@@ -10,6 +10,8 @@
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
+#define DEFAULT_FW_LOG_LEVEL_VALUE FW_LOG_LEVEL_ERROR
+
 #ifdef OS_BUILD
 #define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_FW,ppResult,pState)
 #else // OS_BUILD
@@ -91,6 +93,14 @@ RunFwDiagnostics(
     ReturnCode = SystemTimeCheck(ppDimms[Index], ppResult, pDiagState);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The check for Dimm's system time failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
+      if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
+        goto FinishError;
+      }
+    }
+
+    ReturnCode = FwLogLevelCheck(ppDimms[Index], ppResult, pDiagState);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("The check for Dimm's FW log level failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
         goto FinishError;
       }
@@ -549,4 +559,59 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+/**
+Get the DIMM's debug log level and compare it to the default value.
+Log proper events in case of any error.
+
+@param[in] pDimm Pointer to the DIMM
+@param[in out] ppResult Pointer to the result string of fw diagnostics message
+@param[out] pDiagState Pointer to the quick diagnostics test state
+
+@retval EFI_SUCCESS Test executed correctly
+@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
+**/
+EFI_STATUS
+FwLogLevelCheck(
+  IN     DIMM *pDimm,
+  IN OUT CHAR16 **ppResultStr,
+  IN OUT UINT8 *pDiagState
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT8 FwLogLevel = 0;
+  CHAR16 *pTmpStr = NULL;
+  CHAR16 *pTmpStr1 = NULL;
+
+  NVDIMM_ENTRY();
+
+  if ((NULL == pDimm) || (NULL == pDiagState) || (NULL == ppResultStr)) {
+    if (pDiagState != NULL) {
+      *pDiagState |= DIAG_STATE_MASK_ABORTED;
+    }
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // Get the DIMM's FW log level
+  ReturnCode = FwCmdGetFWDebugLevel(pDimm, &FwLogLevel);
+  if (EFI_ERROR(ReturnCode)) {
+    *pDiagState |= DIAG_STATE_MASK_ABORTED;
+    NVDIMM_WARN("Failed to get FW Debug log level for Dimm handle 0x%x.", pDimm->DeviceHandle.AsUint32);
+    goto Finish;
+  }
+
+  // Validate resulats
+  if (FwLogLevel != DEFAULT_FW_LOG_LEVEL_VALUE) {
+    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_FW_LOG_LEVEL_ERROR), NULL);
+    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimm->DeviceHandle.AsUint32, FwLogLevel, DEFAULT_FW_LOG_LEVEL_VALUE);
+    FREE_POOL_SAFE(pTmpStr);
+    APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 #endif // OS_BUILD

@@ -577,8 +577,8 @@ CatVSPrint(
 	VA_LIST ExtraMarker;
 
 	VA_COPY(ExtraMarker, Marker);
-	static const int nBuffSize = 4096;
-	static wchar_t evalBuff[4096];
+	static const int nBuffSize = 8192;
+	static wchar_t evalBuff[8192];
 	CharactersRequired = vswprintf(evalBuff, nBuffSize, FormatString, ExtraMarker);
 	if (CharactersRequired > nBuffSize)
 		return NULL;

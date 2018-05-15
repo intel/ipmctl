@@ -200,7 +200,12 @@ StartDiagnosticCmd(
 
   //Print Cli diagnostics result
 #ifdef OS_BUILD //todo, implement ST->ConOut in OS, for now just Print it
-  Print(pFinalDiagnosticsResult);
+  if (NULL != pFinalDiagnosticsResult) {
+    Print(pFinalDiagnosticsResult);
+  }
+  else {
+    NVDIMM_ERR("The final diagnostic result string not allocated; NULL pointer");
+  }
 #else
   if ((pFinalDiagnosticsResult != NULL) && ((gST != NULL) && (gST->ConOut != NULL))) {
     ReturnCode = gST->ConOut->OutputString(gST->ConOut, pFinalDiagnosticsResult);

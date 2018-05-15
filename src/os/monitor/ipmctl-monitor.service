@@ -1,0 +1,10 @@
+[Unit]
+Description=Intel Persistent Memory monitoring service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/ipmctl-monitor -d
+PIDFile=/var/run/ipmctl-monitor.pid
+
+[Install]
+WantedBy=multi-user.target

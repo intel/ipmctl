@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2018, Intel Corporation.
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#include <CommandParser.h>
+
+#define EXE_NAME               L"ipmctl.efi"
+#define APP_DESCRIPTION        L"Command Line Interface"
+#define DRIVER_API_DESCRIPTION L"Driver API"
+
+extern        EFI_HANDLE                        gNvmDimmCliHiiHandle;
+
+//
+// This is the generated String package data for all .UNI files.
+// This data array is ready to be used as input of HiiAddPackages() to
+// create a packagelist (which contains Form packages, String packages, etc).
+//
+extern unsigned char ipmctlStrings[];
+
+/**
+  Register commands on the commands list
+
+  @retval a return code from called functions
+**/
+EFI_STATUS
+RegisterCommands(
+  );
+
+/**
+  Print the CLI application help
+**/
+EFI_STATUS showHelp(struct Command *pCmd);

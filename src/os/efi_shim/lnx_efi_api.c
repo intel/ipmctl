@@ -66,7 +66,6 @@ initAcpiTables(
     INT32 BuffSize = 0;
     INT32 Result = 0;
     EFI_STATUS ReturnCode;
-	UINT32 lastErr;
     BuffSize = get_acpi_table("NFIT", NULL, BuffSize);
     if (BuffSize > 0)
     {
@@ -82,10 +81,6 @@ initAcpiTables(
         else
             return EFI_OUT_OF_RESOURCES;
     }
-	else if (BuffSize == 0)
-	{
-		lastErr = errno;
-	}
     BuffSize = get_acpi_table("PCAT", NULL, BuffSize);
     if (BuffSize > 0)
     {

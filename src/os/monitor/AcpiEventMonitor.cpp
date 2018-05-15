@@ -32,7 +32,6 @@ monitor::AcpiMonitor::~AcpiMonitor()
 void monitor::AcpiMonitor::init()
 {
 	int dev_cnt = 0;
-	char dummy_uid[] = "monitor";
 
 	nvm_sync_lock_api();
 
@@ -64,7 +63,7 @@ void monitor::AcpiMonitor::init()
 	dimmList.clear();
 	int rc;
 	acpi_contexts = new void*[dev_cnt];
-	for (size_t i = 0; i < dev_cnt; i++)
+	for (int i = 0; i < dev_cnt; i++)
 	{
 		if (NVM_SUCCESS != (rc = nvm_acpi_event_create_ctx(last_dev_details[i].dimm_handle, &acpi_contexts[i])))
 		{

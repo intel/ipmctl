@@ -1825,7 +1825,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
 //deprecated, please implement nvm_get_number_of_pools
 NVM_API int nvm_get_region_count()
 {
-  unsigned int region_count;
+  int region_count;
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
@@ -1879,7 +1879,7 @@ Finish:
 NVM_API int nvm_get_regions(struct region *p_regions, const NVM_UINT8 count)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int RegionCount, Index;
+  int RegionCount, Index;
   REGION_INFO *pRegions = NULL;
   EFI_STATUS erc;
   int rc = NVM_SUCCESS;

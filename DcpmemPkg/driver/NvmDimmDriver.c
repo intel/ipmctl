@@ -373,8 +373,8 @@ FindDriverByComponentName(
      OUT EFI_HANDLE *pDriverHandle
   )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
 #ifndef OS_BUILD
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINTN HandleCount = 0;
   EFI_HANDLE *pHandleBuffer = NULL;
   UINT32 Index = 0;

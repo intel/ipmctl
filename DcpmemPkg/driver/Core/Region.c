@@ -577,15 +577,16 @@ RetrieveISFromInterleaveInformationTable(
           if (Rc == EFI_NOT_FOUND) {
             pIS->State |= IS_STATE_DIMM_MISSING;
             NVDIMM_DBG("The Dimm related with the DimmRegion has not been found on the Dimm list");
+          } else {
+            InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
+
+            IsRegionIndex = pDimmRegion->pDimm->IsRegionsNum;
+            ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
+            pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
+            pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
+
+            pIS->Size += pDimmRegion->PartitionSize;
           }
-          InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
-
-          IsRegionIndex = pDimmRegion->pDimm->IsRegionsNum;
-          ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
-          pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
-          pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
-
-          pIS->Size += pDimmRegion->PartitionSize;
         }
         pCurrentIdentInfo++;
       }

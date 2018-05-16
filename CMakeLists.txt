@@ -419,13 +419,25 @@ endif()
 #----------------------------------------------------------------------------------------------------
 # Generate String Definitions
 #----------------------------------------------------------------------------------------------------
-
-add_custom_target(stringdefs ALL
+set(STRING_DEFS_INPUT_FILES
+	${ROOT}/DcpmemPkg/common/NvmStatus.uni
+	${ROOT}/DcpmemPkg/driver/Core/Diagnostics/DiagnosticsMessages.uni
+	${ROOT}/src/os/os_string_overrides.uni
+	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
 	)
 
-add_custom_command(TARGET stringdefs
+set(STRING_DEFS_OUTPUT_FILES
+	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.h
+	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_defs.h
+	)
+
+add_custom_target(stringdefs ALL
+	DEPENDS ${STRING_DEFS_OUTPUT_FILES} ${STRING_DEFS_INPUT_FILES})
+
+add_custom_command(OUTPUT ${STRING_DEFS_OUTPUT_FILES}
 	COMMAND python ${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
 	COMMENT "Generating String Definitions"
+	DEPENDS ${STRING_DEFS_INPUT_FILES}
 	)
 
 #----------------------------------------------------------------------------------------------------

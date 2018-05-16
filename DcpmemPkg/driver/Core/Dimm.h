@@ -231,7 +231,9 @@ typedef struct _DIMM {
   /** List of Storage Namespaces **/
   LIST_ENTRY StorageNamespaceList;
   VOID *pPcdLsa;
+  // Always allocated to be size of PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE
   VOID *pPcdOem;
+  UINT32 PcdOemSize;
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')

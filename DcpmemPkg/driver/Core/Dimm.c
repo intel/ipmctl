@@ -1743,6 +1743,7 @@ Finish:
   @param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS: Success
+  @retval EFI_UNSUPPORTED: invalid partition specified (OEM Partition not supported).
   @retval EFI_OUT_OF_RESOURCES: memory allocation failure
 **/
 EFI_STATUS
@@ -1761,6 +1762,13 @@ FwCmdGetPlatformConfigData (
   BOOLEAN UseSmallPayload = FALSE;
 
   NVDIMM_ENTRY();
+
+  // Don't support using this function to retrieve PCD OEM Config data.
+  // Use FwCmdGetPcdSmallPayload
+  if (PartitionId == PCD_OEM_PARTITION_ID) {
+    Rc = EFI_UNSUPPORTED;
+    goto Finish;
+  }
 
   SetMem(&InputPayload, sizeof(InputPayload), 0x0);
 
@@ -1800,14 +1808,14 @@ FwCmdGetPlatformConfigData (
   }
   else if (pDimm->pPcdOem && PartitionId == PCD_OEM_PARTITION_ID)
   {
-  CopyMem(*ppRawData, pDimm->pPcdOem, PcdSize);
+	CopyMem(*ppRawData, pDimm->pPcdOem, PcdSize);
     goto Finish;
   }
-  
+
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
-  Rc = EFI_OUT_OF_RESOURCES;
-  goto Finish;
+	Rc = EFI_OUT_OF_RESOURCES;
+	goto Finish;
   }
 
   /**
@@ -1870,25 +1878,25 @@ FwCmdGetPlatformConfigData (
       goto Finish;
     }
   }
-  
+
   VOID *pTempCache = NULL;
   if (PartitionId == PCD_LSA_PARTITION_ID) {
-  pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
-  pTempCache = pDimm->pPcdLsa;
+    pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
+    pTempCache = pDimm->pPcdLsa;
   }
   else if (PartitionId == PCD_OEM_PARTITION_ID) {
-  pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
-  pTempCache = pDimm->pPcdOem;
+    pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
+    pTempCache = pDimm->pPcdOem;
   }
 
   if (UseSmallPayload) {
-  CopyMem(*ppRawData, pBuffer, PcdSize);
+    CopyMem(*ppRawData, pBuffer, PcdSize);
     if (NULL != pTempCache) {
         CopyMem(pTempCache, pBuffer, PcdSize);
     }
   }
   else {
-  CopyMem(*ppRawData, pFwCmd->LargeOutputPayload, PcdSize);
+    CopyMem(*ppRawData, pFwCmd->LargeOutputPayload, PcdSize);
     if (NULL != pTempCache) {
         CopyMem(pTempCache, pFwCmd->LargeOutputPayload, PcdSize);
     }
@@ -1972,6 +1980,327 @@ Finish:
   return Rc;
 }
 
+/**
+Validate the PCD Oem Config Header.
+
+@param[in]  pOemHeader    Pointer to NVDIMM Configuration Header
+
+@retval EFI_INVALID_PARAMETER NULL pointer for DIMM structure provided
+@retval EFI_VOLUME_CORRUPTED  Header is invalid. Signature or checksum failed.
+@retval EFI_NO_MEDIA          Size of the header exceeds allowed capacity
+@retval EFI_SUCCESS           Success - Valid config header
+**/
+EFI_STATUS ValidatePcdOemHeader(
+  IN  NVDIMM_CONFIGURATION_HEADER *pOemHeader)
+{
+  if (NULL == pOemHeader) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (pOemHeader->Header.Signature != NVDIMM_CONFIGURATION_HEADER_SIG) {
+    NVDIMM_WARN("Incorrect signature of the AEP Configuration Header table");
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  if (pOemHeader->Header.Length > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
+    NVDIMM_WARN("Length of PCD header is greater than PCD OEM partition size");
+    return EFI_VOLUME_CORRUPTED;
+  }
+  else if (!IsChecksumValid(pOemHeader, pOemHeader->Header.Length)) {
+    NVDIMM_WARN("The AEP Configuration table checksum is invalid.");
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+Determine if PCD Header is all zeros.
+
+@param[in]  pOemHeader    Pointer to NVDIMM Configuration Header
+@param[out] bIsZero       Pointer to boolean. True if Config Header is zero.
+
+@retval EFI_INVALID_PARAMETER NULL pointer for DIMM structure provided
+@retval EFI_SUCCESS           Success
+**/
+EFI_STATUS IsPcdOemHeaderZero(
+  IN  NVDIMM_CONFIGURATION_HEADER *pOemHeader,
+  OUT BOOLEAN *bIsZero)
+{
+  int i = 0;
+
+  if (NULL == bIsZero || NULL == pOemHeader) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *bIsZero = TRUE;
+
+  for (i = 0; i < sizeof(NVDIMM_CONFIGURATION_HEADER); i++) {
+    if (((UINT8*)pOemHeader)[i] != 0) {
+      *bIsZero = FALSE;
+      break;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+Determine the total size of PCD Config Data area by finding the largest
+offset any of the 3 data sets.
+
+@param[in]  pOemHeader    Pointer to NVDIMM Configuration Header
+@param[out] pOemDataSize  Size of the PCD Config Data
+
+@retval EFI_INVALID_PARAMETER NULL pointer for DIMM structure provided
+@retval EFI_SUCCESS           Success
+**/
+EFI_STATUS GetPcdOemDataSize(NVDIMM_CONFIGURATION_HEADER *pOemHeader, UINT32 *pOemDataSize)
+{
+  if (NULL == pOemHeader || NULL == pOemDataSize) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  UINT32 MaxCur = pOemHeader->CurrentConfStartOffset + pOemHeader->CurrentConfDataSize;
+  UINT32 MaxIn = pOemHeader->ConfInputStartOffset + pOemHeader->ConfInputDataSize;
+  UINT32 MaxOut = pOemHeader->ConfOutputStartOffset + pOemHeader->ConfOutputDataSize;
+
+  // At least return the size of the header...
+  *pOemDataSize = MAX(sizeof(NVDIMM_CONFIGURATION_HEADER), MAX(MaxOut, MAX(MaxCur, MaxIn)));
+  NVDIMM_DBG("GetPcdOemDataSize. MaxOemDataSize: %d.\n", *pOemDataSize);
+
+  // Prevent any crazy large values...
+  if (*pOemDataSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
+    NVDIMM_DBG("GetPcdOemDataSize. MaxOemDataSize is unexpectedly LARGE: %d.\n", *pOemDataSize);
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+Retrieve Pcd data using small payload method only. Data is retrieved in 128
+byte chunks.
+
+@param[in]  pDimm       The DIMM to retrieve security info on
+@param[in]  PartitionId The partition ID of the PCD
+@param[in]  Offset      Offset of data to be read from PCD region
+@param[in,out] pData    Pointer to a buffer used to retrieve PCD data. Must be at least 128 bytes.
+@param[in]  DataSize    Size of the pData buffer in bytes.
+
+@retval EFI_INVALID_PARAMETER NULL pointer for DIMM structure provided
+@retval EFI_OUT_OF_RESOURCES  Memory allocation failure
+@retval EFI_...               Other errors from subroutines
+@retval EFI_SUCCESS           Success
+**/
+EFI_STATUS
+FwCmdGetPcdSmallPayload(
+  IN     DIMM   *pDimm,
+  IN     UINT8  PartitionId,
+  IN     UINT32 Offset,
+  IN OUT UINT8  *pData,
+  IN     UINT8  DataSize
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA *pInputPayload = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pData == NULL) {
+    goto Finish;
+  }
+
+  // Don't let try to read outside PCD or buffer
+  if (((Offset + PCD_GET_SMALL_PAYLOAD_DATA_SIZE) > PCD_PARTITION_SIZE) ||
+    (DataSize > PCD_GET_SMALL_PAYLOAD_DATA_SIZE) ||
+    (0 == DataSize)) {
+    goto Finish;
+  }
+
+  /*
+  * PcdSize is 0 if Media is disabled.
+  * PcdSize was retrieved at driver load time so it is possible that since load time there
+  * was a fatal media error that this would not catch. We would then be returning cached data
+  * from a media disabled DIMM instead of erroring out. This case is purposefully ignored.
+  */
+  if (pDimm->PcdOemPartitionSize == 0) {
+    ReturnCode = EFI_NO_MEDIA;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pInputPayload = (PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA*) pFwCmd->InputPayload;
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopPlatformDataInfo;
+  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
+  pFwCmd->LargeOutputPayloadSize = 0;
+  pFwCmd->OutputPayloadSize = PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
+  pInputPayload->PartitionId = PartitionId;
+  pInputPayload->CmdOptions.RetrieveOption = PCD_CMD_OPT_PARTITION_DATA;
+  pInputPayload->CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
+  pInputPayload->Offset = Offset;
+
+#ifdef OS_BUILD
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#else
+  ReturnCode = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#endif
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = %r)", Offset, ReturnCode);
+    if (FW_ERROR(pFwCmd->Status)) {
+      ReturnCode = MatchFwReturnCode(pFwCmd->Status);
+    }
+    goto Finish;
+  }
+
+  CopyMem(pData, pFwCmd->OutPayload, DataSize);
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+Firmware command get Platform Config Data via small payload only.
+For OEM Config Data, small payload via ASL is faster than large payload via SMM.
+Execute a FW command to get information about DIMM regions and REGIONs configuration.
+
+The caller is responsible for a memory deallocation of the ppRawData
+
+@param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+@param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
+@param[out] pRawDataSize Pointer to size of the data retrieved.
+
+@retval EFI_SUCCESS: Success
+@retval EFI_OUT_OF_RESOURCES: memory allocation failure
+@retval EFI_NO_MEDIA: PCD Partition size reported as 0. Can't read data.
+@retval EFI_NOT_FOUND: No valid PCD Config Data Header. Maybe all zero's.
+@retval EFI_VOLUME_CORRUPTED: PCD Config Data header is invalid/corrupted
+**/
+EFI_STATUS
+GetPcdOemConfigDataUsingSmallPayload(
+  IN     DIMM *pDimm,
+  OUT UINT8 **ppRawData,
+  OUT UINT32 *pRawDataSize
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+  UINT8 *pBuffer = NULL;
+  UINT32 Offset = 0;
+  UINT8 TmpBuf[PCD_GET_SMALL_PAYLOAD_DATA_SIZE];
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || ppRawData == NULL || pRawDataSize == NULL) {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (pDimm->PcdOemPartitionSize == 0) {
+    Rc = EFI_NO_MEDIA;
+    goto Finish;
+  }
+
+  // Return the cached data
+  if (pDimm->pPcdOem)
+  {
+    *ppRawData = AllocateZeroPool(pDimm->PcdOemSize);
+    if (*ppRawData == NULL) {
+      NVDIMM_WARN("Can't allocate memory for Platform Config Data (%d bytes)", pDimm->PcdOemSize);
+      Rc = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
+    CopyMem(*ppRawData, pDimm->pPcdOem, pDimm->PcdOemSize);
+    *pRawDataSize = pDimm->PcdOemSize;
+    goto Finish;
+  }
+
+  // Read first block which includes config header
+  Rc = FwCmdGetPcdSmallPayload(pDimm, PCD_OEM_PARTITION_ID, 0, TmpBuf, sizeof(TmpBuf));
+  if (EFI_ERROR(Rc)) {
+    goto Finish;
+  }
+
+  // Validate the Header
+  NVDIMM_CONFIGURATION_HEADER *pOemHeader = (NVDIMM_CONFIGURATION_HEADER*) TmpBuf;
+
+  Rc = ValidatePcdOemHeader(pOemHeader);
+  if (EFI_ERROR(Rc)) {
+    BOOLEAN IsZero = TRUE;
+    EFI_STATUS tmpRc = IsPcdOemHeaderZero(pOemHeader, &IsZero);
+    if ((EFI_SUCCESS == tmpRc) && (TRUE == IsZero)) {
+      Rc = EFI_NOT_FOUND;
+    }
+
+    goto Finish;
+  }
+
+  // Get size of OEM Config Data
+  UINT32 OemDataSize = 0;
+  Rc = GetPcdOemDataSize(pOemHeader, &OemDataSize);
+  if (EFI_ERROR(Rc)) {
+    goto Finish;
+  }
+
+  // Ensure buffer size is rounded up to next PCD_GET_SMALL_PAYLOAD_DATA_SIZE boundary
+  UINT32 BufferSize = ((OemDataSize / PCD_GET_SMALL_PAYLOAD_DATA_SIZE) + 1) * PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
+  pBuffer = AllocateZeroPool(BufferSize);
+  if (pBuffer == NULL) {
+    NVDIMM_ERR("Can't allocate memory for PCD partition buffer (%d bytes)", BufferSize);
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  // Save the first 128 bytes already read
+  CopyMem(pBuffer, TmpBuf, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+
+  /** Get PCD by small payload in loop in 128 byte chunks **/
+  for (Offset = PCD_GET_SMALL_PAYLOAD_DATA_SIZE; Offset < OemDataSize; Offset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
+
+    Rc = FwCmdGetPcdSmallPayload(pDimm, PCD_OEM_PARTITION_ID, Offset, pBuffer + Offset, (UINT8)PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+    if (EFI_ERROR(Rc)) {
+      goto Finish;
+    }
+  }
+
+  if (OemDataSize > 0)
+  {
+    VOID *pTempCache = NULL;
+    //Assign new data to the requester data pointer
+    *ppRawData = pBuffer;
+
+    // Save data cache info
+    pDimm->PcdOemSize = OemDataSize;
+    pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
+    pTempCache = pDimm->pPcdOem;
+    if (NULL != pTempCache) {
+      CopyMem(pTempCache, pBuffer, OemDataSize);
+    }
+  }
+
+  *pRawDataSize = OemDataSize;
+
+Finish:
+  if (EFI_ERROR(Rc)) {
+    // If error, free the buffer
+    FREE_POOL_SAFE(pBuffer);
+    *ppRawData = NULL;
+  }
+
+  NVDIMM_EXIT_I64(Rc);
+
+  return Rc;
+}
 
 /**
   Firmware command set Platform Config Data.
@@ -2005,17 +2334,31 @@ FwCmdSetPlatformConfigData (
 
   SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
 
-  if (pDimm == NULL || pRawData == NULL) {
+  if ((pDimm == NULL) || (pRawData == NULL) || 
+    (RawDataSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) ||
+    (0 == RawDataSize)) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   if (PartitionId == PCD_OEM_PARTITION_ID) {
     if (NULL == pDimm->pPcdOem) {
-      pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
+      pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
     }
+    pDimm->PcdOemSize = RawDataSize;
+    
+    // If partition size is 0, then prevent write
+    if (0 == pDimm->PcdOemPartitionSize) {
+      Rc = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
+    
     PcdSize = RawDataSize;
     pTempCache = pDimm->pPcdOem;
+
+    // Force OEM writes to use small payload.
+    // DON'T CHANGE THIS unless you understand related repercussions!
+    UseSmallPayload = TRUE;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
     if (NULL == pDimm->pPcdLsa) {
       pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
@@ -2023,6 +2366,7 @@ FwCmdSetPlatformConfigData (
     PcdSize = pDimm->PcdLsaPartitionSize;
     pTempCache = pDimm->pPcdLsa;
   }
+  
   if (PcdSize == 0) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -2080,10 +2424,10 @@ FwCmdSetPlatformConfigData (
         goto Finish;
       } else {
         if (pTempCache) {
-          CopyMem((INT8*)(pTempCache) + Offset, pFwCmd->InputPayload, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+          CopyMem((INT8*)(pTempCache) + Offset, InPayloadSetData.Data, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
         }
       }
-    }
+	}
   } else {
     /** Set PCD by large payload in single call **/
     InPayloadSetData.Offset = 0;
@@ -5007,8 +5351,8 @@ GenerateOemPcdHeader (
 
 /**
   Get Platform Config Data OEM partition Intel config region and check a correctness of header.
-  We only return the first 64KiB of Intel FW/SW config metadata. The latter 64KiB is reserved
-  for OEM use.
+  We only return the actua PCD config data, from the first 64KiB of Intel FW/SW config metadata.
+  The latter 64KiB is reserved for OEM use.
 
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
@@ -5017,17 +5361,16 @@ GenerateOemPcdHeader (
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR Incorrect PCD header
-  @retval Other return codes from FwCmdGetPlatformConfigData
+  @retval Other return codes from GetPcdOemConfigDataUsingSmallPayload
 **/
 EFI_STATUS
 GetPlatformConfigDataOemPartition (
-  IN     DIMM *pDimm,
-     OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
+  IN  DIMM *pDimm,
+  OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  NVDIMM_CONFIGURATION_HEADER ZeroHeader;
-  NVDIMM_CONFIGURATION_HEADER *pOemPartitionHeader = NULL;
+  UINT32 PcdDataSize = 0;
   NVDIMM_ENTRY();
 
   if (pDimm == NULL || ppPlatformConfigData == NULL) {
@@ -5035,46 +5378,26 @@ GetPlatformConfigDataOemPartition (
     goto Finish;
   }
 
-  *ppPlatformConfigData = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
-  if (*ppPlatformConfigData == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
+  /** Get current Platform Config Data oem partition from dimm **/
+  ReturnCode = GetPcdOemConfigDataUsingSmallPayload(pDimm, (UINT8 **)ppPlatformConfigData, &PcdDataSize);
+  if(EFI_NOT_FOUND == ReturnCode) {
+    NVDIMM_WARN("Empty Platform Configuration Data Discovered, Generating new OemPcdHeader");
+    *ppPlatformConfigData = AllocateZeroPool(sizeof(NVDIMM_CONFIGURATION_HEADER));
+    if (*ppPlatformConfigData == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+    GenerateOemPcdHeader(*ppPlatformConfigData);
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
-  ZeroMem(&ZeroHeader, sizeof(NVDIMM_CONFIGURATION_HEADER));
 
-  /** Get current Platform Config Data oem partition from dimm **/
-  ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, (UINT8 **) &pOemPartitionHeader);
   if (EFI_ERROR(ReturnCode) || *ppPlatformConfigData == NULL) {
     NVDIMM_WARN("Error calling Get Platform Config Data FW command (RC = %r)", ReturnCode);
     goto Finish;
   }
 
-  CopyMem(*ppPlatformConfigData, pOemPartitionHeader, PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
-
-  if (CompareMem(&ZeroHeader, *ppPlatformConfigData, sizeof(ZeroHeader)) == 0) {
-    NVDIMM_WARN("Empty Platform Configuration Data Discovered, Generating new OemPcdHeader");
-    GenerateOemPcdHeader(*ppPlatformConfigData);
-    goto Finish;
-  }
-
-  if ((*ppPlatformConfigData)->Header.Signature != NVDIMM_CONFIGURATION_HEADER_SIG) {
-    NVDIMM_WARN("Incorrect signature of the AEP Configuration Header table");
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
-  }
-
-  if ((*ppPlatformConfigData)->Header.Length > pDimm->PcdOemPartitionSize) {
-    NVDIMM_WARN("Length of PCD header is greater than PCD OEM partition size");
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
-  } else if (!IsChecksumValid(*ppPlatformConfigData, (*ppPlatformConfigData)->Header.Length)) {
-    NVDIMM_WARN("The AEP Configuration table checksum is invalid.");
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
-  }
-
 Finish:
-  FREE_POOL_SAFE(pOemPartitionHeader);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -5115,19 +5438,15 @@ SetPlatformConfigDataOemPartition(
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, &pOemPartition);
-  if ((EFI_ERROR(ReturnCode)) || (pOemPartition == NULL)) {
-    NVDIMM_WARN("Error calling Get Platform Config Data FW command (RC = %r)", ReturnCode);
-    goto Finish;
-  }
+  /* Previous algorithm assumed read and write via large payload MB transactions, so 
+     required reading / writing entire PCD region. Switched to using SMALL MB, which allows
+     writing only the relevant data, and preventing any writes > 64kb. This technique is faster 
+     given current size of PCD Data.
+   */
 
-  // Copy the new configuration to the OEM partition, preserving the upper OEM data
-  // Don't need to write the whole 64KiB since the header contains all the offsets
-  CopyMem(pOemPartition, pNewConf, NewConfSize);
-
-  // Due to the upper 64KiB being reserved for OEM, no way around passing the whole partition
-  ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, pOemPartition,
-    pDimm->PcdOemPartitionSize);
+  // Write the PCD data via small payload MB. This call internally enforces using small payload MB 
+  // for any OEM Partition writes.
+  ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, (UINT8*)pNewConf, NewConfSize);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed to set Platform Config Data");
     goto Finish;
@@ -5882,8 +6201,8 @@ Inject Temperature error payload
 **/
 EFI_STATUS
 FwCmdInjectError(
-  IN     DIMM *pDimm,
-  IN     UINT8 SubOpCode,
+  IN  DIMM *pDimm,
+  IN  UINT8 SubOpCode,
   OUT VOID *pinjectInputPayload
 )
 {

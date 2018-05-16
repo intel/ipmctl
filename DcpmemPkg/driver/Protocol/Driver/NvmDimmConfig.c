@@ -1798,6 +1798,9 @@ GetGoalConfigs(
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
+    }
     NVDIMM_ERR("ERROR: RetrieveGoalConfigsFromPlatformConfigData");
     goto Finish;
   }

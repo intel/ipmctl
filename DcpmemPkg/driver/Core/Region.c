@@ -1395,7 +1395,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
       goto FinishError;
     }
 
-    if (pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0) {
+    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0) {
       pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
       pDimm->RegionsGoalConfig = FALSE;
       pDimm->PcdSynced = TRUE;
@@ -3156,7 +3156,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER pDimm is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval other error codes from called functions:
-          FwCmdGetPlatformConfigData, FwCmdSetPlatformConfigData
+          GetPlatformConfigDataOemPartition, SetPlatformConfigDataOemPartition
 **/
 EFI_STATUS
 SendConfigInputToDimm(

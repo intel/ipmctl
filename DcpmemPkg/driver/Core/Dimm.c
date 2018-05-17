@@ -2334,31 +2334,39 @@ FwCmdSetPlatformConfigData (
 
   SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
 
-  if ((pDimm == NULL) || (pRawData == NULL) || 
-    (RawDataSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) ||
+  if ((pDimm == NULL) || (pRawData == NULL) ||
+    (RawDataSize > PCD_PARTITION_SIZE) ||
     (0 == RawDataSize)) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   if (PartitionId == PCD_OEM_PARTITION_ID) {
+    // Force OEM writes to use small payload.
+    // DON'T CHANGE THIS unless you understand related repercussions!
+    UseSmallPayload = TRUE;
+
+    // Using small payload transactions.
+    // Only allow up to 64kb to protect upper 64kb for OEM data.
+    if (RawDataSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
+      Rc = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
+
     if (NULL == pDimm->pPcdOem) {
       pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
     }
     pDimm->PcdOemSize = RawDataSize;
-    
+
     // If partition size is 0, then prevent write
     if (0 == pDimm->PcdOemPartitionSize) {
       Rc = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    
+
     PcdSize = RawDataSize;
     pTempCache = pDimm->pPcdOem;
 
-    // Force OEM writes to use small payload.
-    // DON'T CHANGE THIS unless you understand related repercussions!
-    UseSmallPayload = TRUE;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
     if (NULL == pDimm->pPcdLsa) {
       pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);

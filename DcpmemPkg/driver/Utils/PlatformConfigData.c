@@ -75,8 +75,7 @@ GeneratePcdConfInput(
     // Either case should not stop sending CIN
     Rc = EFI_SUCCESS;
   } else {
-    if ((pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) &&
-        (pIntelDIMMConfigEfiVar->ProvisionCapacityStatus == PROVISION_CAPACITY_STATUS_NEW_UNKNOWN)) {
+    if (pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
       // Add extension table to size
       ConfInputSize += sizeof(CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE) + sizeof(INTEL_DIMM_CONFIG);
     }
@@ -257,8 +256,7 @@ GeneratePcdConfInput(
     Extension table for Intel automatic provisioning
    **/
   if (pIntelDIMMConfigEfiVar != NULL) {
-    if ((pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) &&
-        (pIntelDIMMConfigEfiVar->ProvisionCapacityStatus == PROVISION_CAPACITY_STATUS_NEW_UNKNOWN)) {
+    if (pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
       pAutoProvExtension = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *) pCurrentOffset;
 
       pAutoProvExtension->Header.Type = PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE;

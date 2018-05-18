@@ -8152,6 +8152,9 @@ AutomaticProvisionCapacity(
 
   switch (pIntelDIMMConfig->ProvisionCapacityStatus) {
     case PROVISION_CAPACITY_STATUS_NEW_UNKNOWN:
+    case PROVISION_CAPACITY_STATUS_SUCCESS:
+    case PROVISION_CAPACITY_STATUS_ERROR:
+    case PROVISION_CAPACITY_STATUS_PENDING_SECURITY_DISABLED:
       // Check PCD copy of variables
       ReturnCode = CheckPCDAutoConfVars(pIntelDIMMConfig, &VarsMatch);
       if (EFI_ERROR(ReturnCode)) {
@@ -8168,7 +8171,16 @@ AutomaticProvisionCapacity(
 
       if (!VarsMatch || TopologyChanged) {
         ReturnCode = AutomaticCreateGoal(pIntelDIMMConfig);
-        if (EFI_ERROR(ReturnCode)) {
+        if (ReturnCode == EFI_ACCESS_DENIED) {
+          // If we already tried to signal security needs to be disabled and it was not,
+          // error here so we don't boot loop.
+          if (pIntelDIMMConfig->ProvisionCapacityStatus ==
+            PROVISION_CAPACITY_STATUS_PENDING_SECURITY_DISABLED) {
+            pIntelDIMMConfig->ProvisionCapacityStatus = PROVISION_CAPACITY_STATUS_ERROR;
+          } else {
+            pIntelDIMMConfig->ProvisionCapacityStatus = PROVISION_CAPACITY_STATUS_PENDING_SECURITY_DISABLED;
+          }
+        } else if (EFI_ERROR(ReturnCode)) {
           pIntelDIMMConfig->ProvisionCapacityStatus = PROVISION_CAPACITY_STATUS_ERROR;
         } else {
           pIntelDIMMConfig->ProvisionCapacityStatus = PROVISION_CAPACITY_STATUS_PENDING;
@@ -8190,11 +8202,6 @@ AutomaticProvisionCapacity(
       }
       break;
 
-    case PROVISION_CAPACITY_STATUS_SUCCESS:
-    case PROVISION_CAPACITY_STATUS_ERROR:
-      // Skip any provisioning
-      break;
-
     default:
       NVDIMM_DBG("Invalid ProvisionCapacityStatus: %d", pIntelDIMMConfig->ProvisionCapacityStatus);
       pIntelDIMMConfig->ProvisionCapacityStatus = PROVISION_CAPACITY_STATUS_ERROR;
@@ -8207,7 +8214,10 @@ Finish:
   UpdateIntelDIMMConfig(pIntelDIMMConfig);
 
   if (pIntelDIMMConfig->ProvisionCapacityStatus == PROVISION_CAPACITY_STATUS_PENDING) {
-    NVDIMM_WARN("Reseting for automatic provisioning!");
+    DEBUG((EFI_D_INFO, "Resetting for automatic provisioning.\n"));
+    gRT->ResetSystem(EfiResetCold, ReturnCode, 0, NULL);
+  } else if (pIntelDIMMConfig->ProvisionCapacityStatus == PROVISION_CAPACITY_STATUS_PENDING_SECURITY_DISABLED) {
+    DEBUG((EFI_D_INFO, "Security enabled, resetting. Provisioning pending security disabled.\n"));
     gRT->ResetSystem(EfiResetCold, ReturnCode, 0, NULL);
   }
 
@@ -8240,7 +8250,8 @@ AutomaticProvisionNamespace(
   }
 
   // Check if namespace provisioning is needed
-  if (pIntelDIMMConfig->ProvisionNamespaceStatus == PROVISION_NAMESPACE_STATUS_NEW_UNKNOWN) {
+  if ((pIntelDIMMConfig->ProvisionNamespaceStatus == PROVISION_NAMESPACE_STATUS_NEW_UNKNOWN) &&
+      (pIntelDIMMConfig->ProvisionCapacityStatus != PROVISION_CAPACITY_STATUS_ERROR)) {
     ReturnCode = AutomaticCreateNamespace(pIntelDIMMConfig);
     if (EFI_ERROR(ReturnCode)) {
       pIntelDIMMConfig->ProvisionNamespaceStatus = PROVISION_NAMESPACE_STATUS_ERROR;
@@ -8282,6 +8293,10 @@ AutomaticCreateGoal(
   LIST_ENTRY *pNode = NULL;
   UINT32 NamespaceCount = 0;
   NAMESPACE_INFO *pCurNamespace = NULL;
+  DIMM **ppDimms = NULL;
+  UINT32 DimmsNum = 0;
+  UINT8 DimmSecurityState = 0;
+  UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
@@ -8320,6 +8335,32 @@ AutomaticCreateGoal(
   ReturnCode = GetNSLabelMajorMinorVersion(pIntelDIMMConfig->NamespaceLabelVersion, &Major, &Minor);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
+  }
+
+  ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
+  if (ppDimms == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  // Check for security
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmsNum; Index++) {
+    ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
+      ReturnCode = EFI_ACCESS_DENIED;
+      ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
+      NVDIMM_DBG("Invalid request to create goal while security is enabled.");
+      goto Finish;
+    }
   }
 
   /** Get and delete namespaces **/
@@ -8368,6 +8409,7 @@ AutomaticCreateGoal(
 
 Finish:
   FreeCommandStatus(&pCommandStatus);
+  FREE_POOL_SAFE(ppDimms);
   LIST_FOR_EACH_SAFE(pNode, pNextNode, &NamespaceListHead) {
     FreePool(NAMESPACE_INFO_FROM_NODE(pNode));
   }
@@ -8659,6 +8701,7 @@ CheckPCDAutoConfVars(
 
 Finish:
   FreeCommandStatus(&pCommandStatus);
+  FREE_POOL_SAFE(ppDimms);
   FREE_POOL_SAFE(pConfHeader);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

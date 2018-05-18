@@ -471,7 +471,8 @@ CoreStartDiagnostics(
     }
   }
   if (DiagnosticsTest & DiagnosticConfigTest) {
-    TempReturnCode = RunConfigDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[ConfigDiagnosticIndex]), &(DiagState[ConfigDiagnosticIndex]));
+    TempReturnCode = RunConfigDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference,
+        &(pBuffer[ConfigDiagnosticIndex]), &(DiagState[ConfigDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Platform configuration diagnostics failed. (%r)", TempReturnCode);

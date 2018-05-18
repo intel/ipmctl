@@ -979,6 +979,7 @@ RunConfigDiagnostics(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 *pTmpStr = NULL;
+  SYSTEM_CAPABILITIES_INFO SysCapInfo;
 
   NVDIMM_ENTRY();
 
@@ -1015,6 +1016,17 @@ RunConfigDiagnostics(
     if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
       goto FinishError;
     }
+  }
+
+  ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Failed on GetSystemCapabilitiesInfo");
+    goto Finish;
+  }
+
+  if (!SysCapInfo.AdrSupported) {
+    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_NO_ADR_SUPPORT), NULL);
+    APPEND_RESULT_TO_THE_LOG(NULL, pTmpStr, DIAG_STATE_MASK_FAILED, ppResult, pDiagState);
   }
 
   ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, ppResult, pDiagState);

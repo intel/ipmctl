@@ -1046,7 +1046,7 @@ FwCmdGetFirmwareImageInfo (
   );
 
 /**
-  Firmware command to get Power Management Policy Info (for FIS < 1.3)
+  Firmware command to get Power Management Policy Info (for FIS 1.3+)
 
   @param[in] pDimm The Intel Apache Pass to retrieve Power Management Policy Info
   @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
@@ -1062,22 +1062,6 @@ FwCmdGetPowerManagementPolicy(
      OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY *pPayloadPowerManagementPolicy
   );
 
-/**
-  Firmware command to get Power Management Policy Info (for FIS 1.3)
-
-  @param[in] pDimm The Intel Apache Pass to retrieve Power Management Policy Info
-  @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
-    The caller is responsible to free the allocated memory with the FreePool function.
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadPowerManagementPolicy is NULL
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetPowerManagementPolicyNew(
-  IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY_NEW *pPayloadPowerManagementPolicy
-  );
 
 /**
   Firmware command to get package sparing policy

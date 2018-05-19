@@ -87,7 +87,6 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   SLOT_ID_STR,
   CHANNEL_POS_STR,
   POWER_MANAGEMENT_ON_STR,
-  POWER_LIMIT_STR,
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_BUDGET_STR,
   LAST_SHUTDOWN_STATUS_STR,
@@ -957,11 +956,6 @@ ShowDimms(
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POWER_MANAGEMENT_ON_STR, UNKNOWN_ATTRIB_VAL);
           }
 
-          /** PowerLimit **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POWER_LIMIT_STR))) {
-            Print(L"   " FORMAT_STR L"=%d W\n", POWER_LIMIT_STR, UNKNOWN_ATTRIB_VAL);
-          }
-
           /** PeakPowerBudget **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
             Print(L"   " FORMAT_STR L"=%d mW\n", PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
@@ -975,11 +969,6 @@ ShowDimms(
           /** PowerManagementEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POWER_MANAGEMENT_ON_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POWER_MANAGEMENT_ON_STR, pDimms[Index].PowerManagementEnabled);
-          }
-
-          /** PowerLimit **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POWER_LIMIT_STR))) {
-            Print(L"   " FORMAT_STR L"=%d W\n", POWER_LIMIT_STR, pDimms[Index].PowerLimit);
           }
 
           /** PeakPowerBudget **/

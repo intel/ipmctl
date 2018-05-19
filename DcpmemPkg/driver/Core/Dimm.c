@@ -3107,7 +3107,7 @@ Finish:
 }
 
 /**
-  Firmware command to get Power Management Policy Info (for FIS < 1.3)
+  Firmware command to get Power Management Policy Info (for FIS 1.3+)
 
   @param[in] pDimm The Intel Apache Pass to retrieve Power Management Policy Info
   @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
@@ -3161,60 +3161,6 @@ Finish:
   return Rc;
 }
 
-/**
-  Firmware command to get Power Management Policy Info (for FIS 1.3)
-
-  @param[in] pDimm The Intel Apache Pass to retrieve Power Management Policy Info
-  @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
-    The caller is responsible to free the allocated memory with the FreePool function.
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadPowerManagementPolicy is NULL
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetPowerManagementPolicyNew(
-  IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY_NEW *pPayloadPowerManagementPolicy
-  )
-{
-  EFI_STATUS Rc = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pDimm == NULL || pPayloadPowerManagementPolicy == NULL) {
-    Rc = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    Rc = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtGetFeatures;
-  pFwCmd->SubOpcode = SubopPolicyPowMgmt;
-  pFwCmd->OutputPayloadSize = sizeof(*pPayloadPowerManagementPolicy);
-
-  Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending PowerManagementPolicy command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
-    if (FW_ERROR(pFwCmd->Status)) {
-      Rc = MatchFwReturnCode(pFwCmd->Status);
-    }
-    goto Finish;
-  }
-
-  CopyMem(pPayloadPowerManagementPolicy, pFwCmd->OutPayload, sizeof(*pPayloadPowerManagementPolicy));
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(Rc);
-  return Rc;
-}
 
 /**
   Firmware command to get package sparing policy

@@ -852,7 +852,6 @@ struct device_details {
 	char				bank_label[NVM_BANK_LABEL_LEN];         ///< The bank label
 
 	NVM_BOOL			power_management_enabled;               ///< Enable or disable power management.
-	NVM_UINT8			power_limit;                            ///< dimm power limit in watts (10-18W).
 	NVM_UINT16			peak_power_budget;                      ///< instantaneous power budget in mW (100-20000 mW).
 	NVM_UINT16			avg_power_budget;                       ///< average power budget in mW (100-18000 mW).
 	NVM_BOOL			package_sparing_enabled;                    ///< Enable or disable package sparing.

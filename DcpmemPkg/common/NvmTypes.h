@@ -322,7 +322,6 @@ typedef struct _DIMM_INFO {
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
   BOOLEAN PowerManagementEnabled;           //!< Whether or not the AEP power management policy is enabled
-  UINT8 PowerLimit;                         //!< The power limit in watts (10, 12, 15, or 18 W). The default is 10 W.
   UINT16 PeakPowerBudget;                   //!< The power budget in mW used for instantaneous power (100-20000 mW). The default is 100 mW.
   UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
 

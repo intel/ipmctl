@@ -599,8 +599,7 @@ GetDimmInfo (
   NAMESPACE *pCurNamespace = NULL;
   SENSOR_INFO SensorInfo;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
-  PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayloadOld;
-  PT_PAYLOAD_POWER_MANAGEMENT_POLICY_NEW PowerManagementPolicyPayloadNew;
+  PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayload;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
@@ -614,7 +613,6 @@ GetDimmInfo (
   UINT64 UnconfiguredCapacity = 0;
   UINT64 ReservedCapacity = 0;
   UINT32 Index = 0;
-  BOOLEAN FIS_1_2 = FALSE;
   DIMM_BSR Bsr;
   UINT8 FWLogLevel = 0;
   UINT64 CapacityFromSmbios = 0;
@@ -623,8 +621,7 @@ GetDimmInfo (
 
   ZeroMem(&SensorInfo, sizeof(SensorInfo));
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
-  ZeroMem(&PowerManagementPolicyPayloadOld, sizeof(PowerManagementPolicyPayloadOld));
-  ZeroMem(&PowerManagementPolicyPayloadNew, sizeof(PowerManagementPolicyPayloadNew));
+  ZeroMem(&PowerManagementPolicyPayload, sizeof(PowerManagementPolicyPayload));
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
   ZeroMem(&DmiDeviceMappedAddr, sizeof(DmiDeviceMappedAddr));
   ZeroMem(&Bsr, sizeof(Bsr));
@@ -640,11 +637,6 @@ GetDimmInfo (
   pDimmInfo->SocketId = pDimm->SocketId;
   pDimmInfo->ChannelId = pDimm->ChannelId;
   pDimmInfo->ChannelPos = pDimm->ChannelPos;
-
-  // @todo DE9699 Remove FIS 1.2 backwards compatibility workaround
-  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 2) {
-    FIS_1_2 = TRUE;
-  }
 
   for (Index = 0; Index < pDimm->FmtInterfaceCodeNum; Index++) {
     pDimmInfo->InterfaceFormatCode[Index] = pDimm->FmtInterfaceCode[Index];
@@ -914,27 +906,14 @@ GetDimmInfo (
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_POWER_MGMT_POLICY)
   {
     /* Get current Power Management Policy info */
-    if (!FIS_1_2) {
-      ReturnCode = FwCmdGetPowerManagementPolicyNew(pDimm, &PowerManagementPolicyPayloadNew);
-    } else {
-      ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &PowerManagementPolicyPayloadOld);
-    }
+    ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &PowerManagementPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_POWER_MGMT;
     }
 
-    if (!FIS_1_2) {
-      pDimmInfo->PowerManagementEnabled = PowerManagementPolicyPayloadNew.Enable;
-      pDimmInfo->PowerLimit = PowerManagementPolicyPayloadNew.MaxPower;
-      pDimmInfo->PeakPowerBudget = PowerManagementPolicyPayloadNew.PeakPowerBudget;
-      pDimmInfo->AvgPowerBudget = PowerManagementPolicyPayloadNew.AveragePowerBudget;
-    } else {
-      // @todo DE9699 Remove FIS 1.2 backwards compatibility workaround
-      pDimmInfo->PowerManagementEnabled = PowerManagementPolicyPayloadOld.Enable;
-      pDimmInfo->PowerLimit = PowerManagementPolicyPayloadOld.MaxPower;
-      pDimmInfo->PeakPowerBudget = PowerManagementPolicyPayloadOld.PeakPowerBudget;
-      pDimmInfo->AvgPowerBudget = PowerManagementPolicyPayloadOld.AveragePowerBudget;
-    }
+    pDimmInfo->PowerManagementEnabled = PowerManagementPolicyPayload.Enable;
+    pDimmInfo->PeakPowerBudget = PowerManagementPolicyPayload.PeakPowerBudget;
+    pDimmInfo->AvgPowerBudget = PowerManagementPolicyPayload.AveragePowerBudget;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY)

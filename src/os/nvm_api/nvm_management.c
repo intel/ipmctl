@@ -734,7 +734,6 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   memcpy(p_details->device_locator, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
   memcpy(p_details->bank_label, dimm_info.BankLabel, NVM_BANK_LABEL_LEN);                 // The bank label
   p_details->power_management_enabled = dimm_info.PowerManagementEnabled;                 // Enable or disable power management.
-  p_details->power_limit = dimm_info.PowerLimit;                                          // dimm power limit in watts (10-18W).
   p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
   p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
   p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.

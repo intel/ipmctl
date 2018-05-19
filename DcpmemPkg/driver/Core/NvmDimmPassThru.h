@@ -543,38 +543,8 @@ typedef struct {
     Valid range for power budget 10000 - 18000 mW.
     **/
   UINT16 AveragePowerBudget;
-  /**
-   Shows the current Max AEP dimm power limit in W (watts)
-  **/
-  UINT8 MaxPower;
 
-  UINT8 Reserved[122];
-} PT_PAYLOAD_POWER_MANAGEMENT_POLICY_NEW;
-
-// @todo DE9699 Remove FIS 1.2 backwards compatibility workaround
-typedef struct {
-  /**
-    Enable/Disable reflects whether the power managment policy is enabled or disabled.
-    Disabling power managment will automatically change the Stop/Gate timers to 0x00
-    thus allowing for no power savings.
-  **/
-  UINT8 Enable;
-  /**
-    Shows the current Max AEP dimm power limit in W (watts)
-  **/
-  UINT8 MaxPower;
-  /**
-    Power budget in mW used for instantaneous power.
-    Valid range for power budget 10000 - 20000 mW.
-  **/
-  UINT16 PeakPowerBudget;
-  /**
-    Power budget in mW used for averaged power.
-    Valid range for power budget 10000 - 18000 mW.
-  **/
-  UINT16 AveragePowerBudget;
-
-  UINT8 Reserved[122];
+  UINT8 Reserved[123];
 } PT_PAYLOAD_POWER_MANAGEMENT_POLICY;
 
 typedef struct {

@@ -68,7 +68,6 @@
 #define BANK_LABEL_STR              L"BankLabel"
 #define MEMORY_TYPE_STR             L"MemoryType"
 #define POWER_MANAGEMENT_ON_STR     L"PowerManagementEnabled"
-#define POWER_LIMIT_STR             L"PowerLimit"
 #define PEAK_POWER_BUDGET_STR       L"PeakPowerBudget"
 #define AVG_POWER_BUDGET_STR        L"AvgPowerBudget"
 #define LAST_SHUTDOWN_STATUS_STR    L"LastShutdownStatus"

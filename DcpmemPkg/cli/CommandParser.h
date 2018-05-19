@@ -139,7 +139,7 @@
 #define POISON_INJ_PROPERTY               L"Poison"                   //!< Inject error 'Poison' property
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property
 #define CLEAR_ERROR_INJ_PROPERTY          L"Clear"                    //!< Clear error injection property
-#define DIE_SPARING_INJ_PROPERTY          L"DieSparing"               //!< DieSparing error injection property
+#define PACKAGE_SPARING_INJ_PROPERTY      L"PackageSparing"           //!< PackageSparing error injection property
 #define SPARE_CAPACITY_INJ_PROPERTY       L"SpareCapacity"            //!< SpareCapacity error injection property
 #define FATAL_MEDIA_ERROR_INJ_PROPERTY    L"FatalMediaError"          //!< FatalMediaError error injection property
 #define DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY L"DirtyShutdown"            //!< DirtyShutdown error injection property

@@ -51,7 +51,7 @@ struct Command SetDimmCommand =
     {TEMPERATURE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_TYPE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired},
-    {DIE_SPARING_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired },
+    {PACKAGE_SPARING_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired },
     {SPARE_CAPACITY_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired}
@@ -116,7 +116,7 @@ SetDimm(
   CHAR16 *pTemperature = NULL;
   CHAR16 *pPoisonAddress = NULL;
   CHAR16 *pPoisonType = NULL;
-  CHAR16 *pDieSparing = NULL;
+  CHAR16 *pPackageSparing = NULL;
   CHAR16 *pSpareCapacityPercent = NULL;
   CHAR16 *pFatalMediaError = NULL;
   CHAR16 *pDirtyShutDown = NULL;
@@ -130,7 +130,7 @@ SetDimm(
   UINT8 PoisonTypeValid = 0;
   UINT8 ClearStatus = 0;
   UINT8 FatalMediaError;
-  UINT8 DieSparing;
+  UINT8 PackageSparing;
   UINT8 DirtyShutDown;
   NVDIMM_ENTRY();
 
@@ -263,7 +263,7 @@ SetDimm(
         }
     }
 
-    if (!EFI_ERROR(ContainsProperty(pCmd, DIE_SPARING_INJ_PROPERTY))) {
+    if (!EFI_ERROR(ContainsProperty(pCmd, PACKAGE_SPARING_INJ_PROPERTY))) {
         if (ActionSpecified) {
             /** We already found a specified action, more are not allowed **/
             ReturnCode = EFI_INVALID_PARAMETER;
@@ -605,7 +605,7 @@ SetDimm(
   GetPropertyValue(pCmd, TEMPERATURE_INJ_PROPERTY, &pTemperature);
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
   GetPropertyValue(pCmd, POISON_TYPE_INJ_PROPERTY, &pPoisonType);
-  GetPropertyValue(pCmd, DIE_SPARING_INJ_PROPERTY, &pDieSparing);
+  GetPropertyValue(pCmd, PACKAGE_SPARING_INJ_PROPERTY, &pPackageSparing);
   GetPropertyValue(pCmd, SPARE_CAPACITY_INJ_PROPERTY, &pSpareCapacityPercent);
   GetPropertyValue(pCmd, FATAL_MEDIA_ERROR_INJ_PROPERTY, &pFatalMediaError);
   GetPropertyValue(pCmd, DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, &pDirtyShutDown);
@@ -673,20 +673,20 @@ SetDimm(
   }
 
   /**
-  DIE_SPARING_INJ_PROPERTY
+  PACKAGE_SPARING_INJ_PROPERTY
   **/
-  if (pDieSparing != NULL) {
+  if (pPackageSparing != NULL) {
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-    ReturnCode = GetU64FromString(pDieSparing, (UINT64 *)&DieSparing);
+    ReturnCode = GetU64FromString(pPackageSparing, (UINT64 *)&PackageSparing);
 
-      if (!ReturnCode || 1 != DieSparing) {
-        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'DieSparing'\n", CLI_SYNTAX_ERROR,
-          pDieSparing, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
+      if (!ReturnCode || 1 != PackageSparing) {
+        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PackageSparing'\n", CLI_SYNTAX_ERROR,
+          pPackageSparing, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         ReturnCode = EFI_INVALID_PARAMETER;
         goto FinishError;
       }
-      ErrInjectType = ERROR_INJ_DIE_SPARING;
+      ErrInjectType = ERROR_INJ_PACKAGE_SPARING;
   }
   /**
    SPARE capacity property

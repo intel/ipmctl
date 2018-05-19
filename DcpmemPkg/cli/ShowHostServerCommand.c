@@ -187,7 +187,7 @@ EFI_STATUS IsDimmsMixedSkuCfg(EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtoco
    }
    /** retrieve the DIMM list **/
    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-      DIMM_INFO_CATEGORY_DIE_SPARING, pDimms);
+      DIMM_INFO_CATEGORY_PACKAGE_SPARING, pDimms);
    if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_ABORTED;
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -205,8 +205,8 @@ EFI_STATUS IsDimmsMixedSkuCfg(EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtoco
          *pIsSkuViolation = TRUE;
       }
 
-      if (NVM_SUCCESS != SkuComparison(pDimms[0].DieSparingCapable,
-                                       pDimms[i].DieSparingCapable,
+      if (NVM_SUCCESS != SkuComparison(pDimms[0].PackageSparingCapable,
+                                       pDimms[i].PackageSparingCapable,
                                        pDimms[0].SkuInformation,
                                        pDimms[i].SkuInformation))
       {

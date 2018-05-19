@@ -83,7 +83,7 @@ typedef enum {
   SkuAppDirectModeOnly,
   SkuAppDirectStorageMode,
   SkuTriMode,
-  SkuDieSparingCapable,
+  SkuPackageSparingCapable,
 
   /** SKU Types **/
   SkuSoftProgrammableSku,
@@ -793,7 +793,7 @@ SetAlarmThresholds (
   * Alarm Trips set (Temperature/Spare Blocks)
   * Device life span as a percentage
   * Last shutdown status
-  * Unsafe shutdowns
+  * Dirty shutdowns
   * Last shutdown time
   * AIT DRAM status
   * Power Cycles (does not include warm resets or S3 resumes)

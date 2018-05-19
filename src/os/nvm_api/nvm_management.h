@@ -258,7 +258,7 @@ enum sensor_type {
 	SENSOR_CONTROLLER_TEMPERATURE	= 2,    ///< Device media temperature in degrees Celsius.
 	SENSOR_SPARECAPACITY		= 3,    ///< Amount of spare capacity remaining as a percentage.
 	SENSOR_WEARLEVEL		= 4,    ///< An estimate of the device life used as a percentage.
-	SENSOR_UNSAFESHUTDOWNS		= 5,    ///< Device shutdowns without notification.
+	SENSOR_DIRTYSHUTDOWNS		= 5,    ///< Device shutdowns without notification.
 	SENSOR_POWERONTIME		= 6,    ///< Total power-on time over the lifetime of the device.
 	SENSOR_UPTIME			= 7,    ///< Total power-on time since the last power cycle of the device.
 	SENSOR_POWERCYCLES		= 8,    ///< Number of power cycles over the lifetime of the device.
@@ -362,10 +362,9 @@ enum fw_log_level {
  * Triggers to modify left shift value
  */
 enum triggers_to_modify_shift_value {
-	USER_SPARE_BLOCK_ALARM_TRIP_TRIGGER	= 1,
 	FATAL_ERROR_TRIGGER			= 2,
 	SPARE_BLOCK_PERCENTAGE_TRIGGER		= 3,
-	UNSAFE_SHUTDOWN_TRIGGER			= 4,
+	DIRTY_SHUTDOWN_TRIGGER			= 4,
 };
 
 /**
@@ -374,7 +373,7 @@ enum triggers_to_modify_shift_value {
 enum error_type {
 	ERROR_TYPE_POISON		= 1,    ///< Inject a poison error.
 	ERROR_TYPE_TEMPERATURE		= 2,    ///< Inject a media temperature error.
-	ERROR_TYPE_DIE_SPARING		= 3,    ///< Trigger or revert an artificial die sparing.
+	ERROR_TYPE_PACKAGE_SPARING		= 3,    ///< Trigger or revert an artificial package sparing.
 	ERROR_TYPE_SPARE_CAPACITY	= 4,    ///< Trigger or clear a spare capacity threshold alarm.
 	ERROR_TYPE_MEDIA_FATAL_ERROR	= 5,    ///< Inject or clear a fake media fatal error.
 	ERROR_TYPE_DIRTY_SHUTDOWN	= 6,    ///< Inject or clear a dirty shutdown error.
@@ -607,7 +606,7 @@ struct device_security_capabilities {
  * Structure that describes the capabilities supported by an AEP DIMM
  */
 struct device_capabilities {
-	NVM_BOOL	die_sparing_capable;            ///< AEP DIMM supports die sparing
+	NVM_BOOL	package_sparing_capable;        ///< AEP DIMM supports package sparing
 	NVM_BOOL	memory_mode_capable;            ///< AEP DIMM supports memory mode
 	NVM_BOOL	storage_mode_capable;           ///< AEP DIMM supports storage mode
 	NVM_BOOL	app_direct_mode_capable;        ///< AEP DIMM supports app direct mode
@@ -716,7 +715,7 @@ struct device_status {
 	NVM_BOOL			is_new;                                 ///< Unincorporated with the rest of the devices.
 	NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
 	NVM_BOOL			is_missing;                             ///< If the device is missing.
-	NVM_UINT8			die_spares_available;                   ///< Number of spare devices on the AEP DIMM that are available.
+	NVM_UINT8			package_spares_available;               ///< Number of package spares on the AEP DIMM that are available.
 	NVM_UINT8			last_shutdown_status;                   ///< State of last AEP DIMM shutdown.
 	NVM_UINT8			last_shutdown_status_extended[3];       ///< DEPRECATED; Extendeded fields as per FIS 1.6
 	enum config_status		config_status;                          ///< Status of last configuration request.
@@ -856,8 +855,8 @@ struct device_details {
 	NVM_UINT8			power_limit;                            ///< dimm power limit in watts (10-18W).
 	NVM_UINT16			peak_power_budget;                      ///< instantaneous power budget in mW (100-20000 mW).
 	NVM_UINT16			avg_power_budget;                       ///< average power budget in mW (100-18000 mW).
-	NVM_BOOL			die_sparing_enabled;                    ///< Enable or disable die sparing.
-	NVM_UINT8			die_sparing_level;                      ///< How aggressive to be in die sparing (0-255).
+	NVM_BOOL			package_sparing_enabled;                    ///< Enable or disable package sparing.
+	NVM_UINT8			package_sparing_level;                      ///< How aggressive to be in package sparing (0-255).
 	struct device_settings		settings;                               ///< Modifiable features of the device.
 };
 

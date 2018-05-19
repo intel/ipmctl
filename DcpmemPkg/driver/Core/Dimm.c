@@ -3217,20 +3217,20 @@ Finish:
 }
 
 /**
-  Firmware command to get die sparing policy
+  Firmware command to get package sparing policy
 
-  @param[in] pDimm The Intel NVM Dimm to retrieve Die Sparing policy
-  @param[out] ppPayloadDieSparingPolicy Area to place Die Sparing policy data
+  @param[in] pDimm The Intel NVM Dimm to retrieve Package Sparing policy
+  @param[out] ppPayloadPackageSparingPolicy Area to place Package Sparing policy data
     The caller is responsible to free the allocated memory with the FreePool function.
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadDieSparingPolicy is NULL
+  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadPackageSparingPolicy is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetDieSparingPolicy (
+FwCmdGetPackageSparingPolicy (
   IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_GET_DIE_SPARING_POLICY **ppPayloadDieSparingPolicy
+     OUT PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY **ppPayloadPackageSparingPolicy
   )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
@@ -3238,7 +3238,7 @@ FwCmdGetDieSparingPolicy (
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || ppPayloadDieSparingPolicy == NULL) {
+  if (pDimm == NULL || ppPayloadPackageSparingPolicy == NULL) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -3251,24 +3251,24 @@ FwCmdGetDieSparingPolicy (
 
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetFeatures;
-  pFwCmd->SubOpcode = SubopPolicyDieSparing;
-  pFwCmd->OutputPayloadSize = sizeof(**ppPayloadDieSparingPolicy);
+  pFwCmd->SubOpcode = SubopPolicyPackageSparing;
+  pFwCmd->OutputPayloadSize = sizeof(**ppPayloadPackageSparingPolicy);
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending GetDieSparingPolicy command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending GetPackageSparingPolicy command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
     goto FinishAfterFwCmdAlloc;
   }
 
-  *ppPayloadDieSparingPolicy = AllocateZeroPool(sizeof(**ppPayloadDieSparingPolicy));
-  if (*ppPayloadDieSparingPolicy == NULL) {
+  *ppPayloadPackageSparingPolicy = AllocateZeroPool(sizeof(**ppPayloadPackageSparingPolicy));
+  if (*ppPayloadPackageSparingPolicy == NULL) {
     Rc = EFI_OUT_OF_RESOURCES;
     goto FinishAfterFwCmdAlloc;
   }
-  CopyMem(*ppPayloadDieSparingPolicy, pFwCmd->OutPayload, sizeof(**ppPayloadDieSparingPolicy));
+  CopyMem(*ppPayloadPackageSparingPolicy, pFwCmd->OutPayload, sizeof(**ppPayloadPackageSparingPolicy));
 
 FinishAfterFwCmdAlloc:
   FreePool(pFwCmd);
@@ -5603,7 +5603,7 @@ MatchFwReturnCode (
   @param[in] pDimm2 - second DIMM to compare SKU mode
 
   @retval NVM_SUCCESS - if everything went fine
-  @retval NVM_ERR_DIMM_SKU_DIE_SPARING_MISMATCH - if Die Sparing conflict occurred
+  @retval NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH - if Package Sparing conflict occurred
   @retval NVM_ERR_DIMM_SKU_MODE_MISMATCH - if mode conflict occurred
   @retval NVM_ERR_DIMM_SKU_SECURITY_MISMATCH - if security mode conflict occurred
 **/
@@ -5626,8 +5626,8 @@ IsDimmSkuModeMismatch(
     goto Finish;
   }
 
-  StatusCode = SkuComparison((pDimm1->SkuInformation.DieSparingCapable == MODE_ENABLED),
-                             (pDimm2->SkuInformation.DieSparingCapable == MODE_ENABLED),
+  StatusCode = SkuComparison((pDimm1->SkuInformation.PackageSparingCapable == MODE_ENABLED),
+                             (pDimm2->SkuInformation.PackageSparingCapable == MODE_ENABLED),
                              *(UINT32 *)&pDimm1->SkuInformation,
                              *(UINT32 *)&pDimm2->SkuInformation);
 

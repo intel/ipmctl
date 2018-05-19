@@ -73,10 +73,10 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   MEMORY_MODE_CAPACITY_STR,
   APPDIRECT_MODE_CAPACITY_STR,
   UNCONFIGURED_CAPACITY_STR,
-  DIE_SPARING_ENABLED_STR,
-  DIE_SPARING_LEVEL_STR,
-  DIE_SPARING_CAPABLE_STR,
-  DIE_SPARES_AVAILABLE_STR,
+  PACKAGE_SPARING_ENABLED_STR,
+  PACKAGE_SPARING_LEVEL_STR,
+  PACKAGE_SPARING_CAPABLE_STR,
+  PACKAGE_SPARES_AVAILABLE_STR,
   IS_NEW_STR,
   FW_LOG_LEVEL_STR,
   BANK_LABEL_STR,
@@ -870,40 +870,40 @@ ShowDimms(
           FREE_POOL_SAFE(pCapacityStr);
         }
 
-        /** DieSparingCapable **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARING_CAPABLE_STR))) {
-          Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARING_CAPABLE_STR, pDimms[Index].DieSparingCapable);
+        /** PackageSparingCapable **/
+        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_CAPABLE_STR))) {
+          Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_CAPABLE_STR, pDimms[Index].PackageSparingCapable);
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_DIE_SPARING) {
-          /** DieSparingEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARING_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_PACKAGE_SPARING) {
+          /** PackageSparingEnabled **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
-          /** DieSparingLevel **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARING_LEVEL_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARING_LEVEL_STR, UNKNOWN_ATTRIB_VAL);
+          /** PackageSparingLevel **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_LEVEL_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_LEVEL_STR, UNKNOWN_ATTRIB_VAL);
           }
 
-          /** DieSparesAvailable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARES_AVAILABLE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
+          /** PackageSparesAvailable **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
-          /** DieSparingEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARING_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARING_ENABLED_STR, pDimms[Index].DieSparingEnabled);
+          /** PackageSparingEnabled **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, pDimms[Index].PackageSparingEnabled);
           }
 
-          /** DieSparingLevel **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARING_LEVEL_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARING_LEVEL_STR, pDimms[Index].DieSparingLevel);
+          /** PackageSparingLevel **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_LEVEL_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_LEVEL_STR, pDimms[Index].PackageSparingLevel);
           }
 
-          /** DieSparesAvailable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIE_SPARES_AVAILABLE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, DIE_SPARES_AVAILABLE_STR, pDimms[Index].DieSparesAvailable);
+          /** PackageSparesAvailable **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARES_AVAILABLE_STR, pDimms[Index].PackageSparesAvailable);
           }
         }
 

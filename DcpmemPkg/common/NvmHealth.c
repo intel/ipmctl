@@ -81,7 +81,7 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_WEAR_LEVEL].Value = SensorInfo.WearLevel;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
-  DimmSensorsSet[SENSOR_TYPE_UNSAFE_SHUTDOWNS].Value = SensorInfo.UnsafeShutdowns;
+  DimmSensorsSet[SENSOR_TYPE_DIRTY_SHUTDOWNS].Value = SensorInfo.DirtyShutdowns;
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = SensorInfo.MediaErrorCount + SensorInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = SensorInfo.UpTime;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalLowerThreshold = SensorInfo.MediaThrottlingStopThresh;
@@ -171,8 +171,8 @@ SensorTypeToString(
       return POWER_CYCLES_STR;
     case SENSOR_TYPE_POWER_ON_TIME:
       return POWER_ON_TIME_STR;
-    case SENSOR_TYPE_UNSAFE_SHUTDOWNS:
-      return UNSAFE_SHUTDOWNS_STR;
+    case SENSOR_TYPE_DIRTY_SHUTDOWNS:
+      return DIRTY_SHUTDOWNS_STR;
     case SENSOR_TYPE_FW_ERROR_COUNT:
       return FW_ERROR_COUNT_STR;
     case SENSOR_TYPE_UP_TIME:

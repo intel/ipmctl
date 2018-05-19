@@ -553,8 +553,8 @@ NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
 
 static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *p_status)
 {
-  //DIMM_INFO_CATEGORY_DIE_SPARING
-  p_status->die_spares_available = p_dimm->DieSparesAvailable; // Number of spare devices on the AEP DIMM that are available.
+  //DIMM_INFO_CATEGORY_PACKAGE_SPARING
+  p_status->package_spares_available = p_dimm->PackageSparesAvailable; // Number of package spares on the AEP DIMM that are available.
 
   //DIMM_INFO_CATEGORY_ARS_STATUS
   p_status->ars_status = p_dimm->ARSStatus; // Address range scrub operation status for the AEP DIMM
@@ -737,8 +737,8 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   p_details->power_limit = dimm_info.PowerLimit;                                          // dimm power limit in watts (10-18W).
   p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
   p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
-  p_details->die_sparing_enabled = dimm_info.DieSparingEnabled;                           // Enable or disable die sparing.
-  p_details->die_sparing_level = dimm_info.DieSparingLevel;                               // How aggressive to be in die sparing (0-255).
+  p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
+  p_details->package_sparing_level = dimm_info.PackageSparingLevel;                       // How aggressive to be in package sparing (0-255).
 
   // Basic device identifying information.
   rc = nvm_get_device_discovery(device_uid, &(p_details->discovery));

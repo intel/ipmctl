@@ -101,7 +101,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE              = 142,
   NVM_ERR_LOAD_DIMM_COUNT_MISMATCH                  = 148,
 
-  NVM_ERR_DIMM_SKU_DIE_SPARING_MISMATCH             = 150,
+  NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH         = 150,
   NVM_ERR_DIMM_SKU_MODE_MISMATCH                    = 151,
   NVM_ERR_DIMM_SKU_SECURITY_MISMATCH                = 152,
 

@@ -257,7 +257,7 @@ SmartAndHealthCheck(
   }
   if (SensorInfo.LastShutdownStatus) {
     // LastShutdownStatus != 0 - Dirty Shutdown
-    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_UNSAFE_SHUTDOWN), NULL);
+    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_DIRTY_SHUTDOWN), NULL);
     pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimm->DeviceHandle.AsUint32);
     FREE_POOL_SAFE(pTmpStr);
     APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_OK, ppResultStr, pDiagState);
@@ -291,7 +291,7 @@ SmartAndHealthCheck(
   }
 
   ReturnCode = GetDimm(&gNvmDimmData->NvmDimmConfig, pDimm->DimmID,
-      DIMM_INFO_CATEGORY_DIE_SPARING |
+      DIMM_INFO_CATEGORY_PACKAGE_SPARING |
       DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY |
       DIMM_INFO_CATEGORY_FW_IMAGE_INFO,
       &DimmInfo);
@@ -375,8 +375,8 @@ SmartAndHealthCheck(
     APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
   }
 
-  //Die spare availability check
-  if ((DimmInfo.DieSparingCapable == DIE_SPARING_CAPABLE) && (DimmInfo.DieSparesAvailable == DIE_SPARES_NOT_AVAILABLE)) {
+  //Package spare availability check
+  if ((DimmInfo.PackageSparingCapable == PACKAGE_SPARING_CAPABLE) && (DimmInfo.PackageSparesAvailable == PACKAGE_SPARES_NOT_AVAILABLE)) {
     pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_NO_SPARE_DIE_AVAILABLE), NULL);
     pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr);
     FREE_POOL_SAFE(pTmpStr);

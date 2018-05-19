@@ -166,7 +166,7 @@ typedef struct _DIMM {
   CHAR8 PartNumber[PART_NUMBER_LEN];
   UINT16 Rid;                              //!< Revision ID
   UINT16 SubsystemRid;                     //!< Revision ID of the subsystem memory controller
-  BOOLEAN DieSparingCapable;
+  BOOLEAN PackageSparingCapable;
   SKU_INFORMATION SkuInformation;
   /**
     Format interface code: Allows vendor hardware to be handled by a generic
@@ -1080,20 +1080,20 @@ FwCmdGetPowerManagementPolicyNew(
   );
 
 /**
-  Firmware command to get die sparing policy
+  Firmware command to get package sparing policy
 
-  @param[in] pDimm The Intel NVM Dimm to retrieve Die Sparing policy
-  @param[out] ppPayloadDieSparingPolicy Area to place Die Sparing policy data
+  @param[in] pDimm The Intel NVM Dimm to retrieve Package Sparing policy
+  @param[out] ppPayloadPackageSparingPolicy Area to place Package Sparing policy data
     The caller is responsible to free the allocated memory with the FreePool function.
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadDieSparingPolicy is NULL
+  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadPackageSparingPolicy is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetDieSparingPolicy(
+FwCmdGetPackageSparingPolicy(
   IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_GET_DIE_SPARING_POLICY **ppPayloadDieSparingPolicy
+     OUT PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY **ppPayloadPackageSparingPolicy
   );
 
 /**
@@ -1488,7 +1488,7 @@ MatchFwReturnCode (
   @param[in] pDimm2 - second DIMM to compare SKU mode
 
   @retval NVM_SUCCESS - if everything went fine
-  @retval NVM_ERR_DIMM_SKU_DIE_SPARING_MISMATCH - if Die Sparing conflict occurred
+  @retval NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH - if Package Sparing conflict occurred
   @retval NVM_ERR_DIMM_SKU_MODE_MISMATCH - if mode conflict occurred
   @retval NVM_ERR_DIMM_SKU_SECURITY_MISMATCH - if security mode conflict occurred
 **/

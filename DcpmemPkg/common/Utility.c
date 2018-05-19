@@ -2524,22 +2524,22 @@ Finish:
 }
 
 /**
-  Compare a DieSparing capability, encryption, soft SKU capabilities and SKU mode types.
+  Compare a PackageSparing capability, encryption, soft SKU capabilities and SKU mode types.
 
-  @param[in] DieSparingCapable1 - first DieSparingCapable to compare
-  @param[in] DieSparingCapable2 - second DieSparingCapable to compare
+  @param[in] PackageSparingCapable1 - first PackageSparingCapable to compare
+  @param[in] PackageSparingCapable2 - second PackageSparingCapable to compare
   @param[in] SkuInformation1 - first SkuInformation to compare
   @param[in] SkuInformation2 - second SkuInformation to compare
 
   @retval NVM_SUCCESS - if everything went fine
-  @retval NVM_ERR_DIMM_SKU_DIE_SPARING_MISMATCH - if Die Sparing conflict occurred
+  @retval NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH - if Package Sparing conflict occurred
   @retval NVM_ERR_DIMM_SKU_MODE_MISMATCH - if mode conflict occurred
   @retval NVM_ERR_DIMM_SKU_SECURITY_MISMATCH - if security mode conflict occurred
 **/
 NvmStatusCode
 SkuComparison(
-  IN     BOOLEAN DieSparingCapable1,
-  IN     BOOLEAN DieSparingCapable2,
+  IN     BOOLEAN PackageSparingCapable1,
+  IN     BOOLEAN PackageSparingCapable2,
   IN     UINT32 SkuInformation1,
   IN     UINT32 SkuInformation2
   )
@@ -2547,8 +2547,8 @@ SkuComparison(
   NvmStatusCode StatusCode = NVM_SUCCESS;
   NVDIMM_ENTRY();
 
-  if (DieSparingCapable1 != DieSparingCapable2) {
-    StatusCode = NVM_ERR_DIMM_SKU_DIE_SPARING_MISMATCH;
+  if (PackageSparingCapable1 != PackageSparingCapable2) {
+    StatusCode = NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH;
     goto Finish;
   }
 
@@ -2597,8 +2597,8 @@ IsSkuModeMismatch(
   }
   *pSkuModeMismatch = FALSE;
 
-  StatusCode = SkuComparison(pDimmInfo1->DieSparingCapable,
-                             pDimmInfo2->DieSparingCapable,
+  StatusCode = SkuComparison(pDimmInfo1->PackageSparingCapable,
+                             pDimmInfo2->PackageSparingCapable,
                              pDimmInfo1->SkuInformation,
                              pDimmInfo2->SkuInformation);
 

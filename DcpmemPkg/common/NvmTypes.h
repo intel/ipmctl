@@ -241,7 +241,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_NONE                         0
 #define DIMM_INFO_CATEGORY_FW_LOG_LEVEL                 1 << 0
 #define DIMM_INFO_CATEGORY_SECURITY                     1 << 1
-#define DIMM_INFO_CATEGORY_DIE_SPARING                  1 << 2
+#define DIMM_INFO_CATEGORY_PACKAGE_SPARING              1 << 2
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   1 << 3
 #define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             1 << 4
 #define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            1 << 5
@@ -255,7 +255,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_UID                             (1 << 0)
 #define DIMM_INFO_ERROR_MANAGEABILITY                   (1 << 1)
 #define DIMM_INFO_ERROR_SECURITY_INFO                   (1 << 2)
-#define DIMM_INFO_ERROR_DIE_SPARING                     (1 << 3)
+#define DIMM_INFO_ERROR_PACKAGE_SPARING                 (1 << 3)
 #define DIMM_INFO_ERROR_SMART_AND_HEALTH                (1 << 4)
 #define DIMM_INFO_ERROR_POWER_MGMT                      (1 << 5)
 #define DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA            (1 << 6)
@@ -303,13 +303,13 @@ typedef struct _DIMM_INFO {
   //DIMM_INFO_CATEGORY_SECURITY
   UINT8 SecurityState;                      //!< Identifies the security status of the DIMM collected from FW
 
-  //DIMM_INFO_CATEGORY_DIE_SPARING
-  BOOLEAN DieSparingCapable;                //!< Whether or not the AEP is capable of die sparing
-  UINT8 DieSparingEnabled;                  //!< Whether or not the die sparing policy is enabled on the AEP
-  UINT8 DieSparingLevel;                    //!< How aggressive die sparing is
-  UINT8 DieSparesAvailable;                 //!< Whether or not the AEP still has spare die available,
-                                            //!< and the spare die has not yet been used by the die sparing policy;
-                                            //!< this value will be 0 if the AEP is not die sparing capable as per SKU
+  //DIMM_INFO_CATEGORY_PACKAGE_SPARING
+  BOOLEAN PackageSparingCapable;            //!< Whether or not the AEP is capable of package sparing
+  UINT8 PackageSparingEnabled;              //!< Whether or not the package sparing policy is enabled on the AEP
+  UINT8 PackageSparingLevel;                //!< How aggressive package sparing is
+  UINT8 PackageSparesAvailable;             //!< Whether or not the AEP still has package spares available,
+                                            //!< and the package spare has not yet been used by the package sparing policy;
+                                            //!< this value will be 0 if the AEP is not package sparing capable as per SKU
 
   //DIMM_INFO_CATEGORY_ARS_STATUS
   UINT8 ARSStatus;                          //!< Address Range Scrub (ARS) operation status for the AEP DIMM
@@ -728,28 +728,28 @@ typedef struct _DEBUG_LOG_INFO {
 #define SMBIOS_MEMORY_TYPE_AEP    0x18
 
 /**
-  Die Sparing Capable
+  Package Sparing Capable
 **/
-#define DIE_SPARING_NOT_CAPABLE       0
-#define DIE_SPARING_CAPABLE           1
+#define PACKAGE_SPARING_NOT_CAPABLE       0
+#define PACKAGE_SPARING_CAPABLE           1
 
 /**
-  Die Sparing Enabled
+  Package Sparing Enabled
 **/
-#define DIE_SPARING_DISABLED          0
-#define DIE_SPARING_ENABLED           1
+#define PACKAGE_SPARING_DISABLED          0
+#define PACKAGE_SPARING_ENABLED           1
 
 /**
-  Die Sparing Supported
+  Package Sparing Supported
 **/
-#define DIE_SPARING_NOT_SUPPORTED  0
-#define DIE_SPARING_SUPPORTED     1
+#define PACKAGE_SPARING_NOT_SUPPORTED  0
+#define PACKAGE_SPARING_SUPPORTED     1
 
 /**
-  Die Spares Available
+  Package Spares Available
 **/
-#define DIE_SPARES_NOT_AVAILABLE  0
-#define DIE_SPARES_AVAILABLE      1
+#define PACKAGE_SPARES_NOT_AVAILABLE  0
+#define PACKAGE_SPARES_AVAILABLE      1
 
 /**
   Namespace Health Status
@@ -802,7 +802,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_CONTROLLER_TEMPERATURE     2
 #define SENSOR_TYPE_SPARE_CAPACITY             3
 #define SENSOR_TYPE_WEAR_LEVEL                 4
-#define SENSOR_TYPE_UNSAFE_SHUTDOWNS           5
+#define SENSOR_TYPE_DIRTY_SHUTDOWNS            5
 #define SENSOR_TYPE_POWER_ON_TIME              6
 #define SENSOR_TYPE_UP_TIME                    7
 #define SENSOR_TYPE_POWER_CYCLES               8

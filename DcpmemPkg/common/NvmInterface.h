@@ -581,7 +581,7 @@ EFI_STATUS
   * Alarm Trips set (Temperature/Spare Blocks)
   * Device life span as a percentage
   * Last shutdown status
-  * Unsafe shutdowns
+  * Dirty shutdowns
   * Last shutdown time.
   * Power Cycles (does not include warm resets or S3 resumes)
   * Power on time (life of DIMM has been powered on)
@@ -611,13 +611,13 @@ EFI_STATUS
   );
 
 /**
-  Get NVM DIMM die sparing policy
+  Get NVM DIMM package sparing policy
 
   @param[in]  pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pEnable Reflects whether the die sparing policy is enabled or disabled (0x00 = Disabled)
-  @param[out] pAggressiveness How aggressive to be on die sparing (0...255)
-  @param[out] pSupported Designates whether or not each rank of the DIMM still supports die sparing
+  @param[out] pEnable Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled)
+  @param[out] pAggressiveness How aggressive to be on package sparing (0...255)
+  @param[out] pSupported Designates whether or not each rank of the DIMM still supports package sparing
 
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid
   @retval EFI_DEVICE_ERROR if device error detected
@@ -625,7 +625,7 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIE_SPARING_POLICY) (
+(EFIAPI *EFI_NVMDIMM_CONFIG_GET_PACKAGE_SPARING_POLICY) (
   IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
      OUT BOOLEAN *pEnable OPTIONAL,

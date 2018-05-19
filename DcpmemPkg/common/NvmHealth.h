@@ -13,7 +13,7 @@
 #define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
 #define WEAR_LEVEL_STR                  L"WearLevel"
 #define POWER_ON_TIME_STR               L"PowerOnTime"
-#define UNSAFE_SHUTDOWNS_STR            L"UnsafeShutdowns"
+#define DIRTY_SHUTDOWNS_STR            L"DirtyShutdowns"
 #define POWER_CYCLES_STR                L"PowerCycles"
 #define UPTIME_STR                      L"UpTime"
 #define FW_ERROR_COUNT_STR              L"FwErrorCount"

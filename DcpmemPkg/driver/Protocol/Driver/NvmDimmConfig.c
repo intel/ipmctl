@@ -330,8 +330,8 @@ IsDimmSkuSupported(
     }
     break;
 
-  case SkuDieSparingCapable:
-    if (pDimm->SkuInformation.DieSparingCapable == MODE_ENABLED) {
+  case SkuPackageSparingCapable:
+    if (pDimm->SkuInformation.PackageSparingCapable == MODE_ENABLED) {
       ReturnValue = TRUE;
     }
     break;
@@ -594,7 +594,7 @@ GetDimmInfo (
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PT_GET_SECURITY_PAYLOAD *pSecurityPayload = NULL;
-  PT_PAYLOAD_GET_DIE_SPARING_POLICY *pGetDieSparingPayload = NULL;
+  PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pGetPackageSparingPayload = NULL;
   LIST_ENTRY *pNodeNamespace = NULL;
   NAMESPACE *pCurNamespace = NULL;
   SENSOR_INFO SensorInfo;
@@ -655,11 +655,11 @@ GetDimmInfo (
   pDimmInfo->DimmHandle = pDimm->DeviceHandle.AsUint32;
   pDimmInfo->FwVer = pDimm->FwVer;
 
-  /* Die Sparing Capable */
-  if (pDimm->SkuInformation.DieSparingCapable) {
-    pDimmInfo->DieSparingCapable = TRUE;
+  /* Package Sparing Capable */
+  if (pDimm->SkuInformation.PackageSparingCapable) {
+    pDimmInfo->PackageSparingCapable = TRUE;
   } else {
-    pDimmInfo->DieSparingCapable = FALSE;
+    pDimmInfo->PackageSparingCapable = FALSE;
   }
 
   /* Memory Modes Supported */
@@ -874,18 +874,18 @@ GetDimmInfo (
     ConvertSecurityBitmask(pSecurityPayload->SecurityStatus, &pDimmInfo->SecurityState);
   }
 
-  if (dimmInfoCategories & DIMM_INFO_CATEGORY_DIE_SPARING)
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_PACKAGE_SPARING)
   {
-    ReturnCode = FwCmdGetDieSparingPolicy(pDimm, &pGetDieSparingPayload);
+    ReturnCode = FwCmdGetPackageSparingPolicy(pDimm, &pGetPackageSparingPayload);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Get die sparing policy failed with error %r for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
-      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_DIE_SPARING;
+      NVDIMM_DBG("Get package sparing policy failed with error %r for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_PACKAGE_SPARING;
     }
-    pDimmInfo->DieSparingEnabled = pGetDieSparingPayload->Enable;
-    pDimmInfo->DieSparingLevel = pGetDieSparingPayload->Aggressiveness;
+    pDimmInfo->PackageSparingEnabled = pGetPackageSparingPayload->Enable;
+    pDimmInfo->PackageSparingLevel = pGetPackageSparingPayload->Aggressiveness;
     // This maintains backwards compatibility with FIS 1.3
-    pDimmInfo->DieSparesAvailable = (pGetDieSparingPayload->Supported > DIE_SPARING_NOT_SUPPORTED) ?
-      DIE_SPARES_AVAILABLE : DIE_SPARES_NOT_AVAILABLE;
+    pDimmInfo->PackageSparesAvailable = (pGetPackageSparingPayload->Supported > PACKAGE_SPARING_NOT_SUPPORTED) ?
+      PACKAGE_SPARES_AVAILABLE : PACKAGE_SPARES_NOT_AVAILABLE;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_ARS_STATUS)
@@ -1039,7 +1039,7 @@ GetDimmInfo (
 Finish:
   FREE_POOL_SAFE(pPayloadMemInfoPage3);
   FREE_POOL_SAFE(pPayloadFwImage);
-  FREE_POOL_SAFE(pGetDieSparingPayload);
+  FREE_POOL_SAFE(pGetPackageSparingPayload);
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -2157,7 +2157,7 @@ Finish:
   * Alarm Trips set (Temperature/Spare Blocks)
   * Device life span as a percentage
   * Last shutdown status
-  * Unsafe shutdowns
+  * Dirty shutdowns
   * Last shutdown time.
   * AIT DRAM status
   * Power Cycles (does not include warm resets or S3 resumes)
@@ -2232,7 +2232,7 @@ GetSmartAndHealth (
   pSensorInfo->UpTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.UpTime;
   pSensorInfo->PowerCycles = pPayloadSmartAndHealth->VendorSpecificData.PowerCycles;
   pSensorInfo->PowerOnTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.PowerOnTime;
-  pSensorInfo->UnsafeShutdowns = pPayloadSmartAndHealth->VendorSpecificData.UnsafeShutdowns;
+  pSensorInfo->DirtyShutdowns = pPayloadSmartAndHealth->VendorSpecificData.DirtyShutdowns;
   /** Get Device Characteristics data **/
   pSensorInfo->ContrTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->ControllerShutdownThreshold);
@@ -8947,7 +8947,7 @@ InjectError(
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }
       break;
-    case  ERROR_INJ_DIE_SPARING:
+    case  ERROR_INJ_PACKAGE_SPARING:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));
       if (pInputPayload == NULL) {
           ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -8955,9 +8955,9 @@ InjectError(
       }
 
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = PACKAGE_SPARING_TRIGGER;
-      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->DieSparingTrigger = !ClearStatus;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->PackageSparingTrigger = !ClearStatus;
       for (Index = 0; Index < DimmsNum; Index++) {
-        if (pDimms[Index]->DieSparingCapable) {
+        if (pDimms[Index]->PackageSparingCapable) {
           ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
           if (EFI_ERROR(ReturnCode)) {
               ReturnCode = EFI_DEVICE_ERROR;
@@ -8976,8 +8976,8 @@ InjectError(
           ReturnCode = EFI_OUT_OF_RESOURCES;
           goto Finish;
       }
-      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = UNSAFE_SHUTDOWN_TRIGGER;
-      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->UnsafeShutdownTrigger = !ClearStatus;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = DIRTY_SHUTDOWN_TRIGGER;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->DirtyShutdownTrigger = !ClearStatus;
       for (Index = 0; Index < DimmsNum; Index++) {
           ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, pInputPayload);
           if (EFI_ERROR(ReturnCode)) {

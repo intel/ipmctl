@@ -83,7 +83,7 @@ struct _DIMM;
 #define PACKAGE_SPARING_TRIGGER (1 << 0)
 #define FATAL_ERROR_TRIGGER  (1 << 2)
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
-#define UNSAFE_SHUTDOWN_TRIGGER  (1 << 4)
+#define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
 
 typedef struct {
@@ -290,7 +290,7 @@ enum SetSecInfoSubop {
 enum GetSetFeatSubop {
   SubopAlarmThresholds = 0x01,      //!< Get/Set alarm threshold data (temperature, spare)
   SubopPolicyPowMgmt = 0x02,        //!< Get various power settings
-  SubopPolicyDieSparing = 0x03,     //!< Get/Set the DIMM Die sparing policy parameters
+  SubopPolicyPackageSparing = 0x03, //!< Get/Set the DIMM Package sparing policy parameters
   SubopAddressRangeScrub= 0x04,     //!< Get/Set Address Range Scrub information and state
   SubopDDRTAlerts = 0x05,           //!< Get what alerts are set to notify the user
   SubopConfigDataPolicy = 0x06      //!< Get/Set Optional Configuration Data Policy
@@ -647,7 +647,7 @@ typedef struct _SKU_INFORMATION {
   UINT32 MemoryModeEnabled              : 1;
   UINT32 StorageModeEnabled             : 1;
   UINT32 AppDirectModeEnabled           : 1;
-  UINT32 DieSparingCapable              : 1;
+  UINT32 PackageSparingCapable          : 1;
   UINT32                                : 12;  //!< Reserved
   UINT32 SoftProgramableSku             : 1;
   UINT32 EncryptionEnabled              : 1;
@@ -675,26 +675,26 @@ typedef struct {
 /**
   Passthrough Payload:
     Opcode:    0x04h (Get Features)
-    Sub-Opcode:  0x03h (Die Sparing Policy)
+    Sub-Opcode:  0x03h (Package Sparing Policy)
 **/
 typedef struct
 {
-  UINT8 Enable;           //!< Reflects whether the die sparing policy is enabled or disabled (0x00 = Disabled).
-  UINT8 Aggressiveness;   //!< How aggressive to be on die sparing (0...255)
-  UINT8 Supported;        //!< Designates whether or not the DIMM still supports die sparing.
+  UINT8 Enable;           //!< Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled).
+  UINT8 Aggressiveness;   //!< How aggressive to be on package sparing (0...255)
+  UINT8 Supported;        //!< Designates whether or not the DIMM still supports package sparing.
   UINT8 Reserved[125];    //!< 127-3 : Reserved
-} PT_PAYLOAD_GET_DIE_SPARING_POLICY;
+} PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY;
 
 /**
   Passthrough Payload:
     Opcode:    0x05h (Set Features)
-    Sub-Opcode:  0x03h (Die Sparing Policy)
+    Sub-Opcode:  0x03h (Package Sparing Policy)
 **/
 typedef struct {
-  UINT8 Enable;           //!< Reflects whether the die sparing policy is enabled or disabled (0x00 = Disabled).
-  UINT8 Aggressiveness;   //!< How aggressive to be on die sparing (0...255)
+  UINT8 Enable;           //!< Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled).
+  UINT8 Aggressiveness;   //!< How aggressive to be on package sparing (0...255)
   UINT8 Reserved[126];    //!< 127-2 : Reserved
-} PT_PAYLOAD_SET_DIE_SPARING_POLICY;
+} PT_PAYLOAD_SET_PACKAGE_SPARING_POLICY;
 
 /**
   Passthrough Payload:
@@ -732,7 +732,7 @@ typedef struct {
   UINT64 PowerCycles;       //!< Number of AEP power cycles
   UINT64 PowerOnTime;       //!< Lifetime hours the AEP has been powered on (represented in seconds)
   UINT64 UpTime;            //!< Current uptime of the DIMM for the current power cycle
-  UINT32 UnsafeShutdowns;   //!< This is the # of times that the FW received an unexpected power loss
+  UINT32 DirtyShutdowns;   //!< This is the # of times that the FW received an unexpected power loss
 
   /**
     Display the status of the last shutdown that occurred
@@ -807,7 +807,7 @@ typedef struct {
   TEMPERATURE MediaTemperature;      //!< Current temperature in Celcius. This is the highest die temperature reported.
   TEMPERATURE ControllerTemperature; //!< Current temperature in Celcius. This is the temperature of the controller.
 
-  UINT32 UnsafeShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
+  UINT32 DirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
   UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - disabled, 1 - enabled)
   UINT8 Reserved2[10];
 
@@ -1246,30 +1246,23 @@ typedef struct {
 typedef struct {
 	/*
 	* Contains a bit field of the triggers
-	* Bit 0: Die Spare Trigger
-	* Bit 1: Used Spare Block Alarm Trip Trigger
+	* Bit 0: Package Spare Trigger
+	* Bit 1: Reserved
 	* Bit 2: Fatal Error Trigger
 	* Bit 3: Spare Block Percentage Trigger
-	* Bit 4: Unsafe Shutdown Trigger
+	* Bit 4: Dirty Shutdown Trigger
 	* Bit 63-5: Reserved
 	*/
 	UINT64 TriggersToModify;
 
 	/*
-	* Spoofs FW to initiate a Die Sparing.
+	* Spoofs FW to initiate a Package Sparing.
 	* 0x0h - Do Not/Disable Trigger
 	* 0x1h - Enable Trigger
 	*/
-	UINT8 DieSparingTrigger;
+	UINT8 PackageSparingTrigger;
 
 	UINT8 Reserved1;
-
-	/*
-	* Spoofs FW to trigger a a spare block trip.
-	* 0x0h - Do Not/Disable Trigger
-	* 0x1h - Enable Trigger
-	*/
-	UINT8 UserSpareBlockAlarmTripTrigger;
 
 	/*
 	* Spoofs FW to trigger a fatal media error.
@@ -1288,11 +1281,11 @@ typedef struct {
 	UINT8 SpareBlockPercentageTrigger;
 
 	/*
-	* Spoofs an unsafe shutdown on the next power cycle.
+	* Spoofs a dirty shutdown on the next power cycle.
 	* 0x0h - Do Not/Disable Trigger
 	* 0x1h - Enable Trigger
 	*/
-	UINT8 UnsafeShutdownTrigger;
+	UINT8 DirtyShutdownTrigger;
 
 	UINT8 Reserved2[114];
 } PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS;

@@ -13,7 +13,7 @@
 /*This should match the error_type definition in nvm_management.h*/
 #define ERROR_INJ_POISON          0X01
 #define ERROR_INJ_TEMPERATURE     0X02
-#define ERROR_INJ_DIE_SPARING     0X03
+#define ERROR_INJ_PACKAGE_SPARING 0X03
 #define ERROR_INJ_SPARE_CAPACITY  0X04
 #define ERROR_INJ_FATAL_MEDIA_ERR 0X05
 #define ERROR_INJ_DIRTY_SHUTDOWN  0X06
@@ -116,7 +116,7 @@ typedef struct _SENSOR_INFO {
   INT16 ControllerTemperature;
   UINT8 SpareCapacity;
   UINT8 WearLevel;
-  UINT32 UnsafeShutdowns;
+  UINT32 DirtyShutdowns;
   UINT8 LastShutdownStatus;
   UINT32 PowerOnTime;
   UINT32 UpTime;

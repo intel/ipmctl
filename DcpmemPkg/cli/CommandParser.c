@@ -314,7 +314,7 @@ EFI_STATUS findVerb(UINTN *pStart, struct CommandInput *pInput, struct Command *
     if (StrICmp(gCommandList[i].verb, pInput->ppTokens[*pStart]) == 0)
     {
       /* verb matches, so store it and move on */
-      StrnCpy(pCommand->verb, pInput->ppTokens[*pStart], VERB_LEN - 1);
+      StrnCpyS(pCommand->verb, VERB_LEN, pInput->ppTokens[*pStart], VERB_LEN - 1);
       (*pStart)++;
       rc = EFI_SUCCESS;
       break;
@@ -373,7 +373,7 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 goto Finish;
               }
             }
-            StrnCpy(pCommand->options[matchedOptions].OptionNameShort, pInput->ppTokens[*pStart], OPTION_LEN - 1);
+            StrnCpyS(pCommand->options[matchedOptions].OptionNameShort, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
 
             Found = TRUE;
           } else if (StrICmp(gCommandList[Index].options[Index2].OptionName,
@@ -388,7 +388,7 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 goto Finish;
               }
             }
-            StrnCpy(pCommand->options[matchedOptions].OptionName, pInput->ppTokens[*pStart], OPTION_LEN - 1);
+            StrnCpyS(pCommand->options[matchedOptions].OptionName, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
             Found = TRUE;
           }
           /** if option is found, move to the next token **/
@@ -400,7 +400,7 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
-                StrnCpy(pCommand->options[matchedOptions].OptionValue, pInput->ppTokens[*pStart], OPTION_VALUE_LEN);
+                StrnCpyS(pCommand->options[matchedOptions].OptionValue, OPTION_VALUE_LEN, pInput->ppTokens[*pStart], OPTION_VALUE_LEN - 1);
                 (*pStart)++;
               }
             }
@@ -458,7 +458,7 @@ EFI_STATUS findTargets(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_INVALID_PARAMETER;
               }
             }
-            StrnCpy(pCommand->targets[matchedTargets].TargetName, pInput->ppTokens[*pStart], TARGET_LEN - 1);
+            StrnCpyS(pCommand->targets[matchedTargets].TargetName, TARGET_LEN, pInput->ppTokens[*pStart], TARGET_LEN - 1);
             (*pStart)++;
             Found = TRUE;
 
@@ -470,7 +470,7 @@ EFI_STATUS findTargets(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
-                StrnCpy(pCommand->targets[matchedTargets].pTargetValueStr, pInput->ppTokens[*pStart], TARGET_VALUE_LEN - 1);
+                StrnCpyS(pCommand->targets[matchedTargets].pTargetValueStr, TARGET_VALUE_LEN, pInput->ppTokens[*pStart], TARGET_VALUE_LEN - 1);
                 (*pStart)++;
               }
             }
@@ -529,7 +529,7 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
         Rc = EFI_OUT_OF_RESOURCES;
         break;
       }
-      StrnCpy(propertyValue, pInput->ppTokens[*pStart], propertyLength);
+      StrnCpyS(propertyValue, propertyLength, pInput->ppTokens[*pStart], propertyLength - 1);
       propertyName = StrTok(&propertyValue, L'=');
       /* name is valid */
       if (propertyName)
@@ -548,10 +548,10 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
               if (StrICmp(gCommandList[Index].properties[Index2].PropertyName,
                 propertyName) == 0)
               {
-                StrnCpy(pCommand->properties[matchedProperties].PropertyName, propertyName, PROPERTY_KEY_LEN - 1);
+                StrnCpyS(pCommand->properties[matchedProperties].PropertyName, PROPERTY_KEY_LEN, propertyName, PROPERTY_KEY_LEN - 1);
                 /* value is valid */
                 if (StrLen(propertyValue) > 0) {
-                  StrnCpy(pCommand->properties[matchedProperties].PropertyValue, propertyValue, PROPERTY_VALUE_LEN - 1);
+                  StrnCpyS(pCommand->properties[matchedProperties].PropertyValue, PROPERTY_VALUE_LEN, propertyValue, PROPERTY_VALUE_LEN - 1);
                 }
                 Found = 1;
                 (*pStart)++;

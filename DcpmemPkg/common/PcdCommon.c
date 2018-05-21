@@ -102,7 +102,7 @@ PrintPcdIdentificationInformation(
     Print(L"DimmManufacturerId           : 0x%x\n", EndianSwapUint16(pIdentificationInfo->DimmIdentification.Version1.DimmManufacturerId));
     Print(L"DimmSerialNumber             : 0x%x\n", EndianSwapUint32(pIdentificationInfo->DimmIdentification.Version1.DimmSerialNumber));
     Print(L"DimmPartNumber               : " FORMAT_STR_NL,
-      AsciiStrToUnicodeStr(pIdentificationInfo->DimmIdentification.Version1.DimmPartNumber, PartNumber));
+      AsciiStrToUnicodeStrS(pIdentificationInfo->DimmIdentification.Version1.DimmPartNumber, PartNumber, PART_NUMBER_SIZE + 1));
   } else {
     pTmpDimmUid = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pIdentificationInfo->DimmIdentification.Version2.Uid.ManufacturerId),
       pIdentificationInfo->DimmIdentification.Version2.Uid.ManufacturingLocation,

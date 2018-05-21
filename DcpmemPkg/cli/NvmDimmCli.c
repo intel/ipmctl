@@ -318,7 +318,7 @@ Finish:
   /**
   Disable recording AllocatePool and FreePool occurences, print list and clear it
   **/
-  FlushPointerTrace(__WFUNCTION__);
+  FlushPointerTrace((CHAR16 *)__WFUNCTION__);
 #endif
   NVDIMM_EXIT_I64(Rc);
   return Rc;

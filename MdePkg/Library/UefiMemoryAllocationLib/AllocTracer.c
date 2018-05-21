@@ -132,11 +132,11 @@ RegisterAllocation (
   NodesInList = NumberOfNodesInList(gpTraceList);
   if (NodesInList < MAX_PATH_DEPTH) {
 
-    StrnCpy (pPointerListEntry->File, L"\0", StrLen(L"\0") + 1);
-    StrnCpy (pPointerListEntry->Function, L"\0", StrLen(L"\0") + 1);
+    StrnCpyS (pPointerListEntry->File, FILE_PATH_MAXLEN, L"\0", StrLen(L"\0") + 1);
+    StrnCpyS (pPointerListEntry->Function, FUNCTION_PATH_MAXLEN, L"\0", StrLen(L"\0") + 1);
   } else {
-    StrnCpy (pPointerListEntry->File, L"Path too long...\\\0", StrLen(L"Path too long...\\\0") + 1);
-    StrnCpy (pPointerListEntry->Function, L"Path too long...\\\0", StrLen(L"Path too long...\\\0") + 1);
+    StrnCpyS (pPointerListEntry->File, FILE_PATH_MAXLEN, L"Path too long...\\\0", StrLen(L"Path too long...\\\0") + 1);
+    StrnCpyS (pPointerListEntry->Function, FUNCTION_PATH_MAXLEN,  L"Path too long...\\\0", StrLen(L"Path too long...\\\0") + 1);
   }
 
   for (pCurNode = GetFirstNode (gpTraceList);
@@ -146,14 +146,14 @@ RegisterAllocation (
       pTraceListEntry = TRACE_ENTRY_FROM_NODE(pCurNode);
       pPointerListEntry->pPointer = pMemory;
       if (StrLen (pPointerListEntry->File) + StrLen (pTraceListEntry->File) < FILE_PATH_MAXLEN) {
-        StrnCat (pPointerListEntry->File, pTraceListEntry->File, FILE_NAME_MAXLEN);
+        StrnCatS (pPointerListEntry->File, FILE_PATH_MAXLEN, pTraceListEntry->File, FILE_NAME_MAXLEN - 1);
       } else {
-        StrnCpy (pPointerListEntry->File, pTraceListEntry->File, FILE_NAME_MAXLEN);
+        StrnCpyS (pPointerListEntry->File, FILE_PATH_MAXLEN, pTraceListEntry->File, FILE_NAME_MAXLEN - 1);
       }
       if(StrLen (pPointerListEntry->Function) + StrLen (pTraceListEntry->Function) < FUNCTION_PATH_MAXLEN) {
-        StrnCat (pPointerListEntry->Function, pTraceListEntry->Function, FUNCTION_NAME_MAXLEN);
+        StrnCatS (pPointerListEntry->Function, FUNCTION_PATH_MAXLEN, pTraceListEntry->Function, FUNCTION_NAME_MAXLEN - 1);
       } else {
-        StrnCpy (pPointerListEntry->Function, pTraceListEntry->Function, FUNCTION_NAME_MAXLEN);
+        StrnCpyS (pPointerListEntry->Function, FUNCTION_PATH_MAXLEN, pTraceListEntry->Function, FUNCTION_NAME_MAXLEN - 1);
       }
     }
   }
@@ -219,10 +219,10 @@ RegisterStackTrace (
     goto Finish;
   }
   InsertTailList (gpTraceList, &pTraceListEntry->TraceEntryNode);
-  StrnCpy (pTraceListEntry->File, File, FILE_NAME_MAXLEN);
-  StrnCat (pTraceListEntry->File, L"\\\0", StrLen(L"\\\0") + 1);
-  StrnCpy (pTraceListEntry->Function, Function, FUNCTION_NAME_MAXLEN);
-  StrnCat (pTraceListEntry->Function, L"\\\0", StrLen(L"\\\0") + 1);
+  StrnCpyS (pTraceListEntry->File, FILE_NAME_MAXLEN, File, FILE_NAME_MAXLEN - 1);
+  StrnCatS (pTraceListEntry->File, FILE_NAME_MAXLEN, L"\\\0", StrLen(L"\\\0") + 1);
+  StrnCpyS (pTraceListEntry->Function, FUNCTION_NAME_MAXLEN, Function, FUNCTION_NAME_MAXLEN - 1);
+  StrnCatS (pTraceListEntry->Function, FUNCTION_NAME_MAXLEN, L"\\\0", StrLen(L"\\\0") + 1);
 
 Finish:
   EnableTracing();

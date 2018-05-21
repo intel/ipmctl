@@ -17,7 +17,7 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_NVMDIMM_FIRMWARE_IMAGE_TYPE_GUID;
 #define SUPPORTED_DESCRIPTOR_COUNT 1
 #define NVDIMM_IMAGE_ID 1
 #define NVDIMM_IMAGE_ID_NAME L"Intel persistent memory"
-#define NVDIMM_IMAGE_ID_NAME_LEN 23 // not including null char
+#define NVDIMM_IMAGE_ID_NAME_LEN 24 // including null char
 #define DESCRIPTOR_VERSION_DEFAULT 1
 
 // Compilers align structs front and back to the largest scalar member,
@@ -97,7 +97,7 @@ GetImageInfo (
   pImageInfo[0].ImageId = NVDIMM_IMAGE_ID;
   // Copy the image id name string to a region after the end of the struct
   ImageIdName = (CHAR16 *)((UINT8 *)&pImageInfo[0] + NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET);
-  StrnCpy(ImageIdName, NVDIMM_IMAGE_ID_NAME, NVDIMM_IMAGE_ID_NAME_LEN+1);
+  StrnCpyS(ImageIdName, NVDIMM_IMAGE_ID_NAME_LEN, NVDIMM_IMAGE_ID_NAME, NVDIMM_IMAGE_ID_NAME_LEN - 1);
   // Pointer to that region
   pImageInfo[0].ImageIdName = ImageIdName;
 

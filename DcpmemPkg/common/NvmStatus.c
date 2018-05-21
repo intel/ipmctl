@@ -935,7 +935,7 @@ SetObjStatus(
   if (pObjectIdStr != NULL && StrLen(pObjectIdStr) > 0) {
     pObjectStatus->IsObjectIdStr = TRUE;
 
-    StrnCpy(pObjectStatus->ObjectIdStr, pObjectIdStr, MIN(ObjectIdStrLength, MAX_OBJECT_ID_STR_LEN) - 1);
+    StrnCpyS(pObjectStatus->ObjectIdStr, MAX_OBJECT_ID_STR_LEN, pObjectIdStr, MIN(ObjectIdStrLength, MAX_OBJECT_ID_STR_LEN) - 1);
   } else {
     pObjectStatus->IsObjectIdStr = FALSE;
   }

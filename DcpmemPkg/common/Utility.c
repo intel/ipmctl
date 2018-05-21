@@ -354,7 +354,7 @@ CHAR16 *StrTok(CHAR16 **input, CONST CHAR16 delim)
       if (!token) {
         NVDIMM_DBG("StrTok failed due to lack of resources");
       } else {
-        StrnCpy(token, *input, tokenLength);
+        StrnCpyS(token, tokenLength, *input, tokenLength - 1);
       }
       /** set input to null **/
       (*input)[0] = 0;
@@ -418,7 +418,7 @@ CHAR8 *AsciiStrTok(CHAR8 **ppInput, CONST CHAR8 delim)
       if (!pToken) {
         NVDIMM_DBG("StrTok failed due to lack of resources");
       } else {
-        AsciiStrnCpy(pToken, *ppInput, TokenLength);
+        AsciiStrnCpyS(pToken, TokenLength, *ppInput, TokenLength - 1);
       }
       /** set input to null **/
       (*ppInput)[0] = 0;
@@ -588,7 +588,7 @@ AsciiStrSplit(
     goto FinishCleanMemory;
   }
 
-  AsciiStrnCpy(pInputTmp, pInput, AsciiStrSize(pInput));
+  AsciiStrnCpyS(pInputTmp, AsciiStrSize(pInput) / sizeof(CHAR8), pInput, (AsciiStrSize(pInput) / sizeof(CHAR8)) - 1);
 
   for (Index = 0; Index < *pArraySize; Index++) {
     ppArray[Index] = AsciiStrTok(&pInputTmp, Delimiter);
@@ -3331,7 +3331,7 @@ GetHostServerInfo(
    }
    else
    {
-      AsciiStrToUnicodeStr(name, pHostServerInfo->Name);
+      AsciiStrToUnicodeStrS(name, pHostServerInfo->Name, HOST_SERVER_NAME_LEN);
    }
 
    if (0 != os_get_os_name(osName, HOST_SERVER_OS_NAME_LEN))
@@ -3340,7 +3340,7 @@ GetHostServerInfo(
    }
    else
    {
-      AsciiStrToUnicodeStr(osName, pHostServerInfo->OsName);
+      AsciiStrToUnicodeStrS(osName, pHostServerInfo->OsName, HOST_SERVER_OS_NAME_LEN);
    }
 
    if (0 != os_get_os_version(osVersion, HOST_SERVER_OS_VERSION_LEN))
@@ -3349,7 +3349,7 @@ GetHostServerInfo(
    }
    else
    {
-      AsciiStrToUnicodeStr(osVersion, pHostServerInfo->OsVersion);
+      AsciiStrToUnicodeStrS(osVersion, pHostServerInfo->OsVersion, HOST_SERVER_OS_VERSION_LEN);
    }
    ReturnCode = EFI_SUCCESS;
 #else

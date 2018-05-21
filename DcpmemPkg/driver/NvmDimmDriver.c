@@ -273,7 +273,7 @@ NvmDimmDriverUnload(
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /** Disable recording AllocatePool and FreePool occurrences, print list and clear it **/
-  FlushPointerTrace(__WFUNCTION__);
+  FlushPointerTrace((CHAR16 *)__WFUNCTION__);
 #endif
 
   if (EFI_ERROR(ReturnCode) && DriverAlreadyUnloaded) {

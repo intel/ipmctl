@@ -5691,7 +5691,7 @@ GetDimmUid(
   }
 
   if (TmpDimmUid != NULL) {
-    StrnCpy(pDimmUid, TmpDimmUid, DimmUidLen - 1);
+    StrnCpyS(pDimmUid, DimmUidLen, TmpDimmUid, DimmUidLen - 1);
     FREE_POOL_SAFE(TmpDimmUid);
   }
 

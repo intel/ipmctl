@@ -204,19 +204,19 @@ GetDetailedStatusStr(
 
   if (pTmpStr != NULL) {
     if (PartitionSizeChangeTableStatus == MAX_UINT32) {
-      StrnCpy(PartitionSizeChangeTableStatusStr, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
+      StrnCpyS(PartitionSizeChangeTableStatusStr, MAX_PCD_TABLE_STATUS_LENGTH, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
     } else {
       UnicodeSPrint(PartitionSizeChangeTableStatusStr, sizeof(PartitionSizeChangeTableStatusStr), L"%d", PartitionSizeChangeTableStatus);
     }
 
     if (InterleaveInformationTableStatus_1 == MAX_UINT8) {
-      StrnCpy(InterleaveInformationTableStatus_1Str, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
+      StrnCpyS(InterleaveInformationTableStatus_1Str, MAX_PCD_TABLE_STATUS_LENGTH, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
     } else {
       UnicodeSPrint(InterleaveInformationTableStatus_1Str, sizeof(InterleaveInformationTableStatus_1Str), L"%d", (UINT32)InterleaveInformationTableStatus_1);
     }
 
     if (InterleaveInformationTableStatus_2 == MAX_UINT8) {
-      StrnCpy(InterleaveInformationTableStatus_2Str, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
+      StrnCpyS(InterleaveInformationTableStatus_2Str, MAX_PCD_TABLE_STATUS_LENGTH, pTmpStr, MAX_PCD_TABLE_STATUS_LENGTH - 1);
     } else {
       UnicodeSPrint(InterleaveInformationTableStatus_2Str, sizeof(InterleaveInformationTableStatus_2Str), L"%d", InterleaveInformationTableStatus_2);
     }

@@ -404,7 +404,7 @@ GetDimmUidFromString(
         if ((!IsDimmIdNumber && StrICmp(pDimmString, pDimmInfo[Index].DimmUid) == 0) ||
             (IsDimmIdNumber && pDimmInfo[Index].DimmHandle == ParsedDimmIdNumber))
         {
-            UnicodeStrToAsciiStr(pDimmInfo[Index].DimmUid, pDimmUid);
+            UnicodeStrToAsciiStrS(pDimmInfo[Index].DimmUid, pDimmUid, MAX_DIMM_UID_LENGTH);
             DimmIdFound = TRUE;
             break;
         }
@@ -954,7 +954,7 @@ GetDeviceAndFilePath(
     goto Finish;
   }
 #ifdef OS_BUILD
-  StrnCpy(pOutFilePath, pUserFilePath, OPTION_VALUE_LEN);
+  StrnCpyS(pOutFilePath, OPTION_VALUE_LEN, pUserFilePath, OPTION_VALUE_LEN - 1);
   return EFI_SUCCESS;
 #endif
   pTmpWorkingDir = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pTmpWorkingDir));
@@ -1009,11 +1009,11 @@ GetDeviceAndFilePath(
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
-    StrnCpy(pTmpWorkingDir, pCurDir, OPTION_VALUE_LEN);
+    StrnCpyS(pTmpWorkingDir, OPTION_VALUE_LEN, pCurDir, OPTION_VALUE_LEN - 1);
     // Take null terminator into account
-    StrnCat(pTmpWorkingDir, pCurDirPath, OPTION_VALUE_LEN - StrLen(pTmpWorkingDir) - 1);
+    StrnCatS(pTmpWorkingDir, OPTION_VALUE_LEN, pCurDirPath, OPTION_VALUE_LEN - StrLen(pTmpWorkingDir) - 1);
   } else {
-    StrnCpy(pTmpWorkingDir, pCurDirPath, OPTION_VALUE_LEN);
+    StrnCpyS(pTmpWorkingDir, OPTION_VALUE_LEN, pCurDirPath, OPTION_VALUE_LEN - 1);
   }
 
   // Extract working directory
@@ -1021,7 +1021,7 @@ GetDeviceAndFilePath(
   while (pTmpFilePath[0] != L'\\' && pTmpFilePath[0] != L'\0') {
     pTmpFilePath++;
   }
-  StrnCpy(pOutFilePath, pTmpFilePath, OPTION_VALUE_LEN);
+  StrnCpyS(pOutFilePath, OPTION_VALUE_LEN, pTmpFilePath, OPTION_VALUE_LEN - 1);
 
   // Get Path to Device
   pDevPathInternal = pEfiShell->GetDevicePathFromFilePath(pTmpWorkingDir);
@@ -1331,7 +1331,7 @@ DumpToFile (
       NVDIMM_WARN("Failed to allocate enough memory.");
       return EFI_OUT_OF_RESOURCES;
    }
-   UnicodeStrToAsciiStr(pDumpUserPath, path);
+   UnicodeStrToAsciiStrS(pDumpUserPath, path, StrLen(pDumpUserPath) + 1);
    FILE *destFile = fopen(path, "wb+");
    if (NULL == destFile) {
       FreePool(path);

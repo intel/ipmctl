@@ -87,6 +87,7 @@ typedef struct {
 #define MANUFACTURER_LEN               19
 #define SERIAL_NUMBER_LEN              19
 #define PART_NUMBER_LEN                21
+#define PART_NUMBER_STR_LEN            22
 #define DEVICE_LOCATOR_LEN            128
 #define BANKLABEL_LEN                  32 // @todo confirm label length
 #define SHUTDOWN_STATUS_LEN           136 // @todo confirm label length
@@ -280,7 +281,7 @@ typedef struct _DIMM_INFO {
   UINT8 ManufacturingLocation;              //!< Manufacturing location
   UINT16 ManufacturingDate;                 //!< Manufacturing data
   UINT32 SerialNumber;                      //!< Serial number string
-  CHAR16 PartNumber[PART_NUMBER_LEN];       //!< Part number string
+  CHAR16 PartNumber[PART_NUMBER_STR_LEN];   //!< Part number string
   CHAR16 DeviceLocator[DEVICE_LOCATOR_LEN]; //!< describing the physically-labeled socket or board position
   CHAR16 BankLabel[BANKLABEL_LEN];          //!< identifies the physically labeled bank
   FIRMWARE_VERSION FwVer;                   //!< FNV FW revision

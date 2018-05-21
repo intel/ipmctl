@@ -15,12 +15,13 @@
 #include <os_common.h>
 #endif
 
+#define G_FN_NAME_SIZE 1024
 extern EFI_BOOT_SERVICES *gBS;
-extern CHAR16 gFnName[1024];
+extern CHAR16 gFnName[G_FN_NAME_SIZE];
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 #define __WFUNCTION__ \
-  AsciiStrToUnicodeStr(__FUNCTION__, gFnName)
+  AsciiStrToUnicodeStrS(__FUNCTION__, gFnName, G_FN_NAME_SIZE)
 
 #ifdef OS_BUILD
 extern UINTN EFIAPI PrintNoBuffer(CHAR16* fmt, ...);

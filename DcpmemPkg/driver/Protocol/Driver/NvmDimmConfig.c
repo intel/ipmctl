@@ -157,7 +157,7 @@ EFI_STATUS StoreSystemEntryForDimmList(LIST_ENTRY *pDimmList, CONST CHAR8 *sourc
     DIMM *pDimm = NULL;
     LIST_ENTRY *pDimmNode = NULL;
     CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
+    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
     VA_LIST args;
     NVM_EVENT_MSG event_message = { 0 };
 
@@ -179,7 +179,7 @@ EFI_STATUS StoreSystemEntryForDimmList(LIST_ENTRY *pDimmList, CONST CHAR8 *sourc
                 break;
             }
             // Prepare DIMM UId
-            UnicodeStrToAsciiStr(DimmUid, AsciiDimmUid);
+            UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
             // Store the log
             nvm_store_system_entry(source, event_type, AsciiDimmUid, event_message);
         }
@@ -697,7 +697,7 @@ GetDimmInfo (
   }
 #ifdef OS_BUILD
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-  CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
+  CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
   ReturnCode = GetDimmUid(pDimm, DimmUid, MAX_DIMM_UID_LENGTH);
   if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("ERROR: GetDimmUid\n");
@@ -705,7 +705,7 @@ GetDimmInfo (
   else
   {
       // Prepare DIMM UId
-      UnicodeStrToAsciiStr(DimmUid, AsciiDimmUid);
+      UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
       // Get the action required status
       pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
   }
@@ -847,7 +847,7 @@ GetDimmInfo (
     }
   }
 
-  AsciiStrToUnicodeStr(pDimm->PartNumber, pDimmInfo->PartNumber);
+  AsciiStrToUnicodeStrS(pDimm->PartNumber, pDimmInfo->PartNumber, PART_NUMBER_LEN + 1);
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_SECURITY)
   {
@@ -1470,7 +1470,7 @@ GetUninitializedDimms(
     pDimms[Index].Capacity = pCurDimm->RawCapacity;
     pDimms[Index].ManufacturerId = pCurDimm->Manufacturer;
 
-    AsciiStrToUnicodeStr(pCurDimm->PartNumber, pDimms[Index].PartNumber);
+    AsciiStrToUnicodeStrS(pCurDimm->PartNumber, pDimms[Index].PartNumber, PART_NUMBER_STR_LEN);
 
     pDimms[Index].FwVer = pCurDimm->FwVer;
 #ifndef OS_BUILD
@@ -2404,11 +2404,11 @@ SetSecurityState(
   }
 
   if (pPassphrase != NULL) {
-    UnicodeStrToAsciiStr(pPassphrase, AsciiPassword);
+    UnicodeStrToAsciiStrS(pPassphrase, AsciiPassword, PASSPHRASE_BUFFER_SIZE + 1);
     CopyMem(&pSecurityPayload->PassphraseCurrent, AsciiPassword, AsciiStrLen(AsciiPassword));
   }
   if (pNewPassphrase != NULL) {
-    UnicodeStrToAsciiStr(pNewPassphrase, AsciiPassword);
+    UnicodeStrToAsciiStrS(pNewPassphrase, AsciiPassword, PASSPHRASE_BUFFER_SIZE + 1);
     CopyMem(&pSecurityPayload->PassphraseNew, AsciiPassword, AsciiStrLen(AsciiPassword));
   }
 
@@ -3834,7 +3834,7 @@ initAcpiTables(
     goto Finish;
   }
   /** Set the Base address **/
-  PcdSet64(PcdPciExpressBaseAddress, PciBaseAddress);
+  PcdSet64S(PcdPciExpressBaseAddress, PciBaseAddress);
   if(PcdGet64(PcdPciExpressBaseAddress) != PciBaseAddress) {
     NVDIMM_WARN("Could not set the PCI Base Address");
     ReturnCode = EFI_LOAD_ERROR;
@@ -6049,7 +6049,7 @@ Finish:
     IN     UINT32 BlockSize,
     IN     UINT64 BlockCount,
     IN     CHAR8 *pName,
-  IN     BOOLEAN Mode,
+    IN     BOOLEAN Mode,
     IN     BOOLEAN ForceAll,
     IN     BOOLEAN ForceAlignment,
        OUT UINT64 *pActualNamespaceCapacity,
@@ -6132,7 +6132,7 @@ Finish:
         goto Finish;
       }
     } else {
-       // if size is not specified for Namespace, then find the maximum available size
+      // if size is not specified for Namespace, then find the maximum available size
       NamespaceCapacity = 0;
       ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
       if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
@@ -6153,7 +6153,7 @@ Finish:
         goto Finish;
       }
       *pActualNamespaceCapacity = NamespaceCapacity;
-       ActualBlockCount = *pActualNamespaceCapacity / BlockSize;
+      ActualBlockCount = *pActualNamespaceCapacity / BlockSize;
      }
     /** Namespace capacity that doesn't include block size with 64B cache lane size **/
     NamespaceCapacity = ActualBlockCount * BlockSize;
@@ -6204,9 +6204,9 @@ Build NAMESPACE structure
       pTempName16 = CatSPrint(NULL, L"NvDimmVol%d", pNamespace->NamespaceId);
       // If we failed to allocate the Dimm name - no big deal, just leave it as it is
       if (pTempName16 != NULL) {
-        pName = AllocateZeroPool((StrLen (pTempName16) + 1) * sizeof(CHAR8));
+        pName = AllocateZeroPool((StrLen(pTempName16) + 1) * sizeof(CHAR8));
         if (pName != NULL) {
-          UnicodeStrToAsciiStr(pTempName16, pName);
+          UnicodeStrToAsciiStrS(pTempName16, pName, StrLen(pTempName16) + 1);
         }
       }
     }

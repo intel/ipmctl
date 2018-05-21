@@ -117,7 +117,7 @@ ConvertFwApiVersion(
     tmp = CatSPrint(NULL, L"%d.%d", Major, Minor);
   }
   if (tmp != NULL) {
-    StrnCpy(Version, tmp, FW_API_VERSION_LEN - 1);
+    StrnCpyS(Version, FW_API_VERSION_LEN, tmp, FW_API_VERSION_LEN - 1);
     FREE_POOL_SAFE(tmp);
   }
 
@@ -146,7 +146,7 @@ ConvertFwVersion(
     tmp = CatSPrint(NULL, L"%02d.%02d.%02d.%04d", Product, Revision, SecurityVersion, Build);
   }
   if (tmp != NULL) {
-    StrnCpy(Version, tmp, FW_VERSION_LEN - 1);
+    StrnCpyS(Version, FW_VERSION_LEN, tmp, FW_VERSION_LEN - 1);
     FREE_POOL_SAFE(tmp);
   }
 

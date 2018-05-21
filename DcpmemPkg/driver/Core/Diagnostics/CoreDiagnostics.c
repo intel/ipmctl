@@ -134,11 +134,11 @@ SendTheEventAndAppendToDiagnosticsResult(
     BOOLEAN ActionReqState = 0;
 
     // Prepare the string
-    pAsciiStrToAppend = (CHAR8*)AllocateZeroPool(StrLen(pStrToAppend) + 1); // +1 makes room for string terminaiton
+    pAsciiStrToAppend = (CHAR8*)AllocateZeroPool(StrLen(pStrToAppend) + 1); // +1 makes room for string termination
     if (NULL == pAsciiStrToAppend) {
         return EFI_OUT_OF_RESOURCES;
     }
-    UnicodeStrToAsciiStr(pStrToAppend, pAsciiStrToAppend);
+    UnicodeStrToAsciiStrS(pStrToAppend, pAsciiStrToAppend, StrLen(pStrToAppend) + 1);
     // Get the message severity
     if (DiagStateMask & DIAG_STATE_MASK_ABORTED) {
         EventSeverity = SYSTEM_EVENT_TYPE_ERROR;
@@ -166,7 +166,7 @@ SendTheEventAndAppendToDiagnosticsResult(
         else
         {
             // Prepare DIMM UId
-            UnicodeStrToAsciiStr(DimmUid, AsciiDimmUid);
+            UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
             nvm_store_system_entry(NVM_SYSLOG_SOURCE,
                 SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, UniqeNumber, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
                 AsciiDimmUid, pAsciiStrToAppend);

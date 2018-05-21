@@ -75,27 +75,27 @@ Uint128ToString(
   );
 
 /**
-  Converts an 8 bit ASCII Source buffer to a Null-terminated Unicode Destination string.
-  The ASCII Source buffer may or may not be Null-terminated, and hence the function safely
-  appends it with a Null-terminator character.
-  The caller is responsible to make sure that Destination points to a buffer with size
-  equal to ((sizeof(Source) + 1) * sizeof(CHAR16)) in bytes.
+Converts an 8 bit ASCII Source buffer to a Null-terminated Unicode Destination string.
+The ASCII Source buffer may or may not be Null-terminated, and hence the function safely
+appends it with a Null-terminator character.
+The caller is responsible to make sure that Destination points to a buffer with size
+equal to ((sizeof(Source) + 1) * sizeof(CHAR16)) in bytes.
 
-  @param[in] Source        Pointer to the ASCII Source buffer
-  @param[in] Length        Size of the Source buffer in bytes
-  @param[out] Destination  Pointer to the Null-terminated Unicode Destination string
+@param[in] Source        Pointer to the ASCII Source buffer
+@param[in] Length        Size of the Source buffer in bytes
+@param[out] Destination  Pointer to the Null-terminated Unicode Destination string
 
-  @retval EFI_SUCCESS             The conversion was successful.
-  @retval EFI_INVALID_PARAMETER   A parameter was NULL or invalid.
-  @retval EFI_OUT_OF_RESOURCES    Memory allocation failure
+@retval EFI_SUCCESS             The conversion was successful.
+@retval EFI_INVALID_PARAMETER   A parameter was NULL or invalid.
+@retval EFI_OUT_OF_RESOURCES    Memory allocation failure
 **/
 EFI_STATUS
 EFIAPI
 SafeAsciiStrToUnicodeStr (
-  IN     CONST CHAR8 *Source,
-  IN     UINT32 Length,
-     OUT CHAR16 *Destination
-  );
+IN     CONST CHAR8 *Source,
+IN     UINT32 Length,
+OUT CHAR16 *Destination
+);
 
 /**
   Check if a Unicode character is a decimal character.

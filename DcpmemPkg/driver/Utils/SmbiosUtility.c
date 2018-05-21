@@ -113,7 +113,7 @@ GetSmbiosString (
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
-      AsciiStrToUnicodeStr(pString, pSmbiosString);
+      AsciiStrToUnicodeStrS(pString, pSmbiosString, BufferLen);
       ReturnCode = EFI_SUCCESS;
       goto Finish;
     }

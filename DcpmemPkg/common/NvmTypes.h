@@ -37,6 +37,7 @@
 #define UINT128_DIGITS             39
 #define HII_CAPACITY_STRING_SIZE   19
 #define HII_SENSOR_VALUE_STRING_SIZE   19
+#define HII_HEALTH_REASON_STRNG_SIZE   110
 #define HII_APPDIRECT_PREFERENCE_OPTION_SIZE 30
 
 /** UINT128_DIGITS + 1; it has to be a number because of Vfr compilator requirements **/
@@ -316,7 +317,8 @@ typedef struct _DIMM_INFO {
 
   //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
   UINT8 HealthState;                        //!< overall health state
-  UINT32 LastShutdownStatus;                 //!< The status of the last shutdown of the AEP.
+  UINT16 HealthStausReason;                  //!< Health state reason(s)
+  UINT32 LastShutdownStatus;                //!< The status of the last shutdown of the AEP.
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
   UINT8 AitDramEnabled;                     //!< Whether or not the AEP DIMM AIT DRAM is enabled
 
@@ -612,6 +614,19 @@ typedef struct _DEBUG_LOG_INFO {
 #define HEALTH_NONFUNCTIONAL         6
 
 /**
+  Health Status Reason
+**/
+#define HEALTH_STATUS_REASON_NONE                          0
+#define HEALTH_REASON_PERCENTAGE_REMAINING_LOW            BIT0
+#define HEALTH_REASON_PACKAGE_SPARING_HAS_HAPPENED        BIT1
+#define HEALTH_REASON_CAP_SELF_TEST_WARNING               BIT2
+#define HEALTH_REASON_PERC_REMAINING_EQUALS_ZERO          BIT3
+#define HEALTH_REASON_DIE_FAILURE                         BIT4
+#define HEALTH_REASON_AIT_DRAM_DISABLED                   BIT5
+#define HEALTH_REASON_CAP_SELF_TEST_FAILURE               BIT6
+#define HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE     BIT7
+
+/**
   Security operations
 **/
 #define SECURITY_OPERATION_UNDEFINED          0
@@ -799,7 +814,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_DIMM_HEALTH                0
 #define SENSOR_TYPE_MEDIA_TEMPERATURE          1
 #define SENSOR_TYPE_CONTROLLER_TEMPERATURE     2
-#define SENSOR_TYPE_SPARE_CAPACITY             3
+#define SENSOR_TYPE_PERCENTAGE_REMAINING       3
 #define SENSOR_TYPE_WEAR_LEVEL                 4
 #define SENSOR_TYPE_DIRTY_SHUTDOWNS            5
 #define SENSOR_TYPE_POWER_ON_TIME              6

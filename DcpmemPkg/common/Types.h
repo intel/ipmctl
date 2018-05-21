@@ -111,10 +111,10 @@ typedef struct _SENSOR_INFO {
   BOOLEAN PercentageUsedValid;
   BOOLEAN MediaTemperatureTrip;
   BOOLEAN ControllerTemperatureTrip;
-  BOOLEAN SpareBlockTrip;
+  BOOLEAN PercentageRemainingTrip;
   INT16 MediaTemperature;
   INT16 ControllerTemperature;
-  UINT8 SpareCapacity;
+  UINT8 PercentageRemaining;
   UINT8 WearLevel;
   UINT32 DirtyShutdowns;
   UINT8 LastShutdownStatus;
@@ -123,6 +123,7 @@ typedef struct _SENSOR_INFO {
   UINT64 PowerCycles;
   UINT8 FwErrorCount;
   UINT8 HealthStatus;
+  UINT16 HealthStatusReason;
   UINT8 PercentageUsed;
   UINT32 MediaErrorCount;
   UINT32 ThermalErrorCount;

@@ -23,6 +23,7 @@
 #define MANAGEABILITY_STR           L"ManageabilityState"
 #define MANAGEABILITY_SHORT_STR     L"Manageability"
 #define HEALTH_STR                  L"HealthState"
+#define HEALTH_STATE_REASON_STR     L"HealthStateReason"
 #define ACTION_REQ_STR              L"ActionRequired"
 #define HEALTH_SHORT_STR            L"Health"
 #define SECURITY_STR                L"LockState"

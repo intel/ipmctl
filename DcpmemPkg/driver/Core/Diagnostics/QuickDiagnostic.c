@@ -228,13 +228,14 @@ SmartAndHealthCheck(
   SENSOR_INFO SensorInfo;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
-  INT16 SpareBlockThreshold = 0;
+  INT16 PercentageRemainingThreshold = 0;
   UINT8 AitDramEnabled = 0;
   BOOLEAN FIS_1_3 = FALSE;
   DIMM_INFO DimmInfo;
   CHAR16 *pTmpStr = NULL;
   CHAR16 *pTmpStr1 = NULL;
   CHAR16 *pActualHealthStr = NULL;
+  CHAR16 *pActualHealthReasonStr = NULL;
 
   NVDIMM_ENTRY();
 
@@ -268,26 +269,30 @@ SmartAndHealthCheck(
 
     if ((SensorInfo.HealthStatus & ControllerHealthStatusFatal) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_FATAL_FAILURE), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, pActualHealthStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
     } else if ((SensorInfo.HealthStatus & ControllerHealthStatusCritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_CRITICAL_FAILURE), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, pActualHealthStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
     } else if ((SensorInfo.HealthStatus & ControllerHealthStatusNoncritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_NON_CRITICAL_FAILURE), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, pActualHealthStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
     } else {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_UNKNOWN), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, pActualHealthStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
     }
+
+    if (SensorInfo.HealthStatusReason != HEALTH_STATUS_REASON_NONE) {
+      ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmData->HiiHandle,
+        SensorInfo.HealthStatusReason, &pActualHealthReasonStr);
+      if (pActualHealthReasonStr == NULL || EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Error in converting health state reason to string");
+        goto Finish;
+      }
+
+      pActualHealthStr = CatSPrint(pActualHealthStr, L" (" FORMAT_STR L")", pActualHealthReasonStr);
+    }
+    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, pActualHealthStr);
+    APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
+
     FREE_POOL_SAFE(pActualHealthStr);
+    FREE_POOL_SAFE(pTmpStr);
+    FREE_POOL_SAFE(pActualHealthReasonStr);
   }
 
   ReturnCode = GetDimm(&gNvmDimmData->NvmDimmConfig, pDimm->DimmID,
@@ -351,8 +356,8 @@ SmartAndHealthCheck(
 
   ReturnCode = GetAlarmThresholds(NULL,
       pDimm->DimmID,
-      SENSOR_TYPE_SPARE_CAPACITY,
-      &SpareBlockThreshold,
+      SENSOR_TYPE_PERCENTAGE_REMAINING,
+      &PercentageRemainingThreshold,
       NULL,
       NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -361,9 +366,9 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (SensorInfo.SpareCapacity < SpareBlockThreshold) {
+  if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
     pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_SPARE_CAPACITY_BELOW_ALARM_THR), NULL);
-    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, SensorInfo.SpareCapacity, SpareBlockThreshold);
+    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr, SensorInfo.PercentageRemaining, PercentageRemainingThreshold);
     FREE_POOL_SAFE(pTmpStr);
     APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
   }

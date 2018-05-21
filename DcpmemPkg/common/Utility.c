@@ -2213,6 +2213,94 @@ LastShutdownStatusToStr(
   return pStatusStr;
 }
 
+
+/**
+  Converts the dimm health state reason to its  HII string equivalent
+  @param[in] HiiHandle - handle for hii
+  @param[in] HealthStateReason The health state reason to be converted into its HII string
+  @param[out] ppHealthStateStr A pointer to the HII health state string. Dynamically allocated memory and must be released by calling function.
+
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
+**/
+EFI_STATUS
+ConvertHealthStateReasonToHiiStr(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT16 HealthStatusReason,
+  OUT CHAR16 **ppHealthStatusReasonStr
+)
+{
+
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT16 mask = BIT0;
+  NVDIMM_ENTRY();
+
+  if (ppHealthStatusReasonStr == NULL) {
+    goto Finish;
+  }
+  *ppHealthStatusReasonStr = NULL;
+  while (mask <= BIT7) {
+    switch (HealthStatusReason & mask) {
+    case HEALTH_REASON_PERCENTAGE_REMAINING_LOW:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING), NULL));
+      break;
+    case HEALTH_REASON_PACKAGE_SPARING_HAS_HAPPENED:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_PACKAGE_SPARING_HAPPENED), NULL));
+      break;
+    case HEALTH_REASON_CAP_SELF_TEST_WARNING:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_WARNING), NULL));
+      break;
+    case HEALTH_REASON_PERC_REMAINING_EQUALS_ZERO:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING_ZERO), NULL));
+      break;
+    case HEALTH_REASON_DIE_FAILURE:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_DIE_FAILURE), NULL));
+      break;
+    case HEALTH_REASON_AIT_DRAM_DISABLED:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_AIT_DRAM_DISABLED), NULL));
+      break;
+    case HEALTH_REASON_CAP_SELF_TEST_FAILURE:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_FAIL), NULL));
+      break;
+    case HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE:
+      *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CRITICAL_INTERNAL_FAILURE), NULL));
+    }
+    mask = mask << 1;
+  }
+
+  if (*ppHealthStatusReasonStr == NULL) {
+    *ppHealthStatusReasonStr = HiiGetString(HiiHandle,
+      STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_NONE), NULL);
+  }
+
+  if (*ppHealthStatusReasonStr == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 /**
   Convert modes supported by to string
 

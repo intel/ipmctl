@@ -153,7 +153,7 @@ SetSensor(
     } else if (StrICmp(pTargetValue, MEDIA_TEMPERATURE_TARGET_VALUE) == 0) {
       SensorId = SENSOR_TYPE_MEDIA_TEMPERATURE;
     } else if (StrICmp(pTargetValue, SPARE_CAPACITY_TARGET_VALUE) == 0) {
-      SensorId = SENSOR_TYPE_SPARE_CAPACITY;
+      SensorId = SENSOR_TYPE_PERCENTAGE_REMAINING;
     } else {
       Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SENSOR);
       ReturnCode = EFI_INVALID_PARAMETER;

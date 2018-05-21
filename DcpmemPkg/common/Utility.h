@@ -603,6 +603,23 @@ OpenFileByDevice(
   );
 
 /**
+  Converts the dimm health state reason to its  HII string equivalent
+  @param[in] @param[in] HiiHandle - handle for hii
+  @param[in] HealthStateReason The health state reason to be converted into its HII string
+  @param[out] ppHealthStateStr A pointer to the HII health state string. Dynamically allocated memory and must be released by calling function.
+
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
+**/
+EFI_STATUS
+ConvertHealthStateReasonToHiiStr(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT16 HealthStatusReason,
+  OUT CHAR16 **ppHealthStatusReasonStr
+);
+
+/**
   Open file handle of root directory from given path
 
   @param[in] pDevicePath - path to file

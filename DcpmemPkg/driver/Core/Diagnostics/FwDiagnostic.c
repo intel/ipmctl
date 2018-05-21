@@ -405,7 +405,7 @@ ThresholdsCheck(
   SENSOR_INFO SensorInfo;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
-  INT16 SpareBlockThreshold = 0;
+  INT16 PercentageRemainingThreshold = 0;
   CHAR16 *pTmpStr = NULL;
   CHAR16 *pTmpStr1 = NULL;
 
@@ -469,8 +469,8 @@ ThresholdsCheck(
 
   ReturnCode = GetAlarmThresholds(NULL,
     pDimm->DimmID,
-    SENSOR_TYPE_SPARE_CAPACITY,
-    &SpareBlockThreshold,
+    SENSOR_TYPE_PERCENTAGE_REMAINING,
+    &PercentageRemainingThreshold,
     NULL,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -479,9 +479,9 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (SensorInfo.SpareCapacity < SpareBlockThreshold) {
+  if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
     pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_FW_SPARE_BLOCK_THRESHOLD_ERROR), NULL);
-    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimm->DeviceHandle.AsUint32, SpareBlockThreshold, SensorInfo.SpareCapacity);
+    pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimm->DeviceHandle.AsUint32, PercentageRemainingThreshold, SensorInfo.PercentageRemaining);
     FREE_POOL_SAFE(pTmpStr);
     APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
   }

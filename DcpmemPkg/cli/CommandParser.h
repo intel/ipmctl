@@ -99,9 +99,9 @@
 #define EVENT_TARGET                         L"-event"                   //!< 'event' target name
 #define CONTROLLER_TEMPERATURE_TARGET_VALUE  L"ControllerTemperature"    //!< 'sensor' target value
 #define MEDIA_TEMPERATURE_TARGET_VALUE       L"MediaTemperature"         //!< 'sensor' target value
-#define SPARE_CAPACITY_TARGET_VALUE          L"SpareCapacity"            //!< 'sensor' target value
+#define SPARE_CAPACITY_TARGET_VALUE          L"PercentageRemaining"      //!< 'sensor' target value
 #define SENSOR_TARGETS \
-  L"MediaTemperature|ControllerTemperature|SpareCapacity"                //!< the sensors combined for the target message
+  L"MediaTemperature|ControllerTemperature|PercentageRemaining"          //!< the sensors combined for the target message
 #define DIAGNOSTIC_TARGET                    L"-diagnostic"              //!< 'diagnostic' target name
 #define ALL_TEST_TARGET_VALUE                L"All"                      //!< 'diagnostic' target value
 #define QUICK_TEST_TARGET_VALUE              L"Quick"                    //!< 'diagnostic' target value
@@ -135,12 +135,12 @@
 #define UPDATE_PROPERTY                   L"Update"                   //!< 'Update' property name
 #define EXEC_PROPERTY                     L"Execute"                  //!< 'Exec' property name
 #define FW_LOGLEVEL_PROPERTY              L"FwLogLevel"               //!< 'FwLogLevel' property name
-#define TEMPERATURE_INJ_PROPERTY          L"Temperature"	          //!<  Inject error 'Temperature' property name
+#define TEMPERATURE_INJ_PROPERTY          L"Temperature"	            //!<  Inject error 'Temperature' property name
 #define POISON_INJ_PROPERTY               L"Poison"                   //!< Inject error 'Poison' property
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property
 #define CLEAR_ERROR_INJ_PROPERTY          L"Clear"                    //!< Clear error injection property
 #define PACKAGE_SPARING_INJ_PROPERTY      L"PackageSparing"           //!< PackageSparing error injection property
-#define SPARE_CAPACITY_INJ_PROPERTY       L"SpareCapacity"            //!< SpareCapacity error injection property
+#define SPARE_CAPACITY_INJ_PROPERTY       L"PercentageRemaining"      //!< PercentageRemaining error injection property
 #define FATAL_MEDIA_ERROR_INJ_PROPERTY    L"FatalMediaError"          //!< FatalMediaError error injection property
 #define DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY L"DirtyShutdown"            //!< DirtyShutdown error injection property
 #define LOCKSTATE_PROPERTY                L"LockState"                //!< 'LockState' property name

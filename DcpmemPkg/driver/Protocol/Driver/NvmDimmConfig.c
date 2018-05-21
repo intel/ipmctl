@@ -898,6 +898,7 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
     ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
+    pDimmInfo->HealthStausReason = SensorInfo.HealthStatusReason;
     pDimmInfo->LastShutdownStatus = LastShutdownStatus;
     pDimmInfo->LastShutdownTime = LastShutdownTime;
     pDimmInfo->AitDramEnabled = AitDramEnabled;
@@ -1944,9 +1945,9 @@ GetAlarmThresholds (
     NonCriticalThreshold = TransformFwTempToRealValue(pPayloadAlarmThresholds->ControllerTemperatureThreshold);
     EnabledState = (UINT8) pPayloadAlarmThresholds->Enable.Separated.ControllerTemperature;
     break;
-  case SENSOR_TYPE_SPARE_CAPACITY:
-    NonCriticalThreshold = (INT16) pPayloadAlarmThresholds->SpareBlockThreshold;
-    EnabledState = (UINT8) pPayloadAlarmThresholds->Enable.Separated.SpareBlock;
+  case SENSOR_TYPE_PERCENTAGE_REMAINING:
+    NonCriticalThreshold = (INT16) pPayloadAlarmThresholds->PercentageRemainingThreshold;
+    EnabledState = (UINT8) pPayloadAlarmThresholds->Enable.Separated.PercentageRemaining;
     break;
   }
 
@@ -2014,7 +2015,7 @@ SetAlarmThresholds (
 
   if (SensorId != SENSOR_TYPE_MEDIA_TEMPERATURE &&
      SensorId != SENSOR_TYPE_CONTROLLER_TEMPERATURE &&
-     SensorId != SENSOR_TYPE_SPARE_CAPACITY) {
+     SensorId != SENSOR_TYPE_PERCENTAGE_REMAINING) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_SENSOR_NOT_VALID);
     goto Finish;
   }
@@ -2049,7 +2050,7 @@ SetAlarmThresholds (
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    if ((SensorId == SENSOR_TYPE_SPARE_CAPACITY) &&
+    if ((SensorId == SENSOR_TYPE_PERCENTAGE_REMAINING) &&
         !IS_IN_RANGE(NonCriticalThreshold, CAPACITY_THRESHOLD_MIN, CAPACITY_THRESHOLD_MAX)) {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE);
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -2096,13 +2097,13 @@ SetAlarmThresholds (
         pPayloadAlarmThresholds->Enable.Separated.MediaTemperature = EnabledState;
       }
     }
-    if (SensorId == SENSOR_TYPE_SPARE_CAPACITY) {
+    if (SensorId == SENSOR_TYPE_PERCENTAGE_REMAINING) {
       if (NonCriticalThreshold != THRESHOLD_UNDEFINED) {
-        pPayloadAlarmThresholds->SpareBlockThreshold = (UINT8) NonCriticalThreshold;
-        pPayloadAlarmThresholds->Enable.Separated.SpareBlock = TRUE;
+        pPayloadAlarmThresholds->PercentageRemainingThreshold = (UINT8) NonCriticalThreshold;
+        pPayloadAlarmThresholds->Enable.Separated.PercentageRemaining = TRUE;
       }
       if (EnabledState != ENABLED_STATE_UNDEFINED) {
-        pPayloadAlarmThresholds->Enable.Separated.SpareBlock = EnabledState;
+        pPayloadAlarmThresholds->Enable.Separated.PercentageRemaining = EnabledState;
       }
     }
 
@@ -2197,13 +2198,15 @@ GetSmartAndHealth (
   }
 
   /** Get common data **/
-  pSensorInfo->SpareBlocksValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.SpareBlocks;
+  pSensorInfo->SpareBlocksValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
   pSensorInfo->MediaTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.MediaTemperature;
   pSensorInfo->ControllerTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.ControllerTemperature;
   pSensorInfo->PercentageUsedValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageUsed;
   pSensorInfo->MediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->MediaTemperature);
   pSensorInfo->HealthStatus = pPayloadSmartAndHealth->HealthStatus;
-  pSensorInfo->SpareCapacity = pPayloadSmartAndHealth->SpareBlocks;
+  pSensorInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStausReason) ?
+         pPayloadSmartAndHealth->HealthStatusReason : (UINT16)HEALTH_STATUS_REASON_NONE;
+  pSensorInfo->PercentageRemaining = pPayloadSmartAndHealth->PercentageRemaining;
   pSensorInfo->PercentageUsed = pPayloadSmartAndHealth->PercentageUsed;
   pSensorInfo->LastShutdownStatus = pPayloadSmartAndHealth->LastShutdownStatus;
   /** Get Vendor specific data **/
@@ -2224,7 +2227,7 @@ GetSmartAndHealth (
   /** Check triggered alarms **/
   pSensorInfo->MediaTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.MediaTemperature != 0);
   pSensorInfo->ControllerTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.ControllerTemperature != 0);
-  pSensorInfo->SpareBlockTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.SpareBlock != 0);
+  pSensorInfo->PercentageRemainingTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.PercentageRemaining != 0);
 
   if (pLastShutdownStatus != NULL) {
     /** Copy extended detail bits **/

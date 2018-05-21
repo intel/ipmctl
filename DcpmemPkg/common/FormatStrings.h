@@ -35,6 +35,7 @@
 #define FORMAT_SHOW_REGION_HEADER               L"%8s %8s %23s %9s %12s %11s\n"
 #define FORMAT_16STR                            L"%16s"
 #define FORMAT_UINT64                           L"%ld"
+#define FORMAT_STR_WITH_COMMA                   L", %s"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_DYN_STR                          L"%*ls"
@@ -70,6 +71,7 @@
 #define FORMAT_16STR                            L"%16ls"
 #define FORMAT_UINT64                           L"%llu"
 #define FORMAT_STR_SINGLE_QUOTE                 L"'%ls'"
+#define FORMAT_STR_WITH_COMMA                   L", %ls"
 #endif // OS_BUILD
 
 #endif /** _FORMAT_STRINGS_H_ **/

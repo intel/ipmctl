@@ -119,7 +119,7 @@ ShowSensor(
   } Sensors[] = {
       {CONTROLLER_TEMPERATURE_STR, SENSOR_TYPE_CONTROLLER_TEMPERATURE},
       {MEDIA_TEMPERATURE_STR, SENSOR_TYPE_MEDIA_TEMPERATURE},
-      {SPARE_CAPACITY_STR, SENSOR_TYPE_SPARE_CAPACITY},
+      {SPARE_CAPACITY_STR, SENSOR_TYPE_PERCENTAGE_REMAINING},
       {WEAR_LEVEL_STR, SENSOR_TYPE_WEAR_LEVEL},
       {POWER_CYCLES_STR, SENSOR_TYPE_POWER_CYCLES},
       {POWER_ON_TIME_STR, SENSOR_TYPE_POWER_ON_TIME},
@@ -345,7 +345,7 @@ ShowSensor(
         **/
         if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, LOWER_THRESHOLD_NON_CRITICAL_STR))) {
           switch (Index2) {
-          case SENSOR_TYPE_SPARE_CAPACITY:
+          case SENSOR_TYPE_PERCENTAGE_REMAINING:
             // Only spare capacity sensor got lower non-critical threshold
             pTempBuff = GetSensorValue(DimmSensorsSet[Index2].NonCriticalThreshold, DimmSensorsSet[Index2].Type);
             break;

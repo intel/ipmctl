@@ -44,8 +44,8 @@ InitSensorsSet(
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].SupportedThresholds =
       ThresholdUpperNonCritical | ThresholdLowerCritical | ThresholdUpperCritical | ThresholdUpperFatal;
 
-  DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].SettableThresholds = ThresholdLowerNonCritical;
-  DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].SupportedThresholds = ThresholdLowerNonCritical;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SettableThresholds = ThresholdLowerNonCritical;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SupportedThresholds = ThresholdLowerNonCritical;
 }
 
 EFI_STATUS
@@ -77,7 +77,7 @@ GetSensorsInfo(
   /** Copy SMART & Health values **/
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = SensorInfo.MediaTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = SensorInfo.ControllerTemperature;
-  DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].Value = SensorInfo.SpareCapacity;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_WEAR_LEVEL].Value = SensorInfo.WearLevel;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
@@ -118,14 +118,14 @@ GetSensorsInfo(
   }
 
   if (!SensorInfo.SpareBlocksValid) {
-    DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].State = SENSOR_STATE_UNKNOWN;
-  } else if (SensorInfo.SpareBlockTrip) {
-    DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].State = SENSOR_STATE_NON_CRITICAL;
+    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_UNKNOWN;
+  } else if (SensorInfo.PercentageRemainingTrip) {
+    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_NON_CRITICAL;
   } else {
-    DimmSensorsSet[SENSOR_TYPE_SPARE_CAPACITY].State = SENSOR_STATE_NORMAL;
+    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_NORMAL;
   }
 
-  for (Index = SENSOR_TYPE_MEDIA_TEMPERATURE; Index <= SENSOR_TYPE_SPARE_CAPACITY; ++Index) {
+  for (Index = SENSOR_TYPE_MEDIA_TEMPERATURE; Index <= SENSOR_TYPE_PERCENTAGE_REMAINING; ++Index) {
     ReturnCode = pNvmDimmConfigProtocol->GetAlarmThresholds(
         pNvmDimmConfigProtocol,
         DimmID,
@@ -163,7 +163,7 @@ SensorTypeToString(
       return MEDIA_TEMPERATURE_STR;
     case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
       return CONTROLLER_TEMPERATURE_STR;
-    case SENSOR_TYPE_SPARE_CAPACITY:
+    case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_STR;
     case SENSOR_TYPE_WEAR_LEVEL:
       return WEAR_LEVEL_STR;
@@ -228,7 +228,7 @@ SensorValueMeasure(
     case SENSOR_TYPE_MEDIA_TEMPERATURE:
     case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
       return TEMPERATURE_MSR;
-    case SENSOR_TYPE_SPARE_CAPACITY:
+    case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_MSR;
     case SENSOR_TYPE_WEAR_LEVEL:
       return WEAR_LEVEL_MSR;

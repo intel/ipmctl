@@ -493,7 +493,7 @@ typedef struct
   union {
     UINT16 AllBits;
     struct {
-      UINT16 SpareBlock              : 1;
+      UINT16 PercentageRemaining     : 1;
       UINT16 MediaTemperature        : 1;
       UINT16 ControllerTemperature   : 1;
       UINT16                         : 13; //!< Reserved
@@ -505,7 +505,7 @@ typedef struct
     events may be triggered and may cause a transition in the overall health
     state
   **/
-  UINT8 SpareBlockThreshold;
+  UINT8 PercentageRemainingThreshold;
   /**
     Media temperature threshold (in Celsius) above this threshold trigger asynchronous
     events and may cause a transition in the overall health state
@@ -684,13 +684,14 @@ typedef union _SMART_VALIDATION_FLAGS {
   UINT32 AllFlags;
   struct {
     UINT32 HealthStatus                     : 1;
-    UINT32 SpareBlocks                      : 1;
+    UINT32 PercentageRemaining              : 1;
     UINT32 PercentageUsed                   : 1;
     UINT32 MediaTemperature                 : 1;
     UINT32 ControllerTemperature            : 1;
-    UINT32 UnsafeShutdownCount              : 1;
+    UINT32 UnsafeShutdownCount               : 1;
     UINT32 AITDRAMStatus                    : 1;
-    UINT32                                  : 2;  //!< Reserved
+    UINT32 HealthStausReason                : 1;
+    UINT32                                  : 1;  //!< Reserved
     UINT32 AlarmTrips                       : 1;
     UINT32 LastShutdownStatus               : 1;
     UINT32 SizeOfVendorSpecificDataValid    : 1;
@@ -736,6 +737,7 @@ typedef struct {
   Passthrough Payload:
     Opcode:    0x08h (Get Log Page)
     Sub-Opcode:  0x00h (SMART & Health Info)
+    FIS 1.9
 **/
 typedef struct {
   /** If validation flag is not set it indicates that corresponding field is not valid**/
@@ -752,7 +754,7 @@ typedef struct {
   **/
   UINT8 HealthStatus;
 
-  UINT8 SpareBlocks;          //!< remaining spare capacity as a percentage of factory configured spare
+  UINT8 PercentageRemaining;          //!< remaining spare capacity as a percentage of factory configured spare
   /**
     Device life span as a percentage.
     100 = warranted life span of device has been reached however values up to 255 can be used.
@@ -768,7 +770,7 @@ typedef struct {
   union {
     UINT8 AllFlags;
     struct {
-      UINT8 SpareBlock : 1;
+      UINT8 PercentageRemaining : 1;
       UINT8 MediaTemperature : 1;
       UINT8 ControllerTemperature : 1;
     } Separated;
@@ -779,7 +781,8 @@ typedef struct {
 
   UINT32 DirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
   UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - disabled, 1 - enabled)
-  UINT8 Reserved2[10];
+  UINT16 HealthStatusReason;      //!<  Indicates why the module is in the current Health State
+  UINT8 Reserved2[8];
 
   /**
     00h:       Clean Shutdown

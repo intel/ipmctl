@@ -162,7 +162,7 @@ int dsm_err_to_nvm_lib_err(unsigned int status, struct fw_cmd *p_fw_cmd)
 			rc = NVM_ERR_GENERAL_DEV_FAILURE;
 			break;
 		case DSM_VENDOR_RETRY_SUGGESTED:
-			rc = NVM_ERR_TIMEOUT;
+			rc = NVM_ERR_RETRY_SUGGESTED;
 			break;
 		case DSM_VENDOR_UNKNOWN:
 			rc = NVM_ERR_UNKNOWN;

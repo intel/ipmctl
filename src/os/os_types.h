@@ -12,6 +12,7 @@
 #define DSM_BACKGROUND_OP_STATE_SHIFT (24)
 #define DSM_VENDOR_ERROR(status) ((status & 0xFFFF) >> DSM_VENDOR_ERROR_SHIFT)
 #define DSM_EXTENDED_ERROR(status) ((status & 0xFFFF0000) >> DSM_MAILBOX_ERROR_SHIFT)
+#define DSM_MAX_RETRIES 5
 
 #define BUILD_DSM_OPCODE(Opcode, SubOpcode) (UINT32)(SubOpcode << 8 | Opcode)
 

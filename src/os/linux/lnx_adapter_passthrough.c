@@ -426,6 +426,8 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 	COMMON_LOG_ENTRY();
 	int rc = NVM_SUCCESS;
 	struct ndctl_ctx *ctx;
+	int retry = 0;
+
 	// check input parameters
 	if (p_fw_cmd == NULL)
 	{
@@ -471,54 +473,71 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 			}
 			else
 			{
-				int lnx_err_status = 0;
-				unsigned int dsm_vendor_err_status = 0;
-
-				if (p_fw_cmd->InputPayloadSize > 0)
+				while (retry < DSM_MAX_RETRIES)
 				{
-					size_t bytes_written = ndctl_cmd_vendor_set_input(p_vendor_cmd,
-						p_fw_cmd->InputPayload, p_fw_cmd->InputPayloadSize);
+					int lnx_err_status = 0;
+					unsigned int dsm_vendor_err_status = 0;
 
-					if (bytes_written != p_fw_cmd->InputPayloadSize)
+					if (p_fw_cmd->InputPayloadSize > 0)
 					{
-						COMMON_LOG_ERROR("Failed to write input payload");
-						rc = NVM_ERR_GENERAL_OS_DRIVER_FAILURE;
+						size_t bytes_written = ndctl_cmd_vendor_set_input(p_vendor_cmd,
+							p_fw_cmd->InputPayload, p_fw_cmd->InputPayloadSize);
+
+						if (bytes_written != p_fw_cmd->InputPayloadSize)
+						{
+							COMMON_LOG_ERROR("Failed to write input payload");
+							rc = NVM_ERR_GENERAL_OS_DRIVER_FAILURE;
+							break;
+						}
 					}
-				}
 
-				if (rc == NVM_SUCCESS && p_fw_cmd->LargeInputPayloadSize > 0)
-				{
-					rc = bios_write_large_payload(p_dimm, p_fw_cmd);
-				}
-
-				COMMON_LOG_HANDOFF_F("Passthrough IOCTL. Opcode: 0x%x, SubOpcode: 0x%x",
-					p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
-				if (p_fw_cmd->InputPayloadSize)
-				{
-					// Print one DWORD at a time starting from LSB of InputPayload
-					for (int i = 0; i < p_fw_cmd->InputPayloadSize / sizeof(UINT32); i++)
+					if (p_fw_cmd->LargeInputPayloadSize > 0)
 					{
-						// Make sure entire DWORD gets printed
-						COMMON_LOG_HANDOFF_F("Input[%d]: 0x%.8x",
-							i, ((UINT32 *) (p_fw_cmd->InputPayload))[i]);
+						rc = bios_write_large_payload(p_dimm, p_fw_cmd);
+						if (rc != NVM_SUCCESS)
+						{
+							break;
+						}
 					}
-				}
-				if (rc == NVM_SUCCESS)
-				{
+
+					COMMON_LOG_HANDOFF_F("Passthrough IOCTL. Opcode: 0x%x, SubOpcode: 0x%x",
+						p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
+					if (p_fw_cmd->InputPayloadSize)
+					{
+						// Print one DWORD at a time starting from LSB of InputPayload
+						for (int i = 0; i < p_fw_cmd->InputPayloadSize / sizeof(UINT32); i++)
+						{
+							// Make sure entire DWORD gets printed
+							COMMON_LOG_HANDOFF_F("Input[%d]: 0x%.8x",
+								i, ((UINT32 *) (p_fw_cmd->InputPayload))[i]);
+						}
+					}
+
 					if ((lnx_err_status = ndctl_cmd_submit(p_vendor_cmd)) >= 0)
 					{
 						// BSR returns 0x78, but everything else seems to indicate the
 						// command was a success. Going
 						// to ignore the result for now. If there was a real error,
 						// the fw_status should have it.
-						if ((dsm_vendor_err_status =
-								ndctl_cmd_get_firmware_status(p_vendor_cmd)) != DSM_VENDOR_SUCCESS)
+						dsm_vendor_err_status =	ndctl_cmd_get_firmware_status(p_vendor_cmd);
+
+						if (dsm_vendor_err_status == DSM_VENDOR_RETRY_SUGGESTED)
+						{
+							COMMON_LOG_ERROR_F("RETRY %i IOCTL passthrough failed: "
+								"DSM returned error %d for command with "
+										"Opcode - 0x%x SubOpcode - 0x%x \n", retry, dsm_vendor_err_status,
+											p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
+							retry++;
+							continue;
+						}
+						else if (dsm_vendor_err_status != DSM_VENDOR_SUCCESS)
 						{
 							rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
-							/*COMMON_LOG_ERROR_F("IOCTL passthrough failed: "
+							COMMON_LOG_ERROR_F("IOCTL passthrough failed: "
 								"DSM returned error %d for command with "
-										"Opcode - 0x%x SubOpcode - 0x%x ", dsm_vendor_err_status,
-											p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);*/
+										"Opcode - 0x%x SubOpcode - 0x%x \n", dsm_vendor_err_status,
+											p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
+							break;
 						}
 						else
 						{
@@ -534,6 +553,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 
 								rc = bios_read_large_payload(p_dimm, p_fw_cmd);
 							}
+							break;
 						}
 					}
 					else
@@ -543,9 +563,9 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 								"Linux driver returned error %d for command with "
 								"Opcode- 0x%x SubOpcode- 0x%x ", lnx_err_status,
 								p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
+						break;
 					}
 				}
-
 				ndctl_cmd_unref(p_vendor_cmd);
 			}
 		}

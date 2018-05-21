@@ -170,6 +170,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_DRIVERFAILED                              = 288,
   NVM_ERR_INVALIDPARAMETER                          = 289,
   NVM_ERR_OPERATION_NOT_SUPPORTED                   = 290,
+  NVM_ERR_RETRY_SUGGESTED			    = 291,
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

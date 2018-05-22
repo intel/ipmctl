@@ -3910,6 +3910,7 @@ initAcpiTables(
   EFI_ACPI_DESCRIPTION_HEADER *pPcat = NULL;
   EFI_ACPI_DESCRIPTION_HEADER *pPMTT = NULL;
   UINT64 PciBaseAddress;
+  RETURN_STATUS PcdStatus = RETURN_NOT_STARTED;
 
   NVDIMM_ENTRY();
 
@@ -3942,7 +3943,12 @@ initAcpiTables(
     goto Finish;
   }
   /** Set the Base address **/
-  PcdSet64S(PcdPciExpressBaseAddress, PciBaseAddress);
+  PcdStatus = PcdSet64S(PcdPciExpressBaseAddress, PciBaseAddress);
+  if (RETURN_ERROR(PcdStatus)) {
+    NVDIMM_WARN("PcdSet64S failed");
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
+  }
   if(PcdGet64(PcdPciExpressBaseAddress) != PciBaseAddress) {
     NVDIMM_WARN("Could not set the PCI Base Address");
     ReturnCode = EFI_LOAD_ERROR;

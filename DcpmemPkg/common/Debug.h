@@ -21,7 +21,7 @@ extern CHAR16 gFnName[G_FN_NAME_SIZE];
 #define WIDEN2(x) L ## x
 #define WIDEN(x) WIDEN2(x)
 #define __WFUNCTION__ \
-  AsciiStrToUnicodeStrS(__FUNCTION__, gFnName, G_FN_NAME_SIZE)
+  ((AsciiStrToUnicodeStrS(__FUNCTION__, gFnName, G_FN_NAME_SIZE) == RETURN_SUCCESS) ? gFnName : L"" )
 
 #ifdef OS_BUILD
 extern UINTN EFIAPI PrintNoBuffer(CHAR16* fmt, ...);

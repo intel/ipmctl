@@ -145,8 +145,9 @@ PrintNamespaceIndex(
   }
 
   ZeroMem(Buffer, sizeof(Buffer));
+  AsciiStrToUnicodeStrS((CHAR8 *)&pNamespaceIndex->Signature, Buffer, NSINDEX_SIG_LEN + 1);
 
-  Print(L"Signature   : " FORMAT_STR_NL, AsciiStrToUnicodeStrS((CHAR8 *) &pNamespaceIndex->Signature, Buffer, NSINDEX_SIG_LEN + 1));
+  Print(L"Signature   : " FORMAT_STR_NL, Buffer);
   Print(L"Flags       : 0x%x\n", *pNamespaceIndex->Flags);
   Print(L"LabelSize   : 0x%x\n", pNamespaceIndex->LabelSize);
   Print(L"Sequence    : 0x%x\n", pNamespaceIndex->Sequence);
@@ -183,9 +184,10 @@ PrintNamespaceLabel(
   }
 
   ZeroMem(Buffer, sizeof(Buffer));
+  AsciiStrToUnicodeStrS((CHAR8 *)&pNamespaceLabel->Name, Buffer, NLABEL_NAME_LEN_WITH_TERMINATOR);
 
   Print(L"Uuid          : %g\n", pNamespaceLabel->Uuid);
-  Print(L"Name          : " FORMAT_STR_NL, AsciiStrToUnicodeStrS((CHAR8 *) &pNamespaceLabel->Name, Buffer, NLABEL_NAME_LEN_WITH_TERMINATOR));
+  Print(L"Name          : " FORMAT_STR_NL, Buffer);
   Print(L"Flags         : 0x%x\n", pNamespaceLabel->Flags);
   Print(L"NumOfLabels   : 0x%x\n", pNamespaceLabel->NumberOfLabels);
   Print(L"Position      : 0x%x\n", pNamespaceLabel->Position);

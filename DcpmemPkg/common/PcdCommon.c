@@ -95,14 +95,14 @@ PrintPcdIdentificationInformation(
   CHAR16 *pTmpDimmUid = NULL;
 
   ZeroMem(PartNumber, sizeof(PartNumber));
+  AsciiStrToUnicodeStrS(pIdentificationInfo->DimmIdentification.Version1.DimmPartNumber, PartNumber, PART_NUMBER_SIZE + 1);
 
   Print(L"Platform Config Data Identification Information table\n");
 
   if (PcdConfigTableRevision == NVDIMM_CONFIGURATION_TABLES_REVISION_1) {
     Print(L"DimmManufacturerId           : 0x%x\n", EndianSwapUint16(pIdentificationInfo->DimmIdentification.Version1.DimmManufacturerId));
     Print(L"DimmSerialNumber             : 0x%x\n", EndianSwapUint32(pIdentificationInfo->DimmIdentification.Version1.DimmSerialNumber));
-    Print(L"DimmPartNumber               : " FORMAT_STR_NL,
-      AsciiStrToUnicodeStrS(pIdentificationInfo->DimmIdentification.Version1.DimmPartNumber, PartNumber, PART_NUMBER_SIZE + 1));
+    Print(L"DimmPartNumber               : " FORMAT_STR_NL, PartNumber);
   } else {
     pTmpDimmUid = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pIdentificationInfo->DimmIdentification.Version2.Uid.ManufacturerId),
       pIdentificationInfo->DimmIdentification.Version2.Uid.ManufacturingLocation,

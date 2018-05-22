@@ -3161,7 +3161,121 @@ Finish:
   return Rc;
 }
 
+#ifdef OS_BUILD
 
+/**
+  Firmware command to get PMON Info
+
+  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[out] pPayloadPMONRegisters Area to place PMON Registers data
+    The caller is responsible to free the allocated memory with the FreePool function.
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pDimm or pPayloadPMONRegisters is NULL
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetPMONRegisters(
+  IN     DIMM *pDimm,
+  IN     UINT8 SmartDataMask,
+     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+  )
+{
+  EFI_STATUS Rc = EFI_INVALID_PARAMETER;
+  FW_CMD *pFwCmd = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pPayloadPMONRegisters == NULL) {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetFeatures;
+  pFwCmd->SubOpcode = SubopPMONRegisters;
+  pFwCmd->InputPayload[0] = SmartDataMask;
+  pFwCmd->OutputPayloadSize = sizeof(*pPayloadPMONRegisters);
+
+  Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(Rc)) {
+    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    if (FW_ERROR(pFwCmd->Status)) {
+      Rc = MatchFwReturnCode(pFwCmd->Status);
+    }
+    goto Finish;
+  }
+
+  CopyMem(pPayloadPMONRegisters, pFwCmd->OutPayload, sizeof(*pPayloadPMONRegisters));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(Rc);
+  return Rc;
+}
+
+/**
+  Firmware command to set PMON Info
+
+  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[out] PMONGroupEnable  Specifies which PMON Group to enable.
+    The caller is responsible to free the allocated memory with the FreePool function.
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdSetPMONRegisters(
+  IN     DIMM *pDimm,
+  IN     UINT8 PMONGroupEnable
+  )
+{
+  EFI_STATUS Rc = EFI_INVALID_PARAMETER;
+  FW_CMD *pFwCmd = NULL;
+
+
+  NVDIMM_ENTRY();
+
+/**
+...Valid  PMON groups -0xA -0xF
+**/
+  if (pDimm == NULL) {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtSetFeatures;
+  pFwCmd->SubOpcode = SubopPMONRegisters;
+  pFwCmd->InputPayload[0] = PMONGroupEnable;
+
+  Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(Rc)) {
+    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    if (FW_ERROR(pFwCmd->Status)) {
+      Rc = MatchFwReturnCode(pFwCmd->Status);
+    }
+    goto Finish;
+  }
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(Rc);
+  return Rc;
+}
+#endif
 /**
   Firmware command to get package sparing policy
 

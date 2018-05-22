@@ -1483,6 +1483,36 @@ extern NVM_API int nvm_get_device_discovery(const NVM_UID device_uid, struct dev
 extern NVM_API int nvm_get_device_status(const NVM_UID device_uid, struct device_status *p_status);
 
 /**
+ * @brief Retrieve the PMON Registers of device specified.
+ * @param[in] device_uid
+ *              The device identifier.
+ * @param[in,out] output_payload
+ * @pre The caller must have administrative privileges.
+ * @pre The device is manageable.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ *              NVM_SUCCESS @n
+ *              NVM_ERR_INVALID_PARAMETER @n
+ *              NVM_ERR_DIMM_NOT_FOUND @n
+ */
+extern NVM_API int nvm_get_pmon_registers(const NVM_UID device_uid, const NVM_UINT8 SmartDataMask, PMON_REGISTERS *p_output_payload);
+
+/**
+ * @brief Set the PMON Registers of device specified.
+ * @param[in] device_uid
+ *              The device identifier.
+  * @param[in] device_uid
+ *              The device identifier.
+ * @pre The caller must have administrative privileges.
+ * @pre The device is manageable.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ *              NVM_SUCCESS @n
+ *              NVM_ERR_INVALID_PARAMETER @n
+ *              NVM_ERR_DIMM_NOT_FOUND @n
+ */
+extern NVM_API int nvm_set_pmon_registers(const NVM_UID device_uid, NVM_UINT8 PMONGroupEnable);
+
+
+/**
  * @brief Retrieve #device_settings information about the device specified.
  * @param[in] device_uid
  *              The device identifier.

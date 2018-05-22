@@ -492,24 +492,35 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
     return -1;
   }
 
-  UINT32 dimm_cnt = nvm_get_device_count();
+  int temp_count = 0;
+  int actual_count = 0;
+  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&actual_count)))
+  {
+    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
+    return -1;
+  }
+
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * count);
+  if(count > actual_count)
+    temp_count = actual_count;
+  else temp_count = count;
+
+  DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * actual_count);
   if (NULL == pdimms) {
     NVDIMM_ERR("Failed to allocate memory\n");
     return -1;
   }
 
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)count, DIMM_INFO_CATEGORY_NONE, pdimms);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)actual_count, DIMM_INFO_CATEGORY_NONE, pdimms);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     FreePool(pdimms);
     return -1;
   }
-  for (i = 0; i < dimm_cnt; ++i)
+  for (i = 0; i < temp_count; ++i)
     dimm_info_to_device_discovery(&pdimms[i], &p_devices[i]);
   FreePool(pdimms);
-  return dimm_cnt;
+  return temp_count;
 }
 
 // Deprecated
@@ -616,6 +627,57 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     return NVM_ERR_DIMM_NOT_FOUND;
   }
   dimm_info_to_device_status(&dimm_info, p_status);
+  return NVM_SUCCESS;
+}
+
+NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
+          const NVM_UINT8 SmartDataMask, PMON_REGISTERS *p_output_payload)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  unsigned int dimm_id;
+  int nvm_status;
+  int rc;
+
+  if (NULL == p_output_payload) {
+    NVDIMM_ERR("NULL input parameter\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
+  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    return nvm_status;
+  }
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    return NVM_ERR_DIMM_NOT_FOUND;
+  }
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, (UINT8)SmartDataMask, (PT_PMON_REGISTERS *)p_output_payload);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    return NVM_ERR_OPERATION_FAILED;
+  }
+  return NVM_SUCCESS;
+}
+NVM_API int nvm_set_pmon_registers(const NVM_UID   device_uid,
+          NVM_UINT8 PMONGroupEnable)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  unsigned int dimm_id;
+  int nvm_status;
+  int rc;
+
+  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    return nvm_status;
+  }
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    return NVM_ERR_DIMM_NOT_FOUND;
+  }
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, (UINT8)PMONGroupEnable);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    return NVM_ERR_OPERATION_FAILED;
+  }
   return NVM_SUCCESS;
 }
 

@@ -1062,7 +1062,42 @@ FwCmdGetPowerManagementPolicy(
      OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY *pPayloadPowerManagementPolicy
   );
 
+#ifdef OS_BUILD
 
+/**
+  Firmware command to get PMON Info
+
+  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[out] pPayloadPMONRegisters Area to place PMON Registers data
+    The caller is responsible to free the allocated memory with the FreePool function.
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pDimm or pPayloadPMONRegisters is NULL
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetPMONRegisters(
+  IN     DIMM *pDimm,
+  IN     UINT8 SmartDataMask,
+     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+  );
+
+/**
+  Firmware command to set PMON Info
+
+  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[out] PMONGroupEnable  Specifies which PMON Group to enable.
+    The caller is responsible to free the allocated memory with the FreePool function.
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdSetPMONRegisters(
+  IN     DIMM *pDimm,
+  IN     UINT8 PMONGroupEnable
+  );
+#endif
 /**
   Firmware command to get package sparing policy
 

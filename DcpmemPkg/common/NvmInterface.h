@@ -13,6 +13,8 @@
 #include <FwUtility.h>
 #include <PcdCommon.h>
 
+
+
 /* {CF2F5F1F-94B6-4C15-9CAE-AFB3BD9F2BA5} */
 #define EFI_NVMDIMM_CONFIG_PROTOCOL_GUID \
   {0xcf2f5f1f, 0x94b6, 0x4c15, {0x9c, 0xae, 0xaf, 0xb3, 0xbd, 0x9f, 0x2b, 0xa5}}
@@ -151,6 +153,46 @@ EFI_STATUS
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO *pDimmInfo
 );
+#ifdef OS_BUILD
+/**
+  Get the PMON registers
+
+  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
+  @param[out] pDimmInfo A pointer to the dimm found in NFIT
+
+  @retval EFI_SUCCESS  The dimm information was returned properly
+  @retval EFI_INVALID_PARAMETER pDimm is NULL or the dimm with the pid provided does not exist.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_NVMDIMM_CONFIG_GET_PMON) (
+  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 Pid,
+  IN     UINT8 SmartDataMask,
+     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+);
+
+/**
+  Set the PMON Group
+
+  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
+  @param[out] pDimmInfo A pointer to the dimm found in NFIT
+
+  @retval EFI_SUCCESS  The dimm information was returned properly
+  @retval EFI_INVALID_PARAMETER pDimm is NULL or the dimm with the pid provided does not exist.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_NVMDIMM_CONFIG_SET_PMON) (
+  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 Pid,
+  IN     UINT8 PMONGroupEnable
+);
+#endif
 
 /**
   Retrieve the details about the uninitialized AEP specified with pid found thru SMBUS
@@ -1444,6 +1486,10 @@ struct _EFI_NVMDIMM_CONFIG_PROTOCOL {
   EFI_NVMDIMM_CONFIG_GET_DIMM_COUNT GetDimmCount;
   EFI_NVMDIMM_CONFIG_GET_DIMMS GetDimms;
   EFI_NVMDIMM_CONFIG_GET_DIMM GetDimm;
+#ifdef OS_BUILD
+  EFI_NVMDIMM_CONFIG_GET_PMON GetPMONRegisters;
+  EFI_NVMDIMM_CONFIG_SET_PMON SetPMONRegisters;
+#endif
   EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMM_COUNT GetUninitializedDimmCount;
   EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMMS GetUninitializedDimms;
   EFI_NVMDIMM_CONFIG_GET_SOCKETS GetSockets;

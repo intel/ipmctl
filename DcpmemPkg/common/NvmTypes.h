@@ -1016,4 +1016,63 @@ typedef struct _HOST_SERVER_INFO
    CHAR16 OsName[HOST_SERVER_OS_NAME_LEN];
    CHAR16 OsVersion[HOST_SERVER_OS_VERSION_LEN];
 }HOST_SERVER_INFO;
+#ifdef OS_BUILD
+
+typedef unsigned char NVM_UINT8; // 8 bit unsigned integer
+
+typedef struct _PT_PMON_REGISTERS {
+  /**
+  This will specify whether or not to return the extra smart data along with the PMON
+  Counter data.
+  0x0 - No Smart Data DDRT or 3D XPoint™
+  0x1 - DDRT Data only to be returned
+  0x2 - 3D XPoint™ Data only to be returned
+  0x3 - DDRT & 3D XPoint™ Data to be returned
+  All other values reserved
+  **/
+  NVM_UINT8 SmartDataMask;
+  NVM_UINT8 Reserved1[3];
+  /**
+  This will specify which group that is currently enabled. If no groups are enabled Group
+  F will be returned
+  **/
+  NVM_UINT8 GroupEnabled;
+  NVM_UINT8 Reserved2[18];
+  NVM_UINT8 PMON4Counter[4];
+  NVM_UINT8 PMON5Counter[4];
+  NVM_UINT8 Reserved3[4];
+  NVM_UINT8 PMON7Counter[4];
+  NVM_UINT8 PMON8Counter[4];
+  NVM_UINT8 PMON9Counter[4];
+  NVM_UINT8 Reserved4[15];
+  NVM_UINT8 PMON14Counter[4];
+  NVM_UINT8 Reserved5[4];
+  /**
+  DDRT Reads for current power cycle
+  **/
+  NVM_UINT8 DDRTRD[8];
+  /**
+  DDRT Writes for current power cycle
+  **/
+  NVM_UINT8 DDRTWR[8];
+  /**
+  3D XPoint™ Reads for current power cycle
+  **/
+  NVM_UINT8 SXPRD[8];
+  /**
+  3D XPoint™ Writes for current power cycle
+  **/
+  NVM_UINT8 SXPWR[8];
+  /**
+  Current 3D XPoint™ Media temp
+  **/
+  NVM_UINT8 MTP[2];
+  /**
+  Current Controller temp
+  **/
+  NVM_UINT8 CTP[2];
+  NVM_UINT8 Reserved[19];
+}PT_PMON_REGISTERS;
+
+#endif
 #endif /** _NVM_TYPES_H_ **/

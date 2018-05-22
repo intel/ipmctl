@@ -198,6 +198,48 @@ GetDimm(
      OUT DIMM_INFO *pDimmInfo
   );
 
+#ifdef OS_BUILD
+/**
+  Retrieve the PMON register values from the dimm
+
+  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] SmartDataMask This will specify whether or not to return the extra smart data along with the PMON
+  Counter data
+  @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
+
+  @retval EFI_SUCCESS  The dimm information was returned properly
+  @retval EFI_INVALID_PARAMETER pDimm is NULL or the dimm with the pid provided does not exist.
+**/
+EFI_STATUS
+EFIAPI
+GetPMONRegisters(
+  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 Pid,
+  IN     UINT8 SmartDataMask,
+     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+  );
+
+/**
+  Set the PMON register values from the dimm
+
+  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] PMONGroupEnable Specifies which PMON Group to enable
+  @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
+
+  @retval EFI_SUCCESS  The dimm information was returned properly
+  @retval EFI_INVALID_PARAMETER pDimm is NULL or the dimm with the pid provided does not exist.
+**/
+EFI_STATUS
+EFIAPI
+SetPMONRegisters(
+  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 Pid,
+  IN     UINT8 PMONGroupEnable
+  );
+#endif
+
 /**
   Retrieve the list of sockets (physical processors) in the host server
 

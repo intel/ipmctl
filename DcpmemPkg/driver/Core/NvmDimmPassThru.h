@@ -293,7 +293,8 @@ enum GetSetFeatSubop {
   SubopPolicyPackageSparing = 0x03, //!< Get/Set the DIMM Package sparing policy parameters
   SubopAddressRangeScrub= 0x04,     //!< Get/Set Address Range Scrub information and state
   SubopDDRTAlerts = 0x05,           //!< Get what alerts are set to notify the user
-  SubopConfigDataPolicy = 0x06      //!< Get/Set Optional Configuration Data Policy
+  SubopConfigDataPolicy = 0x06,     //!< Get/Set Optional Configuration Data Policy
+  SubopPMONRegisters = 0x07         //!< Get/Set PMON Registers
 };
 
 /**

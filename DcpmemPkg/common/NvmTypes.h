@@ -110,10 +110,13 @@ typedef struct {
 
 #ifdef OS_BUILD
 #define	NVM_SYSLOG_SOURCE	"NVM_MGMT"
+#define	NVM_SYSLOG_SRC_W	L"NVM_MGMT"
 #define NVM_DEBUG_LOGGER_SOURCE "NVM_DBG_LOGGER"
 #define NVM_DIMM_NAME       "Apache Pass DIMM"
+#define MAX_SOURCE_STR_LENGTH    32
 
 typedef char NVM_EVENT_MSG[NVM_EVENT_MSG_LEN]; // Event message string
+typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #endif // OS_BUILD
 
 

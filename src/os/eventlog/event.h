@@ -27,6 +27,7 @@ extern "C" {
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_7        7
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_8        8
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_9        9
+#define SYSTEM_EVENT_CAT_MGMT_NUMB_10       10
 
 #define SYSTEM_EVENT_TYPE_CATEGORY_MASK     0xFF000000
 #define SYSTEM_EVENT_TYPE_SEVERITY_MASK     0x00F00000
@@ -119,6 +120,11 @@ NVM_API int nvm_get_system_entries(const char *source, unsigned int event_type_m
 * Store an event log entry in the system event log
 */
 NVM_API int nvm_store_system_entry(const char *source, unsigned int event_type, const char *device_uid, const char  *message, ...);
+
+/*
+* Store an event log entry in the system event log, wide character message support
+*/
+NVM_API int nvm_store_system_entry_widechar(const wchar_t *source, unsigned int event_type, const wchar_t *device_uid, const wchar_t  *message, ...);
 
 /*
 * Return action required status for defined DIMM UID

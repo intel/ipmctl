@@ -152,44 +152,69 @@ InitializeNvmDimmDriver (
 #include "event.h"
 #include <stdio.h>
 #include <stdarg.h>
+
 /*
 * Store an event log entry in the system event log for the dimms list
 */
-EFI_STATUS StoreSystemEntryForDimmList(LIST_ENTRY *pDimmList, CONST CHAR8 *source, UINT32 event_type, CONST CHAR8  *message, ...)
+EFI_STATUS StoreSystemEntryForDimm(OBJECT_STATUS *pObjectStatus, CONST CHAR16 *source, UINT32 event_type, CONST CHAR16  *message, ...)
 {
-    EFI_STATUS ReturnCode = EFI_SUCCESS;
-    DIMM *pDimm = NULL;
-    LIST_ENTRY *pDimmNode = NULL;
-    CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
-    VA_LIST args;
-    NVM_EVENT_MSG event_message = { 0 };
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pDimmNode = NULL;
+  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
+  VA_LIST args;
+  NVM_EVENT_MSG_W event_message = { 0 };
 
-    if (pDimmList == NULL) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-    }
-    else
-    {
-        // Prepare the string
-        VA_START(args, message);
-        AsciiVSPrint(event_message, sizeof(event_message), message, args);
-        VA_END(args);
-        LIST_FOR_EACH(pDimmNode, pDimmList) {
-            pDimm = DIMM_FROM_NODE(pDimmNode);
-            // Get the current dimm uid
-            ReturnCode = GetDimmUid(pDimm, DimmUid, MAX_DIMM_UID_LENGTH);
-            if (EFI_ERROR(ReturnCode)) {
-                NVDIMM_DBG("ERROR: GetDimmUid\n");
-                break;
-            }
-            // Prepare DIMM UId
-            UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
-            // Store the log
-            nvm_store_system_entry(source, event_type, AsciiDimmUid, event_message);
+  if ((pObjectStatus == NULL) || (NULL == message)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+  }
+  else
+  {
+    // Prepare the string
+    VA_START(args, message);
+    UnicodeVSPrint(event_message, sizeof(event_message), message, args);
+    VA_END(args);
+    // Store the log
+    nvm_store_system_entry_widechar(source, event_type, pObjectStatus->ObjectIdStr, event_message);
+  }
+
+  return ReturnCode;
+}
+/*
+* Store an event log entry in the system event log for the dimms list
+*/
+EFI_STATUS StoreSystemEntryForDimmList(COMMAND_STATUS *pCommandStatus, CONST CHAR16 *source, UINT32 event_type, CONST CHAR16  *message)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pObjectStatusNode = NULL;
+  OBJECT_STATUS *pObjectStatus = NULL;
+  UINT32 Index = 0;
+  BOOLEAN IsDimmStatusSuccess = TRUE;
+
+  if (pCommandStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+  }
+  else
+  {
+    LIST_FOR_EACH(pObjectStatusNode, &pCommandStatus->ObjectStatusList) {
+      pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
+      // Check the DIMM status
+      IsDimmStatusSuccess = TRUE;
+      for (Index = 0; Index < ((NVM_LAST_STATUS_VALUE / 64) + 1); Index++) {
+        if ((0 == Index) && (NVM_SUCCESS_FW_RESET_REQUIRED == pObjectStatus->StatusBitField.BitField[Index])) {
+          continue;
         }
+        if (pObjectStatus->StatusBitField.BitField[Index] != NVM_SUCCESS) {
+          IsDimmStatusSuccess = FALSE;
+        }
+      }
+      if (IsDimmStatusSuccess) {
+        // Store the log
+        StoreSystemEntryForDimm(pObjectStatus, source, event_type, message, pObjectStatus->ObjectId);
+      }
     }
+  }
 
-    return ReturnCode;
+  return ReturnCode;
 }
 #endif // OS_BUILD
 
@@ -5610,9 +5635,11 @@ CreateGoalConfig(
 #ifdef OS_BUILD
   if (!EFI_ERROR(ReturnCode))
   {
-      StoreSystemEntryForDimmList(&gNvmDimmData->PMEMDev.Dimms, NVM_SYSLOG_SOURCE,
+      CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_CHANGE_NEW_GOAL), NULL);
+      StoreSystemEntryForDimmList(pCommandStatus, NVM_SYSLOG_SRC_W,
           SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_1, FALSE, TRUE, TRUE, FALSE, 0),
-          "A new configuration goal has been saved on %s", NVM_DIMM_NAME);
+          pTmpStr);
+      FREE_POOL_SAFE(pTmpStr);
   }
 #endif // OS_BUILD
 
@@ -5712,6 +5739,17 @@ DeleteGoalConfig (
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
+
+#ifdef OS_BUILD
+  if (!EFI_ERROR(ReturnCode))
+  {
+    CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_CHANGE_DELETE_GOAL), NULL);
+    StoreSystemEntryForDimmList(pCommandStatus, NVM_SYSLOG_SRC_W,
+      SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_10, FALSE, TRUE, TRUE, FALSE, 0),
+      pTmpStr);
+    FREE_POOL_SAFE(pTmpStr);
+  }
+#endif // OS_BUILD
 
 Finish:
   ClearInternalGoalConfigsInfo(&gNvmDimmData->PMEMDev.Dimms);

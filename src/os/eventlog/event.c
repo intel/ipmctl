@@ -1102,3 +1102,38 @@ NVM_API int nvm_get_uid_form_entry(CHAR8 *event_entry, UINT32 size, CHAR8 *dimm_
 
     return 0;
 }
+
+/*
+* Store an event log entry in the system event log, wide character message support
+*/
+NVM_API int nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT32 event_type, CONST CHAR16 *device_uid, CONST CHAR16 *message, ...)
+{
+  VA_LIST args;
+  NVM_EVENT_MSG_W widechar_event_message = { 0 };
+  NVM_EVENT_MSG ascii_event_message = { 0 };
+  UINTN size = NVM_EVENT_MSG_LEN;
+  UINTN ret_value = 0;
+  CHAR8 ascii_source[MAX_SOURCE_STR_LENGTH] = { 0 };
+  CHAR8 ascii_dimm_id[MAX_DIMM_UID_LENGTH] = { 0 };
+
+  if ((NULL == source) || (NULL == message)) {
+    return -1;
+  }
+
+  // Convert the event message wide character string to ascii event string
+  VA_START(args, message);
+  ret_value = UnicodeVSPrint(widechar_event_message, size, message, args);
+  VA_END(args);
+  if (ret_value < size) {
+    UnicodeStrToAsciiStr(widechar_event_message, ascii_event_message);
+    UnicodeStrToAsciiStr(source, ascii_source);
+    if (NULL != device_uid) {
+      UnicodeStrToAsciiStr(device_uid, ascii_dimm_id);
+      nvm_store_system_entry(ascii_source, event_type, ascii_dimm_id, ascii_event_message);
+    }
+    else {
+      nvm_store_system_entry(ascii_source, event_type, NULL, ascii_event_message);
+    }
+  }
+  return -1;
+}

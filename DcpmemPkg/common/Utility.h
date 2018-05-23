@@ -621,6 +621,22 @@ ConvertHealthStateReasonToHiiStr(
 );
 
 /**
+  Converts the dimm Id to its  HII string equivalent
+  @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
+
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
+**/
+EFI_STATUS
+  ConvertDimmIdToDimmListStr(
+    IN     REGION_INFO *pRegionInfo,
+    OUT CHAR16 **ppDimmIdStr
+  );
+
+
+/**
   Open file handle of root directory from given path
 
   @param[in] pDevicePath - path to file

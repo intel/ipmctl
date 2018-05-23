@@ -36,6 +36,8 @@
 #define FORMAT_16STR                            L"%16s"
 #define FORMAT_UINT64                           L"%ld"
 #define FORMAT_STR_WITH_COMMA                   L", %s"
+#define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
+#define FORMAT_HEX                              L"0x%04x"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_DYN_STR                          L"%*ls"
@@ -72,6 +74,8 @@
 #define FORMAT_UINT64                           L"%llu"
 #define FORMAT_STR_SINGLE_QUOTE                 L"'%ls'"
 #define FORMAT_STR_WITH_COMMA                   L", %ls"
+#define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
+#define FORMAT_HEX                              L"0x%04x"
 #endif // OS_BUILD
 
 #endif /** _FORMAT_STRINGS_H_ **/

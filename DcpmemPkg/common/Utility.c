@@ -2305,6 +2305,49 @@ Finish:
 }
 
 /**
+  Converts the dimm Id to its  HII string equivalent
+  @param[in] HiiHandle - handle for hii
+  @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
+
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
+**/
+EFI_STATUS
+ConvertDimmIdToDimmListStr(
+  IN     REGION_INFO *pRegionInfo,
+  OUT CHAR16 **ppDimmIdStr
+)
+{
+
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  INT32 Index = 0;
+  NVDIMM_ENTRY();
+
+  if (ppDimmIdStr == NULL) {
+    goto Finish;
+  }
+  *ppDimmIdStr = NULL;
+
+  for (Index = 0; Index < pRegionInfo->DimmIdCount; Index++) {
+    *ppDimmIdStr = CatSPrint(*ppDimmIdStr,
+      ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
+         pRegionInfo->DimmId[Index]);
+  }
+
+  if (*ppDimmIdStr == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Convert modes supported by to string
 
   @param[in] ModesSupported, bits define modes supported

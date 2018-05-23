@@ -863,7 +863,7 @@ typedef struct {
   //
   UINT16 CompositeTemp;
   //
-  // Contains a normalized percentage (0 to 100%) of the remaining spare capacity available.
+  // Contains a normalized percentage (0 to 100%) of the remaining percentage remaining available.
   //
   UINT8  AvailableSpare;
   //

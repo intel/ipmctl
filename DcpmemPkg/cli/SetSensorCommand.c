@@ -179,7 +179,7 @@ SetSensor(
   } else if (SensorId == SENSOR_TYPE_MEDIA_TEMPERATURE) {
     pCommandStatusMessage = CatSPrint(NULL, L"Modify media temperature settings");
   } else {
-    pCommandStatusMessage = CatSPrint(NULL, L"Modify spare capacity settings");
+    pCommandStatusMessage = CatSPrint(NULL, L"Modify percentage remaining settings");
   }
 
   if (!Force) {

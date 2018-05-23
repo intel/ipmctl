@@ -52,7 +52,7 @@ struct Command SetDimmCommand =
     {POISON_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_TYPE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired},
     {PACKAGE_SPARING_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired },
-    {SPARE_CAPACITY_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
+    {PERCENTAGE_REAMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired}
   },                                                                //!< properties
@@ -117,14 +117,14 @@ SetDimm(
   CHAR16 *pPoisonAddress = NULL;
   CHAR16 *pPoisonType = NULL;
   CHAR16 *pPackageSparing = NULL;
-  CHAR16 *pSpareCapacityPercent = NULL;
+  CHAR16 *pPercentageRemaining = NULL;
   CHAR16 *pFatalMediaError = NULL;
   CHAR16 *pDirtyShutDown = NULL;
   CHAR16 *pClearErrorInj = NULL;
   UINT16 ErrInjectType = ERROR_INJ_TYPE_INVALID;
   UINT64 TemperatureInteger;
   UINT64 PoisonAddress;
-  UINT64 SpareCapacityPercent;
+  UINT64 PercentageRemaining;
   UINT8  PoisonType = POISON_MEMORY_TYPE_PATROLSCRUB;
   UINT8 ErrorInjectionTypeSet = 0;
   UINT8 PoisonTypeValid = 0;
@@ -274,7 +274,7 @@ SetDimm(
         }
     }
 
-    if (!EFI_ERROR(ContainsProperty(pCmd, SPARE_CAPACITY_INJ_PROPERTY))) {
+    if (!EFI_ERROR(ContainsProperty(pCmd, PERCENTAGE_REAMAINING_INJ_PROPERTY))) {
         if (ActionSpecified) {
             /** We already found a specified action, more are not allowed **/
             ReturnCode = EFI_INVALID_PARAMETER;
@@ -606,7 +606,7 @@ SetDimm(
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
   GetPropertyValue(pCmd, POISON_TYPE_INJ_PROPERTY, &pPoisonType);
   GetPropertyValue(pCmd, PACKAGE_SPARING_INJ_PROPERTY, &pPackageSparing);
-  GetPropertyValue(pCmd, SPARE_CAPACITY_INJ_PROPERTY, &pSpareCapacityPercent);
+  GetPropertyValue(pCmd, PERCENTAGE_REAMAINING_INJ_PROPERTY, &pPercentageRemaining);
   GetPropertyValue(pCmd, FATAL_MEDIA_ERROR_INJ_PROPERTY, &pFatalMediaError);
   GetPropertyValue(pCmd, DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, &pDirtyShutDown);
   GetPropertyValue(pCmd, CLEAR_ERROR_INJ_PROPERTY, &pClearErrorInj);
@@ -689,16 +689,16 @@ SetDimm(
       ErrInjectType = ERROR_INJ_PACKAGE_SPARING;
   }
   /**
-   SPARE capacity property
+   percentage remaining property
   **/
-  if (pSpareCapacityPercent != NULL) {
+  if (pPercentageRemaining != NULL) {
       pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
       pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-      ReturnCode = GetU64FromString(pSpareCapacityPercent, &SpareCapacityPercent);
+      ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemaining);
 
-      if (!ReturnCode || SpareCapacityPercent > 100) {
-        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'SpareCapacity'\n", CLI_SYNTAX_ERROR,
-          pSpareCapacityPercent, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
+      if (!ReturnCode || PercentageRemaining > 100) {
+        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
+          pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         ReturnCode = EFI_INVALID_PARAMETER;
         goto FinishError;
       }
@@ -755,7 +755,7 @@ SetDimm(
   if (ErrInjectType != ERROR_INJ_TYPE_INVALID) {
     ReturnCode = pNvmDimmConfigProtocol->InjectError(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount,
     (UINT8)ErrInjectType, ClearStatus, &TemperatureInteger,
-    &PoisonAddress, &PoisonType, (UINT8 *)&SpareCapacityPercent, pCommandStatus);
+    &PoisonAddress, &PoisonType, (UINT8 *)&PercentageRemaining, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_INJECT_ERROR_FAILED);
       goto FinishError;

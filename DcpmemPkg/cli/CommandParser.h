@@ -140,7 +140,7 @@
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property
 #define CLEAR_ERROR_INJ_PROPERTY          L"Clear"                    //!< Clear error injection property
 #define PACKAGE_SPARING_INJ_PROPERTY      L"PackageSparing"           //!< PackageSparing error injection property
-#define SPARE_CAPACITY_INJ_PROPERTY       L"PercentageRemaining"      //!< PercentageRemaining error injection property
+#define PERCENTAGE_REAMAINING_INJ_PROPERTY       L"PercentageRemaining"      //!< PercentageRemaining error injection property
 #define FATAL_MEDIA_ERROR_INJ_PROPERTY    L"FatalMediaError"          //!< FatalMediaError error injection property
 #define DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY L"DirtyShutdown"            //!< DirtyShutdown error injection property
 #define LOCKSTATE_PROPERTY                L"LockState"                //!< 'LockState' property name

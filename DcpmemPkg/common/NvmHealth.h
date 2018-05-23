@@ -8,7 +8,7 @@
 
 #include "NvmInterface.h"
 
-#define SPARE_CAPACITY_STR              L"SpareCapacity"
+#define SPARE_CAPACITY_STR              L"PercentageRemaining"
 #define CONTROLLER_TEMPERATURE_STR      L"ControllerTemperature"
 #define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
 #define WEAR_LEVEL_STR                  L"WearLevel"
@@ -20,7 +20,7 @@
 #define DIMM_HEALTH_STR                 L"Health"
 
 #define SENSORS_COMBINED \
-  L"Health|MediaTemperature|ControllerTemperature|SpareCapacity|WearLevel|UnsafeShutdowns|PowerOnTime|" \
+  L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|WearLevel|DirtyShutdowns|PowerOnTime|" \
   L"UpTime|PowerCycles|FwErrorCount"
 
 #define TEMPERATURE_MSR     L"C"

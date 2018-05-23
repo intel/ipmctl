@@ -9002,7 +9002,7 @@ Finish:
   @param[IN] pInjectTemperatureValue - Pointer to inject temperature
   @param[IN] pInjectPoisonAddress - Pointer to inject poison address
   @param[IN] pPoisonType - Pointer to poison type
-  @param[IN] pSpareCapacityPercent - Pointer to spare capacity
+  @param[IN] pPercentageremaining - Pointer to percentage remaining
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
@@ -9020,7 +9020,7 @@ InjectError(
     IN     UINT64 *pInjectTemperatureValue,
     IN     UINT64 *pInjectPoisonAddress,
     IN     UINT8  *pPoisonType,
-    IN     UINT8  *pSpareCapacityPercent,
+    IN     UINT8  *pPercentageRemaining,
     OUT COMMAND_STATUS *pCommandStatus
 )
 {
@@ -9188,7 +9188,7 @@ InjectError(
         goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = SPARE_BLOCK_PERCENTAGE_TRIGGER;
-      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger = *pSpareCapacityPercent;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger = *pPercentageRemaining;
       for (Index = 0; Index < DimmsNum; Index++) {
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
         if (EFI_ERROR(ReturnCode)) {

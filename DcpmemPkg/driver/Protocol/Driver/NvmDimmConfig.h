@@ -1730,7 +1730,7 @@ InjectError
 @param[IN] pInjectTemperatureValue - Pointer to inject temperature
 @param[IN] pInjectPoisonAddress - Pointer to inject poison address
 @param[IN] pPoisonType - Pointer to poison type
-@param[IN] pSpareCapacityPercent - Pointer to spare capacity
+@param[IN] pPercentageRemaining - Pointer to percentage remaining
 @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
 @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
@@ -1748,7 +1748,7 @@ InjectError(
 	IN     UINT64 *pInjectTemperatureValue OPTIONAL,
 	IN     UINT64 *pInjectPoisonAddress,
 	IN     UINT8 *pPoisonType,
-	IN     UINT8  *pSpareCapacityPercent,
+	IN     UINT8  *pPercentageRemaining,
 	OUT COMMAND_STATUS *pCommandStatus
 );
 

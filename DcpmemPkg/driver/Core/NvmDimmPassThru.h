@@ -755,7 +755,7 @@ typedef struct {
   **/
   UINT8 HealthStatus;
 
-  UINT8 PercentageRemaining;          //!< remaining spare capacity as a percentage of factory configured spare
+  UINT8 PercentageRemaining;          //!< remaining percentage remaining as a percentage of factory configured spare
   /**
     Device life span as a percentage.
     100 = warranted life span of device has been reached however values up to 255 can be used.

@@ -28,8 +28,8 @@
 #define EMULATOR_DIMM_HEALTH_STATUS       0    //!< Normal
 #define EMULATOR_DIMM_TEMPERATURE         300  //!< 300K is about 26C
 #define EMULATOR_DIMM_TEMPERATURE_THR     310  //!< 310K is about 35C
-#define EMULATOR_DIMM_SPARE_CAPACITY      75   //!< 75% of spare capacity
-#define EMULATOR_DIMM_SPARE_CAPACITY_THR  5    //!< 5% of spare capacity
+#define EMULATOR_DIMM_PERCENTAGE_REMAINING      75   //!< 75% of percentage remaining
+#define EMULATOR_DIMM_PERCENTAGE_REMAINING_THR  5    //!< 5% of percentage remaining
 #define EMULATOR_DIMM_PERCENTAGE_USED_THR 90   //!< 90% of space is used
 #define DIMM_OUTPUT_PAYLOAD_SIZE          128  //!< The max size of the DIMM small output payload
 

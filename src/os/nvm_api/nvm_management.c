@@ -2641,7 +2641,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID   device_uid,
   DimmCount = 1;
   ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
                    (UINT8)p_error->type, ClearStatus, (UINT64 *)&p_error->temperature, (UINT64 *)&p_error->dpa,
-                   (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->spareCapacity, pCommandStatus);
+                   (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
@@ -2682,7 +2682,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID   device_uid,
   DimmCount = 1;
   ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
                    (UINT8)p_error->type, ClearStatus, (UINT64 *)&p_error->temperature, (UINT64 *)&p_error->dpa,
-                   (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->spareCapacity, pCommandStatus);
+                   (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;

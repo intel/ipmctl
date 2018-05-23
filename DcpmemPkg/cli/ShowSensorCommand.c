@@ -346,7 +346,7 @@ ShowSensor(
         if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, LOWER_THRESHOLD_NON_CRITICAL_STR))) {
           switch (Index2) {
           case SENSOR_TYPE_PERCENTAGE_REMAINING:
-            // Only spare capacity sensor got lower non-critical threshold
+            // Only percentage remaining sensor got lower non-critical threshold
             pTempBuff = GetSensorValue(DimmSensorsSet[Index2].NonCriticalThreshold, DimmSensorsSet[Index2].Type);
             break;
           default:

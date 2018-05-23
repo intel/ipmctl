@@ -256,7 +256,7 @@ enum sensor_type {
 	SENSOR_HEALTH			= 0,    ///< Apache Pass DIMM health as reported in the SMART log
 	SENSOR_MEDIA_TEMPERATURE	= 1,    ///< Device media temperature in degrees Celsius.
 	SENSOR_CONTROLLER_TEMPERATURE	= 2,    ///< Device media temperature in degrees Celsius.
-	SENSOR_SPARECAPACITY		= 3,    ///< Amount of spare capacity remaining as a percentage.
+	SENSOR_PERCENTAGE_REMAINING		= 3,    ///< Amount of percentage remaining as a percentage.
 	SENSOR_WEARLEVEL		= 4,    ///< An estimate of the device life used as a percentage.
 	SENSOR_DIRTYSHUTDOWNS		= 5,    ///< Device shutdowns without notification.
 	SENSOR_POWERONTIME		= 6,    ///< Total power-on time over the lifetime of the device.
@@ -374,7 +374,7 @@ enum error_type {
 	ERROR_TYPE_POISON		= 1,    ///< Inject a poison error.
 	ERROR_TYPE_TEMPERATURE		= 2,    ///< Inject a media temperature error.
 	ERROR_TYPE_PACKAGE_SPARING		= 3,    ///< Trigger or revert an artificial package sparing.
-	ERROR_TYPE_SPARE_CAPACITY	= 4,    ///< Trigger or clear a spare capacity threshold alarm.
+	ERROR_TYPE_SPARE_CAPACITY	= 4,    ///< Trigger or clear a percentage remaining threshold alarm.
 	ERROR_TYPE_MEDIA_FATAL_ERROR	= 5,    ///< Inject or clear a fake media fatal error.
 	ERROR_TYPE_DIRTY_SHUTDOWN	= 6,    ///< Inject or clear a dirty shutdown error.
 };
@@ -1195,7 +1195,7 @@ struct device_error {
 	enum poison_memory_type memory_type;    ///< Poison type
 	NVM_UINT64		dpa;            ///< only valid if injecting poison error
 	NVM_UINT64		temperature;    ///< only valid if injecting temperature error
-	NVM_UINT64		spareCapacity;  ///< only valid if injecting spare capacity error
+	NVM_UINT64		percentageRemaining;  ///< only valid if injecting percentage remaining error
 };
 
 /**

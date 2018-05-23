@@ -216,6 +216,22 @@ EFI_STATUS StoreSystemEntryForDimmList(COMMAND_STATUS *pCommandStatus, CONST CHA
 
   return ReturnCode;
 }
+
+/*
+* Converts the sensor Id value to the wide character string
+*/
+STATIC CHAR16* ConvertSensorIdToStringW(UINT8 SensorId)
+{
+  if (SensorId == SENSOR_TYPE_CONTROLLER_TEMPERATURE) {
+    return L"ControllerTemperature";
+  } else if (SensorId == SENSOR_TYPE_MEDIA_TEMPERATURE) {
+    return L"MediaTemperature";
+  } else if (SensorId == SENSOR_TYPE_PERCENTAGE_REMAINING) {
+    return L"PercentageRemaining";
+  }
+  return L"";
+}
+
 #endif // OS_BUILD
 
 /**
@@ -2129,6 +2145,10 @@ SetAlarmThresholds (
   UINT32 DimmsNum = 0;
   PT_PAYLOAD_ALARM_THRESHOLDS *pPayloadAlarmThresholds = NULL;
   UINT32 Index = 0;
+#ifdef OS_BUILD
+  LIST_ENTRY *pObjectStatusNode = NULL;
+  OBJECT_STATUS *pObjectStatus = NULL;
+#endif // OS_BUILD
 
   NVDIMM_ENTRY();
 
@@ -2197,7 +2217,16 @@ SetAlarmThresholds (
     goto Finish;
   }
 
-  for (Index = 0; Index < DimmsNum; Index++) {
+  for ((Index = 0)
+#ifdef OS_BUILD
+    ,(pObjectStatusNode = (&pCommandStatus->ObjectStatusList)->ForwardLink)
+#endif // OS_BUILD
+    ; Index < DimmsNum;
+    (Index++)
+#ifdef OS_BUILD
+    ,(pObjectStatusNode = pObjectStatusNode->ForwardLink)
+#endif // OS_BUILD
+    ) {
     // let's read current values so we'll not overwrite them during setting
     ReturnCode = FwCmdGetAlarmThresholds(pDimms[Index], &pPayloadAlarmThresholds);
     if (pPayloadAlarmThresholds == NULL) {
@@ -2249,6 +2278,13 @@ SetAlarmThresholds (
       }
     } else {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+#ifdef OS_BUILD
+      pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
+      CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_SENSOR_SET_CHANGED), NULL);
+        nvm_store_system_entry_widechar(NVM_SYSLOG_SRC_W,
+          SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_11, FALSE, TRUE, TRUE, FALSE, 0),
+          pObjectStatus->ObjectIdStr, pTmpStr, ConvertSensorIdToStringW(SensorId), pDimms[Index]->DeviceHandle.AsUint32);
+#endif // OS_BUILD
     }
   }
 

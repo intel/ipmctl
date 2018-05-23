@@ -41,7 +41,7 @@ struct Command ShowEventCommand =
 };
 
 CHAR8 g_ascii_str[1024];
-#define TO_ASCII(x) UnicodeStrToAsciiStrS(x, g_ascii_str, 1024)
+#define TO_ASCII(x) (UnicodeStrToAsciiStrS(x, g_ascii_str, 1024) == RETURN_SUCCESS) ? g_ascii_str : ""
 
 /**
 Execute the Show Goal command
@@ -256,7 +256,7 @@ ShowEvent(
 		size_t StringLen = AsciiStrSize(StringBuffer) + 1;
 		WStringBuffer = (CHAR16 *) AllocateZeroPool(StringLen * sizeof(CHAR16));
 		if (NULL != WStringBuffer) {
-			if (NULL == AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
+			if (RETURN_SUCCESS != AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
 				ReturnCode = EFI_ABORTED;
 				goto Finish;
 			}

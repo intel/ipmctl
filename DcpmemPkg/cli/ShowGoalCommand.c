@@ -302,20 +302,22 @@ ShowGoalPrintDetailedView(
     CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH];
     /** ActionRequired **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQ_PROPERTY))) {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ACTION_REQ_PROPERTY, (UINT8) nvm_get_action_required(UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH)));
+        UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
+        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ACTION_REQ_PROPERTY, (UINT8) nvm_get_action_required(AsciiDimmUid));
     }
     /** ActionRequiredEvents **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQ_EVENTS_PROPERTY))) {
         CHAR8 *StringBuffer = NULL;
+        UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
         nvm_get_events_from_file(SYSTEM_EVENT_TYPE_AR_STATUS_SET(TRUE) | SYSTEM_EVENT_TYPE_AR_EVENT_SET(TRUE),
-                                UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH), SYSTEM_EVENT_NOT_APPLICABLE,
+                                AsciiDimmUid, SYSTEM_EVENT_NOT_APPLICABLE,
                                 SYSTEM_EVENT_NOT_APPLICABLE, NULL, &StringBuffer);
         if (NULL != StringBuffer) {
             size_t StringLen = AsciiStrSize(StringBuffer) + 1;
             CHAR16 *WStringBuffer = NULL;
             WStringBuffer = (CHAR16 *)AllocateZeroPool(StringLen * sizeof(CHAR16));
             if (NULL != WStringBuffer) {
-                if (NULL == AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
+                if (RETURN_SUCCESS != AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
                     ReturnCode = EFI_ABORTED;
                     FREE_POOL_SAFE(StringBuffer);
                     FREE_POOL_SAFE(WStringBuffer);

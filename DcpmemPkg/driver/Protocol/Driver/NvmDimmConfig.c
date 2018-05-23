@@ -5695,6 +5695,8 @@ DeleteGoalConfig (
     goto Finish;
   }
 
+  pCommandStatus->ObjectType = ObjectTypeDimm;
+
   /** Verify input parameters and determine a list of DIMMs **/
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {

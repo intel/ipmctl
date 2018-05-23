@@ -148,7 +148,7 @@ CreateCommandStatusString(
         goto Finish;
       }
 
-      pPrefixString = CatSPrint(NULL, FORMAT_STR FORMAT_STR FORMAT_STR L"(" FORMAT_STR L"): ",
+      pPrefixString = CatSPrint(NULL, FORMAT_STR FORMAT_STR FORMAT_STR FORMAT_STR L": ",
           pStatusMessage,
           pStatusPreposition,
           pObjectTypeString,

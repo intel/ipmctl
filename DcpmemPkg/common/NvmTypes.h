@@ -479,10 +479,11 @@ typedef struct _NAMESPACE_INFO {
   UINT64 BlockSize;                             //!< Internal Block Size to calculate Capacity
   UINT64 LogicalBlockSize;                      //!< Logical Block Size from NS Label
   UINT64 BlockCount;                            //!< Block Count
-  UINT8 NamespaceMode;                         //!< 0: None, 1: fsdax / pfn, 2: btt/sector
+  UINT8 NamespaceMode;                          //!< 0: None, 1: fsdax / pfn, 2: btt/sector
   UINT8 NamespaceType;                          //!< 1: Block, 2: PM
   UINT16 Major;                                 //!< Namespace label major version
   UINT16 Minor;                                 //!< Namespace label minor version
+  UINT64 UsableSize;                            //!< Usable size of namespace, minus metadata
 } NAMESPACE_INFO;
 
 /** Default AppDirect Namespace block size **/

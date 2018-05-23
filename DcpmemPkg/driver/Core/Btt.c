@@ -281,6 +281,8 @@ BttInit(
     BttRelease(pBtt);  /* free up any allocations */
     return NULL;
   }
+  // Set blockcount to usable size, excluding metadata
+  ((NAMESPACE *) pNamespace)->UsableSize = pBtt->NoLbas * pBtt->LbaSize;
 
   NVDIMM_DBG("Success, pBtt=%p", pBtt);
   return pBtt;

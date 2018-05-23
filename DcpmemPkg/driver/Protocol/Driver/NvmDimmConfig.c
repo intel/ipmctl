@@ -6413,6 +6413,7 @@ Build NAMESPACE structure
     /** Provision Namespace Capacity using only Region Id **/
     ReturnCode = AllocateNamespaceCapacity(NULL, pIS, pActualNamespaceCapacity, pNamespace);
     pNamespace->BlockCount = *pActualNamespaceCapacity / GetPhysicalBlockSize(pNamespace->BlockSize);
+    pNamespace->UsableSize = *pActualNamespaceCapacity;
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
       FailFlag = TRUE;
@@ -6649,6 +6650,7 @@ GetNamespaces (
     pNamespaceInfo->BlockSize = pNamespace->BlockSize;
     pNamespaceInfo->LogicalBlockSize = pNamespace->Media.BlockSize;
     pNamespaceInfo->BlockCount = pNamespace->BlockCount;
+    pNamespaceInfo->UsableSize = pNamespace->UsableSize;
     pNamespaceInfo->Major = pNamespace->Major;
     pNamespaceInfo->Minor = pNamespace->Minor;
 

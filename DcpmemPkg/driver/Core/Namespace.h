@@ -65,6 +65,7 @@ typedef struct _NAMESPACE {
   BOOLEAN IsPfnEnabled;
   PFN *pPfn;
   BOOLEAN IsRawNamespace;
+  UINT64 UsableSize;
 } NAMESPACE;
 
 typedef struct _NVM_COOKIE_DATA {

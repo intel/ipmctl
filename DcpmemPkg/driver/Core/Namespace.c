@@ -2206,6 +2206,7 @@ RetrieveNamespacesFromLsa(
 
       pNamespace->BlockSize = AD_NAMESPACE_BLOCK_SIZE;
       pNamespace->BlockCount = RawCapacity;
+      pNamespace->UsableSize = RawCapacity;
       pNamespace->NamespaceType = APPDIRECT_NAMESPACE;
 
       // Find parent Interleave Set

@@ -65,8 +65,12 @@ PfnInit(
   } else {
     pPfn->DataOff = pPfnInfo->DataOff;
     pPfn->StartPad = pPfnInfo->StartPad;
-
     ((NAMESPACE *) pNamespace)->pPfn = pPfn;
+
+    // Set blockcount to usable size, excluding metadata
+    ((NAMESPACE *) pNamespace)->UsableSize = ((NAMESPACE *) pNamespace)->BlockCount -
+      pPfnInfo->StartPad - pPfnInfo->EndTrunc - pPfnInfo->DataOff;
+
     goto Finish;
   }
 

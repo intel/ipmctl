@@ -772,11 +772,12 @@ typedef struct _DEBUG_LOG_INFO {
 /**
   Namespace Health Status
 **/
-#define NAMESPACE_HEALTH_UNKNOWN    0
-#define NAMESPACE_HEALTH_OK         1
-#define NAMESPACE_HEALTH_WARNING    2
-#define NAMESPACE_HEALTH_CRITICAL   3
+#define NAMESPACE_HEALTH_UNKNOWN       0
+#define NAMESPACE_HEALTH_OK            1
+#define NAMESPACE_HEALTH_WARNING       2
+#define NAMESPACE_HEALTH_CRITICAL      3
 #define NAMESPACE_HEALTH_UNSUPPORTED   4
+#define NAMESPACE_HEALTH_LOCKED        5
 
 /**
   Manageability states

@@ -2748,21 +2748,18 @@ SetSecurityState(
     pDimms[Index]->EncryptionEnabled = ((DimmSecurityState & SECURITY_MASK_ENABLED) != 0);
   }
 
-  /** If we successfully unlocked the device - install protocols **/
-  /** Wait until we are finished unlocking DIMMs **/
-  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
-    ReturnCode = ReenumerateNamespacesAndISs();
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=%r", ReturnCode);
-      goto Finish;
-    }
-  }
-
   if (!EFI_ERROR(ReturnCode)) {
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   }
 
 Finish:
+  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
+    ReturnCode = ReenumerateNamespacesAndISs();
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=%r", ReturnCode);
+    }
+  }
+
   CleanStringMemory(AsciiPassword);
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);

@@ -132,6 +132,7 @@ typedef union {
 #define HEALTHSTATE_CRITICAL       L"Critical"
 #define HEALTHSTATE_UNKNOWN        L"Unknown"
 #define HEALTHSTATE_UNSUPPORTED    L"Unsupported"
+#define HEALTHSTATE_LOCKED         L"Locked"
 
 //Persistent Memory Type
 #define PERSISTENT_MEM_TYPE_AD_STR       L"AppDirect"

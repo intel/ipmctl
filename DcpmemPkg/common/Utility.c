@@ -131,6 +131,9 @@ NamespaceHealthToString(
     case NAMESPACE_HEALTH_UNSUPPORTED:
       pHealthString = CatSPrint(NULL, FORMAT_STR, HEALTHSTATE_UNSUPPORTED);
       break;
+    case NAMESPACE_HEALTH_LOCKED:
+      pHealthString = CatSPrint(NULL, FORMAT_STR, HEALTHSTATE_LOCKED);
+      break;
     default:
       pHealthString = CatSPrint(NULL, FORMAT_STR, HEALTHSTATE_UNKNOWN);
       break;

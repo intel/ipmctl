@@ -2178,6 +2178,21 @@ RetrieveNamespacesFromLsa(
           }
         }
 
+// Save an extra FIS call in OS. OS just needs to size for region capacity used
+#ifndef OS_BUILD
+        UINT8 SecurityState = 0;
+        ReturnCode = GetDimmSecurityState(pDimm, PT_TIMEOUT_INTERVAL, &SecurityState);
+        if (EFI_ERROR(ReturnCode)) {
+          NVDIMM_DBG("Failed to get PMM security state.");
+          goto Finish;
+        }
+
+        if (!IsConfiguringAllowed(SecurityState)) {
+          NVDIMM_DBG("Namespace contains a locked PMM 0x%X", pDimm->DeviceHandle.AsUint32);
+          pNamespace->HealthState = NAMESPACE_HEALTH_LOCKED;
+        }
+#endif
+
         LabelsFound++;
         NVDIMM_DBG("Label (%d/%d) of App Direct Namespace %g found",
             LabelsFound, pNamespaceLabel->NumberOfLabels, pNamespace->NamespaceGuid);
@@ -2236,7 +2251,9 @@ RetrieveNamespacesFromLsa(
 
     InsertTailList(pNamespacesList, &pNamespace->NamespaceNode);
 
-    if (pNamespace->HealthState != NAMESPACE_HEALTH_CRITICAL && pNamespace->HealthState != NAMESPACE_HEALTH_UNSUPPORTED) {
+    if (pNamespace->HealthState != NAMESPACE_HEALTH_CRITICAL &&
+        pNamespace->HealthState != NAMESPACE_HEALTH_UNSUPPORTED &&
+        pNamespace->HealthState != NAMESPACE_HEALTH_LOCKED) {
       if (Use_Namespace1_1 || pNamespace->IsBttEnabled || pNamespace->IsPfnEnabled) {
         ReturnCode = EFI_INVALID_PARAMETER;
         ReturnCode2 = EFI_INVALID_PARAMETER;

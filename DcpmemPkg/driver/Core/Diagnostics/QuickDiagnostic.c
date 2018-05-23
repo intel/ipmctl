@@ -8,7 +8,7 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #ifdef OS_BUILD
-#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_QUICK,ppResult,pState)
+#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,ACTION_REQUIRED_NOT_SET,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_QUICK,ppResult,pState)
 #else // OS_BUILD
 #define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) AppendToDiagnosticsResult(pStr,StateMask,ppResult,pState)
 #endif // OS_BUILD
@@ -258,7 +258,7 @@ SmartAndHealthCheck(
   }
   if (SensorInfo.LastShutdownStatus) {
     // LastShutdownStatus != 0 - Dirty Shutdown
-    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_DIRTY_SHUTDOWN), NULL);
+    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_QUICK_DIRTY_SHUTDOWN), NULL);
     pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimm->DeviceHandle.AsUint32);
     FREE_POOL_SAFE(pTmpStr);
     APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_OK, ppResultStr, pDiagState);

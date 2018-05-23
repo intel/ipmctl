@@ -112,6 +112,9 @@ AppendToDiagnosticsResult (
 
 #ifdef OS_BUILD
 #include "event.h"
+
+#define ACTION_REQUIRED_NOT_SET 0xff
+
 /**
 Append to the results string for a paricular diagnostic test, modify
 the test state as per the message being appended and send the event
@@ -129,6 +132,7 @@ to the event log.
 EFI_STATUS
 SendTheEventAndAppendToDiagnosticsResult(
     IN     DIMM *pDimm,
+    IN     UINT8 ActionReqSet,
     IN     CHAR16 *pStrToAppend,
     IN     UINT8 DiagStateMask,
     IN     UINT8 UniqeNumber,

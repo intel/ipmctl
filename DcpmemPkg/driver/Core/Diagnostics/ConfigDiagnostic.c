@@ -9,7 +9,7 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #ifdef OS_BUILD
-#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_CONFIG,ppResult,pState)
+#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,ACTION_REQUIRED_NOT_SET,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_CONFIG,ppResult,pState)
 #else // OS_BUILD
 #define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) AppendToDiagnosticsResult(pStr,StateMask,ppResult,pState)
 #endif // OS_BUILD
@@ -526,7 +526,11 @@ CheckPlatformConfigurationData(
         pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_GOAL_NOT_APPLIED), NULL);
         pTmpStr1 = CatSPrint(NULL, pTmpStr, ppDimms[Index]->DeviceHandle.AsUint32);
         FREE_POOL_SAFE(pTmpStr);
+#ifdef OS_BUILD
+        SendTheEventAndAppendToDiagnosticsResult(ppDimms[Index], 1, pTmpStr1, DIAG_STATE_MASK_OK, __COUNTER__, SYSTEM_EVENT_CAT_CONFIG, ppResultStr, pDiagState);
+#else // OS_BUILD
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], pTmpStr1, DIAG_STATE_MASK_OK, ppResultStr, pDiagState);
+#endif // OS_BUILD
       }
     }
 
@@ -562,7 +566,11 @@ CheckPlatformConfigurationData(
         pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_CONFIG_GOAL_NOT_APPLIED), NULL);
         pTmpStr1 = CatSPrint(NULL, pTmpStr, ppDimms[Index]->DeviceHandle.AsUint32);
         FREE_POOL_SAFE(pTmpStr);
+#ifdef OS_BUILD
+        SendTheEventAndAppendToDiagnosticsResult(ppDimms[Index], 1, pTmpStr1, DIAG_STATE_MASK_OK, __COUNTER__, SYSTEM_EVENT_CAT_CONFIG, ppResultStr, pDiagState);
+#else // OS_BUILD
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], pTmpStr1, DIAG_STATE_MASK_OK, ppResultStr, pDiagState);
+#endif // OS_BUILD
       }
     }
 

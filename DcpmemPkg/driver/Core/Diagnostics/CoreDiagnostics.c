@@ -117,6 +117,7 @@ to the event log.
 EFI_STATUS
 SendTheEventAndAppendToDiagnosticsResult(
     IN     DIMM *pDimm,
+    IN     UINT8 ActionReqSet,
     IN     CHAR16 *pStrToAppend,
     IN     UINT8 DiagStateMask,
     IN     UINT8 UniqeNumber,
@@ -147,13 +148,18 @@ SendTheEventAndAppendToDiagnosticsResult(
     else if (DiagStateMask & DIAG_STATE_MASK_FAILED) {
         EventSeverity = SYSTEM_EVENT_TYPE_ERROR;
         StoreInSystemLog = TRUE;
-        ActionReqState = 1;
+        if (ACTION_REQUIRED_NOT_SET == ActionReqSet) {
+            ActionReqState = 1;
+        }
     }
     else if (DiagStateMask & DIAG_STATE_MASK_WARNING) {
         EventSeverity = SYSTEM_EVENT_TYPE_WARNING;
     }
     else if (DiagStateMask & DIAG_STATE_MASK_OK) {
         EventSeverity = SYSTEM_EVENT_TYPE_INFO;
+    }
+    if (ACTION_REQUIRED_NOT_SET != ActionReqSet) {
+        ActionReqState = (BOOLEAN)ActionReqSet;
     }
     // Store the log
     if (pDimm != NULL)

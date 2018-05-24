@@ -98,36 +98,36 @@ ShowMemoryResources(
   SetDisplayInfo(L"MemoryResources", ListView);
 
   ReturnCode = MakeCapacityString(MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
-  Print(FORMAT_STR L": " FORMAT_STR_NL,DISPLAYED_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL,DISPLAYED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
 
-  Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.UnconfiguredCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
 
-  Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
 
-  Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
 
-  Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr);
+  Print(FORMAT_STR L"=" FORMAT_STR_NL, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
 Finish:

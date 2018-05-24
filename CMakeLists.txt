@@ -470,6 +470,9 @@ FILE(GLOB NVM_HEADERS
 	DcpmemPkg/common/NvmStatusValues.h
 	)
 
+FILE(COPY ${NVM_HEADERS}
+       DESTINATION ${OUTPUT_DIR})
+
 if(LNX_BUILD)
     include(GNUInstallDirs)
 	find_package(PkgConfig)

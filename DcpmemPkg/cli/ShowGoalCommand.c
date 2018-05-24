@@ -330,12 +330,12 @@ ShowGoalPrintDetailedView(
                 goto Finish;
             }
             FREE_POOL_SAFE(StringBuffer);
-            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L":");
+            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L"=");
             Print(FORMAT_STR, WStringBuffer);
             FREE_POOL_SAFE(WStringBuffer);
         }
         else {
-            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L": N/A");
+            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L"=N/A");
         }
     }
     Print(FORMAT_STR_NL, L"");

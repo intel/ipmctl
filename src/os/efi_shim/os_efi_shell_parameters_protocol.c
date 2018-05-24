@@ -64,8 +64,9 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 
 	for (int Index = 1; Index < argc; Index++) {
     stripped_args = 0;
-		if (0 == s_strncmpi(argv[Index], STR_DASH_OUTPUT_SHORT, strlen(STR_DASH_OUTPUT_SHORT)+1) ||
-			0 == s_strncmpi(argv[Index], STR_DASH_OUTPUT_LONG, strlen(STR_DASH_OUTPUT_LONG+1) ))
+		if ( (0 == s_strncmpi(argv[Index], STR_DASH_OUTPUT_SHORT, strlen(STR_DASH_OUTPUT_SHORT)+1) ||
+			  0 == s_strncmpi(argv[Index], STR_DASH_OUTPUT_LONG, strlen(STR_DASH_OUTPUT_LONG+1))) &&
+        Index+1 != argc)
 		{
         char *tok;
         tok = strtok(argv[Index + 1], ",");

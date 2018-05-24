@@ -4874,7 +4874,7 @@ UpdateFw(
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_VALID);
       }
     }
-    ReturnCode = EFI_SUCCESS;
+    ReturnCode = EFI_LOAD_ERROR;
     NVDIMM_DBG("LoadFileAndCheckHeader Failed");
     goto Finish;
   }

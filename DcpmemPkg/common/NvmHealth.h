@@ -94,7 +94,7 @@ typedef union {
     UINT8 PmS3                      : 1;
     UINT8 PmS5                      : 1;
     UINT8 DdrtPowerFailure          : 1;
-    UINT8 Pmic12VPowerFailure       : 1;
+    UINT8 PmicPowerLoss             : 1;
     UINT8 PmWarmReset               : 1;
     UINT8 ThermalShutdown           : 1;
     UINT8 FwFlushComplete           : 1;

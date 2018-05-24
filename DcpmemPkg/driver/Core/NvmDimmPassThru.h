@@ -712,7 +712,7 @@ typedef struct {
     Bit 1: PM S3 (0 - Not Received, 1 - Received)
     Bit 2: PM S5 (0 - Not Received, 1 - Received)
     Bit 3: DDRT Power Fail Command Received (0 - Not Received, 1 - Received)
-    Bit 4: PMIC 12V (0 - Not Received, 1 - 12V Power Loss)
+    Bit 4: PMIC Power Loss (0 - Not Received, 1 - PMIC Power Loss)
     Bit 5: PM Warm Reset (0 - Not Received, 1 - Received)
     Bit 6: Thermal Shutdown Received (0 - Did not occur, 1 Thermal Shutdown Triggered)
     Bit 7: Controller Flush Complete (0 - Did not occur, 1 - Completed)

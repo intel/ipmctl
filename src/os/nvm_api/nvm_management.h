@@ -468,16 +468,17 @@ enum nvm_format {
  * Status of last AEP DIMM shutdown
  */
 enum shutdown_status {
-	SHUTDOWN_STATUS_UNKNOWN			= 0,            ///< The last shutdown status cannot be determined.
-	SHUTDOWN_STATUS_PM_ADR			= 1 << 0,       ///< Async DIMM Refresh command received
-	SHUTDOWN_STATUS_PM_S3			= 1 << 1,       ///< PM S3 received
-	SHUTDOWN_STATUS_PM_S5			= 1 << 2,       ///< PM S5 received
-	SHUTDOWN_STATUS_DDRT_POWER_FAIL		= 1 << 3,       ///< DDRT power fail command received
-	SHUTDOWN_STATUS_PMIC_12V_POWER_FAIL	= 1 << 4,
-	SHUTDOWN_STATUS_WARM_RESET		= 1 << 5,       ///< PM warm reset received
-	SHUTDOWN_STATUS_FORCED_THERMAL		= 1 << 6,       ///< Thermal shutdown received
-	SHUTDOWN_STATUS_CLEAN			= 1 << 7        ///< Denotes a proper clean shutdown
+  SHUTDOWN_STATUS_UNKNOWN = 0,                ///< The last shutdown status cannot be determined.
+  SHUTDOWN_STATUS_PM_ADR = 1 << 0,            ///< Async DIMM Refresh command received
+  SHUTDOWN_STATUS_PM_S3 = 1 << 1,             ///< PM S3 received
+  SHUTDOWN_STATUS_PM_S5 = 1 << 2,             ///< PM S5 received
+  SHUTDOWN_STATUS_DDRT_POWER_FAIL = 1 << 3,   ///< DDRT power fail command received
+  SHUTDOWN_STATUS_PMIC_POWER_LOSS = 1 << 4,   ///< PMIC Power Loss received
+  SHUTDOWN_STATUS_WARM_RESET = 1 << 5,        ///< PM warm reset received
+  SHUTDOWN_STATUS_FORCED_THERMAL = 1 << 6,    ///< Thermal shutdown received
+  SHUTDOWN_STATUS_CLEAN = 1 << 7              ///< Denotes a proper clean shutdown
 };
+
 enum shutdown_status_extended {
 	SHUTDOWN_STATUS_VIRAL_INT_RCVD			= 1 << 0,
 	SHUTDOWN_STATUS_SURPRISE_CLK_STOP_INT_RCVD	= 1 << 1,

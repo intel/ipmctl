@@ -2176,9 +2176,9 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_DDRT_POWER_FAIL_STR);
   }
-  if (LastShutdownStatus.Combined.LastShutdownStatus.Separated.Pmic12VPowerFailure) {
+  if (LastShutdownStatus.Combined.LastShutdownStatus.Separated.PmicPowerLoss) {
     pStatusStr = CatSPrintClean(pStatusStr,
-        FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PMIC_12V_POWER_FAIL_STR);
+        FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PMIC_POWER_LOSS_STR);
   }
   if (LastShutdownStatus.Combined.LastShutdownStatus.Separated.PmWarmReset) {
     pStatusStr = CatSPrintClean(pStatusStr,

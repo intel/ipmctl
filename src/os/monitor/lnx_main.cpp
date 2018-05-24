@@ -22,7 +22,7 @@
 #include <nvm_management.h>
 #include "NvmMonitorBase.h"
 
-#define PID_FILE_NAME "/var/run/ixpdimm-monitor.pid"
+#define PID_FILE_NAME "/var/run/ipmctl-monitor.pid"
 
 int setupDaemon();
 void signalHandler(int sigNum);

@@ -13,7 +13,7 @@
 
 extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 
-int init_protocol_shell_parameters_protocol(int argc, char *argv[]);
+EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[]);
 int uninit_protocol_shell_parameters_protocol();
 
 

@@ -43,14 +43,19 @@ int g_file_io = 0;
 #define STR_TEXT                "text"
 #define STR_VERBOSE             "verbose"
 #define STR_DASH_FAST_LONG      "-fast"
+#define MAX_INPUT_PARAMS        256
 
-int init_protocol_shell_parameters_protocol(int argc, char *argv[])
+EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 {
 	int i = 1;
 	int stripped_args = 0;
-	gOsShellParametersProtocol.Argv = AllocateZeroPool(1024);
+  if (argc > MAX_INPUT_PARAMS) {
+    return EFI_INVALID_PARAMETER;
+  }
+  
+  gOsShellParametersProtocol.Argv = AllocateZeroPool(MAX_INPUT_PARAMS * sizeof(CHAR16*));
 	if (NULL == gOsShellParametersProtocol.Argv) {
-		return (int)EFI_OUT_OF_RESOURCES;
+		return EFI_OUT_OF_RESOURCES;
 	}
 	gOsShellParametersProtocol.StdErr = stderr;
 	gOsShellParametersProtocol.StdOut = stdout;
@@ -113,7 +118,7 @@ int init_protocol_shell_parameters_protocol(int argc, char *argv[])
       VOID * ptr = AllocateZeroPool((argvSize + 1) * sizeof(wchar_t));
 	    if (NULL == ptr) {
 		    FreePool(gOsShellParametersProtocol.Argv);
-		    return (int)EFI_OUT_OF_RESOURCES;
+		    return EFI_OUT_OF_RESOURCES;
 	    }
 	    gOsShellParametersProtocol.Argv[i] = AsciiStrToUnicodeStr(argv[Index], ptr);
 	    ++i;
@@ -140,5 +145,5 @@ int uninit_protocol_shell_parameters_protocol()
   {
     FreePool(gOsShellParametersProtocol.Argv);
   }
-	return 0;
+	return EFI_SUCCESS;
 }

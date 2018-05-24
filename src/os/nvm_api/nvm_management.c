@@ -124,7 +124,12 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   EFI_STATUS rc;
   int nvm_status;
 
-  init_protocol_shell_parameters_protocol(argc, argv);
+  rc = init_protocol_shell_parameters_protocol(argc, argv);
+  if (rc == EFI_INVALID_PARAMETER) {
+    wprintf(L"Syntax Error: Exceeded input parameters limit.\n");
+    return (int)rc;
+  }
+
   if (gOsShellParametersProtocol.StdOut == stdout)
   {
     //WA to ensure wprintf work throughout invocation of cr-mgmt stack.

@@ -7403,7 +7403,7 @@ DimmFormat(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_STATUS *pReturnCodes = NULL;
-#ifndef MDEPKG_NDEBUG
+#ifdef FORMAT_SUPPORTED
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
@@ -7417,9 +7417,9 @@ DimmFormat(
     goto Finish;
   }
 
-#ifdef MDEPKG_NDEBUG
+#ifndef FORMAT_SUPPORTED
   ReturnCode = EFI_UNSUPPORTED;
-  ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
+  ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
 #else
   ZeroMem(pDimms, sizeof(pDimms));
   ZeroMem(&Bsr, sizeof(Bsr));

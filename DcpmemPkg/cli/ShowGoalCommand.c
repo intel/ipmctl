@@ -245,7 +245,7 @@ ShowGoalPrintDetailedView(
 
     /** Socket Id **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-      Print(L"   " FORMAT_STR L"=0x%x\n", SOCKET_ID_STR, pCurrentGoal->SocketId);
+      Print(L"   " FORMAT_STR L"=0x%04x\n", SOCKET_ID_STR, pCurrentGoal->SocketId);
     }
     /** Volatile Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_SIZE_PROPERTY))) {

@@ -949,8 +949,8 @@ typedef struct {
 #define DISPLAY_SIZE_MAX_SIZE      9  //!< Number of possible size display options
 #define DISPLAY_SIZE_UNIT_UNKNOWN 10  //!< Unknown units
 
-#define DISPLAY_DIMM_ID_VARIABLE_NAME L"DisplayDimmId"
-#define DISPLAY_SIZE_VARIABLE_NAME L"DisplaySizeUnit"
+#define DISPLAY_DIMM_ID_VARIABLE_NAME L"CLI_DEFAULT_DIMM_ID"
+#define DISPLAY_SIZE_VARIABLE_NAME L"CLI_DEFAULT_SIZE"
 #define BMI_VARIABLE_NAME L"BootMinimalInit"
 
 /** Intel DIMM Config automatic provisioning **/

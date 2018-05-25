@@ -30,14 +30,13 @@ struct Command SetPreferencesCommand =
     {APP_DIRECT_SETTINGS_PROPERTY, L"", HELP_TEXT_APPDIRECT_SETTINGS, FALSE, ValueRequired},
     {APP_DIRECT_GRANULARITY_PROPERTY, L"", HELP_TEXT_APPDIRECT_GRANULARITY, FALSE, ValueRequired},
 #ifdef OS_BUILD
-	{SUPPORT_SNAPSHOT_MAX_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired},
-	{PERFORMANCE_MONITOR_ENABLED, L"", HELP_PERFORMANCE_MONITOR_ENABLED, FALSE, ValueRequired },
-	{PERFORMANCE_MONITOR_INTERVAL_MINUTES, L"", HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
-	{EVENT_MONITOR_ENABLED, L"", HELP_EVENT_MONITOR_ENABLED, FALSE, ValueRequired },
-	{EVENT_MONITOR_INTERVAL_MINUTES, L"", HELP_EVENT_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
-	{EVENT_LOG_MAX, L"", HELP_EVENT_LOG_MAX, FALSE, ValueRequired },
-	{LOG_MAX, L"", HELP_LOG_MAX, FALSE, ValueRequired },
-   { LOG_LEVEL, L"", HELP_LOG_LEVEL, FALSE, ValueRequired },
+    {PERFORMANCE_MONITOR_ENABLED, L"", HELP_PERFORMANCE_MONITOR_ENABLED, FALSE, ValueRequired },
+    {PERFORMANCE_MONITOR_INTERVAL_MINUTES, L"", HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
+    {EVENT_MONITOR_ENABLED, L"", HELP_EVENT_MONITOR_ENABLED, FALSE, ValueRequired },
+    {EVENT_MONITOR_INTERVAL_MINUTES, L"", HELP_EVENT_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
+    {EVENT_LOG_MAX, L"", HELP_EVENT_LOG_MAX, FALSE, ValueRequired },
+    {DBG_LOG_MAX, L"", HELP_DBG_LOG_MAX, FALSE, ValueRequired },
+    {DBG_LOG_LEVEL, L"", HELP_DBG_LOG_LEVEL, FALSE, ValueRequired},
 #endif
   },
   L"Set user preferences",                  //!< help
@@ -146,33 +145,55 @@ Finish:
 }
 
 #ifdef OS_BUILD
-EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning)
-{
-	EFI_STATUS rc = EFI_SUCCESS;
-	CHAR16 *pTypeValue = NULL;
+EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, UINT8 ValidateBool, UINT64 *IntegerEq) {
 
-	if ((rc = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
-		if (EFI_ERROR(rc)) {
-			Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-			goto Finish;
-		}
+  EFI_STATUS rc = EFI_INVALID_PARAMETER;
+  if (!GetU64FromString(InputString, IntegerEq)) {
+    goto Finish;
+  }
+  if (ValidateBool && !(*IntegerEq == 0 || *IntegerEq == 1)) {
+      goto Finish;
+  }
+  rc = EFI_SUCCESS;
 
-		rc = GetPropertyValue(pCmd, pName, &pTypeValue);
-		if (EFI_ERROR(rc)) {
-			PRINT_SET_PREFERENCES_EFI_ERR(pName, NULL, EFI_INVALID_PARAMETER);
-		} else {
-			if (rc == EFI_SUCCESS) {
-				rc = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
-				if (!EFI_ERROR(rc)) {
-					PRINT_SET_PREFERENCES_SUCCESS(pName, pTypeValue);
-				} else {
-					PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, rc);
-				}
-			}
-		}
-	}
 Finish:
-	return rc;
+  return rc;
+}
+
+EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN BOOLEAN IsBool)
+{
+  EFI_STATUS rc = EFI_SUCCESS;
+  CHAR16 *pTypeValue = NULL;
+  UINT64 IntegerValue;
+
+  if ((rc = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
+    if (EFI_ERROR(rc)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+
+    rc = GetPropertyValue(pCmd, pName, &pTypeValue);
+    if (EFI_ERROR(rc)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+    rc = ValidateAndConvertInput(pTypeValue, IsBool, &IntegerValue);
+    if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
+      PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, EFI_INVALID_PARAMETER);
+      goto Finish;
+    } else {
+      if (rc == EFI_SUCCESS) {
+        rc = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
+        if (!EFI_ERROR(rc)) {
+          PRINT_SET_PREFERENCES_SUCCESS(pName, pTypeValue);
+        } else {
+          PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, rc);
+        }
+      }
+    }
+  }
+Finish:
+  return rc;
 }
 #endif
 
@@ -261,7 +282,7 @@ SetPreferences(
       DisplayPreferences.DimmIdentifier = Index;
       VariableSize = sizeof(DisplayPreferences.DimmIdentifier);
       TempReturnCode = SET_VARIABLE_NV(
-        DISPLAY_DIMM_ID_VARIABLE_NAME,
+        CLI_DEFAULT_DIMM_ID_PROPERTY,
         gNvmDimmCliVariableGuid,
         VariableSize,
         &DisplayPreferences.DimmIdentifier);
@@ -293,7 +314,7 @@ SetPreferences(
       DisplayPreferences.SizeUnit = Index;
       VariableSize = sizeof(DisplayPreferences.SizeUnit);
       TempReturnCode = SET_VARIABLE_NV(
-        DISPLAY_SIZE_VARIABLE_NAME,
+        CLI_DEFAULT_SIZE_PROPERTY,
         gNvmDimmCliVariableGuid,
         VariableSize,
         &DisplayPreferences.SizeUnit);
@@ -377,14 +398,13 @@ SetPreferences(
     }
   }
 #ifdef OS_BUILD
-  SetPreferenceStr(pCmd, SUPPORT_SNAPSHOT_MAX_PROPERTY, "Support snapshot max setting type not provided");
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided");
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided");
-  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided");
-  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided");
-  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided");
-  SetPreferenceStr(pCmd, LOG_MAX, "Log max setting type not provided");
-  SetPreferenceStr(pCmd, LOG_LEVEL, "Log level setting type not provided");
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", TRUE);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", FALSE);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", TRUE);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", FALSE);
+  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", FALSE);
+  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", FALSE);
+  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", FALSE);
 #endif
 
 Finish:

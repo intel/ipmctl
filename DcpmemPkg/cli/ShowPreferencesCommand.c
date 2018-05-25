@@ -141,14 +141,6 @@ ShowPreferences(
   }
 
 #ifdef OS_BUILD
-
-  ReturnCode = GET_VARIABLE_STR(SUPPORT_SNAPSHOT_MAX_PROPERTY, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR L"=" FORMAT_STR_NL,
-      SUPPORT_SNAPSHOT_MAX_PROPERTY,
-      tempStr);
-  }
-
   ReturnCode = GET_VARIABLE_STR(PERFORMANCE_MONITOR_ENABLED, gNvmDimmConfigProtocolGuid, 0, tempStr);
   if (!EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR L"=" FORMAT_STR_NL,
@@ -183,17 +175,17 @@ ShowPreferences(
       EVENT_LOG_MAX,
       tempStr);
   }
-  ReturnCode = GET_VARIABLE_STR(LOG_MAX, gNvmDimmConfigProtocolGuid, 0, tempStr);
+  ReturnCode = GET_VARIABLE_STR(DBG_LOG_MAX, gNvmDimmConfigProtocolGuid, 0, tempStr);
   if (!EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR L"=" FORMAT_STR_NL,
-      LOG_MAX,
+      DBG_LOG_MAX,
       tempStr);
   }
 
-  ReturnCode = GET_VARIABLE_STR(LOG_LEVEL, gNvmDimmConfigProtocolGuid, 0, tempStr);
+  ReturnCode = GET_VARIABLE_STR(DBG_LOG_LEVEL, gNvmDimmConfigProtocolGuid, 0, tempStr);
   if (!EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR L"=" FORMAT_STR_NL,
-       LOG_LEVEL,
+       DBG_LOG_LEVEL,
        tempStr);
   }
 

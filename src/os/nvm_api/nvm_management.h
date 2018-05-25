@@ -253,17 +253,17 @@ enum device_overwritedimm_status {
  * @endinternal
  */
 enum sensor_type {
-	SENSOR_HEALTH			= 0,    ///< Apache Pass DIMM health as reported in the SMART log
-	SENSOR_MEDIA_TEMPERATURE	= 1,    ///< Device media temperature in degrees Celsius.
-	SENSOR_CONTROLLER_TEMPERATURE	= 2,    ///< Device media temperature in degrees Celsius.
-	SENSOR_PERCENTAGE_REMAINING		= 3,    ///< Amount of percentage remaining as a percentage.
-	SENSOR_WEARLEVEL		= 4,    ///< An estimate of the device life used as a percentage.
-	SENSOR_DIRTYSHUTDOWNS		= 5,    ///< Device shutdowns without notification.
-	SENSOR_POWERONTIME		= 6,    ///< Total power-on time over the lifetime of the device.
-	SENSOR_UPTIME			= 7,    ///< Total power-on time since the last power cycle of the device.
-	SENSOR_POWERCYCLES		= 8,    ///< Number of power cycles over the lifetime of the device.
-	SENSOR_FWERRORLOGCOUNT		= 9,    ///< The total number of firmware error log entries.
-	SENSOR_POWERLIMITED		= 10,   ///< Whether or not the AEP DIMM is power limited.
+  SENSOR_HEALTH = 0,    ///< Apache Pass DIMM health as reported in the SMART log
+  SENSOR_MEDIA_TEMPERATURE = 1,    ///< Device media temperature in degrees Celsius.
+  SENSOR_CONTROLLER_TEMPERATURE = 2,    ///< Device media temperature in degrees Celsius.
+  SENSOR_PERCENTAGE_REMAINING = 3,    ///< Amount of percentage remaining as a percentage.
+  SENSOR_WEARLEVEL = 4,    ///< An estimate of the device life used as a percentage.
+  SENSOR_DIRTYSHUTDOWNS = 5,    ///< Device shutdowns without notification.
+  SENSOR_POWERONTIME = 6,    ///< Total power-on time over the lifetime of the device.
+  SENSOR_UPTIME = 7,    ///< Total power-on time since the last power cycle of the device.
+  SENSOR_POWERCYCLES = 8,    ///< Number of power cycles over the lifetime of the device.
+  SENSOR_FWERRORLOGCOUNT = 9,    ///< The total number of firmware error log entries.
+  SENSOR_POWERLIMITED = 10,   ///< Whether or not the AEP DIMM is power limited.
 };
 
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;

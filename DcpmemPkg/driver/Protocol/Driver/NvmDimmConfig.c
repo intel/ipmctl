@@ -9108,7 +9108,8 @@ InjectError(
         goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_TEMPERATURE *)pInputPayload)->Enable = !ClearStatus;
-      ((PT_INPUT_PAYLOAD_INJECT_TEMPERATURE *)pInputPayload)->Temperature = (UINT16) *pInjectTemperatureValue;
+      ((PT_INPUT_PAYLOAD_INJECT_TEMPERATURE *)pInputPayload)->Temperature.Separated.TemperatureInteger =
+        (UINT16) *pInjectTemperatureValue;
       for (Index = 0; Index < DimmsNum; Index++) {
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopMediaErrorTemperature, (VOID *)pInputPayload);
         if (EFI_ERROR(ReturnCode)) {

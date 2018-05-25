@@ -1175,12 +1175,29 @@ typedef struct {
 	* 0x01h - On
 	*/
 	UINT8 Enable;
-	/*
-	* A number representing the temperature (Celsius) to inject
-	* Bit 14-0: Temperature in Celsius with 0.0625 C resolution
-	* Bit 15: Sign Bit ( 1 = negative, 0 = positive)
-	*/
-	UINT16 Temperature;
+        union {
+          /*
+          * A number representing the temperature (Celsius) to inject
+          * Bit 3-0: Fractional value of temperature (0.0625 C resolution)
+          * Bit 4-14: Integer value of temperature in Celsius
+          * Bit 15: Sign Bit ( 1 = negative, 0 = positive)
+          */
+          struct {
+            UINT16 TemperatureFractional:4;
+            UINT16 TemperatureInteger:11;
+            UINT16 TemperatureSign:1;
+          } Separated;
+          /*
+          * A number representing the temperature (Celsius) to inject
+          * Bit 14-0: Temperature in Celsius with 0.0625 C resolution
+          * Bit 15: Sign Bit ( 1 = negative, 0 = positive)
+          */
+          struct {
+            UINT16 Temperature:15;
+            UINT16 Sign:1;
+          } SignSeparated;
+          UINT16 AsUint16;
+        } Temperature;
 	UINT8 Reserved[125];
 } PT_INPUT_PAYLOAD_INJECT_TEMPERATURE;
 

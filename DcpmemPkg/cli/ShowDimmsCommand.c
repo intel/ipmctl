@@ -197,7 +197,6 @@ ShowDimms(
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 *pFormat = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-  CHAR16 *pInterfaceFormatCodeStr = NULL;
   BOOLEAN ByteAddressable = FALSE;
   BOOLEAN BlockAddressable = FALSE;
 #ifdef OS_BUILD
@@ -651,10 +650,8 @@ ShowDimms(
           }
 
           if (ByteAddressable) {
-            pInterfaceFormatCodeStr = CatSPrint(NULL, L"0x%04x %s", AEP_FMT_CODE_APP_DIRECT,
-              FORMAT_CODE_APP_DIRECT_STR);
-            Print(L"%s", pInterfaceFormatCodeStr);
-            FREE_POOL_SAFE(pInterfaceFormatCodeStr);
+            Print(L"0x%04x ", AEP_FMT_CODE_APP_DIRECT);
+            Print(FORMAT_CODE_APP_DIRECT_STR);
           }
 
           if (pDimms[Index].InterfaceFormatCodeNum > 1) {
@@ -662,9 +659,8 @@ ShowDimms(
           }
 
           if (BlockAddressable) {
-            pInterfaceFormatCodeStr = CatSPrint(NULL, L"0x%04x %s", AEP_FMT_CODE_STORAGE, FORMAT_CODE_STORAGE_STR);
-            Print(L"%s", pInterfaceFormatCodeStr);
-            FREE_POOL_SAFE(pInterfaceFormatCodeStr);
+            Print(L"0x%04x ", FORMAT_CODE_STORAGE_STR);
+            Print(FORMAT_CODE_STORAGE_STR);
           }
         }
         Print(L"\n");

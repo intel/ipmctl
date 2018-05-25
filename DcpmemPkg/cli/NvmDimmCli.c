@@ -542,12 +542,12 @@ RegisterCommands(
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-#endif
+
   Rc = RegisterShowRegisterCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
+#endif
   Rc = RegisterStartFormatCommand();
   if (EFI_ERROR(Rc)) {
     goto done;

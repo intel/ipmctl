@@ -90,6 +90,7 @@ ShowErrorCommand(
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   UINT16 ManageableListIndex = 0;
+  UINT64 RangeInBytes = 0;
 
   NVDIMM_ENTRY();
 
@@ -281,14 +282,149 @@ ShowErrorCommand(
         if (ErrorsArray[Index2].ErrorType == THERMAL_ERROR) {
           pThermalErrorInfo = (THERMAL_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
           Print(FORMAT_16STR L" : %d" FORMAT_STR_NL, ERROR_THERMAL_TEMPERATURE_STR, pThermalErrorInfo->Temperature, TEMPERATURE_MSR);
-          Print(FORMAT_16STR L" : %d\n", ERROR_THERMAL_REPORTED_STR, pThermalErrorInfo->Reported);
+          // Thermal Reported
+          if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_USER_ALARM) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
+                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_USER_ALARM_STR);
+          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_LOW) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
+                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_LOW_STR);
+          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_HIGH) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
+                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_HIGH_STR);
+          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_CRITICAL) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
+                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_CRITICAL_STR);
+          } else {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
+                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_UNKNOWN_STR);
+          }
+          // Temperature Type
+          if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
+                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_MEDIA_STR);
+          } else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CORE) {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
+                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_CORE_STR);
+          } else {
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
+                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_UNKNOWN_STR);
+          }
+          Print(FORMAT_16STR L" : %d\n", ERROR_SEQUENCE_NUMBER, pThermalErrorInfo->SequenceNum);
         }
         else {
           pMediaErrorInfo = (MEDIA_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
-          Print(FORMAT_16STR L" : %d\n", ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa);
-          Print(FORMAT_16STR L" : %d\n", ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda);
-          Print(FORMAT_16STR L" : %d\n", ERROR_MEDIA_RANGE_STR, pMediaErrorInfo->Range);
-          Print(FORMAT_16STR L" : %d\n", ERROR_MEDIA_ERROR_TYPE_STR, pMediaErrorInfo->ErrorType);
+          Print(FORMAT_16STR L" : 0x%08llx\n", ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa);
+          Print(FORMAT_16STR L" : 0x%08llx\n", ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda);
+          // Range in bytes
+          RangeInBytes = Pow(2, pMediaErrorInfo->Range);
+          Print(FORMAT_16STR L" : %lldB\n", ERROR_MEDIA_RANGE_STR, RangeInBytes);
+          // Error Type
+          switch (pMediaErrorInfo->ErrorType) {
+            case ERROR_TYPE_UNCORRECTABLE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_UNCORRECTABLE_STR);
+              break;
+            case ERROR_TYPE_DPA_MISMATCH:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_DPA_MISMATCH_STR);
+              break;
+            case ERROR_TYPE_AIT_ERROR:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_AIT_ERROR_STR);
+              break;
+            case ERROR_TYPE_DATA_PATH_ERROR:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_DATA_PATH_ERROR_STR);
+              break;
+            case ERROR_TYPE_LOCKED_ILLEGAL_ACCESS:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_LOCKED_ILLEGAL_ACCESS_STR);
+              break;
+            case ERROR_TYPE_PERCENTAGE_REMAINING:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_PERCENTAGE_REMAINING_STR);
+              break;
+            case ERROR_TYPE_SMART_CHANGE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_SMART_CHANGE_STR);
+              break;
+            default:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_UNKNOWN_STR);
+              break;
+          }
+          // Error Flags
+          Print(FORMAT_16STR L" : ", ERROR_MEDIA_ERROR_FLAGS_STR);
+          if (pMediaErrorInfo->PdaValid) {
+            Print(FORMAT_STR L" ", ERROR_FLAGS_PDA_VALID_STR);
+          }
+          if (pMediaErrorInfo->DpaValid) {
+            Print(FORMAT_STR L" ", ERROR_FLAGS_DPA_VALID_STR);
+          }
+          if (pMediaErrorInfo->Interrupt) {
+            Print(FORMAT_STR L" ", ERROR_FLAGS_INTERRUPT_STR);
+          }
+          if (pMediaErrorInfo->Viral) {
+            Print(FORMAT_STR L" ", ERROR_FLAGS_VIRAL_STR);
+          }
+          Print(L"\n");
+          // Transaction Type
+          switch (pMediaErrorInfo->TransactionType) {
+            case TRANSACTION_TYPE_2LM_READ:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_2LM_READ_STR);
+              break;
+            case TRANSACTION_TYPE_2LM_WRITE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_2LM_WRITE_STR);
+              break;
+            case TRANSACTION_TYPE_PM_READ:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PM_READ_STR);
+              break;
+            case TRANSACTION_TYPE_PM_WRITE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PM_WRITE_STR);
+              break;
+            case TRANSACTION_TYPE_AIT_READ:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_AIT_READ_STR);
+              break;
+            case TRANSACTION_TYPE_AIT_WRITE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_AIT_WRITE_STR);
+              break;
+            case TRANSACTION_TYPE_WEAR_LEVEL_MOVE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_WEAR_LEVEL_MOVE_STR);
+              break;
+            case TRANSACTION_TYPE_PATROL_SCRUB:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PATROL_SCRUB_STR);
+              break;
+            case TRANSACTION_TYPE_CSR_READ:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_CSR_READ_STR);
+              break;
+            case TRANSACTION_TYPE_CSR_WRITE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_CSR_WRITE_STR);
+              break;
+            case TRANSACTION_TYPE_ARS:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_ARS_STR);
+              break;
+            case TRANSACTION_TYPE_UNAVAILABLE:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_UNAVAILABLE_STR);
+              break;
+            default:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
+                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_UNKNOWN_STR);
+              break;
+          }
+          Print(FORMAT_16STR L" : %d\n", ERROR_SEQUENCE_NUMBER, pMediaErrorInfo->SequenceNum);
         }
       }
     }

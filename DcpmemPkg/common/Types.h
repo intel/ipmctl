@@ -149,8 +149,9 @@ typedef struct {
 typedef struct _THERMAL_ERROR_LOG_PER_DIMM_INFO {
   INT16   Temperature;        //!< In celsius
   UINT8   Reported;           //!< Temperature being reported
+  UINT8   Type;               //!< Which device the temperature is for
   UINT16  SequenceNum;
-  UINT8   Reserved[2];
+  UINT8   Reserved[1];
 } THERMAL_ERROR_LOG_INFO;
 
 typedef struct _MEDIA_ERROR_LOG_PER_DIMM_INFO {

@@ -4194,6 +4194,7 @@ GetAndParseFwErrorLogForDimm(
         pThermalErrorInfo->Temperature = TransformFwTempToRealValue(Temperature);
 
         pThermalErrorInfo->Reported = (UINT8)pThermalLogEntry->HostReportedTempData.Separated.Reported;
+        pThermalErrorInfo->Type = (UINT8)pThermalLogEntry->HostReportedTempData.Separated.Type;
         if (!FIS_1_2) {
           pThermalErrorInfo->SequenceNum = pThermalLogEntry->SequenceNum;
         }

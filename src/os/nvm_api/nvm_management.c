@@ -2425,42 +2425,54 @@ NVM_API int nvm_delete_namespace(const NVM_UID namespace_uid)
   return NVM_ERR_API_NOT_SUPPORTED;
 }
 
+void get_version_numbers(int *major, int *minor, int *hotfix, int *build)
+{
+  int first;
+  int second;
+  int third;
+  int fourth;
+
+  sscanf(VERSION_STR, "%d.%d.%d.%d", &first, &second, &third, &fourth);
+
+  if(major)
+    *major = first;
+
+  if(minor)
+    *minor = second;
+
+  if(hotfix)
+    *hotfix = third;
+
+  if(build)
+    *build = fourth;
+}
+
 NVM_API int nvm_get_major_version()
 {
-  char first[10];
-  char second[10];
-  char third[10];
-  char fourth[10];
-
-  sscanf(VERSION_STR, "%s.%s.%s.%s", first, second, third, fourth);
-  return atoi(first);
+  int major = 0;
+  get_version_numbers(&major, NULL, NULL, NULL);
+  return major;
 }
 
 NVM_API int nvm_get_minor_version()
 {
-  char first[10];
-  char second[10];
-  char third[10];
-  char fourth[10];
-
-  sscanf(VERSION_STR, "%s.%s.%s.%s", first, second, third, fourth);
-  return atoi(second);
+  int minor = 0;
+  get_version_numbers(NULL, &minor, NULL, NULL);
+  return minor;
 }
 
 NVM_API int nvm_get_hotfix_number()
 {
-  return 0;
+  int hotfix = 0;
+  get_version_numbers(NULL, NULL, &hotfix, NULL);
+  return hotfix;
 }
 
 NVM_API int nvm_get_build_number()
 {
-  char first[10];
-  char second[10];
-  char third[10];
-  char fourth[10];
-
-  sscanf(VERSION_STR, "%s.%s.%s.%s", first, second, third, fourth);
-  return atoi(fourth);
+  int build = 0;
+  get_version_numbers(NULL, NULL, NULL, &build);
+  return build;
 }
 
 /*

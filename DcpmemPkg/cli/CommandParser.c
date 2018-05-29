@@ -178,6 +178,34 @@ void FreeCommandInput(struct CommandInput *pCommandInput)
 }
 
 /*
+* Ensure cmdline args don't include '%'
+*/
+EFI_STATUS
+InvalidTokenScreen(
+  IN struct CommandInput *pInput,
+  IN CHAR16 *pHelpStr
+)
+{
+  UINTN Index = 0;
+  CHAR16 *pTmpString = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  if (NULL == pInput || NULL == pHelpStr) {
+    return ReturnCode;
+  }
+
+  for (Index = 0; Index < pInput->TokenCount; Index++) {
+    if (NULL != StrStr(pInput->ppTokens[Index], L"%")) {
+      pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, L"%%");
+      SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+        CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+      return ReturnCode;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
+/*
  * Parse the given the command line arguments to
  * identify the correct command.
  *
@@ -232,6 +260,12 @@ Parse(
   }
 
   pHelpStr = getCommandHelp(pCommand, FALSE);
+
+  ReturnCode = InvalidTokenScreen(pInput, pHelpStr);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   ReturnCode = findOptions(&Start, pInput, pCommand);
 
   /** Catch errors and send appropriate message **/

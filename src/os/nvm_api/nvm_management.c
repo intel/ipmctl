@@ -831,7 +831,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   if (rc != NVM_SUCCESS)
     return rc;
   // Modifiable features of the device.
-  rc = nvm_modify_device_settings(device_uid, &(p_details->settings));
+  rc = nvm_get_device_settings(device_uid, &(p_details->settings));
   if (rc != NVM_SUCCESS)
     return rc;
   return NVM_SUCCESS;

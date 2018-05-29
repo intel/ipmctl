@@ -237,7 +237,7 @@ NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory)
     return NVM_ERR_UNKNOWN;
   UnicodeStrToAsciiStr(Version, p_inventory->vendor_driver_revision);
   p_inventory->vendor_driver_compatible = TRUE;
-  return NVM_ERR_API_NOT_SUPPORTED;
+  return NVM_SUCCESS;
 }
 
 NVM_API int nvm_get_version(NVM_VERSION version_str, const NVM_SIZE str_len)

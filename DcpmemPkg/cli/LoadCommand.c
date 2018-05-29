@@ -100,6 +100,14 @@ Load (
     goto Finish;
   }
 
+  // initialize status structure
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
+  }
+
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
@@ -139,14 +147,6 @@ Load (
       ReturnCode = EFI_NOT_FOUND;
       goto FinishWithError;
     }
-  }
-
-  // initialize status structure
-  ReturnCode = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_DBG("Failed on InitializeCommandStatus");
-    goto Finish;
   }
 
   // check options

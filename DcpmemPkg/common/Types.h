@@ -115,7 +115,6 @@ typedef struct _SENSOR_INFO {
   INT16 MediaTemperature;
   INT16 ControllerTemperature;
   UINT8 PercentageRemaining;
-  UINT8 WearLevel;
   UINT32 DirtyShutdowns;
   UINT8 LastShutdownStatus;
   UINT32 PowerOnTime;
@@ -124,8 +123,8 @@ typedef struct _SENSOR_INFO {
   UINT8 FwErrorCount;
   UINT8 HealthStatus;
   UINT16 HealthStatusReason;
-  UINT8 PercentageUsed;
   UINT32 MediaErrorCount;
+  UINT8 PercentageUsed;
   UINT32 ThermalErrorCount;
   INT16 ContrTempShutdownThresh;
   INT16 MediaTempShutdownThresh;

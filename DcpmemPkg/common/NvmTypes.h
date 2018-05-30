@@ -822,13 +822,12 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_MEDIA_TEMPERATURE          1
 #define SENSOR_TYPE_CONTROLLER_TEMPERATURE     2
 #define SENSOR_TYPE_PERCENTAGE_REMAINING       3
-#define SENSOR_TYPE_WEAR_LEVEL                 4
-#define SENSOR_TYPE_DIRTY_SHUTDOWNS            5
-#define SENSOR_TYPE_POWER_ON_TIME              6
-#define SENSOR_TYPE_UP_TIME                    7
-#define SENSOR_TYPE_POWER_CYCLES               8
-#define SENSOR_TYPE_FW_ERROR_COUNT             9
-#define SENSOR_TYPE_ALL                        10
+#define SENSOR_TYPE_DIRTY_SHUTDOWNS            4
+#define SENSOR_TYPE_POWER_ON_TIME              5
+#define SENSOR_TYPE_UP_TIME                    6
+#define SENSOR_TYPE_POWER_CYCLES               7
+#define SENSOR_TYPE_FW_ERROR_COUNT             8
+#define SENSOR_TYPE_ALL                        9
 #define SENSOR_TYPE_COUNT                      SENSOR_TYPE_ALL
 
 /** Sensor states **/

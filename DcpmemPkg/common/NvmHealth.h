@@ -11,7 +11,6 @@
 #define SPARE_CAPACITY_STR              L"PercentageRemaining"
 #define CONTROLLER_TEMPERATURE_STR      L"ControllerTemperature"
 #define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
-#define WEAR_LEVEL_STR                  L"WearLevel"
 #define POWER_ON_TIME_STR               L"PowerOnTime"
 #define DIRTY_SHUTDOWNS_STR            L"DirtyShutdowns"
 #define POWER_CYCLES_STR                L"PowerCycles"
@@ -20,12 +19,11 @@
 #define DIMM_HEALTH_STR                 L"Health"
 
 #define SENSORS_COMBINED \
-  L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|WearLevel|DirtyShutdowns|PowerOnTime|" \
+  L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|DirtyShutdowns|PowerOnTime|" \
   L"UpTime|PowerCycles|FwErrorCount"
 
 #define TEMPERATURE_MSR     L"C"
 #define SPARE_CAPACITY_MSR  L"%"
-#define WEAR_LEVEL_MSR      L"%"
 #define TIME_MSR            L"s"
 
 #define STATE_NORMAL_STR        L"Normal"

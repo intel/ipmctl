@@ -78,7 +78,6 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = SensorInfo.MediaTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = SensorInfo.ControllerTemperature;
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
-  DimmSensorsSet[SENSOR_TYPE_WEAR_LEVEL].Value = SensorInfo.WearLevel;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
   DimmSensorsSet[SENSOR_TYPE_DIRTY_SHUTDOWNS].Value = SensorInfo.DirtyShutdowns;
@@ -165,8 +164,6 @@ SensorTypeToString(
       return CONTROLLER_TEMPERATURE_STR;
     case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_STR;
-    case SENSOR_TYPE_WEAR_LEVEL:
-      return WEAR_LEVEL_STR;
     case SENSOR_TYPE_POWER_CYCLES:
       return POWER_CYCLES_STR;
     case SENSOR_TYPE_POWER_ON_TIME:
@@ -230,8 +227,6 @@ SensorValueMeasure(
       return TEMPERATURE_MSR;
     case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_MSR;
-    case SENSOR_TYPE_WEAR_LEVEL:
-      return WEAR_LEVEL_MSR;
     case SENSOR_TYPE_POWER_ON_TIME:
     case SENSOR_TYPE_UP_TIME:
       return TIME_MSR;

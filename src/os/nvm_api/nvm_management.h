@@ -257,13 +257,12 @@ enum sensor_type {
   SENSOR_MEDIA_TEMPERATURE = 1,    ///< Device media temperature in degrees Celsius.
   SENSOR_CONTROLLER_TEMPERATURE = 2,    ///< Device media temperature in degrees Celsius.
   SENSOR_PERCENTAGE_REMAINING = 3,    ///< Amount of percentage remaining as a percentage.
-  SENSOR_WEARLEVEL = 4,    ///< An estimate of the device life used as a percentage.
-  SENSOR_DIRTYSHUTDOWNS = 5,    ///< Device shutdowns without notification.
-  SENSOR_POWERONTIME = 6,    ///< Total power-on time over the lifetime of the device.
-  SENSOR_UPTIME = 7,    ///< Total power-on time since the last power cycle of the device.
-  SENSOR_POWERCYCLES = 8,    ///< Number of power cycles over the lifetime of the device.
-  SENSOR_FWERRORLOGCOUNT = 9,    ///< The total number of firmware error log entries.
-  SENSOR_POWERLIMITED = 10,   ///< Whether or not the AEP DIMM is power limited.
+  SENSOR_DIRTYSHUTDOWNS = 4,    ///< Device shutdowns without notification.
+  SENSOR_POWERONTIME = 5,    ///< Total power-on time over the lifetime of the device.
+  SENSOR_UPTIME = 6,    ///< Total power-on time since the last power cycle of the device.
+  SENSOR_POWERCYCLES = 7,    ///< Number of power cycles over the lifetime of the device.
+  SENSOR_FWERRORLOGCOUNT = 8,    ///< The total number of firmware error log entries.
+  SENSOR_POWERLIMITED = 9,   ///< Whether or not the AEP DIMM is power limited.
 };
 
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;

@@ -4,7 +4,7 @@
 Name:		ipmctl
 Version:	%{build_version}
 Release:	1%{?dist}
-Summary:	Utility for managing Intel Persistent Memory
+Summary:	Utility for managing Intel Optane DC persistent memory modules
 License:	BSD-3-Clause
 Group:		Applications/System
 URL:		https://github.com/intel/ipmctl
@@ -14,42 +14,60 @@ ExclusiveArch:	x86_64
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 BuildRequires:	pkgconfig(libndctl)
 BuildRequires:	cmake
+BuildRequires:	python2
+BuildRequires:	gcc
+BuildRequires:	gcc-c++
 Obsoletes:	ixpdimm-cli < 01.00.00.3000
 
 %description
-Utility for managing Intel Persistent Memory
+Utility for managing Intel Optane DC persistent memory modules
+Supports functionality to:
+Discover PMMs on the platform.
+Provision the platform memory configuration.
+View and update the firmware on PMMs.
+Configure data-at-rest security on PMMs.
+Monitor PMM health.
+Track performance of PMMs.
+Debug and troubleshoot PMMs.
 
 %prep
 %setup -q -n %{name}-%{version}
 
 %package -n ipmctl-monitor
-Summary:	Daemon for monitoring the status of Intel Persistent Memory.
+Summary:	Daemon for monitoring the status of Intel PMM
 Group:		System Environment/Daemons
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 %{?systemd_requires}
 BuildRequires:	systemd
-Obsoletes:	ipmctl-monitor < 01.00.00.3000
+Obsoletes:	ixpdimm-monitor < 01.00.00.3000
 
 %description -n ipmctl-monitor
-A monitor daemon for monitoring the health and status of Intel Persistent Memory.
+A monitor daemon for monitoring the health and status of Utility for managing Intel Optane DC persistent memory modules
 
 %package -n libipmctl
-Summary:	Library for Intel Persistent Memory management.
+Summary:	Library for Intel PMM management
 Group:		System/Libraries
 Requires:	ndctl-libs >= 58.2
+Obsoletes:	ixpdimm_sw < 01.00.00.3000
+Obsoletes:	libixpdimm-common < 01.00.00.3000
+Obsoletes:	libixpdimm-core < 01.00.00.3000
+Obsoletes:	libixpdimm-cli < 01.00.00.3000
+Obsoletes:	libixpdimm-cim < 01.00.00.3000
 Obsoletes:	libixpdimm < 01.00.00.3000
+Obsoletes:	ixpdimm-data < 01.00.00.3000
 
 %description -n libipmctl
-Library for Intel Persistent Memory management.
+An Application Programming Interface (API) library for managing Intel Optane DC persistent memory modules.
 
 %package -n libipmctl-devel
-Summary:	API for development of Intel Persistent Memory management utilities.
+Summary:	Development packages for libipmctl
 Group:		System/Libraries
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
-Obsoletes:	libixpdimm-devel < 01.00.00.3000
+Obsoletes:	ixpdimm-devel < 01.00.00.3000
+Obsoletes:	ixpdimm_sw-devel < 01.00.00.3000
 
 %description -n libipmctl-devel
-Development packages for libipmctl.
+API for development of Intel Optane DC persistent memory management utilities.
 
 %build
 %cmake -DBUILDNUM=%{version} -DCMAKE_INSTALL_PREFIX=/ \

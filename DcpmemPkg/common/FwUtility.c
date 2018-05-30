@@ -114,7 +114,7 @@ ConvertFwApiVersion(
   if ((Major == 0) && (Minor == 0)) {
     tmp = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
   } else {
-    tmp = CatSPrint(NULL, L"%d.%d", Major, Minor);
+    tmp = CatSPrint(NULL, L"%02d.%02d", Major, Minor);
   }
   if (tmp != NULL) {
     StrnCpyS(Version, FW_API_VERSION_LEN, tmp, FW_API_VERSION_LEN - 1);

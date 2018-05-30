@@ -119,6 +119,27 @@ void nvm_current_cmd(struct Command Command)
   g_cur_command = Command;
 }
 
+//temp, until uefi and os validation agree to
+//return code unification.
+EFI_STATUS uefi_to_os_ret_val(EFI_STATUS uefi_rc)
+{
+  EFI_STATUS rc = EFI_SUCCESS;
+  switch (uefi_rc)
+  {
+  case (0):
+    break;
+  case (2):
+    rc = 201;
+    break;
+  case (EFI_INVALID_PARAMETER):
+    rc = 201;
+    break;
+  default:
+    rc = 1;
+  }
+  return rc;
+}
+
 NVM_API int nvm_run_cli(int argc, char *argv[])
 {
   EFI_STATUS rc;
@@ -127,7 +148,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   rc = init_protocol_shell_parameters_protocol(argc, argv);
   if (rc == EFI_INVALID_PARAMETER) {
     wprintf(L"Syntax Error: Exceeded input parameters limit.\n");
-    return (int)rc;
+    return (int)uefi_to_os_ret_val(rc);
   }
 
   if (gOsShellParametersProtocol.StdOut == stdout)
@@ -141,19 +162,8 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     return nvm_status;
   }
 
-  rc = UefiMain(0, NULL);
-  switch (rc) {
-  case (0):
-    break;
-  case (2):
-    rc = 201;
-    break;
-  case (EFI_INVALID_PARAMETER):
-    rc = 201;
-    break;
-  default:
-    rc = 1;
-  }
+  rc = uefi_to_os_ret_val(UefiMain(0, NULL));
+
   //gOsShellParametersProtocol.StdOut will be overriden when
   //-o xml is used (temp hack)
   if (gOsShellParametersProtocol.StdOut != stdout) {
@@ -164,7 +174,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     dt = (enum DisplayType)d;
     process_output(dt, disp_name, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
   }
-    nvm_uninit();
+  nvm_uninit();
   return (int)rc;
 }
 

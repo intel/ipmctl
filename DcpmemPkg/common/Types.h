@@ -56,6 +56,7 @@ typedef struct {
 
 #define DIMM_BSR_OIE_ENABLED 0x1
 #define DIMM_BSR_FW_ASSERT 0x1
+#define DIMM_BSR_POWER_CYCLE_NEEDED 0x1
 #define DIMM_BSR_MEDIA_INTERFACE_ENGINE_STALLED 0x01
 
 #define REGISTER_BSR_STR  L"BSR"
@@ -84,23 +85,21 @@ typedef union {
     UINT64 Rsvd1 : 29;
   } Separated_FIS_1_4;
   struct {
-    UINT64 Major : 8;
-    UINT64 Minor : 8;
-    UINT64 MR : 2;
-    UINT64 DT : 1;
-    UINT64 PCR : 1;
-    UINT64 MBR : 1;
-    UINT64 WTS : 1;
-    UINT64 FRCF : 1;
-    UINT64 CR : 1;
-    UINT64 MD: 1;
-    UINT64 OIE: 1;
-    UINT64 OIWE: 1;
-    UINT64 DR: 2;
-    UINT64 Rsvd: 3;
-    UINT64 Assertion : 1;
-    UINT64 MI_Stalled: 1;
-    UINT64 Rsvd1: 30;
+    UINT64 Major : 8;       //7:0
+    UINT64 Minor : 8;       //15:8
+    UINT64 MR : 2;          //17:16
+    UINT64 DT : 1;          //18
+    UINT64 PCR : 1;         //19
+    UINT64 MBR : 1;         //20
+    UINT64 WTS : 1;         //21
+    UINT64 FRCF : 1;        //22
+    UINT64 CR : 1;          //23
+    UINT64 MD: 1;           //24
+    UINT64 OIE: 1;          //25
+    UINT64 OIWE: 1;         //26
+    UINT64 DR: 2;           //28:27
+    UINT64 PCN: 1;          //29
+    UINT64 Rsvd: 34;        //63:30
   } Separated_Current_FIS;
 } DIMM_BSR;
 

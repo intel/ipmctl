@@ -514,9 +514,6 @@ PopulateDimmBootStatusBitmask(
     if (pBsr->Separated_Current_FIS.MD == DIMM_BSR_MEDIA_DISABLED) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_DISABLED;
     }
-    if (pBsr->Separated_Current_FIS.Assertion == DIMM_BSR_FW_ASSERT) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_FW_ASSERT;
-    }
     GetDdrtIoInitInfo(NULL, pDimm->DimmID, &DdrtTrainingStatus);
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");
@@ -526,6 +523,9 @@ PopulateDimmBootStatusBitmask(
     }
     if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
+    }
+    if (pBsr->Separated_Current_FIS.PCN == DIMM_BSR_POWER_CYCLE_NEEDED) {
+      BootStatusBitmask |= DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED;
     }
   }
 
@@ -7450,11 +7450,6 @@ DimmFormat(
 
       if (EFI_ERROR(pReturnCodes[Index])) {
         continue;
-      }
-
-      if ((Bsr.Separated_Current_FIS.Assertion == DIMM_BSR_FW_ASSERT) &&
-          (Bsr.Separated_Current_FIS.MR == DIMM_BSR_MAILBOX_READY)) {
-        pReturnCodes[Index] = EFI_DEVICE_ERROR;
       }
     }
   }

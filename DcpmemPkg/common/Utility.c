@@ -2554,14 +2554,14 @@ BootStatusBitmaskToStr(
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
-    if (BootStatusBitmask & DIMM_BOOT_STATUS_FW_ASSERT) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_FW_ASSERT), NULL);
+    if (BootStatusBitmask & DIMM_BOOT_STATUS_MAILBOX_NOT_READY) {
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MAILBOX_NOT_READY), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
-    if (BootStatusBitmask & DIMM_BOOT_STATUS_MAILBOX_NOT_READY) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MAILBOX_NOT_READY), NULL);
+    if (BootStatusBitmask & DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED) {
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_PCN), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);

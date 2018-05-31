@@ -510,18 +510,6 @@ BootStatusDiagnosticsCheck(
       FREE_POOL_SAFE(pTmpStr);
       APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
     }
-    if (Bsr.Separated_Current_FIS.Assertion == DIMM_BSR_FW_ASSERT) {
-      pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_BSR_FW_ASSERT), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
-    }
-    if (Bsr.Separated_Current_FIS.MI_Stalled == DIMM_BSR_MEDIA_INTERFACE_ENGINE_STALLED) {
-      pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_BSR_MEDIA_ENGINE_STALLED), NULL);
-      pTmpStr1 = CatSPrint(NULL, pTmpStr, pDimmStr);
-      FREE_POOL_SAFE(pTmpStr);
-      APPEND_RESULT_TO_THE_LOG(pDimm, pTmpStr1, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
-    }
     if ((FIS_1_4 && (Bsr.Separated_FIS_1_4.DR != DIMM_BSR_AIT_DRAM_READY)) ||
         (!FIS_1_4 && (Bsr.Separated_Current_FIS.DR != DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY))) {
       pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_AIT_DRAM_NOT_READY), NULL);

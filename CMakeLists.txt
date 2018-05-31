@@ -113,9 +113,12 @@ if(LNX_BUILD)
 		-D_GNU_SOURCE
 		-D__LINUX__
 		)
-
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-strong")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong")
+	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-strong")
+	endif()
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.8)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong")
+	endif()
 endif()
 
 #----------------------------------------------------------------------------------------------------

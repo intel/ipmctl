@@ -374,6 +374,7 @@ int process_output(
    }
    else if (TableView == type || TableTabView == type)
    {
+      wchar_t * trimmed_line = NULL;
       int col = 0;
       int row = 0;
       show_table.column_cnt = 0;
@@ -386,7 +387,8 @@ int process_output(
       //get column names (used as key names)
       if (fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
       {
-         tok = wcstok(line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
+	trimmed_line = trimwhitespace(line);
+	tok = wcstok(trimmed_line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
          if (NULL != tok)
          {
             swprintf(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok);
@@ -407,9 +409,10 @@ int process_output(
       //iterate through all of the rows in the table
       while (num_dictionaries < NUM_DICTIONARIES_MAX && NULL != fgetws(line, READ_FD_LINE_SZ, fd))
       {
+         trimmed_line = trimwhitespace(line);
          //using the coresponding column header saved above as the key
          col = 0;
-         tok = wcstok(line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
+         tok = wcstok(trimmed_line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
          if (NULL != tok)
          {
             //get first column row-data

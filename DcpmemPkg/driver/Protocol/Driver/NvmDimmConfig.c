@@ -2211,12 +2211,6 @@ SetAlarmThresholds (
     }
   }
 
-  pPayloadAlarmThresholds = AllocateZeroPool(sizeof(*pPayloadAlarmThresholds));
-  if (pPayloadAlarmThresholds == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
   for ((Index = 0)
 #ifdef OS_BUILD
     ,(pObjectStatusNode = (&pCommandStatus->ObjectStatusList)->ForwardLink)
@@ -2288,10 +2282,8 @@ SetAlarmThresholds (
     }
   }
 
-  if (pPayloadAlarmThresholds != NULL) {
-    FreePool(pPayloadAlarmThresholds);
-  }
 Finish:
+  FREE_POOL_SAFE(pPayloadAlarmThresholds);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

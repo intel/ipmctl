@@ -950,7 +950,6 @@ typedef struct {
 
 #define DISPLAY_DIMM_ID_VARIABLE_NAME L"CLI_DEFAULT_DIMM_ID"
 #define DISPLAY_SIZE_VARIABLE_NAME L"CLI_DEFAULT_SIZE"
-#define BMI_VARIABLE_NAME L"BootMinimalInit"
 
 /** Intel DIMM Config automatic provisioning **/
 #define INTEL_DIMM_CONFIG_VARIABLE_NAME L"IntelDIMMConfig"

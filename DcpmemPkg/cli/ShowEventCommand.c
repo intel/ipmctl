@@ -264,7 +264,7 @@ ShowEvent(
 			ReturnCode = EFI_BUFFER_TOO_SMALL;
 			goto Finish;
 		}
-		Print(L"Time\tEventID\tSeverity\tActionRequired\tMessage\n");
+		Print(L"Time\tEventID\tSeverity\tActionRequired\tCode\tMessage\n");
 		Print(FORMAT_STR, WStringBuffer);
 	}
 

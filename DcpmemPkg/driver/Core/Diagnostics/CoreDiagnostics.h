@@ -24,12 +24,86 @@
 #include <Protocol/Smbios.h>
 #include <Library/HiiLib.h>
 
-/** Diagnostics State bitmasks **/
+#ifdef OS_BUILD
+#define APPEND_TO_DIAG_RESULT_FUNC SendTheEventAndAppendToDiagnosticsResult
+#else // OS_BUILD
+#define APPEND_TO_DIAG_RESULT_FUNC AppendToDiagnosticsResult
+#endif // OSBUILD
+
+#define APPEND_RESULT_TO_THE_LOG(pDimm,String,Code,StateMask,ppResult,pState,...) { \
+  CHAR16 *pTempHiiString = HiiGetString(gNvmDimmData->HiiHandle, String, NULL); \
+  pTempHiiString = CatSPrintClean(NULL, pTempHiiString, ## __VA_ARGS__); \
+  APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString, StateMask, ppResult, pState); \
+}
+
+ /** Diagnostics State bitmasks **/
 #define DIAG_STATE_MASK_OK         BIT0
 #define DIAG_STATE_MASK_WARNING    BIT1
 #define DIAG_STATE_MASK_FAILED     BIT2
 #define DIAG_STATE_MASK_ABORTED    BIT3
 #define DIAG_STATE_MASK_ALL (DIAG_STATE_MASK_OK |  DIAG_STATE_MASK_WARNING |  DIAG_STATE_MASK_FAILED |  DIAG_STATE_MASK_ABORTED)
+
+/** Event Codes' definitions **/
+/* Diagnostic Quick Eve nts **/
+#define EVENT_CODE_500      500
+#define EVENT_CODE_501      501
+#define EVENT_CODE_502      502
+#define EVENT_CODE_503      503
+#define EVENT_CODE_504      504
+#define EVENT_CODE_505      505
+#define EVENT_CODE_506      506
+#define EVENT_CODE_507      507
+#define EVENT_CODE_511      511
+#define EVENT_CODE_513      513
+#define EVENT_CODE_514      514
+#define EVENT_CODE_515      515
+#define EVENT_CODE_519      519
+#define EVENT_CODE_520      520
+#define EVENT_CODE_521      521
+#define EVENT_CODE_522      522
+#define EVENT_CODE_523      523
+#define EVENT_CODE_529      529
+#define EVENT_CODE_530      530
+#define EVENT_CODE_533      533
+#define EVENT_CODE_534      534
+#define EVENT_CODE_535      535
+#define EVENT_CODE_536      536
+#define EVENT_CODE_537      537
+#define EVENT_CODE_538      538
+#define EVENT_CODE_539      539
+#define EVENT_CODE_540      540
+/* Diagnostic Config Platform Events **/
+#define EVENT_CODE_600      600
+#define EVENT_CODE_601      601
+#define EVENT_CODE_606      606
+#define EVENT_CODE_608      608
+#define EVENT_CODE_609      609
+#define EVENT_CODE_618      618
+#define EVENT_CODE_621      621
+#define EVENT_CODE_622      622
+#define EVENT_CODE_623      623
+#define EVENT_CODE_624      624
+#define EVENT_CODE_625      625
+#define EVENT_CODE_626      626
+#define EVENT_CODE_627      627
+#define EVENT_CODE_628      628
+#define EVENT_CODE_629      629
+#define EVENT_CODE_630      630
+/* Diagnostic Security Events **/
+#define EVENT_CODE_800      800
+#define EVENT_CODE_801      801
+#define EVENT_CODE_802      802
+#define EVENT_CODE_805      805
+/* Diagnostic Firmware Events **/
+#define EVENT_CODE_900      900
+#define EVENT_CODE_901      901
+#define EVENT_CODE_902      902
+#define EVENT_CODE_903      903
+#define EVENT_CODE_904      904
+#define EVENT_CODE_905      905
+#define EVENT_CODE_906      906
+#define EVENT_CODE_907      907
+#define EVENT_CODE_910      910
 
 typedef enum {
   QuickDiagnosticIndex,
@@ -104,6 +178,8 @@ CreateDiagnosticStr (
 **/
 EFI_STATUS
 AppendToDiagnosticsResult (
+  IN     DIMM *pDimm OPTIONAL,
+  IN     UINT32 Code OPTIONAL,
   IN     CHAR16 *pStrToAppend,
   IN     UINT8 DiagStateMask,
   IN OUT CHAR16 **ppResultStr,
@@ -113,7 +189,14 @@ AppendToDiagnosticsResult (
 #ifdef OS_BUILD
 #include "event.h"
 
-#define ACTION_REQUIRED_NOT_SET 0xff
+#define EVENT_CODE_BASE_VALUE     100
+#define DEVICE_CONFIG_BASE_CODE   1
+#define DEVICE_HEALTH_BASE_CODE   2
+#define CONFIG_CHANGE_BASE_CODE   3
+#define QUICK_HEALTH_BASE_CODE    5
+#define PLATFORM_CONFIG_BASE_CODE 6
+#define SECURITY_CHECK_BASE_CODE  8
+#define FW_CONSISTENCY_BASE_CODE  9
 
 /**
 Append to the results string for a paricular diagnostic test, modify
@@ -121,6 +204,7 @@ the test state as per the message being appended and send the event
 to the event log.
 
 @param[in] pDimm Pointer to the DIMM structure
+@param[in] Code The event's code (for details see the event CSPEC)
 @param[in] pStrToAppend Pointer to the message string to be appended
 @param[in] DiagStateMask State corresonding to the string that is being appended
 @param[in out] ppResult Pointer to the result string of the particular test-suite's messages
@@ -131,14 +215,12 @@ to the event log.
 **/
 EFI_STATUS
 SendTheEventAndAppendToDiagnosticsResult(
-    IN     DIMM *pDimm,
-    IN     UINT8 ActionReqSet,
-    IN     CHAR16 *pStrToAppend,
-    IN     UINT8 DiagStateMask,
-    IN     UINT8 UniqeNumber,
-    IN     enum system_event_category Category,
-    IN OUT CHAR16 **ppResultStr,
-    IN OUT UINT8 *pDiagState
+  IN     DIMM *pDimm,
+  IN     UINT32 Code,
+  IN     CHAR16 *pStrToAppend,
+  IN     UINT8 DiagStateMask,
+  IN OUT CHAR16 **ppResultStr,
+  IN OUT UINT8 *pDiagState
 );
 #endif // OS_BUILD
 

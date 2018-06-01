@@ -425,7 +425,6 @@ endif()
 set(STRING_DEFS_INPUT_FILES
 	${ROOT}/DcpmemPkg/common/NvmStatus.uni
 	${ROOT}/DcpmemPkg/driver/Core/Diagnostics/DiagnosticsMessages.uni
-	${ROOT}/src/os/os_string_overrides.uni
 	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
 	)
 

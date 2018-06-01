@@ -55,7 +55,7 @@ const char *entry_type_string_table[] = { "Information", "Warning", "Error", "De
 * Find and return the event_type value form the event entry stored in the log
 * Returns 0 in case of success
 */
-static UINT32 get_event_type_form_event_entry(CHAR8 *event_message);
+static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_ctl_start, CHAR8 **pp_ctl_stop);
 
 /*
 * Function returns event id form the event message string
@@ -220,28 +220,29 @@ static char get_action_required_status(char *uid_string)
 static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, CHAR8 **event_buffer)
 {
     size_t end_of_event_buffer = *p_event_buff_size;
-    char *temp_string_ptr = NULL;
     size_t str_size;
+    UINT32 event_type = 0;
+    char *p_ctl_start = NULL;
+    char *p_ctl_stop = NULL;
+    char code_str[SYSTEM_LOG_CODE_STRING_SIZE] = { 0 };
 
     // Find the control char and estimate the fist section size
-    temp_string_ptr = strchr(event_entry, EVENT_MESSAGE_CONTROL_CHAR_START);
-    if (temp_string_ptr != NULL)
-    {
-        str_size = (size_t)(temp_string_ptr - event_entry);
-        str_size--; // Remove last tabulator
+    event_type = get_event_type_form_event_entry(event_entry, &p_ctl_start, &p_ctl_stop);
+    if ((NULL != p_ctl_start) && (NULL != p_ctl_stop)) {
+        str_size = (size_t)(p_ctl_start - event_entry);
         // Find the second control char and skip to the next char
-        temp_string_ptr = strchr(event_entry, EVENT_MESSAGE_CONTROL_CHAR_STOP);
-        if (NULL == temp_string_ptr)
-            return;  // Improper entry format
-        temp_string_ptr++;
+        p_ctl_stop++;
+        // Add the event code string
+        AsciiSPrint(code_str, SYSTEM_LOG_CODE_STRING_SIZE, "%03d", SYSTEM_EVENT_TYPE_NUMBER_GET(event_type));
         // Increase buffer size
-        *p_event_buff_size += str_size + AsciiStrLen(temp_string_ptr) + 1; // + new line marker
+        *p_event_buff_size += str_size + AsciiStrLen(code_str) + AsciiStrLen(p_ctl_stop) + 1; // + new line marker
         *event_buffer = realloc(*event_buffer, *p_event_buff_size);
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
             // Coppy strings to the buffer
             s_strncat(*event_buffer, *p_event_buff_size, event_entry, str_size);
-            s_strcat(*event_buffer, *p_event_buff_size, temp_string_ptr);
+            s_strcat(*event_buffer, *p_event_buff_size, code_str);
+            s_strcat(*event_buffer, *p_event_buff_size, p_ctl_stop);
         }
     }
     else
@@ -266,7 +267,7 @@ static void store_log_entry(CHAR8 *event_message, UINTN offset, log_entry **pp_l
     p_current = AllocateZeroPool(sizeof(log_entry));
     if (NULL != p_current) {
         // Fill with data
-        p_current->event_type = get_event_type_form_event_entry(event_message);
+        p_current->event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
         p_current->message_offset = offset;
         // Add it to the log entry list
         if (NULL == *pp_log_entry)
@@ -343,7 +344,7 @@ static char* fgetsrev(char* str, int num, FILE * stream)
 * Find and return the event_type value form the event entry stored in the log
 * Returns 0 in case of success
 */
-static UINT32 get_event_type_form_event_entry(CHAR8 *event_message)
+static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_ctl_start, CHAR8 **pp_ctl_stop)
 {
     char *p_ctrl_str_start = NULL;
     char *p_ctrl_str_stop = NULL;
@@ -353,11 +354,17 @@ static UINT32 get_event_type_form_event_entry(CHAR8 *event_message)
 
     // Find the control char and estimate the fist section size
     p_ctrl_str_start = strchr(event_message, EVENT_MESSAGE_CONTROL_CHAR_START);
+    if (NULL != pp_ctl_start) {
+      *pp_ctl_start = p_ctrl_str_start;
+    }
     // Skip the control char
     p_ctrl_str_start++;
     if (p_ctrl_str_start != NULL)
     {
         p_ctrl_str_stop = strchr(event_message, EVENT_MESSAGE_CONTROL_CHAR_STOP);
+        if (NULL != pp_ctl_stop) {
+          *pp_ctl_stop = p_ctrl_str_stop;
+        }
         // Calculate event type value size
         str_size = (size_t)(p_ctrl_str_stop - p_ctrl_str_start);
         // Copy the event type string only
@@ -415,7 +422,7 @@ static BOOLEAN check_skip_entry_status_for_event_category(BOOLEAN not_matching, 
     if (SYSTEM_EVENT_NOT_APPLICABLE != cat_mask)
     {
         // Get the event type value
-        event_type = get_event_type_form_event_entry(event_message);
+        event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
         // Get the category form it
         event_cat_mask = SYSTEM_EVENT_TO_MASK(SYSTEM_EVENT_TYPE_CATEGORY_GET(event_type));
         if (event_cat_mask & cat_mask)
@@ -452,7 +459,7 @@ static BOOLEAN check_skip_entry_status_for_event_actionreq_set(BOOLEAN not_match
     else
         skip_entry = !not_matching;
     // Get the event type value
-    event_type = get_event_type_form_event_entry(event_message);
+    event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
     // Get the UID file name
     get_unified_id_form_event_entry(event_message, sizeof(log_file_name), log_file_name);
     // The action required file configured
@@ -956,7 +963,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                 if (temp_event_id == event_id)
                 {
                     // We found event, now get the event type
-                    event_type = get_event_type_form_event_entry(event_message);
+                    event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
                     // Get the UID file name
                     get_unified_id_form_event_entry(event_message, sizeof(log_file_name), log_file_name);
                     // The action required file configured

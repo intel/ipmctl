@@ -62,8 +62,7 @@ if __name__ == '__main__':
 	# Later files override earlier files
 	inputFiles = [
 	os.path.join(uefiRootPath,'DcpmemPkg','common','NvmStatus.uni'),
-	os.path.join(uefiRootPath,'DcpmemPkg','driver','Core','Diagnostics','DiagnosticsMessages.uni'),
-	os.path.join(uefiRootPath,'src','os','os_string_overrides.uni')]
+	os.path.join(uefiRootPath,'DcpmemPkg','driver','Core','Diagnostics','DiagnosticsMessages.uni')]
 	outputFileDir = os.path.dirname(os.path.realpath(__file__))
 	# Output to the same directory
 	# Different headers because everyone needs indices (defs) but not the actual strings

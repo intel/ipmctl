@@ -102,7 +102,6 @@ GetOptimumFwVersion(
      OUT UINT8 *pDiagState
   );
 
-#ifdef OS_BUILD
 /**
 Get the smart and health data and checks the Media Temperature,
 Controller Temperature and Spare Block thresholds.
@@ -122,6 +121,7 @@ ThresholdsCheck(
   IN OUT UINT8 *pDiagState
 );
 
+#ifdef OS_BUILD
 /**
 Get the DIMMs system time and compare it to the local system time.
 Log proper events in case of any error.
@@ -139,6 +139,7 @@ SystemTimeCheck(
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
 );
+#endif // OS_BUILD
 
 /**
 Get the DIMM's debug log level and compare it to the default value.
@@ -157,5 +158,4 @@ FwLogLevelCheck(
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
 );
-#endif // OS_BUILD
 #endif

@@ -7,12 +7,6 @@
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
-#ifdef OS_BUILD
-#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) SendTheEventAndAppendToDiagnosticsResult(pDimm,ACTION_REQUIRED_NOT_SET,pStr,StateMask,__COUNTER__,SYSTEM_EVENT_CAT_SECURITY,ppResult,pState)
-#else // OS_BUILD
-#define APPEND_RESULT_TO_THE_LOG(pDimm,pStr,StateMask,ppResult,pState) AppendToDiagnosticsResult(pStr,StateMask,ppResult,pState)
-#endif // OS_BUILD
-
 /**
   Run security diagnostics for the list of DIMMs, and appropriately
   populate the result messages, and test-state.
@@ -36,7 +30,6 @@ RunSecurityDiagnostics(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  CHAR16 *pTmpStr = NULL;
   CHAR16 *pInconsistentSecurityStatesStr = NULL;
   UINT8 DimmSecurityState = 0;
   UINT8 SecurityFlag = 0;
@@ -55,8 +48,7 @@ RunSecurityDiagnostics(
   }
 
   if (DimmCount == 0 || ppDimms == NULL) {
-    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_NO_MANAGEABLE_DIMMS), NULL);
-    APPEND_RESULT_TO_THE_LOG(NULL, pTmpStr, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_NO_MANAGEABLE_DIMMS), EVENT_CODE_801, DIAG_STATE_MASK_OK, ppResult, pDiagState, pInconsistentSecurityStatesStr, L".");
     goto Finish;
   }
 
@@ -97,21 +89,18 @@ RunSecurityDiagnostics(
   }
 
   if (InconsistencyFlag) {
-    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_SECURITY_INCONSISTENT), NULL);
-    pTmpStr = CatSPrintClean(pTmpStr, L" " FORMAT_STR FORMAT_STR, pInconsistentSecurityStatesStr, L".");
-    APPEND_RESULT_TO_THE_LOG(NULL, pTmpStr, DIAG_STATE_MASK_WARNING, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING, ppResult, pDiagState, pInconsistentSecurityStatesStr, L".");
   }
 
   if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
-    pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_SECURITY_SUCCESS), NULL);
-    APPEND_RESULT_TO_THE_LOG(NULL, pTmpStr, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_SUCCESS), EVENT_CODE_800, DIAG_STATE_MASK_OK, ppResult, pDiagState);
   }
+
   ReturnCode = EFI_SUCCESS;
   goto Finish;
 
 FinishError:
-  pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DIAGNOSTIC_SECURITY_ABORTED_INTERNAL_ERROR), NULL);
-  APPEND_RESULT_TO_THE_LOG(NULL, pTmpStr, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
+  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_ABORTED_INTERNAL_ERROR), EVENT_CODE_805, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
 Finish:
   FREE_POOL_SAFE(pInconsistentSecurityStatesStr);
   NVDIMM_EXIT_I64(ReturnCode);

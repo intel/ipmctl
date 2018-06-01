@@ -73,6 +73,8 @@ CreateDiagnosticStr (
 **/
 EFI_STATUS
 AppendToDiagnosticsResult (
+  IN     DIMM *pDimm OPTIONAL,
+  IN     UINT32 Code OPTIONAL,
   IN     CHAR16 *pStrToAppend,
   IN     UINT8 DiagStateMask,
   IN OUT CHAR16 **ppResultStr,
@@ -101,11 +103,74 @@ Finish:
 #ifdef OS_BUILD
 #include "event.h"
 /**
+Converts the event code to the event category
+**/
+enum system_event_category EventCodeToEventCategory(
+  IN UINT32 Code)
+{
+  if (DEVICE_CONFIG_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_PM; //!< PM metadata diagnostic test events
+  }
+  else if (DEVICE_HEALTH_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_HEALTH; //!< Device health events
+  }
+  else if (CONFIG_CHANGE_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_MGMT; //!< Management software generated events
+  }
+  else if (QUICK_HEALTH_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_QUICK; //!< Quick diagnostic test events
+  }
+  else if (PLATFORM_CONFIG_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_CONFIG; //!< Platform config diagnostic test events
+  }
+  else if (SECURITY_CHECK_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_SECURITY; //!< Secuirty diagnostic test events
+  }
+  else if (FW_CONSISTENCY_BASE_CODE == (Code / EVENT_CODE_BASE_VALUE)) {
+    return SYSTEM_EVENT_CAT_FW;    //!< FW consistency diagnostic test events
+  }
+
+  return SYSTEM_EVENT_CAT_DIAG;  //!< Diagnostic test events
+}
+
+/**
+Converts the event code to the action required state
+**/
+BOOLEAN EventCodeToActionRequiredState(
+  IN UINT32 Code)
+{
+  if ((EVENT_CODE_513 == Code) ||
+    (EVENT_CODE_514 == Code) ||
+    (EVENT_CODE_515 == Code) ||
+    (EVENT_CODE_519 == Code) ||
+    (EVENT_CODE_520 == Code) ||
+    (EVENT_CODE_521 == Code) ||
+    (EVENT_CODE_522 == Code) ||
+    (EVENT_CODE_523 == Code) ||
+    (EVENT_CODE_533 == Code) ||
+    (EVENT_CODE_534 == Code) ||
+    (EVENT_CODE_535 == Code) ||
+    (EVENT_CODE_536 == Code) ||
+    (EVENT_CODE_537 == Code) ||
+    (EVENT_CODE_609 == Code) ||
+    (EVENT_CODE_624 == Code) ||
+    (EVENT_CODE_625 == Code) ||
+    (EVENT_CODE_626 == Code) ||
+    (EVENT_CODE_627 == Code) ||
+    (EVENT_CODE_628 == Code) ||
+    (EVENT_CODE_629 == Code)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
 Append to the results string for a paricular diagnostic test, modify
 the test state as per the message being appended and send the event
 to the event log.
 
 @param[in] pDimm Pointer to the DIMM structure
+@param[in] Code The event's code (for details see the event CSPEC)
 @param[in] pStrToAppend Pointer to the message string to be appended
 @param[in] DiagStateMask State corresonding to the string that is being appended
 @param[in out] ppResult Pointer to the result string of the particular test-suite's messages
@@ -117,11 +182,9 @@ to the event log.
 EFI_STATUS
 SendTheEventAndAppendToDiagnosticsResult(
     IN     DIMM *pDimm,
-    IN     UINT8 ActionReqSet,
+    IN     UINT32 Code,
     IN     CHAR16 *pStrToAppend,
     IN     UINT8 DiagStateMask,
-    IN     UINT8 UniqeNumber,
-    IN     enum system_event_category Category,
     IN OUT CHAR16 **ppResultStr,
     IN OUT UINT8 *pDiagState
 )
@@ -129,37 +192,29 @@ SendTheEventAndAppendToDiagnosticsResult(
     EFI_STATUS ReturnCode = EFI_SUCCESS;
     CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
     CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-	enum system_event_type EventSeverity = SYSTEM_EVENT_TYPE_INFO;
+	  enum system_event_type EventSeverity = SYSTEM_EVENT_TYPE_INFO;
     CHAR8 * pAsciiStrToAppend = NULL;
     BOOLEAN StoreInSystemLog = FALSE;
-    BOOLEAN ActionReqState = 0;
+    BOOLEAN ActionReqState = EventCodeToActionRequiredState(Code);
+    enum system_event_category Category = EventCodeToEventCategory(Code);
 
     // Prepare the string
     pAsciiStrToAppend = (CHAR8*)AllocateZeroPool(StrLen(pStrToAppend) + 1); // +1 makes room for string termination
     if (NULL == pAsciiStrToAppend) {
-        return EFI_OUT_OF_RESOURCES;
+      FREE_POOL_SAFE(pStrToAppend);
+      return EFI_OUT_OF_RESOURCES;
     }
     UnicodeStrToAsciiStrS(pStrToAppend, pAsciiStrToAppend, StrLen(pStrToAppend) + 1);
     // Get the message severity
-    if (DiagStateMask & DIAG_STATE_MASK_ABORTED) {
+    if ((DiagStateMask & DIAG_STATE_MASK_ABORTED) || (DiagStateMask & DIAG_STATE_MASK_FAILED)) {
         EventSeverity = SYSTEM_EVENT_TYPE_ERROR;
         StoreInSystemLog = TRUE;
-    }
-    else if (DiagStateMask & DIAG_STATE_MASK_FAILED) {
-        EventSeverity = SYSTEM_EVENT_TYPE_ERROR;
-        StoreInSystemLog = TRUE;
-        if (ACTION_REQUIRED_NOT_SET == ActionReqSet) {
-            ActionReqState = 1;
-        }
     }
     else if (DiagStateMask & DIAG_STATE_MASK_WARNING) {
         EventSeverity = SYSTEM_EVENT_TYPE_WARNING;
     }
     else if (DiagStateMask & DIAG_STATE_MASK_OK) {
         EventSeverity = SYSTEM_EVENT_TYPE_INFO;
-    }
-    if (ACTION_REQUIRED_NOT_SET != ActionReqSet) {
-        ActionReqState = (BOOLEAN)ActionReqSet;
     }
     // Store the log
     if (pDimm != NULL)
@@ -174,19 +229,19 @@ SendTheEventAndAppendToDiagnosticsResult(
             // Prepare DIMM UId
             UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
             nvm_store_system_entry(NVM_SYSLOG_SOURCE,
-                SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, UniqeNumber, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
+                SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, Code, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
                 AsciiDimmUid, pAsciiStrToAppend);
         }
     }
     else
     {
         nvm_store_system_entry(NVM_SYSLOG_SOURCE,
-            SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, UniqeNumber, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
+            SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, Code, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
             NULL, pAsciiStrToAppend);
     }
 
     FREE_POOL_SAFE(pAsciiStrToAppend);
-    return AppendToDiagnosticsResult(pStrToAppend, DiagStateMask, ppResultStr, pDiagState);
+    return AppendToDiagnosticsResult(pDimm, Code, pStrToAppend, DiagStateMask, ppResultStr, pDiagState);
 }
 #endif // OS_BUILD
 

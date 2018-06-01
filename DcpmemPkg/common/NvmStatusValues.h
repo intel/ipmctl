@@ -12,7 +12,7 @@
 #ifndef _NVM_STATUS_VALUES_H_
 #define _NVM_STATUS_VALUES_H_
 
- 
+
 typedef enum _NvmStatusCode {
   NVM_SUCCESS                                       = 0,
   NVM_SUCCESS_FW_RESET_REQUIRED                     = 1,
@@ -170,7 +170,12 @@ typedef enum _NvmStatusCode {
   NVM_ERR_DRIVERFAILED                              = 288,
   NVM_ERR_INVALIDPARAMETER                          = 289,
   NVM_ERR_OPERATION_NOT_SUPPORTED                   = 290,
-  NVM_ERR_RETRY_SUGGESTED			    = 291,
+  NVM_ERR_RETRY_SUGGESTED			                      = 291,
+
+  NVM_ERR_SPD_NOT_ACCESSIBLE                        = 300,
+  NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION            = 301,
+
+
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

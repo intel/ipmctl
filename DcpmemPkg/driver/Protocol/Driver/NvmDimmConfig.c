@@ -28,8 +28,13 @@
 #include <ShowAcpi.h>
 #include <CoreDiagnostics.h>
 #include <NvmHealth.h>
+#include <Utility.h>
+
 #ifndef OS_BUILD
+#include <SpiRecovery.h>
+#include <FConfig.h>
 #include <Spi.h>
+#include <Smbus.h>
 #endif
 
 #ifdef OS_BUILD
@@ -4687,11 +4692,60 @@ Finish:
   return ReturnCode;
 }
 
+/*
+ * Helper function for writing a spi image to a backup file.
+ * Does note overwrite an existing file
+ */
+EFI_STATUS
+DebugWriteSpiImageToFile(
+    IN     CHAR16 *pWorkingDirectory OPTIONAL,
+    IN     UINT32 DimmHandle,
+    IN     CONST VOID *pSpiImageBuffer,
+    IN     UINT64 ImageBufferSize
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_FILE_HANDLE FileHandle = NULL;
+  CHAR16 *FileNameFconfig = NULL;
+
+
+  FileHandle = NULL;
+  FileNameFconfig = CatSPrint(NULL, L"new_spi_w_merged_fconfig_0x%04x.bin", DimmHandle);
+
+  // Do not overwrite if file exists
+  ReturnCode = OpenFile(FileNameFconfig, &FileHandle, pWorkingDirectory, FALSE);
+  if (ReturnCode != EFI_NOT_FOUND) {
+    ReturnCode = EFI_WRITE_PROTECTED;
+    NVDIMM_ERR("Found existing file when trying to write backup file %s", FileNameFconfig);
+    NVDIMM_ERR("Move the existing file to a safe location, as it likely has the original fconfigs");
+    goto Finish;
+  }
+  // If a handle was opened for some reason, make sure to close it
+  if (FileHandle != NULL) {
+    FileHandle->Close(FileHandle);
+  }
+
+  ReturnCode = OpenFile(FileNameFconfig, &FileHandle, pWorkingDirectory, TRUE);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+  ReturnCode = FileHandle->Write(FileHandle, &ImageBufferSize, (VOID *)pSpiImageBuffer);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+Finish:
+  FREE_POOL_SAFE(FileNameFconfig);
+  if (FileHandle != NULL) {
+    FileHandle->Close(FileHandle);
+  }
+  return ReturnCode;
+}
+
 /**
   Recover firmware of a specified NVDIMM
 
   @param[in] DimmPid Dimm ID of a NVDIMM on which recovery is to be performed
-  @param[in] pImageBuffer is a pointer to FW image
+  @param[in] pNewSpiImageBuffer is a pointer to new SPI FW image
   @param[in] ImageBufferSize is Image size in bytes
 
   @param[out] pNvmStatus NVM error code
@@ -4706,57 +4760,113 @@ Finish:
 EFI_STATUS
 EFIAPI
 RecoverDimmFw(
-  IN     UINT16 DimmPid,
-  IN     CONST VOID *pImageBuffer,
+  IN     UINT32 DimmHandle,
+  IN     CONST VOID *pNewSpiImageBuffer,
   IN     UINT64 ImageBufferSize,
+  IN     CHAR16 *pWorkingDirectory OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 #ifndef OS_BUILD
-  UINT8 *pImage = NULL;
   DIMM *pCurrentDimm = NULL;
   EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  SPI_DIRECTORY *pSpiDirectoryNewSpiImageBuffer;
+  SPI_DIRECTORY SpiDirectoryTarget;
+  UINT8 *pFconfigRegionNewSpiImageBuffer = NULL;
+  UINT8 *pFconfigRegionTemp = NULL;
+  UINT16 DeviceId;
 
-  if (pImageBuffer == NULL || pCommandStatus == NULL) {
+  NVDIMM_ENTRY();
+
+  if (pNewSpiImageBuffer == NULL || pCommandStatus == NULL) {
     goto Finish;
   }
 
-  pImage = (UINT8*)pImageBuffer;
-  if (pImage == NULL) {
-    NVDIMM_DBG("pImage is NULL");
-  }
+  pSpiDirectoryNewSpiImageBuffer = (SPI_DIRECTORY *) pNewSpiImageBuffer;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **) &pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
-  pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.UninitializedDimms);
+  pCurrentDimm = GetDimmByHandle(DimmHandle, &gNvmDimmData->PMEMDev.UninitializedDimms);
   if (pCurrentDimm == NULL) {
-    NVDIMM_DBG("Failed at GetDimm");
+    NVDIMM_ERR("Failed to find handle 0x%x in uninitialized dimm list", DimmHandle);
+    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_NOT_FOUND);
     goto Finish;
   }
 
-  ReturnCode = SpiCheckAccess(pCurrentDimm, pCommandStatus);
+  ReturnCode = SpiCheckAccess(pCurrentDimm);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Spi access is not enabled on DIMM 0x%x", pCurrentDimm->DeviceHandle.AsUint32);
+    NVDIMM_ERR("Spi access is not enabled on DIMM 0x%x", pCurrentDimm->DeviceHandle.AsUint32);
+    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
     goto Finish;
   }
 
-  ReturnCode = SpiEraseChip(pCurrentDimm, pCommandStatus);
+  // Make sure we are working with a Dcpmem 1st gen device
+  ReturnCode = GetDeviceIdSpd(pCurrentDimm->SmbusAddress, &DeviceId);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed at Chip Erase");
+    NVDIMM_ERR("Cannot access spd data over smbus: 0x%x", ReturnCode);
+    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_SPD_NOT_ACCESSIBLE);
+    goto Finish;
+  }
+  if (DeviceId != SPD_DEVICE_ID_DCPMEM_GEN1) {
+    NVDIMM_ERR("Incompatible hardware revision 0x%x", DeviceId);
+    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION);
     goto Finish;
   }
 
-  ReturnCode = SpiWrite(pCurrentDimm, pImageBuffer, (UINT32)ImageBufferSize, SPI_START_ADDRESS, FALSE, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed at Spi Write");
+  pFconfigRegionTemp = (UINT8 *)AllocateZeroPool(SPI_FCONFIG_REGION_MAX_SIZE_BYTES);
+  if (pFconfigRegionTemp == NULL) {
+    NVDIMM_ERR("Out of memory");
+    ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
+
+  // Gather fconfig data
+  ReturnCode = ReadSpiDirectoryTarget(pCurrentDimm, &SpiDirectoryTarget);
+  if (!EFI_ERROR(ReturnCode)) {
+    ReturnCode = ReadAndVerifyFconfigTarget(pCurrentDimm, &SpiDirectoryTarget, pFconfigRegionTemp);
+  }
+  // If there are any errors in recovering configuration data from the existing module spi image,
+  // we need to recreate the fconfig data by merging entries from the spd
+  // and the new spi image fconfig. Copy them to pFconfigRegionTemp
+  if (EFI_ERROR(ReturnCode)) {
+    ZeroMem(pFconfigRegionTemp, SPI_FCONFIG_REGION_MAX_SIZE_BYTES);
+    ReturnCode = RecreateFconfigFromSpdAndNewSpiImage((UINT8 *)pNewSpiImageBuffer,
+        ImageBufferSize, pCurrentDimm, pFconfigRegionTemp);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+  }
+
+  // Copy original fconfig or generated fconfig to the new image
+  pFconfigRegionNewSpiImageBuffer = ((UINT8 *)pNewSpiImageBuffer +
+      pSpiDirectoryNewSpiImageBuffer->FconfigDataOffset);
+  CopyMem((VOID *)pFconfigRegionNewSpiImageBuffer, (VOID *)pFconfigRegionTemp,
+          sizeof(FconfigContainerHeader) + ((FconfigContainerHeader *)pFconfigRegionTemp)->DwordLen * sizeof(UINT32));
+
+  // Copy migration data from the existing dimm spi image, if applicable
+  CHECK_RESULT(ReadAndCopyMigrationData(pCurrentDimm, &SpiDirectoryTarget,
+               pSpiDirectoryNewSpiImageBuffer), Finish);
+
+  ////////////////////////////////////////////////////
+  // Write out the new image to a file in order to recover the
+  // dimm back to a good state after testing.
+  // TODO: Needed for validation only! We do not need this after product PRQ and will
+  // probably confuse people
+  CHECK_RESULT(DebugWriteSpiImageToFile(pWorkingDirectory, pCurrentDimm->DeviceHandle.AsUint32,
+      pNewSpiImageBuffer, ImageBufferSize), Finish);
+  ///////////////////////////////////////////////////
+
+  CHECK_RESULT(SpiEraseChip(pCurrentDimm, pCommandStatus), Finish);
+
+  CHECK_RESULT(SpiWrite(pCurrentDimm, pNewSpiImageBuffer, (UINT32)ImageBufferSize,
+      SPI_START_ADDRESS, FALSE, pCommandStatus), Finish);
 
 Finish:
+  FREE_POOL_SAFE(pFconfigRegionTemp);
   NVDIMM_EXIT_I64(ReturnCode);
   #endif
   return ReturnCode;
@@ -4898,22 +5008,38 @@ UpdateFw(
       goto Finish;
     }
     for (Index = 0; Index < DimmsNum; Index++) {
-      TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
-
-      if (EFI_ERROR(TempReturnCode)) {
-        if (TempReturnCode == EFI_ABORTED) {
-          if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
-          } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID){
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-          } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID){
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-          }
+      if (Recovery && FlashSPI) {
+        // We will only be able to flash spi if we can access the
+        // spi interface over smbus
+#ifdef OS_BUILD
+        // Spi check access will fail with unsupported on OS
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+#else
+        TempReturnCode = SpiCheckAccess(pDimms[Index]);
+#endif
+        if (EFI_ERROR(TempReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
         } else {
-          goto Finish;
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
         }
       } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+        TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
+
+        if (EFI_ERROR(TempReturnCode)) {
+          if (TempReturnCode == EFI_ABORTED) {
+            if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
+            } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+            } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+            }
+          } else {
+            goto Finish;
+          }
+        } else {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+        }
       }
     }
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
@@ -4927,7 +5053,8 @@ UpdateFw(
     // upload FW image to all specified DIMMs
     for (Index = 0; Index < DimmsNum; Index++) {
       if (Recovery && FlashSPI) {
-        ReturnCode = RecoverDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, pCommandStatus);
+        ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
+            pImageBuffer, BuffSize, pWorkingDirectory, pCommandStatus);
       } else if (Recovery) {
         ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
       } else {

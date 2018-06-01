@@ -5,9 +5,8 @@
 
 #include <Uefi.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Library/BaseMemoryLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
 #include "FwUtility.h"
 #include "Utility.h"
 #include <Library/UefiLib.h>
@@ -290,7 +289,7 @@ LoadFileAndCheckHeader(
       goto FinishClose;
     }
 
-    ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageCopyStage10Offset);
+    ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageOffset);
     if (EFI_ERROR(ReturnCode)) {
       *ppError = CatSPrint(NULL, L"Error: Could not read the file.\n");
       ReturnValue = FALSE;
@@ -325,3 +324,36 @@ FinishClose:
 Finish:
   return ReturnValue;
 }
+
+
+/**
+  Calculates the checksum of passed in buffer and keeps a running
+  value. Used by CR FW for computing their checksum, used in our code for get/set
+  fconfig data.
+
+  @param[in]  pBuffer Pointer to buffer whose checksum needs to be calculated.
+  @param[in]  NumBytes Number of bytes inside buffer to calculate checksum on.
+  @param[in]  Csum current running checksum.
+
+  @retval The computed checksum
+**/
+UINT32 RunningChecksum(
+  IN VOID *pBuffer,
+  IN UINT32 NumBytes,
+  IN UINT32 Csum)
+
+{
+  UINT32 Index;
+  UINT8 *pU8Buffer;
+
+  Csum = (~(Csum) + 1);
+
+  pU8Buffer = pBuffer;
+
+  for (Index = 0; Index < NumBytes; Index++) {
+    Csum = Csum + pU8Buffer[Index] * (1 << (8 * (Index % 4)));
+  }
+  Csum = ~(Csum) + 1;
+  return Csum;
+}
+

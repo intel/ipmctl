@@ -286,6 +286,15 @@ typedef union {
 #define IS_LEAP_YEAR(Year)              (!((Year) % 4) && (((Year) % 100) || !((Year) % 400)))
 #define DAYS_IN_YEAR(Year)              (IS_LEAP_YEAR(Year) ? 366 : 365)
 
+#define CHECK_RESULT(Call, Label)                             \
+  do {                                                        \
+    ReturnCode = Call;                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_WARN("Failure on function: 0x%x", ReturnCode);   \
+      goto Label;                                             \
+    }                                                         \
+  } while (0)
+
 /**
   Get a variable from UEFI RunTime services.
 

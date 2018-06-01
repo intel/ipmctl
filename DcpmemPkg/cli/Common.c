@@ -301,6 +301,11 @@ GetDimmIdsFromString(
       if ( (!pIsDimmIdNumber[Index] && StrICmp(ppDimmIdTokensStr[Index],pDimmInfo[Index2].DimmUid) == 0) ||
            (pIsDimmIdNumber[Index] && pDimmInfo[Index2].DimmHandle == pParsedDimmIdNumber[Index]) )
       {
+        // Note: For uninitialized dimms, the DimmID is always 0x0
+        // It can cause havok later on if you care about those dimms
+        // We should switch to using DimmHandle at some point, as we
+        // don't accept DimmID as a command line dimm specifier!
+        // (we only accept positional handle and uid)
         (*ppDimmIds)[Index] = pDimmInfo[Index2].DimmID;
         DimmIdFound = TRUE;
         break;

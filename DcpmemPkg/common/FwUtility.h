@@ -139,19 +139,43 @@ typedef struct {
 /**
   SPI Directory structure that holds SPI memory map
 **/
+
+// Copied March 2018 from spi_memory_map_ekvs1.h
+#define SPI_DIRECTORY_VERSION 1
+
 typedef struct {
   UINT16 DirectoryVersion;
   UINT16 DirectorySize;
-  UINT32 SpiSoftFusesDataOffset;
-  UINT32 FwImageStage10Offset;
-  UINT32 FwImageStage20Offset;
-  UINT32 FwImageCopyStage10Offset;
-  UINT32 FwImageCopyStage20Offset;
-  UINT32 FwImageDfxState10Offset;
-  UINT32 FwImageDfxStage20Offset;
+  UINT32 SoftFusesDataOffset;
+  UINT32 DirectoryCopyOffset;        // Not used
+  UINT32 MfgCypherOffset;
+  UINT32 FwImageOffset;
+  UINT32 FwImageDfxOffset;
+  UINT32 SpdDataOffset;
+  UINT32 MigrationDataOffset;
+  UINT32 FwImageCopyOffset;
+  UINT32 SxpSavedRegistersOffset;
+  UINT32 Reserved_1;                 // was DdrtSavedRegistersOffset;
+  UINT32 BurninInputDataOffset;
+  UINT32 BurninOutputDataOffset;
+  UINT32 SxpRankInterleavingOffset;
+  UINT32 DdrtIoMmrcTableOffset;
+  UINT32 SxpIoMmrcTableOffset;
+  UINT32 Reserved_2;                 // was FwStateDataOffset;
+  UINT32 FconfigDataOffset;
+  UINT32 SxpTimingParametersOffset;
+  UINT32 SxpTrainingReportOffset;
+  UINT32 SxpRmtResultsOffset;
+  UINT32 SxpRawTrainingDataOffset;
+  UINT32 PreInjectionModuleFrameworkOffset;
+  UINT32 reserved[8];
+  UINT8  reservedu8[3];
+  UINT8  SpiEndOfDirectory;
 } SPI_DIRECTORY;
 
 #pragma pack(pop)
+
+
 
 /**
   FW Image header information
@@ -281,6 +305,23 @@ ConvertFwApiVersion(
 BOOLEAN
 IsFwStaged(
   IN FIRMWARE_VERSION StagedFwVersion
+  );
+
+/**
+  Calculates the checksum of passed in buffer and keeps a running
+  value. Used by CR FW for computing their checksum, used in our code for get/set
+  fconfig data.
+
+  @param[in]  pBuffer Pointer to buffer; whose checksum needs to be calculated.
+  @param[in]  NumBytes Number of bytes inside buffer to calculate checksum on.
+  @param[in]  Csum current running checksum.
+
+  @retval The computed checksum
+**/
+UINT32 RunningChecksum(
+  IN VOID *pBuffer,
+  IN UINT32 NumBytes,
+  IN UINT32 Csum
   );
 
 #endif /** _FWUTILITY_H_ **/

@@ -492,9 +492,10 @@ UpdateDimmFw(
 EFI_STATUS
 EFIAPI
 RecoverDimmFw(
-  IN     UINT16 DimmPid,
+  IN     UINT32 DimmHandle,
   IN     CONST VOID *pImageBuffer,
   IN     UINT64 ImageBufferSize,
+  IN     CHAR16 *pWorkingDirectory OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

@@ -79,8 +79,14 @@ LoadRecover(
   BOOLEAN FlashSpi = FALSE;
   CHAR16 *pOptionsValue = NULL;
   CHAR16 *pFwType = NULL;
+  CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
+  BOOLEAN Confirmation = FALSE;
+  UINT16 Index1 = 0;
+  UINT16 Index2 = 0;
 
   NVDIMM_ENTRY();
+
+  ZeroMem(DimmStr, sizeof(DimmStr));
 
   if (pCmd == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
@@ -134,6 +140,39 @@ LoadRecover(
       Print(FORMAT_STR_NL, CLI_INFO_LOAD_RECOVER_INVALID_DIMM);
       goto Finish;
     }
+  }
+  Print(CLI_FLASH_DIMM_SPI_PROMPT_STR);
+  // Print out the dimm identifiers to be recovered
+  if (DimmIdsCount == 0) {
+    // Iterate through all uninitialized dimms
+    for (Index1 = 0; Index1 < DimmCount; Index1++) {
+      ReturnCode = GetPreferredDimmIdAsString(pDimms[Index1].DimmHandle, pDimms[Index1].DimmUid,
+                  DimmStr, MAX_DIMM_UID_LENGTH);
+      Print(L"%s ", DimmStr);
+    }
+  } else {
+    // Print the handle/uid for each passed in dimm. It's already filtered by
+    // GetDimmIdsFromString, but it doesn't return handle/uid
+    for (Index1 = 0; Index1 < DimmIdsCount; Index1++) {
+      for (Index2 = 0; Index2 < DimmCount; Index2++) {
+        if (pDimms[Index2].DimmID == pDimmIds[Index1]) {
+          ReturnCode = GetPreferredDimmIdAsString(pDimms[Index2].DimmHandle, pDimms[Index2].DimmUid,
+                      DimmStr, MAX_DIMM_UID_LENGTH);
+          Print(L"%s ", DimmStr);
+          break;
+        }
+      }
+    }
+  }
+  Print(L"\n");
+
+  // Warn about disabling TSOD for SMBUS operations
+  Print(CLI_FLASH_DIMM_SPI_TSOD_REMINDER_STR);
+
+  ReturnCode = PromptYesNo(&Confirmation);
+  if (EFI_ERROR(ReturnCode) || !Confirmation) {
+    ReturnCode = EFI_NOT_STARTED;
+    goto Finish;
   }
 
   // check options

@@ -409,11 +409,7 @@ ShowDimms(
       }
 
       ReturnCode = MakeCapacityString(pDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-      if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-        pHealthStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-      } else {
-        pHealthStr = HealthToString(pDimms[Index].HealthState);
-      }
+      pHealthStr = HealthToString(pDimms[Index].HealthState);
 
       if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
         pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
@@ -482,20 +478,12 @@ ShowDimms(
         continue;
       }
 
-      if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-        pHealthStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-      } else {
-        pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
-      }
+      pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
 
-      if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-        pHealthStateReasonStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-      } else {
-         ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-           pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
-         if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
-           goto Finish;
-         }
+      ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
+        pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+      if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
+        goto Finish;
       }
 
       ReturnCode = GetPreferredDimmIdAsString(pUninitializedDimms[Index].DimmHandle, NULL, DimmStr,
@@ -599,26 +587,17 @@ ShowDimms(
 
       /** Health State **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-          pHealthStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-        } else {
-          pHealthStr = HealthToString(pDimms[Index].HealthState);
-        }
+        pHealthStr = HealthToString(pDimms[Index].HealthState);
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
 
       /** Health State Reason**/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
-
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-          pHealthStateReasonStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-        } else {
-          ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-            pDimms[Index].HealthStausReason, &pHealthStateReasonStr);
-          if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
-            goto Finish;
-          }
+        ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
+          pDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+        if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
+          goto Finish;
         }
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
         FREE_POOL_SAFE(pHealthStateReasonStr);
@@ -668,11 +647,7 @@ ShowDimms(
 
       /** Manageability **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANAGEABILITY_STR))) {
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY) {
-          pManageabilityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-        } else {
-          pManageabilityStr = ManageabilityToString(pDimms[Index].ManageabilityState);
-        }
+        pManageabilityStr = ManageabilityToString(pDimms[Index].ManageabilityState);
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MANAGEABILITY_STR, pManageabilityStr);
         FREE_POOL_SAFE(pManageabilityStr);
       }
@@ -1204,26 +1179,16 @@ ShowDimms(
 
       /** Health State **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-
-        if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-          pHealthStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-        } else {
-          pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
-      }
+        pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
       /** Health State reason**/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
-
-        if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH) {
-          pHealthStateReasonStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-        } else {
-          ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-            pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
-          if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
-            goto Finish;
-          }
+        ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
+          pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+        if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
+          goto Finish;
         }
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
         FREE_POOL_SAFE(pHealthStateReasonStr);

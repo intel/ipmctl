@@ -819,10 +819,11 @@ GetDimmInfo (
   if (!IsDimmManageable(pDimm)) {
     pDimmInfo->ManageabilityState = MANAGEMENT_INVALID_CONFIG;
     pDimmInfo->HealthState = HEALTH_UNMANAGEABLE;
-    pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_MANAGEABILITY;
+  } else {
+    pDimmInfo->ManageabilityState = MANAGEMENT_VALID_CONFIG;
+    pDimmInfo->HealthState = HEALTH_UNKNOWN;
   }
 
-  pDimmInfo->ManageabilityState = MANAGEMENT_VALID_CONFIG;
   pDimmInfo->IsNew = pDimm->IsNew;
   pDimmInfo->RebootNeeded = pDimm->RebootNeeded;
   pDimmInfo->PmCapacity = pDimm->PmCapacity;
@@ -947,7 +948,9 @@ GetDimmInfo (
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
-    ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
+    if (HEALTH_UNMANAGEABLE != pDimmInfo->HealthState) {
+      ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
+    }
     pDimmInfo->HealthStausReason = SensorInfo.HealthStatusReason;
     pDimmInfo->LastShutdownStatus = LastShutdownStatus;
     pDimmInfo->LastShutdownTime = LastShutdownTime;

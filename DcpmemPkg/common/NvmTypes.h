@@ -259,7 +259,6 @@ typedef struct _SMBUS_DIMM_ADDR {
 
 #define DIMM_INFO_ERROR_NONE                            0
 #define DIMM_INFO_ERROR_UID                             (1 << 0)
-#define DIMM_INFO_ERROR_MANAGEABILITY                   (1 << 1)
 #define DIMM_INFO_ERROR_SECURITY_INFO                   (1 << 2)
 #define DIMM_INFO_ERROR_PACKAGE_SPARING                 (1 << 3)
 #define DIMM_INFO_ERROR_SMART_AND_HEALTH                (1 << 4)
@@ -271,9 +270,6 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_FW_IMAGE_INFO                   (1 << 0xA)
 #define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 0xB)
 #define DIMM_INFO_ERROR_MAX                             (1 << 0xC)
-
-#define DIMM_INFO_ERROR_MANAGEABILITY_SMARTANDHEALTH    (DIMM_INFO_ERROR_MANAGEABILITY |\
-    DIMM_INFO_ERROR_SMART_AND_HEALTH)
 
 // The "global dimm struct" is at &gNvmDimmData->PMEMDev.Dimms and is populated
 // at HII driver loading, so they are included by default on any call to GetDimmInfo()

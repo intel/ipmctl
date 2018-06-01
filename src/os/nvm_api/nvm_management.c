@@ -443,7 +443,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   return NVM_SUCCESS;
 }
 
-//AEP Watch
+
 //deprecated, please use nvm_get_number_of_devices
 NVM_API int nvm_get_device_count()
 {
@@ -491,7 +491,6 @@ Finish:
   return NVM_SUCCESS;
 }
 
-//AEP Watch
 NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 count)
 {
   int nvm_status;
@@ -538,10 +537,15 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
   return temp_count;
 }
 
-// Deprecated
 NVM_API int nvm_get_devices_nfit(struct device_discovery *p_devices, const NVM_UINT8 count)
 {
-  return nvm_get_devices(p_devices, count);
+  int rc = nvm_get_devices(p_devices, count);
+
+  if (rc < 0) {
+    return NVM_ERR_UNKNOWN;
+  }
+
+  return NVM_SUCCESS;
 }
 
 NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
@@ -1246,7 +1250,7 @@ int driver_features_to_nvm_features(
 
   return rc;
 }
-//AEP Watch
+
 NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties)
 {
   int nvm_status;
@@ -1282,7 +1286,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties)
   return NVM_SUCCESS;
 }
 
-//AEP Watch
+
 NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 {
   UINT64 VolatileCapacity;
@@ -1897,7 +1901,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
   return nvm_clear_action_required(event_id);
 }
 
-//AEP Watch
+
 //deprecated, please implement nvm_get_number_of_pools
 NVM_API int nvm_get_region_count()
 {
@@ -3314,7 +3318,7 @@ finish:
   return rc;
 }
 
-//AEP Watch
+
 NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
               struct device_pt_cmd *  p_cmd)
 {

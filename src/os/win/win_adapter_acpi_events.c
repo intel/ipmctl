@@ -212,12 +212,12 @@ NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type even
 * @param[in] ctx - pointer to a context created by acpi_event_create_ctx
 *
 */
-NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
+NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int mask)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != acpi_event_ctx)
 	{
-		acpi_event_ctx->monitored_events = acpi_monitored_event_mask;
+		acpi_event_ctx->monitored_events = mask;
 	}
 	return NVM_SUCCESS;
 }

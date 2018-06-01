@@ -537,12 +537,28 @@ endif()
 # add a target to generate API documentation with Doxygen^M
 find_package(Doxygen)
 
+
 if(DOXYGEN_FOUND)
+
+#----------------------------------------------------------------------------------------------------
+# Generate NVM C API documentation with Doxygen
+#----------------------------------------------------------------------------------------------------
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${ROOT}/output/${BUILD_TYPE}/Doxyfile @ONLY)
-	add_custom_target(doc
+	add_custom_target(doc-api
 		${DOXYGEN_EXECUTABLE} ${ROOT}/output/${BUILD_TYPE}/Doxyfile
+		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
 		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
+		)
+
+#----------------------------------------------------------------------------------------------------
+# Generate NVM DIMM Config Protocol API documentation with Doxygen
+#----------------------------------------------------------------------------------------------------
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/DcpmemPkg/driver/Doxyfile_nvm_dimm_config_protocol.in ${CMAKE_BINARY_DIR}/Doxyfile_nvm_dimm_config_protocol @ONLY)
+	add_custom_target(doc-uefi
+		${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile_nvm_dimm_config_protocol
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		COMMENT "Generating NVM DIMM Config Protocol API documentation with Doxygen" VERBATIM
 		)
 endif()
 

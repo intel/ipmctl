@@ -452,7 +452,7 @@ add_custom_target(iniconfig ALL
 if(MSVC)
 	set(PRECOMPILER_FLAG /EP)
 else()
-	set(PRECOMPILER_FLAG -E -P)
+	set(PRECOMPILER_FLAG -E -P -D__LINUX__)
 endif()
 
 add_custom_command(TARGET iniconfig

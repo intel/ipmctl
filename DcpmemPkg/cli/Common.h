@@ -178,6 +178,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_INFO_RETRIEVING_DEVICE_SUPPORT_DATA               L"Retrieving device support data from AEP DIMM (" FORMAT_STR L")."
 #define CLI_INFO_NO_DEVICE_SUPPORT_DATA_AVAILABLE             L"No device support data available from AEP DIMM (" FORMAT_STR L")."
 #define CLI_INFO_DUMP_SUCCESS                                 L"Dump device support data from AEP DIMM (" FORMAT_STR L"): Successfully written to " FORMAT_STR L"."
+#define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
 
 #define CLI_ERR_FILE_EXISTS                                   L"Error: File (" FORMAT_STR L") already exists."
 #define CLI_ERR_OUT_OF_SPACE                                  L"Error: Not enough space to save file"

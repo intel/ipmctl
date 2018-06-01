@@ -89,6 +89,7 @@ DumpSupportCommand(
   struct CommandInput Input;
   struct Command Command;
   CHAR8 *pDumpUserPathAscii = NULL;
+  FILE *hFile = NULL;
 
   NVDIMM_ENTRY();
   SetDisplayInfo(L"DumpSupport", ResultsView);
@@ -121,12 +122,13 @@ DumpSupportCommand(
   }
 
   UnicodeStrToAsciiStr(pDumpUserPath, pDumpUserPathAscii);
-  if(NULL == (gOsShellParametersProtocol.StdOut = fopen(pDumpUserPathAscii, "w+")))
+  if(NULL == (hFile = fopen(pDumpUserPathAscii, "w+")))
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
+  gOsShellParametersProtocol.StdOut = (SHELL_FILE_HANDLE) hFile;
 
   for(Index = 0; Index < MAX_CMDS; ++Index)
   {
@@ -142,6 +144,8 @@ DumpSupportCommand(
 
   fclose(gOsShellParametersProtocol.StdOut);
   gOsShellParametersProtocol.StdOut = stdout;
+
+  Print(CLI_INFO_DUMP_SUPPORT_SUCCESS, pDumpUserPath);
 
 Finish:
   FreeCommandStatus(&pCommandStatus);

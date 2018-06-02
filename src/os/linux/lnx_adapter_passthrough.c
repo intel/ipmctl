@@ -446,7 +446,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 	else if ((p_fw_cmd->Opcode == 0x08 && p_fw_cmd->SubOpcode == 0x02) || // get fw debug log
 				(p_fw_cmd->Opcode == 0x0A)) // inject error
 	{
-		COMMON_LOG_ERROR_F("Intel DIMM Gen 1 FW command OpCode: 0x%x SubOpCode: "
+		COMMON_LOG_ERROR_F("Intel DC PMM FW command OpCode: 0x%x SubOpCode: "
 				"0x%x is not supported",
 				p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
 		rc = NVM_LIB_ERR_NOTSUPPORTED;

@@ -20,7 +20,7 @@ struct Command showAcpiCommand =
   {{L"", L"", L"", L"", FALSE, ValueOptional}},                        //!< options
   {{SYSTEM_TARGET, L"", SYSTEM_ACPI_TARGETS, TRUE, ValueOptional}},    //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                             //!< properties
-  L"Show the ACPI tables related to the AEPs in the system.",          //!< help
+  L"Show the ACPI tables related to the DCPMEM DIMMs in the system.",  //!< help
   showAcpi                                                             //!< run function
 };
 
@@ -42,7 +42,7 @@ EFI_STATUS registerShowAcpiCommand() {
  */
 EFI_STATUS showAcpi(struct Command *pCmd) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ParsedFitHeader *pNFit = NULL;
   ParsedPcatHeader *pPcat = NULL;
   PMTT_TABLE *pPMTT = NULL;
@@ -96,10 +96,10 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   if (ChosenAcpiSystem == AcpiAll || ChosenAcpiSystem == AcpiNfit) {
     ReturnCode = pNvmDimmConfigProtocol->GetAcpiNFit(pNvmDimmConfigProtocol, &pNFit);
     if (EFI_ERROR(ReturnCode) || pNFit == NULL) {
-      Print(L"Error: Failed to find the AEP Firmware Interface ACPI tables\n");
+      Print(L"Error: Failed to find the DIMM Firmware Interface ACPI tables\n");
       ReturnCode = EFI_ABORTED;
     } else {
-      Print(L"---AEP Firmware Interface Table---\n");
+      Print(L"---DIMM Firmware Interface Table---\n");
       PrintNFit(pNFit);
     }
   }

@@ -61,7 +61,7 @@ DumpDeviceSupportCommand(
   IN    struct Command *pCmd
 )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pTargetValue = NULL;
   CHAR16 *pDumpUserPath = NULL;
   CHAR16 *pDumpAppendedPath = NULL;
@@ -204,7 +204,7 @@ DumpDeviceSupportCommand(
           pDimmIds[DimmIndex], TokenIndex, &pSupportBuffer, &BytesWritten, pCommandStatus);
       if (EFI_ERROR(TempReturnCode)) {
         /* EFI_ABORTED means no data availible so just continue. Print all other errors  */
-        NVDIMM_DBG("Error retrieving token %d from AEP DIMM (%s)", TokenIndex, DimmStr);
+        NVDIMM_DBG("Error retrieving token %d from DIMM (%s)", TokenIndex, DimmStr);
         if (TempReturnCode != EFI_ABORTED) {
           DisplayCommandStatus(CLI_INFO_DUMP_SUPPORT, CLI_INFO_FROM, pCommandStatus);
           KEEP_ERROR(ReturnCode, TempReturnCode);

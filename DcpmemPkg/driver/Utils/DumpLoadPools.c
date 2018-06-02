@@ -216,7 +216,7 @@ SetUpGoalStructures(
       DimmsConfig[DimmConfigIndex] = CurrentDimmConfig;
       DimmConfigIndex++;
     } else {
-      NVDIMM_WARN("Specified AEP has no match in the file.");
+      NVDIMM_WARN("Specified DIMM has no match in the file.");
       ReturnCode = EFI_ABORTED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_INVALID_DATA_IN_FILE);
       goto Finish;
@@ -226,7 +226,7 @@ SetUpGoalStructures(
   if (DimmConfigIndex == DimmsNum) {
     ReturnCode = EFI_SUCCESS;
   } else {
-    NVDIMM_WARN("Not all specified AEPs have match in the file.");
+    NVDIMM_WARN("Not all specified DCPMEM DIMMs have match in the file.");
     ReturnCode = EFI_ABORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_DIMM_COUNT_MISMATCH);
     goto Finish;

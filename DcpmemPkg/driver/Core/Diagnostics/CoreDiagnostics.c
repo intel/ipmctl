@@ -348,7 +348,7 @@ CombineDiagnosticsTestResults(
     goto Finish;
   }
 
-  pColonMarkStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_COLON_MARK), NULL);
+  pColonMarkStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DCPMM_COLON_MARK), NULL);
 
   for (Index = 0; Index < DIAGNOSTIC_TEST_COUNT; Index++) {
     if (pBuffer[Index] != NULL) {

@@ -29,7 +29,7 @@ struct Command ShowFirmwareCommand =
     {FIRMWARE_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
-  L"Show information about firmware on one or more AEPs.",          //!< help
+  L"Show information about firmware on one or more DCPMEM DIMMs.",  //!< help
   ShowFirmware                                                      //!< run function
 };
 
@@ -79,7 +79,7 @@ ShowFirmware(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   BOOLEAN AllOptionSet = FALSE;
   BOOLEAN DisplayOptionSet = FALSE;
@@ -126,7 +126,7 @@ ShowFirmware(
     goto Finish;
   }
 
-  /** Get AEPs list **/
+  /** Get DCPMEM DIMMs list **/
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);

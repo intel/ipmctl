@@ -14,6 +14,10 @@ extern OBJECT_STATUS gAllErrorNvmStatuses;
 extern OBJECT_STATUS gAllWarningNvmStatuses;
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
+/** common display options **/
+#define SOCKET_ID_STR               L"SocketID"
+#define DIMM_ID_STR                 L"DimmID"
+
 #define MAX_FILE_PATH_LEN           512
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
 #define MAX_SHELL_PROTOCOL_HANDLES  2
@@ -47,7 +51,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_ERR_NO_CONFIG_PROTOCOL            L"Error: Communication with the device driver failed."
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
-#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no AEPs on the specified socket(s)."
+#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."
 #define CLI_ERR_INVALID_SOCKET_ID             L"Error: The socket identifier is not valid."
 #define CLI_ERR_OUT_OF_MEMORY                 L"Error: There is not enough memory to complete the requested operation."
 #define CLI_ERR_WRONG_FILE_PATH               L"Error: Wrong file path."
@@ -116,9 +120,9 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%"
 
-#define CLI_INFO_NO_DIMMS                                     L"No AEPs in the system."
-#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable AEP DIMMs in the system."
-#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional AEP DIMMs in the system."
+#define CLI_INFO_NO_DIMMS                                     L"No DIMMs in the system."
+#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable DIMMs in the system."
+#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional DIMMs in the system."
 #define CLI_INFO_SHOW_REGION                                  L"Show Region"
 #define CLI_INFO_NO_NAMESPACES_DEFINED                        L"No Namespaces defined in the system."
 #define CLI_INFO_SHOW_NAMESPACE                               L"Show Namespace"
@@ -126,7 +130,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_INFO_DELETE_NAMESPACE                             L"Delete Namespace"
 #define CLI_INFO_DUMP_DEBUG_LOG                               L"Dump Debug Log"
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
-#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the AEP DIMMs on the next reboot."
+#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the DIMMs on the next reboot."
 
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option"
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size"
@@ -141,7 +145,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
 #define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
 #define CLI_INFO_ON                                           L" on"
-#define CLI_PROGRESS_STR                                      L"\rLoad firmware on AEP DIMM (0x%04x) Progress: %d%%"
+#define CLI_PROGRESS_STR                                      L"\rLoad firmware on DIMM (0x%04x) Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"
 #define CLI_INJECT_MFG                                        L"MFG Inject command"
@@ -156,11 +160,11 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
 #define CLI_CREATE_NAMESPACE_PROMPT_ROUNDING_CAPACITY         L"The requested namespace capacity %lld B will be rounded up to %lld B to align properly."
 
-#define REGION_FOUND                                          L"REGION FOUND."
+#define REGION_FOUND         L"REGION FOUND."
 
 #define CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE                  L"Unable to retrieve user display preferences."
 
-#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on AEP DIMM [" FORMAT_STR L"]?"
+#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM [" FORMAT_STR L"]?"
 
 #define CLI_FLASH_DIMM_SPI_PROMPT_STR                         L"Recover dimm: "
 #define CLI_FLASH_DIMM_SPI_TSOD_REMINDER_STR                  L"Warning: Make sure TSOD polling is disabled!\n" \
@@ -168,16 +172,16 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
-#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on AEP DIMM "
+#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
 #define CLI_INFO_START_FORMAT                                 L"Format"
-#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting AEP DIMM(s)..."
+#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting DIMM(s)..."
 
 #define CLI_INFO_DUMP_SUPPORT                                 L"Dump device support data"
 #define CLI_INFO_FROM                                         L" from"
-#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_SUPPORTED             L"Retrieve device support data not supported on AEP DIMM (" FORMAT_STR L")."
-#define CLI_INFO_RETRIEVING_DEVICE_SUPPORT_DATA               L"Retrieving device support data from AEP DIMM (" FORMAT_STR L")."
-#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_AVAILABLE             L"No device support data available from AEP DIMM (" FORMAT_STR L")."
-#define CLI_INFO_DUMP_SUCCESS                                 L"Dump device support data from AEP DIMM (" FORMAT_STR L"): Successfully written to " FORMAT_STR L"."
+#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_SUPPORTED             L"Retrieve device support data not supported on DIMM (" FORMAT_STR L")."
+#define CLI_INFO_RETRIEVING_DEVICE_SUPPORT_DATA               L"Retrieving device support data from DIMM (" FORMAT_STR L")."
+#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_AVAILABLE             L"No device support data available from DIMM (" FORMAT_STR L")."
+#define CLI_INFO_DUMP_SUCCESS                                 L"Dump device support data from DIMM (" FORMAT_STR L"): Successfully written to " FORMAT_STR L"."
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
 
 #define CLI_ERR_FILE_EXISTS                                   L"Error: File (" FORMAT_STR L") already exists."
@@ -202,14 +206,14 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 extern EFI_GUID gNvmDimmCliVariableGuid;
 
 /**
-  Retrieve a populated array and count of AEPs in the system. The caller is
+  Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
   @param[out] ppDimms A pointer to the dimm list found in NFIT.
-  @param[out] pDimmCount A pointer to the number of AEPs found in NFIT.
+  @param[out] pDimmCount A pointer to the number of DIMMs found in NFIT.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -218,7 +222,7 @@ extern EFI_GUID gNvmDimmCliVariableGuid;
 **/
 EFI_STATUS
 GetDimmList(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO **ppDimms,
      OUT UINT32 *pDimmCount

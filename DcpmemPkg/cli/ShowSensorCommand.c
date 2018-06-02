@@ -14,7 +14,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <NvmHealth.h>
 
-#define DIMM_ID_STR                       L"DimmID"
 #define SENSOR_TYPE_STR                   L"Type"
 #define CURRENT_VALUE_STR                 L"CurrentValue"
 #define CURRENT_STATE_STR                 L"CurrentState"
@@ -96,7 +95,7 @@ ShowSensor(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   CHAR16 *pDimmsValue = NULL;

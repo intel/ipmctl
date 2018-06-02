@@ -152,7 +152,7 @@ GetRegionList()
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of AEPs
+  @param[in, out] pDimmList: the list of DCPMEM DIMMs
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -383,7 +383,7 @@ RetrieveISsFromPlatformConfigData(
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
     if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-      NVDIMM_DBG("Incorrect signature of the AEP Current Config table");
+      NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
       FreePool(pPcdConfHeader);
       pPcdConfHeader = NULL;
       continue;
@@ -1409,7 +1409,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
 
     PcdInputValid = FALSE;
     if (pPcdConfInput->Header.Signature != NVDIMM_CONFIGURATION_INPUT_SIG) {
-      NVDIMM_DBG("Incorrect signature of the AEP Config Input table");
+      NVDIMM_DBG("Incorrect signature of the DIMM Config Input table");
 
     } else if (pPcdConfInput->Header.Length > pDimm->PcdOemPartitionSize) {
       NVDIMM_DBG("Length of PCD Config Input header is greater than max PCD OEM partition size");
@@ -1518,7 +1518,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
     }
 
     if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-      NVDIMM_DBG("Icorrect signature of the AEP Config Output table");
+      NVDIMM_DBG("Icorrect signature of the DIMM Config Output table");
       ReturnCode = EFI_ABORTED;
       goto FinishError;
     } else if (pPcdConfOutput->Header.Length > pDimm->PcdOemPartitionSize) {
@@ -1614,7 +1614,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
         case INTERLEAVE_INFO_STATUS_NOT_PROCESSED:
         case INTERLEAVE_INFO_STATUS_PARTITIONING_FAILED:
         case INTERLEAVE_INFO_STATUS_UNDEFINED:
-        default : 
+        default :
           pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_FAILED_UNKNOWN;
           break;
         }
@@ -1880,7 +1880,7 @@ MapRegionsGoal(
     goto Finish;
   }
 
-  /** Get the largest interleave set index in existing Config Input tables on AEPs. **/
+  /** Get the largest interleave set index in existing Config Input tables on DCPMEM DIMMs. **/
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
@@ -2993,7 +2993,7 @@ Finish:
 
 
 /**
-  Verify AEP dimms SKU support
+  Verify DIMMs SKU support
 
   @param[in] ppDimms Array of dimms
   @param[in] DimmsNum Number of dimms

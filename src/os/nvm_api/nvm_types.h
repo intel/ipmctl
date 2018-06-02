@@ -28,16 +28,12 @@ byte swap
 */
 #define SWAP_BYTES_U16(u16) (((u16 >> 8)& 0x00FF) | ((u16 << 8)& 0xFF00))
 
-#define	NVM_PRODUCT_NAME            "Intel DIMM Gen 1 Software\0"
-#define	NVM_DIMM_NAME_LONG          "Intel DIMM Gen 1"
-#ifndef NVM_DIMM_NAME
-#define	NVM_DIMM_NAME               "Apache Pass DIMM"
-#endif // NVM_DIMM_NAME
-#define	NVM_SYSLOG_SOURCE           "NVM_MGMT"
-#define	NVM_DEFAULT_NAMESPACE_NAME  "NvDimmVol"
-#define	NVM_SYSTEM                  "Intel DIMM Gen 1"
-#define	NVM_INTEL_VENDOR_ID	0x8980
-#define	NVM_DIMM_SUBSYSTEM_VENDOR_ID SWAP_BYTES_U16(0x8980)
+#define NVM_PRODUCT_NAME "Intel(R) Optane(TM) DC persistent memory Software\0"
+#define NVM_SYSLOG_SOURCE          "NVM_MGMT"
+#define NVM_DEFAULT_NAMESPACE_NAME "NvDimmVol"
+#define NVM_SYSTEM "Intel(R) Optane(TM) DC Persistent Memory"
+#define NVM_INTEL_VENDOR_ID 0x8980
+#define NVM_DIMM_SUBSYSTEM_VENDOR_ID SWAP_BYTES_U16(0x8980)
 #define NVM_DIMM_SUBSYSTEM_DEVICE_ID_1 SWAP_BYTES_U16(0x0979)
 #define NVM_DIMM_SUBSYSTEM_DEVICE_ID_2 SWAP_BYTES_U16(0x097A)
 #define NVM_DIMM_SUBSYSTEM_DEVICE_ID_3 SWAP_BYTES_U16(0x097B)
@@ -163,16 +159,16 @@ enum region_type
 };
 
 /**
- * Rolled-up health of the underlying AEP DIMMs from which the REGION is created.
+ * Rolled-up health of the underlying DIMMs from which the REGION is created.
  */
 enum region_health
 {
   REGION_HEALTH_UNKNOWN = 0, ///< The REGION health cannot be determined.
-  REGION_HEALTH_NORMAL = 1, ///< All underlying AEP DIMM Persistent memory capacity is available.
+  REGION_HEALTH_NORMAL  = 1, ///< All underlying DIMM Persistent memory capacity is available.
   REGION_HEALTH_PENDING = 2, ///< A new memory allocation goal has been created but not applied.
-  REGION_HEALTH_ERROR = 3, ///< There is an issue with some or all of the underlying
-              ///< AEP DIMM capacity.
-  REGION_HEALTH_LOCKED = 4 ///< One or more of the underlying AEP DIMMs are locked.
+  REGION_HEALTH_ERROR   = 3, ///< There is an issue with some or all of the underlying
+                             ///< DIMM capacity.
+  REGION_HEALTH_LOCKED  = 4  ///< One or more of the underlying DIMMs are locked.
 };
 
 /**
@@ -180,10 +176,10 @@ enum region_health
  */
 enum interleave_set_health
 {
-  INTERLEAVE_HEALTH_UNKNOWN = 0, ///< Health cannot be determined.
-  INTERLEAVE_HEALTH_NORMAL = 1, ///< Available and underlying AEP DIMMs have good health.
-  INTERLEAVE_HEALTH_DEGRADED = 2, ///< In danger of failure, may have degraded performance.
-  INTERLEAVE_HEALTH_FAILED = 3 ///< Interleave set has failed and is unavailable.
+  INTERLEAVE_HEALTH_UNKNOWN  = 0,  ///< Health cannot be determined.
+  INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying DCPMEM DIMMs have good health.
+  INTERLEAVE_HEALTH_DEGRADED = 2,  ///< In danger of failure, may have degraded performance.
+  INTERLEAVE_HEALTH_FAILED   = 3   ///< Interleave set has failed and is unavailable.
 };
 
 /**

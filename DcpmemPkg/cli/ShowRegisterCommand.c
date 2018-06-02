@@ -26,7 +26,7 @@ struct Command ShowRegisterCommand =
     {REGISTER_TARGET, L"", L"Register", TRUE, ValueOptional},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                    //!< properties
-  L"Show Key Dimm Registers.",                                //!< help
+  L"Show Key DIMM Registers.",                                //!< help
   ShowRegister
 };
 
@@ -71,7 +71,7 @@ ShowRegister(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   CHAR16 *pRegisterValues = NULL;
@@ -120,7 +120,7 @@ ShowRegister(
     if (StrLen(pDimmValues) > 0) {
       ReturnCode = GetDimmIdsFromString(pDimmValues, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Target value is not a valid Dimm ID");
+        NVDIMM_WARN("Target value is not a valid DIMM ID");
         goto Finish;
       }
     } else {

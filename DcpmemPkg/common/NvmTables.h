@@ -286,12 +286,12 @@ typedef struct {
     1 - 1LM mode
     2 - 2LM + PM-Direct Mode
     3 - 2LM + PM-Cached Mode
-    4 - Auto (2LM if DDR4+AEP with volatile mode present, 1LM otherwise)
+    4 - Auto (2LM if DDR4+PMM with volatile mode present, 1LM otherwise)
     Note: no direct control is given to the management software to switch the mode
   **/
   CURRENT_MEMORY_MODE CurrentMemoryMode;
   /**
-    Bit0: If set AEP Persistent Memory region mirroring is supported
+    Bit0: If set Persistent Memory region mirroring is supported
     If mirror is supported, management software can select interleave sets for mirror.
   **/
   UINT8 PersistentMemoryRasCapability;
@@ -444,7 +444,7 @@ typedef struct {
     0 - None
     1 - Busy
     2 - Done
-    Results are updated in the AEPs' config output structures
+    Results are updated in the DCPMEM DIMMs' config output structures
   **/
   UINT64 StatusMask;
 } RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE;

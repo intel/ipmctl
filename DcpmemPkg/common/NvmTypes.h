@@ -113,7 +113,7 @@ typedef struct {
 #define	NVM_SYSLOG_SOURCE	"NVM_MGMT"
 #define	NVM_SYSLOG_SRC_W	L"NVM_MGMT"
 #define NVM_DEBUG_LOGGER_SOURCE "NVM_DBG_LOGGER"
-#define NVM_DIMM_NAME       "Apache Pass DIMM"
+#define NVM_DIMM_NAME       "Intel Persistent Memory Module"
 #define MAX_SOURCE_STR_LENGTH    32
 
 typedef char NVM_EVENT_MSG[NVM_EVENT_MSG_LEN]; // Event message string
@@ -213,8 +213,8 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
   The current code should be 0x201 for Storage mode and 0x301 for AppDirect mode
   We should use the values that are reported by BIOS
 **/
-#define AEP_FMT_CODE_STORAGE     0x201
-#define AEP_FMT_CODE_APP_DIRECT  0x301
+#define DCPMM_FMT_CODE_STORAGE     0x201
+#define DCPMM_FMT_CODE_APP_DIRECT  0x301
 
 typedef struct _FIRMWARE_VERSION {
   UINT8 FwProduct;                         //!< FW Version Product Number
@@ -290,7 +290,7 @@ typedef struct _DIMM_INFO {
   UINT16 SocketId;                          //!< socket id
   UINT16 InterfaceFormatCode[MAX_IFC_NUM];  //!< format interface codes
   UINT32 InterfaceFormatCodeNum;            //!< number of format interface codes
-  UINT8 FormFactor;                         //!< The AEP form factor
+  UINT8 FormFactor;                         //!< The DIMM form factor
   UINT16 DataWidth;                         //!< The width in bits used to store user data
   UINT16 TotalWidth;                        //!< The width in bits for data and error correction and/or data redundancy
   UINT16 Speed;                             //!< The speed in nanoseconds
@@ -300,31 +300,31 @@ typedef struct _DIMM_INFO {
   UINT64 PmCapacity;                        //!< Capacity in bytes reserved for persistent memory
 
   //DIMM_INFO_CATEGORY_FW_LOG_LEVEL
-  UINT8 FWLogLevel;                         //!< The logging level of the AEP firmware
+  UINT8 FWLogLevel;                         //!< The logging level of the DIMM firmware
 
   //DIMM_INFO_CATEGORY_SECURITY
   UINT8 SecurityState;                      //!< Identifies the security status of the DIMM collected from FW
 
   //DIMM_INFO_CATEGORY_PACKAGE_SPARING
-  BOOLEAN PackageSparingCapable;            //!< Whether or not the AEP is capable of package sparing
-  UINT8 PackageSparingEnabled;              //!< Whether or not the package sparing policy is enabled on the AEP
+  BOOLEAN PackageSparingCapable;            //!< Whether or not the DIMM is capable of package sparing
+  UINT8 PackageSparingEnabled;              //!< Whether or not the package sparing policy is enabled on the DIMM
   UINT8 PackageSparingLevel;                //!< How aggressive package sparing is
-  UINT8 PackageSparesAvailable;             //!< Whether or not the AEP still has package spares available,
+  UINT8 PackageSparesAvailable;             //!< Whether or not the DIMM still has package spares available,
                                             //!< and the package spare has not yet been used by the package sparing policy;
-                                            //!< this value will be 0 if the AEP is not package sparing capable as per SKU
+                                            //!< this value will be 0 if the DIMM is not package sparing capable as per SKU
 
   //DIMM_INFO_CATEGORY_ARS_STATUS
-  UINT8 ARSStatus;                          //!< Address Range Scrub (ARS) operation status for the AEP DIMM
+  UINT8 ARSStatus;                          //!< Address Range Scrub (ARS) operation status for the DIMM
 
   //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
   UINT8 HealthState;                        //!< overall health state
   UINT16 HealthStausReason;                  //!< Health state reason(s)
-  UINT32 LastShutdownStatus;                //!< The status of the last shutdown of the AEP.
+  UINT32 LastShutdownStatus;                //!< The status of the last shutdown of the DIMM.
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
-  UINT8 AitDramEnabled;                     //!< Whether or not the AEP DIMM AIT DRAM is enabled
+  UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
-  BOOLEAN PowerManagementEnabled;           //!< Whether or not the AEP power management policy is enabled
+  BOOLEAN PowerManagementEnabled;           //!< Whether or not the DIMM power management policy is enabled
   UINT16 PeakPowerBudget;                   //!< The power budget in mW used for instantaneous power (100-20000 mW). The default is 100 mW.
   UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
 
@@ -336,8 +336,8 @@ typedef struct _DIMM_INFO {
   // From global dimm struct
   UINT16 BootStatusBitmask;                 //!< The dimm boot status bitmask
   UINT64 AppDirectCapacity;                 //!< Capacity in bytes mapped as persistent memory
-  UINT64 UnconfiguredCapacity;              //!< Total AEP capacity in bytes that needs further configuration.
-  UINT64 ReservedCapacity;                  //!< Total AEP capacity in bytes that is reserved for metadata.
+  UINT64 UnconfiguredCapacity;              //!< Total DIMM capacity in bytes that needs further configuration.
+  UINT64 ReservedCapacity;                  //!< Total DIMM capacity in bytes that is reserved for metadata.
   UINT64 InaccessibleCapacity;              //!< Capacity in bytes for use that has not been exposed
 
   //DIMM_INFO_CATEGORY_FW_IMAGE_INFO
@@ -358,7 +358,7 @@ typedef struct _DIMM_INFO {
 
   // From global dimm struct
   UINT8 ManageabilityState;                 //!< if the DIMM is manageable by this SW
-  UINT8 IsNew;                              //!< if is incorporated with the rest of the AEPs in the system
+  UINT8 IsNew;                              //!< if is incorporated with the rest of the DCPMEM DIMMs in the system
   UINT8 RebootNeeded;                       //!< Whether or not reboot is required to reconfigure dimm
   UINT32 SkuInformation;                    //!< Information about SKU modes
   UINT16 VendorId;                          //!< vendor id
@@ -373,14 +373,14 @@ typedef struct _DIMM_INFO {
   UINT16 NodeControllerID;                  //!< The node controller identifier
   UINT8 MemoryType;                         //!< memory type
   UINT8 ConfigStatus;                       //!< ConfigurationStatus code
-  UINT8 ModesSupported;                     //!< A list of the modes supported by the AEP
-  BOOLEAN SecurityCapabilities;             //!< The security features supported by the AEP
-  BOOLEAN SKUViolation;                     //!< The configuration of the AEP is unsupported due to a license issue
+  UINT8 ModesSupported;                     //!< A list of the modes supported by the DIMM
+  BOOLEAN SecurityCapabilities;             //!< The security features supported by the DIMM
+  BOOLEAN SKUViolation;                     //!< The configuration of the DIMM is unsupported due to a license issue
   UINT8 OverwriteDimmStatus;                //!< Overwrite DIMM operation status
   BOOLEAN Configured;                       //!< true if the DIMM is configured
   CHAR16 ManufacturerStr[MANUFACTURER_LEN]; //!< Manufacturer string matched from manufacturer string number.
 
-  UINT32 DimmHandle;                        //!< The AEP DIMM handle
+  UINT32 DimmHandle;                        //!< The DIMM handle
   BOOLEAN Initialized;                      //!< True if Dimm is in NFIT
   SMBUS_DIMM_ADDR SmbusAddress;             //!< SMBUS address
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM id (in hexadecimal format representation)
@@ -729,7 +729,7 @@ typedef struct _DEBUG_LOG_INFO {
 **/
 #define MEMORYTYPE_UNKNOWN  0
 #define MEMORYTYPE_DDR4     1
-#define MEMORYTYPE_AEP      2
+#define MEMORYTYPE_DCPMEM   2
 
 /**
   @todo(after official SmBIOS spec release): update with correct values from SMBIOS spec
@@ -742,7 +742,7 @@ typedef struct _DEBUG_LOG_INFO {
   DIMM type
 **/
 #define SMBIOS_MEMORY_TYPE_DDR4   0x1A
-#define SMBIOS_MEMORY_TYPE_AEP    0x18
+#define SMBIOS_MEMORY_TYPE_DCPMEM 0x18
 
 /**
   Package Sparing Capable

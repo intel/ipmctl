@@ -24,7 +24,7 @@ struct Command DeletePcdCommand =
     {PCD_TARGET, L"", PCD_LSA_TARGET_VALUE, TRUE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                         //!< properties
-  L"Clear the namespace LSA partition on one or more AEPs",                        //!< help
+  L"Clear the namespace LSA partition on one or more DCPMEM DIMMs",                //!< help
 	DeletePcdCmd
 };
 
@@ -72,7 +72,7 @@ DeletePcdCmd(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   DIMM_INFO *pDimms = NULL;
@@ -89,7 +89,7 @@ DeletePcdCmd(
   NVDIMM_ENTRY();
 
   SetDisplayInfo(L"DeletePcd", ResultsView);
-  
+
   ZeroMem(DimmStr, sizeof(DimmStr));
 
   if (pCmd == NULL) {
@@ -172,7 +172,7 @@ DeletePcdCmd(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      Print(L"Clear LSA namespace partition on AEP (" FORMAT_STR L"). ", DimmStr);
+      Print(L"Clear LSA namespace partition on DIMM (" FORMAT_STR L"). ", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (EFI_ERROR(ReturnCode) || !Confirmation) {
         ReturnCode = EFI_NOT_STARTED;
@@ -187,11 +187,11 @@ DeletePcdCmd(
                                                   pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Clear LSA namespace partition", L" on AEP ", pCommandStatus);
+    DisplayCommandStatus(L"Clear LSA namespace partition", L" on DIMM ", pCommandStatus);
     goto Finish;
   }
 
-  DisplayCommandStatus(pCommandStatusMessage, L" on AEP ", pCommandStatus);
+  DisplayCommandStatus(pCommandStatusMessage, L" on DIMM ", pCommandStatus);
 
 Finish:
   FREE_POOL_SAFE(pDimmIds);

@@ -112,27 +112,27 @@ extern "C"
  * long, this is an issue with gcc - see http:// gcc.gnu.org/bugzilla/show_bug.cgi?id=47821.
  */
 #define NVM_8_BYTE_ARRAY_TO_64_BIT_VALUE(arr, val) \
-  val = ((unsigned long long)(arr[7] & 0xFF) << 56) + \
-        ((unsigned long long)(arr[6] & 0xFF) << 48) + \
-        ((unsigned long long)(arr[5] & 0xFF) << 40) + \
-        ((unsigned long long)(arr[4] & 0xFF) << 32) + \
-        ((unsigned long long)(arr[3] & 0xFF) << 24) + \
-        ((unsigned long long)(arr[2] & 0xFF) << 16) + \
-        ((unsigned long long)(arr[1] & 0xFF) << 8) + \
-        (unsigned long long)(arr[0] & 0xFF);
+	val = ((unsigned long long)(arr[7] & 0xFF) << 56) + \
+	      ((unsigned long long)(arr[6] & 0xFF) << 48) + \
+	      ((unsigned long long)(arr[5] & 0xFF) << 40) + \
+	      ((unsigned long long)(arr[4] & 0xFF) << 32) + \
+	      ((unsigned long long)(arr[3] & 0xFF) << 24) + \
+	      ((unsigned long long)(arr[2] & 0xFF) << 16) + \
+	      ((unsigned long long)(arr[1] & 0xFF) << 8) + \
+	      (unsigned long long)(arr[0] & 0xFF);
 
 /**
  * Convert an unsigned 64 bit integer to an array of 8 unsigned chars
  */
 #define NVM_64_BIT_VALUE_TO_8_BYTE_ARRAY(val, arr) \
-  arr[7] = (unsigned char)((val >> 56) & 0xFF); \
-  arr[6] = (unsigned char)((val >> 48) & 0xFF); \
-  arr[5] = (unsigned char)((val >> 40) & 0xFF); \
-  arr[4] = (unsigned char)((val >> 32) & 0xFF); \
-  arr[3] = (unsigned char)((val >> 24) & 0xFF); \
-  arr[2] = (unsigned char)((val >> 16) & 0xFF); \
-  arr[1] = (unsigned char)((val >> 8) & 0xFF); \
-  arr[0] = (unsigned char)(val & 0xFF);
+	arr[7] = (unsigned char)((val >> 56) & 0xFF); \
+	arr[6] = (unsigned char)((val >> 48) & 0xFF); \
+	arr[5] = (unsigned char)((val >> 40) & 0xFF); \
+	arr[4] = (unsigned char)((val >> 32) & 0xFF); \
+	arr[3] = (unsigned char)((val >> 24) & 0xFF); \
+	arr[2] = (unsigned char)((val >> 16) & 0xFF); \
+	arr[1] = (unsigned char)((val >> 8) & 0xFF); \
+	arr[0] = (unsigned char)(val & 0xFF);
 
 /**
  * Encode the temperature as a NVM_UINT32
@@ -183,7 +183,7 @@ enum manageability_state {
 };
 
 /**
- * Security and Sanitize state of the AEP DIMM.
+ * Security and Sanitize state of the DIMM.
  */
 enum lock_state {
 	LOCK_STATE_UNKNOWN		= 0,    ///< Device lock state can not be determined.
@@ -225,7 +225,7 @@ enum device_health {
 };
 
 /**
- * The address range scrub (ARS) operation status for the AEP DIMM
+ * The address range scrub (ARS) operation status for the DIMM
  */
 enum device_ars_status {
 	DEVICE_ARS_STATUS_UNKNOWN,
@@ -236,7 +236,7 @@ enum device_ars_status {
 };
 
 /**
- * The overwrite DIMM operation status for the AEP DIMM
+ * The overwrite DIMM operation status for the DIMM
  */
 enum device_overwritedimm_status {
 	DEVICE_OVERWRITEDIMM_STATUS_UNKNOWN,
@@ -257,12 +257,12 @@ enum sensor_type {
   SENSOR_MEDIA_TEMPERATURE = 1,    ///< Device media temperature in degrees Celsius.
   SENSOR_CONTROLLER_TEMPERATURE = 2,    ///< Device media temperature in degrees Celsius.
   SENSOR_PERCENTAGE_REMAINING = 3,    ///< Amount of percentage remaining as a percentage.
-  SENSOR_DIRTYSHUTDOWNS = 4,    ///< Device shutdowns without notification.
-  SENSOR_POWERONTIME = 5,    ///< Total power-on time over the lifetime of the device.
-  SENSOR_UPTIME = 6,    ///< Total power-on time since the last power cycle of the device.
-  SENSOR_POWERCYCLES = 7,    ///< Number of power cycles over the lifetime of the device.
-  SENSOR_FWERRORLOGCOUNT = 8,    ///< The total number of firmware error log entries.
-  SENSOR_POWERLIMITED = 9,   ///< Whether or not the AEP DIMM is power limited.
+  SENSOR_DIRTYSHUTDOWNS = 5,    ///< Device shutdowns without notification.
+  SENSOR_POWERONTIME = 6,    ///< Total power-on time over the lifetime of the device.
+  SENSOR_UPTIME = 7,    ///< Total power-on time since the last power cycle of the device.
+  SENSOR_POWERCYCLES = 8,    ///< Number of power cycles over the lifetime of the device.
+  SENSOR_FWERRORLOGCOUNT = 9,    ///< The total number of firmware error log entries.
+  SENSOR_POWERLIMITED = 10,   ///< Whether or not the DIMM is power limited.
 };
 
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;
@@ -445,7 +445,7 @@ typedef NVM_UINT64 diagnostic_threshold_type;
 enum volatile_mode {
 	VOLATILE_MODE_1LM	= 0,    ///< 1LM Mode
 	VOLATILE_MODE_MEMORY	= 1,    ///< Memory Mode
-	VOLATILE_MODE_AUTO	= 2,    ///< Memory Mode if DDR4 + AEP DIMM present, 1LM otherwise
+	VOLATILE_MODE_AUTO	= 2,    ///< Memory Mode if DDR4 + PMM present, 1LM otherwise
 	VOLATILE_MODE_UNKNOWN	= 3,    ///< The current volatile memory mode cannot be determined.
 };
 
@@ -464,7 +464,7 @@ enum nvm_format {
 };
 
 /**
- * Status of last AEP DIMM shutdown
+ * Status of last DIMM shutdown
  */
 enum shutdown_status {
   SHUTDOWN_STATUS_UNKNOWN = 0,                ///< The last shutdown status cannot be determined.
@@ -563,8 +563,8 @@ struct host {
 	enum os_type	os_type;                        ///<OS type.
 	char		os_name[NVM_OSNAME_LEN];        ///< OS name string.
 	char		os_version[NVM_OSVERSION_LEN];  ///< OS version string.
-	NVM_BOOL	mixed_sku;                      ///< One or more AEP DIMMs have different SKUs.
-	NVM_BOOL	sku_violation;                  ///< Configuration of AEP DIMMs are unsupported due to a license issue.
+	NVM_BOOL	mixed_sku;                      ///< One or more DIMMs have different SKUs.
+	NVM_BOOL	sku_violation;                  ///< Configuration of DIMMs are unsupported due to a license issue.
 };
 
 /**
@@ -597,19 +597,19 @@ struct memory_topology {
  * Structure that describes the security capabilities of a device
  */
 struct device_security_capabilities {
-	NVM_BOOL	passphrase_capable;     ///< AEP DIMM supports the nvm_(set|remove)_passphrase command
-	NVM_BOOL	unlock_device_capable;  ///< AEP DIMM supports the nvm_unlock_device command
-	NVM_BOOL	erase_crypto_capable;   ///< AEP DIMM supports nvm_erase command with the CRYPTO
+	NVM_BOOL	passphrase_capable;     ///< DIMM supports the nvm_(set|remove)_passphrase command
+	NVM_BOOL	unlock_device_capable;  ///< DIMM supports the nvm_unlock_device command
+	NVM_BOOL	erase_crypto_capable;   ///< DIMM supports nvm_erase command with the CRYPTO
 };
 
 /**
- * Structure that describes the capabilities supported by an AEP DIMM
+ * Structure that describes the capabilities supported by a DIMM
  */
 struct device_capabilities {
-	NVM_BOOL	package_sparing_capable;        ///< AEP DIMM supports package sparing
-	NVM_BOOL	memory_mode_capable;            ///< AEP DIMM supports memory mode
-	NVM_BOOL	storage_mode_capable;           ///< AEP DIMM supports storage mode
-	NVM_BOOL	app_direct_mode_capable;        ///< AEP DIMM supports app direct mode
+	NVM_BOOL	package_sparing_capable;        ///< DIMM supports package sparing
+	NVM_BOOL	memory_mode_capable;            ///< DIMM supports memory mode
+	NVM_BOOL	storage_mode_capable;           ///< DIMM supports storage mode
+	NVM_BOOL	app_direct_mode_capable;        ///< DIMM supports app direct mode
 };
 
 /**
@@ -657,16 +657,16 @@ struct device_discovery {
 	NVM_UINT32				dimm_sku;
 	NVM_MANUFACTURER			manufacturer;                   ///< The manufacturer ID code determined by JEDEC JEP-106
 	NVM_SERIAL_NUMBER			serial_number;                  // Serial number assigned by the vendor.
-	NVM_UINT16				subsystem_vendor_id;            // vendor identifier of the AEP DIMM non-volatile
+	NVM_UINT16				subsystem_vendor_id;            // vendor identifier of the DIMM non-volatile
 	// memory subsystem controller
-	NVM_UINT16				subsystem_device_id;            // device identifier of the AEP DIMM non-volatile
+	NVM_UINT16				subsystem_device_id;            // device identifier of the DIMM non-volatile
 	// memory subsystem controller
-	NVM_UINT16				subsystem_revision_id;          // revision identifier of the AEP DIMM non-volatile
+	NVM_UINT16				subsystem_revision_id;          // revision identifier of the DIMM non-volatile
 	// memory subsystem controller
 	NVM_BOOL				manufacturing_info_valid;       // manufacturing location and date validity
-	NVM_UINT8				manufacturing_location;         // AEP DIMM manufacturing location assigned by vendor
+	NVM_UINT8				manufacturing_location;         // DIMM manufacturing location assigned by vendor
 	// only valid if manufacturing_info_valid=1
-	NVM_UINT16				manufacturing_date;             // Date the AEP DIMM was manufactured, assigned by vendor
+	NVM_UINT16				manufacturing_date;             // Date the DIMM was manufactured, assigned by vendor
 	// only valid if manufacturing_info_valid=1
 	char					part_number[NVM_PART_NUM_LEN];  // The manufacturer's model part number
 	NVM_VERSION				fw_revision;                    // The current active firmware revision.
@@ -715,22 +715,22 @@ struct device_status {
 	NVM_BOOL			is_new;                                 ///< Unincorporated with the rest of the devices.
 	NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
 	NVM_BOOL			is_missing;                             ///< If the device is missing.
-	NVM_UINT8			package_spares_available;               ///< Number of package spares on the AEP DIMM that are available.
-	NVM_UINT8			last_shutdown_status;                   ///< State of last AEP DIMM shutdown.
+	NVM_UINT8			package_spares_available;               ///< Number of package spares on the DIMM that are available.
+	NVM_UINT8			last_shutdown_status;                   ///< State of last DIMM shutdown.
 	NVM_UINT8			last_shutdown_status_extended[3];       ///< DEPRECATED; Extendeded fields as per FIS 1.6
 	enum config_status		config_status;                          ///< Status of last configuration request.
 	NVM_UINT64			last_shutdown_time;                     ///< Time of the last shutdown - seconds since 1 January 1970
-	NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more AEP DIMMs have different SKUs.
-	NVM_BOOL			sku_violation;                          ///< The AEP DIMM configuration is unsupported due to a license issue.
-	NVM_BOOL			viral_state;                            ///< Current viral status of AEP DIMM.
-	enum device_ars_status		ars_status;                             ///< Address range scrub operation status for the AEP DIMM
-	enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DIMM operation status for the AEP DIMM
-	NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the AEP DIMM
+	NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DIMMs have different SKUs.
+	NVM_BOOL			sku_violation;                          ///< The DIMM configuration is unsupported due to a license issue.
+	NVM_BOOL			viral_state;                            ///< Current viral status of DIMM.
+	enum device_ars_status		ars_status;                             ///< Address range scrub operation status for the DIMM
+	enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DIMM operation status for the DIMM
+	NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the DIMM
 	NVM_UINT64			newest_error_log_timestamp;             ///< DEPRECATED Timestamp of the newest log entry in the fw error log
 	NVM_BOOL			ait_dram_enabled;                       ///< Whether or not the AIT DRAM is enabled.
-	NVM_UINT64			boot_status;                            ///< The status of the AEP DIMM as reported by the firmware in the BSR
-	NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on AEP DIMM
-	NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on AEP DIMM
+	NVM_UINT64			boot_status;                            ///< The status of the DIMM as reported by the firmware in the BSR
+	NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on DIMM
+	NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DIMM
 	struct device_error_log_status	error_log_status;                       // DEPRECATED;
 };
 
@@ -791,14 +791,14 @@ struct sensor {
  * Device partition capacities (in bytes) used for a single device or aggregated across the server.
  */
 struct device_capacities {
-	NVM_UINT64	capacity;                       ///< The total AEP DIMM capacity in bytes.
-	NVM_UINT64	memory_capacity;                ///< The total AEP DIMM capacity in bytes for memory mode.
-	NVM_UINT64	app_direct_capacity;            ///< The total AEP DIMM capacity in bytes for app direct mode.
-	NVM_UINT64	mirrored_app_direct_capacity;   ///< The total AEP DIMM mirrored app direct capacity.
-	NVM_UINT64	storage_capacity;               ///< AEP DIMM capacity allocated that can be used as storage.
-	NVM_UINT64	unconfigured_capacity;          ///< Unconfigured AEP DIMM capacity. Can be used as storage.
-	NVM_UINT64	inaccessible_capacity;          ///< AEP DIMM capacity not licensed for this AEP DIMM SKU.
-	NVM_UINT64	reserved_capacity;              ///< AEP DIMM capacity reserved for metadata.
+	NVM_UINT64	capacity;                       ///< The total DIMM capacity in bytes.
+	NVM_UINT64	memory_capacity;                ///< The total DIMM capacity in bytes for memory mode.
+	NVM_UINT64	app_direct_capacity;            ///< The total DIMM capacity in bytes for app direct mode.
+	NVM_UINT64	mirrored_app_direct_capacity;   ///< The total DIMM mirrored app direct capacity.
+	NVM_UINT64	storage_capacity;               ///< DIMM capacity allocated that can be used as storage.
+	NVM_UINT64	unconfigured_capacity;          ///< Unconfigured DIMM capacity. Can be used as storage.
+	NVM_UINT64	inaccessible_capacity;          ///< DIMM capacity not licensed for this DIMM SKU.
+	NVM_UINT64	reserved_capacity;              ///< DIMM capacity reserved for metadata.
 };
 
 /**
@@ -836,27 +836,27 @@ struct device_fw_info {
  */
 struct device_details {
   struct device_discovery     discovery;                                ///< Basic device identifying information.
-  struct device_status        status;                                   ///< Device health and status.
-  struct device_fw_info       fw_info;                                  ///< The firmware image information for the PMM DIMM.
-  NVM_UINT8                   padding[2];                               ///< struct alignment
-  struct device_performance   performance;                              ///< A snapshot of the performance metrics.
-  struct sensor               sensors[NVM_MAX_DEVICE_SENSORS];          ///< Device sensors.
-  struct device_capacities    capacities;                               ///< Partition information
+	struct device_status		status;                                 ///< Device health and status.
+  struct device_fw_info       fw_info;                                  ///< The firmware image information for the PMem DIMM.
+	NVM_UINT8			padding[2];                             ///< struct alignment
+	struct device_performance	performance;                            ///< A snapshot of the performance metrics.
+	struct sensor			sensors[NVM_MAX_DEVICE_SENSORS];        ///< Device sensors.
+	struct device_capacities	capacities;                             ///< Partition information
 
-  // from SMBIOS Type 17 Table
-  enum device_form_factor     form_factor;                              ///< The type of DIMM.
+	// from SMBIOS Type 17 Table
+	enum device_form_factor		form_factor;                            ///< The type of DIMM.
   NVM_UINT64                  data_width;                               ///< The width in bits used to store user data.
   NVM_UINT64                  total_width;                              ///< The width in bits for data and ECC and/or redundancy.
-  NVM_UINT64                  speed;                                    ///< The speed in nanoseconds.
-  char                        device_locator[NVM_DEVICE_LOCATOR_LEN];   ///< The socket or board position label
-  char                        bank_label[NVM_BANK_LABEL_LEN];           ///< The bank label
+	NVM_UINT64			speed;                                  ///< The speed in nanoseconds.
+	char				device_locator[NVM_DEVICE_LOCATOR_LEN]; ///< The socket or board position label
+	char				bank_label[NVM_BANK_LABEL_LEN];         ///< The bank label
 
-  NVM_BOOL                    power_management_enabled;                 ///< Enable or disable power management.
-  NVM_UINT16                  peak_power_budget;                        ///< instantaneous power budget in mW (100-20000 mW).
-  NVM_UINT16                  avg_power_budget;                         ///< average power budget in mW (100-18000 mW).
-  NVM_BOOL                    package_sparing_enabled;                  ///< Enable or disable package sparing.
-  NVM_UINT8                   package_sparing_level;                    ///< How aggressive to be in package sparing (0-255).
-  struct device_settings      settings;                                 ///< Modifiable features of the device.
+	NVM_BOOL			power_management_enabled;               ///< Enable or disable power management.
+	NVM_UINT16			peak_power_budget;                      ///< instantaneous power budget in mW (100-20000 mW).
+	NVM_UINT16			avg_power_budget;                       ///< average power budget in mW (100-18000 mW).
+	NVM_BOOL			package_sparing_enabled;                    ///< Enable or disable package sparing.
+	NVM_UINT8			package_sparing_level;                      ///< How aggressive to be in package sparing (0-255).
+	struct device_settings		settings;                               ///< Modifiable features of the device.
 };
 
 /**
@@ -887,45 +887,45 @@ struct platform_capabilities {
 };
 
 /**
- * AEP DIMM software-supported features
+ * DIMM software-supported features
  */
 struct nvm_features {
-  NVM_BOOL  get_platform_capabilities;      ///< get platform supported capabilities
-  NVM_BOOL  get_devices;                    ///< retrieve the list of AEP DIMMs installed on the server
-  NVM_BOOL  get_device_smbios;              ///< retrieve the SMBIOS information for AEP DIMMs
-  NVM_BOOL  get_device_health;              ///< retrieve the health status for AEP DIMMs
-  NVM_BOOL  get_device_settings;            ///< retrieve AEP DIMM settings
-  NVM_BOOL  modify_device_settings;         ///< modify AEP DIMM settings
-  NVM_BOOL  get_device_security;            ///< retrieve AEP DIMM security state
-  NVM_BOOL  modify_device_security;         ///< modify AEP DIMM security settings
-  NVM_BOOL  get_device_performance;         ///< retrieve AEP DIMM performance metrics
-  NVM_BOOL  get_device_firmware;            ///< retrieve AEP DIMM firmware version
-  NVM_BOOL  update_device_firmware;         ///< update the firmware version on AEP DIMMs
-  NVM_BOOL  get_sensors;                    ///< get health sensors on AEP DIMMS
-  NVM_BOOL  modify_sensors;                 ///< modify the AEP DIMM health sensor settings
-  NVM_BOOL  get_device_capacity;            ///< retrieve how AEP DIMM capacity is mapped by BIOS
-  NVM_BOOL  modify_device_capacity;         ///< modify how the AEP DIMM capacity is provisioned
-  NVM_BOOL  get_regions;                     ///< retrieve regions of AEP DIMM capacity
-  NVM_BOOL  get_namespaces;                 ///< retrieve the list of namespaces allocated from regions
-  NVM_BOOL  get_namespace_details;          ///< retrieve detailed info about each namespace
-  NVM_BOOL  create_namespace;               ///< create a new namespace
-  NVM_BOOL  rename_namespace;               ///< rename an existing namespace
-  NVM_BOOL  grow_namespace;                 ///< increase the capacity of a namespace
-  NVM_BOOL  shrink_namespace;               ///< decrease the capacity of a namespace
-  NVM_BOOL  enable_namespace;               ///< enable a namespace
-  NVM_BOOL  disable_namespace;              ///< disable a namespace
-  NVM_BOOL  delete_namespace;               ///< delete a namespace
-  NVM_BOOL  get_address_scrub_data;         ///< retrieve address range scrub data
-  NVM_BOOL  start_address_scrub;            ///< initiate an address range scrub
-  NVM_BOOL  quick_diagnostic;               ///< quick health diagnostic
-  NVM_BOOL  platform_config_diagnostic;     ///< platform configuration diagnostic
-  NVM_BOOL  pm_metadata_diagnostic;         ///< persistent memory metadata diagnostic
-  NVM_BOOL  security_diagnostic;            ///< security diagnostic
-  NVM_BOOL  fw_consistency_diagnostic;      ///< firmware consistency diagnostic
-  NVM_BOOL  memory_mode;                    ///< access AEP DIMM capacity as memory
-  NVM_BOOL  app_direct_mode;                ///< access AEP DIMM persistent memory in App Direct Mode
-  NVM_BOOL  storage_mode;                   ///< access AEP DIMM persistent memory in Storage Mode
-  NVM_BOOL  error_injection;                ///< error injection on AEP DIMMs
+	NVM_BOOL	get_platform_capabilities;      ///< get platform supported capabilities
+	NVM_BOOL	get_devices;                    ///< retrieve the list of DIMMs installed on the server
+	NVM_BOOL	get_device_smbios;              ///< retrieve the SMBIOS information for DIMMs
+	NVM_BOOL	get_device_health;              ///< retrieve the health status for DIMMs
+	NVM_BOOL	get_device_settings;            ///< retrieve DIMM settings
+	NVM_BOOL	modify_device_settings;         ///< modify DIMM settings
+	NVM_BOOL	get_device_security;            ///< retrieve DIMM security state
+	NVM_BOOL	modify_device_security;         ///< modify DIMM security settings
+	NVM_BOOL	get_device_performance;         ///< retrieve DIMM performance metrics
+	NVM_BOOL	get_device_firmware;            ///< retrieve DIMM firmware version
+	NVM_BOOL	update_device_firmware;         ///< update the firmware version on DIMMs
+	NVM_BOOL	get_sensors;                    ///< get health sensors on DIMMs
+	NVM_BOOL	modify_sensors;                 ///< modify the DIMM health sensor settings
+	NVM_BOOL	get_device_capacity;            ///< retrieve how DIMM capacity is mapped by BIOS
+	NVM_BOOL	modify_device_capacity;         ///< modify how the DIMM capacity is provisioned
+	NVM_BOOL	get_regions;                      ///< retrieve regions of DIMM capacity
+	NVM_BOOL	get_namespaces;                 ///< retrieve the list of namespaces allocated from regions
+	NVM_BOOL	get_namespace_details;          ///< retrieve detailed info about each namespace
+	NVM_BOOL	create_namespace;               ///< create a new namespace
+	NVM_BOOL	rename_namespace;               ///< rename an existing namespace
+	NVM_BOOL	grow_namespace;                 ///< increase the capacity of a namespace
+	NVM_BOOL	shrink_namespace;               ///< decrease the capacity of a namespace
+	NVM_BOOL	enable_namespace;               ///< enable a namespace
+	NVM_BOOL	disable_namespace;              ///< disable a namespace
+	NVM_BOOL	delete_namespace;               ///< delete a namespace
+	NVM_BOOL	get_address_scrub_data;         ///< retrieve address range scrub data
+	NVM_BOOL	start_address_scrub;            ///< initiate an address range scrub
+	NVM_BOOL	quick_diagnostic;               ///< quick health diagnostic
+	NVM_BOOL	platform_config_diagnostic;     ///< platform configuration diagnostic
+	NVM_BOOL	pm_metadata_diagnostic;         ///< persistent memory metadata diagnostic
+	NVM_BOOL	security_diagnostic;            ///< security diagnostic
+	NVM_BOOL	fw_consistency_diagnostic;      ///< firmware consistency diagnostic
+	NVM_BOOL	memory_mode;                    ///< access DIMM capacity as memory
+	NVM_BOOL	app_direct_mode;                ///< access DIMM persistent memory in App Direct Mode
+	NVM_BOOL	storage_mode;                   ///< access DIMM persistent memory in Storage Mode
+	NVM_BOOL	error_injection;                ///< error injection on DIMMs
 };
 
 /**
@@ -937,24 +937,24 @@ struct sw_capabilities {
 };
 
 /**
- * Aggregation of AEP DIMM SKU capabilities across all manageable AEP DIMMs in the system.
+ * Aggregation of DIMM SKU capabilities across all manageable DIMMs in the system.
  */
 struct dimm_sku_capabilities {
-	NVM_BOOL	mixed_sku;      ///< One or more AEP DIMMs have different SKUs.
-	NVM_BOOL	sku_violation;  ///< One or more AEP DIMMs are in violation of their SKU.
-	NVM_BOOL	memory_sku;     ///< One or more AEP DIMMs support memory mode.
-	NVM_BOOL	app_direct_sku; ///< One or more AEP DIMMs support app direct mode.
-	NVM_BOOL	storage_sku;    ///< One or more AEP DIMMs support storage mode.
+	NVM_BOOL	mixed_sku;      ///< One or more DIMMs have different SKUs.
+	NVM_BOOL	sku_violation;  ///< One or more DIMMs are in violation of their SKU.
+	NVM_BOOL	memory_sku;     ///< One or more DIMMs support memory mode.
+	NVM_BOOL	app_direct_sku; ///< One or more DIMMs support app direct mode.
+	NVM_BOOL	storage_sku;    ///< One or more DIMMs support storage mode.
 };
 
 /**
- * Combined AEP DIMM capabilities
+ * Combined DIMM capabilities
  */
 struct nvm_capabilities {
-	struct nvm_features		nvm_features;           ///< supported features of the AEP DIMM software
+	struct nvm_features		nvm_features;           ///< supported features of the PMM software
 	struct sw_capabilities		sw_capabilities;        ///< driver supported capabilities
 	struct platform_capabilities	platform_capabilities;  ///< platform-supported capabilities
-	struct dimm_sku_capabilities	sku_capabilities;       ///< aggregated AEP DIMM SKU capabilities
+	struct dimm_sku_capabilities	sku_capabilities;       ///< aggregated DIMM SKU capabilities
 };
 
 /*
@@ -976,7 +976,7 @@ struct interleave_set {
 };
 
 /**
- * Information about a region of AEP DIMM capacity
+ * Information about a persistent memory region
  */
 struct region {
 	NVM_UID			region_uid;       ///< Unique identifier of the region.
@@ -991,20 +991,20 @@ struct region {
 	NVM_UINT64		raw_capacities[NVM_MAX_DEVICES_PER_POOL];
 	// Memory mode capacity of each dimm in the region in bytes.
 	NVM_UINT64		memory_capacities[NVM_MAX_DEVICES_PER_POOL];
-	NVM_UID			dimms[NVM_MAX_DEVICES_PER_POOL]; ///< Unique ID's of underlying AEP DIMMs.
+	NVM_UID			dimms[NVM_MAX_DEVICES_PER_POOL]; ///< Unique ID's of underlying DIMMs.
 	// The interleave sets in this region
 	struct interleave_set	ilsets[NVM_MAX_DEVICES_PER_POOL * 2];
-	enum region_health	health; ///< Rolled up health of the underlying AEP DIMMs.
-	// possible to create a namespace wholly contained on AEP DIMMs that have encryption enabled.
+	enum region_health	health; ///< Rolled up health of the underlying DIMMs.
+	// possible to create a namespace wholly contained on DIMMs that have encryption enabled.
 	NVM_BOOL		encryption_enabled;
-	// possible to create a namespace wholly contained on AEP DIMMs that support encryption.
+	// possible to create a namespace wholly contained on DIMMs that support encryption.
 	NVM_BOOL		encryption_capable;
 	// true if its possible to create namespace that would be wholly contained on erasable dimms
 	NVM_BOOL		erase_capable;
 };
 
 /**
- * Describes the configuration goal for a particular AEP DIMM.
+ * Describes the configuration goal for a particular DIMM.
  */
 struct config_goal_input {
 	NVM_UINT8	persistent_mem_type;
@@ -1056,7 +1056,7 @@ struct namespace_details {
 	NVM_UINT32				block_size;             ///< Block size in bytes.
 	NVM_UINT64				block_count;            ///< Number of blocks.
 	enum namespace_type			type;                   ///< The type of namespace
-	enum namespace_health			health;                 ///< Rolled-up health of the underlying AEP DIMMs.
+	enum namespace_health			health;                 ///< Rolled-up health of the underlying DIMMs.
 	enum namespace_enable_state		enabled;                ///< If namespace is exposed to the OS.
 	NVM_BOOL				btt;                    ///< optimized for speed
 	struct namespace_security_features	security_features;      ///< Security features
@@ -1422,12 +1422,12 @@ NVM_API int nvm_get_host_name(char *host_name, const NVM_SIZE host_name_len);
 NVM_API int nvm_get_host(struct host *p_host);
 
 /**
- * @brief Retrieve a list of installed software versions related to AEP DIMM management.
+ * @brief Retrieve a list of installed software versions related to DIMM management.
  * @param[in,out] p_inventory
  *              A pointer to a #sw_inventory structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @remarks If a version cannot be retrieved, the version is returned as all zeros.
- * @remarks AEP DIMM firmware revisions are not included.
+ * @remarks DIMM firmware revisions are not included.
  * @return Returns one of the following return_codes:
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
@@ -1513,7 +1513,7 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
 /**
  * @deprecated please use: nvm_get_number_of_memory_topology_devices
  * @brief Returns the number of memory devices installed in the system. This count includes
- * both AEP DIMMs and other memory devices, such as DRAM.
+ * both DIMMs and other memory devices, such as DRAM.
  * @pre The caller must have administrative privileges.
  * @remarks This method should be called before #nvm_get_device_topology.
  * @return Returns the number of devices in the topology on success
@@ -1524,7 +1524,7 @@ NVM_API int nvm_get_memory_topology_count();
 
 /**
 * @brief Retrieve the number of memory devices installed in the system. This count includes
-* both AEP DIMMs and other memory devices, such as DRAM.
+* both DCPMEM DIMMs and other memory devices, such as DRAM.
 * @pre The caller must have administrative privileges.
 * @remarks This method should be called before #nvm_get_memory_topology.
 * @param[out] count pointer to number of memory devices
@@ -1537,7 +1537,7 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count);
 
 /**
  * @brief Retrieves basic topology information about all memory devices installed in the
- * system, including both AEP DIMMs and other memory devices, such as DRAM.
+ * system, including both PMMs and other memory devices, such as DRAM.
  * @pre The caller must have administrative privileges.
  * @param[out] p_devices pointer to #memory_topology array of size count
  * @param[in] count number of elements in p_devices array
@@ -1835,7 +1835,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid, const NVM_PATH path,
 NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
 
 /**
- * @brief Retrieve the aggregate capacities across all manageable AEP DIMMs in the system.
+ * @brief Retrieve the aggregate capacities across all manageable DIMMs in the system.
  * @param[in,out] p_capacities
  *              A pointer to an #device_capacities structure allocated by the caller.
  * @pre The caller must have administrative privileges.
@@ -1847,7 +1847,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
 NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 
 /**
-* @brief Retrieve all the health sensors for the specified AEP DIMM.
+* @brief Retrieve all the health sensors for the specified DCPMEM DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in,out] p_sensors
@@ -1868,7 +1868,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors, const NVM_UINT16 count);
 
 /**
-* @brief Retrieve a specific health sensor from the specified AEP DIMM.
+* @brief Retrieve a specific health sensor from the specified DCPMEM DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type
@@ -1886,7 +1886,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
 
 /**
 * @brief Change the critical threshold on the specified health sensor for the specified
-* AEP DIMM.
+* DCPMEM DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type
@@ -2188,7 +2188,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
 
 /**
  * @deprecated please use: nvm_get_number_of_regions
- * @brief Retrieve the number of configured regions of AEP DIMM capacity in the host server.
+ * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
  * @return Returns the number of regions on success or
@@ -2204,7 +2204,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
 NVM_API int nvm_get_region_count();
 
 /**
- * @brief Retrieve the number of configured regions of AEP DIMM capacity in the host server.
+ * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
  * @param[in,out] count
@@ -2217,7 +2217,7 @@ NVM_API int nvm_get_region_count();
 NVM_API int nvm_get_number_of_regions(int *count);
 
 /**
- * @brief Retrieve a list of the configured regions of AEP DIMM capacity in host server.
+ * @brief Retrieve a list of the configured persistent memory regions in host server.
  * @param[in,out] p_regions
  *              An array of #region structures allocated by the caller.
  * @param[in] count
@@ -2235,7 +2235,7 @@ NVM_API int nvm_get_number_of_regions(int *count);
 NVM_API int nvm_get_regions(struct region *p_regions, const NVM_UINT8 count);
 
 /**
- * @brief Retrieve a specific region of AEP DIMM capacity.
+ * @brief Retrieve a specific persistent memory region.
  * @param[in] region_uid
  *              The identifier of the region to retrieve
  * @param[in,out] p_region
@@ -2265,17 +2265,17 @@ NVM_API int nvm_get_region(const NVM_UID region_uid, struct region *p_region);
 NVM_API int nvm_get_available_persistent_size_range(const NVM_UID region_uid, struct possible_namespace_ranges *p_range, const NVM_UINT8 ways);
 
 /**
- * @brief Modify how the AEP DIMM capacity is provisioned by the BIOS on the next reboot.
+ * @brief Modify how the DIMM capacity is provisioned by the BIOS on the next reboot.
  * @param p_device_uids
  *              Pointer to list of device uids to configure.
  *              If NULL, all devices on platform will be configured.
  * @param device_uids_couut
  *              Number of devices in p_device_uids list.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
+ * @pre The specified DIMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
- *              AEP DIMM must be deleted first.
- * @remarks This operation stores the specified configuration goal on the AEP DIMM
+ *              DIMM must be deleted first.
+ * @remarks This operation stores the specified configuration goal on the DIMM
  *              for the BIOS to read on the next reboot.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *		NVM_SUCCESS @n
@@ -2285,7 +2285,7 @@ NVM_API int nvm_get_available_persistent_size_range(const NVM_UID region_uid, st
 NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal_input *p_goal);
 
 /**
- * @brief Retrieve the configuration goal from the specified AEP DIMM.
+ * @brief Retrieve the configuration goal from the specified DIMM.
  * @param p_device_uids
  *              Pointer to list of device uids to retrieve config goal from.
  *              If NULL, retrieve goal configs from all devices on platform.
@@ -2294,11 +2294,11 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  * @param p_goal
  *              A pointer to a list of config_goal structures allocated by the caller.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
- * @remarks A configuration goal is stored on the AEP DIMM until the
+ * @pre The specified DIMM is manageable by the host software.
+ * @remarks A configuration goal is stored on the DIMM until the
  *              BIOS successfully processes it on reboot.
  *              Use @link nvm_delete_config_goal @endlink to erase a
- *              configuration goal from an AEP DIMM.
+ *              configuration goal from a DIMM.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *		NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
@@ -2307,14 +2307,14 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal *p_goal);
 
 /**
- * @brief Erase the region configuration goal from the specified AEP DIMM.
+ * @brief Erase the region configuration goal from the specified DIMM.
  * @param p_device_uids
  *              Pointer to list of device uids to erase the region config goal.
  *              If NULL, all devices on platform will have their region config goal erased.
  * @param device_uids_count
  *              Number of devices in p_device_uids list.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
+ * @pre The specified DIMM is manageable by the host software.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *		NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
@@ -2324,28 +2324,28 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 
 /**
  * @deprecated No longer supported
- * @brief Store the configuration settings of how the AEP DIMM capacity
+ * @brief Store the configuration settings of how the DIMM
  * is currently provisioned to a file in order to duplicate the
  * configuration elsewhere.
  * @param device_uid
- *              The AEP DIMM identifier.
+ *              The DIMM identifier.
  * @param file
  *              The absolute file path in which to store the configuration data.
  * @param file_len
  *              String length of file, should be < #NVM_PATH_LEN.
  * @param append
- *              Whether to append the AEP DIMM configuration to an existing file
+ *              Whether to append the DIMM configuration to an existing file
  *              or create/replace the file.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
- * @pre The specified AEP DIMM is currently configured.
+ * @pre The specified DIMM is manageable by the host software.
+ * @pre The specified DIMM is currently configured.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *		NVM_ERR_API_NOT_SUPPORTED @n
  */
 NVM_API int nvm_dump_config(const NVM_UID device_uid, const NVM_PATH file, const NVM_SIZE file_len, const NVM_BOOL append);
 
 /**
- * @brief Store the configuration settings of how the AEP DIMM capacity
+ * @brief Store the configuration settings of how the DIMM capacity
  * is currently provisioned to a file in order to duplicate the
  * configuration elsewhere.
  * @param file
@@ -2353,8 +2353,8 @@ NVM_API int nvm_dump_config(const NVM_UID device_uid, const NVM_PATH file, const
  * @param file_len
  *              String length of file, should be < #NVM_PATH_LEN.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
- * @pre The specified AEP DIMM is currently configured.
+ * @pre The specified DIMM is manageable by the host software.
+ * @pre The specified DIMM is currently configured.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_DUMP_FILE_OPERATION_FAILED @n
@@ -2364,22 +2364,22 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 
 /**
  * @deprecate Please use  nvm_load_goal_config
- * Modify how the AEP DIMM capacity is provisioned by the BIOS on the
+ * Modify how the DIMM capacity is provisioned by the BIOS on the
  * next reboot by applying the configuration goal previously stored in the
  * specified file with @link nvm_dump_config @endlink.
  * @param device_uid
- *              The AEP DIMM identifier.
+ *              The DIMM identifier.
  * @param file
  *              The absolute file path containing the region configuration goal to load.
  * @param file_len
  *              String length of file, should be < #NVM_PATH_LEN.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
+ * @pre The specified DIMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
- *              AEP DIMM must be deleted first.
+ *              DIMM must be deleted first.
  * @pre If the configuration goal contains any app direct memory,
- *              all AEP DIMMs that are part of the interleave set must be included in the file.
- * @pre The specified AEP DIMM must be >= the total capacity of the AEP DIMM
+ *              all DIMMs that are part of the interleave set must be included in the file.
+ * @pre The specified DIMM must be >= the total capacity of the DIMM
  *              specified in the file.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_ERR_API_NOT_SUPPORTED @n
@@ -2387,7 +2387,7 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 NVM_API int nvm_load_config(const NVM_UID device_uid, const NVM_PATH file, const NVM_SIZE file_len);
 
 /**
- * @brief Modify how the AEP DIMM capacity is provisioned by the BIOS on the
+ * @brief Modify how the DIMM capacity is provisioned by the BIOS on the
  * next reboot by applying the configuration goal previously stored in the
  * specified file with @link nvm_dump_config @endlink.
  * @param file
@@ -2395,12 +2395,12 @@ NVM_API int nvm_load_config(const NVM_UID device_uid, const NVM_PATH file, const
  * @param file_len
  *              String length of file, should be < NVM_PATH_LEN.
  * @pre The caller has administrative privileges.
- * @pre The specified AEP DIMM is manageable by the host software.
+ * @pre The specified DIMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
- *              AEP DIMM must be deleted first.
+ *              DIMM must be deleted first.
  * @pre If the configuration goal contains any app direct memory,
- *              all AEP DIMMs that are part of the interleave set must be included in the file.
- * @pre The specified AEP DIMM must be >= the total capacity of the AEP DIMM
+ *              all DIMMs that are part of the interleave set must be included in the file.
+ * @pre The specified DIMM must be >= the total capacity of the DIMM
  *              specified in the file.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
@@ -2411,8 +2411,8 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 
 /**
  * @deprecated Not supported
- * @brief Retrieve the number of namespaces allocated from regions of AEP DIMM
- * capacity in the host server.
+ * @brief Retrieve the number of namespaces allocated from persistent
+ * memory regions in the host server.
  * @pre The caller must have administrative privileges.
  * @remarks This method should be called before #nvm_get_namespaces.
  * @return Returns the number of namespaces on success or
@@ -2428,7 +2428,7 @@ NVM_API int nvm_get_namespace_count();
  * @brief Determine if any existing namespaces of the specified type
  * utilize capacity from the specified device.
  * @param device_uid
- *              The AEP DIMM identifier.
+ *              The DIMM identifier.
  * @param[in] type
  *              The type of namespace, use UNKNOWN to check for all namespaces.
  * @pre The caller must have administrative privileges.
@@ -2441,8 +2441,8 @@ NVM_API int nvm_get_device_namespace_count(const NVM_UID uid, const enum namespa
 
 /**
  * @deprecated Not supported
- * @brief Retrieve discovery information about each namespace allocated from regions
- * of AEP DIMM capacity in the host server.
+ * @brief Retrieve discovery information about each namespace allocated from
+ * persistent memory regions in the host server.
  * @param[in,out] p_namespaces
  *              An array of #namespace_discovery structures allocated by the caller.
  * @param[in] count
@@ -2506,7 +2506,7 @@ NVM_API int nvm_adjust_modify_namespace_block_count(const NVM_UID namespace_uid,
 
 /**
  * @deprecated Not supported
- * @brief Create a new namespace on the specified persistent memory region of AEP DIMM capacity.
+ * @brief Create a new namespace on the specified persistent memory.
  * @param[in,out] p_namespace_uid
  *              The namespace identifier of the newly created namespace.
  * @param[in] region_uid
@@ -2686,7 +2686,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
  * @param[in] device_uid
  *		DimmUID for which the support files will be generated.
  * @param[in] support_file
- *		Absolute file path which will be used to generate the support files. For each AEP DIMM,
+ *		Absolute file path which will be used to generate the support files. For each DIMM,
  *		one or more support files may be generated at the specified destination path
  *		with the DimmUID and file number appended to the filename. Note the support
  *		files are encrypted
@@ -2760,7 +2760,7 @@ NVM_API int nvm_add_simulator(const NVM_PATH simulator, const NVM_SIZE simulator
 NVM_API int nvm_remove_simulator();
 
 /**
- * @brief Retrieve the current level of debug logging performed on the specified AEP DIMM.
+ * @brief Retrieve the current level of debug logging performed on the specified DIMM.
  * @param[in] device_uid
  *              The device identifier.
  * @param[out,in] p_log_level
@@ -2773,7 +2773,7 @@ NVM_API int nvm_remove_simulator();
 NVM_API int nvm_get_fw_log_level(const NVM_UID device_uid, enum fw_log_level *p_log_level);
 
 /**
- * @brief Set the current level of debug logging performed on the specified AEP DIMM.
+ * @brief Set the current level of debug logging performed on the specified DIMM.
  * @param[in] device_uid
  *              The device identifier.
  * @param[in] log_level
@@ -2793,7 +2793,7 @@ NVM_API int nvm_set_fw_log_level(const NVM_UID device_uid, const enum fw_log_lev
  *              error information allocated by the caller.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @pre This interface is only supported by the underlying AEP DIMM firmware when it's in a
+ * @pre This interface is only supported by the underlying DIMM firmware when it's in a
  * debug state.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
@@ -2811,7 +2811,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct devic
  *              error information allocated by the caller.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @pre This interface is only supported by the underlying AEP DIMM firmware when it's in a
+ * @pre This interface is only supported by the underlying DIMM firmware when it's in a
  * debug state.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
@@ -2839,7 +2839,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const stru
 NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic *p_diagnostic, NVM_UINT32 *p_results);
 
 /**
- * @brief Set the user preference config value in AEP DIMM software.
+ * @brief Set the user preference config value in DIMM software.
  * @param[in] key
  *              The property key.
  * @param[in] value
@@ -2851,7 +2851,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic
 NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY key, const NVM_PREFERENCE_VALUE value);
 
 /**
- * @brief Clear namespace label storage area in PCD on the specified AEP DIMM.
+ * @brief Clear namespace label storage area in PCD on the specified DIMM.
  * @param[in] device_uid
  *              The device identifier.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
@@ -2927,7 +2927,7 @@ NVM_API int nvm_get_number_of_debug_logs(int *count);
 
 /**
  * @brief Retrieve a list of stored debug log entries from the native API library database
-  * @param[in,out] p_logs
+ * @param[in,out] p_logs
  *              An array of #log structures allocated by the caller.
  * @param[in] count
  *              The size of the array.

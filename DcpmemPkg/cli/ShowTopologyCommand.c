@@ -26,8 +26,8 @@ struct Command ShowTopologyCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Show the topology of the AEPs installed in the host server"  ,       //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                                 //!< properties
+  L"Show the topology of the DCPMEM DIMMs installed in the host server"  , //!< help
   ShowTopology
 };
 
@@ -66,7 +66,7 @@ ShowTopology(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_STATUS TempReturnCode = EFI_INVALID_PARAMETER;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pSockets = NULL;
   UINT32 SocketsNum = 0;
   UINT16 *pDimmIds = NULL;
@@ -76,7 +76,7 @@ ShowTopology(
   UINT16 Index2 = 0;
   UINT16 TopologyDimmsNumber = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN AllOptionSet = FALSE;
   BOOLEAN DisplayOptionSet = FALSE;
   BOOLEAN Found = FALSE;
@@ -267,7 +267,7 @@ ShowTopology(
   else {
 
     SetDisplayInfo(L"DimmTopology", ListView);
-    
+
     ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;
 
     for (Index = 0; Index < DimmCount; Index++) {

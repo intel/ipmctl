@@ -466,7 +466,7 @@ CheckPlatformConfigurationData(
       pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
       if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-        NVDIMM_DBG("Incorrect signature of the AEP Current Config table");
+        NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
         ReturnCode = EFI_VOLUME_CORRUPTED;
       } else if (pPcdCurrentConf->Header.Length > ppDimms[Index]->PcdOemPartitionSize) {
         NVDIMM_DBG("Length of PCD Current Config header is greater than max PCD OEM partition size");
@@ -491,7 +491,7 @@ CheckPlatformConfigurationData(
       pPcdInputConf = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
 
       if (pPcdInputConf->Header.Signature != NVDIMM_CONFIGURATION_INPUT_SIG) {
-        NVDIMM_DBG("Incorrect signature of the AEP Config input table");
+        NVDIMM_DBG("Incorrect signature of the DIMM Config input table");
         ReturnCode = EFI_VOLUME_CORRUPTED;
       } else if (pPcdInputConf->Header.Length > ppDimms[Index]->PcdOemPartitionSize) {
         NVDIMM_DBG("Length of PCD Config Input header is greater than max PCD OEM partition size");
@@ -519,7 +519,7 @@ CheckPlatformConfigurationData(
       pPcdOutputConf = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
 
       if (pPcdOutputConf->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-        NVDIMM_DBG("Incorrect signature of the AEP Config output table");
+        NVDIMM_DBG("Incorrect signature of the DIMM Config output table");
         ReturnCode = EFI_VOLUME_CORRUPTED;
       } else if (pPcdOutputConf->Header.Length > ppDimms[Index]->PcdOemPartitionSize) {
         NVDIMM_DBG("Length of PCD Config Output header is greater than max PCD OEM partition size");

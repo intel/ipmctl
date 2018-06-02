@@ -65,7 +65,7 @@
 #include "DumpSupportCommand.h"
 extern void nvm_current_cmd(struct Command Command);
 #else
-EFI_GUID gNvmDimmConfigProtocolGuid = EFI_NVMDIMM_CONFIG_PROTOCOL_GUID;
+EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
 #endif
 EFI_GUID gNvmDimmDriverHealthGuid = EFI_DRIVER_HEALTH_PROTOCOL_GUID;
 
@@ -594,7 +594,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 ApiVersion[FW_API_VERSION_LEN] = {0};
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   NVDIMM_ENTRY();
 
   SetDisplayInfo(L"Software", TableTabView);
@@ -610,14 +610,10 @@ EFI_STATUS showVersion(struct Command *pCmd)
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-#ifdef OS_BUILD
-  Print(L"Component\t\t\t\tVersion\n");
-  Print(L"Intel DIMM Gen 1 Software Version\t%ls\n", NVMDIMM_VERSION_STRING);
-  Print(L"Intel DIMM Gen 1 Driver Version\t\t%ls\n", ApiVersion);
-#else
-  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE NVMDIMM_VERSION_STRING L"\n", PRODUCT_NAME, APP_DESCRIPTION);
-  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE FORMAT_STR_NL, PRODUCT_NAME, DRIVER_API_DESCRIPTION, ApiVersion);
-#endif
+
+  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " NVMDIMM_VERSION_STRING L"\n", PRODUCT_NAME, APP_DESCRIPTION);
+  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " FORMAT_STR_NL, PRODUCT_NAME, DRIVER_API_DESCRIPTION, ApiVersion);
+
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

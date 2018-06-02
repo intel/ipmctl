@@ -60,7 +60,7 @@ DumpDebugCommand(
   IN    struct Command *pCmd
 )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT32 DimmCount = 0;

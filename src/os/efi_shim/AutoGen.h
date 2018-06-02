@@ -22,11 +22,11 @@ extern CHAR8 *gEfiCallerBaseName;
 
 // Definition of PCDs used in this module
 
-#define _PCD_TOKEN_PcdAepCliDefaultCapacityUnit  1U
-#define _PCD_VALUE_PcdAepCliDefaultCapacityUnit  0U
-extern const  UINT32  _gPcd_FixedAtBuild_PcdAepCliDefaultCapacityUnit;
-#define _PCD_GET_MODE_32_PcdAepCliDefaultCapacityUnit  _gPcd_FixedAtBuild_PcdAepCliDefaultCapacityUnit
-//#define _PCD_SET_MODE_32_PcdAepCliDefaultCapacityUnit  ASSERT(FALSE)  // It is not allowed to set value for a FIXED_AT_BUILD PCD
+#define _PCD_TOKEN_PcdDcpmmCliDefaultCapacityUnit  1U
+#define _PCD_VALUE_PcdDcpmmCliDefaultCapacityUnit  0U
+extern const  UINT32  _gPcd_FixedAtBuild_PcdDcpmmCliDefaultCapacityUnit;
+#define _PCD_GET_MODE_32_PcdDcpmmCliDefaultCapacityUnit  _gPcd_FixedAtBuild_PcdDcpmmCliDefaultCapacityUnit
+//#define _PCD_SET_MODE_32_PcdDcpmmCliDefaultCapacityUnit  ASSERT(FALSE)  // It is not allowed to set value for a FIXED_AT_BUILD PCD
 
 #define _PCD_TOKEN_PcdShellSupportLevel  2U
 #define _PCD_VALUE_PcdShellSupportLevel  3U

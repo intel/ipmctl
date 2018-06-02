@@ -25,7 +25,7 @@ struct Command LoadRecoverCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},          //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                //!< properties
-  L"Flash firmware on one or more non-functional AEPs.",                  //!< help
+  L"Flash firmware on one or more non-functional DCPMEM DIMMs.",          //!< help
   LoadRecover                                                             //!< run function
 };
 
@@ -51,8 +51,8 @@ RegisterLoadRecoverCommand (
 
   @retval EFI_SUCCESS if everything went OK - including the firmware load process.
   @retval EFI_INVALID_PARAMETER if the user input is invalid or the file validation fails
-  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no AEPs in the system.
-  @retval EFI_NOT_FOUND if there is no AEP with the user specified PID
+  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMEM DIMMs in the system.
+  @retval EFI_NOT_FOUND if there is no DIMM with the user specified PID
 **/
 EFI_STATUS
 LoadRecover(
@@ -60,7 +60,7 @@ LoadRecover(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   CHAR16 *pFileName = NULL;
   CHAR16 *pRelativeFileName = NULL;

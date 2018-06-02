@@ -108,7 +108,7 @@ typedef union {
 #define OVERWRITE_DIMM_STATUS_COMPLETED_STR    L"Completed"
 
 // Memory type string values
-#define MEMORY_TYPE_AEP_STR      L"AEP DIMM"
+#define MEMORY_TYPE_DCPMEM_STR   L"DCPMEM"
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 
@@ -369,7 +369,7 @@ GetEnvVariable(
 **/
 EFI_STATUS
 CheckConfigProtocolVersion(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pConfigProtocol
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pConfigProtocol
   );
 
 /**
@@ -1339,7 +1339,7 @@ GoalStatusToString(
 
   Polls the status of the background operation on the dimm.
 
-  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param [in] DimmId Dimm ID of the dimm to poll status
   @param [in] OpcodeToPoll Specify an opcode to poll, 0 to poll regardless of opcode
   @param [in] SubOpcodeToPoll Specify an opcode to poll
@@ -1347,7 +1347,7 @@ GoalStatusToString(
 **/
 EFI_STATUS
 PollLongOpStatus(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 DimmId,
   IN     UINT8 OpcodeToPoll OPTIONAL,
   IN     UINT8 SubOpcodeToPoll OPTIONAL,

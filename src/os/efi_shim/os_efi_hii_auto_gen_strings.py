@@ -37,7 +37,7 @@ def ConvertLine(line):
 
 def ConvertLine_Test():
 	assert(None == ConvertLine('#langdef en "English"'))
-	assert(len(ConvertLine('#string STR_NVMDIMM_DECIMAL_MARK  #language en "."')) == 2)
+	assert(len(ConvertLine('#string STR_DCPMM_DECIMAL_MARK  #language en "."')) == 2)
 
 def OrderedDict_Test():
 	# Should preserve original insertion order, even with overwriting

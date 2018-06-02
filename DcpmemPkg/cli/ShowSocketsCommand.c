@@ -86,7 +86,7 @@ ShowSockets(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 SocketCount = 0;
   SOCKET_INFO *pSockets = NULL;
   UINT16 *pSocketIds = NULL;
@@ -95,7 +95,7 @@ ShowSockets(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN DisplayOptionSet = FALSE;
   CHAR16 *pDisplayValues = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;

@@ -37,7 +37,7 @@ StartFormat(
   IN     struct Command *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pTargetValue = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
@@ -79,7 +79,7 @@ StartFormat(
 
   if (containsOption(pCmd, RECOVER_OPTION)) {
     Recovery = TRUE;
-    // Populate the list of DIMM_INFO structures with the AEPs NOT found in NFIT
+    // Populate the list of DIMM_INFO structures with the DCPMEM DIMMs NOT found in NFIT
     ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &DimmCount);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;

@@ -192,7 +192,7 @@ typedef struct _DIMM {
   struct _DIMM_REGION *pIsRegions[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNum;
 
-  UINT8 IsNew;                             //!< if is incorporated with the rest of the AEPs in the system
+  UINT8 IsNew;                             //!< if is incorporated with the rest of the DCPMEM DIMMs in the system
   UINT8 RebootNeeded;                      //!< Whether or not reboot is required to reconfigure dimm
 
   UINT8 LsaStatus;                         //!< The status of the LSA partition parsing for this DIMM
@@ -1048,7 +1048,7 @@ FwCmdGetFirmwareImageInfo (
 /**
   Firmware command to get Power Management Policy Info (for FIS 1.3+)
 
-  @param[in] pDimm The Intel Apache Pass to retrieve Power Management Policy Info
+  @param[in] pDimm The Intel dcpmem module to retrieve Power Management Policy Info
   @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
     The caller is responsible to free the allocated memory with the FreePool function.
 
@@ -1067,7 +1067,7 @@ FwCmdGetPowerManagementPolicy(
 /**
   Firmware command to get PMON Info
 
-  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[in] pDimm The DC PMEM Module to retrieve PMON Info
   @param[out] pPayloadPMONRegisters Area to place PMON Registers data
     The caller is responsible to free the allocated memory with the FreePool function.
 
@@ -1085,7 +1085,7 @@ FwCmdGetPMONRegisters(
 /**
   Firmware command to set PMON Info
 
-  @param[in] pDimm The Intel Apache Pass to retrieve PMON Info
+  @param[in] pDimm The DC PMEM Module to retrieve PMON Info
   @param[out] PMONGroupEnable  Specifies which PMON Group to enable.
     The caller is responsible to free the allocated memory with the FreePool function.
 

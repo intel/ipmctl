@@ -64,7 +64,7 @@ ShowErrorCommand(
   IN    struct Command *pCmd
 )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   BOOLEAN ThermalError = FALSE;
@@ -276,7 +276,7 @@ ShowErrorCommand(
       for (Index2 = 0; Index2 < ReturnedCount; Index2++) {
         pErrorType = (ErrorsArray[Index2].ErrorType == THERMAL_ERROR ?
         ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
-        Print(FORMAT_STR_SPACE L"on Dimm (" FORMAT_STR L"):\n", pErrorType, DimmStr);
+        Print(FORMAT_STR_SPACE L"on DIMM (" FORMAT_STR L"):\n", pErrorType, DimmStr);
         Print(FORMAT_16STR L" : %lld\n", ERROR_SYSTEM_TIMESTAMP_STR, ErrorsArray[Index2].SystemTimestamp);
 
         if (ErrorsArray[Index2].ErrorType == THERMAL_ERROR) {

@@ -30,7 +30,7 @@ struct Command ShowRegionsCommand =
     {REGION_TARGET, L"", L"RegionIDs", TRUE, ValueOptional},
     { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired },
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},              //!< properties
+  {{L"", L"", L"", FALSE, ValueOptional}},             //!< properties
   L"Show information about one or more Regions.",        //!< help
   ShowRegions                                            //!< run function
 };
@@ -111,7 +111,7 @@ ShowRegions(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 RegionCount = 0;
   REGION_INFO *pRegions = NULL;
   UINT16 *pRegionsIds = NULL;
@@ -130,7 +130,7 @@ ShowRegions(
   BOOLEAN HeaderPrinted = FALSE;
   INTERLEAVE_FORMAT *pInterleaveFormat = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
   CHAR16 *pFreeCapacityStr = NULL;
   CONST CHAR16 *pHealthStateStr = NULL;
@@ -179,7 +179,7 @@ ShowRegions(
       Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
       goto Finish;
     }
-  }
+    }
 
   /**
     if Region IDs were passed in, read them
@@ -342,7 +342,7 @@ ShowRegions(
           pRegions[Index].CookieId,
 #endif
           pRegionTempStr,
-          pCapacityStr,
+        pCapacityStr,
           pFreeCapacityStr,
           pHealthStateStr);
 
@@ -444,9 +444,9 @@ ShowRegions(
         for (DimmIdx = 0; DimmIdx < pRegions[Index].DimmIdCount; DimmIdx++) {
           if (DimmIdx > 0) {
               Print(L", ");
-          }
+      }
           Print(L"0x%04x", pRegions[Index].DimmId[DimmIdx]);
-        }
+      }
         Print(L"\n");
       }
 
@@ -460,8 +460,8 @@ ShowRegions(
           Print(L"   " FORMAT_STR L"=0x%016llx\n", ISET_ID_STR, pRegions[Index].CookieId);
       }
 #endif
-    }
-  }
+      }
+      }
 
   if (RegionIdsNum > 0 && !Found) {
     Print(FORMAT_STR_SPACE L"" FORMAT_STR_NL, CLI_ERR_INVALID_REGION_ID, pCmd->targets[0].pTargetValueStr);

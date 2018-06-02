@@ -24,8 +24,8 @@ struct Command DeleteGoalCommand =
     {GOAL_TARGET, L"", L"", TRUE, ValueEmpty},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Delete the pool configuration goal from one or more AEPs",        //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
+  L"Delete the region configuration goal from one or more DCPMEM DIMMs", //!< help
   DeleteGoal
 };
 
@@ -46,7 +46,7 @@ DeleteGoal(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
   CHAR16 *pTargetValue = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   UINT16 *pSocketIds = NULL;

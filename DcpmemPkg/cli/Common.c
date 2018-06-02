@@ -59,14 +59,14 @@ CONST CHAR16 *mpDefaultDimmIds[DISPLAY_DIMM_ID_MAX_SIZE] = {
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
 
 /**
-  Retrieve a populated array and count of AEPs in the system. The caller is
+  Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
   @param[out] ppDimms A pointer to the dimm list found in NFIT.
-  @param[out] pDimmCount A pointer to the number of AEPs found in NFIT.
+  @param[out] pDimmCount A pointer to the number of DIMMs found in NFIT.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -75,7 +75,7 @@ CONST CHAR16 *mpDefaultDimmIds[DISPLAY_DIMM_ID_MAX_SIZE] = {
 **/
 EFI_STATUS
 GetDimmList(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO **ppDimms,
      OUT UINT32 *pDimmCount
@@ -314,7 +314,7 @@ GetDimmIdsFromString(
 
     if (!DimmIdFound) {
       Rc = EFI_NOT_FOUND;
-      Print(L"\nAEP not found. Invalid DimmID: " FORMAT_STR_NL, ppDimmIdTokensStr[Index]);
+      Print(L"\nDIMM not found. Invalid DimmID: " FORMAT_STR_NL, ppDimmIdTokensStr[Index]);
       goto FinishError;
     }
   }
@@ -417,7 +417,7 @@ GetDimmUidFromString(
 
     if (!DimmIdFound) {
         Rc = EFI_NOT_FOUND;
-        Print(L"\nAEP not found. Invalid DimmID: " FORMAT_STR_NL, pDimmString);
+        Print(L"\nDIMM not found. Invalid DimmID: " FORMAT_STR_NL, pDimmString);
     }
 
 Finish:
@@ -520,7 +520,7 @@ GetManageableDimmsNumberAndId(
   OUT UINT16 **ppDimmIds
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM_INFO *pDimms = NULL;
   UINT16 Index = 0;
@@ -1942,7 +1942,7 @@ IsSkuMixed(
   UINT32 DimmCount = 0;
   UINT32 Index = 0;
   DIMM_INFO *pDimmsInformation = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   DIMM_INFO *pFirstManageableDimmInfo = NULL;
 
   NVDIMM_ENTRY();
@@ -2216,7 +2216,7 @@ ReadRunTimeCliDisplayPreferences(
     &pDisplayPreferences->SizeUnit);
 
   if(ReturnCode == EFI_NOT_FOUND) {
-    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
     ReturnCode = EFI_SUCCESS;
   } else if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed to retrieve Size Display Variable");
@@ -2226,7 +2226,7 @@ ReadRunTimeCliDisplayPreferences(
   if (pDisplayPreferences->SizeUnit >= DISPLAY_SIZE_MAX_SIZE ||
       pDisplayPreferences->DimmIdentifier >= DISPLAY_DIMM_ID_MAX_SIZE) {
     NVDIMM_DBG("Parameters retrieved from RT services are invalid, setting defaults");
-    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
     pDisplayPreferences->DimmIdentifier = DISPLAY_DIMM_ID_DEFAULT;
     goto Finish;
   }

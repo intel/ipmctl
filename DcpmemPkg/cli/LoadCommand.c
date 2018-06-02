@@ -28,7 +28,7 @@ struct Command LoadCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Update the firmware on one or more AEPs",                         //!< help
+  L"Update the firmware on one or more DCPMEM DIMMs",                 //!< help
   Load                                                                //!< run function
 };
 
@@ -54,8 +54,8 @@ RegisterLoadCommand (
 
   @retval EFI_SUCCESS if everything went OK - including the firmware load process.
   @retval EFI_INVALID_PARAMETER if the user input is invalid or the file validation fails
-  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no AEPs in the system.
-  @retval EFI_NOT_FOUND if there is no AEP with the user specified PID
+  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMEM DIMMs in the system.
+  @retval EFI_NOT_FOUND if there is no DIMM with the user specified PID
 **/
 EFI_STATUS
 Load (
@@ -63,7 +63,7 @@ Load (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pFileName = NULL;
   CHAR16 *pRelativeFileName = NULL;
   CHAR16 *pTargetValue = NULL;

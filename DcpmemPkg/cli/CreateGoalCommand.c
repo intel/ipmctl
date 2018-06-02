@@ -41,7 +41,7 @@ struct Command CreateGoalCommand =
     {CONFIG_PROPERTY, L"", HELP_TEXT_CONFIG_PROPERTY, FALSE, ValueRequired},
     {NS_LABEL_VERSION_PROPERTY, L"", HELP_TEXT_NS_LABEL_VERSION, FALSE, ValueRequired}
   },
-  L"Provision capacity on one or more AEPs into regions",     //!< help
+  L"Provision capacity on one or more DIMMs into regions",     //!< help
   CreateGoal
 };
 
@@ -124,7 +124,7 @@ Finish:
   Send user capacities to driver and retrieve alignments that will have to be done. Display these alignments and
   confirm using prompt mechanism.
 
-  @param[in] pNvmDimmConfigProtocol is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
@@ -142,7 +142,7 @@ Finish:
 STATIC
 EFI_STATUS
 CheckAndConfirmAlignments(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds OPTIONAL,
@@ -239,8 +239,8 @@ CheckAndConfirmAlignments(
     FREE_POOL_SAFE(pSingleStatusCodeMessage);
   }
 
-  if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_AEP_NOT_PAIRED) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_AEP_NOT_PAIRED);
+  if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
+    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
     NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
     FREE_POOL_SAFE(pSingleStatusCodeMessage);
   }
@@ -281,7 +281,7 @@ CreateGoal(
   IN     struct Command *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 
@@ -304,7 +304,7 @@ CreateGoal(
   UINT32 DimmCount = 0;
   BOOLEAN Valid = FALSE;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCommandStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT16 LabelVersionMajor = 0;

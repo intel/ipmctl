@@ -239,18 +239,18 @@ extern "C"
 #endif
 
 /**
-  Defines the Firmware Command Table opcodes accessed via the EFI_NVMDIMM_PASS_THRU_PROTOCOL
+  Defines the Firmware Command Table opcodes accessed via the EFI_DCPMM_PASS_THRU_PROTOCOL
 **/
 enum PassthroughOpcode {
-  PtIdentifyDimm = 0x01,       //!< Retrieve physical inventory data for an AEP
-  PtGetSecInfo = 0x02,         //!< Retrieve security information from an AEP
-  PtSetSecInfo = 0x03,         //!< Send a security related command to an AEP
-  PtGetFeatures = 0x04,        //!< Retrieve modifiable settings for AEP
-  PtSetFeatures = 0x05,        //!< Modify settings for AEP
+  PtIdentifyDimm = 0x01,       //!< Retrieve physical inventory data for DIMM
+  PtGetSecInfo = 0x02,         //!< Retrieve security information from DIMM
+  PtSetSecInfo = 0x03,         //!< Send a security related command to DIMM
+  PtGetFeatures = 0x04,        //!< Retrieve modifiable settings for DIMM
+  PtSetFeatures = 0x05,        //!< Modify settings for DIMM
   PtGetAdminFeatures = 0x06,   //!< Gets the advanced DIMM settings
   PtSetAdminFeatures = 0x07,   //!< Sets the advanced DIMM settings
   PtGetLog = 0x08,             //!< Retrieve administrative data, error info, other FW data
-  PtUpdateFw = 0x09,           //!< Move an image to the AEP
+  PtUpdateFw = 0x09,           //!< Move an image to the DIMM
   PtInjectError = 0x0A,        //!< Validation only CMD to trigger error conditions
   PtCustomerFormat = 0xF1,     //!< DFX command for factory reset
   PtMax = 0xF2
@@ -393,7 +393,7 @@ enum InjectErrorSubop
     Opcode: 0x01h (Identify DIMM)
 **/
 typedef struct {
-  UINT16 Vid;                     //!< 1-0   : AEP vendor id
+  UINT16 Vid;                     //!< 1-0   : DIMM vendor id
   UINT16 Did;                     //!< 3-2   : Device ID
   UINT16 Rid;                     //!< 5-4   : Revision ID
   UINT16 Ifc;                     //!< 7-6   : Interface format code (0x301)
@@ -701,8 +701,8 @@ typedef union _SMART_VALIDATION_FLAGS {
 } SMART_VALIDATION_FLAGS;
 
 typedef struct {
-  UINT64 PowerCycles;       //!< Number of AEP power cycles
-  UINT64 PowerOnTime;       //!< Lifetime hours the AEP has been powered on (represented in seconds)
+  UINT64 PowerCycles;       //!< Number of DIMM power cycles
+  UINT64 PowerOnTime;       //!< Lifetime hours the DIMM has been powered on (represented in seconds)
   UINT64 UpTime;            //!< Current uptime of the DIMM for the current power cycle
   UINT32 DirtyShutdowns;   //!< This is the # of times that the FW received an unexpected power loss
 

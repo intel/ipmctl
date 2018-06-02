@@ -126,7 +126,7 @@ GeneratePcdConfInput(
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pConfHeader);
 
     if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-      NVDIMM_DBG("Incorrect signature of the AEP Current Config table");
+      NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
     } else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
       NVDIMM_DBG("The Current Config table checksum is invalid.");
     } else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
@@ -402,7 +402,7 @@ GetNewSequenceNumber(
     pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
 
     if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-      NVDIMM_WARN("Error: incorrect signature of the AEP Config Output table");
+      NVDIMM_WARN("Error: incorrect signature of the DIMM Config Output table");
       ReturnCode = EFI_ABORTED;
       goto Finish;
     } else if (pPcdConfOutput->Header.Length > pDimm->PcdOemPartitionSize) {
@@ -410,7 +410,7 @@ GetNewSequenceNumber(
       ReturnCode = EFI_ABORTED;
       goto Finish;
     } else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
-      NVDIMM_WARN("The checksum of AEP Config Output table is invalid.");
+      NVDIMM_WARN("The checksum of DIMM Config Output table is invalid.");
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }

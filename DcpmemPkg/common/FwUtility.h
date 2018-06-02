@@ -189,7 +189,7 @@ typedef struct {
 } FW_IMAGE_INFO;
 
 /**
-  The AEP module type code (taken from FW image)
+  The persistent memory module type code (taken from FW image)
 **/
 #define LT_MODULETYPE_CSS 0x6
 

@@ -12,7 +12,7 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 EFI_GUID gNvmDimmFirmwareManagementProtocolGuid = EFI_FIRMWARE_MANAGEMENT_PROTOCOL_GUID;
-EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_NVMDIMM_FIRMWARE_IMAGE_TYPE_GUID;
+EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 
 #define SUPPORTED_DESCRIPTOR_COUNT 1
 #define NVDIMM_IMAGE_ID 1
@@ -199,7 +199,7 @@ SetImage (
     if (pSingleStatusCodeMessage != NULL) {
       *AbortReason = AllocateCopyPool (StrSize(pSingleStatusCodeMessage), pSingleStatusCodeMessage);
     }
-    NVDIMM_WARN("Could not update the firmware on the AEP(s).\n");
+    NVDIMM_WARN("Could not update the firmware on the DIMM(s).\n");
     goto Finish;
   }
 

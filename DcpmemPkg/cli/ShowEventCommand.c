@@ -72,7 +72,7 @@ ShowEvent(
 	CHAR8 *StringBuffer = NULL;
     CHAR16 *WStringBuffer = NULL;
     UINT32 EventTypeMask = 0;
-    EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+    EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
     DIMM_INFO *pDimms = NULL;
     UINT32 DimmCount = 0;
     CHAR16 *pTargetValue = NULL;

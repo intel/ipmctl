@@ -27,7 +27,7 @@ struct Command SetSensorCommand =
     {NON_CRIT_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},
     {ENABLED_STATE_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE}
   },
-  L"Modify the alarm threshold(s) for one or more AEPs.",           //!< help
+  L"Modify the alarm threshold(s) for one or more DCPMEM DIMMs.",   //!< help
   SetSensor
 };
 
@@ -44,7 +44,7 @@ SetSensor(
   IN     struct Command *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmHandle = 0;
   UINT32 DimmIndex = 0;
@@ -193,7 +193,7 @@ SetSensor(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      Print(L"Modifying settings on AEP (" FORMAT_STR L").", DimmStr);
+      Print(L"Modifying settings on DIMM (" FORMAT_STR L").", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetAlarmThresholds(pNvmDimmConfigProtocol, &pDimmIds[Index], 1,
@@ -202,7 +202,7 @@ SetSensor(
           goto Finish;
         }
       } else {
-        Print(L"Skipped modifying settings for AEP (" FORMAT_STR L")\n", DimmStr);
+        Print(L"Skipped modifying settings for DIMM (" FORMAT_STR L")\n", DimmStr);
         continue;
       }
     }

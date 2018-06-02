@@ -30,7 +30,7 @@ struct Command LoadGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load stored pool configuration goal for specific AEPs",             //!< help
+  L"Load stored pool configuration goal for specific DCPMEM DIMMs",     //!< help
   LoadGoal
 };
 
@@ -54,7 +54,7 @@ LoadGoal(
   UINT16 *pSocketIds = NULL;
   UINT32 SocketIdsCount = 0;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
   CHAR16 *pTargetValue = NULL;
@@ -67,7 +67,7 @@ LoadGoal(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT32 SocketIndex = 0;
   BOOLEAN Confirmation = FALSE;

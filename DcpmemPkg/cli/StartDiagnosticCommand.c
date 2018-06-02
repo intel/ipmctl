@@ -25,7 +25,7 @@ COMMAND StartDiagnosticCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                        //!< properties
-  L"Run a diagnostic test on one or more AEPs",                   //!< help
+  L"Run a diagnostic test on one or more DCPMEM DIMMs",           //!< help
   StartDiagnosticCmd
 };
 
@@ -99,7 +99,7 @@ StartDiagnosticCmd(
   IN     COMMAND *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;

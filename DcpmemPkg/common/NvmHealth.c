@@ -50,7 +50,7 @@ InitSensorsSet(
 
 EFI_STATUS
 GetSensorsInfo(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 DimmID,
   IN OUT DIMM_SENSOR DimmSensorsSet[SENSOR_TYPE_COUNT]
   )

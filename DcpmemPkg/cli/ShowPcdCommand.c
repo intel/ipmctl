@@ -22,7 +22,7 @@ struct Command ShowPcdCommand =
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show pool configuration goal stored on one or more AEPs",         //!< help
+  L"Show pool configuration goal stored on one or more DCPMEM DIMMs", //!< help
   ShowPcd
 };
 
@@ -76,7 +76,7 @@ ShowPcd(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   DIMM_PCD_INFO *pDimmPcdInfo = NULL;
   UINT32 DimmPcdInfoCount = 0;
   UINT16 *pDimmIds = NULL;

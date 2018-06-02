@@ -17,7 +17,7 @@
 #define _read read
 #define _getch getchar
 #endif
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include <fcntl.h>
 #include "os.h"
 #include "os_efi_bs_protocol.h"
@@ -27,7 +27,7 @@ EFI_BOOT_SERVICES gOsBootServices;
 EFI_BOOT_SERVICES *gBS = &gOsBootServices;
 
 //below externs used by BsLocateHandleBuffer & BsOpenProtocol
-extern EFI_NVMDIMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 extern EFI_GUID  gEfiSimpleFileSystemProtocolGuid;
 

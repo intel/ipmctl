@@ -12,10 +12,10 @@
 
 #if defined(DYNAMIC_WA_ENABLE)
 
-#define DYNAMIC_WA_ENV_VARIABLE_NAME  L"AEP_DRIVER_FLAGS"
+#define DYNAMIC_WA_ENV_VARIABLE_NAME  L"PMMD_FLAGS"
 #define WA_FLAG_ALWAYS_LOAD           L"ALWAYS_LOAD"
 #define WA_FLAG_SIMICS                L"SIMICS"
-#define WA_FLAG_UNLOAD_OTHER_DRIVERS  L"UNLOAD_OTHER_DRIVERS"
+#define WA_FLAG_UNLOAD_OTHER_DRIVERS  L"UNLOAD"
 #define WA_FLAG_IGNORE_UID_NUMS       L"IGNORE_UID_NUMBERS"
 #define WA_FLAG_NO_PCD_INIT           L"NO_PCD_INIT"
 
@@ -87,7 +87,7 @@ extern EFI_COMPONENT_NAME_PROTOCOL gNvmDimmDriverComponentName;
 extern EFI_DRIVER_DIAGNOSTICS2_PROTOCOL gNvmDimmDriverDriverDiagnostics2;
 extern EFI_DRIVER_DIAGNOSTICS_PROTOCOL gNvmDimmDriverDriverDiagnostics;
 extern EFI_DRIVER_HEALTH_PROTOCOL gNvmDimmDriverHealth;
-extern EFI_NVMDIMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_FIRMWARE_MANAGEMENT_PROTOCOL gNvmDimmFirmwareManagementProtocol;
 extern EFI_STORAGE_SECURITY_COMMAND_PROTOCOL gNvmDimmDriverStorageSecurityCommand;
 extern EFI_BLOCK_IO_PROTOCOL gNvmDimmDriverBlockIo;
@@ -133,7 +133,7 @@ typedef struct {
   /**
     NvmDimm data
   **/
-  EFI_NVMDIMM_CONFIG_PROTOCOL NvmDimmConfig;
+  EFI_DCPMM_CONFIG_PROTOCOL NvmDimmConfig;
 
   /**
     This flag informs us if we installed the Device Path

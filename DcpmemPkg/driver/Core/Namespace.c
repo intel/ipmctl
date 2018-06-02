@@ -13,6 +13,7 @@
 #include "Pfn.h"
 #include <Convert.h>
 #include "AsmCommands.h"
+#include <Version.h>
 
 extern EFI_SYSTEM_TABLE *gSystemTable;
 extern EFI_DIMMS_DATA gDimmsUefiData[MAX_DIMMS];
@@ -149,7 +150,7 @@ RegisterNamespaceName(
 
   NVDIMM_ENTRY();
 
-  pNamespaceName = CatSPrint(NULL, L"Intel NVDIMM Namespace Id %d", pNamespace->NamespaceId);
+  pNamespaceName = CatSPrint(NULL, (PRODUCT_NAME L" Namespace Id %d"), pNamespace->NamespaceId);
 
   if (pNamespaceName != NULL) {
     ReturnCode = AddStringToUnicodeTable(pNamespaceName, &pNamespaceNameTable);
@@ -2049,7 +2050,7 @@ RetrieveNamespacesFromLsa(
       pNamespace->BlockCount = RawCapacity / GetPhysicalBlockSize(pNamespace->BlockSize);
 
       if (pDimm->SkuInformation.StorageModeEnabled == MODE_DISABLED) {
-        NVDIMM_DBG("Storage NS discovered on AEP DIMM that does not support storage mode");
+        NVDIMM_DBG("Storage NS discovered on DIMM that does not support storage mode");
          pNamespace->HealthState = NAMESPACE_HEALTH_UNSUPPORTED;
       }
     } else {
@@ -2183,12 +2184,12 @@ RetrieveNamespacesFromLsa(
         UINT8 SecurityState = 0;
         ReturnCode = GetDimmSecurityState(pDimm, PT_TIMEOUT_INTERVAL, &SecurityState);
         if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_DBG("Failed to get PMM security state.");
+          NVDIMM_DBG("Failed to get DIMM security state.");
           goto Finish;
         }
 
         if (!IsConfiguringAllowed(SecurityState)) {
-          NVDIMM_DBG("Namespace contains a locked PMM 0x%X", pDimm->DeviceHandle.AsUint32);
+          NVDIMM_DBG("Namespace contains a locked DIMM 0x%X", pDimm->DeviceHandle.AsUint32);
           pNamespace->HealthState = NAMESPACE_HEALTH_LOCKED;
         }
 #endif

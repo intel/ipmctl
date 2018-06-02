@@ -10,6 +10,9 @@
 #include <Library/UefiLib.h>
 #include <Library/MemoryAllocationLib.h>
 
+#define PMEM_MODULE_NAME L"Intel(R) DCPMEM "
+#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMEM"
+
 /*This should match the error_type definition in nvm_management.h*/
 #define ERROR_INJ_POISON          0X01
 #define ERROR_INJ_TEMPERATURE     0X02

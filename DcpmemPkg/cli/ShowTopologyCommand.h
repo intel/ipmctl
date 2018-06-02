@@ -27,7 +27,7 @@ RegisterShowTopologyCommand(
 #define NODE_CONTROLLER_ID_STR      L"NodeControllerID"
 
 #define MEMORY_TYPE_DDR4_VALUE            1
-#define MEMORY_TYPE_AEP_VALUE             2
+#define MEMORY_TYPE_DCPMEM_VALUE          2
 
 
 /**

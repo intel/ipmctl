@@ -14,8 +14,6 @@
   show -dimm display options
   some of common display options are in CommandParser.h
 **/
-#define DIMM_ID_STR                 L"DimmID"
-#define SOCKET_ID_SHORT_STR         L"SockID"
 #define FW_VER_STR                  L"FWVersion"
 #define FW_API_VER_STR              L"FWAPIVersion"
 #define INTERFACE_FORMAT_CODE_STR   L"InterfaceFormatCode"

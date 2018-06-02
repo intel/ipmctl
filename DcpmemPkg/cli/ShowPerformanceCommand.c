@@ -26,13 +26,13 @@ struct Command ShowPerformanceCommand =
         { L"", L"", L"", L"", FALSE, ValueOptional },
     },
     {                                                                   //!< targets
-		{ DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional },
+        { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional },
         { PERFORMANCE_TARGET, L"", HELP_TEXT_PERFORMANCE_CATEGORIES, TRUE, ValueOptional }
     },
-    {																	//!< properties
+    {                                                                   //!< properties
         { L"", L"", L"", FALSE, ValueOptional },
     },
-    L"Show performance statistics per dimm",         //!< help
+    L"Show performance statistics per DIMM",                            //!< help
     ShowPerformance
 };
 
@@ -148,7 +148,7 @@ ShowPerformance(
 {
 	COMMAND_STATUS *pCommandStatus = NULL;
 	EFI_STATUS ReturnCode = EFI_SUCCESS;
-    EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+    EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
     CHAR16 *pTargetValueStr;
     UINT32 TargetPerformanceMask = 0;
     UINT32 DimmCount;

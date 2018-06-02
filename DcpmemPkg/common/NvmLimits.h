@@ -30,7 +30,7 @@
 #define MAX_REGIONS             44
 
 /**
-  Cache line size in bytes. Used by all of the platforms supporting Intel AEPs
+  Cache line size in bytes. Used by all of the platforms supporting Intel DCPMEM DIMMs
 **/
 #define CACHE_LINE_SIZE 64
 

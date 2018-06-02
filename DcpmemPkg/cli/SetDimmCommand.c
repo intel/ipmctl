@@ -56,7 +56,7 @@ struct Command SetDimmCommand =
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired}
   },                                                                //!< properties
-  L"Set properties of one or more AEPs.",                      //!< help
+  L"Set properties of one or more DCPMEM DIMMs.",                   //!< help
   SetDimm
 };
 
@@ -73,7 +73,7 @@ SetDimm(
   IN     struct Command *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pLockStatePropertyValue = NULL;
   CHAR16 *pPassphrase = NULL;
   CHAR16 *pNewPassphrase = NULL;
@@ -523,7 +523,7 @@ SetDimm(
   // Call the driver protocol function if either of the property is requested to be set
   if ((pFirstFastRefreshValue != NULL) || (pViralPolicyValue != NULL))
   {
-    pCommandStatusMessage = CatSPrint(NULL, L"Modify AEP");
+    pCommandStatusMessage = CatSPrint(NULL, L"Modify DIMM");
     if (pFirstFastRefreshValue != NULL) {
       if (StrCmp(pFirstFastRefreshValue, PROPERTY_VALUE_0) == 0) {
         FirstFastRefreshState = FIRST_FAST_REFRESH_DISABLED;
@@ -561,7 +561,7 @@ SetDimm(
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
-        Print(L"Modifying device settings on AEP (" FORMAT_STR L").", DimmStr);
+        Print(L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
@@ -570,7 +570,7 @@ SetDimm(
             goto Finish;
           }
         } else {
-          Print(L"Skipping modify device settings on AEP (" FORMAT_STR L")\n", DimmStr);
+          Print(L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
           continue;
         }
       }

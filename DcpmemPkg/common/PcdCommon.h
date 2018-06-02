@@ -147,8 +147,8 @@ typedef struct {
   **/
   UINT16 ConfigStatus;
   UINT8 Reserved[2];
-  UINT64 VolatileMemSizeIntoSpa;   //!< Total amount of 2LM size from the AEP mapped into the SPA
-  UINT64 PersistentMemSizeIntoSpa; //!< Total amount of PM size from AEP mapped into the SPA
+  UINT64 VolatileMemSizeIntoSpa;   //!< Total amount of 2LM size from the DIMM mapped into the SPA
+  UINT64 PersistentMemSizeIntoSpa; //!< Total amount of PM size from DIMM mapped into the SPA
   /**
     A list of PCAT table structures
   **/
@@ -184,13 +184,13 @@ typedef struct {
       3 - All the DIMMs in the interleave set not found
       4 - Matching Interleave set not found (Matching DIMMs found)
       5 - Total partition size defined in the interleave set exceeds the partition size input
-      6 - AEP FW returned error
+      6 - DIMM FW returned error
       7 - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
           Repartition not performed.
       8 - Persistent memory partition size is not aligned to the Interleave Alignment Size specified
           in the Interface Capability Information Table
     Byte1:
-      AEP FW Error Response Code. Only valid boot time records, runtime validation will not invoke AEP FW
+      DIMM FW Error Response Code. Only valid boot time records, runtime validation will not invoke DIMM FW
       to get the data
   **/
   UINT32 PartitionSizeChangeStatus;
@@ -257,7 +257,7 @@ typedef struct {
   UINT8 InterleaveChangeStatus;
   UINT8 MemorySpare;
   UINT8 Reserved[9];
-  VOID *pIdentificationInfoList[0];  //!< AEP interleave set information
+  VOID *pIdentificationInfoList[0];  //!< DIMM interleave set information
 } NVDIMM_INTERLEAVE_INFORMATION;
 
 typedef struct _DIMM_UNIQUE_IDENTIFIER {
@@ -270,8 +270,8 @@ typedef struct _DIMM_UNIQUE_IDENTIFIER {
 typedef struct {
   union {
     struct {
-      UINT16 DimmManufacturerId;                //!< Manufacturer ID string from AEP
-      UINT32 DimmSerialNumber;                  //!< Serial number string from AEP
+      UINT16 DimmManufacturerId;                //!< Manufacturer ID string from DIMM
+      UINT32 DimmSerialNumber;                  //!< Serial number string from DIMM
       CHAR8 DimmPartNumber[PART_NUMBER_SIZE];   //!< Dimm part number
       UINT8 Reserved[6];
     } Version1;

@@ -175,7 +175,7 @@ GetRegionList();
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of AEPs
+  @param[in, out] pDimmList: the list of DCPMEM DIMMs
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -198,7 +198,7 @@ FreeISResources(
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of AEPs
+  @param[in, out] pDimmList: the list of DCPMEM DIMMs
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -522,7 +522,7 @@ CalculateDimmCapacityFromPercent(
   );
 
 /**
-  Verify AEP dimms SKU support
+  Verify DIMMs SKU support
 
   @param[in] ppDimms Array of dimms
   @param[in] DimmsNum Number of dimms

@@ -66,7 +66,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
 
   NVM_WARN_2LM_MODE_OFF                             = 103,  ///< Error: MemoryMode off
-  NVM_WARN_IMC_DDR_AEP_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
+  NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config
   NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM      = 106,  ///< Error: Goal config affects unspecified DIMM
   NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM      = 107,  ///< Error: Current config affects unspecified DIMM

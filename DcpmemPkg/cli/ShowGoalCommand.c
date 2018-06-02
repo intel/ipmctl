@@ -37,8 +37,8 @@ struct Command ShowGoalCommand =
     {GOAL_TARGET, L"", L"", TRUE, ValueEmpty},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show region configuration goal stored on one or more AEPs",         //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
+  L"Show region configuration goal stored on one or more DCPMEM DIMMs", //!< help
   ShowGoal
 };
 
@@ -363,14 +363,14 @@ ShowGoal(
   UINT16 *pDimmIds = NULL;
   UINT16 *pSocketIds = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   UINT32 DimmIdsCount = 0;
   UINT32 SocketIdsCount = 0;
   UINT32 RegionConfigsCount = 0;
   CHAR16 *pSettingsString = NULL;
   CHAR16 *pDisplayValues = NULL;
   CHAR16 *pTargetValue = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   REGION_GOAL_PER_DIMM_INFO RegionConfigsInfo[MAX_DIMMS];
   EFI_STATUS ReturnCode = EFI_SUCCESS;

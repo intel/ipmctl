@@ -29,8 +29,8 @@ struct Command DeleteDimmCommand =
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired}
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},         //!< targets
-  {{PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional}},   //!< properties
-  L"Erase persistent data on one or more AEPs.",                         //!< help
+  {{PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional}},  //!< properties
+  L"Erase persistent data on one or more DCPMEM DIMMs.",                 //!< help
   DeleteDimm
 };
 
@@ -47,7 +47,7 @@ DeleteDimm(
   IN     struct Command *pCmd
   )
 {
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
   CHAR16 *pPassphrase = NULL;
@@ -205,7 +205,7 @@ DeleteDimm(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      Print(L"Erasing AEP (" FORMAT_STR L").", DimmStr);
+      Print(L"Erasing DIMM (" FORMAT_STR L").", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
@@ -214,7 +214,7 @@ DeleteDimm(
           goto Finish;
         }
       } else {
-        Print(L"Skipped erasing data from AEP (" FORMAT_STR L")\n", DimmStr);
+        Print(L"Skipped erasing data from DIMM (" FORMAT_STR L")\n", DimmStr);
         continue;
       }
     }

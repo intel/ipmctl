@@ -16,13 +16,13 @@
 
 
 /* {CF2F5F1F-94B6-4C15-9CAE-AFB3BD9F2BA5} */
-#define EFI_NVMDIMM_CONFIG_PROTOCOL_GUID \
+#define EFI_DCPMM_CONFIG_PROTOCOL_GUID \
   {0xcf2f5f1f, 0x94b6, 0x4c15, {0x9c, 0xae, 0xaf, 0xb3, 0xbd, 0x9f, 0x2b, 0xa5}}
 
 #define NVMDIMM_DRIVER_DEVICE_PATH_GUID \
   { 0xb976a9d2, 0x8772, 0x414f, {0x9f, 0xb0, 0x05, 0x99, 0x95, 0xf4, 0xbe, 0xac} }
 
-typedef struct _EFI_NVMDIMM_CONFIG_PROTOCOL EFI_NVMDIMM_CONFIG_PROTOCOL;
+typedef struct _EFI_DCPMM_CONFIG_PROTOCOL EFI_DCPMM_CONFIG_PROTOCOL;
 struct _POOL_INFO;
 
 #define DIANGOSTIC_QUICK_NAME     L"Quick"
@@ -51,53 +51,53 @@ extern CONST CHAR16 *gDiagnosticTestPrefixStr[];
   Run the time intensive initialization routines. This should be called by
   any module prior to using the driver protocols.
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 
   @retval EFI_SUCCESS  Initialization succeeded
   @retval EFI_XXX Any number of EFI error codes
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_INITIALIZE_NVM_DRIVER) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis
+(EFIAPI *EFI_DCPMM_CONFIG_INITIALIZE_NVM_DRIVER) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis
 );
 
 /**
-  Retrieve the number of AEPs in the system found in NFIT
+  Retrieve the number of DCPMEM DIMMs in the system found in NFIT
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of AEPs found in NFIT.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[out] pDimmCount The number of DCPMEM DIMMs found in NFIT.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIMM_COUNT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DIMM_COUNT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT UINT32 *pDimmCount
 );
 
 /**
-  Retrieve the number of uninitialized AEPs in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMEM DIMMs in the system found thru SMBUS
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of AEPs found thru SMBUS.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[out] pDimmCount The number of DCPMEM DIMMs found thru SMBUS.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMM_COUNT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_UNINITIALIZED_DIMM_COUNT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT UINT32 *pDimmCount
   );
 
 /**
-  Retrieve the list of AEPs found in NFIT
+  Retrieve the list of DCPMEM DIMMs found in NFIT
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
   @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
   @param[out] pDimms The dimm list found in NFIT.
@@ -108,17 +108,17 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIMMS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DIMMS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT32 DimmCount,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO *pDimms
 );
 
 /**
-  Retrieve the list of uninitialized AEPs found thru SMBUS
+  Retrieve the list of uninitialized DCPMEM DIMMs found thru SMBUS
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
   @param[out] pDimms The dimm list found thru SMBUS.
 
@@ -128,16 +128,16 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMMS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_UNINITIALIZED_DIMMS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT32 DimmCount,
      OUT DIMM_INFO *pDimms
   );
 
 /**
-  Retrieve the details about the AEP specified with pid found in NFIT
+  Retrieve the details about the DIMM specified with pid found in NFIT
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
   @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
   @param[out] pDimmInfo A pointer to the dimm found in NFIT
@@ -147,8 +147,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIMM) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DIMM) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO *pDimmInfo
@@ -157,7 +157,7 @@ EFI_STATUS
 /**
   Get the PMON registers
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
   @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
   @param[out] pDimmInfo A pointer to the dimm found in NFIT
@@ -167,8 +167,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_PMON) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_PMON) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
   IN     UINT8 SmartDataMask,
      OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
@@ -177,7 +177,7 @@ EFI_STATUS
 /**
   Set the PMON Group
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
   @param[in] dimmInfoCategories The categories of additional dimm info parameters to retrieve
   @param[out] pDimmInfo A pointer to the dimm found in NFIT
@@ -187,17 +187,17 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_PMON) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_PMON) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
   IN     UINT8 PMONGroupEnable
 );
 #endif
 
 /**
-  Retrieve the details about the uninitialized AEP specified with pid found thru SMBUS
+  Retrieve the details about the uninitialized DIMM specified with pid found thru SMBUS
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
   @param[out] pDimmInfo A pointer to the dimm found thru SMBUS
 
@@ -206,8 +206,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMM) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_UNINITIALIZED_DIMM) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
      OUT DIMM_INFO *pDimmInfo
   );
@@ -215,7 +215,7 @@ EFI_STATUS
 /**
   Retrieve the list of sockets (physical processors) in the host server
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pSocketCount The size of the list of sockets.
   @param[out] ppSockets Pointer to the list of sockets.
 
@@ -228,8 +228,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_SOCKETS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_SOCKETS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT UINT32 *pSocketCount,
      OUT SOCKET_INFO **ppSockets
 );
@@ -237,7 +237,7 @@ EFI_STATUS
 /**
   Retrieve an SMBIOS table type 17 table for a specific DIMM
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
   @param[out] pTable A pointer to the SMBIOS table
 
@@ -247,8 +247,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIMM_SMBIOS_TABLE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DIMM_SMBIOS_TABLE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
   IN     UINT8 Type,
      OUT SMBIOS_STRUCTURE_POINTER *pTable
@@ -257,7 +257,7 @@ EFI_STATUS
 /**
   Retrieve the NFIT ACPI table
 
-  @param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] ppNFit A pointer to the output NFIT table
 
   @retval EFI_SUCCESS Ok
@@ -267,15 +267,15 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ACPI_NFIT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ACPI_NFIT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT ParsedFitHeader **ppNFit
 );
 
 /**
   Retrieve the PCAT ACPI table
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] ppPcat output buffer with PCAT tables
 
   @retval EFI_SUCCESS Ok
@@ -284,15 +284,15 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ACPI_PCAT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ACPI_PCAT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT ParsedPcatHeader **pPcat
 );
 
 /**
 Retrieve the PMTT ACPI table
 
-@param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[out] ppPMTT output buffer with PMTT tables
 
 @retval EFI_SUCCESS Ok
@@ -301,8 +301,8 @@ Retrieve the PMTT ACPI table
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ACPI_PMTT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ACPI_PMTT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   OUT PMTT_TABLE **pPMTT
 );
 
@@ -311,7 +311,7 @@ EFI_STATUS
 
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
-  @param[in] pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param{in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
@@ -325,8 +325,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_PCD) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_PCD) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT8 PcdTarget,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
@@ -337,8 +337,8 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DELETE_PCD) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DELETE_PCD) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
      OUT COMMAND_STATUS *pCommandStatus
@@ -350,7 +350,7 @@ EFI_STATUS
   Function checks security state of a set of DIMMs. It sets security state
   to mixed when not all DIMMs have the same state.
 
-  @param[in] pThis a pointer to EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[out] pSecurityState security state of a DIMM or all DIMMs
@@ -362,8 +362,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_SECURITY_STATE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_SECURITY_STATE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
      OUT UINT8 *pSecurityState,
@@ -377,7 +377,7 @@ EFI_STATUS
   one of DIMMs function continues with setting state on following DIMMs
   but exits with error.
 
-  @param[in] pThis a pointer to EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] pDimmIds Pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] SecurityOperation Security Operation code
@@ -387,15 +387,15 @@ EFI_STATUS
 
   @retval EFI_INVALID_PARAMETER when pLockState is NULL
   @retval EFI_OUT_OF_RESOURCES couldn't allocate memory for a structure
-  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of AEPs is detected
+  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMEM DIMMs is detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
   @retval EFI_SUCCESS security state correctly set
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_SECURITY_STATE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_SECURITY_STATE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 SecurityOperation,
@@ -407,7 +407,7 @@ EFI_STATUS
 /**
   Gather info about total capacities on all dimms
 
-  @param[in] pThis a pointer to EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[out] pMemoryResourcesInfo structure filled with required information
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
@@ -417,57 +417,57 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_REGION_COUNT) (
-	IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
-	OUT UINT32 *pCount
+(EFIAPI *EFI_DCPMM_CONFIG_GET_REGION_COUNT) (
+	IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+     OUT UINT32 *pCount
 	);
 
 /**
 Retrieve the region list
 
-@param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[in] Count The number of regions.
 @param[out] pRegions The region list
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
 @retval EFI_SUCCESS  The region list was returned properly
 @retval EFI_INVALID_PARAMETER pRegions is NULL.
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_REGIONS) (
-	IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
-	IN     UINT32 Count,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_REGIONS) (
+	IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT32 Count,
 	OUT struct _REGION_INFO *pRegions,
-	OUT COMMAND_STATUS *pCommandStatus
+     OUT COMMAND_STATUS *pCommandStatus
 	);
 
 /**
 Retrieve the details about the region specified with region id
 
-@param[in] pThis A pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
 @param[in] RegionId The region id of the region to retrieve
 @param[out] pRegion A pointer to the region
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
 @retval EFI_SUCCESS The region was returned properly
 @retval EFI_INVALID_PARAMETER pRegion is NULL
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_REGION) (
-	IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_REGION) (
+	IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
 	IN     UINT16 RegionId,
 	OUT struct _REGION_INFO *pRegion,
-	OUT COMMAND_STATUS *pCommandStatus
+     OUT COMMAND_STATUS *pCommandStatus
 	);
 
 /**
   Gather info about total capacities on all dimms
 
-  @param[in] pThis a pointer to EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[out] pMemoryResourcesInfo structure filled with required information
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
@@ -477,15 +477,15 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_MEMORY_RESOURCES_INFO) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_MEMORY_RESOURCES_INFO) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT MEMORY_RESOURCES_INFO *pMemoryResourcesInfo
   );
 
 /**
 Gather info about performance on all dimms
 
-@param[in] pThis a pointer to EFI_NVMDIMM_CONFIG_PROTOCOL instance
+@param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
 @param[out] pDimmCount pointer to the number of dimms on list
 @param[out] pDimmsPerformanceData list of dimms' performance data
 
@@ -496,8 +496,8 @@ Gather info about performance on all dimms
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DIMMS_PERFORMANCE) (
-    IN  EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DIMMS_PERFORMANCE) (
+    IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
     OUT UINT32 *pDimmCount,
     OUT DIMM_PERFORMANCE_DATA **pDimmsPerformanceData
     );
@@ -507,7 +507,7 @@ EFI_STATUS
   Pointer to variable length pInterleaveFormatsSupported is allocated here and must be freed by
   caller.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[out] pSysCapInfo is a pointer to table with System Capabilities information
 
   @retval EFI_SUCCESS   on success
@@ -516,15 +516,15 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_SYSTEM_CAPABILITIES_INFO) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_SYSTEM_CAPABILITIES_INFO) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT SYSTEM_CAPABILITIES_INFO *pSysCapInfo
   );
 
 /**
   Update firmware or training data in one or all NVDIMMs of the system
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pFileName Name is a pointer to a file containing FW image
@@ -541,13 +541,13 @@ EFI_STATUS
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
   @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
   @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_SUCCESS Update has completed successfully
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_UPDATE_FW) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_UPDATE_FW) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     CHAR16 *pFileName,
@@ -561,9 +561,9 @@ EFI_STATUS
 );
 
 /**
-  Get AEP dimm alarm thresholds
+  Get DIMM alarm thresholds
 
-  @param[in]  pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[in]  SensorId Sensor id to retrieve information for
   @param[out] pNonCriticalThreshold Current non-critical threshold for sensor
@@ -577,8 +577,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ALARM_THR) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ALARM_THR) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
   IN     UINT8 SensorId,
      OUT INT16 *pNonCriticalThreshold,
@@ -587,9 +587,9 @@ EFI_STATUS
 );
 
 /**
-  Set AEP dimm alarm thresholds
+  Set DIMM alarm thresholds
 
-  @param[in]  pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in]  pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in]  pDimmIds Pointer to an array of DIMM IDs
   @param[in]  DimmIdsCount Number of items in array of DIMM IDs
   @param[in]  SensorId Sensor id to set values for
@@ -597,14 +597,14 @@ EFI_STATUS
   @param[in]  EnabledState New enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_ALARM_THR) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_ALARM_THR) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     UINT8 SensorId,
@@ -629,7 +629,7 @@ EFI_STATUS
   * Power on time (life of DIMM has been powered on)
   * Uptime for current power cycle in seconds
 
-  @param[in]  pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
   @param[out] pLastShutdownStatus pointer to store last shutdown status
@@ -643,8 +643,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_SMART_AND_HEALTH) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_SMART_AND_HEALTH) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
      OUT SENSOR_INFO *pSensorInfo,
      OUT UINT32 *pLastShutdownStatus OPTIONAL,
@@ -655,7 +655,7 @@ EFI_STATUS
 /**
   Get NVM DIMM package sparing policy
 
-  @param[in]  pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pEnable Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled)
   @param[out] pAggressiveness How aggressive to be on package sparing (0...255)
@@ -667,8 +667,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_PACKAGE_SPARING_POLICY) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_PACKAGE_SPARING_POLICY) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
      OUT BOOLEAN *pEnable OPTIONAL,
      OUT UINT8 *pAggressiveness OPTIONAL,
@@ -678,7 +678,7 @@ EFI_STATUS
 /**
   Get actual Region goal capacities that would be used based on input values.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
@@ -691,14 +691,14 @@ EFI_STATUS
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ACTUAL_REGIONS_GOAL_CAPACITIES) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ACTUAL_REGIONS_GOAL_CAPACITIES) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds    OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds  OPTIONAL,
@@ -715,7 +715,7 @@ EFI_STATUS
 /**
   Create pool goal configuration
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Examine Do a dry run if set
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
@@ -729,14 +729,14 @@ EFI_STATUS
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_CREATE_GOAL) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_CREATE_GOAL) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     BOOLEAN Examine,
   IN     UINT16 *pDimmIds    OPTIONAL,
   IN     UINT32 DimmIdsCount,
@@ -754,21 +754,21 @@ EFI_STATUS
 /**
   Delete pool goal configuration
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DELETE_GOAL) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DELETE_GOAL) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds      OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds    OPTIONAL,
@@ -779,7 +779,7 @@ EFI_STATUS
 /**
   Get pool goal configuration
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
@@ -788,14 +788,14 @@ EFI_STATUS
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_GOALS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_GOALS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds      OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds    OPTIONAL,
@@ -809,20 +809,20 @@ EFI_STATUS
 /**
   Dump pool goal configuration into the file
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pFilePath Name is a pointer to a dump file path
   @param[in] pDevicePath is a pointer to a device where dump file will be stored
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DUMP_GOAL)
+(EFIAPI *EFI_DCPMM_CONFIG_DUMP_GOAL)
 (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     CHAR16 *pFilePath,
   IN     EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
      OUT COMMAND_STATUS *pCommandStatus
@@ -831,7 +831,7 @@ EFI_STATUS
 /**
   Load pool goal configuration from file
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
@@ -839,15 +839,15 @@ EFI_STATUS
   @param[in] pFileString Buffer for Pool Goal configuration from file
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_LOAD_GOAL)
+(EFIAPI *EFI_DCPMM_CONFIG_LOAD_GOAL)
 (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds,
@@ -859,7 +859,7 @@ EFI_STATUS
 /**
   Start Diagnostic
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] DiagnosticTestId ID of a diagnostic test to be started
@@ -872,8 +872,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_START_DIAGNOSTIC) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_START_DIAGNOSTIC) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     CONST UINT8 DiagnosticTestId,
@@ -885,7 +885,7 @@ EFI_STATUS
   Create namespace
   Creates a Storage or AppDirect namespace on the provided pool/dimm.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] PoolId the ID of the pool that the Namespace is supposed to be created.
   @param[in] DimmId the PID of the Dimm that the Storage Namespace is supposed to be created.
   @param[in] NamespaceType Type of the namespace to be created (Storage or AppDirect).
@@ -915,12 +915,12 @@ EFI_STATUS
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID already exists in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Pool.
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_CREATE_NAMESPACE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_CREATE_NAMESPACE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 RegionId,
   IN     UINT16 DimmId,
   IN     UINT32 BlockSize,
@@ -938,7 +938,7 @@ EFI_STATUS
   Modify namespace
   Modifies a block or persistent memory namespace on the provided pool/dimm.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] NamespaceId the ID of the namespace to be modified.
   @param[in] pName pointer to a ASCI NULL-terminated string with
     user defined name for the namespace
@@ -950,14 +950,14 @@ EFI_STATUS
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Pool.
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
 
   Do not change property if NULL pointer provided
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_MODIFY_NAMESPACE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_MODIFY_NAMESPACE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 NamespaceId,
   IN     CHAR8 *pName,
   IN     BOOLEAN Force,
@@ -967,7 +967,7 @@ EFI_STATUS
 /**
   Delete Namespace
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] Force Force to perform deleting namespace configs on all affected DIMMs
   @param[in] NamespaceId the ID of the namespace to be removed.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -975,12 +975,12 @@ EFI_STATUS
   @retval EFI_SUCCESS if the operation was successful.
   @retval EFI_NOT_FOUND if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DELETE_NAMESPACE) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DELETE_NAMESPACE) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     BOOLEAN Force,
   IN     UINT16 NamespaceId,
      OUT COMMAND_STATUS *pCommandStatus
@@ -989,7 +989,7 @@ EFI_STATUS
 /**
   Get Driver API Version
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pVersion output version
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
@@ -997,28 +997,28 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_GET_DRIVER_API_VERSION) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_GET_DRIVER_API_VERSION) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT CHAR16 pVersion[FW_API_VERSION_LEN]
 );
 
 /**
   Get namespaces info
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pNamespaceListNode - pointer to namespace list node
   @param[out] pNamespacesCount - namespace count
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
   @retval EFI_SUCCESS All ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_NAMESPACES) (
-    IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_NAMESPACES) (
+    IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
     IN OUT LIST_ENTRY *pNamespaceListNode,
        OUT UINT32 *pNamespacesCount,
        OUT COMMAND_STATUS *pCommandStatus
@@ -1027,7 +1027,7 @@ EFI_STATUS
 /**
   Get Error log for given dimm
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - array of dimm pids. Use all dimms if pDimms is NULL and DimmsCount is 0.
   @param[in] DimmsCount - number of dimms in array. Use all dimms if pDimms is NULL and DimmsCount is 0.
   @param[in] ThermalError - is thermal error (if not it is media error)
@@ -1042,8 +1042,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ERROR_LOG) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ERROR_LOG) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     CONST UINT32 DimmsCount,
   IN     CONST BOOLEAN ThermalError,
@@ -1057,7 +1057,7 @@ EFI_STATUS
 /**
   Dump FW logging level
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] LogPageOffset - log page offset
   @param[out] OutputDebugLogSize - size of output debug buffer
   @param[out] pDebugLogs - output buffer of debug messages
@@ -1068,8 +1068,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DUMP_FW_DEBUG_LOG) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmDimmID,
      OUT VOID **ppDebugLogs,
      OUT UINT64 *pBytesWritten,
@@ -1079,7 +1079,7 @@ EFI_STATUS
 /**
   Get Optional Configuration Data Policy using FW command
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
 
@@ -1092,8 +1092,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_OPTIONAL_DATA_POLICY) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_OPTIONAL_DATA_POLICY) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
      OUT UINT8 *pFirstFastRefresh,
@@ -1103,7 +1103,7 @@ EFI_STATUS
 /**
   Set Optional Configuration Data Policy using FW command
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] FirstFastRefresh - FirstFastRefresh value to set
@@ -1111,14 +1111,14 @@ EFI_STATUS
 
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_OPTIONAL_DATA_POLICY) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     UINT8 FirstFastRefresh,
@@ -1129,7 +1129,7 @@ EFI_STATUS
 /**
   Get requested number of specific DIMM registers for given DIMM id
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmId - ID of a DIMM.
   @param[out] pBsr - Pointer to buffer for Boot Status register, contains
               high and low 4B register.
@@ -1143,8 +1143,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_RETRIEVE_DIMM_REGISTERS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_RETRIEVE_DIMM_REGISTERS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmId,
      OUT UINT64 *pBsr,
      OUT UINT64 *pFwMailboxStatus,
@@ -1156,21 +1156,21 @@ EFI_STATUS
 /**
   Set firmware log level
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
 
   @param[out] FwLogLevel - FW log level to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_FW_LOG_LEVEL) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_FW_LOG_LEVEL) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     UINT8 FwLogLevel,
@@ -1180,7 +1180,7 @@ EFI_STATUS
 /**
   Get system topology from SMBIOS table
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 
   @param[out] ppTopologyDimm Structure containing information about DDR4 entries from SMBIOS.
   @param[out] pTopologyDimmsNumber Number of DDR4 entries found in SMBIOS.
@@ -1191,8 +1191,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_SYSTEM_TOPOLOGY) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_SYSTEM_TOPOLOGY) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT TOPOLOGY_DIMM_INFO **ppTopologyDimm,
      OUT UINT16 *pTopologyDimmsNumber
   );
@@ -1202,7 +1202,7 @@ EFI_STATUS
   In this function, the system-wide ARS status is determined based on the ARS status
   values for the individual DIMMs.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 
   @param[out] pARSStatus pointer to the current system ARS status.
 
@@ -1211,15 +1211,15 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_ARS_STATUS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_ARS_STATUS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT UINT8 *pARSStatus
   );
 
 /**
   Get the User Driver Preferences.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pDriverPreferences pointer to the current driver preferences.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -1228,8 +1228,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DRIVER_PREFERENCES) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DRIVER_PREFERENCES) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
      OUT DRIVER_PREFERENCES *pDriverPreferences,
      OUT COMMAND_STATUS *pCommandStatus
   );
@@ -1237,7 +1237,7 @@ EFI_STATUS
 /**
   Set the User Driver Preferences.
 
-  @param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDriverPreferences pointer to the desired driver preferences.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -1246,8 +1246,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_SET_DRIVER_PREFERENCES) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_SET_DRIVER_PREFERENCES) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     DRIVER_PREFERENCES *pDriverPreferences,
      OUT COMMAND_STATUS *pCommandStatus
   );
@@ -1255,7 +1255,7 @@ EFI_STATUS
 /**
   Attempt to format a dimm through a customer format command
 
-  @param[in]  pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in]  pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in]  pDimmIds Pointer to an array of DIMM IDs
   @param[in]  DimmIdsCount Number of items in array of DIMM IDs
   @param[in]  Recovery - Perform on non-functional dimms
@@ -1268,8 +1268,8 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DIMM_FORMAT) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DIMM_FORMAT) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     BOOLEAN Recovery,
@@ -1279,7 +1279,7 @@ EFI_STATUS
 /**
   Get device support data inventory
 
-  @param[in] pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] DimmID DimmID of device to retrieve inventory from
   @param[out] pMaxTokenID Pointer to integer where max inventory is stored
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -1289,8 +1289,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmID,
      OUT UINT32 *pMaxTokenID,
      OUT COMMAND_STATUS *pCommandStatus
@@ -1299,7 +1299,7 @@ EFI_STATUS
 /**
   Dump device support data
 
-  @param[in] pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] TokenID TokenID of the support data to retrieve
   @param[in] DimmID DimmID of device to retrieve support data from
   @param[out] ppSupportBuffer Pointer to buffer to store support data
@@ -1311,8 +1311,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmDimmID,
   IN     UINT32 TokenID,
      OUT VOID *pSupportBuffer,
@@ -1323,7 +1323,7 @@ EFI_STATUS
 /**
   Get DDRT IO init info
 
-  @param[in] pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] DimmID DimmID of device to retrieve support data from
   @param[out] pDdrtTrainingStatus pointer to the dimms DDRT training status
 
@@ -1332,8 +1332,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_DDRT_IO_INIT_INFO) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_DDRT_IO_INIT_INFO) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmID,
      OUT UINT8 *pDdrtTrainingStatus
   );
@@ -1341,7 +1341,7 @@ EFI_STATUS
 /**
   Get long operation status
 
-  @param[in] pThis Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] DimmID DimmID of device to retrieve status from
   @param[in] pOpcode pointer to opcode of long op command to check
   @param[in] pOpcode pointer to subopcode of long op command to check
@@ -1354,8 +1354,8 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_GET_LONG_OP_STATUS) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_GET_LONG_OP_STATUS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmID,
      OUT UINT8 *pOpcode OPTIONAL,
      OUT UINT8 *pSubOpcode OPTIONAL,
@@ -1367,7 +1367,7 @@ EFI_STATUS
 /**
 InjectError
 
-@param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
 @param[in] DimmIdsCount - number of elements in pDimmIds
 
@@ -1379,14 +1379,14 @@ InjectError
 @param[IN] pPercentRemaining - Pointer to percentage remaining
 @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-@retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
 @retval EFI_INVALID_PARAMETER One or more parameters are invalid
 @retval EFI_SUCCESS All ok
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_INJECT_ERROR) (
-	IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_INJECT_ERROR) (
+	IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
 	IN     UINT16 *pDimmIds OPTIONAL,
 	IN     UINT32 DimmIdsCount,
 	IN     UINT8  ErrorInjType,
@@ -1416,7 +1416,7 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_PASS_THRU) (
+(EFIAPI *EFI_DCPMM_CONFIG_PASS_THRU) (
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
@@ -1425,7 +1425,7 @@ EFI_STATUS
 /**
 Update from mfg to prod firmware
 
-@param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
 @param[in] DimmIdsCount Number of items in array of DIMM IDs
 @param[in] pFileName Name is a pointer to a file containing FW image
@@ -1435,13 +1435,13 @@ Update from mfg to prod firmware
 @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
 @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
 @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
 @retval EFI_SUCCESS Update has completed successfully
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW) (
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     CHAR16 *pFileName,
@@ -1452,7 +1452,7 @@ EFI_STATUS
 /**
 Get Mem Info pages
 
-@param[in] pThis is a pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance.
+@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
 @param[in] DimmIdsCount Number of items in array of DIMM IDs
 @param[in] pFilePath Name is a pointer to a file  to which the hex dump will be written
@@ -1462,13 +1462,13 @@ Get Mem Info pages
 @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
 @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
 @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of AEPs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
 @retval EFI_SUCCESS Update has completed successfully
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_NVMDIMM_CONFIG_MFG_MEM_INFO_PAGE) (
-  IN EFI_NVMDIMM_CONFIG_PROTOCOL *pThis,
+(EFIAPI *EFI_DCPMM_CONFIG_MFG_MEM_INFO_PAGE) (
+  IN EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds      OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     CHAR16 *pFilePath,
@@ -1478,72 +1478,72 @@ EFI_STATUS
 
 #endif
 /**
-  Configuration and management of AEPs Protocol Interface
+  Configuration and management of DCPMEM DIMMs Protocol Interface
 **/
-struct _EFI_NVMDIMM_CONFIG_PROTOCOL {
+struct _EFI_DCPMM_CONFIG_PROTOCOL {
   UINT32 Version;
-  EFI_NVMDIMM_CONFIG_INITIALIZE_NVM_DRIVER InitializeNvmDimmDriver;
-  EFI_NVMDIMM_CONFIG_GET_DIMM_COUNT GetDimmCount;
-  EFI_NVMDIMM_CONFIG_GET_DIMMS GetDimms;
-  EFI_NVMDIMM_CONFIG_GET_DIMM GetDimm;
+  EFI_DCPMM_CONFIG_INITIALIZE_NVM_DRIVER InitializeNvmDimmDriver;
+  EFI_DCPMM_CONFIG_GET_DIMM_COUNT GetDimmCount;
+  EFI_DCPMM_CONFIG_GET_DIMMS GetDimms;
+  EFI_DCPMM_CONFIG_GET_DIMM GetDimm;
 #ifdef OS_BUILD
-  EFI_NVMDIMM_CONFIG_GET_PMON GetPMONRegisters;
-  EFI_NVMDIMM_CONFIG_SET_PMON SetPMONRegisters;
+  EFI_DCPMM_CONFIG_GET_PMON GetPMONRegisters;
+  EFI_DCPMM_CONFIG_SET_PMON SetPMONRegisters;
 #endif
-  EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMM_COUNT GetUninitializedDimmCount;
-  EFI_NVMDIMM_CONFIG_GET_UNINITIALIZED_DIMMS GetUninitializedDimms;
-  EFI_NVMDIMM_CONFIG_GET_SOCKETS GetSockets;
-  EFI_NVMDIMM_CONFIG_GET_DIMM_SMBIOS_TABLE GetDimmSmbiosTable;
-  EFI_NVMDIMM_CONFIG_GET_ACPI_NFIT GetAcpiNFit;
-  EFI_NVMDIMM_CONFIG_GET_ACPI_PCAT GetAcpiPcat;
-  EFI_NVMDIMM_CONFIG_GET_ACPI_PMTT GetAcpiPMTT;
-  EFI_NVMDIMM_CONFIG_GET_PCD GetPcd;
-  EFI_NVMDIMM_CONFIG_DELETE_PCD DeletePcd;
-  EFI_NVMDIMM_CONFIG_GET_SECURITY_STATE GetSecurityState;
-  EFI_NVMDIMM_CONFIG_SET_SECURITY_STATE SetSecurityState;
-  EFI_NVMDIMM_CONFIG_UPDATE_FW UpdateFw;
-  EFI_NVMDIMM_CONFIG_GET_REGION_COUNT GetRegionCount;
-  EFI_NVMDIMM_CONFIG_GET_REGIONS GetRegions;
-  EFI_NVMDIMM_CONFIG_GET_REGION GetRegion;
-  EFI_NVMDIMM_CONFIG_GET_MEMORY_RESOURCES_INFO GetMemoryResourcesInfo;
-  EFI_NVMDIMM_CONFIG_GET_DIMMS_PERFORMANCE GetDimmsPerformance;
-  EFI_NVMDIMM_CONFIG_GET_SYSTEM_CAPABILITIES_INFO GetSystemCapabilitiesInfo;
-  EFI_NVMDIMM_GET_DRIVER_API_VERSION GetDriverApiVersion;
-  EFI_NVMDIMM_CONFIG_GET_ALARM_THR GetAlarmThresholds;
-  EFI_NVMDIMM_CONFIG_SET_ALARM_THR SetAlarmThresholds;
-  EFI_NVMDIMM_CONFIG_GET_SMART_AND_HEALTH GetSmartAndHealth;
-  EFI_NVMDIMM_CONFIG_GET_GOALS GetGoalConfigs;
-  EFI_NVMDIMM_CONFIG_GET_ACTUAL_REGIONS_GOAL_CAPACITIES GetActualRegionsGoalCapacities;
-  EFI_NVMDIMM_CONFIG_CREATE_GOAL CreateGoalConfig;
-  EFI_NVMDIMM_CONFIG_DELETE_GOAL DeleteGoalConfig;
-  EFI_NVMDIMM_CONFIG_DUMP_GOAL DumpGoalConfig;
-  EFI_NVMDIMM_CONFIG_LOAD_GOAL LoadGoalConfig;
-  EFI_NVMDIMM_CONFIG_START_DIAGNOSTIC StartDiagnostic;
-  EFI_NVMDIMM_CONFIG_CREATE_NAMESPACE CreateNamespace;
-  EFI_NVMDIMM_CONFIG_GET_NAMESPACES GetNamespaces;
-  EFI_NVMDIMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;
-  EFI_NVMDIMM_CONFIG_DELETE_NAMESPACE DeleteNamespace;
-  EFI_NVMDIMM_CONFIG_GET_ERROR_LOG GetErrorLog;
-  EFI_NVMDIMM_CONFIG_DUMP_FW_DEBUG_LOG DumpFwDebugLog;
-  EFI_NVMDIMM_CONFIG_SET_OPTIONAL_DATA_POLICY SetOptionalConfigurationDataPolicy;
-  EFI_NVMDIMM_CONFIG_RETRIEVE_DIMM_REGISTERS RetrieveDimmRegisters;
-  EFI_NVMDIMM_CONFIG_SET_FW_LOG_LEVEL SetFwLogLevel;
-  EFI_NVMDIMM_CONFIG_GET_SYSTEM_TOPOLOGY GetSystemTopology;
-  EFI_NVMDIMM_CONFIG_GET_ARS_STATUS GetARSStatus;
-  EFI_NVMDIMM_CONFIG_GET_DRIVER_PREFERENCES GetDriverPreferences;
-  EFI_NVMDIMM_CONFIG_SET_DRIVER_PREFERENCES SetDriverPreferences;
-  EFI_NVMDIMM_CONFIG_DIMM_FORMAT DimmFormat;
-  EFI_NVMDIMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY GetDeviceSupportDataInventory;
-  EFI_NVMDIMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA DumpDeviceSupportData;
-  EFI_NVMDIMM_CONFIG_GET_DDRT_IO_INIT_INFO GetDdrtIoInitInfo;
-  EFI_NVMDIMM_CONFIG_GET_LONG_OP_STATUS GetLongOpStatus;
-  EFI_NVMDIMM_CONFIG_INJECT_ERROR InjectError;
+  EFI_DCPMM_CONFIG_GET_UNINITIALIZED_DIMM_COUNT GetUninitializedDimmCount;
+  EFI_DCPMM_CONFIG_GET_UNINITIALIZED_DIMMS GetUninitializedDimms;
+  EFI_DCPMM_CONFIG_GET_SOCKETS GetSockets;
+  EFI_DCPMM_CONFIG_GET_DIMM_SMBIOS_TABLE GetDimmSmbiosTable;
+  EFI_DCPMM_CONFIG_GET_ACPI_NFIT GetAcpiNFit;
+  EFI_DCPMM_CONFIG_GET_ACPI_PCAT GetAcpiPcat;
+  EFI_DCPMM_CONFIG_GET_ACPI_PMTT GetAcpiPMTT;
+  EFI_DCPMM_CONFIG_GET_PCD GetPcd;
+  EFI_DCPMM_CONFIG_DELETE_PCD DeletePcd;
+  EFI_DCPMM_CONFIG_GET_SECURITY_STATE GetSecurityState;
+  EFI_DCPMM_CONFIG_SET_SECURITY_STATE SetSecurityState;
+  EFI_DCPMM_CONFIG_UPDATE_FW UpdateFw;
+  EFI_DCPMM_CONFIG_GET_REGION_COUNT GetRegionCount;
+  EFI_DCPMM_CONFIG_GET_REGIONS GetRegions;
+  EFI_DCPMM_CONFIG_GET_REGION GetRegion;
+  EFI_DCPMM_CONFIG_GET_MEMORY_RESOURCES_INFO GetMemoryResourcesInfo;
+  EFI_DCPMM_CONFIG_GET_DIMMS_PERFORMANCE GetDimmsPerformance;
+  EFI_DCPMM_CONFIG_GET_SYSTEM_CAPABILITIES_INFO GetSystemCapabilitiesInfo;
+  EFI_DCPMM_GET_DRIVER_API_VERSION GetDriverApiVersion;
+  EFI_DCPMM_CONFIG_GET_ALARM_THR GetAlarmThresholds;
+  EFI_DCPMM_CONFIG_SET_ALARM_THR SetAlarmThresholds;
+  EFI_DCPMM_CONFIG_GET_SMART_AND_HEALTH GetSmartAndHealth;
+  EFI_DCPMM_CONFIG_GET_GOALS GetGoalConfigs;
+  EFI_DCPMM_CONFIG_GET_ACTUAL_REGIONS_GOAL_CAPACITIES GetActualRegionsGoalCapacities;
+  EFI_DCPMM_CONFIG_CREATE_GOAL CreateGoalConfig;
+  EFI_DCPMM_CONFIG_DELETE_GOAL DeleteGoalConfig;
+  EFI_DCPMM_CONFIG_DUMP_GOAL DumpGoalConfig;
+  EFI_DCPMM_CONFIG_LOAD_GOAL LoadGoalConfig;
+  EFI_DCPMM_CONFIG_START_DIAGNOSTIC StartDiagnostic;
+  EFI_DCPMM_CONFIG_CREATE_NAMESPACE CreateNamespace;
+  EFI_DCPMM_CONFIG_GET_NAMESPACES GetNamespaces;
+  EFI_DCPMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;
+  EFI_DCPMM_CONFIG_DELETE_NAMESPACE DeleteNamespace;
+  EFI_DCPMM_CONFIG_GET_ERROR_LOG GetErrorLog;
+  EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG DumpFwDebugLog;
+  EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY SetOptionalConfigurationDataPolicy;
+  EFI_DCPMM_CONFIG_RETRIEVE_DIMM_REGISTERS RetrieveDimmRegisters;
+  EFI_DCPMM_CONFIG_SET_FW_LOG_LEVEL SetFwLogLevel;
+  EFI_DCPMM_CONFIG_GET_SYSTEM_TOPOLOGY GetSystemTopology;
+  EFI_DCPMM_CONFIG_GET_ARS_STATUS GetARSStatus;
+  EFI_DCPMM_CONFIG_GET_DRIVER_PREFERENCES GetDriverPreferences;
+  EFI_DCPMM_CONFIG_SET_DRIVER_PREFERENCES SetDriverPreferences;
+  EFI_DCPMM_CONFIG_DIMM_FORMAT DimmFormat;
+  EFI_DCPMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY GetDeviceSupportDataInventory;
+  EFI_DCPMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA DumpDeviceSupportData;
+  EFI_DCPMM_CONFIG_GET_DDRT_IO_INIT_INFO GetDdrtIoInitInfo;
+  EFI_DCPMM_CONFIG_GET_LONG_OP_STATUS GetLongOpStatus;
+  EFI_DCPMM_CONFIG_INJECT_ERROR InjectError;
 #ifdef __MFG__
-  EFI_NVMDIMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW InjectAndUpdateMfgToProdfw;
-  EFI_NVMDIMM_CONFIG_MFG_MEM_INFO_PAGE MfgDumpMemInfoPage;
+  EFI_DCPMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW InjectAndUpdateMfgToProdfw;
+  EFI_DCPMM_CONFIG_MFG_MEM_INFO_PAGE MfgDumpMemInfoPage;
 #endif
 #ifndef MDEPKG_NDEBUG
-  EFI_NVMDIMM_CONFIG_PASS_THRU PassThru;
+  EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/
 };
 

@@ -21,7 +21,7 @@ struct Command ShowMemoryResourcesCommand = {
   {{UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}}, //!< options
   {{MEMORY_RESOURCES_TARGET, L"", L"", TRUE, ValueEmpty}},                            //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                            //!< properties
-  L"Show information about total AEP resource allocation.",                           //!< help
+  L"Show information about total DIMM resource allocation.",                          //!< help
   ShowMemoryResources
 };
 
@@ -42,10 +42,10 @@ ShowMemoryResources(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   MEMORY_RESOURCES_INFO MemoryResourcesInfo;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
 

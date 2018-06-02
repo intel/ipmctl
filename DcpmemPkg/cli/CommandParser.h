@@ -264,9 +264,6 @@
 #define HELP_EVENT_LOG_MAX                        L"num events"
 #define HELP_DBG_LOG_MAX                          L"num log entries"
 #define HELP_DBG_LOG_LEVEL                        L"log level"
-/** common display options **/
-#define SOCKET_ID_STR               L"SocketID"
-#define DIMM_ID_STR                 L"DimmID"
 
 /** health states **/
 #define HEALTHY_STATE_STR               L"Healthy"

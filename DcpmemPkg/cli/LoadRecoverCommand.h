@@ -24,8 +24,8 @@ RegisterLoadRecoverCommand (
 
   @retval EFI_SUCCESS if everything went OK - including the firmware load process.
   @retval EFI_INVALID_PARAMETER if the user input is invalid or the file validation fails
-  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no AEPs in the system.
-  @retval EFI_NOT_FOUND if there is no AEP with the user specified PID
+  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMEM DIMMs in the system.
+  @retval EFI_NOT_FOUND if there is no DIMM with the user specified PID
 **/
 EFI_STATUS
 LoadRecover(

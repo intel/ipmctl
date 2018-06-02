@@ -867,7 +867,7 @@ Finish:
 **/
 EFI_STATUS
 CheckConfigProtocolVersion(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pConfigProtocol
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pConfigProtocol
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -962,13 +962,13 @@ OpenNvmDimmProtocol(
   }
 
   if (CompareGuid(&Guid, &gNvmDimmConfigProtocolGuid)) {
-     ReturnCode = ((EFI_NVMDIMM_CONFIG_PROTOCOL *)*ppProtocol)->InitializeNvmDimmDriver((EFI_NVMDIMM_CONFIG_PROTOCOL *) *ppProtocol);
-     if (EFI_ERROR(ReturnCode)) {
-       NVDIMM_DBG("Failed to Initialize NvmDimmDriver.");
-       goto Finish;
-   }
+    ReturnCode = ((EFI_DCPMM_CONFIG_PROTOCOL *)*ppProtocol)->InitializeNvmDimmDriver((EFI_DCPMM_CONFIG_PROTOCOL *) *ppProtocol);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to Initialize NvmDimmDriver.");
+      goto Finish;
+    }
 
-    ReturnCode = CheckConfigProtocolVersion((EFI_NVMDIMM_CONFIG_PROTOCOL *) *ppProtocol);
+    ReturnCode = CheckConfigProtocolVersion((EFI_DCPMM_CONFIG_PROTOCOL *) *ppProtocol);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to get the proper config protocol.");
       ppProtocol = NULL;
@@ -1515,7 +1515,7 @@ MatchCurrentARSStatus(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT8 CurrentARSStatus = ARS_STATUS_UNKNOWN;
 
   NVDIMM_ENTRY();
@@ -2248,49 +2248,49 @@ ConvertHealthStateReasonToHiiStr(
     case HEALTH_REASON_PERCENTAGE_REMAINING_LOW:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING), NULL));
       break;
     case HEALTH_REASON_PACKAGE_SPARING_HAS_HAPPENED:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_PACKAGE_SPARING_HAPPENED), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_PACKAGE_SPARING_HAPPENED), NULL));
       break;
     case HEALTH_REASON_CAP_SELF_TEST_WARNING:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_WARNING), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_WARNING), NULL));
       break;
     case HEALTH_REASON_PERC_REMAINING_EQUALS_ZERO:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING_ZERO), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_PERCENTAGE_REMAINING_ZERO), NULL));
       break;
     case HEALTH_REASON_DIE_FAILURE:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_DIE_FAILURE), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_DIE_FAILURE), NULL));
       break;
     case HEALTH_REASON_AIT_DRAM_DISABLED:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_AIT_DRAM_DISABLED), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_AIT_DRAM_DISABLED), NULL));
       break;
     case HEALTH_REASON_CAP_SELF_TEST_FAILURE:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_FAIL), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_CAP_SELF_TEST_FAIL), NULL));
       break;
     case HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE:
       *ppHealthStatusReasonStr = CatSPrint(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_CRITICAL_INTERNAL_FAILURE), NULL));
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_CRITICAL_INTERNAL_FAILURE), NULL));
     }
     mask = mask << 1;
   }
 
   if (*ppHealthStatusReasonStr == NULL) {
     *ppHealthStatusReasonStr = HiiGetString(HiiHandle,
-      STRING_TOKEN(STR_NVMDIMM_VIEW_DCPMEM_FORM_NONE), NULL);
+      STRING_TOKEN(STR_DCPMM_VIEW_DCPMEM_FORM_NONE), NULL);
   }
 
   if (*ppHealthStatusReasonStr == NULL) {
@@ -2424,37 +2424,37 @@ SecurityToString(
 
   switch (SecurityState) {
   case SECURITY_DISABLED:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_DISABLED), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_DISABLED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case SECURITY_LOCKED:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_LOCKED), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_LOCKED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case SECURITY_UNLOCKED:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_UNLOCKED), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_UNLOCKED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case SECURITY_FROZEN:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_FROZEN), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_FROZEN), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case SECURITY_PW_MAX:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_PW_MAX), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_PW_MAX), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case SECURITY_NOT_SUPPORTED:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_NOT_SUPPORTED), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_NOT_SUPPORTED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   default:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_SECSTATE_UNKNOWN), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_UNKNOWN), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
@@ -2523,45 +2523,45 @@ BootStatusBitmaskToStr(
   NVDIMM_ENTRY();
 
   if (BootStatusBitmask == 0) {
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_SUCCESS), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_SUCCESS), NULL);
     pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
   } else if (BootStatusBitmask & DIMM_BOOT_STATUS_UNKNOWN) {
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_UNKNOWN), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_UNKNOWN), NULL);
     pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
   } else {
     if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MEDIA_NOT_READY), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_MEDIA_NOT_READY), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
     if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MEDIA_ERROR), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_MEDIA_ERROR), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
     if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MEDIA_DISABLED), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_MEDIA_DISABLED), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
     if (BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_DDRT_NOT_READY), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_DDRT_NOT_READY), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
     if (BootStatusBitmask & DIMM_BOOT_STATUS_MAILBOX_NOT_READY) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_MAILBOX_NOT_READY), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_MAILBOX_NOT_READY), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
     if (BootStatusBitmask & DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_BOOT_STATUS_PCN), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_PCN), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
@@ -2606,7 +2606,7 @@ StringToDouble(
     goto Finish;
   }
 
-  pDecimalMarkStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_DECIMAL_MARK), NULL);
+  pDecimalMarkStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_DECIMAL_MARK), NULL);
 
   if (pDecimalMarkStr == NULL) {
     ReturnCode = EFI_NOT_FOUND;
@@ -2765,8 +2765,8 @@ MemoryTypeToStr(
     case MEMORYTYPE_DDR4:
       pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_DDR4_STR);
       break;
-    case MEMORYTYPE_AEP:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_AEP_STR);
+    case MEMORYTYPE_DCPMEM:
+      pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_DCPMEM_STR);
       break;
     default:
       pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_UNKNOWN_STR);
@@ -2965,22 +2965,22 @@ LastFwUpdateStatusToString(
 
   switch (LastFwUpdateStatus) {
   case FW_UPDATE_STATUS_STAGED_SUCCESS:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_FW_UPDATE_STATUS_STAGED), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FW_UPDATE_STATUS_STAGED), NULL);
     pLastFwUpdateStatusString = CatSPrintClean(pLastFwUpdateStatusString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case FW_UPDATE_STATUS_LOAD_SUCCESS:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_FW_UPDATE_STATUS_SUCCESS), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FW_UPDATE_STATUS_SUCCESS), NULL);
     pLastFwUpdateStatusString = CatSPrintClean(pLastFwUpdateStatusString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   case FW_UPDATE_STATUS_FAILED:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_FW_UPDATE_STATUS_FAIL), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FW_UPDATE_STATUS_FAIL), NULL);
     pLastFwUpdateStatusString = CatSPrintClean(pLastFwUpdateStatusString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
   default:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_NVMDIMM_FW_UPDATE_STATUS_UNKNOWN), NULL);
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FW_UPDATE_STATUS_UNKNOWN), NULL);
     pLastFwUpdateStatusString = CatSPrintClean(pLastFwUpdateStatusString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
@@ -3183,42 +3183,42 @@ GoalStatusToString(
   switch (Status) {
     case GOAL_CONFIG_STATUS_UNKNOWN:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NEW:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_BAD_REQUEST:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NOT_ENOUGH_RESOURCES:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_FIRMWARE_ERROR:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     default:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_NVMDIMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
@@ -3232,7 +3232,7 @@ GoalStatusToString(
 
   Polls the status of the background operation on the dimm.
 
-  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_NVMDIMM_CONFIG_PROTOCOL instance
+  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param [in] DimmId Dimm ID of the dimm to poll status
   @param [in] OpcodeToPoll Specify an opcode to poll, 0 to poll regardless of opcode
   @param [in] SubOpcodeToPoll Specify an opcode to poll
@@ -3240,7 +3240,7 @@ GoalStatusToString(
 **/
 EFI_STATUS
 PollLongOpStatus(
-  IN     EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 DimmId,
   IN     UINT8 OpcodeToPoll OPTIONAL,
   IN     UINT8 SubOpcodeToPoll OPTIONAL,

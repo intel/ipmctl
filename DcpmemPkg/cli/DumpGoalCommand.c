@@ -24,7 +24,7 @@ struct Command DumpGoalCommand =
     {CONFIG_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Store the pool configuration goal from one or more AEPs to a file",           //!< help
+  L"Store the region configuration goal from one or more DCPMEM DIMMs to a file", //!< help
   DumpGoal
 };
 
@@ -44,7 +44,7 @@ DumpGoal(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pDumpUserPath = NULL;
   CHAR16 *pDumpFilePath = NULL;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePath = NULL;

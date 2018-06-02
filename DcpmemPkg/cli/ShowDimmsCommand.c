@@ -36,9 +36,9 @@ struct Command ShowDimmsCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},            //!< properties
-  L"Show information about one or more AEPs.", //!< help
-  ShowDimms                                         //!< run function
+  {{L"", L"", L"", FALSE, ValueOptional}},             //!< properties
+  L"Show information about one or more DCPMEM DIMMs.", //!< help
+  ShowDimms                                            //!< run function
 };
 
 CHAR16 *mppAllowedShowDimmsDisplayValues[] =
@@ -161,7 +161,7 @@ ShowDimms(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 DimmCount = 0;
   UINT32 UninitializedDimmCount = 0;
   DIMM_INFO *pDimms = NULL;
@@ -182,7 +182,7 @@ ShowDimms(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdAepCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN AllOptionSet = FALSE;
   BOOLEAN DisplayOptionSet = FALSE;
   CHAR16 *pDisplayValues = NULL;
@@ -378,8 +378,7 @@ ShowDimms(
 
   /** display a summary table of all dimms **/
   if (!AllOptionSet && !DisplayOptionSet) {
-
-     SetDisplayInfo(L"Dimm", TableView);
+    SetDisplayInfo(L"DIMM", TableView);
 
     pFormat = FORMAT_SHOW_DIMM_HEADER;
 #ifdef OS_BUILD
@@ -540,7 +539,7 @@ ShowDimms(
 
   /** display detailed view **/
   else {
-    SetDisplayInfo(L"Dimm", ListView);
+    SetDisplayInfo(L"DIMM", ListView);
 
     // Collect all properties if the user calls "show -a -dimm"
     ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
@@ -621,15 +620,15 @@ ShowDimms(
         Print(L"   " FORMAT_STR L"=", INTERFACE_FORMAT_CODE_STR);
         if (pDimms[Index].InterfaceFormatCodeNum <= MAX_IFC_NUM) {
           for (Index2 = 0; Index2 < pDimms[Index].InterfaceFormatCodeNum; Index2++) {
-            if (pDimms[Index].InterfaceFormatCode[Index2] == AEP_FMT_CODE_APP_DIRECT) {
+            if (pDimms[Index].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_APP_DIRECT) {
               ByteAddressable = TRUE;
-            } else if (pDimms[Index].InterfaceFormatCode[Index2] == AEP_FMT_CODE_STORAGE) {
+            } else if (pDimms[Index].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_STORAGE) {
               BlockAddressable = TRUE;
             }
           }
 
           if (ByteAddressable) {
-            Print(L"0x%04x ", AEP_FMT_CODE_APP_DIRECT);
+            Print(L"0x%04x ", DCPMM_FMT_CODE_APP_DIRECT);
             Print(FORMAT_CODE_APP_DIRECT_STR);
           }
 

@@ -15,7 +15,7 @@
 #define _VERSION_H_
 
 #define VENDOR_ID          0x8086
-#define PRODUCT_NAME            L"Intel Optane DC Persistent Memory"
+#define PRODUCT_NAME       L"Intel(R) Optane(TM) DC Persistent Memory"
 
 #define GENERAL_RELEASE             0
 #define ALPHA_RELEASE               1

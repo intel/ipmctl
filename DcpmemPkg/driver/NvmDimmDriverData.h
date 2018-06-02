@@ -34,7 +34,7 @@
 extern EFI_GUID gNvmDimmDevicePathGuid;
 
 /**
-  AEP GUID base.
+  DIMM GUID base.
   The GUID changes on each DIMM
 **/
 #define NVMDIMM_DRIVER_NGNVM_GUID \

@@ -20,7 +20,7 @@
 #pragma comment(lib,"Version.lib")
 #pragma comment(lib, "Ws2_32.lib")
 
-#define	MGMTSW_REG_KEY "SOFTWARE\\INTEL\\INTEL DIMM GEN 1"
+#define	MGMTSW_REG_KEY "SOFTWARE\\INTEL\\INTEL DC PMM"
 #define	INSTALLDIR_REG_SUBKEY "InstallDir"
 #define	EVENT_SOURCE	"IntelASM"
 

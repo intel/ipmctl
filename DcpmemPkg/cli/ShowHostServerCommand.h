@@ -42,7 +42,7 @@ RegisterShowHostServerCommand(
 
 
 EFI_STATUS IsDimmsMixedSkuCfg(
-   EFI_NVMDIMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
    BOOLEAN *pIsMixedSku,
    BOOLEAN *pIsSkuViolation);
 

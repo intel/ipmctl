@@ -236,13 +236,13 @@ SmartAndHealthCheck(
 
   if (SensorInfo.HealthStatus != CONTROLLER_HEALTH_NORMAL) {
     if ((SensorInfo.HealthStatus & ControllerHealthStatusFatal) != 0) {
-      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_FATAL_FAILURE), NULL);
+      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DCPMM_HEALTH_FATAL_FAILURE), NULL);
     } else if ((SensorInfo.HealthStatus & ControllerHealthStatusCritical) != 0) {
-      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_CRITICAL_FAILURE), NULL);
+      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DCPMM_HEALTH_CRITICAL_FAILURE), NULL);
     } else if ((SensorInfo.HealthStatus & ControllerHealthStatusNoncritical) != 0) {
-      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_NON_CRITICAL_FAILURE), NULL);
+      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DCPMM_HEALTH_NON_CRITICAL_FAILURE), NULL);
     } else {
-      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NVMDIMM_HEALTH_UNKNOWN), NULL);
+      pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_DCPMM_HEALTH_UNKNOWN), NULL);
     }
 
     if (SensorInfo.HealthStatusReason != HEALTH_STATUS_REASON_NONE) {

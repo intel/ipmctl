@@ -13,7 +13,7 @@ extern EFI_GUID gNvmDimmFirmwareManagementProtocolGuid;
 extern EFI_GUID mNvmDimmFirmwareImageTypeGuid;
 
 /* {c376fe51-aad4-4b40-9ed2-f775cbbdc6a1} */
-#define EFI_NVMDIMM_FIRMWARE_IMAGE_TYPE_GUID \
+#define EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID \
 {0xc376fe51, 0xaad4, 0x4b40, {0x9e, 0xd2, 0xf7, 0x75, 0xcb, 0xbd, 0xc6, 0xa1}}
 
 #define GET_DIMM_FROM_INSTANCE(InstanceAddress) BASE_CR(InstanceAddress, EFI_DIMMS_DATA, FirmwareManagementInstance)

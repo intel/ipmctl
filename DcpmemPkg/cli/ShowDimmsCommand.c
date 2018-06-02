@@ -704,17 +704,18 @@ ShowDimms(
 
       /** ManufacturerId **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR, EndianSwapUint16(pDimms[Index].ManufacturerId));
+        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR,
+          EndianSwapUint16(pDimms[Index].ManufacturerId));
       }
 
       /** VendorId **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VENDOR_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, VENDOR_ID_STR, pDimms[Index].VendorId);
+        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, VENDOR_ID_STR, EndianSwapUint16(pDimms[Index].VendorId));
       }
 
       /** DeviceId **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DEVICE_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, DEVICE_ID_STR, pDimms[Index].DeviceId);
+        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, DEVICE_ID_STR, EndianSwapUint16(pDimms[Index].DeviceId));
       }
 
       /** RevisionId **/
@@ -724,7 +725,8 @@ ShowDimms(
 
       /** SubsytemVendorId **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_VENDOR_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_VENDOR_ID_STR, pDimms[Index].SubsystemVendorId);
+        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_VENDOR_ID_STR,
+          EndianSwapUint16(pDimms[Index].SubsystemVendorId));
       }
 
       /** SubsytemDeviceId **/

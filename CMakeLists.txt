@@ -470,6 +470,7 @@ FILE(GLOB NVM_HEADERS
 	src/os/nvm_api/nvm_management.h
 	src/os/nvm_api/nvm_types.h
 	DcpmemPkg/common/NvmStatusValues.h
+	src/os/ipmctl_default.conf
 	)
 
 FILE(COPY ${NVM_HEADERS}

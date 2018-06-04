@@ -29,6 +29,8 @@
 #define EVENT_MESSAGE_CONTROL_CHARACTERS "\n<>\t"
 #define EVENT_MESSAGE_CONTROL_CHAR_START '>'
 #define EVENT_MESSAGE_CONTROL_CHAR_STOP  '<'
+#define ENVIRONMENT_VARIABLE_CHAR_START '%'
+#define ENVIRONMENT_VARIABLE_CHAR_STOP  '%'
 #define ACTION_REQUIRED_FILE_PARSING_STRING "%s.ar"
 
 /*
@@ -89,11 +91,33 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
 {
     EFI_STATUS efi_status = EFI_SUCCESS;
     EFI_GUID guid = { 0 };
+    CHAR8 temp_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
+    CHAR8 environment_variable[ENVIRONMENT_VARIABLE_MAX_LEN];
+    CHAR8 *p_env_start = NULL;
+    CHAR8 *p_env_stop = NULL;
 
     if (FALSE == g_log_file_table[file].name_initialized) {
         // The system log file name not configured yet, check the preferences
         efi_status = preferences_get_string_ascii(g_log_file_table[file].ini_entry_name, guid, SYSTEM_LOG_FILE_NAME_MAX_LEN, g_log_file_table[file].file_name);
         if (EFI_SUCCESS == efi_status) {
+            // Overwrite environment variables
+            // Find the environment variable control chars 
+            p_env_start = strchr(g_log_file_table[file].file_name, ENVIRONMENT_VARIABLE_CHAR_START);
+            if (NULL != p_env_start)
+            {
+                p_env_start++; // start + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_START char
+                p_env_stop = strchr(p_env_start, ENVIRONMENT_VARIABLE_CHAR_STOP);
+                if (NULL != p_env_stop) {
+                  // Replace the environment variable with the real value
+                  environment_variable[0] = 0; // Initialize the environemt variable string as empty
+                  s_strncat(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start); 
+                  snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", getenv(environment_variable));
+                  p_env_stop++; // stop + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_STOP char
+                  s_strcat(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
+                  // Store the proper file name
+                  s_strncpy(g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+                }
+            }
             g_log_file_table[file].name_initialized = TRUE;
         }
     }
@@ -357,11 +381,11 @@ static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_c
     if (NULL != pp_ctl_start) {
       *pp_ctl_start = p_ctrl_str_start;
     }
-    // Skip the control char
-    p_ctrl_str_start++;
     if (p_ctrl_str_start != NULL)
-    {
-        p_ctrl_str_stop = strchr(event_message, EVENT_MESSAGE_CONTROL_CHAR_STOP);
+    {   
+        // Skip the control char
+        p_ctrl_str_start++;
+        p_ctrl_str_stop = strchr(p_ctrl_str_start, EVENT_MESSAGE_CONTROL_CHAR_STOP);
         if (NULL != pp_ctl_stop) {
           *pp_ctl_stop = p_ctrl_str_stop;
         }

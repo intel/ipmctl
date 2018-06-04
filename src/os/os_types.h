@@ -63,6 +63,7 @@
 #define SYSTEM_LOG_DEBUG_LIMIT "DBG_LOG_MAX"
 #define SYSTEM_LOG_FILE_NAME_MAX_LEN 256
 #define SYSTEM_LOG_CODE_STRING_SIZE 4
+#define ENVIRONMENT_VARIABLE_MAX_LEN 64
 
 /*!
 * An enumeration set describing system event types

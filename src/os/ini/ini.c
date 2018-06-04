@@ -13,9 +13,11 @@
 #include "ini.h"
 
 #if defined(__LINUX__) || defined(__ESX__)
+#define APP_DATA_FILE_PATH    ""
 #define INI_INSTALL_FILEPATH	"/etc/"
 #else
-#define INI_INSTALL_FILEPATH	""
+#define APP_DATA_FILE_PATH    getenv("APPDATA")
+#define INI_INSTALL_FILEPATH	"\\Intel\\ipmctl\\"
 #define W_OK			0x2
 #endif
 
@@ -199,7 +201,7 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
   snprintf(g_ini_path_filename, sizeof (g_ini_path_filename), "%s", p_ini_file_name);
   h_file = fopen(g_ini_path_filename, "r");
   if (NULL == h_file) {
-    snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s%s", INI_INSTALL_FILEPATH, p_ini_file_name);
+    snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
     h_file = fopen(g_ini_path_filename, "r");
     if (NULL == h_file) {
       // File does not exists, lets create the new one

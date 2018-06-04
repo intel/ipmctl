@@ -55,7 +55,7 @@ extern "C"
 #define NUM_DICTIONARIES_MAX                    1024
 #endif
 #define PAIR_NAME_SZ                            256
-#define PAIR_VALUE_SZ                           1024
+#define PAIR_VALUE_SZ                           1533
 #define READ_FD_LINE_SZ                         512
 #define COLUMN_HEADER_SZ                        256
 #define ROW_VALUE_SZ                            1024

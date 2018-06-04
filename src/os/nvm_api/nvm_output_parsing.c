@@ -609,10 +609,11 @@ int process_output(
                }
                else
                {
+                  size_t cur_len = wcsnlen(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ) + 1;
                   wcsncat(
                      cur_dict->items[cur_dict->item_cnt].value,
                      trimmed_line,
-                     PAIR_VALUE_SZ);
+                     PAIR_VALUE_SZ - cur_len);
                }
             }
             cur_dict->item_cnt++;

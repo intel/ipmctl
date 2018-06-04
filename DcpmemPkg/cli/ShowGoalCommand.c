@@ -264,7 +264,11 @@ ShowGoalPrintDetailedView(
     }
     /** AppDirect1Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_INDEX_PROPERTY))) {
-      Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_1_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[0]);
+      if (pCurrentGoal->AppDirectSize[0] == 0) {
+        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_1_INDEX_PROPERTY, L"N/A");
+      } else {
+        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_1_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[0]);
+      }
     }
     /** AppDirect1Settings **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SETTINGS_PROPERTY))) {
@@ -283,7 +287,11 @@ ShowGoalPrintDetailedView(
     }
     /** AppDirect2Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_INDEX_PROPERTY))) {
-      Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_2_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[1]);
+      if (pCurrentGoal->AppDirectSize[1] == 0) {
+        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_2_INDEX_PROPERTY, L"N/A");
+      } else {
+        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_2_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[1]);
+      }
     }
     /** AppDirect2Settings **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_SETTINGS_PROPERTY))) {

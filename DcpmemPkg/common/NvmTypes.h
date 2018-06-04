@@ -48,6 +48,7 @@
 #define REGION_TYPE_STR_SIZE               50
 #define REGION_HEALTH_STR_SIZE             9
 #define REGION_GOAL_SETTINGS_STR_SIZE      32
+#define REGION_GOAL_INDEX_STR_SIZE         10
 
 #define NSLABEL_NAME_LEN                 63 //!< Namespace name length
 #define NLABEL_NAME_LEN_WITH_TERMINATOR  64 //!< Namespace name length + null terminator

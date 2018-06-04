@@ -34,7 +34,6 @@ bool keepRunning = true;
 int main(int argc, char **argv)
 {
 	int rc = EXIT_SUCCESS;
-	nvm_init();
 	// Register interupt signals with the signalHandler
 	signal(SIGINT, signalHandler);
 
@@ -49,7 +48,7 @@ int main(int argc, char **argv)
 
 	if (rc == EXIT_SUCCESS)
 	{
-
+		nvm_init();
 		std::vector<monitor::NvmMonitorBase *> monitors;
 		monitor::NvmMonitorBase::getMonitors(monitors);
 

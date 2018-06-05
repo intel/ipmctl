@@ -43,6 +43,8 @@ CHAR16 *mppAllowedShowRegionsDisplayValues[] =
   FREE_CAPACITY_STR,
   SOCKET_ID_STR,
   REGION_HEALTH_STATE_STR,
+  DIMM_ID_STR,
+  ISET_ID_STR,
 };
 
 /**

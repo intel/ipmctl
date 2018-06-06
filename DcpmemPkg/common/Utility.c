@@ -491,7 +491,7 @@ StrSplit(
   ppArray = AllocateZeroPool(*pArraySize * sizeof(CHAR16 *));
   if (ppArray == NULL) {
     NVDIMM_ERR("Memory allocation failed.");
-    goto FinishCleanMemory;
+    goto Finish;
   }
 
   /** Copy the input to a tmp var to avoid changing it **/

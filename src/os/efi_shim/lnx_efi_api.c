@@ -182,19 +182,20 @@ int get_smbios_table_alloc(UINT8 **pp_smbios_table, size_t *p_allocated_size, UI
 	}
 
 	UINT8 *p_smbios_table = calloc(1, table_length);
-	if (fread(p_smbios_table, 1, table_length, dmi_file) == table_length)
-	{
-		*pp_smbios_table = p_smbios_table;
-		*p_allocated_size = table_length;
-	}
-	else
-	{
-		NVDIMM_ERR("Could not read SMBIOS DMI from sysfs");
-		free(p_smbios_table);
-		fclose(dmi_file);
-		return -ENXIO;
-	}
-
+  if (NULL != p_smbios_table) {
+    if (fread(p_smbios_table, 1, table_length, dmi_file) == table_length)
+    {
+      *pp_smbios_table = p_smbios_table;
+      *p_allocated_size = table_length;
+    }
+    else
+    {
+      NVDIMM_ERR("Could not read SMBIOS DMI from sysfs");
+      free(p_smbios_table);
+      fclose(dmi_file);
+      return -ENXIO;
+    }
+  }
 	fclose(dmi_file);
 
 	return rc;

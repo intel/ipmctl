@@ -2280,7 +2280,7 @@ GetPcdOemConfigDataUsingSmallPayload(
     pDimm->PcdOemSize = OemDataSize;
     pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
     pTempCache = pDimm->pPcdOem;
-    if (NULL != pTempCache) {
+    if ((NULL != pTempCache) && (OemDataSize <= PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE)) {
       CopyMem(pTempCache, pBuffer, OemDataSize);
     }
   }
@@ -2291,7 +2291,8 @@ Finish:
   if (EFI_ERROR(Rc)) {
     // If error, free the buffer
     FREE_POOL_SAFE(pBuffer);
-    *ppRawData = NULL;
+    if(NULL != ppRawData)
+      *ppRawData = NULL;
   }
 
   NVDIMM_EXIT_I64(Rc);

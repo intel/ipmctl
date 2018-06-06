@@ -368,6 +368,11 @@ InstallNamespaceProtocols(
 
     NVDIMM_DBG("Using NVDIMM Namespace Device Path");
     pNvdimmNamespaceDevicePath = AllocateZeroPool(sizeof(NVDIMM_NAMESPACE_DEVICE_PATH));
+    if (NULL == pNvdimmNamespaceDevicePath) {
+      NVDIMM_DBG("Failed to initialize the pNvdimmNamespaceDevicePath.\n");
+      ReturnCode = EFI_ABORTED;
+      goto Finish;
+    }
 
     pNvdimmNamespaceDevicePath->Header.Type = MESSAGING_DEVICE_PATH;
     pNvdimmNamespaceDevicePath->Header.SubType = MSG_NVDIMM_NAMESPACE_DP;
@@ -384,7 +389,11 @@ InstallNamespaceProtocols(
   } else {
     NVDIMM_DBG("Using VenHw Namespace Device Path");
     pVenHwNamespaceDevicePath = AllocateZeroPool(sizeof(VENDOR_DEVICE_PATH));
-
+    if (NULL == pVenHwNamespaceDevicePath) {
+      NVDIMM_DBG("Failed to initialize the pVenHwNamespaceDevicePath.\n");
+      ReturnCode = EFI_ABORTED;
+      goto Finish;
+    }
     pVenHwNamespaceDevicePath->Header.Type = HARDWARE_DEVICE_PATH;
     pVenHwNamespaceDevicePath->Header.SubType = HW_VENDOR_DP;
 
@@ -469,6 +478,8 @@ InstallNamespaceProtocols(
   pNamespace->ProtocolsInstalled = TRUE;
 
 Finish:
+  FREE_POOL_SAFE(pNvdimmNamespaceDevicePath);
+  FREE_POOL_SAFE(pVenHwNamespaceDevicePath);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -8596,11 +8596,6 @@ AutomaticCreateGoal(
     goto Finish;
   }
 
-  ReturnCode = InitializeNvmDimmDriver(NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
   /** Check IntelDimmConfig variables **/
   if (pIntelDIMMConfig->MemorySize > MEMORY_SIZE_MAX_PERCENT) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -8732,11 +8727,6 @@ AutomaticCreateNamespace(
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on InitializeCommandStatus");
-    goto Finish;
-  }
-
-  ReturnCode = InitializeNvmDimmDriver(NULL);
-  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -8904,11 +8894,6 @@ CheckPCDAutoConfVars(
     goto Finish;
   }
 
-  ReturnCode = InitializeNvmDimmDriver(NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
   ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
   if (ppDimms == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -9019,11 +9004,6 @@ CheckTopologyChange(
     goto Finish;
   }
 
-  ReturnCode = InitializeNvmDimmDriver(NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
   ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
   if (ppDimms == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -9102,11 +9082,6 @@ CheckGoalStatus(
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
-
-  ReturnCode = InitializeNvmDimmDriver(NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-   }
 
   ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
   if (ppDimms == NULL) {

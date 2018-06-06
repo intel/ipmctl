@@ -1392,6 +1392,14 @@ NvmDimmDriverDriverBindingStart(
 		NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
 		goto Finish;
 	}
+  /**
+    Initialize DIMMs, ISets and namespaces
+  **/
+  ReturnCode = InitializeNvmDimmDriver(NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
+    goto Finish;
+  }
 
   /**
     Check Intel DIMM Config EFI variables whether to perform automatic provisioning

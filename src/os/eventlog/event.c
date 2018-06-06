@@ -51,7 +51,8 @@ log_file_struct g_log_file_table[SYSTEM_LOG_FILE_STRUCT_SIZE] =
 * An enumeration set describing system event types represented by strings
 * It is used to trasform the system_event_type enum value to the string
 */
-const char *entry_type_string_table[] = { "Information", "Warning", "Error", "Debug" };
+#define TYPE_STRING_TABLE_SIZE 4
+const char *entry_type_string_table[TYPE_STRING_TABLE_SIZE] = { "Information", "Warning", "Error", "Debug" };
 
 /*
 * Find and return the event_type value form the event entry stored in the log
@@ -93,6 +94,7 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
     EFI_GUID guid = { 0 };
     CHAR8 temp_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
     CHAR8 environment_variable[ENVIRONMENT_VARIABLE_MAX_LEN];
+    CHAR8 *p_env_variable_path;
     CHAR8 *p_env_start = NULL;
     CHAR8 *p_env_stop = NULL;
 
@@ -111,7 +113,9 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
                   // Replace the environment variable with the real value
                   environment_variable[0] = 0; // Initialize the environemt variable string as empty
                   s_strncat(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start); 
-                  snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", getenv(environment_variable));
+                  if (NULL != (p_env_variable_path = getenv(environment_variable))) {
+                    snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", p_env_variable_path);
+                  }
                   p_env_stop++; // stop + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_STOP char
                   s_strcat(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
                   // Store the proper file name
@@ -147,7 +151,7 @@ static CHAR8 get_type_value(CHAR8 *type_string)
 {
     int index;
 
-    for (index = 0; index < sizeof(*entry_type_string_table); index++)
+    for (index = 0; index < TYPE_STRING_TABLE_SIZE; index++)
     {
         if (strcmp(type_string, entry_type_string_table[index]) == 0)
             return SYSTEM_EVENT_TO_MASK(index);
@@ -781,19 +785,19 @@ static void log_system_event_to_file(UINT32 event_type, const char *event_messag
                     if (NULL != h_file) {
                         // Find the first end of line char and move to the next line
                         fprintf(h_file, "%s", p_file_buffer);
+                        // Reopen and truncate the file in append mode again
+                        h_file = freopen(log_file_name, "a+", h_file);
                     }
                     free(p_file_buffer);
-                    // Reopen and truncate the file in append mode again
-                    h_file = freopen(log_file_name, "a+", h_file);
                 }
             }
             // Append the new entry
             if (NULL != h_file) {
                 fprintf(h_file, "%s\t%d\t%s\t%d\t%c%08x%c\t%s\n", time_stamp, *p_event_id, entry_type_string_table[SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type)],
                     SYSTEM_EVENT_TYPE_AR_EVENT_GET(event_type), EVENT_MESSAGE_CONTROL_CHAR_START, event_type, EVENT_MESSAGE_CONTROL_CHAR_STOP, event_message);
+                // Close the file
+                fclose(h_file);
             }
-            // Close the file
-            fclose(h_file);
         }
     }
 }
@@ -1040,16 +1044,16 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
 */
 NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dimm_uid, UINT32 event_id)
 {
-    CHAR8 *event_buffer = NULL;
-    INTN event_buffer_size = 0;
-    FILE *h_file = NULL;
-    EFI_STATUS efi_status = EFI_SUCCESS;
-    char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
-    char *p_values_init = NULL;
+  CHAR8 *event_buffer = NULL;
+  INTN event_buffer_size = 0;
+  FILE *h_file = NULL;
+  EFI_STATUS efi_status = EFI_SUCCESS;
+  char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
+  char *p_values_init = NULL;
 
-    // Read all events matching the criteria
-    event_buffer_size = get_system_events_from_file(FALSE, TRUE, event_type_mask, SYSTEM_EVENT_NOT_APPLICABLE, dimm_uid, event_id, NULL, &event_buffer);
-	if (event_buffer_size > 0)
+  // Read all events matching the criteria
+  event_buffer_size = get_system_events_from_file(FALSE, TRUE, event_type_mask, SYSTEM_EVENT_NOT_APPLICABLE, dimm_uid, event_id, NULL, &event_buffer);
+	if ((event_buffer_size > 0) || (NULL == event_buffer))
 	{
 		// Find the system log file name        
     if (SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask) & SYSTEM_EVENT_DEBUG_MASK) {
@@ -1079,7 +1083,7 @@ NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dim
 			free(event_buffer);
 		}
 	}
-    return 0;
+  return 0;
 }
 
 /*

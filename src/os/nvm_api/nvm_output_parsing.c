@@ -150,6 +150,9 @@ int output_to_nvm_xml_list(
    struct dict *dictionaries,
    int num_dictionaries)
 {
+  wchar_t name[PAIR_NAME_SZ];
+  wchar_t value[PAIR_VALUE_SZ];
+
    //Transform data structures to XML
    wprintf(XML_ROOT_LIST_BEGIN_TAG, struct_name);
 
@@ -158,7 +161,9 @@ int output_to_nvm_xml_list(
       wprintf(XML_ROOT_KEY_VALS_BEGIN_TAG, struct_name);
       for (int j = 0; j < dictionaries[i].item_cnt; ++j)
       {
-         wprintf(XML_KEY_VAL_PAIR_TAGS, dictionaries[i].items[j].name, dictionaries[i].items[j].value, dictionaries[i].items[j].name);
+        swprintf(name, PAIR_NAME_SZ, FORMAT_STR, dictionaries[i].items[j].name);
+        swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, dictionaries[i].items[j].value);
+        wprintf(XML_KEY_VAL_PAIR_TAGS, name, value, name);
       }
       wprintf(XML_ROOT_KEY_VALS_END_TAG, struct_name);
    }
@@ -174,11 +179,15 @@ int output_to_nvm_xml_key_val_pairs(
    wchar_t *struct_name,
    struct dict *dictionary)
 {
+  wchar_t name[PAIR_NAME_SZ];
+  wchar_t value[PAIR_VALUE_SZ];
    //Transform data structures to XML
    wprintf(XML_ROOT_KEY_VALS_BEGIN_TAG, struct_name);
    for (int j = 0; j < dictionary->item_cnt; ++j)
    {
-      wprintf(XML_KEY_VAL_PAIR_TAGS, dictionary->items[j].name, dictionary->items[j].value, dictionary->items[j].name);
+      swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].name));
+      swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].value));
+      wprintf(XML_KEY_VAL_PAIR_TAGS, name, value, name);
    }
    wprintf(XML_ROOT_KEY_VALS_END_TAG, struct_name);
    return 0;
@@ -223,6 +232,8 @@ int output_to_esx_xml_key_val_pairs(
    wchar_t *struct_name,
    struct dict *dictionary)
 {
+  wchar_t name[PAIR_NAME_SZ];
+  wchar_t value[PAIR_VALUE_SZ];
    //Transform data structures to XML
    wprintf(ESX_XML_FILE_BEGIN);
    wprintf(ESX_XML_LIST_STRUCT_BEGIN);
@@ -231,11 +242,13 @@ int output_to_esx_xml_key_val_pairs(
       wprintf(ESX_XML_KEY_VAL_TYPE_STRUCT_BEGIN);
 
       wprintf(ESX_XML_FIELD_ATTRIB_NAME_BEGIN);
-      wprintf(ESX_XML_STRING_BEGIN_AND_END, trimwhitespace(dictionary->items[j].name));
+      swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].name));
+      wprintf(ESX_XML_STRING_BEGIN_AND_END, name);
       wprintf(ESX_XML_FIELD_END);
 
       wprintf(ESX_XML_FIELD_VALUE_BEGIN);
-      wprintf(ESX_XML_STRING_BEGIN_AND_END, trimwhitespace(dictionary->items[j].value));
+      swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].value));
+      wprintf(ESX_XML_STRING_BEGIN_AND_END, value);
       wprintf(ESX_XML_FIELD_END);
 
       wprintf(ESX_XML_KEY_VAL_TYPE_STRUCT_END);
@@ -254,6 +267,9 @@ int output_to_esx_xml_list(
    struct dict *dictionaries,
    int num_dictionaries)
 {
+  wchar_t name[PAIR_NAME_SZ];
+  wchar_t value[PAIR_VALUE_SZ];
+
    //Transform data structures to XML
    wprintf(ESX_XML_FILE_BEGIN);
    wprintf(ESX_XML_LIST_STRUCT_BEGIN);
@@ -262,8 +278,10 @@ int output_to_esx_xml_list(
       wprintf(ESX_XML_STRUCT_BEGIN, struct_name);
       for (int j = 0; j < dictionaries->item_cnt; ++j)
       {
-         wprintf(ESX_XML_FIELD_BEGIN, trimwhitespace(dictionaries[i].items[j].name));
-         wprintf(ESX_XML_STRING_BEGIN_AND_END, trimwhitespace(dictionaries[i].items[j].value));
+         swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionaries[i].items[j].name));
+         swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionaries[i].items[j].value));
+         wprintf(ESX_XML_FIELD_BEGIN, name);
+         wprintf(ESX_XML_STRING_BEGIN_AND_END, value);
          wprintf(ESX_XML_FIELD_END);
       }
       wprintf(ESX_XML_KEY_VAL_TYPE_STRUCT_END);
@@ -345,7 +363,7 @@ int process_output(
    int argc,
    char *argv[])
 {
-   enum OutputType out_type;
+   enum OutputType out_type = UnknownType;
    struct table show_table;
    enum DisplayType type = display_view_type(view_type, rc);
    wchar_t *line = (wchar_t*)malloc(READ_FD_LINE_SZ * sizeof(wchar_t));
@@ -378,8 +396,8 @@ int process_output(
       int col = 0;
       int row = 0;
       show_table.column_cnt = 0;
-      swprintf(show_table.name, COLUMN_HEADER_SZ, display_name);
-
+      swprintf(show_table.name, COLUMN_HEADER_SZ, FORMAT_STR, display_name);
+      
       //*************************************************************************
       //Parse listview output format into dictionary data structs
       //*************************************************************************

@@ -1145,7 +1145,7 @@ RemoveDimmInventory(
 
     TmpReturnCode = RemoveDimm(pCurDimm, 0);
     if (EFI_ERROR(TmpReturnCode)) {
-      NVDIMM_WARN("Unable to remove NVDIMM %#x Error: %d", pCurDimm->DeviceHandle.AsUint32, TmpReturnCode);
+      NVDIMM_WARN("Unable to remove NVDIMM %#x Error: %d", (NULL != pCurDimm) ? pCurDimm->DeviceHandle.AsUint32 : 0, TmpReturnCode);
       ReturnCode = TmpReturnCode;
     }
   }
@@ -1160,7 +1160,7 @@ RemoveDimmInventory(
 
     TmpReturnCode = RemoveDimm(pCurDimm, 0);
     if (EFI_ERROR(TmpReturnCode)) {
-      NVDIMM_WARN("Unable to remove NVDIMM %#x Error: %d", pCurDimm->DeviceHandle.AsUint32, TmpReturnCode);
+      NVDIMM_WARN("Unable to remove NVDIMM %#x Error: %d", (NULL != pCurDimm) ? pCurDimm->DeviceHandle.AsUint32 : 0, TmpReturnCode);
       ReturnCode = TmpReturnCode;
     }
   }

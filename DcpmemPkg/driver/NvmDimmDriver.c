@@ -306,8 +306,10 @@ InitWorkarounds(
   pShellVar = GetEnvVariable(DYNAMIC_WA_ENV_VARIABLE_NAME);
 
   if (pShellVar != NULL) {
-    ppShellVarSplit = StrSplit(pShellVar, L',', &ShellTokensCount);
-
+    if (NULL == (ppShellVarSplit = StrSplit(pShellVar, L',', &ShellTokensCount))) {
+      return;
+    }
+    
     for (Index = 0; Index < ShellTokensCount; Index++) {
       if (CompareMem(ppShellVarSplit[Index], WA_FLAG_ALWAYS_LOAD, sizeof(WA_FLAG_ALWAYS_LOAD)) == 0) {
         Print(L"INFO: 'Always load' workaround enabled in the driver.\n");

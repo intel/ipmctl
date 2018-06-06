@@ -3560,9 +3560,7 @@ GetDimmsPerformanceData(
 
     // Get total DIMM count and allocate memory for the table
     GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
-    *pDimmsPerformanceData = AllocateZeroPool(sizeof(DIMM_PERFORMANCE_DATA) * (*pDimmCount));
-    if (NULL == pDimmsPerformanceData)
-    {
+    if(NULL == (*pDimmsPerformanceData = AllocateZeroPool(sizeof(DIMM_PERFORMANCE_DATA) * (*pDimmCount)))) {
         NVDIMM_ERR("Memory allocation failure");
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;

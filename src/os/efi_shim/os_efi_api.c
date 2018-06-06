@@ -1283,13 +1283,14 @@ PromptedInput(
 
 	Print(L"%ls", pPrompt);
 	char buff[MAX_PROMT_INPUT_SZ];
+	memset(buff, 0, MAX_PROMT_INPUT_SZ);
+
 	for (PromptIndex = 0; PromptIndex < MAX_PROMT_INPUT_SZ; ++PromptIndex)
 	{
 		buff[PromptIndex] = _getch();
 		if (RETURN_KEY == buff[PromptIndex])
 			break;
 	}
-	buff[PromptIndex] = '\0';
 	VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);
     if (NULL == ptr) {
         ReturnCode = EFI_OUT_OF_RESOURCES;

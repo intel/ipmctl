@@ -213,6 +213,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmemPkg/cli/ShowRegisterCommand.c
 	DcpmemPkg/cli/StartFormatCommand.c
 	DcpmemPkg/cli/ShowEventCommand.c
+	DcpmemPkg/cli/SetEventCommand.c
 	DcpmemPkg/cli/ShowPerformanceCommand.c
 	DcpmemPkg/cli/ShowHostServerCommand.c
 	DcpmemPkg/common/FwUtility.c

@@ -257,6 +257,7 @@
                                         UNITS_OPTION_TIB
 #define HELP_TEXT_PERSISTENT_MEM_TYPE   L"AppDirect|AppDirectNotInterleaved"
 #define HELP_TEXT_FLASH_SPI             L"FlashSPI"
+#define HELP_TEXT_EVENT_ID              L"EventID"
 #define HELP_PERFORMANCE_MONITOR_ENABLED	      L"0|1"
 #define HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES L"minutes"
 #define HELP_EVENT_MONITOR_ENABLED                L"0|1"

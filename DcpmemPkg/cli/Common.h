@@ -81,6 +81,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_ERR_INCORRECT_VALUE_TARGET_SENSOR                 L"Syntax Error: Incorrect value for target -sensor"
 #define CLI_ERR_INCORRECT_VALUE_TARGET_PCD                    L"Syntax Error: Incorrect value for target -pcd"
 #define CLI_ERR_INCORRECT_VALUE_TARGET_PERFORMANCE            L"Syntax Error: Incorrect value for target -performance"
+#define CLI_ERR_INCORRECT_VALUE_TARGET_EVENT                  L"Syntax Error: Incorrect value for target -event"
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_MEMORY_MODE          L"Syntax Error: Incorrect value for property MemoryMode"
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_PERSISTENT_MEM_TYPE  L"Syntax Error: Incorrect value for property PersistentMemoryType"
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_RESERVED             L"Syntax Error: Incorrect value for property Reserved"

@@ -1053,7 +1053,7 @@ NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dim
 
   // Read all events matching the criteria
   event_buffer_size = get_system_events_from_file(FALSE, TRUE, event_type_mask, SYSTEM_EVENT_NOT_APPLICABLE, dimm_uid, event_id, NULL, &event_buffer);
-	if ((event_buffer_size > 0) || (NULL != event_buffer))
+	if ((event_buffer_size > 0) && (NULL != event_buffer))
 	{
 		// Find the system log file name        
     if (SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask) & SYSTEM_EVENT_DEBUG_MASK) {

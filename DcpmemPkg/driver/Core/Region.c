@@ -1355,7 +1355,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
   NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput = NULL;
   NVDIMM_PARTITION_SIZE_CHANGE *pPartitionSizeChange = NULL;
   NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = NULL;
-  CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *pConfigManagementAttributesInfo = NULL;
   PCAT_TABLE_HEADER *pPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
   REGION_GOAL *pRegionGoals[MAX_IS_PER_DIMM * MAX_DIMMS];
@@ -1445,6 +1444,11 @@ RetrieveGoalConfigsFromPlatformConfigData(
     pDimm->RegionsGoalConfig = TRUE;
 
     pPcatTable = (PCAT_TABLE_HEADER *) &pPcdConfInput->pPcatTables;
+    if (pPcatTable == NULL) {
+      NVDIMM_ERR("pPcatTable is null");
+      ReturnCode = EFI_ABORTED;
+      goto FinishError;
+    }
     SizeOfPcatTables = pPcdConfHeader->ConfInputDataSize - (UINT32)((UINT8 *)pPcatTable - (UINT8 *)pPcdConfInput);
 
     SequenceIndex = 0;
@@ -1493,7 +1497,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
 
         break;
       case PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE:
-        pConfigManagementAttributesInfo = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *) pPcatTable;
         break;
       default:
         NVDIMM_DBG("This type (%d) of PCAT table shouldn't be contained in Config Input table", pPcatTable->Type);
@@ -1546,6 +1549,11 @@ RetrieveGoalConfigsFromPlatformConfigData(
     }
 
     pPcatTable = (PCAT_TABLE_HEADER *) &pPcdConfOutput->pPcatTables;
+    if (pPcatTable == NULL) {
+      NVDIMM_ERR("pPcatTable is null");
+      ReturnCode = EFI_ABORTED;
+      goto FinishError;
+    }
     SizeOfPcatTables = pPcdConfHeader->ConfOutputDataSize - (UINT32)((UINT8 *)pPcatTable - (UINT8 *)pPcdConfOutput);
 
     /**
@@ -1621,10 +1629,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
 
         break;
       case PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE:
-        pConfigManagementAttributesInfo = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *) pPcatTable;
-        if (pConfigManagementAttributesInfo == NULL) {
-          NVDIMM_DBG("pConfigManagementAttributesInfo is null");
-        }
         break;
       default:
         NVDIMM_DBG("This type (%d) of PCAT table shouldn't be contained in Config Output table", pPcatTable->Type);

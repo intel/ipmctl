@@ -84,6 +84,11 @@ SetEvent(
       EventId = (UINT32) ParsedNumber;
     }
   }
+  else {
+    Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_EVENT);
+    NVDIMM_DBG("Failed on geting the target value");
+    goto Finish;
+  }
 
   ReturnCode = GetPropertyValue(pCmd, ACTION_REQ_PROPERTY, &pPropertyValue);
   if (!EFI_ERROR(ReturnCode)) {

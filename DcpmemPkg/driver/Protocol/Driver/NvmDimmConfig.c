@@ -922,11 +922,13 @@ GetDimmInfo (
       NVDIMM_DBG("Get package sparing policy failed with error %r for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_PACKAGE_SPARING;
     }
-    pDimmInfo->PackageSparingEnabled = pGetPackageSparingPayload->Enable;
-    pDimmInfo->PackageSparingLevel = pGetPackageSparingPayload->Aggressiveness;
-    // This maintains backwards compatibility with FIS 1.3
-    pDimmInfo->PackageSparesAvailable = (pGetPackageSparingPayload->Supported > PACKAGE_SPARING_NOT_SUPPORTED) ?
-      PACKAGE_SPARES_AVAILABLE : PACKAGE_SPARES_NOT_AVAILABLE;
+    else {
+      pDimmInfo->PackageSparingEnabled = pGetPackageSparingPayload->Enable;
+      pDimmInfo->PackageSparingLevel = pGetPackageSparingPayload->Aggressiveness;
+      // This maintains backwards compatibility with FIS 1.3
+      pDimmInfo->PackageSparesAvailable = (pGetPackageSparingPayload->Supported > PACKAGE_SPARING_NOT_SUPPORTED) ?
+        PACKAGE_SPARES_AVAILABLE : PACKAGE_SPARES_NOT_AVAILABLE;
+    }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_ARS_STATUS)

@@ -702,12 +702,6 @@ ShowDimms(
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MANUFACTURER_STR, pDimms[Index].ManufacturerStr);
       }
 
-      /** ManufacturerId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR,
-          EndianSwapUint16(pDimms[Index].ManufacturerId));
-      }
-
       /** VendorId **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VENDOR_ID_STR))) {
         Print(FORMAT_3SPACE_EQ_0X04HEX_NL, VENDOR_ID_STR, EndianSwapUint16(pDimms[Index].VendorId));
@@ -807,6 +801,12 @@ ShowDimms(
 
       /** If Dimm is Manageable, print rest of the attributes **/
       if (pDimms[Index].ManageabilityState) {
+        /** ManufacturerId **/
+        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_ID_STR))) {
+          Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR,
+            EndianSwapUint16(pDimms[Index].ManufacturerId));
+        }
+
         /** VolatileCapacity **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_MODE_CAPACITY_STR))) {
           if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {

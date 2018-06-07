@@ -481,6 +481,9 @@ Finish:
     }
   }
   FREE_POOL_SAFE(pRegions);
+  FREE_POOL_SAFE(pDisplayValues);
+  FREE_POOL_SAFE(pRegionsIds);
+  FREE_POOL_SAFE(pSocketIds);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

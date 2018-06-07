@@ -2331,7 +2331,7 @@ ConvertDimmIdToDimmListStr(
   *ppDimmIdStr = NULL;
 
   for (Index = 0; Index < pRegionInfo->DimmIdCount; Index++) {
-    *ppDimmIdStr = CatSPrint(*ppDimmIdStr,
+    *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
       ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
          pRegionInfo->DimmId[Index]);
   }

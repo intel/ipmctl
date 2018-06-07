@@ -954,7 +954,8 @@ RunConfigDiagnostics(
       goto FinishError;
     }
   }
-
+  // Clear the pointer before using the struct
+  SysCapInfo.PtrInterleaveFormatsSupported = 0;
   ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on GetSystemCapabilitiesInfo");

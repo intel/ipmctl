@@ -190,6 +190,7 @@ static char get_action_req_state_form_file(CHAR8 *device_uid)
         }
     }
 
+    fclose(h_file);
     return action_req;
 }
 
@@ -411,7 +412,7 @@ static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_c
 static BOOLEAN check_skip_entry_status_for_type(BOOLEAN not_matching, CHAR8 type_mask, CHAR8 *event_message)
 {
     char time_stamp[MAX_TIMESTAMP_LEN];
-    UINT32 event_id = 0;
+    int event_id = 0;
     char type_string[MAX_EVENT_TYPE_STRING_LENGTH];
     CHAR8 tmp_type_mask;
     BOOLEAN skip_entry = not_matching;
@@ -576,10 +577,10 @@ static BOOLEAN check_skip_entry_status_for_event_id(BOOLEAN not_matching, UINT32
 static UINT32 get_event_id_form_entry(CHAR8* event_message)
 {
     char time_stamp[MAX_TIMESTAMP_LEN];
-    UINT32 event_id = 0;
+    int event_id = 0;
 
     sscanf(event_message, "%s\t%s\t%d", time_stamp, time_stamp, &event_id);
-    return event_id;
+    return (UINT32) event_id;
 }
 /*
 * Get the requested events form the system log file and prepare the string.
@@ -866,10 +867,10 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
                         strcat(new_file_buffer, event_type_str);
                     }
                 }
-		            FILE *file = freopen(ar_file_name, "w", h_file);
-		            if (file == NULL)
-			            return;
-                fprintf(h_file, "%s", new_file_buffer);
+		            h_file = freopen(ar_file_name, "w", h_file);
+                if (h_file == NULL) {
+                  fprintf(h_file, "%s", new_file_buffer);
+                }
                 free(new_file_buffer);
             }
             fclose(h_file);
@@ -1024,13 +1025,14 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                         strcat(new_file_buffer, event_type_str);
                     }
                 }
-                FILE *file = freopen(log_file_name, "w", h_file);
-                if (file == NULL)
-                    return -1;
-                fprintf(h_file, "%s", new_file_buffer);
-                fclose(h_file);
+                h_file = freopen(log_file_name, "w", h_file);
+                if (h_file == NULL) {
+                  fprintf(h_file, "%s", new_file_buffer);
+                  fclose(h_file);
+                }
                 free(new_file_buffer);
             } else {
+                fclose(h_file);
                 return -1;
             }
         }

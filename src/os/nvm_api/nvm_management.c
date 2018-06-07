@@ -1053,7 +1053,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID		device_uid,
 	}
 
 	ReturnCode = FwCmdGetFirmwareImageInfo(pDimm, &fw_image_info);
-	if (EFI_ERROR(ReturnCode)) {
+	if (EFI_ERROR(ReturnCode) || (NULL == fw_image_info)) {
 		NVDIMM_ERR("FwCmdGetFirmwareImageInfo failed (%d)\n", ReturnCode);
 		return NVM_ERR_UNKNOWN;
 	}
@@ -1073,8 +1073,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID		device_uid,
 	p_fw_info->active_fw_build_configuration[NVM_BUILD_CONFIGURATION_LEN - 1] = 0;
 	p_fw_info->fw_update_status =
 		firmware_update_status_to_enum(fw_image_info->LastFwUpdateStatus);
-  if(fw_image_info)
-    free(fw_image_info);
+  free(fw_image_info);
 	return NVM_SUCCESS;
 }
 

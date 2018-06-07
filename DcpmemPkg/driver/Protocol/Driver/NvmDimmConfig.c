@@ -6386,7 +6386,6 @@ Finish:
   BOOLEAN FailFlag = FALSE;
   CHAR16 *pTempName16 = NULL;
   DIMM_REGION *pDimmRegion = NULL;
-  INT32 DimmForBlockNSIndex = -1;
   UINT64 ISAvailableCapacity = 0;
   BOOLEAN CapacitySpecified = FALSE;
   UINT64 RequestedCapacity = 0;
@@ -6644,7 +6643,7 @@ Update NAMESPACE_INDEX with NAMESPACE_LABEL(s)
           if (Index2 >= LabelsToRemove) {
             break;
           }
-          RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[DimmForBlockNSIndex]->Uuid, 0);
+          RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, 0);
           Index2++;
         }
         FailFlag = TRUE;

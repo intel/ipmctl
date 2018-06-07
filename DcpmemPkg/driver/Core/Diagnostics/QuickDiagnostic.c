@@ -253,7 +253,7 @@ SmartAndHealthCheck(
         goto Finish;
       }
 
-      pActualHealthStr = CatSPrint(pActualHealthStr, L" (" FORMAT_STR L")", pActualHealthReasonStr);
+      pActualHealthStr = CatSPrintClean(pActualHealthStr, L" (" FORMAT_STR L")", pActualHealthReasonStr);
     }
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_BAD_HEALTH_STATE), EVENT_CODE_504, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pActualHealthStr);

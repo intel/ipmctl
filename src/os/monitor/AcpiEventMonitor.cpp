@@ -16,6 +16,7 @@ monitor::AcpiMonitor::AcpiMonitor() :
 	m_event_log_src = std::string(ACPI_MONITOR_LOG_SRC);
 	//minimal delay in monitor execution
 	m_intervalSeconds = 1;
+  acpi_contexts = NULL;
 }
 
 monitor::AcpiMonitor::~AcpiMonitor()

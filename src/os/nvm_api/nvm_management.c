@@ -1029,7 +1029,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID		device_uid,
 	DIMM *pDimm = NULL;
 	unsigned int dimm_id;
 	int rc;
-	PT_PAYLOAD_FW_IMAGE_INFO *fw_image_info;
+	PT_PAYLOAD_FW_IMAGE_INFO *fw_image_info = NULL;
 	int nvm_status;
 
 	if (NULL == p_fw_info) {
@@ -1073,6 +1073,8 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID		device_uid,
 	p_fw_info->active_fw_build_configuration[NVM_BUILD_CONFIGURATION_LEN - 1] = 0;
 	p_fw_info->fw_update_status =
 		firmware_update_status_to_enum(fw_image_info->LastFwUpdateStatus);
+  if(fw_image_info)
+    free(fw_image_info);
 	return NVM_SUCCESS;
 }
 
@@ -1943,7 +1945,6 @@ NVM_API int nvm_get_number_of_regions(int *count)
 
 	if (EFI_ERROR(ReturnCode)) {
 		NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-		FreeCommandStatus(&pCommandStatus);
 		rc = NVM_ERR_UNKNOWN;
 	}
 	FreeCommandStatus(&pCommandStatus);
@@ -2072,7 +2073,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 
 	// If user passed DIMM uids, convert to id
@@ -2101,6 +2102,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 	if (EFI_ERROR(efi_rc))
 		rc = NVM_ERR_UNKNOWN;
 Finish:
+    FreeCommandStatus(&pCommandStatus);
     FREE_POOL_SAFE(p_dimm_ids);
 	return rc;
 }
@@ -2126,7 +2128,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
 
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 
 	// If user passed DIMM uids, convert to id
@@ -2182,6 +2184,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
 	}
 
 Finish:
+    FreeCommandStatus(&pCommandStatus);
     FREE_POOL_SAFE(p_dimm_ids);
     FREE_POOL_SAFE(pRegionConfigsInfo);
 	return rc;
@@ -2204,7 +2207,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 
 	// If user passed DIMM uids, convert to id
@@ -2229,6 +2232,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 	if (EFI_ERROR(efi_rc))
 		rc = NVM_ERR_UNKNOWN;
 Finish:
+    FreeCommandStatus(&pCommandStatus);
     FREE_POOL_SAFE(p_dimm_ids);
 	return rc;
 }
@@ -2654,15 +2658,16 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
 
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 	if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
 		NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-		return rc;
+    goto Finish;
 	}
 	if (NULL == (pDimm = (UINT16 *)GetDimmByPid(DimmId, &gNvmDimmData->PMEMDev.Dimms))) {
 		NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", DimmId);
-		return NVM_ERR_UNKNOWN;
+		rc = NVM_ERR_UNKNOWN;
+    goto Finish;
 	}
 	DimmCount = 1;
 	ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
@@ -2670,8 +2675,10 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
                    (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
 	if (EFI_ERROR(ReturnCode))
-		return NVM_ERR_UNKNOWN;
+		rc = NVM_ERR_UNKNOWN;
 
+Finish:
+  FreeCommandStatus(&pCommandStatus);
 	return rc;
 }
 
@@ -2695,15 +2702,16 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID		device_uid,
 
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 	if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
 		NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 	if (NULL == (pDimm = (UINT16 *)GetDimmByPid(DimmId, &gNvmDimmData->PMEMDev.Dimms))) {
 		NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", DimmId);
-		return NVM_ERR_UNKNOWN;
+		rc = NVM_ERR_UNKNOWN;
+    goto Finish;
 	}
 	DimmCount = 1;
 	ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
@@ -2711,8 +2719,10 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID		device_uid,
                    (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
 	if (EFI_ERROR(ReturnCode))
-		return NVM_ERR_UNKNOWN;
+		rc = NVM_ERR_UNKNOWN;
 
+Finish:
+  FreeCommandStatus(&pCommandStatus);
 	return rc;
 }
 
@@ -3083,9 +3093,14 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 	unsigned int max_errors;
 	int rc = NVM_SUCCESS;
 
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    return NVM_ERR_UNKNOWN;
+  }
+
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
+		goto Finish;
 	}
 
 	if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
@@ -3094,12 +3109,6 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 	}
 
 	max_errors = 1;
-
-	ReturnCode = InitializeCommandStatus(&pCommandStatus);
-	if (EFI_ERROR(ReturnCode)) {
-		rc = NVM_ERR_UNKNOWN;
-		goto Finish;
-	}
 
 	ReturnCode = gNvmDimmDriverNvmDimmConfig.GetErrorLog(
 		&gNvmDimmDriverNvmDimmConfig,
@@ -3114,11 +3123,11 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 
 	if (EFI_ERROR(ReturnCode)) {
 		NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-		FreeCommandStatus(&pCommandStatus);
 		rc = NVM_ERR_UNKNOWN;
 	}
-	FreeCommandStatus(&pCommandStatus);
+
 Finish:
+	FreeCommandStatus(&pCommandStatus);
 	return rc;
 }
 

@@ -12,54 +12,6 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 /**
-  Function to create a string, using the EFI_STRING_ID and the variable number
-  of arguments for the format string
-
-  Storage for the formatted Unicode string returned is allocated using
-  AllocatePool(). The pointer to the created string is returned.  The caller
-  is responsible for freeing the returned string.
-
-  @param[in] StringId  ID of string
-  @param[in] NumOfArgs Number of agruments passed
-  @param[in] ...       The variable argument list
-
-  @retval NULL    There was not enough available memory.
-  @return         Null-terminated formatted Unicode string.
-**/
-CHAR16 *
-CreateDiagnosticStr (
-  IN     EFI_STRING_ID StringId,
-  IN     UINT16 NumOfArgs,
-  ...
-  )
-{
-  UINTN Index = 0;
-  CHAR16 *pTmpStr = NULL;
-  CHAR16 *pOutputStr = NULL;
-  VA_LIST ArgList;
-
-  NVDIMM_ENTRY();
-
-  ZeroMem(&ArgList, sizeof(ArgList));
-
-  pOutputStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(StringId), NULL);
-
-  if (NumOfArgs > 0) {
-
-    VA_START(ArgList, NumOfArgs);
-    for (Index = 0; Index < NumOfArgs; Index++) {
-      pTmpStr = VA_ARG (ArgList, CHAR16*);
-      pOutputStr = CatSPrintClean(NULL, pOutputStr, pTmpStr);
-      FREE_POOL_SAFE(pTmpStr);
-    }
-    VA_END (ArgList);
-  }
-
-  NVDIMM_EXIT();
-  return pOutputStr;
-}
-
-/**
   Append to the results string for a paricular diagnostic test, and modify
   the test state as per the message being appended.
 
@@ -365,6 +317,7 @@ CombineDiagnosticsTestResults(
       pDiagStateValueStr = GetDiagnosticState(DiagState[Index]);
       if (pDiagStateValueStr == NULL) {
         NVDIMM_DBG("Retrieval of the test state failed");
+        FREE_POOL_SAFE(pTestNameValueStr);
         //log as warning state and a message
         continue;
       }

@@ -67,7 +67,6 @@ namespace monitor
 		std::string m_name;
 		size_t m_intervalSeconds;
 		bool m_enabled;
-		SYSTEM_LOGGER m_logger;
 	};
 
 

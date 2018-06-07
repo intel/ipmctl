@@ -163,10 +163,8 @@ InitializeNvmDimmDriver (
 */
 EFI_STATUS StoreSystemEntryForDimm(OBJECT_STATUS *pObjectStatus, CONST CHAR16 *source, UINT32 event_type, CONST CHAR16  *message, ...)
 {
-    EFI_STATUS ReturnCode = EFI_SUCCESS;
-    LIST_ENTRY *pDimmNode = NULL;
-    CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-    VA_LIST args;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  VA_LIST args;
   NVM_EVENT_MSG_W event_message = { 0 };
 
   if ((pObjectStatus == NULL) || (NULL == message)) {
@@ -2286,9 +2284,10 @@ SetAlarmThresholds (
 #ifdef OS_BUILD
       pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
       CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_SENSOR_SET_CHANGED), NULL);
-        nvm_store_system_entry_widechar(NVM_SYSLOG_SRC_W,
-          SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_11, FALSE, TRUE, TRUE, FALSE, 0),
-          pObjectStatus->ObjectIdStr, pTmpStr, ConvertSensorIdToStringW(SensorId), pDimms[Index]->DeviceHandle.AsUint32);
+      nvm_store_system_entry_widechar(NVM_SYSLOG_SRC_W,
+        SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_11, FALSE, TRUE, TRUE, FALSE, 0),
+        pObjectStatus->ObjectIdStr, pTmpStr, ConvertSensorIdToStringW(SensorId), pDimms[Index]->DeviceHandle.AsUint32);
+      FREE_POOL_SAFE(pTmpStr);
 #endif // OS_BUILD
     }
   }
@@ -6526,7 +6525,6 @@ Build NAMESPACE structure
     CopyMem(&pNamespace->Name, pName, MIN(AsciiStrLen(pName), NSLABEL_NAME_LEN));
     // If we allocated the buffer here, not in the CLI - we need to free it after its copied
     if (pTempName16 != NULL) {
-      FREE_POOL_SAFE(pTempName16);
       FREE_POOL_SAFE(pName);
     }
   }
@@ -6715,6 +6713,7 @@ Finish:
     FREE_POOL_SAFE(pNamespace);
     ReturnCode = EFI_ABORTED;
   }
+  FREE_POOL_SAFE(pTempName16);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
   }

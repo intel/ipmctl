@@ -667,6 +667,7 @@ CheckPlatformConfigurationData(
   }
 
 Finish:
+  FREE_POOL_SAFE(pPcdConfHeader);
   FREE_POOL_SAFE(pBrokenISs);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -997,6 +998,9 @@ RunConfigDiagnostics(
 FinishError:
   APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
 Finish:
+  if (SysCapInfo.PtrInterleaveFormatsSupported != 0) {
+    FreePool((VOID *)SysCapInfo.PtrInterleaveFormatsSupported);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

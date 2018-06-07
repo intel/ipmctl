@@ -1043,12 +1043,14 @@ GetDimmInfo (
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_FW_IMAGE_INFO; // maybe used in other caller APIs excluding ShowDimms()
     }
-    pDimmInfo->LastFwUpdateStatus = pPayloadFwImage->LastFwUpdateStatus;
-    pDimmInfo->ActiveFwType = pPayloadFwImage->FwType;
-    pDimmInfo->StagedFwVersion = ParseFwVersion(pPayloadFwImage->StagedFwRevision);
+    else {
+      pDimmInfo->LastFwUpdateStatus = pPayloadFwImage->LastFwUpdateStatus;
+      pDimmInfo->ActiveFwType = pPayloadFwImage->FwType;
+      pDimmInfo->StagedFwVersion = ParseFwVersion(pPayloadFwImage->StagedFwRevision);
 
-    SafeAsciiStrToUnicodeStr(pPayloadFwImage->CommitId, FW_COMMIT_ID_LEN, pDimmInfo->ActiveFwCommitId);
-    SafeAsciiStrToUnicodeStr(pPayloadFwImage->BuildConfiguration, FW_BUILD_LEN, pDimmInfo->ActiveFwBuild);
+      SafeAsciiStrToUnicodeStr(pPayloadFwImage->CommitId, FW_COMMIT_ID_LEN, pDimmInfo->ActiveFwCommitId);
+      SafeAsciiStrToUnicodeStr(pPayloadFwImage->BuildConfiguration, FW_BUILD_LEN, pDimmInfo->ActiveFwBuild);
+    }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3)
@@ -1057,14 +1059,15 @@ GetDimmInfo (
       if (EFI_ERROR(ReturnCode)) {
         pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_MEM_INFO_PAGE;
       }
-
-      pDimmInfo->ErrorInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_ENABLED_BIT;
-      pDimmInfo->MediaTemperatureInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT;
-      pDimmInfo->SoftwareTriggersEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_SW_TRIGGER_ENABLED_BIT;
-      pDimmInfo->PoisonErrorInjectionsCounter = pPayloadMemInfoPage3->PoisonErrorInjectionsCounter;
-      pDimmInfo->PoisonErrorClearCounter = pPayloadMemInfoPage3->PoisonErrorClearCounter;
-      pDimmInfo->MediaTemperatureInjectionsCounter = pPayloadMemInfoPage3->MediaTemperatureInjectionsCounter;
-      pDimmInfo->SoftwareTriggersCounter = pPayloadMemInfoPage3->SoftwareTriggersCounter;
+      else {
+        pDimmInfo->ErrorInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_ENABLED_BIT;
+        pDimmInfo->MediaTemperatureInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT;
+        pDimmInfo->SoftwareTriggersEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_SW_TRIGGER_ENABLED_BIT;
+        pDimmInfo->PoisonErrorInjectionsCounter = pPayloadMemInfoPage3->PoisonErrorInjectionsCounter;
+        pDimmInfo->PoisonErrorClearCounter = pPayloadMemInfoPage3->PoisonErrorClearCounter;
+        pDimmInfo->MediaTemperatureInjectionsCounter = pPayloadMemInfoPage3->MediaTemperatureInjectionsCounter;
+        pDimmInfo->SoftwareTriggersCounter = pPayloadMemInfoPage3->SoftwareTriggersCounter;
+      }
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -8546,11 +8549,11 @@ AutomaticProvisionNamespace(
     }
   }
 
-Finish:
   // Update status
   NVDIMM_DBG("New ProvisionNamespaceStatus: %d", pIntelDIMMConfig->ProvisionNamespaceStatus);
   UpdateIntelDIMMConfig(pIntelDIMMConfig);
 
+Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

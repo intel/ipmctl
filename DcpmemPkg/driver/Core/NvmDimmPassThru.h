@@ -1278,7 +1278,7 @@ typedef struct {
 	*/
 	UINT8 DirtyShutdownTrigger;
 
-	UINT8 Reserved2[114];
+	UINT8 Reserved2[115];
 } PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS;
 
 /*

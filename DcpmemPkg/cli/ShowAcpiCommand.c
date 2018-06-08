@@ -116,7 +116,10 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
 
   if (ChosenAcpiSystem == AcpiAll || ChosenAcpiSystem == AcpiPMTT) {
     ReturnCode = pNvmDimmConfigProtocol->GetAcpiPMTT(pNvmDimmConfigProtocol, &pPMTT);
-    if (EFI_ERROR(ReturnCode) || pPMTT == NULL) {
+    if (ReturnCode == EFI_NOT_FOUND) {
+      Print(L"PMTT table not found.\n");
+      ReturnCode = EFI_SUCCESS;
+    } else if (EFI_ERROR(ReturnCode)|| pPMTT == NULL) {
       Print(L"Error: Failed to find the PMTT tables\n");
     } else {
       Print(L"---Platform Memory Topology Table---\n");

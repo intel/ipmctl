@@ -158,7 +158,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
 			}
 		}
 
-		delete dimms;
+		delete[] dimms;
 	}
 	return dimmList;
 }

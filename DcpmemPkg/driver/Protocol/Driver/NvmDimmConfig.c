@@ -5080,7 +5080,7 @@ Finish:
   }
   FREE_POOL_SAFE(pFileHeader);
   FREE_POOL_SAFE(pImageBuffer);
-
+  FREE_POOL_SAFE(pErrorMessage);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -5289,22 +5289,23 @@ GetActualRegionsGoalCapacities(
       goto Finish;
     }
   }
+  // allocate helper structures
+  pDimmsSymPerSocket = AllocateZeroPool(sizeof(*pDimmsSym) * MAX_DIMMS);
+  if (pDimmsSymPerSocket == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  pDimmsAsymPerSocket = AllocateZeroPool(sizeof(*pDimmsAsym) * MAX_DIMMS);
+  if (pDimmsAsymPerSocket == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
 
   for (Socket = 0; Socket < MAX_SOCKETS; Socket++) {
     DimmsAsymNumPerSocket = 0;
     DimmsSymNumPerSocket = 0;
     ZeroMem(pDimmsOnSocket, sizeof(pDimmsOnSocket[0]) * MAX_DIMMS);
-    pDimmsSymPerSocket = AllocateZeroPool(sizeof(*pDimmsSym) * MAX_DIMMS);
-    if (pDimmsSymPerSocket == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
 
-    pDimmsAsymPerSocket = AllocateZeroPool(sizeof(*pDimmsAsym) * MAX_DIMMS);
-    if (pDimmsAsymPerSocket == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
     FilterDimmBySocket(Socket, ppDimms, DimmsNum, pDimmsOnSocket, &NumDimmsOnSocket);
 
      /**User might have created goal for 2nd socket alone*/
@@ -5343,14 +5344,14 @@ GetActualRegionsGoalCapacities(
       goto Finish;
     }
 
-    if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL) {
+    if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsSymNumPerSocket; Index++) {
         pDimmsSym[DimmsSymNum] = pDimmsSymPerSocket[Index];
         DimmsSymNum++;
       }
     }
 
-    if (pDimmsAsym != NULL && pDimmsAsymPerSocket != NULL) {
+    if (pDimmsAsym != NULL && pDimmsAsymPerSocket != NULL && (DimmsAsymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsAsymNumPerSocket; Index++) {
         pDimmsAsym[DimmsAsymNum] = pDimmsAsymPerSocket[Index];
         DimmsAsymNum++;
@@ -5437,6 +5438,7 @@ Finish:
   FREE_POOL_SAFE(pDimmsSym);
   FREE_POOL_SAFE(pDimmsAsym);
   FREE_POOL_SAFE(pDimmsSymPerSocket);
+  FREE_POOL_SAFE(pDimmsAsymPerSocket);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -6387,6 +6389,7 @@ Finish:
   BOOLEAN FailFlag = FALSE;
   CHAR16 *pTempName16 = NULL;
   DIMM_REGION *pDimmRegion = NULL;
+  INT32 DimmForBlockNSIndex = -1;
   UINT64 ISAvailableCapacity = 0;
   BOOLEAN CapacitySpecified = FALSE;
   UINT64 RequestedCapacity = 0;
@@ -6644,7 +6647,7 @@ Update NAMESPACE_INDEX with NAMESPACE_LABEL(s)
           if (Index2 >= LabelsToRemove) {
             break;
           }
-          RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, 0);
+          RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[DimmForBlockNSIndex]->Uuid, 0);
           Index2++;
         }
         FailFlag = TRUE;

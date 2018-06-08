@@ -164,6 +164,7 @@ ShowPcd(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FreeCommandStatus(&pCommandStatus);
   FreeDimmPcdInfoArray(pDimmPcdInfo, DimmPcdInfoCount);
   pDimmPcdInfo = NULL;
   FREE_POOL_SAFE(pDimmIds);

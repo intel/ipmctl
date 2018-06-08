@@ -164,6 +164,10 @@ OS_MUTEX * os_mutex_init(const char *name)
 		{
 			return mutex;
 		}
+    else
+    {
+      free(mutex);
+    }
 	}
 	return NULL;
 }

@@ -194,6 +194,7 @@ DeletePcdCmd(
   DisplayCommandStatus(pCommandStatusMessage, L" on DIMM ", pCommandStatus);
 
 Finish:
+  FREE_POOL_SAFE(pCommandStatusMessage);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   NVDIMM_EXIT_I64(ReturnCode);

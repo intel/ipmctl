@@ -409,6 +409,7 @@ ShowTopology(
   }
 
 Finish:
+  FREE_POOL_SAFE(pDisplayValues);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pMemoryType);
   FREE_POOL_SAFE(pDimmIds);

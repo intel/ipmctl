@@ -345,7 +345,7 @@ GetSingleNvmStatusCodeMessage(
       return pTempString;
     }
 
-    return CatSPrint(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_CONTROLLER_THRESHOLD_MAX);
+    return CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_CONTROLLER_THRESHOLD_MAX);
 
   case NVM_ERR_SENSOR_MEDIA_TEMP_OUT_OF_RANGE:
     pTempString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_MEDIA_OUT_OF_RANGE),  NULL);
@@ -354,7 +354,7 @@ GetSingleNvmStatusCodeMessage(
       return pTempString;
     }
 
-    return CatSPrint(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_MEDIA_THRESHOLD_MAX);
+    return CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_MEDIA_THRESHOLD_MAX);
   case NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE:
     pTempString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CAPACITY_OUT_OF_RANGE),  NULL);
 
@@ -362,7 +362,7 @@ GetSingleNvmStatusCodeMessage(
       return pTempString;
     }
 
-    return CatSPrint(NULL, pTempString, CAPACITY_THRESHOLD_MIN, CAPACITY_THRESHOLD_MAX);
+    return CatSPrintClean(NULL, pTempString, CAPACITY_THRESHOLD_MIN, CAPACITY_THRESHOLD_MAX);
   case NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE), NULL);
 

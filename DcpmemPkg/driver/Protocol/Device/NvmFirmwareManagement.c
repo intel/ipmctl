@@ -204,6 +204,7 @@ SetImage (
   }
 
 Finish:
+  FREE_POOL_SAFE(pSingleStatusCodeMessage);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

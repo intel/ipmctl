@@ -188,6 +188,7 @@ static char get_action_req_state_form_file(CHAR8 *device_uid)
                 action_req = 1;
             }
         }
+        fclose(h_file);
     }
 
     fclose(h_file);
@@ -868,12 +869,15 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
                     }
                 }
 		            h_file = freopen(ar_file_name, "w", h_file);
-                if (h_file == NULL) {
-                  fprintf(h_file, "%s", new_file_buffer);
+                if (h_file != NULL) {
+                    fprintf(h_file, "%s", new_file_buffer);
+                    fclose(h_file);
                 }
                 free(new_file_buffer);
             }
-            fclose(h_file);
+            else {
+                fclose(h_file);
+            }
         }
     }
 }
@@ -1026,7 +1030,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                     }
                 }
                 h_file = freopen(log_file_name, "w", h_file);
-                if (h_file == NULL) {
+                if (h_file != NULL) {
                   fprintf(h_file, "%s", new_file_buffer);
                   fclose(h_file);
                 }

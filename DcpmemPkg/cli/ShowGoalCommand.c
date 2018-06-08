@@ -564,6 +564,7 @@ ShowGoal(
   }
 
 Finish:
+  FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pSocketIds);

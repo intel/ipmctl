@@ -1000,9 +1000,7 @@ RunConfigDiagnostics(
 FinishError:
   APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
 Finish:
-  if (SysCapInfo.PtrInterleaveFormatsSupported != 0) {
-    FreePool((VOID *)SysCapInfo.PtrInterleaveFormatsSupported);
-  }
+  FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

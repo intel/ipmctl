@@ -97,8 +97,10 @@ NVM_API int nvm_init()
 
 NVM_API void nvm_uninit()
 {
-    uninit_protocol_shell_parameters_protocol();
-    preferences_uninit();
+  EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
+  NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
+  uninit_protocol_shell_parameters_protocol();
+  preferences_uninit();
 }
 
 NVM_API void nvm_sync_lock_api()
@@ -174,7 +176,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
 		dt = (enum DisplayType)d;
 		process_output(dt, disp_name, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
 	}
-    nvm_uninit();
+  nvm_uninit();
 	return (int)rc;
 }
 
@@ -1361,6 +1363,7 @@ NVM_API int nvm_set_passphrase(const NVM_UID device_uid,
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   return rc;
 }
 
@@ -1418,6 +1421,7 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   FreeCommandStatus(&p_command_status);
   return rc;
 }
@@ -1447,6 +1451,7 @@ NVM_API int nvm_unlock_device(const NVM_UID device_uid,
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   return rc;
 }
 
@@ -1474,6 +1479,7 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid)
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   return rc;
 }
 
@@ -1502,6 +1508,7 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid,
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   return rc;
 }
 
@@ -2535,6 +2542,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
 		if (!EFI_ERROR(ReturnCode))
 			/* parse success, now run the command */
 			ReturnCode = Command.run(&Command);
+    FreeCommandInput(&Input);
 	}
 
 	fclose(gOsShellParametersProtocol.StdOut);

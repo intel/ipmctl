@@ -731,6 +731,18 @@ EFI_STATUS
 initAcpiTables(
   );
 
+#ifdef OS_BUILD
+/**
+  Uninitialize ACPI tables (NFit and PCAT)
+
+  @retval EFI_SUCCESS   on success
+  @retval EFI_NOT_FOUND Nfit table not found
+**/
+EFI_STATUS
+uninitAcpiTables(
+  );
+#endif // OS_BUILD
+
 /**
   Initialize a simulated NFit table.
 

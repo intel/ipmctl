@@ -239,11 +239,11 @@ LoadGoal(
     }
     NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, L"Loaded following pool configuration goal\n");
     ShowGoalCmd.run(&ShowGoalCmd);
-    FreeCommandInput(&ShowGoalCmdInput);
     FREE_POOL_SAFE(pCommandStr);
   }
 
 Finish:
+  FreeCommandInput(&ShowGoalCmdInput);
   FreeCommandStructure(&ShowGoalCmd);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pLoadFilePath);

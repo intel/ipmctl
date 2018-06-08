@@ -1150,6 +1150,8 @@ IsSecurityOpSupported(
 
   NVDIMM_ENTRY();
 
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
+
   ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SystemCapabilitiesInfo);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on GetSystemCapabilitiesInfo");
@@ -1195,6 +1197,7 @@ IsSecurityOpSupported(
   }
 
 Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   NVDIMM_EXIT();
   return Result;
 }
@@ -6936,6 +6939,7 @@ ModifyNamespace(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

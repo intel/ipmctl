@@ -128,6 +128,9 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   }
 
 Finish:
+  if (ppStringElements != NULL) {
+    FreeStringArray(ppStringElements, ElementsCount);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

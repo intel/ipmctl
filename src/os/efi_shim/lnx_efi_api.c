@@ -126,6 +126,16 @@ initAcpiTables(
     return EFI_SUCCESS;
 }
 
+EFI_STATUS
+uninitAcpiTables(
+)
+{
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPMTTTble);
+  return EFI_SUCCESS;
+}
+
 /*
 * Harvest the raw SMBIOS table data from memory and allocate a copy
 * to parse.

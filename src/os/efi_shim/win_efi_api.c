@@ -139,6 +139,17 @@ initAcpiTables(
     return EFI_SUCCESS;
 }
 
+EFI_STATUS
+uninitAcpiTables(
+)
+{
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPMTTTble);
+  return EFI_SUCCESS;
+}
+
+
 UINT32 string_to_dword(const char *str)
 {
 	union

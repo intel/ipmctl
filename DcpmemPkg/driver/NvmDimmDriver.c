@@ -1642,7 +1642,9 @@ NvmDimmDriverDriverBindingStop(
   gNvmDimmData->ControllerHandle = NULL;
 
 Finish:
-#endif
+#else //not OS_BUILD
+  uninitAcpiTables();
+#endif //not OS_BUILD
   /** Bullseye dump here **/
   NVDIMM_DBG("Exiting DriverBindingStop, error = %r.\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);

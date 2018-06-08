@@ -152,7 +152,7 @@ GetRegionList()
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of DCPMEM DIMMs
+  @param[in, out] pDimmList: the list of DCPMEM modules
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -1884,7 +1884,7 @@ MapRegionsGoal(
     goto Finish;
   }
 
-  /** Get the largest interleave set index in existing Config Input tables on DCPMEM DIMMs. **/
+  /** Get the largest interleave set index in existing Config Input tables on DIMMs. **/
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 

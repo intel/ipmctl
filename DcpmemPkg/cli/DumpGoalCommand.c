@@ -24,7 +24,7 @@ struct Command DumpGoalCommand =
     {CONFIG_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Store the region configuration goal from one or more DCPMEM DIMMs to a file", //!< help
+  L"Store the region configuration goal from one or more DIMMs to a file",        //!< help
   DumpGoal
 };
 

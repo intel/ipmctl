@@ -27,7 +27,7 @@ struct Command SetSensorCommand =
     {NON_CRIT_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},
     {ENABLED_STATE_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE}
   },
-  L"Modify the alarm threshold(s) for one or more DCPMEM DIMMs.",   //!< help
+  L"Modify the alarm threshold(s) for one or more DIMMs.",          //!< help
   SetSensor
 };
 

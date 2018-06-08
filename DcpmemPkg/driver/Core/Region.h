@@ -175,7 +175,7 @@ GetRegionList();
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of DCPMEM DIMMs
+  @param[in, out] pDimmList: the list of DCPMEM modules
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -198,7 +198,7 @@ FreeISResources(
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of DCPMEM DIMMs
+  @param[in, out] pDimmList: the list of DCPMEM modules
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID

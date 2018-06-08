@@ -56,7 +56,7 @@ struct Command SetDimmCommand =
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired}
   },                                                                //!< properties
-  L"Set properties of one or more DCPMEM DIMMs.",                   //!< help
+  L"Set properties of one or more DIMMs.",                          //!< help
   SetDimm
 };
 

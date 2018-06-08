@@ -22,7 +22,7 @@ struct Command ShowPcdCommand =
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show pool configuration goal stored on one or more DCPMEM DIMMs", //!< help
+  L"Show pool configuration goal stored on one or more DIMMs",        //!< help
   ShowPcd
 };
 

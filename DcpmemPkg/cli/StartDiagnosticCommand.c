@@ -25,7 +25,7 @@ COMMAND StartDiagnosticCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                        //!< properties
-  L"Run a diagnostic test on one or more DCPMEM DIMMs",           //!< help
+  L"Run a diagnostic test on one or more DIMMs",                  //!< help
   StartDiagnosticCmd
 };
 

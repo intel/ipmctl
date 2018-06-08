@@ -359,7 +359,7 @@ typedef struct _DIMM_INFO {
 
   // From global dimm struct
   UINT8 ManageabilityState;                 //!< if the DIMM is manageable by this SW
-  UINT8 IsNew;                              //!< if is incorporated with the rest of the DCPMEM DIMMs in the system
+  UINT8 IsNew;                              //!< if is incorporated with the rest of the DCPMEM modules in the system
   UINT8 RebootNeeded;                       //!< Whether or not reboot is required to reconfigure dimm
   UINT32 SkuInformation;                    //!< Information about SKU modes
   UINT16 VendorId;                          //!< vendor id

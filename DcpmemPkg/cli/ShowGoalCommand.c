@@ -38,7 +38,7 @@ struct Command ShowGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Show region configuration goal stored on one or more DCPMEM DIMMs", //!< help
+  L"Show region configuration goal stored on one or more DIMMs",        //!< help
   ShowGoal
 };
 

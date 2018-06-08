@@ -36,9 +36,9 @@ struct Command ShowDimmsCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},             //!< properties
-  L"Show information about one or more DCPMEM DIMMs.", //!< help
-  ShowDimms                                            //!< run function
+  {{L"", L"", L"", FALSE, ValueOptional}},               //!< properties
+  L"Show information about one or more DIMMs.", //!< help
+  ShowDimms                                              //!< run function
 };
 
 CHAR16 *mppAllowedShowDimmsDisplayValues[] =

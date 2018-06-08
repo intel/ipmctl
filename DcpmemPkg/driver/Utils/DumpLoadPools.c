@@ -226,7 +226,7 @@ SetUpGoalStructures(
   if (DimmConfigIndex == DimmsNum) {
     ReturnCode = EFI_SUCCESS;
   } else {
-    NVDIMM_WARN("Not all specified DCPMEM DIMMs have match in the file.");
+    NVDIMM_WARN("Not all specified DIMMs have match in the file.");
     ReturnCode = EFI_ABORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_DIMM_COUNT_MISMATCH);
     goto Finish;

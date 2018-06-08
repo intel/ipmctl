@@ -20,7 +20,7 @@ struct Command showAcpiCommand =
   {{L"", L"", L"", L"", FALSE, ValueOptional}},                        //!< options
   {{SYSTEM_TARGET, L"", SYSTEM_ACPI_TARGETS, TRUE, ValueOptional}},    //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                             //!< properties
-  L"Show the ACPI tables related to the DCPMEM DIMMs in the system.",  //!< help
+  L"Show the ACPI tables related to the DIMMs in the system.",//!< help
   showAcpi                                                             //!< run function
 };
 

@@ -177,7 +177,7 @@ enum region_health
 enum interleave_set_health
 {
   INTERLEAVE_HEALTH_UNKNOWN  = 0,  ///< Health cannot be determined.
-  INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying DCPMEM DIMMs have good health.
+  INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying DIMMs have good health.
   INTERLEAVE_HEALTH_DEGRADED = 2,  ///< In danger of failure, may have degraded performance.
   INTERLEAVE_HEALTH_FAILED   = 3   ///< Interleave set has failed and is unavailable.
 };

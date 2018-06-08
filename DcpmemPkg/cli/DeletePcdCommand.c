@@ -24,7 +24,7 @@ struct Command DeletePcdCommand =
     {PCD_TARGET, L"", PCD_LSA_TARGET_VALUE, TRUE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                         //!< properties
-  L"Clear the namespace LSA partition on one or more DCPMEM DIMMs",                //!< help
+  L"Clear the namespace LSA partition on one or more DIMMs",                       //!< help
 	DeletePcdCmd
 };
 

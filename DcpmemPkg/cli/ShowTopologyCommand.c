@@ -26,8 +26,8 @@ struct Command ShowTopologyCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                                 //!< properties
-  L"Show the topology of the DCPMEM DIMMs installed in the host server"  , //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                                   //!< properties
+  L"Show the topology of the DCPMEM modules installed in the host server"  , //!< help
   ShowTopology
 };
 

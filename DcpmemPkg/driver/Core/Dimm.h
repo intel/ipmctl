@@ -192,7 +192,7 @@ typedef struct _DIMM {
   struct _DIMM_REGION *pIsRegions[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNum;
 
-  UINT8 IsNew;                             //!< if is incorporated with the rest of the DCPMEM DIMMs in the system
+  UINT8 IsNew;                             //!< if is incorporated with the rest of the DIMMs in the system
   UINT8 RebootNeeded;                      //!< Whether or not reboot is required to reconfigure dimm
 
   UINT8 LsaStatus;                         //!< The status of the LSA partition parsing for this DIMM

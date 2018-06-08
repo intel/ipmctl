@@ -29,7 +29,7 @@ struct Command ShowFirmwareCommand =
     {FIRMWARE_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
-  L"Show information about firmware on one or more DCPMEM DIMMs.",  //!< help
+  L"Show information about firmware on one or more DIMMs.",         //!< help
   ShowFirmware                                                      //!< run function
 };
 
@@ -126,7 +126,7 @@ ShowFirmware(
     goto Finish;
   }
 
-  /** Get DCPMEM DIMMs list **/
+  /** Get DCPMEM modules list **/
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);

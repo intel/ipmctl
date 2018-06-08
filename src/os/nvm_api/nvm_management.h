@@ -1524,7 +1524,7 @@ NVM_API int nvm_get_memory_topology_count();
 
 /**
 * @brief Retrieve the number of memory devices installed in the system. This count includes
-* both DCPMEM DIMMs and other memory devices, such as DRAM.
+* both DCPMEM modules and other memory devices, such as DRAM.
 * @pre The caller must have administrative privileges.
 * @remarks This method should be called before #nvm_get_memory_topology.
 * @param[out] count pointer to number of memory devices
@@ -1847,7 +1847,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
 NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 
 /**
-* @brief Retrieve all the health sensors for the specified DCPMEM DIMM.
+* @brief Retrieve all the health sensors for the specified DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in,out] p_sensors
@@ -1868,7 +1868,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors, const NVM_UINT16 count);
 
 /**
-* @brief Retrieve a specific health sensor from the specified DCPMEM DIMM.
+* @brief Retrieve a specific health sensor from the specified DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type
@@ -1886,7 +1886,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
 
 /**
 * @brief Change the critical threshold on the specified health sensor for the specified
-* DCPMEM DIMM.
+* DIMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type

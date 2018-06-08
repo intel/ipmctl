@@ -309,7 +309,7 @@ InitWorkarounds(
     if (NULL == (ppShellVarSplit = StrSplit(pShellVar, L',', &ShellTokensCount))) {
       return;
     }
-    
+
     for (Index = 0; Index < ShellTokensCount; Index++) {
       if (CompareMem(ppShellVarSplit[Index], WA_FLAG_ALWAYS_LOAD, sizeof(WA_FLAG_ALWAYS_LOAD)) == 0) {
         Print(L"INFO: 'Always load' workaround enabled in the driver.\n");
@@ -916,7 +916,7 @@ InitializeDimms()
    InitErrorAndWarningNvmStatusCodes();
 
    /**
-    enumerate DCPMEM DIMMs
+    enumerate DCPMEM modules
    **/
 
    ReturnCodeNonBlocking = FillDimmList();
@@ -1177,7 +1177,7 @@ NvmDimmDriverDriverBindingStart(
 	}
 
 	/**
-	enumerate DCPMEM DIMMs
+	enumerate DCPMEM modules
 	**/
 	ReturnCode = FillDimmList();
 	if (EFI_ERROR(ReturnCode)) {

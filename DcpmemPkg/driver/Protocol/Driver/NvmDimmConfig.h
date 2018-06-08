@@ -6,7 +6,7 @@
 /*
  * @file NvmDimmConfig.h
  * @brief Implementation of the EFI_NVMDIMMS_CONFIG_PROTOCOL, a custom protocol
- * to configure and manage DCPMEM DIMMs
+ * to configure and manage DCPMEM modules
  */
 
 #ifndef _NVMDIMM_CONFIG_H_
@@ -106,10 +106,10 @@ ReadRunTimeDriverPreferences(
   );
 
 /**
-  Retrieve the number of DCPMEM DIMMs in the system found in NFIT
+  Retrieve the number of DCPMEM modules in the system found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMEM DIMMs found in NFIT.
+  @param[out] pDimmCount The number of DCPMEM modules found in NFIT.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -122,10 +122,10 @@ GetDimmCount(
   );
 
 /**
-  Retrieve the number of uninitialized DCPMEM DIMMs in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMEM modules in the system found thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMEM DIMMs found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMEM modules found thru SMBUS.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -138,7 +138,7 @@ GetUninitializedDimmCount(
   );
 
 /**
-  Retrieve the list of DCPMEM DIMMs found in NFIT
+  Retrieve the list of DCPMEM modules found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -158,7 +158,7 @@ GetDimms(
   );
 
 /**
-  Retrieve the list of uninitialized DCPMEM DIMMs found thru SMBUS
+  Retrieve the list of uninitialized DCPMEM modules found thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -328,7 +328,7 @@ GetSecurityState(
 
   @retval EFI_INVALID_PARAMETER when pLockState is NULL
   @retval EFI_OUT_OF_RESOURCES couldn't allocate memory for a structure
-  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMEM DIMMs detected
+  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMEM modules detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
   @retval EFI_SUCCESS security state correctly set
@@ -516,7 +516,7 @@ RecoverDimmFw(
     need to be provided if examine flag is set
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
   @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
   @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
@@ -565,7 +565,7 @@ Retrieve the region list
 
 @retval EFI_SUCCESS  The region list was returned properly
 @retval EFI_INVALID_PARAMETER pRegions is NULL.
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
 **/
 EFI_STATUS
 EFIAPI
@@ -586,7 +586,7 @@ Retrieve the details about the region specified with region id
 
 @retval EFI_SUCCESS The region was returned properly
 @retval EFI_INVALID_PARAMETER pRegion is NULL
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
 **/
 EFI_STATUS
 EFIAPI
@@ -810,7 +810,7 @@ GetAlarmThresholds (
   @param[in]  EnabledState New enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -890,7 +890,7 @@ GetDriverApiVersion(
   @param[out] pNamespacesCount - namespace count
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
   @retval EFI_SUCCESS All ok
@@ -919,7 +919,7 @@ EFIAPI GetNamespaces (
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -957,7 +957,7 @@ GetActualRegionsGoalCapacities(
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -989,7 +989,7 @@ CreateGoalConfig (
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -1016,7 +1016,7 @@ DeleteGoalConfig (
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -1042,7 +1042,7 @@ GetGoalConfigs(
   @param[in] pDevicePath is a pointer to a device where dump file will be stored
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -1066,7 +1066,7 @@ DumpGoalConfig(
   @param[in] pFileString Buffer for Region Goal configuration from file
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -1132,7 +1132,7 @@ StartDiagnostic(
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID already exists in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Region.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
 **/
 EFI_STATUS
 EFIAPI
@@ -1168,7 +1168,7 @@ CreateNamespace(
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Region.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
 
   Do not change property if NULL pointer provided
 **/
@@ -1194,7 +1194,7 @@ ModifyNamespace(
   @retval EFI_SUCCESS if the operation was successful.
   @retval EFI_NOT_FOUND if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
 **/
 EFI_STATUS
 EFIAPI
@@ -1268,7 +1268,7 @@ DumpFwDebugLog(
 
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
@@ -1293,7 +1293,7 @@ SetOptionalConfigurationDataPolicy(
   @param[out] FwLogLevel - FW log level to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
@@ -1734,7 +1734,7 @@ InjectError
 @param[IN] pPercentageRemaining - Pointer to percentage remaining
 @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
 @retval EFI_INVALID_PARAMETER One or more parameters are invalid
 @retval EFI_SUCCESS All ok
 **/
@@ -1803,7 +1803,7 @@ Update from mfg to prod firmware
 @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
 @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
 @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM DIMMs has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
 @retval EFI_SUCCESS Update has completed successfully
 **/
 EFI_STATUS

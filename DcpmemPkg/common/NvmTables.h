@@ -444,7 +444,7 @@ typedef struct {
     0 - None
     1 - Busy
     2 - Done
-    Results are updated in the DCPMEM DIMMs' config output structures
+    Results are updated in the DIMMs' config output structures
   **/
   UINT64 StatusMask;
 } RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE;

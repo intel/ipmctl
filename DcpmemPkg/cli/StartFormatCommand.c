@@ -79,7 +79,7 @@ StartFormat(
 
   if (containsOption(pCmd, RECOVER_OPTION)) {
     Recovery = TRUE;
-    // Populate the list of DIMM_INFO structures with the DCPMEM DIMMs NOT found in NFIT
+    // Populate the list of DIMM_INFO structures with the DIMMs NOT found in NFIT
     ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &DimmCount);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;

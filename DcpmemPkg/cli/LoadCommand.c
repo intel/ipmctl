@@ -28,7 +28,7 @@ struct Command LoadCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Update the firmware on one or more DCPMEM DIMMs",                 //!< help
+  L"Update the firmware on one or more DIMMs",                        //!< help
   Load                                                                //!< run function
 };
 
@@ -54,7 +54,7 @@ RegisterLoadCommand (
 
   @retval EFI_SUCCESS if everything went OK - including the firmware load process.
   @retval EFI_INVALID_PARAMETER if the user input is invalid or the file validation fails
-  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMEM DIMMs in the system.
+  @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMEM modules in the system.
   @retval EFI_NOT_FOUND if there is no DIMM with the user specified PID
 **/
 EFI_STATUS

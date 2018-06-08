@@ -31,6 +31,8 @@ GUID gSpaRangeRawPmRegionGuid = SPA_RANGE_RAW_PM;
 
 GUID gSpaRangeIsoPmRegionGuid = SPA_RANGE_ISO_PM;
 
+GUID gAppDirectPmTypeGuid = APPDIRECT_PM_TYPE;
+
 /**
   CopyMemoryAndAddPointerToArray - Copies the data and adds the result pointer to an array of pointers.
 

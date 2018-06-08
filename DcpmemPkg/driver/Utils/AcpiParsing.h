@@ -19,6 +19,7 @@ extern GUID gSpaRangeRawVolatileRegionGuid;
 extern GUID gSpaRangeIsoVolatileRegionGuid;
 extern GUID gSpaRangeRawPmRegionGuid;
 extern GUID gSpaRangeIsoPmRegionGuid;
+extern GUID gAppDirectPmTypeGuid;
 
 #define SPA_RANGE_VOLATILE_REGION_GUID \
   { 0x7305944F, 0xFDDA, 0x44E3, {0xB1, 0x6C, 0x3F, 0x22, 0xD2, 0x52, 0xE5, 0xD0} }
@@ -43,6 +44,9 @@ extern GUID gSpaRangeIsoPmRegionGuid;
 
 #define SPA_RANGE_ISO_PM \
   { 0x08018188, 0x42CD, 0xBB48, {0x10, 0x0F, 0x53, 0x87, 0xD5, 0x3D, 0xED, 0x3D} }
+
+#define APPDIRECT_PM_TYPE \
+  { 0x66F0D379, 0xB4F3, 0x4074, {0xAC, 0x43, 0x0D, 0x33, 0x18, 0xB7, 0x8C, 0xDB} }
 
 #define NFIT_ACPI_NAMESPACE_ID SIGNATURE_64('A', 'C', 'P', 'I', '0', '0', '1', '0')
 #define NFIT_TABLE_SIG         SIGNATURE_32('N', 'F', 'I', 'T') //!< NFIT Table signature

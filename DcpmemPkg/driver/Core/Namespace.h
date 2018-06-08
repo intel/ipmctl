@@ -517,6 +517,18 @@ WriteBlockDevice(
   IN     UINT64 Lba,
      OUT CHAR8 *pBuffer
   );
+/**
+Checks whether NamespaceType is AppDirect
+
+Function reads the label version and NameSpaceLabel and
+determines whether App Direct Type or not
+
+@retval TRUE if AppDirect Type
+@retval FALSE if not AppDirect Type
+**/
+BOOLEAN
+IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Namespace1_1
+);
 
 /**
   Initializes Namespaces inventory

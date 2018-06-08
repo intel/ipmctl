@@ -836,6 +836,8 @@ GetAppDirectLabelByUUID(
   UINT16 Index = 0;
   BOOLEAN Found = FALSE;
   UINT16 SlotStatus = SLOT_UNKNOWN;
+  BOOLEAN Use_Namespace1_1 = FALSE;
+
 
   NVDIMM_ENTRY();
 
@@ -860,8 +862,13 @@ GetAppDirectLabelByUUID(
     if (SlotStatus == SLOT_FREE) {
       continue;
     }
+    if (pLsa->Index[CurrentIndex].Major == NSINDEX_MAJOR &&
+        pLsa->Index[CurrentIndex].Minor == NSINDEX_MINOR_1) {
+      Use_Namespace1_1 = TRUE;
+    }
 
-    if (pLsa->pLabels[Index].Flags.Values.Local) {
+
+    if (!IsNameSpaceTypeAppDirect(&pLsa->pLabels[Index], Use_Namespace1_1)) {
       continue;
     }
 
@@ -909,7 +916,7 @@ Finish:
 **/
 EFI_STATUS
 ValidateNamespaceLabel(
-  IN     NAMESPACE_LABEL *pNamespaceLabel
+  IN     NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Use_Namespace1_1
   )
 {
   EFI_STATUS ReturnCode = EFI_VOLUME_CORRUPTED;
@@ -924,16 +931,18 @@ ValidateNamespaceLabel(
   if (pNamespaceLabel->RawSize == 0) {
     goto Finish;
   }
+
   // Block namespace checks
-  if (pNamespaceLabel->Flags.Values.Local &&
+  if (!IsNameSpaceTypeAppDirect(pNamespaceLabel, Use_Namespace1_1) &&
       (pNamespaceLabel->LbaSize == 0 ||
        pNamespaceLabel->Position != 0 ||
        pNamespaceLabel->NumberOfLabels != 0)) {
     goto Finish;
   }
+
   // AppDirect namespace checks
-  if (!pNamespaceLabel->Flags.Values.Local &&
-      (pNamespaceLabel->Position > pNamespaceLabel->NumberOfLabels)) {
+  if (IsNameSpaceTypeAppDirect(pNamespaceLabel, Use_Namespace1_1) &&
+    (pNamespaceLabel->Position > pNamespaceLabel->NumberOfLabels)) {
     goto Finish;
   }
 
@@ -1946,7 +1955,7 @@ RetrieveNamespacesFromLsa(
       continue;
     }
 
-    ReturnCode = ValidateNamespaceLabel(pNamespaceLabel);
+    ReturnCode = ValidateNamespaceLabel(pNamespaceLabel, Use_Namespace1_1);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Label invalid or check failed. Skipping");
       continue;
@@ -1974,7 +1983,7 @@ RetrieveNamespacesFromLsa(
     }
 
     LabelsFound = 0;
-    if (pNamespaceLabel->Flags.Values.Local) {
+    if (!IsNameSpaceTypeAppDirect(pNamespaceLabel, Use_Namespace1_1)) {
       /**
         Block Mode Namespace case
       **/
@@ -2001,7 +2010,7 @@ RetrieveNamespacesFromLsa(
         pNamespaceLabel2 = &pLabelStorageArea->pLabels[Index2];
 
         if (CompareMem(&pNamespaceLabel->Uuid, &pNamespaceLabel2->Uuid, sizeof(GUID)) == 0) {
-          ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2);
+          ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);
           if (EFI_ERROR(ReturnCode)) {
             NVDIMM_DBG("Label invalid or check failed. Skipping");
             pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
@@ -2155,7 +2164,7 @@ RetrieveNamespacesFromLsa(
           }
         }
 
-        ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2);
+        ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_DBG("Label invalid or check failed. Skipping");
           continue;
@@ -2350,7 +2359,24 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+/**
+Checks whether NamespaceType is AppDirect
 
+Function reads the label version and NameSpaceLabel and
+determines whether App Direct Type or not
+
+@retval TRUE if AppDirect Type
+@retval FALSE if not AppDirect Type
+**/
+BOOLEAN
+IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Namespace1_1
+)
+{
+  if (!Is_Namespace1_1)
+    return CompareGuid(&gAppDirectPmTypeGuid, &pNamespaceLabel->TypeGuid);
+  else
+    return !(pNamespaceLabel->Flags.Values.Local & 0x01);
+}
 /**
   Initializes Namespaces inventory
 
@@ -2685,7 +2711,7 @@ IoNamespaceBlock(
 
   NVDIMM_ENTRY();
 
-  IsStorageNamespace = pNamespace->Flags.Values.Local & 0x01;
+  IsStorageNamespace = (pNamespace->NamespaceType == STORAGE_NAMESPACE);
 
   if (IsStorageNamespace) {
     ReturnCode = NamespaceIoGetDpaFromNamespace(pNamespace, Lba, &Dpa);
@@ -2856,7 +2882,7 @@ IoNamespaceBytes(
     goto Finish;
   }
 
-  IsStorageNamespace = pNamespace->Flags.Values.Local & 0x01;
+  IsStorageNamespace = (pNamespace->NamespaceType == STORAGE_NAMESPACE);
 
   if (IsStorageNamespace) {
     while (BytesRead < BufferLength) {
@@ -4218,7 +4244,7 @@ CreateNamespaceLabels(
   pLabel->Flags = pNamespace->Flags;
   CopyMem(&pLabel->Uuid, pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
   CopyMem(&pLabel->Name, pNamespace->Name, sizeof(pLabel->Name));
-  if (pNamespace->Flags.Values.Local) {
+  if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
     // Block Mode Namespace
     pLabel->Position = 0;            //Always zero for Block NS
     pLabel->NumberOfLabels = 0;      //Always zero for Block NS
@@ -4667,7 +4693,7 @@ CreateLabelsFromRanges(
     pLabel->Flags = pNamespace->Flags;
     CopyMem(&pLabel->Uuid, pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
     CopyMem(&pLabel->Name, pNamespace->Name, sizeof(pLabel->Name));
-    if (pNamespace->Flags.Values.Local) {
+    if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
       pLabel->LbaSize = pNamespace->BlockSize;
       pLabel->InterleaveSetCookie = 0;      // Always zero for Block Namespace
       pLabel->Position = 0;                 // Always zero for Block Namespace

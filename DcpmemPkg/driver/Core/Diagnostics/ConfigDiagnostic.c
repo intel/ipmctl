@@ -920,6 +920,8 @@ RunConfigDiagnostics(
   SYSTEM_CAPABILITIES_INFO SysCapInfo;
 
   NVDIMM_ENTRY();
+  // Clear the pointer before using the struct
+  SysCapInfo.PtrInterleaveFormatsSupported = 0;
 
   if (ppResult == NULL || pDiagState == NULL || DimmCount > MAX_DIMMS) {
     NVDIMM_DBG("The platform configuration diagnostics test aborted due to an internal error.");
@@ -954,8 +956,7 @@ RunConfigDiagnostics(
       goto FinishError;
     }
   }
-  // Clear the pointer before using the struct
-  SysCapInfo.PtrInterleaveFormatsSupported = 0;
+
   ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on GetSystemCapabilitiesInfo");

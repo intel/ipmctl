@@ -191,7 +191,6 @@ static char get_action_req_state_form_file(CHAR8 *device_uid)
         fclose(h_file);
     }
 
-    fclose(h_file);
     return action_req;
 }
 

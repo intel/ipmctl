@@ -252,6 +252,7 @@ PrintFitTable(
   ControlRegionTbl *pTableControlRegion = NULL;
   BWRegionTbl *pTableBWRegion = NULL;
   FlushHintTbl *pTableFlushHint = NULL;
+  PlatformCapabilitiesTbl *pTablePlatCap = NULL;
   UINT32 Index = 0;
 
   if (pTable == NULL) {
@@ -422,6 +423,15 @@ PrintFitTable(
       Print(L"FlushHintAddress %d: 0x%llx\n", Index, pTableFlushHint->FlushHintAddress[Index]);
     }
     break;
+  case NVDIMM_PLATFORM_CAPABILITIES_TYPE:
+    pTablePlatCap = (PlatformCapabilitiesTbl *)pTable;
+    Print(L"TypeEquals: Platform Capabilities\n"
+      L"Highest Valid Capability: 0x%2.2x\n"
+      L"Capabilities: 0x%8.8x\n",
+      pTablePlatCap->HighestValidCapability,
+      pTablePlatCap->Capabilities
+    );
+    break;
   default:
     break;
   }
@@ -453,14 +463,16 @@ PrintNFit(
       L"InterleaveTablesNum: %d\n"
       L"NVDIMMRegionTablesNum: %d\n"
       L"SmbiosTablesNum: %d\n"
-      L"SpaRangeTablesNum: %d\n",
+      L"SpaRangeTablesNum: %d\n"
+      L"PlatformCapabilitiesTablesNum: %d\n",
       pHeader->BWRegionTblesNum,
       pHeader->ControlRegionTblesNum,
       pHeader->FlushHintTblesNum,
       pHeader->InterleaveTblesNum,
       pHeader->NvDimmRegionTblesNum,
       pHeader->SmbiosTblesNum,
-      pHeader->SpaRangeTblesNum
+      pHeader->SpaRangeTblesNum,
+      pHeader->PlatformCapabilitiesTblesNum
       );
 
   Print(L"\n");
@@ -497,6 +509,11 @@ PrintNFit(
 
   for(Index = 0; Index < pHeader->SpaRangeTblesNum; Index++) {
     PrintFitTable((SubTableHeader *)pHeader->ppSpaRangeTbles[Index]);
+    Print(L"\n");
+  }
+
+  for (Index = 0; Index < pHeader->PlatformCapabilitiesTblesNum; Index++) {
+    PrintFitTable((SubTableHeader *)pHeader->ppPlatformCapabilitiesTbles[Index]);
     Print(L"\n");
   }
 }

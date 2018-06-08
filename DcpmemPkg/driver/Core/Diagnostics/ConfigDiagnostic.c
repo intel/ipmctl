@@ -65,7 +65,7 @@ CheckNamespaceLabelAreaIndex(
 
     ReturnCode = ReadLabelStorageArea(ppDimms[Index]->DimmID, &pLabelStorageArea);
     if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_UNABLE_TO_READ_NS_INFO), EVENT_CODE_622, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_UNABLE_TO_READ_NS_INFO), EVENT_CODE_622, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
     } else {
       ReturnCode = EFI_SUCCESS;
     }
@@ -209,7 +209,7 @@ GetDetailedStatusStr(
     FREE_POOL_SAFE(pTmpStr);
 
   }
-  pTmpStr1 = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_EVENT_DIAG_CONFIG_DETAILED_STATUS), NULL);
+  pTmpStr1 = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_DIAG_CONFIG_DETAILED_STATUS), NULL);
   pReturnStr = CatSPrint(NULL, pTmpStr1, CoutStatus, PartitionSizeChangeTableStatusStr, InterleaveInformationTableStatus_1Str, InterleaveInformationTableStatus_2Str);
   FREE_POOL_SAFE(pTmpStr1);
 
@@ -456,7 +456,7 @@ CheckPlatformConfigurationData(
     if (!EFI_ERROR(ReturnCode)) {
       if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
         // Dimm not configured
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_DIMM_NOT_CONFIGURED), EVENT_CODE_606, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
+        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_DIMM_NOT_CONFIGURED), EVENT_CODE_606, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
           ppDimms[Index]->DeviceHandle.AsUint32);
         FREE_POOL_SAFE(pPcdConfHeader);
         NVDIMM_WARN("There is no Current Config table");
@@ -504,7 +504,7 @@ CheckPlatformConfigurationData(
         ReturnCode = EFI_VOLUME_CORRUPTED;
       } else if (pPcdConfHeader->ConfOutputStartOffset == 0 || pPcdConfHeader->ConfOutputDataSize == 0) {
         // No Output table defined yet means the goal has not been applied yet
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
+        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
           ppDimms[Index]->DeviceHandle.AsUint32);
       }
     }
@@ -532,13 +532,13 @@ CheckPlatformConfigurationData(
         ReturnCode = EFI_VOLUME_CORRUPTED;
       } else if (pPcdOutputConf->SequenceNumber != pPcdInputConf->SequenceNumber) {
         // The goal has not been applied yet
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
+        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
           ppDimms[Index]->DeviceHandle.AsUint32);
       }
     }
 
     if (EFI_ERROR(ReturnCode)) {
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_UNABLE_TO_READ_POOL_INFO), EVENT_CODE_621, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_UNABLE_TO_READ_POOL_INFO), EVENT_CODE_621, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
       continue;
     }
 
@@ -605,19 +605,19 @@ CheckPlatformConfigurationData(
       break;
     case PcdErrorFirmware:
       pDetailedStatusStr = GetDetailedStatusStr(pPcdOutputConf->ValidationStatus, PartitionSizeChangeTableStatus, InterleaveInformationTableStatus_1, InterleaveInformationTableStatus_2);
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_FAILED_FIRMWARE), EVENT_CODE_626, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_FAILED_FIRMWARE), EVENT_CODE_626, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         DimmStr, pDetailedStatusStr);
       FREE_POOL_SAFE(pDetailedStatusStr);
       break;
     case PcdErrorGoalData:
       pDetailedStatusStr = GetDetailedStatusStr(pPcdOutputConf->ValidationStatus, PartitionSizeChangeTableStatus, InterleaveInformationTableStatus_1, InterleaveInformationTableStatus_2);
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_FAILED_DATA), EVENT_CODE_624, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_FAILED_DATA), EVENT_CODE_624, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         DimmStr, pDetailedStatusStr);
       FREE_POOL_SAFE(pDetailedStatusStr);
       break;
     case PcdErrorInsufficientResources:
       pDetailedStatusStr = GetDetailedStatusStr(pPcdOutputConf->ValidationStatus, PartitionSizeChangeTableStatus, InterleaveInformationTableStatus_1, InterleaveInformationTableStatus_2);
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_FAILED_INSUFFICIENT_RESOURCES), EVENT_CODE_625, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_FAILED_INSUFFICIENT_RESOURCES), EVENT_CODE_625, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         DimmStr, pDetailedStatusStr);
       FREE_POOL_SAFE(pDetailedStatusStr);
       break;
@@ -632,7 +632,7 @@ CheckPlatformConfigurationData(
     case PcdErrorUnknown:
     default:
       pDetailedStatusStr = GetDetailedStatusStr(pPcdOutputConf->ValidationStatus, PartitionSizeChangeTableStatus, InterleaveInformationTableStatus_1, InterleaveInformationTableStatus_2);
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_GOAL_FAILED_UNKNOWN), EVENT_CODE_627, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_FAILED_UNKNOWN), EVENT_CODE_627, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         DimmStr, pDetailedStatusStr);
       FREE_POOL_SAFE(pDetailedStatusStr);
       break;
@@ -660,7 +660,7 @@ CheckPlatformConfigurationData(
         }
         FREE_POOL_SAFE(pTmpDimmIdStr);
       }
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_IS_BROKEN_DIMMS_MISSING), EVENT_CODE_628, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_IS_BROKEN_DIMMS_MISSING), EVENT_CODE_628, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pBrokenISs[Index].InterleaveSetIndex, pDimmIdentifiersStr);
       FREE_POOL_SAFE(pDimmIdentifiersStr);
     }
@@ -706,7 +706,7 @@ CheckUninitializedDimms(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.UninitializedDimms) {
     pCurDimm = DIMM_FROM_NODE(pNode);
-    APPEND_RESULT_TO_THE_LOG(pCurDimm, STRING_TOKEN(STR_EVENT_DIMM_FAILED_TO_INITIALIZE), EVENT_CODE_618, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pCurDimm, STRING_TOKEN(STR_CONFIG_DIMM_FAILED_TO_INITIALIZE), EVENT_CODE_618, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
       pCurDimm->DeviceHandle.AsUint32);
   }
 
@@ -757,7 +757,7 @@ CheckSystemSupportedCapabilities(
     pPlatformCapability = gNvmDimmData->PMEMDev.pPcatHead->ppPlatformCapabilityInfo[0];
 
     if (!IS_BIT_SET_VAR(pPlatformCapability->MgmtSwConfigInputSupport, BIT0)) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_NO_OS_PROVISIONING), EVENT_CODE_623, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_OS_PROVISIONING), EVENT_CODE_623, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
     }
   } else {
     ReturnCode = EFI_NOT_FOUND;
@@ -878,7 +878,7 @@ CheckDimmUIDDuplication(
       CopyMem(ppDuplicateDimmUids[TotalNumDuplicateUID], CandidateDimmUID, MAX_DIMM_UID_LENGTH * sizeof(CHAR16));
       TotalNumDuplicateUID++;
 
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_EVENT_DUPLICATE_DIMM_UID), EVENT_CODE_608, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_DUPLICATE_DIMM_UID), EVENT_CODE_608, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         NumDuplicateUID, CandidateDimmUID);
     }
   }
@@ -943,7 +943,7 @@ RunConfigDiagnostics(
 
   if (DimmCount == 0 || ppDimms == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_NO_MANAGEABLE_DIMMS), EVENT_CODE_601, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_MANAGEABLE_DIMMS), EVENT_CODE_601, DIAG_STATE_MASK_OK, ppResult, pDiagState);
     goto Finish;
   }
 
@@ -963,7 +963,7 @@ RunConfigDiagnostics(
   }
 
   if (!SysCapInfo.AdrSupported) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_NO_ADR_SUPPORT), EVENT_CODE_629, DIAG_STATE_MASK_FAILED, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_ADR_SUPPORT), EVENT_CODE_629, DIAG_STATE_MASK_FAILED, ppResult, pDiagState);
   }
 
   ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, ppResult, pDiagState);
@@ -991,13 +991,13 @@ RunConfigDiagnostics(
   }
 
   if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, ppResult, pDiagState);
   }
   ReturnCode = EFI_SUCCESS;
   goto Finish;
 
 FinishError:
-  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
+  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
 Finish:
   if (SysCapInfo.PtrInterleaveFormatsSupported != 0) {
     FreePool((VOID *)SysCapInfo.PtrInterleaveFormatsSupported);

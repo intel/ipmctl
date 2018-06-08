@@ -48,7 +48,7 @@ RunFwDiagnostics(
   }
 
   if (DimmCount == 0 || ppDimms == NULL) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_NO_MANAGEABLE_DIMMS), EVENT_CODE_901, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_NO_MANAGEABLE_DIMMS), EVENT_CODE_901, DIAG_STATE_MASK_OK, ppResult, pDiagState);
     goto Finish;
   }
 
@@ -101,13 +101,13 @@ RunFwDiagnostics(
   }
 
   if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_SUCCESS), EVENT_CODE_900, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_SUCCESS), EVENT_CODE_900, DIAG_STATE_MASK_OK, ppResult, pDiagState);
   }
   ReturnCode = EFI_SUCCESS;
   goto Finish;
 
 FinishError:
-  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
+  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -355,7 +355,7 @@ CheckFwConsistency(
     }
 
     if (pAppendedDimmsStr != NULL) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_EVENT_INCONSISTENT), EVENT_CODE_902, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState, pAppendedDimmsStr, SubsystemDeviceIdList[Index], OptimumFwVersionStr);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_INCONSISTENT), EVENT_CODE_902, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState, pAppendedDimmsStr, SubsystemDeviceIdList[Index], OptimumFwVersionStr);
       FREE_POOL_SAFE(pAppendedDimmsStr);
     }
   }
@@ -424,7 +424,7 @@ ThresholdsCheck(
   }
 
   if (SensorInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, SensorInfo.MediaTempShutdownThresh);
   }
 
@@ -441,7 +441,7 @@ ThresholdsCheck(
   }
 
   if (SensorInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_CORE_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CORE_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, SensorInfo.ContrTempShutdownThresh);
   }
 
@@ -458,7 +458,7 @@ ThresholdsCheck(
   }
 
   if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, PercentageRemainingThreshold, SensorInfo.PercentageRemaining);
   }
 
@@ -516,13 +516,13 @@ SystemTimeCheck(
   // Validate resulats
   if ((time_t) SystemTimePayload.UnixTime < raw_start_time) {
     CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_LOWER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, pTmpStr, (raw_start_time - SystemTimePayload.UnixTime));
     FREE_POOL_SAFE(pTmpStr)
   }
   else if ((time_t) SystemTimePayload.UnixTime > raw_end_time) {
     CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_GREATER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, pTmpStr, (SystemTimePayload.UnixTime - raw_end_time));
     FREE_POOL_SAFE(pTmpStr);
   }
@@ -577,7 +577,7 @@ FwLogLevelCheck(
 
   // Validate resulats
   if (FwLogLevel != DEFAULT_FW_LOG_LEVEL_VALUE) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_EVENT_LOG_LEVEL_ERROR), EVENT_CODE_906, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_LOG_LEVEL_ERROR), EVENT_CODE_906, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, FwLogLevel, DEFAULT_FW_LOG_LEVEL_VALUE);
   }
 

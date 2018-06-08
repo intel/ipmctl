@@ -322,7 +322,7 @@ void logStartError(std::string msg)
 {
 	std::stringstream message;
 	message << "Failed to start " << g_serviceName << " service.";
-	logMsg(SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_9, false, true, true, false, 0), message.str().c_str(), msg);
+	logMsg(SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_1, false, true, true, false, 0), message.str().c_str(), msg);
 }
 
 

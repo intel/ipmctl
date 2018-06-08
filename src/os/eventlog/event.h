@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 // SYSTEM_EVENT_CAT_MGMT
-#define SYSTEM_EVENT_CAT_MGMT_NUMB_1        1 //STR_CONFIG_CHANGE_NEW_GOAL
+#define SYSTEM_EVENT_CAT_MGMT_NUMB_1        1 //call to void logStartError(std::string msg)
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_2        2 //"ACPI Monitor starting initialization..."
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_3        3 //"ACPI Monitor init complete.  Will be monitoring %d number of dimms"
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_4        4 //ACPI_EVENT_MSG_FW_ERROR_CNT_INCREASED "FW error count increased to: %d"
@@ -26,9 +26,10 @@ extern "C" {
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_6        6 //"nvm_get_device_count failed with error %d"
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_7        7 //"nvm_get_devices failed with error %d"
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_8        8 //call to bool monitor::PerformanceMonitor::storeDimmPerformanceData(const std::string &dimmUidStr, struct device_performance &performance)
-#define SYSTEM_EVENT_CAT_MGMT_NUMB_9        9 //call to void logStartError(std::string msg)
-#define SYSTEM_EVENT_CAT_MGMT_NUMB_10       10 //STR_CONFIG_CHANGE_DELETE_GOAL
-#define SYSTEM_EVENT_CAT_MGMT_NUMB_11       11 //STR_CONFIG_SENSOR_SET_CHANGED 
+
+#define EVENT_CONFIG_CHANGE_300        300 //STR_CONFIG_CHANGE_NEW_GOAL
+#define EVENT_CONFIG_CHANGE_301        301 //STR_CONFIG_CHANGE_DELETE_GOAL
+#define EVENT_CONFIG_CHANGE_305        305 //STR_CONFIG_SENSOR_SET_CHANGED 
 
 #define SYSTEM_EVENT_TYPE_CATEGORY_MASK     0xFF000000
 #define SYSTEM_EVENT_TYPE_SEVERITY_MASK     0x00F00000

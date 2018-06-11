@@ -163,6 +163,20 @@ target_include_directories(ipmctl_os_interface PUBLIC
 	src/os/nvm_api
 	src/os/s_string
 	)
+# TODO: Remove the backup winioctl.h file when the 17650+ Windows SDK is publicly released
+if (MSVC)
+	string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+\\.[0-9]+" "\\1" sdk_version_major $ENV{WindowsSDKVersion})
+	string(REGEX REPLACE "[0-9]+\\.([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" sdk_version_major2 $ENV{WindowsSDKVersion})
+	string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1" sdk_version_minor $ENV{WindowsSDKVersion})
+	if (${sdk_version_major} GREATER 9 AND ${sdk_version_minor} GREATER 17650)
+		MESSAGE("Using Windows SDK 17650+")
+	else()
+		MESSAGE("Using internal winioctl.h")
+		target_include_directories(ipmctl_os_interface PUBLIC
+			src/os/win/sdk
+		)
+	endif()
+endif()
 
 #----------------------------------------------------------------------------------------------------
 # libipmctl

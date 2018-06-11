@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <windows.h>
-#include <winioctl.h>
 
 #define FILE_DEVICE_PERSISTENT_MEMORY   0x00000059 // defined in devioctl.h
 

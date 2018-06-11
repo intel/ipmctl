@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <WinBase.h>
 #include "win_scm2_ioctl.h"
-//#include "win_scm2_adapter.h"
 
 #ifdef _WIN32
 #ifndef WINBOOL

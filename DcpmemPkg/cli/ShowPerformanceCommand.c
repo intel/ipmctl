@@ -248,6 +248,7 @@ ShowPerformance(
     PrintPerformanceData(pDimmIds, pDimms, TargetPerformanceMask, DimmCount, pDimmsPerformanceData);
 
 Finish:
+    FREE_POOL_SAFE(pDimmIds);
     FREE_POOL_SAFE(pDimmsPerformanceData);
 	FreeCommandStatus(&pCommandStatus);
     NVDIMM_EXIT_I64(ReturnCode);

@@ -1339,8 +1339,8 @@ DumpToFile (
    UnicodeStrToAsciiStrS(pDumpUserPath, path, StrLen(pDumpUserPath) + 1);
    FILE *destFile = fopen(path, "wb+");
    if (NULL == destFile) {
-      FreePool(path);
       NVDIMM_WARN("Failed to open file (%s) errno: (%d)", path, errno);
+      FreePool(path);
       return EFI_INVALID_PARAMETER;
    }
    size_t bytes_written = fwrite(pBuffer, 1, BufferSize, destFile);

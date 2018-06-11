@@ -186,7 +186,7 @@ DumpDeviceSupportCommand(
     for (TokenIndex = 1; TokenIndex <= MaxTokenID; TokenIndex++) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
 
-      pDumpAppendedPath = CatSPrint(NULL, FORMAT_STR L"_" FORMAT_STR L"_%d", pDumpUserPath, pDimms[DimmHandleIndex].DimmUid,
+      pDumpAppendedPath = CatSPrintClean(NULL, FORMAT_STR L"_" FORMAT_STR L"_%d", pDumpUserPath, pDimms[DimmHandleIndex].DimmUid,
         TokenIndex);
 
       TempReturnCode = FileExists(pDumpAppendedPath, &fExists);

@@ -251,6 +251,7 @@ Finish:
   FREE_POOL_SAFE(pSocketIds);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
+  FREE_POOL_SAFE(pLoadUserPath);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -39,6 +39,8 @@ void monitor::PerformanceMonitor::monitor()
 		std::string dimmUidStr = *dimmUidIter;
 		NVM_UID dimmUid;
 		strncpy(dimmUid, dimmUidStr.c_str(), NVM_MAX_UID_LEN);
+    dimmUid[NVM_MAX_UID_LEN-1] = '\0';
+
 		// get performance data for the dimm
 		struct device_performance devPerformance;
 		memset(&devPerformance, 0, sizeof (devPerformance));

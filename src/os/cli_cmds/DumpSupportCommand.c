@@ -140,6 +140,8 @@ DumpSupportCommand(
       /* parse success, now run the command */
       ReturnCode = Command.run(&Command);
     }
+
+    FreeCommandInput(&Input);
   }
 
   fclose(gOsShellParametersProtocol.StdOut);

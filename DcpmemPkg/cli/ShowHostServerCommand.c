@@ -139,7 +139,7 @@ ShowHostServer(
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
-
+  FREE_POOL_SAFE(pDisplayValues);
   return  ReturnCode;
 }
 

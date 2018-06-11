@@ -126,6 +126,7 @@ file_open(
 
 	if (-1 == pFc->fd)
 	{
+    FreePool(pFp);
 		return get_last_error();
 	}
 	*NewHandle = pFp;

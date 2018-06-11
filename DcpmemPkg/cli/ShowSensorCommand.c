@@ -285,6 +285,7 @@ ShowSensor(
          Health State
         **/
         if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
+            FREE_POOL_SAFE(pTempBuff);
             pTempBuff = SensorHealthToString((UINT8)DimmSensorsSet[Index2].Value);
             if (pTempBuff == NULL) {
               Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -318,6 +319,7 @@ ShowSensor(
            Only for Health State
           **/
           if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
+              FREE_POOL_SAFE(pTempBuff);
               pTempBuff = SensorHealthToString((UINT8)DimmSensorsSet[Index2].Value);
               if (pTempBuff == NULL) {
                 Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);

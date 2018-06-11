@@ -553,7 +553,6 @@ CreateGoal(
     }
     NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, L"Created following region configuration goal\n");
     ShowGoalCmd.run(&ShowGoalCmd);
-    FreeCommandInput(&ShowGoalCmdInput);
     FREE_POOL_SAFE(pCommandStr);
   } else {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
@@ -561,6 +560,7 @@ CreateGoal(
   }
 
 Finish:
+  FreeCommandInput(&ShowGoalCmdInput);
   FreeCommandStructure(&ShowGoalCmd);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pSocketIds);

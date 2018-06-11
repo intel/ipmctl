@@ -604,13 +604,9 @@ AsciiStrSplit(
 
   /** Error path **/
 FinishCleanMemory:
-  if (ppArray != NULL) {
-    for (Index = 0; Index < *pArraySize; Index++) {
-      FREE_POOL_SAFE(ppArray[Index]);
-    }
-    ppArray = NULL;
-    *pArraySize = 0;
-  }
+  FreeStringArray((CHAR16**)ppArray, *pArraySize);
+  ppArray = NULL;
+  *pArraySize = 0;
 
 Finish:
   FREE_POOL_SAFE(pInputTmp);

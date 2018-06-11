@@ -75,11 +75,15 @@ initAcpiTables(
             Result = get_acpi_table("NFIT", (struct acpi_table*)PtrNfitTable, BuffSize);
             if (0 > Result)
             {
-                return EFI_LOAD_ERROR;
+              ReturnCode = EFI_LOAD_ERROR;
+              goto Finish_Error;
             }
         }
-        else
-            return EFI_OUT_OF_RESOURCES;
+        else 
+        {
+          ReturnCode = EFI_OUT_OF_RESOURCES;
+          goto Finish_Error;
+        }
     }
     BuffSize = get_acpi_table("PCAT", NULL, BuffSize);
     if (BuffSize > 0)
@@ -90,11 +94,15 @@ initAcpiTables(
             Result = get_acpi_table("PCAT", (struct acpi_table*)PtrPcatTable, BuffSize);
             if (0 > Result)
             {
-                return EFI_LOAD_ERROR;
+              ReturnCode = EFI_LOAD_ERROR;
+              goto Finish_Error;
             }
         }
         else
-            return EFI_OUT_OF_RESOURCES;
+        {
+          ReturnCode = EFI_OUT_OF_RESOURCES;
+          goto Finish_Error;
+        }
     }
 
     BuffSize = get_acpi_table("PMTT", NULL, BuffSize);
@@ -106,11 +114,15 @@ initAcpiTables(
         Result = get_acpi_table("PMTT", (struct acpi_table*)PtrPMTTTable, BuffSize);
         if (0 > Result)
         {
-          return EFI_LOAD_ERROR;
+          ReturnCode = EFI_LOAD_ERROR;
+          goto Finish_Error;
         }
       }
       else
-        return EFI_OUT_OF_RESOURCES;
+      {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish_Error;
+      }
     }
 
     /**
@@ -124,6 +136,12 @@ initAcpiTables(
         return EFI_NOT_FOUND;
     }
     return EFI_SUCCESS;
+
+Finish_Error:
+    FREE_POOL_SAFE(PtrNfitTable);
+    FREE_POOL_SAFE(PtrPcatTable);
+    FREE_POOL_SAFE(PtrPMTTTable);
+    return ReturnCode;
 }
 
 EFI_STATUS

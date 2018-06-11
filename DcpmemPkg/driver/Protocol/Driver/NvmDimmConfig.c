@@ -5681,24 +5681,23 @@ CreateGoalConfig(
     NVDIMM_ERR("AppDirectSettingConflict Errors with CommandStatus set to NVM_ERR_APPDIRECT_IN_SYSTEM");
     goto Finish;
   }
+  // allocate helper structures
+  pDimmsSymPerSocket = AllocateZeroPool(sizeof(*pDimmsSym) * MAX_DIMMS);
+  if (pDimmsSymPerSocket == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  pDimmsAsymPerSocket = AllocateZeroPool(sizeof(*pDimmsAsym) * MAX_DIMMS);
+  if (pDimmsAsymPerSocket == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
 
   /** Calculate volatile and AD capacities at the socket level **/
   for (Socket = 0; Socket < MAX_SOCKETS; Socket++) {
     DimmsAsymNumPerSocket = 0;
     DimmsSymNumPerSocket = 0;
     ZeroMem(pDimmsOnSocket, sizeof(pDimmsOnSocket[0]) * MAX_DIMMS);
-
-    pDimmsSymPerSocket = AllocateZeroPool(sizeof(*pDimmsSym) * MAX_DIMMS);
-    if (pDimmsSymPerSocket == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-
-    pDimmsAsymPerSocket = AllocateZeroPool(sizeof(*pDimmsAsym) * MAX_DIMMS);
-    if (pDimmsAsymPerSocket == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
 
     FilterDimmBySocket(Socket, ppDimms, DimmsNum, pDimmsOnSocket, &NumDimmsOnSocket);
 
@@ -5735,14 +5734,14 @@ CreateGoalConfig(
 
 
     /**Add the symmetrical and Asymmetrical size  to the global list **/
-    if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL) {
+    if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsSymNumPerSocket; Index++) {
         pDimmsSym[DimmsSymNum] = pDimmsSymPerSocket[Index];
         DimmsSymNum++;
       }
     }
 
-    if (pDimmsAsym != NULL && pDimmsAsymPerSocket != NULL) {
+    if (pDimmsAsym != NULL && pDimmsAsymPerSocket != NULL && (DimmsAsymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsAsymNumPerSocket; Index++) {
         pDimmsAsym[DimmsAsymNum] = pDimmsAsymPerSocket[Index];
         DimmsAsymNum++;
@@ -6716,6 +6715,9 @@ Finish:
   for (Index = 0; Index < LabelsCount; Index++) {
     FREE_POOL_SAFE(ppLabels[Index]);
   }
+
+  FREE_POOL_SAFE(ppLabels);
+
   if (FailFlag) {
     if (pNamespace->DimmNode.BackLink != NULL && pNamespace->DimmNode.ForwardLink != NULL) {
       RemoveEntryList(&pNamespace->DimmNode);
@@ -7398,6 +7400,7 @@ SetFwLogLevel(
   }
 
 Finish:
+  FREE_POOL_SAFE(ppDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

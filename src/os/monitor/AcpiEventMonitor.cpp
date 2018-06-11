@@ -49,6 +49,7 @@ void monitor::AcpiMonitor::init()
 		memset(&e_hist, 0, sizeof(e_hist));
 		std::string dimmUidStr = *dimmUidIter;
 		strncpy(e_hist.device_uid, dimmUidStr.c_str(), NVM_MAX_UID_LEN);
+    e_hist.device_uid[NVM_MAX_UID_LEN-1] = '\0';
 		// get performance data for the dimm
 		if (NVM_SUCCESS != (nvm_get_fw_err_log_stats(e_hist.device_uid, &e_hist.stats)))
 		{

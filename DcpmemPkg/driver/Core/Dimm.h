@@ -166,7 +166,6 @@ typedef struct _DIMM {
   CHAR8 PartNumber[PART_NUMBER_LEN];
   UINT16 Rid;                              //!< Revision ID
   UINT16 SubsystemRid;                     //!< Revision ID of the subsystem memory controller
-  BOOLEAN PackageSparingCapable;
   SKU_INFORMATION SkuInformation;
   /**
     Format interface code: Allows vendor hardware to be handled by a generic

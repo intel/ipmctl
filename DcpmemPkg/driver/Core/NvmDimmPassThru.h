@@ -1229,6 +1229,13 @@ typedef struct {
 	UINT8 Reserved3[116];
 } PT_INPUT_PAYLOAD_INJECT_POISON;
 
+typedef union {
+  UINT8 AllBits;
+  struct {
+    UINT8 Enable : 1;
+    UINT8 Value  : 7;
+  }Separated;
+} PERCENTAGE_REMAINING;
 /*
 * Passthrough Payload:
 *		Opcode:		0x0Ah (Inject Error)
@@ -1253,7 +1260,7 @@ typedef struct {
 	*/
 	UINT8 PackageSparingTrigger;
 
-	UINT8 Reserved1;
+	UINT16 Reserved1;
 
 	/*
 	* Spoofs FW to trigger a fatal media error.
@@ -1269,7 +1276,7 @@ typedef struct {
 	* 0x1h - Enable Trigger
 	* Bits 7:1 - Spare Block Percentage (valid values are between 0 and 100)
 	*/
-	UINT8 SpareBlockPercentageTrigger;
+	PERCENTAGE_REMAINING SpareBlockPercentageTrigger;
 
 	/*
 	* Spoofs a dirty shutdown on the next power cycle.

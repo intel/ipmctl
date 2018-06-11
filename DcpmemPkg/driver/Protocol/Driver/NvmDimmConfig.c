@@ -9173,7 +9173,7 @@ InjectError(
     UINT32 DimmsNum = 0;
     UINT32 Index = 0;
     UINT8 SecurityState = SECURITY_UNKNOWN;
-    EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+    PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pPayloadPackageSparingPolicy = NULL;
 
     SetMem(pDimms, sizeof(pDimms), 0x0);
 
@@ -9182,12 +9182,6 @@ InjectError(
     if (pThis == NULL || pCommandStatus == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-      ReturnCode = EFI_UNSUPPORTED;
-      ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
       goto Finish;
     }
 
@@ -9202,11 +9196,12 @@ InjectError(
     case ERROR_INJ_TEMPERATURE:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_TEMPERATURE));
       if (pInputPayload == NULL) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
       }
       if (pInjectTemperatureValue == NULL) {
-        ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PARAMETER);
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
@@ -9216,8 +9211,9 @@ InjectError(
       for (Index = 0; Index < DimmsNum; Index++) {
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopMediaErrorTemperature, (VOID *)pInputPayload);
         if (EFI_ERROR(ReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
-        goto Finish;
+          continue;
         }
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }
@@ -9225,22 +9221,32 @@ InjectError(
     case  ERROR_INJ_PACKAGE_SPARING:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));
       if (pInputPayload == NULL) {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
       }
-
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = PACKAGE_SPARING_TRIGGER;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->PackageSparingTrigger = !ClearStatus;
+
       for (Index = 0; Index < DimmsNum; Index++) {
-        if (pDimms[Index]->PackageSparingCapable) {
+        ReturnCode =  FwCmdGetPackageSparingPolicy(pDimms[Index], &pPayloadPackageSparingPolicy);
+        if (EFI_ERROR(ReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+          ReturnCode = EFI_DEVICE_ERROR;
+          continue;
+        }
+        if (pDimms[Index]->SkuInformation.PackageSparingCapable &&
+          pPayloadPackageSparingPolicy->Supported && pPayloadPackageSparingPolicy->Enable) {
           ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
           if (EFI_ERROR(ReturnCode)) {
-              ReturnCode = EFI_DEVICE_ERROR;
-              goto Finish;
+            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+            ReturnCode = EFI_DEVICE_ERROR;
+            continue;
           }
         } else {
           ReturnCode = EFI_UNSUPPORTED;
-          goto Finish;
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
+          continue;
         }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }
@@ -9248,25 +9254,28 @@ InjectError(
     case ERROR_INJ_DIRTY_SHUTDOWN:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));
       if (NULL == pInputPayload) {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
+        goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = DIRTY_SHUTDOWN_TRIGGER;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->DirtyShutdownTrigger = !ClearStatus;
       for (Index = 0; Index < DimmsNum; Index++) {
-          ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, pInputPayload);
-          if (EFI_ERROR(ReturnCode)) {
-              ReturnCode = EFI_DEVICE_ERROR;
-              goto Finish;
-          }
-          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+        ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, pInputPayload);
+        if (EFI_ERROR(ReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+          ReturnCode = EFI_DEVICE_ERROR;
+          continue;
+        }
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }
       break;
     case ERROR_INJ_FATAL_MEDIA_ERR:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));
       if (pInputPayload == NULL) {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
       }
 
     ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = FATAL_ERROR_TRIGGER;
@@ -9275,33 +9284,31 @@ InjectError(
     for (Index = 0; Index < DimmsNum; Index++) {
       ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *) pInputPayload);
       if (EFI_ERROR(ReturnCode)) {
-          ReturnCode = EFI_DEVICE_ERROR;
-          goto Finish;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+        ReturnCode = EFI_DEVICE_ERROR;
+        continue;
       }
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
     }
     break;
     case ERROR_INJ_POISON:
-      ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **) &pNvmDimmConfigProtocol, NULL);
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
-      }
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_POISON));
       if (pInputPayload == NULL) {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
       }
       if (pPoisonType == NULL) {
-        ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PARAMETER);
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_POISON *)pInputPayload)->Memory = *pPoisonType;
 
       if (pInjectPoisonAddress == NULL) {
-          ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
-          ReturnCode = EFI_INVALID_PARAMETER;
-          goto Finish;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PARAMETER);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_POISON *)pInputPayload)->DpaAddress = *pInjectPoisonAddress;
       ((PT_INPUT_PAYLOAD_INJECT_POISON *)pInputPayload)->Enable = !ClearStatus;
@@ -9310,34 +9317,39 @@ InjectError(
         ReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &SecurityState);
         if (EFI_ERROR(ReturnCode)) {
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
-          goto Finish;
+          continue;
         }
         if (SecurityState == SECURITY_LOCKED) {
           NVDIMM_DBG("Invalid security check- poison inject error cannot be applied");
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
           ReturnCode = EFI_INVALID_PARAMETER;
-          goto Finish;
+          continue;
         }
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopErrorPoison, (VOID *) pInputPayload);
         if (EFI_ERROR(ReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
-          goto Finish;
+          continue;
         }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }
        break;
-    case ERROR_INJ_SPARE_CAPACITY:
+    case ERROR_INJ_PERCENTAGE_REMAINING:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));
       if (pInputPayload == NULL) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_NO_MEM);
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
       }
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = SPARE_BLOCK_PERCENTAGE_TRIGGER;
-      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger = *pPercentageRemaining;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Enable = !ClearStatus;
+      ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Value = *pPercentageRemaining;
       for (Index = 0; Index < DimmsNum; Index++) {
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
         if (EFI_ERROR(ReturnCode)) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
-          goto Finish;
+          continue;
         }
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
       }

@@ -59,7 +59,30 @@ struct Command SetDimmCommand =
   L"Set properties of one or more DIMMs.",                          //!< help
   SetDimm
 };
-
+CHAR16* GetCorrectClearMessageBasedOnProperty(UINT16 ErrorInjectType) {
+  CHAR16 *ClearOutputPropertyString = NULL;
+  switch(ErrorInjectType) {
+  case ERROR_INJ_POISON:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_POISON_INJECT_ERROR;
+    break;
+  case ERROR_INJ_TEMPERATURE:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_TEMPERATURE_INJECT_ERROR;
+    break;
+  case ERROR_INJ_PACKAGE_SPARING:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_PACKAGE_SPARING_INJECT_ERROR;
+    break;
+  case ERROR_INJ_PERCENTAGE_REMAINING:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_PERCENTAGE_REMAINING_INJECT_ERROR;
+    break;
+  case ERROR_INJ_FATAL_MEDIA_ERR:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_FATAL_MEDIA_ERROR_INJECT_ERROR;
+    break;
+  case ERROR_INJ_DIRTY_SHUTDOWN:
+    ClearOutputPropertyString = CLI_INFO_CLEAR_DIRTY_SHUT_DOWN_INJECT_ERROR;
+    break;
+  }
+  return ClearOutputPropertyString;
+}
 /**
   Execute the set dimm command
 
@@ -615,7 +638,7 @@ SetDimm(
   Inject error Temperature
   **/
   if (pTemperature != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_TEMPERATURE_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ErrInjectType = ERROR_INJ_TEMPERATURE;
     ReturnCode = GetU64FromString(pTemperature, &TemperatureInteger);
@@ -630,7 +653,7 @@ SetDimm(
   Inject Poison Error
   **/
   if (pPoisonAddress != NULL) {
-      pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+      pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_POISON_INJECT_ERROR, pPoisonAddress);
       pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
       ErrInjectType = ERROR_INJ_POISON;
       ReturnCode =  IsHexValue(pPoisonAddress, FALSE);
@@ -654,8 +677,6 @@ SetDimm(
   Inject Poison Type Error
   **/
   if (pPoisonType != NULL) {
-      pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
-      pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
       /**
         Check if poison MemoryType is valid
       **/
@@ -676,7 +697,7 @@ SetDimm(
   PACKAGE_SPARING_INJ_PROPERTY
   **/
   if (pPackageSparing != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_PACKAGE_SPARING_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pPackageSparing, (UINT64 *)&PackageSparing);
 
@@ -689,27 +710,27 @@ SetDimm(
       ErrInjectType = ERROR_INJ_PACKAGE_SPARING;
   }
   /**
-   percentage remaining property
+   Percentage remaining property
   **/
   if (pPercentageRemaining != NULL) {
-      pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
-      pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-      ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemaining);
+    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_PERCENTAGE_REMAINING_INJECT_ERROR);
+    pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
+    ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemaining);
 
-      if (!ReturnCode || PercentageRemaining > 100) {
-        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
-          pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
-        ReturnCode = EFI_INVALID_PARAMETER;
-        goto FinishError;
-      }
-      ErrInjectType = ERROR_INJ_SPARE_CAPACITY;
+    if (!ReturnCode || PercentageRemaining > 100) {
+      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
+        pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto FinishError;
+    }
+    ErrInjectType = ERROR_INJ_PERCENTAGE_REMAINING;
   }
 
   /**
    Fatal Media Error Inj property
   **/
   if (pFatalMediaError != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pFatalMediaError, (UINT64 *)&FatalMediaError);
     if (!ReturnCode || 1 != FatalMediaError) {
@@ -725,7 +746,7 @@ SetDimm(
    Dirty shutdown error injection
   **/
   if (pDirtyShutDown != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_DIRTY_SHUT_DOWN_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pDirtyShutDown, (UINT64 *)&DirtyShutDown);
 
@@ -741,7 +762,7 @@ SetDimm(
     Clear error injection
   **/
   if (pClearErrorInj != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_INJECT_ERROR);
+    pCommandStatusMessage = CatSPrint(NULL, GetCorrectClearMessageBasedOnProperty(ErrInjectType), pPoisonAddress);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pClearErrorInj, (UINT64 *)&ClearStatus);
 
@@ -757,8 +778,7 @@ SetDimm(
     (UINT8)ErrInjectType, ClearStatus, &TemperatureInteger,
     &PoisonAddress, &PoisonType, (UINT8 *)&PercentageRemaining, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_INJECT_ERROR_FAILED);
-      goto FinishError;
+      goto Finish;
     }
   }
 Finish:

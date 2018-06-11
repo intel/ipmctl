@@ -153,7 +153,19 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_MEM_INFO_MFG                                      L"MFG Mem Info page"
 
 #define CLI_INFO_SET_FW_LOG_LEVEL                             L"Set firmware log level"
-#define CLI_INFO_INJECT_ERROR                                 L"Inject error command"
+#define CLI_INFO_PACKAGE_SPARING_INJECT_ERROR                 L"Trigger package sparing"
+#define CLI_INFO_POISON_INJECT_ERROR                          L"Poison address (" FORMAT_STR L")"
+#define CLI_INFO_PERCENTAGE_REMAINING_INJECT_ERROR            L"Trigger a percentage remaining"
+#define CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR               L"Create a media fatal error"
+#define CLI_INFO_DIRTY_SHUT_DOWN_INJECT_ERROR                 L"Trigger a dirty shut down"
+#define CLI_INFO_TEMPERATURE_INJECT_ERROR                     L"Set temperature"
+#define CLI_INFO_CLEAR_PACKAGE_SPARING_INJECT_ERROR           L"Trigger package sparing"
+#define CLI_INFO_CLEAR_POISON_INJECT_ERROR                    L"Clear injected poison of address (" FORMAT_STR L")"
+#define CLI_INFO_CLEAR_PERCENTAGE_REMAINING_INJECT_ERROR      L"Clear injected percentage remaining"
+#define CLI_INFO_CLEAR_FATAL_MEDIA_ERROR_INJECT_ERROR         L"Clear injected media fatal error"
+#define CLI_INFO_CLEAR_DIRTY_SHUT_DOWN_INJECT_ERROR           L"Clear dirty shut down"
+#define CLI_INFO_CLEAR_TEMPERATURE_INJECT_ERROR               L"Clear injected temperature"
+
 #define PROMPT_CONTINUE_QUESTION                              L"Do you want to continue? [y/n] "
 
 #define CLI_CREATE_GOAL_PROMPT_VOLATILE                       L"The requested goal was adjusted more than 10%% to find a valid configuration."

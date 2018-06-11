@@ -4582,6 +4582,12 @@ InitializeDimm (
     goto after_dimm;
   }
 
+  if (ControlRegTblsNum > MAX_IFC_NUM) {
+    NVDIMM_ERR("The ControlRegTblsNum value greater than %d", MAX_IFC_NUM);
+    ReturnCode = EFI_BUFFER_TOO_SMALL;
+    goto after_dimm;
+  }
+
   for (Index = 0; Index < ControlRegTblsNum; Index++) {
     pNewDimm->FmtInterfaceCode[Index] = pControlRegTbls[Index]->RegionFormatInterfaceCode;
   }
@@ -4626,8 +4632,8 @@ InitializeDimm (
     }
   }
 
-  if ( (SPD_INTEL_VENDOR_ID == pNewDimm->SubsystemVendorId) &&
-      IsSubsystemDeviceIdSupported(pNewDimm) ) {
+  if ((SPD_INTEL_VENDOR_ID == pNewDimm->SubsystemVendorId) &&
+    IsSubsystemDeviceIdSupported(pNewDimm)) {
 
     pNewDimm->pHostMailbox = CreateMailbox(pNewDimm, pMbITbl);
 
@@ -4655,26 +4661,28 @@ InitializeDimm (
 
     pNewDimm->NumBlockWindows = pPayload->Nbw;
     /** pPayload->Rc in 4KiB multiples **/
-    pNewDimm->RawCapacity = (UINT64) pPayload->Rc * (4 * 1024);
+    pNewDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
     pNewDimm->Manufacturer = pPayload->Mf;
-    pNewDimm->SkuInformation = *((SKU_INFORMATION *) &pPayload->DimmSku);
+    pNewDimm->SkuInformation = *((SKU_INFORMATION *)&pPayload->DimmSku);
     CopyMem(pNewDimm->PartNumber, pPayload->Pn, sizeof(pPayload->Pn));
     pNewDimm->PartNumber[PART_NUMBER_LEN - 1] = '\0';
 
     NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
     pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
     ParseFwApiVersion(pNewDimm, pPayload);
+    
+    if (IsDimmManageable(pNewDimm)) {
+      for (Index = 0; Index < pNewDimm->FmtInterfaceCodeNum; Index++) {
+        if (pNewDimm->FmtInterfaceCode[Index] != pPayload->Ifc && pNewDimm->FmtInterfaceCode[Index] != IfcExtra) {
+          NVDIMM_WARN("FIT and FW Interface Code mismatch");
+          ReturnCode = EFI_DEVICE_ERROR;
+          goto after_mailbox;
+        }
+      }
+    }
   }
 
   if (IsDimmManageable(pNewDimm)) {
-    for (Index = 0; Index < pNewDimm->FmtInterfaceCodeNum; Index++) {
-      if (pNewDimm->FmtInterfaceCode[Index] != pPayload->Ifc && pNewDimm->FmtInterfaceCode[Index] != IfcExtra) {
-        NVDIMM_WARN("FIT and FW Interface Code mismatch");
-        ReturnCode = EFI_DEVICE_ERROR;
-        goto after_mailbox;
-      }
-    }
-
     pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
     if (pPartitionInfoPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;

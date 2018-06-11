@@ -3399,7 +3399,8 @@ FindRelatedDimmsByRegions(
 
   NVDIMM_ENTRY();
 
-  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL) {
+  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL || 
+    DimmsNum > MAX_DIMMS) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -3417,7 +3418,12 @@ FindRelatedDimmsByRegions(
         pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
         pDimmPointer = pDimmRegion->pDimm;
 
-        if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
+        if (*pRelatedDimmsNum >= MAX_DIMMS) {
+          NVDIMM_ERR("Found more Dimms than %d. Not possible in theory.", MAX_DIMMS);
+          Rc = EFI_ABORTED;
+          goto Finish;
+        }
+        else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
           ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
 
           pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
@@ -3459,7 +3465,8 @@ FindRelatedDimmsByRegionGoalConfigs(
 
   NVDIMM_ENTRY();
 
-  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL) {
+  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL ||
+    DimmsNum > MAX_DIMMS) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -3476,7 +3483,12 @@ FindRelatedDimmsByRegionGoalConfigs(
       for (Index3 = 0; Index3 < pDimms[Index]->pRegionsGoal[Index2]->DimmsNum; Index3++) {
         pDimmPointer = (VOID *) pDimms[Index]->pRegionsGoal[Index2]->pDimms[Index3];
 
-        if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
+        if (*pRelatedDimmsNum >= MAX_DIMMS) {
+          NVDIMM_ERR("Found more Dimms than %d. Not possible in theory.", MAX_DIMMS);
+          Rc = EFI_ABORTED;
+          goto Finish;
+        }
+        else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
           ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
 
           pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
@@ -3529,12 +3541,12 @@ FindUniqueRegionsGoal(
     for (Index2 = 0; Index2 < pDimms[Index]->RegionsGoalNum; Index2++) {
       pRegionGoalPointer = (VOID *) pDimms[Index]->pRegionsGoal[Index2];
 
-      if (!IsPointerInArray((VOID **) pRegionsGoal, *pRegionsGoalNum, pRegionGoalPointer)) {
-        if (*pRegionsGoalNum >= MAX_IS_CONFIGS) {
-          NVDIMM_DBG("Found more regions than %d. Not possible in theory.", MAX_IS_CONFIGS);
-          Rc = EFI_ABORTED;
-          goto Finish;
-        }
+      if (*pRegionsGoalNum >= MAX_IS_CONFIGS) {
+        NVDIMM_ERR("Found more regions than %d. Not possible in theory.", MAX_IS_CONFIGS);
+        Rc = EFI_ABORTED;
+        goto Finish;
+      }
+      else if (!IsPointerInArray((VOID **) pRegionsGoal, *pRegionsGoalNum, pRegionGoalPointer)) {
         pRegionsGoal[(*pRegionsGoalNum)] = pRegionGoalPointer;
         (*pRegionsGoalNum)++;
       }

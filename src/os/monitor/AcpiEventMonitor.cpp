@@ -69,7 +69,7 @@ void monitor::AcpiMonitor::init()
 		if (NVM_SUCCESS != (rc = nvm_acpi_event_create_ctx(last_dev_details[i].dimm_handle, &acpi_contexts[i])))
 		{
 			if (acpi_contexts)
-				free(acpi_contexts);
+        delete[] acpi_contexts;
 
 			goto Finish;
 		}

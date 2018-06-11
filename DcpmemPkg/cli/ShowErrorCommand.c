@@ -220,6 +220,7 @@ ShowErrorCommand(
 
   if (DimmIdsNum == 0) {
     DimmIdsNum = DimmCount;
+    FREE_POOL_SAFE(pDimmIds);
     pDimmIds = AllocateZeroPool(sizeof(*pDimmIds) * DimmIdsNum);
     if (pDimmIds == NULL) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);

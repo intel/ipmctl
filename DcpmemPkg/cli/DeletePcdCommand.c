@@ -142,7 +142,7 @@ DeletePcdCmd(
 
   /* If no dimms specified then use all dimms */
   if (DimmIdsCount == 0) {
-
+    FREE_POOL_SAFE(pDimmIds);
     pDimmIds = AllocateZeroPool(sizeof(*pDimmIds) * DimmCount);
 
     if (pDimmIds == NULL) {
@@ -194,6 +194,7 @@ DeletePcdCmd(
   DisplayCommandStatus(pCommandStatusMessage, L" on DIMM ", pCommandStatus);
 
 Finish:
+  FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pCommandStatusMessage);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);

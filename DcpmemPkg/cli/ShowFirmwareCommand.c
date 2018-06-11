@@ -292,6 +292,7 @@ ShowFirmware(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FREE_POOL_SAFE(pOptionsValues);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   FreeCommandStatus(&pCommandStatus);

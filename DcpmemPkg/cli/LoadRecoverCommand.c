@@ -291,6 +291,7 @@ LoadRecover(
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
 Finish:
   FreeCommandStatus(&pCommandStatus);
+  FREE_POOL_SAFE(pOptionsValue);
   FREE_POOL_SAFE(pFileName);
   FREE_POOL_SAFE(pFwImageInfo);
   FREE_POOL_SAFE(pDimmIds);

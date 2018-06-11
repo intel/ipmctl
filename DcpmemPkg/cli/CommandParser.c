@@ -1387,6 +1387,7 @@ GetUnitsOption(
   }
 
   Finish:
+  FREE_POOL_SAFE(pOptionsValue);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

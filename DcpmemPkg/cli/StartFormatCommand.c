@@ -130,6 +130,7 @@ StartFormat(
   /* If no dimms specified then use all dimms */
   if (DimmIdsCount == 0) {
 
+    FREE_POOL_SAFE(pDimmIds);
     pDimmIds = AllocateZeroPool(sizeof(*pDimmIds) * DimmCount);
 
     if (pDimmIds == NULL) {

@@ -5748,6 +5748,9 @@ CreateGoalConfig(
         DimmsAsymNum++;
       }
     }
+
+    FREE_POOL_SAFE(pDimmsSymPerSocket);
+    FREE_POOL_SAFE(pDimmsAsymPerSocket);
   }
 
   // We have removed all Asymmetrical memory, so decrease the number of goal templates
@@ -5810,6 +5813,8 @@ Finish:
   FREE_POOL_SAFE(pDimmsSym);
   FREE_POOL_SAFE(pDimmsAsym);
   NVDIMM_EXIT_I64(ReturnCode);
+  FREE_POOL_SAFE(pDimmsSymPerSocket);
+  FREE_POOL_SAFE(pDimmsAsymPerSocket);
   return ReturnCode;
 }
 

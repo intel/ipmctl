@@ -3345,16 +3345,6 @@ ValidateRegionsCorrelations(
         }
       }
     }
-
-    if (LastNvmStatus == NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM) {
-      SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index],
-              NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM);
-      LastNvmStatus = NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM;
-    } else {
-      SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index],
-              NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM);
-      LastNvmStatus = NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM;
-    }
   }
 
   if (LastNvmStatus == NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM ||

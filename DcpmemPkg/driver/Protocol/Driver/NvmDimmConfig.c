@@ -5748,9 +5748,6 @@ CreateGoalConfig(
         DimmsAsymNum++;
       }
     }
-
-    FREE_POOL_SAFE(pDimmsSymPerSocket);
-    FREE_POOL_SAFE(pDimmsAsymPerSocket);
   }
 
   // We have removed all Asymmetrical memory, so decrease the number of goal templates

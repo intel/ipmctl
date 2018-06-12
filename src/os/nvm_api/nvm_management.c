@@ -1400,6 +1400,7 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   CHAR16 UnicodePassphrase[PASSPHRASE_BUFFER_SIZE];
 
   SetMem(UnicodePassphrase, sizeof(UnicodePassphrase), 0x0);
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);

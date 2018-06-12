@@ -30,7 +30,7 @@ Ubuntu packages can be found at: https://launchpad.net/~jhli/+archive/ubuntu/ipm
 
 ### Linux
 
-The lastest Linux kernel version available is suggested.
+The latest Linux kernel version available is suggested.
 
 libndctl is required to build, packages can be found at: https://copr.fedoraproject.org/coprs/djbw/ndctl/
 
@@ -56,5 +56,8 @@ The RPMs will be in output/rpmbuild/RPMS/
 
 ## Build Windows
 
+Install the Windows RS5 (Build >17650) Driver Development Kit. See https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewSDK for access if it's not externally available at https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk. Make sure that winioctl.h is available after installation.
+
 Install VS2017
+
 Open as a CMake project

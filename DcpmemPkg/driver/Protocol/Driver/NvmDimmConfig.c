@@ -613,6 +613,7 @@ GetDimmMappedMemSize(
   pDimm->MappedVolatileCapacity = pPcdCurrentConf->VolatileMemSizeIntoSpa;
   pDimm->MappedPersistentCapacity = pPcdCurrentConf->PersistentMemSizeIntoSpa;
 
+  FreePool(pPcdConfHeader);
   return EFI_SUCCESS;
 }
 #endif // OS_BUILD
@@ -9244,14 +9245,17 @@ InjectError(
           if (EFI_ERROR(ReturnCode)) {
             SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
             ReturnCode = EFI_DEVICE_ERROR;
+            FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
             continue;
           }
         } else {
           ReturnCode = EFI_UNSUPPORTED;
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
+          FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
           continue;
         }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+          FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
       }
       break;
     case ERROR_INJ_DIRTY_SHUTDOWN:

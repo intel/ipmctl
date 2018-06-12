@@ -192,11 +192,13 @@ DumpDeviceSupportCommand(
       TempReturnCode = FileExists(pDumpAppendedPath, &fExists);
       if (EFI_ERROR(TempReturnCode) && TempReturnCode != EFI_NOT_FOUND) {
         KEEP_ERROR(ReturnCode, TempReturnCode);
+        FREE_POOL_SAFE(pDumpAppendedPath);
         continue;
       }
       if (fExists) {
         Print(CLI_ERR_FILE_EXISTS L"\n", pDumpAppendedPath);
         KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
+        FREE_POOL_SAFE(pDumpAppendedPath);
         continue;
       }
 
@@ -243,6 +245,7 @@ Finish:
   FREE_POOL_SAFE(pDumpUserPath);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pSupportBuffer);
+  FREE_POOL_SAFE(pDumpAppendedPath);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

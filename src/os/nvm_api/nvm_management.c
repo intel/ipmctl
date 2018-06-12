@@ -76,23 +76,44 @@ extern int g_fast_path;
 //todo: add error checking
 NVM_API int nvm_init()
 {
-	int rc = NVM_SUCCESS;
+  int rc = NVM_SUCCESS;
 
-	if (g_nvm_initialized)
-		return rc;
-	g_api_mutex = os_mutex_init("nvm_api");
-	EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
-	init_protocol_bs();
-	init_protocol_simple_file_system_protocol();
-	// Initialize Preferences
-	preferences_init();
-	NvmDimmDriverDriverEntryPoint(0, NULL);
+  if (g_nvm_initialized)
+    return rc;
+  
+  if (NULL == (g_api_mutex = os_mutex_init("nvm_api")))
+  {
+    NVDIMM_ERR("Failed to intialize NVM API mutex\n");
+    return NVM_ERR_UNKNOWN;
+  }
+
+  EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
+  init_protocol_bs();
+  init_protocol_simple_file_system_protocol();
+
+  // Initialize Preferences
+  if (EFI_SUCCESS != preferences_init())
+  {
+    NVDIMM_ERR("Failed to intialize preferences\n");
+    return NVM_ERR_UNKNOWN;
+  }
+
+  if (EFI_SUCCESS != NvmDimmDriverDriverEntryPoint(0, NULL))
+  {
+    NVDIMM_ERR("Nvm Dimm driver entry point failed.\n");
+    return NVM_ERR_UNKNOWN;
+  }
+
   if(!g_fast_path)
   {
-	  NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
+    if (EFI_SUCCESS != NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL))
+    {
+      NVDIMM_ERR("Nvm Dimm driver binding start failed.\n");
+      return NVM_ERR_UNKNOWN;
+    }
   }
-	g_nvm_initialized = 1;
-	return rc;
+  g_nvm_initialized = 1;
+  return rc;
 }
 
 NVM_API void nvm_uninit()
@@ -160,7 +181,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
 	}
 
 	if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-		NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    wprintf(L"Failed to intialize nvm library %d\n", nvm_status);
 		return nvm_status;
 	}
 

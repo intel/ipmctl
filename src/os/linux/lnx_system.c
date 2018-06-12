@@ -166,6 +166,7 @@ OS_MUTEX * os_mutex_init(const char *name)
 		}
     else
     {
+      pthread_mutexattr_destroy(&attr);
       free(mutex);
     }
 	}

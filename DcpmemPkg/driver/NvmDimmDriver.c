@@ -666,6 +666,7 @@ NvmDimmDriverDriverEntryPoint(
   }
 #endif // UEFI
 Finish:
+#ifndef OS_BUILD
   /**
     Install the unload function on the loaded image protocol
   **/
@@ -679,7 +680,7 @@ Finish:
   } else {  /** clean - call unload manually if we failed to initialize the driver **/
     NvmDimmDriverUnload(ImageHandle);
   }
-
+#endif
   NVDIMM_DBG("Exiting DriverEntryPoint, error = %r.\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

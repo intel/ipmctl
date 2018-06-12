@@ -111,6 +111,7 @@ DumpGoal(
 Finish:
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDumpFilePath);
+  FREE_POOL_SAFE(pDumpUserPath);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
  }

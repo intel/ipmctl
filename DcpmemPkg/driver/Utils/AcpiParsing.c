@@ -335,8 +335,16 @@ CheckIsMemoryModeAllowed(
   BOOLEAN MMCanBeConfigured = FALSE;
   BOOLEAN IsDDR = FALSE;
   BOOLEAN IsDCPMEM = FALSE;
-  UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
 
+  if (pPMTT == NULL) {
+    goto Finish;
+  }
+  if (!IsChecksumValid(pPMTT, pPMTT->Header.Length)) {
+    NVDIMM_WARN("The checksum of PMTT table is invalid.");
+    goto Finish;
+  }
+
+  UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
   PMTT_COMMON_HEADER *pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
   while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_SOCKET) {
     // check if socket is enabled
@@ -350,12 +358,13 @@ CheckIsMemoryModeAllowed(
           pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
           // check if at least one DCPMEM module is present
           while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_MODULE) {
+            PMTT_MODULE *pModule = (PMTT_MODULE *)(((UINT8 *)pCommonHeader) + sizeof(pCommonHeader));
             // if DCPMEM is already set then continue to loop to find the offset of the next aggregated device
             if (!IsDCPMEM) {
               // bit 2 is set then DCPMEM
-              if (pCommonHeader->Flags & PMTT_DDR_DCPMEM_FLAG) {
+              if ((pCommonHeader->Flags & PMTT_DDR_DCPMEM_FLAG) && pModule->SizeOfDimm > 0) {
                 IsDCPMEM = TRUE;
-              } else {
+              } else if (!(pCommonHeader->Flags & PMTT_DDR_DCPMEM_FLAG) && pModule->SizeOfDimm > 0) {
                 IsDDR = TRUE;
               }
             }

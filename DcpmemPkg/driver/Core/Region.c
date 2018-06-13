@@ -1227,6 +1227,13 @@ MapRequestToActualRegionGoalTemplates(
     }
   }
 
+  /** Check if platform allows volatile mode  */
+  if (VolatileSize > 0 && !gNvmDimmData->PMEMDev.IsMemModeAllowedByBios) {
+    // set objectId to 0, there should be at leat one object in here
+    SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+
+  }
+
   if (pVolatileSizeActual != NULL) {
     *pVolatileSizeActual = VolatileSizeActual;
   }

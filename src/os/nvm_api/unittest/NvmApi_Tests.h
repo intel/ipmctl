@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 #include <nvm_management.h>
+#include <wchar.h> 
 
 class NvmApi_Tests : public ::testing::Test
 {
@@ -25,7 +26,7 @@ TEST_F(NvmApi_Tests, GetPmonRegs)
   {
     PMON_REGISTERS *p_output_payload = (PMON_REGISTERS *)malloc(sizeof(PMON_REGISTERS));
 
-    nvm_get_pmon_registers(p_devices->uid, SmartDataMask, p_output_payload);
+    EXPECT_EQ(nvm_get_pmon_registers(p_devices->uid, SmartDataMask, p_output_payload), NVM_SUCCESS);
 
     free(p_output_payload);
   }
@@ -42,11 +43,25 @@ TEST_F(NvmApi_Tests, SetPmonRegs)
   //Valid PMON groups from 0xA to 0xF
   for (PMONGroupEnable = 10; PMONGroupEnable < 16; PMONGroupEnable++)
   {
-    nvm_set_pmon_registers(p_devices->uid, PMONGroupEnable);
+    EXPECT_EQ(nvm_set_pmon_registers(p_devices->uid, PMONGroupEnable), NVM_SUCCESS);
   }
 
   free(p_devices);
 
+}
+
+TEST_F(NvmApi_Tests, GetDeviceStatus)
+{
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+
+  nvm_get_devices(p_devices, 1);
+  device_status *p_status = (device_status *)malloc(sizeof(device_status));
+
+  EXPECT_EQ(nvm_get_device_status(p_devices->uid, p_status), NVM_SUCCESS);
+
+  free(p_status);
+
+  free(p_devices);
 }
 
 #endif //NVM_API_TESTS_H

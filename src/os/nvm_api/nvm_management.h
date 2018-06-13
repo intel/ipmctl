@@ -218,10 +218,10 @@ enum device_form_factor {
  */
 enum device_health {
 	DEVICE_HEALTH_UNKNOWN		= 0,    ///< The HEALTH can not be determined.
-	DEVICE_HEALTH_NORMAL		= 5,    ///< Normal.
-	DEVICE_HEALTH_NONCRITICAL	= 15,   ///< Maintenance required.
-	DEVICE_HEALTH_CRITICAL		= 25,   ///< Features or performance degraded due to failure.
-	DEVICE_HEALTH_FATAL		= 30,   ///< Data loss has occurred or is imminent.
+	DEVICE_HEALTH_NORMAL		= 1,    ///< Normal.
+	DEVICE_HEALTH_NONCRITICAL	= 2,   ///< Maintenance required.
+	DEVICE_HEALTH_CRITICAL		= 3,   ///< Features or performance degraded due to failure.
+	DEVICE_HEALTH_FATAL		= 4,   ///< Data loss has occurred or is imminent.
 };
 
 /**

@@ -99,11 +99,14 @@ ShowEvent(
     // Populate the list of DIMM_INFO structures with relevant information
     ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
     if (EFI_ERROR(ReturnCode)) {
+      // Allow show event to run even if there are no DIMMs
+      if (ReturnCode != EFI_NOT_FOUND) {
         goto Finish;
+      }
     }
 
     // check targets
-    if (ContainTarget(pCmd, DIMM_TARGET)) {
+    if ((ContainTarget(pCmd, DIMM_TARGET) && (DimmCount > 0))) {
         pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
         ReturnCode = GetDimmUidFromString(pTargetValue, pDimms, DimmCount, DimmUid);
         if (EFI_ERROR(ReturnCode)) {

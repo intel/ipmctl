@@ -216,11 +216,7 @@ Load (
     ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pRelativeFileName,
         (CHAR16 *) pWorkingDirectory, Examine, FALSE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
 
-    if (EFI_ERROR(ReturnCode)) {
-      goto FinishWithError;
-    }
-
-   if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS) {
+   if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
      pFwType = FirmwareTypeToString(pFwImageInfo->FirmwareType);
      if (pFwType == NULL) {
        Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -238,6 +234,7 @@ Load (
      FREE_POOL_SAFE(pFwType);
    } else {
      Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+     goto FinishWithError;
    }
    DisplayCommandStatus(L"",L"", pCommandStatus);
    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);

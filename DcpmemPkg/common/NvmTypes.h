@@ -320,7 +320,7 @@ typedef struct _DIMM_INFO {
 
   //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
   UINT8 HealthState;                        //!< overall health state
-  UINT16 HealthStausReason;                  //!< Health state reason(s)
+  UINT16 HealthStatusReason;                  //!< Health state reason(s)
   UINT32 LastShutdownStatus;                //!< The status of the last shutdown of the DIMM.
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled

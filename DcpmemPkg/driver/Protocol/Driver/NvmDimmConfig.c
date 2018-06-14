@@ -950,7 +950,7 @@ GetDimmInfo (
     if (HEALTH_UNMANAGEABLE != pDimmInfo->HealthState) {
     ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
     }
-    pDimmInfo->HealthStausReason = SensorInfo.HealthStatusReason;
+    pDimmInfo->HealthStatusReason = SensorInfo.HealthStatusReason;
     pDimmInfo->LastShutdownStatus = LastShutdownStatus;
     pDimmInfo->LastShutdownTime = LastShutdownTime;
     pDimmInfo->AitDramEnabled = AitDramEnabled;
@@ -2379,7 +2379,7 @@ GetSmartAndHealth (
   pSensorInfo->PercentageUsedValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageUsed;
   pSensorInfo->MediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->MediaTemperature);
   pSensorInfo->HealthStatus = pPayloadSmartAndHealth->HealthStatus;
-  pSensorInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStausReason) ?
+  pSensorInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStatusReason) ?
          pPayloadSmartAndHealth->HealthStatusReason : (UINT16)HEALTH_STATUS_REASON_NONE;
   pSensorInfo->PercentageRemaining = pPayloadSmartAndHealth->PercentageRemaining;
   pSensorInfo->PercentageUsed = pPayloadSmartAndHealth->PercentageUsed;

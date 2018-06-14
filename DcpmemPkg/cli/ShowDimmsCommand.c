@@ -480,7 +480,7 @@ ShowDimms(
       pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
 
       ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-        pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+        pUninitializedDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
       if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
@@ -594,7 +594,7 @@ ShowDimms(
       /** Health State Reason**/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
         ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-          pDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+          pDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
         if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
@@ -1187,7 +1187,7 @@ ShowDimms(
       /** Health State reason**/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
         ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-          pUninitializedDimms[Index].HealthStausReason, &pHealthStateReasonStr);
+          pUninitializedDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
         if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
           goto Finish;
         }

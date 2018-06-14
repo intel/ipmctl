@@ -691,7 +691,7 @@ typedef union _SMART_VALIDATION_FLAGS {
     UINT32 ControllerTemperature            : 1;
     UINT32 UnsafeShutdownCount               : 1;
     UINT32 AITDRAMStatus                    : 1;
-    UINT32 HealthStausReason                : 1;
+    UINT32 HealthStatusReason                : 1;
     UINT32                                  : 1;  //!< Reserved
     UINT32 AlarmTrips                       : 1;
     UINT32 LastShutdownStatus               : 1;

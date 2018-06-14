@@ -96,8 +96,8 @@ typedef union {
 
 // ARS status string values
 #define ARS_STATUS_UNKNOWN_STR       L"Unknown"
-#define ARS_STATUS_NOT_STARTED_STR   L"Not Started"
-#define ARS_STATUS_IN_PROGRESS_STR   L"In Progress"
+#define ARS_STATUS_NOT_STARTED_STR   L"Not started"
+#define ARS_STATUS_IN_PROGRESS_STR   L"In progress"
 #define ARS_STATUS_COMPLETED_STR     L"Completed"
 #define ARS_STATUS_ABORTED_STR       L"Aborted"
 

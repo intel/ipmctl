@@ -445,7 +445,6 @@ int process_output(
                //malformed table (no matching column header)
                if (col > show_table.column_cnt)
                {
-                  num_dictionaries--;
                   goto Parsing_done;
                }
 

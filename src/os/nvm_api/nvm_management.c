@@ -106,11 +106,7 @@ NVM_API int nvm_init()
 
   if(!g_fast_path)
   {
-    if (EFI_SUCCESS != NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL))
-    {
-      NVDIMM_ERR("Nvm Dimm driver binding start failed.\n");
-      return NVM_ERR_UNKNOWN;
-    }
+    NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
   }
   g_nvm_initialized = 1;
   return rc;

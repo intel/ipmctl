@@ -11,11 +11,6 @@
 // Cli will warn the user when suggested alignment is greater than this percentage
 #define PROMPT_ALIGN_PERCENTAGE 10
 
-#define HELP_TEXT_CONFIG_PROPERTY L"MM|AD|MM+AD"
-#define PROPERTY_CONFIG_VALUE_MM L"MM"
-#define PROPERTY_CONFIG_VALUE_AD L"AD"
-#define PROPERTY_CONFIG_VALUE_MM_AD L"MM+AD"
-
 /**
   Register the Create Goal command
 

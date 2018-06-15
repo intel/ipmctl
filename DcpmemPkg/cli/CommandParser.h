@@ -226,7 +226,6 @@
 #define CATEGORY_PROPERTY                 L"Category"
 #define ACTION_REQ_PROPERTY               L"ActionRequired"
 #define ACTION_REQ_EVENTS_PROPERTY        L"ActionRequiredEvents"
-#define CONFIG_PROPERTY                   L"Config"
 #define DBG_LOG_LEVEL                     L"DBG_LOG_LEVEL"
 #define CREATE_SUPP_NAME                  L"Name"
 /** common help messages **/

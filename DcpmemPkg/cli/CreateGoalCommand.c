@@ -38,7 +38,6 @@ struct Command CreateGoalCommand =
     {MEMORY_MODE_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {PERSISTENT_MEM_TYPE_PROPERTY, L"", HELP_TEXT_PERSISTENT_MEM_TYPE, FALSE, ValueRequired},
     {RESERVED_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
-    {CONFIG_PROPERTY, L"", HELP_TEXT_CONFIG_PROPERTY, FALSE, ValueRequired},
     {NS_LABEL_VERSION_PROPERTY, L"", HELP_TEXT_NS_LABEL_VERSION, FALSE, ValueRequired}
   },
   L"Provision capacity on one or more DIMMs into regions",     //!< help
@@ -392,77 +391,51 @@ CreateGoal(
     goto Finish;
   }
 
-  // Check quick config first
-  ReturnCode = ContainsProperty(pCmd, CONFIG_PROPERTY);
+  ReturnCode = ContainsProperty(pCmd, MEMORY_MODE_PROPERTY);
   if (!EFI_ERROR(ReturnCode)) {
-      ReturnCode = GetPropertyValue(pCmd, CONFIG_PROPERTY, &pPropertyValue);
-      if (EFI_ERROR(ReturnCode)) {
-          Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-          goto Finish;
-      }
-      if (StrICmp(pPropertyValue, PROPERTY_CONFIG_VALUE_MM) == 0) {
-          VolatileMode = 100;
-          ReservedPercent = 0;
-      } else if (StrICmp(pPropertyValue, PROPERTY_CONFIG_VALUE_AD) == 0) {
-          PersistentMemType = PM_TYPE_AD;
-          ReservedPercent = 0;
-      } else if (StrICmp(pPropertyValue, PROPERTY_CONFIG_VALUE_MM_AD) == 0) {
-          VolatileMode = 25;
-          PersistentMemType = PM_TYPE_AD;
-          ReservedPercent = 0;
-      } else {
-          ReturnCode = EFI_INVALID_PARAMETER;
-          NVDIMM_WARN("Invalid Config. Supported categories %s ", HELP_TEXT_CONFIG_PROPERTY);
-          Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG);
-          goto Finish;
-      }
+    Valid = PropertyToUint64(pCmd, MEMORY_MODE_PROPERTY, &PropertyValue);
+    /** Make sure it is in 0-100 percent range. **/
+    if (Valid && PropertyValue <= 100) {
+      VolatileMode = (UINT32)PropertyValue;
+    } else {
+        Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_MEMORY_MODE);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        goto Finish;
+     }
   } else {
-      ReturnCode = ContainsProperty(pCmd, MEMORY_MODE_PROPERTY);
-      if (!EFI_ERROR(ReturnCode)) {
-          Valid = PropertyToUint64(pCmd, MEMORY_MODE_PROPERTY, &PropertyValue);
-          /** Make sure it is in 0-100 percent range. **/
-          if (Valid && PropertyValue <= 100) {
-              VolatileMode = (UINT32)PropertyValue;
-          } else {
-              Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_MEMORY_MODE);
-              ReturnCode = EFI_INVALID_PARAMETER;
-              goto Finish;
-          }
-      } else {
-          VolatileMode = 0;
-      }
+      VolatileMode = 0;
+  }
 
-      if ((ReturnCode = ContainsProperty(pCmd, PERSISTENT_MEM_TYPE_PROPERTY)) != EFI_NOT_FOUND) {
-          if (EFI_ERROR(ReturnCode)) {
-              Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-              goto Finish;
-          }
-          ReturnCode = GetPropertyValue(pCmd, PERSISTENT_MEM_TYPE_PROPERTY, &pPropertyValue);
-          if (EFI_ERROR(ReturnCode)) {
-              Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-              goto Finish;
-          }
-          ReturnCode = GetPersistentMemTypeValue(pPropertyValue, &PersistentMemType);
-          if (EFI_ERROR(ReturnCode)) {
-              Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_PERSISTENT_MEM_TYPE);
-              goto Finish;
-          }
-      }
+  if ((ReturnCode = ContainsProperty(pCmd, PERSISTENT_MEM_TYPE_PROPERTY)) != EFI_NOT_FOUND) {
+    if (EFI_ERROR(ReturnCode)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+    ReturnCode = GetPropertyValue(pCmd, PERSISTENT_MEM_TYPE_PROPERTY, &pPropertyValue);
+    if (EFI_ERROR(ReturnCode)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+    ReturnCode = GetPersistentMemTypeValue(pPropertyValue, &PersistentMemType);
+    if (EFI_ERROR(ReturnCode)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_PERSISTENT_MEM_TYPE);
+      goto Finish;
+    }
+  }
 
-      ReturnCode = ContainsProperty(pCmd, RESERVED_PROPERTY);
-      if (!EFI_ERROR(ReturnCode)) {
-          Valid = PropertyToUint64(pCmd, RESERVED_PROPERTY, &PropertyValue);
-          /** Make sure it is in 0-100 percent range. **/
-          if (Valid && PropertyValue <= 100) {
-              ReservedPercent = (UINT32)PropertyValue;
-          } else {
-              Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_RESERVED);
-              ReturnCode = EFI_INVALID_PARAMETER;
-              goto Finish;
-          }
-      } else {
-          ReservedPercent = 0;
-      }
+  ReturnCode = ContainsProperty(pCmd, RESERVED_PROPERTY);
+  if (!EFI_ERROR(ReturnCode)) {
+    Valid = PropertyToUint64(pCmd, RESERVED_PROPERTY, &PropertyValue);
+    /** Make sure it is in 0-100 percent range. **/
+    if (Valid && PropertyValue <= 100) {
+      ReservedPercent = (UINT32)PropertyValue;
+    } else {
+        Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_RESERVED);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        goto Finish;
+    }
+  } else {
+      ReservedPercent = 0;
   }
 
   if (ReservedPercent + VolatileMode > 100) {

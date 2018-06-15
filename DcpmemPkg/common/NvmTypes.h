@@ -933,6 +933,7 @@ typedef struct {
 #define DISPLAY_DIMM_ID_MAX_SIZE  2 //!< Number of possible Dimm Identifiers
 
 #define DISPLAY_DIMM_ID_DEFAULT DISPLAY_DIMM_ID_HANDLE
+#define APP_DIRECT_SETTINGS_INDEX_DEFAULT 0
 
 #define BMI_DEFAULT MODE_DISABLED     //!< default setting for boot minimal init
 

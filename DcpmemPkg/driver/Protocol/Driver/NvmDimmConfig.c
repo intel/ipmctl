@@ -3285,7 +3285,7 @@ GetRegionMinimalInfo(
     pRegionMin->DimmId[pRegionMin->DimmIdCount] = (UINT16)pDimm->DeviceHandle.AsUint32;
     pRegionMin->DimmIdCount++;
   }
-
+  BubbleSort(pRegionMin->DimmId, pRegionMin->DimmIdCount, sizeof(pRegionMin->DimmId[0]), SortRegionDimmId);
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -3331,6 +3331,47 @@ GetRegionCount(
 Finish:
   NVDIMM_EXIT_I64(Rc);
   return Rc;
+}
+
+/**
+  Sorts the region list by Id
+
+  @param[in out] pRegion1 A pointer to the Regions.
+  @param[in out] pRegion2 A pointer to the copy of Regions.
+
+  @retval int retruns 0,-1, 0
+**/
+INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2)
+{
+  REGION_INFO *pRegiona = (REGION_INFO *)pRegion1;
+  REGION_INFO *pRegionb = (REGION_INFO *)pRegion2;
+
+  if (pRegiona->RegionId == pRegionb->RegionId) {
+    return 0;
+  } else if (pRegiona->RegionId < pRegionb->RegionId) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
+/**
+  Sorts the DimmIds list by Id
+
+  @param[in out] pDimmId1 A pointer to the pDimmId list.
+  @param[in out] pDimmId2 A pointer to the copy of pDimmId list.
+
+  @retval int retruns 0,-1, 0
+**/
+INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2)
+{
+  if (*(UINT16 *)pDimmId1 == *(UINT16 *)pDimmId2) {
+    return 0;
+  } else if (*(UINT16 *)pDimmId1 < *(UINT16 *)pDimmId2) {
+    return -1;
+  } else {
+    return 1;
+  }
 }
 
 /**
@@ -3397,6 +3438,8 @@ GetRegions(
     GetRegionMinimalInfo(pCurRegion, &pRegions[Index]);
     Index++;
   }
+
+  BubbleSort(pRegions, Count, sizeof(*pRegions), SortRegionInfoById);
 
 Finish:
   NVDIMM_EXIT_I64(Rc);

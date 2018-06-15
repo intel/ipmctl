@@ -122,6 +122,26 @@ GetDimmCount(
   );
 
 /**
+  Sorts the region list by Id
+
+  @param[in out] pRegion1 A pointer to the Regions.
+  @param[in out] pRegion2 A pointer to the copy of Regions.
+
+  @retval int retruns 0,-1, 0
+**/
+INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2);
+
+/**
+  Sorts the DimmIds list by Id
+
+  @param[in out] pDimmId1 A pointer to the pDimmId list.
+  @param[in out] pDimmId2 A pointer to the copy of pDimmId list.
+
+  @retval int retruns 0,-1, 0
+**/
+INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2);
+
+/**
   Retrieve the number of uninitialized DCPMEM modules in the system found thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.

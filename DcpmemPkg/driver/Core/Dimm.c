@@ -3670,26 +3670,16 @@ ParseFwApiVersion(
   IN     PT_ID_DIMM_PAYLOAD *pPayload
   )
 {
-  API_VERSION FwApiVersionNew;
-  VERSION_BYTE FwApiVersionOld;
+  API_VERSION FwApiVersion;
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&FwApiVersionNew, sizeof(FwApiVersionNew));
-  ZeroMem(&FwApiVersionOld, sizeof(FwApiVersionOld));
+  ZeroMem(&FwApiVersion, sizeof(FwApiVersion));
 
-  // Try new location first; else fallback to old location
-  FwApiVersionNew.Version = pPayload->ApiVer;
+  FwApiVersion.Version = pPayload->ApiVer;
 
-  // @todo DE9699 Remove FIS 1.2 backwards compatibility workaround
-  if (FwApiVersionNew.Version != 0) {
-    pDimm->FwVer.FwApiMajor = BCD_TO_TWO_DEC(FwApiVersionNew.Byte.Digit1);
-    pDimm->FwVer.FwApiMinor = BCD_TO_TWO_DEC(FwApiVersionNew.Byte.Digit2);
-  } else {
-    FwApiVersionOld.Version = pPayload->Reservd0;
-    pDimm->FwVer.FwApiMajor = BCD_TO_TWO_DEC(FwApiVersionOld.Nibble.Digit1);
-    pDimm->FwVer.FwApiMinor = BCD_TO_TWO_DEC(FwApiVersionOld.Nibble.Digit2);
-  }
+  pDimm->FwVer.FwApiMajor = BCD_TO_TWO_DEC(FwApiVersion.Byte.Digit1);
+  pDimm->FwVer.FwApiMinor = BCD_TO_TWO_DEC(FwApiVersion.Byte.Digit2);
 
   NVDIMM_EXIT();
 }
@@ -4659,7 +4649,6 @@ InitializeDimm (
     pNewDimm->FlushRequired = (pPayload->Fswr & BIT0) != 0;
     pNewDimm->ControlWindowLatch = (pPayload->Fswr & BIT1) != 0;
 
-    pNewDimm->NumBlockWindows = pPayload->Nbw;
     /** pPayload->Rc in 4KiB multiples **/
     pNewDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
     pNewDimm->Manufacturer = pPayload->Mf;

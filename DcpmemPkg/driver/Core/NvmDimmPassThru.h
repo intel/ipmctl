@@ -398,20 +398,19 @@ typedef struct {
   UINT16 Rid;                     //!< 5-4   : Revision ID
   UINT16 Ifc;                     //!< 7-6   : Interface format code (0x301)
   UINT8 Fwr[FW_BCD_VERSION_LEN];  //!< 12-8  : BCD formated firmware revision
-  UINT8 Reservd0;                 //!< 13    : Reserved
+  UINT8 Reserved0;                //!< 13    : Reserved
   UINT8 Fswr;                     //!< 14    : Feature SW Required Mask
-  UINT8 Reservd1;                 //!< 15    : Reserved
-  UINT16 Nbw;                     //!< 17-16 : Number of block windows
-  UINT8 Reserved[10];             //!< 27-18 : Reserved
-  UINT32 Obmcr;                   //!< 31-28 : Offset of block mode control region
+  UINT8 Reserved1;                //!< 15    : Reserved
+  UINT8 Reserved2[16];            //!< 31-16 : Reserved
   UINT32 Rc;                      //!< 35-32 : Raw capacity
-  UINT16 Mf;                      //!< 37-36 : Manufacturer ID
-  UINT32 Sn;                      //!< 41-38 : Serial Number ID
+  UINT16 Mf;                      //!< 37-36 : Manufacturer ID (Deprecated)
+  UINT32 Sn;                      //!< 41-38 : Serial Number ID (Deprecated)
   CHAR8 Pn[DIMM_PN_LEN];          //!< 61-42 : ASCII Part Number
   UINT32 DimmSku;                 //!< 65-62 : DIMM SKU
-  UINT16 Ifce;                    //!< 67-66 : Interface format code extra (0x201)
+  UINT8 Reserved3[2];             //!< 66-67 : Reserved
   UINT16 ApiVer;                  //!< 69-68 : API Version
-  UINT8 Resrvd2[58];              //!< 127-70: Reserved
+  UINT8 DimmUid[9];               //!< 78-70 : DIMM Unique ID (UID)
+  UINT8 Reserved4[49];            //!< 127-70: Reserved
 } PT_ID_DIMM_PAYLOAD;
 
 typedef struct {

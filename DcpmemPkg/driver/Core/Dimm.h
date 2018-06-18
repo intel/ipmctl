@@ -179,8 +179,6 @@ typedef struct _DIMM {
   #define DEV_FW_API_VERSION_MAJOR_MIN   1
   #define DEV_FW_API_VERSION_MINOR_MIN   2
 
-  UINT16 NumBlockWindows;                  //!< Number of Block Windows Supported
-
   UINT64 RawCapacity;                      //!< PM + volatile
   UINT64 VolatileStart;                    //!< DPA start of the Volatile region
   UINT64 VolatileCapacity;                 //!< Capacity in bytes mapped as volatile memory

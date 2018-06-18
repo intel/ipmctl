@@ -10,6 +10,12 @@
 #include <wctype.h>
 #include <string.h>
 
+#define MAX_TABLE_ITEM_LEN  256
+#define wcsncpy_s(dest, dmax, src, slen) ws_strcpy(dest, src, dmax)
+
+
+
+
 wchar_t * normalize_tok(
    wchar_t *tok)
 {
@@ -53,8 +59,8 @@ int starts_with(
    wchar_t *prefix)
 {
    wchar_t *begining_str = str;
-   int start_str_len = (int)wcslen(prefix);
-   int total_str_len = (int)wcslen(str);
+   int start_str_len = (int)wcsnlen(prefix, READ_FD_LINE_SZ);
+   int total_str_len = (int)wcsnlen(str, READ_FD_LINE_SZ);
    for(int i = 0; i < total_str_len; ++i)
    {
       if(str[i] == L' ' || str[i] == L'\t')
@@ -70,8 +76,8 @@ int ends_with(
 {
    if (!str || !suffix)
       return 1;
-   int lenstr = (int)wcslen(str);
-   int lensuffix = (int)wcslen(suffix);
+   int lenstr = (int)wcsnlen(str, READ_FD_LINE_SZ);
+   int lensuffix = (int)wcsnlen(suffix, READ_FD_LINE_SZ);
    if (lensuffix >  lenstr)
       return 1;
    return wcsncmp(str + lenstr - lensuffix, suffix, lensuffix);
@@ -98,7 +104,7 @@ wchar_t *trimwhitespace(
    if (*str == 0)
       return str;
    // Trim trailing space
-   end = str + wcslen(str) - 1;
+   end = str + wcsnlen(str, READ_FD_LINE_SZ) - 1;
    while (end > str && iswspace((wchar_t)*end)) end--;
    // Write new null terminator
    *(end + 1) = 0;
@@ -116,7 +122,7 @@ wchar_t *trimchar(
    if (*str == 0)
       return str;
    // Trim trailing space
-   end = str + wcslen(str) - 1;
+   end = str + wcsnlen(str, READ_FD_LINE_SZ) - 1;
    while (end > str && (*end == c)) end--;
    // Write new null terminator
    *(end + 1) = 0;
@@ -126,18 +132,36 @@ wchar_t *trimchar(
 
 int tokenize_and_copy_key_value_pair(
    wchar_t *line,
-   wchar_t *delims,
    wchar_t *key,
    int key_sz,
    wchar_t *val,
    int val_sz)
 {
-   wchar_t *state;
-   wchar_t *tok;
-   tok = wcstok(line, delims, &state);
-   swprintf(key, key_sz, tok);
-   tok = wcstok(NULL, delims, &state);
-   swprintf(val, val_sz, tok);
+   wchar_t *tok = line;
+   int index = 0;
+
+   memset(key, 0, key_sz);
+   memset(val, 0, val_sz);
+
+   while (tok[index] != L'\0' && ((tok[index] != L'=') || (tok[index] != L':')))
+   {
+     if(index < (key_sz-1))
+      key[index] = tok[index];
+     ++index;
+   }
+
+   if(tok[index] == L'\0')
+    return -1;
+
+   ++index;//shift past delim
+
+   while (tok[index] != L'\0')
+   {
+     if (index < (val_sz - 1))
+       val[index] = tok[index];
+     ++index;
+   }
+
    return 0;
 }
 
@@ -161,8 +185,8 @@ int output_to_nvm_xml_list(
       wprintf(XML_ROOT_KEY_VALS_BEGIN_TAG, struct_name);
       for (int j = 0; j < dictionaries[i].item_cnt; ++j)
       {
-        swprintf(name, PAIR_NAME_SZ, FORMAT_STR, dictionaries[i].items[j].name);
-        swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, dictionaries[i].items[j].value);
+        wcsncpy_s(name, PAIR_NAME_SZ, dictionaries[i].items[j].name, PAIR_NAME_SZ);
+        wcsncpy_s(value, PAIR_VALUE_SZ, dictionaries[i].items[j].value, PAIR_VALUE_SZ);
         wprintf(XML_KEY_VAL_PAIR_TAGS, name, value, name);
       }
       wprintf(XML_ROOT_KEY_VALS_END_TAG, struct_name);
@@ -185,9 +209,9 @@ int output_to_nvm_xml_key_val_pairs(
    wprintf(XML_ROOT_KEY_VALS_BEGIN_TAG, struct_name);
    for (int j = 0; j < dictionary->item_cnt; ++j)
    {
-      swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].name));
-      swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].value));
-      wprintf(XML_KEY_VAL_PAIR_TAGS, name, value, name);
+     wcsncpy_s(name, PAIR_NAME_SZ, trimwhitespace(dictionary->items[j].name), PAIR_NAME_SZ);
+     wcsncpy_s(value, PAIR_VALUE_SZ, trimwhitespace(dictionary->items[j].value), PAIR_VALUE_SZ);
+     wprintf(XML_KEY_VAL_PAIR_TAGS, name, value, name);
    }
    wprintf(XML_ROOT_KEY_VALS_END_TAG, struct_name);
    return 0;
@@ -242,12 +266,12 @@ int output_to_esx_xml_key_val_pairs(
       wprintf(ESX_XML_KEY_VAL_TYPE_STRUCT_BEGIN);
 
       wprintf(ESX_XML_FIELD_ATTRIB_NAME_BEGIN);
-      swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].name));
+      wcsncpy_s(name, PAIR_NAME_SZ, trimwhitespace(dictionary->items[j].name), PAIR_NAME_SZ);
       wprintf(ESX_XML_STRING_BEGIN_AND_END, name);
       wprintf(ESX_XML_FIELD_END);
 
       wprintf(ESX_XML_FIELD_VALUE_BEGIN);
-      swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionary->items[j].value));
+      wcsncpy_s(value, PAIR_VALUE_SZ, trimwhitespace(dictionary->items[j].value), PAIR_VALUE_SZ);
       wprintf(ESX_XML_STRING_BEGIN_AND_END, value);
       wprintf(ESX_XML_FIELD_END);
 
@@ -278,8 +302,8 @@ int output_to_esx_xml_list(
       wprintf(ESX_XML_STRUCT_BEGIN, struct_name);
       for (int j = 0; j < dictionaries->item_cnt; ++j)
       {
-         swprintf(name, PAIR_NAME_SZ, FORMAT_STR, trimwhitespace(dictionaries[i].items[j].name));
-         swprintf(value, PAIR_VALUE_SZ, FORMAT_STR, trimwhitespace(dictionaries[i].items[j].value));
+         wcsncpy_s(name, PAIR_NAME_SZ, trimwhitespace(dictionaries[i].items[j].name), PAIR_NAME_SZ);
+         wcsncpy_s(value, PAIR_VALUE_SZ, trimwhitespace(dictionaries[i].items[j].value), PAIR_VALUE_SZ);
          wprintf(ESX_XML_FIELD_BEGIN, name);
          wprintf(ESX_XML_STRING_BEGIN_AND_END, value);
          wprintf(ESX_XML_FIELD_END);
@@ -396,8 +420,8 @@ int process_output(
       int col = 0;
       int row = 0;
       show_table.column_cnt = 0;
-      swprintf(show_table.name, COLUMN_HEADER_SZ, FORMAT_STR, display_name);
-      
+      wcsncpy_s(show_table.name, COLUMN_HEADER_SZ, display_name, MAX_TABLE_ITEM_LEN);
+
       //*************************************************************************
       //Parse listview output format into dictionary data structs
       //*************************************************************************
@@ -409,12 +433,12 @@ int process_output(
 	tok = wcstok(trimmed_line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
          if (NULL != tok)
          {
-            swprintf(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok);
+            wcsncpy_s(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok, MAX_TABLE_ITEM_LEN);
             ++col;
             show_table.column_cnt = col;
             while (NULL != (tok = wcstok(NULL, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state)))
             {
-               swprintf(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok);
+              wcsncpy_s(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok, MAX_TABLE_ITEM_LEN);
                ++col;
             }
             show_table.column_cnt = col;
@@ -434,8 +458,9 @@ int process_output(
          if (NULL != tok)
          {
             //get first column row-data
-            swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, show_table.columns[col].header_name);
-            swprintf(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok);
+            wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, show_table.columns[col].header_name, MAX_TABLE_ITEM_LEN);
+            wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok, MAX_TABLE_ITEM_LEN);
+
             cur_dict->item_cnt++;
             col++;
 
@@ -451,15 +476,15 @@ int process_output(
                if (special_tok(tok))
                {
                   wchar_t tmp_val[1024];
-                  int cat_tok_size = (int)wcslen(cur_dict->items[cur_dict->item_cnt-1].value) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for null term
-                  cat_tok_size += (int)wcslen(tok) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for whitespace
+                  int cat_tok_size = (int)wcsnlen(cur_dict->items[cur_dict->item_cnt-1].value, READ_FD_LINE_SZ) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for null term
+                  cat_tok_size += (int)wcsnlen(tok, READ_FD_LINE_SZ) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for whitespace
                   swprintf(tmp_val, 1024, L"%ls %ls", cur_dict->items[cur_dict->item_cnt-1].value, tok);
-                  swprintf(cur_dict->items[cur_dict->item_cnt - 1].value, PAIR_VALUE_SZ, L"%ls", tmp_val);
+                  wcsncpy_s(cur_dict->items[cur_dict->item_cnt - 1].value, PAIR_VALUE_SZ, tmp_val, MAX_TABLE_ITEM_LEN);
                }
                else
                {
-                  swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, show_table.columns[col].header_name);
-                  swprintf(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok);
+                  wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, show_table.columns[col].header_name, MAX_TABLE_ITEM_LEN);
+                  wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok, MAX_TABLE_ITEM_LEN);
                   ++col;
                   cur_dict->item_cnt++;
                }
@@ -502,13 +527,13 @@ int process_output(
          {
             continue;
          }
-         swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok);
+         wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
          tok = wcstok(NULL, KEY_VALUE_TOK_DELIM, &state);
          if (NULL == tok)
          {
            continue;
          }
-         swprintf(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok);
+         wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok, MAX_TABLE_ITEM_LEN);
          cur_dict->item_cnt++;
       }
 
@@ -553,7 +578,7 @@ int process_output(
             trimmed_line = trimchar(trimmed_line, trimmed_line[0]);
             //tokenize and temporarily store this node's key/value
             tokenize_and_copy_key_value_pair(
-               trimmed_line, KEY_VALUE_TOK_DELIM,
+               trimmed_line,
                parent_node.name,
                PAIR_NAME_SZ,
                parent_node.value,
@@ -566,14 +591,15 @@ int process_output(
             ++num_dictionaries;
             trimmed_line = trimchar(trimmed_line, trimmed_line[0]);
             //add parent node to current dictionary
-            swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, parent_node.name);
-            swprintf(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, parent_node.value);
+            wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, parent_node.name, MAX_TABLE_ITEM_LEN);
+            wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, parent_node.value, MAX_TABLE_ITEM_LEN);
+
             //added parent to cur dictionary, so increment cnt
             cur_dict->item_cnt++;
          }
 
          tokenize_and_copy_key_value_pair(
-            trimmed_line, KEY_VALUE_TOK_DELIM,
+            trimmed_line,
             cur_dict->items[cur_dict->item_cnt].name,
             PAIR_NAME_SZ,
             cur_dict->items[cur_dict->item_cnt].value,
@@ -615,7 +641,7 @@ int process_output(
          wchar_t * trimmed_line = trimwhitespace(line);
          if (0 == starts_with(trimmed_line, L"Message:"))
          {
-            swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, L"Message");
+            wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, L"Message", MAX_TABLE_ITEM_LEN);
             while (fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
             {
                trimmed_line = trimwhitespace(line);
@@ -644,9 +670,9 @@ TestName:
          }
  
          tok = wcstok(trimmed_line, KEY_VALUE_TOK_DELIM, &state);
-         swprintf(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok);
+         wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
          tok = wcstok(NULL, KEY_VALUE_TOK_DELIM, &state);
-         swprintf(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok);
+         wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok, MAX_TABLE_ITEM_LEN);
          cur_dict->item_cnt++;
       }
       //Transform data structures to XML

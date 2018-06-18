@@ -1007,12 +1007,12 @@ struct region {
  * Describes the configuration goal for a particular DIMM.
  */
 struct config_goal_input {
-	NVM_UINT8	persistent_mem_type;
-	NVM_UINT32	volatile_percent;
-	NVM_UINT32	reserved_percent;
-	NVM_UINT32	reserve_dimm;
-	NVM_UINT16	namespace_label_major;
-	NVM_UINT16	namespace_label_minor;
+	NVM_UINT8	persistent_mem_type;      ///< Persistent memory type: 0x1 - AppDirect, 0x2 - AppDirect Non-Interleaved
+	NVM_UINT32	volatile_percent;       ///< Volatile region size in percents
+	NVM_UINT32	reserved_percent;       ///< Amount of AppDirect memory to not map in percents
+	NVM_UINT32	reserve_dimm;           ///< Reserve one DIMM for use as not interleaved AppDirect memory: 0x0 - RESERVE_DIMM_NONE, 0x1 - STORAGE (NOT SUPPORTED), 0x2 - RESERVE_DIMM_AD_NOT_INTERLEAVED
+	NVM_UINT16	namespace_label_major;  ///< Major version of label to init: 0x1 (only supported major version)
+	NVM_UINT16	namespace_label_minor;  ///< Minor version of label to init: 0x1 or 0x2 (only supported minor versions)
 };
 
 struct config_goal {
@@ -1193,8 +1193,8 @@ struct nvm_log {
 struct device_error {
 	enum error_type		type;           ///< The type of error to inject.
 	enum poison_memory_type memory_type;    ///< Poison type
-	NVM_UINT64		dpa;            ///< only valid if injecting poison error
-	NVM_UINT64		temperature;    ///< only valid if injecting temperature error
+	NVM_UINT64		dpa;            ///< Inject poison address - only valid if injecting poison error
+	NVM_UINT64		temperature;    ///< Inject temperature - only valid if injecting temperature error
 	NVM_UINT64		percentageRemaining;  ///< only valid if injecting percentage remaining error
 };
 
@@ -1644,7 +1644,11 @@ NVM_API int nvm_get_device_status(const NVM_UID device_uid, struct device_status
  * @brief Retrieve the PMON Registers of device specified.
  * @param[in] device_uid
  *              The device identifier.
- * @param[in,out] output_payload
+ * @param[in] SmartDataMask
+ *              This will specify whether or not to return the extra smart data along with the PMON
+ * Counter data
+ * @param[out] p_output_payload
+ *               A pointer to the output payload PMON registers
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
@@ -1658,8 +1662,8 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID device_uid, const NVM_UINT8 Sma
  * @brief Set the PMON Registers of device specified.
  * @param[in] device_uid
  *              The device identifier.
-  * @param[in] device_uid
- *              The device identifier.
+ * @param[in] PMONGroupEnable
+ *              Specifies which PMON Group to enable
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
@@ -2271,6 +2275,8 @@ NVM_API int nvm_get_available_persistent_size_range(const NVM_UID region_uid, st
  *              If NULL, all devices on platform will be configured.
  * @param device_uids_couut
  *              Number of devices in p_device_uids list.
+ * @param p_goal
+ *              Values that defines how regions are created.
  * @pre The caller has administrative privileges.
  * @pre The specified DIMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
@@ -2804,6 +2810,8 @@ NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct devic
 
 /**
  * @brief Clear an injected error into the device specified for debugging purposes.
+ *        From a FIS perspective, it's setting the enable/disable field to disable for
+ *        the specified injected error type.
  * @param[in] device_uid
  *              The device identifier.
  * @param[in] p_error
@@ -2839,11 +2847,13 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const stru
 NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic *p_diagnostic, NVM_UINT32 *p_results);
 
 /**
- * @brief Set the user preference config value in DIMM software.
+ * @brief Set the user preference config value in DIMM software.  See the Change Preferences section of the CLI
+ * specification for a list of supported preferences and values.  Note, this API does not verify if the property key
+ * is supported, or if the value is supported per the CLI specification.
  * @param[in] key
- *              The property key.
+ *              The preference name.
  * @param[in] value
- *              The property value.
+ *              The preference value.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -2881,7 +2891,7 @@ NVM_API int nvm_debug_logging_enabled();
 
 /**
  * @brief Toggle whether the native API library performs debug logging.
- * @param[in] debug @n
+ * @param[in] enabled @n
  *              0: Log native API errors only. @n
  *              1: Log all native API traces. @n
  * @pre The caller must have administrative privileges.

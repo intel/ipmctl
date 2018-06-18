@@ -1408,6 +1408,25 @@ UnicodeSPrint(
 	return vswprintf(StartOfBuffer, BufferSize, FormatString, Marker);
 }
 
+/*
+* Function returns the current state of the debug logger
+*/
+BOOLEAN
+EFIAPI
+IsDebugLoggerEnabled()
+{
+  if (FALSE == g_log_config.initialized) {
+    return FALSE;
+  }
+  if (LOGGER_OFF != g_log_config.level) {
+    if ((TRUE == g_log_config.file_enabled) ||
+      (TRUE == g_log_config.stdout_enabled)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 /**
 Produces a Null-terminated Unicode string in an output buffer based on
 a Null-terminated Unicode format string and a VA_LIST argument list.

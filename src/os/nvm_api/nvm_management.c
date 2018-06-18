@@ -80,7 +80,9 @@ NVM_API int nvm_init()
 
   if (g_nvm_initialized)
     return rc;
-  
+
+  NVDIMM_DBG("Nvm Init");
+
   if (NULL == (g_api_mutex = os_mutex_init("nvm_api")))
   {
     NVDIMM_ERR("Failed to intialize NVM API mutex\n");
@@ -2865,6 +2867,10 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
  * Function enables disables the debug logger
  */
 extern int EFIAPI DebugLoggerEnable(IN BOOLEAN EnableDbgLogger);
+/*
+* Function returns the current state of the debug logger
+*/
+extern BOOLEAN EFIAPI IsDebugLoggerEnabled();
 
 NVM_API int nvm_debug_logging_enabled()
 {
@@ -2874,7 +2880,7 @@ NVM_API int nvm_debug_logging_enabled()
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
 		return rc;
 	}
-	return DebugLoggerEnable(TRUE);
+	return IsDebugLoggerEnabled();
 }
 
 NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled)

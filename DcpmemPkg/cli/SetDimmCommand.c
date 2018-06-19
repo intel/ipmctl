@@ -40,13 +40,7 @@ struct Command SetDimmCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
   {
-    {LOCKSTATE_PROPERTY, L"", LOCKSTATE_VALUE_DISABLED L"|" LOCKSTATE_VALUE_UNLOCKED L"|" LOCKSTATE_VALUE_FROZEN, FALSE, ValueRequired},
-    {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {FW_LOGLEVEL_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueRequired},
-    {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
-    {VIRAL_POLICY_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
+#ifdef OS_BUILD
     {CLEAR_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {TEMPERATURE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
@@ -54,8 +48,16 @@ struct Command SetDimmCommand =
     {PACKAGE_SPARING_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired },
     {PERCENTAGE_REAMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
-    {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired}
-  },                                                                //!< properties
+    {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
+#endif
+    {LOCKSTATE_PROPERTY, L"", LOCKSTATE_VALUE_DISABLED L"|" LOCKSTATE_VALUE_UNLOCKED L"|" LOCKSTATE_VALUE_FROZEN, FALSE, ValueRequired},
+    {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
+    {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
+    {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
+    {FW_LOGLEVEL_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueRequired},
+    {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
+    {VIRAL_POLICY_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired}
+    },                                                                //!< properties
   L"Set properties of one or more DIMMs.",                          //!< help
   SetDimm
 };
@@ -135,6 +137,7 @@ SetDimm(
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
 
+#ifdef OS_BUILD
   /*Inject error*/
   CHAR16 *pTemperature = NULL;
   CHAR16 *pPoisonAddress = NULL;
@@ -155,6 +158,7 @@ SetDimm(
   UINT8 FatalMediaError;
   UINT8 PackageSparing;
   UINT8 DirtyShutDown;
+#endif //OS_BUILD
   NVDIMM_ENTRY();
 
   SetDisplayInfo(L"SetDimm", ResultsView);
@@ -254,7 +258,7 @@ SetDimm(
             ActionSpecified = TRUE;
         }
     }
-
+#ifdef OS_BUILD
     if (!EFI_ERROR(ContainsProperty(pCmd, TEMPERATURE_INJ_PROPERTY))) {
         if (ActionSpecified) {
             /** We already found a specified action, more are not allowed **/
@@ -337,7 +341,7 @@ SetDimm(
           goto FinishError;
         }
     }
-
+#endif //OS_BUILD
   /** Syntax error - mixed properties from different set -dimm commands **/
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
@@ -624,7 +628,7 @@ SetDimm(
     ReturnCode = pNvmDimmConfigProtocol->SetFwLogLevel(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, FwLogLevel, pCommandStatus);
     goto Finish;
   }
-
+#ifdef OS_BUILD
   GetPropertyValue(pCmd, TEMPERATURE_INJ_PROPERTY, &pTemperature);
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
   GetPropertyValue(pCmd, POISON_TYPE_INJ_PROPERTY, &pPoisonType);
@@ -633,6 +637,7 @@ SetDimm(
   GetPropertyValue(pCmd, FATAL_MEDIA_ERROR_INJ_PROPERTY, &pFatalMediaError);
   GetPropertyValue(pCmd, DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, &pDirtyShutDown);
   GetPropertyValue(pCmd, CLEAR_ERROR_INJ_PROPERTY, &pClearErrorInj);
+
 
   /**
   Inject error Temperature
@@ -781,6 +786,7 @@ SetDimm(
       goto Finish;
     }
   }
+#endif
 Finish:
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   DisplayCommandStatus(pCommandStatusMessage, pCommandStatusPreposition, pCommandStatus);

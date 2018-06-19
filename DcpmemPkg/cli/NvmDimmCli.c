@@ -503,12 +503,12 @@ RegisterCommands(
     goto done;
   }
 
+#ifdef OS_BUILD
   Rc = RegisterShowHostServerCommand();
   if (EFI_ERROR(Rc)) {
      goto done;
   }
 
-#ifdef OS_BUILD
   Rc = RegisterShowEventCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
@@ -529,7 +529,6 @@ RegisterCommands(
      goto done;
    }
 #endif
-#endif // OS_BUILD
 
 #ifndef __MFG__
   Rc = RegisterShowPerformanceCommand();
@@ -537,6 +536,8 @@ RegisterCommands(
       goto done;
   }
 #endif
+#endif // OS_BUILD
+
   /* Debug Utility commands */
 #ifndef MDEPKG_NDEBUG
   Rc = RegisterLoadRecoverCommand();

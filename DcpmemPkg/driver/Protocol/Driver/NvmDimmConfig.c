@@ -653,10 +653,6 @@ GetDimmInfo (
   UINT32 LastShutdownStatus = 0;
   UINT64 LastShutdownTime = 0;
   UINT8 AitDramEnabled = 0;
-  UINT64 VolatileCapacity = 0;
-  UINT64 AppDirectCapacity = 0;
-  UINT64 UnconfiguredCapacity = 0;
-  UINT64 ReservedCapacity = 0;
   UINT32 Index = 0;
   DIMM_BSR Bsr;
   UINT8 FWLogLevel = 0;
@@ -1012,27 +1008,11 @@ GetDimmInfo (
 
   // Data already in pDimm
   pDimmInfo->Configured = pDimm->Configured;
-  ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity);
+  ReturnCode = GetCapacities(pDimm->DimmID, &pDimmInfo->VolatileCapacity, &pDimmInfo->AppDirectCapacity,
+    &pDimmInfo->UnconfiguredCapacity, &pDimmInfo->ReservedCapacity, &pDimmInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_CAPACITY;
   }
-
-  if (pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) {
-    pDimmInfo->VolatileCapacity = VolatileCapacity;
-    pDimmInfo->ReservedCapacity = ReservedCapacity;
-  } else {
-    pDimmInfo->InaccessibleCapacity += VolatileCapacity;
-  }
-
-  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
-    pDimmInfo->AppDirectCapacity = AppDirectCapacity;
-  } else {
-    pDimmInfo->InaccessibleCapacity += AppDirectCapacity;
-  }
-
-  pDimmInfo->UnconfiguredCapacity = UnconfiguredCapacity;
-
-
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_FW_IMAGE_INFO)
   {
@@ -3523,6 +3503,7 @@ GetMemoryResourcesInfo(
   UINT64 AppDirectCapacity = 0;
   UINT64 UnconfiguredCapacity = 0;
   UINT64 ReservedCapacity = 0;
+  UINT64 InaccessibleCapacity = 0;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -3546,27 +3527,17 @@ GetMemoryResourcesInfo(
 #endif // OS_BUILD
 
     ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity,
-        &UnconfiguredCapacity, &ReservedCapacity);
+        &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
     if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
 
-    if (pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) {
-      pMemoryResourcesInfo->VolatileCapacity += VolatileCapacity;
-      pMemoryResourcesInfo->ReservedCapacity += ReservedCapacity;
-    } else {
-      pMemoryResourcesInfo->InaccessibleCapacity += VolatileCapacity;
-    }
-
-    if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
-      pMemoryResourcesInfo->AppDirectCapacity += AppDirectCapacity;
-    } else {
-      pMemoryResourcesInfo->InaccessibleCapacity += AppDirectCapacity;
-    }
-
+    pMemoryResourcesInfo->VolatileCapacity += VolatileCapacity;
+    pMemoryResourcesInfo->ReservedCapacity += ReservedCapacity;
+    pMemoryResourcesInfo->AppDirectCapacity += AppDirectCapacity;
+    pMemoryResourcesInfo->InaccessibleCapacity += InaccessibleCapacity;
     pMemoryResourcesInfo->UnconfiguredCapacity += UnconfiguredCapacity;
-
   }
 
 Finish:
@@ -7747,6 +7718,7 @@ FreeDimmList(
   @param[out] pAppDirectCapacity required appdirect capacity
   @param[out] pUnconfiguredCapacity required unconfigured capacity
   @param[out] pReservedCapacity required reserved capacity
+  @param[out] pInaccessibleCapacity required inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval Other errors failure of FW commands
@@ -7759,7 +7731,8 @@ GetCapacities(
      OUT UINT64 *pVolatileCapacity,
      OUT UINT64 *pAppDirectCapacity,
      OUT UINT64 *pUnconfiguredCapacity,
-     OUT UINT64 *pReservedCapacity
+     OUT UINT64 *pReservedCapacity,
+     OUT UINT64 *pInaccessibleCapacity
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -7774,9 +7747,12 @@ GetCapacities(
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
 
   if (pDimm == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL || pReservedCapacity == NULL ||
-      pAppDirectCapacity == NULL) {
+      pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
     goto Finish;
   }
+
+  // All shall be zero to start
+  *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
 
   ReturnCode = CurrentMemoryMode(&CurrentMode);
 
@@ -7796,15 +7772,29 @@ GetCapacities(
     }
   }
 
-  *pVolatileCapacity = VolatileCapacity;
   *pReservedCapacity = ReservedCapacity;
-  *pAppDirectCapacity = AppDirectCapacity;
+
+  if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
+    *pVolatileCapacity = VolatileCapacity;
+  } else {
+    *pInaccessibleCapacity = VolatileCapacity;
+  }
+
+  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
+    *pAppDirectCapacity = AppDirectCapacity;
+  } else {
+    *pInaccessibleCapacity += AppDirectCapacity;
+  }
+
   if (CurrentMode != MEMORY_MODE_2LM && !pDimm->Configured) {
     //DIMM is unconfigured and system is in 1LM mode
     *pUnconfiguredCapacity = pDimm->RawCapacity;
+    // No useable capacity
+    *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
   } else {
     *pUnconfiguredCapacity = pDimm->PmCapacity - AppDirectCapacity;
   }
+
   ReturnCode = EFI_SUCCESS;
 
 Finish:

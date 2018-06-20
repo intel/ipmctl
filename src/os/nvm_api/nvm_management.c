@@ -67,7 +67,7 @@ extern EFI_STATUS EFIAPI NvmDimmDriverDriverEntryPoint(IN EFI_HANDLE ImageHandle
 extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_STATUS
 EFIAPI
-GetCapacities(IN UINT16 DimmPid, OUT UINT64 *pVolatileCapacity, OUT UINT64 *pAppDirectCapacity, OUT UINT64 *pUnconfiguredCapacity, OUT UINT64 *pReservedCapacity);
+GetCapacities(IN UINT16 DimmPid, OUT UINT64 *pVolatileCapacity, OUT UINT64 *pAppDirectCapacity, OUT UINT64 *pUnconfiguredCapacity, OUT UINT64 *pReservedCapacity, OUT UINT64 *pInaccessibleCapacity);
 extern EFI_STATUS
 ParseSourceDumpFile(IN CHAR16 *pFilePath, IN EFI_DEVICE_PATH_PROTOCOL *pDevicePath, OUT CHAR8 **pFileString);
 extern EFI_STATUS RegisterCommands();
@@ -1313,6 +1313,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 	UINT64 AppDirectCapacity;
 	UINT64 UnconfiguredCapacity;
 	UINT64 ReservedCapacity;
+  UINT64 InaccessibleCapacity;
 	unsigned int i;
 	EFI_STATUS ReturnCode = EFI_SUCCESS;
 	int rc = NVM_SUCCESS;
@@ -1340,16 +1341,17 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 		goto Finish;
 	}
 	for (i = 0; i < dimm_cnt; ++i) {
-		ReturnCode = GetCapacities(pdimms[i].DimmID, &VolatileCapacity, &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity);
+		ReturnCode = GetCapacities(pdimms[i].DimmID, &VolatileCapacity, &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
 		if (EFI_ERROR(ReturnCode)) {
 			rc = NVM_ERR_UNKNOWN;
 			goto Finish;
 		}
-		p_capacities->capacity += VolatileCapacity + AppDirectCapacity + UnconfiguredCapacity + ReservedCapacity;
+		p_capacities->capacity += VolatileCapacity + AppDirectCapacity + UnconfiguredCapacity + ReservedCapacity + InaccessibleCapacity;
 		p_capacities->app_direct_capacity += AppDirectCapacity;
 		p_capacities->unconfigured_capacity += UnconfiguredCapacity;
 		p_capacities->reserved_capacity += ReservedCapacity;
 		p_capacities->memory_capacity += VolatileCapacity;
+    p_capacities->inaccessible_capacity += InaccessibleCapacity;
 	}
 Finish:
 	FreePool(pdimms);

@@ -1414,27 +1414,29 @@ DimmFormat(
   );
 
 /**
-  Gather capacities from dimm
+Gather capacities from dimm
 
-  @param[in]  DimmPid The ID of the DIMM
-  @param[out] pVolatileCapacity required volatile capacity
-  @param[out] pAppDirectCapacity required appdirect capacity
-  @param[out] pUnconfiguredCapacity required unconfigured capacity
-  @param[out] pReservedCapacity required reserved capacity
+@param[in]  DimmPid The ID of the DIMM
+@param[out] pVolatileCapacity required volatile capacity
+@param[out] pAppDirectCapacity required appdirect capacity
+@param[out] pUnconfiguredCapacity required unconfigured capacity
+@param[out] pReservedCapacity required reserved capacity
+@param[out] pInaccessibleCapacity required inaccessible capacity
 
-  @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval Other errors failure of FW commands
-  @retval EFI_SUCCESS Success
+@retval EFI_INVALID_PARAMETER passed NULL argument
+@retval Other errors failure of FW commands
+@retval EFI_SUCCESS Success
 **/
 EFI_STATUS
 EFIAPI
 GetCapacities(
   IN     UINT16 DimmPid,
-     OUT UINT64 *pVolatileCapacity,
-     OUT UINT64 *pAppDirectCapacity OPTIONAL,
-     OUT UINT64 *pUnconfiguredCapacity,
-     OUT UINT64 *pReservedCapacity
-  );
+  OUT UINT64 *pVolatileCapacity,
+  OUT UINT64 *pAppDirectCapacity,
+  OUT UINT64 *pUnconfiguredCapacity,
+  OUT UINT64 *pReservedCapacity,
+  OUT UINT64 *pInaccessibleCapacity
+);
 
 /**
   Retrieve Smbios tables dynamically, and populate Smbios table structures

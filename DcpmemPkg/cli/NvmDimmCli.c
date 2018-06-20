@@ -54,7 +54,6 @@
 #include "StartFormatCommand.h"
 #include "ShowPreferencesCommand.h"
 #include "SetPreferencesCommand.h"
-#include "DumpDeviceSupportCommand.h"
 #include "ShowHostServerCommand.h"
 #include "ShowPerformanceCommand.h"
 #ifdef __MFG__
@@ -494,11 +493,6 @@ RegisterCommands(
   }
 
   Rc = RegisterSetPreferencesCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterDumpDeviceSupportCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }

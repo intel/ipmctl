@@ -1531,39 +1531,6 @@ SetDriverPreferences(
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-EFI_STATUS
-EFIAPI
-GetDeviceSupportDataInventory(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT UINT32 *pMaxTokenID,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
-  Dump device support data
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-  @param[in] TokenID TokenID of the support data to retrieve
-  @param[in] DimmID DimmID of device to retrieve support data from
-  @param[out] pSupportBuffer Pointer to buffer to store support data
-  @param[out] pBytesWritten Pointer to integer of bytes written
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-**/
-EFI_STATUS
-EFIAPI
-DumpDeviceSupportData(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-  IN     UINT32 TokenID,
-     OUT VOID *pSupportBuffer,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
 /**
   Get DDRT IO init info
 

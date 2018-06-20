@@ -1277,50 +1277,6 @@ EFI_STATUS
   );
 
 /**
-  Get device support data inventory
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-  @param[in] DimmID DimmID of device to retrieve inventory from
-  @param[out] pMaxTokenID Pointer to integer where max inventory is stored
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY) (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT UINT32 *pMaxTokenID,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
-  Dump device support data
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-  @param[in] TokenID TokenID of the support data to retrieve
-  @param[in] DimmID DimmID of device to retrieve support data from
-  @param[out] ppSupportBuffer Pointer to buffer to store support data
-  @param[out] pBytesWritten Pointer to integer of bytes written
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA) (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmDimmID,
-  IN     UINT32 TokenID,
-     OUT VOID *pSupportBuffer,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Get DDRT IO init info
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
@@ -1533,8 +1489,6 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_DRIVER_PREFERENCES GetDriverPreferences;
   EFI_DCPMM_CONFIG_SET_DRIVER_PREFERENCES SetDriverPreferences;
   EFI_DCPMM_CONFIG_DIMM_FORMAT DimmFormat;
-  EFI_DCPMM_CONFIG_GET_DEVICE_SUPPORT_DATA_INVENTORY GetDeviceSupportDataInventory;
-  EFI_DCPMM_CONFIG_DUMP_DEVICE_SUPPORT_DATA DumpDeviceSupportData;
   EFI_DCPMM_CONFIG_GET_DDRT_IO_INIT_INFO GetDdrtIoInitInfo;
   EFI_DCPMM_CONFIG_GET_LONG_OP_STATUS GetLongOpStatus;
   EFI_DCPMM_CONFIG_INJECT_ERROR InjectError;

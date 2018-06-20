@@ -114,8 +114,6 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetDriverPreferences,
   SetDriverPreferences,
   DimmFormat,
-  GetDeviceSupportDataInventory,
-  DumpDeviceSupportData,
   GetDdrtIoInitInfo,
   GetLongOpStatus,
   InjectError,
@@ -8192,128 +8190,6 @@ SetDriverPreferences(
   gNvmDimmData->Alignments.RegionPartitionAlignment = ConvertAppDirectGranularityPreference(pDriverPreferences->AppDirectGranularity);
 
   ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Get device support data inventory
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-  @param[in] DimmID DimmID of device to retrieve inventory from
-  @param[out] pMaxTokenID Pointer to integer where max inventory is stored
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-**/
-EFI_STATUS
-EFIAPI
-GetDeviceSupportDataInventory(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT UINT32 *pMaxTokenID,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  DIMM *pDimm = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pThis == NULL || pCommandStatus == NULL || pMaxTokenID == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
-    goto Finish;
-  }
-
-  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
-    goto Finish;
-  }
-
-  if (!IsDimmManageable(pDimm)) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
-    goto Finish;
-  }
-
-  pCommandStatus->ObjectType = ObjectTypeDimm;
-
-  ReturnCode = FwCmdGetFAInventory(pDimm, pMaxTokenID);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error getting FA Inventory");
-    if (ReturnCode == EFI_UNSUPPORTED) {
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_GET_FA_UNSUPPORTED);
-    } else {
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_OPERATION_FAILED);
-    }
-    goto Finish;
-  }
-
-  SetObjStatusForDimm(pCommandStatus, pDimm, NVM_SUCCESS);
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Dump device support data
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-  @param[in] TokenID TokenID of the support data to retrieve
-  @param[in] DimmID DimmID of device to retrieve support data from
-  @param[out] pSupportBuffer Pointer to buffer to store support data
-  @param[out] pBytesWritten Pointer to integer of bytes written
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-**/
-EFI_STATUS
-EFIAPI
-DumpDeviceSupportData(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-  IN     UINT32 TokenID,
-     OUT VOID *pSupportBuffer,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  DIMM *pDimm = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pThis == NULL || pBytesWritten == NULL || pCommandStatus == NULL || pSupportBuffer == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
-    goto Finish;
-  }
-
-  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
-    goto Finish;
-  }
-
-  if (!IsDimmManageable(pDimm)) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
-    goto Finish;
-  }
-
-  pCommandStatus->ObjectType = ObjectTypeDimm;
-
-  ReturnCode = FwCmdGetFailureAnalysisData(pDimm, TokenID, pSupportBuffer, pBytesWritten);
-  if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ABORTED) {
-    NVDIMM_DBG("Error getting FA Blob");
-    SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_GET_FA_DATA_FAILED);
-    goto Finish;
-  }
-
-  SetObjStatusForDimm(pCommandStatus, pDimm, NVM_SUCCESS);
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

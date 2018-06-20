@@ -183,23 +183,12 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_FLASH_DIMM_SPI_TSOD_REMINDER_STR                  L"Warning: Make sure TSOD polling is disabled!\n" \
                                                                 "Otherwise, SPI access errors will occur.\n"
 
-
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
 #define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
 #define CLI_INFO_START_FORMAT                                 L"Format"
 #define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting DIMM(s)..."
 
-#define CLI_INFO_DUMP_SUPPORT                                 L"Dump device support data"
-#define CLI_INFO_FROM                                         L" from"
-#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_SUPPORTED             L"Retrieve device support data not supported on DIMM (" FORMAT_STR L")."
-#define CLI_INFO_RETRIEVING_DEVICE_SUPPORT_DATA               L"Retrieving device support data from DIMM (" FORMAT_STR L")."
-#define CLI_INFO_NO_DEVICE_SUPPORT_DATA_AVAILABLE             L"No device support data available from DIMM (" FORMAT_STR L")."
-#define CLI_INFO_DUMP_SUCCESS                                 L"Dump device support data from DIMM (" FORMAT_STR L"): Successfully written to " FORMAT_STR L"."
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
-
-#define CLI_ERR_FILE_EXISTS                                   L"Error: File (" FORMAT_STR L") already exists."
-#define CLI_ERR_OUT_OF_SPACE                                  L"Error: Not enough space to save file"
-#define CLI_ERR_DUMP_FAILED                                   L"Error: Failed to dump file"
 
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2

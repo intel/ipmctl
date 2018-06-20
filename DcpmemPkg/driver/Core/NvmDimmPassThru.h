@@ -1086,42 +1086,6 @@ typedef struct {
 } PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY;
 
 /**
-  Passthrough Input Payload:
-    Opcode:    0x08h (Get Log Page)
-    Sub-Opcode:  0xFAh (Failure Analysis Data)
-**/
-typedef struct {
-  UINT8  Action;
-  UINT8  Reserved1[3];
-  UINT32 ID;
-  UINT32 Offset;
-  UINT8  Reserved2[116];
-} PT_INPUT_PAYLOAD_GET_FAILURE_ANALYSIS_DATA;
-
-enum GetFailureAnalysisDataAction {
-  ActionGetFAInventory = 0x00,
-  ActionGetFABlobHeader = 0x01,
-  ActionGetFABlobSmallPayload = 0x02,
-  ActionGetFABlobLargePayload = 0x03
-};
-
-typedef struct {
-  UINT32 MaxFATokenID;
-  UINT8  Reserved[124];
-} PT_OUTPUT_PAYLOAD_GET_FA_INVENTORY;
-
-typedef struct {
-  UINT32 Version;
-  UINT32 Size;
-  UINT32 TokenID;
-  UINT8  DimmID[9];
-  UINT8  Sha256[32];
-  UINT8  SessionKey[16];
-  UINT8  SesessionIV[16];
-  UINT8  Reserved[43];
-} PT_OUTPUT_PAYLOAD_GET_FA_BLOB_HEADER;
-
-/**
   Passthrough Output DDRT IO Init Info
 **/
 

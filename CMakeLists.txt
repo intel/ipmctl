@@ -221,7 +221,6 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmemPkg/cli/SetDimmCommand.c
 	DcpmemPkg/cli/LoadCommand.c
 	DcpmemPkg/cli/DeleteDimmCommand.c
-	DcpmemPkg/cli/DumpDeviceSupportCommand.c
 	src/os/cli_cmds/DumpSupportCommand.c
 	DcpmemPkg/cli/LoadRecoverCommand.c
 	DcpmemPkg/cli/ShowRegisterCommand.c

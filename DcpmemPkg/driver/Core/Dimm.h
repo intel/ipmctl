@@ -1616,63 +1616,6 @@ FwCmdFormatDimm(
   );
 
 /**
-  Firmware command to get failure analysis data
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] ID TokenID for blob to retrieve
-  @param[out] ppOutputBuffer Pointer to buffer start
-  @param[out] pBytesWritten Number of bytes fetched
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR If failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES Memory allocation failure
-  @retval EFI_INVALID_PARAMETER Input parameter null
-**/
-EFI_STATUS
-FwCmdGetFailureAnalysisData(
-  IN     DIMM *pDimm,
-  IN     UINT32 ID,
-     OUT VOID **ppOutputBuffer,
-     OUT UINT64 *pBytesWritten
-  );
-
-/**
-  Firmware command to get failure analysis inventory
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[out] pMaxFATokenID Last TokenID of all valid FA data blobs
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR If failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES Memory allocation failure
-  @retval EFI_INVALID_PARAMETER Input parameter null
-**/
-EFI_STATUS
-FwCmdGetFAInventory(
-  IN     DIMM *pDimm,
-     OUT UINT32 *pMaxFATokenID
-  );
-
-/**
-  Firmware command to gAet failure analysis blob header
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] ID TokenID of the FA blob header to retrieve
-  @param[out] pFABlobHeader Pointer to filled payload with FA blob header
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-FwCmdGetFABlobHeader(
-  IN    DIMM *pDimm,
-  IN     UINT32 ID,
-     OUT PT_OUTPUT_PAYLOAD_GET_FA_BLOB_HEADER *pFABlobHeader
-  );
-
-/**
   Firmware command to get DDRT IO init info
 
   @param[in] pDimm Target DIMM structure pointer

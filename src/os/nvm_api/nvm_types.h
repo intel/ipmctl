@@ -23,6 +23,11 @@
 #define DIMM_ACPI_EVENT_SMART_HEALTH_MASK 1 << ACPI_SMART_HEALTH
 #define DIMM_ACPI_EVENT_UNCORRECTABLE_MASK  1 << ACPI_UNCORRECTABLE
 
+#define MAX_IN_MB_SIZE          (1 << 20)   //!< Size of the OS mailbox large input payload
+#define MAX_OUT_MB_SIZE         (1 << 20)   //!< Size of the OS mailbox large output payload
+#define MAX_IN_PAYLOAD_SIZE     (128)       //!< Total size of the input payload registers
+#define MAX_OUT_PAYLOAD_SIZE    (128)       //!< Total size of the output payload registers
+
 /**
 byte swap
 */

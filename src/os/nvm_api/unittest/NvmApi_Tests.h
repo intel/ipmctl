@@ -64,4 +64,22 @@ TEST_F(NvmApi_Tests, GetDeviceStatus)
   free(p_devices);
 }
 
+TEST_F(NvmApi_Tests, GetDimmIdPassThru)
+{
+  struct device_pt_cmd get_dimm_id_pt;
+
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+
+  nvm_get_devices(p_devices, 1);
+  get_dimm_id_pt.opcode = 0x1;
+  get_dimm_id_pt.sub_opcode = 0x0;
+  get_dimm_id_pt.output_payload_size = 128;
+  get_dimm_id_pt.input_payload_size = 0;
+  get_dimm_id_pt.large_input_payload_size = 0;
+  get_dimm_id_pt.large_output_payload_size = 0;
+
+  get_dimm_id_pt.output_payload = malloc(128);
+  int status = nvm_send_device_passthrough_cmd(p_devices->uid, &get_dimm_id_pt);
+}
+
 #endif //NVM_API_TESTS_H

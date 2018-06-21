@@ -3363,6 +3363,24 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID		device_uid,
 	unsigned int dimm_handle;
 	int rc = NVM_ERR_UNKNOWN;
 
+  if (p_cmd->input_payload_size > MAX_IN_PAYLOAD_SIZE ||
+    p_cmd->large_input_payload_size > MAX_IN_MB_SIZE)
+  {
+    NVDIMM_ERR("Invalid input payload size(s)\n");
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto finish;
+
+  }
+
+  if (p_cmd->output_payload_size > MAX_OUT_PAYLOAD_SIZE ||
+    p_cmd->large_output_payload_size > MAX_OUT_MB_SIZE)
+  {
+    NVDIMM_ERR("Invalid output payload size(s)\n");
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto finish;
+
+  }
+
 	if (NVM_SUCCESS != (rc = nvm_init())) {
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
 		return rc;
@@ -3390,9 +3408,42 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID		device_uid,
 	cmd->LargeOutputPayloadSize = p_cmd->large_output_payload_size;
 	CopyMem(cmd->LargeInputPayload, p_cmd->large_input_payload, cmd->LargeInputPayloadSize);
 
-	if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL))
-		rc = NVM_SUCCESS;
+	if (EFI_SUCCESS != PassThruCommand(cmd, PT_TIMEOUT_INTERVAL))
+  {
+    NVDIMM_ERR("Passthru command failed\n");
+    goto finish;
+  }
+  else
+  {
+    NVDIMM_DBG("Passthru command executed successfully\n");
+    rc = NVM_SUCCESS;
+  }
 
+  if (cmd->LargeOutputPayloadSize)
+  {
+    if(p_cmd->large_output_payload_size < cmd->LargeOutputPayloadSize)
+    {
+      p_cmd->large_output_payload_size = 0; //indicate to caller that nothing was copied into their large output payload buffer
+      NVDIMM_ERR("Not enough memory to copy the large output payload\n", rc);
+      rc = NVM_ERR_INVALID_PARAMETER;
+      goto finish;
+    }
+    p_cmd->large_output_payload_size = cmd->LargeOutputPayloadSize;
+    CopyMem(p_cmd->large_output_payload, cmd->LargeOutputPayload, cmd->LargeOutputPayloadSize);
+  }
+  else if (cmd->OutputPayloadSize)
+  {
+    if(p_cmd->output_payload_size < cmd->OutputPayloadSize)
+    {
+      p_cmd->output_payload_size = 0; //indicate to caller that nothing was copied into their output payload buffer
+      NVDIMM_ERR("Not enough memory to copy the output payload\n", rc);
+      rc = NVM_ERR_INVALID_PARAMETER;
+      goto finish;
+    }
+    p_cmd->output_payload_size = cmd->OutputPayloadSize;
+    CopyMem(p_cmd->output_payload, cmd->OutPayload, cmd->OutputPayloadSize);
+  }
+  
 finish:
 	FREE_POOL_SAFE(cmd);
 	return rc;

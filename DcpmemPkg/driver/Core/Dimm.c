@@ -3258,6 +3258,7 @@ FwCmdSetPMONRegisters(
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopPMONRegisters;
   pFwCmd->InputPayload[0] = PMONGroupEnable;
+  pFwCmd->InputPayloadSize = sizeof(PMONGroupEnable);
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {

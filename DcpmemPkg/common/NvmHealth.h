@@ -12,7 +12,7 @@
 #define CONTROLLER_TEMPERATURE_STR      L"ControllerTemperature"
 #define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
 #define POWER_ON_TIME_STR               L"PowerOnTime"
-#define DIRTY_SHUTDOWNS_STR            L"DirtyShutdowns"
+#define DIRTY_SHUTDOWNS_STR             L"DirtyShutdowns"
 #define POWER_CYCLES_STR                L"PowerCycles"
 #define UPTIME_STR                      L"UpTime"
 #define FW_ERROR_COUNT_STR              L"FwErrorCount"
@@ -47,16 +47,6 @@ typedef enum {
   ThresholdUpperCritical = BIT3,
   ThresholdUpperFatal  = BIT4
 } SensorThresholds;
-
-
-/** health states **/
-#define HEALTHY_STATE_STR               L"Healthy"
-#define NON_CRITICAL_FAILURE_STATE_STR  L"Minor Failure"
-#define CRITICAL_FAILURE_STATE_STR      L"Critical Failure"
-#define FATAL_ERROR_STATE_STR           L"Non-recoverable error"
-#define UNKNOWN_STR                     L"Unknown"
-#define UNMANAGEABLE_STR                L"Unmanageable"
-#define NONFUNCTIONAL_STR               L"Non-functional"
 
 #define SENSOR_ENABLED_STATE_ENABLED_STR    L"1"
 #define SENSOR_ENABLED_STATE_DISABLED_STR   L"0"
@@ -230,13 +220,18 @@ ConvertHealthBitmask(
   );
 
 /**
-  Convert health state to a string
+  Convert dimm or sensor health state to a string. The caller is responsible for
+  freeing the returned string
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Health State - Numeric Value of the Health State.
       Defined in NvmTypes.h
+
+  @retval String representation of the health state
 **/
-CHAR16*
-SensorHealthToString(
+EFI_STRING
+HealthToString(
+  IN     EFI_HANDLE HiiHandle,
   IN     UINT8 HealthState
   );
 #endif /** _NVMHEALTH_H_ **/

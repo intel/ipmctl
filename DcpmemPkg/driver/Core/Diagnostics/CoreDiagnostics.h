@@ -116,7 +116,7 @@ typedef enum {
   The fundamental core diagnostics function that is used by both
   the NvmDimmConfig protocol and the DriverDiagnostic protoocls.
 
-  It runs the specified diagnotsics tests on the list of specified dimms,
+  It runs the specified diagnostics tests on the list of specified dimms,
   and returns a single combined test result message
 
   @param[in] ppDimms The platform DIMM pointers list
@@ -165,11 +165,11 @@ CreateDiagnosticStr (
   );
 
 /**
-  Append to the results string for a paricular diagnostic test, and modify
+  Append to the results string for a particular diagnostic test, and modify
   the test state as per the message being appended.
 
   @param[in] pStrToAppend Pointer to the message string to be appended
-  @param[in] DiagStateMask State corresonding to the string that is being appended
+  @param[in] DiagStateMask State corresponding to the string that is being appended
   @param[in out] ppResult Pointer to the result string of the particular test-suite's messages
   @param[in out] pDiagState Pointer to the particular test state
 
@@ -199,14 +199,14 @@ AppendToDiagnosticsResult (
 #define FW_CONSISTENCY_BASE_CODE  9
 
 /**
-Append to the results string for a paricular diagnostic test, modify
+Append to the results string for a particular diagnostic test, modify
 the test state as per the message being appended and send the event
 to the event log.
 
 @param[in] pDimm Pointer to the DIMM structure
 @param[in] Code The event's code (for details see the event CSPEC)
 @param[in] pStrToAppend Pointer to the message string to be appended
-@param[in] DiagStateMask State corresonding to the string that is being appended
+@param[in] DiagStateMask State corresponding to the string that is being appended
 @param[in out] ppResult Pointer to the result string of the particular test-suite's messages
 @param[in out] pDiagState Pointer to the particular test state
 

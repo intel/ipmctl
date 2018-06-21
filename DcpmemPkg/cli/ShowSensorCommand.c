@@ -286,7 +286,7 @@ ShowSensor(
         **/
         if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
             FREE_POOL_SAFE(pTempBuff);
-            pTempBuff = SensorHealthToString((UINT8)DimmSensorsSet[Index2].Value);
+            pTempBuff = HealthToString(gNvmDimmCliHiiHandle, (UINT8)DimmSensorsSet[Index2].Value);
             if (pTempBuff == NULL) {
               Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
               ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -320,7 +320,7 @@ ShowSensor(
           **/
           if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
               FREE_POOL_SAFE(pTempBuff);
-              pTempBuff = SensorHealthToString((UINT8)DimmSensorsSet[Index2].Value);
+              pTempBuff = HealthToString(gNvmDimmCliHiiHandle, (UINT8)DimmSensorsSet[Index2].Value);
               if (pTempBuff == NULL) {
                 Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
                 ReturnCode = EFI_OUT_OF_RESOURCES;

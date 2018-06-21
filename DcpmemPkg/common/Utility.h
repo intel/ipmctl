@@ -286,11 +286,31 @@ typedef union {
 #define IS_LEAP_YEAR(Year)              (!((Year) % 4) && (((Year) % 100) || !((Year) % 400)))
 #define DAYS_IN_YEAR(Year)              (IS_LEAP_YEAR(Year) ? 366 : 365)
 
+// Helper macros to streamline the reading of code
+// NVDIMM_ERR will print out the line number, so no need to be specific
 #define CHECK_RESULT(Call, Label)                             \
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_WARN("Failure on function: 0x%x", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: 0x%x", ReturnCode);   \
+      goto Label;                                             \
+    }                                                         \
+  } while (0)
+
+#define CHECK_RESULT_CONTINUE(Call)                           \
+  do {                                                        \
+    ReturnCode = Call;                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_ERR("Failure on function: 0x%x", ReturnCode);   \
+    }                                                         \
+  } while (0)
+
+#define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \
+  do {                                                        \
+    Pointer = Call;                                           \
+    if (Pointer == NULL) {                                    \
+      NVDIMM_ERR("Failed to allocate memory");                \
+      ReturnCode = EFI_OUT_OF_RESOURCES;                      \
       goto Label;                                             \
     }                                                         \
   } while (0)

@@ -214,17 +214,6 @@ enum device_form_factor {
 };
 
 /**
- * Overall health summary of the device
- */
-enum device_health {
-	DEVICE_HEALTH_UNKNOWN		= 0,    ///< The HEALTH can not be determined.
-	DEVICE_HEALTH_NORMAL		= 1,    ///< Normal.
-	DEVICE_HEALTH_NONCRITICAL	= 2,   ///< Maintenance required.
-	DEVICE_HEALTH_CRITICAL		= 3,   ///< Features or performance degraded due to failure.
-	DEVICE_HEALTH_FATAL		= 4,   ///< Data loss has occurred or is imminent.
-};
-
-/**
  * The address range scrub (ARS) operation status for the DIMM
  */
 enum device_ars_status {
@@ -711,7 +700,7 @@ struct device_error_log_status {
  */
 
 struct device_status {
-	enum device_health		health;                                 ///< Overall device health.
+	NVM_UINT8			health;                                 ///< Overall device health.
 	NVM_BOOL			is_new;                                 ///< Unincorporated with the rest of the devices.
 	NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
 	NVM_BOOL			is_missing;                             ///< If the device is missing.

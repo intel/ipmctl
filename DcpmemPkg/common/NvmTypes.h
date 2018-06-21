@@ -609,14 +609,13 @@ typedef struct _DEBUG_LOG_INFO {
 /**
   Health State
 **/
-//If you change any of the below values make sure to update the corresponding API enum device_health
 #define HEALTH_UNKNOWN               0
 #define HEALTH_HEALTHY               1
 #define HEALTH_NON_CRITICAL_FAILURE  2
 #define HEALTH_CRITICAL_FAILURE      3
 #define HEALTH_FATAL_FAILURE         4
 #define HEALTH_UNMANAGEABLE          5
-#define HEALTH_NONFUNCTIONAL         6
+#define HEALTH_NON_FUNCTIONAL        6
 
 /**
   Health Status Reason

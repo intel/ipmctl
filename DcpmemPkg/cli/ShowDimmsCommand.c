@@ -16,6 +16,7 @@
 #include "NvmDimmCli.h"
 #include <NvmWorkarounds.h>
 #include <ShowTopologyCommand.h>
+#include <NvmHealth.h>
 
 /* Command syntax definition */
 struct Command ShowDimmsCommand =
@@ -130,7 +131,6 @@ CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
 };
 
 /* local functions */
-STATIC CHAR16 *HealthToString(UINT8 HealthState);
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
 STATIC CHAR16 *FormFactorToString(UINT8 FormFactor);
 STATIC CHAR16 *FwLogLevelToStr(UINT8 FwLogLevel);
@@ -408,7 +408,7 @@ ShowDimms(
       }
 
       ReturnCode = MakeCapacityString(pDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-      pHealthStr = HealthToString(pDimms[Index].HealthState);
+      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[Index].HealthState);
 
       if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
         pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
@@ -477,7 +477,7 @@ ShowDimms(
         continue;
       }
 
-      pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
+      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[Index].HealthState);
 
       ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
         pUninitializedDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
@@ -586,7 +586,7 @@ ShowDimms(
 
       /** Health State **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-        pHealthStr = HealthToString(pDimms[Index].HealthState);
+        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[Index].HealthState);
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
@@ -1180,7 +1180,7 @@ ShowDimms(
 
       /** Health State **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-        pHealthStr = HealthToString(pUninitializedDimms[Index].HealthState);
+        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[Index].HealthState);
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
@@ -1273,43 +1273,6 @@ Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
-}
-
-/**
-  Convert health state to a string
-**/
-STATIC
-CHAR16*
-HealthToString(
-  IN     UINT8 HealthState
-  )
-{
-  CHAR16 *pHealthString = NULL;
-  switch(HealthState) {
-    case HEALTH_HEALTHY:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, HEALTHY_STATE_STR);
-      break;
-    case HEALTH_NON_CRITICAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, NON_CRITICAL_FAILURE_STATE_STR);
-      break;
-    case HEALTH_CRITICAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, CRITICAL_FAILURE_STATE_STR);
-      break;
-    case HEALTH_FATAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, FATAL_ERROR_STATE_STR);
-      break;
-    case HEALTH_UNMANAGEABLE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, UNMANAGEABLE_STR);
-      break;
-    case HEALTH_NONFUNCTIONAL:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, NONFUNCTIONAL_STR);
-      break;
-    case HEALTH_UNKNOWN:
-    default:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, UNKNOWN_STR);
-      break;
-  }
-  return pHealthString;
 }
 
 /**

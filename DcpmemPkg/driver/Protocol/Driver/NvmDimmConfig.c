@@ -617,6 +617,61 @@ GetDimmMappedMemSize(
 #endif // OS_BUILD
 
 
+/*
+ * Helper function for initializing information from the NFIT for non-functional
+ * dimms only. This should eventually include functional dimms as well
+ * (GetDimmInfo), but currently avoiding as it's hard to extract the NFIT-only
+ * calls from GetDimmInfo.
+ */
+VOID
+InitializeNfitDimmInfoFieldsFromDimm(
+  IN     DIMM *pDimm,
+     OUT DIMM_INFO *pDimmInfo
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+
+  //pDimm->Signature = DIMM_SIGNATURE;
+  pDimmInfo->Configured = pDimm->Configured;
+  //pDimm->ISsNum = 0;
+  pDimmInfo->DimmID = pDimm->DimmID;
+  pDimmInfo->DimmHandle = pDimm->DeviceHandle.AsUint32;
+  pDimmInfo->SocketId = pDimm->SocketId;
+  pDimmInfo->ImcId = pDimm->ImcId;
+  pDimmInfo->NodeControllerID = pDimm->NodeControllerID;
+  pDimmInfo->ChannelId = pDimm->ChannelId;
+  pDimmInfo->ChannelPos = pDimm->ChannelPos;
+  //pDimm->NvDimmStateFlags
+  pDimmInfo->VendorId = pDimm->VendorId;
+  pDimmInfo->DeviceId = pDimm->DeviceId;
+  pDimmInfo->Rid = pDimm->Rid;
+  pDimmInfo->SubsystemVendorId = pDimm->SubsystemVendorId;
+  pDimmInfo->SubsystemDeviceId = pDimm->SubsystemDeviceId;
+  pDimmInfo->SubsystemRid = pDimm->SubsystemRid;
+  pDimmInfo->ManufacturingInfoValid = pDimm->ManufacturingInfoValid;
+  pDimmInfo->ManufacturingLocation = pDimm->ManufacturingLocation;
+  pDimmInfo->ManufacturingDate = pDimm->ManufacturingDate;
+  pDimmInfo->SerialNumber = pDimm->SerialNumber;
+  pDimmInfo->Capacity = pDimm->RawCapacity;
+  pDimmInfo->ManufacturerId = pDimm->Manufacturer;
+
+  pDimmInfo->SmbusAddress = pDimm->SmbusAddress;
+
+  CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
+#ifdef OS_BUILD
+  if (ReturnCode == EFI_SUCCESS) {
+    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
+    // Prepare DIMM UID
+    UnicodeStrToAsciiStrS(pDimmInfo->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
+    // Get the action required status
+    pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
+  }
+#endif // OS_BUILD
+  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+    pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
+  }
+}
+
 /**
   Init DIMM_INFO structure for given DIMM
 
@@ -736,21 +791,6 @@ GetDimmInfo (
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failure to retrieve SMBIOS tables");
   }
-#ifdef OS_BUILD
-  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-  CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
-  ReturnCode = GetDimmUid(pDimm, DimmUid, MAX_DIMM_UID_LENGTH);
-  if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("ERROR: GetDimmUid\n");
-  }
-  else
-  {
-      // Prepare DIMM UId
-      UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
-      // Get the action required status
-      pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
-  }
-#endif // OS_BUILD
 
   /* SMBIOS type 17 table info */
   if (DmiPhysicalDev.Type17 != NULL) {
@@ -797,6 +837,20 @@ GetDimmInfo (
     }
   } else {
     NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmHandle);
+  }
+
+  CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
+#ifdef OS_BUILD
+  if (ReturnCode == EFI_SUCCESS) {
+    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
+    // Prepare DIMM UID
+    UnicodeStrToAsciiStrS(pDimmInfo->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
+    // Get the action required status
+    pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
+  }
+#endif // OS_BUILD
+  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+    pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
   ReturnCode = GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH);
@@ -1446,8 +1500,10 @@ Finish:
   return Rc;
 }
 
+
 /**
-  Retrieve the list of uninitialized DCPMEM modules found thru SMBUS
+  Retrieve the list of uninitialized DCPMEM modules found in NFIT and partially
+  populated thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -1492,19 +1548,7 @@ GetUninitializedDimms(
     }
 
     pCurDimm = DIMM_FROM_NODE(pNode);
-
-    pDimms[Index].DimmID = pCurDimm->DimmID;
-    pDimms[Index].DimmHandle = pCurDimm->DeviceHandle.AsUint32;
-    pDimms[Index].SocketId = pCurDimm->SocketId;
-    pDimms[Index].ImcId = pCurDimm->ImcId;
-    pDimms[Index].ChannelId = pCurDimm->ChannelId;
-    pDimms[Index].ChannelPos = pCurDimm->ChannelPos;
-    pDimms[Index].SmbusAddress = pCurDimm->SmbusAddress;
-    pDimms[Index].SubsystemDeviceId = pCurDimm->SubsystemDeviceId;
-    pDimms[Index].SubsystemRid = pCurDimm->SubsystemRid;
-    pDimms[Index].SerialNumber = pCurDimm->SerialNumber;
-    pDimms[Index].Capacity = pCurDimm->RawCapacity;
-    pDimms[Index].ManufacturerId = pCurDimm->Manufacturer;
+    InitializeNfitDimmInfoFieldsFromDimm(pCurDimm, &(pDimms[Index]));
 
     AsciiStrToUnicodeStrS(pCurDimm->PartNumber, pDimms[Index].PartNumber, PART_NUMBER_STR_LEN);
 
@@ -1514,7 +1558,7 @@ GetUninitializedDimms(
 
     PopulateDimmBootStatusBitmask(&Bsr, pCurDimm, &pDimms[Index].BootStatusBitmask);
 #endif
-    pDimms[Index].HealthState = HEALTH_NONFUNCTIONAL;
+    pDimms[Index].HealthState = HEALTH_NON_FUNCTIONAL;
 
     Index++;
   }

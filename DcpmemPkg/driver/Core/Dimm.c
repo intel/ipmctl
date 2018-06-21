@@ -1169,6 +1169,40 @@ RemoveDimmInventory(
   return ReturnCode;
 }
 
+VOID
+InitializeDimmFieldsFromNfit(
+  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     ControlRegionTbl *pControlRegionTbl,
+     OUT DIMM *pDimm
+  )
+{
+
+  pDimm->Signature = DIMM_SIGNATURE;
+  pDimm->Configured = FALSE;
+  pDimm->ISsNum = 0;
+  pDimm->SocketId = (UINT16) pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId;
+  // BIOS sets this to 0x0 for every non-functional (non-booting) dimm
+  pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
+  pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
+  pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;
+  pDimm->NodeControllerID = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
+  pDimm->ChannelId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemChannel;
+  pDimm->ChannelPos = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.DimmNumber;
+  pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
+
+  pDimm->VendorId = pControlRegionTbl->VendorId;
+  pDimm->DeviceId = pControlRegionTbl->DeviceId;
+  pDimm->Rid = pControlRegionTbl->Rid;
+  pDimm->SubsystemVendorId = pControlRegionTbl->SubsystemVendorId;
+  pDimm->SubsystemDeviceId = pControlRegionTbl->SubsystemDeviceId;
+  pDimm->SubsystemRid = pControlRegionTbl->SubsystemRid;
+  pDimm->ManufacturingInfoValid = pControlRegionTbl->ValidFields;
+  pDimm->ManufacturingLocation = pControlRegionTbl->ManufacturingLocation;
+  pDimm->ManufacturingDate = pControlRegionTbl->ManufacturingDate;
+  pDimm->SerialNumber = pControlRegionTbl->SerialNumber;
+  // Not using the rest of the control region fields
+}
+
 /**
   Creates the DIMM inventory
   Using the Firmware Interface Table, create an in memory representation
@@ -1246,17 +1280,7 @@ InitializeDimmInventory(
         NVDIMM_WARN("Unable to allocate memory for Intel NVM Dimm - Out of memory");
         continue;
       }
-
-      pNewUnInitDimm->Signature = DIMM_SIGNATURE;
-      pNewUnInitDimm->SocketId = (UINT16) ppNvDimmRegionTbls[Index]->DeviceHandle.NfitDeviceHandle.SocketId;
-      // NFIT seems sets this to 0x0 for disabled DIMMs
-      pNewUnInitDimm->DimmID = ppNvDimmRegionTbls[Index]->NvDimmPhysicalId;
-      pNewUnInitDimm->DeviceHandle.AsUint32 = ppNvDimmRegionTbls[Index]->DeviceHandle.AsUint32;
-      pNewUnInitDimm->ImcId = (UINT16)ppNvDimmRegionTbls[Index]->DeviceHandle.NfitDeviceHandle.MemControllerId;
-      pNewUnInitDimm->NodeControllerID = (UINT16)ppNvDimmRegionTbls[Index]->DeviceHandle.NfitDeviceHandle.NodeControllerId;
-      pNewUnInitDimm->ChannelId = (UINT16)ppNvDimmRegionTbls[Index]->DeviceHandle.NfitDeviceHandle.MemChannel;
-      pNewUnInitDimm->ChannelPos = (UINT16)ppNvDimmRegionTbls[Index]->DeviceHandle.NfitDeviceHandle.DimmNumber;
-      pNewUnInitDimm->NvDimmStateFlags = ppNvDimmRegionTbls[Index]->NvDimmStateFlags;
+      InitializeDimmFieldsFromNfit(ppNvDimmRegionTbls[Index], pDimmControlRegionTable, pNewUnInitDimm);
 
       InsertTailList(&gNvmDimmData->PMEMDev.UninitializedDimms, &pNewUnInitDimm->DimmNode);
     }
@@ -4547,26 +4571,7 @@ InitializeDimm (
   }
 
   InitializeListHead(&pNewDimm->StorageNamespaceList);
-  pNewDimm->Signature = DIMM_SIGNATURE;
-  pNewDimm->Configured = FALSE;
-  pNewDimm->ISsNum = 0;
-  pNewDimm->DimmID = Pid;
-  pNewDimm->DeviceHandle = pNvDimmRegionTblCtrl->DeviceHandle;
-  pNewDimm->ImcId = (UINT16)pNvDimmRegionTblCtrl->DeviceHandle.NfitDeviceHandle.MemControllerId;
-  pNewDimm->NodeControllerID = (UINT16)pNvDimmRegionTblCtrl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
-  pNewDimm->ChannelId = (UINT16)pNvDimmRegionTblCtrl->DeviceHandle.NfitDeviceHandle.MemChannel;
-  pNewDimm->ChannelPos = (UINT16)pNvDimmRegionTblCtrl->DeviceHandle.NfitDeviceHandle.DimmNumber;
-  pNewDimm->SocketId = (UINT16)pNvDimmRegionTblCtrl->DeviceHandle.NfitDeviceHandle.SocketId;
-  pNewDimm->VendorId = pControlRegTbl->VendorId;
-  pNewDimm->DeviceId = pControlRegTbl->DeviceId;
-  pNewDimm->Rid = pControlRegTbl->Rid;
-  pNewDimm->SubsystemVendorId = pControlRegTbl->SubsystemVendorId;
-  pNewDimm->SubsystemDeviceId = pControlRegTbl->SubsystemDeviceId;
-  pNewDimm->SubsystemRid = pControlRegTbl->SubsystemRid;
-  pNewDimm->ManufacturingInfoValid = pControlRegTbl->ValidFields;
-  pNewDimm->ManufacturingLocation = pControlRegTbl->ManufacturingLocation;
-  pNewDimm->ManufacturingDate = pControlRegTbl->ManufacturingDate;
-  pNewDimm->SerialNumber = pControlRegTbl->SerialNumber;
+  InitializeDimmFieldsFromNfit(pNvDimmRegionTblCtrl, pControlRegTbl, pNewDimm);
 
   ReturnCode = GetControlRegionTablesForPID(pFitHead, Pid, pControlRegTbls, &ControlRegTblsNum);
   if (EFI_ERROR(ReturnCode)) {
@@ -4660,7 +4665,7 @@ InitializeDimm (
     NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
     pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
     ParseFwApiVersion(pNewDimm, pPayload);
-    
+
     if (IsDimmManageable(pNewDimm)) {
       for (Index = 0; Index < pNewDimm->FmtInterfaceCodeNum; Index++) {
         if (pNewDimm->FmtInterfaceCode[Index] != pPayload->Ifc && pNewDimm->FmtInterfaceCode[Index] != IfcExtra) {
@@ -5773,7 +5778,7 @@ TransformRealValueToFwTemp(
   @param[out] pDimmUid Array to store Dimm UID
   @param[in] DimmUidLen Size of pDimmUid
 
-  @retval EFI_SUCCESS  Dimm UID field was initialized successfully.
+  @retval EFI_SUCCESS Dimm UID field was initialized successfully.
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL.
 **/
 EFI_STATUS

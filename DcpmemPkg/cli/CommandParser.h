@@ -265,15 +265,6 @@
 #define HELP_DBG_LOG_MAX                          L"num log entries"
 #define HELP_DBG_LOG_LEVEL                        L"log level"
 
-/** health states **/
-#define HEALTHY_STATE_STR               L"Healthy"
-#define NON_CRITICAL_FAILURE_STATE_STR  L"Minor Failure"
-#define CRITICAL_FAILURE_STATE_STR      L"Critical Failure"
-#define FATAL_ERROR_STATE_STR           L"Non-recoverable error"
-#define UNKNOWN_STR                     L"Unknown"
-#define UNMANAGEABLE_STR                L"Unmanageable"
-#define NONFUNCTIONAL_STR               L"Non-functional"
-
 enum ValueRequirementType
 {
   ValueEmpty = 1,

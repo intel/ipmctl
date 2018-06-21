@@ -6,6 +6,7 @@
 #include <Uefi.h>
 #include <NvmTypes.h>
 #include <Library/UefiLib.h>
+#include <Library/HiiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Debug.h>
 #include "NvmHealth.h"
@@ -327,34 +328,36 @@ ConvertHealthBitmask(
 }
 
 /**
-  Convert health state to a string
+  Convert dimm or sensor health state to a string. The caller is responsible for
+  freeing the returned string
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Health State - Numeric Value of the Health State.
       Defined in NvmTypes.h
+
+  @retval String representation of the health state
 **/
-CHAR16*
-SensorHealthToString(
+EFI_STRING
+HealthToString(
+  IN     EFI_HANDLE HiiHandle,
   IN     UINT8 HealthState
   )
 {
-  CHAR16 *pHealthString = NULL;
   switch (HealthState) {
     case HEALTH_HEALTHY:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, HEALTHY_STATE_STR);
-      break;
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_HEALTHY), NULL);
     case HEALTH_NON_CRITICAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, NON_CRITICAL_FAILURE_STATE_STR);
-      break;
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_NON_CRITICAL_FAILURE), NULL);
     case HEALTH_CRITICAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, CRITICAL_FAILURE_STATE_STR);
-      break;
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_CRITICAL_FAILURE), NULL);
     case HEALTH_FATAL_FAILURE:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, FATAL_ERROR_STATE_STR);
-      break;
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_FATAL_FAILURE), NULL);
+    case HEALTH_UNMANAGEABLE:
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_UNMANAGEABLE), NULL);
+    case HEALTH_NON_FUNCTIONAL:
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_NON_FUNCTIONAL), NULL);
     case HEALTH_UNKNOWN:
     default:
-      pHealthString = CatSPrint(NULL, FORMAT_STR, UNKNOWN_STR);
-      break;
+      return HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
   }
-  return pHealthString;
 }

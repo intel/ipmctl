@@ -5367,7 +5367,7 @@ FwCmdGetErrorCount(
 
   FIS_1_2 = pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 2;
 
-  InputPayload.LogParameters.Separated.LogType = 1;
+  InputPayload.LogParameters.Separated.LogInfo = 1;
 
   if (pMediaLogCount != NULL) {
     InputPayload.LogParameters.Separated.LogType = ErrorLogTypeMedia;

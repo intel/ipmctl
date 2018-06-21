@@ -4990,6 +4990,7 @@ UpdateFw(
   if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
     for (Index = 0; Index < DimmsNum; ++Index) {
       if (Examine) {
+        pCommandStatus->ObjectType = ObjectTypeDimm;
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_VALID);

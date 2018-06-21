@@ -145,7 +145,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_INFO_LOAD_FW                                      L"Load FW"
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
 #define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
-#define CLI_INFO_ON                                           L" on "
+#define CLI_INFO_ON                                           L" on"
 #define CLI_PROGRESS_STR                                      L"\rLoad firmware on DIMM (0x%04x) Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"

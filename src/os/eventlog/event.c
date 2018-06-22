@@ -426,7 +426,7 @@ static BOOLEAN check_skip_entry_status_for_type(BOOLEAN not_matching, CHAR8 type
     {
         // Get event type and compare with requested event type mask
         // The single line format is "%s %s %d %s %d %s\n" time_stamp date, time_stamp time, event_id, event_type, action_req, event_message
-        sscanf(event_message, "%s %s\t%d\t%s", time_stamp, time_stamp, &event_id, type_string);
+        sscanf_s(event_message, "%s %s\t%d\t%s", time_stamp, time_stamp, &event_id, type_string);
         // Convert the event type string to the event type value
         tmp_type_mask = get_type_value(type_string);
         if (tmp_type_mask & type_mask)
@@ -584,7 +584,7 @@ static UINT32 get_event_id_form_entry(CHAR8* event_message)
     char time_stamp[MAX_TIMESTAMP_LEN];
     int event_id = 0;
 
-    sscanf(event_message, "%s\t%s\t%d", time_stamp, time_stamp, &event_id);
+    sscanf_s(event_message, "%s\t%s\t%d", time_stamp, time_stamp, &event_id);
     return (UINT32) event_id;
 }
 /*
@@ -783,7 +783,7 @@ static void log_system_event_to_file(UINT32 event_type, const char *event_messag
                         }
                         else {
                             // Copyt all other entries to the buffer
-                            strcat(p_file_buffer, last_event_message);
+                            strcat_s(p_file_buffer, file_buffer_size, last_event_message);
                         }
                     }
                     // Reopen and truncate the file
@@ -985,6 +985,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
     NVM_EVENT_MSG event_type_str = { 0 };
     char* new_file_buffer;
     UINT32 read_event_type = 0;
+    size_t file_buff_size = 0;
 
     // Get the log file name if it is necessary
     efi_status = get_the_system_log_file_name(SYSTEM_LOG_EVENT_FILE, sizeof(log_file_name), log_file_name);
@@ -1023,7 +1024,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
         h_file = fopen(log_file_name, "r+");
         if (NULL != h_file)
         {
-            new_file_buffer = allocate_buffer_for_file(h_file, NULL);
+            new_file_buffer = allocate_buffer_for_file(h_file, &file_buff_size);
             if (NULL != new_file_buffer) {
                 // Remove the event type from the action required file
                 while (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
@@ -1031,7 +1032,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                     read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
                     if (((read_event_type ^ event_type) & (SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_NUMBER_MASK)) != 0)
                     {
-                        strcat(new_file_buffer, event_type_str);
+                        strcat_s(new_file_buffer, file_buff_size, event_type_str);
                     }
                 }
                 h_file = freopen(log_file_name, "w", h_file);

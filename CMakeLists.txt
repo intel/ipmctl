@@ -477,11 +477,6 @@ add_custom_command(OUTPUT ${OUTPUT_DIR}/ipmctl_default.conf
 	COMMENT "Generating INI Default Config File"
 	)
 
-# --------------------------------------------------------------------------------------------------
-# Pkgconfig
-# --------------------------------------------------------------------------------------------------
-configure_file(${ROOT}/install/linux/libipmctl.pc.in ${OUTPUT_DIR}/libipmctl.pc @ONLY)
-
 #----------------------------------------------------------------------------------------------------
 # Install
 #----------------------------------------------------------------------------------------------------
@@ -496,10 +491,12 @@ FILE(COPY ${NVM_HEADERS}
        DESTINATION ${OUTPUT_DIR})
 
 if(LNX_BUILD)
-    include(GNUInstallDirs)
+	include(GNUInstallDirs)
 	find_package(PkgConfig)
 
 	pkg_check_modules(SYSTEMD systemd)
+
+	configure_file(${ROOT}/install/linux/libipmctl.pc.in ${OUTPUT_DIR}/libipmctl.pc @ONLY)
 
 	if(DEFINED INSTALL_UNITDIR)
 		set(INSTALL_SYSTEMDSYSTEMUNITDIR ${INSTALL_UNITDIR})

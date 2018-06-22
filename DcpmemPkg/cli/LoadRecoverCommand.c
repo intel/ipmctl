@@ -78,7 +78,6 @@ LoadRecover(
   UINT32 DimmCount = 0;
   BOOLEAN FlashSpi = FALSE;
   CHAR16 *pOptionsValue = NULL;
-  CHAR16 *pFwType = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   BOOLEAN Confirmation = FALSE;
   UINT16 Index1 = 0;
@@ -259,21 +258,12 @@ LoadRecover(
   if (Examine && pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU) {
     if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS) {
 
-      pFwType = FirmwareTypeToString(pFwImageInfo->FirmwareType);
-      if (pFwType == NULL) {
-        Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-        ReturnCode = EFI_OUT_OF_RESOURCES;
-        goto Finish;
-      }
-
-      Print(FORMAT_STR L": %02d.%02d.%02d.%04d (" FORMAT_STR L")\n",
+      Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
         pFileName,
         pFwImageInfo->ImageVersion.ProductNumber.Version,
         pFwImageInfo->ImageVersion.RevisionNumber.Version,
         pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
-        pFwImageInfo->ImageVersion.BuildNumber.Build,
-        pFwType);
-      FREE_POOL_SAFE(pFwType);
+        pFwImageInfo->ImageVersion.BuildNumber.Build);
     } else {
       Print(FORMAT_STR FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
     }

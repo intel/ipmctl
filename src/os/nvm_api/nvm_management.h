@@ -810,13 +810,8 @@ struct device_fw_info {
 	 * bbbb = 4-digit build version
 	 */
 	NVM_VERSION		active_fw_revision;
-	enum device_fw_type	active_fw_type;                         ///< active FW type.
-	char			active_fw_commit_id[NVM_COMMIT_ID_LEN]; ///< commit id of active FW for debug/troubleshooting
-
-	// build configuration of active FW for debug/troubleshooting
-	char			active_fw_build_configuration[NVM_BUILD_CONFIGURATION_LEN];
-
 	NVM_VERSION		staged_fw_revision;     ///<  BCD formatted revision of the staged FW.
+	NVM_UINT32    FWImageMaxSize;     ///<  The size of FW Image in bytes.
 	enum fw_update_status	fw_update_status;       ///< status of last FW update operation.
 };
 

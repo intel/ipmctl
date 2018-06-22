@@ -327,10 +327,8 @@ typedef struct _DIMM_INFO {
   UINT64 InaccessibleCapacity;              //!< Capacity in bytes for use that has not been exposed
 
   //DIMM_INFO_CATEGORY_FW_IMAGE_INFO
-  UINT8 ActiveFwType;                       //!< Type of the current firmware version
-  CHAR16 ActiveFwCommitId[FW_COMMIT_ID_STR_LEN]; //!< Commit ID of the current firmware
-  CHAR16 ActiveFwBuild[FW_BUILD_STR_LEN];        //!< Build number of the current firmware
   FIRMWARE_VERSION StagedFwVersion;         //!< The current staged firmare version
+  UINT32 FWImageMaxSize;                    //!< The maximum size of the Firmware
   UINT8 LastFwUpdateStatus;                 //!< Status of the last FW update
 
   //DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3

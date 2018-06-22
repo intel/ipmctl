@@ -2096,39 +2096,6 @@ Finish:
 }
 
 /**
-  Convert firmware type value to string.
-  The caller function is obligated to free memory of the returned string.
-
-  @param[in] FirmwareType value to convert
-
-  @retval output string or NULL if memory allocation failed
-**/
-CHAR16 *
-FirmwareTypeToString(
-  IN     UINT8 FirmwareType
-  )
-{
-  CHAR16 *pFwTypeString = NULL;
-
-  switch (FirmwareType) {
-  case FW_TYPE_PRODUCTION:
-    pFwTypeString = CatSPrint(NULL, FORMAT_STR, L"Production");
-    break;
-  case FW_TYPE_DFX:
-    pFwTypeString = CatSPrint(NULL, FORMAT_STR, L"Dfx");
-    break;
-  case FW_TYPE_DEBUG:
-    pFwTypeString = CatSPrint(NULL, FORMAT_STR, L"Debug");
-    break;
-  default:
-    pFwTypeString = CatSPrint(NULL, FORMAT_STR, L"Unknown");
-    break;
-  }
-
-  return pFwTypeString;
-}
-
-/**
   Check if all dimms in the specified pDimmIds list are manageable.
   This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.

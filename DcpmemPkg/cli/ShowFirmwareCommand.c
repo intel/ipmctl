@@ -10,11 +10,10 @@
 
 #define DIMM_ID_ATTR                        L"DimmID"
 #define ACTIVE_FW_VER_ATTR                  L"ActiveFWVersion"
-#define ACTIVE_FW_TYPE_ATTR                 L"ActiveFWType"
-#define ACTIVE_FW_COMMIT_ID_ATTR            L"ActiveFWCommitID"
-#define ACTIVE_FW_BUILD_CONFIGURATION_ATTR  L"ActiveFWBuildConfiguration"
 #define STAGED_FW_VER_ATTR                  L"StagedFWVersion"
 #define FW_UPDATE_STATUS_ATTR               L"FWUpdateStatus"
+#define FW_IMAGE_MAX_SIZE_ATTR              L"FWImageMaxSize"
+
 
 /** Command syntax definition **/
 struct Command ShowFirmwareCommand =
@@ -36,11 +35,9 @@ struct Command ShowFirmwareCommand =
 CHAR16 *mppAllowedShowFirmwareDisplayValues[] = {
   DIMM_ID_ATTR,
   ACTIVE_FW_VER_ATTR,
-  ACTIVE_FW_TYPE_ATTR,
-  ACTIVE_FW_COMMIT_ID_ATTR,
-  ACTIVE_FW_BUILD_CONFIGURATION_ATTR,
   STAGED_FW_VER_ATTR,
   FW_UPDATE_STATUS_ATTR
+  FW_IMAGE_MAX_SIZE_ATTR
 };
 
 /**
@@ -88,7 +85,6 @@ ShowFirmware(
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   UINT32 Index = 0;
-  CHAR16 *pFwType = NULL;
   CHAR16 *pFwUpdateStatusString = NULL;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
@@ -237,33 +233,6 @@ ShowFirmware(
             pDimms[Index].FwVer.FwBuild);
       }
 
-      if (AllOptionSet || (DisplayOptionSet && ContainsValue(pOptionsValues, ACTIVE_FW_TYPE_ATTR))) {
-        pFwType = FirmwareTypeToString(pDimms[Index].ActiveFwType);
-        if (pFwType == NULL) {
-          Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
-        }
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ACTIVE_FW_TYPE_ATTR, pFwType);
-        FREE_POOL_SAFE(pFwType);
-      }
-
-      if (AllOptionSet || (DisplayOptionSet && ContainsValue(pOptionsValues, ACTIVE_FW_COMMIT_ID_ATTR))) {
-        if (pDimms[Index].ActiveFwCommitId[0] == L'\0') {
-          Print(L"   " FORMAT_STR L"=N/A\n", ACTIVE_FW_COMMIT_ID_ATTR);
-        } else {
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ACTIVE_FW_COMMIT_ID_ATTR, pDimms[Index].ActiveFwCommitId);
-        }
-      }
-
-      if (AllOptionSet || (DisplayOptionSet && ContainsValue(pOptionsValues, ACTIVE_FW_BUILD_CONFIGURATION_ATTR))) {
-        if (pDimms[Index].ActiveFwBuild[0] == L'\0') {
-          Print(L"   " FORMAT_STR L"=N/A\n", ACTIVE_FW_BUILD_CONFIGURATION_ATTR);
-        } else {
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ACTIVE_FW_BUILD_CONFIGURATION_ATTR, pDimms[Index].ActiveFwBuild);
-         }
-      }
-
       if (AllOptionSet || (DisplayOptionSet && ContainsValue(pOptionsValues, STAGED_FW_VER_ATTR))) {
         if (IsFwStaged(pDimms[Index].StagedFwVersion)) {
           Print(L"   " FORMAT_STR L"=%02d.%02d.%02d.%04d\n", STAGED_FW_VER_ATTR,
@@ -285,6 +254,11 @@ ShowFirmware(
         }
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_UPDATE_STATUS_ATTR, pFwUpdateStatusString);
         FREE_POOL_SAFE(pFwUpdateStatusString);
+      }
+
+      if (AllOptionSet || (DisplayOptionSet && ContainsValue(pOptionsValues, FW_IMAGE_MAX_SIZE_ATTR))) {
+        Print(L"   " FORMAT_STR L"=%010d\n", FW_IMAGE_MAX_SIZE_ATTR,
+            pDimms[Index].FWImageMaxSize);
       }
     }
   }

@@ -727,19 +727,6 @@ GetRelativePath(
   );
 
 /**
-  Convert firmware type value to string.
-  The caller function is obligated to free memory of the returned string.
-
-  @param[in] FirmwareType value to convert
-
-  @retval output string or NULL if memory allocation failed
-**/
-CHAR16 *
-FirmwareTypeToString(
-  IN     UINT8 FirmwareType
-  );
-
-/**
   Check if all dimms in the specified pDimmIds list are manageable.
   This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.

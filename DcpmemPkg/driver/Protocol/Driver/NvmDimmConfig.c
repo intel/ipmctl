@@ -1061,11 +1061,8 @@ GetDimmInfo (
     }
     else {
       pDimmInfo->LastFwUpdateStatus = pPayloadFwImage->LastFwUpdateStatus;
-      pDimmInfo->ActiveFwType = pPayloadFwImage->FwType;
       pDimmInfo->StagedFwVersion = ParseFwVersion(pPayloadFwImage->StagedFwRevision);
-
-      SafeAsciiStrToUnicodeStr(pPayloadFwImage->CommitId, FW_COMMIT_ID_LEN, pDimmInfo->ActiveFwCommitId);
-      SafeAsciiStrToUnicodeStr(pPayloadFwImage->BuildConfiguration, FW_BUILD_LEN, pDimmInfo->ActiveFwBuild);
+      pDimmInfo->FWImageMaxSize = pPayloadFwImage->FWImageMaxSize * 4096;
     }
   }
 

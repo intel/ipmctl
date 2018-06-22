@@ -76,7 +76,6 @@ Load (
   BOOLEAN Examine = FALSE;
   BOOLEAN Force = FALSE;
   FW_IMAGE_INFO *pFwImageInfo = NULL;
-  CHAR16 *pFwType = NULL;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   BOOLEAN Confirmation = 0;
@@ -217,21 +216,13 @@ Load (
         (CHAR16 *) pWorkingDirectory, Examine, FALSE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
 
    if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
-     pFwType = FirmwareTypeToString(pFwImageInfo->FirmwareType);
-     if (pFwType == NULL) {
-       Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-       ReturnCode = EFI_OUT_OF_RESOURCES;
-       goto Finish;
-     }
 
-     Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d (" FORMAT_STR L")\n",
+     Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
        pFileName,
        pFwImageInfo->ImageVersion.ProductNumber.Version,
        pFwImageInfo->ImageVersion.RevisionNumber.Version,
        pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
-       pFwImageInfo->ImageVersion.BuildNumber.Build,
-       pFwType);
-     FREE_POOL_SAFE(pFwType);
+       pFwImageInfo->ImageVersion.BuildNumber.Build);
    } else {
      Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
      goto FinishWithError;

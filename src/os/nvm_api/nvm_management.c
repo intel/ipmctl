@@ -1094,13 +1094,8 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID    device_uid,
   FW_VER_ARR_TO_STR(fw_image_info->StagedFwRevision, p_fw_info->staged_fw_revision,
         NVM_VERSION_LEN);
 
-  p_fw_info->active_fw_type = firmware_type_to_enum(fw_image_info->FwType);
-  memmove(p_fw_info->active_fw_commit_id, fw_image_info->CommitId, DEV_FW_COMMIT_ID_LEN);
-  memmove(p_fw_info->active_fw_build_configuration, fw_image_info->BuildConfiguration,
-    DEV_FW_BUILD_CONFIGURATION_LEN);
-  // make sure cstring is null terminated
-  p_fw_info->active_fw_commit_id[NVM_COMMIT_ID_LEN - 1] = 0;
-  p_fw_info->active_fw_build_configuration[NVM_BUILD_CONFIGURATION_LEN - 1] = 0;
+  p_fw_info->FWImageMaxSize = fw_image_info->FWImageMaxSize;
+
   p_fw_info->fw_update_status =
     firmware_update_status_to_enum(fw_image_info->LastFwUpdateStatus);
   free(fw_image_info);

@@ -794,15 +794,13 @@ typedef struct {
 **/
 typedef struct {
   UINT8 FwRevision[FW_BCD_VERSION_LEN];
-  UINT8 FwType;
-  UINT8 Reserved1[10];
+  UINT8 Reserved1;
+  UINT16 FWImageMaxSize;
+  UINT8 Reserved2[8];
   UINT8 StagedFwRevision[FW_BCD_VERSION_LEN];
-  UINT8 StagedFwType;
+  UINT8 Reserved3;
   UINT8 LastFwUpdateStatus;
-  UINT8 Reserved2[9];
-  CHAR8 CommitId[FW_COMMIT_ID_LENGTH];
-  CHAR8 BuildConfiguration[FW_BUILD_CONFIGURATION_LENGTH];
-  UINT8 Reserved3[40];
+  UINT8 Reserved4[105];
 } PT_PAYLOAD_FW_IMAGE_INFO;
 
 enum GetFWDebugLogLogAction {

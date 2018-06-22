@@ -64,6 +64,10 @@ RunSecurityDiagnostics(
       goto FinishError;
     }
 
+    if (ppDimms[Index]->SkuInformation.EncryptionEnabled == MODE_DISABLED) {
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_SECURITY_NOT_SUPPORTED), EVENT_CODE_804, DIAG_STATE_MASK_OK, ppResult, pDiagState);
+    }
+
     ReturnCode = GetDimmSecurityState(
       ppDimms[Index],
       PT_TIMEOUT_INTERVAL,

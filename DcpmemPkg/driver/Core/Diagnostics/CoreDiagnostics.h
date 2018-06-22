@@ -93,6 +93,7 @@
 #define EVENT_CODE_800      800
 #define EVENT_CODE_801      801
 #define EVENT_CODE_802      802
+#define EVENT_CODE_804      804
 #define EVENT_CODE_805      805
 /* Diagnostic Firmware Events **/
 #define EVENT_CODE_900      900

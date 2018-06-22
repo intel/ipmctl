@@ -206,7 +206,6 @@ UefiMain(
 #else
   Argc = gEfiShellParametersProtocol->Argc;
   ppArgv = gEfiShellParametersProtocol->Argv;
-  int rc = os_check_admin_permissions();
   if (g_basic_commands)
   {
     Rc = RegisterNonAdminUserCommands();

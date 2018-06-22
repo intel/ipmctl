@@ -1176,31 +1176,34 @@ InitializeDimmFieldsFromNfit(
      OUT DIMM *pDimm
   )
 {
-
   pDimm->Signature = DIMM_SIGNATURE;
   pDimm->Configured = FALSE;
   pDimm->ISsNum = 0;
-  pDimm->SocketId = (UINT16) pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId;
-  // BIOS sets this to 0x0 for every non-functional (non-booting) dimm
-  pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
-  pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
-  pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;
-  pDimm->NodeControllerID = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
-  pDimm->ChannelId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemChannel;
-  pDimm->ChannelPos = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.DimmNumber;
-  pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
+  if (pNvDimmRegionTbl != NULL) {
+    pDimm->SocketId = (UINT16) pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId;
+    // BIOS sets this to 0x0 for every non-functional (non-booting) dimm
+    pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
+    pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
+    pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;
+    pDimm->NodeControllerID = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
+    pDimm->ChannelId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemChannel;
+    pDimm->ChannelPos = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.DimmNumber;
+    pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
+  }
 
-  pDimm->VendorId = pControlRegionTbl->VendorId;
-  pDimm->DeviceId = pControlRegionTbl->DeviceId;
-  pDimm->Rid = pControlRegionTbl->Rid;
-  pDimm->SubsystemVendorId = pControlRegionTbl->SubsystemVendorId;
-  pDimm->SubsystemDeviceId = pControlRegionTbl->SubsystemDeviceId;
-  pDimm->SubsystemRid = pControlRegionTbl->SubsystemRid;
-  pDimm->ManufacturingInfoValid = pControlRegionTbl->ValidFields;
-  pDimm->ManufacturingLocation = pControlRegionTbl->ManufacturingLocation;
-  pDimm->ManufacturingDate = pControlRegionTbl->ManufacturingDate;
-  pDimm->SerialNumber = pControlRegionTbl->SerialNumber;
-  // Not using the rest of the control region fields
+  if (pControlRegionTbl != NULL) {
+    pDimm->VendorId = pControlRegionTbl->VendorId;
+    pDimm->DeviceId = pControlRegionTbl->DeviceId;
+    pDimm->Rid = pControlRegionTbl->Rid;
+    pDimm->SubsystemVendorId = pControlRegionTbl->SubsystemVendorId;
+    pDimm->SubsystemDeviceId = pControlRegionTbl->SubsystemDeviceId;
+    pDimm->SubsystemRid = pControlRegionTbl->SubsystemRid;
+    pDimm->ManufacturingInfoValid = pControlRegionTbl->ValidFields;
+    pDimm->ManufacturingLocation = pControlRegionTbl->ManufacturingLocation;
+    pDimm->ManufacturingDate = pControlRegionTbl->ManufacturingDate;
+    pDimm->SerialNumber = pControlRegionTbl->SerialNumber;
+    // Not using the rest of the control region fields
+  }
 }
 
 /**
@@ -1243,6 +1246,11 @@ InitializeDimmInventory(
   for (Index = 0; Index < pFitHead->NvDimmRegionTblesNum; Index++) {
     isUninitializedDimm = TRUE;
     TmpReturnCode = GetControlRegionTableForNvDimmRegionTable(pDev->pFitHead, ppNvDimmRegionTbls[Index], &pDimmControlRegionTable);
+    // TODO: Clarify in what scenarios the NvDimmRegionTbls will be valid
+    // but the pDimmControlRegionTable won't be to simplify the logic.
+    // Also the below logic is really confusing and probably should
+    // be doing "continue" somewhere. Klocwork is complaining that we're
+    // using potential NULL values since we don't continue.
     if (EFI_ERROR(TmpReturnCode) || pDimmControlRegionTable == NULL) {
       ReturnCode = TmpReturnCode;
       NVDIMM_DBG("Could not find the Control Region Table for the NvDimm Region Table.");
@@ -1280,6 +1288,7 @@ InitializeDimmInventory(
         NVDIMM_WARN("Unable to allocate memory for Intel NVM Dimm - Out of memory");
         continue;
       }
+
       InitializeDimmFieldsFromNfit(ppNvDimmRegionTbls[Index], pDimmControlRegionTable, pNewUnInitDimm);
 
       InsertTailList(&gNvmDimmData->PMEMDev.UninitializedDimms, &pNewUnInitDimm->DimmNode);

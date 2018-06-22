@@ -9,4 +9,3 @@ CMakeSettings.json
 *.pyc
 src/os/efi_shim/os_efi_hii_auto_gen_defs.h
 src/os/efi_shim/os_efi_hii_auto_gen_strings.h
-src/os/ipmctl_default.conf

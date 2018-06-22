@@ -461,6 +461,7 @@ add_custom_command(OUTPUT ${STRING_DEFS_OUTPUT_FILES}
 #----------------------------------------------------------------------------------------------------
 
 add_custom_target(iniconfig ALL
+	DEPENDS ${OUTPUT_DIR}/ipmctl_default.conf
 	)
 
 if(MSVC)
@@ -469,9 +470,9 @@ else()
 	set(PRECOMPILER_FLAG -E -P -D__LINUX__)
 endif()
 
-add_custom_command(TARGET iniconfig
+add_custom_command(OUTPUT ${OUTPUT_DIR}/ipmctl_default.conf
 	COMMAND ${CMAKE_C_COMPILER} ${MY_CMAKE_SYSROOT} ${PRECOMPILER_FLAG} ${ROOT}/src/os/ini/ipmctl_default.c > ${ROOT}/src/os/ini/ipmctl_default.i
-	COMMAND python ${ROOT}/src/os/ini/ini_auto_gen_default_config.py ${ROOT}/src/os/ini/ipmctl_default.i ${ROOT}/src/os/ipmctl_default.conf
+	COMMAND python ${ROOT}/src/os/ini/ini_auto_gen_default_config.py ${ROOT}/src/os/ini/ipmctl_default.i ${OUTPUT_DIR}/ipmctl_default.conf
 	COMMAND ${CMAKE_COMMAND} -E remove -f ${ROOT}/src/os/ini/ipmctl_default.i
 	COMMENT "Generating INI Default Config File"
 	)
@@ -489,7 +490,6 @@ FILE(GLOB NVM_HEADERS
 	src/os/nvm_api/nvm_management.h
 	src/os/nvm_api/nvm_types.h
 	DcpmemPkg/common/NvmStatusValues.h
-	src/os/ipmctl_default.conf
 	)
 
 FILE(COPY ${NVM_HEADERS}
@@ -524,11 +524,11 @@ if(LNX_BUILD)
 			)
 	endif()
 
-	install(FILES src/os/ipmctl_default.conf
+	install(FILES ${OUTPUT_DIR}/ipmctl_default.conf
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
 		)
 
-	install(FILES src/os/ipmctl_default.conf
+	install(FILES ${OUTPUT_DIR}/ipmctl_default.conf
 		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
 		RENAME ipmctl.conf
 		)

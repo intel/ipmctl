@@ -209,7 +209,7 @@ ShowRegister(
         Print(L"  [63:35] Rsvd ----------------- = 0x%x\n\n", Bsr.Separated_FIS_1_4.Rsvd1);
       } else {
         Print(L"  [28:27] DR (DRAM Ready(AIT)) --= 0x%x (0:Not trained,Not Loaded; 1:Trained,Not Loaded; 2:Error; 3:Trained,Loaded(Ready))\n", Bsr.Separated_Current_FIS.DR);
-        Print(L"  [29] PCN (Power Cycle Needed)= 0x%x (0:No Power Cycle is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)\n", Bsr.Separated_Current_FIS.PCN);
+        Print(L"  [29] RR (Reboot Required)= 0x%x (0:No reset is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)\n", Bsr.Separated_Current_FIS.RR);
         Print(L"  [30:63] Rsvd ----------------- = 0x%x\n", Bsr.Separated_Current_FIS.Rsvd);
       }
     }

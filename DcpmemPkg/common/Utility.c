@@ -2204,6 +2204,14 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR);
   }
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.PMIdle) {
+    pStatusStr = CatSPrintClean(pStatusStr,
+        FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PM_IDLE_STR);
+  }
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.SurpriseReset) {
+    pStatusStr = CatSPrintClean(pStatusStr,
+        FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR);
+  }
   if (pStatusStr == NULL) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR, LAST_SHUTDOWN_STATUS_UNKNOWN_STR);
@@ -2591,8 +2599,8 @@ BootStatusBitmaskToStr(
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);
     }
-    if (BootStatusBitmask & DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED) {
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_PCN), NULL);
+    if (BootStatusBitmask & DIMM_BOOT_STATUS_REBOOT_REQUIRED) {
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_RR), NULL);
       pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR FORMAT_STR,
         pBootStatusStr == NULL ? L"" : L", ", pTempStr);
       FREE_POOL_SAFE(pTempStr);

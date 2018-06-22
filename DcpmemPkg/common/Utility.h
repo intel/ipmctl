@@ -84,6 +84,8 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR   L"Surprise Clock Stop"
 #define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR       L"Write Data Flush Complete"
 #define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4"
+#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"Surprise Reset"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"

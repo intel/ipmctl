@@ -108,7 +108,6 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   DumpFwDebugLog,
   SetOptionalConfigurationDataPolicy,
   RetrieveDimmRegisters,
-  SetFwLogLevel,
   GetSystemTopology,
   GetARSStatus,
   GetDriverPreferences,
@@ -517,15 +516,15 @@ PopulateDimmBootStatusBitmask(
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");
     }
-    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE) {
+    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_DDRT_NOT_READY;
     }
     if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
     }
-    if (pBsr->Separated_Current_FIS.PCN == DIMM_BSR_POWER_CYCLE_NEEDED) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED;
-  }
+    if (pBsr->Separated_Current_FIS.RR == DIMM_BSR_REBOOT_REQUIRED) {
+      BootStatusBitmask |= DIMM_BOOT_STATUS_REBOOT_REQUIRED;
+    }
   }
 
   *pBootStatusBitmask = BootStatusBitmask;
@@ -710,7 +709,6 @@ GetDimmInfo (
   UINT8 AitDramEnabled = 0;
   UINT32 Index = 0;
   DIMM_BSR Bsr;
-  UINT8 FWLogLevel = 0;
   UINT64 CapacityFromSmbios = 0;
 
   NVDIMM_ENTRY();
@@ -873,17 +871,6 @@ GetDimmInfo (
   pDimmInfo->RebootNeeded = pDimm->RebootNeeded;
   pDimmInfo->PmCapacity = pDimm->PmCapacity;
 
-  if (dimmInfoCategories & DIMM_INFO_CATEGORY_FW_LOG_LEVEL)
-  {
-    ReturnCode = FwCmdGetFWDebugLevel(pDimm, &FWLogLevel);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to get FW Debug log level for dimm: 0x%x.", pDimm->DeviceHandle.AsUint32);
-      ReturnCode = EFI_SUCCESS;
-      FWLogLevel = FWLOGLEVEL_DISABLED;
-    }
-    pDimmInfo->FWLogLevel = FWLogLevel;
-  }
-
   /* Configuration Status */
   switch (pDimm->ConfigStatus) {
     case DIMM_CONFIG_SUCCESS:
@@ -971,7 +958,6 @@ GetDimmInfo (
     }
     else {
       pDimmInfo->PackageSparingEnabled = pGetPackageSparingPayload->Enable;
-      pDimmInfo->PackageSparingLevel = pGetPackageSparingPayload->Aggressiveness;
       // This maintains backwards compatibility with FIS 1.3
       pDimmInfo->PackageSparesAvailable = (pGetPackageSparingPayload->Supported > PACKAGE_SPARING_NOT_SUPPORTED) ?
         PACKAGE_SPARES_AVAILABLE : PACKAGE_SPARES_NOT_AVAILABLE;
@@ -1012,7 +998,6 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_POWER_MGMT;
     }
 
-    pDimmInfo->PowerManagementEnabled = PowerManagementPolicyPayload.Enable;
     pDimmInfo->PeakPowerBudget = PowerManagementPolicyPayload.PeakPowerBudget;
     pDimmInfo->AvgPowerBudget = PowerManagementPolicyPayload.AveragePowerBudget;
   }
@@ -7382,81 +7367,6 @@ SetOptionalConfigurationDataPolicy(
     SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
   }
 Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Set firmware log level
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
-  @param[in] DimmIdsCount - number of elements in pDimmIds
-
-  @param[out] FwLogLevel - FW log level to set
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
-
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-EFIAPI
-SetFwLogLevel(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     UINT8 FwLogLevel,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_OUT_OF_RESOURCES;
-  UINT32 Index = 0;
-  UINT32 DimmsNum = 0;
-  DIMM **ppDimms = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-    ReturnCode = EFI_UNSUPPORTED;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
-    goto Finish;
-  }
-
-  pCommandStatus->ObjectType = ObjectTypeDimm;
-
-  ppDimms = AllocateZeroPool(MAX_DIMMS * sizeof(DIMM *));
-  if (ppDimms == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-    goto Finish;
-  }
-
-  /**
-    Filter or get all availible dimms
-  **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  if (FwLogLevel > FW_MAX_DEBUG_LOG_LEVEL || FwLogLevel < FW_MIN_DEBUG_LOG_LEVEL) {
-    for (Index = 0; Index < DimmsNum; ++Index) {
-      SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_ERR_INVALID_PARAMETER);
-    }
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmsNum; ++Index) {
-    ReturnCode = FwCmdSetFWDebugLevel(ppDimms[Index], FwLogLevel);
-    if (EFI_ERROR(ReturnCode)) {
-      SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_ERR_FW_DBG_SET_LOG_LEVEL_FAILED);
-    } else {
-      SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_SUCCESS);
-    }
-  }
-
-Finish:
-  FREE_POOL_SAFE(ppDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

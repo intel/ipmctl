@@ -63,18 +63,6 @@
 #define FEATURE_NOT_SUPPORTED 0
 #define FEATURE_SUPPORTED     1
 
-/**
-  FWLogLevel
-**/
-#define FWLOGLEVEL_DISABLED   0
-#define FWLOGLEVEL_ERROR      1
-#define FWLOGLEVEL_WARN       2
-#define FWLOGLEVEL_INFO       3
-#define FWLOGLEVEL_DEBUG      4
-#define FWLOGLEVEL_UNKNOWN    5
-
-
-
 typedef struct {
   UINT64  Uint64;
   UINT64  Uint64_1;
@@ -302,16 +290,12 @@ typedef struct _DIMM_INFO {
   UINT64 VolatileCapacity;                  //!< Capacity in bytes mapped as volatile memory
   UINT64 PmCapacity;                        //!< Capacity in bytes reserved for persistent memory
 
-  //DIMM_INFO_CATEGORY_FW_LOG_LEVEL
-  UINT8 FWLogLevel;                         //!< The logging level of the DIMM firmware
-
   //DIMM_INFO_CATEGORY_SECURITY
   UINT8 SecurityState;                      //!< Identifies the security status of the DIMM collected from FW
 
   //DIMM_INFO_CATEGORY_PACKAGE_SPARING
   BOOLEAN PackageSparingCapable;            //!< Whether or not the DIMM is capable of package sparing
   UINT8 PackageSparingEnabled;              //!< Whether or not the package sparing policy is enabled on the DIMM
-  UINT8 PackageSparingLevel;                //!< How aggressive package sparing is
   UINT8 PackageSparesAvailable;             //!< Whether or not the DIMM still has package spares available,
                                             //!< and the package spare has not yet been used by the package sparing policy;
                                             //!< this value will be 0 if the DIMM is not package sparing capable as per SKU
@@ -327,7 +311,6 @@ typedef struct _DIMM_INFO {
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
-  BOOLEAN PowerManagementEnabled;           //!< Whether or not the DIMM power management policy is enabled
   UINT16 PeakPowerBudget;                   //!< The power budget in mW used for instantaneous power (100-20000 mW). The default is 100 mW.
   UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
 
@@ -675,6 +658,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DDRT_TRAINING_NOT_COMPLETE  0x00
 #define DDRT_TRAINING_COMPLETE      0x01
 #define DDRT_TRAINING_FAILURE       0x02
+#define DDRT_S3_COMPLETE            0x03
 #define DDRT_TRAINING_UNKNOWN       0xFF
 
 /** Dimm Boot Status Bitmask **/
@@ -685,7 +669,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_BOOT_STATUS_FW_ASSERT            BIT4
 #define DIMM_BOOT_STATUS_DDRT_NOT_READY       BIT5
 #define DIMM_BOOT_STATUS_MAILBOX_NOT_READY    BIT6
-#define DIMM_BOOT_STATUS_POWER_CYCLE_NEEDED   BIT7
+#define DIMM_BOOT_STATUS_REBOOT_REQUIRED      BIT7
 
 /**
   System-wide ARS Status Bitmask

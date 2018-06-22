@@ -76,11 +76,9 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   APPDIRECT_MODE_CAPACITY_STR,
   UNCONFIGURED_CAPACITY_STR,
   PACKAGE_SPARING_ENABLED_STR,
-  PACKAGE_SPARING_LEVEL_STR,
   PACKAGE_SPARING_CAPABLE_STR,
   PACKAGE_SPARES_AVAILABLE_STR,
   IS_NEW_STR,
-  FW_LOG_LEVEL_STR,
   BANK_LABEL_STR,
   MEMORY_TYPE_STR,
   FIRST_FAST_REFRESH_PROPERTY,
@@ -88,7 +86,6 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   CHANNEL_ID_STR,
   SLOT_ID_STR,
   CHANNEL_POS_STR,
-  POWER_MANAGEMENT_ON_STR,
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_BUDGET_STR,
   LAST_SHUTDOWN_STATUS_STR,
@@ -134,7 +131,6 @@ CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
 STATIC CHAR16 *FormFactorToString(UINT8 FormFactor);
-STATIC CHAR16 *FwLogLevelToStr(UINT8 FwLogLevel);
 STATIC CHAR16 *OverwriteDimmStatusToStr(UINT8 OverwriteDimmStatus);
 
 /*
@@ -882,11 +878,6 @@ ShowDimms(
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
-          /** PackageSparingLevel **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_LEVEL_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_LEVEL_STR, UNKNOWN_ATTRIB_VAL);
-          }
-
           /** PackageSparesAvailable **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
@@ -895,11 +886,6 @@ ShowDimms(
           /** PackageSparingEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, pDimms[Index].PackageSparingEnabled);
-          }
-
-          /** PackageSparingLevel **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_LEVEL_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_LEVEL_STR, pDimms[Index].PackageSparingLevel);
           }
 
           /** PackageSparesAvailable **/
@@ -911,13 +897,6 @@ ShowDimms(
         /** IsNew **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, IS_NEW_STR))) {
           Print(FORMAT_3SPACE_STR_EQ_DEC_NL, IS_NEW_STR, pDimms[Index].IsNew);
-        }
-
-        /** FWLogLevel **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FW_LOG_LEVEL_STR))) {
-          pAttributeStr = FwLogLevelToStr(pDimms[Index].FWLogLevel);
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_LOG_LEVEL_STR, pAttributeStr);
-          FREE_POOL_SAFE(pAttributeStr);
         }
 
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) {
@@ -953,11 +932,6 @@ ShowDimms(
         }
 
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_POWER_MGMT) {
-          /** PowerManagementEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POWER_MANAGEMENT_ON_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POWER_MANAGEMENT_ON_STR, UNKNOWN_ATTRIB_VAL);
-          }
-
           /** PeakPowerBudget **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
             Print(L"   " FORMAT_STR L"=%d mW\n", PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
@@ -968,11 +942,6 @@ ShowDimms(
             Print(L"   " FORMAT_STR L"=%d mW\n", AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
-          /** PowerManagementEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POWER_MANAGEMENT_ON_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POWER_MANAGEMENT_ON_STR, pDimms[Index].PowerManagementEnabled);
-          }
-
           /** PeakPowerBudget **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
             Print(L"   " FORMAT_STR L"=%d mW\n", PEAK_POWER_BUDGET_STR, pDimms[Index].PeakPowerBudget);
@@ -1334,38 +1303,6 @@ FormFactorToString(
   }
   return pFormFactorStr;
 }
-
-/**
-  Convert type to string
-**/
-STATIC
-CHAR16*
-FwLogLevelToStr(
-  IN     UINT8 FwLogLevel
-  )
-{
-  switch(FwLogLevel) {
-    case FW_LOG_LEVEL_DISABLED:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_DISABLED_STR);
-      break;
-    case FW_LOG_LEVEL_ERROR:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_ERROR_STR);
-      break;
-    case FW_LOG_LEVEL_WARNING:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_WARNING_STR);
-      break;
-    case FW_LOG_LEVEL_INFO:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_INFO_STR);
-      break;
-    case FW_LOG_LEVEL_DEBUG:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_DEBUG_STR);
-      break;
-    default:
-      return CatSPrint(NULL, FORMAT_STR, FW_LOG_LEVEL_UNKNOWN_STR);
-      break;
-  }
-}
-
 
 /**
   Convert overwrite DIMM status value to string

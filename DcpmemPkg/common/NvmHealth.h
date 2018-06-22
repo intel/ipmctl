@@ -99,7 +99,9 @@ typedef union {
     UINT8 SurpriseClockStopInterrupt  : 1;
     UINT8 WriteDataFlushComplete      : 1;
     UINT8 S4PowerState                : 1;
-    UINT8                             : 4; //!< Reserved
+    UINT8 PMIdle                      : 1;
+    UINT8 SurpriseReset               : 1;
+    UINT8                             : 2; //!< Reserved
     UINT8                             : 8; //!< Reserved
     UINT8                             : 8; //!< Reserved
   } Separated;

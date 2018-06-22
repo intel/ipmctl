@@ -90,14 +90,6 @@ RunFwDiagnostics(
       }
     }
 #endif // OS_BUILD
-
-    ReturnCode = FwLogLevelCheck(ppDimms[Index], ppResult, pDiagState);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("The check for Dimm's FW log level failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-        goto FinishError;
-      }
-    }
   }
 
   if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
@@ -535,53 +527,3 @@ Finish:
   return ReturnCode;
 }
 #endif // OS_BUILD
-
-/**
-Get the DIMM's debug log level and compare it to the default value.
-Log proper events in case of any error.
-
-@param[in] pDimm Pointer to the DIMM
-@param[in out] ppResult Pointer to the result string of fw diagnostics message
-@param[out] pDiagState Pointer to the quick diagnostics test state
-
-@retval EFI_SUCCESS Test executed correctly
-@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
-**/
-EFI_STATUS
-FwLogLevelCheck(
-  IN     DIMM *pDimm,
-  IN OUT CHAR16 **ppResultStr,
-  IN OUT UINT8 *pDiagState
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT8 FwLogLevel = 0;
-
-  NVDIMM_ENTRY();
-
-  if ((NULL == pDimm) || (NULL == pDiagState) || (NULL == ppResultStr)) {
-    if (pDiagState != NULL) {
-      *pDiagState |= DIAG_STATE_MASK_ABORTED;
-    }
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  // Get the DIMM's FW log level
-  ReturnCode = FwCmdGetFWDebugLevel(pDimm, &FwLogLevel);
-  if (EFI_ERROR(ReturnCode)) {
-    *pDiagState |= DIAG_STATE_MASK_ABORTED;
-    NVDIMM_WARN("Failed to get FW Debug log level for Dimm handle 0x%x.", pDimm->DeviceHandle.AsUint32);
-    goto Finish;
-  }
-
-  // Validate resulats
-  if (FwLogLevel != DEFAULT_FW_LOG_LEVEL_VALUE) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_LOG_LEVEL_ERROR), EVENT_CODE_906, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, FwLogLevel, DEFAULT_FW_LOG_LEVEL_VALUE);
-  }
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}

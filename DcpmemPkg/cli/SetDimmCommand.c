@@ -15,13 +15,6 @@
 #include <NvmInterface.h>
 #include "Common.h"
 
-CONST CHAR16 *pFwDebugLogLevelStr[FW_LOG_LEVELS_COUNT] = {
-  L"Error",
-  L"Warning",
-  L"Info",
-  L"Debug"
-};
-
 CONST CHAR16 *pPoisonMemoryTypeStr[POISON_MEMORY_TYPE_COUNT] = {
 	L"MemoryMode",
 	L"AppDirect",
@@ -54,7 +47,6 @@ struct Command SetDimmCommand =
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {FW_LOGLEVEL_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueRequired},
     {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
     {VIRAL_POLICY_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired}
     },                                                                //!< properties
@@ -108,7 +100,6 @@ SetDimm(
   CHAR16 *pConfirmPassphraseStatic = NULL;
   CHAR16 *pFirstFastRefreshValue = NULL;
   CHAR16 *pViralPolicyValue = NULL;
-  CHAR16 *pFwLogLevel = NULL;
   CHAR16 *pTargetValue = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
@@ -116,7 +107,6 @@ SetDimm(
   UINT16 SecurityOperation = SECURITY_OPERATION_UNDEFINED;
   UINT8 FirstFastRefreshState = OPTIONAL_DATA_UNDEFINED;
   UINT8 ViralPolicyState = OPTIONAL_DATA_UNDEFINED;
-  UINT8 FwLogLevel = FW_LOG_LEVELS_INVALID_LEVEL; // unknown log level
   UINT16 *pDimmIds = NULL;
   UINT32 DimmHandle = 0;
   UINT32 DimmIndex = 0;
@@ -245,15 +235,6 @@ SetDimm(
             /** We already found a specified action, more are not allowed **/
             ReturnCode = EFI_INVALID_PARAMETER;
         } else {
-            /** Found specified action **/
-            ActionSpecified = TRUE;
-        }
-    }
-    if (!EFI_ERROR(ContainsProperty(pCmd, FW_LOGLEVEL_PROPERTY))) {
-        if (ActionSpecified) {
-            /** We already found a specified action, more are not allowed **/
-            ReturnCode = EFI_INVALID_PARAMETER;
-        }   else {
             /** Found specified action **/
             ActionSpecified = TRUE;
         }
@@ -606,27 +587,6 @@ SetDimm(
           pDimmIds, DimmIdsCount, FirstFastRefreshState, ViralPolicyState, pCommandStatus);
       goto Finish;
     }
-  }
-
-  /**
-    Set FwLevel
-  **/
-  GetPropertyValue(pCmd, FW_LOGLEVEL_PROPERTY, &pFwLogLevel);
-
-  if (pFwLogLevel != NULL) {
-    pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_SET_FW_LOG_LEVEL);
-    pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-
-    /**
-      Trying to match FWLevel, if fail INVALID_LEVEL will be passed to drv.
-    **/
-    for (Index = 0; Index < FW_LOG_LEVELS_COUNT; ++Index) {
-      if (0 == StrCmp(pFwLogLevel, pFwDebugLogLevelStr[Index])) {
-        FwLogLevel = (UINT8)Index + 1; // adding 1 to indicate the exact fw log level (not the loop index)
-      }
-    }
-    ReturnCode = pNvmDimmConfigProtocol->SetFwLogLevel(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, FwLogLevel, pCommandStatus);
-    goto Finish;
   }
 #ifdef OS_BUILD
   GetPropertyValue(pCmd, TEMPERATURE_INJ_PROPERTY, &pTemperature);

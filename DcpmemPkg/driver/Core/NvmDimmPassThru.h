@@ -527,12 +527,7 @@ typedef struct
     Sub-Opcode:  0x02h (Power Managment Policy)
 **/
 typedef struct {
-  /**
-    Enable/Disable reflects whether the power managment policy is enabled or disabled.
-    Disabling power managment will automatically change the Stop/Gate timers to 0x00
-    thus allowing for no power savings.
-  **/
-  UINT8 Enable;
+  UINT8 Reserved1;
   /**
     Power budget in mW used for instantaneous power.
     Valid range for power budget 10000 - 20000 mW.
@@ -650,7 +645,7 @@ typedef struct {
 typedef struct
 {
   UINT8 Enable;           //!< Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled).
-  UINT8 Aggressiveness;   //!< How aggressive to be on package sparing (0...255)
+  UINT8 Reserved1;        //!< Reserved
   UINT8 Supported;        //!< Designates whether or not the DIMM still supports package sparing.
   UINT8 Reserved[125];    //!< 127-3 : Reserved
 } PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY;
@@ -662,8 +657,7 @@ typedef struct
 **/
 typedef struct {
   UINT8 Enable;           //!< Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled).
-  UINT8 Aggressiveness;   //!< How aggressive to be on package sparing (0...255)
-  UINT8 Reserved[126];    //!< 127-2 : Reserved
+  UINT8 Reserved[127];    //!< 127-1 : Reserved
 } PT_PAYLOAD_SET_PACKAGE_SPARING_POLICY;
 
 /**
@@ -724,9 +718,11 @@ typedef struct {
     Display extended details of the last shutdown that occured
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
-    Bit 0: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
-    Bit 1: S4 Power State (0 - Not Received, 1 - Received)
-    Bit 4-23: Reserved
+    Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
+    Bit 3: S4 Power State (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
+    Bit 6-23: Reserved
   **/
   LAST_SHUTDOWN_STATUS_EXTENDED LastShutdownExtendedDetails;
 
@@ -1000,21 +996,12 @@ typedef struct {
 
 typedef struct _LOG_INFO_DATA_RETURN {
   UINT16 MaxLogEntries;
-  union {
-    struct {
-      UINT16 NewLogEntriesFis;
-      UINT64 OldestLogEntryTimestamp;
-      UINT64 NewestLogEnrtyTimestamp;
-      UINT8 Reserved[108];
-    } FIS_1_2;
-    struct {
-      UINT16 CurrentSequenceNum;
-      UINT16 OldestSequenceNum;
-      UINT64 OldestLogEntryTimestamp;
-      UINT64 NewestLogEnrtyTimestamp;
-      UINT8 Reserved[106];
-    } FIS_1_3;
-  } Params;
+  UINT16 CurrentSequenceNum;
+  UINT16 OldestSequenceNum;
+  UINT64 OldestLogEntryTimestamp;
+  UINT64 NewestLogEntryTimestamp;
+  UINT8  AdditionalLogStatus;
+  UINT8  Reserved[105];
 } LOG_INFO_DATA_RETURN;
 
 /**
@@ -1122,6 +1109,7 @@ typedef struct {
     0x00 - Training Not Complete
     0x01 - Training Complete
     0x02 - Training Failure
+    0x03 - S3 Complete
   **/
   UINT8 DdrtTrainingStatus; //!<Designates training has been completed by BIOS.
   UINT8 Reserved[126];

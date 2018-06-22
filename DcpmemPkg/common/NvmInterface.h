@@ -1154,30 +1154,6 @@ EFI_STATUS
   );
 
 /**
-  Set firmware log level
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
-  @param[in] DimmIdsCount - number of elements in pDimmIds
-
-  @param[out] FwLogLevel - FW log level to set
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
-
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_SET_FW_LOG_LEVEL) (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds,
-  IN     UINT32 DimmIdsCount,
-  IN     UINT8 FwLogLevel,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Get system topology from SMBIOS table
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
@@ -1483,7 +1459,6 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG DumpFwDebugLog;
   EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY SetOptionalConfigurationDataPolicy;
   EFI_DCPMM_CONFIG_RETRIEVE_DIMM_REGISTERS RetrieveDimmRegisters;
-  EFI_DCPMM_CONFIG_SET_FW_LOG_LEVEL SetFwLogLevel;
   EFI_DCPMM_CONFIG_GET_SYSTEM_TOPOLOGY GetSystemTopology;
   EFI_DCPMM_CONFIG_GET_ARS_STATUS GetARSStatus;
   EFI_DCPMM_CONFIG_GET_DRIVER_PREFERENCES GetDriverPreferences;

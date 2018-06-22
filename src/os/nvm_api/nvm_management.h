@@ -335,8 +335,8 @@ enum log_level {
 };
 
 /**
- * Logging level used with the firmware logging functions.
- */
+* Logging level used with the firmware logging functions.
+*/
 enum fw_log_level {
 	FW_LOG_LEVEL_DISABLED	= 0,    ///< Logging Disabled
 	FW_LOG_LEVEL_ERROR	= 1,    ///< Error message
@@ -840,11 +840,9 @@ struct device_details {
 	char				device_locator[NVM_DEVICE_LOCATOR_LEN]; ///< The socket or board position label
 	char				bank_label[NVM_BANK_LABEL_LEN];         ///< The bank label
 
-	NVM_BOOL			power_management_enabled;               ///< Enable or disable power management.
 	NVM_UINT16			peak_power_budget;                      ///< instantaneous power budget in mW (100-20000 mW).
 	NVM_UINT16			avg_power_budget;                       ///< average power budget in mW (100-18000 mW).
 	NVM_BOOL			package_sparing_enabled;                    ///< Enable or disable package sparing.
-	NVM_UINT8			package_sparing_level;                      ///< How aggressive to be in package sparing (0-255).
 	struct device_settings		settings;                               ///< Modifiable features of the device.
 };
 
@@ -2755,28 +2753,30 @@ NVM_API int nvm_add_simulator(const NVM_PATH simulator, const NVM_SIZE simulator
 NVM_API int nvm_remove_simulator();
 
 /**
- * @brief Retrieve the current level of debug logging performed on the specified DIMM.
- * @param[in] device_uid
- *              The device identifier.
- * @param[out,in] p_log_level
- *              A buffer for the log_level, allocated by the caller.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_UNKNOWN @n
- */
+* @obsolete
+* @brief Retrieve the current level of debug logging performed on the specified DIMM.
+* @param[in] device_uid
+*              The device identifier.
+* @param[out,in] p_log_level
+*              A buffer for the log_level, allocated by the caller.
+* @return Returns one of the following @link #return_code return_codes: @endlink @n
+*            ::NVM_SUCCESS @n
+*            ::NVM_ERR_INVALIDPARAMETER @n
+*            ::NVM_ERR_UNKNOWN @n
+*/
 NVM_API int nvm_get_fw_log_level(const NVM_UID device_uid, enum fw_log_level *p_log_level);
 
 /**
- * @brief Set the current level of debug logging performed on the specified DIMM.
- * @param[in] device_uid
- *              The device identifier.
- * @param[in] log_level
- *              The firmware log level.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_UNKNOWN @n
- */
+* @obsolete
+* @brief Set the current level of debug logging performed on the specified DIMM.
+* @param[in] device_uid
+*              The device identifier.
+* @param[in] log_level
+*              The firmware log level.
+* @return Returns one of the following @link #return_code return_codes: @endlink @n
+*            ::NVM_SUCCESS @n
+*            ::NVM_ERR_UNKNOWN @n
+*/
 NVM_API int nvm_set_fw_log_level(const NVM_UID device_uid, const enum fw_log_level log_level);
 
 /**

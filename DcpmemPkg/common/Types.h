@@ -59,7 +59,7 @@ typedef struct {
 
 #define DIMM_BSR_OIE_ENABLED 0x1
 #define DIMM_BSR_FW_ASSERT 0x1
-#define DIMM_BSR_POWER_CYCLE_NEEDED 0x1
+#define DIMM_BSR_REBOOT_REQUIRED 0x1
 #define DIMM_BSR_MEDIA_INTERFACE_ENGINE_STALLED 0x01
 
 #define REGISTER_BSR_STR  L"BSR"
@@ -101,7 +101,7 @@ typedef union {
     UINT64 OIE: 1;          //25
     UINT64 OIWE: 1;         //26
     UINT64 DR: 2;           //28:27
-    UINT64 PCN: 1;          //29
+    UINT64 RR: 1;           //29
     UINT64 Rsvd: 34;        //63:30
   } Separated_Current_FIS;
 } DIMM_BSR;

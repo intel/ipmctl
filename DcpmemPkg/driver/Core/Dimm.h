@@ -743,38 +743,6 @@ GetDimmARSStatusFromARSPayload(
      OUT UINT8 *pDimmARSStatus
 );
 
- /**
-  Firmware command to set FW debug level
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] FwLogLevel - FwLogLevel to set
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdSetFWDebugLevel(
-  IN     DIMM *pDimm,
-  IN     UINT8 FwLogLevel
-  );
-
- /**
-  Firmware command to get FW debug level
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[out] pFwLogLevel - output variable to save FwLogLevel
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetFWDebugLevel(
-  IN     DIMM *pDimm,
-     OUT UINT8 *pFwLogLevel
-  );
-
 /**
   Firmware command to get Error logs
 

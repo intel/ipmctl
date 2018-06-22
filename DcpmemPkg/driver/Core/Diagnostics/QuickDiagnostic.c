@@ -437,7 +437,7 @@ BootStatusDiagnosticsCheck(
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");
     }
-    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE) {
+    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_DDRT_IO_NOT_COMPLETE), EVENT_CODE_538, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }

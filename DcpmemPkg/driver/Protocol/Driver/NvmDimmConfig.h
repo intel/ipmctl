@@ -1316,30 +1316,6 @@ SetOptionalConfigurationDataPolicy(
   );
 
 /**
-  Set firmware log level
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
-  @param[in] DimmIdsCount - number of elements in pDimmIds
-
-  @param[out] FwLogLevel - FW log level to set
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
-
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-EFIAPI
-SetFwLogLevel(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds,
-  IN     UINT32 DimmIdsCount,
-  IN     UINT8 FwLogLevel,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Get requested number of specific DIMM registers for given DIMM id
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.

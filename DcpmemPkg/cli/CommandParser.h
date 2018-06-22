@@ -134,7 +134,6 @@
 #define TYPE_VALUE_TRAINGING              L"Training"                 //!< 'Type' property Training value
 #define UPDATE_PROPERTY                   L"Update"                   //!< 'Update' property name
 #define EXEC_PROPERTY                     L"Execute"                  //!< 'Exec' property name
-#define FW_LOGLEVEL_PROPERTY              L"FwLogLevel"               //!< 'FwLogLevel' property name
 #define TEMPERATURE_INJ_PROPERTY          L"Temperature"	            //!<  Inject error 'Temperature' property name
 #define POISON_INJ_PROPERTY               L"Poison"                   //!< Inject error 'Poison' property
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property

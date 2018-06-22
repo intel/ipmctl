@@ -834,11 +834,9 @@ NVM_API int nvm_get_device_details(const NVM_UID		device_uid,
 	p_details->speed = dimm_info.Speed;                                                     // The speed in nanoseconds.
 	memcpy(p_details->device_locator, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
 	memcpy(p_details->bank_label, dimm_info.BankLabel, NVM_BANK_LABEL_LEN);                 // The bank label
-	p_details->power_management_enabled = dimm_info.PowerManagementEnabled;                 // Enable or disable power management.
 	p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
 	p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
   p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
-  p_details->package_sparing_level = dimm_info.PackageSparingLevel;                       // How aggressive to be in package sparing (0-255).
 
 	// Basic device identifying information.
 	rc = nvm_get_device_discovery(device_uid, &(p_details->discovery));
@@ -2601,70 +2599,13 @@ NVM_API int nvm_remove_simulator()
 
 NVM_API int nvm_get_fw_log_level(const NVM_UID device_uid, enum fw_log_level *p_log_level)
 {
-	EFI_STATUS ReturnCode;
-	DIMM *pDimm = NULL;
-	unsigned int dimm_id;
-	UINT8 FwLogLevel;
-	int rc = NVM_SUCCESS;
-
-	if (NULL == p_log_level)
-		return NVM_ERR_INVALIDPARAMETER;
-
-	if (NVM_SUCCESS != (rc = nvm_init())) {
-		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
-	}
-
-	if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-		NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-		return rc;
-	}
-
-	if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-		NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", dimm_id);
-		return NVM_ERR_UNKNOWN;
-	}
-
-	ReturnCode = FwCmdGetFWDebugLevel(pDimm, &FwLogLevel);
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_ERR("FwCmdGetFWDebugLevel failed (%d)\n", ReturnCode);
-		return NVM_ERR_UNKNOWN;
-	}
-
-	*p_log_level = (enum fw_log_level)FwLogLevel;
-	return NVM_SUCCESS;
+  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 NVM_API int nvm_set_fw_log_level(const NVM_UID			device_uid,
-				 const enum fw_log_level	log_level)
+  const enum fw_log_level	log_level)
 {
-	EFI_STATUS ReturnCode;
-	DIMM *pDimm = NULL;
-	unsigned int dimm_id;
-	int rc = NVM_SUCCESS;
-
-	if (NVM_SUCCESS != (rc = nvm_init())) {
-		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-		return rc;
-	}
-
-	if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-		NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-		return rc;
-	}
-
-	if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-		NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", dimm_id);
-		return NVM_ERR_UNKNOWN;
-	}
-
-	ReturnCode = FwCmdSetFWDebugLevel(pDimm, (UINT8)log_level);
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_ERR("FwCmdSetFWDebugLevel failed (%d)\n", ReturnCode);
-		return NVM_ERR_UNKNOWN;
-	}
-
-	return NVM_SUCCESS;
+  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
@@ -3199,32 +3140,32 @@ NVM_API int nvm_get_fw_err_log_stats(const NVM_UID			device_uid,
 			ErrorLogLowPriority,
 			ErrorLogTypeMedia,
 			&get_error_log_output);
-		error_log_stats->media_low.oldest = get_error_log_output.Params.FIS_1_3.OldestSequenceNum;
-		error_log_stats->media_low.current = get_error_log_output.Params.FIS_1_3.CurrentSequenceNum;
+		error_log_stats->media_low.oldest = get_error_log_output.OldestSequenceNum;
+		error_log_stats->media_low.current = get_error_log_output.CurrentSequenceNum;
 
 		get_fw_err_log_stats(
 			dimm_id,
 			ErrorLogHighPriority,
 			ErrorLogTypeMedia,
 			&get_error_log_output);
-		error_log_stats->media_high.oldest = get_error_log_output.Params.FIS_1_3.OldestSequenceNum;
-		error_log_stats->media_high.current = get_error_log_output.Params.FIS_1_3.CurrentSequenceNum;
+		error_log_stats->media_high.oldest = get_error_log_output.OldestSequenceNum;
+		error_log_stats->media_high.current = get_error_log_output.CurrentSequenceNum;
 
 		get_fw_err_log_stats(
 			dimm_id,
 			ErrorLogLowPriority,
 			ErrorLogTypeThermal,
 			&get_error_log_output);
-		error_log_stats->therm_low.oldest = get_error_log_output.Params.FIS_1_3.OldestSequenceNum;
-		error_log_stats->therm_low.current = get_error_log_output.Params.FIS_1_3.CurrentSequenceNum;
+		error_log_stats->therm_low.oldest = get_error_log_output.OldestSequenceNum;
+		error_log_stats->therm_low.current = get_error_log_output.CurrentSequenceNum;
 
 		get_fw_err_log_stats(
 			dimm_id,
 			ErrorLogHighPriority,
 			ErrorLogTypeThermal,
 			&get_error_log_output);
-		error_log_stats->therm_high.oldest = get_error_log_output.Params.FIS_1_3.OldestSequenceNum;
-		error_log_stats->therm_high.current = get_error_log_output.Params.FIS_1_3.CurrentSequenceNum;
+		error_log_stats->therm_high.oldest = get_error_log_output.OldestSequenceNum;
+		error_log_stats->therm_high.current = get_error_log_output.CurrentSequenceNum;
 	}
 	return NVM_SUCCESS;
 }

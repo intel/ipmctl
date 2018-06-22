@@ -2612,117 +2612,6 @@ Finish:
 }
 
  /**
-  Firmware command to set FW debug level
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] FwLogLevel - FwLogLevel to set
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdSetFWDebugLevel(
-  IN     DIMM *pDimm,
-  IN     UINT8 FwLogLevel
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
-  NVDIMM_ENTRY();
-
-  if (pDimm == NULL || FwLogLevel > FW_MAX_DEBUG_LOG_LEVEL || FwLogLevel < FW_MIN_DEBUG_LOG_LEVEL) {
-    goto Finish;
-  }
-
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtSetAdminFeatures;
-  pFwCmd->SubOpcode = SubopFwDbgLogLevel;
-  pFwCmd->InputPayload[0] = FwLogLevel;
-  pFwCmd->InputPayloadSize = sizeof(FwLogLevel);
-  pFwCmd->OutputPayloadSize = 0;
-
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to set error log, error: %x\n", ReturnCode);
-    if (FW_ERROR(pFwCmd->Status)) {
-      ReturnCode = MatchFwReturnCode(pFwCmd->Status);
-    }
-    goto Finish;
-  }
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
- /**
-  Firmware command to get FW debug level
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] LogId - log to fetch <0,255>
-  @param[out] pFwLogLevel - output variable to save FwLogLevel
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetFWDebugLevel (
-  IN     DIMM *pDimm,
-     OUT UINT8 *pFwLogLevel
-  )
-{
-  FW_CMD *pFwCmd = NULL;
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG_LEVEL *pOutputPayload = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pFwLogLevel == NULL || pDimm == NULL) {
-    goto Finish;
-  }
-
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtGetAdminFeatures;
-  pFwCmd->SubOpcode = SubopFwDbgLogLevel;
-  pFwCmd->InputPayloadSize = IN_PAYLOAD_SIZE;
-  pFwCmd->OutputPayloadSize = sizeof(*pOutputPayload);
-
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Fail to get error log, error: %x\n", ReturnCode);
-    if (FW_ERROR(pFwCmd->Status)) {
-      ReturnCode = MatchFwReturnCode(pFwCmd->Status);
-    }
-    goto Finish;
-  }
-
-  pOutputPayload = (PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG_LEVEL*) pFwCmd->OutPayload;
-  *pFwLogLevel = pOutputPayload->LogLevel;
-
-  if (*pFwLogLevel >= FWLOGLEVEL_UNKNOWN) {
-    NVDIMM_WARN("Invalid value of FWDbgLogLevel %d for dimm %x\n", *pFwLogLevel, pDimm->DeviceHandle.AsUint32);
-  }
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
- /**
   Firmware command to get debug logs size in MB
 
   @param[in] pDimm Target DIMM structure pointer
@@ -5310,30 +5199,21 @@ ClearInterleavedBuffer(
 STATIC
 UINT16
 GetLogEntriesCount(
-  IN     LOG_INFO_DATA_RETURN *pLogInfoDataReturn,
-  IN     BOOLEAN FIS_1_2
+  IN     LOG_INFO_DATA_RETURN *pLogInfoDataReturn
   )
 {
   INT32 Tmp = 0;
   UINT16 Result = 0;
 
-  if (FIS_1_2) {
-    if (pLogInfoDataReturn->Params.FIS_1_2.NewLogEntriesFis < pLogInfoDataReturn->MaxLogEntries) {
-      Result = pLogInfoDataReturn->Params.FIS_1_2.NewLogEntriesFis;
-    } else {
-      Result = pLogInfoDataReturn->MaxLogEntries;
-    }
-  } else {
-    Tmp = (INT32) pLogInfoDataReturn->Params.FIS_1_3.CurrentSequenceNum -
-        (INT32) pLogInfoDataReturn->Params.FIS_1_3.OldestSequenceNum;
+  Tmp = (INT32) pLogInfoDataReturn->CurrentSequenceNum -
+      (INT32) pLogInfoDataReturn->OldestSequenceNum;
 
-    if (Tmp > 0) {
-      Result = (UINT16) Tmp + 1;
-    } else if (Tmp < 0) {
-      Result = (UINT16) (Tmp + pLogInfoDataReturn->MaxLogEntries + 1);
-    } else {
-      Result = 0;
-    }
+  if (Tmp > 0) {
+    Result = (UINT16) Tmp + 1;
+  } else if (Tmp < 0) {
+    Result = (UINT16) (Tmp + pLogInfoDataReturn->MaxLogEntries + 1);
+  } else {
+    Result = 0;
   }
 
   return Result;
@@ -5359,7 +5239,6 @@ FwCmdGetErrorCount(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PT_INPUT_PAYLOAD_GET_ERROR_LOG InputPayload;
   LOG_INFO_DATA_RETURN OutputPayload;
-  BOOLEAN FIS_1_2 = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -5371,8 +5250,6 @@ FwCmdGetErrorCount(
     goto Finish;
   }
 
-  FIS_1_2 = pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 2;
-
   InputPayload.LogParameters.Separated.LogInfo = 1;
 
   if (pMediaLogCount != NULL) {
@@ -5382,7 +5259,7 @@ FwCmdGetErrorCount(
       *pMediaLogCount = 0;
       goto Finish;
     }
-    *pMediaLogCount = GetLogEntriesCount(&OutputPayload, FIS_1_2);
+    *pMediaLogCount = GetLogEntriesCount(&OutputPayload);
   }
 
   if (pThermalLogCount != NULL) {
@@ -5392,7 +5269,7 @@ FwCmdGetErrorCount(
       *pThermalLogCount = 0;
       goto Finish;
     }
-    *pThermalLogCount = GetLogEntriesCount(&OutputPayload, FIS_1_2);
+    *pThermalLogCount = GetLogEntriesCount(&OutputPayload);
   }
 
 Finish:

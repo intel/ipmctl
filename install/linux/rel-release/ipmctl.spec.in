@@ -125,6 +125,7 @@ make -f Makefile install DESTDIR=%{buildroot}
 %attr(644,root,root) %{_includedir}/nvm_management.h
 %attr(644,root,root) %{_includedir}/export_api.h
 %attr(644,root,root) %{_includedir}/NvmStatusValues.h
+%{_libdir}/pkgconfig/libipmctl.pc
 
 %changelog
 * Wed May 02 2018 Juston Li <juston.li@intel.com> - 01.00.00.3000

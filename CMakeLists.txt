@@ -476,6 +476,11 @@ add_custom_command(TARGET iniconfig
 	COMMENT "Generating INI Default Config File"
 	)
 
+# --------------------------------------------------------------------------------------------------
+# Pkgconfig
+# --------------------------------------------------------------------------------------------------
+configure_file(${ROOT}/install/linux/libipmctl.pc.in ${OUTPUT_DIR}/libipmctl.pc @ONLY)
+
 #----------------------------------------------------------------------------------------------------
 # Install
 #----------------------------------------------------------------------------------------------------
@@ -543,6 +548,8 @@ if(LNX_BUILD)
 			DESTINATION ${INSTALL_SYSTEMDSYSTEMUNITDIR}
 			)
 	endif()
+
+	install(FILES ${OUTPUT_DIR}/libipmctl.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 #----------------------------------------------------------------------------------------------------

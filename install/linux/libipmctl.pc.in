@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: libipmctl
+Description: Manage Intel DC Optane persistent memory modules
+Version: @BUILDNUM@
+Libs: -L${libdir} -lipmctl
+Cflags: -I${includedir}

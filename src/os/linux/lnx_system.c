@@ -30,7 +30,6 @@
 #include <lnx_adapter.h>
 
 #define	LOCALE_DIR	"/usr/share/locale"
-
 /*
  * Return the base path for the language catalog
  */
@@ -456,4 +455,18 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	get_supported_block_sizes(p_capabilities);
 	p_capabilities->namespace_memory_page_allocation_capable = 1;
 	return 0;
+}
+
+/*
+* Determine if the caller has permission to make changes to the system
+*/
+int os_check_admin_permissions()
+{
+  int rc = NVM_ERR_INVALID_PERMISSIONS;
+  // root user id will always be 0
+  if (ROOT_USER_ID == getuid())
+  {
+    rc = NVM_SUCCESS;
+  }
+  return rc;
 }

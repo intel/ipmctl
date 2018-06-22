@@ -14,6 +14,7 @@
 #define	OS_PATH_SEP	"/"
 #endif
 
+#define ROOT_USER_ID 0
 #define	BYTES_PER_KIB	1024
 #define	BYTES_PER_MIB	(unsigned long long)(1 << 20) // 1024^2
 #define	BYTES_PER_GIB	(BYTES_PER_MIB * BYTES_PER_KIB) // 1024^3
@@ -93,6 +94,7 @@ extern int os_get_os_name(char *os_name, const unsigned int os_name_len);
 extern int os_get_os_version(char *os_version, const unsigned int os_version_len);
 extern int os_get_os_type();
 extern int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities);
+extern int os_check_admin_permissions();
 int wait_for_sec(unsigned int seconds);
 
 #endif

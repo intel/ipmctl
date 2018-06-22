@@ -206,13 +206,22 @@ UefiMain(
 #else
   Argc = gEfiShellParametersProtocol->Argc;
   ppArgv = gEfiShellParametersProtocol->Argv;
-#endif //OS_BUILD
-
-  Rc = RegisterCommands();
-  if (EFI_ERROR(Rc)) {
-    goto Finish;
+  int rc = os_check_admin_permissions();
+  if (g_basic_commands)
+  {
+    Rc = RegisterNonAdminUserCommands();
+    if (EFI_ERROR(Rc)) {
+      goto Finish;
+    }
   }
-
+  else
+#endif //OS_BUILD
+  {
+    Rc = RegisterCommands();
+    if (EFI_ERROR(Rc)) {
+      goto Finish;
+    }
+  }
   while (MoreInput) {
     Input.TokenCount = 0;
 #ifndef OS_BUILD
@@ -325,6 +334,26 @@ Finish:
 }
 
 /**
+Register basic commands on the commands list for non-root users
+
+@retval a return code from called functions
+**/
+EFI_STATUS
+RegisterNonAdminUserCommands(
+)
+{
+  EFI_STATUS Rc;
+
+  NVDIMM_ENTRY();
+  Rc = RegisterCommand(&VersionCommand);
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+done:
+  NVDIMM_EXIT_I64(Rc);
+  return Rc;
+}
+/**
   Register commands on the commands list
 
   @retval a return code from called functions
@@ -343,7 +372,7 @@ RegisterCommands(
     goto done;
   }
 
-  Rc = RegisterCommand(&VersionCommand);
+  Rc = RegisterNonAdminUserCommands();
   if (EFI_ERROR(Rc)) {
     goto done;
   }

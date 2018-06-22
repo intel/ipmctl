@@ -17,7 +17,7 @@ extern        EFI_HANDLE                        gNvmDimmCliHiiHandle;
 // create a packagelist (which contains Form packages, String packages, etc).
 //
 extern unsigned char ipmctlStrings[];
-
+extern int g_basic_commands;
 /**
   Register commands on the commands list
 
@@ -26,6 +26,15 @@ extern unsigned char ipmctlStrings[];
 EFI_STATUS
 RegisterCommands(
   );
+
+/**
+Register basic commands on the commands list for non-root users
+
+@retval a return code from called functions
+**/
+EFI_STATUS
+RegisterNonAdminUserCommands(
+);
 
 /**
   Print the CLI application help

@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <winnt.h>
 #include <stdio.h>
+#include <nvm_management.h>
 #include <tchar.h> // todo: remove this header and replace associated functions
 #include <direct.h> // for _getcwd
 #include <s_str.h>
@@ -802,10 +803,13 @@ int os_get_os_version(char *os_version, const unsigned int os_version_len)
 
 /*
  * Determine if the caller has permission to make changes to the system
+  https://msdn.microsoft.com/en-us/library/windows/desktop/aa379649(v=vs.85).aspx
  */
 int os_check_admin_permissions()
 {
-	int rc = 0;
+	int rc = NVM_SUCCESS;
+ /*  The SECURITY_NT_AUTHORITY (S-1-5) predefined identifier authority produces SIDs that are not universal but are meaningful
+   only on Windows installation*/
 	SID_IDENTIFIER_AUTHORITY authority = { SECURITY_NT_AUTHORITY };
 	PSID group;
 	BOOL is_member = FALSE;
@@ -816,7 +820,7 @@ int os_check_admin_permissions()
 	{
 		if (!CheckTokenMembership(NULL, group, &is_member) || !is_member)
 		{
-			rc = -1;
+			rc = NVM_ERR_INVALID_PERMISSIONS;
 		}
 		FreeSid(group);
 	}

@@ -452,27 +452,27 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   int nvm_status;
   int index;
 
-  if (NULL == p_devices)
-    return NVM_ERR_INVALID_PARAMETER;
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return nvm_status;
-  }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemTopology(&gNvmDimmDriverNvmDimmConfig, &p_dimm_topology, (UINT16 *)&topology_dimms_count);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    return NVM_ERR_UNKNOWN;
-  } else if (p_dimm_topology == NULL) {
-    NVDIMM_ERR("Could not read the system topology.\n");
-    return NVM_ERR_UNKNOWN;
-  }
-  for (index = 0; (index < count) && (index < topology_dimms_count); index++) {
-    p_devices[index].physical_id = p_dimm_topology[index].DimmID;                                           // Memory device's physical identifier (SMBIOS handle)
-    p_devices[index].memory_type = p_dimm_topology[index].MemoryType;                                       // Type of memory device
-    memcpy(p_devices[index].device_locator, p_dimm_topology[index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
-    memcpy(p_devices[index].bank_label, p_dimm_topology[index].BankLabel, BANKLABEL_LEN);                   // Physically-labeled bank of device location
-  }
-  return NVM_SUCCESS;
+	if (NULL == p_devices)
+		return NVM_ERR_INVALID_PARAMETER;
+	if (NVM_SUCCESS != (nvm_status = nvm_init())) {
+		NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+		return nvm_status;
+	}
+	ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemTopology(&gNvmDimmDriverNvmDimmConfig, &p_dimm_topology, (UINT16 *)&topology_dimms_count);
+	if (EFI_ERROR(ReturnCode)) {
+		NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+		return NVM_ERR_UNKNOWN;
+	} else if (p_dimm_topology == NULL) {
+		NVDIMM_ERR("Could not read the system topology.\n");
+		return NVM_ERR_UNKNOWN;
+	}
+	for (index = 0; (index < count) && (index < topology_dimms_count); index++) {
+		p_devices[index].physical_id = p_dimm_topology[index].DimmID;                                           // Memory device's physical identifier (SMBIOS handle)
+		p_devices[index].memory_type = p_dimm_topology[index].MemoryType;                                       // Type of memory device
+    memcpy_s(p_devices[index].device_locator, NVM_DEVICE_LOCATOR_LEN, p_dimm_topology[index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
+    memcpy_s(p_devices[index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[index].BankLabel, BANKLABEL_LEN);                   // Physically-labeled bank of device location
+	}
+	return NVM_SUCCESS;
 }
 
 //deprecated, please use nvm_get_number_of_devices
@@ -843,8 +843,8 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
 	p_details->data_width = dimm_info.DataWidth;                                            // The width in bits used to store user data.
 	p_details->total_width = dimm_info.TotalWidth;                                          // The width in bits for data and ECC and/or redundancy.
 	p_details->speed = dimm_info.Speed;                                                     // The speed in nanoseconds.
-	memcpy(p_details->device_locator, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
-	memcpy(p_details->bank_label, dimm_info.BankLabel, NVM_BANK_LABEL_LEN);                 // The bank label
+	memcpy_s(p_details->device_locator, NVM_DEVICE_LOCATOR_LEN, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
+	memcpy_s(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, NVM_BANK_LABEL_LEN);                 // The bank label
 	p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
 	p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
         p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
@@ -1157,40 +1157,40 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
   if ((path_len > NVM_PATH_LEN) || (NULL == image_version))
     return NVM_ERR_UNKNOWN;
 
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  ReturnCode = InitializeCommandStatus(&p_command_status);
-  if (EFI_ERROR(ReturnCode))
-    return NVM_ERR_UNKNOWN;
-  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    FreeCommandStatus(&p_command_status);
-    NVDIMM_ERR("Failed to get DIMM ID %d\n", rc);
-    return rc;
-  }
-  p_fw_image_info = AllocateZeroPool(sizeof(*p_fw_image_info));
-  if (p_fw_image_info == NULL) {
-    NVDIMM_ERR("Failed to allocate memory");
-    rc = NVM_ERR_UNKNOWN;
-  } else {
-    ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
-                  NULL, TRUE, FALSE, FALSE, FALSE, p_fw_image_info, p_command_status);
-    if (NVM_SUCCESS != ReturnCode) {
-      NVDIMM_ERR("Failed to update the FW, file %s. Return code %d", path, ReturnCode);
-      rc = NVM_ERR_DUMP_FILE_OPERATION_FAILED;
-    } else {
-      if (image_version_len > NVM_VERSION_LEN) {
-        sprintf(image_version, "%d.%d.%d.%d", p_fw_image_info->ImageVersion.ProductNumber.Version,
-          p_fw_image_info->ImageVersion.RevisionNumber.Version,
-          p_fw_image_info->ImageVersion.SecurityVersionNumber.Version,
-          p_fw_image_info->ImageVersion.BuildNumber.Build);
-      }
-    }
-  }
-  FreeCommandStatus(&p_command_status);
-  FREE_POOL_SAFE(p_fw_image_info);
-  return rc;
+	if (NVM_SUCCESS != (rc = nvm_init())) {
+		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+		return rc;
+	}
+	ReturnCode = InitializeCommandStatus(&p_command_status);
+	if (EFI_ERROR(ReturnCode))
+		return NVM_ERR_UNKNOWN;
+	if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+		FreeCommandStatus(&p_command_status);
+		NVDIMM_ERR("Failed to get DIMM ID %d\n", rc);
+		return rc;
+	}
+	p_fw_image_info = AllocateZeroPool(sizeof(*p_fw_image_info));
+	if (p_fw_image_info == NULL) {
+		NVDIMM_ERR("Failed to allocate memory");
+		rc = NVM_ERR_UNKNOWN;
+	} else {
+		ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
+								  NULL, TRUE, FALSE, FALSE, FALSE, p_fw_image_info, p_command_status);
+		if (NVM_SUCCESS != ReturnCode) {
+			NVDIMM_ERR("Failed to update the FW, file %s. Return code %d", path, ReturnCode);
+			rc = NVM_ERR_DUMP_FILE_OPERATION_FAILED;
+		} else {
+			if (image_version_len > NVM_VERSION_LEN) {
+				sprintf_s(image_version, NVM_VERSION_LEN, "%d.%d.%d.%d", p_fw_image_info->ImageVersion.ProductNumber.Version,
+					p_fw_image_info->ImageVersion.RevisionNumber.Version,
+					p_fw_image_info->ImageVersion.SecurityVersionNumber.Version,
+					p_fw_image_info->ImageVersion.BuildNumber.Build);
+			}
+		}
+	}
+	FreeCommandStatus(&p_command_status);
+	FREE_POOL_SAFE(p_fw_image_info);
+	return rc;
 }
 
 int driver_features_to_nvm_features(
@@ -2075,11 +2075,11 @@ NVM_API int nvm_get_region(const NVM_UID region_uid, struct region *p_region)
   for (Index = 0; Index < region_count; ++Index) {
     UINT32 *p_id = (UINT32 *)p_regions[Index].region_uid;
     if (*p_id == *region_id) {
-      memcpy(p_region, &p_regions[Index], sizeof(struct region));
-      rc = NVM_SUCCESS;
-      break;
-    }
-  }
+      memcpy_s(p_region, sizeof(struct region), &p_regions[Index], sizeof(struct region));
+			rc = NVM_SUCCESS;
+			break;
+		}
+	}
 Finish:
   FreePool(p_regions);
   return rc;
@@ -2482,7 +2482,7 @@ void get_version_numbers(int *major, int *minor, int *hotfix, int *build)
   int third;
   int fourth;
 
-  sscanf(VERSION_STR, "%d.%d.%d.%d", &first, &second, &third, &fourth);
+  sscanf_s(VERSION_STR, "%d.%d.%d.%d", &first, &second, &third, &fourth);
 
   if(major)
     *major = first;
@@ -3270,37 +3270,37 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
 }
 
 int get_fw_err_log_stats(
-  const unsigned int  dimm_id,
-  const unsigned char log_level,
-  const unsigned char log_type,
-  LOG_INFO_DATA_RETURN *  log_info)
+	const unsigned int	dimm_id,
+	const unsigned char	log_level,
+	const unsigned char	log_type,
+	LOG_INFO_DATA_RETURN *	log_info)
 {
-  int rc = NVM_ERR_UNKNOWN;
-  FW_CMD *cmd;
-  PT_INPUT_PAYLOAD_GET_ERROR_LOG get_error_log_input;
+	int rc = NVM_ERR_UNKNOWN;
+	FW_CMD *cmd;
+	PT_INPUT_PAYLOAD_GET_ERROR_LOG get_error_log_input;
 
-  if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
-    NVDIMM_ERR("Failed to allocate memory\n");
-    goto finish;
-  }
-  ZeroMem(cmd, sizeof(FW_CMD));
-  ZeroMem(&get_error_log_input, sizeof(get_error_log_input));
-  get_error_log_input.SequenceNumber = 0;
-  get_error_log_input.LogParameters.Separated.LogInfo = 1;
-  get_error_log_input.LogParameters.Separated.LogLevel = log_level;
-  get_error_log_input.LogParameters.Separated.LogType = log_type;
-  get_error_log_input.LogParameters.Separated.LogEntriesPayloadReturn = 0;
+	if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
+		NVDIMM_ERR("Failed to allocate memory\n");
+		goto finish;
+	}
+	ZeroMem(cmd, sizeof(FW_CMD));
+	ZeroMem(&get_error_log_input, sizeof(get_error_log_input));
+	get_error_log_input.SequenceNumber = 0;
+	get_error_log_input.LogParameters.Separated.LogInfo = 1;
+	get_error_log_input.LogParameters.Separated.LogLevel = log_level;
+	get_error_log_input.LogParameters.Separated.LogType = log_type;
+	get_error_log_input.LogParameters.Separated.LogEntriesPayloadReturn = 0;
 
-  cmd->DimmID = dimm_id;
-  cmd->Opcode = PtGetLog;
-  cmd->SubOpcode = SubopErrorLog;
-  cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_ERROR_LOG);
-  CopyMem(cmd->InputPayload, &get_error_log_input, cmd->InputPayloadSize);
-  cmd->OutputPayloadSize = sizeof(LOG_INFO_DATA_RETURN);
-  if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
-    memcpy(log_info, cmd->OutPayload, cmd->OutputPayloadSize);
-    rc = NVM_SUCCESS;
-  }
+	cmd->DimmID = dimm_id;
+	cmd->Opcode = PtGetLog;
+	cmd->SubOpcode = SubopErrorLog;
+	cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_ERROR_LOG);
+	CopyMem(cmd->InputPayload, &get_error_log_input, cmd->InputPayloadSize);
+	cmd->OutputPayloadSize = sizeof(LOG_INFO_DATA_RETURN);
+	if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
+		memcpy_s(log_info, sizeof(LOG_INFO_DATA_RETURN), cmd->OutPayload, cmd->OutputPayloadSize);
+		rc = NVM_SUCCESS;
+	}
 finish:
   if (cmd)
     FreePool(cmd);

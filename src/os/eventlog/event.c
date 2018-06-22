@@ -117,14 +117,14 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
                 if (NULL != p_env_stop) {
                   // Replace the environment variable with the real value
                   environment_variable[0] = 0; // Initialize the environemt variable string as empty
-                  s_strncat(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start); 
+                  strncat_s(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start);
                   if (NULL != (p_env_variable_path = getenv(environment_variable))) {
                     snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", p_env_variable_path);
                   }
                   p_env_stop++; // stop + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_STOP char
-                  s_strcat(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
+                  strcat_s(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
                   // Store the proper file name
-                  s_strncpy(g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+                  strncpy_s(g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
                 }
             }
             g_log_file_table[file].name_initialized = TRUE;
@@ -177,7 +177,7 @@ static char get_action_req_state_form_file(CHAR8 *device_uid)
     UINTN read_event_type = 0;
 
     // The action required file configured
-    sprintf(ar_file_name, ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
+    snprintf(ar_file_name, sizeof(ar_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
     // Check if file exists
     h_file = fopen(ar_file_name, "r");
     if (NULL != h_file)
@@ -274,9 +274,9 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
             // Coppy strings to the buffer
-            s_strncat(*event_buffer, *p_event_buff_size, event_entry, str_size);
-            s_strcat(*event_buffer, *p_event_buff_size, code_str);
-            s_strcat(*event_buffer, *p_event_buff_size, p_ctl_stop);
+            strncat_s(*event_buffer, *p_event_buff_size, event_entry, str_size);
+            strcat_s(*event_buffer, *p_event_buff_size, code_str);
+            strcat_s(*event_buffer, *p_event_buff_size, p_ctl_stop);
         }
     }
     else
@@ -288,7 +288,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
             // Coppy strings to the buffer
-            s_strcat(*event_buffer, *p_event_buff_size, event_entry);
+            strcat_s(*event_buffer, *p_event_buff_size, event_entry);
         }
     }
 }
@@ -817,12 +817,12 @@ void write_system_event_to_stdout(enum system_event_type type, const char *sourc
     CHAR16 w_event_message[sizeof(ascii_event_message)] = { 0 };
  
     // Prepare string
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), source);
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), " ");
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), entry_type_string_table[type]);
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), " ");
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), message);
-    s_strcat(ascii_event_message, sizeof(ascii_event_message), "\n");
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), source);
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), " ");
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), entry_type_string_table[type]);
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), " ");
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), message);
+    strcat_s(ascii_event_message, sizeof(ascii_event_message), "\n");
     // Convert to the unicode
     AsciiStrToUnicodeStr(ascii_event_message, w_event_message);
 
@@ -839,10 +839,11 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
     FILE     *h_file = NULL;
     NVM_EVENT_MSG event_type_str = { 0 };
     char* new_file_buffer;
+    size_t new_file_buffer_size = 0;
     UINT32 read_event_type = 0;
 
     // The action required file configured
-    sprintf(ar_file_name, ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
+    sprintf_s(ar_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
 
     if (SYSTEM_EVENT_TYPE_AR_EVENT_GET(type))
     {
@@ -861,7 +862,7 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
         h_file = fopen(ar_file_name, "r+");
         if (NULL != h_file)
         {
-            new_file_buffer = allocate_buffer_for_file(h_file, NULL);
+            new_file_buffer = allocate_buffer_for_file(h_file, &new_file_buffer_size);
             if (NULL != new_file_buffer) {
                 // Remove the event type from the action required file
                 while (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
@@ -869,7 +870,7 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
                     read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
                     if (((read_event_type ^ type) & (SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_NUMBER_MASK | SYSTEM_EVENT_TYPE_AR_STATUS_MASK)) != 0)
                     {
-                        strcat(new_file_buffer, event_type_str);
+                        strcat_s(new_file_buffer, new_file_buffer_size, event_type_str);
                     }
                 }
 		            h_file = freopen(ar_file_name, "w", h_file);
@@ -938,8 +939,8 @@ NVM_API int nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event_type, con
         remove_control_characters(event_message);
         if (device_uid != NULL)
         {
-            s_strcat(event_message, sizeof(event_message), EVENT_MESSAGE_UID_PREFIX);
-            s_strcat(event_message, sizeof(event_message), device_uid);
+            strcat_s(event_message, sizeof(event_message), EVENT_MESSAGE_UID_PREFIX);
+            strcat_s(event_message, sizeof(event_message), device_uid);
         }
         if (SYSTEM_EVENT_TYPE_SYSLOG_FILE_GET(event_type))
         {

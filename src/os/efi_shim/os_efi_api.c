@@ -24,6 +24,7 @@
 #include <io.h>
 #include <conio.h>
 #include <time.h>
+#include <wchar.h>
 #else
 #include <unistd.h>
 #include <wchar.h>
@@ -230,7 +231,14 @@ AsciiVSPrint(
     IN  VA_LIST       Marker
 )
 {
-    return vsnprintf(StartOfBuffer, BufferSize, FormatString, Marker);
+   if(0 == BufferSize)
+    return BufferSize;
+
+  return vsnprintf_s(StartOfBuffer, BufferSize
+#ifdef _MSC_VER 
+        ,BufferSize-1 
+#endif
+        , FormatString, Marker);
 }
 
 /**
@@ -369,7 +377,7 @@ CopyMem(
 	IN UINTN       Length
 )
 {
-	memcpy(DestinationBuffer, SourceBuffer, Length);
+	memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
 	return DestinationBuffer;
 }
 
@@ -573,7 +581,7 @@ CatVSPrint(
 	IN  VA_LIST       Marker
 )
 {
-	UINTN   CharactersRequired;
+	INT32   CharactersRequired;
 	UINTN   SizeRequired;
 	CHAR16  *BufferToReturn;
 	VA_LIST ExtraMarker;
@@ -581,7 +589,7 @@ CatVSPrint(
 	VA_COPY(ExtraMarker, Marker);
 	static const int nBuffSize = 8192;
 	static wchar_t evalBuff[8192];
-	CharactersRequired = vswprintf(evalBuff, nBuffSize, FormatString, ExtraMarker);
+	CharactersRequired = vswprintf_s(evalBuff, nBuffSize, FormatString, ExtraMarker);
 	if (CharactersRequired > nBuffSize)
 		return NULL;
 
@@ -601,9 +609,9 @@ CatVSPrint(
 	}
 
 	if (String != NULL) {
-		StrCpy(BufferToReturn, String);
+    wcscpy_s(BufferToReturn, SizeRequired / sizeof(CHAR16), String);
 	}
-	vswprintf(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
+	vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
 
 	ASSERT(StrSize(BufferToReturn) == SizeRequired);
 
@@ -719,7 +727,7 @@ AllocateCopyPool(
 {
     void * ptr = calloc(AllocationSize, 1);
     if (NULL != ptr) {
-        memcpy(ptr, Buffer, AllocationSize);
+        memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
     }
     return ptr;
 }
@@ -1407,7 +1415,7 @@ UnicodeSPrint(
 {
 	VA_LIST Marker;
 	VA_START(Marker, FormatString);
-	return vswprintf(StartOfBuffer, BufferSize, FormatString, Marker);
+	return vswprintf_s(StartOfBuffer, BufferSize, FormatString, Marker);
 }
 
 /*
@@ -1472,7 +1480,7 @@ UnicodeVSPrint(
 	IN  VA_LIST        Marker
 )
 {
-	return vswprintf(StartOfBuffer, BufferSize, FormatString, Marker);
+	return vswprintf_s(StartOfBuffer, BufferSize/sizeof(CHAR16), FormatString, Marker);
 }
 
 /**
@@ -1519,7 +1527,11 @@ AsciiSPrint(
 {
    VA_LIST Marker;
    VA_START(Marker, FormatString);
-   return vsnprintf(StartOfBuffer, BufferSize, FormatString, Marker);
+   return vsnprintf_s(StartOfBuffer, BufferSize
+#ifdef _MSC_VER 
+     , BufferSize - 1
+#endif
+     , FormatString, Marker);
 }
 /**
 Returns the number of characters that would be produced by if the formatted
@@ -1543,7 +1555,7 @@ SPrintLength(
 {
 	static const int nBuffSprintLenSize = 1024;
 	static wchar_t evalSprintBuff[1024];
-	return vswprintf(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
+	return vswprintf_s(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
 }
 
 UINT64

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <Debug.h>
 #include "ini.h"
+#include <s_str.h>
 
 #if defined(__LINUX__)
 #include <safe_str_lib.h>
@@ -188,8 +189,10 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
   char *p_key = NULL;
   char *p_value = NULL;
   char *p_comment = NULL;
+  char *p_tok_context = NULL;
   dictionary *p_current_entry = NULL;
   size_t string_size = 0;
+  size_t ini_entry_sz_chars;
 
   // Check inputs
   if (NULL == p_ini_file_name) {
@@ -247,23 +250,25 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
       p_current_entry = p_current_entry->p_next;
     }
     // Parse the line
-    p_key = strtok(ini_entry_string, NVM_INI_VALUE_TOKEN);
+    ini_entry_sz_chars = strnlen_s(ini_entry_string, NVM_INI_ENTRY_LEN) + 1;
+    p_key = s_strtok(ini_entry_string, &ini_entry_sz_chars, NVM_INI_VALUE_TOKEN, &p_tok_context);
     if (NULL == p_key) {
       p_key = ini_entry_string;
       p_value = ini_entry_string;
     }
     else {
-      p_value = strtok(NULL, NVM_INI_VALUE_TOKEN);
+      p_value = s_strtok(NULL, &ini_entry_sz_chars, NVM_INI_VALUE_TOKEN, &p_tok_context);
       if (NULL == p_value) {
         p_value = ini_entry_string;
       }
     }
-    p_comment = strtok(p_value, NVM_INI_COMMENT_TOKEN);
+    ini_entry_sz_chars = strnlen_s(p_value, NVM_INI_ENTRY_LEN) + 1;
+    p_comment = s_strtok(p_value, &ini_entry_sz_chars, NVM_INI_COMMENT_TOKEN, &p_tok_context);
     if (NULL == p_comment) {
       p_comment = (char *)(p_value + strlen(p_value));
     }
     else if (p_value == p_comment) {
-      p_comment = strtok(NULL, NVM_INI_COMMENT_TOKEN);
+      p_comment = s_strtok(NULL, &ini_entry_sz_chars, NVM_INI_COMMENT_TOKEN, &p_tok_context);
       if (NULL == p_comment) {
         p_comment = (char *)(p_value + strlen(p_value));
       }

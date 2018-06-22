@@ -400,6 +400,7 @@ int process_output(
    int num_dictionaries = 0;
    struct dict *dictionaries = (struct dict*)malloc(sizeof(struct dict) * NUM_DICTIONARIES_MAX);
    struct dict *cur_dict = &dictionaries[0];
+   size_t line_sz_chars = READ_FD_LINE_SZ;
 
    if (NULL == dictionaries || NULL == line)
    {
@@ -434,13 +435,14 @@ int process_output(
       if (fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
       {
 	trimmed_line = trimwhitespace(line);
-	tok = wcstok(trimmed_line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
+         line_sz_chars = wcsnlen_s(trimmed_line, READ_FD_LINE_SZ);
+         tok = s_wcstok(trimmed_line, &line_sz_chars, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
          if (NULL != tok)
          {
             wcsncpy_s(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok, MAX_TABLE_ITEM_LEN);
             ++col;
             show_table.column_cnt = col;
-            while (NULL != (tok = wcstok(NULL, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state)))
+            while (NULL != (tok = s_wcstok(NULL, &line_sz_chars, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state)))
             {
               wcsncpy_s(show_table.columns[col].header_name, COLUMN_HEADER_SZ, tok, MAX_TABLE_ITEM_LEN);
                ++col;
@@ -456,9 +458,10 @@ int process_output(
       while (num_dictionaries < NUM_DICTIONARIES_MAX && NULL != fgetws(line, READ_FD_LINE_SZ, fd))
       {
          trimmed_line = trimwhitespace(line);
+         line_sz_chars = wcsnlen_s(trimmed_line, READ_FD_LINE_SZ);
          //using the coresponding column header saved above as the key
          col = 0;
-         tok = wcstok(trimmed_line, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
+         tok = s_wcstok(trimmed_line, &line_sz_chars, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state);
          if (NULL != tok)
          {
             //get first column row-data
@@ -469,7 +472,7 @@ int process_output(
             col++;
 
             //start iterating through the rest of the columns in our row
-            while (NULL != (tok = wcstok(NULL, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state)))
+            while (NULL != (tok = s_wcstok(NULL, &line_sz_chars, (TableView == type) ? TABLE_TOK_DELIM : TABBED_TABLE_TOK_DELIM, &state)))
             {
                //malformed table (no matching column header)
                if (col > show_table.column_cnt)
@@ -482,7 +485,7 @@ int process_output(
                   wchar_t tmp_val[1024];
                   int cat_tok_size = (int)wcsnlen(cur_dict->items[cur_dict->item_cnt-1].value, READ_FD_LINE_SZ) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for null term
                   cat_tok_size += (int)wcsnlen(tok, READ_FD_LINE_SZ) * sizeof(wchar_t) + sizeof(wchar_t); //+1 for whitespace
-                  swprintf(tmp_val, 1024, L"%ls %ls", cur_dict->items[cur_dict->item_cnt-1].value, tok);
+                  swprintf_s(tmp_val, 1024, L"%ls %ls", cur_dict->items[cur_dict->item_cnt-1].value, tok);
                   wcsncpy_s(cur_dict->items[cur_dict->item_cnt - 1].value, PAIR_VALUE_SZ, tmp_val, MAX_TABLE_ITEM_LEN);
                }
                else
@@ -519,6 +522,8 @@ int process_output(
       while (num_dictionaries < NUM_DICTIONARIES_MAX && fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
       {
          wchar_t * trimmed_line = trimwhitespace(line);
+         line_sz_chars = wcsnlen_s(trimmed_line, READ_FD_LINE_SZ);
+
          if(0 == starts_with(trimmed_line, NEW_BRANCH_IDENTIFIER) && 0 == ends_with(trimmed_line, NEW_BRANCH_IDENTIFIER))
          {
             is_nested_list = 1;
@@ -526,13 +531,13 @@ int process_output(
             ++num_dictionaries;
             trimmed_line = trimchar(trimmed_line, trimmed_line[0]);
          }
-         tok = wcstok(trimmed_line, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(trimmed_line, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
          if (NULL == tok)
          {
             continue;
          }
          wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
-         tok = wcstok(NULL, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(NULL, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
          if (NULL == tok)
          {
            continue;
@@ -643,6 +648,7 @@ int process_output(
       while (num_dictionaries < NUM_DICTIONARIES_MAX && fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
       {
          wchar_t * trimmed_line = trimwhitespace(line);
+         line_sz_chars = wcsnlen_s(trimmed_line, READ_FD_LINE_SZ);
          if (0 == starts_with(trimmed_line, L"Message:"))
          {
             wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, L"Message", MAX_TABLE_ITEM_LEN);
@@ -657,8 +663,9 @@ int process_output(
                else
                {
                   size_t cur_len = wcsnlen(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ) + 1;
-                  wcsncat(
+                  wcsncat_s(
                      cur_dict->items[cur_dict->item_cnt].value,
+                     PAIR_VALUE_SZ,
                      trimmed_line,
                      PAIR_VALUE_SZ - cur_len);
                }
@@ -673,9 +680,9 @@ TestName:
             ++num_dictionaries;
          }
  
-         tok = wcstok(trimmed_line, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(trimmed_line, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
          wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
-         tok = wcstok(NULL, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(NULL, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
          wcsncpy_s(cur_dict->items[cur_dict->item_cnt].value, PAIR_VALUE_SZ, tok, MAX_TABLE_ITEM_LEN);
          cur_dict->item_cnt++;
       }

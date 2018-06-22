@@ -1098,6 +1098,7 @@ GetDimmInfo (
         pDimmInfo->PoisonErrorClearCounter = pPayloadMemInfoPage3->PoisonErrorClearCounter;
         pDimmInfo->MediaTemperatureInjectionsCounter = pPayloadMemInfoPage3->MediaTemperatureInjectionsCounter;
         pDimmInfo->SoftwareTriggersCounter = pPayloadMemInfoPage3->SoftwareTriggersCounter;
+        pDimmInfo->SoftwareTriggersEnabledDetails = pPayloadMemInfoPage3->SoftwareTriggersEnabledDetails;
       }
   }
 
@@ -3637,7 +3638,7 @@ GetDimmsPerformanceData(
             NVDIMM_WARN("Dimm 0x%x is not manageable", pDimm->DeviceHandle.AsUint32);
             continue;
         }
-		(*pDimmsPerformanceData)[Index].DimmId = pDimm->DimmID;
+        (*pDimmsPerformanceData)[Index].DimmId = pDimm->DimmID;
         // Get Dimm Performance data
         ReturnCode = FwCmdGetMemoryInfoPage(pDimm, MEMORY_INFO_PAGE_1, sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1), (VOID **)&pPayloadMemInfoPage1);
         if (EFI_ERROR(ReturnCode)) {

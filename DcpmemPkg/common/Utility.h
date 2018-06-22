@@ -89,6 +89,14 @@ typedef union {
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"
 #define MODES_SUPPORTED_APP_DIRECT_MODE_STR  L"App Direct"
 
+// Software triggers enabled string values
+#define SW_TRIGGERS_ENABLED_NONE_STR L"None"
+#define SW_TRIGGERS_ENABLED_BIT0_STR L"Package Sparing"
+#define SW_TRIGGERS_ENABLED_BIT1_STR L"Reserved"
+#define SW_TRIGGERS_ENABLED_BIT2_STR L"Fatal Error"
+#define SW_TRIGGERS_ENABLED_BIT3_STR L"Percentage Remaining"
+#define SW_TRIGGERS_ENABLED_BIT4_STR L"Dirty Shutdown"
+
 // Security capabilities string values
 #define SECURITY_CAPABILITIES_ENCRYPTION  L"Encryption"
 #define SECURITY_CAPABILITIES_ERASE       L"Erase"
@@ -1100,6 +1108,18 @@ LastShutdownStatusToStr(
 CHAR16*
 ModesSupportedToStr(
   IN     UINT8 ModesSupported
+  );
+
+/**
+  Convert software triggers enabled to string
+
+  @param[in] SoftwareTriggersEnabled, bits define triggers that are enabled
+
+  @retval CLI string representation of enabled triggers
+**/
+CHAR16*
+SoftwareTriggersEnabledToStr(
+  IN     UINT64 SoftwareTriggersEnabled
   );
 
 /**

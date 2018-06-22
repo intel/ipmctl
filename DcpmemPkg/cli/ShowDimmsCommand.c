@@ -111,6 +111,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   ERROR_INJECT_ENABLED_STR,
   MEDIA_TEMP_INJ_ENABLED_STR,
   SW_TRIGGERS_ENABLED_STR,
+  SW_TRIGGER_ENABLED_DETAILS_STR,
   POISON_ERR_INJ_CTR_STR,
   POISON_ERR_CLR_CTR_STR,
   MEDIA_TEMP_INJ_CTR_STR,
@@ -1086,6 +1087,11 @@ ShowDimms(
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGERS_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
+          /** SoftwareTriggersEnabledDetails **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
+            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGER_ENABLED_DETAILS_STR, UNKNOWN_ATTRIB_VAL);
+          }
+
           /** PoisonErrorInjectionsCounter **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POISON_ERR_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
@@ -1120,6 +1126,13 @@ ShowDimms(
           /** SoftwareTriggersEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGERS_ENABLED_STR, pDimms[Index].SoftwareTriggersEnabled);
+          }
+
+          /** SoftwareTriggersEnabledDetails **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
+            pAttributeStr = SoftwareTriggersEnabledToStr(pDimms[Index].SoftwareTriggersEnabledDetails);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_ENABLED_DETAILS_STR, pAttributeStr);
+            FREE_POOL_SAFE(pAttributeStr);
           }
 
           /** PoisonErrorInjectionsCounter **/

@@ -105,6 +105,7 @@ typedef struct {
 #define FW_COMMIT_ID_LEN               40
 #define FW_COMMIT_ID_STR_LEN           41
 #define DATE_STR_LEN                   25
+#define SW_TRIG_ENABLED_DETAILS_LEN   120
 
 /** DIMM UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< DIMM UID hexadecimal-format representation length, including manufacturing fields
@@ -357,6 +358,7 @@ typedef struct _DIMM_INFO {
   UINT32 PoisonErrorClearCounter;           //!< This counter will be incremented each time the clear poison error is successfully executed
   UINT32 MediaTemperatureInjectionsCounter; //!< This counter will be incremented each time the media temperature is injected
   UINT32 SoftwareTriggersCounter;           //!< This counter is incremented each time a software trigger is enabled
+  UINT64 SoftwareTriggersEnabledDetails;    //!< For each bit set, the corresponding trigger is currently enabled.
 
   // From global dimm struct
   UINT8 ManageabilityState;                 //!< if the DIMM is manageable by this SW

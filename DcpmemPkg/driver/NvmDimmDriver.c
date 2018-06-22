@@ -1123,141 +1123,140 @@ Finish:
 EFI_STATUS
 EFIAPI
 NvmDimmDriverDriverBindingStart(
-	IN     EFI_DRIVER_BINDING_PROTOCOL *pThis,
-	IN     EFI_HANDLE ControllerHandle,
-	IN     EFI_DEVICE_PATH_PROTOCOL *pRemainingDevicePath OPTIONAL
+   IN     EFI_DRIVER_BINDING_PROTOCOL *pThis,
+   IN     EFI_HANDLE ControllerHandle,
+   IN     EFI_DEVICE_PATH_PROTOCOL *pRemainingDevicePath OPTIONAL
 )
 {
-	EFI_STATUS ReturnCode = EFI_SUCCESS;
-	UINT32 Index = 0;
-	EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
-	DIMM *pDimm = NULL;
-	DIMM *pDimm2 = NULL;
-	LIST_ENTRY *pDimmNode = NULL;
-	LIST_ENTRY *pDimmNode2 = NULL;
-	VOID *pDummy = 0;
-	BOOLEAN PcdUsage = TRUE;
-	CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
-	CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
+   EFI_STATUS ReturnCode = EFI_SUCCESS;
+   UINT32 Index = 0;
+   EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
+   DIMM *pDimm = NULL;
+   DIMM *pDimm2 = NULL;
+   LIST_ENTRY *pDimmNode = NULL;
+   LIST_ENTRY *pDimmNode2 = NULL;
+   VOID *pDummy = 0;
+   BOOLEAN PcdUsage = TRUE;
+   CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
+   CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
 
-	NVDIMM_ENTRY();
+   NVDIMM_ENTRY();
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-	/**
-	Enable recording AllocatePool and FreePool occurences
-	**/
-	EnableTracing();
+   /**
+   Enable recording AllocatePool and FreePool occurences
+   **/
+   EnableTracing();
 #endif
 
-	/**
-	Init container keeping operation statuses with wanring, error and info level messages.
-	**/
-	InitErrorAndWarningNvmStatusCodes();
+   /**
+   Init container keeping operation statuses with wanring, error and info level messages.
+   **/
+   InitErrorAndWarningNvmStatusCodes();
 
-	/**
-	Remember the Controller handle that we were started with.
-	**/
-	gNvmDimmData->ControllerHandle = ControllerHandle;
-	gNvmDimmData->NvmDimmConfig = gNvmDimmDriverNvmDimmConfig;
+   /**
+   Remember the Controller handle that we were started with.
+   **/
+   gNvmDimmData->ControllerHandle = ControllerHandle;
+   gNvmDimmData->NvmDimmConfig = gNvmDimmDriverNvmDimmConfig;
 
-	/**
-	load the ACPI Tables (NFIT, PCAT, PMTT)
-	**/
-	ReturnCode = initAcpiTables();
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to initialize the ACPI tables, error = %r.", ReturnCode);
-	}
+   /**
+   load the ACPI Tables (NFIT, PCAT, PMTT)
+   **/
+   ReturnCode = initAcpiTables();
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to initialize the ACPI tables, error = %r.", ReturnCode);
+   }
 
-	/**
-	check the NFIT SPA range map against the memory map
-	**/
-	ReturnCode = CheckMemoryMap();
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
-		goto Finish;
-	}
+   /**
+   check the NFIT SPA range map against the memory map
+   **/
+   ReturnCode = CheckMemoryMap();
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
+      goto Finish;
+   }
 
-	/**
-	enumerate DCPMEM modules
-	**/
-	ReturnCode = FillDimmList();
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to initialize Dimms, error = %r.", ReturnCode);
-	}
+   /**
+   enumerate DCPMEM modules
+   **/
+   ReturnCode = FillDimmList();
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to initialize Dimms, error = %r.", ReturnCode);
+   }
 
-	/**
-	Verify that all manageable NVM-DIMMs have unique identifier. Otherwise, print a critical error and
-	break further initialization.
-	**/
-	LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-		pDimm = DIMM_FROM_NODE(pDimmNode);
-		if (!IsDimmManageable(pDimm)) {
-			continue;
-		}
+   /**
+   Verify that all manageable NVM-DIMMs have unique identifier. Otherwise, print a critical error and
+   break further initialization.
+   **/
+   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+      pDimm = DIMM_FROM_NODE(pDimmNode);
+      if (!IsDimmManageable(pDimm)) {
+         continue;
+      }
 
-		LIST_FOR_EACH(pDimmNode2, &gNvmDimmData->PMEMDev.Dimms) {
-			pDimm2 = DIMM_FROM_NODE(pDimmNode2);
-			if (IsDimmManageable(pDimm2)) {
-				ZeroMem(Dimm1Uid, sizeof(Dimm1Uid));
-				ZeroMem(Dimm2Uid, sizeof(Dimm2Uid));
-				GetDimmUid(pDimm, Dimm1Uid, MAX_DIMM_UID_LENGTH);
-				GetDimmUid(pDimm2, Dimm2Uid, MAX_DIMM_UID_LENGTH);
-				if (pDimm != pDimm2 && (StrICmp(Dimm1Uid, Dimm2Uid) == 0)) {
-					NVDIMM_ERR("NVM-DIMMs with the same NVDIMM UID have been detected.");
+      LIST_FOR_EACH(pDimmNode2, &gNvmDimmData->PMEMDev.Dimms) {
+         pDimm2 = DIMM_FROM_NODE(pDimmNode2);
+         if (IsDimmManageable(pDimm2)) {
+            ZeroMem(Dimm1Uid, sizeof(Dimm1Uid));
+            ZeroMem(Dimm2Uid, sizeof(Dimm2Uid));
+            GetDimmUid(pDimm, Dimm1Uid, MAX_DIMM_UID_LENGTH);
+            GetDimmUid(pDimm2, Dimm2Uid, MAX_DIMM_UID_LENGTH);
+            if (pDimm != pDimm2 && (StrICmp(Dimm1Uid, Dimm2Uid) == 0)) {
+               NVDIMM_ERR("NVM-DIMMs with the same NVDIMM UID have been detected.");
 
 #if defined(DYNAMIC_WA_ENABLE)
-					if (gNvmDimmData->IgnoreTheSameUIDNumbers) {
-						NVDIMM_DBG("Ignoring same NVDIMM UIDs among dimms");
-					}
-					else {
+               if (gNvmDimmData->IgnoreTheSameUIDNumbers) {
+                  NVDIMM_DBG("Ignoring same NVDIMM UIDs among dimms");
+               } else {
 #endif
-						NvmDimmDriverDriverBindingStop(pThis, ControllerHandle, 0, NULL);
-						NVDIMM_DBG("Stopping driver");
-						ReturnCode = EFI_DEVICE_ERROR;
-						goto Finish;
+                  NvmDimmDriverDriverBindingStop(pThis, ControllerHandle, 0, NULL);
+                  NVDIMM_DBG("Stopping driver");
+                  ReturnCode = EFI_DEVICE_ERROR;
+                  goto Finish;
 #if defined(DYNAMIC_WA_ENABLE)
-					}
+               }
 #endif
-				}
-			}
-		}
-	}
+            }
+         }
+      }
+   }
 #if defined(DYNAMIC_WA_ENABLE)
-	PcdUsage = !gNvmDimmData->PcdUsageDisabledOnInit;
+   PcdUsage = !gNvmDimmData->PcdUsageDisabledOnInit;
 #endif
 
-	Index = 0;
-	for (pDimmNode = GetFirstNode(&gNvmDimmData->PMEMDev.Dimms);
-		!IsNull(&gNvmDimmData->PMEMDev.Dimms, pDimmNode);
-		pDimmNode = GetNextNode(&gNvmDimmData->PMEMDev.Dimms, pDimmNode)) {
-		pDimm = DIMM_FROM_NODE(pDimmNode);
+   Index = 0;
+   for (pDimmNode = GetFirstNode(&gNvmDimmData->PMEMDev.Dimms);
+      !IsNull(&gNvmDimmData->PMEMDev.Dimms, pDimmNode);
+      pDimmNode = GetNextNode(&gNvmDimmData->PMEMDev.Dimms, pDimmNode)) {
+      pDimm = DIMM_FROM_NODE(pDimmNode);
 
-		/**
-		Technically this should be NULL as it is in a global array,
-		but we NULL it here just to be sure that the handle will be created
-		in the first call to the "InstallMultipleProtocolInterfaces"
-		**/
-		gDimmsUefiData[Index].DeviceHandle = NULL;
-		gDimmsUefiData[Index].pDevicePath = NULL;
-		gDimmsUefiData[Index].pDimm = pDimm;
+      /**
+      Technically this should be NULL as it is in a global array,
+      but we NULL it here just to be sure that the handle will be created
+      in the first call to the "InstallMultipleProtocolInterfaces"
+      **/
+      gDimmsUefiData[Index].DeviceHandle = NULL;
+      gDimmsUefiData[Index].pDevicePath = NULL;
+      gDimmsUefiData[Index].pDimm = pDimm;
 
-		gNvmDimmDevicePathNode.NFITDeviceHandle = pDimm->DeviceHandle.AsUint32;
-		gDimmsUefiData[Index].pDevicePath = AppendDevicePathNode(
-			gNvmDimmData->pControllerDevicePathInstance,
-			(CONST EFI_DEVICE_PATH_PROTOCOL *) &gNvmDimmDevicePathNode);
+      gNvmDimmDevicePathNode.NFITDeviceHandle = pDimm->DeviceHandle.AsUint32;
+      gDimmsUefiData[Index].pDevicePath = AppendDevicePathNode(
+         gNvmDimmData->pControllerDevicePathInstance,
+         (CONST EFI_DEVICE_PATH_PROTOCOL *) &gNvmDimmDevicePathNode);
 
-		if (gDimmsUefiData[Index].pDevicePath == NULL) {
-			NVDIMM_WARN("Failed to create DIMM logic unit device path, not enough resources.");
-			ReturnCode = EFI_OUT_OF_RESOURCES;
-			goto Finish;
-		}
-	}
+      if (gDimmsUefiData[Index].pDevicePath == NULL) {
+         NVDIMM_WARN("Failed to create DIMM logic unit device path, not enough resources.");
+         ReturnCode = EFI_OUT_OF_RESOURCES;
+         goto Finish;
+      }
+   }
 
 Finish:
   //ReturnCode = 0;
-	NVDIMM_DBG("Exiting DriverBindingStart, error = %r.\n", ReturnCode);
-	NVDIMM_EXIT_I64(ReturnCode);
-	return ReturnCode;
+   NVDIMM_DBG("Exiting DriverBindingStart, error = %r.\n", ReturnCode);
+   NVDIMM_EXIT_I64(ReturnCode);
+   return ReturnCode;
 }
 #else
 /**
@@ -1278,121 +1277,118 @@ NvmDimmDriverDriverBindingStart(
   NVDIMM_ENTRY();
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-	/**
-	Enable recording AllocatePool and FreePool occurences
-	**/
-	EnableTracing();
+   /**
+   Enable recording AllocatePool and FreePool occurences
+   **/
+   EnableTracing();
 #endif
 
-	/**
-	Remember the Controller handle that we were started with.
-	**/
-	gNvmDimmData->ControllerHandle = ControllerHandle;
+   /**
+   Remember the Controller handle that we were started with.
+   **/
+   gNvmDimmData->ControllerHandle = ControllerHandle;
 
-	/**
-	Install device path protocol
-	**/
-	ReturnCode = gBS->InstallMultipleProtocolInterfaces(
-		&ControllerHandle,
-		&gEfiDevicePathProtocolGuid,
-		&gNvmDimmDriverDevicePath,
-		NULL);
-	if (EFI_ERROR(ReturnCode)) {
-		/**
-		We might get this error if we already have the device path protocol installed.
-		Lets try to open it.
-		**/
-		if (ReturnCode == EFI_INVALID_PARAMETER) {
-			ReturnCode = gBS->OpenProtocol(
-				ControllerHandle,
-				&gEfiDevicePathProtocolGuid,
-				(VOID **)&gNvmDimmData->pControllerDevicePathInstance,
-				pThis->DriverBindingHandle,
-				NULL,
-				EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
-			);
+   /**
+   Install device path protocol
+   **/
+   ReturnCode = gBS->InstallMultipleProtocolInterfaces(
+      &ControllerHandle,
+      &gEfiDevicePathProtocolGuid,
+      &gNvmDimmDriverDevicePath,
+      NULL);
+   if (EFI_ERROR(ReturnCode)) {
+      /**
+      We might get this error if we already have the device path protocol installed.
+      Lets try to open it.
+      **/
+      if (ReturnCode == EFI_INVALID_PARAMETER) {
+         ReturnCode = gBS->OpenProtocol(
+            ControllerHandle,
+            &gEfiDevicePathProtocolGuid,
+            (VOID **)&gNvmDimmData->pControllerDevicePathInstance,
+            pThis->DriverBindingHandle,
+            NULL,
+            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
+         );
 
-			if (EFI_ERROR(ReturnCode)) {
-				NVDIMM_WARN("Failed to install Device Path protocol, error = %r.", ReturnCode);
-				goto Finish;
-			}
-			else {
-				gNvmDimmData->UninstallDevicePath = FALSE; //!< The device path was already installed - do not uninstall it
-			}
-		}
-		else {
-			NVDIMM_WARN("Failed to install Device Path protocol, error = %r.", ReturnCode);
-		}
-	}
-	else {
-		gNvmDimmData->UninstallDevicePath = TRUE; //!< We installed the device path - need to uninstall it on Stop()
-	}
+         if (EFI_ERROR(ReturnCode)) {
+            NVDIMM_WARN("Failed to install Device Path protocol, error = %r.", ReturnCode);
+            goto Finish;
+         } else {
+            gNvmDimmData->UninstallDevicePath = FALSE; //!< The device path was already installed - do not uninstall it
+         }
+      } else {
+         NVDIMM_WARN("Failed to install Device Path protocol, error = %r.", ReturnCode);
+      }
+   } else {
+      gNvmDimmData->UninstallDevicePath = TRUE; //!< We installed the device path - need to uninstall it on Stop()
+   }
 
-	/**
-	Install EFI_DCPMM_CONFIG_PROTOCOL on the driver handle
-	**/
-	ReturnCode = gBS->InstallMultipleProtocolInterfaces(&gNvmDimmData->DriverHandle,
-		&gNvmDimmConfigProtocolGuid, &gNvmDimmDriverNvmDimmConfig,
-		NULL);
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to install the NvmDimmConfigProtocol, error = %r.", ReturnCode);
-		goto Finish;
-	}
-	gNvmDimmData->NvmDimmConfig = gNvmDimmDriverNvmDimmConfig;
+   /**
+   Install EFI_DCPMM_CONFIG_PROTOCOL on the driver handle
+   **/
+   ReturnCode = gBS->InstallMultipleProtocolInterfaces(&gNvmDimmData->DriverHandle,
+      &gNvmDimmConfigProtocolGuid, &gNvmDimmDriverNvmDimmConfig,
+      NULL);
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to install the NvmDimmConfigProtocol, error = %r.", ReturnCode);
+      goto Finish;
+   }
+   gNvmDimmData->NvmDimmConfig = gNvmDimmDriverNvmDimmConfig;
 
-	/**
-	Open the device path protocol to prepare for appending DIMM nodes.
-	**/
-	ReturnCode = gBS->OpenProtocol(
-		ControllerHandle,
-		&gEfiDevicePathProtocolGuid,
-		(VOID **)&gNvmDimmData->pControllerDevicePathInstance,
-		pThis->DriverBindingHandle,
-		ControllerHandle,
-		EFI_OPEN_PROTOCOL_BY_DRIVER
-	);
+   /**
+   Open the device path protocol to prepare for appending DIMM nodes.
+   **/
+   ReturnCode = gBS->OpenProtocol(
+      ControllerHandle,
+      &gEfiDevicePathProtocolGuid,
+      (VOID **)&gNvmDimmData->pControllerDevicePathInstance,
+      pThis->DriverBindingHandle,
+      ControllerHandle,
+      EFI_OPEN_PROTOCOL_BY_DRIVER
+   );
 
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to open Device Path protocol, error = %r.", ReturnCode);
-		goto FinishSkipClose;
-	}
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to open Device Path protocol, error = %r.", ReturnCode);
+      goto FinishSkipClose;
+   }
 
-	ReturnCode = gBS->OpenProtocol(
-		ControllerHandle,
-		&gNfitBindingProtocolGuid,
-		&pDummy,
-		pThis->DriverBindingHandle,
-		ControllerHandle,
-		EFI_OPEN_PROTOCOL_BY_DRIVER
-	);
+   ReturnCode = gBS->OpenProtocol(
+      ControllerHandle,
+      &gNfitBindingProtocolGuid,
+      &pDummy,
+      pThis->DriverBindingHandle,
+      ControllerHandle,
+      EFI_OPEN_PROTOCOL_BY_DRIVER
+   );
 
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to open NFIT Binding protocol, error = %r.", ReturnCode);
-		goto FinishSkipClose;
-	}
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to open NFIT Binding protocol, error = %r.", ReturnCode);
+      goto FinishSkipClose;
+   }
 
-	gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelDCPersistentMemoryDriverStrings, NULL);
-	if (gNvmDimmData->HiiHandle == NULL) {
-		NVDIMM_WARN("Unable to add string package to Hii");
-		goto Finish;
-	}
+   gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelDCPersistentMemoryDriverStrings, NULL);
+   if (gNvmDimmData->HiiHandle == NULL) {
+      NVDIMM_WARN("Unable to add string package to Hii");
+      goto Finish;
+   }
 
-	/**
-	load the ACPI Tables (NFIT and PCAT)
-	**/
-	ReturnCode = initAcpiTables();
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_WARN("Failed to initialize the ACPI tables, error = %r.", ReturnCode);
-	}
+   /**
+   load the ACPI Tables (NFIT and PCAT)
+   **/
+   ReturnCode = initAcpiTables();
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to initialize the ACPI tables, error = %r.", ReturnCode);
+   }
 
-	/**
-	check the NFIT SPA range map against the memory map
-	**/
-	ReturnCode = CheckMemoryMap();
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
-		goto Finish;
-	}
+   /**
+   check the NFIT SPA range map against the memory map
+   **/
+   ReturnCode = CheckMemoryMap();
+   if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
+      goto Finish;
+   }
   /**
     Initialize DIMMs, ISets and namespaces
   **/

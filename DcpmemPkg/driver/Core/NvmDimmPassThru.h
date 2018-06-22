@@ -900,7 +900,8 @@ typedef struct {
   UINT32 PoisonErrorClearCounter;           //!< This counter will be incremented each time the clear poison error is successfully executed
   UINT32 MediaTemperatureInjectionsCounter; //!< This counter will be incremented each time the media temperature is injected
   UINT32 SoftwareTriggersCounter;           //!< This counter is incremented each time a software trigger is enabled
-  UINT8 Reserved[108];                      //!< Reserved
+  UINT64 SoftwareTriggersEnabledDetails;    //!< For each bit set, the corresponding trigger is currently enabled.
+  UINT8 Reserved[100];                      //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3;
 
 /**

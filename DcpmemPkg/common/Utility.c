@@ -2362,11 +2362,46 @@ ModesSupportedToStr(
   if (ModesSupported & BIT0) {
     pModesStr = CatSPrintClean(pModesStr, FORMAT_STR, MODES_SUPPORTED_MEMORY_MODE_STR);
   }
-  if
-    (ModesSupported & BIT2) {
+  if (ModesSupported & BIT2) {
     pModesStr = CatSPrintClean(pModesStr, FORMAT_STR FORMAT_STR, pModesStr == NULL ? L"" : L", ", MODES_SUPPORTED_APP_DIRECT_MODE_STR);
   }
   NVDIMM_EXIT();
+  return pModesStr;
+}
+
+/**
+  Convert software triggers enabled to string
+
+  @param[in] SoftwareTriggersEnabled, bits define triggers that are enabled
+
+  @retval CLI string representation of enabled triggers
+**/
+CHAR16*
+SoftwareTriggersEnabledToStr(
+  IN     UINT64 SoftwareTriggersEnabled
+  )
+{
+  CHAR16 *pModesStr = NULL;
+
+  if (!SoftwareTriggersEnabled) {
+     pModesStr = CatSPrintClean(pModesStr, FORMAT_STR, SW_TRIGGERS_ENABLED_NONE_STR);
+  } else {
+     if (SoftwareTriggersEnabled & BIT0) {
+       pModesStr = CatSPrintClean(pModesStr, FORMAT_STR, SW_TRIGGERS_ENABLED_BIT0_STR);
+     }
+     if (SoftwareTriggersEnabled & BIT1) {
+       pModesStr = CatSPrintClean(pModesStr, FORMAT_STR FORMAT_STR, pModesStr == NULL ? L"" : L", ", SW_TRIGGERS_ENABLED_BIT1_STR);
+     }
+     if (SoftwareTriggersEnabled & BIT2) {
+       pModesStr = CatSPrintClean(pModesStr, FORMAT_STR FORMAT_STR, pModesStr == NULL ? L"" : L", ", SW_TRIGGERS_ENABLED_BIT2_STR);
+     }
+     if (SoftwareTriggersEnabled & BIT3) {
+       pModesStr = CatSPrintClean(pModesStr, FORMAT_STR FORMAT_STR, pModesStr == NULL ? L"" : L", ", SW_TRIGGERS_ENABLED_BIT3_STR);
+     }
+     if (SoftwareTriggersEnabled & BIT4) {
+       pModesStr = CatSPrintClean(pModesStr, FORMAT_STR FORMAT_STR, pModesStr == NULL ? L"" : L", ", SW_TRIGGERS_ENABLED_BIT4_STR);
+     }
+  }
   return pModesStr;
 }
 

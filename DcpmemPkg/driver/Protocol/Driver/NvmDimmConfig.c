@@ -3596,6 +3596,7 @@ GetDimmsPerformanceData(
     DIMM *pDimm = NULL;
     LIST_ENTRY *pDimmNode = NULL;
     UINT32 Index = 0;
+    PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE0 *pPayloadMemInfoPage0 = NULL;
     PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1 *pPayloadMemInfoPage1 = NULL;
 
     NVDIMM_ENTRY();
@@ -3621,25 +3622,42 @@ GetDimmsPerformanceData(
             continue;
         }
         (*pDimmsPerformanceData)[Index].DimmId = pDimm->DimmID;
+
         // Get Dimm Performance data
-        ReturnCode = FwCmdGetMemoryInfoPage(pDimm, MEMORY_INFO_PAGE_1, sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1), (VOID **)&pPayloadMemInfoPage1);
+        ReturnCode = FwCmdGetMemoryInfoPage(pDimm, MEMORY_INFO_PAGE_0,
+            sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE0), (VOID **)&pPayloadMemInfoPage0);
+        if (EFI_ERROR(ReturnCode)) {
+            NVDIMM_ERR("Could not read the memory info page 0; Return code 0x%08x", ReturnCode);
+            ReturnCode = EFI_DEVICE_ERROR;
+            FREE_POOL_SAFE(*pDimmsPerformanceData);
+            goto Finish;
+        }
+        ReturnCode = FwCmdGetMemoryInfoPage(pDimm, MEMORY_INFO_PAGE_1,
+            sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1), (VOID **)&pPayloadMemInfoPage1);
         if (EFI_ERROR(ReturnCode)) {
             NVDIMM_ERR("Could not read the memory info page 1; Return code 0x%08x", ReturnCode);
             ReturnCode = EFI_DEVICE_ERROR;
             FREE_POOL_SAFE(*pDimmsPerformanceData);
             goto Finish;
         }
+
         // Copy the data
-        (*pDimmsPerformanceData)[Index].TotalBlockReadRequests = pPayloadMemInfoPage1->TotalBlockReadRequests;
-        (*pDimmsPerformanceData)[Index].TotalBlockWriteRequests = pPayloadMemInfoPage1->TotalBlockWriteRequests;
-        (*pDimmsPerformanceData)[Index].TotalBytesRead = pPayloadMemInfoPage1->TotalBytesRead;
-        (*pDimmsPerformanceData)[Index].TotalBytesWritten = pPayloadMemInfoPage1->TotalBytesWritten;
+        (*pDimmsPerformanceData)[Index].MediaReads = pPayloadMemInfoPage0->MediaReads;
+        (*pDimmsPerformanceData)[Index].MediaWrites = pPayloadMemInfoPage0->MediaWrites;
+        (*pDimmsPerformanceData)[Index].ReadRequests = pPayloadMemInfoPage0->ReadRequests;
+        (*pDimmsPerformanceData)[Index].WriteRequests = pPayloadMemInfoPage0->WriteRequests;
+        (*pDimmsPerformanceData)[Index].TotalMediaReads = pPayloadMemInfoPage1->TotalMediaReads;
+        (*pDimmsPerformanceData)[Index].TotalMediaWrites = pPayloadMemInfoPage1->TotalMediaWrites;
         (*pDimmsPerformanceData)[Index].TotalReadRequests = pPayloadMemInfoPage1->TotalReadRequests;
         (*pDimmsPerformanceData)[Index].TotalWriteRequests = pPayloadMemInfoPage1->TotalWriteRequests;
+
+        FREE_POOL_SAFE(pPayloadMemInfoPage0);
         FREE_POOL_SAFE(pPayloadMemInfoPage1);
     }
 
 Finish:
+    FREE_POOL_SAFE(pPayloadMemInfoPage0);
+    FREE_POOL_SAFE(pPayloadMemInfoPage1);
     NVDIMM_EXIT_I64(ReturnCode);
     return ReturnCode;
 }

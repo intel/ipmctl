@@ -732,12 +732,12 @@ struct device_performance {
 	// These next fields are 16 bytes in the fw spec, but it would take 100 years
 	// of over 31 million reads/writes per second to reach the limit, so we
 	// are just using 8 bytes here.
-	NVM_UINT64	bytes_read;     ///< Total bytes of data read from the DIMM.
-	NVM_UINT64	host_reads;     ///< Lifetime number of read requests the DIMM serviced.
-	NVM_UINT64	bytes_written;  ///< Total bytes of data written to the DIMM.
-	NVM_UINT64	host_writes;    ///< Lifetime number of write requests the DIMM serviced.
-	NVM_UINT64	block_reads;    ///< Lifetime number of BW read requests the DIMM has services.
-	NVM_UINT64	block_writes;   ///< Lifetime number of BW write requests the DIMM has services.
+	NVM_UINT64	bytes_read;     ///< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
+	NVM_UINT64	host_reads;     ///< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
+	NVM_UINT64	bytes_written;  ///< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
+	NVM_UINT64	host_writes;    ///< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+	NVM_UINT64	block_reads;    ///< Invalid field. "Lifetime number of BW read requests the DIMM has serviced"
+	NVM_UINT64	block_writes;   ///< Invalid field. "Lifetime number of BW write requests the DIMM has serviced"
 };
 
 /**
@@ -809,10 +809,10 @@ struct device_fw_info {
 	 * hh = 2-digit hot fix version
 	 * bbbb = 4-digit build version
 	 */
-	NVM_VERSION		active_fw_revision;
-	NVM_VERSION		staged_fw_revision;     ///<  BCD formatted revision of the staged FW.
+	NVM_VERSION active_fw_revision;
+	NVM_VERSION staged_fw_revision;               ///<  BCD formatted revision of the staged FW.
 	NVM_UINT32    FWImageMaxSize;     ///<  The size of FW Image in bytes.
-	enum fw_update_status	fw_update_status;       ///< status of last FW update operation.
+	enum fw_update_status fw_update_status;       ///< status of last FW update operation.
 };
 
 /**

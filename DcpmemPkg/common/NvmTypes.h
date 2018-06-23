@@ -438,13 +438,20 @@ typedef struct _MEMORY_RESOURCES_INFO {
 } MEMORY_RESOURCES_INFO;
 
 typedef struct _DIMM_PERFORMANCE_DATA {
-  UINT16  DimmId;                   //!< SMBIOS Type 17 handle corresponding to this memory device
-  UINT128 TotalBytesRead;           //!< Lifetime number of 64 byte reads from the DIMM
-  UINT128 TotalBytesWritten;        //!< Lifetime number of 64 byte writes to the DIMM
-  UINT128 TotalReadRequests;        //!< Lifetime number of DDRT read transactions the DIMM has serviced
-  UINT128 TotalWriteRequests;       //!< Lifetime number of DDRT write transactions the DIMM has serviced
-  UINT128 TotalBlockReadRequests;   //!< Lifetime number of BW read requests the DIMM has serviced
-  UINT128 TotalBlockWriteRequests;  //!< Lifetime number of BW write requests the DIMM has serviced
+  UINT16  DimmId;             //!< SMBIOS Type 17 handle corresponding to this memory device
+  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMEM DIMM since last AC cycle
+  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMEM DIMM since last AC cycle
+  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMEM DIMM has serviced since last AC cycle
+  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMEM DIMM has serviced since last AC cycle
+  UINT128 TotalMediaReads;    //!< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
+  UINT128 TotalMediaWrites;   //!< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
+  UINT128 TotalReadRequests;  //!< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
+  UINT128 TotalWriteRequests; //!< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+  // These are deprecated in the FIS, but leaving these in to preserve functionality
+  // of manufacturing command (MfgShowPerformanceCommand.c). They are set to 0s
+  // in GetDimmsPerformanceData
+  UINT128 TotalBlockReadRequests;   //!< Lifetime number of BW read requests the DCPMEM DIMM has serviced
+  UINT128 TotalBlockWriteRequests;  //!< Lifetime number of BW write requests the DCPMEM DIMM has serviced
 } DIMM_PERFORMANCE_DATA;
 
 typedef struct _NAMESPACE_INFO {

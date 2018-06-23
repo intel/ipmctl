@@ -215,21 +215,21 @@ Load (
     ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pRelativeFileName,
         (CHAR16 *) pWorkingDirectory, Examine, FALSE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
 
-   if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
+  if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
 
-     Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
-       pFileName,
-       pFwImageInfo->ImageVersion.ProductNumber.Version,
-       pFwImageInfo->ImageVersion.RevisionNumber.Version,
-       pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
-       pFwImageInfo->ImageVersion.BuildNumber.Build);
-   } else {
-     Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
-     goto FinishWithError;
-   }
-   DisplayCommandStatus(L"",L"", pCommandStatus);
-   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-   goto Finish;
+    Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
+    pFileName,
+    pFwImageInfo->ImageVersion.ProductNumber.Version,
+    pFwImageInfo->ImageVersion.RevisionNumber.Version,
+    pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
+     pFwImageInfo->ImageVersion.BuildNumber.Build);
+  } else {
+    Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+    goto FinishWithError;
+  }
+  DisplayCommandStatus(L"", L"", pCommandStatus);
+  ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+  goto Finish;
 
   } else {
     for (Index = 0; Index < DimmIdsCount; Index++) {

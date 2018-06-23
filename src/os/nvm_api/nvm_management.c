@@ -921,12 +921,12 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   cmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1);
   if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
     pmem_info_output = (PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1 *)cmd->OutPayload;
-    p_performance->block_reads = pmem_info_output->TotalBlockReadRequests.Uint64;
-    p_performance->block_writes = pmem_info_output->TotalBlockWriteRequests.Uint64;
-    p_performance->bytes_read = pmem_info_output->TotalBytesRead.Uint64;
-    p_performance->bytes_written = pmem_info_output->TotalBytesWritten.Uint64;
+    p_performance->bytes_read = pmem_info_output->TotalMediaReads.Uint64;
+    p_performance->bytes_written = pmem_info_output->TotalMediaWrites.Uint64;
     p_performance->host_reads = pmem_info_output->TotalReadRequests.Uint64;
     p_performance->host_writes = pmem_info_output->TotalWriteRequests.Uint64;
+    p_performance->block_reads = 0;
+    p_performance->block_writes = 0;
     rc = NVM_SUCCESS;
     goto finish;
   }

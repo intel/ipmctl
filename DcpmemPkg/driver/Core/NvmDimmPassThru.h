@@ -851,13 +851,11 @@ typedef struct {
     Page: 0 (Current Boot Info)
 **/
 typedef struct {
-  UINT128 BytesRead;          //!< Number of 64 byte reads from the DIMM
-  UINT128 BytesWritten;       //!< Number of 64 byte writes to the DIMM
-  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DIMM has serviced
-  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DIMM has serviced
-  UINT128 BlockReadRequests;  //!< Number of BW read requests the DIMM has serviced
-  UINT128 BlockWriteRequests; //!< Number of BW write requests the DIMM has serviced
-  UINT8 Reserved[32];   //!< Reserved
+  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMEM DIMM since last AC cycle
+  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMEM DIMM since last AC cycle
+  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMEM DIMM has serviced since last AC cycle
+  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMEM DIMM has serviced since last AC cycle
+  UINT8 Reserved[64];   //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE0;
 
 /**
@@ -867,13 +865,11 @@ typedef struct {
     Page: 1 (Lifetime Info)
  **/
 typedef struct {
-  UINT128 TotalBytesRead;           //!< Lifetime number of 64 byte reads from the DIMM
-  UINT128 TotalBytesWritten;        //!< Lifetime number of 64 byte writes to the DIMM
-  UINT128 TotalReadRequests;        //!< Lifetime number of DDRT read transactions the DIMM has serviced
-  UINT128 TotalWriteRequests;       //!< Lifetime number of DDRT write transactions the DIMM has serviced
-  UINT128 TotalBlockReadRequests;   //!< Lifetime number of BW read requests the DIMM has serviced
-  UINT128 TotalBlockWriteRequests;  //!< Lifetime number of BW write requests the DIMM has serviced
-  UINT8 Reserved[32];   //!< Reserved
+  UINT128 TotalMediaReads;          //!< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
+  UINT128 TotalMediaWrites;         //!< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
+  UINT128 TotalReadRequests;        //!< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
+  UINT128 TotalWriteRequests;       //!< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+  UINT8 Reserved[64];   //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1;
 
 /**

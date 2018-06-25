@@ -228,7 +228,7 @@ int output_to_nvm_xml_key_val_pairs(
 int output_to_nvm_xml_results(
    FILE *fd)
 {
-   int c;
+   wint_t c;
    wprintf(XML_RESULT_BEGIN);
    while ((c = getwc(fd)) != WEOF)
       putwchar(c);
@@ -244,7 +244,7 @@ int output_to_nvm_xml_error(
    FILE *fd,
    int rc)
 {
-   int c;
+   wint_t c;
    wprintf(XML_ERROR_BEGIN, rc);
    while ((c = getwc(fd)) != WEOF)
       putwchar(c);
@@ -326,7 +326,7 @@ int output_to_esx_xml_list(
 int output_to_esx_xml_results(
    FILE *fd)
 {
-   int c;
+   wint_t c;
    wprintf(ESX_XML_FILE_BEGIN);
    wprintf(ESX_XML_LIST_STRING_BEGIN);
    while ((c = getwc(fd)) != WEOF)
@@ -344,8 +344,8 @@ int output_to_esx_xml_error(
    FILE *fd,
    int rc)
 {
+   wint_t c;
    wprintf(L"ERROR: ");
-   int c;
    while ((c = getwc(fd)) != WEOF)
    {
       if(c != '\n')

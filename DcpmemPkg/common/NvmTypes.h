@@ -256,11 +256,10 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_POWER_MGMT                      (1 << 5)
 #define DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA            (1 << 6)
 #define DIMM_INFO_ERROR_OVERWRITE_STATUS                (1 << 7)
-#define DIMM_INFO_ERROR_BSR                             (1 << 8)
-#define DIMM_INFO_ERROR_CAPACITY                        (1 << 9)
-#define DIMM_INFO_ERROR_FW_IMAGE_INFO                   (1 << 0xA)
-#define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 0xB)
-#define DIMM_INFO_ERROR_MAX                             (1 << 0xC)
+#define DIMM_INFO_ERROR_CAPACITY                        (1 << 8)
+#define DIMM_INFO_ERROR_FW_IMAGE_INFO                   (1 << 9)
+#define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 0xA)
+#define DIMM_INFO_ERROR_MAX                             (1 << 0xB)
 
 // The "global dimm struct" is at &gNvmDimmData->PMEMDev.Dimms and is populated
 // at HII driver loading, so they are included by default on any call to GetDimmInfo()
@@ -320,7 +319,6 @@ typedef struct _DIMM_INFO {
   BOOLEAN ViralStatus;                      //!< true if the status is viral
 
   // From global dimm struct
-  UINT16 BootStatusBitmask;                 //!< The dimm boot status bitmask
   UINT64 AppDirectCapacity;                 //!< Capacity in bytes mapped as persistent memory
   UINT64 UnconfiguredCapacity;              //!< Total DIMM capacity in bytes that needs further configuration.
   UINT64 ReservedCapacity;                  //!< Total DIMM capacity in bytes that is reserved for metadata.
@@ -366,7 +364,6 @@ typedef struct _DIMM_INFO {
   CHAR16 ManufacturerStr[MANUFACTURER_LEN]; //!< Manufacturer string matched from manufacturer string number.
 
   UINT32 DimmHandle;                        //!< The DIMM handle
-  BOOLEAN Initialized;                      //!< True if Dimm is in NFIT
   SMBUS_DIMM_ADDR SmbusAddress;             //!< SMBUS address
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM id (in hexadecimal format representation)
   UINT16 ErrorMask;                         //!< Bit mask representing which FW functions failed

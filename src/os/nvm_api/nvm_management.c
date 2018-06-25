@@ -630,7 +630,6 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
    p_status->viral_state = p_dimm->ViralStatus; // Current viral status of DIMM.
 
    // From global dimm struct
-   p_status->boot_status = p_dimm->BootStatusBitmask;      // The status of the DIMM as reported by the firmware in the BSR
    p_status->is_new = p_dimm->IsNew;                       // Unincorporated with the rest of the devices.
    p_status->is_configured = p_dimm->Configured;           // only the values 1(Success) and 6 (old config used) from CCUR are considered configured
    p_status->overwritedimm_status = p_dimm->OverwriteDimmStatus;     // OverwriteDimm operation status for the DIMM
@@ -655,8 +654,7 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
   DIMM_INFO dimm_info = { 0 };
   unsigned int dimm_id;
   int nvm_status;
-  int rc;
-
+  UINT16 BootstatusBitmask;
   if (NULL == p_status) {
     NVDIMM_ERR("NULL input parameter\n");
     return NVM_ERR_INVALID_PARAMETER;
@@ -665,8 +663,8 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
-  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+  if (NVM_SUCCESS != (nvm_status = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimmm ID %d\n", nvm_status);
     p_status->is_missing = TRUE;
     return NVM_ERR_DIMM_NOT_FOUND;
   }
@@ -676,6 +674,14 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     p_status->is_missing = TRUE;
     return NVM_ERR_DIMM_NOT_FOUND;
   }
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetBSRAndBootStatusBitMask(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, NULL, &BootstatusBitmask);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to get boot status %d\n", ReturnCode);
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    p_status->is_missing = TRUE;
+    return NVM_ERR_DIMM_NOT_FOUND;
+  }
+  p_status->boot_status = BootstatusBitmask;
   dimm_info_to_device_status(&dimm_info, p_status);
   return NVM_SUCCESS;
 }

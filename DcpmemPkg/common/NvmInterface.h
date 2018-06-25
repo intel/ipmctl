@@ -1329,6 +1329,28 @@ EFI_STATUS
 	IN     UINT8  *pPercentageremaining,
 	OUT COMMAND_STATUS *pCommandStatus
 	);
+
+/**
+  GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+  UEFI - Read directly from BSR register
+  OS - Get BSR value from BIOS emulated command
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID -  dimm handle of the DIMM
+  @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
+  @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_SUCCESS Success
+  @retval Other errors failure of FW commands
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_GET_BSR_AND_BITMASK) (
+  IN      EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN      UINT16 DimmID,
+  OUT     UINT64 *pBsrValue OPTIONAL,
+  OUT     UINT16 *pBootStatusBitmask OPTIONAL
+ );
 /**
   Pass Thru command to FW
   Sends a command to FW and waits for response from firmware
@@ -1467,6 +1489,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_DDRT_IO_INIT_INFO GetDdrtIoInitInfo;
   EFI_DCPMM_CONFIG_GET_LONG_OP_STATUS GetLongOpStatus;
   EFI_DCPMM_CONFIG_INJECT_ERROR InjectError;
+  EFI_DCPMM_CONFIG_GET_BSR_AND_BITMASK GetBSRAndBootStatusBitMask;
 #ifdef __MFG__
   EFI_DCPMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW InjectAndUpdateMfgToProdfw;
   EFI_DCPMM_CONFIG_MFG_MEM_INFO_PAGE MfgDumpMemInfoPage;

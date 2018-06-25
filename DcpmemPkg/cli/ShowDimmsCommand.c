@@ -196,6 +196,7 @@ ShowDimms(
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   BOOLEAN ByteAddressable = FALSE;
   BOOLEAN BlockAddressable = FALSE;
+  UINT16  BootStatusBitMask = 0;
 #ifdef OS_BUILD
   CHAR16 *pActionReqStr = NULL;
 #endif // OS_BUILD
@@ -1031,10 +1032,12 @@ ShowDimms(
 
         /** Boot Status **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_BSR) {
+
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[Index].DimmID, NULL, &BootStatusBitMask);
+          if (EFI_ERROR(ReturnCode)) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, pDimms[Index].BootStatusBitmask);
+            pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
           }
           Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
@@ -1210,10 +1213,12 @@ ShowDimms(
 
       /** Boot Status **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
-        if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_BSR) {
+
+        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pUninitializedDimms[Index].DimmID, NULL, &BootStatusBitMask);
+        if (EFI_ERROR(ReturnCode)) {
           pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         } else {
-          pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, pUninitializedDimms[Index].BootStatusBitmask);
+          pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
         }
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
         FREE_POOL_SAFE(pAttributeStr);

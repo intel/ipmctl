@@ -116,6 +116,7 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetDdrtIoInitInfo,
   GetLongOpStatus,
   InjectError,
+  GetBSRAndBootStatusBitMask,
 #ifdef __MFG__
   InjectAndUpdateMfgToProdfw,
 #endif
@@ -489,7 +490,7 @@ PopulateDimmBootStatusBitmask(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef OS_BUILD
+
   UINT16 BootStatusBitmask = 0;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
 
@@ -531,7 +532,7 @@ PopulateDimmBootStatusBitmask(
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
-#endif
+
   return ReturnCode;
 }
 
@@ -613,8 +614,8 @@ GetDimmMappedMemSize(
   FreePool(pPcdConfHeader);
   return EFI_SUCCESS;
 }
-#endif // OS_BUILD
 
+#endif // OS_BUILD
 
 /*
  * Helper function for initializing information from the NFIT for non-functional
@@ -672,7 +673,7 @@ InitializeNfitDimmInfoFieldsFromDimm(
 }
 
 /**
-  Init DIMM_INFO structure for given DIMM
+  Init DIMM_INFO structure for given Initialized DIMM
 
   @param[in] pDimm DIMM that will be used to create DIMM_INFO
   @param[in] dimmInfoCategories DIMM_INFO_CATEGORIES specifies which (if any)
@@ -708,7 +709,6 @@ GetDimmInfo (
   UINT64 LastShutdownTime = 0;
   UINT8 AitDramEnabled = 0;
   UINT32 Index = 0;
-  DIMM_BSR Bsr;
   UINT64 CapacityFromSmbios = 0;
 
   NVDIMM_ENTRY();
@@ -718,7 +718,6 @@ GetDimmInfo (
   ZeroMem(&PowerManagementPolicyPayload, sizeof(PowerManagementPolicyPayload));
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
   ZeroMem(&DmiDeviceMappedAddr, sizeof(DmiDeviceMappedAddr));
-  ZeroMem(&Bsr, sizeof(Bsr));
   ZeroMem(&SmbiosVersion, sizeof(SmbiosVersion));
 
   if (pDimm == NULL || pDimmInfo == NULL) {
@@ -731,7 +730,6 @@ GetDimmInfo (
   pDimmInfo->SocketId = pDimm->SocketId;
   pDimmInfo->ChannelId = pDimm->ChannelId;
   pDimmInfo->ChannelPos = pDimm->ChannelPos;
-
   for (Index = 0; Index < pDimm->FmtInterfaceCodeNum; Index++) {
     pDimmInfo->InterfaceFormatCode[Index] = pDimm->FmtInterfaceCode[Index];
   }
@@ -1027,22 +1025,8 @@ GetDimmInfo (
     }
   }
 
-#ifndef OS_BUILD
-  // Data already in pDimm
-  if (pDimm->pHostMailbox == NULL || pDimm->pHostMailbox->pBsr == NULL) {
-    NVDIMM_WARN("Unable to get the DIMMs BSR.");
-  } else {
-    CopyMem(&Bsr.AsUint64, (VOID *) pDimm->pHostMailbox->pBsr, sizeof(Bsr));
-    ReturnCode = PopulateDimmBootStatusBitmask(&Bsr, pDimm, &pDimmInfo->BootStatusBitmask);
-
-    if (EFI_ERROR(ReturnCode)) {
-      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_BSR;
-    }
-  }
-#endif
-
 #ifdef OS_BUILD
-  GetDimmMappedMemSize(pDimm);
+   GetDimmMappedMemSize(pDimm);
 #endif // OS_BUILD
 
   // Data already in pDimm
@@ -1508,11 +1492,8 @@ GetUninitializedDimms(
   UINT32 Index = 0;
   LIST_ENTRY *pNode = NULL;
   DIMM *pCurDimm = NULL;
-  DIMM_BSR Bsr;
 
   NVDIMM_ENTRY();
-
-  ZeroMem(&Bsr, sizeof(Bsr));
 
   if (pThis == NULL || pDimms == NULL) {
     NVDIMM_DBG("Parameter is NULL");
@@ -1536,11 +1517,6 @@ GetUninitializedDimms(
     AsciiStrToUnicodeStrS(pCurDimm->PartNumber, pDimms[Index].PartNumber, PART_NUMBER_STR_LEN);
 
     pDimms[Index].FwVer = pCurDimm->FwVer;
-#ifndef OS_BUILD
-    SmbusGetBSR(pCurDimm->SmbusAddress, &Bsr);
-
-    PopulateDimmBootStatusBitmask(&Bsr, pCurDimm, &pDimms[Index].BootStatusBitmask);
-#endif
     pDimms[Index].HealthState = HEALTH_NON_FUNCTIONAL;
 
     Index++;
@@ -4273,12 +4249,18 @@ ValidateImageVersion(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM_BSR Bsr;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
 
   ZeroMem(&Bsr, sizeof(Bsr));
 
   if (pImage == NULL || pDimm == NULL || pNvmStatus == NULL) {
+    goto Finish;
+  }
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -4299,15 +4281,13 @@ ValidateImageVersion(
   }
 
   if (pDimm->FwVer.FwSecurityVersion > pImage->ImageVersion.SecurityVersionNumber.Version) {
-#ifndef OS_BUILD
-    if (pDimm->pHostMailbox->pBsr == NULL) {
+
+    ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Could not get the DIMM BSR register, can't check if it is safe to send the command.");
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
-
-    CopyMem(&Bsr.AsUint64, (VOID *)pDimm->pHostMailbox->pBsr, sizeof(Bsr));
-
     if (Bsr.Separated_Current_FIS.OIE != DIMM_BSR_OIE_ENABLED) {
       if (pNvmStatus != NULL) {
         *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
@@ -4315,7 +4295,7 @@ ValidateImageVersion(
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
-#endif
+
     if (!Force) {
       if (pNvmStatus != NULL) {
         *pNvmStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
@@ -9243,6 +9223,90 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+/**
+GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+UEFI - Read directly from BSR register
+OS - Get BSR value from BIOS emulated command
+@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+@param[in] DimmID -  dimm handle of the DIMM
+@param[out] pBsrValue - pointer to  BSR register value OPTIONAL
+@param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
+
+@retval EFI_INVALID_PARAMETER passed NULL argument
+@retval EFI_SUCCESS Success
+@retval Other errors failure of FW commands
+**/
+EFI_STATUS
+EFIAPI
+GetBSRAndBootStatusBitMask(
+  IN      EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN      UINT16 DimmID,
+  OUT     UINT64 *pBsrValue OPTIONAL,
+  OUT     UINT16 *pBootStatusBitmask OPTIONAL
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pDimm = NULL;
+  DIMM_BSR Bsr;
+  NVDIMM_ENTRY();
+  ZeroMem(&Bsr, sizeof(DIMM_BSR));
+  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
+#ifndef OS_BUILD
+  if (pDimm != NULL && pDimm->pHostMailbox != NULL) {
+    Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
+  } else {
+    goto Finish;
+  }
+#endif // !OS_BUILD
+
+  if (pDimm == NULL) {
+    pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
+#ifndef OS_BUILD
+    if (pDimm != NULL) {
+      LIST_ENTRY *pCurDimmInfoNode = NULL;
+      for (pCurDimmInfoNode = GetFirstNode(&gNvmDimmData->PMEMDev.UninitializedDimms);
+        !IsNull(&gNvmDimmData->PMEMDev.UninitializedDimms, pCurDimmInfoNode);
+        pCurDimmInfoNode = GetNextNode(&gNvmDimmData->PMEMDev.UninitializedDimms, pCurDimmInfoNode)) {
+
+        if (DimmID == ((DIMM_INFO *)pCurDimmInfoNode)->DimmID) {
+          break;
+        }
+      }
+      if (NULL != pCurDimmInfoNode) {
+        ReturnCode = SmbusGetBSR(((DIMM_INFO *)pCurDimmInfoNode)->SmbusAddress, &Bsr);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+      }
+    }
+#endif // !OS_BUILD
+  }
+  if (pDimm == NULL) {
+    goto Finish;
+  }
+#ifdef OS_BUILD
+  ReturnCode = FwCmdGetBsr(pDimm, &Bsr.AsUint64);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+#endif
+  if (pBootStatusBitmask != NULL) {
+    ReturnCode = PopulateDimmBootStatusBitmask(&Bsr, pDimm, pBootStatusBitmask);
+  }
+  if (pBsrValue != NULL) {
+    // If Bsr value is MAX_UINT64_VALUE, then it is access violation
+    if (Bsr.AsUint64 == MAX_UINT64_VALUE) {
+      goto Finish;
+    }
+    *pBsrValue = Bsr.AsUint64;
+  }
+  ReturnCode = EFI_SUCCESS;
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 #ifdef __MFG__
 /**
 Update from mfg to prod firmware

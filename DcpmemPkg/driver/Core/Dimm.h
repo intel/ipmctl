@@ -1636,11 +1636,4 @@ FwCmdGetSystemTime(
   IN     DIMM *pDimm,
   OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
 );
-
-#ifdef OS_BUILD
-extern UINT64 EFIAPI GetBsr(DIMM *pDimm);
-#define BSR(pDimm) GetBsr(pDimm)
-#else //OS_BUILD
-#define BSR(pDimm) *(pDimm->pHostMailbox->pBsr)
-#endif //OS_BUILD
 #endif

@@ -253,10 +253,10 @@ SmartAndHealthCheck(
         goto Finish;
       }
 
-      pActualHealthStr = CatSPrintClean(pActualHealthStr, L" (" FORMAT_STR L")", pActualHealthReasonStr);
+      pActualHealthStr = CatSPrintClean(pActualHealthStr, FORMAT_STR_WITH_PARANTHESIS, pActualHealthReasonStr);
     }
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BAD_HEALTH_STATE), EVENT_CODE_504, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pActualHealthStr);
+      pDimmStr, pActualHealthStr);
 
     FREE_POOL_SAFE(pActualHealthStr);
     FREE_POOL_SAFE(pActualHealthReasonStr);
@@ -390,6 +390,7 @@ BootStatusDiagnosticsCheck(
   DIMM_BSR Bsr;
   BOOLEAN FIS_1_4 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
 
@@ -403,9 +404,12 @@ BootStatusDiagnosticsCheck(
     goto Finish;
   }
 
-  if (pDimm->pHostMailbox == NULL || pDimm->pHostMailbox->pBsr == NULL) {
+  /** make sure we can access the config protocol **/
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_DEVICE_ERROR;
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
+    NVDIMM_WARN("Unable to access protocol.");
     goto Finish;
   }
 
@@ -413,15 +417,13 @@ BootStatusDiagnosticsCheck(
     FIS_1_4 = TRUE;
   }
 
-  //CopyMem(&Bsr.AsUint64, (VOID *) pDimm->pHostMailbox->pBsr, sizeof(Bsr));
-  Bsr.AsUint64 = BSR(pDimm);
-  if ((Bsr.AsUint64 == MAX_UINT64_VALUE) || (Bsr.AsUint64 == 0)) {
+   ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+  if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_DEVICE_ERROR;
     NVDIMM_WARN("Unable to get the DIMMs BSR.");
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_NOT_READABLE), EVENT_CODE_513, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
       pDimmStr);
   } else {
-
     if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_NO_POST_CODE) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_BIOS_POST_TRAINING_FAILED), EVENT_CODE_519, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);

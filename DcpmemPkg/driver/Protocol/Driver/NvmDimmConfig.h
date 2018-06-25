@@ -1730,7 +1730,27 @@ InjectError(
 	OUT COMMAND_STATUS *pCommandStatus
 );
 
+/**
+  GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+  UEFI - Read directly from BSR register
+  OS - Get BSR value from BIOS emulated command
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID -  dimm handle of the DIMM
+  @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
+  @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
 
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_SUCCESS Success
+  @retval Other errors failure of FW commands
+**/
+EFI_STATUS
+EFIAPI
+GetBSRAndBootStatusBitMask(
+  IN      EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN      UINT16 DimmID,
+  OUT     UINT64 *pBsrValue OPTIONAL,
+  OUT     UINT16 *pBootStatusBitmask OPTIONAL
+);
 /**
 Verify target DIMM IDs list. Fill output list of pointers to dimms.
 

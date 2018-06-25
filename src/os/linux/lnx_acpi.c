@@ -119,7 +119,7 @@ int get_acpi_table(
 			if (p_table)
 			{
 				memset(p_table, 0, size);
-				memcpy(&(p_table->header), &header, header_size);
+				memcpy_s(&(p_table->header), sizeof(struct acpi_table_header), &header, header_size);
 				if (size < total_table_size)
 				{
 					rc = ACPI_ERR_BADTABLE;

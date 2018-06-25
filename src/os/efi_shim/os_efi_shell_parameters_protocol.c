@@ -45,9 +45,12 @@ int g_file_io = 0;
 #define STR_VERBOSE             "verbose"
 #define STR_DASH_FAST_LONG      "-fast"
 #define MAX_INPUT_PARAMS        256
+#define MAX_INPUT_PARAM_LEN     4096
 
 EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 {
+  size_t argv_sz_chars = 0;
+  char *p_tok_context = NULL;
 	int i = 1;
 	int stripped_args = 0;
   if (argc > MAX_INPUT_PARAMS) {
@@ -70,7 +73,8 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
         Index+1 != argc)
 		{
         char *tok;
-        tok = strtok(argv[Index + 1], ",");
+        argv_sz_chars = strnlen_s(argv[Index + 1], MAX_INPUT_PARAM_LEN) + 1;
+        tok = s_strtok(argv[Index + 1], &argv_sz_chars, ",", &p_tok_context);
 
         while(tok)
         {
@@ -98,7 +102,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
             gOsShellParametersProtocol.StdOut = stdout;
             break;
           }
-          tok = strtok(NULL, ",");
+          tok = s_strtok(NULL, &argv_sz_chars, ",", &p_tok_context);
         }
 
         if(stripped_args)

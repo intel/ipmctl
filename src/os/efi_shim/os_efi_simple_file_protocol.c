@@ -98,7 +98,7 @@ file_open(
 
 	pFc = (FILE_CONTEXT*)(pFp->Revision);
 	wcstombs(pFc->filename_ascii, FileName, MAX_FILE_NAME_SIZE);
-	swprintf(pFc->filename, MAX_W_FILE_NAME_SIZE, FORMAT_STR, FileName);
+	swprintf_s(pFc->filename, MAX_W_FILE_NAME_SIZE, FORMAT_STR, FileName);
 
 	if ((OpenMode & EFI_FILE_MODE_READ) &&
 		(OpenMode & EFI_FILE_MODE_WRITE))

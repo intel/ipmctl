@@ -153,7 +153,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
 				if (dimms[i].manageability == MANAGEMENT_VALIDCONFIG)
 				{
 					NVM_UID uidStr;
-					strcpy(uidStr, dimms[i].uid);
+					strncpy_s(uidStr, NVM_MAX_UID_LEN, dimms[i].uid, NVM_MAX_UID_LEN);
 					dimmList.push_back(std::string(uidStr));
 				}
 			}

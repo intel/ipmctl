@@ -101,7 +101,7 @@ endif()
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNO_MSABI_VA_FUNCS -std=c99 -Wformat -Wformat-security -D_XOPEN_SOURCE=500 -Wall -Wfatal-errors -MMD -fPIC")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wformat -Wformat-security -D_XOPEN_SOURCE=500 -Wall -Wfatal-errors -MMD -fPIC")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wformat -Wformat-security -D_XOPEN_SOURCE=500 -Drestrict=__restrict__ -Wall -Wfatal-errors -MMD -fPIC")
 	set(CMAKE_SHARED_LINKER_FLAGS "-z noexecstack -z relro -z now -pie")
 elseif(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /GS /DynamicBase /sdl")
@@ -348,9 +348,6 @@ if(MSVC)
 	SET_SOURCE_FILES_PROPERTIES(src/os/efi_shim/os_efi_preferences.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/nvm_api/nvm_management.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(DcpmemPkg/cli/Common.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
-	SET_SOURCE_FILES_PROPERTIES(src/os/monitor/AcpiEventMonitor.cpp PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
-	SET_SOURCE_FILES_PROPERTIES(src/os/monitor/NvmMonitorBase.cpp PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
-	SET_SOURCE_FILES_PROPERTIES(src/os/monitor/PerformanceMonitor.cpp PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/nvm_api/nvm_output_parsing.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/efi_shim/os_efi_shell_parameters_protocol.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/cli_cmds/DumpSupportCommand.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
@@ -431,6 +428,9 @@ if (NOT ESX_BUILD)
 		list(APPEND IPMCTL_MONITOR_SOURCE_FILES
 			src/os/monitor/lnx_main.cpp
 			)
+	set_source_files_properties(${IPMCTL_MONITOR_SOURCE_FILES}
+		PROPERTIES COMPILE_FLAGS ${SAFECLIB_COMPILE_FLAGS}
+	)
 	endif()
 
 	add_executable(ipmctl-monitor ${IPMCTL_MONITOR_SOURCE_FILES})

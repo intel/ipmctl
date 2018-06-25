@@ -9,6 +9,8 @@
 #include <sstream>
 #include <NvmDimmPassThru.h>
 #include <event.h>
+#include <memory.h>
+
 
 monitor::AcpiMonitor::AcpiMonitor() :
 	NvmMonitorBase(MONITOR_NAME)
@@ -48,7 +50,7 @@ void monitor::AcpiMonitor::init()
 		dev_event_history e_hist;
 		memset(&e_hist, 0, sizeof(e_hist));
 		std::string dimmUidStr = *dimmUidIter;
-		strncpy(e_hist.device_uid, dimmUidStr.c_str(), NVM_MAX_UID_LEN);
+		strncpy_s(e_hist.device_uid, NVM_MAX_UID_LEN, dimmUidStr.c_str(), NVM_MAX_UID_LEN);
     e_hist.device_uid[NVM_MAX_UID_LEN-1] = '\0';
 		// get performance data for the dimm
 		if (NVM_SUCCESS != (nvm_get_fw_err_log_stats(e_hist.device_uid, &e_hist.stats)))
@@ -169,7 +171,7 @@ void  monitor::AcpiMonitor::processNvmEvents(const unsigned int device_handle)
 				cur_stats.stats.media_high);
 
 			//sendFwErrCntSystemEventEntry(last_dev_details[i].device_uid, total_events);
-			memcpy(cur_stats.device_uid, last_dev_details[i].device_uid, sizeof(cur_stats.device_uid));
+			memcpy_s(cur_stats.device_uid, NVM_MAX_UID_LEN, last_dev_details[i].device_uid, sizeof(cur_stats.device_uid));
 			cur_stats.dimm_id = last_dev_details[i].dimm_id;
 			cur_stats.dimm_handle = last_dev_details[i].dimm_handle;
 			last_dev_details[i] = cur_stats;

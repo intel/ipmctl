@@ -142,7 +142,7 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
             efi_status = EFI_BUFFER_TOO_SMALL;
         else {
             // the name has been read successfuly from the ini file
-            memcpy(file_name, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+            memcpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
         }
     }
     return efi_status;
@@ -852,7 +852,7 @@ static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
 			    return;
 		    }
         // Create the event type string
-        sprintf(event_type_str, "%08x\n", type);
+        sprintf_s(event_type_str, sizeof(event_type_str), "%08x\n", type);
         // Add the event type to the action required file
         fputs(event_type_str, h_file);
         fclose(h_file);

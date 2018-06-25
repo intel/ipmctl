@@ -1711,6 +1711,13 @@ static unsigned int convert_event_filter_data_and_return_event_type(const struct
 {
   unsigned int event_type_mask = 0;
 
+  if (NULL == p_filter) {
+    event_type_mask = SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_ALL_MASK) |
+      SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_ALL_MASK);
+
+    return event_type_mask;
+  }
+
   if (NVM_FILTER_ON_TYPE & p_filter->filter_mask) {
     switch (p_filter->type) {
     case EVENT_TYPE_ALL:
@@ -1837,8 +1844,9 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
   log_entry *p_prev_log_entry = NULL;
   int rc = NVM_SUCCESS;
 
-  if ((NULL == p_filter) || (NULL == count))
+  if (NULL == count) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -1883,8 +1891,9 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
   unsigned int event_id = 0;
   int rc = NVM_SUCCESS;
 
-  if ((NULL == p_filter) || (NULL == p_events))
+  if (NULL == p_events) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -1916,9 +1925,6 @@ NVM_API int nvm_purge_events(const struct event_filter *p_filter)
   NVM_UID dimm_uid = { 0 };
   unsigned int event_id = 0;
   int rc = NVM_SUCCESS;
-
-  if (NULL == p_filter)
-    return NVM_ERR_INVALIDPARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2102,12 +2108,19 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   EFI_STATUS efi_rc = EFI_INVALID_PARAMETER;
   unsigned int Index = 0;
 
-  if (NULL == p_goal_input || NULL == p_device_uids)
+  if (NULL == p_goal_input) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
+
+  // if no device UIDs force count to 0
+  if (NULL == p_device_uids) {
+    device_uids_count = 0;
+  }
 
   efi_rc = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(efi_rc))
+  if (EFI_ERROR(efi_rc)) {
     return NVM_ERR_UNKNOWN;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2157,12 +2170,19 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
   unsigned int Index = 0;
   unsigned int Index2 = 0;
 
-  if (NULL == p_goal || NULL == p_device_uids)
+  if (NULL == p_goal) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
+
+  // if no device UIDs force count to 0
+  if (NULL == p_device_uids) {
+    device_uids_count = 0;
+  }
 
   efi_rc = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(efi_rc))
+  if (EFI_ERROR(efi_rc)) {
     return NVM_ERR_UNKNOWN;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2236,12 +2256,19 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   int rc = NVM_SUCCESS;
   unsigned int i;
 
-  if (NULL == p_device_uids)
+  if (NULL == p_device_uids) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
+
+  // if no device UIDs force count to 0
+  if (NULL == p_device_uids) {
+    device_uids_count = 0;
+  }
 
   efi_rc = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(efi_rc))
+  if (EFI_ERROR(efi_rc)) {
     return NVM_ERR_UNKNOWN;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);

@@ -9254,17 +9254,20 @@ GetBSRAndBootStatusBitMask(
   ZeroMem(&Bsr, sizeof(DIMM_BSR));
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
 #ifndef OS_BUILD
-  if (pDimm != NULL && pDimm->pHostMailbox != NULL) {
+  if (pDimm != NULL) {
+    if (pDimm->pHostMailbox == NULL) {
+      goto Finish;
+    }
     Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
-  } else {
-    goto Finish;
   }
 #endif // !OS_BUILD
 
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
+    if (pDimm == NULL) {
+      goto Finish;
+    }
 #ifndef OS_BUILD
-    if (pDimm != NULL) {
       LIST_ENTRY *pCurDimmInfoNode = NULL;
       for (pCurDimmInfoNode = GetFirstNode(&gNvmDimmData->PMEMDev.UninitializedDimms);
         !IsNull(&gNvmDimmData->PMEMDev.UninitializedDimms, pCurDimmInfoNode);
@@ -9280,12 +9283,9 @@ GetBSRAndBootStatusBitMask(
           goto Finish;
         }
       }
-    }
 #endif // !OS_BUILD
   }
-  if (pDimm == NULL) {
-    goto Finish;
-  }
+
 #ifdef OS_BUILD
   ReturnCode = FwCmdGetBsr(pDimm, &Bsr.AsUint64);
   if (EFI_ERROR(ReturnCode)) {

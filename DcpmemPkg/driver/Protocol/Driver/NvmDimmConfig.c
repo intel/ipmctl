@@ -7728,7 +7728,8 @@ GetCapacities(
   if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
     *pVolatileCapacity = VolatileCapacity;
   } else {
-    *pInaccessibleCapacity = VolatileCapacity;
+    // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
+    *pInaccessibleCapacity = ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
   }
 
   if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {

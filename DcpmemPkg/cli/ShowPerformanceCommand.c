@@ -135,8 +135,8 @@ PrintPerformanceData(UINT16 *DimmId, UINT32 DimmIdsNum, DIMM_INFO *AllDimmInfos,
     }
 
     /** WriteRequests **/
-    if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_READ_REQUESTS))) {
-      Print(DCPMM_PERFORMANCE_READ_REQUESTS PERFORMANCE_DATA_FORMAT,
+    if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_WRITE_REQUESTS))) {
+      Print(DCPMM_PERFORMANCE_WRITE_REQUESTS PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].WriteRequests.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].WriteRequests.Uint64);
     }

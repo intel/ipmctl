@@ -2876,14 +2876,14 @@ NVM_API int nvm_debug_logging_enabled();
 /**
  * @brief Toggle whether the native API library performs debug logging.
  * @param[in] enabled @n
- *              0: Log native API errors only. @n
- *              1: Log all native API traces. @n
+ *              0: Debug logger disabled. @n
+ *              1: Log warning and error debug traces to the file. @n
  * @pre The caller must have administrative privileges.
  * @remarks By default, the native API library starts logging errors only.
  * @remarks Debug logging may impact native API library performance depending
  * on the workload of the library.  It's recommended that debug logging is only
  * turned on during troubleshooting or debugging.
- * @remarks Changing the debug log level is persistent.
+ * @remarks Changing the debug log level is NOT persistent.
  * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n

@@ -93,7 +93,7 @@ ReceiveData (
       } else {
         ReturnCode = EFI_SUCCESS;
       }
-      CopyMem(PayloadBuffer, &SupportedProtocolsData, *PayloadTransferSize);
+      CopyMem_S(PayloadBuffer, PayloadBufferSize, &SupportedProtocolsData, *PayloadTransferSize);
       goto Finish;
 
     } else {
@@ -131,7 +131,7 @@ ReceiveData (
           ReturnCode = EFI_WARN_BUFFER_TOO_SMALL;
         }
         // write data to return buffer
-        CopyMem(PayloadBuffer, &SecurityState, *PayloadTransferSize);
+        CopyMem_S(PayloadBuffer, PayloadBufferSize, &SecurityState, *PayloadTransferSize);
 
       } else {
         //SubOpcode not supported

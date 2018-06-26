@@ -322,7 +322,7 @@ UpdateBrokenInterleaveSets(
               if (PcdRevision_1) {
                 pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount].SerialNumber = TmpDimmSerialNumber;
               } else {
-                CopyMem(&pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount],
+                CopyMem_S(&pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
                   &TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER));
               }
               pBrokenISs[BrokenISArrayIndex].MissingDimmCount++;
@@ -333,7 +333,7 @@ UpdateBrokenInterleaveSets(
             if (PcdRevision_1) {
               pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount].SerialNumber = TmpDimmSerialNumber;
             } else {
-	      CopyMem(&pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount],
+	      CopyMem_S(&pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
                 &TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER));
             }
             pBrokenISs[*pBrokenISCount].MissingDimmCount++;
@@ -875,7 +875,7 @@ CheckDimmUIDDuplication(
         goto Finish;
       }
 
-      CopyMem(ppDuplicateDimmUids[TotalNumDuplicateUID], CandidateDimmUID, MAX_DIMM_UID_LENGTH * sizeof(CHAR16));
+      CopyMem_S(ppDuplicateDimmUids[TotalNumDuplicateUID], MAX_DIMM_UID_LENGTH * sizeof(CHAR16), CandidateDimmUID, MAX_DIMM_UID_LENGTH * sizeof(CHAR16));
       TotalNumDuplicateUID++;
 
       APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_DUPLICATE_DIMM_UID), EVENT_CODE_608, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,

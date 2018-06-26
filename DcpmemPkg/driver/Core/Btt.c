@@ -254,7 +254,7 @@ BttInit(
 
   ZeroMem(pBtt, sizeof(BTT));
 
-  CopyMem(&pBtt->ParentUuid, pParentUuid, sizeof(GUID));
+  CopyMem_S(&pBtt->ParentUuid, sizeof(pBtt->ParentUuid), pParentUuid, sizeof(GUID));
   pBtt->RawSize = RawSize;
   pBtt->LbaSize = LbaSize;
   pBtt->pNamespace = pNamespace;
@@ -994,9 +994,9 @@ BttWriteLayout(
 
     // Construct the BTT Info block and write it out at both the beginning and end of the arena.
     ZeroMem(pBttInfo, sizeof(*pBttInfo));
-    CopyMem(pBttInfo->Sig, Sig, BTTINFO_SIG_LEN);
-    CopyMem(&pBttInfo->Uuid, &pBtt->Uuid, sizeof(GUID));
-    CopyMem(&pBttInfo->ParentUuid, &pBtt->ParentUuid, sizeof(GUID));
+    CopyMem_S(pBttInfo->Sig, sizeof(pBttInfo->Sig), Sig, BTTINFO_SIG_LEN);
+    CopyMem_S(&pBttInfo->Uuid, sizeof(pBttInfo->Uuid), &pBtt->Uuid, sizeof(GUID));
+    CopyMem_S(&pBttInfo->ParentUuid, sizeof(pBttInfo->ParentUuid), &pBtt->ParentUuid, sizeof(GUID));
     // Check BTT version. 2.0 offset is 0, 1.1 offset is 4K.
     if (pBtt->PrimaryInfoOffset == BTT_PRIMARY_INFO_BLOCK_OFFSET) {
       pBttInfo->Major = 2;

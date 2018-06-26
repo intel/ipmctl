@@ -1371,7 +1371,7 @@ FwCmdGetOptionalConfigurationDataPolicy(
     }
     goto Finish;
   }
-  CopyMem(pOptionalDataPolicyPayload, pFwCmd->OutPayload, sizeof(*pOptionalDataPolicyPayload));
+  CopyMem_S(pOptionalDataPolicyPayload, sizeof(*pOptionalDataPolicyPayload), pFwCmd->OutPayload, sizeof(*pOptionalDataPolicyPayload));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -1409,7 +1409,7 @@ FwCmdSetOptionalConfigurationDataPolicy(
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopConfigDataPolicy;
   pFwCmd->InputPayloadSize = sizeof(*pOptionalDataPolicyPayload);
-  CopyMem(pFwCmd->InputPayload, pOptionalDataPolicyPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pOptionalDataPolicyPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
@@ -1469,7 +1469,7 @@ FwCmdGetSecurityInfo(
     }
     goto Finish;
   }
-  CopyMem(pSecurityPayload, pFwCmd->OutPayload, sizeof(*pSecurityPayload));
+  CopyMem_S(pSecurityPayload, sizeof(*pSecurityPayload), pFwCmd->OutPayload, sizeof(*pSecurityPayload));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -1638,7 +1638,7 @@ FwCmdIdDimm (
 		}
 		goto Finish;
 	}
-	CopyMem(pPayload, pFwCmd->OutPayload, sizeof(*pPayload));
+	CopyMem_S(pPayload, sizeof(*pPayload), pFwCmd->OutPayload, sizeof(*pPayload));
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -1696,7 +1696,7 @@ FwCmdDeviceCharacteristics (
     }
     goto FinishError;
   }
-  CopyMem(*ppPayload, pFwCmd->OutPayload, sizeof(**ppPayload));
+  CopyMem_S(*ppPayload, sizeof(**ppPayload), pFwCmd->OutPayload, sizeof(**ppPayload));
 
   ReturnCode = EFI_SUCCESS;
   goto Finish;
@@ -1757,7 +1757,7 @@ FwCmdGetDimmPartitionInfo(
     }
     goto Finish;
   }
-  CopyMem(pPayload, pFwCmd->OutPayload, sizeof(*pPayload));
+  CopyMem_S(pPayload, sizeof(*pPayload), pFwCmd->OutPayload, sizeof(*pPayload));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -1835,10 +1835,10 @@ FwCmdGetPlatformConfigData (
   }
 
   if (pDimm->pPcdLsa && PartitionId == PCD_LSA_PARTITION_ID) {
-    CopyMem(*ppRawData, pDimm->pPcdLsa, PcdSize);
+    CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdLsa, PcdSize);
     goto Finish;
   } else if (pDimm->pPcdOem && PartitionId == PCD_OEM_PARTITION_ID) {
-    CopyMem(*ppRawData, pDimm->pPcdOem, PcdSize);
+    CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdOem, PcdSize);
     goto Finish;
   }
 
@@ -1871,7 +1871,7 @@ FwCmdGetPlatformConfigData (
     InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
     for (Offset = 0; Offset < PcdSize; Offset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
       InputPayload.Offset = Offset;
-      CopyMem(pFwCmd->InputPayload, &InputPayload, pFwCmd->InputPayloadSize);
+      CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
 #ifdef OS_BUILD
       Rc = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
@@ -1884,7 +1884,7 @@ FwCmdGetPlatformConfigData (
         }
         goto Finish;
       }
-      CopyMem(pBuffer + Offset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+      CopyMem_S(pBuffer + Offset, PcdSize-Offset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
     }
   } else {
     /** Get PCD by large payload in single call **/
@@ -1894,7 +1894,7 @@ FwCmdGetPlatformConfigData (
     if (pFwCmd->InputPayloadSize > IN_PAYLOAD_SIZE) {
       NVDIMM_DBG("The size of command parameters is greater than the size of the small payload.");
     }
-    CopyMem(pFwCmd->InputPayload, &InputPayload, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
 #ifdef OS_BUILD
     Rc = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
@@ -1910,25 +1910,29 @@ FwCmdGetPlatformConfigData (
   }
 
   VOID *pTempCache = NULL;
+  UINTN pTempCacheSz = 0;
+
   if (PartitionId == PCD_LSA_PARTITION_ID) {
      pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
      pTempCache = pDimm->pPcdLsa;
+     pTempCacheSz = pDimm->PcdLsaPartitionSize;
   }
   else if (PartitionId == PCD_OEM_PARTITION_ID) {
      pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
      pTempCache = pDimm->pPcdOem;
+     pTempCacheSz = pDimm->PcdOemPartitionSize;
   }
 
   if (UseSmallPayload) {
-     CopyMem(*ppRawData, pBuffer, PcdSize);
+     CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
      if (NULL != pTempCache) {
-        CopyMem(pTempCache, pBuffer, PcdSize);
+        CopyMem_S(pTempCache, pTempCacheSz, pBuffer, PcdSize);
      }
   }
   else {
-     CopyMem(*ppRawData, pFwCmd->LargeOutputPayload, PcdSize);
+     CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
      if (NULL != pTempCache) {
-        CopyMem(pTempCache, pFwCmd->LargeOutputPayload, PcdSize);
+        CopyMem_S(pTempCache, pTempCacheSz, pFwCmd->LargeOutputPayload, PcdSize);
      }
   }
 
@@ -1991,7 +1995,7 @@ FwCmdGetPlatformConfigDataSize (
   pFwCmd->LargeOutputPayloadSize = 0;
   pFwCmd->OutputPayloadSize = PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
   InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
-  CopyMem(pFwCmd->InputPayload, &InputPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
     NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = %r)", Rc);
@@ -2000,7 +2004,7 @@ FwCmdGetPlatformConfigDataSize (
     }
     goto Finish;
   }
-  CopyMem(&OutputPcdSize, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+  CopyMem_S(&OutputPcdSize, sizeof(OutputPcdSize), pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
 
   *pPcdSize = OutputPcdSize.Size;
 
@@ -2192,7 +2196,7 @@ FwCmdGetPcdSmallPayload(
     goto Finish;
   }
 
-  CopyMem(pData, pFwCmd->OutPayload, DataSize);
+  CopyMem_S(pData, DataSize, pFwCmd->OutPayload, DataSize);
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -2250,7 +2254,7 @@ GetPcdOemConfigDataUsingSmallPayload(
       goto Finish;
     }
 
-    CopyMem(*ppRawData, pDimm->pPcdOem, pDimm->PcdOemSize);
+    CopyMem_S(*ppRawData, pDimm->PcdOemSize, pDimm->pPcdOem, pDimm->PcdOemSize);
     *pRawDataSize = pDimm->PcdOemSize;
     goto Finish;
   }
@@ -2292,7 +2296,7 @@ GetPcdOemConfigDataUsingSmallPayload(
   }
 
   // Save the first 128 bytes already read
-  CopyMem(pBuffer, TmpBuf, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+  CopyMem_S(pBuffer, BufferSize, TmpBuf, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
 
   /** Get PCD by small payload in loop in 128 byte chunks **/
   for (Offset = PCD_GET_SMALL_PAYLOAD_DATA_SIZE; Offset < OemDataSize; Offset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
@@ -2314,7 +2318,7 @@ GetPcdOemConfigDataUsingSmallPayload(
     pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
     pTempCache = pDimm->pPcdOem;
     if ((NULL != pTempCache) && (OemDataSize <= PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE)) {
-      CopyMem(pTempCache, pBuffer, OemDataSize);
+      CopyMem_S(pTempCache, PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE, pBuffer, OemDataSize);
     }
   }
 
@@ -2361,6 +2365,7 @@ FwCmdSetPlatformConfigData (
   UINT32 PcdSize = 0;
   BOOLEAN UseSmallPayload = FALSE;
 	VOID *pTempCache = NULL;
+  UINTN pTempCacheSz = 0;
   NVDIMM_ENTRY();
 
   SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
@@ -2397,6 +2402,7 @@ FwCmdSetPlatformConfigData (
 
 		PcdSize = RawDataSize;
 		pTempCache = pDimm->pPcdOem;
+    pTempCacheSz = PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE;
 
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
     if (NULL == pDimm->pPcdLsa) {
@@ -2404,6 +2410,7 @@ FwCmdSetPlatformConfigData (
 		}
 		PcdSize = pDimm->PcdLsaPartitionSize;
 		pTempCache = pDimm->pPcdLsa;
+    pTempCacheSz = PcdSize;
 	}
 
 	if (PcdSize == 0) {
@@ -2430,7 +2437,7 @@ FwCmdSetPlatformConfigData (
   }
 
   /** Copy the data to 128KB partition. If the data is smaller, the rest of partition will be empty (filled with 0) **/
-  CopyMem(pPartition, pRawData, RawDataSize);
+  CopyMem_S(pPartition, PcdSize, pRawData, RawDataSize);
 
   /**
     Set the Platform Config Data
@@ -2452,8 +2459,8 @@ FwCmdSetPlatformConfigData (
 
     for (Offset = 0; Offset < PcdSize; Offset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
       InPayloadSetData.Offset = Offset;
-      CopyMem(InPayloadSetData.Data, pPartition + Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
-      CopyMem(pFwCmd->InputPayload, &InPayloadSetData, pFwCmd->InputPayloadSize);
+      CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pPartition + Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+      CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
       Rc = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
       if (EFI_ERROR(Rc)) {
         NVDIMM_DBG("Error detected when sending Platform Config Data (Offset=%d Rc=%r, FWStatus=%d)", Offset, Rc, pFwCmd->Status);
@@ -2463,7 +2470,7 @@ FwCmdSetPlatformConfigData (
         goto Finish;
       }	else {
         if (pTempCache) {
-          CopyMem((INT8*)(pTempCache) + Offset, InPayloadSetData.Data, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+          CopyMem_S((INT8*)(pTempCache) + Offset, pTempCacheSz - Offset, InPayloadSetData.Data, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
         }
       }
 	}
@@ -2472,10 +2479,10 @@ FwCmdSetPlatformConfigData (
     InPayloadSetData.Offset = 0;
     InPayloadSetData.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
     pFwCmd->LargeInputPayloadSize = PcdSize;
-    CopyMem(pFwCmd->InputPayload, &InPayloadSetData, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
 
     /** Save 128KB partition to Large Payload **/
-    CopyMem(pFwCmd->LargeInputPayload, pPartition, PcdSize);
+    CopyMem_S(pFwCmd->LargeInputPayload, sizeof(pFwCmd->LargeInputPayload), pPartition, PcdSize);
 #ifdef OS_BUILD
     Rc = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
@@ -2488,7 +2495,7 @@ FwCmdSetPlatformConfigData (
       }
     } else {
       if (pTempCache) {
-        CopyMem(pTempCache, pPartition, PcdSize);
+        CopyMem_S(pTempCache, pTempCacheSz, pPartition, PcdSize);
       }
     }
   }
@@ -2552,7 +2559,7 @@ FwCmdGetAlarmThresholds (
     }
     goto FinishAfterPayloadAlloc;
   }
-  CopyMem(*ppPayloadAlarmThresholds, pFwCmd->OutPayload, sizeof(**ppPayloadAlarmThresholds));
+  CopyMem_S(*ppPayloadAlarmThresholds, sizeof(**ppPayloadAlarmThresholds), pFwCmd->OutPayload, sizeof(**ppPayloadAlarmThresholds));
 
 FinishAfterPayloadAlloc:
   if (EFI_ERROR(Rc)){
@@ -2602,7 +2609,7 @@ FwCmdSetAlarmThresholds (
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopAlarmThresholds;
   pFwCmd->InputPayloadSize = sizeof(PT_PAYLOAD_ALARM_THRESHOLDS);
-  CopyMem(pFwCmd->InputPayload, pPayloadAlarmThresholds, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pPayloadAlarmThresholds, pFwCmd->InputPayloadSize);
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
@@ -2696,7 +2703,8 @@ FwCmdGetFWDebugLog (
   IN     DIMM *pDimm,
   IN     UINT64 LogSizeInMbs,
      OUT UINT64 *pBytesWritten,
-     OUT VOID *pOutputBuffer
+     OUT VOID *pOutputBuffer,
+  IN UINTN OutputBufferSz
   )
 {
   FW_CMD *pFwCmd = NULL;
@@ -2750,7 +2758,7 @@ FwCmdGetFWDebugLog (
       goto Finish;
     }
 
-    CopyMem((UINT8 *)pOutputBuffer + *pBytesWritten , pFwCmd->LargeOutputPayload, MIB_TO_BYTES(1));
+    CopyMem_S((UINT8 *)pOutputBuffer + *pBytesWritten, OutputBufferSz - *pBytesWritten, pFwCmd->LargeOutputPayload, MIB_TO_BYTES(1));
     *pBytesWritten = MIB_TO_BYTES(Index + 1);
   }
 
@@ -2808,7 +2816,7 @@ FwCmdGetErrorLog (
   pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
   pFwCmd->OutputPayloadSize = OutputPayloadSize;
   pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem(&pFwCmd->InputPayload, pInputPayload, sizeof(pFwCmd->InputPayload));
+  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, sizeof(pFwCmd->InputPayload));
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -2820,11 +2828,11 @@ FwCmdGetErrorLog (
   }
 
   if (pOutputPayload != NULL) {
-    CopyMem(pOutputPayload, &pFwCmd->OutPayload, OutputPayloadSize);
+    CopyMem_S(pOutputPayload, OutputPayloadSize, &pFwCmd->OutPayload, OutputPayloadSize);
   }
 
   if (pLargeOutputPayload != NULL) {
-    CopyMem(pLargeOutputPayload, &pFwCmd->LargeOutputPayload, LargeOutputPayloadSize);
+    CopyMem_S(pLargeOutputPayload, LargeOutputPayloadSize, &pFwCmd->LargeOutputPayload, LargeOutputPayloadSize);
   }
 
 Finish:
@@ -2885,7 +2893,7 @@ FwCmdGetSmartAndHealth (
     Rc = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
-  CopyMem(*ppPayloadSmartAndHealth, pFwCmd->OutPayload, sizeof(**ppPayloadSmartAndHealth));
+  CopyMem_S(*ppPayloadSmartAndHealth, sizeof(**ppPayloadSmartAndHealth), pFwCmd->OutPayload, sizeof(**ppPayloadSmartAndHealth));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -2941,7 +2949,7 @@ FwCmdGetMemoryInfoPage (
   pFwCmd->InputPayloadSize  = sizeof(InputPayload);
   pFwCmd->OutputPayloadSize = PageSize;
 
-  CopyMem(pFwCmd->InputPayload, &InputPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
     NVDIMM_WARN("Error detected when sending MemoryInfoPage command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
@@ -2956,7 +2964,7 @@ FwCmdGetMemoryInfoPage (
     Rc = EFI_OUT_OF_RESOURCES;
     goto FinishAfterFwCmdAlloc;
   }
-  CopyMem(*ppPayloadMemoryInfoPage, pFwCmd->OutPayload, pFwCmd->OutputPayloadSize);
+  CopyMem_S(*ppPayloadMemoryInfoPage, PageSize, pFwCmd->OutPayload, pFwCmd->OutputPayloadSize);
 
 FinishAfterFwCmdAlloc:
   FREE_POOL_SAFE(pFwCmd);
@@ -3017,7 +3025,7 @@ FwCmdGetFirmwareImageInfo (
     Rc = EFI_OUT_OF_RESOURCES;
     goto FinishError;
   }
-  CopyMem(*ppPayloadFwImage, pFwCmd->OutPayload, sizeof(**ppPayloadFwImage));
+  CopyMem_S(*ppPayloadFwImage, sizeof(**ppPayloadFwImage), pFwCmd->OutPayload, sizeof(**ppPayloadFwImage));
 
 FinishError:
   FREE_POOL_SAFE(pFwCmd);
@@ -3073,7 +3081,7 @@ FwCmdGetPowerManagementPolicy(
     goto Finish;
   }
 
-  CopyMem(pPayloadPowerManagementPolicy, pFwCmd->OutPayload, sizeof(*pPayloadPowerManagementPolicy));
+  CopyMem_S(pPayloadPowerManagementPolicy, sizeof(*pPayloadPowerManagementPolicy), pFwCmd->OutPayload, sizeof(*pPayloadPowerManagementPolicy));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -3132,7 +3140,7 @@ FwCmdGetPMONRegisters(
     goto Finish;
   }
 
-  CopyMem(pPayloadPMONRegisters, pFwCmd->OutPayload, sizeof(*pPayloadPMONRegisters));
+  CopyMem_S(pPayloadPMONRegisters, sizeof(*pPayloadPMONRegisters), pFwCmd->OutPayload, sizeof(*pPayloadPMONRegisters));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -3249,7 +3257,7 @@ FwCmdGetPackageSparingPolicy (
     Rc = EFI_OUT_OF_RESOURCES;
     goto FinishAfterFwCmdAlloc;
   }
-  CopyMem(*ppPayloadPackageSparingPolicy, pFwCmd->OutPayload, sizeof(**ppPayloadPackageSparingPolicy));
+  CopyMem_S(*ppPayloadPackageSparingPolicy, sizeof(**ppPayloadPackageSparingPolicy), pFwCmd->OutPayload, sizeof(**ppPayloadPackageSparingPolicy));
 
 FinishAfterFwCmdAlloc:
   FreePool(pFwCmd);
@@ -3311,7 +3319,7 @@ FwCmdGetLongOperationStatus(
     goto Finish;
   }
 
-  CopyMem(pLongOpStatus, pFwCmd->OutPayload, sizeof(*pLongOpStatus));
+  CopyMem_S(pLongOpStatus, sizeof(*pLongOpStatus), pFwCmd->OutPayload, sizeof(*pLongOpStatus));
 
   ReturnCode = EFI_SUCCESS;
 
@@ -4190,7 +4198,7 @@ PrepareAndSendCommandRegisterCmd(
   NVDIMM_EXIT();
   return;
 }
-
+#ifndef OS_BUILD
 /**
   Read a number of bytes from a DIMM
 
@@ -4198,7 +4206,6 @@ PrepareAndSendCommandRegisterCmd(
   @param[in] Offset: offset from the start of the region this mem type uses
   @param[in] Nbytes: Number of bytes to read
   @param[out] pBuffer: Buffer to place bytes into
-
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
   @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
@@ -4222,7 +4229,7 @@ ApertureRead (
   CHAR8 *pDstChunk = NULL;
   CHAR8 *pAlignChunk = NULL;
   UINT64 NoApertureChunks = 0;
-
+  UINTN AlignChunkSz = 0;
   NVDIMM_ENTRY();
 
   if (pBuffer == NULL) {
@@ -4243,7 +4250,8 @@ ApertureRead (
   if (Nbytes % CACHE_LINE_SIZE != 0) {
     NotAlignedNbytes = Nbytes;
     Nbytes += CACHE_LINE_SIZE - Nbytes % CACHE_LINE_SIZE;
-    pAlignChunk = AllocatePool(Nbytes % BW_APERTURE_LENGTH);
+    AlignChunkSz = Nbytes % BW_APERTURE_LENGTH;
+    pAlignChunk = AllocatePool(AlignChunkSz);
     if (pAlignChunk == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
@@ -4276,10 +4284,10 @@ ApertureRead (
     pDstChunk = pBuffer + Index * BW_APERTURE_LENGTH;
     // For last chunk use temporary, aligned buffer
     if (Index == NoApertureChunks && NotAlignedNbytes != 0) {
-      ReadFromInterleavedBuffer((VOID *)pAlignChunk, (VOID **) pDimm->pBw->ppBwApt, pDimm->pBw->LineSizeOfApt, Length);
+      ReadFromInterleavedBuffer((VOID *)pAlignChunk, AlignChunkSz,(VOID **) pDimm->pBw->ppBwApt, pDimm->pBw->LineSizeOfApt, Length);
       CopyMem(pDstChunk, pAlignChunk, NotAlignedNbytes % BW_APERTURE_LENGTH);
     } else {
-      ReadFromInterleavedBuffer((VOID *)pDstChunk, (VOID **) pDimm->pBw->ppBwApt, pDimm->pBw->LineSizeOfApt, Length);
+      ReadFromInterleavedBuffer((VOID *)pDstChunk, Nbytes, (VOID **) pDimm->pBw->ppBwApt, pDimm->pBw->LineSizeOfApt, Length);
     }
   }
 Finish:
@@ -4384,7 +4392,61 @@ Finish:
   NVDIMM_EXIT_I(ReturnCode);
   return ReturnCode;
 }
+#else
+/**
+Read a number of bytes from a DIMM
 
+@param[in] pDimm: DIMM to read from
+@param[in] Offset: offset from the start of the region this mem type uses
+@param[in] Nbytes: Number of bytes to read
+@param[out] pBuffer: Buffer to place bytes into
+
+@retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
+@retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
+@retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
+@retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
+@retval EFI_OUT_OF_RESOURCES in case of failed region allocation
+**/
+EFI_STATUS
+EFIAPI
+ApertureRead(
+  IN     DIMM *pDimm,
+  IN     UINT64 Offset,
+  IN     UINT64 Nbytes,
+  OUT CHAR8 *pBuffer
+)
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+Write a number of bytes to a DIMM
+
+@param[out] pDimm: DIMM to write to
+@param[in] Offset: offset from the start of the region this mem type uses
+@param[in] Nbytes: Number of bytes to write (less or equal to buffer size).
+@param[in] pBuffer: Buffer containing data to write
+
+@retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
+@retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
+@retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
+@retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
+@retval EFI_OUT_OF_RESOURCES in case of failed region allocation
+**/
+EFI_STATUS
+EFIAPI
+ApertureWrite(
+  OUT DIMM *pDimm,
+  IN     UINT64 Offset,
+  IN     UINT64 Nbytes,
+  IN     CHAR8 *pBuffer
+)
+{
+  return EFI_UNSUPPORTED;
+}
+
+
+#endif //OS_BUILD
 /**
   Create DIMM
   Perform all functions needed for DIMM initialization this includes:
@@ -4557,7 +4619,7 @@ InitializeDimm (
     pNewDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
     pNewDimm->Manufacturer = pPayload->Mf;
     pNewDimm->SkuInformation = *((SKU_INFORMATION *)&pPayload->DimmSku);
-    CopyMem(pNewDimm->PartNumber, pPayload->Pn, sizeof(pPayload->Pn));
+    CopyMem_S(pNewDimm->PartNumber, sizeof(pNewDimm->PartNumber), pPayload->Pn, sizeof(pPayload->Pn));
     pNewDimm->PartNumber[PART_NUMBER_LEN - 1] = '\0';
 
     NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
@@ -4926,6 +4988,7 @@ DimmWPQFlush(
   Both buffers have to be equal or greater than NumOfBytes.
 
   @param[out] pRegularBuffer output regular buffer
+  @param[in] RegularBufferSz size of the RegualrBuffer
   @param[in] ppInterleavedBuffer input interleaved buffer
   @param[in] LineSize line size of interleaved buffer
   @param[in] NumOfBytes number of bytes to copy
@@ -4933,6 +4996,7 @@ DimmWPQFlush(
 VOID
 ReadFromInterleavedBuffer(
      OUT VOID *pRegularBuffer,
+  IN     UINTN RegularBufferSz,
   IN     VOID **ppInterleavedBuffer,
   IN     UINT32 LineSize,
   IN     UINT32 NumOfBytes
@@ -4942,6 +5006,7 @@ ReadFromInterleavedBuffer(
   UINT32 NumOfSegments = 0;
   UINT32 Remain = 0;
   UINT32 Index = 0;
+
 
   NVDIMM_ENTRY();
 
@@ -4955,12 +5020,13 @@ ReadFromInterleavedBuffer(
 
   pTo = pRegularBuffer;
   for (Index = 0; Index < NumOfSegments; Index++) {
-    CopyMem(pTo, ppInterleavedBuffer[Index], LineSize);
+    CopyMem_S(pTo, RegularBufferSz, ppInterleavedBuffer[Index], LineSize);
     pTo += LineSize;
+    RegularBufferSz -= LineSize;
   }
 
   if (Remain > 0) {
-    CopyMem(pTo, ppInterleavedBuffer[Index], Remain);
+    CopyMem_S(pTo, RegularBufferSz, ppInterleavedBuffer[Index], Remain);
   }
 
 Finish:
@@ -5092,7 +5158,7 @@ CopyMem_8 (
 
       // Copy the remaining bytes using a 1 byte copy
       if (Length > 0) {
-        return CopyMem((UINT8 *)Destination64, (UINT8 *)Source64, Length);
+        return CopyMem_S((UINT8 *)Destination64, Length, (UINT8 *)Source64, Length);
       }
     } else if (SourceBuffer < DestinationBuffer) {
       Destination64 = (UINT64*)((UINTN)DestinationBuffer + Length);
@@ -5101,7 +5167,7 @@ CopyMem_8 (
       Alignment = Length & 0x7;
       if (Alignment != 0) {
         // Copy the unaligned bytes using a byte copy
-        CopyMem((UINT8 *)Destination64, (UINT8 *)Source64, Alignment);
+        CopyMem_S((UINT8 *)Destination64, Alignment, (UINT8 *)Source64, Alignment);
       }
       Length -= Alignment;
 
@@ -5114,7 +5180,7 @@ CopyMem_8 (
   } else {
     // Source or destination address are not aligned OR the length of bytes is less than 8
     // Let's fall back to 1 byte memcopy
-    return CopyMem(DestinationBuffer, SourceBuffer, Length);
+    return CopyMem_S(DestinationBuffer, Length, SourceBuffer, Length);
   }
 
   return DestinationBuffer;
@@ -5295,7 +5361,7 @@ GenerateOemPcdHeader (
   pPlatformConfigData->Header.Signature = NVDIMM_CONFIGURATION_HEADER_SIG;
   pPlatformConfigData->Header.Length = sizeof (*pPlatformConfigData);
   pPlatformConfigData->Header.Revision = NVDIMM_CONFIGURATION_HEADER_REVISION;
-  CopyMem(&pPlatformConfigData->Header.OemId, NVDIMM_CONFIGURATION_HEADER_OEM_ID, NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN);
+  CopyMem_S(&pPlatformConfigData->Header.OemId, sizeof(pPlatformConfigData->Header.OemId), NVDIMM_CONFIGURATION_HEADER_OEM_ID, NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN);
   pPlatformConfigData->Header.OemTableId = NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID;
   pPlatformConfigData->Header.OemRevision = NVDIMM_CONFIGURATION_HEADER_OEM_REVISION;
   pPlatformConfigData->Header.CreatorId = NVDIMM_CONFIGURATION_HEADER_CREATOR_ID;
@@ -5436,6 +5502,7 @@ GetKeyDimmRegisters(
      OUT UINT64 *pFwMailboxOutput
   )
 {
+#ifndef OS_BUILD
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
   MAILBOX *pMailbox = NULL;
@@ -5468,6 +5535,9 @@ GetKeyDimmRegisters(
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+#else
+  return EFI_UNSUPPORTED;
+#endif //OS_BUILD
 }
 
 /**
@@ -5904,7 +5974,7 @@ FwCmdGetDdrtIoInitInfo(
 		goto Finish;
 	}
 
-  CopyMem(pDdrtIoInitInfo, pFwCmd->OutPayload, sizeof(*pDdrtIoInitInfo));
+  CopyMem_S(pDdrtIoInitInfo, sizeof(*pDdrtIoInitInfo), pFwCmd->OutPayload, sizeof(*pDdrtIoInitInfo));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -5952,7 +6022,7 @@ FwCmdInjectError(
 	pFwCmd->SubOpcode = SubOpCode;
 	pFwCmd->InputPayloadSize = SMALL_PAYLOAD_SIZE;
 	pFwCmd->OutputPayloadSize = 0;
-	CopyMem(pFwCmd->InputPayload, pinjectInputPayload, pFwCmd->InputPayloadSize);
+	CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pinjectInputPayload, pFwCmd->InputPayloadSize);
 
 	ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
 	if (EFI_ERROR(ReturnCode)) {
@@ -6020,7 +6090,7 @@ FwCmdGetSystemTime(
     }
     goto Finish;
   }
-  CopyMem(pSystemTimePayload, pFwCmd->OutPayload, sizeof(*pSystemTimePayload));
+  CopyMem_S(pSystemTimePayload, sizeof(*pSystemTimePayload), pFwCmd->OutPayload, sizeof(*pSystemTimePayload));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);

@@ -2930,9 +2930,9 @@ BubbleSort(
       pSecond = (UINT8 *) pArray + Index * ItemSize;
 
       if (Compare(pFirst, pSecond) > 0) {
-        CopyMem(pTmpItem, pFirst, ItemSize);
-        CopyMem(pFirst, pSecond, ItemSize);
-        CopyMem(pSecond, pTmpItem, ItemSize);
+        CopyMem_S(pTmpItem, ItemSize, pFirst, ItemSize);
+        CopyMem_S(pFirst, ItemSize, pSecond, ItemSize);
+        CopyMem_S(pSecond, ItemSize, pTmpItem, ItemSize);
         Swapped = TRUE;
       }
     }
@@ -3453,4 +3453,32 @@ GetHostServerInfo(
 Finish:
    NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
+}
+
+/**
+Copies a source buffer to a destination buffer, and returns the destination buffer.
+
+
+@param  DestinationBuffer   The pointer to the destination buffer of the memory copy.
+@param  DestLength          The length in bytes of DestinationBuffer.
+@param  SourceBuffer        The pointer to the source buffer of the memory copy.
+@param  Length              The number of bytes to copy from SourceBuffer to DestinationBuffer.
+
+@return DestinationBuffer.
+
+**/
+VOID *
+CopyMem_S(
+  OUT VOID       *DestinationBuffer,
+  IN UINTN       DestLength,
+  IN CONST VOID  *SourceBuffer,
+  IN UINTN       Length
+)
+{
+#ifdef OS_BUILD
+  memcpy_s(DestinationBuffer, DestLength, SourceBuffer, Length);
+  return DestinationBuffer;
+#else
+  return CopyMem(DestinationBuffer, SourceBuffer, Length);
+#endif
 }

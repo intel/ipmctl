@@ -2387,7 +2387,7 @@ GetSmartAndHealth (
 
   if (pLastShutdownStatus != NULL) {
     /** Copy extended detail bits **/
-    CopyMem(pLastShutdownStatus, pPayloadSmartAndHealth->VendorSpecificData.LastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_EXTENDED));
+    CopyMem_S(pLastShutdownStatus, sizeof(LAST_SHUTDOWN_STATUS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.LastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_EXTENDED));
     /** Shift extended over, add the original 8 bits **/
     *pLastShutdownStatus = (*pLastShutdownStatus << sizeof(LAST_SHUTDOWN_STATUS) * 8)
                          + pPayloadSmartAndHealth->VendorSpecificData.LastShutdownDetails.AllFlags;
@@ -2561,11 +2561,11 @@ SetSecurityState(
 
   if (pPassphrase != NULL) {
     UnicodeStrToAsciiStrS(pPassphrase, AsciiPassword, PASSPHRASE_BUFFER_SIZE + 1);
-    CopyMem(&pSecurityPayload->PassphraseCurrent, AsciiPassword, AsciiStrLen(AsciiPassword));
+    CopyMem_S(&pSecurityPayload->PassphraseCurrent, sizeof(pSecurityPayload->PassphraseCurrent), AsciiPassword, AsciiStrLen(AsciiPassword));
   }
   if (pNewPassphrase != NULL) {
     UnicodeStrToAsciiStrS(pNewPassphrase, AsciiPassword, PASSPHRASE_BUFFER_SIZE + 1);
-    CopyMem(&pSecurityPayload->PassphraseNew, AsciiPassword, AsciiStrLen(AsciiPassword));
+    CopyMem_S(&pSecurityPayload->PassphraseNew, sizeof(pSecurityPayload->PassphraseNew), AsciiPassword, AsciiStrLen(AsciiPassword));
   }
 
   /**
@@ -4129,7 +4129,8 @@ GetSystemCapabilitiesInfo(
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
-    CopyMem((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported,
+    CopyMem_S((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported,
+      sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum,
         pInterleaveCapability->InterleaveFormatList,
         sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum);
   }
@@ -4141,7 +4142,7 @@ GetSystemCapabilitiesInfo(
     pSysCapInfo->AdrSupported = (Capabilities == NFIT_MEMORY_CONTROLLER_FLUSH_BIT1);
   }
   for (Index = 0; Index < SUPPORTED_BLOCK_SIZES_COUNT; Index++) {
-    CopyMem(&pSysCapInfo->NsBlockSizes[Index], &gSupportedBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]));
+    CopyMem_S(&pSysCapInfo->NsBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]),  &gSupportedBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]));
   }
   pSysCapInfo->MinNsSize = gNvmDimmData->Alignments.BlockNamespaceMinSize;
 
@@ -4601,7 +4602,7 @@ UpdateDimmFw(
 
 #ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   pPassThruCommand->LargeInputPayloadSize = (UINT32) ImageBufferSize;
-  CopyMem(pPassThruCommand->LargeInputPayload, pImageBuffer, ImageBufferSize);
+  CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
 
 #ifdef OS_BUILD
   do
@@ -6567,7 +6568,7 @@ Build NAMESPACE structure
 
   // Lets leave this check in case that the allocation failed
   if (pName != NULL) {
-    CopyMem(&pNamespace->Name, pName, MIN(AsciiStrLen(pName), NSLABEL_NAME_LEN));
+    CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), pName, MIN(AsciiStrLen(pName), NSLABEL_NAME_LEN));
     // If we allocated the buffer here, not in the CLI - we need to free it after its copied
     if (pTempName16 != NULL) {
       FREE_POOL_SAFE(pName);
@@ -6575,7 +6576,7 @@ Build NAMESPACE structure
   }
 
   GenerateRandomGuid(&NamespaceGUID);
-  CopyMem(&pNamespace->NamespaceGuid, &NamespaceGUID, NSGUID_LEN);
+  CopyMem_S(&pNamespace->NamespaceGuid, sizeof(pNamespace->NamespaceGuid), &NamespaceGUID, NSGUID_LEN);
     /** Provision Namespace Capacity using only Region Id **/
     ReturnCode = AllocateNamespaceCapacity(NULL, pIS, pActualNamespaceCapacity, pNamespace);
   pNamespace->BlockCount = *pActualNamespaceCapacity / GetPhysicalBlockSize(pNamespace->BlockSize);
@@ -6814,8 +6815,8 @@ GetNamespaces (
     }
 
     pNamespaceInfo->NamespaceId = pNamespace->NamespaceId;
-    CopyMem(pNamespaceInfo->NamespaceGuid, pNamespace->NamespaceGuid, sizeof(pNamespaceInfo->NamespaceGuid));
-    CopyMem(pNamespaceInfo->Name, pNamespace->Name, sizeof(pNamespaceInfo->Name));
+    CopyMem_S(pNamespaceInfo->NamespaceGuid, sizeof(pNamespaceInfo->NamespaceGuid), pNamespace->NamespaceGuid, sizeof(pNamespaceInfo->NamespaceGuid));
+    CopyMem_S(pNamespaceInfo->Name, sizeof(pNamespaceInfo->Name), pNamespace->Name, sizeof(pNamespaceInfo->Name));
     pNamespaceInfo->HealthState = pNamespace->HealthState;
     pNamespaceInfo->BlockSize = pNamespace->BlockSize;
     pNamespaceInfo->LogicalBlockSize = pNamespace->Media.BlockSize;
@@ -6976,7 +6977,7 @@ ModifyNamespace(
   }
 
   ZeroMem(pNamespace->Name, sizeof(pNamespace->Name));
-  CopyMem(pNamespace->Name, pName, AsciiStrLen(pName));
+  CopyMem_S(pNamespace->Name, sizeof(pNamespace->Name), pName, AsciiStrLen(pName));
 
   SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   ReturnCode = EFI_SUCCESS;
@@ -7264,7 +7265,7 @@ DumpFwDebugLog(
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetFWDebugLog(pDimm, DebugLogSize, pBytesWritten, *ppDebugLogs);
+  ReturnCode = FwCmdGetFWDebugLog(pDimm, DebugLogSize, pBytesWritten, *ppDebugLogs, DebugLogSize);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_SECURITY_VIOLATION) {
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE);
@@ -7393,6 +7394,7 @@ RetrieveDimmRegisters(
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
+#ifndef OS_BUILD
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 #ifndef MDEPKG_NDEBUG
   DIMM *pDimm = NULL;
@@ -7434,6 +7436,9 @@ Finish:
 #endif
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+#else
+  return EFI_UNSUPPORTED;
+#endif //OS_BUILD
 }
 
 /**

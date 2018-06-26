@@ -145,7 +145,7 @@ GeneratePcdConfInput(
     }
   }
 
-  CopyMem((*ppConfigInput)->Header.OemId, pConfHeader->Header.OemId, sizeof((*ppConfigInput)->Header.OemId));
+  CopyMem_S((*ppConfigInput)->Header.OemId, sizeof((*ppConfigInput)->Header.OemId), pConfHeader->Header.OemId, sizeof((*ppConfigInput)->Header.OemId));
   (*ppConfigInput)->Header.OemTableId = pConfHeader->Header.OemTableId;
   (*ppConfigInput)->Header.OemRevision = pConfHeader->Header.OemRevision;
   (*ppConfigInput)->Header.CreatorId = pConfHeader->Header.CreatorId;
@@ -233,7 +233,7 @@ GeneratePcdConfInput(
       if ((*ppConfigInput)->Header.Revision == NVDIMM_CONFIGURATION_TABLES_REVISION_1) {
 	pIdentInfo->DimmIdentification.Version1.DimmManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->Manufacturer;
 	pIdentInfo->DimmIdentification.Version1.DimmSerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
-	CopyMem(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
+	CopyMem_S(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber), pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
 	    sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber));
       } else {
         pIdentInfo->DimmIdentification.Version2.Uid.ManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->VendorId;

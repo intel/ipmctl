@@ -1415,4 +1415,24 @@ EFI_STATUS
 GetHostServerInfo(
    OUT HOST_SERVER_INFO *pHostServerInfo
 );
+
+/**
+Copies a source buffer to a destination buffer, and returns the destination buffer.
+
+
+@param  DestinationBuffer   The pointer to the destination buffer of the memory copy.
+@param  DestLength          The length in bytes of DestinationBuffer.
+@param  SourceBuffer        The pointer to the source buffer of the memory copy.
+@param  Length              The number of bytes to copy from SourceBuffer to DestinationBuffer.
+
+@return DestinationBuffer.
+
+**/
+VOID *
+CopyMem_S(
+  OUT VOID       *DestinationBuffer,
+  IN UINTN       DestLength,
+  IN CONST VOID  *SourceBuffer,
+  IN UINTN       Length
+);
 #endif /** _UTILITY_H_ **/

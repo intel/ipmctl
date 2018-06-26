@@ -100,7 +100,7 @@ ParseNfitTable(
     goto FinishError;
   }
 
-  CopyMem(pParsedHeader->pFit, pNFit, sizeof(NFitHeader));
+  CopyMem_S(pParsedHeader->pFit, sizeof(NFitHeader), pNFit, sizeof(NFitHeader));
 
   while (RemainingNFITBytes > 0) {
     RemainingNFITBytes -= pTableHeader->Length;
@@ -238,7 +238,7 @@ ParsePcatTable (
   }
 
   // Copying PCAT header to parsed structure
-  CopyMem(pParsedPcat->pPlatformConfigAttr, pPcatHeader, sizeof(*pParsedPcat->pPlatformConfigAttr));
+  CopyMem_S(pParsedPcat->pPlatformConfigAttr, sizeof(*pParsedPcat->pPlatformConfigAttr), pPcatHeader, sizeof(*pParsedPcat->pPlatformConfigAttr));
 
   // Looking for sub tables
   while (RemainingPcatBytes > 0) {
@@ -834,11 +834,11 @@ CopyMemoryAndAddPointerToArray(
 
   // Copy the array beginning only if there is any
   if (*pNewPointerIndex > 0 && ppTable != NULL) {
-    CopyMem(ppNewTable, ppTable, sizeof(VOID *) * *pNewPointerIndex);
+    CopyMem_S(ppNewTable, sizeof(VOID *) * (*pNewPointerIndex + 1), ppTable, sizeof(VOID *) * *pNewPointerIndex);
   }
 
   // Make a copy of the table to add
-  CopyMem(pData, pToAdd, DataSize);
+  CopyMem_S(pData, DataSize, pToAdd, DataSize);
 
   // Assign the new copied table to the array
   ppNewTable[*pNewPointerIndex] = pData;

@@ -300,7 +300,7 @@ PerformInterleavingAndCreateGoal(
   }
 
   if (DimmsNum > 0) {
-    CopyMem(pDimmsCopy, pDimms, sizeof(pDimms[0]) * DimmsNum);
+    CopyMem_S(pDimmsCopy, sizeof(pDimms[0]) * DimmsNum, pDimms, sizeof(pDimms[0]) * DimmsNum);
   }
 
   while (RemainingDimms > 0) {

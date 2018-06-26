@@ -194,7 +194,7 @@ if (TempSource == NULL) {
 return EFI_OUT_OF_RESOURCES;
 }
 
-CopyMem(TempSource, Source, Length);
+CopyMem_S(TempSource, Length + 1, Source, Length);
 TempSource[Length] = '\0';
 AsciiStrToUnicodeStrS(TempSource, Destination, Length + 1);
 

@@ -346,8 +346,8 @@ ShowDimms(
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
     }
-    CopyMem(pAllDimms, pDimms, sizeof(*pDimms) * DimmCount);
-    CopyMem(&pAllDimms[DimmCount], pUninitializedDimms, sizeof(*pUninitializedDimms) * UninitializedDimmCount);
+    CopyMem_S(pAllDimms, sizeof(*pAllDimms) * (DimmCount), pDimms, sizeof(*pDimms) * DimmCount);
+    CopyMem_S(&pAllDimms[DimmCount], sizeof(*pAllDimms) * (UninitializedDimmCount), pUninitializedDimms, sizeof(*pUninitializedDimms) * UninitializedDimmCount);
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pDimmsValue, pAllDimms, DimmCount + UninitializedDimmCount, &pDimmIds,
         &DimmIdsNum);

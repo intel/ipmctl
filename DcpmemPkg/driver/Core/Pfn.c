@@ -53,7 +53,7 @@ PfnInit(
     goto FinishWithError;
   }
 
-  CopyMem(&pPfn->ParentUuid, pParentUuid, sizeof(GUID));
+  CopyMem_S(&pPfn->ParentUuid, sizeof(pPfn->ParentUuid), pParentUuid, sizeof(GUID));
   pPfn->RawSize = RawSize;
   pPfn->LbaSize = LbaSize;
   pPfn->pNamespace = pNamespace;

@@ -128,7 +128,7 @@ SetDimmSecurityState(
   pPassThruCommand->Opcode = Opcode;
   pPassThruCommand->SubOpcode= SubOpcode;
   if (pPayloadBuffer != NULL) {
-    CopyMem(&pPassThruCommand->InputPayload, pPayloadBuffer, PayloadBufferSize);
+    CopyMem_S(&pPassThruCommand->InputPayload, sizeof(pPassThruCommand->InputPayload), pPayloadBuffer, PayloadBufferSize);
     pPassThruCommand->InputPayloadSize = PayloadBufferSize;
   }
 

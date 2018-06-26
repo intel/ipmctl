@@ -380,7 +380,7 @@ InstallNamespaceProtocols(
     pNvdimmNamespaceDevicePath->Header.Length[0] = (UINT8)(sizeof(NVDIMM_NAMESPACE_DEVICE_PATH));
     pNvdimmNamespaceDevicePath->Header.Length[1] = (UINT8)((sizeof(NVDIMM_NAMESPACE_DEVICE_PATH)) >> 8);
 
-    CopyMem(&pNvdimmNamespaceDevicePath->Guid, pNamespace->NamespaceGuid,
+    CopyMem_S(&pNvdimmNamespaceDevicePath->Guid, sizeof(pNvdimmNamespaceDevicePath->Guid), pNamespace->NamespaceGuid,
       sizeof(pNvdimmNamespaceDevicePath->Guid));
 
     pNamespace->pBlockDevicePath = AppendDevicePathNode(
@@ -400,7 +400,7 @@ InstallNamespaceProtocols(
     pVenHwNamespaceDevicePath->Header.Length[0] = (UINT8)(sizeof(VENDOR_DEVICE_PATH));
     pVenHwNamespaceDevicePath->Header.Length[1] = (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8);
 
-    CopyMem(&pVenHwNamespaceDevicePath->Guid, pNamespace->NamespaceGuid,
+    CopyMem_S(&pVenHwNamespaceDevicePath->Guid, sizeof(pVenHwNamespaceDevicePath->Guid), pNamespace->NamespaceGuid,
       sizeof(pVenHwNamespaceDevicePath->Guid));
 
     pNamespace->pBlockDevicePath = AppendDevicePathNode(
@@ -418,7 +418,7 @@ InstallNamespaceProtocols(
     goto Finish;
   }
 
-  CopyMem(&pNamespace->Media, &gNvmDimmDriverBlockIoMedia, sizeof(pNamespace->Media));
+  CopyMem_S(&pNamespace->Media, sizeof(pNamespace->Media), &gNvmDimmDriverBlockIoMedia, sizeof(pNamespace->Media));
 
   // Overwrite with actual namespace size
   pNamespace->Media.BlockSize = MediaBlockSize;
@@ -756,7 +756,7 @@ GenerateRandomGuid(
   GeneratedGuid.Data4[0] |= 0x80; // 0b10000000 Set the highest bit
   GeneratedGuid.Data4[0] &= 0xBF; // 0b10111111 Clear the 7th bit
 
-  CopyMem(pResultGuid, &GeneratedGuid, sizeof(*pResultGuid));
+  CopyMem_S(pResultGuid, sizeof(*pResultGuid), &GeneratedGuid, sizeof(*pResultGuid));
 }
 
 /**
@@ -888,7 +888,7 @@ GetAppDirectLabelByUUID(
       goto Finish;
     }
 
-    CopyMem(pLabel, &pLsa->pLabels[Index], sizeof(*pLabel));
+    CopyMem_S(pLabel, sizeof(*pLabel), &pLsa->pLabels[Index], sizeof(*pLabel));
 
     *ppNamespaceLabel = pLabel;
     Found = TRUE;
@@ -1010,8 +1010,9 @@ ValidateLsaData(
     NVDIMM_DBG("Signature of the NAMESPACE INDEX %d", Index);
     NVDIMM_HEXDUMP(&NamespaceSignature, sizeof(NamespaceSignature));
     // We are copying the signature in two steps so we need to copy twice the half of the NSINDEX_SIG_LEN length.
-    CopyMem(&NamespaceSignature.Uint64, &pLabelStorageArea->Index[Index].Signature, NSINDEX_SIG_LEN / 2);
-    CopyMem(&NamespaceSignature.Uint64_1,
+    CopyMem_S(&NamespaceSignature.Uint64, sizeof(NamespaceSignature.Uint64), &pLabelStorageArea->Index[Index].Signature, NSINDEX_SIG_LEN / 2);
+    CopyMem_S(&NamespaceSignature.Uint64_1,
+      sizeof(NamespaceSignature.Uint64_1),
       &pLabelStorageArea->Index[Index].Signature[NSINDEX_SIG_LEN / 2], NSINDEX_SIG_LEN / 2);
     if (NamespaceSignature.Uint64 != LSA_NAMESPACE_INDEX_SIG_L ||
       NamespaceSignature.Uint64_1 != LSA_NAMESPACE_INDEX_SIG_H) {
@@ -1173,7 +1174,7 @@ RawDataToLabelIndexArea(
   for (Index = 0; Index < NAMESPACE_INDEXES; Index++) {
     pNamespaceIndex = &pLsa->Index[Index];
 
-    CopyMem(pNamespaceIndex, pBuffer, FreeOffset);
+    CopyMem_S(pNamespaceIndex, sizeof(*pNamespaceIndex), pBuffer, FreeOffset);
 
     pNamespaceIndex->pFree = AllocateZeroPool(NumFreeBytes);
     if (pNamespaceIndex->pFree == NULL) {
@@ -1181,7 +1182,7 @@ RawDataToLabelIndexArea(
       goto Finish;
     }
 
-    CopyMem(pNamespaceIndex->pFree, pBuffer + FreeOffset, NumFreeBytes);
+    CopyMem_S(pNamespaceIndex->pFree, NumFreeBytes, pBuffer + FreeOffset, NumFreeBytes);
 
     pBuffer += IndexSize;
   }
@@ -1298,12 +1299,12 @@ ReadLabelStorageArea(
     pFrom = pRawData + LabelIndexSize;
 
     for (Index = 0; Index < (*ppLsa)->Index[CurrentIndex].NumberOfLabels; Index++) {
-      CopyMem(pTo, pFrom, sizeof(NAMESPACE_LABEL_1_1));
+      CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
       pTo += sizeof(*((*ppLsa)->pLabels));
       pFrom += sizeof(NAMESPACE_LABEL_1_1);
     }
   } else {
-    CopyMem((*ppLsa)->pLabels, pRawData + LabelIndexSize, LabelSize);
+    CopyMem_S((*ppLsa)->pLabels, LabelSize, pRawData + LabelIndexSize, LabelSize);
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -1393,7 +1394,7 @@ WriteLabelStorageArea(
   }
 
   // Copy the Label index area
-  CopyMem(pRawData, pIndexArea, LabelIndexSize);
+  CopyMem_S(pRawData, TotalPcdSize, pIndexArea, LabelIndexSize);
 
   // Copy the label area
   if (UseNamespace_1_1) {
@@ -1401,12 +1402,12 @@ WriteLabelStorageArea(
     pTo = pRawData + LabelIndexSize;
 
     for (Index = 0; Index < pLsa->Index[CurrentIndex].NumberOfLabels; Index++) {
-      CopyMem(pTo, pFrom, sizeof(NAMESPACE_LABEL_1_1));
+      CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
       pFrom += sizeof(*(pLsa->pLabels));
       pTo += sizeof(NAMESPACE_LABEL_1_1);
     }
   } else {
-    CopyMem(pRawData + LabelIndexSize, pLsa->pLabels, LabelSize);
+    CopyMem_S(pRawData + LabelIndexSize, TotalPcdSize - LabelIndexSize, pLsa->pLabels, LabelSize);
   }
 
   NVDIMM_DBG("Writing LSA to DIMM %x ...", pDimm->DeviceHandle.AsUint32);
@@ -1812,7 +1813,7 @@ RecoverLabelSet(
     LabelsFound++;
 
     if (pNamespaceLabel->Position == 0) {
-      CopyMem(pNamespaceLabelName, &pNamespaceLabel->Name, NSLABEL_NAME_LEN);
+      CopyMem_S(pNamespaceLabelName, NLABEL_NAME_LEN_WITH_TERMINATOR, &pNamespaceLabel->Name, NSLABEL_NAME_LEN);
       Pos0Found = TRUE;
     }
     FREE_POOL_SAFE(pNamespaceLabel);
@@ -1866,10 +1867,10 @@ RecoverLabelSet(
   // Our structs for pNamespace and pNamespaceLabel in RetrieveNamespacesFromLsa are now out of date
   // Update the UPDATING bit and name here saving another LSA Storage read
   pNamespace->Flags.Values.Updating = 0;
-  CopyMem(&pNamespace->Name, pNamespaceLabelName, NSLABEL_NAME_LEN);
+  CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), pNamespaceLabelName, NSLABEL_NAME_LEN);
 
   pNamespaceLabelStale->Flags.Values.Updating = 0;
-  CopyMem(&pNamespaceLabelStale->Name, pNamespaceLabelName, NSLABEL_NAME_LEN);
+  CopyMem_S(&pNamespaceLabelStale->Name, sizeof(pNamespaceLabelStale->Name), pNamespaceLabelName, NSLABEL_NAME_LEN);
 
   ReturnCode = EFI_SUCCESS;
 
@@ -1972,8 +1973,8 @@ RetrieveNamespacesFromLsa(
     pNamespace->NamespaceId = GenerateNamespaceId();
     pNamespace->Enabled = FALSE;
     pNamespace->HealthState = NAMESPACE_HEALTH_OK;
-    CopyMem(&pNamespace->Name, &pNamespaceLabel->Name, NSLABEL_NAME_LEN);
-    CopyMem(&pNamespace->NamespaceGuid, &pNamespaceLabel->Uuid, NSGUID_LEN);
+    CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), &pNamespaceLabel->Name, NSLABEL_NAME_LEN);
+    CopyMem_S(&pNamespace->NamespaceGuid, sizeof(pNamespace->NamespaceGuid), &pNamespaceLabel->Uuid, NSGUID_LEN);
     pNamespace->InterleaveSetCookie = pNamespaceLabel->InterleaveSetCookie;
     pNamespace->Major = NSINDEX_MAJOR;
     if (Use_Namespace1_1) {
@@ -2798,6 +2799,7 @@ AppDirectIo(
   IN     BOOLEAN ReadOperation
   )
 {
+#ifndef OS_BUILD
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   LIST_ENTRY *pNode = NULL;
   DIMM_REGION *pRegion = NULL;
@@ -2835,6 +2837,9 @@ AppDirectIo(
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+#else
+  return EFI_UNSUPPORTED;
+#endif
 }
 
 /**
@@ -3345,7 +3350,7 @@ FindADMemmapRangeInIS(
   if (!Found) {
     ReturnCode = EFI_NOT_FOUND;
   } else {
-    CopyMem(pFoundRange, pRange, sizeof(*pFoundRange));
+    CopyMem_S(pFoundRange, sizeof(*pFoundRange), pRange, sizeof(*pFoundRange));
   }
 
 Finish:
@@ -3800,8 +3805,8 @@ LabelIndexAreaToRawData(
       goto Finish;
     }
 
-    CopyMem(pBuffer, pNamespaceIndex, FreeOffset);
-    CopyMem(pBuffer + FreeOffset, pNamespaceIndex->pFree, NumFreeBytes);
+    CopyMem_S(pBuffer, TotalIndexSize, pNamespaceIndex, FreeOffset);
+    CopyMem_S(pBuffer + FreeOffset, TotalIndexSize - FreeOffset, pNamespaceIndex->pFree, NumFreeBytes);
 
     pBuffer += pNamespaceIndex->MySize;
 
@@ -3908,7 +3913,7 @@ InitializeLabelStorageArea(
       goto Finish;
     }
     SetMem(pNewIndex->pFree, FreeBlocks, 0xFF);
-    CopyMem(&pNewIndex->Signature, &IndexSignature, NSINDEX_SIG_LEN);
+    CopyMem_S(&pNewIndex->Signature, sizeof(pNewIndex->Signature), &IndexSignature, NSINDEX_SIG_LEN);
 
     pNewIndex->LabelSize = (UINT8) BYTE_TO_INDEX_LABEL_SIZE(LabelSize);
 
@@ -4242,8 +4247,8 @@ CreateNamespaceLabels(
   pLabel->Dpa = pNamespace->Range[Index].Dpa;
   pLabel->RawSize = pNamespace->Range[Index].Size;
   pLabel->Flags = pNamespace->Flags;
-  CopyMem(&pLabel->Uuid, pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
-  CopyMem(&pLabel->Name, pNamespace->Name, sizeof(pLabel->Name));
+  CopyMem_S(&pLabel->Uuid, sizeof(pLabel->Uuid), pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
+  CopyMem_S(&pLabel->Name, sizeof(pLabel->Name), pNamespace->Name, sizeof(pLabel->Name));
   if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
     // Block Mode Namespace
     pLabel->Position = 0;            //Always zero for Block NS
@@ -4366,7 +4371,7 @@ InsertNamespaceLabels(
 
   FreeBlocks = LABELS_TO_FREE_BYTES(ROUNDUP(pLsa->Index[CurrentIndex].NumberOfLabels, 8));
   // Copy free bitmap to next index before updating it
-  CopyMem(pLsa->Index[NextIndex].pFree, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
+  CopyMem_S(pLsa->Index[NextIndex].pFree, FreeBlocks, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
 
   // Insert labels & update next index free map
   for (Index = 0; Index < LabelCount; Index++) {
@@ -4376,7 +4381,7 @@ InsertNamespaceLabels(
     }
 
     ppLabel[Index]->Slot = SlotNumber;
-    CopyMem(&pLsa->pLabels[SlotNumber], ppLabel[Index], sizeof(pLsa->pLabels[SlotNumber]));
+    CopyMem_S(&pLsa->pLabels[SlotNumber], sizeof(pLsa->pLabels[SlotNumber]), ppLabel[Index], sizeof(pLsa->pLabels[SlotNumber]));
     ChangeSlotStatus(&pLsa->Index[NextIndex], SlotNumber, SLOT_USED);
   }
   ReturnCode = UpdateLsaIndex(pLsa);
@@ -4460,10 +4465,10 @@ ModifyLabelAtSlot(
 
   FreeBlocks = LABELS_TO_FREE_BYTES(ROUNDUP(pLsa->Index[CurrentIndex].NumberOfLabels, 8));
   // Copy free bitmap to next index before updating it
-  CopyMem(pLsa->Index[NextIndex].pFree, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
+  CopyMem_S(pLsa->Index[NextIndex].pFree, FreeBlocks, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
 
   // Copy Label to a new position
-  CopyMem(&pLsa->pLabels[NewSlot], &pLsa->pLabels[SlotNumber], sizeof(pLsa->pLabels[NewSlot]));
+  CopyMem_S(&pLsa->pLabels[NewSlot], sizeof(pLsa->pLabels[NewSlot]), &pLsa->pLabels[SlotNumber], sizeof(pLsa->pLabels[NewSlot]));
   pLsa->pLabels[NewSlot].Slot = NewSlot;
 
     // Update Label fields
@@ -4471,7 +4476,7 @@ ModifyLabelAtSlot(
     pLsa->pLabels[NewSlot].Flags.AsUint32 = *pFlags;
   }
   if (pName != NULL) {
-    CopyMem(&pLsa->pLabels[NewSlot].Name, pName, NSLABEL_NAME_LEN);
+    CopyMem_S(&pLsa->pLabels[NewSlot].Name, sizeof(pLsa->pLabels[NewSlot].Name), pName, NSLABEL_NAME_LEN);
   }
   if (TotalLabelsNum != 0) {
     pLsa->pLabels[NewSlot].NumberOfLabels = TotalLabelsNum;
@@ -4627,7 +4632,7 @@ RemoveNamespaceLabels(
 
   FreeBlocks = LABELS_TO_FREE_BYTES(ROUNDUP(pLsa->Index[CurrentIndex].NumberOfLabels, 8));
   // Copy free bitmap to next index before modifying it
-  CopyMem(pLsa->Index[NextIndex].pFree, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
+  CopyMem_S(pLsa->Index[NextIndex].pFree, FreeBlocks, pLsa->Index[CurrentIndex].pFree, FreeBlocks);
 
   for (Index = 0; Index < pLsa->Index[NextIndex].NumberOfLabels; Index++) {
     pLabel = &pLsa->pLabels[Index];
@@ -4691,8 +4696,8 @@ CreateLabelsFromRanges(
     pLabel->Dpa = pNamespace->Range[Index].Dpa;
     pLabel->RawSize = pNamespace->Range[Index].Size;
     pLabel->Flags = pNamespace->Flags;
-    CopyMem(&pLabel->Uuid, pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
-    CopyMem(&pLabel->Name, pNamespace->Name, sizeof(pLabel->Name));
+    CopyMem_S(&pLabel->Uuid, sizeof(pLabel->Uuid), pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
+    CopyMem_S(&pLabel->Name, sizeof(pLabel->Name), pNamespace->Name, sizeof(pLabel->Name));
     if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
       pLabel->LbaSize = pNamespace->BlockSize;
       pLabel->InterleaveSetCookie = 0;      // Always zero for Block Namespace

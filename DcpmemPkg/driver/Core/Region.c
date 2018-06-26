@@ -274,7 +274,7 @@ InitializeDimmRegion(
     ManufacturerInPcd = pIdentificationInfo->DimmIdentification.Version1.DimmManufacturerId;
     SerialNumberInPcd = pIdentificationInfo->DimmIdentification.Version1.DimmSerialNumber;
   } else {
-    CopyMem(&DimmUidInPcd, &pIdentificationInfo->DimmIdentification.Version2.Uid, sizeof(DIMM_UNIQUE_IDENTIFIER));
+    CopyMem_S(&DimmUidInPcd, sizeof(DimmUidInPcd), &pIdentificationInfo->DimmIdentification.Version2.Uid, sizeof(DIMM_UNIQUE_IDENTIFIER));
     ManufacturerInPcd = DimmUidInPcd.ManufacturerId;
     SerialNumberInPcd = DimmUidInPcd.SerialNumber;
   }
@@ -940,7 +940,8 @@ ReduceAppDirectCapacityPerReservedCapacity(
       if (RemovedRegionGoalDimmsNum != 0) {
         for (Index = 0, TempRegionGoalDimmIndex = 0; Index < *pRegionGoalDimmsNum; Index++) {
           if (RegionGoalDimms[Index].RegionSize != 0 || RegionGoalDimms[Index].VolatileSize != 0) {
-            CopyMem(&TempRegionGoalDimms[TempRegionGoalDimmIndex],
+            CopyMem_S(&TempRegionGoalDimms[TempRegionGoalDimmIndex],
+              sizeof(TempRegionGoalDimms[Index]),
               &RegionGoalDimms[Index], sizeof(TempRegionGoalDimms[Index]));
             TempRegionGoalDimmIndex++;
           }
@@ -948,7 +949,7 @@ ReduceAppDirectCapacityPerReservedCapacity(
 
         ZeroMem(RegionGoalDimms, sizeof(RegionGoalDimms[0]) * MAX_DIMMS);
 
-        CopyMem(RegionGoalDimms, TempRegionGoalDimms, sizeof(RegionGoalDimms[0]) * MAX_DIMMS);
+        CopyMem_S(RegionGoalDimms, sizeof(RegionGoalDimms[0]) * MAX_DIMMS, TempRegionGoalDimms, sizeof(RegionGoalDimms[0]) * MAX_DIMMS);
 
         *pRegionGoalDimmsNum = TempRegionGoalDimmIndex;
       }
@@ -3214,15 +3215,16 @@ SendConfigInputToDimm(
   }
 
   /** Copy Configuration Header table **/
-  CopyMem(pNewConfHeader, pConfHeader, sizeof(*pConfHeader));
+  CopyMem_S(pNewConfHeader, PcdLength, pConfHeader, sizeof(*pConfHeader));
 
   CurrentOffset += sizeof(*pConfHeader);
 
   /** Copy Current Config table **/
 
   if (pConfHeader->CurrentConfStartOffset != 0 && pConfHeader->CurrentConfDataSize != 0) {
-    CopyMem(
+    CopyMem_S(
       (UINT8 *) pNewConfHeader + CurrentOffset,
+      PcdLength - CurrentOffset,
       (UINT8 *) pConfHeader + pConfHeader->CurrentConfStartOffset,
       pConfHeader->CurrentConfDataSize);
 
@@ -3236,8 +3238,9 @@ SendConfigInputToDimm(
 
   /** Copy new Configuration Input table **/
   if (pNewConfigInput != NULL) {
-    CopyMem(
+    CopyMem_S(
       (UINT8 *) pNewConfHeader + CurrentOffset,
+      PcdLength - CurrentOffset,
       pNewConfigInput,
       pNewConfigInput->Header.Length);
 

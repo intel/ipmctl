@@ -513,7 +513,7 @@ HiiGetString(
 	UINTN str_size = StrSize(gHiiStrings[StringId]);
 	CHAR16 * str = (CHAR16*)AllocatePool(str_size);
     if (NULL != str) {
-        CopyMem(str, gHiiStrings[StringId], str_size);
+        CopyMem_S(str, str_size, gHiiStrings[StringId], str_size);
     }
 	return str;
 }
@@ -1589,7 +1589,7 @@ FwCmdGetBsr(DIMM *pDimm, UINT64 *pBsrValue)
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-  CopyMem(pBsrValue, pFwCmd->OutPayload, sizeof(UINT64));
+  CopyMem_S(pBsrValue, sizeof(*pBsrValue), pFwCmd->OutPayload, sizeof(UINT64));
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);

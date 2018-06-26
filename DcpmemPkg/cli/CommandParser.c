@@ -53,7 +53,7 @@ EFI_STATUS RegisterCommand(struct Command *pCommand)
     }
     if (gCommandList) {
       pCommand->CommandId = (UINT8)gCommandCount; // Save its index for better tracking.
-      CopyMem(&gCommandList[gCommandCount], pCommand, sizeof(struct Command));
+      CopyMem_S(&gCommandList[gCommandCount], sizeof(struct Command), pCommand, sizeof(struct Command));
       gCommandCount++;
     } else {
       NVDIMM_WARN("Failed to register the command due to lack of resources");

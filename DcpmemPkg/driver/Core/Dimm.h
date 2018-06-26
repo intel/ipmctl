@@ -776,6 +776,7 @@ FwCmdGetErrorLog (
   @param[in] LogSizeInMbs - number of MB to be fetched
   @param[out] pBytesWritten - number of MB fetched
   @param[out] ppOutPayload - pointer to buffer start
+  @param[in] OutputBufferSz - size of ppOutPayload in bytes
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
@@ -786,7 +787,8 @@ FwCmdGetFWDebugLog(
   IN     DIMM *pDimm,
   IN     UINT64 LogSizeInMbs,
      OUT UINT64 *pBytesWritten,
-     OUT VOID *ppOutPayload
+     OUT VOID *ppOutPayload,
+  IN UINTN OutputBufferSz
   );
 
  /**
@@ -1256,17 +1258,19 @@ ApertureWrite(
   Both buffers have to be equal or greater than NumOfBytes.
 
   @param[out] pRegularBuffer output regular buffer
+  @param[in] RegularBufferSz size of the RegualrBuffer
   @param[in] ppInterleavedBuffer input interleaved buffer
   @param[in] LineSize line size of interleaved buffer
   @param[in] NumOfBytes number of bytes to copy
 **/
 VOID
 ReadFromInterleavedBuffer(
-     OUT VOID *pRegularBuffer,
+  OUT VOID *pRegularBuffer,
+  IN     UINTN RegularBufferSz,
   IN     VOID **ppInterleavedBuffer,
   IN     UINT32 LineSize,
   IN     UINT32 NumOfBytes
-  );
+);
 
 /**
   Flush data from an interleaved buffer.
@@ -1287,7 +1291,6 @@ FlushInterleavedBuffer(
 /**
   Copies 'Length' no of bytes from source buffer into destination buffer
   The function attempts to perform an 8 byte copy and falls back to 1 byte copies if required
-
   @param[in] SourceBuffer Source address
   @param[in] Length The length in no of bytes
   @param[out] DestinationBuffer Destination address

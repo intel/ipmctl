@@ -923,7 +923,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   cmd->Opcode = PtGetLog;
   cmd->SubOpcode = SubopMemInfo;
   cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_MEMORY_INFO);
-  CopyMem(cmd->InputPayload, &mem_info_input, cmd->InputPayloadSize);
+  CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), &mem_info_input, cmd->InputPayloadSize);
   cmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1);
   if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
     pmem_info_output = (PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1 *)cmd->OutPayload;
@@ -3278,20 +3278,19 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   p_device->node_controller_id = p_dimm->NodeControllerID;
   p_device->memory_type = p_dimm->MemoryType;
   p_device->dimm_sku = p_dimm->SkuInformation;
-  CopyMem(p_device->manufacturer, &(p_dimm->ManufacturerId), sizeof(UINT16));
-  CopyMem(p_device->serial_number, &(p_dimm->SerialNumber), sizeof(UINT32));
+  CopyMem_S(p_device->manufacturer, sizeof(p_device->manufacturer), &(p_dimm->ManufacturerId), sizeof(UINT16));
+  CopyMem_S(p_device->serial_number, sizeof(p_device->serial_number), &(p_dimm->SerialNumber), sizeof(UINT32));
   p_device->subsystem_vendor_id = p_dimm->SubsystemVendorId;
   p_device->subsystem_device_id = p_dimm->SubsystemDeviceId;
   p_device->subsystem_revision_id = p_dimm->SubsystemRid;
   p_device->manufacturing_info_valid = p_dimm->ManufacturingInfoValid;
   p_device->manufacturing_location = p_dimm->ManufacturingLocation;
   p_device->manufacturing_date = p_dimm->ManufacturingDate;
-  CopyMem(p_device->serial_number, &(p_dimm->SerialNumber), sizeof(UINT32));
-  CopyMem(p_device->part_number, p_dimm->PartNumber, PART_NUMBER_LEN);
+  CopyMem_S(p_device->part_number, sizeof(p_device->part_number), p_dimm->PartNumber, PART_NUMBER_LEN);
   //p_device->fw_revision = //todo
   //p_device->fw_api_version = //todo
   p_device->capacity = p_dimm->Capacity;
-  CopyMem(p_device->interface_format_codes, p_dimm->InterfaceFormatCode, sizeof(UINT16) * 2);
+  CopyMem_S(p_device->interface_format_codes, sizeof(p_device->interface_format_codes), p_dimm->InterfaceFormatCode, sizeof(UINT16) * 2);
   UnicodeStrToAsciiStr(p_dimm->DimmUid, p_device->uid);
   p_device->lock_state = p_dimm->SecurityState;
   p_device->manageability = p_dimm->ManageabilityState;
@@ -3323,7 +3322,7 @@ int get_fw_err_log_stats(
 	cmd->Opcode = PtGetLog;
 	cmd->SubOpcode = SubopErrorLog;
 	cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_ERROR_LOG);
-	CopyMem(cmd->InputPayload, &get_error_log_input, cmd->InputPayloadSize);
+	CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), &get_error_log_input, cmd->InputPayloadSize);
 	cmd->OutputPayloadSize = sizeof(LOG_INFO_DATA_RETURN);
 	if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
 		memcpy_s(log_info, sizeof(LOG_INFO_DATA_RETURN), cmd->OutPayload, cmd->OutputPayloadSize);
@@ -3382,11 +3381,11 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
 	cmd->Opcode = p_cmd->opcode;
 	cmd->SubOpcode = p_cmd->sub_opcode;
 	cmd->InputPayloadSize = p_cmd->input_payload_size;
-	CopyMem(cmd->InputPayload, p_cmd->input_payload, cmd->InputPayloadSize);
+	CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), p_cmd->input_payload, cmd->InputPayloadSize);
 	cmd->OutputPayloadSize = p_cmd->output_payload_size;
 	cmd->LargeInputPayloadSize = p_cmd->large_input_payload_size;
 	cmd->LargeOutputPayloadSize = p_cmd->large_output_payload_size;
-	CopyMem(cmd->LargeInputPayload, p_cmd->large_input_payload, cmd->LargeInputPayloadSize);
+	CopyMem_S(cmd->LargeInputPayload, sizeof(cmd->LargeInputPayload), p_cmd->large_input_payload, cmd->LargeInputPayloadSize);
 
 	if (EFI_SUCCESS != PassThruCommand(cmd, PT_TIMEOUT_INTERVAL))
   {
@@ -3408,8 +3407,8 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
       rc = NVM_ERR_INVALID_PARAMETER;
       goto finish;
     }
+    CopyMem_S(p_cmd->large_output_payload, p_cmd->large_output_payload_size, cmd->LargeOutputPayload, cmd->LargeOutputPayloadSize);
     p_cmd->large_output_payload_size = cmd->LargeOutputPayloadSize;
-    CopyMem(p_cmd->large_output_payload, cmd->LargeOutputPayload, cmd->LargeOutputPayloadSize);
   }
   else if (cmd->OutputPayloadSize)
   {
@@ -3420,10 +3419,9 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
       rc = NVM_ERR_INVALID_PARAMETER;
       goto finish;
     }
+    CopyMem_S(p_cmd->output_payload, p_cmd->output_payload_size, cmd->OutPayload, cmd->OutputPayloadSize);
     p_cmd->output_payload_size = cmd->OutputPayloadSize;
-    CopyMem(p_cmd->output_payload, cmd->OutPayload, cmd->OutputPayloadSize);
   }
-  
 finish:
   FREE_POOL_SAFE(cmd);
   return rc;

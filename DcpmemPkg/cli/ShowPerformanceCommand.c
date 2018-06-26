@@ -67,7 +67,7 @@ CHAR16 *mppAllowedShowPerformanceDisplayValues[] =
   DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
 };
 
-#define PERFORMANCE_DATA_FORMAT    L"=0x%016Lx%016Lx\n"
+#define PERFORMANCE_DATA_FORMAT    L"="FORMAT_UINT64_HEX FORMAT_UINT64_HEX"\n"
 
 
 EFI_STATUS GetDimmIdorDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,

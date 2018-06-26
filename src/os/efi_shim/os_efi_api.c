@@ -1415,7 +1415,7 @@ UnicodeSPrint(
 {
 	VA_LIST Marker;
 	VA_START(Marker, FormatString);
-	return vswprintf_s(StartOfBuffer, BufferSize, FormatString, Marker);
+	return vswprintf_s(StartOfBuffer, BufferSize/sizeof(CHAR16), FormatString, Marker);
 }
 
 /*

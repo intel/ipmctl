@@ -19,7 +19,7 @@ extern "C" {
 
 // SYSTEM_EVENT_CAT_MGMT
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_1        1 //call to void logStartError(std::string msg)
-#define SYSTEM_EVENT_CAT_MGMT_NUMB_2        2 //"ACPI Monitor starting initialization..."
+#define SYSTEM_EVENT_CAT_MGMT_NUMB_2        2 // 
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_3        3 //"ACPI Monitor init complete.  Will be monitoring %d number of dimms"
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_4        4 //ACPI_EVENT_MSG_FW_ERROR_CNT_INCREASED "FW error count increased to: %d"
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_5        5 //call to void monitor::AcpiMonitor::sendFwErrLogSystemEventEntry(const NVM_UID device_uid, std::string log_type_level, std::string log_details)
@@ -30,6 +30,7 @@ extern "C" {
 #define EVENT_CONFIG_CHANGE_300        300 //STR_CONFIG_CHANGE_NEW_GOAL
 #define EVENT_CONFIG_CHANGE_301        301 //STR_CONFIG_CHANGE_DELETE_GOAL
 #define EVENT_CONFIG_CHANGE_305        305 //STR_CONFIG_SENSOR_SET_CHANGED 
+#define EVENT_CONFIG_CHANGE_312        312 //STR_CONFIG_MONITOR_HAS_STARTED 
 
 #define SYSTEM_EVENT_TYPE_CATEGORY_MASK     0xFF000000
 #define SYSTEM_EVENT_TYPE_SEVERITY_MASK     0x00F00000

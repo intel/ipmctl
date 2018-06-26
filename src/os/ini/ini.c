@@ -263,6 +263,7 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
       }
     }
     ini_entry_sz_chars = strnlen_s(p_value, NVM_INI_ENTRY_LEN) + 1;
+    p_tok_context = NULL;
     p_comment = s_strtok(p_value, &ini_entry_sz_chars, NVM_INI_COMMENT_TOKEN, &p_tok_context);
     if (NULL == p_comment) {
       p_comment = (char *)(p_value + strlen(p_value));

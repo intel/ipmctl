@@ -42,11 +42,6 @@ void monitor::AcpiMonitor::init()
 
 	nvm_sync_lock_api();
 
-	nvm_store_system_entry(LOG_SRC,
-        SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, SYSTEM_EVENT_CAT_MGMT_NUMB_2, false, false, true, false, 0),
-        NULL,
-		"ACPI Monitor starting initialization...");
-
 	std::vector<std::string> dimmList = getDimmList();
 	for (std::vector<std::string>::const_iterator dimmUidIter = dimmList.begin();
 		dimmUidIter != dimmList.end(); dimmUidIter++)

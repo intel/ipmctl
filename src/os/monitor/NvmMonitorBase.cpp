@@ -42,6 +42,10 @@ monitor::NvmMonitorBase::NvmMonitorBase(std::string const &name)
 
 	configResult = nvm_get_config_int(enabledKey.c_str(), 0);
 	m_enabled = configResult != 0;
+
+  nvm_store_system_entry(LOG_SRC,
+    SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_312, false, true, true, false, 0),
+    NULL, "The Intel(R) Optane (TM) DC persistent memory %s monitor service has started.", m_name.c_str());
 }
 
 monitor::NvmMonitorBase::~NvmMonitorBase()

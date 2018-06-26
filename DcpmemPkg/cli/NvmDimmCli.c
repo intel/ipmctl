@@ -199,7 +199,11 @@ UefiMain(
   // Check for NVM Protocol
   Rc = gBS->LocateHandleBuffer(ByProtocol, &gNvmDimmConfigProtocolGuid, NULL, &HandleCount, &pHandleBuffer);
   if (EFI_ERROR(Rc) || HandleCount != 1) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    if (Rc == EFI_NOT_FOUND) {
+      Print(FORMAT_STR_NL, CLI_ERR_FAILED_TO_FIND_PROTOCOL);
+      goto Finish;
+    }
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     Rc = EFI_NOT_FOUND;
     goto Finish;
   }
@@ -630,7 +634,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }

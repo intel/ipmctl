@@ -210,7 +210,7 @@ ShowPerformance(
   // Make sure we can access the config protocol
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     NVDIMM_ERR("Communication with the device driver failed; ReturnCode 0x%x", ReturnCode);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
@@ -265,7 +265,7 @@ ShowPerformance(
   ReturnCode = pNvmDimmConfigProtocol->GetDimmsPerformanceData(pNvmDimmConfigProtocol,
       &DimmCount, &pDimmsPerformanceData);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     NVDIMM_ERR("");
     goto Finish;
   }

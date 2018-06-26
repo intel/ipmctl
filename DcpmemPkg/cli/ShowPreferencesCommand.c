@@ -77,7 +77,7 @@ ShowPreferences(
   /** Need NvmDimmConfigProtocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-   Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+   Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
    ReturnCode = EFI_NOT_FOUND;
    goto Finish;
   }
@@ -110,7 +110,7 @@ ShowPreferences(
     pImcInterleaving = ParseImcInterleavingValue(DriverPreferences.ImcInterleaving);
 
     if (pChannelInterleaving == NULL || pImcInterleaving == NULL) {
-      Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+      Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
       ReturnCode = EFI_DEVICE_ERROR;
     } else {
       Print(FORMAT_STR L"=" FORMAT_STR L"_" FORMAT_STR_NL,
@@ -132,7 +132,7 @@ ShowPreferences(
   }
 
   if (pAppDirectGranularity == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_DEVICE_ERROR;
   } else {
     Print(FORMAT_STR L"=" FORMAT_STR_NL,

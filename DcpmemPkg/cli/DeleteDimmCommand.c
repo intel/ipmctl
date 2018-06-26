@@ -79,7 +79,7 @@ DeleteDimm(
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_CONFIG_PROTOCOL);
+    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
     goto FinishWithError;
   }

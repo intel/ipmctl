@@ -27,6 +27,8 @@
 
 // Static values and definitions used locally only
 #define MAX_EVENT_TYPE_STRING_LENGTH 15
+#define SEVERITY_STRING_LOCATION_IN_EVENT_MESSAGE 3
+#define EVENT_ID_STRING_LOCATION_IN_EVENT_MESSAGE 2
 
 // Common strings and formatting string
 #define EVENT_MESSAGE_UID_PREFIX_CHAR ':' // Last char of the EVENT_MESSAGE_UID_PREFIX string
@@ -69,6 +71,33 @@ static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_c
 * Function returns event id form the event message string
 */
 static UINT32 get_event_id_form_entry(CHAR8* event_message);
+
+/*
+* Get defined word form the string and writes to the buffer
+*/
+static void return_word_form_the_string(char* event_message, UINT8 word_number, CHAR8* p_buffer, UINT8 buffer_size)
+{
+  UINT8 index;
+  char *p_word = NULL;
+  char *p_context = NULL;
+  NVM_EVENT_MSG event_message_copy;
+  size_t event_message_size = strnlen_s(event_message, sizeof(NVM_EVENT_MSG)) + 1;
+
+  // Need to copy the message because strtok is going to destroy it
+  strcpy_s(event_message_copy, event_message_size, event_message);
+
+  p_word = s_strtok(event_message_copy, &event_message_size, EVENT_MESSAGE_CONTROL_CHARACTERS, &p_context);
+  for (index = 1; (index < word_number) && p_context && event_message_size; index++) {
+    p_word = s_strtok(NULL, &event_message_size, EVENT_MESSAGE_CONTROL_CHARACTERS, &p_context);
+  }
+
+  if (NULL != p_word) {
+    strcpy_s(p_buffer, buffer_size, p_word);
+  }
+  else {
+    p_buffer[0] = 0;
+  }
+}
 
 /*
 * Strip out the end of line chars form the string
@@ -416,8 +445,6 @@ static UINT32 get_event_type_form_event_entry(CHAR8 *event_message, CHAR8 **pp_c
 */
 static BOOLEAN check_skip_entry_status_for_type(BOOLEAN not_matching, CHAR8 type_mask, CHAR8 *event_message)
 {
-    char time_stamp[MAX_TIMESTAMP_LEN];
-    int event_id = 0;
     char type_string[MAX_EVENT_TYPE_STRING_LENGTH];
     CHAR8 tmp_type_mask;
     BOOLEAN skip_entry = not_matching;
@@ -426,7 +453,7 @@ static BOOLEAN check_skip_entry_status_for_type(BOOLEAN not_matching, CHAR8 type
     {
         // Get event type and compare with requested event type mask
         // The single line format is "%s %s %d %s %d %s\n" time_stamp date, time_stamp time, event_id, event_type, action_req, event_message
-        sscanf_s(event_message, "%s %s\t%d\t%s", time_stamp, time_stamp, &event_id, type_string);
+        return_word_form_the_string(event_message, SEVERITY_STRING_LOCATION_IN_EVENT_MESSAGE, type_string, sizeof(type_string));
         // Convert the event type string to the event type value
         tmp_type_mask = get_type_value(type_string);
         if (tmp_type_mask & type_mask)
@@ -581,10 +608,11 @@ static BOOLEAN check_skip_entry_status_for_event_id(BOOLEAN not_matching, UINT32
 */
 static UINT32 get_event_id_form_entry(CHAR8* event_message)
 {
-    char time_stamp[MAX_TIMESTAMP_LEN];
+    char event_id_str[SYSTEM_LOG_EVENT_ID_STRING_SIZE];
     int event_id = 0;
 
-    sscanf_s(event_message, "%s\t%s\t%d", time_stamp, time_stamp, &event_id);
+    return_word_form_the_string(event_message, EVENT_ID_STRING_LOCATION_IN_EVENT_MESSAGE, event_id_str, sizeof(event_id_str));
+    sscanf_s(event_id_str, "%d", &event_id);
     return (UINT32) event_id;
 }
 /*

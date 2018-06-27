@@ -90,8 +90,8 @@ RunQuickDiagnostics(
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The BSR check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((TmpDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED, ppResult, &TmpDiagState,
-          DimmStr);
+          APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED, ppResult, &TmpDiagState,
+            DimmStr);
       }
       continue;
     }

@@ -1550,13 +1550,37 @@ NVM_API int nvm_get_security_permission(struct device_discovery *p_discovery)
   return NVM_ERR_API_NOT_SUPPORTED;
 }
 
+static void get_sensor_units(const enum sensor_type type, struct sensor *psensor)
+{
+  switch (type) {
+  case SENSOR_MEDIA_TEMPERATURE:
+  case SENSOR_CONTROLLER_TEMPERATURE:
+    psensor->units = UNIT_CELSIUS;
+    break;
+  case SENSOR_PERCENTAGE_REMAINING:
+    psensor->units = UNIT_PERCENT;
+    break;
+  case SENSOR_POWERCYCLES:
+    psensor->units = UNIT_CYCLES;
+    break;
+  case SENSOR_UPTIME:
+    psensor->units = UNIT_SECONDS;
+    break;
+  case SENSOR_DIRTYSHUTDOWNS:
+  case SENSOR_FWERRORLOGCOUNT:
+  case SENSOR_HEALTH:
+    psensor->units = UNIT_COUNT;
+    break;
+  }
+}
+
 int fill_sensor_info(DIMM_SENSOR    DimmSensorsSet[SENSOR_TYPE_COUNT],
          struct sensor *    p_sensor,
          const enum sensor_type type)
 {
   if ((int)type > (int)SENSOR_TYPE_COUNT) {
     NVDIMM_ERR_W(L"Sensor type (%d) not supported\n", (int)type);
-    return NVM_ERR_UNKNOWN;
+    return NVM_ERR_INVALIDPARAMETER;
   } else {
     p_sensor->type = (enum sensor_type)DimmSensorsSet[type].Type;
     p_sensor->current_state = (enum sensor_status)DimmSensorsSet[type].State;
@@ -1578,6 +1602,7 @@ int fill_sensor_info(DIMM_SENSOR    DimmSensorsSet[SENSOR_TYPE_COUNT],
     p_sensor->upper_noncritical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperNonCritical) ? TRUE : FALSE;
     p_sensor->upper_fatal_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperFatal) ? TRUE : FALSE;
     p_sensor->upper_critical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperCritical) ? TRUE : FALSE;
+    get_sensor_units((enum sensor_type) DimmSensorsSet[type].Type, p_sensor);
     return NVM_SUCCESS;
   }
 }
@@ -1593,7 +1618,8 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
 
   if (NULL == p_sensors) {
     NVDIMM_ERR("NULL input parameter\n");
-    return NVM_ERR_INVALID_PARAMETER;
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto Finish;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
@@ -1603,51 +1629,65 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-    return rc;
+    goto Finish;
   }
 
   ReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DimmSensorsSet);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(L"Failed to GetSensorsInfo\n");
     rc = NVM_ERR_UNKNOWN;
+    goto Finish;
   }
 
-  for (i = 0; i < SENSOR_TYPE_COUNT; ++i)
-    fill_sensor_info(DimmSensorsSet, &p_sensors[i], (enum sensor_type)i);
+  for (i = 0; i < SENSOR_TYPE_COUNT; ++i) {
+    rc = fill_sensor_info(DimmSensorsSet, &p_sensors[i], (enum sensor_type)i);
+    if (EFI_ERROR(ReturnCode)) {
+      rc = NVM_ERR_OPERATION_FAILED;
+    }
+  }
+
+Finish:
   return rc;
 }
-
 
 NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type,
          struct sensor *p_sensor)
 {
-  EFI_STATUS ReturnCode;
+  EFI_STATUS EFIReturnCode = EFI_INVALID_PARAMETER;
   unsigned int dimm_id;
   DIMM_SENSOR DimmSensorsSet[SENSOR_TYPE_COUNT];
   int rc = NVM_SUCCESS;
 
   if (NULL == p_sensor) {
     NVDIMM_ERR("NULL input parameter\n");
-    return NVM_ERR_INVALID_PARAMETER;
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto Finish;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
+    goto Finish;
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-    return rc;
+    goto Finish;
   }
 
-  ReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DimmSensorsSet);
-  if (EFI_ERROR(ReturnCode)) {
+  EFIReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DimmSensorsSet);
+  if (EFI_ERROR(EFIReturnCode)) {
     NVDIMM_ERR_W(L"Failed to GetSensorsInfo\n");
-    rc = NVM_ERR_UNKNOWN;
+    rc = NVM_ERR_OPERATION_FAILED;
+    goto Finish;
+  }
+  EFIReturnCode = fill_sensor_info(DimmSensorsSet, p_sensor, type);
+  if (EFI_ERROR(EFIReturnCode)) {
+    NVDIMM_ERR_W(L"Failed to FillSensorsInfo\n");
+    rc = NVM_ERR_OPERATION_FAILED;
   }
 
-  return fill_sensor_info(DimmSensorsSet, p_sensor, type);
+Finish:
+  return rc;
 }
 
 NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
@@ -1660,22 +1700,23 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
 
   if (NULL == p_settings) {
     NVDIMM_ERR("NULL input parameter\n");
-    return NVM_ERR_INVALID_PARAMETER;
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto Finish;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
+    goto Finish;
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
-    return rc;
+    goto Finish;
   }
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    rc = NVM_ERR_UNKNOWN;
+    rc = NVM_ERR_OPERATION_FAILED;
     goto Finish;
   }
 
@@ -1689,7 +1730,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
     pCommandStatus);
 
   if (EFI_ERROR(ReturnCode))
-    rc = NVM_ERR_UNKNOWN;
+    rc = NVM_ERR_OPERATION_FAILED;
 
   FreeCommandStatus(&pCommandStatus);
 Finish:
@@ -2691,8 +2732,8 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_clear_injected_device_error(const NVM_UID   device_uid,
-              const struct device_error * p_error)
+NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
+              const struct device_error *p_error)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 DimmId;

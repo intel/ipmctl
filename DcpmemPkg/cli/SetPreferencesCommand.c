@@ -13,6 +13,14 @@
 #include "Common.h"
 #include "Convert.h"
 #include "Utility.h"
+
+ /**
+ Local definitions
+ **/
+#define MAX_BOOLEAN_VALUE 1
+#define MAX_LOG_VALUE 0x7FFFFFFF
+#define MAX_LOG_LEVEL_VALUE 4
+
 /**
   Command syntax definition
 **/
@@ -145,13 +153,13 @@ Finish:
 }
 
 #ifdef OS_BUILD
-EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, UINT8 ValidateBool, UINT64 *IntegerEq) {
+EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, UINT64 MaxValue, UINT64 *IntegerEq) {
 
   EFI_STATUS rc = EFI_INVALID_PARAMETER;
   if (!GetU64FromString(InputString, IntegerEq)) {
     goto Finish;
   }
-  if (ValidateBool && !(*IntegerEq == 0 || *IntegerEq == 1)) {
+  if (*IntegerEq > MaxValue) {
       goto Finish;
   }
   rc = EFI_SUCCESS;
@@ -160,7 +168,7 @@ Finish:
   return rc;
 }
 
-EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN BOOLEAN IsBool)
+EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MaxValue)
 {
   EFI_STATUS rc = EFI_SUCCESS;
   CHAR16 *pTypeValue = NULL;
@@ -177,7 +185,7 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
-    rc = ValidateAndConvertInput(pTypeValue, IsBool, &IntegerValue);
+    rc = ValidateAndConvertInput(pTypeValue, MaxValue, &IntegerValue);
     if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
       PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, EFI_INVALID_PARAMETER);
       goto Finish;
@@ -398,13 +406,13 @@ SetPreferences(
     }
   }
 #ifdef OS_BUILD
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", TRUE);
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", FALSE);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", TRUE);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", FALSE);
-  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", FALSE);
-  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", FALSE);
-  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", FALSE);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MAX_BOOLEAN_VALUE);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MAX_UINT64_VALUE);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MAX_BOOLEAN_VALUE);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MAX_UINT64_VALUE);
+  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MAX_LOG_VALUE);
+  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MAX_LOG_VALUE);
+  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MAX_LOG_LEVEL_VALUE);
 #endif
 
 Finish:

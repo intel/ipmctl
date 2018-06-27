@@ -93,7 +93,7 @@ RunSecurityDiagnostics(
   }
 
   if (InconsistencyFlag) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING, ppResult, pDiagState, pInconsistentSecurityStatesStr, L".");
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING, ppResult, pDiagState, pInconsistentSecurityStatesStr);
   }
 
   if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {

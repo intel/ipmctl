@@ -1761,7 +1761,7 @@ static unsigned int convert_event_filter_data_and_return_event_type(const struct
 
   if (NULL == p_filter) {
     event_type_mask = SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_ALL_MASK) |
-      SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_ALL_MASK);
+      SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_ONLY_MASK);
 
     return event_type_mask;
   }

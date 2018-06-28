@@ -734,7 +734,7 @@ static inline void *allocate_buffer_for_file(FILE *h_file, size_t *buff_size)
 
     // Check the file size
     fseek(h_file, 0, SEEK_END);
-    file_size = ftell(h_file);
+    file_size = ftell(h_file) + 1; // + terminating zero
     fseek(h_file, 0, SEEK_SET);
     if (file_size > 0) {
         file_buffer = AllocateZeroPool(file_size);

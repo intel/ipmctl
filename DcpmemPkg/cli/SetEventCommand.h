@@ -20,7 +20,7 @@ Execute the Set Event command
 @retval EFI_NOT_READY Invalid device state to perform action
 **/
 EFI_STATUS
-SetEvent(
+SetEventCmd(
   IN  struct Command *pCmd
 );
 

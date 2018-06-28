@@ -82,7 +82,7 @@ int acpi_health_notification_callback (HCMNOTIFICATION h_notify, void *context, 
 * @return Returns a pointer to the context.  Note, this context needs to be freed
 *	by acpi_event_free_ctx.
 */
-NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
+NVM_API int acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
 {
 	struct nvm_dimm_acpi_event_ctx * win_ctx = NULL;
 	char ioctl_target[256];
@@ -144,7 +144,7 @@ NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
 *
 * @param[in] ctx - pointer to a context created by acpi_event_create_ctx
 */
-NVM_API int nvm_acpi_event_free_ctx(void * context)
+NVM_API int acpi_event_free_ctx(void * context)
 {
 	struct nvm_dimm_acpi_event_ctx * ctx = context;
 	if (NULL != ctx)
@@ -168,7 +168,7 @@ NVM_API int nvm_acpi_event_free_ctx(void * context)
 *
 * @return Returns the NFIT dimm handle associated with the context
 */
-NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle)
+NVM_API int acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != acpi_event_ctx)
@@ -192,7 +192,7 @@ NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_ha
 *		ACPI_EVENT_NOT_SIGNALLED
 *		ACPI_EVENT_UNKNOWN
 */
-NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
+NVM_API int acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != acpi_event_ctx)
@@ -212,7 +212,7 @@ NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type even
 * @param[in] ctx - pointer to a context created by acpi_event_create_ctx
 *
 */
-NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int mask)
+NVM_API int acpi_event_set_monitor_mask(void * ctx, const unsigned int mask)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != acpi_event_ctx)
@@ -228,7 +228,7 @@ NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int mask)
 * @param[in] ctx - pointer to a context created by acpi_event_create_ctx
 *
 */
-NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
+NVM_API int acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != acpi_event_ctx)
@@ -254,7 +254,7 @@ NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
 *		ACPI_EVENT_TIMED_OUT_RESULT
 *		ACPI_EVENT_UNKNOWN_RESULT
 */
-NVM_API int nvm_acpi_wait_for_event(void * acpi_event_contexts[], const unsigned int dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
+NVM_API int acpi_wait_for_event(void * acpi_event_contexts[], const unsigned int dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
 {
 	struct nvm_dimm_acpi_event_ctx *ctx;
 	unsigned int index;

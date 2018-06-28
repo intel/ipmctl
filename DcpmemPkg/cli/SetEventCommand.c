@@ -15,7 +15,7 @@
 #include "Convert.h"
 
 EFI_STATUS
-SetEvent(IN struct Command *pCmd);
+SetEventCmd(IN struct Command *pCmd);
 
 /**
 Command syntax definition
@@ -33,7 +33,7 @@ struct Command SetEventCommand =
     { ACTION_REQ_PROPERTY, L"", HELP_TEXT_SET_ACTION_REQ_PROPERTY, TRUE, ValueRequired },
   },
   L"Set event's action required flag on/off",         //!< help
-  SetEvent
+  SetEventCmd
 };
 
 /**
@@ -46,7 +46,7 @@ Execute the Set Event command
 @retval EFI_NOT_READY Invalid device state to perform action
 **/
 EFI_STATUS
-SetEvent(
+SetEventCmd(
 	IN     struct Command *pCmd
 )
 {

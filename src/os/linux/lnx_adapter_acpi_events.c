@@ -28,7 +28,7 @@ struct nvm_dimm_acpi_event_ctx
 *		NVM_SUCCESS
 *		NVM_ERR_NO_MEM
 */
-NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
+NVM_API int acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
 {
 	int rc = NVM_SUCCESS;
 	struct nvm_dimm_acpi_event_ctx * new_ctx;
@@ -62,7 +62,7 @@ NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
 * @return Returns one of the following
 *		NVM_SUCCESS
 */
-NVM_API int nvm_acpi_event_free_ctx(void * ctx)
+NVM_API int acpi_event_free_ctx(void * ctx)
 {
 	if (NULL != ctx)
 	{
@@ -83,7 +83,7 @@ NVM_API int nvm_acpi_event_free_ctx(void * ctx)
 *		NVM_ERR_INVALID_PARAMETER
 *		NVM_SUCCESS
 */
-NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle)
+NVM_API int acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != ctx)
@@ -108,7 +108,7 @@ NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_ha
 *		NVM_ERR_INVALID_PARAMETER
 *		NVM_SUCCESS
 */
-NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
+NVM_API int acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != ctx)
@@ -133,7 +133,7 @@ NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type even
 *		NVM_SUCCESS
 *
 */
-NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
+NVM_API int acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != ctx)
@@ -157,7 +157,7 @@ NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_
 *		NVM_ERR_INVALID_PARAMETER
 *		NVM_SUCCESS
 */
-NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
+NVM_API int acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
 {
 	struct nvm_dimm_acpi_event_ctx * acpi_event_ctx = (struct nvm_dimm_acpi_event_ctx *)ctx;
 	if (NULL != ctx)
@@ -185,7 +185,7 @@ NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
 *		NVM_ERR_UNKNOWN
 *		NVM_SUCCESS
 */
-NVM_API int nvm_acpi_wait_for_event(void * acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
+NVM_API int acpi_wait_for_event(void * acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
 {
 	COMMON_LOG_ENTRY();
 	struct nvm_dimm_acpi_event_ctx * context;

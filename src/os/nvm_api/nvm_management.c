@@ -78,6 +78,13 @@ extern EFI_STATUS
 ParseSourceDumpFile(IN CHAR16 *pFilePath, IN EFI_DEVICE_PATH_PROTOCOL *pDevicePath, OUT CHAR8 **pFileString);
 extern EFI_STATUS RegisterCommands();
 extern int g_fast_path;
+extern int acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx);
+extern int acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle);
+extern int acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state);
+extern int acpi_event_set_monitor_mask(void * ctx, const unsigned int mask);
+extern int acpi_event_get_monitor_mask(void * ctx, unsigned int * mask);
+extern int acpi_wait_for_event(void * acpi_event_contexts[], const unsigned int dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result);
+extern int acpi_event_free_ctx(void * context);
 
 //todo: add error checking
 NVM_API int nvm_init()
@@ -3466,4 +3473,39 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
 finish:
   FREE_POOL_SAFE(cmd);
   return rc;
+}
+
+NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
+{
+  return acpi_event_create_ctx(dimm_handle, ctx);
+}
+
+NVM_API int nvm_acpi_event_free_ctx(void * ctx)
+{
+  return acpi_event_free_ctx(ctx);
+}
+
+NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int  * dev_handle)
+{
+  return acpi_event_ctx_get_dimm_handle(ctx, dev_handle);
+}
+
+NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
+{
+  return acpi_event_get_event_state(ctx, event_type, event_state);
+}
+
+NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
+{
+  return acpi_event_set_monitor_mask(ctx, acpi_monitored_event_mask);
+}
+
+NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
+{
+  return acpi_event_get_monitor_mask(ctx, mask);
+}
+
+NVM_API int nvm_acpi_wait_for_event(void * acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
+{
+  return acpi_wait_for_event(acpi_event_contexts, dimm_cnt, timeout_sec, event_result);
 }

@@ -962,12 +962,6 @@ OpenNvmDimmProtocol(
   }
 
   if (CompareGuid(&Guid, &gNvmDimmConfigProtocolGuid)) {
-    ReturnCode = ((EFI_DCPMM_CONFIG_PROTOCOL *)*ppProtocol)->InitializeNvmDimmDriver((EFI_DCPMM_CONFIG_PROTOCOL *) *ppProtocol);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to Initialize NvmDimmDriver.");
-      goto Finish;
-    }
-
     ReturnCode = CheckConfigProtocolVersion((EFI_DCPMM_CONFIG_PROTOCOL *) *ppProtocol);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to get the proper config protocol.");

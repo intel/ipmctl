@@ -63,7 +63,6 @@ extern CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT];
 EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
 {
   NVMD_CONFIG_PROTOCOL_VERSION,
-  InitializeNvmDimmDriver,
   GetDimmCount,
   GetDimms,
   GetDimm,
@@ -124,32 +123,6 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   PassThruCommand
 #endif /* MDEPKG_NDEBUG */
 };
-
-/**
-  Run the time intensive initialization routines. This should be called by
-  any module prior to using the driver protocols.
-
-  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-
-  @retval EFI_SUCCESS  Initialization succeeded
-  @retval EFI_XXX Any number of EFI error codes
-**/
-EFI_STATUS
-EFIAPI
-InitializeNvmDimmDriver (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis
-  )
-{
-   EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-   if (!gNvmDimmData->DriverInitialized) {
-      ReturnCode = InitializeDimms();
-      if (!EFI_ERROR(ReturnCode)) {
-         gNvmDimmData->DriverInitialized = TRUE;
-      }
-   }
-   return ReturnCode;
-}
 
 #ifdef OS_BUILD
 #include "event.h"

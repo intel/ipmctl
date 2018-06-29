@@ -141,8 +141,6 @@ typedef struct {
   **/
   BOOLEAN UninstallDevicePath;
 
-  BOOLEAN DriverInitialized;
-
   /**
     All of the minimal sizes and alignment values for the DIMM
     partitioning and Namespaces creation.

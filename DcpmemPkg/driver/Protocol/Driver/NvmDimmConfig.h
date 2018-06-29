@@ -1681,22 +1681,6 @@ CheckGoalStatus(
   );
 
 /**
-  Run the time intensive initialization routines. This should be called by
-  any module prior to using the driver protocols.
-
-  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-
-  @retval EFI_SUCCESS  Initialization succeeded
-  @retval EFI_XXX Any number of EFI error codes
-**/
-EFI_STATUS
-EFIAPI
-InitializeNvmDimmDriver(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis
-  );
-
-
-/**
 InjectError
 
 @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.

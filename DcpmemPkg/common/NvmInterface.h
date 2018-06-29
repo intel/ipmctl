@@ -46,22 +46,6 @@ typedef enum {
 
 extern CONST CHAR16 *gDiagnosticTestPrefixStr[];
 
-
-/**
-  Run the time intensive initialization routines. This should be called by
-  any module prior to using the driver protocols.
-
-  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-
-  @retval EFI_SUCCESS  Initialization succeeded
-  @retval EFI_XXX Any number of EFI error codes
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_INITIALIZE_NVM_DRIVER) (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis
-);
-
 /**
   Retrieve the number of DCPMEM modules in the system found in NFIT
 
@@ -1436,7 +1420,6 @@ EFI_STATUS
 **/
 struct _EFI_DCPMM_CONFIG_PROTOCOL {
   UINT32 Version;
-  EFI_DCPMM_CONFIG_INITIALIZE_NVM_DRIVER InitializeNvmDimmDriver;
   EFI_DCPMM_CONFIG_GET_DIMM_COUNT GetDimmCount;
   EFI_DCPMM_CONFIG_GET_DIMMS GetDimms;
   EFI_DCPMM_CONFIG_GET_DIMM GetDimm;

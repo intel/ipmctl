@@ -1392,7 +1392,7 @@ NvmDimmDriverDriverBindingStart(
   /**
     Initialize DIMMs, ISets and namespaces
   **/
-  ReturnCode = InitializeNvmDimmDriver(NULL);
+  ReturnCode = InitializeDimms();
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed while checking memory map, error = %r.", ReturnCode);
     goto Finish;

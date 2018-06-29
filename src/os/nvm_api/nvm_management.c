@@ -1571,6 +1571,7 @@ static void get_sensor_units(const enum sensor_type type, struct sensor *psensor
     psensor->units = UNIT_CYCLES;
     break;
   case SENSOR_UPTIME:
+  case SENSOR_POWERONTIME:
     psensor->units = UNIT_SECONDS;
     break;
   case SENSOR_DIRTYSHUTDOWNS:

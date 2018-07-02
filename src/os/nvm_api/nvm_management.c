@@ -94,6 +94,17 @@ NVM_API int nvm_init()
   if (g_nvm_initialized)
     return rc;
 
+  // Configure gOsShellParametersProtocol 
+  if (gOsShellParametersProtocol.StdOut == 0) {
+    gOsShellParametersProtocol.StdOut = stdout;
+  }
+  if (gOsShellParametersProtocol.StdErr == 0) {
+    gOsShellParametersProtocol.StdErr = stderr;
+  }
+  if (gOsShellParametersProtocol.StdIn == 0) {
+    gOsShellParametersProtocol.StdIn = stdin;
+  }
+
   NVDIMM_DBG("Nvm Init");
 
   if (NULL == (g_api_mutex = os_mutex_init("nvm_api")))

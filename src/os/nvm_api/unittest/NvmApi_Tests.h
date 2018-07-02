@@ -82,4 +82,59 @@ TEST_F(NvmApi_Tests, GetDimmIdPassThru)
   int status = nvm_send_device_passthrough_cmd(p_devices->uid, &get_dimm_id_pt);
 }
 
+TEST_F(NvmApi_Tests, GetFwErrorLogEntry)
+{
+  struct device_pt_cmd get_dimm_id_pt;
+  ERROR_LOG entry;
+
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+
+  nvm_get_devices(p_devices, 1);
+  //media/low
+  int status = nvm_get_fw_error_log_entry_cmd(p_devices->uid, 1, 0, 0, &entry);
+  if(status == NVM_SUCCESS)
+  { 
+    MEDIA_ERROR_LOG *media_log = (MEDIA_ERROR_LOG*)entry.OutputData;
+  }
+  else if (status == NVM_SUCCESS_NO_ERROR_LOG_ENTRY)
+  {
+    //no media/low entry
+  }
+
+  //media/high
+  status = nvm_get_fw_error_log_entry_cmd(p_devices->uid, 1, 1, 0, &entry);
+  if (status == NVM_SUCCESS)
+  {
+    MEDIA_ERROR_LOG *media_log = (MEDIA_ERROR_LOG*)entry.OutputData;
+  }
+  else if (status == NVM_SUCCESS_NO_ERROR_LOG_ENTRY)
+  {
+    //no media/high entry
+  }
+
+
+  //theraml/low
+  status = nvm_get_fw_error_log_entry_cmd(p_devices->uid, 1, 0, 1, &entry);
+  if (status == NVM_SUCCESS)
+  {
+    THERMAL_ERROR_LOG *thermal_log = (THERMAL_ERROR_LOG*)entry.OutputData;
+  }
+  else if (status == NVM_SUCCESS_NO_ERROR_LOG_ENTRY)
+  {
+    //no thermal/low entry
+  }
+
+  //theraml/high
+  status = nvm_get_fw_error_log_entry_cmd(p_devices->uid, 1, 1, 1, &entry);
+  if (status == NVM_SUCCESS)
+  {
+    THERMAL_ERROR_LOG *thermal_log = (THERMAL_ERROR_LOG*)entry.OutputData;
+  }
+  else if (status == NVM_SUCCESS_NO_ERROR_LOG_ENTRY)
+  {
+    //no thermal/high entry
+  }
+
+  free(p_devices);
+}
 #endif //NVM_API_TESTS_H

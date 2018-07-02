@@ -198,7 +198,7 @@ int monitor::AcpiMonitor::processNewEvents(NVM_UID uid,
 	struct fw_error_log_sequence_numbers last_numbers,
 	struct fw_error_log_sequence_numbers cur_numbers)
 {
-	unsigned char buffer[128];
+  ERROR_LOG log;
 	int new_log_cnt = 0;
 
 	for (int index = cur_numbers.oldest; index <= cur_numbers.current; index++)
@@ -209,9 +209,9 @@ int monitor::AcpiMonitor::processNewEvents(NVM_UID uid,
 			int rc;
 			//get the log via the seq number and craft an appropriate event.
 			if (NVM_SUCCESS == (rc = nvm_get_fw_error_log_entry_cmd(uid,
-				index, log_level, log_type, buffer, 128)))
+				index, log_level, log_type, &log)))
 			{
-				generateSystemEventEntry(uid, log_type, log_level, (void *)buffer);
+				generateSystemEventEntry(uid, log_type, log_level, (void *)&log);
 				new_log_cnt++;
 			}
 		}

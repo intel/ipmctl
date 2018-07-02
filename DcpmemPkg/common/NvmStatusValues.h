@@ -128,7 +128,7 @@ typedef enum _NvmStatusCode {
   NVM_INFO_FW_DBG_LOG_NO_LOGS_TO_FETCH              = 197,  ///< Error: No debug logs
 
   NVM_ERR_FAILED_TO_FETCH_ERROR_LOG                 = 200,  ///< Error: Failed to fetch error log
-
+  NVM_SUCCESS_NO_ERROR_LOG_ENTRY                    = 201,  ///< Info: Request to retrieve entry was successful, however log was empty
   NVM_ERR_SMART_FAILED_TO_GET_SMART_INFO            = 220,  ///< Error: Failed to get smart info
   NVM_WARN_SMART_NONCRITICAL_HEALTH_ISSUE           = 221,  ///< Warning: Non-critical health issue
   NVM_ERR_SMART_CRITICAL_HEALTH_ISSUE               = 222,  ///< Error: Critical health issue

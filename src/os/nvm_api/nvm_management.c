@@ -3146,14 +3146,31 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
   const unsigned short  seq_num,
   const unsigned char log_level,
   const unsigned char log_type,
-  void *      buffer,
-  unsigned int    buffer_size)
+  ERROR_LOG * error_entry)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
   unsigned int dimm_id;
   unsigned int max_errors;
   int rc = NVM_SUCCESS;
+
+  if (log_level > 1)
+  {
+    NVDIMM_ERR("Invalid log level.  Only valid values are 0: Low, and 1: High\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
+
+  if (log_type > 1)
+  {
+    NVDIMM_ERR("Invalid log type.  Only valid values are 0: Media, and 1: Thermal\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
+
+  if (!error_entry)
+  {
+    NVDIMM_ERR("Invalid error_entry paramter (NULL).\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
@@ -3178,14 +3195,19 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
     1,
     log_type,
     seq_num,
-    log_type,
+    log_level,
     &max_errors,
-    (ERROR_LOG_INFO *)buffer,
+    (ERROR_LOG_INFO *)error_entry,
     pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     rc = NVM_ERR_UNKNOWN;
+  }
+
+  if (0 == max_errors) {
+  
+    rc = NVM_SUCCESS_NO_ERROR_LOG_ENTRY;
   }
 
 Finish:

@@ -3014,12 +3014,12 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID device_uid, struct dev
 * @brief Retrieve a FW error log entry
 * @param[in] device_uid The device identifier
 * @param[in] seq_num Log entry sequence number
-* @param[in] log_level Log entry log level
-* @param[in] log_type Log entry log type
-* @param[out] buffer pointer to buffer to store FW error log data
-* @param[in] buffer_size size of the buffer in bytes
+* @param[in] log_level Log entry log level (0: Low, 1: High)
+* @param[in] log_type Log entry log type (0: Media, 1: Thermal)
+* @param[out] error_entry pointer to buffer to store a single FW error log entry
 * @return Returns one of the following @link #return_code return_codes: @endlink @n
 *            ::NVM_SUCCESS @n
+*            ::NVM_SUCCESS_NO_ERROR_LOG_ENTRY @n
 *            ::NVM_ERR_INVALIDPARAMETER @n
 *            ::NVM_ERR_INVALIDPERMISSIONS @n
 *            ::NVM_ERR_NOTSUPPORTED @n
@@ -3030,7 +3030,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID device_uid, struct dev
 *            ::NVM_ERR_DEVICEERROR @n
 *            ::NVM_ERR_DEVICEBUSY @n
 */
-NVM_API int nvm_get_fw_error_log_entry_cmd(const NVM_UID device_uid, const unsigned short seq_num, const unsigned char log_level, const unsigned char log_type, void *buffer, unsigned int buffer_size);
+NVM_API int nvm_get_fw_error_log_entry_cmd(const NVM_UID   device_uid, const unsigned short  seq_num, const unsigned char log_level, const unsigned char log_type, ERROR_LOG * error_entry);
 
 /**
 * @brief Retrieve a FW error log counters: current and oldest sequence number for each log type.

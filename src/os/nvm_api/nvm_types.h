@@ -369,4 +369,36 @@ typedef struct _PMON_REGISTERS {
   NVM_UINT8 Reserved[19];
 }PMON_REGISTERS;
 
+#define MAX_ERROR_LOG_SZ 64
+
+typedef struct _ERROR_LOG {
+  NVM_UINT16 DimmID;                        ///< The DimmID
+  NVM_UINT64 SystemTimestamp;               ///< Unix epoch time of log entry
+  NVM_UINT8 ErrorType;                      ///< 0: Thermal, 1: Media
+  NVM_UINT8 OutputData[MAX_ERROR_LOG_SZ];   ///< Either THERMAL_ERROR_LOG or MEDIA_ERROR_LOG (see ErrorType)
+} ERROR_LOG;
+
+typedef struct _THERMAL_ERROR_LOG_PER_DIMM {
+  NVM_INT16   Temperature;        ///< In celsius
+  NVM_UINT8   Reported;           ///< Temperature being reported
+  NVM_UINT8   Type;               ///< Which device the temperature is for
+  NVM_UINT16  SequenceNum;
+  NVM_UINT8   Reserved[1];
+} THERMAL_ERROR_LOG;
+
+typedef struct _MEDIA_ERROR_LOG_PER_DIMM {
+  NVM_UINT64  Dpa;                ///< Specifies DPA address of error
+  NVM_UINT64  Pda;                ///< Specifies PDA address of the failure
+  NVM_UINT8   Range;              ///< Specifies the length in address space of this error.
+  NVM_UINT8   ErrorType;          ///< Indicates what kind of error was logged.
+  NVM_UINT8   PdaValid;           ///< Indicates the PDA address is valid.
+  NVM_UINT8   DpaValid;           ///< Indicates the DPA address is valid.
+  NVM_UINT8   Interrupt;          ///< Indicates this error generated an interrupt packet
+  NVM_UINT8   Viral;              ///< Indicates Viral was signaled for this error
+  NVM_UINT8   TransactionType;
+  NVM_UINT16  SequenceNum;
+  NVM_UINT8   Reserved[2];
+} MEDIA_ERROR_LOG;
+
+
 #endif /* NVM_TYPES_H_ */

@@ -1368,19 +1368,19 @@ GetUnitsOption(
     }
 
     if (pOptionsValue != NULL) {
-      if (StrCmp(pOptionsValue, UNITS_OPTION_B) == 0) {
+      if (StrICmp(pOptionsValue, UNITS_OPTION_B) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_B;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_MB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_MB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_MB;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_MIB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_MIB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_MIB;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_GB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_GB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_GB;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_GIB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_GIB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_GIB;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_TB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_TB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_TB;
-      } else if (StrCmp(pOptionsValue, UNITS_OPTION_TIB) == 0) {
+      } else if (StrICmp(pOptionsValue, UNITS_OPTION_TIB) == 0) {
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_TIB;
       } else {
         ReturnCode = EFI_INVALID_PARAMETER;

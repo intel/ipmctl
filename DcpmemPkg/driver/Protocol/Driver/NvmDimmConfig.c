@@ -2113,8 +2113,7 @@ SetAlarmThresholds (
   PT_PAYLOAD_ALARM_THRESHOLDS *pPayloadAlarmThresholds = NULL;
   UINT32 Index = 0;
 #ifdef OS_BUILD
-  LIST_ENTRY *pObjectStatusNode = NULL;
-  OBJECT_STATUS *pObjectStatus = NULL;
+   OBJECT_STATUS *pObjectStatus = NULL;
 #endif // OS_BUILD
 
   NVDIMM_ENTRY();
@@ -2178,16 +2177,7 @@ SetAlarmThresholds (
     }
   }
 
-  for ((Index = 0)
-#ifdef OS_BUILD
-    ,(pObjectStatusNode = (&pCommandStatus->ObjectStatusList)->ForwardLink)
-#endif // OS_BUILD
-    ; Index < DimmsNum;
-    (Index++)
-#ifdef OS_BUILD
-    ,(pObjectStatusNode = pObjectStatusNode->ForwardLink)
-#endif // OS_BUILD
-    ) {
+  for ((Index = 0); Index < DimmsNum; (Index++)) {
     // let's read current values so we'll not overwrite them during setting
     ReturnCode = FwCmdGetAlarmThresholds(pDimms[Index], &pPayloadAlarmThresholds);
     if (pPayloadAlarmThresholds == NULL) {
@@ -2240,7 +2230,7 @@ SetAlarmThresholds (
     } else {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
 #ifdef OS_BUILD
-      pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
+      pObjectStatus = GetObjectStatus(pCommandStatus, pDimms[Index]->DeviceHandle.AsUint32);
       CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_SENSOR_SET_CHANGED), NULL);
       nvm_store_system_entry_widechar(NVM_SYSLOG_SRC_W,
         SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_305, FALSE, TRUE, TRUE, FALSE, 0),

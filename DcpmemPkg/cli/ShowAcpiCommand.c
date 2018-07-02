@@ -96,10 +96,10 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   if (ChosenAcpiSystem == AcpiAll || ChosenAcpiSystem == AcpiNfit) {
     ReturnCode = pNvmDimmConfigProtocol->GetAcpiNFit(pNvmDimmConfigProtocol, &pNFit);
     if (EFI_ERROR(ReturnCode) || pNFit == NULL) {
-      Print(L"Error: Failed to find the DIMM Firmware Interface ACPI tables\n");
+      Print(L"Error: Failed to find the NVDIMM Firmware Interface ACPI tables\n");
       ReturnCode = EFI_ABORTED;
     } else {
-      Print(L"---DIMM Firmware Interface Table---\n");
+      Print(L"---NVDIMM Firmware Interface Table---\n");
       PrintNFit(pNFit);
     }
   }

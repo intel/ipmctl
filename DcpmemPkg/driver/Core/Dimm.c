@@ -4518,7 +4518,7 @@ InitializeDimm (
   ReturnCode = GetFlushHintTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTblCtrl, &pFlushHintTable);
   if (!EFI_ERROR(ReturnCode) && pFlushHintTable != NULL) {
     // Found the Flush Hint Table
-    for (Index = 0; Index < pFlushHintTable->NumberOfFlushHintAddressesInThisStructureM; Index++) {
+    for (Index = 0; Index < pFlushHintTable->NumberOfFlushHintAddresses; Index++) {
       if (pFlushHintTable->FlushHintAddress[Index] != MAX_UINT64_VALUE) { // Entry equal to MAX_UINT64_VALUE is not valid
         pNewDimm->pFlushAddress = (UINT64 *)pFlushHintTable->FlushHintAddress[Index]; // Assign the first valid address
         /**

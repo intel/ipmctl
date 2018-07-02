@@ -411,15 +411,15 @@ PrintFitTable(
         L"NfitDeviceHandle.MemControllerId: 0x%x\n"
         L"NfitDeviceHandle.SocketId: 0x%x\n"
         L"NfitDeviceHandle.NodeControllerId: 0x%x\n"
-        L"NumberOfFlushHintAddressesInThisStructureM: 0x%x\n",
+        L"NumberOfFlushHintAddresses: 0x%x\n",
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.DimmNumber,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.MemChannel,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.MemControllerId,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.SocketId,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.NodeControllerId,
-        pTableFlushHint->NumberOfFlushHintAddressesInThisStructureM
+        pTableFlushHint->NumberOfFlushHintAddresses
         );
-    for (Index = 0; Index < pTableFlushHint->NumberOfFlushHintAddressesInThisStructureM; Index++) {
+    for (Index = 0; Index < pTableFlushHint->NumberOfFlushHintAddresses; Index++) {
       Print(L"FlushHintAddress %d: 0x%llx\n", Index, pTableFlushHint->FlushHintAddress[Index]);
     }
     break;

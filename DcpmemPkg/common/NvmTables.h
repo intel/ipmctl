@@ -174,7 +174,7 @@ typedef struct {
 typedef struct {
   SubTableHeader Header;
   NfitDeviceHandle DeviceHandle;
-  UINT16 NumberOfFlushHintAddressesInThisStructureM;
+  UINT16 NumberOfFlushHintAddresses;
   UINT8 Reserved[6];
   UINT64 FlushHintAddress[0];
 } FlushHintTbl;

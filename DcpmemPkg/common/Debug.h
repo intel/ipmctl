@@ -198,7 +198,7 @@ DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s()\n", \
 DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): 0x%x\n", \
            FileFromPath(__WFILE__), __WFUNCTION__, rc)
 #define NVDIMM_EXIT_I64(rc) \
-DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): %r\n", \
+DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): " FORMAT_EFI_STATUS "\n", \
            FileFromPath(__WFILE__), __WFUNCTION__, rc)
 #define NVDIMM_EXIT_CHECK_I64(rc) \
 if(rc) { \
@@ -219,7 +219,7 @@ DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): 0x%x\n", \
   FileFromPath(__WFILE__), __WFUNCTION__, rc); \
   PopStackTrace()
 #define NVDIMM_EXIT_I64(rc) \
-DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): %r\n", \
+DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): " FORMAT_EFI_STATUS "\n", \
   FileFromPath(__WFILE__), __WFUNCTION__, rc); \
   PopStackTrace()
 #define NVDIMM_EXIT_CHECK_I64(rc) \

@@ -195,10 +195,10 @@ Load (
         NVDIMM_WARN("Error while getting the Working Directory.");
       }
     } else {
-      NVDIMM_WARN("Error while opening the shell protocol. Code: %r", ReturnCode);
+      NVDIMM_WARN("Error while opening the shell protocol. Code: " FORMAT_EFI_STATUS "", ReturnCode);
     }
   } else {
-    NVDIMM_WARN("Error while opening the shell protocol. Code: %r", ReturnCode);
+    NVDIMM_WARN("Error while opening the shell protocol. Code: " FORMAT_EFI_STATUS "", ReturnCode);
     /**
       We can still try to open the file. If it is in the root directory, we will be able to open it.
     **/

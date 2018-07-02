@@ -227,7 +227,7 @@ LoadFileAndCheckHeader(
   ReturnCode = OpenFile(pFilePath, &FileHandle, pWorkingDirectory, FALSE);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("OpenFile returned: %r.\n", ReturnCode);
+    NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
     *ppError = CatSPrint(NULL, L"Error: The specified source file is not valid.\n");
     ReturnValue = FALSE;
     goto Finish;
@@ -237,7 +237,7 @@ LoadFileAndCheckHeader(
   BuffSize = FileSize;
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("GetFileSize returned: %r.\n", ReturnCode);
+    NVDIMM_DBG("GetFileSize returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
     *ppError = CatSPrint(NULL, L"Error: Could not get the file information.\n");
     ReturnValue = FALSE;
     goto FinishClose;

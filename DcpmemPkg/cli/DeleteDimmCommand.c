@@ -169,7 +169,7 @@ DeleteDimm(
 
     ReturnCode = GetDeviceAndFilePath(pLoadUserPath, pLoadFilePath, &pDevicePathProtocol);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to get file path (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
       goto FinishWithError;
     }
     ReturnCode = ParseSourcePassFile(pLoadFilePath, pDevicePathProtocol, &pPassphrase, NULL);

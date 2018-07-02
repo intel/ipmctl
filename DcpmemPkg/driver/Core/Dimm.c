@@ -1365,7 +1365,7 @@ FwCmdGetOptionalConfigurationDataPolicy(
 
   NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending PtGetOptionalDataPolicy command (RC = %r)", ReturnCode);
+    NVDIMM_DBG("Error detected when sending PtGetOptionalDataPolicy command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -1414,7 +1414,7 @@ FwCmdSetOptionalConfigurationDataPolicy(
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending PtGetOptionalDataPolicy command (Dimm(%d), RC = %r, Status = %d)",
+    NVDIMM_DBG("Error detected when sending PtGetOptionalDataPolicy command (Dimm(%d), RC = " FORMAT_EFI_STATUS ", Status = %d)",
         pDimm->DeviceHandle.AsUint32 ,pFwCmd->Status ,ReturnCode);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
@@ -1463,7 +1463,7 @@ FwCmdGetSecurityInfo(
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Error detected when sending PtGetSecInfo command (RC = %r)", Rc);
+    NVDIMM_DBG("Error detected when sending PtGetSecInfo command (RC = " FORMAT_EFI_STATUS ")", Rc);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -1519,7 +1519,7 @@ FwCmdGetARS(
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Error detected when sending Firmware Get AddressRangeScrub command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_DBG("Error detected when sending Firmware Get AddressRangeScrub command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -1632,7 +1632,7 @@ FwCmdIdDimm (
 	}
 #endif
 	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_DBG("Error detected when sending PtIdentifyDimm command (RC = %r)", ReturnCode);
+		NVDIMM_DBG("Error detected when sending PtIdentifyDimm command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
 		if (FW_ERROR(pFwCmd->Status)) {
 			ReturnCode = MatchFwReturnCode(pFwCmd->Status);
 		}
@@ -1690,7 +1690,7 @@ FwCmdDeviceCharacteristics (
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Device Characteristics command (RC = %r)", ReturnCode);
+    NVDIMM_DBG("Error detected when sending Device Characteristics command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -1750,7 +1750,7 @@ FwCmdGetDimmPartitionInfo(
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending GetAdminFeatures command (RC = %r)", ReturnCode);
+    NVDIMM_DBG("Error detected when sending GetAdminFeatures command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
@@ -1878,7 +1878,7 @@ FwCmdGetPlatformConfigData (
       Rc = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #endif
       if (EFI_ERROR(Rc)) {
-        NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = %r)", Offset, Rc);
+        NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = " FORMAT_EFI_STATUS ")", Offset, Rc);
         if (FW_ERROR(pFwCmd->Status)) {
           Rc = MatchFwReturnCode(pFwCmd->Status);
         }
@@ -1901,7 +1901,7 @@ FwCmdGetPlatformConfigData (
     Rc = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #endif
     if (EFI_ERROR(Rc)) {
-      NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = %r)", Rc);
+      NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = " FORMAT_EFI_STATUS ")", Rc);
       if (FW_ERROR(pFwCmd->Status)) {
         Rc = MatchFwReturnCode(pFwCmd->Status);
       }
@@ -1998,7 +1998,7 @@ FwCmdGetPlatformConfigDataSize (
   CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = %r)", Rc);
+    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = " FORMAT_EFI_STATUS ")", Rc);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -2189,7 +2189,7 @@ FwCmdGetPcdSmallPayload(
   ReturnCode = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #endif
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = %r)", Offset, ReturnCode);
+    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = " FORMAT_EFI_STATUS ")", Offset, ReturnCode);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -2463,7 +2463,7 @@ FwCmdSetPlatformConfigData (
       CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
       Rc = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
       if (EFI_ERROR(Rc)) {
-        NVDIMM_DBG("Error detected when sending Platform Config Data (Offset=%d Rc=%r, FWStatus=%d)", Offset, Rc, pFwCmd->Status);
+        NVDIMM_DBG("Error detected when sending Platform Config Data (Offset=%d Rc=" FORMAT_EFI_STATUS ", FWStatus=%d)", Offset, Rc, pFwCmd->Status);
         if (FW_ERROR(pFwCmd->Status)) {
           Rc = MatchFwReturnCode(pFwCmd->Status);
         }
@@ -2489,7 +2489,7 @@ FwCmdSetPlatformConfigData (
     Rc = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #endif
     if (EFI_ERROR(Rc)) {
-      NVDIMM_WARN("Error detected when sending Platform Config Data (Rc=%r, FWStatus=%d)", Rc, pFwCmd->Status);
+      NVDIMM_WARN("Error detected when sending Platform Config Data (Rc=" FORMAT_EFI_STATUS ", FWStatus=%d)", Rc, pFwCmd->Status);
       if (FW_ERROR(pFwCmd->Status)) {
         Rc = MatchFwReturnCode(pFwCmd->Status);
       }
@@ -2553,7 +2553,7 @@ FwCmdGetAlarmThresholds (
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending AlarmThresholds command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending AlarmThresholds command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -2613,7 +2613,7 @@ FwCmdSetAlarmThresholds (
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending AlarmThresholds command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending AlarmThresholds command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -2881,7 +2881,7 @@ FwCmdGetSmartAndHealth (
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending SmartAndHealth command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending SmartAndHealth command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -2952,7 +2952,7 @@ FwCmdGetMemoryInfoPage (
   CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending MemoryInfoPage command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending MemoryInfoPage command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3013,7 +3013,7 @@ FwCmdGetFirmwareImageInfo (
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending FirmwareImageInfo command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending FirmwareImageInfo command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3074,7 +3074,7 @@ FwCmdGetPowerManagementPolicy(
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending PowerManagementPolicy command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending PowerManagementPolicy command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3133,7 +3133,7 @@ FwCmdGetPMONRegisters(
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3192,7 +3192,7 @@ FwCmdSetPMONRegisters(
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending PMONRegisters command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3245,7 +3245,7 @@ FwCmdGetPackageSparingPolicy (
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Error detected when sending GetPackageSparingPolicy command (RC = %r, Status = %d)", Rc, pFwCmd->Status);
+    NVDIMM_WARN("Error detected when sending GetPackageSparingPolicy command (RC = " FORMAT_EFI_STATUS ", Status = %d)", Rc, pFwCmd->Status);
     if (FW_ERROR(pFwCmd->Status)) {
       Rc = MatchFwReturnCode(pFwCmd->Status);
     }
@@ -3310,7 +3310,7 @@ FwCmdGetLongOperationStatus(
     /** FW_INTERNAL_DEVICE_ERROR or FW_DATA_NOT_SET occurs when there is no long operation at this moment. Which one depends on FIS**/
     if (!(pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4 && pFwCmd->Status == FW_INTERNAL_DEVICE_ERROR) &&
       pFwCmd->Status != FW_DATA_NOT_SET) {
-      NVDIMM_WARN("Error detected when sending LongOperationStatus command (RC = %r, Status = %d)",
+      NVDIMM_WARN("Error detected when sending LongOperationStatus command (RC = " FORMAT_EFI_STATUS ", Status = %d)",
           ReturnCode, pFwCmd->Status);
     }
     if (FW_ERROR(pFwCmd->Status)) {
@@ -3651,7 +3651,7 @@ RefreshDimm(
 
   ReturnCode = FwCmdIdDimm(pDimm, FALSE, pPayload);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FW CMD Error: %r", ReturnCode);
+    NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -3722,7 +3722,7 @@ CreateBw(
   // Getting Control Region Table with all needed BW values
   ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pDimm->pDataTbl, &pControlRegTbl);
   if (pControlRegTbl == NULL || EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Unable to get Control region table. Returned: %r", ReturnCode);
+    NVDIMM_WARN("Unable to get Control region table. Returned: " FORMAT_EFI_STATUS "", ReturnCode);
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -3730,7 +3730,7 @@ CreateBw(
   // Getting Block Data Windows Region Description table to get the misc offsets
   ReturnCode = GetBlockDataWindowRegDescTabl(pFitHead, pControlRegTbl, &pBlockDataWindowTable);
   if (pBlockDataWindowTable == NULL || EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Unable to get Block Data Window table. Returned: %r", ReturnCode);
+    NVDIMM_WARN("Unable to get Block Data Window table. Returned: " FORMAT_EFI_STATUS "", ReturnCode);
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -5415,7 +5415,7 @@ GetPlatformConfigDataOemPartition (
   }
 
   if (EFI_ERROR(ReturnCode) || *ppPlatformConfigData == NULL) {
-    NVDIMM_WARN("Error calling Get Platform Config Data FW command (RC = %r)", ReturnCode);
+    NVDIMM_WARN("Error calling Get Platform Config Data FW command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 
@@ -5906,7 +5906,7 @@ FwCmdFormatDimm(
 	}
 #endif
 	if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_TIMEOUT) {
-		NVDIMM_DBG("Error detected when sending PtCustomerFormat command (RC = %r)", ReturnCode);
+		NVDIMM_DBG("Error detected when sending PtCustomerFormat command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
 		if (FW_ERROR(pFwCmd->Status)) {
 			ReturnCode = MatchFwReturnCode(pFwCmd->Status);
 		}
@@ -6084,7 +6084,7 @@ FwCmdGetSystemTime(
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("Error detected when sending FwCmdGetSystemTime command (RC = %r)", ReturnCode);
+    NVDIMM_ERR("Error detected when sending FwCmdGetSystemTime command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     if (FW_ERROR(pFwCmd->Status)) {
       ReturnCode = MatchFwReturnCode(pFwCmd->Status);
     }

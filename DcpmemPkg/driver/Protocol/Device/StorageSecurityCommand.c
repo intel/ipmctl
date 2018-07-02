@@ -119,7 +119,7 @@ ReceiveData (
         }
         ReturnCode = GetDimmSecurityState(Dimm->pDimm, PT_TIMEOUT_INTERVAL, &SecurityState);
         if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_DBG("Failed on GetDimmSecurityState, status=%r", ReturnCode);
+          NVDIMM_DBG("Failed on GetDimmSecurityState, status=" FORMAT_EFI_STATUS "", ReturnCode);
           goto Finish;
         }
 
@@ -194,7 +194,7 @@ SendData (
       ReturnCode =
         SetDimmSecurityState(Dimm->pDimm, Opcode, SubOpcode, (UINT16)PayloadBufferSize, PayloadBuffer, PT_TIMEOUT_INTERVAL);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Failed on SetDimmSecurityState, status=%r", ReturnCode);
+        NVDIMM_DBG("Failed on SetDimmSecurityState, status=" FORMAT_EFI_STATUS "", ReturnCode);
         goto Finish;
       }
     } else {

@@ -218,7 +218,7 @@ ShowSensor(
       &DisplayOptionSet,
       &pDisplayValues);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code %r\n", ReturnCode);
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
     goto Finish;
   }
 
@@ -249,7 +249,7 @@ ShowSensor(
       /**
         We do not return on error. Just inform the user and skip to the next DIMM or end.
       **/
-      Print(L"Failed to read the sensors or thresholds values from DIMM %d. Code: %r\n",
+      Print(L"Failed to read the sensors or thresholds values from DIMM %d. Code: " FORMAT_EFI_STATUS "\n",
           pDimms[Index].DimmID, ReturnCode);
       continue;
     }

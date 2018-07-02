@@ -142,7 +142,7 @@ GetRegionList()
     ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
       &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the REGION list, error = %r.", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     } else
       gNvmDimmData->PMEMDev.RegionsInitialized = TRUE;
   }
@@ -4163,7 +4163,7 @@ GetSecurityStateForDimm(
 
   ReturnCode = FwCmdGetSecurityInfo(pDimm, pSecurityPayload);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FW CMD Error: %r", ReturnCode);
+    NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
   ConvertSecurityBitmask(pSecurityPayload->SecurityStatus, &SecurityState);

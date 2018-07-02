@@ -56,7 +56,7 @@ GetDimmSecurityState(
   pPassThruCommand->OutputPayloadSize = sizeof(*pSecurityPayload);
 
   ReturnCode = PassThru(pDimm, pPassThruCommand, Timeout);
-  NVDIMM_DBG("PtReturnCode=%r, FwReturnCode=%d", ReturnCode, pPassThruCommand->Status);
+  NVDIMM_DBG("PtReturnCode=" FORMAT_EFI_STATUS ", FwReturnCode=%d", ReturnCode, pPassThruCommand->Status);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on PassThru.");
     if FW_ERROR(pPassThruCommand->Status) {
@@ -133,7 +133,7 @@ SetDimmSecurityState(
   }
 
   ReturnCode = PassThru(pDimm, pPassThruCommand, Timeout);
-  NVDIMM_DBG("PtReturnCode=%r, FwReturnCode=%d", ReturnCode, pPassThruCommand->Status);
+  NVDIMM_DBG("PtReturnCode=" FORMAT_EFI_STATUS ", FwReturnCode=%d", ReturnCode, pPassThruCommand->Status);
   if(EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on PassThru");
     if (FW_ERROR(pPassThruCommand->Status)) {

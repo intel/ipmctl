@@ -938,7 +938,7 @@ OpenNvmDimmProtocol(
       ReturnCode = GetDriverHandle(&gNvmDimmConfigProtocolGuid, &DeviceHandle);
     }
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Could not determine the target device type, error = %r", ReturnCode);
+      NVDIMM_DBG("Could not determine the target device type, error = " FORMAT_EFI_STATUS "", ReturnCode);
       goto Finish;
     }
   } else {
@@ -956,7 +956,7 @@ OpenNvmDimmProtocol(
     if (ReturnCode == EFI_ALREADY_STARTED) {
       ReturnCode = EFI_SUCCESS;
     } else {
-      NVDIMM_WARN("Failed to open NvmDimmProtocol, error = %r", ReturnCode);
+      NVDIMM_WARN("Failed to open NvmDimmProtocol, error = " FORMAT_EFI_STATUS "", ReturnCode);
       goto Finish;
     }
   }
@@ -1043,7 +1043,7 @@ OpenFile(
 
   Rc = gBS->LocateHandleBuffer(ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &HandlesSize, &pHandles);
   if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Couldn't find EfiSimpleFileSystemProtocol: %r", Rc);
+    NVDIMM_DBG("Couldn't find EfiSimpleFileSystemProtocol: " FORMAT_EFI_STATUS "", Rc);
     goto Finish;
   }
 
@@ -1230,7 +1230,7 @@ GetFileSize(
   ReturnCode = FileHandle->GetInfo(FileHandle, &gEfiFileInfoGuid, &BuffSize, pFileInfo);
 
   if (ReturnCode != EFI_BUFFER_TOO_SMALL) {
-    NVDIMM_DBG("pFileHandle->GetInfo returned: %r.\n", ReturnCode);
+    NVDIMM_DBG("pFileHandle->GetInfo returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
     goto Finish;
   }
 
@@ -1245,7 +1245,7 @@ GetFileSize(
   ReturnCode = FileHandle->GetInfo(FileHandle, &gEfiFileInfoGuid, &BuffSize, pFileInfo);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("pFileHandle->GetInfo returned: %r.\n", ReturnCode);
+    NVDIMM_DBG("pFileHandle->GetInfo returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
   }
 
   *pFileSize = pFileInfo->FileSize;
@@ -1456,14 +1456,14 @@ CheckDimmsHealth(
   ReturnCode = GetControllerHandle(&Controller);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not get the controller handle: %r", ReturnCode);
+    NVDIMM_DBG("Could not get the controller handle: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
   ReturnCode = OpenNvmDimmProtocol(gEfiDriverHealthProtocolGuid, (VOID **)&pHealthProtocol, NULL);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Could not open the driver health protocol: %r", ReturnCode);
+    NVDIMM_WARN("Could not open the driver health protocol: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -1477,7 +1477,7 @@ CheckDimmsHealth(
       );
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not get the health status: %r", ReturnCode);
+    NVDIMM_DBG("Could not get the health status: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -1792,7 +1792,7 @@ ReadFile(
 #ifdef OS_BUILD
   ReturnCode = OpenFile(pFilePath, &pFileHandle, NULL, 0);
   if (EFI_ERROR(ReturnCode) || pFileHandle == NULL) {
-     NVDIMM_DBG("Failed opening File (%r)", ReturnCode);
+     NVDIMM_DBG("Failed opening File (" FORMAT_EFI_STATUS ")", ReturnCode);
      goto Finish;
   }
 #else
@@ -1801,7 +1801,7 @@ ReadFile(
   }
   ReturnCode = OpenFileByDevice(pFilePath, pDevicePath, FALSE, &pFileHandle);
   if (EFI_ERROR(ReturnCode) || pFileHandle == NULL) {
-    NVDIMM_DBG("Failed opening File (%r)", ReturnCode);
+    NVDIMM_DBG("Failed opening File (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 #endif
@@ -1902,7 +1902,7 @@ ReadAsciiLineFromFile(
   }
 
   if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Error reading the file: %r", Rc);
+    NVDIMM_DBG("Error reading the file: " FORMAT_EFI_STATUS "", Rc);
   }
 
   pLine[Index] = '\0';

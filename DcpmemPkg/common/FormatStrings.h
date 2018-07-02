@@ -40,6 +40,7 @@
 #define FORMAT_STR_WITH_COMMA                   L", %s"
 #define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
 #define FORMAT_HEX                              L"0x%04x"
+#define FORMAT_EFI_STATUS                       "%r"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_STR_WITH_PARANTHESIS             L"(%ls)"
@@ -80,6 +81,7 @@
 #define FORMAT_STR_WITH_COMMA                   L", %ls"
 #define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
 #define FORMAT_HEX                              L"0x%04x"
+#define FORMAT_EFI_STATUS                       "%x"
 #endif // OS_BUILD
 
 #endif /** _FORMAT_STRINGS_H_ **/

@@ -449,7 +449,7 @@ InstallNamespaceProtocols(
   ReturnCode = gBS->InstallProtocolInterface(
     &pNamespace->BlockIoHandle, &gEfiDevicePathProtocolGuid, EFI_NATIVE_INTERFACE, pNamespace->pBlockDevicePath);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to install the device path protocol, error = %r\n.", ReturnCode);
+    NVDIMM_WARN("Failed to install the device path protocol, error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
   }
 
   ReturnCode = gBS->InstallMultipleProtocolInterfaces(
@@ -460,7 +460,7 @@ InstallNamespaceProtocols(
     NULL);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to install the block io protocol, error = %r\n.", ReturnCode);
+    NVDIMM_WARN("Failed to install the block io protocol, error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
   } else {
     ReturnCode = gBS->OpenProtocol(
       (IsStorageNamespace) ? gDimmsUefiData[DimmIndex].DeviceHandle : gNvmDimmData->ControllerHandle,
@@ -471,7 +471,7 @@ InstallNamespaceProtocols(
       EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER);
 
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to initialize the Block Device, error = %r\n.", ReturnCode);
+      NVDIMM_WARN("Failed to initialize the Block Device, error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
     }
   }
 
@@ -539,7 +539,7 @@ UninstallNamespaceProtocols(
   );
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to detach the block device from parent device. Error = %r\n.", ReturnCode);
+    NVDIMM_WARN("Failed to detach the block device from parent device. Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
   }
 
   ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
@@ -552,7 +552,7 @@ UninstallNamespaceProtocols(
     );
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to uninstall the block device protocols. Error = %r\n.", ReturnCode);
+    NVDIMM_WARN("Failed to uninstall the block device protocols. Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
     NVDIMM_WARN("The device may be still visible in the system and accessing it may cause unpredicted behaviour.");
   } else {
     // Free the instance only if the protocol was uninstalled successfully.
@@ -562,7 +562,7 @@ UninstallNamespaceProtocols(
     ReturnCode = FreeUnicodeStringTable(pNamespace->pNamespaceName);
 
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to free the namespace unicode name. Error = %r\n.", ReturnCode);
+      NVDIMM_DBG("Failed to free the namespace unicode name. Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
     } else {
       // The memory is cleared in the FreeUnicodeStringTable function
       pNamespace->pNamespaceName = NULL;
@@ -1248,7 +1248,7 @@ ReadLabelStorageArea(
   }
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FwCmdGetPlatformConfigData returned: %r", ReturnCode);
+    NVDIMM_DBG("FwCmdGetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -1414,7 +1414,7 @@ WriteLabelStorageArea(
   ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID,
     pRawData, pDimm->PcdLsaPartitionSize);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FwCmdSetPlatformConfigData returned: %r", ReturnCode);
+    NVDIMM_DBG("FwCmdSetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -1460,7 +1460,7 @@ ZeroLabelStorageArea(
   ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID,
     pZeroRawLsa, pDimm->PcdLsaPartitionSize);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FwCmdSetPlatformConfigData returned: %r", ReturnCode);
+    NVDIMM_DBG("FwCmdSetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 

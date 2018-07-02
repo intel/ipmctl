@@ -781,7 +781,7 @@ GetDimmInfo (
     ReturnCode = GetSmbiosCapacity(DmiPhysicalDev.Type17->Size, DmiPhysicalDev.Type17->ExtendedSize,
                                     SmbiosVersion, &CapacityFromSmbios);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve capacity from SMBIOS table (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve capacity from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
 
     pDimmInfo->CapacityFromSmbios = CapacityFromSmbios;
@@ -790,19 +790,19 @@ GetDimmInfo (
                 DmiPhysicalDev.Type17->DeviceLocator,
                 pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
     ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
                 DmiPhysicalDev.Type17->BankLocator,
                 pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
     ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
                 DmiPhysicalDev.Type17->Manufacturer,
                 pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
   } else {
     NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmHandle);
@@ -914,7 +914,7 @@ GetDimmInfo (
 
     ReturnCode = FwCmdGetSecurityInfo(pDimm, pSecurityPayload);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FW CMD Error: %r", ReturnCode);
+      NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURITY_INFO;
     }
     ConvertSecurityBitmask(pSecurityPayload->SecurityStatus, &pDimmInfo->SecurityState);
@@ -924,7 +924,7 @@ GetDimmInfo (
   {
     ReturnCode = FwCmdGetPackageSparingPolicy(pDimm, &pGetPackageSparingPayload);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Get package sparing policy failed with error %r for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
+      NVDIMM_DBG("Get package sparing policy failed with error " FORMAT_EFI_STATUS " for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_PACKAGE_SPARING;
     }
     else {
@@ -940,7 +940,7 @@ GetDimmInfo (
     /* address range scrub */
     ReturnCode = FwCmdGetARS(pDimm, &pDimmInfo->ARSStatus);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FwCmdGetARS failed with error %r for DIMM %d", ReturnCode, pDimm->DeviceHandle.AsUint32);
+      NVDIMM_DBG("FwCmdGetARS failed with error " FORMAT_EFI_STATUS " for DIMM %d", ReturnCode, pDimm->DeviceHandle.AsUint32);
     }
   }
 
@@ -2706,7 +2706,7 @@ SetSecurityState(
     ReturnCode = SetDimmSecurityState(pDimms[Index], PtSetSecInfo, SubOpcode, PayloadBufferSize,
         pSecurityPayload, PT_TIMEOUT_INTERVAL);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed on SetDimmSecurityState, ReturnCode=%r", ReturnCode);
+      NVDIMM_DBG("Failed on SetDimmSecurityState, ReturnCode=" FORMAT_EFI_STATUS "", ReturnCode);
       if (ReturnCode == EFI_ACCESS_DENIED) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PASSPHRASE);
       } else {
@@ -2729,7 +2729,7 @@ SetSecurityState(
     **/
     ReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed on GetDimmSecurityState, ReturnCode=%r", ReturnCode);
+      NVDIMM_DBG("Failed on GetDimmSecurityState, ReturnCode=" FORMAT_EFI_STATUS "", ReturnCode);
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
       ReturnCode = EFI_ABORTED;
       goto Finish;
@@ -2752,7 +2752,7 @@ Finish:
   if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
     ReturnCode = ReenumerateNamespacesAndISs();
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=%r", ReturnCode);
+      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=" FORMAT_EFI_STATUS "", ReturnCode);
     }
   }
 
@@ -3038,7 +3038,7 @@ GetPcd(
 		}
 #endif // MEMORY_CORRUPTIO_WA
 		if (EFI_ERROR(ReturnCode)) {
-			NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: %r", ReturnCode);
+			NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
 			SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
 			goto FinishError;
 		}
@@ -3071,13 +3071,13 @@ GetPcd(
 			so we don't want to "kill" a valid configuration
 			**/
 			NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-			NVDIMM_DBG("Error in retrieving the LSA: %r", ReturnCode);
+			NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
 			goto Finish;
 		}
 		pDimms[Index]->LsaStatus = LSA_OK;
 #else // OS_BUILD
 		if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
-			NVDIMM_DBG("Error in retrieving the LSA: %r", ReturnCode);
+			NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
 			goto Finish;
 		}
 #endif // OS_BUILD
@@ -3163,7 +3163,7 @@ DeletePcd(
     if (EFI_ERROR(TmpReturnCode)) {
       KEEP_ERROR(ReturnCode, TmpReturnCode);
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
-      NVDIMM_DBG("Error in zero-ing the LSA: %r", TmpReturnCode);
+      NVDIMM_DBG("Error in zero-ing the LSA: " FORMAT_EFI_STATUS "", TmpReturnCode);
       continue;
     }
 
@@ -3375,7 +3375,7 @@ GetRegions(
 #ifdef OS_BUILD
   Rc = InitializeNamespaces();
   if (EFI_ERROR(Rc)) {
-    NVDIMM_WARN("Failed to initialize Namespaces, error = %r.", Rc);
+    NVDIMM_WARN("Failed to initialize Namespaces, error = " FORMAT_EFI_STATUS ".", Rc);
   }
 #endif
 
@@ -4415,7 +4415,7 @@ UpdateSmbusDimmFw(
   CurrentPacket++;
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pNvmStatus != NULL) {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
@@ -4435,7 +4435,7 @@ UpdateSmbusDimmFw(
 
     ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-      NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
       if (pNvmStatus != NULL) {
         *pNvmStatus = NVM_ERR_OPERATION_FAILED;
       }
@@ -4451,7 +4451,7 @@ UpdateSmbusDimmFw(
 
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pNvmStatus != NULL) {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
@@ -4610,7 +4610,7 @@ UpdateDimmFw(
 #else
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-     NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
      if (pNvmStatus != NULL) {
         if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
            *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
@@ -4645,7 +4645,7 @@ UpdateDimmFw(
   CurrentPacket++;
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pNvmStatus != NULL) {
       if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
@@ -4665,7 +4665,7 @@ UpdateDimmFw(
 
     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-      NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
       if (pNvmStatus != NULL) {
         if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
           *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
@@ -4683,7 +4683,7 @@ UpdateDimmFw(
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=%r status=%d", ReturnCode, pPassThruCommand->Status);
+    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pNvmStatus != NULL) {
       if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
@@ -6007,7 +6007,7 @@ DumpGoalConfig(
   /** Create new file for dump **/
   ReturnCode = OpenFileByDevice(pFilePath, pDevicePath, TRUE, &pFileHandle);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed on create file to dump Region goal configuration. (%r)", ReturnCode);
+    NVDIMM_WARN("Failed on create file to dump Region goal configuration. (" FORMAT_EFI_STATUS ")", ReturnCode);
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED);
     goto Finish;
   }
@@ -6022,7 +6022,7 @@ DumpGoalConfig(
     ReturnCode = pFileHandle->Delete(pFileHandle);
 
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed on deleting old dump file! (%r)", ReturnCode);
+      NVDIMM_WARN("Failed on deleting old dump file! (" FORMAT_EFI_STATUS ")", ReturnCode);
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
@@ -6030,7 +6030,7 @@ DumpGoalConfig(
     /** Create new file for dump **/
     ReturnCode = OpenFileByDevice(pFilePath, pDevicePath, TRUE, &pFileHandle);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed on create file to dump Region Goal Configuration. (%r)", ReturnCode);
+      NVDIMM_WARN("Failed on create file to dump Region Goal Configuration. (" FORMAT_EFI_STATUS ")", ReturnCode);
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
@@ -6038,7 +6038,7 @@ DumpGoalConfig(
 #else
   ReturnCode = OpenFile(pFilePath, &pFileHandle, NULL, 1);
   if (EFI_ERROR(ReturnCode)) {
-     NVDIMM_WARN("Failed on open dump file header info. (%r)", ReturnCode);
+     NVDIMM_WARN("Failed on open dump file header info. (" FORMAT_EFI_STATUS ")", ReturnCode);
      ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED);
      goto Finish;
   }
@@ -6046,7 +6046,7 @@ DumpGoalConfig(
   /** Write dump file header **/
   ReturnCode = WriteDumpFileHeader(pFileHandle);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed on write dump file header info. (%r)", ReturnCode);
+    NVDIMM_WARN("Failed on write dump file header info. (" FORMAT_EFI_STATUS ")", ReturnCode);
     ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED);
     goto Finish;
   }
@@ -6054,7 +6054,7 @@ DumpGoalConfig(
   /** Perform Dump to File **/
   ReturnCode = DumpConfigToFile(pFileHandle, pDimmConfigs, DimmConfigsNum);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed on write dump. (%r)", ReturnCode);
+    NVDIMM_WARN("Failed on write dump. (" FORMAT_EFI_STATUS ")", ReturnCode);
     ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED);
     goto Finish;
   }
@@ -6165,7 +6165,7 @@ LoadGoalConfig(
   // Parse source file
   ReturnCode = SetUpGoalStructures(pDimms, pDimmsConfig, DimmsNum, pFileString, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("SetUpGoalStructures failed. (%r)",ReturnCode);
+    NVDIMM_DBG("SetUpGoalStructures failed. (" FORMAT_EFI_STATUS ")",ReturnCode);
     goto Finish;
   }
 
@@ -6181,7 +6181,7 @@ LoadGoalConfig(
       &PersistentMemType, &VolatilePercent, &ReservedPercent, &LabelVersionMajor, &LabelVersionMinor,
       pCmdStatusInternal);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("ValidAndPrepareLoadConfig failed. (%r)", ReturnCode);
+      NVDIMM_DBG("ValidAndPrepareLoadConfig failed. (" FORMAT_EFI_STATUS ")", ReturnCode);
       SetObjStatus(pCommandStatus, Socket, NULL, 0, pCmdStatusInternal->GeneralStatus);
       FreeCommandStatus(&pCmdStatusInternal);
       goto Finish;
@@ -6210,7 +6210,7 @@ LoadGoalConfig(
     ReturnCode = CreateGoalConfig(pThis, FALSE, DimmIDs, DimmIDsNum, NULL, 0, PersistentMemType, VolatilePercent, ReservedPercent,
         RESERVE_DIMM_NONE, LabelVersionMajor, LabelVersionMinor, pCmdStatusInternal);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("CreateGoalConfig failed. (%r)", ReturnCode);
+      NVDIMM_DBG("CreateGoalConfig failed. (" FORMAT_EFI_STATUS ")", ReturnCode);
       SetObjStatus(pCommandStatus, Socket, NULL, 0, pCmdStatusInternal->GeneralStatus);
       FreeCommandStatus(&pCmdStatusInternal);
       goto Finish;
@@ -7859,13 +7859,13 @@ GetSystemTopology(
              SmBiosStruct.Type17->DeviceLocator, (*ppTopologyDimm)[Index].DeviceLocator,
              sizeof((*ppTopologyDimm)[Index].DeviceLocator));
         if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->DeviceLocator (%r)", ReturnCode);
+          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->DeviceLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
         }
         ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &SmBiosStruct.Type17,
               SmBiosStruct.Type17->BankLocator, (*ppTopologyDimm)[Index].BankLabel,
               sizeof((*ppTopologyDimm)[Index].BankLabel));
         if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->BankLocator (%r)", ReturnCode);
+          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->BankLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
         }
         // override types to keep consistency with dimm_info values
         if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
@@ -7939,7 +7939,7 @@ GetARSStatus(
     if (pDimm->PmCapacity > 0) {
       ReturnCode = FwCmdGetARS(pDimm, &DimmARSStatus);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("FwCmdGetARS failed with error %r for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
+        NVDIMM_DBG("FwCmdGetARS failed with error " FORMAT_EFI_STATUS " for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       }
 
       switch(DimmARSStatus) {

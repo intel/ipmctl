@@ -984,7 +984,7 @@ GetDeviceAndFilePath(
   // Get Efi Shell Protocol
   ReturnCode = gBS->LocateHandleBuffer(ByProtocol, &gEfiShellProtocolGuid, NULL, &HandlesCount, &pHandles);
   if (EFI_ERROR(ReturnCode) || HandlesCount >= MAX_SHELL_PROTOCOL_HANDLES) {
-    NVDIMM_WARN("Error while opening the shell protocol. Code: %r", ReturnCode);
+    NVDIMM_WARN("Error while opening the shell protocol. Code: " FORMAT_EFI_STATUS "", ReturnCode);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
@@ -997,7 +997,7 @@ GetDeviceAndFilePath(
       EFI_OPEN_PROTOCOL_GET_PROTOCOL
   );
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Error while opening the shell protocol. Code: %r", ReturnCode);
+    NVDIMM_WARN("Error while opening the shell protocol. Code: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
@@ -1238,7 +1238,7 @@ FileExists (
 
   ReturnCode = GetDeviceAndFilePath(pDumpUserPath, pDumpFilePath, &pDevicePathProtocol);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to get file path (%r)", ReturnCode);
+    NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 
@@ -1283,12 +1283,12 @@ DeleteFile (
 
   ReturnCode = GetDeviceAndFilePath(pFilePath, pDumpFilePath, &pDevicePathProtocol);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to get file path (%r)", ReturnCode);
+    NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
   ReturnCode = OpenRootFileVolume(pDevicePathProtocol, &RootDirHandle);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to open file volume (%r)", ReturnCode);
+    NVDIMM_WARN("Failed to open file volume (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 
@@ -1300,7 +1300,7 @@ DeleteFile (
   if (!EFI_ERROR(ReturnCode)) {
     ReturnCode = pFileHandle->Delete(pFileHandle);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to delete file path (%r)", ReturnCode);
+      NVDIMM_WARN("Failed to delete file path (" FORMAT_EFI_STATUS ")", ReturnCode);
       goto Finish;
     }
   }
@@ -1376,7 +1376,7 @@ DumpToFile (
 
   ReturnCode = GetDeviceAndFilePath(pDumpUserPath, pDumpFilePath, &pDevicePathProtocol);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to get file path (%r)", ReturnCode);
+    NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 
@@ -1398,7 +1398,7 @@ DumpToFile (
   // Create new file for dump
   ReturnCode = OpenFileByDevice(pDumpFilePath, pDevicePathProtocol, TRUE, &pFileHandle);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to open file (%r) (%s)", ReturnCode, pDumpFilePath);
+    NVDIMM_WARN("Failed to open file (" FORMAT_EFI_STATUS ") (%s)", ReturnCode, pDumpFilePath);
     goto Finish;
   }
 
@@ -1410,14 +1410,14 @@ DumpToFile (
       ReturnCode = pFileHandle->Delete(pFileHandle);
 
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Failed deleting old dump file (%r)", ReturnCode);
+        NVDIMM_WARN("Failed deleting old dump file (" FORMAT_EFI_STATUS ")", ReturnCode);
         goto Finish;
       }
 
       // Create new file for dump
       ReturnCode = OpenFileByDevice(pDumpFilePath, pDevicePathProtocol, TRUE, &pFileHandle);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Failed to create dump file (%r)", ReturnCode);
+        NVDIMM_WARN("Failed to create dump file (" FORMAT_EFI_STATUS ")", ReturnCode);
         goto Finish;
       }
     } else {

@@ -85,7 +85,7 @@ DumpGoal(
 
   ReturnCode = GetDeviceAndFilePath(pDumpUserPath, pDumpFilePath, &pDevicePath);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to get file path (%r)", ReturnCode);
+    NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
   }
 

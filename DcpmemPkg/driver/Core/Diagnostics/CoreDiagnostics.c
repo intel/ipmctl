@@ -481,7 +481,7 @@ CoreStartDiagnostics(
     }
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Quick diagnostics failed. (%r)", TempReturnCode);
+      NVDIMM_DBG("Quick diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
   if (DiagnosticsTest & DiagnosticConfigTest) {
@@ -489,21 +489,21 @@ CoreStartDiagnostics(
         &(pBuffer[ConfigDiagnosticIndex]), &(DiagState[ConfigDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Platform configuration diagnostics failed. (%r)", TempReturnCode);
+      NVDIMM_DBG("Platform configuration diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
   if (DiagnosticsTest & DiagnosticSecurityTest) {
     TempReturnCode = RunSecurityDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[SecurityDiagnosticIndex]), &(DiagState[SecurityDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Security diagnostics failed. (%r)", TempReturnCode);
+      NVDIMM_DBG("Security diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
   if (DiagnosticsTest & DiagnosticFwTest) {
     TempReturnCode = RunFwDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[FwDiagnosticIndex]), &(DiagState[FwDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Firmware and consistency settings diagnostics failed. (%r)", TempReturnCode);
+      NVDIMM_DBG("Firmware and consistency settings diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
 

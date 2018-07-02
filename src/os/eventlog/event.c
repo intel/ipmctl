@@ -676,7 +676,7 @@ static int get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching, U
         {
             skip_entry |= check_skip_entry_status_for_event_actionreq_set(not_matching, SYSTEM_EVENT_TYPE_AR_EVENT_GET(event_type_mask), event_message);
         }
-        if (dimm_uid != NULL)
+        if ((dimm_uid != NULL) && (*dimm_uid != 0))
         {
             skip_entry |= check_skip_entry_status_for_dimm_id(not_matching, dimm_uid, event_message);
         }

@@ -143,11 +143,12 @@ int tokenize_and_copy_key_value_pair(
 {
    wchar_t *tok = line;
    int index = 0;
+   int vindex = 0;
 
    memset(key, 0, key_sz);
    memset(val, 0, val_sz);
 
-   while (tok[index] != L'\0' && ((tok[index] != L'=') || (tok[index] != L':')))
+   while (tok[index] != L'\0' && ((tok[index] != L'=') && (tok[index] != L':')))
    {
      if(index < (key_sz-1))
       key[index] = tok[index];
@@ -162,8 +163,9 @@ int tokenize_and_copy_key_value_pair(
    while (tok[index] != L'\0')
    {
      if (index < (val_sz - 1))
-       val[index] = tok[index];
+       val[vindex] = tok[index];
      ++index;
+     ++vindex;
    }
 
    return 0;

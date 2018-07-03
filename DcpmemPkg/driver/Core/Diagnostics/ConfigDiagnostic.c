@@ -538,7 +538,8 @@ CheckPlatformConfigurationData(
     }
 
     if (EFI_ERROR(ReturnCode)) {
-      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_UNABLE_TO_READ_POOL_INFO), EVENT_CODE_621, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState);
+      APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_INVALID_PCD_DATA), EVENT_CODE_621, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+        ppDimms[Index]->DeviceHandle.AsUint32);
       continue;
     }
 

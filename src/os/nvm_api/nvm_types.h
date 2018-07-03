@@ -168,12 +168,14 @@ enum region_type
  */
 enum region_health
 {
-  REGION_HEALTH_UNKNOWN = 0, ///< The REGION health cannot be determined.
   REGION_HEALTH_NORMAL  = 1, ///< All underlying DIMM Persistent memory capacity is available.
-  REGION_HEALTH_PENDING = 2, ///< A new memory allocation goal has been created but not applied.
-  REGION_HEALTH_ERROR   = 3, ///< There is an issue with some or all of the underlying
+  REGION_HEALTH_ERROR   = 2, ///< There is an issue with some or all of the underlying
                              ///< DIMM capacity.
-  REGION_HEALTH_LOCKED  = 4  ///< One or more of the underlying DIMMs are locked.
+  REGION_HEALTH_UNKNOWN = 3, ///< The REGION health cannot be determined.
+
+  REGION_HEALTH_PENDING = 4, ///< A new memory allocation goal has been created but not applied.
+
+  REGION_HEALTH_LOCKED  = 5  ///< One or more of the underlying DIMMs are locked.
 };
 
 /**
@@ -185,50 +187,6 @@ enum interleave_set_health
   INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying DIMMs have good health.
   INTERLEAVE_HEALTH_DEGRADED = 2,  ///< In danger of failure, may have degraded performance.
   INTERLEAVE_HEALTH_FAILED   = 3   ///< Interleave set has failed and is unavailable.
-};
-
-/**
- * Type of the namespace
- */
-enum namespace_type
-{
-  NAMESPACE_TYPE_UNKNOWN = 0, ///< Type cannot be determined
-  NAMESPACE_TYPE_APP_DIRECT = 1 ///< App Direct namespace
-};
-
-/**
- * Namespace health
- */
-enum namespace_health
-{
-  NAMESPACE_UNKNOWN_HEALTH = 0, ///< Namespace health cannot be determined
-  NAMESPACE_HEALTH_NORMAL = 5, ///< Namespace is OK
-  NAMESPACE_HEALTH_NONCRITICAL = 10, ///< Non-critical health issue
-  // NAMESPACE_HEALTH_CRITICAL = 25, // Critical health issue
-  NAMESPACE_HEALTH_BROKENMIRROR = 65535 ///< Broken mirror
-};
-
-/**
- * If the namespace is exposed to the OS
- */
-enum namespace_enable_state
-{
-  NAMESPACE_ENABLE_STATE_UNKNOWN = 0, ///< Cannot be determined
-  NAMESPACE_ENABLE_STATE_ENABLED = 2, ///< Exposed to OS
-  NAMESPACE_ENABLE_STATE_DISABLED = 3 ///< Hidden from OS
-};
-
-/**
- * Where the capacity is allocated from for the underlying OS structures
- * if access to the AppDirect namespace capacity is supported using
- * legacy memory page protocols such as DMA/RDMA
- */
-enum namespace_memory_page_allocation
-{
-  NAMESPACE_MEMORY_PAGE_ALLOCATION_UNKNOWN = 0, ///< Cannot be determined
-  NAMESPACE_MEMORY_PAGE_ALLOCATION_NONE = 1, ///< No support to access NS using memoryPageProtocols
-  NAMESPACE_MEMORY_PAGE_ALLOCATION_DRAM = 2, ///< Capacity is allocated from DRAM
-  NAMESPACE_MEMORY_PAGE_ALLOCATION_APP_DIRECT = 3 ///< Capacity is allocated from the NS itself
 };
 
 /**

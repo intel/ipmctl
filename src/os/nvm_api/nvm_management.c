@@ -310,21 +310,6 @@ NVM_API int nvm_get_version(NVM_VERSION version_str, const NVM_SIZE str_len)
   return NVM_SUCCESS;
 }
 
-//deprecated function, but here for backwards compatibility for now
-NVM_API int nvm_get_socket_count()
-{
-  int SocketCount;
-  int nvm_status;
-
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return nvm_status;
-  }
-  if (NVM_SUCCESS == nvm_get_number_of_sockets(&SocketCount))
-    return SocketCount;
-  return -1;
-}
-
 NVM_API int nvm_get_number_of_sockets(int *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -451,16 +436,6 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count)
   return NVM_SUCCESS;
 }
 
-//deprecated, implement nvm_get_number_of_memory_topology_devices
-NVM_API int nvm_get_memory_topology_count()
-{
-  int TopologyCount = 0;
-
-  if (NVM_SUCCESS == nvm_get_number_of_memory_topology_devices(&TopologyCount))
-    return TopologyCount;
-  return -1;
-}
-
 NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
             const NVM_UINT8   count)
 {
@@ -491,22 +466,6 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
     memcpy_s(p_devices[index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[index].BankLabel, BANKLABEL_LEN);                   // Physically-labeled bank of device location
 	}
 	return NVM_SUCCESS;
-}
-
-//deprecated, please use nvm_get_number_of_devices
-NVM_API int nvm_get_device_count()
-{
-  int dimm_cnt;
-  int nvm_status;
-
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return nvm_status;
-  }
-
-  if (NVM_SUCCESS == nvm_get_number_of_devices(&dimm_cnt))
-    return dimm_cnt;
-  return -1;
 }
 
 NVM_API int nvm_get_number_of_devices(int *count)
@@ -1341,10 +1300,11 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 	UINT64 AppDirectCapacity;
 	UINT64 UnconfiguredCapacity;
 	UINT64 ReservedCapacity;
-        UINT64 InaccessibleCapacity;
+  UINT64 InaccessibleCapacity;
 	unsigned int i;
 	EFI_STATUS ReturnCode = EFI_SUCCESS;
 	int rc = NVM_SUCCESS;
+  UINT32 dimm_cnt;
 
 	if (NULL == p_capacities) {
 		NVDIMM_ERR("NULL input parameter\n");
@@ -1355,7 +1315,11 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 		NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
 		return rc;
 	}
-	UINT32 dimm_cnt = nvm_get_device_count();
+  if (NVM_SUCCESS != nvm_get_number_of_devices(&dimm_cnt)) {
+    NVDIMM_ERR("Failed to get number of devices\n");
+    return NVM_ERR_UNKNOWN;
+  }
+
 	DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * dimm_cnt);
 	if (NULL == pdimms) {
 		NVDIMM_ERR("Failed to allocate memory\n");
@@ -1560,12 +1524,6 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid,
 Finish:
   FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   return rc;
-}
-
-// DEPRECATED -- don't impl
-NVM_API int nvm_get_security_permission(struct device_discovery *p_discovery)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 static void get_sensor_units(const enum sensor_type type, struct sensor *psensor)
@@ -1925,17 +1883,6 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
   return NVM_SUCCESS;
 }
 
-//deprecated, please implement nvm_get_number_of_events
-NVM_API int nvm_get_event_count(const struct event_filter *p_filter)
-{
-  int count = 0;
-  int rc = nvm_get_number_of_events(p_filter, &count);
-
-  if (rc == 0)
-    return count;
-  return -1;
-}
-
 NVM_API int nvm_get_events(const struct event_filter *p_filter,
          struct event *p_events, const NVM_UINT16 count)
 {
@@ -2005,24 +1952,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
   return nvm_clear_action_required(event_id);
 }
 
-//deprecated, please implement nvm_get_number_of_pools
-NVM_API int nvm_get_region_count()
-{
-  int region_count;
-  int rc = NVM_SUCCESS;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-
-  if (NVM_SUCCESS != nvm_get_number_of_regions(&region_count))
-    return -1;
-
-  return region_count;
-}
-
-NVM_API int nvm_get_number_of_regions(int *count)
+NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
@@ -2053,20 +1983,21 @@ NVM_API int nvm_get_number_of_regions(int *count)
   }
   FreeCommandStatus(&pCommandStatus);
 Finish:
-  *count = region_count;
+  *count = (NVM_UINT8)region_count;
   return rc;
 }
 
-NVM_API int nvm_get_regions(struct region *p_regions, const NVM_UINT8 count)
+NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
-  int RegionCount, Index;
+  NVM_UINT8 RegionCount, Index, DimmIndex;
   REGION_INFO *pRegions = NULL;
   EFI_STATUS erc;
   int rc = NVM_SUCCESS;
 
-  if (NULL == p_regions)
+  if ((NULL == p_regions) || (NULL == count)) {
     return NVM_ERR_INVALIDPARAMETER;
+  }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2094,69 +2025,29 @@ NVM_API int nvm_get_regions(struct region *p_regions, const NVM_UINT8 count)
     goto Finish;
   }
 
-  if ((UINT8)RegionCount > count)
-    RegionCount = (UINT32)count;
+  if (RegionCount > *count)
+    RegionCount = *count;
 
   for (Index = 0; Index < RegionCount; Index++) {
     memset(&p_regions[Index], 0, sizeof(struct region));
     p_regions[Index].socket_id = pRegions[Index].SocketId;
-    *((UINT32 *)p_regions[Index].region_uid) = pRegions[Index].RegionId;
+    p_regions[Index].isetId = pRegions[Index].CookieId;
     p_regions[Index].capacity = pRegions[Index].Capacity;
     p_regions[Index].free_capacity = pRegions[Index].FreeCapacity;
     p_regions[Index].health = pRegions[Index].Health;
     p_regions[Index].type = pRegions[Index].RegionType;
+    p_regions[Index].dimm_count = pRegions[Index].DimmIdCount;
+
+    for (DimmIndex = 0; DimmIndex < pRegions[Index].DimmIdCount; DimmIndex++)
+      p_regions[Index].dimms[DimmIndex] = pRegions[Index].DimmId[DimmIndex];
   }
+
+  *count = RegionCount;
 
 Finish:
   FreeCommandStatus(&pCommandStatus);
   FreePool(pRegions);
   return rc;
-}
-
-NVM_API int nvm_get_region(const NVM_UID region_uid, struct region *p_region)
-{
-  UINT32 *region_id = (UINT32 *)region_uid;
-  int region_count;
-  struct region *p_regions;
-  int Index = 0;
-  int rc = NVM_SUCCESS;
-
-  if (NULL == p_region)
-    return NVM_ERR_INVALIDPARAMETER;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-
-  if (NVM_SUCCESS != (rc = nvm_get_number_of_regions(&region_count)))
-    return rc;
-
-  p_regions = AllocateZeroPool(sizeof(struct region) * region_count);
-  if (p_regions == NULL)
-    return NVM_ERR_NO_MEM;
-
-  if (NVM_SUCCESS != (rc = nvm_get_regions(p_regions, region_count)))
-    goto Finish;
-
-  for (Index = 0; Index < region_count; ++Index) {
-    UINT32 *p_id = (UINT32 *)p_regions[Index].region_uid;
-    if (*p_id == *region_id) {
-      memcpy_s(p_region, sizeof(struct region), &p_regions[Index], sizeof(struct region));
-			rc = NVM_SUCCESS;
-			break;
-		}
-	}
-Finish:
-  FreePool(p_regions);
-  return rc;
-}
-
-//DEPRECATED -- don't support namespaces
-NVM_API int nvm_get_available_persistent_size_range(const NVM_UID region_uid,
-                struct possible_namespace_ranges *p_range, const NVM_UINT8 ways)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count,
@@ -2429,7 +2320,11 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file,
     rc = NVM_ERR_UNKNOWN;
     goto Finish;
   }
-  dimm_count = nvm_get_device_count();
+  if (NVM_SUCCESS != nvm_get_number_of_devices(&dimm_count)) {
+    NVDIMM_ERR("Failed to get number of devices\n");
+    rc = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
   pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * dimm_count);
   if (NULL == pdimms) {
     NVDIMM_ERR("Failed to allocate memory\n");
@@ -2484,83 +2379,6 @@ Finish:
   FREE_POOL_SAFE(p_socket_ids);
   FREE_POOL_SAFE(p_file_string);
   return rc;
-}
-
-//deprecated, please implement nvm_get_number_of_namespaces
-NVM_API int nvm_get_namespace_count()
-{
-  return -1;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_get_device_namespace_count(const NVM_UID    uid,
-             const enum namespace_type  type)
-{
-  return -1;
-}
-
-
-//deprecated -- don't impl
-NVM_API int nvm_get_namespaces(struct namespace_discovery * p_namespaces,
-             const NVM_UINT8      count)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_get_namespace_details(const NVM_UID   namespace_uid,
-              struct namespace_details *p_namespace)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_adjust_create_namespace_block_count(const NVM_UID region_uid,
-                struct namespace_create_settings *p_settings, const struct interleave_format *p_format)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_adjust_modify_namespace_block_count(
-  const NVM_UID namespace_uid, NVM_UINT64 *p_block_count)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_create_namespace(NVM_UID *p_namespace_uid, const NVM_UID region_uid,
-         struct namespace_create_settings *p_settings,
-         const struct interleave_format *p_format, const NVM_BOOL allow_adjustment)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_modify_namespace_name(const NVM_UID   namespace_uid,
-              const NVM_NAMESPACE_NAME  name)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_modify_namespace_block_count(const NVM_UID namespace_uid,
-               NVM_UINT64 block_count, NVM_BOOL allow_adjustment)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_modify_namespace_enabled(const NVM_UID        namespace_uid,
-           const enum namespace_enable_state  enabled)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-//deprecated -- don't impl
-NVM_API int nvm_delete_namespace(const NVM_UID namespace_uid)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 void get_version_numbers(int *major, int *minor, int *hotfix, int *build)
@@ -2975,17 +2793,6 @@ NVM_API int nvm_get_number_of_debug_logs(int *count)
   return NVM_SUCCESS;
 }
 
-//deprecated, please implement nvm_get_number_of_debug_logs
-NVM_API int nvm_get_debug_log_count()
-{
-  int count = 0;
-  int rc = nvm_get_number_of_debug_logs(&count);
-
-  if (rc == 0)
-    return count;
-  return -1;
-}
-
 static void convert_debug_log_entry_to_event(log_entry *p_log_entry, char *event_message, struct nvm_log *p_event)
 {
   char *p_src_msg = event_message;
@@ -3031,13 +2838,6 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
   free(event_buffer);
   return NVM_SUCCESS;
 }
-
-//deprecated, please implement nvm_get_number_of_jobs
-NVM_API int nvm_get_job_count()
-{
-  return -1;
-}
-
 
 #pragma pack(push)
 #pragma pack(1)
@@ -3312,8 +3112,8 @@ int get_dimm_id(const char *uid, unsigned int *dimm_id, unsigned int *dimm_handl
   int i;
 
   if (NULL == g_dimms) {
-    if (0 == (g_dimm_cnt = nvm_get_device_count())) {
-      NVDIMM_ERR("nvm_get_device_count failed\n");
+    if (NVM_SUCCESS != nvm_get_number_of_devices(&g_dimm_cnt)) {
+      NVDIMM_ERR("Failed to get number of devices\n");
       return NVM_ERR_UNKNOWN;
     }
 

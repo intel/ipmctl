@@ -128,46 +128,48 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
 	//LogEnterExit logging(__FUNCTION__, __FILE__, __LINE__);
 
 	std::vector<std::string> dimmList;
-	int dimmCount = nvm_get_device_count();
-	// error getting dimm count
-	if (dimmCount < 0)
-	{
-		nvm_store_system_entry(LOG_SRC,
-            SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_6, false, true, true, false, 0),
-            NULL,
-            "nvm_get_device_count failed with error %d",
-			dimmCount);
-	}
-	// at least one dimm
-	else if (dimmCount > 0)
-	{
-		struct device_discovery *dimms = new device_discovery[dimmCount];
-		dimmCount = nvm_get_devices(dimms, dimmCount);
-		// error getting dimms
-		if (dimmCount < 0)
-		{
-			nvm_store_system_entry(LOG_SRC,
-                SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_7, false, true, true, false, 0),
-                NULL,
-				"nvm_get_devices failed with error %d",
-				dimmCount);
-		}
-		// at least one dimm
-		else if (dimmCount > 0)
-		{
-			for (int i = 0; i < dimmCount; i++)
-			{
-				// only looks at manageable NVM-DIMMs
-				if (dimms[i].manageability == MANAGEMENT_VALIDCONFIG)
-				{
-					NVM_UID uidStr;
-					strncpy_s(uidStr, NVM_MAX_UID_LEN, dimms[i].uid, NVM_MAX_UID_LEN);
-					dimmList.push_back(std::string(uidStr));
-				}
-			}
-		}
+  int dimmCount = 0;
+  if (NVM_SUCCESS == nvm_get_number_of_devices(&dimmCount)) {
+    // error getting dimm count
+    if (dimmCount < 0)
+    {
+      nvm_store_system_entry(LOG_SRC,
+        SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_6, false, true, true, false, 0),
+        NULL,
+        "nvm_get_device_count failed with error %d",
+        dimmCount);
+    }
+    // at least one dimm
+    else if (dimmCount > 0)
+    {
+      struct device_discovery *dimms = new device_discovery[dimmCount];
+      dimmCount = nvm_get_devices(dimms, dimmCount);
+      // error getting dimms
+      if (dimmCount < 0)
+      {
+        nvm_store_system_entry(LOG_SRC,
+          SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_7, false, true, true, false, 0),
+          NULL,
+          "nvm_get_devices failed with error %d",
+          dimmCount);
+      }
+      // at least one dimm
+      else if (dimmCount > 0)
+      {
+        for (int i = 0; i < dimmCount; i++)
+        {
+          // only looks at manageable NVM-DIMMs
+          if (dimms[i].manageability == MANAGEMENT_VALIDCONFIG)
+          {
+            NVM_UID uidStr;
+            strncpy_s(uidStr, NVM_MAX_UID_LEN, dimms[i].uid, NVM_MAX_UID_LEN);
+            dimmList.push_back(std::string(uidStr));
+          }
+        }
+      }
 
-		delete[] dimms;
-	}
+      delete[] dimms;
+    }
+  }
 	return dimmList;
 }

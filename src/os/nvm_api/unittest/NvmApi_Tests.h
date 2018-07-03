@@ -82,6 +82,18 @@ TEST_F(NvmApi_Tests, GetDimmIdPassThru)
   int status = nvm_send_device_passthrough_cmd(p_devices->uid, &get_dimm_id_pt);
 }
 
+TEST_F(NvmApi_Tests, GetRegions)
+{
+  NVM_UINT8 count;
+  nvm_get_number_of_regions(&count);
+  region *p_region = (region *)malloc(sizeof(region)*count);
+
+  EXPECT_EQ(nvm_get_regions(p_region, &count), NVM_SUCCESS);
+
+  free(p_region);
+
+}
+
 TEST_F(NvmApi_Tests, GetFwErrorLogEntry)
 {
   struct device_pt_cmd get_dimm_id_pt;

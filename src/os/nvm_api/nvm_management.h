@@ -960,28 +960,15 @@ struct interleave_set {
  * Information about a persistent memory region
  */
 struct region {
-	NVM_UID			region_uid;       ///< Unique identifier of the region.
+  NVM_UINT64 isetId;       ///< Unique identifier of the region.
 	enum region_type		type;           ///< The type of region.
 	NVM_UINT64		capacity;       ///< Size of the region in bytes.
 	NVM_UINT64		free_capacity;  ///< Available size of the region in bytes.
 	// The processor socket identifier.
 	NVM_INT16		socket_id;
 	NVM_UINT16		dimm_count;     ///< The number of dimms in this region.
-	NVM_UINT16		ilset_count;    ///< The number of interleave sets in this region.
-	// Raw capacity of each dimm in the region in bytes.
-	NVM_UINT64		raw_capacities[NVM_MAX_DEVICES_PER_POOL];
-	// Memory mode capacity of each dimm in the region in bytes.
-	NVM_UINT64		memory_capacities[NVM_MAX_DEVICES_PER_POOL];
-	NVM_UID			dimms[NVM_MAX_DEVICES_PER_POOL]; ///< Unique ID's of underlying DIMMs.
-	// The interleave sets in this region
-	struct interleave_set	ilsets[NVM_MAX_DEVICES_PER_POOL * 2];
+	NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique ID's of underlying DIMMs.
 	enum region_health	health; ///< Rolled up health of the underlying DIMMs.
-	// possible to create a namespace wholly contained on DIMMs that have encryption enabled.
-	NVM_BOOL		encryption_enabled;
-	// possible to create a namespace wholly contained on DIMMs that support encryption.
-	NVM_BOOL		encryption_capable;
-	// true if its possible to create namespace that would be wholly contained on erasable dimms
-	NVM_BOOL		erase_capable;
 };
 
 /**
@@ -1008,69 +995,6 @@ struct config_goal {
 	enum interleave_size	channel_interleaving[MAX_IS_PER_DIMM];
 	NVM_UINT8		appdirect_index[MAX_IS_PER_DIMM];
 	enum config_goal_status status; // Status for the config goal. Ignored for input.
-};
-
-/**
- * Basic discovery information about a namespace.
- */
-struct namespace_discovery {
-	NVM_UID namespace_uid;                          ///< Unique identifier of the namespace.
-	char	friendly_name[NVM_NAMESPACE_NAME_LEN];  ///< User supplied friendly name.
-};
-
-/**
- * Structure that describes the security features of a namespace
- */
-struct namespace_security_features {
-	// encryption status of the NVDIMM or interleave set
-	enum encryption_status		encryption;
-	// true if the parent NVDIMM or interleave set is erase capable
-	enum erase_capable_status	erase_capable;
-};
-
-/**
- * Detailed information about a namespace.
- */
-struct namespace_details {
-	struct namespace_discovery		discovery;              ///< Basic discovery information.
-	NVM_UID					region_uid;               ///< The region the namespace is created from.
-	NVM_UINT32				block_size;             ///< Block size in bytes.
-	NVM_UINT64				block_count;            ///< Number of blocks.
-	enum namespace_type			type;                   ///< The type of namespace
-	enum namespace_health			health;                 ///< Rolled-up health of the underlying DIMMs.
-	enum namespace_enable_state		enabled;                ///< If namespace is exposed to the OS.
-	NVM_BOOL				btt;                    ///< optimized for speed
-	struct namespace_security_features	security_features;      ///< Security features
-	struct interleave_format		interleave_format;
-	NVM_BOOL				mirrored;
-	union {
-		NVM_UID		device_uid;             ///< Used when creating a storage Namespace
-		NVM_UINT32	interleave_setid;       ///< Used when creating an app direct Namespace
-	} creation_id;                                  ///< the identifier used by the driver when creating a Namespace
-	enum namespace_memory_page_allocation	memory_page_allocation;
-};
-
-/**
- * Caller specified settings for creating a new namespace.
- */
-struct namespace_create_settings {
-	char					friendly_name[NVM_NAMESPACE_NAME_LEN];  ///< User supplied friendly name.
-	NVM_UINT16				block_size;                             ///< Block size in bytes.
-	NVM_UINT64				block_count;                            ///< The number of blocks.
-	enum namespace_type			type;                                   ///< The type of namespace.
-	enum namespace_enable_state		enabled;                                ///< If the namespace is exposed to OS after creation.
-	NVM_BOOL				btt;                                    ///< optimized for speed
-	struct namespace_security_features	security_features;                      ///< Security features
-	enum namespace_memory_page_allocation	memory_page_allocation;
-};
-
-/**
- * Namespace size ranges. All sizes are in bytes.
- */
-struct possible_namespace_ranges {
-	NVM_UINT64	largest_possible_app_direct_ns;         ///< largest app direct namespace size possible
-	NVM_UINT64	smallest_possible_app_direct_ns;        ///< smallest app direct namespace size possible
-	NVM_UINT64	app_direct_increment;                   ///< Valid increment between smallest & largest app direct size
 };
 
 /*
@@ -1417,22 +1341,6 @@ NVM_API int nvm_get_host(struct host *p_host);
 NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory);
 
 /**
- * @deprecated Please use: nvm_get_number_of_sockets
- * @brief Retrieves the number of physical processors (NUMA nodes) in the system.
- * @pre
- *              The OS must support its respective NUMA implementation.
- * @remarks
- *              This method should be called before #nvm_get_socket or #nvm_get_sockets
- * @remarks
- *              This method should never return a value less than 1.
- * @return
- *              Returns the number of nodes on success or one of the following @link #return_code
- *              return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_socket_count();
-
-/**
  * @brief Retrieves the number of physical processors (NUMA nodes) in the system.
  * @pre
  *              The OS must support its respective NUMA implementation.
@@ -1482,27 +1390,6 @@ NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count);
  */
 NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
 
-
-/**
- * @}
- * @defgroup Device
- * These functions operate on Intel DC Persistent Memory DIMMs. They allow for
- * enumerating, getting and setting attributes of the DIMMs.
- * @{
- */
-
-/**
- * @deprecated please use: nvm_get_number_of_memory_topology_devices
- * @brief Returns the number of memory devices installed in the system. This count includes
- * both DIMMs and other memory devices, such as DRAM.
- * @pre The caller must have administrative privileges.
- * @remarks This method should be called before #nvm_get_device_topology.
- * @return Returns the number of devices in the topology on success
- * or one of the following @link #return_code return_codes: @endlink @n
- *              -1
- */
-NVM_API int nvm_get_memory_topology_count();
-
 /**
 * @brief Retrieve the number of memory devices installed in the system. This count includes
 * both DCPMEM modules and other memory devices, such as DRAM.
@@ -1528,19 +1415,6 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count);
  *              ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_memory_topology(struct memory_topology *p_devices, const NVM_UINT8 count);
-
-/*
- * @deprecated please use: nvm_get_number_of_devices
- * @brief Returns the number of devices installed in the system whether they are
- * fully compatible with the current native API library version or not.
- * @pre The caller must have administrative privileges.
- * @remarks This method should be called before #nvm_get_devices.
- * @remarks The number of devices can be 0.
- * @return Returns the number of devices on success
- * or one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_device_count();
 
 /*
 * @brief Retrieves the number of devices installed in the system whether they are
@@ -2027,22 +1901,6 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid);
 NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
 
 /**
- * @deprecated Not supported
- * @brief Get security permission to access/modify the device.
- * @param[in] p_discovery
- *              pinter to struct device_discovery.
- * @pre The caller has administrative privileges.
- * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_UNKNOWN @n
- *		NVM_ERR_SECURITYFROZEN @n
- *            ::NVM_ERR_LIMITPASSPHRASE @n
- *		NVM_ERR_NOTSUPPORTED @n
- */
-NVM_API int nvm_get_security_permission(struct device_discovery *p_discovery);
-
-/**
  * @}
  * @defgroup Events
  * These functions provide access to various events generated from
@@ -2089,20 +1947,6 @@ NVM_API int nvm_add_event_notify(const enum event_type type, void (*p_event_call
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_remove_event_notify(const int callback_id);
-
-/**
- * @deprecated please us: nvm_get_number_of_events
- * @brief Retrieve the number of events in the native API library event database.
- * @param[in] p_filter
- *              A pointer to an event_filter structure allocated by the caller to
- *              optionally filter the event count. NULL will return the count of
- *              all event log entries.
- * @pre The caller must have administrative privileges.
- * @return Returns the number of events on success or
- * one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_event_count(const struct event_filter *p_filter);
 
 /**
  * @brief Retrieve the number of events in the native API library event database.
@@ -2164,31 +2008,6 @@ NVM_API int nvm_purge_events(const struct event_filter *p_filter);
 NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
 
 /**
- * @}
- * @defgroup Region and Persistent Memory Management
- * These functions manage configuration of persistent memory regions
- * of Intel DC Persistent Memory DIMMs.
- * @{
- */
-
-/**
- * @deprecated please use: nvm_get_number_of_regions
- * @brief Retrieve the number of configured persistent memory regions in the host server.
- * @pre The caller has administrative privileges.
- * @remarks This method should be called before #nvm_get_regions.
- * @return Returns the number of regions on success or
- * one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_DRIVERFAILED @n
- *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADDRIVER @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only) @n
- */
-NVM_API int nvm_get_region_count();
-
-/**
  * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
@@ -2199,14 +2018,14 @@ NVM_API int nvm_get_region_count();
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
-NVM_API int nvm_get_number_of_regions(int *count);
+NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
 
 /**
  * @brief Retrieve a list of the configured persistent memory regions in host server.
  * @param[in,out] p_regions
  *              An array of #region structures allocated by the caller.
- * @param[in] count
- *              The size of the array.
+ * @param[in,out] count
+ *              The size of the array set  by caller and returns the count of regions that were returned.
  * @pre The caller has administrative privileges.
  * @remarks To allocate the array of #region structures,
  * call #nvm_get_region_count before calling this method.
@@ -2217,37 +2036,7 @@ NVM_API int nvm_get_number_of_regions(int *count);
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NO_MEM @n
  */
-NVM_API int nvm_get_regions(struct region *p_regions, const NVM_UINT8 count);
-
-/**
- * @brief Retrieve a specific persistent memory region.
- * @param[in] region_uid
- *              The identifier of the region to retrieve
- * @param[in,out] p_region
- *              A pointer to a #region structure allocated by the caller.
- * @pre The caller has administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_NO_MEM @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_get_region(const NVM_UID region_uid, struct region *p_region);
-
-/**
- * @deprecated This function is no longer supported.
- * @brief Takes a region UUID and returns the largest and smallest app direct and storage namespaces
- * that can be created on that region.
- * @pre The caller has administrative privileges.
- * @param[in] region_id
- *              UUID of the region getting ranges for
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- * @param[in,out] p_range
- *              Structure that will contain the ranges
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_get_available_persistent_size_range(const NVM_UID region_uid, struct possible_namespace_ranges *p_range, const NVM_UINT8 ways);
+NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Modify how the DIMM capacity is provisioned by the BIOS on the next reboot.
@@ -2395,176 +2184,6 @@ NVM_API int nvm_load_config(const NVM_UID device_uid, const NVM_PATH file, const
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_load_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
-
-/**
- * @deprecated Not supported
- * @brief Retrieve the number of namespaces allocated from persistent
- * memory regions in the host server.
- * @pre The caller must have administrative privileges.
- * @remarks This method should be called before #nvm_get_namespaces.
- * @return Returns the number of namespaces on success or
- * one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_namespace_count();
-
-
-
-/**
- * @deprecated Not supported
- * @brief Determine if any existing namespaces of the specified type
- * utilize capacity from the specified device.
- * @param device_uid
- *              The DIMM identifier.
- * @param[in] type
- *              The type of namespace, use UNKNOWN to check for all namespaces.
- * @pre The caller must have administrative privileges.
- * @return Returns 1 if namespaces exist or
- * one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_device_namespace_count(const NVM_UID uid, const enum namespace_type type);
-
-
-/**
- * @deprecated Not supported
- * @brief Retrieve discovery information about each namespace allocated from
- * persistent memory regions in the host server.
- * @param[in,out] p_namespaces
- *              An array of #namespace_discovery structures allocated by the caller.
- * @param[in] count
- *              The size of the array.
- * @pre The caller must have administrative privileges.
- * @remarks To allocate the array of #namespace_discovery structures,
- * call #nvm_get_namespace_count before calling this method.
- * @return Returns the number of namespaces on success
- * or one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_get_namespaces(struct namespace_discovery *p_namespaces, const NVM_UINT8 count);
-
-/**
- * @deprecated Not supported
- * @brief Retrieve detailed information about the specified namespace.
- * @param[in] namespace_uid
- *              The namespace identifier.
- * @param[in,out] p_namespace
- *              A pointer to an #namespace_details structure allocated by the caller.
- * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_get_namespace_details(const NVM_UID namespace_uid, struct namespace_details *p_namespace);
-
-/**
- * @deprecated Not supported
- * @brief Given a struct namespace_create_settings, adjust the block count so that the namespace
- * size meets alignment requirements for a namespace creation request.
- * @param[in] region_uid
- *              The region identifier to create the namespace from.
- * @param[in,out] p_settings
- *              The creation settings for a namespace
- * @param[in] *p_format
- *              An optionally supplied pointer to an interleave_format struct allocated by the caller to
- *              specify desired interleave set format for the namespace
- *      @pre The caller has administrative privileges
- *      @remarks  the namespace size is adjusted for alignment only, no other size requirements
- *      are considered
- *      @return Returns one of the  following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_adjust_create_namespace_block_count(const NVM_UID region_uid, struct namespace_create_settings *p_settings, const struct interleave_format *p_format);
-
-/**
- * @deprecated Not supported
- * @brief Given namespace_uid and a block count, adjust the block count so that the namespace
- * size meets alignment requirements for a namespace modification request.
- * @param[in] namespace_uid
- *              The namespace that is to be modified.
- * @param[in,out] block_count
- *              The requested block count for the namespace
- *      @pre The caller has administrative privileges
- *      @remarks  the namespace size is adjusted for alignment only, no other size requirements
- *      are considered
- *      @return Returns one of the  following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_adjust_modify_namespace_block_count(const NVM_UID namespace_uid, NVM_UINT64 *p_block_count);
-
-/**
- * @deprecated Not supported
- * @brief Create a new namespace on the specified persistent memory.
- * @param[in,out] p_namespace_uid
- *              The namespace identifier of the newly created namespace.
- * @param[in] region_uid
- *              The region identifier to create the namespace from.
- * @param[in] p_settings
- *              A pointer to an #namespace_create_settings structure describing the new
- *              namespace settings.
- * @param[in] p_format
- *              An optionally supplied pointer to an #interleave_format structure describing
- *              the interleave set format for the namespace.
- * @pre The caller has administrative privileges.
- * @remarks block_size * block_size must result in a size that is less than
- * or equal to the available capacity of the region.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_create_namespace(NVM_UID *p_namespace_uid, const NVM_UID region_uid, struct namespace_create_settings *p_settings, const struct interleave_format *p_format, const NVM_BOOL allow_adjustment);
-
-/**
- * @deprecated Not supported
- * @brief Change the friendly_name setting on the specified namespace.
- * @param[in] namespace_uid
- *              The namespace identifier.
- * @param[in] name
- *              A c-style string that contains the friendly name of the namespace.
- * @pre The caller has administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_modify_namespace_name(const NVM_UID namespace_uid, const NVM_NAMESPACE_NAME name);
-
-/**
- * @deprecated Not supported
- * @brief Change the block_count setting on the specified namespace.
- * @param[in] namespace_uid
- *              The namespace identifier.
- * @param[in] block_count
- *              The number of blocks in the new size of the namespace.
- * @pre The caller has administrative privileges.
- * @remarks block_size * block_size must result in a size that is less than
- * or equal to the available capacity of the region.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_modify_namespace_block_count(const NVM_UID namespace_uid, NVM_UINT64 block_count, NVM_BOOL allow_adjustment);
-
-/**
- * @deprecated Not supported
- * @brief Change the enabled setting on the specified namespace.
- * @param[in] namespace_uid
- *              The namespace identifier.
- * @param[in] enabled
- *              NAMESPACE_ENABLE_STATE_ENABLED or NAMESPACE_ENABLE_STATE_DISABLED
- * @pre The caller has administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_modify_namespace_enabled(const NVM_UID namespace_uid, const enum namespace_enable_state enabled);
-
-/**
- * @deprecated Not supported
- * @brief Delete an existing namespace.
- * @param[in] namespace_uid
- *              The namespace identifier.
- * @pre The caller has administrative privileges.
- * @remarks Resources allocated to the deleted namespace are returned to the
- * region from which they originated.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_delete_namespace(const NVM_UID namespace_uid);
 
 /**
  * @}
@@ -2899,16 +2518,6 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled);
 NVM_API int nvm_purge_debug_log();
 
 /**
- * @deprecated please use: nvm_get_number_of_debug_logs
- * @brief Retrieve the number of debug log entries in the native API library database.
- * @pre The caller must have administrative privileges.
- * @return Returns the number of debug log entries on success or
- * one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_debug_log_count();
-
-/**
  * @brief Retrieve the number of debug log entries in the native API library database.
  * @pre The caller must have administrative privileges.
  * @return Returns the number of debug log entries on success or
@@ -2933,18 +2542,6 @@ NVM_API int nvm_get_number_of_debug_logs(int *count);
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count);
-
-
-/**
- * @deprecated Not supported
- * @brief Get the number of current jobs.
- * @pre The caller must have administrative privileges.
- * @return Return the number of current jobs: @endlink @n
- *              -1 @n
- */
-NVM_API int nvm_get_job_count();
-
-
 
 /**
  * @brief Retrieves #job information about each device in the system

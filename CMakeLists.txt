@@ -64,6 +64,10 @@ if(INTERNAL_MFG)
         include(CMake/mfg.cmake)
 endif()
 
+if(EXISTS CMake/internal.cmake)
+        include(CMake/internal.cmake)
+endif()
+
 message(BUILD_TYPE: ${CMAKE_BUILD_TYPE})
 message(OS_TYPE: ${OS_TYPE})
 message(LIB_TYPE: ${LIB_TYPE})
@@ -585,16 +589,6 @@ if(DOXYGEN_FOUND)
 		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
 		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
-		)
-
-#----------------------------------------------------------------------------------------------------
-# Generate NVM DIMM Config Protocol API documentation with Doxygen
-#----------------------------------------------------------------------------------------------------
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/DcpmemPkg/driver/Doxyfile_nvm_dimm_config_protocol.in ${CMAKE_BINARY_DIR}/Doxyfile_nvm_dimm_config_protocol @ONLY)
-	add_custom_target(doc-uefi
-		${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile_nvm_dimm_config_protocol
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		COMMENT "Generating NVM DIMM Config Protocol API documentation with Doxygen" VERBATIM
 		)
 endif()
 

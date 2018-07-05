@@ -425,11 +425,17 @@ PrintFitTable(
     break;
   case NVDIMM_PLATFORM_CAPABILITIES_TYPE:
     pTablePlatCap = (PlatformCapabilitiesTbl *)pTable;
-    Print(L"TypeEquals: Platform Capabilities\n"
-      L"Highest Valid Capability: 0x%2.2x\n"
-      L"Capabilities: 0x%8.8x\n",
+    Print(L"TypeEquals: PlatformCapabilities\n"
+      L"HighestValidCapability: 0x%2.2x\n"
+      L"Capabilities: 0x%8.8x\n"
+      L"Capabilities.CPUCacheFlushToNVDIMM: %d\n"
+      L"Capabilities.MemoryControllerFlushToNVDIMM: %d\n"
+      L"Capabilities.MemoryMirroring: %d\n",
       pTablePlatCap->HighestValidCapability,
-      pTablePlatCap->Capabilities
+      pTablePlatCap->Capabilities,
+      (pTablePlatCap->Capabilities & CAPABILITY_CACHE_FLUSH) ? 1 : 0,
+      (pTablePlatCap->Capabilities & CAPABILITY_MEMORY_FLUSH) ? 1 : 0,
+      (pTablePlatCap->Capabilities & CAPABILITY_MEMORY_MIRROR) ? 1 : 0
     );
     break;
   default:

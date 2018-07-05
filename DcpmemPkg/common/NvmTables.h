@@ -179,6 +179,10 @@ typedef struct {
   UINT64 FlushHintAddress[0];
 } FlushHintTbl;
 
+#define CAPABILITY_CACHE_FLUSH    BIT0
+#define CAPABILITY_MEMORY_FLUSH   BIT1
+#define CAPABILITY_MEMORY_MIRROR  BIT2
+
 typedef struct {
   SubTableHeader Header;
   UINT8 HighestValidCapability;

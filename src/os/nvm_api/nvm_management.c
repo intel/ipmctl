@@ -2054,7 +2054,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
            struct config_goal_input *p_goal_input)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int *p_dimm_ids = NULL;
+  UINT16 *p_dimm_ids = NULL;
   int rc = NVM_SUCCESS;
   EFI_STATUS efi_rc = EFI_INVALID_PARAMETER;
   unsigned int Index = 0;
@@ -2080,7 +2080,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 
   // If user passed DIMM uids, convert to id
   if (p_device_uids != NULL && device_uids_count > 0) {
-    p_dimm_ids = AllocateZeroPool(sizeof(*p_dimm_ids) * device_uids_count);
+    p_dimm_ids = (UINT16 *) AllocateZeroPool(sizeof(UINT16) * device_uids_count);
         if (NULL == p_dimm_ids) {
             NVDIMM_ERR("Failed to allocate zero region");
             rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
@@ -2095,7 +2095,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   }
 
   efi_rc = gNvmDimmDriverNvmDimmConfig.CreateGoalConfig(&gNvmDimmDriverNvmDimmConfig,
-                    FALSE, (UINT16 *)p_dimm_ids, device_uids_count, NULL, 0,
+                    FALSE, p_dimm_ids, device_uids_count, NULL, 0,
                     p_goal_input->persistent_mem_type, p_goal_input->volatile_percent,
                     p_goal_input->reserved_percent, p_goal_input->reserve_dimm,
                     p_goal_input->namespace_label_major, p_goal_input->namespace_label_minor,
@@ -2113,7 +2113,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
         struct config_goal *p_goal)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int *p_dimm_ids = NULL;
+  UINT16 *p_dimm_ids = NULL;
   unsigned int region_configs_count;
   int rc = NVM_SUCCESS;
   EFI_STATUS efi_rc = EFI_INVALID_PARAMETER;
@@ -2142,7 +2142,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
 
   // If user passed DIMM uids, convert to id
   if (p_device_uids != NULL && device_uids_count > 0) {
-    p_dimm_ids = AllocateZeroPool(sizeof(*p_dimm_ids) * device_uids_count);
+    p_dimm_ids = (UINT16 *) AllocateZeroPool(sizeof(UINT16) * device_uids_count);
         if (NULL == p_dimm_ids) {
             NVDIMM_ERR("Failed to allocate zero region");
             rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
@@ -2163,7 +2163,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
         goto Finish;
     }
   efi_rc = gNvmDimmDriverNvmDimmConfig.GetGoalConfigs(&gNvmDimmDriverNvmDimmConfig,
-                  (UINT16 *)p_dimm_ids, device_uids_count, NULL, 0, MAX_DIMMS, pRegionConfigsInfo,
+                  p_dimm_ids, device_uids_count, NULL, 0, MAX_DIMMS, pRegionConfigsInfo,
                   &region_configs_count, pCommandStatus);
 
     if (EFI_ERROR(efi_rc)) {
@@ -2202,14 +2202,10 @@ Finish:
 NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int *p_dimm_ids = NULL;
+  UINT16 *p_dimm_ids = NULL;
   EFI_STATUS efi_rc = EFI_INVALID_PARAMETER;
   int rc = NVM_SUCCESS;
   unsigned int i;
-
-  if (NULL == p_device_uids) {
-    return NVM_ERR_INVALIDPARAMETER;
-  }
 
   // if no device UIDs force count to 0
   if (NULL == p_device_uids) {
@@ -2228,7 +2224,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 
   // If user passed DIMM uids, convert to id
   if (p_device_uids != NULL && device_uids_count > 0) {
-    p_dimm_ids = AllocateZeroPool(sizeof(*p_dimm_ids) * device_uids_count);
+    p_dimm_ids = (UINT16 *) AllocateZeroPool(sizeof(UINT16) * device_uids_count);
         if (NULL == p_dimm_ids) {
             NVDIMM_ERR("Failed to allocate memory: p_dimm_ids");
             rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
@@ -2243,7 +2239,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   }
 
   efi_rc = gNvmDimmDriverNvmDimmConfig.DeleteGoalConfig(&gNvmDimmDriverNvmDimmConfig,
-                    (UINT16 *)p_dimm_ids, device_uids_count, NULL, 0, pCommandStatus);
+                    p_dimm_ids, device_uids_count, NULL, 0, pCommandStatus);
 
   if (EFI_ERROR(efi_rc))
     rc = NVM_ERR_UNKNOWN;

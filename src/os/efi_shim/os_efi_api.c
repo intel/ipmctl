@@ -28,6 +28,8 @@
 #include <unistd.h>
 #include <wchar.h>
 #include <fcntl.h>
+#include <safe_str_lib.h>
+#include <safe_mem_lib.h>
 #define _read read
 #define _getch getchar
 #endif

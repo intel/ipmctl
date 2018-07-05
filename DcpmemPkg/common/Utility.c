@@ -25,6 +25,10 @@
 #include <os.h>
 #endif
 
+#if defined(__LINUX__)
+#include <safe_mem_lib.h>
+#endif
+
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 CHAR16 gFnName[1024];
 

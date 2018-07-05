@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdio.h>
+#include <safe_mem_lib.h>
 
 #define	SYSFS_ACPI_PATH	"/sys/firmware/acpi/tables/"
 int g_count = 0;

@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #define _read read
 #define _getch getchar
+#include <safe_str_lib.h>
 #endif
 
 #include <sys/stat.h> 

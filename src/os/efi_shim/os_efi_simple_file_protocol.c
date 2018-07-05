@@ -15,6 +15,7 @@
 #include <wchar.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <safe_str_lib.h>
 #define _open open
 #define _close close
 #define _lseek lseek

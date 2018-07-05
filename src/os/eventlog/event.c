@@ -20,6 +20,11 @@
 #include <PrintLib.h>
 #include "s_str.h"
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#include <safe_mem_lib.h>
+#endif
+
 // Static values and definitions used locally only
 #define MAX_EVENT_TYPE_STRING_LENGTH 15
 

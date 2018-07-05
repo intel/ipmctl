@@ -13,6 +13,7 @@ ExclusiveArch:	x86_64
 
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 BuildRequires:	pkgconfig(libndctl)
+BuildRequires:	pkgconfig(safec-3.3)
 BuildRequires:	cmake
 BuildRequires:	python2
 BuildRequires:	gcc

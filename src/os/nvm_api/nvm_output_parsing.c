@@ -10,6 +10,10 @@
 #include <wctype.h>
 #include <string.h>
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#endif
+
 #define MAX_TABLE_ITEM_LEN  256
 #define wcsncpy_s(dest, dmax, src, slen) ws_strcpy(dest, src, dmax)
 

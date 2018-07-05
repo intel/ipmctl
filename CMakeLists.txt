@@ -53,6 +53,7 @@ elseif(UNIX)
 	find_package(PkgConfig)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
 	pkg_check_modules(SYSTEMD systemd)
+	pkg_check_modules(LIBSAFEC REQUIRED safec-3.3>=03032018.0-g570fa5)
 elseif(MSVC)
 	set(WIN_BUILD 1)
 	set(OS_TYPE win)
@@ -112,6 +113,7 @@ if(LNX_BUILD)
 	add_definitions(
 		-D_GNU_SOURCE
 		-D__LINUX__
+		-DHAVE_C99
 		)
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-strong")
@@ -156,12 +158,19 @@ target_link_libraries(ipmctl_os_interface
 	${CMAKE_THREAD_LIBS_INIT}
 	)
 
+if(LNX_BUILD)
+	target_link_libraries(ipmctl_os_interface
+		${LIBSAFEC_LIBRARIES}
+		)
+endif()
+
 target_include_directories(ipmctl_os_interface PUBLIC
 	src/os
 	src/os/${OS_TYPE}
 	DcpmemPkg/common
 	src/os/nvm_api
 	src/os/s_string
+	${LIBSAFEC_INCLUDE_DIRS}
 	)
 # TODO: Remove the backup winioctl.h file when the 17650+ Windows SDK is publicly released
 if (MSVC)
@@ -326,6 +335,7 @@ target_include_directories(ipmctl PUBLIC
 	MdeModulePkg
 	MdeModulePkg/Include
 	MdeModulePkg/Include/Library
+	${LIBSAFEC_INCLUDE_DIRS}
         )
 
 if(MSVC)
@@ -357,8 +367,13 @@ add_dependencies(ipmctl
 
 target_link_libraries(ipmctl
 	ipmctl_os_interface
-	${NDCTL_LIBRARIES}
 	)
+
+if(LNX_BUILD)
+	target_link_libraries(ipmctl
+		${NDCTL_LIBRARIES}
+		)
+endif()
 
 set_target_properties(ipmctl PROPERTIES
 	VERSION ${LIBIPMCTL_VERSION_STRING}
@@ -374,12 +389,16 @@ FILE(GLOB IPMCTL_SOURCE_FILES
 
 add_executable(ipmctl-bin ${IPMCTL_SOURCE_FILES})
 
-target_link_libraries(ipmctl-bin ipmctl)
+target_link_libraries(ipmctl-bin
+	ipmctl
+	)
+
 
 target_include_directories(ipmctl-bin PUBLIC
 	src/os
 	src/os/nvm_api
 	src/os/ini
+	${LIBSAFEC_INCLUDE_DIRS}
 	)
 
 set_target_properties(ipmctl-bin
@@ -418,6 +437,7 @@ if (NOT ESX_BUILD)
 
 	target_link_libraries(ipmctl-monitor
 		ipmctl
+		${LIBSAFEC_LIBRARIES}
 		)
 
 	target_include_directories(ipmctl-monitor PUBLIC
@@ -425,6 +445,7 @@ if (NOT ESX_BUILD)
 		src/os/nvm_api
 		src/os/ini
 		DcpmemPkg/common
+		${LIBSAFEC_INCLUDE_DIRS}
 		)
 
 if(UNIX)

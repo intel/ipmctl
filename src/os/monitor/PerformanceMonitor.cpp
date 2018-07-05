@@ -14,8 +14,6 @@
 #include "LogEnterExit.h"
 #include <event.h>
 
-
-
 monitor::PerformanceMonitor::PerformanceMonitor()
 	: NvmMonitorBase(PERFORMANCE_MONITOR_NAME)
 {

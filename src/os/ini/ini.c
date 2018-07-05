@@ -12,6 +12,10 @@
 #include <Debug.h>
 #include "ini.h"
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#endif
+
 #if defined(__LINUX__) || defined(__ESX__)
 #define APP_DATA_FILE_PATH    ""
 #define INI_INSTALL_FILEPATH	"/etc/"

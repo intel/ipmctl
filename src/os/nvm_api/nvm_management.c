@@ -41,6 +41,11 @@
 #include <Protocol/EfiShellParameters.h>
 #include "LoadCommand.h"
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#include <safe_mem_lib.h>
+#endif
+
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
 #define VERSION_STR STRINGIZE(__VERSION_NUMBER__)

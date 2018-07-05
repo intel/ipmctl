@@ -428,9 +428,6 @@ if (NOT ESX_BUILD)
 		list(APPEND IPMCTL_MONITOR_SOURCE_FILES
 			src/os/monitor/lnx_main.cpp
 			)
-	set_source_files_properties(${IPMCTL_MONITOR_SOURCE_FILES}
-		PROPERTIES COMPILE_FLAGS ${SAFECLIB_COMPILE_FLAGS}
-	)
 	endif()
 
 	add_executable(ipmctl-monitor ${IPMCTL_MONITOR_SOURCE_FILES})

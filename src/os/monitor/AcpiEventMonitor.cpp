@@ -11,6 +11,10 @@
 #include <event.h>
 #include <memory.h>
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#include <safe_mem_lib.h>
+#endif
 
 monitor::AcpiMonitor::AcpiMonitor() :
 	NvmMonitorBase(MONITOR_NAME)

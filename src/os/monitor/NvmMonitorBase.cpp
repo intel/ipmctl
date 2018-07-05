@@ -16,6 +16,10 @@
 #include <nvm_management.h>
 #include <event.h>
 
+#if defined(__LINUX__)
+#include <safe_str_lib.h>
+#endif
+
 /*
  * Constructor
  * param:  name - used to look up monitor configurations in the config database.

@@ -564,13 +564,14 @@ RegisterCommands(
 #endif
 #endif // OS_BUILD
 
-  /* Debug Utility commands */
-#ifndef MDEPKG_NDEBUG
+#ifndef OS_BUILD
   Rc = RegisterLoadRecoverCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-#ifndef OS_BUILD
+
+  /* Debug Utility commands */
+#ifndef MDEPKG_NDEBUG
   Rc = registerShowSmbiosCommand();
   if (EFI_ERROR(Rc)) {
     goto done;

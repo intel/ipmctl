@@ -4228,6 +4228,15 @@ ValidateImageVersion(
     goto Finish;
   }
 
+  if (pDimm->FwVer.FwProduct == 0) {
+    if (pNvmStatus != NULL) {
+      // Dimm seems inaccessible over DDRT and SMBUS, as we couldn't get the proper
+      // firmware version
+      *pNvmStatus = NVM_ERR_TIMEOUT;
+    }
+    ReturnCode = EFI_ABORTED;
+    goto Finish;
+  }
   if (pDimm->FwVer.FwProduct != pImage->ImageVersion.ProductNumber.Version) {
     if (pNvmStatus != NULL) {
       *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
@@ -4939,14 +4948,6 @@ UpdateFw(
   if (pThis == NULL || pCommandStatus == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
     goto Finish;
   }
-
-#ifdef MDEPKG_NDEBUG
-  if (Recovery) {
-    ReturnCode = EFI_UNSUPPORTED;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
-    goto Finish;
-  }
-#endif /* MDEPKG_NDEBUG */
 
   if (pFileName == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_FILENAME_NOT_PROVIDED);

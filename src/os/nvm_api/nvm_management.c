@@ -599,7 +599,7 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
 
    //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
    p_status->health = p_dimm->HealthState;                         // Overall device health.
-   p_status->last_shutdown_status = p_dimm->LastShutdownStatus;    // State of last DIMM shutdown.
+   p_status->last_shutdown_status_details = p_dimm->LastShutdownStatusDetails;    // State of last DIMM shutdown.
    p_status->last_shutdown_time = p_dimm->LastShutdownTime;        // Time of the last shutdown - seconds since 1 January 1970
    p_status->ait_dram_enabled = p_dimm->AitDramEnabled;            // Whether or not the AIT DRAM is enabled.
 
@@ -2642,13 +2642,13 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
   }
 
   if (DIAG_TYPE_QUICK == p_diagnostic->test) {
-    diag_tests = DiagnosticQuickTest;
+    diag_tests = DIAGNOSTIC_TEST_QUICK;
   } else if (DIAG_TYPE_PLATFORM_CONFIG == p_diagnostic->test) {
-    diag_tests = DiagnosticConfigTest;
+    diag_tests = DIAGNOSTIC_TEST_CONFIG;
   } else if (DIAG_TYPE_SECURITY == p_diagnostic->test) {
-    diag_tests = DiagnosticSecurityTest;
+    diag_tests = DIAGNOSTIC_TEST_SECURITY;
   } else if (DIAG_TYPE_FW_CONSISTENCY == p_diagnostic->test) {
-    diag_tests = DiagnosticFwTest;
+    diag_tests = DIAGNOSTIC_TEST_FW;
   } else {
     rc = NVM_ERR_INVALID_PARAMETER;
     goto Finish;

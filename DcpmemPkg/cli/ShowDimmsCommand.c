@@ -190,7 +190,7 @@ ShowDimms(
   CHAR16 *pAttributeStr =  NULL;
   CHAR16 *pCapacityStr = NULL;
   CHAR16 *pDimmErrStr = NULL;
-  LAST_SHUTDOWN_STATUS_COMBINED LastShutdownStatus;
+  LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatusDetails;
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 *pFormat = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -205,7 +205,7 @@ ShowDimms(
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
   ZeroMem(DimmStr, sizeof(DimmStr));
-  ZeroMem(&LastShutdownStatus, sizeof(LastShutdownStatus));
+  ZeroMem(&LastShutdownStatusDetails, sizeof(LastShutdownStatusDetails));
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -954,13 +954,13 @@ ShowDimms(
           }
         }
 
-        /** LastShutdownStatus **/
+        /** LastShutdownStatusDetails **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, LAST_SHUTDOWN_STATUS_STR))) {
-          LastShutdownStatus.AsUint32 = pDimms[Index].LastShutdownStatus;
+          LastShutdownStatusDetails.AsUint32 = pDimms[Index].LastShutdownStatusDetails;
           if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = LastShutdownStatusToStr(LastShutdownStatus);
+            pAttributeStr = LastShutdownStatusToStr(LastShutdownStatusDetails);
           }
           Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);

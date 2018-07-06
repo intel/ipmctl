@@ -34,10 +34,10 @@ COMMAND StartDiagnosticCommand =
 
   @param[in] pCmd command from CLI
 
-  @retval One of DiagnosticTestType
-  @retval DiagnosticUnknownTest if any error occurs
+  @retval One of DIAGNOSTIC_TEST_X types
+  @retval DIAGNOSTIC_TEST_UNKNOWN if any error occurs
 **/
-DiagnosticTestType
+UINT8
 GetDiagnosticTestType(
   IN     COMMAND *pCmd
 )
@@ -45,7 +45,7 @@ GetDiagnosticTestType(
   CHAR16 *pDiagnosticTargetValue = NULL;
   CHAR16 **ppStringElements = NULL;
   UINT16 Index = 0;
-  UINT16 ChosenDiagnosticTests = DiagnosticUnknownTest;
+  UINT8 ChosenDiagnosticTests = DIAGNOSTIC_TEST_UNKNOWN;
   UINT32 ElementsCount = 0;
 
   if (pCmd == NULL) {
@@ -60,21 +60,21 @@ GetDiagnosticTestType(
   ppStringElements = StrSplit(pDiagnosticTargetValue, L',', &ElementsCount);
   if (ppStringElements == NULL) {
     /** If no diagnostic test was given explicitly, start all test**/
-    ChosenDiagnosticTests |= DiagnosticAllTest;
+    ChosenDiagnosticTests |= DIAGNOSTIC_TEST_ALL;
     goto Finish;
   }
 
   for (Index = 0; Index < ElementsCount; ++Index) {
     if (StrICmp(ppStringElements[Index], QUICK_TEST_TARGET_VALUE) == 0) {
-      ChosenDiagnosticTests |= DiagnosticQuickTest;
+      ChosenDiagnosticTests |= DIAGNOSTIC_TEST_QUICK;
     } else if (StrICmp(ppStringElements[Index], CONFIG_TEST_TARGET_VALUE) == 0) {
-      ChosenDiagnosticTests |= DiagnosticConfigTest;
+      ChosenDiagnosticTests |= DIAGNOSTIC_TEST_CONFIG;
     } else if (StrICmp(ppStringElements[Index], SECURITY_TEST_TARGET_VALUE) == 0) {
-      ChosenDiagnosticTests |= DiagnosticSecurityTest;
+      ChosenDiagnosticTests |= DIAGNOSTIC_TEST_SECURITY;
     } else if (StrICmp(ppStringElements[Index], FW_TEST_TARGET_VALUE) == 0) {
-      ChosenDiagnosticTests |= DiagnosticFwTest;
+      ChosenDiagnosticTests |= DIAGNOSTIC_TEST_FW;
     } else {
-      ChosenDiagnosticTests = DiagnosticUnknownTest;
+      ChosenDiagnosticTests = DIAGNOSTIC_TEST_UNKNOWN;
       goto Finish;
     }
   }
@@ -104,8 +104,8 @@ StartDiagnosticCmd(
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   CHAR16 *pDimmTargetValue = NULL;
-  UINT8 ChosenDiagTests = DiagnosticUnknownTest;
-  UINT8 CurrentDiagTest = DiagnosticUnknownTest;
+  UINT8 ChosenDiagTests = DIAGNOSTIC_TEST_UNKNOWN;
+  UINT8 CurrentDiagTest = DIAGNOSTIC_TEST_UNKNOWN;
   UINT32 Index = 0;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
@@ -134,7 +134,7 @@ StartDiagnosticCmd(
   DimmIdPreference = DisplayPreferences.DimmIdentifier;
 
   ChosenDiagTests = GetDiagnosticTestType(pCmd);
-  if (ChosenDiagTests == DiagnosticUnknownTest || ((ChosenDiagTests & DiagnosticAllTest) != ChosenDiagTests)) {
+  if (ChosenDiagTests == DIAGNOSTIC_TEST_UNKNOWN || ((ChosenDiagTests & DIAGNOSTIC_TEST_ALL) != ChosenDiagTests)) {
       Print(FORMAT_STR_SPACE FORMAT_STR_NL, CLI_ERR_WRONG_DIAGNOSTIC_TARGETS, ALL_DIAGNOSTICS_TARGETS);
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;

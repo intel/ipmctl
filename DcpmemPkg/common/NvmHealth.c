@@ -117,7 +117,7 @@ GetSensorsInfo(
     DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].State = SENSOR_STATE_NORMAL;
   }
 
-  if (!SensorInfo.SpareBlocksValid) {
+  if (!SensorInfo.PercentageRemainingValid) {
     DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_UNKNOWN;
   } else if (SensorInfo.PercentageRemainingTrip) {
     DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_NON_CRITICAL;
@@ -314,11 +314,11 @@ ConvertHealthBitmask(
      OUT UINT8 *pHealthState
   )
 {
-  if (HealthMask & ControllerHealthStatusFatal) {
+  if (HealthMask & HealthStatusFatal) {
     *pHealthState = HEALTH_FATAL_FAILURE;
-  } else if (HealthMask & ControllerHealthStatusCritical) {
+  } else if (HealthMask & HealthStatusCritical) {
     *pHealthState = HEALTH_CRITICAL_FAILURE;
-  } else if (HealthMask & ControllerHealthStatusNoncritical) {
+  } else if (HealthMask & HealthStatusNoncritical) {
     *pHealthState = HEALTH_NON_CRITICAL_FAILURE;
   } else if (HealthMask == CONTROLLER_HEALTH_NORMAL) {
     *pHealthState = HEALTH_HEALTHY;

@@ -427,14 +427,14 @@ CoreStartDiagnostics(
     goto Finish;
   }
 
-  if ((DiagnosticsTest & DiagnosticAllTest) == 0) {
+  if ((DiagnosticsTest & DIAGNOSTIC_TEST_ALL) == 0) {
     NVDIMM_DBG("Invalid diagnostics test");
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   // Populate the specified dimms for quick diagnostics
-  if ((DiagnosticsTest & DiagnosticQuickTest) && (DimmIdsCount > 0)) {
+  if ((DiagnosticsTest & DIAGNOSTIC_TEST_QUICK) && (DimmIdsCount > 0)) {
     if (pDimmIds == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
@@ -472,7 +472,7 @@ CoreStartDiagnostics(
     }
   }
 
-  if (DiagnosticsTest & DiagnosticQuickTest) {
+  if (DiagnosticsTest & DIAGNOSTIC_TEST_QUICK) {
     if (SpecifiedDimmsNum > 0) {
       TempReturnCode = RunQuickDiagnostics(ppSpecifiedDimms, (UINT16)SpecifiedDimmsNum, DimmIdPreference,
         &(pBuffer[QuickDiagnosticIndex]), &(DiagState[QuickDiagnosticIndex]));
@@ -484,7 +484,7 @@ CoreStartDiagnostics(
       NVDIMM_DBG("Quick diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
-  if (DiagnosticsTest & DiagnosticConfigTest) {
+  if (DiagnosticsTest & DIAGNOSTIC_TEST_CONFIG) {
     TempReturnCode = RunConfigDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference,
         &(pBuffer[ConfigDiagnosticIndex]), &(DiagState[ConfigDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
@@ -492,14 +492,14 @@ CoreStartDiagnostics(
       NVDIMM_DBG("Platform configuration diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
-  if (DiagnosticsTest & DiagnosticSecurityTest) {
+  if (DiagnosticsTest & DIAGNOSTIC_TEST_SECURITY) {
     TempReturnCode = RunSecurityDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[SecurityDiagnosticIndex]), &(DiagState[SecurityDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Security diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
   }
-  if (DiagnosticsTest & DiagnosticFwTest) {
+  if (DiagnosticsTest & DIAGNOSTIC_TEST_FW) {
     TempReturnCode = RunFwDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[FwDiagnosticIndex]), &(DiagState[FwDiagnosticIndex]));
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);

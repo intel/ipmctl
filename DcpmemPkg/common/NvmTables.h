@@ -14,19 +14,23 @@
 #endif
 
 /**
-  NVDIMM Firmware Interface Table (NFIT) types
+ * @defgroup NFIT_TABLE_TYPES NVDIMM Firmware Interface Table (NFIT) types
+ * @{
 **/
 
-#define NVDIMM_SPA_RANGE_TYPE                 0
-#define NVDIMM_NVDIMM_REGION_TYPE             1
-#define NVDIMM_INTERLEAVE_TYPE                2
-#define NVDIMM_SMBIOS_MGMT_INFO_TYPE          3
-#define NVDIMM_CONTROL_REGION_TYPE            4
-#define NVDIMM_BW_DATA_WINDOW_REGION_TYPE     5
-#define NVDIMM_FLUSH_HINT_TYPE                6
-#define NVDIMM_PLATFORM_CAPABILITIES_TYPE     7
+#define NVDIMM_SPA_RANGE_TYPE                 0   ///< SPA Range table
+#define NVDIMM_NVDIMM_REGION_TYPE             1   ///< NVDIMM Region type table
+#define NVDIMM_INTERLEAVE_TYPE                2   ///< Interleave type table
+#define NVDIMM_SMBIOS_MGMT_INFO_TYPE          3   ///< SMBIOS MGMT Info type table
+#define NVDIMM_CONTROL_REGION_TYPE            4   ///< Control Region table
+#define NVDIMM_BW_DATA_WINDOW_REGION_TYPE     5   ///< BW Data Window Region table
+#define NVDIMM_FLUSH_HINT_TYPE                6   ///< Flush Hint table
+#define NVDIMM_PLATFORM_CAPABILITIES_TYPE     7   ///< Platform Capabilities (PCAT) table
 
-/** Fields offsets in structures **/
+/** 
+ * @}
+ * Fields offsets in structures 
+ **/
 #define NFIT_TABLE_HEADER_LENGTH_OFFSET              2
 #define NFIT_TABLE_HEADER_LENGTH_FIELD_SIZE          2
 #define PCAT_TABLE_HEADER_CHECKSUM_OFFSET            9
@@ -56,159 +60,170 @@
 /** NFIT Tables structures **/
 #pragma pack(push)
 #pragma pack(1)
+
+/** NFIT sub-table header */
 typedef struct {
-  UINT16 Type;
-  UINT16 Length;
+  UINT16 Type;        ///< sub-table type
+  UINT16 Length;      ///< sub-table length
 } SubTableHeader;
 
-/** Tables below are stored in ACPI tables by BIOS **/
-
+/** ACPI table header. **/
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;    //!< Length in bytes for entire table. It implies the number of Entry fields at the end of the table
-  UINT8 Revision;
+  UINT32 Signature;       //!< ACPI table signature
+  UINT32 Length;          //!< Length in bytes for entire table. It implies the number of Entry fields at the end of the table
+  UINT8 Revision;         //!< table revision
   UINT8 Checksum;         //!< Entire table must sum to zero
-  UINT8 OemId[6];
+  UINT8 OemId[6];         //!< OEM ID
   UINT64 OemTableId;      //!< the table ID is the manufacturer model ID
   UINT32 OemRevision;     //!< OEM revision of table for supplied OEM table ID
   UINT32 CreatorId;       //!< Vendor ID of utility that created the table
   UINT32 CreatorRevision; //!< Revision of utility that created the table
 } TABLE_HEADER;
 
+/** NFIT table header */
 typedef struct {
-  TABLE_HEADER Header;
-  UINT8 Reserved[4];
+  TABLE_HEADER Header;    ///< NFIT Header
+  UINT8 Reserved[4];      ///< Reserved
 } NFitHeader;
 
+/** SPA Range Table */
 typedef struct {
-  SubTableHeader Header;
-  UINT16 SpaRangeDescriptionTableIndex;
-  UINT16 Flags;
-  UINT8 Reserved[4];
-  UINT32 ProximityDomain;
-  UINT8 AddressRangeTypeGuid[16];
-  UINT64 SystemPhysicalAddressRangeBase;
-  UINT64 SystemPhysicalAddressRangeLength;
-  UINT64 AddressRangeMemoryMappingAttribute;
+  SubTableHeader Header;                      ///< Header
+  UINT16 SpaRangeDescriptionTableIndex;       ///< SPA Range Description Table index
+  UINT16 Flags;                               ///< Flags
+  UINT8 Reserved[4];                          ///< Reserved
+  UINT32 ProximityDomain;                     ///< Proximity Domain
+  UINT8 AddressRangeTypeGuid[16];             ///< Address Range Type GUID
+  UINT64 SystemPhysicalAddressRangeBase;      ///< System Physical Address Range Base
+  UINT64 SystemPhysicalAddressRangeLength;    ///< Systems Physical Address Range Length
+  UINT64 AddressRangeMemoryMappingAttribute;  ///< Address Range Memory Mapping Attributes
 } SpaRangeTbl;
 
+/** NFIT Device Handle */
 typedef union {
   struct {
-    UINT32 DimmNumber:4;
-    UINT32 MemChannel:4;
-    UINT32 MemControllerId:4;
-    UINT32 SocketId:4;
-    UINT32 NodeControllerId:12;
-    UINT32 Reserved:4;
+    UINT32 DimmNumber:4;          ///< DIMM Number
+    UINT32 MemChannel:4;          ///< Memory Channel
+    UINT32 MemControllerId:4;     ///< Memory Controller ID
+    UINT32 SocketId:4;            ///< Socket ID
+    UINT32 NodeControllerId:12;   ///< Node Controller ID
+    UINT32 Reserved:4;            ///< Reserved
   } NfitDeviceHandle;
-  UINT32 AsUint32;
+  UINT32 AsUint32;                ///< Combined value
 } NfitDeviceHandle;
 
-
+/** DIMM Region table */
 typedef struct {
-  SubTableHeader Header;
-  NfitDeviceHandle DeviceHandle;
-  UINT16 NvDimmPhysicalId;
-  UINT16 NvDimmRegionalId;
-  UINT16 SpaRangeDescriptionTableIndex;
-  UINT16 NvdimmControlRegionDescriptorTableIndex;
-  UINT64 NvDimmRegionSize;
-  UINT64 RegionOffset;
-  UINT64 NvDimmPhysicalAddressRegionBase;
-  UINT16 InterleaveStructureIndex;
-  UINT16 InterleaveWays;
-  UINT16 NvDimmStateFlags;
-  UINT8 Reserved[2];
+  SubTableHeader Header;                              ///< Header
+  NfitDeviceHandle DeviceHandle;                      ///< DIMM Handle
+  UINT16 NvDimmPhysicalId;                            ///< Physical ID
+  UINT16 NvDimmRegionalId;                            ///< Region ID
+  UINT16 SpaRangeDescriptionTableIndex;               ///< SPA Range Description table index
+  UINT16 NvdimmControlRegionDescriptorTableIndex;     ///< Control Region Descriptor table index
+  UINT64 NvDimmRegionSize;                            ///< Region Size
+  UINT64 RegionOffset;                                ///< Region Offset
+  UINT64 NvDimmPhysicalAddressRegionBase;             ///< Physical Address Range Base
+  UINT16 InterleaveStructureIndex;                    ///< Interleave Structure Index
+  UINT16 InterleaveWays;                              ///< Interleave Ways
+  UINT16 NvDimmStateFlags;                            ///< State Flags
+  UINT8 Reserved[2];                                  ///< Reserved
 } NvDimmRegionTbl;
 
+/** Interleave table */
 typedef struct {
-  SubTableHeader Header;
-  UINT16 InterleaveStructureIndex;
-  UINT8 Reserved[2];
-  UINT32 NumberOfLinesDescribed;
-  UINT32 LineSize;
-  UINT32 LinesOffsets[0];
+  SubTableHeader Header;            ///< Header
+  UINT16 InterleaveStructureIndex;  ///< Interleave structure index
+  UINT8 Reserved[2];                ///< Reserved
+  UINT32 NumberOfLinesDescribed;    ///< Number of lines described
+  UINT32 LineSize;                  ///< Line size
+  UINT32 LinesOffsets[0];           ///< Line offsets
 } InterleaveStruct;
 
+/** SMBIOS table*/
 typedef struct {
-  SubTableHeader Header;
-  UINT8 Reserved[4];
-  UINT8 Data[0];
+  SubTableHeader Header;            ///< Header
+  UINT8 Reserved[4];                ///< Reserved
+  UINT8 Data[0];                    ///< Data
 } SmbiosTbl;
 
+/** Control Region Table */
 typedef struct {
-  SubTableHeader Header;
-  UINT16 ControlRegionDescriptorTableIndex;
-  UINT16 VendorId;
-  UINT16 DeviceId;
-  UINT16 Rid;
-  UINT16 SubsystemVendorId;
-  UINT16 SubsystemDeviceId;
-  UINT16 SubsystemRid;
-  UINT8 ValidFields;
-  UINT8 ManufacturingLocation;
-  UINT16 ManufacturingDate;
-  UINT8 Reserved[2];
-  UINT32 SerialNumber;
-  UINT16 RegionFormatInterfaceCode;
-  UINT16 NumberOfBlockControlWindows;
-  UINT64 SizeOfBlockControlWindow;
-  UINT64 CommandRegisterOffsetInBlockControlWindow;
-  UINT64 SizeOfCommandRegisterInBlockControlWindows;
-  UINT64 StatusRegisterOffsetInBlockControlWindow;
-  UINT64 SizeOfStatusRegisterInBlockControlWindows;
-  UINT16 ControlRegionFlag;
-  UINT8 Reserved1[6];
+  SubTableHeader Header;                                  ///< Header
+  UINT16 ControlRegionDescriptorTableIndex;               ///< Control Region Descriptor Table index
+  UINT16 VendorId;                                        ///< Vendor ID
+  UINT16 DeviceId;                                        ///< Device ID
+  UINT16 Rid;                                             ///< Revsion ID
+  UINT16 SubsystemVendorId;                               ///< Subsystem Vendor ID
+  UINT16 SubsystemDeviceId;                               ///< Subsystem Device ID
+  UINT16 SubsystemRid;                                    ///< Subsystem Revision ID
+  UINT8 ValidFields;                                      ///< Valid Fields
+  UINT8 ManufacturingLocation;                            ///< Manfacturing Location
+  UINT16 ManufacturingDate;                               ///< Manufacturing Date
+  UINT8 Reserved[2];                                      ///< Reserved
+  UINT32 SerialNumber;                                    ///< Serial Number
+  UINT16 RegionFormatInterfaceCode;                       ///< Region format interface code
+  UINT16 NumberOfBlockControlWindows;                     ///< Number of block control windows
+  UINT64 SizeOfBlockControlWindow;                        ///< Size of block control window
+  UINT64 CommandRegisterOffsetInBlockControlWindow;       ///< Command register offset in block control window
+  UINT64 SizeOfCommandRegisterInBlockControlWindows;      ///< Size of command register
+  UINT64 StatusRegisterOffsetInBlockControlWindow;        ///< Status register offset in block control window
+  UINT64 SizeOfStatusRegisterInBlockControlWindows;       ///< Size of status register
+  UINT16 ControlRegionFlag;                               ///< Control region flags
+  UINT8 Reserved1[6];                                     ///< Reserved
 } ControlRegionTbl;
 
+/** BW Region table */
 typedef struct {
-  SubTableHeader Header;
-  UINT16 ControlRegionStructureIndex;
-  UINT16 NumberOfBlockDataWindows;
-  UINT64 BlockDataWindowStartLogicalOffset;
-  UINT64 SizeOfBlockDataWindow;
-  UINT64 AccessibleBlockCapacity;
-  UINT64 AccessibleBlockCapacityStartAddress;
+  SubTableHeader Header;                                  ///< Header
+  UINT16 ControlRegionStructureIndex;                     ///< Control region structure index
+  UINT16 NumberOfBlockDataWindows;                        ///< Number of block data windows
+  UINT64 BlockDataWindowStartLogicalOffset;               ///< Block data window starting logical offset
+  UINT64 SizeOfBlockDataWindow;                           ///< Size of block data window
+  UINT64 AccessibleBlockCapacity;                         ///< Accessible block capacity
+  UINT64 AccessibleBlockCapacityStartAddress;             ///< Accessible block capacity start address
 } BWRegionTbl;
 
+/** Flush Hint table */
 typedef struct {
-  SubTableHeader Header;
-  NfitDeviceHandle DeviceHandle;
-  UINT16 NumberOfFlushHintAddresses;
-  UINT8 Reserved[6];
-  UINT64 FlushHintAddress[0];
+  SubTableHeader Header;                ///< Header
+  NfitDeviceHandle DeviceHandle;        ///< Device handle
+  UINT16 NumberOfFlushHintAddresses;    ///< Number of flush hint addresses
+  UINT8 Reserved[6];                    ///< Reserved
+  UINT64 FlushHintAddress[0];           ///< Flush hint addresses
 } FlushHintTbl;
 
 #define CAPABILITY_CACHE_FLUSH    BIT0
 #define CAPABILITY_MEMORY_FLUSH   BIT1
 #define CAPABILITY_MEMORY_MIRROR  BIT2
 
+/** Platform Capabilities table */
 typedef struct {
-  SubTableHeader Header;
-  UINT8 HighestValidCapability;
-  UINT8 Reserved[3];
-  UINT32 Capabilities;
-  UINT32 Reserved_1;
+  SubTableHeader Header;              ///< Header
+  UINT8 HighestValidCapability;       ///< Highest valid capability
+  UINT8 Reserved[3];                  ///< Reserved
+  UINT32 Capabilities;                ///< Capabilities
+  UINT32 Reserved_1;                  ///< Reserved
 } PlatformCapabilitiesTbl;
 
+/** NFIT ACPI data */
 typedef struct {
-  NFitHeader *pFit;
-  UINT32 SpaRangeTblesNum;
-  SpaRangeTbl **ppSpaRangeTbles;
-  UINT32 NvDimmRegionTblesNum;
-  NvDimmRegionTbl **ppNvDimmRegionTbles;
-  UINT32 InterleaveTblesNum;
-  InterleaveStruct **ppInterleaveTbles;
-  UINT32 SmbiosTblesNum;
-  SmbiosTbl **ppSmbiosTbles;
-  UINT32 ControlRegionTblesNum;
-  ControlRegionTbl **ppControlRegionTbles;
-  UINT32 BWRegionTblesNum;
-  BWRegionTbl **ppBWRegionTbles;
-  UINT32 FlushHintTblesNum;
-  FlushHintTbl **ppFlushHintTbles;
-  UINT32 PlatformCapabilitiesTblesNum;
-  PlatformCapabilitiesTbl **ppPlatformCapabilitiesTbles;
+  NFitHeader *pFit;                                         ///< NFIT Header
+  UINT32 SpaRangeTblesNum;                                  ///< Count of SPA Range tables
+  SpaRangeTbl **ppSpaRangeTbles;                            ///< SPA Range tables
+  UINT32 NvDimmRegionTblesNum;                              ///< Count of Region tables
+  NvDimmRegionTbl **ppNvDimmRegionTbles;                    ///< Region tables
+  UINT32 InterleaveTblesNum;                                ///< Count of interleave tables
+  InterleaveStruct **ppInterleaveTbles;                     ///< Interleave tables
+  UINT32 SmbiosTblesNum;                                    ///< Count of SMBIOS tables
+  SmbiosTbl **ppSmbiosTbles;                                ///< SMBIOS tables
+  UINT32 ControlRegionTblesNum;                             ///< Count of Control Region tables
+  ControlRegionTbl **ppControlRegionTbles;                  ///< Control region tables
+  UINT32 BWRegionTblesNum;                                  ///< Count of BW Region tables
+  BWRegionTbl **ppBWRegionTbles;                            ///< BW Region tables
+  UINT32 FlushHintTblesNum;                                 ///< Count of Flush Hint Tables
+  FlushHintTbl **ppFlushHintTbles;                          ///< Flush Hint tables
+  UINT32 PlatformCapabilitiesTblesNum;                      ///< Count of PCAT tables
+  PlatformCapabilitiesTbl **ppPlatformCapabilitiesTbles;    ///< PCAT tables
 } ParsedFitHeader;
 
 typedef struct {

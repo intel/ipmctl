@@ -710,7 +710,7 @@ typedef struct {
     Bit 6: Thermal Shutdown Received (0 - Did not occur, 1 Thermal Shutdown Triggered)
     Bit 7: Controller Flush Complete (0 - Did not occur, 1 - Completed)
   **/
-  LAST_SHUTDOWN_STATUS LastShutdownDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS LastShutdownDetails;
 
   UINT64 LastShutdownTime;
 
@@ -724,7 +724,7 @@ typedef struct {
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/
-  LAST_SHUTDOWN_STATUS_EXTENDED LastShutdownExtendedDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED LastShutdownExtendedDetails;
 
   UINT8 Reserved[52];
 } SMART_INTEL_SPECIFIC_DATA;

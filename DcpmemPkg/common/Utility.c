@@ -2147,7 +2147,7 @@ Finish:
 **/
 CHAR16*
 LastShutdownStatusToStr(
-  IN     LAST_SHUTDOWN_STATUS_COMBINED LastShutdownStatus
+  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus
   )
 {
   CHAR16 *pStatusStr = NULL;

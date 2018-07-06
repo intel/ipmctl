@@ -704,14 +704,13 @@ struct device_status {
   NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
   NVM_BOOL			is_missing;                             ///< If the device is missing.
   NVM_UINT8			package_spares_available;               ///< Number of package spares on the DIMM that are available.
-  NVM_UINT8			last_shutdown_status;                   ///< State of last DIMM shutdown.
-  NVM_UINT8			last_shutdown_status_extended[3];       ///< DEPRECATED; Extendeded fields as per FIS 1.6
-  enum config_status		config_status;                          ///< Status of last configuration request.
-  NVM_UINT64			last_shutdown_time;                     ///< Time of the last shutdown - seconds since 1 January 1970
+  NVM_UINT32		last_shutdown_status_details;         ///< Extendeded fields as per FIS 1.6 (LSS Details/Extended Details)
+  enum config_status		config_status;                  ///< Status of last configuration request.
+  NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970
   NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DIMMs have different SKUs.
   NVM_BOOL			sku_violation;                          ///< The DIMM configuration is unsupported due to a license issue.
   NVM_BOOL			viral_state;                            ///< Current viral status of DIMM.
-  enum device_ars_status		ars_status;                             ///< Address range scrub operation status for the DIMM
+  enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the DIMM
   enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DIMM operation status for the DIMM
   NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the DIMM
   NVM_UINT64			newest_error_log_timestamp;             ///< DEPRECATED Timestamp of the newest log entry in the fw error log

@@ -44,7 +44,7 @@ GetObjectTypeString(
   case ObjectTypeNamespace:
     pObjectTypeString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_NAMESPACE), NULL);
     break;
-  case ObjectTypePool:
+  case ObjectTypeRegion:
     pObjectTypeString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_REGION), NULL);
     break;
   default:

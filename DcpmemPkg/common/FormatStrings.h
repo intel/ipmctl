@@ -72,7 +72,6 @@
 #define FORMAT_SHOW_TOPO_HEADER                 L"%ls\t%ls\t%ls\t%ls\t%ls\n"
 #define FORMAT_SHOW_SOCKET_HEADER               L"%-9ls %-22ls %-20ls\n"
 #define FORMAT_SHOW_SOCKET                      L"0x%04x    %-22ls %-20ls\n" 
-#define FORMAT_SHOW_POOL_HEADER                 L"%ls\t%ls\t%ls\t%ls\n"
 #define FORMAT_SHOW_REGION_HEADER               L"%8ls %18ls %23ls %9ls %12ls %11ls\n"
 #define FORMAT_16STR                            L"%16ls"
 #define FORMAT_UINT64                           L"%llu"

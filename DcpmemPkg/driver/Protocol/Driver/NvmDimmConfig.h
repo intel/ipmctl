@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-/*
+/**
  * @file NvmDimmConfig.h
  * @brief Implementation of the EFI_NVMDIMMS_CONFIG_PROTOCOL, a custom protocol
  * to configure and manage DCPMEM modules
@@ -162,6 +162,9 @@ GetUninitializedDimmCount(
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
+  @param[in] DimmInfoCategories See @ref DIMM_INFO_CATEGORY_TYPES specifies which (if any)
+  additional FW api calls is desired. If ::DIMM_INFO_CATEGORY_NONE, then only
+  the properties from the pDimms struct(s) will be populated.
   @param[out] pDimms The dimm list found in NFIT.
 
   @retval EFI_SUCCESS  The dimm list was returned properly
@@ -173,7 +176,7 @@ EFIAPI
 GetDimms(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT32 DimmCount,
-  IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
+  IN     DIMM_INFO_CATEGORIES DimmInfoCategories,
      OUT DIMM_INFO *pDimms
   );
 
@@ -201,8 +204,8 @@ GetUninitializedDimms(
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
-  @param[in] dimmInfoCategories DIMM_INFO_CATEGORIES specifies which (if any)
-  additional FW api calls is desired. If DIMM_INFO_CATEGORY_NONE, then only
+  @param[in] DimmInfoCategories  @ref DIMM_INFO_CATEGORY_TYPES specifies which (if any)
+  additional FW api calls is desired. If ::DIMM_INFO_CATEGORY_NONE, then only
   the properties from the pDimm struct will be populated.
   @param[out] pDimmInfo A pointer to the dimm found in NFIT
 
@@ -214,7 +217,7 @@ EFIAPI
 GetDimm(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
-  IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
+  IN     DIMM_INFO_CATEGORIES DimmInfoCategories,
      OUT DIMM_INFO *pDimmInfo
   );
 
@@ -286,8 +289,8 @@ GetSockets(
   Retrieve an SMBIOS table type 17 or type 20 for a specific DIMM
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] Pid The ID of the dimm to retrieve
-  @param[in] Type The Type of SMBIOS table to retrieve
+  @param[in] Pid The ID of the DIMM to retrieve
+  @param[in] Type The Type of SMBIOS table to retrieve. Valid values: 17, 20.
   @param[out] pTable A pointer to the SMBIOS table
 
   @retval EFI_SUCCESS  The count was returned properly
@@ -571,8 +574,8 @@ Retrieve the number of regions in the system
 EFI_STATUS
 EFIAPI
 GetRegionCount(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-     OUT UINT32 *pCount
+  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  OUT   UINT32 *pCount
 );
 
 /**
@@ -580,7 +583,7 @@ Retrieve the region list
 
 @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
 @param[in] Count The number of regions.
-@param[out] pRegions The region list
+@param[out] pRegions The region info list
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
 @retval EFI_SUCCESS  The region list was returned properly
@@ -590,10 +593,10 @@ Retrieve the region list
 EFI_STATUS
 EFIAPI
 GetRegions(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT32 Count,
-	OUT struct _REGION_INFO *pRegions,
-     OUT COMMAND_STATUS *pCommandStatus
+  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN    UINT32 Count,
+  OUT   REGION_INFO *pRegions,
+  OUT   COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -601,7 +604,7 @@ Retrieve the details about the region specified with region id
 
 @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
 @param[in] RegionId The region id of the region to retrieve
-@param[out] pRegion A pointer to the region
+@param[out] pRegion A pointer to the region info
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
 @retval EFI_SUCCESS The region was returned properly
@@ -611,10 +614,10 @@ Retrieve the details about the region specified with region id
 EFI_STATUS
 EFIAPI
 GetRegion(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-	IN     UINT16 RegionId,
-	OUT struct _REGION_INFO *pRegionInfo,
-     OUT COMMAND_STATUS *pCommandStatus
+  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN    UINT16 RegionId,
+  OUT   REGION_INFO *pRegionInfo,
+  OUT   COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -810,7 +813,7 @@ FreeDimmList(
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[in]  SensorId Sensor id to retrieve information for
+  @param[in]  SensorId Sensor ID to retrieve information for. See @ref SENSOR_TYPES
   @param[out] pNonCriticalThreshold Current non-critical threshold for sensor
   @param[out] pEnabledState Current enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -859,12 +862,11 @@ SetAlarmThresholds (
   );
 
 /**
-  Get NVM DIMM Health Info
+  Get DIMM Health Info
 
   This FW command is used to retrieve current health of system, including SMART information:
   * Overall health status
   * Temperature
-  * Spare blocks
   * Alarm Trips set (Temperature/Spare Blocks)
   * Device life span as a percentage
   * Last shutdown status
@@ -878,9 +880,9 @@ SetAlarmThresholds (
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLastShutdownStatus pointer to store last shutdown status
-  @param[out] pLastShutdownTime pointer to store the time the system was last shutdown
-  @param[out] pAitDramEnabled pointer to store the state of AIT DRAM (whether it is Enabled/ Disabled/ Unknown)
+  @param[out] pLastShutdownStatusDetails pointer to store last shutdown status details. See @ref LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
+  @param[out] pLastShutdownTime pointer to store the time the system was last shutdown. Number of seconds since 1 January 1970. See FIS field LST for additional details.
+  @param[out] pAitDramEnabled pointer to store the state of AIT DRAM. See @ref AIT_DRAM_STATUS.
 
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
@@ -890,19 +892,19 @@ SetAlarmThresholds (
 EFI_STATUS
 EFIAPI
 GetSmartAndHealth (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmPid,
-     OUT SENSOR_INFO *pSensorInfo,
-     OUT UINT32 *pLastShutdownStatus OPTIONAL,
-     OUT UINT64 *pLastShutdownTime OPTIONAL,
-     OUT UINT8 *pAitDramEnabled OPTIONAL
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN  UINT16 DimmPid,
+  OUT SENSOR_INFO *pSensorInfo,
+  OUT UINT32 *pLastShutdownStatusDetails OPTIONAL,
+  OUT UINT64 *pLastShutdownTime OPTIONAL,
+  OUT UINT8 *pAitDramEnabled OPTIONAL
   );
 
 /**
   Get Driver API Version
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pVersion output version
+  @param[out] pVersion output version in string format MM.mm. M = Major, m = minor.
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
@@ -918,8 +920,8 @@ GetDriverApiVersion(
   Get namespaces info
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pNamespaceListNode - pointer to namespace list node
-  @param[out] pNamespacesCount - namespace count
+  @param[out] pNamespaceListNode Pointer to namespace list node of @ref NAMESPACE_INFO structs.
+  @param[out] pNamespacesCount Count of namespaces on the list
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
@@ -1044,6 +1046,7 @@ DeleteGoalConfig (
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
+  @param[in] ConfigGoalTableSize Number of elements in the pConfigGoals array passed in
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -1055,15 +1058,15 @@ DeleteGoalConfig (
 EFI_STATUS
 EFIAPI
 GetGoalConfigs(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds      OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     UINT16 *pSocketIds    OPTIONAL,
-  IN     UINT32 SocketIdsCount,
-  IN     CONST UINT32 ConfigGoalTableSize,
-     OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
-     OUT UINT32 *pConfigGoalsCount,
-     OUT COMMAND_STATUS *pCommandStatus
+  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN    UINT16 *pDimmIds      OPTIONAL,
+  IN    UINT32 DimmIdsCount,
+  IN    UINT16 *pSocketIds    OPTIONAL,
+  IN    UINT32 SocketIdsCount,
+  IN    CONST UINT32 ConfigGoalTableSize,
+  OUT   REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
+  OUT   UINT32 *pConfigGoalsCount,
+  OUT   COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -1243,11 +1246,11 @@ DeleteNamespace(
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - array of dimm pids. Use all dimms if pDimms is NULL and DimmsCount is 0.
   @param[in] DimmsCount - number of dimms in array. Use all dimms if pDimms is NULL and DimmsCount is 0.
-  @param[in] ThermalError - is thermal error (if not it is media error)
+  @param[in] ThermalError - TRUE = Thermal error, FALSE = media error
   @param[in] SequenceNumber - sequence number of error to fetch in queue
   @param[in] HighLevel - high level if true, low level otherwise
-  @param[in, out] pCount - number of error entries in output array
-  @param[out] pErrorLogs - output array of errors
+  @param[in, out] pErrorLogCount - IN: element count of pErrorLogs. OUT: Count of error entries in pErrorLogs
+  @param[out] pErrorLogs - output array of errors. Allocated to elmeent count indicated by pErrorLogCount
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
@@ -1262,7 +1265,7 @@ GetErrorLog(
   IN     CONST BOOLEAN ThermalError,
   IN     CONST UINT16 SequenceNumber,
   IN     CONST BOOLEAN HighLevel,
-  IN OUT UINT32 *pMaxErrorsToFetch,
+  IN OUT UINT32 *pErrorLogCount,
      OUT ERROR_LOG_INFO *pErrorLogs,
      OUT COMMAND_STATUS *pCommandStatus
   );

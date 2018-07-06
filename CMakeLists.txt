@@ -60,14 +60,6 @@ elseif(MSVC)
 	set(FILE_PREFIX win)
 endif()
 
-if(INTERNAL_MFG)
-        include(CMake/mfg.cmake)
-endif()
-
-if(EXISTS CMake/internal.cmake)
-        include(CMake/internal.cmake)
-endif()
-
 message(BUILD_TYPE: ${CMAKE_BUILD_TYPE})
 message(OS_TYPE: ${OS_TYPE})
 message(LIB_TYPE: ${LIB_TYPE})
@@ -82,6 +74,14 @@ set(CMAKE_BINARY_DIR ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+if(INTERNAL_MFG)
+        include(CMake/mfg.cmake)
+endif()
+
+if(EXISTS "${ROOT}/CMake/internal.cmake")
+        include("${ROOT}/CMake/internal.cmake")
+endif()
 
 #----------------------------------------------------------------------------------------------------
 # Project wide defines and flags

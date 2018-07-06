@@ -678,7 +678,7 @@ GetDimmInfo (
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
-  UINT32 LastShutdownStatus = 0;
+  UINT32 LastShutdownStatusDetails = 0;
   UINT64 LastShutdownTime = 0;
   UINT8 AitDramEnabled = 0;
   UINT32 Index = 0;
@@ -948,7 +948,7 @@ GetDimmInfo (
   {
     /* Get current health state */
     ReturnCode = GetSmartAndHealth(&gNvmDimmDriverNvmDimmConfig,pDimm->DimmID,
-      &SensorInfo, &LastShutdownStatus, &LastShutdownTime, &AitDramEnabled);
+      &SensorInfo, &LastShutdownStatusDetails, &LastShutdownTime, &AitDramEnabled);
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
@@ -956,7 +956,7 @@ GetDimmInfo (
     ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
     }
     pDimmInfo->HealthStatusReason = SensorInfo.HealthStatusReason;
-    pDimmInfo->LastShutdownStatus = LastShutdownStatus;
+    pDimmInfo->LastShutdownStatusDetails = LastShutdownStatusDetails;
     pDimmInfo->LastShutdownTime = LastShutdownTime;
     pDimmInfo->AitDramEnabled = AitDramEnabled;
   }
@@ -2266,7 +2266,7 @@ Finish:
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLastShutdownStatus pointer to store last shutdown status
+  @param[out] pLastShutdownStatusDetails pointer to store last shutdown status details
   @param[out] pLastShutdownTime pointer to store the time the system was last shutdown
   @param[out] pAitDramEnabled pointer to store the state of AIT DRAM (whether it is Enabled/ Disabled/ Unknown)
 
@@ -2281,7 +2281,7 @@ GetSmartAndHealth (
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
      OUT SENSOR_INFO *pSensorInfo,
-     OUT UINT32 *pLastShutdownStatus OPTIONAL,
+     OUT UINT32 *pLastShutdownStatusDetails OPTIONAL,
      OUT UINT64 *pLastShutdownTime OPTIONAL,
      OUT UINT8 *pAitDramEnabled OPTIONAL
   )
@@ -2317,7 +2317,7 @@ GetSmartAndHealth (
   }
 
   /** Get common data **/
-  pSensorInfo->SpareBlocksValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
+  pSensorInfo->PercentageRemainingValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
   pSensorInfo->MediaTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.MediaTemperature;
   pSensorInfo->ControllerTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.ControllerTemperature;
   pSensorInfo->PercentageUsedValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageUsed;
@@ -2348,11 +2348,11 @@ GetSmartAndHealth (
   pSensorInfo->ControllerTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.ControllerTemperature != 0);
   pSensorInfo->PercentageRemainingTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.PercentageRemaining != 0);
 
-  if (pLastShutdownStatus != NULL) {
+  if (pLastShutdownStatusDetails != NULL) {
     /** Copy extended detail bits **/
-    CopyMem_S(pLastShutdownStatus, sizeof(LAST_SHUTDOWN_STATUS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.LastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_EXTENDED));
+    CopyMem_S(pLastShutdownStatusDetails, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.LastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED));
     /** Shift extended over, add the original 8 bits **/
-    *pLastShutdownStatus = (*pLastShutdownStatus << sizeof(LAST_SHUTDOWN_STATUS) * 8)
+    *pLastShutdownStatusDetails = (*pLastShutdownStatusDetails << sizeof(LAST_SHUTDOWN_STATUS_DETAILS) * 8)
                          + pPayloadSmartAndHealth->VendorSpecificData.LastShutdownDetails.AllFlags;
   }
 
@@ -2365,7 +2365,7 @@ GetSmartAndHealth (
 
     if (!FIS_1_3) {
       if ((pPayloadSmartAndHealth->ValidationFlags.Separated.AITDRAMStatus == 0) &&
-          (pPayloadSmartAndHealth->HealthStatus < ControllerHealthStatusCritical)) {
+          (pPayloadSmartAndHealth->HealthStatus < HealthStatusCritical)) {
         *pAitDramEnabled = AIT_DRAM_ENABLED;
       }
     }
@@ -3333,10 +3333,10 @@ INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2)
 EFI_STATUS
 EFIAPI
 GetRegions(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT32 Count,
-     OUT REGION_INFO *pRegions,
-     OUT COMMAND_STATUS *pCommandStatus
+  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN    UINT32 Count,
+  OUT   REGION_INFO *pRegions,
+  OUT   COMMAND_STATUS *pCommandStatus
 )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
@@ -7086,7 +7086,7 @@ Finish:
   @param[in] ThermalError - is thermal error (if not it is media error)
   @param[in] SequenceNumber - sequence number of error to fetch in queue
   @param[in] HighLevel - high level if true, low level otherwise
-  @param[in, out] pCount - number of error entries in output array
+  @param[in, out] pCount - Innumber of error entries in output array
   @param[out] pErrorLogs - output array of errors
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
@@ -7102,7 +7102,7 @@ GetErrorLog(
   IN     CONST BOOLEAN ThermalError,
   IN     CONST UINT16 SequenceNumber,
   IN     CONST BOOLEAN HighLevel,
-  IN OUT UINT32 *pMaxErrorsToFetch,
+  IN OUT UINT32 *pErrorLogCount,
      OUT ERROR_LOG_INFO *pErrorLogs,
      OUT COMMAND_STATUS *pCommandStatus
   )
@@ -7118,7 +7118,7 @@ GetErrorLog(
 
   NVDIMM_ENTRY();
 
-  if (pThis == NULL || pCommandStatus == NULL || pMaxErrorsToFetch == NULL ||
+  if (pThis == NULL || pCommandStatus == NULL || pErrorLogCount == NULL ||
       (pDimmIds == NULL && DimmsCount > 0)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;
@@ -7131,12 +7131,12 @@ GetErrorLog(
   }
 
   ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
-  for (Index = 0; Index < DimmsNum && AllErrorsFetched < *pMaxErrorsToFetch; ++Index) {
+  for (Index = 0; Index < DimmsNum && AllErrorsFetched < *pErrorLogCount; ++Index) {
     ReturnCode = GetAndParseFwErrorLogForDimm(pDimms[Index],
       ThermalError,
       HighLevel,
       SequenceNumber,
-      (*pMaxErrorsToFetch - AllErrorsFetched),
+      (*pErrorLogCount - AllErrorsFetched),
       &SingleDimmErrorsFetched,
       &pErrorLogs[AllErrorsFetched]);
 
@@ -7148,8 +7148,8 @@ GetErrorLog(
   }
 
 Finish:
-  if (pMaxErrorsToFetch != NULL) {
-    *pMaxErrorsToFetch = AllErrorsFetched;
+  if (pErrorLogCount != NULL) {
+    *pErrorLogCount = AllErrorsFetched;
   }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

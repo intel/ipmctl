@@ -3,6 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ /**
+ * @file NvmInterface.h
+ * @brief Implementation of the EFI_NVMDIMMS_CONFIG_PROTOCOL, a custom protocol
+ * to configure and manage DCPMEM modules
+ */
+
 #ifndef _NVM_INTERFACE_H_
 #define _NVM_INTERFACE_H_
 
@@ -14,7 +20,6 @@
 #include <PcdCommon.h>
 
 
-
 /* {CF2F5F1F-94B6-4C15-9CAE-AFB3BD9F2BA5} */
 #define EFI_DCPMM_CONFIG_PROTOCOL_GUID \
   {0xcf2f5f1f, 0x94b6, 0x4c15, {0x9c, 0xae, 0xaf, 0xb3, 0xbd, 0x9f, 0x2b, 0xa5}}
@@ -23,28 +28,6 @@
   { 0xb976a9d2, 0x8772, 0x414f, {0x9f, 0xb0, 0x05, 0x99, 0x95, 0xf4, 0xbe, 0xac} }
 
 typedef struct _EFI_DCPMM_CONFIG_PROTOCOL EFI_DCPMM_CONFIG_PROTOCOL;
-struct _POOL_INFO;
-
-#define DIANGOSTIC_QUICK_NAME     L"Quick"
-#define DIANGOSTIC_CONFIG_NAME    L"Config"
-#define DIANGOSTIC_SECURITY_NAME  L"Security"
-#define DIANGOSTIC_FW_NAME        L"FW"
-
-#define DIAGNOSTIC_TEST_COUNT 4
-/**
-  Start Diagnostic Command tests codes
-**/
-typedef enum {
-  DiagnosticUnknownTest =   0,
-  DiagnosticQuickTest =     BIT0,
-  DiagnosticConfigTest =    BIT1,
-  DiagnosticSecurityTest =  BIT2,
-  DiagnosticFwTest =        BIT3,
-  DiagnosticAllTest = DiagnosticQuickTest | DiagnosticConfigTest |
-      DiagnosticSecurityTest | DiagnosticFwTest
-} DiagnosticTestType;
-
-extern CONST CHAR16 *gDiagnosticTestPrefixStr[];
 
 /**
   Retrieve the number of DCPMEM modules in the system found in NFIT
@@ -616,7 +599,7 @@ EFI_STATUS
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLastShutdownStatus pointer to store last shutdown status
+  @param[out] pLastShutdownStatusDetails pointer to store last shutdown status details
   @param[out] pLastShutdownTime pointer to store the time the system was last shutdown
   @param[out] pAitDramEnabled pointer to store the state of AIT DRAM (whether it is Enabled/ Disabled/ Unknown)
 
@@ -631,7 +614,7 @@ EFI_STATUS
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
      OUT SENSOR_INFO *pSensorInfo,
-     OUT UINT32 *pLastShutdownStatus OPTIONAL,
+     OUT UINT32 *pLastShutdownStatusDetails OPTIONAL,
      OUT UINT64 *pLastShutdownTime OPTIONAL,
      OUT UINT8 *pAitDramEnabled OPTIONAL
   );

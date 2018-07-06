@@ -3,54 +3,67 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ /**
+ * @file NvmStatus.h
+ * @brief Status Types for EFI_NVMDIMMS_CONFIG_PROTOCOL.
+ */
+
 #ifndef _NVM_STATUS_H_
 #define _NVM_STATUS_H_
 
 #include "NvmLimits.h"
 #include "NvmStatusValues.h"
 
+/** Return code status values as identified by #NvmStatusCode */
 typedef INT16 NVM_STATUS;
 
 /** Structures for CLI command status output **/
-/** Object type **/
+
+/** Object type used by #COMMAND_STATUS **/
 typedef enum {
-  ObjectTypeSocket    = 0,
-  ObjectTypeDimm      = 1,
-  ObjectTypePool      = 2,
-  ObjectTypeNamespace = 3,
-  ObjectTypeUnknown   = 4
-} ObjectType;
+  ObjectTypeSocket    = 0,  ///< Socket
+  ObjectTypeDimm      = 1,  ///< DIMM
+  ObjectTypeRegion    = 2,  ///< Region
+  ObjectTypeNamespace = 3,  ///< Namespace
+  ObjectTypeUnknown   = 4   ///< Unknown
+} OBJECT_TYPE;
 
 /** List head functions **/
+
+/** #OBJECT_STATUS Signature */
 #define OBJECT_STATUS_SIGNATURE      SIGNATURE_64('O', 'B', 'J', 'S', 'T', 'A', 'T', 'S')
+
+/* Helper function to get #OBJECT_STATUS from a node */
 #define OBJECT_STATUS_FROM_NODE(a)   CR(a, OBJECT_STATUS, ObjectStatusNode, OBJECT_STATUS_SIGNATURE)
 
+/** Status bit field for #OBJECT_STATUS */
 typedef struct _NVM_STATUS_BIT_FIELD {
   UINT64 BitField[(NVM_LAST_STATUS_VALUE / 64) + 1];
 } NVM_STATUS_BIT_FIELD;
 
+/** Max length of the ObjectIdStr string */
 #define MAX_OBJECT_ID_STR_LEN  30
 
-/** List structure **/
+/** Object status list structure **/
 typedef struct {
-  LIST_ENTRY ObjectStatusNode;
-  UINT64 Signature;
-  UINT32 ObjectId;
-  BOOLEAN IsObjectIdStr;
-  CHAR16 ObjectIdStr[MAX_OBJECT_ID_STR_LEN];
-  NVM_STATUS_BIT_FIELD StatusBitField;
-  UINT8 Progress;
+  LIST_ENTRY ObjectStatusNode;                ///< Object status node list pointer
+  UINT64 Signature;                           ///< Signature must match #OBJECT_STATUS_SIGNATURE 
+  UINT32 ObjectId;                            ///< Object ID
+  BOOLEAN IsObjectIdStr;                      ///< Is #ObjectIdStr valid?
+  CHAR16 ObjectIdStr[MAX_OBJECT_ID_STR_LEN];  ///< String representation of Object ID
+  NVM_STATUS_BIT_FIELD StatusBitField;        ///< Bitfield for NVM Status
+  UINT8 Progress;                             ///< Progress
 } OBJECT_STATUS;
 
 /**
   COMMAND_STATUS type contains executed command status code as well as
-  status codes for every Object (DIMM, POOL, NAMESPACE) which were involved in this operation
+  status codes for every Object (SOCKET, DIMM, NAMESPACE) which were involved in this operation
 **/
 typedef struct {
-  NVM_STATUS GeneralStatus;
-  UINT8 ObjectType;
-  LIST_ENTRY ObjectStatusList;
-  UINT16 ObjectStatusCount;
+  NVM_STATUS GeneralStatus;     ///< General return status
+  OBJECT_TYPE ObjectType;       ///< Type of object
+  LIST_ENTRY ObjectStatusList;  ///< List of #OBJECT_STATUS objects
+  UINT16 ObjectStatusCount;     ///< Count of object on #ObjectStatusList
 } COMMAND_STATUS;
 
 /**

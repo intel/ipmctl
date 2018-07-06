@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/**
+  * @file NvmHealth.h
+  * @brief Health Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMEM modules.
+  */
+
 #ifndef _NVMHEALTH_H_
 #define _NVMHEALTH_H_
 
@@ -64,10 +69,11 @@ typedef enum {
 
 #define CONTROLLER_HEALTH_NORMAL 0
 
-enum CONTROLLER_HEALTH_STATE {
-  ControllerHealthStatusNoncritical = BIT0,  //!< maintenance required
-  ControllerHealthStatusCritical = BIT1,     //!< features or performance degraded due to failure
-  ControllerHealthStatusFatal = BIT2         //!< data loss has occurred or is imminent
+/** Overall DIMM Health Status */
+enum HEALTH_STATUS {
+  HealthStatusNoncritical = BIT0,  //!< Non-Critical (maintenance required)
+  HealthStatusCritical = BIT1,     //!< Critcial (features or performance degraded due to failure)
+  HealthStatusFatal = BIT2         //!< Fatal (data loss has occurred or is imminent)
 };
 
 #pragma pack(push)
@@ -78,16 +84,16 @@ enum CONTROLLER_HEALTH_STATE {
 typedef union {
   UINT8 AllFlags;
   struct {
-    UINT8 PmAdr                     : 1;
-    UINT8 PmS3                      : 1;
-    UINT8 PmS5                      : 1;
-    UINT8 DdrtPowerFailure          : 1;
-    UINT8 PmicPowerLoss             : 1;
-    UINT8 PmWarmReset               : 1;
-    UINT8 ThermalShutdown           : 1;
-    UINT8 FwFlushComplete           : 1;
+    UINT8 PmAdr                     : 1; //!< PM ADR Command received
+    UINT8 PmS3                      : 1; //!< PM Se received
+    UINT8 PmS5                      : 1; //!< PM S5 received
+    UINT8 DdrtPowerFailure          : 1; //!< DDRT Power Fail Command received
+    UINT8 PmicPowerLoss             : 1; //!< PMIC Power Loss
+    UINT8 PmWarmReset               : 1; //!< PM Warm Reset received
+    UINT8 ThermalShutdown           : 1; //!< Thermal Shutdown received
+    UINT8 FwFlushComplete           : 1; //!< Flush Complete
   } Separated;
-} LAST_SHUTDOWN_STATUS;
+} LAST_SHUTDOWN_STATUS_DETAILS;
 
 /**
   Last shutdown status extended struct
@@ -95,17 +101,17 @@ typedef union {
 typedef union {
   UINT8 Raw[3];
   struct {
-    UINT8 ViralInterrupt              : 1;
-    UINT8 SurpriseClockStopInterrupt  : 1;
-    UINT8 WriteDataFlushComplete      : 1;
-    UINT8 S4PowerState                : 1;
-    UINT8 PMIdle                      : 1;
-    UINT8 SurpriseReset               : 1;
+    UINT8 ViralInterrupt              : 1; //!< Viral interrupt received
+    UINT8 SurpriseClockStopInterrupt  : 1; //!< Surprise clock stop interrupt received
+    UINT8 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
+    UINT8 S4PowerState                : 1; //!< S4 Power State received
+    UINT8 PMIdle                      : 1; //!< PM Idle received
+    UINT8 SurpriseReset               : 1; //!< Surprise Reset received
     UINT8                             : 2; //!< Reserved
     UINT8                             : 8; //!< Reserved
     UINT8                             : 8; //!< Reserved
   } Separated;
-} LAST_SHUTDOWN_STATUS_EXTENDED;
+} LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED;
 
 /**
   Last shutdown status combined struct
@@ -114,10 +120,10 @@ typedef union {
 typedef union {
   UINT32 AsUint32;
   struct {
-    LAST_SHUTDOWN_STATUS LastShutdownStatus;
-    LAST_SHUTDOWN_STATUS_EXTENDED LastShutdownStatusExtended;
+    LAST_SHUTDOWN_STATUS_DETAILS LastShutdownStatus;
+    LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED LastShutdownStatusExtended;
   } Combined;
-} LAST_SHUTDOWN_STATUS_COMBINED;
+} LAST_SHUTDOWN_STATUS_DETAILS_COMBINED;
 
 /**
   Temperature structure

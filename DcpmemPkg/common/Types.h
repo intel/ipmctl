@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/**
+ * @file Types.h
+ * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMEM modules. These types don't compile with VFR compiler and are kept separate.
+ */
+
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
@@ -106,34 +111,39 @@ typedef union {
   } Separated_Current_FIS;
 } DIMM_BSR;
 
+/**
+  Contains SMART and Health attributes of a DIMM
+**/
 typedef struct _SENSOR_INFO {
-  BOOLEAN SpareBlocksValid;
-  BOOLEAN MediaTemperatureValid;
-  BOOLEAN ControllerTemperatureValid;
-  BOOLEAN PercentageUsedValid;
-  BOOLEAN MediaTemperatureTrip;
-  BOOLEAN ControllerTemperatureTrip;
-  BOOLEAN PercentageRemainingTrip;
-  INT16 MediaTemperature;
-  INT16 ControllerTemperature;
-  UINT8 PercentageRemaining;
-  UINT32 DirtyShutdowns;
-  UINT8 LastShutdownStatus;
-  UINT32 PowerOnTime;
-  UINT32 UpTime;
-  UINT64 PowerCycles;
-  UINT8 FwErrorCount;
-  UINT8 HealthStatus;
-  UINT16 HealthStatusReason;
-  UINT32 MediaErrorCount;
-  UINT8 PercentageUsed;
-  UINT32 ThermalErrorCount;
-  INT16 ContrTempShutdownThresh;
-  INT16 MediaTempShutdownThresh;
-  INT16 MediaThrottlingStartThresh;
-  INT16 MediaThrottlingStopThresh;
+  BOOLEAN PercentageRemainingValid;     ///< Indicates if PercentageRemaining is valid
+  BOOLEAN MediaTemperatureValid;        ///< Indicates if MediaTemperature is valid
+  BOOLEAN ControllerTemperatureValid;   ///< Indicates if ControllerTemperature is valid
+  BOOLEAN PercentageUsedValid;          ///< Indicates if PercentageUsed is valid (deprecated)
+  BOOLEAN MediaTemperatureTrip;         ///< Indicates if Media Temperature alarm threshold has tripped
+  BOOLEAN ControllerTemperatureTrip;    ///< Indicates if Controller Temperature alarm threshold has tripped
+  BOOLEAN PercentageRemainingTrip;      ///< Indicates if Percentage Remaining alarm threshold has tripped
+  INT16 MediaTemperature;               ///< Current Media Temperature in C
+  INT16 ControllerTemperature;          ///< Current Controller Temperature in C
+  UINT8 PercentageRemaining;            ///< Remaining module's life as a percentage value of factory expected life span (0-100)
+  UINT32 DirtyShutdowns;                ///< Dirty Shutdowns count
+  UINT8 LastShutdownStatus;             ///< Last Shutdown Status. See FIS field LSS for additional details
+  UINT32 PowerOnTime;                   ///< Lifetime DIMM has been powered on in seconds. See FIS field POT for additional details
+  UINT32 UpTime;                        ///< DIMM uptime in seconds since last AC cycle. See FIS field UT for additional details
+  UINT64 PowerCycles;                   ///< Number of DIMM power cycles. See FIS field PC for additional details
+  UINT8 HealthStatus;                   ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
+  UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
+  UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
+  UINT8 PercentageUsed;                 ///< Device life span as a percentage (deprecated)
+  UINT32 ThermalErrorCount;             ///< Total count of thermal errors found in Error Log
+  INT16 ContrTempShutdownThresh;        ///< Controller temperature shutdown threshold in C
+  INT16 MediaTempShutdownThresh;        ///< Media temperature shutdown threshold in C
+  INT16 MediaThrottlingStartThresh;     ///< Media throttling start temperature threshold in C
+  INT16 MediaThrottlingStopThresh;      ///< Media throttling stop temperature threshold in C
 } SENSOR_INFO;
 
+/**
+  Individual sensor attributes struct
+**/
 typedef struct {
   UINT8 Type;
   UINT8 State;
@@ -147,32 +157,42 @@ typedef struct {
   INT64 FatalThreshold;
 } DIMM_SENSOR;
 
+/**
+  Thermal error log info struct
+**/
 typedef struct _THERMAL_ERROR_LOG_PER_DIMM_INFO {
   INT16   Temperature;        //!< In celsius
   UINT8   Reported;           //!< Temperature being reported
   UINT8   Type;               //!< Which device the temperature is for
-  UINT16  SequenceNum;
+  UINT16  SequenceNum;        //!< Log entry sequence number
   UINT8   Reserved[1];
 } THERMAL_ERROR_LOG_INFO;
 
+/**
+  Media error log info struct
+**/
 typedef struct _MEDIA_ERROR_LOG_PER_DIMM_INFO {
   UINT64  Dpa;                //!< Specifies DPA address of error
   UINT64  Pda;                //!< Specifies PDA address of the failure
   UINT8   Range;              //!< Specifies the length in address space of this error.
-  UINT8   ErrorType;          //!< Indicates what kind of error was logged.
+  UINT8   ErrorType;          //!< Indicates what kind of error was logged. See @ref ERROR_LOG_TYPES.
   UINT8   PdaValid;           //!< Indicates the PDA address is valid.
   UINT8   DpaValid;           //!< Indicates the DPA address is valid.
   UINT8   Interrupt;          //!< Indicates this error generated an interrupt packet
   UINT8   Viral;              //!< Indicates Viral was signaled for this error
-  UINT8   TransactionType;
-  UINT16  SequenceNum;
+  UINT8   TransactionType;    //!< Transaction type
+  UINT16  SequenceNum;        //!< Log entry sequence number
   UINT8   Reserved[2];
 } MEDIA_ERROR_LOG_INFO;
 
-#define THERMAL_ERROR 0
-#define MEDIA_ERROR 1
+/**
+* @defgroup ERROR_LOG_TYPES Error Log Types
+  * @{
+  */
 
-#define FW_MAX_DEBUG_LOG_LEVEL         4
-#define FW_MIN_DEBUG_LOG_LEVEL	       1
+#define THERMAL_ERROR   0   ///< Thermal error log type
+#define MEDIA_ERROR     1   ///< Media error log type
+
+  /** @} */
 
 #endif /** _TYPES_H_ **/

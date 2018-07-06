@@ -235,11 +235,11 @@ SmartAndHealthCheck(
   }
 
   if (SensorInfo.HealthStatus != CONTROLLER_HEALTH_NORMAL) {
-    if ((SensorInfo.HealthStatus & ControllerHealthStatusFatal) != 0) {
+    if ((SensorInfo.HealthStatus & HealthStatusFatal) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_FATAL_FAILURE), NULL);
-    } else if ((SensorInfo.HealthStatus & ControllerHealthStatusCritical) != 0) {
+    } else if ((SensorInfo.HealthStatus & HealthStatusCritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CRITICAL_FAILURE), NULL);
-    } else if ((SensorInfo.HealthStatus & ControllerHealthStatusNoncritical) != 0) {
+    } else if ((SensorInfo.HealthStatus & HealthStatusNoncritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NON_CRITICAL_FAILURE), NULL);
     } else {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);

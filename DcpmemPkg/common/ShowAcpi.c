@@ -556,7 +556,7 @@ PrintPMTT(
       Print(L"Type: %d\nReserved1: %d\nLength: %d\nFlags:%d\nReserved2:%d\n", pCommonHeader->Type,
         pCommonHeader->Reserved1, pCommonHeader->Length, pCommonHeader->Flags, pCommonHeader->Reserved2);
       Print(L"ReadLatency: %d\nWriteLatency: %d\nReadBW: %d\nWriteBW:%d\nOptimalAccessUnit:%d\n"
-        "OptimalAccessAlignment:%d\nReserved3:%d\nNoOfProximityDomains:%d\nProximityDomainArray:%d\n",
+        L"OptimalAccessAlignment:%d\nReserved3:%d\nNoOfProximityDomains:%d\nProximityDomainArray:%d\n",
         piMC->ReadLatency, piMC->WriteLatency, piMC->ReadBW, piMC->WriteBW, piMC->OptimalAccessUnit,
         piMC->OptimalAccessAlignment, piMC->Reserved3, piMC->WriteBW, piMC->NoOfProximityDomains,
         piMC->ProximityDomainArray);

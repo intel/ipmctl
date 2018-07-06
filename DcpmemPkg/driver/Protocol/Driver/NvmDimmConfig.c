@@ -2413,6 +2413,7 @@ SetSecurityState(
   )
 {
   EFI_STATUS ReturnCode = EFI_UNSUPPORTED;
+  EFI_STATUS TempReturnCode = EFI_UNSUPPORTED;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT16 PayloadBufferSize = 0;
@@ -2693,6 +2694,7 @@ SetSecurityState(
       NVDIMM_DBG("Failed on SetDimmSecurityState, ReturnCode=" FORMAT_EFI_STATUS "", ReturnCode);
       if (ReturnCode == EFI_ACCESS_DENIED) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PASSPHRASE);
+        goto Finish;
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
       }
@@ -2734,9 +2736,9 @@ SetSecurityState(
 
 Finish:
   if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
-    ReturnCode = ReenumerateNamespacesAndISs();
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=" FORMAT_EFI_STATUS "", ReturnCode);
+    TempReturnCode = ReenumerateNamespacesAndISs();
+    if (EFI_ERROR(TempReturnCode)) {
+      NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=" FORMAT_EFI_STATUS "", TempReturnCode);
     }
   }
 

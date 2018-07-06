@@ -85,7 +85,6 @@ struct _DIMM;
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
-
 typedef struct {
   volatile UINT64 *pCommand;                      //!< va of the command register
   volatile UINT64 *pNonce0;                       //!< va of the nonce0 register

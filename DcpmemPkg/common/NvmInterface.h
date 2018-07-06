@@ -1264,19 +1264,19 @@ EFI_STATUS
   );
 
 /**
-InjectError
+  InjectError
 
-@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
-@param[in] DimmIdsCount - number of elements in pDimmIds
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
+  @param[in] DimmIdsCount - number of elements in pDimmIds
 
-@param[IN] ErrorInjType - Error Inject type
-@param[IN] ClearStatus - Is clear status set
-@param[IN] pInjectTemperatureValue - Pointer to inject temperature
-@param[IN] pInjectPoisonAddress - Pointer to inject poison address
-@param[IN] pPoisonType - Pointer to poison type
-@param[IN] pPercentRemaining - Pointer to percentage remaining
-@param[out] pCommandStatus Structure containing detailed NVM error codes.
+  @param[IN] ErrorInjType - Error Inject type
+  @param[IN] ClearStatus - Is clear status set
+  @param[IN] pInjectTemperatureValue - Pointer to inject temperature
+  @param[IN] pInjectPoisonAddress - Pointer to inject poison address
+  @param[IN] pPoisonType - Pointer to poison type
+  @param[IN] pPercentRemaining - Pointer to percentage remaining
+  @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
 @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
 @retval EFI_INVALID_PARAMETER One or more parameters are invalid
@@ -1285,17 +1285,17 @@ InjectError
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_INJECT_ERROR) (
-	IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-	IN     UINT16 *pDimmIds OPTIONAL,
-	IN     UINT32 DimmIdsCount,
-	IN     UINT8  ErrorInjType,
-	IN     UINT8  ClearStatus,
-	IN     UINT64 *pInjectTemperatureValue,
-	IN     UINT64 *pInjectPoisonAddress,
-	IN     UINT8  *pPoisonType,
-	IN     UINT8  *pPercentageremaining,
-	OUT COMMAND_STATUS *pCommandStatus
-	);
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT8  ErrorInjType,
+  IN     UINT8  ClearStatus,
+  IN     UINT64 *pInjectTemperatureValue,
+  IN     UINT64 *pInjectPoisonAddress,
+  IN     UINT8  *pPoisonType,
+  IN     UINT8  *pPercentageremaining,
+  OUT COMMAND_STATUS *pCommandStatus
+ );
 
 /**
   GetBsr value and return bsr or bootstatusbitmask depending on the requested options
@@ -1318,6 +1318,7 @@ EFI_STATUS
   OUT     UINT64 *pBsrValue OPTIONAL,
   OUT     UINT16 *pBootStatusBitmask OPTIONAL
  );
+
 /**
   Pass Thru command to FW
   Sends a command to FW and waits for response from firmware
@@ -1340,64 +1341,8 @@ EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_PASS_THRU) (
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout
-  );
+);
 
-#ifdef __MFG__
-/**
-Update from mfg to prod firmware
-
-@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-@param[in] DimmIdsCount Number of items in array of DIMM IDs
-@param[in] pFileName Name is a pointer to a file containing FW image
-@param[in] IsFWUpdate - set to 1 if doing FW update else  0
-@param[out] pCommandStatus Structure containing detailed NVM error codes
-
-@retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-@retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-@retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-@retval EFI_SUCCESS Update has completed successfully
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW) (
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CHAR16 *pFileName,
-  IN     BOOLEAN IsFWUpdate,
-  OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
-Get Mem Info pages
-
-@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-@param[in] DimmIdsCount Number of items in array of DIMM IDs
-@param[in] pFilePath Name is a pointer to a file  to which the hex dump will be written
-@param[in] MemInfoPage number of the meminfo page to be retreived
-@param[out] pCommandStatus Structure containing detailed NVM error codes
-
-@retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-@retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-@retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-@retval EFI_SUCCESS Update has completed successfully
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_MFG_MEM_INFO_PAGE) (
-  IN EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds      OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CHAR16 *pFilePath,
-  IN     UINT16  MemInfoPage,
-  OUT COMMAND_STATUS *pCommandStatus
-  );
-
-#endif
 /**
   Configuration and management of DCPMEM modules Protocol Interface
 **/
@@ -1456,10 +1401,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_LONG_OP_STATUS GetLongOpStatus;
   EFI_DCPMM_CONFIG_INJECT_ERROR InjectError;
   EFI_DCPMM_CONFIG_GET_BSR_AND_BITMASK GetBSRAndBootStatusBitMask;
-#ifdef __MFG__
-  EFI_DCPMM_CONFIG_INJECT_MFG_TO_PROD_UPDATE_FW InjectAndUpdateMfgToProdfw;
-  EFI_DCPMM_CONFIG_MFG_MEM_INFO_PAGE MfgDumpMemInfoPage;
-#endif
+
 #ifndef MDEPKG_NDEBUG
   EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/

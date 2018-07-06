@@ -1721,11 +1721,11 @@ InjectError(
   GetBsr value and return bsr or bootstatusbitmask depending on the requested options
   UEFI - Read directly from BSR register
   OS - Get BSR value from BIOS emulated command
+
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmID -  dimm handle of the DIMM
   @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
   @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
-
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval EFI_SUCCESS Success
   @retval Other errors failure of FW commands
@@ -1771,35 +1771,4 @@ VerifyTargetDimms(
 	OUT UINT32 *pDimmsNum,
 	OUT COMMAND_STATUS *pCommandStatus
 );
-
-#ifdef __MFG__
-/**********************************************************Manufacturing related functions***********************************************************************/
-/**
-Update from mfg to prod firmware
-
-@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-@param[in] DimmIdsCount Number of items in array of DIMM IDs
-@param[in] pFileName Name is a pointer to a file containing FW image
-@param[in] IsFWUpdate - set to 1 if doing FW update else it is 0
-@param[out] pCommandStatus Structure containing detailed NVM error codes
-
-@retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-@retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-@retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-@retval EFI_SUCCESS Update has completed successfully
-**/
-EFI_STATUS
-EFIAPI
-InjectAndUpdateMfgToProdfw(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CHAR16 *pFileName,
-  IN     BOOLEAN  IsFWUpdate,
-  OUT COMMAND_STATUS *pCommandStatus
-);
-
-#endif /* __MFG__ */
 #endif /* _NVMDIMM_CONFIG_H_ */

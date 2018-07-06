@@ -33,10 +33,6 @@
 #define CREATE_VERB   L"create"
 #define DUMP_VERB     L"dump"
 #define START_VERB    L"start"
-#define LOAD_PROD_FW  L"mfgprodfw"
-#define INJECT_MFG    L"mfginject"
-#define GET_MEM_INFO_MFG L"mfgmeminfopage"
-
 
 /** command options **/
 #define ALL_OPTION                      L"-all"                                //!< 'all' option name
@@ -123,7 +119,6 @@
 #define FORMAT_TARGET                        L"-format"                  //!< 'format' target value
 #define PREFERENCES_TARGET                   L"-preferences"             //!< 'preferences' target value
 #define PERFORMANCE_TARGET                   L"-performance"             //!< 'performance' target value
-
 /** Persistent memory type **/
 #define PERSISTENT_MEM_TYPE_AD_STR        L"AppDirect"
 #define PERSISTENT_MEM_TYPE_AD_NI_STR     L"AppDirectNotInterleaved"

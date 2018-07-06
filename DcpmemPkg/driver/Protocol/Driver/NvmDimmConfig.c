@@ -41,9 +41,6 @@
 #include <os_efi_api.h>
 #include "event.h"
 #endif // OS_BUILD
-#ifdef __MFG__
-#include <mfg/Mfg.h>
-#endif
 
 /** Memory Device SMBIOS Table **/
 #define SMBIOS_TYPE_MEM_DEV             17
@@ -116,9 +113,6 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetLongOpStatus,
   InjectError,
   GetBSRAndBootStatusBitMask,
-#ifdef __MFG__
-  InjectAndUpdateMfgToProdfw,
-#endif
 #ifndef MDEPKG_NDEBUG
   PassThruCommand
 #endif /* MDEPKG_NDEBUG */
@@ -9276,41 +9270,3 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-#ifdef __MFG__
-/**
-Update from mfg to prod firmware
-
-@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-@param[in] DimmIdsCount Number of items in array of DIMM IDs
-@param[in] pFileName Name is a pointer to a file containing FW image
-@param[in] IsFWUpdate - set to 1 if doing FW update else 0
-@param[out] pCommandStatus Structure containing detailed NVM error codes
-
-@retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-@retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-@retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
-@retval EFI_SUCCESS Update has completed successfully
-**/
-EFI_STATUS
-EFIAPI
-InjectAndUpdateMfgToProdfw(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CHAR16 *pFileName,
-  IN     BOOLEAN   IsFWUpdate,
-  OUT COMMAND_STATUS *pCommandStatus
-)
-{
-    EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
-    ReturnCode  = InjectAndUpdateToProdfw(pThis, pDimmIds, DimmIdsCount, pFileName, IsFWUpdate, pCommandStatus);
-
-    return ReturnCode;
-}
-
-#endif /*__MFG__*/
-

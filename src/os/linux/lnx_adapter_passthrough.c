@@ -523,6 +523,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 
 						if (dsm_vendor_err_status == DSM_VENDOR_RETRY_SUGGESTED)
 						{
+							rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
 							COMMON_LOG_ERROR_F("RETRY %i IOCTL passthrough failed: "
 								"DSM returned error %d for command with "
 										"Opcode - 0x%x SubOpcode - 0x%x \n", retry, dsm_vendor_err_status,

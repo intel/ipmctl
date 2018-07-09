@@ -509,6 +509,7 @@ static BOOLEAN check_skip_entry_status_for_event_actionreq_set(BOOLEAN not_match
     BOOLEAN skip_entry = not_matching;
     UINT32 event_type = 0;
     CHAR8 event_cat = 0;
+    char dimm_uid[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
     char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
     FILE     *h_file = NULL;
     NVM_EVENT_MSG event_type_str = { 0 };
@@ -522,9 +523,9 @@ static BOOLEAN check_skip_entry_status_for_event_actionreq_set(BOOLEAN not_match
     // Get the event type value
     event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
     // Get the UID file name
-    get_unified_id_form_event_entry(event_message, sizeof(log_file_name), log_file_name);
+    get_unified_id_form_event_entry(event_message, sizeof(dimm_uid), dimm_uid);
     // The action required file configured
-    snprintf(log_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, ACTION_REQUIRED_FILE_PARSING_STRING, log_file_name);
+    snprintf(log_file_name, sizeof(log_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, dimm_uid);
     // Event type cannot equal 0, it is stored in the log file means at least one bit needs to be set
     h_file = fopen(log_file_name, "r+");
     if (NULL != h_file)

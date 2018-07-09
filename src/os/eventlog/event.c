@@ -1006,6 +1006,7 @@ NVM_API char nvm_get_action_required(CONST CHAR8* dimm_uid)
 NVM_API int nvm_clear_action_required(UINT32 event_id)
 {
     char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
+    char dimm_uid[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
     EFI_STATUS efi_status = EFI_SUCCESS;
     FILE     *h_file = NULL;
     NVM_EVENT_MSG event_message = { 0 };
@@ -1033,9 +1034,9 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                     // We found event, now get the event type
                     event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
                     // Get the UID file name
-                    get_unified_id_form_event_entry(event_message, sizeof(log_file_name), log_file_name);
+                    get_unified_id_form_event_entry(event_message, sizeof(dimm_uid), dimm_uid);
                     // The action required file configured
-                    snprintf(log_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, ACTION_REQUIRED_FILE_PARSING_STRING, log_file_name);
+                    snprintf(log_file_name, sizeof(log_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, dimm_uid);
                     break;
                 }
             }

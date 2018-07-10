@@ -1714,17 +1714,6 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_add_event_notify(const enum event_type      type,
-         void (*p_event_callback)(struct event *p_event))
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_remove_event_notify(const int callback_id)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
 static unsigned int convert_event_filter_data_and_return_event_type(const struct event_filter *p_filter, NVM_UID dimm_uid, unsigned int *p_event_id)
 {
   unsigned int event_type_mask = 0;
@@ -2249,12 +2238,6 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_dump_config(const NVM_UID device_uid,
-          const NVM_PATH file, const NVM_SIZE file_len,
-          const NVM_BOOL append)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
 
 
 NVM_API int nvm_dump_goal_config(const NVM_PATH file,
@@ -2283,11 +2266,6 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file,
   return NVM_SUCCESS;
 }
 
-NVM_API int nvm_load_config(const NVM_UID device_uid,
-          const NVM_PATH file, const NVM_SIZE file_len)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
 
 NVM_API int nvm_load_goal_config(const NVM_PATH file,
          const NVM_SIZE file_len)
@@ -2484,42 +2462,6 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
   return NVM_SUCCESS;
 }
 
-NVM_API int nvm_dump_device_support(const NVM_UID device_uid, const NVM_PATH support_file,
-            const NVM_SIZE support_file_len, NVM_PATH support_files[NVM_MAX_EAFD_FILES])
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_save_state(const char *name, const NVM_SIZE name_len)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_purge_state_data()
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_add_simulator(const NVM_PATH simulator, const NVM_SIZE simulator_len)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_remove_simulator()
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_get_fw_log_level(const NVM_UID device_uid, enum fw_log_level *p_log_level)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
-
-NVM_API int nvm_set_fw_log_level(const NVM_UID			device_uid,
-  const enum fw_log_level	log_level)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
-}
 
 NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
             const struct device_error * p_error)

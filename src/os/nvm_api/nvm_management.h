@@ -1908,46 +1908,6 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
  */
 
 /**
- * @deprecated Not supprted
- * @brief Adds a function to be called when an event that matches the specified type.
- * An event structure is populated and passed
- * to the callback function describing the event that occurred.
- * @param[in] type
- *              The type of event to notify on.  Use #EVENT_TYPE_ALL to subscribe
- *              to all events for the device.
- * @param[in] p_event_callback
- *              A pointer to the callback function.
- * @pre The caller has administrative privileges.
- * @remarks Callers must remove the callback using #nvm_remove_event_notify
- * to avoid memory leaks.
- * @return Returns a callback identifier if the callback was added or one of the
- * following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_add_event_notify(const enum event_type type, void (*p_event_callback)(struct event *p_event));
-
-/**
- * @deprecated Not supprted
- * @brief Remove a callback subscription that was previously added using #nvm_add_event_notify.
- * @param[in] callback_id
- *              The identifier for a specific callback, returned from #nvm_add_event_notify.
- * @pre The caller has administrative privileges.
- * @pre The callback was previously added using #nvm_add_event_notify
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_BADCALLBACK @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_remove_event_notify(const int callback_id);
-
-/**
  * @brief Retrieve the number of events in the native API library event database.
  * @param[in] p_filter
  *              A pointer to an event_filter structure allocated by the caller to
@@ -2098,28 +2058,6 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
 NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count);
 
 /**
- * @deprecated No longer supported
- * @brief Store the configuration settings of how the DIMM
- * is currently provisioned to a file in order to duplicate the
- * configuration elsewhere.
- * @param device_uid
- *              The DIMM identifier.
- * @param file
- *              The absolute file path in which to store the configuration data.
- * @param file_len
- *              String length of file, should be < #NVM_PATH_LEN.
- * @param append
- *              Whether to append the DIMM configuration to an existing file
- *              or create/replace the file.
- * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
- * @pre The specified DIMM is currently configured.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *		NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_dump_config(const NVM_UID device_uid, const NVM_PATH file, const NVM_SIZE file_len, const NVM_BOOL append);
-
-/**
  * @brief Store the configuration settings of how the DIMM capacity
  * is currently provisioned to a file in order to duplicate the
  * configuration elsewhere.
@@ -2136,30 +2074,6 @@ NVM_API int nvm_dump_config(const NVM_UID device_uid, const NVM_PATH file, const
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
-
-/**
- * @deprecate Please use  nvm_load_goal_config
- * Modify how the DIMM capacity is provisioned by the BIOS on the
- * next reboot by applying the configuration goal previously stored in the
- * specified file with @link nvm_dump_config @endlink.
- * @param device_uid
- *              The DIMM identifier.
- * @param file
- *              The absolute file path containing the region configuration goal to load.
- * @param file_len
- *              String length of file, should be < #NVM_PATH_LEN.
- * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
- * @pre Any existing namespaces created from capacity on the
- *              DIMM must be deleted first.
- * @pre If the configuration goal contains any app direct memory,
- *              all DIMMs that are part of the interleave set must be included in the file.
- * @pre The specified DIMM must be >= the total capacity of the DIMM
- *              specified in the file.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_load_config(const NVM_UID device_uid, const NVM_PATH file, const NVM_SIZE file_len);
 
 /**
  * @brief Modify how the DIMM capacity is provisioned by the BIOS on the
@@ -2284,112 +2198,6 @@ NVM_API int nvm_get_version(NVM_VERSION version_str, const NVM_SIZE str_len);
  */
 NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE support_file_len);
 
-/**
- * @deprecated Please use nvm_gather_support instead.
- * @brief Collect failure analysis data into a single file to document the context of a problem
- * for offline analysis by support or development personnel.
- * @param[in] device_uid
- *		DimmUID for which the support files will be generated.
- * @param[in] support_file
- *		Absolute file path which will be used to generate the support files. For each DIMM,
- *		one or more support files may be generated at the specified destination path
- *		with the DimmUID and file number appended to the filename. Note the support
- *		files are encrypted
- * @param[in] support_file_len
- *		String length of the file path, should be < NVM_PATH_LEN.
- * @param[out] support_files
- *		Array of the absolute paths to the support files. This parameter can be NULL.
- * @pre The caller must have administrative privileges.
- * @post A support file exists at the path specified for debug by
- * support or development personnel.
- * @remarks The failure analysis file contains a dump of encrypted logs from the FW. One or more
- *			files for individual data blobs from the FW may be generated depending on the number of
- *			blobs returned by the FW.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *		NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_dump_device_support(const NVM_UID device_uid, const NVM_PATH support_file, const NVM_SIZE support_file_len, NVM_PATH support_files[NVM_MAX_EAFD_FILES]);
-
-/**
- * @deprecated Please use nvm_gather_support instead.
- * @brief Capture a snapshot of the current state of the system in the configuration database
- * with the current date/time and optionally a user supplied name and description.
- * @param[in] name
- *              Optional name to describe the snapshot.
- * @param[in] name_len
- *              String length of the name. Ignored if name is NULL.
- * @pre The caller must have administrative privileges.
- * @remarks This operation will be attempt to gather as much information as possible about
- * the state of the system. Therefore, it will ignore errors during the information gathering
- * process and return the first error (if any) that it comes across.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_save_state(const char *name, const NVM_SIZE name_len);
-
-/**
- * @deprecated To purge the last saved state please remove the file generated by nvm_gather_support
- * @brief Clear any snapshots generated with #nvm_save_state from the configuration database.
- * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_purge_state_data();
-
-/**
- * @deprecated Not supported
- * @brief Load a simulator database file.  A simulator may be used to emulate
- * a server with 0 or more devices for debugging purposes.
- * @param[in] simulator
- *              Absolute path to a simulator file.
- * @param[in] simulator_len
- *              String length of the simulator file path, should be < NVM_PATH_LEN.
- * @pre Only available for simulated builds of the Native API library, all other
- * builds will return NVM_ERR_NOTSUPPORTED.
- * @remarks If another file is currently open, it will remove it before
- * loading the current file.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_add_simulator(const NVM_PATH simulator, const NVM_SIZE simulator_len);
-
-/**
- * @deprecated Not supported
- * @brief Remove a simulator database file previously added using #nvm_add_simulator.
- * @pre Only available for simulated builds of the Native API library, all other
- * builds will return NVM_ERR_NOTSUPPORTED.
- * @pre A simulator file was previously loaded using #nvm_add_simulator.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_API_NOT_SUPPORTED @n
- */
-NVM_API int nvm_remove_simulator();
-
-/**
-* @obsolete
-* @brief Retrieve the current level of debug logging performed on the specified DIMM.
-* @param[in] device_uid
-*              The device identifier.
-* @param[out,in] p_log_level
-*              A buffer for the log_level, allocated by the caller.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
-*            ::NVM_SUCCESS @n
-*            ::NVM_ERR_INVALIDPARAMETER @n
-*            ::NVM_ERR_UNKNOWN @n
-*/
-NVM_API int nvm_get_fw_log_level(const NVM_UID device_uid, enum fw_log_level *p_log_level);
-
-/**
-* @obsolete
-* @brief Set the current level of debug logging performed on the specified DIMM.
-* @param[in] device_uid
-*              The device identifier.
-* @param[in] log_level
-*              The firmware log level.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
-*            ::NVM_SUCCESS @n
-*            ::NVM_ERR_UNKNOWN @n
-*/
-NVM_API int nvm_set_fw_log_level(const NVM_UID device_uid, const enum fw_log_level log_level);
 
 /**
  * @brief Inject an error into the device specified for debugging purposes.

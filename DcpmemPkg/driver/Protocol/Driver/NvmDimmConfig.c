@@ -9221,6 +9221,7 @@ GetBSRAndBootStatusBitMask(
 #ifndef OS_BUILD
   if (pDimm != NULL) {
     if (pDimm->pHostMailbox == NULL) {
+      ReturnCode = EFI_DEVICE_ERROR;
       goto Finish;
     }
     Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
@@ -9230,6 +9231,7 @@ GetBSRAndBootStatusBitMask(
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
     if (pDimm == NULL) {
+      ReturnCode = EFI_NOT_FOUND;
       goto Finish;
     }
 #ifndef OS_BUILD
@@ -9263,6 +9265,7 @@ GetBSRAndBootStatusBitMask(
   if (pBsrValue != NULL) {
     // If Bsr value is MAX_UINT64_VALUE, then it is access violation
     if (Bsr.AsUint64 == MAX_UINT64_VALUE) {
+      ReturnCode = EFI_DEVICE_ERROR;
       goto Finish;
     }
     *pBsrValue = Bsr.AsUint64;

@@ -287,7 +287,7 @@ PrintFitTable(
   case NVDIMM_NVDIMM_REGION_TYPE:
     pTableNvDimmRegion = (NvDimmRegionTbl *)pTable;
     Print(L"TypeEquals: NvDimmRegion\n"
-        L"DeviceHandle: 0x%x\n"
+        L"NfitDeviceHandle: 0x%04x\n"
         L"NfitDeviceHandle.DimmNumber: 0x%x\n"
         L"NfitDeviceHandle.MemChannel: 0x%x\n"
         L"NfitDeviceHandle.MemControllerId: 0x%x\n"
@@ -406,12 +406,14 @@ PrintFitTable(
   case NVDIMM_FLUSH_HINT_TYPE:
     pTableFlushHint = (FlushHintTbl *)pTable;
     Print(L"TypeEquals: FlushHint\n"
+        L"NfitDeviceHandle: 0x%04x\n"
         L"NfitDeviceHandle.DimmNumber: 0x%x\n"
         L"NfitDeviceHandle.MemChannel: 0x%x\n"
         L"NfitDeviceHandle.MemControllerId: 0x%x\n"
         L"NfitDeviceHandle.SocketId: 0x%x\n"
         L"NfitDeviceHandle.NodeControllerId: 0x%x\n"
         L"NumberOfFlushHintAddresses: 0x%x\n",
+        pTableFlushHint->DeviceHandle.AsUint32,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.DimmNumber,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.MemChannel,
         pTableFlushHint->DeviceHandle.NfitDeviceHandle.MemControllerId,

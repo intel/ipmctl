@@ -1422,7 +1422,7 @@ GetDimms(
     }
     pDimm = GetDimmByIndex(Index, &gNvmDimmData->PMEMDev);
     if (pDimm == NULL) {
-      NVDIMM_DBG("Failed to retrieve the CR-DIMM index %d", Index);
+      NVDIMM_DBG("Failed to retrieve the DCPMEM index %d", Index);
       Rc = EFI_NOT_FOUND;
       goto Finish;
     }
@@ -1531,7 +1531,7 @@ GetDimm(
   SetMem(pDimmInfo, sizeof(*pDimmInfo), 0); // this clears error mask as well
   pDimm = GetDimmByPid(Pid, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
-    NVDIMM_DBG("Failed to retrieve the CR-DIMM pid %x", Pid);
+    NVDIMM_DBG("Failed to retrieve the DCPMEM pid %x", Pid);
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -1585,7 +1585,7 @@ GetPMONRegisters(
   SetMem(pPayloadPMONRegisters, sizeof(*pPayloadPMONRegisters), 0); // this clears error mask as well
   pDimm = GetDimmByPid(Pid, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
-    NVDIMM_DBG("Failed to retrieve the CR-DIMM pid %x", Pid);
+    NVDIMM_DBG("Failed to retrieve the DCPMEM pid %x", Pid);
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -1634,7 +1634,7 @@ SetPMONRegisters(
 
   pDimm = GetDimmByPid(Pid, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
-    NVDIMM_DBG("Failed to retrieve the CR-DIMM pid %x", Pid);
+    NVDIMM_DBG("Failed to retrieve the DCPMEM pid %x", Pid);
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }

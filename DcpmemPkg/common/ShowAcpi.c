@@ -22,7 +22,7 @@ PrintAcpiHeader(
   }
 
   Print(L"Signature: %c%c%c%c\n"
-    L"Length: 0x%x\n"
+    L"Length: %d bytes\n"
     L"Revision: 0x%x\n"
     L"Checksum: 0x%x\n"
     L"OEMID: %c%c%c%c%c%c\n",
@@ -83,7 +83,7 @@ PrintPcatTable(
   SOCKET_SKU_INFO_TABLE *pSocketSkuInfoTable = NULL;
 
   Print(L"Type: 0x%x\n"
-      L"Length: 0x%x\n",
+      L"Length: %d bytes\n",
       pTable->Type,
       pTable->Length);
 
@@ -260,7 +260,7 @@ PrintFitTable(
   }
 
   Print(L"Type: 0x%x\n"
-      L"Length: 0x%x\n",
+      L"Length: %d bytes\n",
       pTable->Type,
       pTable->Length);
 

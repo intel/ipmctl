@@ -21,7 +21,7 @@ struct Command SetSensorCommand =
   },
   {                                                                 //!< targets
     {SENSOR_TARGET, L"", SENSOR_TARGETS, TRUE, ValueRequired},
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired}
   },
   {                                                                 //!< properties
     {NON_CRIT_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},

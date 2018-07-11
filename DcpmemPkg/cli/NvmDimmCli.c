@@ -50,7 +50,6 @@
 #include "Common.h"
 #include "ShowFirmwareCommand.h"
 #include "ShowPcdCommand.h"
-#include "DeletePcdCommand.h"
 #include "StartFormatCommand.h"
 #include "ShowPreferencesCommand.h"
 #include "SetPreferencesCommand.h"
@@ -65,6 +64,7 @@
 #include "DumpSupportCommand.h"
 extern void nvm_current_cmd(struct Command Command);
 #else
+#include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
 #endif
 EFI_GUID gNvmDimmDriverHealthGuid = EFI_DRIVER_HEALTH_PROTOCOL_GUID;
@@ -453,6 +453,12 @@ RegisterCommands(
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+
+  Rc = RegisterDeletePcdCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
 #endif
   Rc = RegisterShowErrorCommand();
   if (EFI_ERROR(Rc)) {
@@ -510,11 +516,6 @@ RegisterCommands(
   }
 
   Rc = RegisterShowPcdCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterDeletePcdCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }

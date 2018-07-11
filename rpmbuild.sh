@@ -27,7 +27,7 @@ cp install/linux/rel-release/ipmctl.spec.in $SOURCEDIR/output/rpmbuild/SPECS/ipm
 sed -i "s/^%define build_version .*/%define build_version $BUILDNUM/g" $SOURCEDIR/output/rpmbuild/SPECS/ipmctl.spec
 
 # Archive the directory
-tar --exclude-vcs --exclude="*safeclib" --exclude="*output" --exclude="*.swp*" --transform="s,^.,ipmctl-$BUILDNUM," -zcf $SOURCEDIR/output/rpmbuild/SOURCES/ipmctl-$BUILDNUM.tar.gz .
+tar --exclude-vcs --exclude="*output" --exclude="*.swp*" --transform="s,^.,ipmctl-$BUILDNUM," -zcf $SOURCEDIR/output/rpmbuild/SOURCES/ipmctl-$BUILDNUM.tar.gz .
 
 # rpmbuild
 rpmbuild -ba $SOURCEDIR/output/rpmbuild/SPECS/ipmctl.spec --define "_topdir $SOURCEDIR/output/rpmbuild"

@@ -55,7 +55,7 @@ OS_MUTEX *g_api_mutex;
 int g_dimm_cnt;
 int g_basic_commands = 0;
 DIMM_INFO *g_dimms;
-int get_dimm_id(const char *uid, unsigned int *dimm_id, unsigned int *dimm_handle);
+int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle);
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device);
 int g_nvm_initialized = 0;
 int get_fw_err_log_stats(const unsigned int dimm_id, const unsigned char log_level, const unsigned char log_type, LOG_INFO_DATA_RETURN *log_info);
@@ -561,7 +561,7 @@ NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_INFO dimm_info = { 0 };
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   int rc;
 
@@ -579,7 +579,7 @@ NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
     NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DIMM_INFO_CATEGORY_NONE, &dimm_info);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, dimm_id, DIMM_INFO_CATEGORY_NONE, &dimm_info);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_DIMM_NOT_FOUND;
@@ -629,7 +629,7 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_INFO dimm_info = { 0 };
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   UINT16 BootstatusBitmask;
   if (NULL == p_status) {
@@ -645,13 +645,13 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     p_status->is_missing = TRUE;
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DIMM_INFO_CATEGORY_ALL, &dimm_info);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, dimm_id, DIMM_INFO_CATEGORY_ALL, &dimm_info);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     p_status->is_missing = TRUE;
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetBSRAndBootStatusBitMask(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, NULL, &BootstatusBitmask);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetBSRAndBootStatusBitMask(&gNvmDimmDriverNvmDimmConfig, dimm_id, NULL, &BootstatusBitmask);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to get boot status %d\n", ReturnCode);
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -667,7 +667,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
           const NVM_UINT8 SmartDataMask, PMON_REGISTERS *p_output_payload)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   int rc;
 
@@ -683,7 +683,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, (UINT8)SmartDataMask, (PT_PMON_REGISTERS *)p_output_payload);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)SmartDataMask, (PT_PMON_REGISTERS *)p_output_payload);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_OPERATION_FAILED;
@@ -694,7 +694,7 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID   device_uid,
           NVM_UINT8 PMONGroupEnable)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   int rc;
 
@@ -706,7 +706,7 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID   device_uid,
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, (UINT8)PMONGroupEnable);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)PMONGroupEnable);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_OPERATION_FAILED;
@@ -719,7 +719,7 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
 {
   EFI_STATUS ReturnCode;
   DIMM *pDimm = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int rc;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   int nvm_status;
@@ -759,7 +759,7 @@ NVM_API int nvm_modify_device_settings(const NVM_UID      device_uid,
 {
   EFI_STATUS ReturnCode;
   DIMM *pDimm = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int rc;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   int nvm_status;
@@ -801,7 +801,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_INFO dimm_info = { 0 };
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   int rc;
 
@@ -815,7 +815,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DIMM_INFO_CATEGORY_ALL, &dimm_info);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, dimm_id, DIMM_INFO_CATEGORY_ALL, &dimm_info);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_DIMM_NOT_FOUND;
@@ -889,7 +889,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   ZeroMem(cmd, sizeof(FW_CMD));
   ZeroMem(&mem_info_input, sizeof(mem_info_input));
   mem_info_input.MemoryPage = 1;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   unsigned int dimm_handle;
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, &dimm_handle))) {
@@ -1040,7 +1040,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID    device_uid,
 {
   EFI_STATUS ReturnCode;
   DIMM *pDimm = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int rc;
   PT_PAYLOAD_FW_IMAGE_INFO *fw_image_info = NULL;
   int nvm_status;
@@ -1093,7 +1093,7 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid,
   COMMAND_STATUS *p_command_status;
   CHAR16 file_name[NVM_PATH_LEN];
   FW_IMAGE_INFO *p_fw_image_info = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
 
   if (path_len > NVM_PATH_LEN)
     return NVM_ERR_UNKNOWN;
@@ -1110,7 +1110,7 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to get DIMM ID %d\n", rc);
     return rc;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
                 NULL, FALSE, force, FALSE, FALSE, p_fw_image_info, p_command_status);
   if (NVM_SUCCESS != ReturnCode) {
     FreeCommandStatus(&p_command_status);
@@ -1130,7 +1130,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
   COMMAND_STATUS *p_command_status;
   CHAR16 file_name[NVM_PATH_LEN];
   FW_IMAGE_INFO *p_fw_image_info = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
 
   if ((path_len > NVM_PATH_LEN) || (NULL == image_version))
     return NVM_ERR_UNKNOWN;
@@ -1152,7 +1152,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to allocate memory");
     rc = NVM_ERR_UNKNOWN;
   } else {
-    ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
+    ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
                   NULL, TRUE, FALSE, FALSE, FALSE, p_fw_image_info, p_command_status);
     if (NVM_SUCCESS != ReturnCode) {
       NVDIMM_ERR("Failed to update the FW, file %s. Return code %d", path, ReturnCode);
@@ -1387,7 +1387,8 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   int rc = NVM_ERR_API_NOT_SUPPORTED;
   int nvm_status = NVM_SUCCESS;
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-  unsigned int dimm_id, dimm_handle, dimm_count;
+  UINT16 dimm_id;
+  unsigned int dimm_handle, dimm_count;
   COMMAND_STATUS *p_command_status = NULL;
   CHAR16 UnicodePassphrase[PASSPHRASE_BUFFER_SIZE];
 
@@ -1425,7 +1426,7 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   }
 
   dimm_count = 1;
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id,
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, &dimm_id,
     dimm_count, SECURITY_OPERATION_DISABLE_PASSPHRASE, AsciiStrToUnicodeStr(passphrase, UnicodePassphrase), NULL,
     p_command_status);
   if (EFI_ERROR(ReturnCode)) {
@@ -1588,7 +1589,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
           const NVM_UINT16 count)
 {
   EFI_STATUS ReturnCode;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   DIMM_SENSOR DimmSensorsSet[SENSOR_TYPE_COUNT];
   int rc = NVM_SUCCESS;
   int i;
@@ -1609,7 +1610,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
     goto Finish;
   }
 
-  ReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DimmSensorsSet);
+  ReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, dimm_id, DimmSensorsSet);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(L"Failed to GetSensorsInfo\n");
     rc = NVM_ERR_UNKNOWN;
@@ -1631,7 +1632,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
          struct sensor *p_sensor)
 {
   EFI_STATUS EFIReturnCode = EFI_INVALID_PARAMETER;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   DIMM_SENSOR DimmSensorsSet[SENSOR_TYPE_COUNT];
   int rc = NVM_SUCCESS;
 
@@ -1651,7 +1652,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
     goto Finish;
   }
 
-  EFIReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, (UINT16)dimm_id, DimmSensorsSet);
+  EFIReturnCode = GetSensorsInfo(&gNvmDimmDriverNvmDimmConfig, dimm_id, DimmSensorsSet);
   if (EFI_ERROR(EFIReturnCode)) {
     NVDIMM_ERR_W(L"Failed to GetSensorsInfo\n");
     rc = NVM_ERR_OPERATION_FAILED;
@@ -1672,7 +1673,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
 {
   EFI_STATUS ReturnCode;
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int rc = NVM_SUCCESS;
 
   if (NULL == p_settings) {
@@ -2467,8 +2468,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
             const struct device_error * p_error)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT32 DimmId;
-  UINT16 *pDimm = NULL;
+  UINT16 DimmId;
   UINT32 DimmCount;
   UINT32 rc = NVM_SUCCESS;
   UINT8 ClearStatus = 0;
@@ -2489,13 +2489,9 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
     goto Finish;
   }
-  if (NULL == (pDimm = (UINT16 *)GetDimmByPid(DimmId, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", DimmId);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
+
   DimmCount = 1;
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, &DimmId, DimmCount,
                    (UINT8)p_error->type, ClearStatus, (UINT64 *)&p_error->temperature, (UINT64 *)&p_error->dpa,
                    (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
@@ -2511,8 +2507,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
               const struct device_error *p_error)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT32 DimmId;
-  UINT16 *pDimm = NULL;
+  UINT16 DimmId;
   UINT32 DimmCount;
   UINT32 rc = NVM_SUCCESS;
   UINT8 ClearStatus = 1;
@@ -2533,13 +2528,9 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
     goto Finish;
   }
-  if (NULL == (pDimm = (UINT16 *)GetDimmByPid(DimmId, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", DimmId);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
+
   DimmCount = 1;
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, pDimm, DimmCount,
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.InjectError(&gNvmDimmDriverNvmDimmConfig, &DimmId, DimmCount,
                    (UINT8)p_error->type, ClearStatus, (UINT64 *)&p_error->temperature, (UINT64 *)&p_error->dpa,
                    (UINT8 *)&p_error->memory_type, (UINT8 *)&p_error->percentageRemaining, pCommandStatus);
 
@@ -2556,7 +2547,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT8 diag_tests = 0;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   UINT16 *p_dimm_id;
   CHAR16 *pFinalDiagnosticsResult = NULL;
   UINT32 dimm_count;
@@ -2635,7 +2626,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
 NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   int nvm_status;
   COMMAND_STATUS *p_command_status;
 
@@ -2651,7 +2642,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
     NVDIMM_ERR("Failed to get dimmm ID %d\n", nvm_status);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.DeletePcd(&gNvmDimmDriverNvmDimmConfig, (UINT16 *)&dimm_id, 1, p_command_status);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.DeletePcd(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, p_command_status);
   if (EFI_ERROR(ReturnCode)) {
     FreeCommandStatus(&p_command_status);
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -2899,7 +2890,7 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   unsigned int max_errors;
   int rc = NVM_SUCCESS;
 
@@ -2982,7 +2973,7 @@ NVM_API int nvm_get_config_int(const char *param_name, int default_val)
 NVM_API int nvm_get_fw_err_log_stats(const NVM_UID      device_uid,
              struct device_error_log_status * error_log_stats)
 {
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   LOG_INFO_DATA_RETURN get_error_log_output;
   int rc = NVM_SUCCESS;
 
@@ -3039,11 +3030,11 @@ NVM_API int nvm_get_dimm_id(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
-  rc = get_dimm_id((char *)device_uid, dimm_id, dimm_handle);
+  rc = get_dimm_id((char *)device_uid, (UINT16 *)dimm_id, dimm_handle);
   return rc;
 }
 
-int get_dimm_id(const char *uid, unsigned int *dimm_id, unsigned int *dimm_handle)
+int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
 {
   EFI_STATUS rc;
   CHAR16 uid_wide[MAX_DIMM_UID_LENGTH];
@@ -3158,7 +3149,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
               struct device_pt_cmd *  p_cmd)
 {
   FW_CMD *cmd = NULL;
-  unsigned int dimm_id;
+  UINT16 dimm_id;
   unsigned int dimm_handle;
   int rc = NVM_ERR_UNKNOWN;
 

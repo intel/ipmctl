@@ -34,6 +34,21 @@ TEST_F(NvmApi_Tests, GetPmonRegs)
   free(p_devices);
 }
 
+/*In order to run this test enable error injection in BIOS settings PlatformConfiguration->system event log->error injection*/
+//TEST_F(NvmApi_Tests, SetAndClearErrorInjection)
+//{
+//  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+//  nvm_get_devices(p_devices, 1);
+//  device_error de;
+//  de.type = ERROR_TYPE_TEMPERATURE;
+//  de.temperature = 34;
+//  de.memory_type = POISON_MEMORY_TYPE_APPDIRECT;
+//  EXPECT_EQ(nvm_inject_device_error(p_devices->uid, &de), NVM_SUCCESS);
+//  de.temperature = 50;
+//  EXPECT_EQ(nvm_clear_injected_device_error(p_devices->uid, &de), NVM_SUCCESS);
+//  free(p_devices);
+//}
+
 TEST_F(NvmApi_Tests, SetPmonRegs)
 {
   device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));

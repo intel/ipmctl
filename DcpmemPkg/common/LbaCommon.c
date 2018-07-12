@@ -178,6 +178,9 @@ PrintNamespaceLabel(
   )
 {
   CHAR16 Buffer[NLABEL_NAME_LEN_WITH_TERMINATOR];
+  CHAR16 *pUuidStr = NULL;
+  CHAR16 *pTypeGuidStr = NULL;
+  CHAR16 *pAddrAbstrGuidStr = NULL;
 
   if (pNamespaceLabel == NULL) {
     return;
@@ -186,7 +189,11 @@ PrintNamespaceLabel(
   ZeroMem(Buffer, sizeof(Buffer));
   AsciiStrToUnicodeStrS((CHAR8 *)&pNamespaceLabel->Name, Buffer, NLABEL_NAME_LEN_WITH_TERMINATOR);
 
-  Print(L"Uuid          : %g\n", pNamespaceLabel->Uuid);
+  pUuidStr = GuidToStr(&pNamespaceLabel->Uuid);
+  pTypeGuidStr = GuidToStr(&pNamespaceLabel->TypeGuid);
+  pAddrAbstrGuidStr = GuidToStr(&pNamespaceLabel->AddressAbstractionGuid);
+
+  Print(L"Uuid          : " FORMAT_STR_NL, pUuidStr);
   Print(L"Name          : " FORMAT_STR_NL, Buffer);
   Print(L"Flags         : 0x%x\n", pNamespaceLabel->Flags);
   Print(L"NumOfLabels   : 0x%x\n", pNamespaceLabel->NumberOfLabels);
@@ -197,10 +204,14 @@ PrintNamespaceLabel(
   Print(L"RawSize       : 0x%llx\n", pNamespaceLabel->RawSize);
   Print(L"Slot          : 0x%x\n", pNamespaceLabel->Slot);
   Print(L"Alignment     : 0x%x\n", pNamespaceLabel->Alignment);
-  Print(L"TypeGuid      : %g\n", pNamespaceLabel->TypeGuid);
-  Print(L"AddrAbstrGuid : %g\n", pNamespaceLabel->AddressAbstractionGuid);
+  Print(L"TypeGuid      : " FORMAT_STR_NL, pTypeGuidStr);
+  Print(L"AddrAbstrGuid : " FORMAT_STR_NL, pAddrAbstrGuidStr);
   Print(L"Checksum      : 0x%llx\n", pNamespaceLabel->Checksum);
   Print(L"\n");
+
+  FREE_POOL_SAFE(pUuidStr);
+  FREE_POOL_SAFE(pTypeGuidStr);
+  FREE_POOL_SAFE(pAddrAbstrGuidStr);
 }
 
 /**

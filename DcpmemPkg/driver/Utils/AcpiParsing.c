@@ -715,7 +715,7 @@ GetNvDimmRegionTableForPid(
       ReturnCode = GetSpaRangeTable(pFitHead, SpaIndexInNvDimmRegion, &pSpaRangeTbl);
 
       if (EFI_ERROR(ReturnCode) || pSpaRangeTbl == NULL ||
-          CompareMem(pSpaRangeTbl->AddressRangeTypeGuid,
+          CompareMem(&pSpaRangeTbl->AddressRangeTypeGuid,
           pAddrRangeTypeGuid, sizeof(pSpaRangeTbl->AddressRangeTypeGuid)) != 0) {
         Found = FALSE;
       }

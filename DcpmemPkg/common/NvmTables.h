@@ -93,7 +93,7 @@ typedef struct {
   UINT16 Flags;                               ///< Flags
   UINT8 Reserved[4];                          ///< Reserved
   UINT32 ProximityDomain;                     ///< Proximity Domain
-  UINT8 AddressRangeTypeGuid[16];             ///< Address Range Type GUID
+  GUID AddressRangeTypeGuid;                  ///< Address Range Type GUID
   UINT64 SystemPhysicalAddressRangeBase;      ///< System Physical Address Range Base
   UINT64 SystemPhysicalAddressRangeLength;    ///< Systems Physical Address Range Length
   UINT64 AddressRangeMemoryMappingAttribute;  ///< Address Range Memory Mapping Attributes

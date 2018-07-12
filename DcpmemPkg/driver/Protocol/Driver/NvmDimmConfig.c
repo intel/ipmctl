@@ -3911,7 +3911,7 @@ CheckMemoryMap(
   for(Index = 0; Index < pNFit->SpaRangeTblesNum; Index++) {
     SubTableHeader *pTable = (SubTableHeader *)pNFit->ppSpaRangeTbles[Index];
     SpaRangeTbl *pTableSpaRange = (SpaRangeTbl *)pTable;
-    if (CompareMem(pTableSpaRange->AddressRangeTypeGuid,
+    if (CompareMem(&pTableSpaRange->AddressRangeTypeGuid,
           &gSpaRangePmRegionGuid, sizeof(pTableSpaRange->AddressRangeTypeGuid)) == 0) {
 
       FoundInMemoryMap = FALSE;

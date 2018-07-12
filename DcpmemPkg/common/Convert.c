@@ -64,7 +64,10 @@ GuidToStr (
     return NULL;
   }
 
-  pString = CatSPrint(NULL, L"%g", *pGuid);
+  pString = CatSPrint(NULL, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    pGuid->Data1, pGuid->Data2, pGuid->Data3,
+    pGuid->Data4[0], pGuid->Data4[1], pGuid->Data4[2], pGuid->Data4[3],
+    pGuid->Data4[4], pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
   return pString;
 }
 

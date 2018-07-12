@@ -5,6 +5,7 @@
 #include <Uefi.h>
 #include <Debug.h>
 #include <NvmTables.h>
+#include <Convert.h>
 
 /**
   PrintPcatHeader - prints the header of the parsed NFit table.
@@ -81,6 +82,7 @@ PrintPcatTable(
   RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE *pReconfInputValidationInterfaceTable = NULL;
   CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *pConfigManagementAttributesInfoTable = NULL;
   SOCKET_SKU_INFO_TABLE *pSocketSkuInfoTable = NULL;
+  CHAR16 * pGuidStr = NULL;
 
   Print(L"Type: 0x%x\n"
       L"Length: %d bytes\n",
@@ -147,14 +149,16 @@ PrintPcatTable(
     break;
   case PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE:
     pConfigManagementAttributesInfoTable = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *) pTable;
+    pGuidStr = GuidToStr(&pConfigManagementAttributesInfoTable->Guid);
     Print(L"ConfigurationManagementAttributesExtensionTable\n"
         L"VendorID: 0x%x\n"
-        L"GUID: %g\n"
+        L"GUID: " FORMAT_STR_NL
         L"GUIDDataPointer: %p\n",
         pConfigManagementAttributesInfoTable->VendorId,
-        pConfigManagementAttributesInfoTable->Guid,
+        pGuidStr,
         pConfigManagementAttributesInfoTable->pGuidData
         );
+    FREE_POOL_SAFE(pGuidStr);
     break;
   case PCAT_TYPE_SOCKET_SKU_INFO_TABLE:
     pSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE *) pTable;
@@ -254,6 +258,7 @@ PrintFitTable(
   FlushHintTbl *pTableFlushHint = NULL;
   PlatformCapabilitiesTbl *pTablePlatCap = NULL;
   UINT32 Index = 0;
+  CHAR16 *pGuidStr = NULL;
 
   if (pTable == NULL) {
     return;
@@ -267,15 +272,16 @@ PrintFitTable(
   switch (pTable->Type) {
   case NVDIMM_SPA_RANGE_TYPE:
     pTableSpaRange = (SpaRangeTbl *)pTable;
+    pGuidStr = GuidToStr(&pTableSpaRange->AddressRangeTypeGuid);
     Print(L"TypeEquals: SpaRange\n"
-        L"AddressRangeType: %g\n"
+        L"AddressRangeType: " FORMAT_STR_NL
         L"SpaRangeDescriptionTableIndex: 0x%x\n"
         L"Flags: 0x%x\n"
         L"ProximityDomain: 0x%x\n"
         L"SystemPhysicalAddressRangeBase: 0x%llx\n"
         L"SystemPhysicalAddressRangeLength: 0x%llx\n"
         L"MemoryMappingAttribute: 0x%llx\n",
-        pTableSpaRange->AddressRangeTypeGuid,
+        pGuidStr,
         pTableSpaRange->SpaRangeDescriptionTableIndex,
         pTableSpaRange->Flags,
         pTableSpaRange->ProximityDomain,
@@ -283,6 +289,7 @@ PrintFitTable(
         pTableSpaRange->SystemPhysicalAddressRangeLength,
         pTableSpaRange->AddressRangeMemoryMappingAttribute
         );
+    FREE_POOL_SAFE(pGuidStr);
     break;
   case NVDIMM_NVDIMM_REGION_TYPE:
     pTableNvDimmRegion = (NvDimmRegionTbl *)pTable;

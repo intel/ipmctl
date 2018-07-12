@@ -6,6 +6,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Debug.h>
 #include <PcdCommon.h>
+#include <Convert.h>
 
 /**
   Print Platform Config Data table header
@@ -162,11 +163,14 @@ PrintPcdConfigManagementAttributesInformation(
 {
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
   EFI_GUID IntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
+  CHAR16 *pGuidStr = NULL;
+
+  pGuidStr = GuidToStr(&pConfigManagementAttributesInfo->Guid);
 
   Print(L"Platform Config Data Config Management Attributes Extension\n");
   PrintPcdPcatTableHeader(&pConfigManagementAttributesInfo->Header);
   Print(L"VendorID                     : 0x%x\n", pConfigManagementAttributesInfo->VendorId);
-  Print(L"GUID                         : %g\n", pConfigManagementAttributesInfo->Guid);
+  Print(L"GUID                         : " FORMAT_STR_NL, pGuidStr);
 
   if (CompareGuid(&pConfigManagementAttributesInfo->Guid, &IntelDimmConfigVariableGuid)) {
     pIntelDIMMConfig = (INTEL_DIMM_CONFIG *) pConfigManagementAttributesInfo->pGuidData;
@@ -180,6 +184,8 @@ PrintPcdConfigManagementAttributesInformation(
   }
 
   Print(L"\n");
+
+  FREE_POOL_SAFE(pGuidStr);
 }
 
 /**

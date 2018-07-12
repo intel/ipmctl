@@ -169,14 +169,14 @@ enum os_type {
   OS_TYPE_UNKNOWN = 0,    ///< The OS type can not be determined
   OS_TYPE_WINDOWS = 1,    ///< Windows
   OS_TYPE_LINUX	= 2,    ///< Linux
-  OS_TYPE_ESX	= 3     // ESX
+  OS_TYPE_ESX	= 3     ///< ESX
 };
 
 /**
  * Compatibility of the device, FW and configuration with the management software.
  */
 enum manageability_state {
-  MANAGEMENT_UNKNOWN		= 0,    // Device is not recognized or manageability cannot be determined.
+  MANAGEMENT_UNKNOWN		= 0,        ///< Device is not recognized or manageability cannot be determined.
   MANAGEMENT_VALIDCONFIG		= 1,    ///< Device is fully manageable.
   MANAGEMENT_INVALIDCONFIG	= 2,    ///< Device is recognized but cannot be managed.
   MANAGEMENT_NON_FUNCTIONAL	= 3     ///< Device is disabled per NFIT
@@ -192,7 +192,7 @@ enum lock_state {
   LOCK_STATE_LOCKED		= 3,    ///< Security is enabled and locked and un-frozen.
   LOCK_STATE_FROZEN		= 4,    ///< Security is enabled, unlocked and frozen.
   LOCK_STATE_PASSPHRASE_LIMIT	= 5,    ///< The passphrase limit has been reached, reset required.
-  LOCK_STATE_NOT_SUPPORTED	= 6     // Security is not supported
+  LOCK_STATE_NOT_SUPPORTED	= 6     ////< Security is not supported
 };
 
 /**
@@ -200,15 +200,15 @@ enum lock_state {
  */
 enum memory_type {
   MEMORY_TYPE_UNKNOWN	= 0,    ///< The type of DIMM cannot be determined.
-  MEMORY_TYPE_DDR4	= 1,    ///< DDR4.
-  MEMORY_TYPE_NVMDIMM	= 2     // NGNVM.
+  MEMORY_TYPE_DDR4	= 1,      ///< DDR4.
+  MEMORY_TYPE_NVMDIMM	= 2     ///< NGNVM.
 };
 
 /**
  * The device format factor.
  */
 enum device_form_factor {
-  DEVICE_FORM_FACTOR_UNKNOWN	= 0,    // The form factor cannot be determined.
+  DEVICE_FORM_FACTOR_UNKNOWN	= 0,  ///< The form factor cannot be determined.
   DEVICE_FORM_FACTOR_DIMM		= 8,    ///< DIMM.
   DEVICE_FORM_FACTOR_SODIMM	= 12,   ///< SODIMM.
 };
@@ -217,21 +217,21 @@ enum device_form_factor {
  * The address range scrub (ARS) operation status for the DIMM
  */
 enum device_ars_status {
-  DEVICE_ARS_STATUS_UNKNOWN,
-  DEVICE_ARS_STATUS_NOTSTARTED,
-  DEVICE_ARS_STATUS_INPROGRESS,
-  DEVICE_ARS_STATUS_COMPLETE,
-  DEVICE_ARS_STATUS_ABORTED
+  DEVICE_ARS_STATUS_UNKNOWN,      ///< ARS status unknown
+  DEVICE_ARS_STATUS_NOTSTARTED,   ///< ARS not started
+  DEVICE_ARS_STATUS_INPROGRESS,   ///< ARS in-progress
+  DEVICE_ARS_STATUS_COMPLETE,     ///< ARS complete
+  DEVICE_ARS_STATUS_ABORTED       ///< ARS aborted
 };
 
 /**
  * The overwrite DIMM operation status for the DIMM
  */
 enum device_overwritedimm_status {
-  DEVICE_OVERWRITEDIMM_STATUS_UNKNOWN,
-  DEVICE_OVERWRITEDIMM_STATUS_NOTSTARTED,
-  DEVICE_OVERWRITEDIMM_STATUS_INPROGRESS,
-  DEVICE_OVERWRITEDIMM_STATUS_COMPLETE
+  DEVICE_OVERWRITEDIMM_STATUS_UNKNOWN,      ///< Overwrite DIMM status unknown
+  DEVICE_OVERWRITEDIMM_STATUS_NOTSTARTED,   ///< Overwrite DIMM not started
+  DEVICE_OVERWRITEDIMM_STATUS_INPROGRESS,   ///< Overwrite DIMM in-progress
+  DEVICE_OVERWRITEDIMM_STATUS_COMPLETE      ///< Overwrite DIMM complete
 };
 
 /**
@@ -259,68 +259,68 @@ typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;
  * The bitmask for sensor type.
  */
 enum sensor_category {
-  SENSOR_CAT_SMART_HEALTH = 0x1,
-  SENSOR_CAT_POWER	= 0x2,
-  SENSOR_CAT_FW_ERROR	= 0x4,
-  SENSOR_CAT_ALL		= SENSOR_CAT_SMART_HEALTH | SENSOR_CAT_POWER | SENSOR_CAT_FW_ERROR
+  SENSOR_CAT_SMART_HEALTH = 0x1,    ///< SMART and Health
+  SENSOR_CAT_POWER = 0x2,           ///< Power related
+  SENSOR_CAT_FW_ERROR = 0x4,        ///< FW Error related
+  SENSOR_CAT_ALL = SENSOR_CAT_SMART_HEALTH | SENSOR_CAT_POWER | SENSOR_CAT_FW_ERROR ///< All sensor types
 };
 
 /**
  * The units of measurement for a sensor.
  */
 enum sensor_units {
-  UNIT_COUNT	= 1,    ///< In numbers of something (0,1,2 ... n).
-  UNIT_CELSIUS	= 2,    ///< In units of Celsius degrees.
-  UNIT_SECONDS	= 21,   ///< In seconds of time.
-  UNIT_MINUTES	= 22,   ///< In minutes of time.
-  UNIT_HOURS	= 23,   ///< In hours of time.
-  UNIT_CYCLES	= 39,   ///< Cycles
-  UNIT_PERCENT	= 65    ///< In units of percentage.
+  UNIT_COUNT = 1,     ///< In numbers of something (0,1,2 ... n).
+  UNIT_CELSIUS = 2,   ///< In units of Celsius degrees.
+  UNIT_SECONDS = 21,  ///< In seconds of time.
+  UNIT_MINUTES = 22,  ///< In minutes of time.
+  UNIT_HOURS = 23,    ///< In hours of time.
+  UNIT_CYCLES = 39,   ///< Cycles
+  UNIT_PERCENT = 65   ///< In units of percentage.
 };
 
 /**
  * The current status of a sensor
  */
 enum sensor_status {
-  SENSOR_NOT_INITIALIZED	= -1,   //no attempt to read sensor value yet.
-  SENSOR_NORMAL		= 0,    ///< Current value of the sensor is in the normal range.
-  SENSOR_NONCRITICAL	= 1,    ///< Current value of the sensor is in non critical range.
-  SENSOR_CRITICAL		= 2,    ///< Current value of the sensor is in the critical error range.
-  SENSOR_FATAL		= 3,    ///< Current value of the sensor is in the fatal error range.
-  SENSOR_UNKNOWN		= 4,    ///< Sensor status cannot be determined.
+  SENSOR_NOT_INITIALIZED = -1,    ///< no attempt to read sensor value yet.
+  SENSOR_NORMAL = 0,              ///< Current value of the sensor is in the normal range.
+  SENSOR_NONCRITICAL = 1,         ///< Current value of the sensor is in non critical range.
+  SENSOR_CRITICAL = 2,            ///< Current value of the sensor is in the critical error range.
+  SENSOR_FATAL = 3,               ///< Current value of the sensor is in the fatal error range.
+  SENSOR_UNKNOWN = 4,             ///< Sensor status cannot be determined.
 };
 
 /**
  *      The type of the event that occurred.  Can be used to filter subscriptions.
  */
 enum event_type {
-  EVENT_TYPE_ALL			= 0,    // Subscribe or filter on all event types
-  EVENT_TYPE_CONFIG		= 1,    ///< Device configuration status
-  EVENT_TYPE_HEALTH		= 2,    ///< Device health event.
-  EVENT_TYPE_MGMT			= 3,    ///< Management software generated event.
-  EVENT_TYPE_DIAG			= 4,    ///< Subscribe or filter on all diagnostic event types
-  EVENT_TYPE_DIAG_QUICK		= 5,    ///< Quick diagnostic test event.
+  EVENT_TYPE_ALL = 0,                     ///< Subscribe or filter on all event types
+  EVENT_TYPE_CONFIG = 1,                  ///< Device configuration status
+  EVENT_TYPE_HEALTH = 2,                  ///< Device health event.
+  EVENT_TYPE_MGMT = 3,                    ///< Management software generated event.
+  EVENT_TYPE_DIAG = 4,                    ///< Subscribe or filter on all diagnostic event types
+  EVENT_TYPE_DIAG_QUICK = 5,              ///< Quick diagnostic test event.
   EVENT_TYPE_DIAG_PLATFORM_CONFIG = 6,    ///< Platform config diagnostic test event.
-  EVENT_TYPE_DIAG_SECURITY	= 7,    ///< Security diagnostic test event.
-  EVENT_TYPE_DIAG_FW_CONSISTENCY	= 8     ///< FW consistency diagnostic test event.
+  EVENT_TYPE_DIAG_SECURITY = 7,           ///< Security diagnostic test event.
+  EVENT_TYPE_DIAG_FW_CONSISTENCY = 8      ///< FW consistency diagnostic test event.
 };
 
 /**
  * Perceived severity of the event
  */
 enum event_severity {
-  EVENT_SEVERITY_INFO	= 2,    ///< Informational event.
-  EVENT_SEVERITY_WARN	= 3,    ///< Warning or degraded.
+  EVENT_SEVERITY_INFO = 2,        ///< Informational event.
+  EVENT_SEVERITY_WARN = 3,        ///< Warning or degraded.
   EVENT_SEVERITY_CRITICAL = 6,    ///< Critical.
-  EVENT_SEVERITY_FATAL	= 7     // Fatal or nonrecoverable.
+  EVENT_SEVERITY_FATAL = 7        ///< Fatal or nonrecoverable.
 };
 
 enum diagnostic_result {
-  DIAGNOSTIC_RESULT_UNKNOWN	= 0,
-  DIAGNOSTIC_RESULT_OK		= 2,
-  DIAGNOSTIC_RESULT_WARNING	= 3,
-  DIAGNOSTIC_RESULT_FAILED	= 5,
-  DIAGNOSTIC_RESULT_ABORTED	= 6
+  DIAGNOSTIC_RESULT_UNKNOWN = 0,      ///< Diagnostic result unknown
+  DIAGNOSTIC_RESULT_OK = 2,           ///< Diagnostic result OK
+  DIAGNOSTIC_RESULT_WARNING = 3,      ///< Diagnostic result warning
+  DIAGNOSTIC_RESULT_FAILED = 5,       ///< Diagnostic result failed
+  DIAGNOSTIC_RESULT_ABORTED = 6       ///< Diagnostic result aborted
 };
 
 /**
@@ -328,62 +328,40 @@ enum diagnostic_result {
  */
 enum log_level {
   LOG_LEVEL_ERROR = 0,    ///< Error message
-  LOG_LEVEL_WARN	= 1,    ///< Warning message
-  LOG_LEVEL_INFO	= 2,    ///< Informational message
-  LOG_LEVEL_DEBUG = 3     // Debug message
-};
-
-/**
-* Logging level used with the firmware logging functions.
-*/
-enum fw_log_level {
-  FW_LOG_LEVEL_DISABLED	= 0,    ///< Logging Disabled
-  FW_LOG_LEVEL_ERROR	= 1,    ///< Error message
-  FW_LOG_LEVEL_WARN	= 2,    ///< Warning message
-  FW_LOG_LEVEL_INFO	= 3,    ///< Informational message
-  FW_LOG_LEVEL_DEBUG	= 4,    ///< Debug message
-  FW_LOG_LEVEL_UNKNOWN	= 5     // Unknown fw log level setting
-};
-
-/**
- * Triggers to modify left shift value
- */
-enum triggers_to_modify_shift_value {
-  FATAL_ERROR_TRIGGER			= 2,
-  SPARE_BLOCK_PERCENTAGE_TRIGGER		= 3,
-  DIRTY_SHUTDOWN_TRIGGER			= 4,
+  LOG_LEVEL_WARN  = 1,    ///< Warning message
+  LOG_LEVEL_INFO  = 2,    ///< Informational message
+  LOG_LEVEL_DEBUG = 3     ///< Debug message
 };
 
 /**
  * Injected error type - should match the #defines in types.h
  */
 enum error_type {
-  ERROR_TYPE_POISON		= 1,    ///< Inject a poison error.
-  ERROR_TYPE_TEMPERATURE		= 2,    ///< Inject a media temperature error.
-  ERROR_TYPE_PACKAGE_SPARING		= 3,    ///< Trigger or revert an artificial package sparing.
-  ERROR_TYPE_SPARE_CAPACITY	= 4,    ///< Trigger or clear a percentage remaining threshold alarm.
-  ERROR_TYPE_MEDIA_FATAL_ERROR	= 5,    ///< Inject or clear a fake media fatal error.
-  ERROR_TYPE_DIRTY_SHUTDOWN	= 6,    ///< Inject or clear a dirty shutdown error.
+  ERROR_TYPE_POISON             = 1,    ///< Inject a poison error.
+  ERROR_TYPE_TEMPERATURE        = 2,    ///< Inject a media temperature error.
+  ERROR_TYPE_PACKAGE_SPARING    = 3,    ///< Trigger or revert an artificial package sparing.
+  ERROR_TYPE_SPARE_CAPACITY     = 4,    ///< Trigger or clear a percentage remaining threshold alarm.
+  ERROR_TYPE_MEDIA_FATAL_ERROR  = 5,    ///< Inject or clear a fake media fatal error.
+  ERROR_TYPE_DIRTY_SHUTDOWN     = 6,    ///< Inject or clear a dirty shutdown error.
 };
 
 /*
  * Inject a poison error at specific dpa
  */
 enum poison_memory_type {
-  POISON_MEMORY_TYPE_MEMORYMODE	= 1,    ///< currently allocated in Memory mode
-  POISON_MEMORY_TYPE_APPDIRECT	= 2,    ///< currently allocated in AppDirect
-  POISON_MEMORY_TYPE_PATROLSCRUB	= 4,    ///< simulating an error found during a patrol scrub operation
-  // indifferent to how the memory is currently allocated
+  POISON_MEMORY_TYPE_MEMORYMODE   = 1,    ///< currently allocated in Memory mode
+  POISON_MEMORY_TYPE_APPDIRECT    = 2,    ///< currently allocated in AppDirect
+  POISON_MEMORY_TYPE_PATROLSCRUB  = 4,    ///< simulating an error found during a patrol scrub operation indifferent to how the memory is currently allocated
 };
 
 /**
  * Diagnostic test type
  */
 enum diagnostic_test {
-  DIAG_TYPE_QUICK			= 0,    ///< verifies manageable DIMM host mailbox is accessible and basic health
-  DIAG_TYPE_PLATFORM_CONFIG	= 1,    ///< verifies BIOS config matches installed HW
-  DIAG_TYPE_SECURITY		= 2,    ///< verifies all manageable DIMMS have consistent security state
-  DIAG_TYPE_FW_CONSISTENCY	= 3     // verifies all DIMMS have consistent FW and attributes
+  DIAG_TYPE_QUICK           = 0,    ///< verifies manageable DIMM host mailbox is accessible and basic health
+  DIAG_TYPE_PLATFORM_CONFIG = 1,    ///< verifies BIOS config matches installed HW
+  DIAG_TYPE_SECURITY        = 2,    ///< verifies all manageable DIMMS have consistent security state
+  DIAG_TYPE_FW_CONSISTENCY  = 3     ///< verifies all DIMMS have consistent FW and attributes
 };
 
 /**
@@ -431,28 +409,28 @@ typedef NVM_UINT64 diagnostic_threshold_type;
 
 ///< The volatile memory mode currently selected by the BIOS.
 enum volatile_mode {
-  VOLATILE_MODE_1LM	= 0,    ///< 1LM Mode
-  VOLATILE_MODE_MEMORY	= 1,    ///< Memory Mode
-  VOLATILE_MODE_AUTO	= 2,    ///< Memory Mode if DDR4 + PMM present, 1LM otherwise
-  VOLATILE_MODE_UNKNOWN	= 3,    ///< The current volatile memory mode cannot be determined.
-};
-
-///< The App Direct mode currently selected by the BIOS.
-enum app_direct_mode {
-  APP_DIRECT_MODE_DISABLED	= 0,    ///< App Direct mode disabled.
-  APP_DIRECT_MODE_ENABLED		= 1,    ///< App Direct mode enabled.
-  APP_DIRECT_MODE_UNKNOWN		= 2,    ///< The current App Direct mode cannot be determined.
+  VOLATILE_MODE_1LM       = 0,    ///< 1LM Mode
+  VOLATILE_MODE_MEMORY    = 1,    ///< Memory Mode
+  VOLATILE_MODE_AUTO      = 2,    ///< Memory Mode if DDR4 + PMM present, 1LM otherwise
+  VOLATILE_MODE_UNKNOWN   = 3,    ///< The current volatile memory mode cannot be determined.
 };
 
 ///< Interface format code as reported by NFIT
 enum nvm_format {
-  FORMAT_NONE		= 0,
-  FORMAT_BLOCK_STANDARD	= 0x201,
-  FORMAT_BYTE_STANDARD	= 0x301
+  FORMAT_NONE = 0,                  ///< No format indicated
+  FORMAT_BLOCK_STANDARD = 0x201,    ///< Block format
+  FORMAT_BYTE_STANDARD = 0x301      ///< Byte format
+};
+
+///< The App Direct mode currently selected by the BIOS.
+enum app_direct_mode {
+  APP_DIRECT_MODE_DISABLED    = 0,    ///< App Direct mode disabled.
+  APP_DIRECT_MODE_ENABLED     = 1,    ///< App Direct mode enabled.
+  APP_DIRECT_MODE_UNKNOWN     = 2,    ///< The current App Direct mode cannot be determined.
 };
 
 /**
- * Status of last DIMM shutdown
+ * Detailed status of last DIMM shutdown
  */
 enum shutdown_status {
   SHUTDOWN_STATUS_UNKNOWN = 0,                ///< The last shutdown status cannot be determined.
@@ -466,24 +444,30 @@ enum shutdown_status {
   SHUTDOWN_STATUS_CLEAN = 1 << 7              ///< Denotes a proper clean shutdown
 };
 
+/**
+ * Extended detailed status of last DIMM shutdown
+ */
+
 enum shutdown_status_extended {
-  SHUTDOWN_STATUS_VIRAL_INT_RCVD			= 1 << 0,
-  SHUTDOWN_STATUS_SURPRISE_CLK_STOP_INT_RCVD	= 1 << 1,
-  SHUTDOWN_STATUS_WR_DATA_FLUSH_RCVD		= 1 << 2,
-  SHUTDOWN_STATUS_S4_PWR_STATE_RCVD		= 1 << 3,
+  SHUTDOWN_STATUS_VIRAL_INT_RCVD              = 1 << 0,   ///< Virtal interrupt received
+  SHUTDOWN_STATUS_SURPRISE_CLK_STOP_INT_RCVD  = 1 << 1,   ///< Surprise clock stop interrupt received
+  SHUTDOWN_STATUS_WR_DATA_FLUSH_RCVD          = 1 << 2,   ///< Write Data Flush Complete
+  SHUTDOWN_STATUS_S4_PWR_STATE_RCVD           = 1 << 3,   ///< S4 Power State received
+  SHUTDOWN_STATUS_PM_IDLE_RCVD                = 1 << 4,   ///< PM Idle Power State received
+  SHUTDOWN_STATUS_SURPRISE_RESET_RCVD         = 1 << 5,   ///< Surprise Reset received
 };
 
 /**
  * Status of the device current configuration
  */
 enum config_status {
-  CONFIG_STATUS_NOT_CONFIGURED		= 0,    ///< The device is not configured.
-  CONFIG_STATUS_VALID			= 1,    ///< The device has a valid configuration.
-  CONFIG_STATUS_ERR_CORRUPT		= 2,    ///< The device configuration is corrupt.
-  CONFIG_STATUS_ERR_BROKEN_INTERLEAVE	= 3,    ///< The interleave set is broken.
-  CONFIG_STATUS_ERR_REVERTED		= 4,    ///< The configuration failed and was reverted.
-  CONFIG_STATUS_ERR_NOT_SUPPORTED		= 5,    ///< The configuration is not supported by the BIOS.
-  CONFIG_STATUS_UNKNOWN			= 6,    ///< The configuration status cannot be determined
+  CONFIG_STATUS_NOT_CONFIGURED        = 0,    ///< The device is not configured.
+  CONFIG_STATUS_VALID                 = 1,    ///< The device has a valid configuration.
+  CONFIG_STATUS_ERR_CORRUPT           = 2,    ///< The device configuration is corrupt.
+  CONFIG_STATUS_ERR_BROKEN_INTERLEAVE = 3,    ///< The interleave set is broken.
+  CONFIG_STATUS_ERR_REVERTED          = 4,    ///< The configuration failed and was reverted.
+  CONFIG_STATUS_ERR_NOT_SUPPORTED     = 5,    ///< The configuration is not supported by the BIOS.
+  CONFIG_STATUS_UNKNOWN               = 6,    ///< The configuration status cannot be determined
 };
 
 /**
@@ -503,38 +487,38 @@ enum config_goal_status {
  *  * Status of NVM jobs
  */
 enum nvm_job_status {
-  NVM_JOB_STATUS_UNKNOWN		= 0,
-  NVM_JOB_STATUS_NOT_STARTED	= 1,
-  NVM_JOB_STATUS_RUNNING		= 2,
-  NVM_JOB_STATUS_COMPLETE		= 3
+  NVM_JOB_STATUS_UNKNOWN      = 0,  ///< Job status unknown
+  NVM_JOB_STATUS_NOT_STARTED  = 1,  ///< Job status not started
+  NVM_JOB_STATUS_RUNNING      = 2,  ///< Job status in-progress
+  NVM_JOB_STATUS_COMPLETE     = 3   ///< Job status complete
 };
 
 /**
  * Type of job
  */
 enum nvm_job_type {
-  NVM_JOB_TYPE_SANITIZE	= 0,
-  NVM_JOB_TYPE_ARS	= 1
+  NVM_JOB_TYPE_SANITIZE   = 0,  ///< Sanitize
+  NVM_JOB_TYPE_ARS        = 1   ///< ARS
 };
 
 /**
  * firmware type
  */
 enum device_fw_type {
-  DEVICE_FW_TYPE_UNKNOWN		= 0, ///< fw image type cannot be determined
-  DEVICE_FW_TYPE_PRODUCTION	= 1,
-  DEVICE_FW_TYPE_DFX		= 2,
-  DEVICE_FW_TYPE_DEBUG		= 3
+  DEVICE_FW_TYPE_UNKNOWN      = 0, ///< fw image type cannot be determined
+  DEVICE_FW_TYPE_PRODUCTION   = 1, ///< Production image
+  DEVICE_FW_TYPE_DFX          = 2, ///< DFX image
+  DEVICE_FW_TYPE_DEBUG        = 3  ///< Debug image
 };
 
 /**
  * status of last firmware update operation
  */
 enum fw_update_status {
-  FW_UPDATE_UNKNOWN	= 0, ///< status of the last FW update cannot be retrieved
-  FW_UPDATE_STAGED	= 1,
-  FW_UPDATE_SUCCESS	= 2,
-  FW_UPDATE_FAILED	= 3
+  FW_UPDATE_UNKNOWN = 0, ///< status of the last FW update cannot be retrieved
+  FW_UPDATE_STAGED  = 1, ///< FW Update Staged
+  FW_UPDATE_SUCCESS = 2, ///< FW Update Success
+  FW_UPDATE_FAILED  = 3  ///< FW Update Failed
 };
 
 /**
@@ -622,7 +606,7 @@ struct device_discovery {
   // ACPI
   NVM_NFIT_DEVICE_HANDLE	device_handle;          ///< The unique device handle of the memory module
   NVM_UINT16		physical_id;            ///< The unique physical ID of the memory module
-  NVM_UINT16		vendor_id;              // The vendor identifier.
+  NVM_UINT16		vendor_id;              ///< The vendor identifier.
   NVM_UINT16		device_id;              ///< The device identifier.
   NVM_UINT16		revision_id;            ///< The revision identifier.
   NVM_UINT16		channel_pos;            ///< The memory module's position in the memory channel
@@ -643,30 +627,24 @@ struct device_discovery {
   // Identify Intel DIMM Gen 1
   // add_identify_dimm_properties_to_device() in device.c
   NVM_UINT32				dimm_sku;
-  NVM_MANUFACTURER			manufacturer;                   ///< The manufacturer ID code determined by JEDEC JEP-106
-  NVM_SERIAL_NUMBER			serial_number;                  // Serial number assigned by the vendor.
-  NVM_UINT16				subsystem_vendor_id;            // vendor identifier of the DIMM non-volatile
-  // memory subsystem controller
-  NVM_UINT16				subsystem_device_id;            // device identifier of the DIMM non-volatile
-  // memory subsystem controller
-  NVM_UINT16				subsystem_revision_id;          // revision identifier of the DIMM non-volatile
-  // memory subsystem controller
-  NVM_BOOL				manufacturing_info_valid;       // manufacturing location and date validity
-  NVM_UINT8				manufacturing_location;         // DIMM manufacturing location assigned by vendor
-  // only valid if manufacturing_info_valid=1
-  NVM_UINT16				manufacturing_date;             // Date the DIMM was manufactured, assigned by vendor
-  // only valid if manufacturing_info_valid=1
-  char					part_number[NVM_PART_NUM_LEN];  // The manufacturer's model part number
-  NVM_VERSION				fw_revision;                    // The current active firmware revision.
-  NVM_VERSION				fw_api_version;                 // API version of the currently running FW
-  NVM_UINT64				capacity;                       // Raw capacity in bytes.
-  NVM_UINT16				interface_format_codes[NVM_MAX_IFCS_PER_DIMM];
-  // calculate_capabilities_for_populated_devices() in device.c
-  struct device_security_capabilities	security_capabilities;
-  struct device_capabilities		device_capabilities; // Capabilities supported by the device
+  NVM_MANUFACTURER			manufacturer;                ///< The manufacturer ID code determined by JEDEC JEP-106
+  NVM_SERIAL_NUMBER			serial_number;               ///< Serial number assigned by the vendor.
+  NVM_UINT16				subsystem_vendor_id;             ///< vendor identifier of the DIMM non-volatile memory subsystem controller
+  NVM_UINT16				subsystem_device_id;            ///< device identifier of the DIMM non-volatile memory subsystem controller
+  NVM_UINT16				subsystem_revision_id;          ///< revision identifier of the DIMM non-volatile memory subsystem controller
+  NVM_BOOL				manufacturing_info_valid;       ///< manufacturing location and date validity
+  NVM_UINT8				manufacturing_location;         ///< DIMM manufacturing location assigned by vendor only valid if manufacturing_info_valid=1
+  NVM_UINT16				manufacturing_date;             ///< Date the DIMM was manufactured, assigned by vendor only valid if manufacturing_info_valid=1
+  char					part_number[NVM_PART_NUM_LEN];  ///< The manufacturer's model part number
+  NVM_VERSION				fw_revision;                    ///< The current active firmware revision.
+  NVM_VERSION				fw_api_version;                 ///< API version of the currently running FW
+  NVM_UINT64				capacity;                       ///< Raw capacity in bytes.
+  NVM_UINT16				interface_format_codes[NVM_MAX_IFCS_PER_DIMM]; ///< calculate_capabilities_for_populated_devices() in device.c
+  struct device_security_capabilities	security_capabilities; ///< Security capabilities
+  struct device_capabilities		device_capabilities; ///< Capabilities supported by the device
 
-  // Calculated by MGMT from NFIT table properties
-  NVM_UID					uid; // Unique identifier of the device.
+  ///< Calculated by MGMT from NFIT table properties
+  NVM_UID					uid; ///< Unique identifier of the device.
 
 
   // Get Security State
@@ -885,7 +863,7 @@ struct nvm_features {
   NVM_BOOL	modify_sensors;                 ///< modify the DIMM health sensor settings
   NVM_BOOL	get_device_capacity;            ///< retrieve how DIMM capacity is mapped by BIOS
   NVM_BOOL	modify_device_capacity;         ///< modify how the DIMM capacity is provisioned
-  NVM_BOOL	get_regions;                      ///< retrieve regions of DIMM capacity
+  NVM_BOOL	get_regions;                    ///< retrieve regions of DIMM capacity
   NVM_BOOL	get_namespaces;                 ///< retrieve the list of namespaces allocated from regions
   NVM_BOOL	get_namespace_details;          ///< retrieve detailed info about each namespace
   NVM_BOOL	create_namespace;               ///< create a new namespace
@@ -913,7 +891,7 @@ struct nvm_features {
  */
 struct sw_capabilities {
   NVM_UINT64	min_namespace_size; ///< smallest namespace supported by the driver, in bytes
-  NVM_BOOL	namespace_memory_page_allocation_capable;
+  NVM_BOOL	namespace_memory_page_allocation_capable; ///< namespace memory page allocation capable
 };
 
 /**
@@ -945,14 +923,14 @@ struct interleave_set {
   NVM_UINT32			driver_id;      ///< unique identifier from the driver
   NVM_UINT64			size;           ///< size in bytes
   NVM_UINT64			available_size; ///< free size in bytes
-  struct interleave_format	settings;
-  NVM_UINT8			socket_id;
-  NVM_UINT8			dimm_count;
-  NVM_UID				dimms[NVM_MAX_DEVICES_PER_SOCKET];
-  NVM_BOOL			mirrored;
-  enum interleave_set_health	health;
-  enum encryption_status		encryption;     ///< on if lockstates of all dimms is enabled
-  NVM_BOOL			erase_capable;  ///< true if all dimms in the set support erase
+  struct interleave_format	settings; ///< interleave format settings
+  NVM_UINT8			socket_id;        ///< socket ID
+  NVM_UINT8			dimm_count;       ///< number of dimms in member dimms
+  NVM_UID				dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< UID of dimm
+  NVM_BOOL			mirrored;         ///< Is mirrored
+  enum interleave_set_health	health; ///< health status
+  enum encryption_status		encryption;  ///< on if lockstates of all dimms is enabled
+  NVM_BOOL			erase_capable;          ///< true if all dimms in the set support erase
 };
 
 /**
@@ -963,8 +941,7 @@ struct region {
   enum region_type		type;           ///< The type of region.
   NVM_UINT64		capacity;       ///< Size of the region in bytes.
   NVM_UINT64		free_capacity;  ///< Available size of the region in bytes.
-  // The processor socket identifier.
-  NVM_INT16		socket_id;
+  NVM_INT16		socket_id;        ///< socket ID
   NVM_UINT16		dimm_count;     ///< The number of dimms in this region.
   NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique ID's of underlying DIMMs.
   enum region_health	health; ///< Rolled up health of the underlying DIMMs.
@@ -983,17 +960,17 @@ struct config_goal_input {
 };
 
 struct config_goal {
-  NVM_UID			dimm_uid;
-  NVM_UINT16		socket_id;
-  NVM_UINT32		persistent_regions;
-  NVM_UINT64		volatile_size; // Gibibytes of memory mode capacity on the DIMM.
-  NVM_UINT64		storage_capacity;
-  enum interleave_type	interleave_set_type[MAX_IS_PER_DIMM];
-  NVM_UINT64		appdirect_size[MAX_IS_PER_DIMM];
-  enum interleave_size	imc_interleaving[MAX_IS_PER_DIMM];
-  enum interleave_size	channel_interleaving[MAX_IS_PER_DIMM];
-  NVM_UINT8		appdirect_index[MAX_IS_PER_DIMM];
-  enum config_goal_status status; // Status for the config goal. Ignored for input.
+  NVM_UID			dimm_uid;                                        ///< DIMM UID
+  NVM_UINT16		socket_id;                                     ///< Socket ID
+  NVM_UINT32		persistent_regions;                            ///< count of persistent regions
+  NVM_UINT64		volatile_size;                                 ///< Gibibytes of memory mode capacity on the DIMM.
+  NVM_UINT64		storage_capacity;                              ///< Gibibytes of storage capacity on the DIMM.
+  enum interleave_type	interleave_set_type[MAX_IS_PER_DIMM];  ///< type of interleave set
+  NVM_UINT64		appdirect_size[MAX_IS_PER_DIMM];               ///< appdirect size
+  enum interleave_size	imc_interleaving[MAX_IS_PER_DIMM];     ///< IMC interleaving
+  enum interleave_size	channel_interleaving[MAX_IS_PER_DIMM]; ///< Channel interleaving 
+  NVM_UINT8		appdirect_index[MAX_IS_PER_DIMM];                ///< appdirect Index
+  enum config_goal_status status;                              ///< Status for the config goal. Ignored for input.
 };
 
 /*
@@ -1018,7 +995,7 @@ struct event {
  * those that meet the conditions specified.
  */
 struct event_filter {
-  /*
+  /**
    * A bit mask specifying the values in this structure used to limit the results.
    * Any combination of the following or 0 to return all events.
    * NVM_FILTER_ON_TYPE
@@ -1032,49 +1009,49 @@ struct event_filter {
    */
   NVM_UINT8		filter_mask;
 
-  /*
+  /**
    * The type of events to retrieve. Only used if
    * NVM_FILTER_ON_TYPE is set in the #filter_mask.
    */
   enum event_type		type;
 
-  /*
+  /**
    * The type of events to retrieve. Only used if
    * NVM_FILTER_ON_SEVERITY is set in the #filter_mask.
    */
   enum event_severity	severity;
 
-  /*
+  /**
    * The specific event code to retrieve. Only used if
    * NVM_FILTER_ON_CODE is set in the #filter_mask.
    */
   NVM_UINT16		code;
 
-  /*
+  /**
    * The identifier to retrieve events for.
    * Only used if NVM_FILTER_ON_UID is set in the #filter_mask.
    */
   NVM_UID			uid; ///< filter on specific item
 
-  /*
+  /**
    * The time after which to retrieve events.
    * Only used if NVM_FILTER_ON_AFTER is set in the #filter_mask.
    */
   time_t			after; ///< filter on events after specified time
 
-  /*
+  /**
    * The time before which to retrieve events.
    * Only used if NVM_FILTER_ON_BEFORE is set in the #filter_mask.
    */
   time_t			before; ///< filter on events before specified time
 
-  /*
+  /**
    * Event ID number (row ID)
    * Only used if NVM_FILTER_ON_EVENT is set in the #filter mask.
    */
   int			event_id; ///< filter of specified event
 
-  /*
+  /**
    * Only this action_required events are to be retrieved.
    */
   NVM_BOOL		action_required;
@@ -1084,11 +1061,11 @@ struct event_filter {
  * An entry in the native API trace log.
  */
 struct nvm_log {
-  NVM_PATH	file_name;                      ///<DEPRECATED, message string contains all data; The file that generated the log.
-  int		line_number;                    ///<DEPRECATED, message string contains all data; The line number that generated the log.
-  enum log_level	level;                          ///<DEPRECATED, message string contains all data; The log level.
+  NVM_PATH	file_name;                      ///< DEPRECATED, message string contains all data; The file that generated the log.
+  int		line_number;                    ///< DEPRECATED, message string contains all data; The line number that generated the log.
+  enum log_level	level;                          ///< DEPRECATED, message string contains all data; The log level.
   char		message[NVM_LOG_MESSAGE_LEN];   ///< The log message
-  time_t		time;                           ///<DEPRECATED, message string contains all data; The time
+  time_t		time;                           ///< DEPRECATED, message string contains all data; The time
 };
 
 /**
@@ -1140,25 +1117,15 @@ struct socket {
   NVM_BOOL	is_capacity_skuing_supported;                   ///< DEPRECATED; set to 1 if PCAT type 6 table found
 };
 
+/** Describes the status of a job */
 struct job {
-  NVM_UID			uid;
-  NVM_UINT8		percent_complete;
-  enum nvm_job_status	status;
-  enum nvm_job_type	type;
-  NVM_UID			affected_element;
-  void *			result;
+  NVM_UID			uid;                ///< UID of the DIMM
+  NVM_UINT8		percent_complete;   ///< Percent complete
+  enum nvm_job_status	status;     ///< Job status
+  enum nvm_job_type	type;         ///< Job type
+  NVM_UID			affected_element;   ///< Affected element
+  void *			result;             ///< Result
 };
-
-typedef union {
-  struct pt_fw_thermal_log_entry_temp_data {
-    unsigned int	temp : 15;
-    unsigned int	sign : 1;
-    unsigned int	reported : 3;
-    unsigned int	type : 2;
-    unsigned int	reserved : 11;
-  }parts;
-  unsigned int data;
-}SMART_TEMP;
 
 #define TEMP_POSITIVE           0
 #define TEMP_NEGATIVE           1
@@ -1794,7 +1761,6 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid, const enum sensor_
 NVM_API int nvm_set_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE old_passphrase, const NVM_SIZE old_passphrase_len, const NVM_PASSPHRASE new_passphrase, const NVM_SIZE new_passphrase_len);
 
 /**
- * @deprecated Not supported
  * @brief Disables data at rest security and removes the passphrase.
  * @param[in] device_uid
  *              The device identifier.
@@ -2155,25 +2121,6 @@ NVM_API int nvm_get_build_number();
  */
 NVM_API int nvm_get_version(NVM_VERSION version_str, const NVM_SIZE str_len);
 
-/**
- * @deprecated Not supported.
- * @brief Given an numeric #return_code, retrieve a textual description of the return code in English.
- * @param[in] code
- *              The #return_code to retrieve a description of.
- * @param[in,out] description
- *              A buffer for the the textual description allocated by the caller.
- * @param[in] description_len
- *              The size of the description buffer. Should be NVM_ERROR_LEN.
- * @pre No limiting conditions apply to this function.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_BADERRORCODE @n
- */
-/*
-* NVM_API int nvm_get_error(const enum return_code code, NVM_ERROR_DESCRIPTION description,
-*              const NVM_SIZE description_len);
-*/
 
 /**
  * @brief Collect support data into a single file to document the context of a problem
@@ -2374,7 +2321,7 @@ NVM_API int nvm_create_context();
 NVM_API int nvm_free_context(const NVM_BOOL force);
 
 /**
- * @brief A device pass-through command. Refer to the FW specification
+ * A device pass-through command. Refer to the FW specification
  * for specific details about the individual fields
  */
 struct device_pt_cmd {

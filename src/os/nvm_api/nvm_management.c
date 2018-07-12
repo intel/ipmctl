@@ -2406,13 +2406,7 @@ NVM_API int nvm_get_build_number()
   return build;
 }
 
-/*
- * NVM_API int nvm_get_error(const enum return_code code, NVM_ERROR_DESCRIPTION description,
- *      const NVM_SIZE description_len)
- * {
- *      return NVM_ERR_API_NOT_SUPPORTED;
- * }
- */
+
 NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE support_file_len)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;

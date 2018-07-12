@@ -71,6 +71,9 @@ struct _DIMM;
 // PassThru timeout in microseconds
 #define PT_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS(1)
 
+// Smbus delay period in microseconds
+#define SMBUS_PT_DELAY_PERIOD_IN_US  100
+
 // Format timeout in microseconds
 // 120 minutes for 512 GiB dimm
 #define PT_FORMAT_DIMM_MAX_TIMEOUT SECONDS_TO_MICROSECONDS(7200)

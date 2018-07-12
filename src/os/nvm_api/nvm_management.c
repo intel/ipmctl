@@ -3071,8 +3071,8 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device)
 {
   p_device->all_properties_populated = FALSE;
-  p_device->device_handle.handle = p_dimm->DimmHandle;    //check
-  p_device->physical_id = 0xFFFF;                         //check
+  p_device->device_handle.handle = p_dimm->DimmHandle;
+  p_device->physical_id = p_dimm->DimmID;
   p_device->vendor_id = p_dimm->VendorId;
   p_device->device_id = p_dimm->DeviceId;
   p_device->revision_id = p_dimm->Rid;
@@ -3092,8 +3092,9 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   p_device->manufacturing_location = p_dimm->ManufacturingLocation;
   p_device->manufacturing_date = p_dimm->ManufacturingDate;
   CopyMem_S(p_device->part_number, sizeof(p_device->part_number), p_dimm->PartNumber, PART_NUMBER_LEN);
-  //p_device->fw_revision = //todo
-  //p_device->fw_api_version = //todo
+  build_revision(p_device->fw_revision, NVM_VERSION_LEN, p_dimm->FwVer.FwProduct, p_dimm->FwVer.FwRevision,
+		 p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
+  snprintf(p_device->fw_api_version, NVM_VERSION_LEN, "%02d.%02d", p_dimm->FwVer.FwApiMajor, p_dimm->FwVer.FwApiMinor);
   p_device->capacity = p_dimm->Capacity;
   CopyMem_S(p_device->interface_format_codes, sizeof(p_device->interface_format_codes), p_dimm->InterfaceFormatCode, sizeof(UINT16) * 2);
   UnicodeStrToAsciiStr(p_dimm->DimmUid, p_device->uid);

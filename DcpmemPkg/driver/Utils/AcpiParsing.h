@@ -20,6 +20,7 @@ extern GUID gSpaRangeIsoVolatileRegionGuid;
 extern GUID gSpaRangeRawPmRegionGuid;
 extern GUID gSpaRangeIsoPmRegionGuid;
 extern GUID gAppDirectPmTypeGuid;
+extern GUID gSpaRangeMailboxCustomGuid;
 
 #define SPA_RANGE_VOLATILE_REGION_GUID \
   { 0x7305944F, 0xFDDA, 0x44E3, {0xB1, 0x6C, 0x3F, 0x22, 0xD2, 0x52, 0xE5, 0xD0} }
@@ -47,6 +48,13 @@ extern GUID gAppDirectPmTypeGuid;
 
 #define APPDIRECT_PM_TYPE \
   { 0x66F0D379, 0xB4F3, 0x4074, {0xAC, 0x43, 0x0D, 0x33, 0x18, 0xB7, 0x8C, 0xDB} }
+
+/*
+ * SPA_RANGE_CONTROL_REGION_GUID above should only be used for block windows.
+ * This is a custom GUID so that we can find the mailbox spa range structs.
+ */
+#define SPA_RANGE_MAILBOX_CUSTOM_GUID \
+  { 0x48D7624D, 0x5CD8, 0x4924, {0xAF, 0xD5, 0xDB, 0xCB, 0xF8, 0x50, 0xCC, 0x2B} }
 
 #define NFIT_ACPI_NAMESPACE_ID SIGNATURE_64('A', 'C', 'P', 'I', '0', '0', '1', '0')
 #define NFIT_TABLE_SIG         SIGNATURE_32('N', 'F', 'I', 'T') //!< NFIT Table signature

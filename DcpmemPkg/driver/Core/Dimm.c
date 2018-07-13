@@ -4482,8 +4482,6 @@ InitializeDimm (
   PT_ID_DIMM_PAYLOAD *pPayload = NULL;
   PT_DIMM_PARTITION_INFO_PAYLOAD *pPartitionInfoPayload = NULL;
   PT_GET_SECURITY_PAYLOAD *pDimmSecurityPayload = NULL;
-  /** @todo DE9699 Remove FIS 1.2 backwards compatibility workaround **/
-  UINT16 IfcExtra = 0x201;
   ControlRegionTbl *pControlRegTbls[MAX_IFC_NUM];
   UINT32 ControlRegTblsNum = MAX_IFC_NUM;
   UINT32 PcdSize = 0;
@@ -4498,11 +4496,18 @@ InitializeDimm (
     goto out;
   }
 
-  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, Pid, &gSpaRangeControlRegionGuid, FALSE, 0, &pNvDimmRegionTblCtrl);
+  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, Pid, &gSpaRangeMailboxCustomGuid, FALSE, 0,
+    &pNvDimmRegionTblCtrl);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Unable to initialize Intel NVM Dimm. NvDimmRegion for Control Region is missing in NFIT.");
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto after_dimm;
+    NVDIMM_DBG("Unable to initialize Intel NVM Dimm with custom GUID. Trying NVDIMM control region GUID");
+    /* backwards compatibility for NVDIMM control region GUID previously used to map mailbox spa */
+    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, Pid, &gSpaRangeControlRegionGuid, FALSE, 0,
+      &pNvDimmRegionTblCtrl);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Unable to initialize Intel NVM Dimm. NvDimmRegion for Control Region is missing in NFIT.");
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto after_dimm;
+    }
   }
 
   ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTblCtrl, &pControlRegTbl);
@@ -4549,13 +4554,18 @@ InitializeDimm (
   }
   pNewDimm->FmtInterfaceCodeNum = ControlRegTblsNum;
 
-  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID, &gSpaRangeControlRegionGuid,
+  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID, &gSpaRangeMailboxCustomGuid,
     FALSE, 0, &pNewDimm->pCtrlTbl);
-
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("No CTRL Region found unable to create Mailbox");
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto after_dimm;
+    NVDIMM_DBG("No region found using custom GUID. Trying NVDIMM control region GUID");
+    /* backwards compatibility for NVDIMM control region GUID previously used to map mailbox spa */
+    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID, &gSpaRangeControlRegionGuid,
+      FALSE, 0, &pNewDimm->pCtrlTbl);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("No CTRL Region found unable to create Mailbox");
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto after_dimm;
+    }
   }
 
   if (pNewDimm->pCtrlTbl != NULL) {
@@ -4625,16 +4635,6 @@ InitializeDimm (
     NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
     pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
     ParseFwApiVersion(pNewDimm, pPayload);
-
-    if (IsDimmManageable(pNewDimm)) {
-      for (Index = 0; Index < pNewDimm->FmtInterfaceCodeNum; Index++) {
-        if (pNewDimm->FmtInterfaceCode[Index] != pPayload->Ifc && pNewDimm->FmtInterfaceCode[Index] != IfcExtra) {
-          NVDIMM_WARN("FIT and FW Interface Code mismatch");
-          ReturnCode = EFI_DEVICE_ERROR;
-          goto after_mailbox;
-        }
-      }
-    }
   }
 
   if (IsDimmManageable(pNewDimm)) {

@@ -33,6 +33,8 @@ GUID gSpaRangeIsoPmRegionGuid = SPA_RANGE_ISO_PM;
 
 GUID gAppDirectPmTypeGuid = APPDIRECT_PM_TYPE;
 
+GUID gSpaRangeMailboxCustomGuid = SPA_RANGE_MAILBOX_CUSTOM_GUID;
+
 /**
   CopyMemoryAndAddPointerToArray - Copies the data and adds the result pointer to an array of pointers.
 

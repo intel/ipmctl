@@ -519,7 +519,7 @@ SystemTimeCheck(
     FREE_POOL_SAFE(pTmpStr);
   }
   else {
-    NVDIMM_DBG("Dimm 0x%x time veryfication diagnostic test: success", pDimm->DeviceHandle.AsUint32);
+    NVDIMM_DBG("Dimm 0x%x time verification diagnostic test: success", pDimm->DeviceHandle.AsUint32);
   }
 
 Finish:

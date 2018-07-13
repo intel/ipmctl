@@ -304,9 +304,9 @@ ShowErrorCommand(
           if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
               Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
                 pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_MEDIA_STR);
-          } else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CORE) {
+          } else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CONTROLLER) {
               Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
-                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_CORE_STR);
+                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_CONTROLLER_STR);
           } else {
               Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
                 pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_UNKNOWN_STR);

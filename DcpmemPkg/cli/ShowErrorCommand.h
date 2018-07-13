@@ -37,12 +37,12 @@
 #define ERROR_THERMAL_REPORTED_CRITICAL_STR    L"Critical"
 #define ERROR_THERMAL_REPORTED_UNKNOWN_STR     L"Unknown"
 
-#define ERROR_THERMAL_TYPE_MEDIA  0x00
-#define ERROR_THERMAL_TYPE_CORE   0x01
+#define ERROR_THERMAL_TYPE_MEDIA        0x00
+#define ERROR_THERMAL_TYPE_CONTROLLER   0x01
 
-#define ERROR_THERMAL_TYPE_MEDIA_STR    L"Media Temperature"
-#define ERROR_THERMAL_TYPE_CORE_STR     L"Core Temperature"
-#define ERROR_THERMAL_TYPE_UNKNOWN_STR  L"Unknown"
+#define ERROR_THERMAL_TYPE_MEDIA_STR       L"Media Temperature"
+#define ERROR_THERMAL_TYPE_CONTROLLER_STR  L"Controller Temperature"
+#define ERROR_THERMAL_TYPE_UNKNOWN_STR     L"Unknown"
 
 #define ERROR_TYPE_UNCORRECTABLE          0x00
 #define ERROR_TYPE_DPA_MISMATCH           0x01

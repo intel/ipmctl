@@ -433,7 +433,7 @@ ThresholdsCheck(
   }
 
   if (SensorInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CORE_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, SensorInfo.ContrTempShutdownThresh);
   }
 

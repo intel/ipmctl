@@ -342,7 +342,7 @@ void monitor::AcpiMonitor::sendFwErrLogSystemEventEntry(const NVM_UID device_uid
 std::string monitor::AcpiMonitor::createThermStr(THERMAL_ERROR_LOG_INFO * td)
 {
 	std::stringstream temp_details;
-	temp_details << ACPI_SMART_HEALTH_EVENT_TEMP_CORE_STR;
+	temp_details << ACPI_SMART_HEALTH_EVENT_TEMP_CONTROLLER_STR;
 
 	if (TEMP_USER_ALARM == td->Reported)
 	{

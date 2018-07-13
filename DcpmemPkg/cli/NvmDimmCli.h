@@ -5,7 +5,13 @@
 
 #include <CommandParser.h>
 
+#if defined(__LINUX__) || defined(__ESX__)
+#define EXE_NAME               L"ipmctl"
+#elif defined(_MSC_VER)
+#define EXE_NAME               L"ipmctl.exe"
+#else
 #define EXE_NAME               L"ipmctl.efi"
+#endif
 #define APP_DESCRIPTION        L"Command Line Interface"
 #define DRIVER_API_DESCRIPTION L"Driver API"
 

@@ -4850,7 +4850,7 @@ RecoverDimmFw(
     ReturnCode = RecreateFconfigFromSpdAndNewSpiImage((UINT8 *)pNewSpiImageBuffer,
         ImageBufferSize, pCurrentDimm, pFconfigRegionTemp);
     if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
+      goto Finish;
   }
   }
 
@@ -5040,8 +5040,6 @@ UpdateFw(
             } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
             SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
           }
-        } else {
-          goto Finish;
         }
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
@@ -5066,11 +5064,7 @@ UpdateFw(
       } else {
         ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
       }
-
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
-      if (EFI_ERROR(ReturnCode) && (NvmStatus != NVM_ERR_FIRMWARE_ALREADY_LOADED)) {
-        goto Finish;
-      }
     }
   }
 

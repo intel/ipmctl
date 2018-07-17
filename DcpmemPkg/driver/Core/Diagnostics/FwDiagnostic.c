@@ -451,7 +451,7 @@ ThresholdsCheck(
 
   if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, PercentageRemainingThreshold, SensorInfo.PercentageRemaining);
+      pDimm->DeviceHandle.AsUint32, SensorInfo.PercentageRemaining, PercentageRemainingThreshold);
   }
 
 Finish:

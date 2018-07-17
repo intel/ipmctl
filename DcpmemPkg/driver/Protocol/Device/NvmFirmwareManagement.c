@@ -29,8 +29,11 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 // EFI_FIRMWARE_IMAGE_DESCRIPTOR struct
 #define NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET   sizeof(EFI_FIRMWARE_IMAGE_DESCRIPTOR)
 
-// Assume maximum size of strings (512 CHAR16's) appended to the end of the struct
-// in order to align with HP request
+// Assume maximum size of strings (512 CHAR16's) appended to the end of the
+// struct and allocate the whole struct as one piece. The HII spec doesn't
+// specify where these strings should reside, so this is one of several possible
+// implementations. The caller should free the entire struct, which will free
+// the strings as well.
 #define HII_MAX_STRING_LENGTH  512
 #define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + (sizeof(CHAR16) * HII_MAX_STRING_LENGTH)
 #define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + (sizeof(CHAR16) * HII_MAX_STRING_LENGTH)

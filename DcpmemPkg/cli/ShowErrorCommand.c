@@ -91,6 +91,7 @@ ShowErrorCommand(
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   UINT16 ManageableListIndex = 0;
   UINT64 RangeInBytes = 0;
+  CHAR16 *pTempStr = NULL;
 
   NVDIMM_ENTRY();
 
@@ -278,7 +279,9 @@ ShowErrorCommand(
         pErrorType = (ErrorsArray[Index2].ErrorType == THERMAL_ERROR ?
         ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
         Print(FORMAT_STR_SPACE L"on DIMM (" FORMAT_STR L"):\n", pErrorType, DimmStr);
-        Print(FORMAT_16STR L" : %lld\n", ERROR_SYSTEM_TIMESTAMP_STR, ErrorsArray[Index2].SystemTimestamp);
+        pTempStr = GetTimeFormatString(ErrorsArray[Index2].SystemTimestamp);
+        Print(FORMAT_16STR L" :" FORMAT_STR_NL, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
+        FREE_POOL_SAFE(pTempStr);
 
         if (ErrorsArray[Index2].ErrorType == THERMAL_ERROR) {
           pThermalErrorInfo = (THERMAL_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;

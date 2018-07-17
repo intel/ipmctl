@@ -3183,7 +3183,7 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds)
   TimeMonthday = NumberOfFullDays + 1;
 
   pTimeFormatString = CatSPrintClean(pTimeFormatString,
-    FORMAT_STR_SPACE FORMAT_STR L" %02d %02d:%02d:%02d %d",
+    FORMAT_STR_SPACE FORMAT_STR L" %02d %02d:%02d:%02d UTC %d",
     DayOfWeek[TimeWeekday],
     Month[TimeMonth],
     TimeMonthday,

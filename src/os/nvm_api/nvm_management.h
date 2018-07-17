@@ -1022,28 +1022,10 @@ struct event_filter {
   enum event_severity	severity;
 
   /**
-   * The specific event code to retrieve. Only used if
-   * NVM_FILTER_ON_CODE is set in the #filter_mask.
-   */
-  NVM_UINT16		code;
-
-  /**
    * The identifier to retrieve events for.
    * Only used if NVM_FILTER_ON_UID is set in the #filter_mask.
    */
   NVM_UID			uid; ///< filter on specific item
-
-  /**
-   * The time after which to retrieve events.
-   * Only used if NVM_FILTER_ON_AFTER is set in the #filter_mask.
-   */
-  time_t			after; ///< filter on events after specified time
-
-  /**
-   * The time before which to retrieve events.
-   * Only used if NVM_FILTER_ON_BEFORE is set in the #filter_mask.
-   */
-  time_t			before; ///< filter on events before specified time
 
   /**
    * Event ID number (row ID)

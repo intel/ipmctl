@@ -27,7 +27,11 @@ struct Command CreateGoalCommand =
   CREATE_VERB,                                                   //!< verb
   {                                                              //!< options
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}
+    {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired},
+#ifdef OS_BUILD
+    {OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired}
+#endif
+
   },
   {                                                              //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
@@ -525,7 +529,7 @@ CreateGoal(
       goto Finish;
     }
     NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, L"Created following region configuration goal\n");
-    ShowGoalCmd.run(&ShowGoalCmd);
+    ExecuteCmd(&ShowGoalCmd);
     FREE_POOL_SAFE(pCommandStr);
   } else {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);

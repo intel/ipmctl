@@ -25,6 +25,10 @@ struct Command ShowRegionsCommand =
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty},
     {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired},
     {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif // OS_BUILD
+
   },
   {                                                    //!< targets
     {REGION_TARGET, L"", L"RegionIDs", TRUE, ValueOptional},

@@ -21,7 +21,10 @@ struct Command StartFormatCommand =
   START_VERB,                                                            //!< verb
   {                                                                      //!< options
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {L"", RECOVER_OPTION, L"", L"", FALSE, ValueEmpty},
+    {L"", RECOVER_OPTION, L"", L"", FALSE, ValueEmpty}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
   },
   {                                                                      //!< targets
     {FORMAT_TARGET, L"", L"", TRUE, ValueEmpty},

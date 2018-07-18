@@ -19,7 +19,11 @@
 COMMAND StartDiagnosticCommand =
 {
   START_VERB,                                                     //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}},                   //!< options
+  {{L"", L"", L"", L"", FALSE, ValueOptional}                     //!< options
+#ifdef OS_BUILD
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  },
   {                                                               //!< targets
     {DIAGNOSTIC_TARGET, L"", ALL_DIAGNOSTICS_TARGETS, TRUE, ValueOptional},
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},

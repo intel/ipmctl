@@ -18,7 +18,10 @@ struct Command DumpDebugCommandSyntax =
 {
   DUMP_VERB,                                                        //!< verb
   {                                                                 //!< options
-    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired},
+    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
   },
   {
     {DEBUG_TARGET, L"", L"", TRUE, ValueEmpty},

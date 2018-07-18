@@ -17,7 +17,11 @@
 struct Command showAcpiCommand =
 {
   SHOW_VERB,                                                           //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}},                        //!< options
+  {{L"", L"", L"", L"", FALSE, ValueOptional}
+#ifdef OS_BUILD
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  },                        //!< options
   {{SYSTEM_TARGET, L"", SYSTEM_ACPI_TARGETS, TRUE, ValueOptional}},    //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                             //!< properties
   L"Show the ACPI tables related to the DIMMs in the system.",//!< help

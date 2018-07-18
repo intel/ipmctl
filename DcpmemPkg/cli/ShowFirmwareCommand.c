@@ -22,6 +22,9 @@ struct Command ShowFirmwareCommand =
   {                                                                 //!< options
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty},
     {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
   },
   {                                                                 //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},

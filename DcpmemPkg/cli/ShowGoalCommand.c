@@ -30,6 +30,7 @@ struct Command ShowGoalCommand =
     {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}
 #ifdef OS_BUILD
     , {ACTION_REQ_OPTION_SHORT, ACTION_REQ_OPTION, L"", L"", FALSE, ValueEmpty}
+    , {OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired}
 #endif // OS_BUILD
   },
   {                                                                   //!< targets

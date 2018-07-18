@@ -14,6 +14,7 @@
 #include <Library/ShellCommandLib.h>
 #include <Library/HiiLib.h>
 #include <Protocol/DriverHealth.h>
+#include <Protocol/ShellParameters.h>
 #include <Debug.h>
 #include <Types.h>
 #include <Utility.h>
@@ -62,6 +63,7 @@
 #include "ShowEventCommand.h"
 #include "SetEventCommand.h"
 #include "DumpSupportCommand.h"
+#include <stdio.h>
 extern void nvm_current_cmd(struct Command Command);
 #else
 #include "DeletePcdCommand.h"
@@ -73,6 +75,7 @@ extern EFI_SHELL_INTERFACE *mEfiShellInterface;
 
 #ifdef OS_BUILD
 EFI_HANDLE gNvmDimmCliHiiHandle = (EFI_HANDLE)0x1;
+extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 #else
 EFI_HANDLE gNvmDimmCliHiiHandle = NULL;
 #endif
@@ -92,7 +95,12 @@ static EFI_STATUS showVersion(struct Command *pCmd);
 struct Command HelpCommand =
 {
   HELP_VERB,                                  //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}}, //!< options
+  {
+#ifdef OS_BUILD
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }, //!< options
+#endif // OS_BUILD
+    {L"", L"", L"", L"", FALSE, ValueOptional}
+  }, //!< options
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< properties
   L"Display the CLI help.",                   //!< help
@@ -105,7 +113,11 @@ struct Command HelpCommand =
 struct Command VersionCommand =
 {
   VERSION_VERB,                               //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}}, //!< options
+  {{L"", L"", L"", L"", FALSE, ValueOptional}
+#ifdef OS_BUILD
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  }, //!< options
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE}},                     //!< properties
   L"Display the CLI version.",                //!< help
@@ -298,8 +310,12 @@ UefiMain(
       if (Command.ShowHelp) {
         showHelp(&Command);
       } else {
-        //WarnUserIfSkuIsMixed();
-        Rc = Command.run(&Command);
+#ifdef OS_BUILD //WA, remove after all CMDs impl "Show Interface"
+        if (Command.UpdateCmdCtx) {
+          gOsShellParametersProtocol.StdOut = stdout;
+        }
+#endif
+        Rc = ExecuteCmd(&Command);
       }
       if (EFI_ERROR(Rc)) {
         MoreInput = FALSE; /* stop on failures */
@@ -322,6 +338,7 @@ FinishAfterRegCmds:
   FreeCommands();
 
 Finish:
+
   if (gNvmDimmCliHiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmCliHiiHandle);
   }

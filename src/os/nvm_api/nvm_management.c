@@ -2446,8 +2446,10 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
     FillCommandInput(exec_commands[Index], &Input);
     ReturnCode = Parse(&Input, &Command);
     if (!EFI_ERROR(ReturnCode))
+    {
       /* parse success, now run the command */
-      ReturnCode = Command.run(&Command);
+      ReturnCode = ExecuteCmd(&Command);
+    }
     FreeCommandInput(&Input);
   }
 

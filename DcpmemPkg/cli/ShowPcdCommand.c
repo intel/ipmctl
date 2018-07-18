@@ -16,7 +16,11 @@
 struct Command ShowPcdCommand =
 {
   SHOW_VERB,                                                          //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}},                       //!< options
+  {{L"", L"", L"", L"", FALSE, ValueOptional}                         //!< options
+#ifdef OS_BUILD
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  },
   {                                                                   //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}

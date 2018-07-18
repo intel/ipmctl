@@ -20,7 +20,11 @@
 struct Command ShowRegisterCommand =
 {
   SHOW_VERB,                                                  //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueEmpty}},                  //!< options
+  {{L"", L"", L"", L"", FALSE, ValueEmpty}                    //!< options
+#ifdef OS_BUILD
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  },
   {                                                           //!< targets
     {DIMM_TARGET, L"", L"DimmIDs", TRUE, ValueOptional},
     {REGISTER_TARGET, L"", L"Register", TRUE, ValueOptional},

@@ -1017,10 +1017,24 @@ typedef struct _INTEL_DIMM_CONFIG {
   UINT8 Reserved[7];
 } INTEL_DIMM_CONFIG;
 
+#define OUTPUT_NVM_XML        1 << 0
+#define OUTPUT_ESX_XML        1 << 1
+#define OUTPUT_ESX_XML_TABLE  1 << 2
+#define OUTPUT_TEXT           1 << 3
+#define OUTPUT_VERBOSE        1 << 4
+#define OUTPUT_ALL            0xFFFFFFFF
+
 typedef struct _DISPLAY_PREFERENCES {
   UINT8 DimmIdentifier; //!< Default display of DIMM identifiers
   UINT8 SizeUnit;       //!< Default display capacity unit
+  UINT8 OutputTypeMask;
 } DISPLAY_PREFERENCES;
+
+#define OUTPUT_NVM_XML_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_NVM_XML) != 0)
+#define OUTPUT_ESX_XML_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_ESX_XML) != 0)
+#define OUTPUT_ESX_XML_TABLE_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_ESX_XML_TABLE) != 0)
+#define OUTPUT_TEXT_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_TEXT) != 0)
+#define OUTPUT_VERBOSE_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_VERBOSE) != 0)
 
 typedef struct _DRIVER_PREFERENCES {
   UINT8 ImcInterleaving;      //!< IMC interleaving as bit field

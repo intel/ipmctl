@@ -19,6 +19,9 @@ struct Command ShowErrorCommandSyntax =
 {
   SHOW_VERB,                                                           //!< verb
   {
+#ifdef OS_BUILD
+      { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }, //!< options
+#endif // OS_BUILD
       {L"", L"", L"", L"", FALSE, ValueOptional},                      //!< options
   },
   {

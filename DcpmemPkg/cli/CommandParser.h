@@ -9,6 +9,7 @@
 #include <Uefi.h>
 #include <Debug.h>
 #include <Types.h>
+#include <Show.h>
 
 #define DISP_NAME_LEN       32    //!< Display string length (used when formatting output in alternative formats)
 #define VERB_LEN            16    //!< Verb string length
@@ -67,6 +68,14 @@
 #define UNITS_OPTION_SHORT              L"-u"                                  //!< 'units' option short form
 #define PROPERTY_VALUE_0_1_HELP         L"0|1"                                 //!< Property 0 or 1 value
 #define PROPERTY_VALUE_NO_YES_IGN_HELP  L"No|Yes|Ignore"                       //!< Property: No, Yes or Ignore
+#define OUTPUT_OPTION_SHORT             L"-o"                                  //!< 'output' option name short form
+#define OUTPUT_OPTION                   L"-output"                             //!< 'output' option
+#define OUTPUT_OPTION_VERBOSE           L"verbose"                             //!< 'output' option value for verbose
+#define OUTPUT_OPTION_TEXT              L"text"                                //!< 'output' option value for text
+#define OUTPUT_OPTION_NVMXML            L"nvmxml"                              //!< 'output' option value for nvmxml
+#define OUTPUT_OPTION_ESX_XML           L"esx"                                 //!< 'output' option value for esx xml
+#define OUTPUT_OPTION_ESX_TABLE_XML     L"esxtable"                            //!< 'output' option value for esx xml
+#define OUTPUT_OPTION_HELP              L"text|nvmxml"                         //!< 'output' option help text
 #ifdef OS_BUILD
 #define ACTION_REQ_OPTION               L"-actionreq"                          //!< 'action required' option name
 #define ACTION_REQ_OPTION_SHORT         L"-ar"                                 //!< 'action required' option short form
@@ -326,11 +335,14 @@ struct Command
   struct property properties[MAX_PROPERTIES];
   CONST CHAR16 *pHelp;
   EFI_STATUS (*run)(struct Command *pCmd); //!< Execute the command
+  EFI_STATUS (*UpdateCmdCtx)(struct Command *pCmd);
+  EFI_STATUS (*RunCleanup)(struct Command *pCmd);
   BOOLEAN Hidden; //!< Never print
   BOOLEAN ShowHelp;
   UINT8 CommandId;
   UINT8 DispType;
   CHAR16 DispName[DISP_NAME_LEN];
+  SHOW_CMD_CONTEXT *pShowCtx;
 } COMMAND;
 
 typedef
@@ -566,5 +578,13 @@ GetDisplayInfo(
    OUT    UINT8 *pType
 );
 
+/**
+Execute UpdateCmdCtx (if defined), run, and RunCleanup (if defined).
+@param[in] pCommand pointer to the command structure
+@retval EFI_SUCCESS if the name was copied correctly.
+@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+ExecuteCmd(COMMAND *pCommand);
 
 #endif /** _COMMAND_PARSER_H_**/

@@ -20,7 +20,10 @@ extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 struct Command DumpSupportCommandSyntax = {
   DUMP_VERB,                                                      //!< verb
   {                                                                 //!< options
-    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired},
+    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
   },
   {                                                                 //!< targets
     {SUPPORT_TARGET, L"", L"", TRUE, ValueEmpty}
@@ -138,7 +141,7 @@ DumpSupportCommand(
 
     if (!EFI_ERROR(ReturnCode)) {
       /* parse success, now run the command */
-      ReturnCode = Command.run(&Command);
+      ReturnCode = ExecuteCmd(&Command);
     }
 
     FreeCommandInput(&Input);

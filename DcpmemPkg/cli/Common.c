@@ -15,6 +15,7 @@
 #include <Version.h>
 #include <NvmInterface.h>
 #include <NvmTypes.h>
+#include <Show.h>
 #ifdef OS_BUILD
 #include <stdio.h>
 #include <errno.h>
@@ -2201,6 +2202,69 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+/**
+Retrieve the User Cli Display Preferences CMD line arguements.
+
+@param[out] pDisplayPreferences pointer to the current driver preferences.
+
+@retval EFI_INVALID_PARAMETER One or more parameters are invalid
+@retval EFI_SUCCESS All ok
+**/
+EFI_STATUS
+ReadCmdLineShowOptions(
+  IN OUT SHOW_FORMAT_TYPE *pFormatType,
+  IN OUT SHOW_FORMAT_TYPE_FLAGS *pFormatTypeFlags,
+  IN struct Command *pCmd
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  CHAR16 *OutputOptions = NULL;
+  CHAR16 **Toks = NULL;
+  UINT32 NumToks = 0;
+  UINT32 Index = 0;
+
+  if (NULL == pFormatType || NULL == pFormatTypeFlags) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (NULL == (OutputOptions = getOptionValue(pCmd, OUTPUT_OPTION_SHORT))) {
+    if(NULL == (OutputOptions = getOptionValue(pCmd, OUTPUT_OPTION))) {
+      *pFormatType = TEXT;
+      SET_FORMAT_LIST_FLAG(pFormatTypeFlags->Flags);
+      return ReturnCode;
+    }
+  }
+
+  *pFormatType = TEXT; //default
+
+  if(NULL != (Toks = StrSplit(OutputOptions, L',', &NumToks))) {
+    for (Index = 0; Index < NumToks; ++Index) {
+      if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_VERBOSE)) {
+        pFormatTypeFlags->Flags.Verbose = 1;
+      }
+      else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_TEXT)) {
+        *pFormatType = TEXT;
+      }
+      else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_NVMXML)) {
+        *pFormatType = XML;
+      }
+      else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_ESX_XML)) {
+        *pFormatType = XML;
+        SET_FORMAT_ESX_KV_FLAG(pFormatTypeFlags->Flags);
+      }
+      else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_ESX_TABLE_XML)) {
+        *pFormatType = XML;
+        SET_FORMAT_ESX_CUSTOM_FLAG(pFormatTypeFlags->Flags);
+      }
+      else ReturnCode = EFI_INVALID_PARAMETER;
+    }
+  }
+
+  FreeStringArray(Toks, NumToks);
+  return ReturnCode;
+}
+
 
 /**
    Get Dimm identifier preference

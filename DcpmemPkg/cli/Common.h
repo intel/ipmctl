@@ -876,4 +876,19 @@ GetDimmHandleByPid(
      OUT UINT32 *pDimmIndex
   );
 
+/**
+Retrieve the User Cli Display Preferences CMD line arguements.
+
+@param[out] pDisplayPreferences pointer to the current driver preferences.
+
+@retval EFI_INVALID_PARAMETER One or more parameters are invalid
+@retval EFI_SUCCESS All ok
+**/
+EFI_STATUS
+ReadCmdLineShowOptions(
+  IN OUT SHOW_FORMAT_TYPE *pFormatType,
+  IN OUT SHOW_FORMAT_TYPE_FLAGS *pFormatTypeFlags,
+  IN struct Command *pCmd
+);
+
 #endif /** _COMMON_H_ **/

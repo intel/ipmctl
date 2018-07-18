@@ -22,6 +22,9 @@ struct Command LoadRecoverCommand =
     {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", L"", FALSE, ValueEmpty},
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, TRUE, ValueRequired},
     {L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI, TRUE, ValueOptional}
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},          //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                //!< properties

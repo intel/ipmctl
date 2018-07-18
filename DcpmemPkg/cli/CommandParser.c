@@ -302,6 +302,8 @@ Parse(
     ReturnCode = MatchCommand(pCommand, &gCommandList[Index]);
     if (!EFI_ERROR(ReturnCode)) {
       pCommand->run = gCommandList[Index].run;
+      pCommand->RunCleanup = gCommandList[Index].RunCleanup;
+      pCommand->UpdateCmdCtx = gCommandList[Index].UpdateCmdCtx;
       break;
     }
   }
@@ -1026,9 +1028,6 @@ CHAR16
           pHelp = CatSPrintClean(pHelp, L" ");
         }
       }
-#ifdef OS_BUILD
-      pHelp = CatSPrintClean(pHelp, L"[-output|-o (text|nvmxml)] ");
-#endif
 
       /* add the targets pHelp */
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
@@ -1441,4 +1440,50 @@ GetDisplayInfo(
    UnicodeSPrint(pName, NameSize, FORMAT_STR, gDisplayInfo.Name);
    *pType = gDisplayInfo.Type;
    return EFI_SUCCESS;
+}
+
+/**
+Execute UpdateCmdCtx (if defined), run, and RunCleanup (if defined).
+@param[in] pCommand pointer to the command structure
+@retval EFI_SUCCESS if the name was copied correctly.
+@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+ExecuteCmd(COMMAND *pCommand) {
+
+  EFI_STATUS Rc = EFI_SUCCESS;
+
+  if (NULL == pCommand)
+    return EFI_INVALID_PARAMETER;
+
+  if (NULL == (pCommand->pShowCtx = (SHOW_CMD_CONTEXT*)AllocateZeroPool(sizeof(SHOW_CMD_CONTEXT)))) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  if (EFI_SUCCESS != (Rc = ReadCmdLineShowOptions(&pCommand->pShowCtx->FormatType, &pCommand->pShowCtx->FormatTypeFlags, pCommand))) {
+    goto Finish;
+  }
+
+  if (pCommand->UpdateCmdCtx)
+    Rc = pCommand->UpdateCmdCtx(pCommand);
+
+  if (EFI_ERROR(Rc))
+    goto Finish;
+
+  if (NULL == pCommand->run) {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  Rc = pCommand->run(pCommand);
+
+  if (EFI_ERROR(Rc))
+    goto Finish;
+
+  if (pCommand->RunCleanup)
+    Rc = pCommand->RunCleanup(pCommand);
+
+Finish:
+  FREE_POOL_SAFE(pCommand->pShowCtx);
+  return Rc;
 }

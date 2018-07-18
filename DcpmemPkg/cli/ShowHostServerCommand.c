@@ -20,7 +20,11 @@
 struct Command ShowHostServerCommand = {
   SHOW_VERB,                                                                                    //!< verb
   { {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty },
-    {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired }},   //!< options
+    {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired }
+#ifdef OS_BUILD
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#endif
+  },   //!< options
   {{SYSTEM_TARGET, L"", L"", TRUE, ValueEmpty},
    {HOST_TARGET, L"", L"", TRUE, ValueEmpty }},                                                //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                                      //!< properties

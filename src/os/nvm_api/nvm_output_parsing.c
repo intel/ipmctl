@@ -394,7 +394,7 @@ int process_output(
    char *argv[])
 {
    enum OutputType out_type = UnknownType;
-   struct table show_table;
+   static struct table show_table;
    enum DisplayType type = display_view_type(view_type, rc);
    wchar_t *line = (wchar_t*)malloc(READ_FD_LINE_SZ * sizeof(wchar_t));
    wchar_t *tok;

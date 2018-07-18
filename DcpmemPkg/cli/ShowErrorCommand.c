@@ -280,7 +280,7 @@ ShowErrorCommand(
         ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
         Print(FORMAT_STR_SPACE L"on DIMM (" FORMAT_STR L"):\n", pErrorType, DimmStr);
         pTempStr = GetTimeFormatString(ErrorsArray[Index2].SystemTimestamp);
-        Print(FORMAT_16STR L" :" FORMAT_STR_NL, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
+        Print(FORMAT_16STR L" : " FORMAT_STR_NL, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
         FREE_POOL_SAFE(pTempStr);
 
         if (ErrorsArray[Index2].ErrorType == THERMAL_ERROR) {

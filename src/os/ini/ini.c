@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-/*
-* This file contains the implementation of the common ini file parser.
-*/
+ /*
+ * This file contains the implementation of the common ini file parser.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,11 +26,11 @@
 #define W_OK			0x2
 #endif
 
-/**
-@brief  Main dictionary context. This pointer is being initialized by
-the nvm_ini_load_dictionary function and freed by the nvm_ini_free_dictionary
-function
-*/
+ /**
+ @brief  Main dictionary context. This pointer is being initialized by
+ the nvm_ini_load_dictionary function and freed by the nvm_ini_free_dictionary
+ function
+ */
 static dictionary *p_g_dictionary = NULL;
 
 /**
@@ -63,7 +63,7 @@ means we have either token only or end of line or nothing
   }
 
 /**
-@brief Copy the src to dst strings and strip out the new line, leading space 
+@brief Copy the src to dst strings and strip out the new line, leading space
 and ending spac characters form the string
 */
 static void nvm_str_cat(char *dst_str, char *src_str, size_t src_size)
@@ -120,7 +120,7 @@ inline static const char * nvm_dictionary_get_set_value(dictionary *p_dict, cons
       if (NULL == p_value) {
         // Get function call
         return p_dict->p_value;
-      } 
+      }
       else {
         // Set function call
         string_size = (size_t)(strlen(p_value));
@@ -157,7 +157,7 @@ inline static int nvm_convert_string_to_int(char *p_value, int fail_value)
   }
   // Check if it is hex or decimal value
   if (('0' == *p_value) && (('x' == *(p_value + 1)) || ('X' == *(p_value + 1)))) {
-    return (int) AsciiStrHexToUintn(p_value);
+    return (int)AsciiStrHexToUintn(p_value);
   }
   else {
     if (negative_value) {
@@ -212,7 +212,7 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
   g_modified_config = FALSE;
 
   // Try to open the file
-  snprintf(g_ini_path_filename, sizeof (g_ini_path_filename), "%s", p_ini_file_name);
+  snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s", p_ini_file_name);
   h_file = fopen(g_ini_path_filename, "r");
   if (NULL == h_file) {
     snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
@@ -293,7 +293,12 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
 
   // handle special case with empty file
   if (p_g_dictionary == NULL) {
-    wprintf(L"Error: Could not parse configuration file: %hs\n", g_ini_path_filename);
+    if (NULL == g_ini_path_filename) {
+      wprintf(L"Error: Could not parse configuration file: NULL\n");
+    }
+    else {
+      wprintf(L"Error: Could not parse configuration file: %hs\n", g_ini_path_filename);
+    }
 #if defined(__LINUX__)
     wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
 #else
@@ -306,13 +311,13 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
       fclose(h_file);
       return NULL;
     }
-  }
+    }
 
   // Close the file
   fclose(h_file);
 
   return p_g_dictionary;
-}
+  }
 
 /**
 @brief    Free the dictionary structure
@@ -352,7 +357,7 @@ int nvm_ini_get_int_value(dictionary *p_dictionary, const char *p_key, int fail_
     return fail_value;
   }
   else {
-    return nvm_convert_string_to_int((char *) p_value, fail_value);
+    return nvm_convert_string_to_int((char *)p_value, fail_value);
   }
 }
 
@@ -384,7 +389,12 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
 
   p_key_value = nvm_dictionary_get_set_value(p_dictionary, p_key, p_value);
   if (NULL == p_key_value) {
-    wprintf(L"Error: Could not find preference in configuration file: %hs\n", g_ini_path_filename);
+    if (NULL == g_ini_path_filename) {
+      wprintf(L"Error: Could not find preference in configuration file: NULL\n");
+    }
+    else {
+      wprintf(L"Error: Could not find preference in configuration file: %hs\n", g_ini_path_filename);
+    }
     return -1;
   }
 
@@ -411,7 +421,7 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
 
   // nothing to do if no entries or no modified values
   if ((p_dictionary->numb_of_entries == 0) ||
-      (!g_modified_config)) {
+    (!g_modified_config)) {
     return 0;
   }
 

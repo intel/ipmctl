@@ -596,17 +596,24 @@ GetFirstAndBoundSmBiosStructPointer(
       else 
       {
         gSmbiosTable = calloc(1, recording.size);
-        size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
-        if (bytesRead != recording.size)
+        if (NULL == gSmbiosTable)
         {
-          NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_SMBIOS, bytesRead, recording.size);
+          NVDIMM_ERR("Unable to alloc for SMBIOS table\n");
         }
         else
         {
-          pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
-          pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + recording.size;
-          pSmbiosVersion->Major = recording.major;
-          pSmbiosVersion->Minor = recording.minor;
+          size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
+          if (bytesRead != recording.size)
+          {
+            NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_SMBIOS, bytesRead, recording.size);
+          }
+          else
+          {
+            pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
+            pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + recording.size;
+            pSmbiosVersion->Major = recording.major;
+            pSmbiosVersion->Minor = recording.minor;
+          }
         }
       }
 

@@ -34,6 +34,11 @@ function
 static dictionary *p_g_dictionary = NULL;
 
 /**
+@brief global to detect if any preferences were modified
+*/
+static BOOLEAN g_modified_config = FALSE;
+
+/**
 @brief  The default ini file content defined by the ipmctl_default.conf file
 */
 #define LOG_INSTALL_PATH ""
@@ -204,6 +209,8 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
     return p_g_dictionary;
   }
 
+  g_modified_config = FALSE;
+
   // Try to open the file
   snprintf(g_ini_path_filename, sizeof (g_ini_path_filename), "%s", p_ini_file_name);
   h_file = fopen(g_ini_path_filename, "r");
@@ -284,6 +291,23 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
     p_g_dictionary->numb_of_entries += 1;
   }
 
+  // handle special case with empty file
+  if (p_g_dictionary == NULL) {
+    wprintf(L"Error: Could not parse configuration file: %hs\n", g_ini_path_filename);
+#if defined(__LINUX__)
+    wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
+#else
+    wprintf(L"The default configuration can be found here: ipmctl_default.conf\n");
+#endif
+    // create an empty dictionary so the command will run with default configuration
+    p_g_dictionary = (dictionary *)calloc(1, sizeof(dictionary));
+    if (NULL == p_g_dictionary) {
+      // Close the file
+      fclose(h_file);
+      return NULL;
+    }
+  }
+
   // Close the file
   fclose(h_file);
 
@@ -360,8 +384,13 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
 
   p_key_value = nvm_dictionary_get_set_value(p_dictionary, p_key, p_value);
   if (NULL == p_key_value) {
+    wprintf(L"Error: Could not find preference in configuration file: %hs\n", g_ini_path_filename);
     return -1;
   }
+
+  // set global that the config has been modified
+  g_modified_config = TRUE;
+
   return 0;
 }
 
@@ -378,6 +407,12 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
   // Check inputs
   if ((NULL == p_dictionary) || (NULL == p_ini_file_name)) {
     return -1;
+  }
+
+  // nothing to do if no entries or no modified values
+  if ((p_dictionary->numb_of_entries == 0) ||
+      (!g_modified_config)) {
+    return 0;
   }
 
   // Open and truncated the file

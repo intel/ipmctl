@@ -19,139 +19,97 @@
 unsigned char SMBIOS_ANCHOR_STR[] = { 0x5f, 0x53, 0x4d, 0x5f };
 unsigned char SMBIOS_3_ANCHOR_STR[] = { 0x5f, 0x53, 0x4d, 0x33, 0x5f };
 
-extern NVMDIMMDRIVER_DATA *gNvmDimmData;
+
+extern UINT8 *gSmbiosTable;
+extern size_t gSmbiosTableSize;
+extern UINT8 gSmbiosMinorVersion;
+extern UINT8 gSmbiosMajorVersion;
+
 
 extern int get_acpi_table(const char *signature, struct acpi_table *p_table, const unsigned int size);
 
+/**
+Loads a table as specified in the args
+
+@param[in]  currentTableName - the name of the table to load
+@param[out] table - EFI_ACPI_DESCRIPTION_HEADER the table
+
+@retval EFI_SUCCESS  The count was returned properly
+@retval Other errors failure of io
+**/
+EFI_STATUS *
+get_table(
+  IN CHAR8* currentTableName,
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+);
+
 EFI_STATUS
-EFIAPI
-PassThru(
-	IN     struct _DIMM *pDimm,
-	IN OUT FW_CMD *pCmd,
-	IN     UINT64 Timeout
+passthru_os(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     long Timeout
 )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   UINT32 ReturnCode;
-  UINT32 DimmID;
 
-  if(!pDimm || !pCmd)
-    return EFI_INVALID_PARAMETER;
-
-  DimmID = pCmd->DimmID;
-
-  pCmd->DimmID = pDimm->DeviceHandle.AsUint32;
   ReturnCode = ioctl_passthrough_fw_cmd((struct fw_cmd *)pCmd);
   if (0 == ReturnCode)
   {
-      Rc = EFI_SUCCESS;
+    Rc = EFI_SUCCESS;
   }
   else
   {
-      Rc = EFI_DEVICE_ERROR;
+    Rc = EFI_DEVICE_ERROR;
   }
 
-  pCmd->DimmID = DimmID;
   return Rc;
 }
 
-
 EFI_STATUS
-initAcpiTables(
+get_nfit_table(
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
 )
 {
-    EFI_ACPI_DESCRIPTION_HEADER *PtrNfitTable = NULL;
-    EFI_ACPI_DESCRIPTION_HEADER *PtrPcatTable = NULL;
-    EFI_ACPI_DESCRIPTION_HEADER *PtrPMTTTable = NULL;
-    INT32 BuffSize = 0;
-    INT32 Result = 0;
-    EFI_STATUS ReturnCode;
-    BuffSize = get_acpi_table("NFIT", NULL, BuffSize);
-    if (BuffSize > 0)
-    {
-        PtrNfitTable = AllocatePool(BuffSize);
-        if (NULL != PtrNfitTable)
-        {
-            Result = get_acpi_table("NFIT", (struct acpi_table*)PtrNfitTable, BuffSize);
-            if (0 > Result)
-            {
-              ReturnCode = EFI_LOAD_ERROR;
-              goto Finish_Error;
-            }
-        }
-        else 
-        {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish_Error;
-        }
-    }
-    BuffSize = get_acpi_table("PCAT", NULL, BuffSize);
-    if (BuffSize > 0)
-    {
-        PtrPcatTable = AllocatePool(BuffSize);
-        if (NULL != PtrPcatTable)
-        {
-            Result = get_acpi_table("PCAT", (struct acpi_table*)PtrPcatTable, BuffSize);
-            if (0 > Result)
-            {
-              ReturnCode = EFI_LOAD_ERROR;
-              goto Finish_Error;
-            }
-        }
-        else
-        {
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish_Error;
-        }
-    }
-
-    BuffSize = get_acpi_table("PMTT", NULL, BuffSize);
-    if (BuffSize > 0)
-    {
-      PtrPMTTTable = AllocatePool(BuffSize);
-      if (NULL != PtrPMTTTable)
-      {
-        Result = get_acpi_table("PMTT", (struct acpi_table*)PtrPMTTTable, BuffSize);
-        if (0 > Result)
-        {
-          ReturnCode = EFI_LOAD_ERROR;
-          goto Finish_Error;
-        }
-      }
-      else
-      {
-        ReturnCode = EFI_OUT_OF_RESOURCES;
-        goto Finish_Error;
-      }
-    }
-
-    /**
-    Find the NVDIMM FW Interface Table (NFIT), PCAT & PMTT
-    **/
-    ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable, &gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
-    if (EFI_ERROR(ReturnCode))
-    {
-        NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
-        ReturnCode = EFI_NOT_FOUND;
-        goto Finish_Error;
-    }
-    return EFI_SUCCESS;
-
-Finish_Error:
-    FREE_POOL_SAFE(PtrNfitTable);
-    FREE_POOL_SAFE(PtrPcatTable);
-    FREE_POOL_SAFE(PtrPMTTTable);
-    return ReturnCode;
+  return get_table("NFIT", table);
 }
 
 EFI_STATUS
-uninitAcpiTables(
+get_pcat_table(
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
 )
 {
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPMTTTble);
+  return get_table("PCAT", table);
+}
+
+EFI_STATUS
+get_pmtt_table(
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+)
+{
+  return get_table("PMTT", table);
+}
+
+EFI_STATUS *
+get_table(
+  IN CHAR8* currentTableName,
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+)
+{
+  *table = NULL;
+  int buf_size = get_acpi_table(currentTableName, NULL, 0);
+  if (buf_size <= 0)
+  {
+    return EFI_END_OF_FILE;
+  }
+
+  *table = AllocatePool(buf_size);
+  if (NULL == *table)
+  {
+    return EFI_END_OF_FILE;
+  }
+
+  get_acpi_table(currentTableName, (struct acpi_table*)*table, buf_size);
   return EFI_SUCCESS;
 }
 
@@ -161,56 +119,56 @@ uninitAcpiTables(
 */
 int get_smbios_table_alloc(UINT8 **pp_smbios_table, size_t *p_allocated_size, UINT8 *major_version, UINT8 *minor_version)
 {
-	int rc = 0;
-	size_t entry_size;
-	size_t table_length;
+  int rc = 0;
+  size_t entry_size;
+  size_t table_length;
 
-	// set buffer to larger of the possible structs
-	char entry_point_buffer[sizeof(struct smbios_entry_point)];
-	memset(entry_point_buffer, 0, sizeof(struct smbios_entry_point));
+  // set buffer to larger of the possible structs
+  char entry_point_buffer[sizeof(struct smbios_entry_point)];
+  memset(entry_point_buffer, 0, sizeof(struct smbios_entry_point));
 
-	FILE *entry_file = fopen(SMBIOS_ENTRY_POINT_FILE, "r");
-        if (entry_file == NULL)
-        {
-                NVDIMM_ERR("Couldn't open SMBIOS entry point file");
-                return -EIO;
-        }
+  FILE *entry_file = fopen(SMBIOS_ENTRY_POINT_FILE, "r");
+  if (entry_file == NULL)
+  {
+    NVDIMM_ERR("Couldn't open SMBIOS entry point file");
+    return -EIO;
+  }
 
-	entry_size = fread(entry_point_buffer, 1, sizeof(struct smbios_entry_point), entry_file);
+  entry_size = fread(entry_point_buffer, 1, sizeof(struct smbios_entry_point), entry_file);
 
-	struct smbios_entry_point *smbios = ((struct smbios_entry_point *) entry_point_buffer);
-	struct smbios_3_entry_point *smbios_3 = ((struct smbios_3_entry_point *) entry_point_buffer);
-	if ((memcmp(smbios->anchor_str, SMBIOS_ANCHOR_STR, sizeof(SMBIOS_ANCHOR_STR)) == 0) &&
-	    (entry_size == sizeof(struct smbios_entry_point)))
-	{
-		table_length = smbios->structure_table_length;
-		*major_version = smbios->smbios_major_version;
-		*minor_version = smbios->smbios_minor_version;
-	}
-	else if ((memcmp(smbios_3->anchor_str, SMBIOS_3_ANCHOR_STR, sizeof(SMBIOS_3_ANCHOR_STR)) == 0) &&
-		 (entry_size == sizeof(struct smbios_3_entry_point)))
-	{
-		table_length = smbios_3->structure_table_max_length;
-		*major_version = smbios_3->smbios_major_version;
-		*minor_version = smbios_3->smbios_minor_version;
-	}
-	else
-	{
-		NVDIMM_DBG("Couldn't find SMBIOS entry point from sysfs");
-		fclose(entry_file);
-                return -ENXIO;
-	}
+  struct smbios_entry_point *smbios = ((struct smbios_entry_point *) entry_point_buffer);
+  struct smbios_3_entry_point *smbios_3 = ((struct smbios_3_entry_point *) entry_point_buffer);
+  if ((memcmp(smbios->anchor_str, SMBIOS_ANCHOR_STR, sizeof(SMBIOS_ANCHOR_STR)) == 0) &&
+    (entry_size == sizeof(struct smbios_entry_point)))
+  {
+    table_length = smbios->structure_table_length;
+    *major_version = smbios->smbios_major_version;
+    *minor_version = smbios->smbios_minor_version;
+  }
+  else if ((memcmp(smbios_3->anchor_str, SMBIOS_3_ANCHOR_STR, sizeof(SMBIOS_3_ANCHOR_STR)) == 0) &&
+    (entry_size == sizeof(struct smbios_3_entry_point)))
+  {
+    table_length = smbios_3->structure_table_max_length;
+    *major_version = smbios_3->smbios_major_version;
+    *minor_version = smbios_3->smbios_minor_version;
+  }
+  else
+  {
+    NVDIMM_DBG("Couldn't find SMBIOS entry point from sysfs");
+    fclose(entry_file);
+    return -ENXIO;
+  }
 
-	fclose(entry_file);
+  fclose(entry_file);
 
-	FILE *dmi_file = fopen(SMBIOS_DMI_FILE, "r");
-	if (dmi_file == NULL)
-	{
-		NVDIMM_ERR("Couldn't open SMBIOS DMI file");
-                return -EIO;
-	}
+  FILE *dmi_file = fopen(SMBIOS_DMI_FILE, "r");
+  if (dmi_file == NULL)
+  {
+    NVDIMM_ERR("Couldn't open SMBIOS DMI file");
+    return -EIO;
+  }
 
-	UINT8 *p_smbios_table = calloc(1, table_length);
+  UINT8 *p_smbios_table = calloc(1, table_length);
   if (NULL != p_smbios_table) {
     if (fread(p_smbios_table, 1, table_length, dmi_file) == table_length)
     {
@@ -225,40 +183,14 @@ int get_smbios_table_alloc(UINT8 **pp_smbios_table, size_t *p_allocated_size, UI
       return -ENXIO;
     }
   }
-	fclose(dmi_file);
+  fclose(dmi_file);
 
-	return rc;
+  return rc;
 }
 
-UINT8 *gSmbiosTable = NULL;
-size_t gSmbiosTableSize = 0;
-UINT8 gSmbiosMinorVersion = 0;
-UINT8 gSmbiosMajorVersion = 0;
-
-VOID
-GetFirstAndBoundSmBiosStructPointer(
-	OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
-	OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
-	OUT SMBIOS_VERSION *pSmbiosVersion
+UINT32
+get_smbios_table(
 )
 {
-	int rc = 0;
-
-	if (pSmBiosStruct == NULL || pLastSmBiosStruct == NULL || pSmbiosVersion == NULL) {
-		return;
-	}
-
-	// One time initialization
-	if (NULL == gSmbiosTable)
-	{
-		rc = get_smbios_table_alloc(&gSmbiosTable, &gSmbiosTableSize, &gSmbiosMajorVersion, &gSmbiosMinorVersion);
-	}
-
-	if (rc == 0)
-	{
-		pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
-		pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + gSmbiosTableSize;
-		pSmbiosVersion->Major = gSmbiosMajorVersion;
-		pSmbiosVersion->Minor = gSmbiosMinorVersion;
-	}
+  return get_smbios_table_alloc(&gSmbiosTable, &gSmbiosTableSize, &gSmbiosMajorVersion, &gSmbiosMinorVersion);
 }

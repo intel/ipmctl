@@ -32,6 +32,7 @@ else()
 	set(CMAKE_BUILD_TYPE Debug)
 	add_definitions(
 		-DDEBUG_BUILD
+    -DPLAYBACK_RECORD_SUPPORTED
 		)
 endif()
 

@@ -19,6 +19,7 @@
 #include <BaseMemoryLib.h>
 #include <Convert.h>
 #include <Dimm.h>
+#include <NvmDimmDriver.h>
 #include <Common.h>
 #ifdef _MSC_VER
 #include <io.h>
@@ -42,6 +43,7 @@
 #include "os_efi_shell_parameters_protocol.h"
 #include "os.h"
 #include "os_common.h"
+#include <os_efi_api.h>
 #include <os_types.h>
 #include "event.h"
 
@@ -49,24 +51,54 @@ EFI_SYSTEM_TABLE *gST;
 EFI_SHELL_INTERFACE *mEfiShellInterface;
 EFI_RUNTIME_SERVICES *gRT;
 EFI_HANDLE gImageHandle;
-extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 
+extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 extern int get_vendor_driver_revision(char * version_str, const int str_len);
+extern int g_record_mode;
+extern int g_playback_mode;
+extern NVMDIMMDRIVER_DATA *gNvmDimmData;
+
+UINT8 *gSmbiosTable = NULL;
+size_t gSmbiosTableSize = 0;
+UINT8 gSmbiosMinorVersion = 0;
+UINT8 gSmbiosMajorVersion = 0;
+
+typedef struct _smbios_table_recording
+{
+  size_t size;
+  UINT8 minor;
+  UINT8 major;
+  UINT8 table[];
+}smbios_table_recording;
+
+int g_pass_thru_cnt = 0;
+size_t g_pass_thru_playback_offset = 0;
+
+
+#define REC_FILE_SMBIOS "smbios.rec"
+#define REC_FILE_PASSTHRU "pass_thru.rec"
+#define REC_FILE_ACPI_NFIT "acpi_nfit.rec"
+#define REC_FILE_ACPI_PCAT "acpi_pcat.rec"
+#define REC_FILE_ACPI_PMTT "acpi_pmtt.rec"
+#define PLAYBACK_ENABLED() g_playback_mode
+#define RECORD_ENABLED() g_record_mode
+#define INC_PASS_THRU_CNT() ++g_pass_thru_cnt
+#define APPEND_RECORDING() g_pass_thru_cnt
 
 struct debug_logger_config
 {
-    CHAR8 initialized       : 1;
-    CHAR8 stdout_enabled;
-    CHAR8 file_enabled;
-    CHAR8 level;
+  CHAR8 initialized : 1;
+  CHAR8 stdout_enabled;
+  CHAR8 file_enabled;
+  CHAR8 level;
 };
 enum
 {
-    LOGGER_OFF = 0,
-    LOG_ERROR = 1,
-    LOG_WARNING = 2,
-    LOG_INFO = 3,
-    LOG_VERBOSE = 4,
+  LOGGER_OFF = 0,
+  LOG_ERROR = 1,
+  LOG_WARNING = 2,
+  LOG_INFO = 3,
+  LOG_VERBOSE = 4,
 } LOG_LEVEL_LIST;
 
 #define INI_PREFERENCES_LOG_LEVEL L"DBG_LOG_LEVEL"
@@ -78,32 +110,545 @@ enum
 */
 static struct debug_logger_config g_log_config = { 0 };
 
+EFI_STATUS
+passthru_playback(
+  IN OUT FW_CMD *pCmd
+)
+{
+  if (!PLAYBACK_ENABLED())
+  {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (NULL == pCmd)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  FILE *f_passthru_ptr = NULL;
+
+  pass_thru_record_req pt_rec_req;
+  pass_thru_record_resp pt_rec_resp;
+  errno_t open_result = fopen_s(&f_passthru_ptr, REC_FILE_PASSTHRU, "rb");
+  if (0 != open_result)
+  {
+    NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PASSTHRU);
+    return EFI_END_OF_FILE;
+  }
+
+  if (0 != fseek(f_passthru_ptr, g_pass_thru_playback_offset, SEEK_SET))
+  {
+    NVDIMM_ERR("Failed seeking into playback file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (1 != fread(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr))
+  {
+    NVDIMM_ERR("Failed to read the request packet from the recording file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (0 != fseek(f_passthru_ptr, pt_rec_req.InputPayloadSize, SEEK_CUR))
+  {
+    NVDIMM_ERR("Failed seeking into playback file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (1 != fread(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
+  {
+    NVDIMM_ERR("Failed to read the response packet from the recording file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (0 == pt_rec_resp.OutputPayloadSize)
+  {
+    NVDIMM_ERR("Payload size is reporting 0 in the recording file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (pt_rec_resp.OutputPayloadSize > IN_PAYLOAD_SIZE)
+  {
+    pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputPayloadSize;
+    if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to read the LargeOutputPayload from the recording file\n");
+      return EFI_END_OF_FILE;
+    }
+  }
+  else
+  {
+    pCmd->OutputPayloadSize = pt_rec_resp.OutputPayloadSize;
+    if (1 != fread(pCmd->OutPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to read the OutputPayload from the recording file\n");
+      return EFI_END_OF_FILE;
+    }
+  }
+  g_pass_thru_playback_offset = ftell(f_passthru_ptr);
+  fclose(f_passthru_ptr);
+  INC_PASS_THRU_CNT();
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+passthru_record_setup(
+  FILE **f_passthru_ptr,
+  IN OUT FW_CMD *pCmd
+)
+{
+
+  if (!RECORD_ENABLED())
+  {
+    NVDIMM_ERR("Recording mode not enabled. \n");
+    return EFI_UNSUPPORTED;
+  }
+
+  if (NULL == f_passthru_ptr || NULL == pCmd)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (APPEND_RECORDING())
+  {
+    errno_t open_result = fopen_s(f_passthru_ptr, REC_FILE_PASSTHRU, "ab");
+    if (0 != open_result)
+    {
+      NVDIMM_ERR("Failed to open the following recording file in append mode: %s\n", REC_FILE_PASSTHRU);
+      return EFI_END_OF_FILE;
+    }
+  }
+  else
+  {
+    errno_t open_result = fopen_s(f_passthru_ptr, REC_FILE_PASSTHRU, "wb");
+    if (0 != open_result)
+    {
+      NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PASSTHRU);
+      return EFI_END_OF_FILE;
+    }
+  }
+
+  if (0 != fseek(*f_passthru_ptr, 0, SEEK_END))
+  {
+    NVDIMM_ERR("Failed seeking into playback file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+passthru_record_finalize(
+  FILE *f_passthru_ptr,
+  IN OUT FW_CMD *pCmd,
+  UINT32 DimmID
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+
+  if (!RECORD_ENABLED())
+  {
+    NVDIMM_ERR("Recording mode not enabled. \n");
+    return EFI_UNSUPPORTED;
+  }
+
+  if (NULL == f_passthru_ptr || NULL == pCmd)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  pass_thru_record_req pt_rec_req;
+  pt_rec_req.DimmId = DimmID;
+  pt_rec_req.Opcode = pCmd->Opcode;
+  pt_rec_req.SubOpcode = pCmd->SubOpcode;
+  pt_rec_req.InputPayloadSize = pCmd->InputPayloadSize + pCmd->LargeInputPayloadSize;
+
+  size_t bytes_written = 0;
+  bytes_written = fwrite(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr);
+  if (1 != bytes_written)
+  {
+    NVDIMM_ERR("Failed to write the request packet to the recording file\n");
+    return EFI_END_OF_FILE;
+  }
+
+  if (pCmd->InputPayloadSize)
+  {
+    if (1 != fwrite(pCmd->InputPayload, pCmd->InputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to write the input payload to the recording file \n");
+      return EFI_END_OF_FILE;
+    }
+  }
+  else if (pCmd->LargeInputPayloadSize)
+  {
+    if (1 != fwrite(pCmd->LargeInputPayload, pCmd->LargeInputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to write the large input payload to the recording file \n");
+      return EFI_END_OF_FILE;
+    }
+  }
+
+  pass_thru_record_resp pt_rec_resp;
+  pt_rec_resp.DimmId = DimmID;
+  pt_rec_resp.Status = pCmd->Status;
+  pt_rec_resp.OutputPayloadSize = pCmd->OutputPayloadSize + pCmd->LargeOutputPayloadSize;
+  if (1 != fwrite(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
+  {
+    NVDIMM_ERR("Failed to write the response payload to the recording file \n");
+    return EFI_END_OF_FILE;
+  }
+  if (pCmd->OutputPayloadSize)
+  {
+    if (1 != fwrite(pCmd->OutPayload, pCmd->OutputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to write the outpayload to the recording file \n");
+      return EFI_END_OF_FILE;
+    }
+  }
+  else if (pCmd->LargeOutputPayloadSize)
+  {
+    if (1 != fwrite(pCmd->LargeOutputPayload, pCmd->LargeOutputPayloadSize, 1, f_passthru_ptr))
+    {
+      NVDIMM_ERR("Failed to write the large outpayload to the recording file \n");
+      return EFI_END_OF_FILE;
+    }
+  }
+  fflush(f_passthru_ptr);
+  fclose(f_passthru_ptr);
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+PassThru(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     UINT64 Timeout
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+  EFI_STATUS RecordRc = EFI_SUCCESS;
+  UINT32 ReturnCode;
+  UINT32 DimmID;
+  FILE *f_passthru_ptr = NULL;
+
+  if (!pDimm || !pCmd)
+    return EFI_INVALID_PARAMETER;
+
+  if (PLAYBACK_ENABLED())
+  {
+    return passthru_playback(pCmd);
+  }
+
+  if (RECORD_ENABLED())
+  {
+    RecordRc = passthru_record_setup(&f_passthru_ptr, pCmd);
+    if (EFI_SUCCESS != RecordRc)
+    {
+      return RecordRc;
+    }
+  }
+
+  DimmID = pCmd->DimmID;
+  pCmd->DimmID = pDimm->DeviceHandle.AsUint32;
+  Rc = passthru_os(pDimm, pCmd, Timeout);
+  INC_PASS_THRU_CNT();
+  pCmd->DimmID = DimmID;
+
+  if (RECORD_ENABLED())
+  {
+    RecordRc = passthru_record_finalize(f_passthru_ptr, pCmd, DimmID);
+    if (EFI_SUCCESS != Rc)
+    {
+      return RecordRc;
+    }
+  }
+
+  return Rc;
+}
+
+EFI_STATUS
+save_table_to_file(
+  char* destFile,
+  EFI_ACPI_DESCRIPTION_HEADER *table
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+  FILE* f_ptr;
+  errno_t open_result = fopen_s(&f_ptr, destFile, "w+b");
+  if (0 != open_result)
+  {
+    return EFI_END_OF_FILE;
+  }
+
+  if (table && 1 != fwrite(table, table->Length, 1, f_ptr))
+  {
+    Rc = EFI_END_OF_FILE;
+  }
+
+  fclose(f_ptr);
+  return Rc;
+}
+
+
+EFI_STATUS
+load_table_from_file(
+  char* sourceFile,
+  EFI_ACPI_DESCRIPTION_HEADER ** table
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+  UINT32 size;
+  FILE* f_ptr;
+
+  *table = NULL;
+  errno_t open_result = fopen_s(&f_ptr, sourceFile, "rb");
+  if (0 != open_result)
+  {
+    Rc = EFI_END_OF_FILE;
+    return Rc;
+  }
+
+  fseek(f_ptr, 0, SEEK_END);
+  size = ftell(f_ptr);
+  fseek(f_ptr, 0, SEEK_SET);  //same as rewind(f);
+  if (!size)
+  {
+    Rc = EFI_END_OF_FILE;
+  }
+  else
+  {
+    *table = AllocatePool(size);
+    if (!*table)
+    {
+      Rc = EFI_OUT_OF_RESOURCES;
+    }
+    else {
+      if (1 != fread(*table, size, 1, f_ptr))
+      {
+        Rc = EFI_END_OF_FILE;
+      }
+    }
+  }
+
+  fclose(f_ptr);
+  return Rc;
+}
+
+EFI_STATUS
+initAcpiTables()
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_ACPI_DESCRIPTION_HEADER * PtrNfitTable = NULL;
+  EFI_ACPI_DESCRIPTION_HEADER * PtrPcatTable = NULL;
+  EFI_ACPI_DESCRIPTION_HEADER * PtrPMTTTable = NULL;
+  UINT32 failures = 0;
+
+  if (PLAYBACK_ENABLED())
+  {
+    if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_NFIT, &PtrNfitTable)))
+    {
+      Print(L"Failed to load the NFIT table from the record file.\n");
+      failures++;
+    }
+
+    if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PCAT, &PtrPcatTable)))
+    {
+      Print(L"Failed to load the PCAT table from the record file.\n");
+      failures++;
+    }
+
+    if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PMTT, &PtrPMTTTable)))
+    {
+      //Print(L"Failed to load the PMTT table from the record file.\n");
+      //failures++;
+    }
+  }
+  else
+  {
+    if (EFI_ERROR(get_nfit_table(&PtrNfitTable)))
+    {
+      Print(L"Failed to get the NFIT table.\n");
+      failures++;
+    }
+    if (EFI_ERROR(get_pcat_table(&PtrPcatTable)))
+    {
+      Print(L"Failed to get the PCAT table.\n");
+      failures++;
+    }
+    if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable)))
+    {
+      //Print(L"Failed to get the PMTT table.\n");
+      //failures++;
+    }
+
+    if (RECORD_ENABLED())
+    {
+      if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_NFIT, PtrNfitTable)))
+      {
+        Print(L"Failed to save the NFIT table to the record file.\n");
+        failures++;
+      }
+      if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PCAT, PtrPcatTable)))
+      {
+        Print(L"Failed to save the PCAT table to the record file.\n");
+        failures++;
+      }
+      if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PMTT, PtrPMTTTable)))
+      {
+        //Print(L"Failed to save the PMTT table to the record file.\n");
+        //failures++;
+      }
+    }
+  }
+
+  if (failures > 0)
+  {
+    Print(L"Encountered %d failures.\n", failures);
+    NVDIMM_WARN("Encountered %d failures.", failures);
+    return EFI_NOT_FOUND;
+  }
+
+  if (NULL == &PtrNfitTable || NULL == &PtrPcatTable)
+  {
+    NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
+    return EFI_NOT_FOUND;
+  }
+  else
+  {
+    ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,
+      &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
+    if (EFI_ERROR(ReturnCode))
+    {
+      NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
+      return EFI_NOT_FOUND;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+uninitAcpiTables(
+)
+{
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
+  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPMTTTble);
+  return EFI_SUCCESS;
+}
+
+VOID
+GetFirstAndBoundSmBiosStructPointer(
+  OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
+  OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
+  OUT SMBIOS_VERSION *pSmbiosVersion
+)
+{
+  int rc = 0;
+  FILE *f_ptr;
+  smbios_table_recording recording;
+
+  if (pSmBiosStruct == NULL || pLastSmBiosStruct == NULL || pSmbiosVersion == NULL) {
+    return;
+  }
+
+  // One time initialization
+  if (NULL == gSmbiosTable && !PLAYBACK_ENABLED())
+  {
+    rc = get_smbios_table();
+  }
+
+  if (RECORD_ENABLED())
+  {
+    recording.major = gSmbiosMajorVersion;
+    recording.minor = gSmbiosMinorVersion;
+    recording.size = gSmbiosTableSize;
+
+    errno_t open_result = fopen_s(&f_ptr, REC_FILE_SMBIOS, "w+b");
+    if (0 == open_result && NULL != gSmbiosTable)
+    {
+      if (1 != fwrite(&recording, sizeof(smbios_table_recording), 1, f_ptr))
+      {
+        NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_SMBIOS);
+      }
+      if (1 != fwrite(gSmbiosTable, gSmbiosTableSize, 1, f_ptr))
+      {
+        NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_SMBIOS);
+      }
+      fclose(f_ptr);
+    }
+  }
+  else if (PLAYBACK_ENABLED())
+  {
+    errno_t open_result = fopen_s(&f_ptr, REC_FILE_SMBIOS, "rb");
+    if (0 == open_result && NULL != gSmbiosTable)
+    {
+      if (1 != fread(&recording, sizeof(smbios_table_recording), 1, f_ptr))
+      {
+        NVDIMM_ERR("Failed to read from recording file: %s\n", REC_FILE_SMBIOS);
+      }
+
+      if (0 == recording.size)
+      {
+        NVDIMM_ERR("SMBIOS table in file %s reports size of 0.\n", REC_FILE_SMBIOS);
+      }
+      else 
+      {
+        gSmbiosTable = calloc(1, recording.size);
+        size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
+        if (bytesRead != recording.size)
+        {
+          NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_SMBIOS, bytesRead, recording.size);
+        }
+        else
+        {
+          pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
+          pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + recording.size;
+          pSmbiosVersion->Major = recording.major;
+          pSmbiosVersion->Minor = recording.minor;
+        }
+      }
+
+      fclose(f_ptr);
+    }
+  }
+
+  if (!PLAYBACK_ENABLED() && NVM_SUCCESS == rc)
+  {
+    pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
+    pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + gSmbiosTableSize;
+    pSmbiosVersion->Major = gSmbiosMajorVersion;
+    pSmbiosVersion->Minor = gSmbiosMinorVersion;
+  }
+}
+
 /*
 * Function get the ini configuration only on the first call
 */
 static void get_logger_config(struct debug_logger_config *p_log_config)
 {
-    EFI_STATUS efi_status;
-    EFI_GUID guid = { 0 };
-    UINTN size;
+  EFI_STATUS efi_status;
+  EFI_GUID guid = { 0 };
+  UINTN size;
 
-    if (p_log_config->initialized)
-        return;
+  if (p_log_config->initialized)
+    return;
 
-    size = sizeof(p_log_config->level);
-    efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_LEVEL, guid, &size, &p_log_config->level);
-    if (EFI_SUCCESS != efi_status)
-        return;
-    size = sizeof(p_log_config->stdout_enabled);
-    efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_STDOUT_ENABLED, guid, &size, &p_log_config->stdout_enabled);
-    if (EFI_SUCCESS != efi_status)
-        return;
-    size = sizeof(p_log_config->file_enabled);
-    efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_DEBUG_FILE_ENABLED, guid, &size, &p_log_config->file_enabled);
-    if (EFI_SUCCESS != efi_status)
-        return;
+  size = sizeof(p_log_config->level);
+  efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_LEVEL, guid, &size, &p_log_config->level);
+  if (EFI_SUCCESS != efi_status)
+    return;
+  size = sizeof(p_log_config->stdout_enabled);
+  efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_STDOUT_ENABLED, guid, &size, &p_log_config->stdout_enabled);
+  if (EFI_SUCCESS != efi_status)
+    return;
+  size = sizeof(p_log_config->file_enabled);
+  efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_DEBUG_FILE_ENABLED, guid, &size, &p_log_config->file_enabled);
+  if (EFI_SUCCESS != efi_status)
+    return;
 
-    p_log_config->initialized = TRUE;
+  p_log_config->initialized = TRUE;
 }
 
 /*
@@ -112,30 +657,49 @@ static void get_logger_config(struct debug_logger_config *p_log_config)
 int
 EFIAPI
 DebugLoggerEnable(
-    IN  BOOLEAN EnableDbgLogger
+  IN  BOOLEAN EnableDbgLogger
 )
 {
-    if (FALSE == g_log_config.initialized)
-    {
-        return -1;
-    }
+  if (FALSE == g_log_config.initialized)
+  {
+    return -1;
+  }
 
-    if (EnableDbgLogger)
-    {
-        if (FALSE == g_log_config.file_enabled)
-            g_log_config.file_enabled = TRUE;
-        if (LOGGER_OFF == g_log_config.level)
-            g_log_config.level = LOG_WARNING;
-    }
-    else
-    {
-        if (TRUE == g_log_config.file_enabled)
-            g_log_config.file_enabled = FALSE;
-        if (TRUE == g_log_config.stdout_enabled)
-            g_log_config.stdout_enabled = FALSE;
-    }
+  if (EnableDbgLogger)
+  {
+    if (FALSE == g_log_config.file_enabled)
+      g_log_config.file_enabled = TRUE;
+    if (LOGGER_OFF == g_log_config.level)
+      g_log_config.level = LOG_WARNING;
+  }
+  else
+  {
+    if (TRUE == g_log_config.file_enabled)
+      g_log_config.file_enabled = FALSE;
+    if (TRUE == g_log_config.stdout_enabled)
+      g_log_config.stdout_enabled = FALSE;
+  }
 
-    return 0;
+  return 0;
+}
+
+/*
+* Function returns the current state of the debug logger
+*/
+BOOLEAN
+EFIAPI
+IsDebugLoggerEnabled()
+{
+  if (FALSE == g_log_config.initialized) {
+    return FALSE;
+  }
+  if (LOGGER_OFF != g_log_config.level) {
+    if ((TRUE == g_log_config.file_enabled) ||
+      (TRUE == g_log_config.stdout_enabled)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
@@ -156,38 +720,38 @@ based on the format string specified by Format.
 VOID
 EFIAPI
 DebugPrint(
-	IN  UINTN        ErrorLevel,
-	IN  CONST CHAR8  *Format,
-	...
+  IN  UINTN        ErrorLevel,
+  IN  CONST CHAR8  *Format,
+  ...
 )
 {
-    VA_LIST args;
-    static unsigned int event_type_common = 0;
-    NVM_EVENT_MSG event_message;
-    UINT32 size = sizeof(event_message);
+  VA_LIST args;
+  static unsigned int event_type_common = 0;
+  NVM_EVENT_MSG event_message;
+  UINT32 size = sizeof(event_message);
 
-    if (FALSE == g_log_config.initialized)
-    {
-        get_logger_config(&g_log_config);
-        if (g_log_config.file_enabled)
-            event_type_common |= SYSTEM_EVENT_TYPE_SYSLOG_FILE_SET(TRUE);
-        if (g_log_config.stdout_enabled)
-            event_type_common |= SYSTEM_EVENT_TYPE_SOUT_SET(TRUE);
-        event_type_common |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_TYPE_DEBUG);
-    }
-    if (LOGGER_OFF == g_log_config.level)
-        return;
-    if (((LOG_ERROR == g_log_config.level) & (ErrorLevel == OS_DEBUG_ERROR)) ||
-        ((LOG_WARNING == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN))) ||
-        ((LOG_INFO == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN) || (ErrorLevel == OS_DEBUG_INFO))) ||
-        (LOG_VERBOSE == g_log_config.level))
-    {
-        // Send the debug entry to the logger
-        VA_START(args, Format);
-        AsciiVSPrint(event_message, size, Format, args);
-        VA_END(args);
-        nvm_store_system_entry(NVM_DEBUG_LOGGER_SOURCE, event_type_common, NULL, event_message);
-    }
+  if (FALSE == g_log_config.initialized)
+  {
+    get_logger_config(&g_log_config);
+    if (g_log_config.file_enabled)
+      event_type_common |= SYSTEM_EVENT_TYPE_SYSLOG_FILE_SET(TRUE);
+    if (g_log_config.stdout_enabled)
+      event_type_common |= SYSTEM_EVENT_TYPE_SOUT_SET(TRUE);
+    event_type_common |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_TYPE_DEBUG);
+  }
+  if (LOGGER_OFF == g_log_config.level)
+    return;
+  if (((LOG_ERROR == g_log_config.level) & (ErrorLevel == OS_DEBUG_ERROR)) ||
+    ((LOG_WARNING == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN))) ||
+    ((LOG_INFO == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN) || (ErrorLevel == OS_DEBUG_INFO))) ||
+    (LOG_VERBOSE == g_log_config.level))
+  {
+    // Send the debug entry to the logger
+    VA_START(args, Format);
+    AsciiVSPrint(event_message, size, Format, args);
+    VA_END(args);
+    nvm_store_system_entry(NVM_DEBUG_LOGGER_SOURCE, event_type_common, NULL, event_message);
+  }
 }
 
 /**
@@ -225,20 +789,20 @@ Null-terminator.
 UINTN
 EFIAPI
 AsciiVSPrint(
-    OUT CHAR8         *StartOfBuffer,
-    IN  UINTN         BufferSize,
-    IN  CONST CHAR8   *FormatString,
-    IN  VA_LIST       Marker
+  OUT CHAR8         *StartOfBuffer,
+  IN  UINTN         BufferSize,
+  IN  CONST CHAR8   *FormatString,
+  IN  VA_LIST       Marker
 )
 {
-   if(0 == BufferSize)
+  if (0 == BufferSize)
     return BufferSize;
 
   return vsnprintf_s(StartOfBuffer, BufferSize
 #ifdef _MSC_VER 
-        ,BufferSize-1 
+    , BufferSize - 1
 #endif
-        , FormatString, Marker);
+    , FormatString, Marker);
 }
 
 /**
@@ -264,28 +828,28 @@ on the format string specified by Format.
 UINTN
 EFIAPI
 Print(
-	IN CONST CHAR16  *Format,
-	...
+  IN CONST CHAR16  *Format,
+  ...
 )
 {
-	va_list argptr;
-	va_start(argptr, Format);
-	vfwprintf(gOsShellParametersProtocol.StdOut, Format, argptr);
-	va_end(argptr);
-	fflush(gOsShellParametersProtocol.StdOut);
-	return 0;
+  va_list argptr;
+  va_start(argptr, Format);
+  vfwprintf(gOsShellParametersProtocol.StdOut, Format, argptr);
+  va_end(argptr);
+  fflush(gOsShellParametersProtocol.StdOut);
+  return 0;
 }
 
 UINTN
 EFIAPI
 PrintNoBuffer(CHAR16* Format, ...)
 {
-   va_list argptr;
-   va_start(argptr, Format);
-   vfwprintf(stdout, Format, argptr);
-   va_end(argptr);
-   fflush(stdout);
-   return 0;
+  va_list argptr;
+  va_start(argptr, Format);
+  vfwprintf(stdout, Format, argptr);
+  va_end(argptr);
+  fflush(stdout);
+  return 0;
 }
 /**
 Frees a buffer that was previously allocated with one of the pool allocation functions in the
@@ -304,10 +868,10 @@ then ASSERT().
 VOID
 EFIAPI
 FreePool(
-	IN VOID   *Buffer
+  IN VOID   *Buffer
 )
 {
-	if (Buffer)free(Buffer);
+  if (Buffer)free(Buffer);
 }
 
 /**
@@ -327,12 +891,12 @@ If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
 VOID *
 EFIAPI
 ZeroMem(
-	OUT VOID  *Buffer,
-	IN UINTN  Length
+  OUT VOID  *Buffer,
+  IN UINTN  Length
 )
 {
-	memset(Buffer, 0, Length);
-	return Buffer;
+  memset(Buffer, 0, Length);
+  return Buffer;
 }
 
 /**
@@ -347,7 +911,7 @@ If HiiHandle is not a valid EFI_HII_HANDLE in the HII database, then ASSERT().
 VOID
 EFIAPI
 HiiRemovePackages(
-	IN      EFI_HII_HANDLE      HiiHandle
+  IN      EFI_HII_HANDLE      HiiHandle
 )
 {
 }
@@ -372,14 +936,16 @@ If Length is greater than (MAX_ADDRESS - SourceBuffer + 1), then ASSERT().
 VOID *
 EFIAPI
 CopyMem(
-	OUT VOID       *DestinationBuffer,
-	IN CONST VOID  *SourceBuffer,
-	IN UINTN       Length
+  OUT VOID       *DestinationBuffer,
+  IN CONST VOID  *SourceBuffer,
+  IN UINTN       Length
 )
 {
-	memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
-	return DestinationBuffer;
+  memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
+  return DestinationBuffer;
 }
+
+
 
 /**
 Compares the contents of two buffers.
@@ -406,12 +972,12 @@ mismatched byte in DestinationBuffer.
 INTN
 EFIAPI
 CompareMem(
-	IN CONST VOID  *DestinationBuffer,
-	IN CONST VOID  *SourceBuffer,
-	IN UINTN       Length
+  IN CONST VOID  *DestinationBuffer,
+  IN CONST VOID  *SourceBuffer,
+  IN UINTN       Length
 )
 {
-	return memcmp(DestinationBuffer, SourceBuffer, Length);
+  return memcmp(DestinationBuffer, SourceBuffer, Length);
 }
 
 /**
@@ -433,16 +999,16 @@ If Guid2 is NULL, then ASSERT().
 BOOLEAN
 EFIAPI
 CompareGuid(
-	IN CONST GUID  *Guid1,
-	IN CONST GUID  *Guid2
+  IN CONST GUID  *Guid1,
+  IN CONST GUID  *Guid2
 )
 {
-	if (Guid1->Data1 == Guid2->Data1 &&
-		Guid1->Data2 == Guid2->Data2 &&
-		Guid1->Data3 == Guid2->Data3 &&
-		0 == memcmp(Guid1->Data4, Guid2->Data4, 8))
-		return TRUE;
-	return FALSE;
+  if (Guid1->Data1 == Guid2->Data1 &&
+    Guid1->Data2 == Guid2->Data2 &&
+    Guid1->Data3 == Guid2->Data3 &&
+    0 == memcmp(Guid1->Data4, Guid2->Data4, 8))
+    return TRUE;
+  return FALSE;
 }
 
 /**
@@ -463,19 +1029,19 @@ If SourceGuid is NULL, then ASSERT().
 GUID *
 EFIAPI
 CopyGuid(
-    OUT GUID       *DestinationGuid,
-    IN CONST GUID  *SourceGuid
+  OUT GUID       *DestinationGuid,
+  IN CONST GUID  *SourceGuid
 )
 {
-    WriteUnaligned64(
-        (UINT64*)DestinationGuid,
-        ReadUnaligned64((CONST UINT64*)SourceGuid)
-    );
-    WriteUnaligned64(
-        (UINT64*)DestinationGuid + 1,
-        ReadUnaligned64((CONST UINT64*)SourceGuid + 1)
-    );
-    return DestinationGuid;
+  WriteUnaligned64(
+    (UINT64*)DestinationGuid,
+    ReadUnaligned64((CONST UINT64*)SourceGuid)
+  );
+  WriteUnaligned64(
+    (UINT64*)DestinationGuid + 1,
+    ReadUnaligned64((CONST UINT64*)SourceGuid + 1)
+  );
+  return DestinationGuid;
 }
 
 /**
@@ -505,17 +1071,17 @@ the HII Database.
 EFI_STRING
 EFIAPI
 HiiGetString(
-	IN EFI_HII_HANDLE  HiiHandle,
-	IN EFI_STRING_ID   StringId,
-	IN CONST CHAR8     *Language  OPTIONAL
+  IN EFI_HII_HANDLE  HiiHandle,
+  IN EFI_STRING_ID   StringId,
+  IN CONST CHAR8     *Language  OPTIONAL
 )
 {
-	UINTN str_size = StrSize(gHiiStrings[StringId]);
-	CHAR16 * str = (CHAR16*)AllocatePool(str_size);
-    if (NULL != str) {
-        CopyMem_S(str, str_size, gHiiStrings[StringId], str_size);
-    }
-	return str;
+  UINTN str_size = StrSize(gHiiStrings[StringId]);
+  CHAR16 * str = (CHAR16*)AllocatePool(str_size);
+  if (NULL != str) {
+    CopyMem_S(str, str_size, gHiiStrings[StringId], str_size);
+  }
+  return str;
 }
 
 /**
@@ -544,12 +1110,12 @@ specified by DriverBindingHandle.
 EFI_STATUS
 EFIAPI
 EfiTestManagedDevice(
-	IN CONST EFI_HANDLE       ControllerHandle,
-	IN CONST EFI_HANDLE       DriverBindingHandle,
-	IN CONST EFI_GUID         *ProtocolGuid
+  IN CONST EFI_HANDLE       ControllerHandle,
+  IN CONST EFI_HANDLE       DriverBindingHandle,
+  IN CONST EFI_GUID         *ProtocolGuid
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -576,46 +1142,46 @@ string appended to String.
 CHAR16*
 EFIAPI
 CatVSPrint(
-	IN  CHAR16  *String, OPTIONAL
-	IN  CONST CHAR16  *FormatString,
-	IN  VA_LIST       Marker
+  IN  CHAR16  *String, OPTIONAL
+  IN  CONST CHAR16  *FormatString,
+  IN  VA_LIST       Marker
 )
 {
-	INT32   CharactersRequired;
-	UINTN   SizeRequired;
-	CHAR16  *BufferToReturn;
-	VA_LIST ExtraMarker;
+  INT32   CharactersRequired;
+  UINTN   SizeRequired;
+  CHAR16  *BufferToReturn;
+  VA_LIST ExtraMarker;
 
-	VA_COPY(ExtraMarker, Marker);
-	static const int nBuffSize = 8192;
-	static wchar_t evalBuff[8192];
-	CharactersRequired = vswprintf_s(evalBuff, nBuffSize, FormatString, ExtraMarker);
-	if (CharactersRequired > nBuffSize)
-		return NULL;
+  VA_COPY(ExtraMarker, Marker);
+  static const int nBuffSize = 8192;
+  static wchar_t evalBuff[8192];
+  CharactersRequired = vswprintf_s(evalBuff, nBuffSize, FormatString, ExtraMarker);
+  if (CharactersRequired > nBuffSize)
+    return NULL;
 
-	VA_END(ExtraMarker);
+  VA_END(ExtraMarker);
 
-	if (String != NULL) {
-		SizeRequired = StrSize(String) + (CharactersRequired * sizeof(CHAR16));
-	}
-	else {
-		SizeRequired = sizeof(CHAR16) + (CharactersRequired * sizeof(CHAR16));
-	}
+  if (String != NULL) {
+    SizeRequired = StrSize(String) + (CharactersRequired * sizeof(CHAR16));
+  }
+  else {
+    SizeRequired = sizeof(CHAR16) + (CharactersRequired * sizeof(CHAR16));
+  }
 
-	BufferToReturn = AllocateZeroPool(SizeRequired);
+  BufferToReturn = AllocateZeroPool(SizeRequired);
 
-	if (BufferToReturn == NULL) {
-		return NULL;
-	}
+  if (BufferToReturn == NULL) {
+    return NULL;
+  }
 
-	if (String != NULL) {
+  if (String != NULL) {
     wcscpy_s(BufferToReturn, SizeRequired / sizeof(CHAR16), String);
-	}
-	vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
+  }
+  vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
 
-	ASSERT(StrSize(BufferToReturn) == SizeRequired);
+  ASSERT(StrSize(BufferToReturn) == SizeRequired);
 
-	return (BufferToReturn);
+  return (BufferToReturn);
 }
 
 /**
@@ -644,18 +1210,18 @@ string appended to String.
 CHAR16 *
 EFIAPI
 CatSPrint(
-	IN  CHAR16  *String, OPTIONAL
-	IN  CONST CHAR16  *FormatString,
-	...
+  IN  CHAR16  *String, OPTIONAL
+  IN  CONST CHAR16  *FormatString,
+  ...
 )
 {
-	VA_LIST   Marker;
-	CHAR16    *NewString;
+  VA_LIST   Marker;
+  CHAR16    *NewString;
 
-	VA_START(Marker, FormatString);
-	NewString = CatVSPrint(String, FormatString, Marker);
-	VA_END(Marker);
-	return NewString;
+  VA_START(Marker, FormatString);
+  NewString = CatVSPrint(String, FormatString, Marker);
+  VA_END(Marker);
+  return NewString;
 }
 
 /**
@@ -673,10 +1239,10 @@ returned.  If there is not enough memory remaining to satisfy the request, then 
 VOID *
 EFIAPI
 AllocatePool(
-	IN UINTN  AllocationSize
+  IN UINTN  AllocationSize
 )
 {
-	return malloc(AllocationSize);
+  return malloc(AllocationSize);
 }
 
 /**
@@ -695,10 +1261,10 @@ request, then NULL is returned.
 VOID *
 EFIAPI
 AllocateZeroPool(
-	IN UINTN  AllocationSize
+  IN UINTN  AllocationSize
 )
 {
-	return calloc(AllocationSize, 1);
+  return calloc(AllocationSize, 1);
 }
 
 /**
@@ -721,15 +1287,15 @@ If AllocationSize is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
 VOID *
 EFIAPI
 AllocateCopyPool(
-    IN UINTN       AllocationSize,
-    IN CONST VOID  *Buffer
+  IN UINTN       AllocationSize,
+  IN CONST VOID  *Buffer
 )
 {
-    void * ptr = calloc(AllocationSize, 1);
-    if (NULL != ptr) {
-        memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
-    }
-    return ptr;
+  void * ptr = calloc(AllocationSize, 1);
+  if (NULL != ptr) {
+    memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
+  }
+  return ptr;
 }
 
 /**
@@ -756,12 +1322,12 @@ parameter that may be NULL.
 VOID *
 EFIAPI
 ReallocatePool(
-	IN UINTN  OldSize,
-	IN UINTN  NewSize,
-	IN VOID   *OldBuffer  OPTIONAL
+  IN UINTN  OldSize,
+  IN UINTN  NewSize,
+  IN VOID   *OldBuffer  OPTIONAL
 )
 {
-	return realloc(OldBuffer, NewSize);
+  return realloc(OldBuffer, NewSize);
 }
 
 /**
@@ -799,78 +1365,78 @@ all are appended.
 CHAR16*
 EFIAPI
 StrnCatGrow(
-	IN OUT CHAR16           **Destination,
-	IN OUT UINTN            *CurrentSize,
-	IN     CONST CHAR16     *Source,
-	IN     UINTN            Count
+  IN OUT CHAR16           **Destination,
+  IN OUT UINTN            *CurrentSize,
+  IN     CONST CHAR16     *Source,
+  IN     UINTN            Count
 )
 {
-	UINTN DestinationStartSize;
-	UINTN NewSize;
+  UINTN DestinationStartSize;
+  UINTN NewSize;
 
-	//
-	// ASSERTs
-	//
-	ASSERT(Destination != NULL);
+  //
+  // ASSERTs
+  //
+  ASSERT(Destination != NULL);
 
-	//
-	// If there's nothing to do then just return Destination
-	//
-	if (Source == NULL) {
-		return (*Destination);
-	}
+  //
+  // If there's nothing to do then just return Destination
+  //
+  if (Source == NULL) {
+    return (*Destination);
+  }
 
-	//
-	// allow for un-initialized pointers, based on size being 0
-	//
-	if (CurrentSize != NULL && *CurrentSize == 0) {
-		*Destination = NULL;
-	}
+  //
+  // allow for un-initialized pointers, based on size being 0
+  //
+  if (CurrentSize != NULL && *CurrentSize == 0) {
+    *Destination = NULL;
+  }
 
-	//
-	// allow for NULL pointers address as Destination
-	//
-	if (*Destination != NULL) {
-		ASSERT(CurrentSize != 0);
-		DestinationStartSize = StrSize(*Destination);
-		ASSERT(DestinationStartSize <= *CurrentSize);
-	}
-	else {
-		DestinationStartSize = 0;
-		//    ASSERT(*CurrentSize == 0);
-	}
+  //
+  // allow for NULL pointers address as Destination
+  //
+  if (*Destination != NULL) {
+    ASSERT(CurrentSize != 0);
+    DestinationStartSize = StrSize(*Destination);
+    ASSERT(DestinationStartSize <= *CurrentSize);
+  }
+  else {
+    DestinationStartSize = 0;
+    //    ASSERT(*CurrentSize == 0);
+  }
 
-	//
-	// Append all of Source?
-	//
-	if (Count == 0) {
-		Count = StrLen(Source);
-	}
+  //
+  // Append all of Source?
+  //
+  if (Count == 0) {
+    Count = StrLen(Source);
+  }
 
-	//
-	// Test and grow if required
-	//
-	if (CurrentSize != NULL) {
-		NewSize = *CurrentSize;
-		if (NewSize < DestinationStartSize + (Count * sizeof(CHAR16))) {
-			while (NewSize < (DestinationStartSize + (Count * sizeof(CHAR16)))) {
-				NewSize += 2 * Count * sizeof(CHAR16);
-			}
-			*Destination = ReallocatePool(*CurrentSize, NewSize, *Destination);
-			*CurrentSize = NewSize;
-		}
-	}
-	else {
-		*Destination = AllocateZeroPool((Count + 1) * sizeof(CHAR16));
-	}
+  //
+  // Test and grow if required
+  //
+  if (CurrentSize != NULL) {
+    NewSize = *CurrentSize;
+    if (NewSize < DestinationStartSize + (Count * sizeof(CHAR16))) {
+      while (NewSize < (DestinationStartSize + (Count * sizeof(CHAR16)))) {
+        NewSize += 2 * Count * sizeof(CHAR16);
+      }
+      *Destination = ReallocatePool(*CurrentSize, NewSize, *Destination);
+      *CurrentSize = NewSize;
+    }
+  }
+  else {
+    *Destination = AllocateZeroPool((Count + 1) * sizeof(CHAR16));
+  }
 
-	//
-	// Now use standard StrnCat on a big enough buffer
-	//
-	if (*Destination == NULL) {
-		return (NULL);
-	}
-	return StrnCat(*Destination, Source, Count);
+  //
+  // Now use standard StrnCat on a big enough buffer
+  //
+  if (*Destination == NULL) {
+    return (NULL);
+  }
+  return StrnCat(*Destination, Source, Count);
 }
 
 /**
@@ -890,13 +1456,13 @@ If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
 VOID *
 EFIAPI
 SetMem(
-	OUT VOID  *Buffer,
-	IN UINTN  Length,
-	IN UINT8  Value
+  OUT VOID  *Buffer,
+  IN UINTN  Length,
+  IN UINT8  Value
 )
 {
-	memset(Buffer, Value, Length);
-	return Buffer;
+  memset(Buffer, Value, Length);
+  return Buffer;
 }
 
 /**
@@ -923,9 +1489,9 @@ If Description is NULL, then a <Description> string of "(NULL) Description" is p
 VOID
 EFIAPI
 DebugAssert(
-	IN CONST CHAR8  *FileName,
-	IN UINTN        LineNumber,
-	IN CONST CHAR8  *Description
+  IN CONST CHAR8  *FileName,
+  IN UINTN        LineNumber,
+  IN CONST CHAR8  *Description
 )
 {
 }
@@ -943,10 +1509,10 @@ PcdDebugProperyMask is set.  Otherwise FALSE is returned.
 BOOLEAN
 EFIAPI
 DebugAssertEnabled(
-	VOID
+  VOID
 )
 {
-	return FALSE;
+  return FALSE;
 }
 
 /**
@@ -962,10 +1528,10 @@ PcdDebugProperyMask is set.  Otherwise FALSE is returned.
 BOOLEAN
 EFIAPI
 DebugPrintEnabled(
-	VOID
+  VOID
 )
 {
-	return FALSE;
+  return FALSE;
 }
 
 /**
@@ -985,11 +1551,11 @@ It will always return EFI_SUCCESS.
 EFI_STATUS
 EFIAPI
 UefiBootServicesTableLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1009,11 +1575,11 @@ and it will always return EFI_SUCCESS.
 EFI_STATUS
 EFIAPI
 UefiDevicePathLibOptionalDevicePathProtocolConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1032,11 +1598,11 @@ It will always return EFI_SUCCESS.
 EFI_STATUS
 EFIAPI
 UefiRuntimeServicesTableLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1062,11 +1628,11 @@ assuming they are not NULL.
 EFI_STATUS
 EFIAPI
 UefiHiiServicesLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1084,11 +1650,11 @@ libraries.
 EFI_STATUS
 EFIAPI
 UefiLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1106,10 +1672,10 @@ table are freed, and EFI_SUCCESS is returned.
 EFI_STATUS
 EFIAPI
 FreeUnicodeStringTable(
-    IN EFI_UNICODE_STRING_TABLE  *UnicodeStringTable
+  IN EFI_UNICODE_STRING_TABLE  *UnicodeStringTable
 )
 {
-    return 0;
+  return 0;
 }
 
 /**
@@ -1123,11 +1689,11 @@ Constructor for the library.
 EFI_STATUS
 EFIAPI
 HandleParsingLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1143,11 +1709,11 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 EFI_STATUS
 EFIAPI
 ShellLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1163,11 +1729,11 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 EFI_STATUS
 EFIAPI
 ShellCommandLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1182,11 +1748,11 @@ Constructor for the Shell Debug1 Commands library.
 EFI_STATUS
 EFIAPI
 UefiShellDebug1CommandsLibConstructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1198,11 +1764,11 @@ Destructor for the library.  free any resources.
 EFI_STATUS
 EFIAPI
 UefiShellDebug1CommandsLibDestructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1216,11 +1782,11 @@ Destructor for the library.  free any resources.
 EFI_STATUS
 EFIAPI
 ShellCommandLibDestructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1235,11 +1801,11 @@ Destructor for the library.  free any resources.
 EFI_STATUS
 EFIAPI
 ShellLibDestructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 
 /**
@@ -1253,11 +1819,11 @@ Destructor for the library.  free any resources.
 EFI_STATUS
 EFIAPI
 HandleParsingLibDestructor(
-	IN EFI_HANDLE        ImageHandle,
-	IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-	return 0;
+  return 0;
 }
 #define MAX_PROMT_INPUT_SZ 1024
 #define RETURN_KEY	13
@@ -1275,44 +1841,44 @@ that will contain the return value
 **/
 EFI_STATUS
 PromptedInput(
-	IN     CHAR16 *pPrompt,
-	IN     BOOLEAN ShowInput,
-	IN     BOOLEAN OnlyAlphanumeric,
-	OUT CHAR16 **ppReturnValue
+  IN     CHAR16 *pPrompt,
+  IN     BOOLEAN ShowInput,
+  IN     BOOLEAN OnlyAlphanumeric,
+  OUT CHAR16 **ppReturnValue
 )
 {
-	EFI_STATUS ReturnCode = EFI_SUCCESS;
-	int PromptIndex;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  int PromptIndex;
 
-	NVDIMM_ENTRY();
+  NVDIMM_ENTRY();
 
-	if (pPrompt == NULL) {
-		ReturnCode = EFI_INVALID_PARAMETER;
-		goto Finish;
-	}
+  if (pPrompt == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
-	Print(L"%ls", pPrompt);
-	char buff[MAX_PROMT_INPUT_SZ];
-	memset(buff, 0, MAX_PROMT_INPUT_SZ);
+  Print(L"%ls", pPrompt);
+  char buff[MAX_PROMT_INPUT_SZ];
+  memset(buff, 0, MAX_PROMT_INPUT_SZ);
 
-	for (PromptIndex = 0; PromptIndex < MAX_PROMT_INPUT_SZ; ++PromptIndex)
-	{
-		buff[PromptIndex] = _getch();
-		if (RETURN_KEY == buff[PromptIndex])
-			break;
-	}
-	VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);
-    if (NULL == ptr) {
-        ReturnCode = EFI_OUT_OF_RESOURCES;
-        goto Finish;
-    }
-	*ppReturnValue = AsciiStrToUnicodeStr(buff, ptr);
-	if (ShowInput)
-		Print(*ppReturnValue);
+  for (PromptIndex = 0; PromptIndex < MAX_PROMT_INPUT_SZ; ++PromptIndex)
+  {
+    buff[PromptIndex] = _getch();
+    if (RETURN_KEY == buff[PromptIndex])
+      break;
+  }
+  VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);
+  if (NULL == ptr) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  *ppReturnValue = AsciiStrToUnicodeStr(buff, ptr);
+  if (ShowInput)
+    Print(*ppReturnValue);
 Finish:
-	Print(L"\n");
-	NVDIMM_EXIT_I64(ReturnCode);
-	return ReturnCode;
+  Print(L"\n");
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**
@@ -1325,49 +1891,49 @@ Display "yes/no" question and retrieve reply using prompt mechanism
 **/
 EFI_STATUS
 PromptYesNo(
-	OUT BOOLEAN *pConfirmation
+  OUT BOOLEAN *pConfirmation
 )
 {
-	EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-	CHAR16 *pPromptReply = NULL;
-	BOOLEAN ValidInput = FALSE;
-	char buf[10];
-	int readSize = 0;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  CHAR16 *pPromptReply = NULL;
+  BOOLEAN ValidInput = FALSE;
+  char buf[10];
+  int readSize = 0;
 
-	NVDIMM_ENTRY();
+  NVDIMM_ENTRY();
 
-	if (pConfirmation == NULL) {
-		ReturnCode = EFI_INVALID_PARAMETER;
-		goto Finish;
-	}
+  if (pConfirmation == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
-   PrintNoBuffer(L"%ls", PROMPT_CONTINUE_QUESTION);
-	if (0 >= (readSize = _read(0, buf, sizeof(buf))))
-	{
-		ReturnCode = EFI_INVALID_PARAMETER;
-		goto Finish;
-	}
+  PrintNoBuffer(L"%ls", PROMPT_CONTINUE_QUESTION);
+  if (0 >= (readSize = _read(0, buf, sizeof(buf))))
+  {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
-	ValidInput = readSize == 2 &&
-		(buf[0] == 'y' || buf[0] == 'n');
-	if (!ValidInput) {
-		ReturnCode = EFI_INVALID_PARAMETER;
-		goto Finish;
-	}
+  ValidInput = readSize == 2 &&
+    (buf[0] == 'y' || buf[0] == 'n');
+  if (!ValidInput) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
-	if (buf[0] == 'y') {
-		*pConfirmation = TRUE;
-	}
-	else {
-		*pConfirmation = FALSE;
-	}
+  if (buf[0] == 'y') {
+    *pConfirmation = TRUE;
+  }
+  else {
+    *pConfirmation = FALSE;
+  }
 
-	ReturnCode = EFI_SUCCESS;
+  ReturnCode = EFI_SUCCESS;
 
 Finish:
-	FREE_POOL_SAFE(pPromptReply);
-	NVDIMM_EXIT_I64(ReturnCode);
-	return ReturnCode;
+  FREE_POOL_SAFE(pPromptReply);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**
@@ -1407,34 +1973,15 @@ Null-terminator.
 UINTN
 EFIAPI
 UnicodeSPrint(
-	OUT CHAR16        *StartOfBuffer,
-	IN  UINTN         BufferSize,
-	IN  CONST CHAR16  *FormatString,
-	...
+  OUT CHAR16        *StartOfBuffer,
+  IN  UINTN         BufferSize,
+  IN  CONST CHAR16  *FormatString,
+  ...
 )
 {
-	VA_LIST Marker;
-	VA_START(Marker, FormatString);
-	return vswprintf_s(StartOfBuffer, BufferSize/sizeof(CHAR16), FormatString, Marker);
-}
-
-/*
-* Function returns the current state of the debug logger
-*/
-BOOLEAN
-EFIAPI
-IsDebugLoggerEnabled()
-{
-  if (FALSE == g_log_config.initialized) {
-    return FALSE;
-  }
-  if (LOGGER_OFF != g_log_config.level) {
-    if ((TRUE == g_log_config.file_enabled) ||
-      (TRUE == g_log_config.stdout_enabled)) {
-      return TRUE;
-    }
-  }
-  return FALSE;
+  VA_LIST Marker;
+  VA_START(Marker, FormatString);
+  return vswprintf_s(StartOfBuffer, BufferSize / sizeof(CHAR16), FormatString, Marker);
 }
 
 /**
@@ -1474,13 +2021,13 @@ Null-terminator.
 UINTN
 EFIAPI
 UnicodeVSPrint(
-	OUT CHAR16        *StartOfBuffer,
-	IN  UINTN          BufferSize,
-	IN  CONST CHAR16  *FormatString,
-	IN  VA_LIST        Marker
+  OUT CHAR16        *StartOfBuffer,
+  IN  UINTN          BufferSize,
+  IN  CONST CHAR16  *FormatString,
+  IN  VA_LIST        Marker
 )
 {
-	return vswprintf_s(StartOfBuffer, BufferSize/sizeof(CHAR16), FormatString, Marker);
+  return vswprintf_s(StartOfBuffer, BufferSize / sizeof(CHAR16), FormatString, Marker);
 }
 
 /**
@@ -1519,19 +2066,19 @@ Null-terminator.
 UINTN
 EFIAPI
 AsciiSPrint(
-   OUT CHAR8        *StartOfBuffer,
-   IN  UINTN        BufferSize,
-   IN  CONST CHAR8  *FormatString,
-   ...
+  OUT CHAR8        *StartOfBuffer,
+  IN  UINTN        BufferSize,
+  IN  CONST CHAR8  *FormatString,
+  ...
 )
 {
-   VA_LIST Marker;
-   VA_START(Marker, FormatString);
-   return vsnprintf_s(StartOfBuffer, BufferSize
+  VA_LIST Marker;
+  VA_START(Marker, FormatString);
+  return vsnprintf_s(StartOfBuffer, BufferSize
 #ifdef _MSC_VER 
-     , BufferSize - 1
+    , BufferSize - 1
 #endif
-     , FormatString, Marker);
+    , FormatString, Marker);
 }
 /**
 Returns the number of characters that would be produced by if the formatted
@@ -1549,13 +2096,13 @@ Null-terminator.
 UINTN
 EFIAPI
 SPrintLength(
-	IN  CONST CHAR16   *FormatString,
-	IN  VA_LIST         Marker
+  IN  CONST CHAR16   *FormatString,
+  IN  VA_LIST         Marker
 )
 {
-	static const int nBuffSprintLenSize = 1024;
-	static wchar_t evalSprintBuff[1024];
-	return vswprintf_s(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
+  static const int nBuffSprintLenSize = 1024;
+  static wchar_t evalSprintBuff[1024];
+  return vswprintf_s(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
 }
 /**
   Makes Bios emulated pass thru call and returns the values
@@ -1600,16 +2147,16 @@ VOID
 EFIAPI
 GetVendorDriverVersion(CHAR16 * pVersion, UINTN VersionStrSize)
 {
-	char ascii_buffer[100];
+  char ascii_buffer[100];
 
-	if (0 == get_vendor_driver_revision(ascii_buffer, sizeof(ascii_buffer)))
-	{
-		AsciiStrToUnicodeStr(ascii_buffer, pVersion);
-	}
-	else
-	{
-		UnicodeSPrint(pVersion, VersionStrSize, L"0.0.0.0");
-	}
+  if (0 == get_vendor_driver_revision(ascii_buffer, sizeof(ascii_buffer)))
+  {
+    AsciiStrToUnicodeStr(ascii_buffer, pVersion);
+  }
+  else
+  {
+    UnicodeSPrint(pVersion, VersionStrSize, L"0.0.0.0");
+  }
 }
 
 VOID
@@ -1617,3 +2164,4 @@ AsmSfence(
 )
 {
 }
+

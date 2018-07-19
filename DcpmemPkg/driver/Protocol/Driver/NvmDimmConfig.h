@@ -752,7 +752,7 @@ CheckMemoryMap(
 **/
 EFI_STATUS
 initAcpiTables(
-  );
+);
 
 #ifdef OS_BUILD
 /**

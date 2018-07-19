@@ -85,7 +85,16 @@ do { \
   Flags.EsxCustom = 1; \
 }while(0) \
 
+/*
+* Main entry point for displaying an error.
+*/
 VOID ShowCmdError(SHOW_CMD_CONTEXT *ShowCtx, EFI_STATUS CmdExitCode, CHAR16* Msg, ...);
+/*
+* Main entry point for displaying a hierarchical data.
+* Currently supports: Nested lists as text (SHOW_LIST)
+*                     Table as text (SHOW_TABLE)
+*                     NVM XML (SHOW_NVM_XML)
+*                     ESX XML (SHOW_ESX_XML)
+*/
 VOID ShowCmdData(DATA_SET_CONTEXT *DataSetCtx, SHOW_CMD_CONTEXT *ShowCtx);
-
 #endif /** _SHOW_H_**/

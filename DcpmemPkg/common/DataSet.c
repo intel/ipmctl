@@ -37,7 +37,7 @@ typedef struct _DS_NAME_INFO {
       Entry = NextEntry, NextEntry = Entry->ForwardLink \
      )
 
-#define SET_KEY_VALUE(DataSetCtx, RetVal, Key, Val, ValType, ValTypeEnum) \
+#define SET_KEY_VALUE(DataSetCtx, RetVal, Key, Val, ValType, ValTypeEnum, Base) \
 do { \
   KEY_VAL * KeyVal; \
   if(!DataSetCtx || !Key) { \
@@ -48,7 +48,7 @@ do { \
     *RetVal = EFI_OUT_OF_RESOURCES; \
     break; \
   } \
-  KeyVal->ValueToString = CatSPrint(NULL, FormatStringDecimal(ValTypeEnum), *((ValType*)Val)); \
+  KeyVal->ValueToString = CatSPrint(NULL, FormatString(ValTypeEnum, Base), *((ValType*)Val)); \
   KeyVal->KeyValInfo.Type = ValTypeEnum; \
   *RetVal = EFI_SUCCESS; \
 }while(0)
@@ -489,24 +489,24 @@ DATA_SET_CONTEXT *SquashDataSet(DATA_SET_CONTEXT *DataSetCtx) {
 /*
 * Helper to obtain a format string for the specific type
 */
-CHAR16 * FormatStringDecimal(KEY_TYPE KeyType) {
+CHAR16 * FormatString(KEY_TYPE KeyType, TO_STRING_BASE Base) {
   switch (KeyType) {
   case KEY_UINT64:
-    return FORMAT_UINT64;
+    return (Base == HEX) ? L"0x" FORMAT_UINT64_HEX : FORMAT_UINT64;
   case KEY_INT64:
-    return FORMAT_INT64;
+    return (Base == HEX) ? L"0x" FORMAT_UINT64_HEX : FORMAT_INT64;
   case KEY_UINT32:
-    return FORMAT_UINT32;
+    return (Base == HEX) ? L"0x" FORMAT_UINT32_HEX : FORMAT_UINT32;
   case KEY_INT32:
-    return FORMAT_INT32;
+    return (Base == HEX) ? L"0x" FORMAT_UINT32_HEX : FORMAT_INT32;
   case KEY_UINT16:
-    return FORMAT_UINT16;
+    return (Base == HEX) ? L"0x" FORMAT_UINT16_HEX : FORMAT_UINT16;
   case KEY_INT16:
-    return FORMAT_INT16;
+    return (Base == HEX) ? L"0x" FORMAT_UINT16_HEX : FORMAT_INT16;
   case KEY_UINT8:
-    return FORMAT_UINT8;
+    return (Base == HEX) ? L"0x" FORMAT_UINT8_HEX : FORMAT_UINT8;
   case KEY_INT8:
-    return FORMAT_INT8;
+    return (Base == HEX) ? L"0x" FORMAT_UINT8_HEX : FORMAT_INT8;
   default:
     return NULL;
   }
@@ -544,6 +544,9 @@ VOID FreeKeyValMem(KEY_VAL *KeyVal) {
   }
   if (KeyVal->Value) {
     FreePool(KeyVal->Value);
+  }
+  if (KeyVal->KeyValInfo.UserData) {
+    FreePool(KeyVal->KeyValInfo.UserData);
   }
   FreePool(KeyVal);
 }
@@ -742,9 +745,9 @@ EFI_STATUS GetKeyValueBool(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, BOOL
 /*
 * Set an unsigned 64 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT64 Val) {
+EFI_STATUS SetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT64 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT64, KEY_UINT64);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT64, KEY_UINT64, Base);
   return RetVal;
 }
 
@@ -758,9 +761,9 @@ EFI_STATUS GetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UI
 /*
 * Set an signed 64 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT64 Val) {
+EFI_STATUS SetKeyValueInt64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT64 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT64, KEY_INT64);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT64, KEY_INT64, Base);
   return RetVal;
 }
 
@@ -774,9 +777,9 @@ EFI_STATUS GetKeyValueInt64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT
 /*
 * Set an unsigned 32 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT32 Val) {
+EFI_STATUS SetKeyValueUint32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT32 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT32, KEY_UINT32);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT32, KEY_UINT32, Base);
   return RetVal;
 }
 
@@ -790,9 +793,9 @@ EFI_STATUS GetKeyValueUint32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UI
 /*
 * Set an signed 32 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT32 Val) {
+EFI_STATUS SetKeyValueInt32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT32 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT32, KEY_INT32);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT32, KEY_INT32, Base);
   return RetVal;
 }
 
@@ -806,9 +809,9 @@ EFI_STATUS GetKeyValueInt32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT
 /*
 * Set an unsigned 16 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT16 Val) {
+EFI_STATUS SetKeyValueUint16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT16 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT16, KEY_UINT16);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT16, KEY_UINT16, Base);
   return RetVal;
 }
 
@@ -822,9 +825,9 @@ EFI_STATUS GetKeyValueUint16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UI
 /*
 * Set an signed 16 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT16 Val) {
+EFI_STATUS SetKeyValueInt16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT16 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT16, KEY_INT16);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT16, KEY_INT16, Base);
   return RetVal;
 }
 
@@ -838,9 +841,9 @@ EFI_STATUS GetKeyValueInt16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT
 /*
 * Set an unsigned 8 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT8 Val) {
+EFI_STATUS SetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT8 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT8, KEY_UINT8);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, UINT8, KEY_UINT8, Base);
   return RetVal;
 }
 
@@ -854,9 +857,9 @@ EFI_STATUS GetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UIN
 /*
 * Set a signed 8 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT8 Val) {
+EFI_STATUS SetKeyValueInt8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT8 Val, TO_STRING_BASE Base) {
   EFI_STATUS RetVal = EFI_SUCCESS;
-  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT8, KEY_INT8);
+  SET_KEY_VALUE(DataSetCtx, &RetVal, Key, (VOID*)&Val, INT8, KEY_INT8, Base);
   return RetVal;
 }
 
@@ -908,4 +911,44 @@ UINT32 GetKeyCount(DATA_SET_CONTEXT *DataSetCtx) {
   }
 
   return Count;
+}
+
+/*
+* Associate user data with a particular key
+*/
+EFI_STATUS SetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, VOID *UserData) {
+  DATA_SET *DataSet = (DATA_SET*)DataSetCtx;
+  KEY_VAL *KeyVal = NULL;
+
+  if (NULL == Key || NULL == DataSet || NULL == UserData) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (NULL != (KeyVal = FindKeyValuePair(DataSet, Key))) {
+    KeyVal->KeyValInfo.UserData = UserData;
+  }
+  else {
+    return EFI_NOT_FOUND;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/*
+* Retrieve user data from a particular key
+*/
+VOID * GetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key) {
+  DATA_SET *DataSet = (DATA_SET*)DataSetCtx;
+  KEY_VAL *KeyVal = NULL;
+
+  if (NULL == Key || NULL == DataSet) {
+    return NULL;
+  }
+
+  if (NULL != (KeyVal = FindKeyValuePair(DataSet, Key))) {
+    return KeyVal->KeyValInfo.UserData;
+  }
+  else {
+    return NULL;
+  }
 }

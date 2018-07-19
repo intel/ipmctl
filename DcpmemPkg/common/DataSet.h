@@ -27,12 +27,21 @@ typedef enum {
 } KEY_TYPE;
 
 /*
+* Types of ToString
+*/
+typedef enum {
+  HEX,
+  DECIMAL
+} TO_STRING_BASE;
+
+/*
 * Information describing a key/value pair in a DataSet.
 */
 typedef struct _KEY_VAL_INFO {
   KEY_TYPE Type;      //type of value associated with a particular key
   CHAR16 *Key;        //the name associated with a particular value
   UINT32 ValueSize;   //the binary size of the value
+  VOID *UserData;     //user data
 }KEY_VAL_INFO;
 
 #define DATA_SET_CONTEXT  VOID
@@ -105,27 +114,27 @@ EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, c
 /*
 * Set an unsigned 64 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT64 Val);
+EFI_STATUS SetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT64 Val, TO_STRING_BASE Base);
 /*
 * Retrieve an unsigned 64 bit value from the data set.
 */
-EFI_STATUS SetKeyValueInt64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT64 Val);
+EFI_STATUS SetKeyValueInt64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT64 Val, TO_STRING_BASE Base);
 /*
 * Set an unsigned 32 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT32 Val);
+EFI_STATUS SetKeyValueUint32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT32 Val, TO_STRING_BASE Base);
 /*
 * Set an signed 32 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT32 Val);
+EFI_STATUS SetKeyValueInt32(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT32 Val, TO_STRING_BASE Base);
 /*
 * Set an unsigned 16 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT16 Val);
+EFI_STATUS SetKeyValueUint16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT16 Val, TO_STRING_BASE Base);
 /*
 * Set an signed 16 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT16 Val);
+EFI_STATUS SetKeyValueInt16(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT16 Val, TO_STRING_BASE Base);
 /*
 * Set a boolean into the data set.
 */
@@ -133,11 +142,11 @@ EFI_STATUS SetKeyValueBool(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, BOOL
 /*
 * Set an unsigned 8 bit value into the data set.
 */
-EFI_STATUS SetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT8 Val);
+EFI_STATUS SetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT8 Val, TO_STRING_BASE Base);
 /*
 * Set a signed 8 bit value into the data set.
 */
-EFI_STATUS SetKeyValueInt8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key,  INT8 Val);
+EFI_STATUS SetKeyValueInt8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key,  INT8 Val, TO_STRING_BASE Base);
 /*
 * Retrieve a unicode string from the data set.
 */
@@ -178,4 +187,12 @@ EFI_STATUS GetKeyValueUint8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UIN
 * Retrieve a signed 8 bit value from the data set.
 */
 EFI_STATUS GetKeyValueInt8(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, INT8 *Val, INT8 *DefaultVal);
+/*
+* Associate user data with a particular key
+*/
+EFI_STATUS SetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, VOID *UserData);
+/*
+* Retrieve user data from a particular key
+*/
+VOID * GetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key);
 #endif /** _DATA_SET_H_**/

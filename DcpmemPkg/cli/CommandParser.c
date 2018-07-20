@@ -1460,7 +1460,7 @@ ExecuteCmd(COMMAND *pCommand) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  if (EFI_SUCCESS != (Rc = ReadCmdLineShowOptions(&pCommand->pShowCtx->FormatType, &pCommand->pShowCtx->FormatTypeFlags, pCommand))) {
+  if (EFI_SUCCESS != (Rc = ReadCmdLineShowOptions(&pCommand->pShowCtx->FormatType, pCommand))) {
     goto Finish;
   }
 

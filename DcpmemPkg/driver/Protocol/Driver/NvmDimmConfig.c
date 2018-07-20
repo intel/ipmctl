@@ -113,7 +113,10 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetLongOpStatus,
   InjectError,
   GetBSRAndBootStatusBitMask,
+
+  // Debug Only
 #ifndef MDEPKG_NDEBUG
+  GetCommandAccessPolicy,
   PassThruCommand
 #endif /* MDEPKG_NDEBUG */
 };
@@ -9270,3 +9273,84 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+// Debug Only
+#ifndef MDEPKG_NDEBUG
+/**
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID Handle of the DIMM
+  @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_SUCCESS Success
+  @retval Other errors failure of FW commands
+**/
+EFI_STATUS
+EFIAPI
+GetCommandAccessPolicy(
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT UINT32 *pCount,
+  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pDimm = NULL;
+  UINT32 Index = 0;
+  COMMAND_ACCESS_POLICY_ENTRY CapEntries[] = {
+    { PtSetSecInfo, SubopOverwriteDimm, FALSE},
+    { PtSetSecInfo, SubopSetPass, FALSE },
+    { PtSetSecInfo, SubopSecFreezeLock, FALSE },
+    { PtSetFeatures, SubopAlarmThresholds, FALSE },
+    { PtSetFeatures, SubopConfigDataPolicy, FALSE },
+    { PtSetFeatures, SubopAddressRangeScrub, FALSE },
+    { PtSetAdminFeatures, SubopPlatformDataInfo, FALSE },
+    { PtSetAdminFeatures, SubopLatchSystemShutdownState, FALSE },
+    { PtUpdateFw, SubopUpdateFw, FALSE },
+  };
+
+  NVDIMM_ENTRY();
+
+  if (pThis == NULL || pCount == NULL) {
+    NVDIMM_DBG("One or more parameters are NULL");
+    goto Finish;
+  }
+
+  *pCount = COUNT_OF(CapEntries);
+
+  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
+  if (pDimm == NULL || !IsDimmManageable(pDimm)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (NULL == pCapInfo) {
+    NVDIMM_DBG("pCapInfo is NULL, pCount is %d.", *pCount);
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
+  for(Index = 0; Index < *pCount; Index++) {
+    ReturnCode = FwCmdGetCommandAccessPolicy(pDimm, CapEntries[Index].Opcode,
+      CapEntries[Index].SubOpcode, &CapEntries[Index].Restricted);
+
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to retrieve Command Access Policy.");
+      return ReturnCode;
+    }
+  }
+
+  CopyMem_S(pCapInfo, (sizeof(*pCapInfo) * (*pCount)), CapEntries, sizeof(CapEntries));
+
+  ReturnCode = EFI_SUCCESS;
+  goto Finish;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+#endif // !MDEPKG_NDEBUG
+

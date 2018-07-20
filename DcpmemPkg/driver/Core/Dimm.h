@@ -1606,6 +1606,26 @@ FwCmdGetDdrtIoInitInfo(
   );
 
 /**
+  Get Command Access Policy for a specific command
+  @param[IN] pDimm Target DIMM structure pointer
+  @param[IN] Opcode for the command
+  @param[IN] SubOpcode for the command
+  @param[OUT] pRestricted TRUE if restricted, else FALSE
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+FwCmdGetCommandAccessPolicy(
+  IN  DIMM *pDimm,
+  IN  UINT8 Opcode,
+  IN  UINT8 Subopcode,
+  OUT BOOLEAN *pRestricted
+);
+
+/**
   Inject Temperature error payload
   @param[IN] pDimm Target DIMM structure pointer
   @param[IN] subopcode for error injection command

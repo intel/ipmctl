@@ -2214,7 +2214,6 @@ Retrieve the User Cli Display Preferences CMD line arguements.
 EFI_STATUS
 ReadCmdLineShowOptions(
   IN OUT SHOW_FORMAT_TYPE *pFormatType,
-  IN OUT SHOW_FORMAT_TYPE_FLAGS *pFormatTypeFlags,
   IN struct Command *pCmd
 )
 {
@@ -2224,14 +2223,14 @@ ReadCmdLineShowOptions(
   UINT32 NumToks = 0;
   UINT32 Index = 0;
 
-  if (NULL == pFormatType || NULL == pFormatTypeFlags) {
+  if (NULL == pFormatType) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (NULL == (OutputOptions = getOptionValue(pCmd, OUTPUT_OPTION_SHORT))) {
     if(NULL == (OutputOptions = getOptionValue(pCmd, OUTPUT_OPTION))) {
       *pFormatType = TEXT;
-      SET_FORMAT_LIST_FLAG(pFormatTypeFlags->Flags);
+      SET_FORMAT_LIST_FLAG(pCmd->pShowCtx);
       return ReturnCode;
     }
   }
@@ -2241,7 +2240,7 @@ ReadCmdLineShowOptions(
   if(NULL != (Toks = StrSplit(OutputOptions, L',', &NumToks))) {
     for (Index = 0; Index < NumToks; ++Index) {
       if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_VERBOSE)) {
-        pFormatTypeFlags->Flags.Verbose = 1;
+        SET_FORMAT_VERBOSE_FLAG(pCmd->pShowCtx);
       }
       else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_TEXT)) {
         *pFormatType = TEXT;
@@ -2251,11 +2250,11 @@ ReadCmdLineShowOptions(
       }
       else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_ESX_XML)) {
         *pFormatType = XML;
-        SET_FORMAT_ESX_KV_FLAG(pFormatTypeFlags->Flags);
+        SET_FORMAT_ESX_KV_FLAG(pCmd->pShowCtx);
       }
       else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_ESX_TABLE_XML)) {
         *pFormatType = XML;
-        SET_FORMAT_ESX_CUSTOM_FLAG(pFormatTypeFlags->Flags);
+        SET_FORMAT_ESX_CUSTOM_FLAG(pCmd->pShowCtx);
       }
       else ReturnCode = EFI_INVALID_PARAMETER;
     }

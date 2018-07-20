@@ -310,6 +310,8 @@ enum GetSetAdminFeatSubop {
   SubopConfigLockdown = 0x05,           //!< Get whether or not the lock down has occurred also can disable it
   SubopDdrtIoInitInfo = 0x06,           //!< Get the DDRT initialization info
   SubopGetSupportedSkuFeatures = 0x07,  //!< Get/Set the data regarding supported DIMM SKU capabilities and features
+  SubopLatchSystemShutdownState = 0x09, //!< Get/Set the last system shutdown state data
+  SubopCommandAccessPolicy = 0xCA,      //!< Get/Set the command access policy
 };
 
 /**
@@ -1068,6 +1070,22 @@ typedef struct {
   UINT16 SequenceNum;
   UINT8  Reserved[2];
 } PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY;
+
+/**
+Passthrough Input Payload:
+Opcode:    0x07h (Get Admin Feature)
+Sub-Opcode:  0xCAh (Command Access Policy)
+**/
+typedef struct {
+  UINT8  Opcode;
+  UINT8  Subopcode;
+  UINT8  Reserved2[126];
+} PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY;
+
+typedef struct {
+  UINT8 Restricted;
+  UINT8  Reserved[127];
+} PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY;
 
 /**
   Passthrough Output DDRT IO Init Info

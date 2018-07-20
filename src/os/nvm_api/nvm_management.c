@@ -132,7 +132,12 @@ NVM_API int nvm_init()
 
   rc = os_check_admin_permissions();
   if (NVM_SUCCESS != rc) {
+#ifdef MDEPKG_NDEBUG
     g_basic_commands = 1;
+#else
+    // For debug builds, allow non-admin user execution
+    NVDIMM_WARN("Running as non-admin user.");
+#endif
   }
 
   if(!g_fast_path && !g_basic_commands)

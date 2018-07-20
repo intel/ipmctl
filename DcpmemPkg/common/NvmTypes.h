@@ -23,6 +23,7 @@
 #define MAX_UINT16_VALUE 0xFFFF
 #define MAX_UINT32_VALUE 0xFFFFFFFF
 #define MAX_UINT64_VALUE 0xFFFFFFFFFFFFFFFFULL
+
 /**
   Needed for hii form.
   There is an error that the HII form is always displaying the value as signed, so we must skip the highest bit,
@@ -1052,6 +1053,15 @@ typedef struct _HOST_SERVER_INFO
    CHAR16 OsName[HOST_SERVER_OS_NAME_LEN];
    CHAR16 OsVersion[HOST_SERVER_OS_VERSION_LEN];
 }HOST_SERVER_INFO;
+
+/** Command Access Policy reflects if a FW Op/Sub Opcode is restricted */
+typedef struct _COMMAND_ACCESS_POLICY_ENTRY
+{
+  UINT8   Opcode;         //!< Opcode of the FW command
+  UINT8   SubOpcode;      //!< SubOpcode of the FW command
+  BOOLEAN Restricted;     //!< True if the command is restricted.
+} COMMAND_ACCESS_POLICY_ENTRY;
+
 #ifdef OS_BUILD
 
 typedef unsigned char NVM_UINT8; // 8 bit unsigned integer

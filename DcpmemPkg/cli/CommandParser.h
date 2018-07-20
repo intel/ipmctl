@@ -89,6 +89,7 @@
 #define CAPABILITIES_TARGET                  L"-capabilities"            //!< 'capabilities' target name
 #define SOCKET_TARGET                        L"-socket"                  //!< 'socket' target name
 #define GOAL_TARGET                          L"-goal"                    //!< 'goal' target name
+#define CAP_TARGET                           L"-cap"                     //!< 'cap' target name
 #define NAMESPACE_TARGET                     L"-namespace"               //!< 'namespace' target name
 #define HOST_TARGET                          L"-host"                    //!< 'host' target name
 #define TOPOLOGY_TARGET                      L"-topology"                //!< 'topology' target name

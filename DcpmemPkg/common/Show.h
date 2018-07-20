@@ -61,29 +61,42 @@ typedef struct _SHOW_TABLE_ATTRIB {
   TABLE_COLUMN_ATTRIB ColumnAttribs[MAX_TABLE_COLUMNS];
 }SHOW_TABLE_ATTRIB;
 
-#define SET_FORMAT_TABLE_FLAG(Flags) \
-do { \
-  Flags.Table = 1; \
-  Flags.List = 0; \
-}while(0) \
+#define SET_FORMAT_TABLE_FLAG(Ctx) \
+if(NULL != Ctx) { \
+  Ctx->FormatTypeFlags.Flags.Table = 1; \
+  Ctx->FormatTypeFlags.Flags.List = 0; \
+} \
 
-#define SET_FORMAT_LIST_FLAG(Flags) \
-do { \
-  Flags.Table = 0; \
-  Flags.List = 1; \
-}while(0) \
+#define SET_FORMAT_LIST_FLAG(Ctx) \
+if(NULL != Ctx) { \
+  Ctx->FormatTypeFlags.Flags.Table = 0; \
+  Ctx->FormatTypeFlags.Flags.List = 1; \
+} \
 
-#define SET_FORMAT_ESX_KV_FLAG(Flags) \
-do { \
-  Flags.EsxKeyVal = 1; \
-  Flags.EsxCustom = 0; \
-}while(0) \
+#define SET_FORMAT_ESX_KV_FLAG(Ctx) \
+if(NULL != Ctx) { \
+  Ctx->FormatTypeFlags.Flags.EsxKeyVal = 1; \
+  Ctx->FormatTypeFlags.Flags.EsxCustom = 0; \
+} \
 
-#define SET_FORMAT_ESX_CUSTOM_FLAG(Flags) \
+#define SET_FORMAT_ESX_CUSTOM_FLAG(Ctx) \
+if(NULL != Ctx) { \
+  Ctx->FormatTypeFlags.Flags.EsxKeyVal = 0; \
+  Ctx->FormatTypeFlags.Flags.EsxCustom = 1; \
+} \
+
+#define SET_FORMAT_VERBOSE_FLAG(Ctx) \
+if(NULL != Ctx) { \
+  Ctx->FormatTypeFlags.Flags.Verbose = 1; \
+} \
+
+#define SET_TABLE_ATTRIBUTES(Ctx, Attributes) \
 do { \
-  Flags.EsxKeyVal = 0; \
-  Flags.EsxCustom = 1; \
-}while(0) \
+  Ctx->FormatTypeAttribs = (VOID*)&Attributes; \
+} while(0); \
+
+// Helper to calculate the column width of a WCHAR string literal
+#define TABLE_MIN_HEADER_LENGTH(Header)     ((sizeof(Header) / 2) + 2)
 
 /*
 * Main entry point for displaying an error.

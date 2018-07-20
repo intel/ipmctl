@@ -56,6 +56,7 @@
 #include "SetPreferencesCommand.h"
 #include "ShowHostServerCommand.h"
 #include "ShowPerformanceCommand.h"
+#include "ShowCmdAccessPolicyCommand.h"
 #ifdef __MFG__
 #include <mfg/MfgCommands.h>
 #endif
@@ -547,6 +548,14 @@ RegisterCommands(
     goto done;
   }
 
+  /* Debug Utility commands */
+#ifndef MDEPKG_NDEBUG
+  Rc = RegisterShowCmdAccessPolicyCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+#endif
+
 #ifdef OS_BUILD
   Rc = RegisterShowHostServerCommand();
   if (EFI_ERROR(Rc)) {
@@ -567,19 +576,19 @@ RegisterCommands(
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+
 #ifdef __MFG__
    Rc = RegisterMfgCommands();
    if (EFI_ERROR(Rc)) {
      goto done;
    }
-#endif
-
-#ifndef __MFG__
+#else
   Rc = RegisterShowPerformanceCommand();
   if (EFI_ERROR(Rc)) {
       goto done;
   }
-#endif
+#endif // __MFG__
+
 #endif // OS_BUILD
 
 #ifndef OS_BUILD

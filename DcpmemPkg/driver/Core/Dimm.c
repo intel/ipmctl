@@ -5983,6 +5983,78 @@ Finish:
 }
 
 /**
+  Get Command Access Policy for a specific command
+  @param[IN] pDimm Target DIMM structure pointer
+  @param[IN] Opcode for the command
+  @param[IN] SubOpcode for the command
+  @param[OUT] pRestricted TRUE if restricted, else FALSE
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+FwCmdGetCommandAccessPolicy(
+  IN  DIMM *pDimm,
+  IN  UINT8 Opcode,
+  IN  UINT8 Subopcode,
+  OUT BOOLEAN *pRestricted
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY *pInputCAP = NULL;
+  PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY *pOutputCAP = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pRestricted == NULL) {
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopDimmPartitionInfo;
+  pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY);
+
+  pInputCAP = (PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->InputPayload;
+  pInputCAP->Opcode = Opcode;
+  pInputCAP->Subopcode = Subopcode;
+  pFwCmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY);
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending GetCommandAccessPolicy command (RC = %d)", ReturnCode);
+    NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
+    if (FW_ERROR(pFwCmd->Status)) {
+      ReturnCode = MatchFwReturnCode(pFwCmd->Status);
+    }
+    goto Finish;
+  }
+
+  pOutputCAP = (PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->OutPayload;
+
+  if (0 != pOutputCAP->Restricted) {
+    *pRestricted = TRUE;
+  }
+  else {
+    *pRestricted = FALSE;
+  }
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
 Inject Temperature error payload
 @param[IN] pDimm Target DIMM structure pointer
 @param[IN] subopcode for error injection command

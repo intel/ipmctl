@@ -1319,6 +1319,27 @@ EFI_STATUS
   OUT     UINT16 *pBootStatusBitmask OPTIONAL
  );
 
+
+/**
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID Handle of the DIMM
+  @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_SUCCESS Success
+  @retval Other errors failure of FW commands
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY) (
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT UINT32 *pCount,
+  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+);
+
 /**
   Pass Thru command to FW
   Sends a command to FW and waits for response from firmware
@@ -1403,6 +1424,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_BSR_AND_BITMASK GetBSRAndBootStatusBitMask;
 
 #ifndef MDEPKG_NDEBUG
+  EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY GetCommandAccessPolicy;
   EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/
 };

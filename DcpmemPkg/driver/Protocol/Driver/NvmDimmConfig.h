@@ -1738,6 +1738,7 @@ GetBSRAndBootStatusBitMask(
   OUT     UINT64 *pBsrValue OPTIONAL,
   OUT     UINT16 *pBootStatusBitmask OPTIONAL
 );
+
 /**
 Verify target DIMM IDs list. Fill output list of pointers to dimms.
 
@@ -1771,4 +1772,30 @@ VerifyTargetDimms(
 	OUT UINT32 *pDimmsNum,
 	OUT COMMAND_STATUS *pCommandStatus
 );
+
+// Debug Only
+#ifndef MDEPKG_NDEBUG
+
+/**
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID Handle of the DIMM
+  @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_SUCCESS Success
+  @retval Other errors failure of FW commands
+**/
+EFI_STATUS
+EFIAPI
+GetCommandAccessPolicy(
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT UINT32 *pCount,
+  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+);
+
+#endif // !MDEPKG_NDEBUG
+
 #endif /* _NVMDIMM_CONFIG_H_ */

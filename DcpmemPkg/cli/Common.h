@@ -887,7 +887,6 @@ Retrieve the User Cli Display Preferences CMD line arguements.
 EFI_STATUS
 ReadCmdLineShowOptions(
   IN OUT SHOW_FORMAT_TYPE *pFormatType,
-  IN OUT SHOW_FORMAT_TYPE_FLAGS *pFormatTypeFlags,
   IN struct Command *pCmd
 );
 

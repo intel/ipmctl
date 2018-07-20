@@ -243,6 +243,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmemPkg/cli/SetEventCommand.c
 	DcpmemPkg/cli/ShowPerformanceCommand.c
 	DcpmemPkg/cli/ShowHostServerCommand.c
+	DcpmemPkg/cli/ShowCmdAccessPolicyCommand.c
 	DcpmemPkg/common/FwUtility.c
 	DcpmemPkg/common/Utility.c
 	DcpmemPkg/common/NvmTables.c

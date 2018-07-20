@@ -15,7 +15,7 @@
 #include <Show.h>
 #include "Common.h"
 
-EFI_STATUS
+STATIC EFI_STATUS
 UpdateCmdCtx(struct Command *pCmd);
 /**
   Command syntax definition
@@ -186,7 +186,7 @@ context (struct Command).
 
 @retval EFI_STATUS
 **/
-EFI_STATUS
+STATIC EFI_STATUS
 UpdateCmdCtx(struct Command *pCmd) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   return ReturnCode;

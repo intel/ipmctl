@@ -15,6 +15,13 @@
 #include <Library/UefiLib.h>
 #include <Library/MemoryAllocationLib.h>
 
+#ifdef __GNUC__
+ // Need this to build for UEFI/Linux, as size_t is not found by default.
+#include <stddef.h>
+#endif
+
+#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+
 #define PMEM_MODULE_NAME L"Intel(R) DCPMEM "  //short version for drivers list
 #define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMEM" //comma separated search string
 

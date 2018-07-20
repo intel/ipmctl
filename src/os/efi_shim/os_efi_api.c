@@ -57,6 +57,11 @@ extern int get_vendor_driver_revision(char * version_str, const int str_len);
 extern int g_record_mode;
 extern int g_playback_mode;
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
+extern char g_smbios_rec_path[PATH_MAX];
+extern char g_passthru_rec_path[PATH_MAX];
+extern char g_acpi_nfit_rec_path[PATH_MAX];
+extern char g_acpi_pmtt_rec_path[PATH_MAX];
+extern char g_acpi_pcat_rec_path[PATH_MAX];
 
 UINT8 *gSmbiosTable = NULL;
 size_t gSmbiosTableSize = 0;
@@ -74,12 +79,11 @@ typedef struct _smbios_table_recording
 int g_pass_thru_cnt = 0;
 size_t g_pass_thru_playback_offset = 0;
 
-
-#define REC_FILE_SMBIOS "smbios.rec"
-#define REC_FILE_PASSTHRU "pass_thru.rec"
-#define REC_FILE_ACPI_NFIT "acpi_nfit.rec"
-#define REC_FILE_ACPI_PCAT "acpi_pcat.rec"
-#define REC_FILE_ACPI_PMTT "acpi_pmtt.rec"
+#define REC_FILE_SMBIOS g_smbios_rec_path
+#define REC_FILE_PASSTHRU g_passthru_rec_path
+#define REC_FILE_ACPI_NFIT g_acpi_nfit_rec_path
+#define REC_FILE_ACPI_PCAT g_acpi_pcat_rec_path
+#define REC_FILE_ACPI_PMTT g_acpi_pmtt_rec_path
 #define PLAYBACK_ENABLED() g_playback_mode
 #define RECORD_ENABLED() g_record_mode
 #define INC_PASS_THRU_CNT() ++g_pass_thru_cnt
@@ -109,6 +113,7 @@ enum
 * Debug logger context structure.
 */
 static struct debug_logger_config g_log_config = { 0 };
+
 
 EFI_STATUS
 passthru_playback(
@@ -538,6 +543,7 @@ uninitAcpiTables(
   return EFI_SUCCESS;
 }
 
+
 VOID
 GetFirstAndBoundSmBiosStructPointer(
   OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
@@ -579,10 +585,10 @@ GetFirstAndBoundSmBiosStructPointer(
       fclose(f_ptr);
     }
   }
-  else if (PLAYBACK_ENABLED())
+  else if (PLAYBACK_ENABLED() && NULL == gSmbiosTable)
   {
     errno_t open_result = fopen_s(&f_ptr, REC_FILE_SMBIOS, "rb");
-    if (0 == open_result && NULL != gSmbiosTable)
+    if (0 == open_result && NULL == gSmbiosTable)
     {
       if (1 != fread(&recording, sizeof(smbios_table_recording), 1, f_ptr))
       {
@@ -603,30 +609,31 @@ GetFirstAndBoundSmBiosStructPointer(
         else
         {
           size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
-          if (bytesRead != recording.size)
+          if (bytesRead != 1)
           {
             NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_SMBIOS, bytesRead, recording.size);
           }
-          else
-          {
-            pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
-            pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + recording.size;
-            pSmbiosVersion->Major = recording.major;
-            pSmbiosVersion->Minor = recording.minor;
-          }
         }
+
+        gSmbiosMajorVersion = recording.major;
+        gSmbiosMinorVersion = recording.minor;
+        gSmbiosTableSize = recording.size;
       }
 
       fclose(f_ptr);
     }
   }
 
-  if (!PLAYBACK_ENABLED() && NVM_SUCCESS == rc)
+  if (NULL != gSmbiosTable)
   {
     pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
     pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + gSmbiosTableSize;
     pSmbiosVersion->Major = gSmbiosMajorVersion;
     pSmbiosVersion->Minor = gSmbiosMinorVersion;
+  }
+  else
+  {
+    NVDIMM_ERR("Failed to retrieve smbios table\n");
   }
 }
 

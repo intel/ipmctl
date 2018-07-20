@@ -470,3 +470,20 @@ int os_check_admin_permissions()
   }
   return rc;
 }
+
+/*
+* Recursive mkdir, return 0 on success, -1 on error
+*/
+int os_mkdir(OS_PATH path)
+{
+  char* p;
+  for (p = strchr(path + 1, '/'); p; p = strchr(p + 1, '/'))
+  {
+    *p = '\0';
+    if (mkdir(path, ACCESSPERMS) == -1) {
+      if (errno != EEXIST) { *p = '/'; return -1; }
+    }
+    *p = '/';
+  }
+  return 0;
+}

@@ -70,6 +70,7 @@ struct nvm_driver_capabilities
 };
 extern void os_get_locale_dir(OS_PATH locale_dir);
 extern char * os_get_cwd(OS_PATH buffer, size_t size);
+extern int os_mkdir(OS_PATH path);
 
 extern int os_start_process(const char *process_name, unsigned int *p_process_id);
 extern int os_stop_process(unsigned int process_id);

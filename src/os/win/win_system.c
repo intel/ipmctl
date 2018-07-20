@@ -947,3 +947,20 @@ int os_get_os_type()
 {
 	return 1;
 }
+
+/*
+* Recursive mkdir, return 0 on success, -1 on error
+*/
+int os_mkdir(OS_PATH path)
+{
+  char* p;
+  for (p = strchr(path + 1, '/'); p; p = strchr(p + 1, '/'))
+  {
+    *p = '\0';
+    if (_mkdir(path) == -1) {
+      if (errno != EEXIST) { *p = '/'; return -1; }
+    }
+    *p = '/';
+  }
+  return 0;
+}

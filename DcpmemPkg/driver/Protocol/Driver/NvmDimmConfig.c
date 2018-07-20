@@ -5061,10 +5061,11 @@ UpdateFw(
             pImageBuffer, BuffSize, pWorkingDirectory, pCommandStatus);
       } else if (Recovery) {
         ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
       } else {
         ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
       }
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
     }
   }
 

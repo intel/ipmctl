@@ -28,9 +28,11 @@
 struct Command SetPreferencesCommand =
 {
   SET_VERB,                                                          //!< verb
-  {{L"", L"", L"", L"", FALSE, ValueOptional}
+  {
 #ifdef OS_BUILD
-  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+#else
+    {L"", L"", L"", L"", FALSE, ValueOptional}                         //!< options
 #endif
   },                      //!< options
   {                                                                  //!< targets

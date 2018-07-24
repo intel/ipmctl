@@ -179,7 +179,9 @@ Global definitions and typedefs and macros
 #define NVM_INI_PATH_FILE_LEN 1024
 typedef char NVM_INI_ENTRY[NVM_INI_ENTRY_LEN]; // Ini entry string
 typedef char NVM_INI_FILENAME[NVM_INI_PATH_FILE_LEN]; // Ini entry string
+typedef wchar_t NVM_INI_FILENAME_W[NVM_INI_PATH_FILE_LEN];
 static NVM_INI_FILENAME g_ini_path_filename = { 0 };
+static NVM_INI_FILENAME_W g_ini_path_filename_w = { 0 };
 
 /**
 @brief    Open/Create ini file and parse it
@@ -297,7 +299,8 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
       wprintf(L"Error: Could not parse configuration file: NULL\n");
     }
     else {
-      wprintf(L"Error: Could not parse configuration file: %hs\n", g_ini_path_filename);
+      AsciiStrToUnicodeStrS(g_ini_path_filename, g_ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
+      wprintf(L"Error: Could not parse configuration file: %ls\n", g_ini_path_filename_w);
     }
 #if defined(__LINUX__)
     wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
@@ -393,7 +396,8 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
       wprintf(L"Error: Could not find preference in configuration file: NULL\n");
     }
     else {
-      wprintf(L"Error: Could not find preference in configuration file: %hs\n", g_ini_path_filename);
+      AsciiStrToUnicodeStrS(g_ini_path_filename, g_ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
+      wprintf(L"Error: Could not find preference in configuration file: %ls\n", g_ini_path_filename_w);
     }
     return -1;
   }

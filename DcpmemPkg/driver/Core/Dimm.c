@@ -5329,22 +5329,42 @@ FwCmdGetErrorCount(
 
   if (pMediaLogCount != NULL) {
     InputPayload.LogParameters.Separated.LogType = ErrorLogTypeMedia;
+
+    InputPayload.LogParameters.Separated.LogLevel = 0;
     ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutputPayload, sizeof(OutputPayload), NULL, 0);
     if (EFI_ERROR(ReturnCode)) {
       *pMediaLogCount = 0;
       goto Finish;
     }
     *pMediaLogCount = GetLogEntriesCount(&OutputPayload);
+
+    InputPayload.LogParameters.Separated.LogLevel = 1;
+    ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutputPayload, sizeof(OutputPayload), NULL, 0);
+    if (EFI_ERROR(ReturnCode)) {
+      *pMediaLogCount = 0;
+      goto Finish;
+    }
+    *pMediaLogCount += GetLogEntriesCount(&OutputPayload);
   }
 
   if (pThermalLogCount != NULL) {
     InputPayload.LogParameters.Separated.LogType = ErrorLogTypeThermal;
+
+    InputPayload.LogParameters.Separated.LogLevel = 0;
     ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutputPayload, sizeof(OutputPayload), NULL, 0);
     if (EFI_ERROR(ReturnCode)) {
       *pThermalLogCount = 0;
       goto Finish;
     }
     *pThermalLogCount = GetLogEntriesCount(&OutputPayload);
+
+    InputPayload.LogParameters.Separated.LogLevel = 1;
+    ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutputPayload, sizeof(OutputPayload), NULL, 0);
+    if (EFI_ERROR(ReturnCode)) {
+      *pThermalLogCount = 0;
+      goto Finish;
+    }
+    *pThermalLogCount += GetLogEntriesCount(&OutputPayload);
   }
 
 Finish:

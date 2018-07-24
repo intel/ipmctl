@@ -84,7 +84,7 @@ ShowErrorCommand(
   UINT16 Index2 = 0;
   UINT32 DimmIdsNum = 0;
   UINT16 SequenceNum = ERROR_LOG_DEFAULT_SEQUENCE_NUMBER; // By default start from first log
-  UINT32 RequestedCount = ERROR_LOG_DEFAULT_COUNT;   // By default get all logs
+  UINT32 RequestedCount = ERROR_LOG_MAX_COUNT;   // By default get all logs
   UINT32 ReturnedCount = 0;
   UINT64 ParsedNumber = 0;
   ERROR_LOG_INFO ErrorsArray[ERROR_LOG_MAX_COUNT];

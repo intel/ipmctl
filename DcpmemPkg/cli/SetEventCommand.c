@@ -24,7 +24,11 @@ struct Command SetEventCommand =
 {
   SET_VERB,                                                          //!< verb
   {                                                                   //!< options
+#ifdef OS_BUILD
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired },
+#else
     { L"", L"", L"", L"", FALSE, ValueOptional },
+#endif
   },
   {                                                                   //!< targets
     { EVENT_TARGET, L"", HELP_TEXT_EVENT_ID, TRUE, ValueRequired }

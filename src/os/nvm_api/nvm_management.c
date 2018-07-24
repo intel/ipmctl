@@ -1846,6 +1846,7 @@ static void convert_log_entry_to_event(log_entry *p_log_entry, char *event_messa
 
   for (; (*p_src_msg != '\n') && (*p_src_msg != 0); p_src_msg++, p_dst_msg++)
     *p_dst_msg = *p_src_msg;
+  *p_dst_msg = 0; // add the null terminator
 }
 
 NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *count)
@@ -1906,9 +1907,9 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
   bytes_in_event_buffer = nvm_get_events_from_file(event_type_mask, dimm_uid, event_id, events_number, &p_log_entry, &event_buffer);
   while ((bytes_in_event_buffer > 0) && (events_number > 0)) {
     p_event_message = event_buffer + p_log_entry->message_offset;
-    nvm_get_event_id_form_entry(p_event_message, &(p_current_event->event_id));
-    nvm_get_uid_form_entry(p_event_message, sizeof(p_current_event->uid), p_current_event->uid);
     convert_log_entry_to_event(p_log_entry, p_event_message, p_current_event);
+    nvm_get_event_id_form_entry(p_current_event->message, &(p_current_event->event_id));
+    nvm_get_uid_form_entry(p_current_event->message, sizeof(p_current_event->uid), p_current_event->uid);
 
     p_previous_entry = p_log_entry;
     p_log_entry = p_log_entry->p_next;

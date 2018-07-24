@@ -236,22 +236,21 @@ static size_t get_unified_id_form_event_entry(char *event_entry, size_t uid_buff
     char * p_uid_string = NULL;
     size_t index = 0;
 
-    if (NULL != event_entry)
+    if (NULL == event_entry || NULL == (p_uid_string = strstr(event_entry, EVENT_MESSAGE_UID_PREFIX)))
     {
-        // Locate last occurance of special character
-        p_uid_string = strrchr(event_entry, EVENT_MESSAGE_UID_PREFIX_CHAR);
-        // Skip to the first UID char
-        p_uid_string++;
-        // Copy the UID string, we have to remove the end of line char
-        for (index = 0; (*p_uid_string != '\n') && (*p_uid_string != 0) && (uid_buff_size > index); p_uid_string++, index++)
-        {
-            uid_buff[index] = *p_uid_string;
-        }
-        if (uid_buff_size > index)
-        {
-            // There is a room to terminate the string
-            uid_buff[index] = 0;
-        }
+        return 0;
+    }
+    p_uid_string += strlen(EVENT_MESSAGE_UID_PREFIX);
+
+    // Copy the UID string, we have to remove the end of line char
+    for (index = 0; (*p_uid_string != '\n') && (*p_uid_string != 0) && (uid_buff_size > index); p_uid_string++, index++)
+    {
+      uid_buff[index] = *p_uid_string;
+    }
+    if (uid_buff_size > index)
+    {
+      // There is a room to terminate the string
+      uid_buff[index] = 0;
     }
     return index;
 }
@@ -289,6 +288,10 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
     char *p_ctl_stop = NULL;
     char code_str[SYSTEM_LOG_CODE_STRING_SIZE] = { 0 };
 
+    if (0 == *p_event_buff_size) {
+      // First entry, make room for null terminator char
+      *p_event_buff_size = 1;
+    }
     // Find the control char and estimate the fist section size
     event_type = get_event_type_form_event_entry(event_entry, &p_ctl_start, &p_ctl_stop);
     if ((NULL != p_ctl_start) && (NULL != p_ctl_stop)) {
@@ -298,7 +301,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
         // Add the event code string
         AsciiSPrint(code_str, SYSTEM_LOG_CODE_STRING_SIZE, "%03d", SYSTEM_EVENT_TYPE_NUMBER_GET(event_type));
         // Increase buffer size
-        *p_event_buff_size += str_size + AsciiStrLen(code_str) + AsciiStrLen(p_ctl_stop) + 1; // + new line marker
+        *p_event_buff_size += str_size + AsciiStrLen(code_str) + AsciiStrLen(p_ctl_stop);
         *event_buffer = realloc(*event_buffer, *p_event_buff_size);
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
@@ -312,7 +315,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
     {
         // No cotrol characters in the entry
         // Increase buffer size
-        *p_event_buff_size += AsciiStrLen(event_entry) + 1; // + new line marker
+        *p_event_buff_size += AsciiStrLen(event_entry);
         *event_buffer = realloc(*event_buffer, *p_event_buff_size);
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
@@ -331,7 +334,12 @@ static void store_log_entry(CHAR8 *event_message, UINTN offset, log_entry **pp_l
     if (NULL != p_current) {
         // Fill with data
         p_current->event_type = get_event_type_form_event_entry(event_message, NULL, NULL);
-        p_current->message_offset = offset;
+        if (0 == offset) {
+          p_current->message_offset = offset;
+        }
+        else {
+          p_current->message_offset = offset - 1; // minus null terminator
+        }
         // Add it to the log entry list
         if (NULL == *pp_log_entry)
         {

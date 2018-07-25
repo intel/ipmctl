@@ -2147,22 +2147,17 @@ RetrieveNamespacesFromLsa(
           continue;
         }
 
-        if (Use_Namespace1_1) {
-          // Linux treats 0 as 512
-          if (pNamespaceLabel2->LbaSize == 0 ||
-              pNamespaceLabel2->LbaSize == AD_NAMESPACE_LABEL_LBA_SIZE_512) {
-            pNamespace->Media.BlockSize = AD_NAMESPACE_LABEL_LBA_SIZE_512;
-          } else {
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
+        // Only support 512 or 4k LbaSize
+        // Linux treats 0 as 512
+        if (pNamespaceLabel2->LbaSize == 0 ||
+            pNamespaceLabel2->LbaSize == AD_NAMESPACE_LABEL_LBA_SIZE_512) {
+          pNamespace->Media.BlockSize = AD_NAMESPACE_LABEL_LBA_SIZE_512;
+        } else if (pNamespaceLabel2->LbaSize == AD_NAMESPACE_LABEL_LBA_SIZE_4K) {
+            pNamespace->Media.BlockSize = AD_NAMESPACE_LABEL_LBA_SIZE_4K;
         } else {
-          if (pNamespaceLabel2->LbaSize != 0) {
-            pNamespace->Media.BlockSize = (UINT32) pNamespaceLabel2->LbaSize;
-          } else {
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
+          NVDIMM_WARN("Unsupported LbaSize %lld", pNamespaceLabel2->LbaSize);
+          pNamespace->Media.BlockSize = AD_NAMESPACE_LABEL_LBA_SIZE_512;
+          pNamespace->HealthState = NAMESPACE_HEALTH_WARNING;
         }
 
         ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);

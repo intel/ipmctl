@@ -105,6 +105,11 @@ ParseNfitTable(
   CopyMem_S(pParsedHeader->pFit, sizeof(NFitHeader), pNFit, sizeof(NFitHeader));
 
   while (RemainingNFITBytes > 0) {
+    if (pTableHeader->Length == 0) {
+      NVDIMM_DBG("Zero size entry found in nfit region.");
+      goto FinishError;
+    }
+
     RemainingNFITBytes -= pTableHeader->Length;
 
     switch(pTableHeader->Type) {

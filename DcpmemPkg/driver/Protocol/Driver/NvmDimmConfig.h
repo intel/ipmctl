@@ -56,11 +56,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
   Each of those steps must be done at least one, so the minimum number of packets will be 3.
 **/
 #define FW_UPDATE_SP_MINIMUM_PACKETS      3
-/**
-  The FW file size is around 192KB, this divided by the packet size will be 3072 packets of size 64 byte.
-  Rounded up to 4k.
-**/
-#define FW_UPDATE_SP_MAXIMUM_PACKETS      4096
+#define FW_UPDATE_SP_MAXIMUM_PACKETS      MAX_FIRMWARE_IMAGE_SIZE_B / UPDATE_FIRMWARE_DATA_PACKET_SIZE
 
 #pragma pack(push)
 #pragma pack(1)

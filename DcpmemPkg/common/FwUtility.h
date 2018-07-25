@@ -9,7 +9,7 @@
 #include <Uefi.h>
 #include "NvmTypes.h"
 
-#define MAX_FIRMWARE_IMAGE_SIZE_KB 260
+#define MAX_FIRMWARE_IMAGE_SIZE_KB 788
 #define FIRMWARE_RECOVERY_IMAGE_SIZE_KB 1024
 /**
   The maximum file size that a new firmware image can have - in bytes.

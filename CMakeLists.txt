@@ -256,6 +256,8 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmemPkg/common/OsCommon.c
 	DcpmemPkg/common/DataSet.c
 	DcpmemPkg/common/Show.c
+	DcpmemPkg/common/Strings.c
+	DcpmemPkg/common/Nlog.c
 	DcpmemPkg/driver/Protocol/Driver/NvmDimmConfig.c
 	DcpmemPkg/driver/NvmDimmDriver.c
 	DcpmemPkg/driver/Core/Dimm.c

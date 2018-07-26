@@ -10,18 +10,20 @@
 #include "LoadCommand.h"
 #include "Debug.h"
 #include "Convert.h"
+#include "Nlog.h"
 
-/**
-  Get FW debug log syntax definition
-**/
+ /**
+   Get FW debug log syntax definition
+ **/
 struct Command DumpDebugCommandSyntax =
 {
   DUMP_VERB,                                                        //!< verb
   {                                                                 //!< options
-    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired}
+    { L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired },
 #ifdef OS_BUILD
-    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired },
 #endif
+    { L"", DICTIONARY_OPTION, L"", DICTIONARY_OPTION_HELP, FALSE, ValueOptional }
   },
   {
     {DEBUG_TARGET, L"", L"", TRUE, ValueEmpty},
@@ -48,15 +50,15 @@ RegisterDumpDebugCommand(
   return ReturnCode;
 }
 
- /**
-  Dump debug log command
+/**
+ Dump debug log command
 
-  @param[in] pCmd command from CLI
+ @param[in] pCmd command from CLI
 
-  @retval EFI_SUCCESS on success
-  @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
+ @retval EFI_SUCCESS on success
+ @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
+ @retval EFI_OUT_OF_RESOURCES memory allocation failure
+ @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
 **/
 EFI_STATUS
 DumpDebugCommand(
@@ -75,7 +77,14 @@ DumpDebugCommand(
   UINT64 BytesWritten = 0;
   CHAR16 *pDumpUserPath = NULL;
   DIMM_INFO *pDimms = NULL;
-  BOOLEAN fExists = FALSE;
+  nlog_dict_entry * next;
+  BOOLEAN dictExists = FALSE;
+  CHAR16 *pDictUserPath = NULL;
+
+  CHAR16 * decoded_file_name = L"dump.bin.decoded.txt";
+  nlog_dict_entry* dict_head = NULL;
+  UINT32 dict_version;
+  UINT64 dict_entries;
 
   NVDIMM_ENTRY();
 
@@ -110,7 +119,7 @@ DumpDebugCommand(
     goto Finish;
   }
 
-  if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIdsFilter, DimmIdsFilterNum)){
+  if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIdsFilter, DimmIdsFilterNum)) {
     Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -125,17 +134,34 @@ DumpDebugCommand(
       Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
-  } else {
+  }
+  else {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  ReturnCode = FileExists(pDumpUserPath, &fExists);
-  if (!EFI_ERROR(ReturnCode) && fExists){
-     Print(L"Error: File (" FORMAT_STR L") already exists.\n", pDumpUserPath);
-     ReturnCode = EFI_INVALID_PARAMETER;
-     goto Finish;
-   }
+  if (containsOption(pCmd, DICTIONARY_OPTION)) {
+    pDictUserPath = getOptionValue(pCmd, DICTIONARY_OPTION);
+    if (pDictUserPath == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      NVDIMM_ERR("Could not get -dict value. Out of memory.");
+      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      goto Finish;
+    }
+
+    if (EFI_ERROR(FileExists(pDictUserPath, &dictExists)))
+    {
+      ReturnCode = EFI_END_OF_FILE;
+      NVDIMM_ERR("Could not check for existence of the dictionary file.");
+      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+
+    if (!dictExists)
+    {
+      Print(L"The passed dictionary file doesn't exist.\n");
+    }
+  }
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
@@ -146,7 +172,7 @@ DumpDebugCommand(
   BytesWritten = 0;
 
   ReturnCode = pNvmDimmConfigProtocol->DumpFwDebugLog(pNvmDimmConfigProtocol,
-      pDimmIdsFilter[0], &pDebugBuffer, &BytesWritten, pCommandStatus);
+    pDimmIdsFilter[0], &pDebugBuffer, &BytesWritten, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
@@ -157,21 +183,46 @@ DumpDebugCommand(
   }
 
   /** Get Fw debug log  **/
-  ReturnCode = DumpToFile(pDumpUserPath, BytesWritten, pDebugBuffer, FALSE);
+  ReturnCode = DumpToFile(pDumpUserPath, BytesWritten, pDebugBuffer, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_VOLUME_FULL) {
-      Print(L"Not enough space to save file " FORMAT_STR L" with size %d\n", pDumpUserPath, CurrentDebugBufferSize);
-    } else {
+      Print(L"Not enough space to save file " FORMAT_STR L" with size %lu\n", pDumpUserPath, CurrentDebugBufferSize);
+    }
+    else {
       Print(L"Failed to dump FW Debug logs to file (" FORMAT_STR L")\n", pDumpUserPath);
     }
-  } else {
-    Print(L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%d) MiB were written.\n",
-        pDumpUserPath, BYTES_TO_MIB(BytesWritten));
+  }
+  else {
+    Print(L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%lu) MiB were written.\n",
+      pDumpUserPath, BYTES_TO_MIB(BytesWritten));
+
+    if (dictExists)
+    {
+      dict_head = load_nlog_dict(pDictUserPath, &dict_version, &dict_entries);
+      if (!dict_head)
+      {
+        Print(L"Failed to load the dictionary file " FORMAT_STR L"\n", pDictUserPath);
+        goto Finish;
+      }
+
+      Print(L"Loaded %d dictionary entries.\n", dict_entries);
+      decode_nlog_binary(decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
+    }
+  }
+Finish:
+  while (dict_head)
+  {
+    next = dict_head->next;
+    FREE_POOL_SAFE(dict_head->LogLevel);
+    FREE_POOL_SAFE(dict_head->LogString);
+    FREE_POOL_SAFE(dict_head->FileName);
+    FREE_POOL_SAFE(dict_head);
+    dict_head = next;
   }
 
-Finish:
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pDumpUserPath);
+  FREE_POOL_SAFE(pDictUserPath);
   FREE_POOL_SAFE(pDimmIdsFilter);
   FREE_POOL_SAFE(pDebugBuffer);
   FreeCommandStatus(&pCommandStatus);

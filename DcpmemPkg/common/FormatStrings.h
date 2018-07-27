@@ -52,7 +52,7 @@
 #define FORMAT_STR_WITH_COMMA                   L", %s"
 #define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
 #define FORMAT_HEX                              L"0x%04x"
-#define FORMAT_EFI_STATUS                       "%r"
+#define FORMAT_EFI_STATUS                       "0x%lx"
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
@@ -104,7 +104,7 @@
 #define FORMAT_STR_WITH_COMMA                   L", %ls"
 #define FORMAT_HEX_WITH_COMMA                   L", 0x%04x"
 #define FORMAT_HEX                              L"0x%04x"
-#define FORMAT_EFI_STATUS                       "%x"
+#define FORMAT_EFI_STATUS                       "0x%x"
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 #endif // OS_BUILD
 

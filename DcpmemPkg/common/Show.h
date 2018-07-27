@@ -95,8 +95,8 @@ do { \
   Ctx->FormatTypeAttribs = (VOID*)&Attributes; \
 } while(0); \
 
-// Helper to calculate the column width of a WCHAR string literal
-#define TABLE_MIN_HEADER_LENGTH(Header)     ((sizeof(Header) / 2) + 2)
+// Helper to calculate the column width of a CHAR16 string literal
+#define TABLE_MIN_HEADER_LENGTH(Header)     ((sizeof(Header) / sizeof(CHAR16)) + 2)
 
 /*
 * Main entry point for displaying an error.

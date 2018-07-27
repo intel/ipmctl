@@ -143,7 +143,7 @@ LoadRecover(
       goto Finish;
     }
   }
-  Print(CLI_FLASH_DIMM_SPI_PROMPT_STR);
+  Print(CLI_RECOVER_DIMM_PROMPT_STR);
   // Print out the dimm identifiers to be recovered
   if (DimmIdsCount == 0) {
     // Iterate through all uninitialized dimms
@@ -169,7 +169,7 @@ LoadRecover(
   Print(L"\n");
 
   // Warn about disabling TSOD for SMBUS operations
-  Print(CLI_FLASH_DIMM_SPI_TSOD_REMINDER_STR);
+  Print(CLI_RECOVER_DIMM_TSOD_REMINDER_STR);
 
   ReturnCode = PromptYesNo(&Confirmation);
   if (EFI_ERROR(ReturnCode) || !Confirmation) {

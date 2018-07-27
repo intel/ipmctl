@@ -32,8 +32,9 @@
 
 #define APPEND_RESULT_TO_THE_LOG(pDimm,String,Code,StateMask,ppResult,pState,...) { \
   CHAR16 *pTempHiiString = HiiGetString(gNvmDimmData->HiiHandle, String, NULL); \
-  pTempHiiString = CatSPrintClean(NULL, pTempHiiString, ## __VA_ARGS__); \
-  APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString, StateMask, ppResult, pState); \
+  CHAR16 *pTempHiiString1 = CatSPrintClean(NULL, pTempHiiString, ## __VA_ARGS__); \
+  FREE_POOL_SAFE(pTempHiiString); \
+  APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString1, StateMask, ppResult, pState); \
 }
 
  /** Diagnostics State bitmasks **/

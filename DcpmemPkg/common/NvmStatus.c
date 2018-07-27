@@ -291,6 +291,7 @@ GetSingleNvmStatusCodeMessage(
   )
 {
   CHAR16 *pTempString = NULL;
+  CHAR16 *pTempString1 = NULL;
 
   switch (NvmStatusCodeVar) {
 
@@ -340,35 +341,33 @@ GetSingleNvmStatusCodeMessage(
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_SENSOR_NOT_VALID), NULL);
   case NVM_ERR_SENSOR_CONTROLLER_TEMP_OUT_OF_RANGE:
     pTempString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CONTROLLER_OUT_OF_RANGE),  NULL);
-
     if (pTempString == NULL) {
       return pTempString;
     }
-
-    return CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_CONTROLLER_THRESHOLD_MAX);
-
+    pTempString1 = CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_CONTROLLER_THRESHOLD_MAX);
+    FREE_POOL_SAFE(pTempString);
+    return pTempString1;
   case NVM_ERR_SENSOR_MEDIA_TEMP_OUT_OF_RANGE:
     pTempString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_MEDIA_OUT_OF_RANGE),  NULL);
 
     if (pTempString == NULL) {
       return pTempString;
     }
-
-    return CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_MEDIA_THRESHOLD_MAX);
+    pTempString1 = CatSPrintClean(NULL, pTempString, TEMPERATURE_THRESHOLD_MIN, TEMPERATURE_MEDIA_THRESHOLD_MAX);
+    FREE_POOL_SAFE(pTempString);
+    return pTempString1;
   case NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE:
     pTempString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CAPACITY_OUT_OF_RANGE),  NULL);
-
     if (pTempString == NULL) {
       return pTempString;
     }
-
-    return CatSPrintClean(NULL, pTempString, CAPACITY_THRESHOLD_MIN, CAPACITY_THRESHOLD_MAX);
+    pTempString1 = CatSPrintClean(NULL, pTempString, CAPACITY_THRESHOLD_MIN, CAPACITY_THRESHOLD_MAX);
+    FREE_POOL_SAFE(pTempString);
+    return pTempString1;
   case NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE), NULL);
-
   case NVM_ERR_MEDIA_DISABLED:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE), NULL);
-
   case NVM_ERR_ENABLE_SECURITY_NOT_ALLOWED:
       return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_ENABLE_SECURITY_NOT_ALLOWED), NULL);
   case NVM_ERR_CREATE_GOAL_NOT_ALLOWED:

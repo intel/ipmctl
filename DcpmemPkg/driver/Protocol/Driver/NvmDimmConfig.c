@@ -6374,11 +6374,11 @@ Finish:
 	EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimms[MAX_DIMMS_PER_SOCKET];
   NVM_IS *pIS = NULL;
-    LIST_ENTRY *pRegionList = GetRegionList();
+  LIST_ENTRY *pRegionList = GetRegionList();
   NAMESPACE *pNamespace = NULL;
   NAMESPACE_LABEL *pLabel = NULL;
   NAMESPACE_LABEL **ppLabels = NULL;
-    UINT8 NamespaceType = APPDIRECT_NAMESPACE;
+  UINT8 NamespaceType = APPDIRECT_NAMESPACE;
   UINT16 LabelsCount = 0;
   GUID NamespaceGUID;
   UINT64 NamespaceCapacity = 0;
@@ -6439,45 +6439,49 @@ Finish:
   if (CapacitySpecified) {
     /** Calculate namespace capacity to provide **/
     RequestedCapacity = BlockCount * BlockSize;
-      ReturnCode = ConvertUsableSizeToActualSize(BlockSize, RequestedCapacity, Mode,
-      &ActualBlockCount, pActualNamespaceCapacity, pCommandStatus);
+    ReturnCode = ConvertUsableSizeToActualSize(BlockSize, RequestedCapacity, Mode,
+    &ActualBlockCount, pActualNamespaceCapacity, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
   } else {
-      // if size is not specified for Namespace, then find the maximum available size
+    // if size is not specified for Namespace, then find the maximum available size
     NamespaceCapacity = 0;
-      ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
-        if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
-          goto Finish;
-        }
-      /** Find the free capacity**/
-      ReturnCode = FindADMemmapRangeInIS(pIS, MAX_UINT64_VALUE, &AppDirectRange);
-        if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
-          goto Finish;
-        }
-        ReturnCode = EFI_SUCCESS;
-        ISAvailableCapacity = AppDirectRange.RangeLength * RegionCount;
-        if (ISAvailableCapacity > NamespaceCapacity) {
-          NamespaceCapacity = ISAvailableCapacity;
-        }
-      if (NamespaceCapacity == 0) {
-        ReturnCode = EFI_ABORTED;
-        goto Finish;
-      }
-      *pActualNamespaceCapacity = NamespaceCapacity;
-      ActualBlockCount = *pActualNamespaceCapacity / BlockSize;
-    }
-    /** Namespace capacity that doesn't include block size with 64B cache lane size **/
-    NamespaceCapacity = ActualBlockCount * BlockSize;
     ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
     if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
       goto Finish;
     }
-    AlignedNamespaceCapacity = ROUNDUP(NamespaceCapacity, NAMESPACE_4KB_ALIGNMENT_SIZE * RegionCount);
-    RegionSize = AlignedNamespaceCapacity / RegionCount;
-    ReturnCode = FindADMemmapRangeInIS(pIS, RegionSize, &AppDirectRange);
-    if (EFI_ERROR(ReturnCode)) {
+    /** Find the free capacity**/
+    ReturnCode = FindADMemmapRangeInIS(pIS, MAX_UINT64_VALUE, &AppDirectRange);
+    if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
+      goto Finish;
+    }
+    ReturnCode = EFI_SUCCESS;
+    ISAvailableCapacity = AppDirectRange.RangeLength * RegionCount;
+    if (ISAvailableCapacity > NamespaceCapacity) {
+      NamespaceCapacity = ISAvailableCapacity;
+    }
+    if (NamespaceCapacity == 0) {
+      ReturnCode = EFI_ABORTED;
+      goto Finish;
+    }
+    *pActualNamespaceCapacity = NamespaceCapacity;
+    ActualBlockCount = *pActualNamespaceCapacity / BlockSize;
+  }
+  /** Namespace capacity that doesn't include block size with 64B cache lane size **/
+  NamespaceCapacity = ActualBlockCount * BlockSize;
+  ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
+  if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
+    goto Finish;
+  }
+  AlignedNamespaceCapacity = ROUNDUP(NamespaceCapacity, NAMESPACE_4KB_ALIGNMENT_SIZE * RegionCount);
+  RegionSize = AlignedNamespaceCapacity / RegionCount;
+  ReturnCode = FindADMemmapRangeInIS(pIS, RegionSize, &AppDirectRange);
+  if (EFI_NOT_FOUND == ReturnCode) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG(" AD Mem Map Range not found for pIS");
     goto Finish;
   }
@@ -6495,7 +6499,7 @@ Build NAMESPACE structure
   pNamespace->Enabled = TRUE;
   pNamespace->Signature = NAMESPACE_SIGNATURE;
   pNamespace->Flags.Values.ReadOnly = FALSE;
-    pNamespace->NamespaceType = NamespaceType;
+  pNamespace->NamespaceType = NamespaceType;
   if (Mode) {
     pNamespace->IsBttEnabled = TRUE;
   } else {
@@ -6503,14 +6507,14 @@ Build NAMESPACE structure
   }
   pNamespace->BlockSize = BlockSize;
 
-    if (pIS == NULL) {
-      NVDIMM_DBG("No target IS for namespace");
-      FailFlag = TRUE;
-      goto Finish;
-    }
-    // AppDirect namespaces initially stored with 'updating flag'.
-    pNamespace->Flags.Values.Updating = TRUE;
-    pNamespace->pParentIS = pIS;
+  if (pIS == NULL) {
+    NVDIMM_DBG("No target IS for namespace");
+    FailFlag = TRUE;
+    goto Finish;
+  }
+  // AppDirect namespaces initially stored with 'updating flag'.
+  pNamespace->Flags.Values.Updating = TRUE;
+  pNamespace->pParentIS = pIS;
 
   // No name was provided by the user, lets use our default
   if (pName == NULL) {
@@ -6535,12 +6539,12 @@ Build NAMESPACE structure
 
   GenerateRandomGuid(&NamespaceGUID);
   CopyMem_S(&pNamespace->NamespaceGuid, sizeof(pNamespace->NamespaceGuid), &NamespaceGUID, NSGUID_LEN);
-    /** Provision Namespace Capacity using only Region Id **/
-    ReturnCode = AllocateNamespaceCapacity(NULL, pIS, pActualNamespaceCapacity, pNamespace);
+  /** Provision Namespace Capacity using only Region Id **/
+  ReturnCode = AllocateNamespaceCapacity(NULL, pIS, pActualNamespaceCapacity, pNamespace);
   pNamespace->BlockCount = *pActualNamespaceCapacity / GetPhysicalBlockSize(pNamespace->BlockSize);
-    pNamespace->UsableSize = *pActualNamespaceCapacity;
+  pNamespace->UsableSize = *pActualNamespaceCapacity;
   if (EFI_ERROR(ReturnCode)) {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
     FailFlag = TRUE;
     goto Finish;
   }
@@ -6550,15 +6554,15 @@ Build NAMESPACE structure
   }
 
   // Check if capacity meets minimum requirements. This is the aligned capacity.
-    ReturnCode = ADNamespaceMinAndMaxAvailableSizeOnIS(pIS, &MinSize, &MaxSize);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-    if (*pActualNamespaceCapacity < MinSize || MinSize == 0) {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_NAMESPACE_CAPACITY);
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
+  ReturnCode = ADNamespaceMinAndMaxAvailableSizeOnIS(pIS, &MinSize, &MaxSize);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+  if (*pActualNamespaceCapacity < MinSize || MinSize == 0) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_NAMESPACE_CAPACITY);
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
   if (!ForceAlignment && CapacitySpecified && (RequestedCapacity != *pActualNamespaceCapacity)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BADALIGNMENT);
@@ -6609,11 +6613,11 @@ Build NAMESPACE structure
   /** For BTT Namespaces the structures need to be laid out before updating LSA **/
   if (pNamespace->IsBttEnabled) {
     pNamespace->pBtt = BttInit(
-      GetAccessibleCapacity(pNamespace),
-      (UINT32)GetBlockDeviceBlockSize(pNamespace),
-      (GUID *)pNamespace->NamespaceGuid,
-      pNamespace
-      );
+                        GetAccessibleCapacity(pNamespace),
+                        (UINT32)GetBlockDeviceBlockSize(pNamespace),
+                        (GUID *)pNamespace->NamespaceGuid,
+                        pNamespace
+                        );
     if (pNamespace->pBtt == NULL) {
       NVDIMM_DBG("Failed to initialize the BTT. Namespace GUID: %g\n", (GUID *)pNamespace->NamespaceGuid);
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
@@ -6633,52 +6637,51 @@ Build NAMESPACE structure
 /**
 Update NAMESPACE_INDEX with NAMESPACE_LABEL(s)
 **/
-
-    Index2 = 0;
-    LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
-      pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
-      ReturnCode = InsertNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2], 1,
-        pNamespace->Major, pNamespace->Minor);
-      if (EFI_ERROR(ReturnCode)) {
-        //cleanup already written labels and exit
-        LabelsToRemove = (UINT16)Index2;
-        Index2 = 0;
-        LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
-          pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
-          if (Index2 >= LabelsToRemove) {
-            break;
-          }
-          RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, 0);
-          Index2++;
+  Index2 = 0;
+  LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
+    pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
+    ReturnCode = InsertNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2], 1,
+      pNamespace->Major, pNamespace->Minor);
+    if (EFI_ERROR(ReturnCode)) {
+      //cleanup already written labels and exit
+      LabelsToRemove = (UINT16)Index2;
+      Index2 = 0;
+      LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
+        pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
+        if (Index2 >= LabelsToRemove) {
+          break;
         }
-        FailFlag = TRUE;
-        goto Finish;
+        RemoveNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, 0);
+        Index2++;
       }
-      Index2++;
+      FailFlag = TRUE;
+      goto Finish;
     }
-    if (Index2 != LabelsCount) {
-      NVDIMM_DBG("Number of labels written is not equal to number of labels.");
+    Index2++;
+  }
+  if (Index2 != LabelsCount) {
+    NVDIMM_DBG("Number of labels written is not equal to number of labels.");
+    ResetCmdStatus(pCommandStatus, NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN);
+    FailFlag = TRUE;
+    goto Finish;
+  }
+/**
+All ok at this point but one more run is needed to clear updating flag
+**/
+  Index2 = 0;
+  LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
+    pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
+    ppLabels[Index2]->Flags.Values.Updating = FALSE;
+    Flags = ppLabels[Index2]->Flags.AsUint32;
+    ReturnCode = ModifyNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, &Flags, NULL, 0);
+    if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN);
       FailFlag = TRUE;
       goto Finish;
     }
-/**
-All ok at this point but one more run is needed to clear updating flag
-**/
-    Index2 = 0;
-    LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {
-      pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
-      ppLabels[Index2]->Flags.Values.Updating = FALSE;
-      Flags = ppLabels[Index2]->Flags.AsUint32;
-      ReturnCode = ModifyNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2]->Uuid, &Flags, NULL, 0);
-      if (EFI_ERROR(ReturnCode)) {
-        ResetCmdStatus(pCommandStatus, NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN);
-        FailFlag = TRUE;
-        goto Finish;
-      }
-      Index2++;
-    }
-    InsertTailList(&pIS->AppDirectNamespaceList, &pNamespace->IsNode);
+    Index2++;
+  }
+  InsertTailList(&pIS->AppDirectNamespaceList, &pNamespace->IsNode);
 
   pNamespace->HealthState = NAMESPACE_HEALTH_OK;
 
@@ -6723,7 +6726,7 @@ Finish:
   FREE_POOL_SAFE(pTempName16);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
-  }
+}
 
 
 /**

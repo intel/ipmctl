@@ -3106,7 +3106,7 @@ EFI_STATUS
 FwCmdGetPMONRegisters(
   IN     DIMM *pDimm,
   IN     UINT8 SmartDataMask,
-     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+  OUT    PMON_REGISTERS *pPayloadPMONRegisters
   )
 {
   EFI_STATUS Rc = EFI_INVALID_PARAMETER;

@@ -1570,7 +1570,7 @@ GetPMONRegisters(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN     UINT16 Pid,
   IN     UINT8 SmartDataMask,
-     OUT PT_PMON_REGISTERS *pPayloadPMONRegisters
+  OUT    PMON_REGISTERS *pPayloadPMONRegisters
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;

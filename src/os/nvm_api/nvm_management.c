@@ -688,7 +688,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
     NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)SmartDataMask, (PT_PMON_REGISTERS *)p_output_payload);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)SmartDataMask, p_output_payload);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_OPERATION_FAILED;

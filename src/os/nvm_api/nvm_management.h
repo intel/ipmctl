@@ -22,7 +22,7 @@
  *
  *      - nvm_management.h: The native management API interface definition.
  *      - nvm_types.h: Common types used by the native management API.
- *      - NvmStatusValues.h: Return code definitions.
+ *      - NvmSharedDefs.h: Return code definitions.
  *      - export_api.h: Export definitions for libararies.
  *
  * Please be sure to link with the -lipmctl option when compiling.

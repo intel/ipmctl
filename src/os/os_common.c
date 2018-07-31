@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "os_types.h"
-#include "NvmStatusValues.h"
+#include "NvmSharedDefs.h"
 
 
 /*

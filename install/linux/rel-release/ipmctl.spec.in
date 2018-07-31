@@ -125,7 +125,7 @@ make -f Makefile install DESTDIR=%{buildroot}
 %attr(644,root,root) %{_includedir}/nvm_types.h
 %attr(644,root,root) %{_includedir}/nvm_management.h
 %attr(644,root,root) %{_includedir}/export_api.h
-%attr(644,root,root) %{_includedir}/NvmStatusValues.h
+%attr(644,root,root) %{_includedir}/NvmSharedDefs.h
 %{_libdir}/pkgconfig/libipmctl.pc
 
 %changelog

@@ -12,7 +12,7 @@
 #define _NVM_STATUS_H_
 
 #include "NvmLimits.h"
-#include "NvmStatusValues.h"
+#include "NvmSharedDefs.h"
 
 /** Return code status values as identified by #NvmStatusCode */
 typedef INT16 NVM_STATUS;

@@ -5,12 +5,12 @@
 
 
 /**
- * @file NvmStatusValues.h
+ * @file NvmSharedDefs.h
  * @brief Definition of the NVM status codes
  */
 
-#ifndef _NVM_STATUS_VALUES_H_
-#define _NVM_STATUS_VALUES_H_
+#ifndef _NVM_SHARED_DEFS_H_
+#define _NVM_SHARED_DEFS_H_
 
  /**
  * @brief NVM_API return codes
@@ -178,4 +178,61 @@ typedef enum _NvmStatusCode {
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 
-#endif /** _NVM_STATUS_VALUES_H_ **/
+#ifdef OS_BUILD
+typedef struct _PMON_REGISTERS {
+  /**
+  This will specify whether or not to return the extra smart data along with the PMON
+  Counter data.
+  0x0 - No Smart Data DDRT or Media
+  0x1 - DDRT Data only to be returned
+  0x2 - Media Data only to be returned
+  0x3 - DDRT & Media Data to be returned
+  All other values reserved
+  **/
+  unsigned char       SmartDataMask;
+  unsigned char       Reserved1[3];
+  /**
+  This will specify which group that is currently enabled. If no groups are enabled Group
+  F will be returned
+  **/
+  unsigned char       GroupEnabled;
+  unsigned char       Reserved2[19];
+  unsigned int        PMON4Counter;
+  unsigned int        PMON5Counter;
+  unsigned char       Reserved3[4];
+  unsigned int        PMON7Counter;
+  unsigned int        PMON8Counter;
+  unsigned int        PMON9Counter;
+  unsigned char       Reserved4[16];
+  unsigned int        PMON14Counter;
+  unsigned char       Reserved5[4];
+  /**
+  DDRT Reads for current power cycle
+  **/
+  unsigned long long  DDRTRD;
+  /**
+  DDRT Writes for current power cycle
+  **/
+  unsigned long long  DDRTWR;
+  /**
+  Media Reads for current power cycle
+  **/
+  unsigned long long  MERD;
+  /**
+  Media Writes for current power cycle
+  **/
+  unsigned long long  MEWR;
+  /**
+  Current Media temp
+  **/
+  unsigned short      MTP;
+  /**
+  Current Controller temp
+  **/
+  unsigned short      CTP;
+  unsigned char       Reserved[20];
+}PMON_REGISTERS;
+
+#endif
+
+#endif /** _NVM_SHARED_DEFS_H_ **/

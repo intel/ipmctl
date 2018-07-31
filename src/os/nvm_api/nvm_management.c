@@ -646,7 +646,7 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     return nvm_status;
   }
   if (NVM_SUCCESS != (nvm_status = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", nvm_status);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", nvm_status);
     p_status->is_missing = TRUE;
     return NVM_ERR_DIMM_NOT_FOUND;
   }
@@ -685,7 +685,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)SmartDataMask, (PT_PMON_REGISTERS *)p_output_payload);
@@ -708,7 +708,7 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID   device_uid,
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.SetPMONRegisters(&gNvmDimmDriverNvmDimmConfig, dimm_id, (UINT8)PMONGroupEnable);
@@ -740,12 +740,12 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return rc;
   }
 
   if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", dimm_id);
+    NVDIMM_ERR("Failed to get dimm by Pid (%d)\n", dimm_id);
     return NVM_ERR_UNKNOWN;
   }
 
@@ -780,12 +780,12 @@ NVM_API int nvm_modify_device_settings(const NVM_UID      device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return rc;
   }
 
   if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", dimm_id);
+    NVDIMM_ERR("Failed to get dimm by Pid (%d)\n", dimm_id);
     return NVM_ERR_UNKNOWN;
   }
 
@@ -817,7 +817,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimm(&gNvmDimmDriverNvmDimmConfig, dimm_id, DIMM_INFO_CATEGORY_ALL, &dimm_info);
@@ -898,7 +898,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   unsigned int dimm_handle;
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, &dimm_handle))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto finish;
   }
   cmd->DimmID = dimm_id; //PassThruCommand needs the dimm_id (not handle)
@@ -1061,12 +1061,12 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID    device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     return rc;
   }
 
   if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimmm by Pid (%d)\n", dimm_id);
+    NVDIMM_ERR("Failed to get dimm by Pid (%d)\n", dimm_id);
     return NVM_ERR_UNKNOWN;
   }
 
@@ -1426,7 +1426,7 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, &dimm_handle))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -1611,7 +1611,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -1653,7 +1653,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -1693,7 +1693,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -2488,7 +2488,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
     goto Finish;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -2527,7 +2527,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
     goto Finish;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -2568,7 +2568,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
     p_dimm_id = NULL;
   } else {
     if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
-      NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+      NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
       goto Finish;
     } else {
       dimm_count = 1;
@@ -2641,7 +2641,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
     return NVM_ERR_UNKNOWN;
   if (NVM_SUCCESS != (nvm_status = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
     FreeCommandStatus(&p_command_status);
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", nvm_status);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", nvm_status);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.DeletePcd(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, p_command_status);
@@ -2925,7 +2925,7 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto Finish;
   }
 
@@ -2985,7 +2985,7 @@ NVM_API int nvm_get_fw_err_log_stats(const NVM_UID      device_uid,
   }
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
   } else {
     get_fw_err_log_stats(
       dimm_id,
@@ -3187,7 +3187,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
   ZeroMem(cmd, sizeof(FW_CMD));
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, &dimm_handle))) {
-    NVDIMM_ERR("Failed to get dimmm ID %d\n", rc);
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
     goto finish;
   }
 

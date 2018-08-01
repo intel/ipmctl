@@ -121,13 +121,15 @@ NVM_API int nvm_init()
   if (EFI_SUCCESS != preferences_init())
   {
     NVDIMM_ERR("Failed to intialize preferences\n");
-    return NVM_ERR_UNKNOWN;
+    rc = NVM_ERR_UNKNOWN;
+    goto cleanup_mutex;
   }
 
   if (EFI_SUCCESS != NvmDimmDriverDriverEntryPoint(0, NULL))
   {
     NVDIMM_ERR("Nvm Dimm driver entry point failed.\n");
-    return NVM_ERR_UNKNOWN;
+    rc = NVM_ERR_UNKNOWN;
+    goto cleanup_mutex;
   }
 
   rc = os_check_admin_permissions();
@@ -146,6 +148,9 @@ NVM_API int nvm_init()
   }
   g_nvm_initialized = 1;
   return rc;
+cleanup_mutex:
+  os_mutex_delete(g_api_mutex, "nvm_api");
+  return rc;
 }
 
 NVM_API void nvm_uninit()
@@ -154,6 +159,11 @@ NVM_API void nvm_uninit()
   NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
   uninit_protocol_shell_parameters_protocol();
   preferences_uninit();
+
+  if (g_api_mutex) {
+    os_mutex_delete(g_api_mutex, "nvm_api");
+    g_api_mutex = NULL;
+  }
 }
 
 NVM_API void nvm_sync_lock_api()

@@ -1130,6 +1130,11 @@ struct job {
 */
 NVM_API int nvm_init();
 
+/**
+ * @brief  Clean up the library.
+ */
+NVM_API void nvm_uninit();
+
 /*
  * system.c
  */

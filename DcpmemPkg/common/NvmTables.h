@@ -27,9 +27,9 @@
 #define NVDIMM_FLUSH_HINT_TYPE                6   ///< Flush Hint table
 #define NVDIMM_PLATFORM_CAPABILITIES_TYPE     7   ///< Platform Capabilities (PCAT) table
 
-/** 
+/**
  * @}
- * Fields offsets in structures 
+ * Fields offsets in structures
  **/
 #define NFIT_TABLE_HEADER_LENGTH_OFFSET              2
 #define NFIT_TABLE_HEADER_LENGTH_FIELD_SIZE          2
@@ -56,6 +56,7 @@
 #define PMTT_TYPE_MODULE 2
 #define PMTT_COMMON_HDR_LEN 8
 #define PMTT_DDR_DCPMEM_FLAG BIT2
+#define PMTT_INVALID_SMBIOS_HANDLE 0xFFFFFFFF
 
 /** NFIT Tables structures **/
 #pragma pack(push)

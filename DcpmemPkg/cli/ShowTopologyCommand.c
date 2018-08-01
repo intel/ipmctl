@@ -250,6 +250,9 @@ ShowTopology(
     //Print topology for DDR4 entries if no dimm target specified
     if (!ContainTarget(pCmd, DIMM_TARGET)) {
       for (Index = 0; Index < TopologyDimmsNumber; Index++){
+        if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
+          continue;
+        }
         pMemoryType = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
         TempReturnCode = MakeCapacityString(pTopologyDimms[Index].VolatileCapacity,
             UnitsToDisplay, TRUE, &pCapacityStr);

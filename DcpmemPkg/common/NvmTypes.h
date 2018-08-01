@@ -184,8 +184,8 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define NS_LABEL_VERSION_1_1     1
 #define NS_LABEL_VERSION_1_2     2
 
-/** 
- * @defgroup GOAL_CONFIG_STATUS Goal configuration status 
+/**
+ * @defgroup GOAL_CONFIG_STATUS Goal configuration status
  * @{
  */
 #define GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS     0   ///< No Goal or goal applied successfully
@@ -198,7 +198,7 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 
 /**
  * @}
- * Firmware types 
+ * Firmware types
  */
 #define FW_TYPE_PRODUCTION  29
 #define FW_TYPE_DFX         30
@@ -264,9 +264,9 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
 
-/** 
+/**
  * @}
- * DIMM_INFO_ERROR types 
+ * DIMM_INFO_ERROR types
  */
 #define DIMM_INFO_ERROR_NONE                            0
 #define DIMM_INFO_ERROR_UID                             (1 << 0)
@@ -395,6 +395,7 @@ typedef struct _DIMM_INFO {
 
 typedef struct _TOPOLOGY_DIMM_INFO {
   UINT16 DimmID;                            //!< SMBIOS Type 17 handle corresponding to this memory device
+  UINT16 SocketID;                          //!< Socket ID for the memory device
   UINT8 MemoryType;                         //!< memory type
   UINT64 VolatileCapacity;                  //!< Capacity in bytes mapped as volatile memory
   CHAR16 DeviceLocator[DEVICE_LOCATOR_LEN]; //!< describing the physically-labeled socket or board position
@@ -562,11 +563,11 @@ typedef struct _REGION_GOAL_TEMPLATE {
 
 /** Structure describes the usage characteristics and regions (interleave sets) of the specified DIMM */
 typedef struct _REGION_GOAL_PER_DIMM_INFO {
-  UINT32 DimmID;                                    //!< DIMM ID 
+  UINT32 DimmID;                                    //!< DIMM ID
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];              //!< DIMM UID
   UINT16 SocketId;                                  //!< Socket ID that DIMM is found
   UINT32 PersistentRegions;                         //!< Count of persistent regions
-  UINT64 VolatileSize;                              //!< Volatile capacity 
+  UINT64 VolatileSize;                              //!< Volatile capacity
   UINT64 StorageCapacity;                           //!< Any capacity not allocated to Volatile or AppDirect regions
   UINT8 NumberOfInterleavedDimms[MAX_IS_PER_DIMM];  //!< Count of DIMMs that are part of related Interleaved AppDirect regions
   UINT64 AppDirectSize[MAX_IS_PER_DIMM];            //!< AppDirect capacity
@@ -824,7 +825,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SECURITY_CAPABILITIES_ERASE_CAPABLE       BIT1
 
 /* VFR compiler doesn't support enums, that's why we use defines */
-/** 
+/**
  * @defgroup SENSOR_TYPES Sensor Types
  * Sensor IDs for the various sensor types
  * @{
@@ -864,16 +865,16 @@ typedef struct _DEBUG_LOG_INFO {
 /** dump FW debuglog **/
 #define MAX_LOG_PAGE_OFFSET       0xFFFFFFFF
 
-/** 
+/**
 * @defgroup AIT_DRAM_STATUS AIT DRAM Status types
 * @{
 */
 #define AIT_DRAM_DISABLED  0    ///< ATI DRAM Disabled
 #define AIT_DRAM_ENABLED   1    ///< ATI DRAM Enabled
 
-/** 
+/**
 * @}
-* Error injection Enabled states 
+* Error injection Enabled states
 **/
 #define ERR_INJ_DISABLED  0
 #define ERR_INJ_ENABLED   1

@@ -42,6 +42,18 @@
 #include "event.h"
 #endif // OS_BUILD
 
+#define INVALID_SOCKET_ID 0xFFFF
+
+#define PMTT_INFO_SIGNATURE     SIGNATURE_64('P', 'M', 'T', 'T', 'I', 'N', 'F', 'O')
+#define PMTT_INFO_FROM_NODE(a)  CR(a, PMTT_INFO, PmttNode, PMTT_INFO_SIGNATURE)
+
+typedef struct _PMTT_INFO {
+  LIST_ENTRY PmttNode;
+  UINT64 Signature; //!< PMTT_INFO_SIGNATURE
+  UINT32 DimmID;    //!< SMBIOS Type 17 handle corresponding to this memory device
+  UINT16 SocketID;  //!< zero based socket identifier
+} PMTT_INFO;
+
 /** Memory Device SMBIOS Table **/
 #define SMBIOS_TYPE_MEM_DEV             17
 /** Memory Device Mapped Address SMBIOS Table **/
@@ -7785,6 +7797,146 @@ Finish:
   return ReturnCode;
 }
 
+
+/**
+  Free resources of PMTT_INFO list items
+
+  @param[in] pPmttInfo - PMTT_INFO list that items will be freed for
+**/
+STATIC VOID
+FreePmttItems(
+  IN OUT LIST_ENTRY *pPmttInfo
+  )
+{
+  PMTT_INFO *pPmttItem = NULL;
+  LIST_ENTRY *pNode = NULL;
+  LIST_ENTRY *pNext = NULL;
+
+  NVDIMM_ENTRY();
+
+  if ((NULL == pPmttInfo) || (NULL == pPmttInfo->ForwardLink)){
+     goto Finish;
+  }
+
+  LIST_FOR_EACH_SAFE(pNode, pNext, pPmttInfo) {
+    pPmttItem = PMTT_INFO_FROM_NODE(pNode);
+    RemoveEntryList(pNode);
+    FREE_POOL_SAFE(pPmttItem);
+  }
+
+Finish:
+  NVDIMM_EXIT();
+}
+
+/**
+  Step through PMTT and generate linked list of DIMM ID/Socket ID pairs
+  If there is no PMTT, list will be empty
+
+  @param[in] pPmttInfo - pointer to generic list head
+**/
+STATIC VOID
+MapSockets(
+   LIST_ENTRY * pPmttInfo
+)
+{
+  EFI_STATUS ReturnCode;
+  PMTT_TABLE *pPMTT = NULL;
+  PMTT_INFO  *DdrEntry = NULL;
+  PMTT_COMMON_HEADER *pCommonHeader = NULL;
+  PMTT_SOCKET *pSocket = NULL;
+  PMTT_MODULE *pModule = NULL;
+  UINT64 PmttLen = 0;
+  UINT64 Offset = 0;
+#ifndef MDEPKG_NDEBUG
+  LIST_ENTRY *pNode = NULL;
+#endif
+
+  InitializeListHead(pPmttInfo);
+
+  ReturnCode = GetAcpiPMTT(NULL, &pPMTT);
+
+  if (EFI_ERROR(ReturnCode)) {
+    //error getting PMTT. Nothing to map
+    //to see ddr4 topology in this case, do not use -socket
+    return;
+  }
+
+  PmttLen = pPMTT->Header.Length;
+  Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+
+  //step through table and create socket list
+  while (Offset < PmttLen) {
+    pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+    if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
+      pSocket = (PMTT_SOCKET *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+      Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
+    } else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
+      Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
+    } else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
+      if (NULL != pSocket) {
+         pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+         if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
+           DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
+           if (DdrEntry == NULL) {
+             NVDIMM_ERR("Out of memory");
+             goto Finish;
+           }
+           DdrEntry->DimmID = pModule->SmbiosHandle;
+           DdrEntry->SocketID = pSocket->SocketId;
+           DdrEntry->Signature = PMTT_INFO_SIGNATURE;
+
+           InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
+         }
+      }
+      Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
+    }
+  }
+
+#ifndef MDEPKG_NDEBUG
+  LIST_FOR_EACH(pNode, pPmttInfo) {
+     DdrEntry = PMTT_INFO_FROM_NODE(pNode);
+     NVDIMM_DBG("ddr4: 0x%X  Socket: %d\n", DdrEntry->DimmID, DdrEntry->SocketID);
+  }
+#endif
+
+Finish:
+   return;
+}
+
+/**
+  Retrieve Socket ID for a given DIMM
+
+  @param[in]  DimmPid - The ID of the DIMM
+  @param[in]  pPmttInfo - list of DIMM ID/Socket ID pairs
+
+  @retval Socket ID - 0xFFFF if DimmID not in list
+**/
+STATIC UINT16
+GetDdr4Socket(
+  IN     UINT16  DimmID,
+  IN     LIST_ENTRY *pPmttInfo
+  )
+{
+  UINT16 Socket = INVALID_SOCKET_ID;
+  LIST_ENTRY *pNode = NULL;
+  PMTT_INFO  *DdrEntry = NULL;
+
+  if ((NULL == pPmttInfo) || (NULL == pPmttInfo->ForwardLink)){
+     goto Finish;
+  }
+
+  LIST_FOR_EACH(pNode, pPmttInfo) {
+     DdrEntry = PMTT_INFO_FROM_NODE(pNode);
+     if (DdrEntry->DimmID == DimmID) {
+        Socket = DdrEntry->SocketID;
+        break;
+     }
+  }
+
+Finish:
+  return Socket;
+}
+
 /**
   Get system topology from SMBIOS table
 
@@ -7813,6 +7965,8 @@ GetSystemTopology(
   UINT16 Index = 0;
   UINT64 Capacity = 0;
   BOOLEAN IsTopologyDimm = FALSE;
+  LIST_ENTRY PmttInfo;
+
   NVDIMM_ENTRY();
 
   if (pThis == NULL || ppTopologyDimm == NULL || pTopologyDimmsNumber == NULL) {
@@ -7834,13 +7988,17 @@ GetSystemTopology(
     goto Finish;
   }
 
+  MapSockets(&PmttInfo);
+
   while (SmBiosStruct.Raw < BoundSmBiosStruct.Raw) {
     if (SmBiosStruct.Hdr != NULL) {
       IsTopologyDimm = ((SmBiosStruct.Hdr->Type == SMBIOS_TYPE_MEM_DEV && !SmBiosStruct.Type17->TypeDetail.Nonvolatile
              && SmBiosStruct.Type17->Size != 0) ? TRUE : FALSE);
       if (IsTopologyDimm) {
         (*ppTopologyDimm)[Index].DimmID = SmBiosStruct.Hdr->Handle;
-         ReturnCode = GetSmbiosCapacity(SmBiosStruct.Type17->Size, SmBiosStruct.Type17->ExtendedSize, SmbiosVersion,
+        (*ppTopologyDimm)[Index].SocketID = GetDdr4Socket(SmBiosStruct.Hdr->Handle, &PmttInfo);
+
+        ReturnCode = GetSmbiosCapacity(SmBiosStruct.Type17->Size, SmBiosStruct.Type17->ExtendedSize, SmbiosVersion,
                                          &Capacity);
         (*ppTopologyDimm)[Index].VolatileCapacity  = Capacity;
         ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &SmBiosStruct.Type17,
@@ -7879,6 +8037,8 @@ GetSystemTopology(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FreePmttItems(&PmttInfo);
+
   NVDIMM_EXIT_I64(ReturnCode);
 
   return ReturnCode;

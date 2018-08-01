@@ -49,6 +49,7 @@
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
 #define VERSION_STR STRINGIZE(__VERSION_NUMBER__)
+#define NVM_API_MUTEX "nvm_api"
 
 #define INVALID_DIMM_HANDLE     0
 OS_MUTEX *g_api_mutex;
@@ -107,7 +108,7 @@ NVM_API int nvm_init()
 
   NVDIMM_DBG("Nvm Init");
 
-  if (NULL == (g_api_mutex = os_mutex_init("nvm_api")))
+  if (NULL == (g_api_mutex = os_mutex_init(NVM_API_MUTEX)))
   {
     NVDIMM_ERR("Failed to intialize NVM API mutex\n");
     return NVM_ERR_UNKNOWN;
@@ -149,7 +150,7 @@ NVM_API int nvm_init()
   g_nvm_initialized = 1;
   return rc;
 cleanup_mutex:
-  os_mutex_delete(g_api_mutex, "nvm_api");
+  os_mutex_delete(g_api_mutex, NVM_API_MUTEX);
   return rc;
 }
 
@@ -161,7 +162,7 @@ NVM_API void nvm_uninit()
   preferences_uninit();
 
   if (g_api_mutex) {
-    os_mutex_delete(g_api_mutex, "nvm_api");
+    os_mutex_delete(g_api_mutex, NVM_API_MUTEX);
     g_api_mutex = NULL;
   }
 }

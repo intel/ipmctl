@@ -8,6 +8,7 @@
 #include <Debug.h>
 #include <NvmDimmConfig.h>
 #include <NvmDimmDriver.h>
+#include <FwUtility.h>
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
@@ -16,8 +17,6 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 
 #define SUPPORTED_DESCRIPTOR_COUNT 1
 #define NVDIMM_IMAGE_ID 1
-#define NVDIMM_IMAGE_ID_NAME L"Intel persistent memory"
-#define NVDIMM_IMAGE_ID_NAME_LEN 24 // including null char
 #define DESCRIPTOR_VERSION_DEFAULT 1
 
 // Compilers align structs front and back to the largest scalar member,
@@ -29,14 +28,13 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 // EFI_FIRMWARE_IMAGE_DESCRIPTOR struct
 #define NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET   sizeof(EFI_FIRMWARE_IMAGE_DESCRIPTOR)
 
-// Assume maximum size of strings (512 CHAR16's) appended to the end of the
+// Assume maximum size of strings appended to the end of the
 // struct and allocate the whole struct as one piece. The HII spec doesn't
 // specify where these strings should reside, so this is one of several possible
 // implementations. The caller should free the entire struct, which will free
 // the strings as well.
-#define HII_MAX_STRING_LENGTH  512
-#define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + (sizeof(CHAR16) * HII_MAX_STRING_LENGTH)
-#define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + (sizeof(CHAR16) * HII_MAX_STRING_LENGTH)
+#define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
+#define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
 
 /**
   In addition to the function information from the library header.
@@ -87,7 +85,7 @@ GetImageInfo (
 
   /**
     Here we are packing the 8-bit values into 6-bit containers to fit in the UINT32.
-    If the versions will ever go above the 6-bit integer, we will loose that information,
+    If the versions will ever go above the 6-bit integer, we will lose that information,
     but there is nothing else that we can do and we have to agree with that.
   **/
   Uint32Version.PackedVersion.FwProduct = pDimm->FwVer.FwProduct;
@@ -99,7 +97,7 @@ GetImageInfo (
   pImageInfo[0].ImageTypeId = mNvmDimmFirmwareImageTypeGuid;
   pImageInfo[0].ImageId = NVDIMM_IMAGE_ID;
   // Copy the image id name string to a region after the end of the struct
-  ImageIdName = (CHAR16 *)((UINT8 *)&pImageInfo[0] + NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET);
+  ImageIdName = (CHAR16 *)(((UINT8 *)&pImageInfo[0]) + NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET);
   StrnCpyS(ImageIdName, NVDIMM_IMAGE_ID_NAME_LEN, NVDIMM_IMAGE_ID_NAME, NVDIMM_IMAGE_ID_NAME_LEN - 1);
   // Pointer to that region
   pImageInfo[0].ImageIdName = ImageIdName;
@@ -107,12 +105,12 @@ GetImageInfo (
   pImageInfo[0].Version = Uint32Version.AsUint32;
 
   // Creates fw version string and writes to a provided location
-  VersionName = (CHAR16 *)((UINT8 *)&pImageInfo[0] + NVDIMM_VERSION_NAME_BYTE_OFFSET);
+  VersionName = (CHAR16 *)(((UINT8 *)&pImageInfo[0]) + NVDIMM_VERSION_NAME_BYTE_OFFSET);
   ConvertFwVersion(VersionName, pDimm->FwVer.FwProduct, pDimm->FwVer.FwRevision, pDimm->FwVer.FwSecurityVersion, pDimm->FwVer.FwBuild);
   pImageInfo[0].VersionName = VersionName;
 
-  pImageInfo[0].Size = MAX_FW_IMAGE_SIZE; // No planned way to get installed image size.
-                                          // Set allowed maximum.
+  pImageInfo[0].Size = MAX_FIRMWARE_IMAGE_SIZE_B; // No planned way to get installed image size.
+                                                  // Set allowed maximum.
   pImageInfo[0].AttributesSupported = IMAGE_ATTRIBUTE_IMAGE_UPDATABLE
       | IMAGE_ATTRIBUTE_RESET_REQUIRED
       | IMAGE_ATTRIBUTE_IN_USE;
@@ -125,8 +123,9 @@ GetImageInfo (
   }
 
   if (ppPackageVersionName != NULL) {
-    // Copy existing version name string
-    *ppPackageVersionName = AllocateCopyPool(FW_VERSION_LEN * sizeof(CHAR16), (const UINT8 *)NVDIMM_VERSION_NAME_BYTE_OFFSET);
+    // Use existing version name string
+    *ppPackageVersionName = AllocateCopyPool(FW_VERSION_LEN * sizeof(CHAR16), VersionName);
+
   }
 
   if (pDescriptorSize != NULL) {

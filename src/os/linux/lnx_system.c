@@ -216,6 +216,7 @@ int os_mutex_delete(OS_MUTEX *p_mutex, const char *name)
 		{
 			shmdt(p_mutex);
 		}
+                free(p_mutex);
 	}
 	return rc;
 }

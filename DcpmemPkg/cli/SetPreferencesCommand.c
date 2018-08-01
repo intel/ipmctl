@@ -174,7 +174,7 @@ Finish:
   return rc;
 }
 
-EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MaxValue)
+EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
 {
   EFI_STATUS rc = EFI_SUCCESS;
   CHAR16 *pTypeValue = NULL;
@@ -183,25 +183,30 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
   if ((rc = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(rc)) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
 
     rc = GetPropertyValue(pCmd, pName, &pTypeValue);
     if (EFI_ERROR(rc)) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
     rc = ValidateAndConvertInput(pTypeValue, MaxValue, &IntegerValue);
     if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
       PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, EFI_INVALID_PARAMETER);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER);
       goto Finish;
     } else {
       if (rc == EFI_SUCCESS) {
         rc = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
         if (!EFI_ERROR(rc)) {
           PRINT_SET_PREFERENCES_SUCCESS(pName, pTypeValue);
+          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS);
         } else {
           PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, rc);
+          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
         }
       }
     }
@@ -412,13 +417,16 @@ SetPreferences(
     }
   }
 #ifdef OS_BUILD
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MAX_BOOLEAN_VALUE);
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MAX_UINT64_VALUE);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MAX_BOOLEAN_VALUE);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MAX_UINT64_VALUE);
-  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MAX_LOG_VALUE);
-  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MAX_LOG_VALUE);
-  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MAX_LOG_LEVEL_VALUE);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MAX_BOOLEAN_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MAX_UINT64_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MAX_BOOLEAN_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MAX_UINT64_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MAX_LOG_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MAX_LOG_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MAX_LOG_LEVEL_VALUE, pCommandStatus);
+
+  TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
 #endif
 
 Finish:

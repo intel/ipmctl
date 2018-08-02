@@ -419,6 +419,47 @@ Finish:
     FREE_POOL_SAFE(total_formatted_string);
   }
 
+  if (NULL != append_strs)
+  {
+    for (z = 0; z < elements; z++)
+    {
+      FREE_POOL_SAFE(append_strs[z]);
+    }
+    FREE_POOL_SAFE(append_strs);
+  }
+
+  if (NULL != record)
+  {
+    FREE_POOL_SAFE(record->FormattedString);
+    if (NULL != record->DictEntry && NULL != record->ArgValues)
+    {
+      for (z = 0; z < record->DictEntry->Args; z++)
+      {
+        FREE_POOL_SAFE(record->ArgValues[z]);
+      }
+    }
+
+    FREE_POOL_SAFE(record->ArgValues);
+    record->ArgValues = NULL;
+
+    if (NULL != entry && record->DictEntry == entry)
+    {
+      FREE_POOL_SAFE(record->DictEntry->LogLevel);
+      FREE_POOL_SAFE(record->DictEntry->LogString);
+      FREE_POOL_SAFE(record->DictEntry->FileName);
+      FREE_POOL_SAFE(record->DictEntry);
+      entry = NULL;
+    }
+  }
+
+  if (NULL != entry)
+  {
+    FREE_POOL_SAFE(entry->LogLevel);
+    FREE_POOL_SAFE(entry->LogString);
+    FREE_POOL_SAFE(entry->FileName);
+    FREE_POOL_SAFE(entry);
+  }
+
   while (head)
   {
     next = head->next;
@@ -496,7 +537,7 @@ load_nlog_dict(
   }
 
   status = ReadFile(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
-  if (EFI_ERROR(status))
+  if (EFI_ERROR(status) || NULL == file_buffer)
   {
     Print(L"Failed to open or read the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
     goto Finish;

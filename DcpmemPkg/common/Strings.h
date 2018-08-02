@@ -9,7 +9,7 @@
 #include <Debug.h>
 #include "Common.h"
 
-/**
+ /**
 string_concat command
 
 @param[in] str1  - string 1

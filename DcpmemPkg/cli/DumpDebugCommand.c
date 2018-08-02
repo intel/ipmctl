@@ -75,13 +75,15 @@ DumpDebugCommand(
   VOID *pDebugBuffer = NULL;
   UINT64 CurrentDebugBufferSize = 0;
   UINT64 BytesWritten = 0;
+  UINT64 Length = 0;
+  UINT64 Index = 0;
+  BOOLEAN Found = FALSE;
   CHAR16 *pDumpUserPath = NULL;
   DIMM_INFO *pDimms = NULL;
   nlog_dict_entry * next;
   BOOLEAN dictExists = FALSE;
   CHAR16 *pDictUserPath = NULL;
-
-  CHAR16 * decoded_file_name = L"dump.bin.decoded.txt";
+  CHAR16 *decoded_file_name = NULL;
   nlog_dict_entry* dict_head = NULL;
   UINT32 dict_version;
   UINT64 dict_entries;
@@ -205,6 +207,36 @@ DumpDebugCommand(
         goto Finish;
       }
 
+      Length = StrLen(pDumpUserPath);
+      //find the extention value
+      for (Index = Length-1; Index >= 0; Index--)
+      {
+        if (pDumpUserPath[Index] == L'.')
+        {
+          Found = TRUE;
+          break;
+        }
+      }
+
+      if (FALSE == Found)
+      {
+        //no extention was found, just append
+        decoded_file_name = CatSPrintClean(pDumpUserPath, L".txt");
+      }
+      else
+      {
+        //append .txt to the extentionless string
+        Length = Index;
+        decoded_file_name = AllocateZeroPool((sizeof(CHAR16) * Length) + sizeof(CHAR16));
+        for (Index = 0; Index < Length; Index++)
+        {
+          decoded_file_name[Index] = pDumpUserPath[Index];
+        }
+
+        FREE_POOL_SAFE(pDumpUserPath);
+        decoded_file_name = CatSPrintClean(decoded_file_name, L".txt");
+      }
+
       Print(L"Loaded %d dictionary entries.\n", dict_entries);
       decode_nlog_binary(decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
     }
@@ -220,8 +252,8 @@ Finish:
     dict_head = next;
   }
 
+  FREE_POOL_SAFE(decoded_file_name);
   FREE_POOL_SAFE(pDimms);
-  FREE_POOL_SAFE(pDumpUserPath);
   FREE_POOL_SAFE(pDictUserPath);
   FREE_POOL_SAFE(pDimmIdsFilter);
   FREE_POOL_SAFE(pDebugBuffer);

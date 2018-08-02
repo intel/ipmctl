@@ -49,7 +49,8 @@
 #define DESTINATION_OPTION              L"-destination"                        //!< 'source' option name
 #define DICTIONARY_OPTION               L"-dict"                               //!< 'source' option name
 #define DESTINATION_OPTION_HELP         L"path"                                //!< 'source' option help text
-#define DICTIONARY_OPTION_HELP          L"path"                                //!< 'source' option help text
+#define DICTIONARY_OPTION_HELP \
+  L"path (Decoded file name will be txt file with same name as destination)"   //!< 'source' option help text
 #define EXAMINE_OPTION                  L"-examine"                            //!< 'examine' option name
 #define EXAMINE_OPTION_SHORT            L"-x"                                  //!< 'examine' option short form
 #define EXAMINE_OPTION_HELP             L"Verify only"                         //!< 'examine' option help text

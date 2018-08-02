@@ -681,7 +681,9 @@ TestName:
             cur_dict = &dictionaries[num_dictionaries];
             ++num_dictionaries;
          }
- 
+        
+         state = NULL;
+         line_sz_chars = wcsnlen(trimmed_line, READ_FD_LINE_SZ);
          tok = s_wcstok(trimmed_line, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
          wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
          tok = s_wcstok(NULL, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);

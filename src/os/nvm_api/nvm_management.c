@@ -821,6 +821,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   UINT16 dimm_id;
   int nvm_status;
   int rc;
+  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
 
   if (NULL == p_details)
     return NVM_ERR_INVALID_PARAMETER;
@@ -848,6 +849,17 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
   p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
         p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
+    &SystemCapabilitiesInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  p_details->discovery.security_capabilities.erase_crypto_capable = SystemCapabilitiesInfo.EraseDeviceDataSupported;
+  p_details->discovery.security_capabilities.passphrase_capable = SystemCapabilitiesInfo.ChangeDevicePassphraseSupported;
+  p_details->discovery.security_capabilities.unlock_device_capable = SystemCapabilitiesInfo.UnlockDeviceSecuritySupported;
 
   // Basic device identifying information.
   rc = nvm_get_device_discovery(device_uid, &(p_details->discovery));

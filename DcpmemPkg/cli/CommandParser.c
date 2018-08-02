@@ -554,7 +554,7 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
   matchedProperties = 0;
   pHelpStr = getCommandHelp(pCommand, FALSE);
   /* loop through the input tokens */
-  while ((pInput->TokenCount - *pStart) > 0)
+  while (((pInput->TokenCount - *pStart) > 0) && (EFI_SUCCESS == Rc))
   {
     Rc = EFI_INVALID_PARAMETER;
     Found = FALSE;
@@ -570,7 +570,7 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
       if (!propertyValue)
       {
         Rc = EFI_OUT_OF_RESOURCES;
-        break;
+        continue;
       }
       StrnCpyS(propertyValue, propertyLength, pInput->ppTokens[*pStart], propertyLength - 1);
       propertyName = StrTok(&propertyValue, L'=');
@@ -599,7 +599,12 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
                 Found = 1;
                 (*pStart)++;
                 matchedProperties++;
-                Rc = EFI_SUCCESS;
+                if (matchedProperties < MAX_PROPERTIES) {
+                  Rc = EFI_SUCCESS;
+                }
+                else {
+                  Rc = EFI_OUT_OF_RESOURCES;
+                }
                 break; /* move to the next property */
               }
             }
@@ -624,7 +629,7 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
       SetSyntaxError(CatSPrintClean(pTmpStr, FORMAT_NL_STR FORMAT_NL_STR, CLI_PARSER_DID_YOU_MEAN,
           pHelpStr));
       Rc = EFI_INVALID_PARAMETER;
-      break;
+      continue;
     }
   }
 

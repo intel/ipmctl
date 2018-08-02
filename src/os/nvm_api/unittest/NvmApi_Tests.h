@@ -164,4 +164,11 @@ TEST_F(NvmApi_Tests, GetFwErrorLogEntry)
 
   free(p_devices);
 }
+
+TEST_F(NvmApi_Tests, VerifyGetFwErrLogStatsReturnsErrorWithInvalidParam)
+{
+  struct device_error_log_status error_log_stats;
+  int retval = nvm_get_fw_err_log_stats("Asdfg", &error_log_stats);
+  EXPECT_NE(retval, NVM_SUCCESS);
+}
 #endif //NVM_API_TESTS_H

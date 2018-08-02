@@ -3031,7 +3031,7 @@ NVM_API int nvm_get_fw_err_log_stats(const NVM_UID      device_uid,
     error_log_stats->therm_high.oldest = get_error_log_output.OldestSequenceNum;
     error_log_stats->therm_high.current = get_error_log_output.CurrentSequenceNum;
   }
-  return NVM_SUCCESS;
+  return rc;
 }
 
 NVM_API int nvm_get_dimm_id(const NVM_UID device_uid,

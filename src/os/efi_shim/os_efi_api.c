@@ -1840,7 +1840,8 @@ HandleParsingLibDestructor(
   return 0;
 }
 #define MAX_PROMT_INPUT_SZ 1024
-#define RETURN_KEY	13
+#define RETURN_KEY	0xD
+#define LINE_FEED 0xA
 
 /**
 Prompted input request
@@ -1878,7 +1879,7 @@ PromptedInput(
   for (PromptIndex = 0; PromptIndex < MAX_PROMT_INPUT_SZ; ++PromptIndex)
   {
     buff[PromptIndex] = _getch();
-    if (RETURN_KEY == buff[PromptIndex])
+    if (RETURN_KEY == buff[PromptIndex] || LINE_FEED == buff[PromptIndex])
       break;
   }
   VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);

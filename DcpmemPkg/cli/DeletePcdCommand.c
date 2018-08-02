@@ -91,7 +91,7 @@ DeletePcdCmd(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"DeletePcd", ResultsView);
+  SetDisplayInfo(L"DeletePcd", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 

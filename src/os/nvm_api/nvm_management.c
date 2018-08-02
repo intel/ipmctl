@@ -236,9 +236,10 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     enum DisplayType dt;
     UINT8 d;
     wchar_t disp_name[DISP_NAME_LEN];
-    GetDisplayInfo(disp_name, DISP_NAME_LEN*sizeof(wchar_t), &d);
+    wchar_t disp_delims[DISP_DELIMS_LEN];
+    GetDisplayInfo(disp_name, DISP_NAME_LEN*sizeof(wchar_t), &d, disp_delims, DISP_DELIMS_LEN * sizeof(wchar_t));
     dt = (enum DisplayType)d;
-    process_output(dt, disp_name, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
+    process_output(dt, disp_name, disp_delims, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
   }
   nvm_uninit();
   return (int)rc;

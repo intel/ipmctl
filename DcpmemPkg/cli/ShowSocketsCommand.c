@@ -227,7 +227,7 @@ ShowSockets(
   **/
   if (!DisplayOptionSet) {
 
-    SetDisplayInfo(L"Socket", TableView);
+    SetDisplayInfo(L"Socket", TableView, NULL);
 
     Print(FORMAT_SHOW_SOCKET_HEADER,
 	  SOCKET_ID_STR,

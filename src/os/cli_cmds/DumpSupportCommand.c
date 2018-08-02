@@ -95,7 +95,7 @@ DumpSupportCommand(
   FILE *hFile = NULL;
 
   NVDIMM_ENTRY();
-  SetDisplayInfo(L"DumpSupport", ResultsView);
+  SetDisplayInfo(L"DumpSupport", ResultsView, NULL);
 
   if (pCmd == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);

@@ -115,7 +115,7 @@ ShowGoalPrintTableView(
     goto Finish;
   }
 
-  SetDisplayInfo(L"ConfigGoal", TableView);
+  SetDisplayInfo(L"ConfigGoal", TableView, NULL);
 
 #ifdef OS_BUILD
   if (pDimmInfo != NULL) {
@@ -226,7 +226,7 @@ ShowGoalPrintDetailedView(
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 
-  SetDisplayInfo(L"ConfigGoal", ListView);
+  SetDisplayInfo(L"ConfigGoal", ListView, NULL);
 
   if (pRegionConfigsInfo == NULL || (DisplayOptionSet && pDisplayValues == NULL)) {
     goto Finish;

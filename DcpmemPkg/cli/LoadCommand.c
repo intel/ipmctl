@@ -92,7 +92,7 @@ Load (
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"LoadFw", ResultsView);
+  SetDisplayInfo(L"LoadFw", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 

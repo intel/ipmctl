@@ -70,7 +70,7 @@ SetSensor(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"SetSensor", ResultsView);
+  SetDisplayInfo(L"SetSensor", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 

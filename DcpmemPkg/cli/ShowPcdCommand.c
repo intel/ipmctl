@@ -96,7 +96,7 @@ ShowPcd(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"ShowPcd", ResultsView);
+  SetDisplayInfo(L"ShowPcd", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 

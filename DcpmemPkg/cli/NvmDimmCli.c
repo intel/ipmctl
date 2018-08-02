@@ -660,7 +660,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"Software", TableTabView);
+  SetDisplayInfo(L"Software", TableTabView, NULL);
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {

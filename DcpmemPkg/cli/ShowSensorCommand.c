@@ -227,7 +227,7 @@ ShowSensor(
 
   // Print the table header
   if (!AllOptionSet && !DisplayOptionSet) {
-    SetDisplayInfo(L"Sensor", TableView);
+    SetDisplayInfo(L"Sensor", TableView, NULL);
     Print(FORMAT_SHOW_SENSOR_HEADER,
       DIMM_ID_STR,
       SENSOR_TYPE_STR,
@@ -235,7 +235,7 @@ ShowSensor(
       CURRENT_STATE_STR);
   }
   else {
-     SetDisplayInfo(L"Sensor", ListView2L);
+     SetDisplayInfo(L"Sensor", ListView2L, NULL);
   }
 
   for (Index = 0; Index < DimmsCount; Index++) {

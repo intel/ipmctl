@@ -123,7 +123,7 @@ ShowHostServer(
      goto Finish;
   }
 
-  SetDisplayInfo(L"HostServer", ListView);
+  SetDisplayInfo(L"HostServer", ListView, NULL);
 
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_NAME_STR))) {
     Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_NAME_STR, HostServerinfo.Name);

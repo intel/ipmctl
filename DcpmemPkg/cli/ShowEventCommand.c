@@ -83,7 +83,7 @@ ShowEvent(
     char DimmUid[MAX_DIMM_UID_LENGTH]= { 0 };
     BOOLEAN IsDimmUidConfigured = FALSE;
 
-    SetDisplayInfo(L"Event", TableTabView);
+    SetDisplayInfo(L"Event", TableTabView, NULL);
 
 	ReturnCode = InitializeCommandStatus(&pCommandStatus);
 	if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {

@@ -1402,13 +1402,15 @@ GetUnitsOption(
 Sets a display information needed when outputting alternative formats like XML.
 @param[in] pName is a CHAR16 string that represents the output message.
 @param[in] Type represents the type of output being displayed.
+@param[in] pDelims is a CHAR16 string that represents deliminters to use when parsing text output
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
 EFI_STATUS
 SetDisplayInfo(
     IN     CONST CHAR16 *pName,
-    IN     CONST UINT8 Type
+    IN     CONST UINT8 Type,
+    IN     CONST CHAR16 *pDelims
 )
 {
     if (NULL == pName){
@@ -1416,6 +1418,12 @@ SetDisplayInfo(
     }
     UnicodeSPrint(gDisplayInfo.Name, sizeof(gDisplayInfo.Name), FORMAT_STR, pName);
     gDisplayInfo.Type = Type;
+    if(pDelims) {
+      UnicodeSPrint(gDisplayInfo.Delims, sizeof(gDisplayInfo.Delims), FORMAT_STR, pDelims);
+    }
+    else {
+      UnicodeSPrint(gDisplayInfo.Delims, sizeof(gDisplayInfo.Delims), L"");
+    }
     return EFI_SUCCESS;
 }
 
@@ -1424,6 +1432,8 @@ Get display information needed when outputting alternative formats like XML.
 @param[out] pName is a CHAR16 string that represents the output message.
 @param[int] NameSize is the size of pName in bytes
 @param[out] pType represents the type of output being displayed.
+@param[out] pDelims represents the deliminters to use when parsing text output.
+@param[int] DelimsSize is the size of pDelims in bytes
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
@@ -1431,13 +1441,16 @@ EFI_STATUS
 GetDisplayInfo(
    OUT    CHAR16 *pName,
    IN     CONST UINT32 NameSize,
-   OUT    UINT8 *pType
+   OUT    UINT8 *pType,
+   OUT    CHAR16 *pDelims,
+   IN     CONST UINT32 DelimnsSize
 )
 {
-   if (NULL == pName || NULL == pType){
+   if (NULL == pName || NULL == pType || NULL == pDelims){
       return EFI_INVALID_PARAMETER;
    }
    UnicodeSPrint(pName, NameSize, FORMAT_STR, gDisplayInfo.Name);
+   UnicodeSPrint(pDelims, DelimnsSize, FORMAT_STR, gDisplayInfo.Delims);
    *pType = gDisplayInfo.Type;
    return EFI_SUCCESS;
 }

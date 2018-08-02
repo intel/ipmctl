@@ -388,6 +388,7 @@ enum OutputType output_type(int argc, char *argv[])
 int process_output(
    enum DisplayType view_type,
    wchar_t *display_name,
+   wchar_t *display_delims,
    int rc,
    FILE *fd,
    int argc,
@@ -524,6 +525,15 @@ int process_output(
       while (num_dictionaries < NUM_DICTIONARIES_MAX && fgetws(line, READ_FD_LINE_SZ, fd) != NULL)
       {
          wchar_t * trimmed_line = trimwhitespace(line);
+         wchar_t *delims;
+         if (display_delims && wcslen(display_delims))
+         {
+           delims = display_delims;
+         }
+         else
+         {
+           delims = KEY_VALUE_TOK_DELIM;
+         }
          line_sz_chars = wcsnlen_s(trimmed_line, READ_FD_LINE_SZ);
 
          if(0 == starts_with(trimmed_line, NEW_BRANCH_IDENTIFIER) && 0 == ends_with(trimmed_line, NEW_BRANCH_IDENTIFIER))
@@ -533,13 +543,13 @@ int process_output(
             ++num_dictionaries;
             trimmed_line = trimchar(trimmed_line, trimmed_line[0]);
          }
-         tok = s_wcstok(trimmed_line, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(trimmed_line, &line_sz_chars, delims, &state);
          if (NULL == tok)
          {
             continue;
          }
          wcsncpy_s(cur_dict->items[cur_dict->item_cnt].name, PAIR_NAME_SZ, tok, MAX_TABLE_ITEM_LEN);
-         tok = s_wcstok(NULL, &line_sz_chars, KEY_VALUE_TOK_DELIM, &state);
+         tok = s_wcstok(NULL, &line_sz_chars, delims, &state);
          if (NULL == tok)
          {
            continue;

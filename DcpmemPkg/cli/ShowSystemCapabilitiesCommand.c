@@ -281,7 +281,7 @@ ShowSystemCapabilities(
     goto Finish;
   }
 
-  SetDisplayInfo(L"SystemCapabilities", ListView);
+  SetDisplayInfo(L"SystemCapabilities", ListView, NULL);
 
   /** Values shown by default **/
   if (FilterOutput == ContainsValue(pDisplayValues, PLATFORM_CONFIG_SUPPORT_STR)) {

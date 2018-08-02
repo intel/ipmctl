@@ -121,7 +121,7 @@ StartDiagnosticCmd(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"Diagnostic", DiagView);
+  SetDisplayInfo(L"Diagnostic", DiagView, NULL);
 
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
 

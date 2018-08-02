@@ -108,7 +108,7 @@ DumpGoal(
   if (EFI_ERROR(ReturnCode)) {
     DisplayCommandStatus(L"Dump pool configuration goal", L" on", pCommandStatus);
   } else {
-     SetDisplayInfo(L"DumpGoal", ResultsView);
+     SetDisplayInfo(L"DumpGoal", ResultsView, NULL);
     Print(L"Successfully dumped system configuration to file: " FORMAT_STR_NL, pDumpUserPath);
   }
 

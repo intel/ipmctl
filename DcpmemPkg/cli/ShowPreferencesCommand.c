@@ -64,7 +64,7 @@ ShowPreferences(
 #endif
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"Preferences", ListView);
+  SetDisplayInfo(L"Preferences", ListView, NULL);
 
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));

@@ -215,7 +215,7 @@ ShowTopology(
   /** display a summary table of all dimms **/
   if (!AllOptionSet && !DisplayOptionSet) {
 
-    SetDisplayInfo(L"DimmTopology", TableTabView);
+    SetDisplayInfo(L"DimmTopology", TableTabView, NULL);
 
     Print(FORMAT_SHOW_TOPO_HEADER,
         DIMM_ID_STR,
@@ -272,7 +272,7 @@ ShowTopology(
   /** display detailed view **/
   else {
 
-    SetDisplayInfo(L"DimmTopology", ListView);
+    SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
     ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;
 

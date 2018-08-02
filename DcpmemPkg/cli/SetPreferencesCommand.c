@@ -243,7 +243,7 @@ SetPreferences(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"SetPreferences", ResultsView);
+  SetDisplayInfo(L"SetPreferences", ResultsView, NULL);
 
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));

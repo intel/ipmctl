@@ -62,7 +62,7 @@ DeleteGoal(
 
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"DeleteGoalResults", ResultsView);
+  SetDisplayInfo(L"DeleteGoalResults", ResultsView, NULL);
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;

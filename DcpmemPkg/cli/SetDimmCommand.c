@@ -154,7 +154,7 @@ SetDimm(
 #endif //OS_BUILD
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"SetDimm", ResultsView);
+  SetDisplayInfo(L"SetDimm", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 

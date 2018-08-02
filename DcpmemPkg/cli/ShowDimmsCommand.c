@@ -379,7 +379,7 @@ ShowDimms(
 
   /** display a summary table of all dimms **/
   if (!AllOptionSet && !DisplayOptionSet) {
-    SetDisplayInfo(L"DIMM", TableView);
+    SetDisplayInfo(L"DIMM", TableView, NULL);
 
     pFormat = FORMAT_SHOW_DIMM_HEADER;
 #ifdef OS_BUILD
@@ -540,7 +540,7 @@ ShowDimms(
 
   /** display detailed view **/
   else {
-    SetDisplayInfo(L"DIMM", ListView);
+    SetDisplayInfo(L"DIMM", ListView, L"=");
 
     // Collect all properties if the user calls "show -a -dimm"
     ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,

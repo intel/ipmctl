@@ -98,7 +98,7 @@ PrintPerformanceData(UINT16 *DimmId, UINT32 DimmIdsNum, DIMM_INFO *AllDimmInfos,
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 DimmStr[MAX_DIMM_UID_LENGTH];
 
-  SetDisplayInfo(L"DimmPerformance", ListView);
+  SetDisplayInfo(L"DimmPerformance", ListView, NULL);
 
   // Account for multiple or no input dimms given
   for (AllDimmsIndex = 0; AllDimmsIndex < DimmCount; AllDimmsIndex++) {

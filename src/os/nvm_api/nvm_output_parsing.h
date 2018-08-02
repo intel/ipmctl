@@ -96,12 +96,13 @@ enum OutputType
 };
 
 int process_output(
-   enum DisplayType view_type,
-   wchar_t *display_name,
-   int rc,
-   FILE *fd,
-   int argc,
-   char *argv[]);
+  enum DisplayType view_type,
+  wchar_t *display_name,
+  wchar_t *display_delims,
+  int rc,
+  FILE *fd,
+  int argc,
+  char *argv[]);
 #ifdef __cplusplus
 }
 #endif

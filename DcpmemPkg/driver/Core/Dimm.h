@@ -227,10 +227,12 @@ typedef struct _DIMM {
 
   /** List of Storage Namespaces **/
   LIST_ENTRY StorageNamespaceList;
+#ifdef PCD_CACHE_ENABLED
   VOID *pPcdLsa;
   // Always allocated to be size of PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE
   VOID *pPcdOem;
   UINT32 PcdOemSize;
+#endif // PCD cache enabled only for OS
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')

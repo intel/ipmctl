@@ -1834,6 +1834,7 @@ FwCmdGetPlatformConfigData (
       goto Finish;
   }
 
+#ifdef PCD_CACHE_ENABLED
   if (pDimm->pPcdLsa && PartitionId == PCD_LSA_PARTITION_ID) {
     CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdLsa, PcdSize);
     goto Finish;
@@ -1841,6 +1842,7 @@ FwCmdGetPlatformConfigData (
     CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdOem, PcdSize);
     goto Finish;
   }
+#endif /* PCD_CACHE_ENABLED */
 
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
@@ -1909,6 +1911,7 @@ FwCmdGetPlatformConfigData (
     }
   }
 
+#ifdef PCD_CACHE_ENABLED
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
 
@@ -1935,7 +1938,13 @@ FwCmdGetPlatformConfigData (
         CopyMem_S(pTempCache, pTempCacheSz, pFwCmd->LargeOutputPayload, PcdSize);
      }
   }
-
+  goto Finish;
+#endif /* PCD_CACHE_ENABLED */
+  if (UseSmallPayload) {
+    CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
+  } else {
+    CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
+  }
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   FREE_POOL_SAFE(pBuffer);
@@ -2243,7 +2252,7 @@ GetPcdOemConfigDataUsingSmallPayload(
     Rc = EFI_NO_MEDIA;
     goto Finish;
   }
-
+#ifdef PCD_CACHE_ENABLED
   // Return the cached data
   if (pDimm->pPcdOem)
   {
@@ -2258,7 +2267,7 @@ GetPcdOemConfigDataUsingSmallPayload(
     *pRawDataSize = pDimm->PcdOemSize;
     goto Finish;
   }
-
+#endif /* PCD_CACHE_ENABLED */
   // Read first block which includes config header
   Rc = FwCmdGetPcdSmallPayload(pDimm, PCD_OEM_PARTITION_ID, 0, TmpBuf, sizeof(TmpBuf));
   if (EFI_ERROR(Rc)) {
@@ -2307,11 +2316,10 @@ GetPcdOemConfigDataUsingSmallPayload(
     }
   }
 
+#ifdef PCD_CACHE_ENABLED
   if (OemDataSize > 0)
   {
     VOID *pTempCache = NULL;
-    //Assign new data to the requester data pointer
-    *ppRawData = pBuffer;
 
     // Save data cache info
     pDimm->PcdOemSize = OemDataSize;
@@ -2321,7 +2329,9 @@ GetPcdOemConfigDataUsingSmallPayload(
       CopyMem_S(pTempCache, PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE, pBuffer, OemDataSize);
     }
   }
-
+#endif /* PCD_CACHE_ENABLED */
+  //Assign new data to the requester data pointer
+  *ppRawData = pBuffer;
   *pRawDataSize = OemDataSize;
 
 Finish:
@@ -2364,8 +2374,10 @@ FwCmdSetPlatformConfigData (
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
   BOOLEAN UseSmallPayload = FALSE;
-	VOID *pTempCache = NULL;
+#ifdef PCD_CACHE_ENABLED
+  VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
+#endif /* PCD_CACHE_ENABLED */
   NVDIMM_ENTRY();
 
   SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
@@ -2388,31 +2400,30 @@ FwCmdSetPlatformConfigData (
       Rc = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-
+#ifdef PCD_CACHE_ENABLED
     if (NULL == pDimm->pPcdOem) {
       pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
 		}
     pDimm->PcdOemSize = RawDataSize;
-
+    pTempCache = pDimm->pPcdOem;
+    pTempCacheSz = PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE;
+#endif /* PCD_CACHE_ENABLED */
     // If partition size is 0, then prevent write
     if (0 == pDimm->PcdOemPartitionSize) {
       Rc = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-
-		PcdSize = RawDataSize;
-		pTempCache = pDimm->pPcdOem;
-    pTempCacheSz = PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE;
-
+    PcdSize = RawDataSize;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
+#ifdef PCD_CACHE_ENABLED
     if (NULL == pDimm->pPcdLsa) {
-			pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
-		}
-		PcdSize = pDimm->PcdLsaPartitionSize;
-		pTempCache = pDimm->pPcdLsa;
-    pTempCacheSz = PcdSize;
+      pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
+    }
+    pTempCache = pDimm->pPcdLsa;
+    pTempCacheSz = pDimm->PcdLsaPartitionSize;
+#endif /* PCD_CACHE_ENABLED */
+    PcdSize = pDimm->PcdLsaPartitionSize;
 	}
-
 	if (PcdSize == 0) {
 		Rc = EFI_INVALID_PARAMETER;
 		goto Finish;
@@ -2468,13 +2479,16 @@ FwCmdSetPlatformConfigData (
           Rc = MatchFwReturnCode(pFwCmd->Status);
         }
         goto Finish;
-      }	else {
+      }
+#ifdef PCD_CACHE_ENABLED
+      else {
         if (pTempCache) {
           CopyMem_S((INT8*)(pTempCache) + Offset, pTempCacheSz - Offset, InPayloadSetData.Data, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
         }
       }
-	}
-  }	else {
+#endif /* PCD_CACHE_ENABLED */
+    }
+  } else {
     /** Set PCD by large payload in single call **/
     InPayloadSetData.Offset = 0;
     InPayloadSetData.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
@@ -2493,11 +2507,14 @@ FwCmdSetPlatformConfigData (
       if (FW_ERROR(pFwCmd->Status)) {
         Rc = MatchFwReturnCode(pFwCmd->Status);
       }
-    } else {
+    }
+#ifdef PCD_CACHE_ENABLED
+    else {
       if (pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pPartition, PcdSize);
       }
     }
+#endif /* PCD_CACHE_ENABLED */
   }
 
 Finish:

@@ -89,6 +89,7 @@ endif()
 #----------------------------------------------------------------------------------------------------
 add_definitions(
 	-DOS_BUILD
+	-DPCD_CACHE_ENABLED
 	-D__VERSION_NUMBER__=${BUILDNUM}
 	)
 

@@ -183,5 +183,11 @@ TEST_F(NvmApi_Tests, VerifyMemTopology)
   mem_topo = (struct memory_topology *)malloc((sizeof(struct memory_topology) * count));
   retval = nvm_get_memory_topology(mem_topo, count);
 
+
+}
+
+TEST_F(NvmApi_Tests, SetPreferences)
+{
+  int retval = nvm_set_user_preference("PERFORMANCE_MONITOR_INTERVAL_MINUTES","2");
 }
 #endif //NVM_API_TESTS_H

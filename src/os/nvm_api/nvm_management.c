@@ -2473,6 +2473,27 @@ NVM_API int nvm_get_build_number()
 }
 
 
+EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  struct CommandInput Input;
+  struct Command Command;
+
+  ReturnCode = RegisterCommands();
+  if (EFI_ERROR(ReturnCode))
+    return NVM_ERR_UNKNOWN;
+
+  FillCommandInput(cmdline, &Input);
+  ReturnCode = Parse(&Input, &Command);
+  if (!EFI_ERROR(ReturnCode))
+  {
+    /* parse success, now run the command */
+    ReturnCode = ExecuteCmd(&Command);
+  }
+  FreeCommandInput(&Input);
+  return ReturnCode;
+}
+
 NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE support_file_len)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -2502,21 +2523,13 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
-    ReturnCode = RegisterCommands();
-  if (EFI_ERROR(ReturnCode))
-    return NVM_ERR_UNKNOWN;
+
   if (NULL == (gOsShellParametersProtocol.StdOut = fopen(support_file, "w+")))
     return NVM_ERR_UNKNOWN;
 
-  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index) {
-    FillCommandInput(exec_commands[Index], &Input);
-    ReturnCode = Parse(&Input, &Command);
-    if (!EFI_ERROR(ReturnCode))
-    {
-      /* parse success, now run the command */
-      ReturnCode = ExecuteCmd(&Command);
-    }
-    FreeCommandInput(&Input);
+  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index) 
+  {
+    execute_cli_cmd(exec_commands[Index]);
   }
 
   fclose(gOsShellParametersProtocol.StdOut);
@@ -2669,19 +2682,33 @@ Finish:
 NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
             const NVM_PREFERENCE_VALUE  value)
 {
+  int nvm_status;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_GUID g = { 0x0, 0x0, 0x0, { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 } };
-  int rc = NVM_SUCCESS;
+  CHAR16 KeyWide[NVM_THRESHOLD_STR_LEN];
+  CHAR16 ValueWide[NVM_THRESHOLD_STR_LEN];
+  CHAR16 CmdLineWide[4096];
 
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
+  if (NULL == key || NULL == value)
+  {
+    return NVM_ERR_INVALIDPARAMETER;
   }
-  ReturnCode = preferences_set_var_string_ascii(key, g, value);
+
+  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    return nvm_status;
+  }
+
+  AsciiStrToUnicodeStr(key, KeyWide);
+  AsciiStrToUnicodeStr(value, ValueWide);
+  UnicodeSPrint(CmdLineWide, sizeof(CmdLineWide), L"set -preferences " FORMAT_STR L"=" FORMAT_STR, KeyWide, ValueWide);
+  ReturnCode = execute_cli_cmd(CmdLineWide);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("preferences_set_var_string_ascii failed (%d)\n", ReturnCode);
+    NVDIMM_ERR("Set Preference CMD failed (%d)\n", ReturnCode);
     return NVM_ERR_UNKNOWN;
   }
+  //flush dictionary to file
+  preferences_uninit();
+  preferences_init();
   return NVM_SUCCESS;
 }
 

@@ -3298,7 +3298,6 @@ ValidateRegionsCorrelations(
   DIMM *pRelatedDimms[MAX_DIMMS];
   UINT32 RelatedDimmsNum = 0;
   OBJECT_STATUS *pObjectStatus = NULL;
-  BOOLEAN DimmFound = FALSE;
   NvmStatusCode LastNvmStatus = NVM_LAST_STATUS_VALUE;
 
   NVDIMM_ENTRY();
@@ -3331,14 +3330,8 @@ ValidateRegionsCorrelations(
   if (DimmsNum != RelatedDimmsNum) {
     for (Index = 0; Index < RelatedDimmsNum; Index++) {
       if (!IsPointerInArray((VOID **) pDimms, DimmsNum, pRelatedDimms[Index])) {
-        DimmFound = FALSE;
         pObjectStatus = GetObjectStatus(pCommandStatus, pRelatedDimms[Index]->DeviceHandle.AsUint32);
         if (pObjectStatus != NULL) {
-          DimmFound = TRUE;
-          break;
-        }
-
-        if (DimmFound) {
           if (LastNvmStatus == NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM) {
             SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index],
               NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM);

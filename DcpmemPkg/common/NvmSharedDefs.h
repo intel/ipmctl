@@ -70,7 +70,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config
   NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM      = 106,  ///< Error: Goal config affects unspecified DIMM
   NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM      = 107,  ///< Error: Current config affects unspecified DIMM
-  NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM = 108,  ///< Error: Current config affects unspecified DIMM
+  NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM = 108,  ///< Error: Current and goal config affects unspecified DIMM
   NVM_ERR_REGION_CONF_APPLYING_FAILED               = 109,  ///< Error: Failed to apply goal
   NVM_ERR_REGION_CONF_UNSUPPORTED_CONFIG            = 110,  ///< Error: Unsupported config
 

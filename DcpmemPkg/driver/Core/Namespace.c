@@ -1008,12 +1008,12 @@ ValidateLsaData(
   /** Index Blocks tests **/
   for (Index = 0; Index < NAMESPACE_INDEXES; ++Index) {
     NVDIMM_DBG("Signature of the NAMESPACE INDEX %d", Index);
-    NVDIMM_HEXDUMP(&NamespaceSignature, sizeof(NamespaceSignature));
     // We are copying the signature in two steps so we need to copy twice the half of the NSINDEX_SIG_LEN length.
     CopyMem_S(&NamespaceSignature.Uint64, sizeof(NamespaceSignature.Uint64), &pLabelStorageArea->Index[Index].Signature, NSINDEX_SIG_LEN / 2);
     CopyMem_S(&NamespaceSignature.Uint64_1,
       sizeof(NamespaceSignature.Uint64_1),
       &pLabelStorageArea->Index[Index].Signature[NSINDEX_SIG_LEN / 2], NSINDEX_SIG_LEN / 2);
+    NVDIMM_HEXDUMP(&NamespaceSignature, sizeof(NamespaceSignature));
     if (NamespaceSignature.Uint64 != LSA_NAMESPACE_INDEX_SIG_L ||
       NamespaceSignature.Uint64_1 != LSA_NAMESPACE_INDEX_SIG_H) {
       NVDIMM_DBG("The signature of the NAMESPACE INDEX %d is incorrect.", Index);

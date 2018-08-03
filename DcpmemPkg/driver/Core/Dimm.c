@@ -5825,11 +5825,11 @@ SetObjStatusForDimm(
 {
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];
 
-  ZeroMem(DimmUid, sizeof(DimmUid));
-
   if (pDimm == NULL || pCommandStatus == NULL) {
     return;
   }
+
+  ZeroMem(DimmUid, sizeof(DimmUid));
 
   if (EFI_ERROR(GetDimmUid(pDimm, DimmUid, MAX_DIMM_UID_LENGTH))) {
     NVDIMM_ERR("Error in GetDimmUid");

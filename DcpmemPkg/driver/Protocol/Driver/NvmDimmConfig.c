@@ -4228,11 +4228,14 @@ ValidateImageVersion(
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&Bsr, sizeof(Bsr));
 
   if (pImage == NULL || pDimm == NULL || pNvmStatus == NULL) {
     goto Finish;
   }
+
+  *pNvmStatus = NVM_SUCCESS; //assume success
+
+  ZeroMem(&Bsr, sizeof(Bsr));
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -4240,26 +4243,20 @@ ValidateImageVersion(
   }
 
   if (pDimm->FwVer.FwProduct == 0) {
-    if (pNvmStatus != NULL) {
-      // Dimm seems inaccessible over DDRT and SMBUS, as we couldn't get the proper
-      // firmware version
-      *pNvmStatus = NVM_ERR_TIMEOUT;
-    }
+    // Dimm seems inaccessible over DDRT and SMBUS, as we couldn't get the proper
+    // firmware version
+    *pNvmStatus = NVM_ERR_TIMEOUT;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
   if (pDimm->FwVer.FwProduct != pImage->ImageVersion.ProductNumber.Version) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-    }
+    *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
 
   if (pDimm->FwVer.FwRevision > pImage->ImageVersion.RevisionNumber.Version) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-    }
+    *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -4273,17 +4270,13 @@ ValidateImageVersion(
       goto Finish;
     }
     if (Bsr.Separated_Current_FIS.OIE != DIMM_BSR_OIE_ENABLED) {
-      if (pNvmStatus != NULL) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-      }
+      *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
 
     if (!Force) {
-      if (pNvmStatus != NULL) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
-      }
+      *pNvmStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
@@ -4293,9 +4286,7 @@ ValidateImageVersion(
     pDimm->FwVer.FwSecurityVersion == pImage->ImageVersion.SecurityVersionNumber.Version &&
     pDimm->FwVer.FwBuild > pImage->ImageVersion.BuildNumber.Build) {
     if (!Force) {
-      if (pNvmStatus != NULL) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
-      }
+      *pNvmStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
@@ -4304,9 +4295,7 @@ ValidateImageVersion(
   if ((BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) < DEV_FW_API_VERSION_MAJOR_MIN) ||
       (BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) == DEV_FW_API_VERSION_MAJOR_MIN &&
         BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit2) < DEV_FW_API_VERSION_MINOR_MIN)) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_FIRMWARE_API_NOT_VALID;
-    }
+    *pNvmStatus = NVM_ERR_FIRMWARE_API_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -4342,7 +4331,7 @@ UpdateSmbusDimmFw(
   IN     CONST VOID *pImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus OPTIONAL,
+     OUT NVM_STATUS *pNvmStatus,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -4361,7 +4350,7 @@ UpdateSmbusDimmFw(
 
   ZeroMem(&FwUpdatePacket, sizeof(FwUpdatePacket));
 
-  if (pImageBuffer == NULL || pCommandStatus == NULL) {
+  if (pImageBuffer == NULL || pCommandStatus == NULL || pNvmStatus == NULL) {
     goto FinishClean;
   }
   pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
@@ -4369,17 +4358,13 @@ UpdateSmbusDimmFw(
   // upload FW image to specified DIMMs
   pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.UninitializedDimms);
   if (pCurrentDimm == NULL) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
-    }
+    *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
     ReturnCode = EFI_NOT_FOUND;
     goto FinishClean;
   }
 
   if (!ValidateImage(pFileHeader, ImageBufferSize, &pErrorMessage)) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
-    }
+    *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -4426,9 +4411,7 @@ UpdateSmbusDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-    }
+    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     goto Finish;
   }
 
@@ -4446,9 +4429,7 @@ UpdateSmbusDimmFw(
     ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      if (pNvmStatus != NULL) {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      }
+      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
       goto Finish;
     }
   }
@@ -4462,17 +4443,13 @@ UpdateSmbusDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-    }
+    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     goto Finish;
   }
 
   pCurrentDimm->RebootNeeded = TRUE;
 
-  if (pNvmStatus != NULL) {
-    *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
-  }
+  *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
   ReturnCode = EFI_SUCCESS;
 
 Finish:
@@ -4511,7 +4488,7 @@ UpdateDimmFw(
   IN     CONST VOID *pImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus OPTIONAL
+     OUT NVM_STATUS *pNvmStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -4534,9 +4511,8 @@ UpdateDimmFw(
   SetMem(&FwUpdatePacket, sizeof(FwUpdatePacket), 0x0);
 #endif
 
-  if (pImageBuffer == NULL) {
-    NVDIMM_DBG("pImageBuffer is null");
-    ReturnCode = EFI_INVALID_PARAMETER;
+  if (pImageBuffer == NULL || pNvmStatus == NULL) {
+    NVDIMM_DBG("an input buffer is null");
     goto Finish;
   }
   pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
@@ -4544,25 +4520,19 @@ UpdateDimmFw(
   // upload FW image to specified DIMMs
   pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
   if (pCurrentDimm == NULL) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
-    }
+    *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
 
   if (!IsDimmManageable(pCurrentDimm)) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
-    }
+    *pNvmStatus = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   if (!ValidateImage(pFileHeader, ImageBufferSize, &pErrorMessage)) {
-    if (pNvmStatus != NULL) {
-      *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
-    }
+    *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -4605,13 +4575,11 @@ UpdateDimmFw(
               break;
            }
 
-           if (pNvmStatus != NULL) {
-              if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-                 *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-              }
-              else {
-                 *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-              }
+           if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+              *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+           }
+           else {
+              *pNvmStatus = NVM_ERR_OPERATION_FAILED;
            }
         }
         goto Finish;
@@ -4621,13 +4589,11 @@ UpdateDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-     if (pNvmStatus != NULL) {
-        if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-           *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-        }
-        else {
-           *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-        }
+     if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+     }
+     else {
+        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
      }
      goto Finish;
   }
@@ -4656,12 +4622,10 @@ UpdateDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pNvmStatus != NULL) {
-      if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      } else {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      }
+    if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+      *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+    } else {
+      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
     goto Finish;
   }
@@ -4676,12 +4640,10 @@ UpdateDimmFw(
     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      if (pNvmStatus != NULL) {
-        if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-          *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-        } else {
-          *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-        }
+      if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+      } else {
+        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
       }
       goto Finish;
     }
@@ -4694,12 +4656,10 @@ UpdateDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pNvmStatus != NULL) {
-      if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      } else {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      }
+    if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+      *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+    } else {
+      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
     goto Finish;
   }
@@ -4707,9 +4667,7 @@ UpdateDimmFw(
 
   pCurrentDimm->RebootNeeded = TRUE;
 
-  if (pNvmStatus != NULL) {
-    *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
-  }
+  *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
   ReturnCode = EFI_SUCCESS;
 
 Finish:
@@ -4777,6 +4735,7 @@ Finish:
   @param[in] ImageBufferSize is Image size in bytes
 
   @param[out] pNvmStatus NVM error code
+  @param[out] pCommandStatus  command status list
 
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
   @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
@@ -4792,6 +4751,7 @@ RecoverDimmFw(
   IN     CONST VOID *pNewSpiImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     CHAR16 *pWorkingDirectory OPTIONAL,
+     OUT NVM_STATUS *pNvmStatus,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -4807,7 +4767,7 @@ RecoverDimmFw(
 
   NVDIMM_ENTRY();
 
-  if (pNewSpiImageBuffer == NULL || pCommandStatus == NULL) {
+  if (pNewSpiImageBuffer == NULL || pCommandStatus == NULL || pNvmStatus == NULL) {
     goto Finish;
   }
 
@@ -4821,14 +4781,14 @@ RecoverDimmFw(
   pCurrentDimm = GetDimmByHandle(DimmHandle, &gNvmDimmData->PMEMDev.UninitializedDimms);
   if (pCurrentDimm == NULL) {
     NVDIMM_ERR("Failed to find handle 0x%x in uninitialized dimm list", DimmHandle);
-    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_NOT_FOUND);
+    *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
     goto Finish;
   }
 
   ReturnCode = SpiCheckAccess(pCurrentDimm);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Spi access is not enabled on DIMM 0x%x", pCurrentDimm->DeviceHandle.AsUint32);
-    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
+    *pNvmStatus = NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED;
     goto Finish;
   }
 
@@ -4836,12 +4796,12 @@ RecoverDimmFw(
   ReturnCode = GetDeviceIdSpd(pCurrentDimm->SmbusAddress, &DeviceId);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Cannot access spd data over smbus: 0x%x", ReturnCode);
-    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_SPD_NOT_ACCESSIBLE);
+    *pNvmStatus = NVM_ERR_SPD_NOT_ACCESSIBLE;
     goto Finish;
   }
   if (DeviceId != SPD_DEVICE_ID_DCPMEM_GEN1) {
     NVDIMM_ERR("Incompatible hardware revision 0x%x", DeviceId);
-    SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION);
+    *pNvmStatus = NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION;
     goto Finish;
   }
 
@@ -5044,22 +5004,22 @@ UpdateFw(
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
         }
       } else {
-      TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
+         TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
 
-      if (EFI_ERROR(TempReturnCode)) {
-        if (TempReturnCode == EFI_ABORTED) {
-          if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
-            } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-            } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
-            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-          }
-        }
-      } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
-      }
-    }
+         if (EFI_ERROR(TempReturnCode)) {
+           if (TempReturnCode == EFI_ABORTED) {
+             if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
+               } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
+               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+               } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
+               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+             }
+           }
+         } else {
+           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+         }
+       }
     }
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
     pFwImageInfo->Date = pFileHeader->Date;
@@ -5068,24 +5028,22 @@ UpdateFw(
     pFwImageInfo->ModuleVendor = pFileHeader->ModuleVendor;
     pFwImageInfo->Size = pFileHeader->Size;
 
+    ReturnCode = EFI_SUCCESS;
   } else {
     // upload FW image to all specified DIMMs
     for (Index = 0; Index < DimmsNum; Index++) {
       if (Recovery && FlashSPI) {
         ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
-            pImageBuffer, BuffSize, pWorkingDirectory, pCommandStatus);
+            pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
       } else if (Recovery) {
         ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
       } else {
         ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
       }
+
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
     }
   }
-
-
-  ReturnCode = EFI_SUCCESS;
 
 Finish:
   if (FileHandle != NULL) {

@@ -218,74 +218,74 @@ Load (
     ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pRelativeFileName,
         (CHAR16 *) pWorkingDirectory, Examine, FALSE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
 
-  if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
+    if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS && ReturnCode == EFI_SUCCESS) {
 
-    Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
-    pFileName,
-    pFwImageInfo->ImageVersion.ProductNumber.Version,
-    pFwImageInfo->ImageVersion.RevisionNumber.Version,
-    pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
-     pFwImageInfo->ImageVersion.BuildNumber.Build);
-  } else {
-    Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
-    goto FinishWithError;
-  }
-  DisplayCommandStatus(L"", L"", pCommandStatus);
-  ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-  goto Finish;
+      Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
+      pFileName,
+      pFwImageInfo->ImageVersion.ProductNumber.Version,
+      pFwImageInfo->ImageVersion.RevisionNumber.Version,
+      pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
+       pFwImageInfo->ImageVersion.BuildNumber.Build);
+    } else {
+      Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+      goto FinishWithError;
+    }
+    DisplayCommandStatus(L"", L"", pCommandStatus);
+    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    goto Finish;
 
-  } else {
-    for (Index = 0; Index < DimmIdsCount; Index++) {
+    } else {
+      for (Index = 0; Index < DimmIdsCount; Index++) {
 
-      ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
+        ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
 
-      ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, pRelativeFileName,
-          (CHAR16 *) pWorkingDirectory, FALSE, Force, FALSE, FALSE, pFwImageInfo, pCommandStatus);
+        ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, pRelativeFileName,
+            (CHAR16 *) pWorkingDirectory, FALSE, Force, FALSE, FALSE, pFwImageInfo, pCommandStatus);
 
-      if (ReturnCode == EFI_ABORTED &&
-        pCommandStatus->GeneralStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+        if (ReturnCode == EFI_ABORTED &&
+          pCommandStatus->GeneralStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
 
-        ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
+          ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
+          if (EFI_ERROR(ReturnCode)) {
+            goto Finish;
+          }
+
+          ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
+              DimmStr, MAX_DIMM_UID_LENGTH);
+          if (EFI_ERROR(ReturnCode)) {
+            goto Finish;
+          }
+
+          Print(CLI_DOWNGRADE_PROMPT L"\n", DimmStr);
+          ReturnCode = PromptYesNo(&Confirmation);
+          if (!EFI_ERROR(ReturnCode) && Confirmation) {
+            ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
+
+            ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, pRelativeFileName,
+                 (CHAR16 *) pWorkingDirectory, FALSE, TRUE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
+          } else {
+            DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
+            continue;
+          }
+        }
+
         if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
-
-        ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
-            DimmStr, MAX_DIMM_UID_LENGTH);
-        if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
-
-        Print(CLI_DOWNGRADE_PROMPT L"\n", DimmStr);
-        ReturnCode = PromptYesNo(&Confirmation);
-        if (!EFI_ERROR(ReturnCode) && Confirmation) {
-          ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
-
-          ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, pRelativeFileName,
-               (CHAR16 *) pWorkingDirectory, FALSE, TRUE, FALSE, FALSE, pFwImageInfo, pCommandStatus);
-        } else {
-          DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
-          continue;
-        }
-      }
-
-      if (EFI_ERROR(ReturnCode)) {
-        goto FinishWithError;
-      }
-
-      ReturnCode = PollLongOpStatus(pNvmDimmConfigProtocol, pDimmIds[Index],
-        FW_UPDATE_OPCODE, FW_UPDATE_SUBOPCODE, LONG_OP_FW_UPDATE_TIMEOUT);
-      if (EFI_ERROR(ReturnCode)) {
-        if (ReturnCode == (EFI_INCOMPATIBLE_VERSION) || (ReturnCode == EFI_UNSUPPORTED)) {
-          NVDIMM_DBG("Long operation status for FwUpdate not supported");
-          ReturnCode = EFI_SUCCESS;
-        } else {
-          ResetCmdStatus(pCommandStatus, NVM_ERR_FIRMWARE_FAILED_TO_STAGE);
           goto FinishWithError;
         }
+
+        ReturnCode = PollLongOpStatus(pNvmDimmConfigProtocol, pDimmIds[Index],
+          FW_UPDATE_OPCODE, FW_UPDATE_SUBOPCODE, LONG_OP_FW_UPDATE_TIMEOUT);
+        if (EFI_ERROR(ReturnCode)) {
+          if (ReturnCode == (EFI_INCOMPATIBLE_VERSION) || (ReturnCode == EFI_UNSUPPORTED)) {
+            NVDIMM_DBG("Long operation status for FwUpdate not supported");
+            ReturnCode = EFI_SUCCESS;
+          } else {
+            ResetCmdStatus(pCommandStatus, NVM_ERR_FIRMWARE_FAILED_TO_STAGE);
+            goto FinishWithError;
+          }
+        }
+        DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
       }
-      DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
-    }
     goto Finish;
   }
 

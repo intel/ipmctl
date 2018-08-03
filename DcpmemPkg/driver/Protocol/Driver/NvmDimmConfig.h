@@ -489,7 +489,7 @@ UpdateDimmFw(
   IN     CONST VOID *pImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus OPTIONAL
+     OUT NVM_STATUS *pNvmStatus
   );
 
 /**
@@ -500,6 +500,7 @@ UpdateDimmFw(
   @param[in] ImageBufferSize is Image size in bytes
 
   @param[out] pNvmStatus NVM error code
+  @param[out] pCommandStatus  command status list
 
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
   @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
@@ -515,6 +516,7 @@ RecoverDimmFw(
   IN     CONST VOID *pImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     CHAR16 *pWorkingDirectory OPTIONAL,
+     OUT NVM_STATUS *pNvmStatus,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

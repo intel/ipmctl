@@ -17,9 +17,14 @@
  /**
  Local definitions
  **/
+#define MIN_BOOLEAN_VALUE 0
 #define MAX_BOOLEAN_VALUE 1
+#define MIN_LOG_VALUE 0x0
 #define MAX_LOG_VALUE 0x7FFFFFFF
+#define MIN_LOG_LEVEL_VALUE 0
 #define MAX_LOG_LEVEL_VALUE 4
+#define MIN_PERFORMANCE_MONITOR_INTERVAL_MINUTES 1
+#define MIN_EVENT_MONITOR_INTERVAL_MINUTES 1
 
 /**
   Command syntax definition
@@ -159,13 +164,13 @@ Finish:
 }
 
 #ifdef OS_BUILD
-EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, UINT64 MaxValue, UINT64 *IntegerEq) {
+EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, INT64 MinVal, UINT64 MaxValue, UINT64 *IntegerEq) {
 
   EFI_STATUS rc = EFI_INVALID_PARAMETER;
   if (!GetU64FromString(InputString, IntegerEq)) {
     goto Finish;
   }
-  if (*IntegerEq > MaxValue) {
+  if (*IntegerEq > MaxValue || *IntegerEq < MinVal) {
       goto Finish;
   }
   rc = EFI_SUCCESS;
@@ -174,7 +179,7 @@ Finish:
   return rc;
 }
 
-EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
+EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN INT64 MinVal, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
 {
   EFI_STATUS rc = EFI_SUCCESS;
   CHAR16 *pTypeValue = NULL;
@@ -193,7 +198,7 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
-    rc = ValidateAndConvertInput(pTypeValue, MaxValue, &IntegerValue);
+    rc = ValidateAndConvertInput(pTypeValue, MinVal, MaxValue, &IntegerValue);
     if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
       PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, EFI_INVALID_PARAMETER);
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER);
@@ -417,13 +422,13 @@ SetPreferences(
     }
   }
 #ifdef OS_BUILD
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MAX_BOOLEAN_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MAX_UINT64_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MAX_BOOLEAN_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MAX_UINT64_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MAX_LOG_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MAX_LOG_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MAX_LOG_LEVEL_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MIN_BOOLEAN_VALUE, MAX_BOOLEAN_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MIN_PERFORMANCE_MONITOR_INTERVAL_MINUTES, MAX_UINT64_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MIN_BOOLEAN_VALUE, MAX_BOOLEAN_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MIN_EVENT_MONITOR_INTERVAL_MINUTES, MAX_UINT64_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MIN_LOG_VALUE, MAX_LOG_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MIN_LOG_VALUE, MAX_LOG_VALUE, pCommandStatus);
+  SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MIN_LOG_LEVEL_VALUE, MAX_LOG_LEVEL_VALUE, pCommandStatus);
 
   TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   KEEP_ERROR(ReturnCode, TempReturnCode);

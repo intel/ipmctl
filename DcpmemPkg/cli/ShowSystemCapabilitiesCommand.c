@@ -155,7 +155,7 @@ PrintSupportedMemoryModes(
 {
   BOOLEAN First = TRUE;
 
-  Print(FORMAT_STR L": ", OPERATING_MODE_SUPPORT_STR);
+  Print(FORMAT_STR L"=", OPERATING_MODE_SUPPORT_STR);
   if (MemoryModes.MemoryModesFlags.OneLm) {
     Print(ONE_LM_STR);
     First = FALSE;

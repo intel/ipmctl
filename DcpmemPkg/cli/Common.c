@@ -1490,10 +1490,10 @@ PrintAppDirectSettings(
 
   if (Mode == PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD) {
     if (PrintRecommended) {
-      Print(L"RecommendedAppDirectSettings: ");
+      Print(L"RecommendedAppDirectSettings=");
     }
     else {
-      Print(L"SupportedAppDirectSettings: ");
+      Print(L"SupportedAppDirectSettings=");
     }
   }
 

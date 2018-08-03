@@ -1094,6 +1094,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
 */
 NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dimm_uid, UINT32 event_id)
 {
+  int Rc = 0;
   CHAR8 *event_buffer = NULL;
   INTN event_buffer_size = 0;
   FILE *h_file = NULL;
@@ -1103,37 +1104,41 @@ NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dim
 
   // Read all events matching the criteria
   event_buffer_size = get_system_events_from_file(FALSE, TRUE, event_type_mask, SYSTEM_EVENT_NOT_APPLICABLE, dimm_uid, event_id, NULL, &event_buffer);
-	if ((event_buffer_size > 0) && (NULL != event_buffer))
-	{
-		// Find the system log file name        
-    if (SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask) & SYSTEM_EVENT_DEBUG_MASK) {
-      efi_status = get_the_system_log_file_name(SYSTEM_LOG_DEBUG_FILE, sizeof(log_file_name), log_file_name);
-      p_values_init = PTR_VALUES_INIT(SYSTEM_LOG_DEBUG_FILE);
+
+  // Find the system log file name
+  if (SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask) & SYSTEM_EVENT_DEBUG_MASK) {
+    efi_status = get_the_system_log_file_name(SYSTEM_LOG_DEBUG_FILE, sizeof(log_file_name), log_file_name);
+    p_values_init = PTR_VALUES_INIT(SYSTEM_LOG_DEBUG_FILE);
+  }
+  else {
+    efi_status = get_the_system_log_file_name(SYSTEM_LOG_EVENT_FILE, sizeof(log_file_name), log_file_name);
+    p_values_init = PTR_VALUES_INIT(SYSTEM_LOG_EVENT_FILE);
+  }
+  if (EFI_SUCCESS == efi_status)
+  {
+    // Trunct the old log file and store the new value in it
+    h_file = fopen(log_file_name, "w");
+    if (NULL != h_file)
+    {
+      if ((event_buffer_size > 0) && (NULL != event_buffer))
+      {
+        // Copy data only if there is anything in the buffer
+        fprintf(h_file, "%s", event_buffer);
+      }
+      // Close the file
+      fclose(h_file);
+      // Requires new value initialization
+      *p_values_init = FALSE;
     }
-    else {
-      efi_status = get_the_system_log_file_name(SYSTEM_LOG_EVENT_FILE, sizeof(log_file_name), log_file_name);
-      p_values_init = PTR_VALUES_INIT(SYSTEM_LOG_EVENT_FILE);
-    }
-		if (EFI_SUCCESS == efi_status)
-		{
-			// Trunct the old log file and store the new value in it
-			h_file = fopen(log_file_name, "w");
-			if (NULL != h_file)
-			{
-				// Copy data only if there is anything in the buffer
-				fprintf(h_file, "%s", event_buffer);
-				// Close the file
-				fclose(h_file);
-        // Requires new value initialization
-        *p_values_init = FALSE;
-			}
-			else
-				return -1;
-			// Free the buffer
-			free(event_buffer);
-		}
-	}
-  return 0;
+    else
+      Rc = -1;
+  }
+  if (NULL != event_buffer) {
+    // Free the buffer
+    free(event_buffer);
+  }
+
+  return Rc;
 }
 
 /*

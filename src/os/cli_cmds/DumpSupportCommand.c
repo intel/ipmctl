@@ -28,7 +28,7 @@ struct Command DumpSupportCommandSyntax = {
   {                                                                 //!< properties
     { L"", L"", L"", FALSE, ValueOptional }
   },
-  L"Capture a snapshot of the system staet for support purposes",   //!< help
+  L"Capture a snapshot of the system state for support purposes",   //!< help
   DumpSupportCommand                                                //!< run function
 };
 

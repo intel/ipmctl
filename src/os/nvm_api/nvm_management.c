@@ -428,7 +428,8 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   TOPOLOGY_DIMM_INFO *pDimmTopology = NULL;
-  int TopologyDimmsCount = 0;
+  int DdrDimmCnt = 0;
+  int DpcCnt = 0;
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
@@ -441,7 +442,7 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count)
     return NVM_ERR_INVALID_PARAMETER;
   }
 
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemTopology(&gNvmDimmDriverNvmDimmConfig, &pDimmTopology, (UINT16 *)&TopologyDimmsCount);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemTopology(&gNvmDimmDriverNvmDimmConfig, &pDimmTopology, (UINT16 *)&DdrDimmCnt);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     return NVM_ERR_UNKNOWN;
@@ -449,7 +450,14 @@ NVM_API int nvm_get_number_of_memory_topology_devices(int *count)
     NVDIMM_ERR("Could not read the system topology.\n");
     return NVM_ERR_UNKNOWN;
   }
-  *count = TopologyDimmsCount;
+
+  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&DpcCnt)))
+  {
+    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n", nvm_status);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  *count = DdrDimmCnt + DpcCnt;
   return NVM_SUCCESS;
 }
 
@@ -461,6 +469,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   int topology_dimms_count = 0;
   int nvm_status;
   int index;
+  int dpc_cnt = 0;
 
   if (NULL == p_devices)
     return NVM_ERR_INVALID_PARAMETER;
@@ -478,10 +487,37 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   }
   for (index = 0; (index < count) && (index < topology_dimms_count); index++) {
     p_devices[index].physical_id = p_dimm_topology[index].DimmID;                                           // Memory device's physical identifier (SMBIOS handle)
-    p_devices[index].memory_type = p_dimm_topology[index].MemoryType;                                       // Type of memory device
+    p_devices[index].memory_type = MEMORY_TYPE_DDR4;                                       // Type of memory device
     memcpy_s(p_devices[index].device_locator, NVM_DEVICE_LOCATOR_LEN, p_dimm_topology[index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
     memcpy_s(p_devices[index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[index].BankLabel, BANKLABEL_LEN);                   // Physically-labeled bank of device location
   }
+
+  DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * (count - index));
+  if (NULL == pdimms) {
+    NVDIMM_ERR("Failed to allocate memory\n");
+    return NVM_ERR_UNKNOWN;
+  }
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)(count - index), DIMM_INFO_CATEGORY_NONE, pdimms);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    FreePool(pdimms);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  if (NVM_SUCCESS != nvm_get_number_of_devices(&dpc_cnt)) {
+    NVDIMM_ERR("Failed to get number of devices\n");
+    FreePool(pdimms);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  for (int i = 0; (index < count) && (i < dpc_cnt); index++,++i) {
+    p_devices[index].physical_id = pdimms[i].DimmID; // Memory device's physical identifier (SMBIOS handle)
+    p_devices[index].memory_type = MEMORY_TYPE_NVMDIMM; // Type of memory device
+    memcpy_s(p_devices[index].device_locator, NVM_DEVICE_LOCATOR_LEN, pdimms[i].DeviceLocator, NVM_DEVICE_LOCATOR_LEN); // Physically-labeled socket of device location
+    memcpy_s(p_devices[index].bank_label, NVM_BANK_LABEL_LEN, pdimms[i].BankLabel, BANKLABEL_LEN); // Physically-labeled bank of device location
+  }
+
   return NVM_SUCCESS;
 }
 

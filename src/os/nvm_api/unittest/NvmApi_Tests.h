@@ -171,4 +171,17 @@ TEST_F(NvmApi_Tests, VerifyGetFwErrLogStatsReturnsErrorWithInvalidParam)
   int retval = nvm_get_fw_err_log_stats("Asdfg", &error_log_stats);
   EXPECT_NE(retval, NVM_SUCCESS);
 }
+
+TEST_F(NvmApi_Tests, VerifyMemTopology)
+{
+  int count;
+  int retval;
+  struct memory_topology * mem_topo;
+
+  retval = nvm_get_number_of_memory_topology_devices(&count);
+
+  mem_topo = (struct memory_topology *)malloc((sizeof(struct memory_topology) * count));
+  retval = nvm_get_memory_topology(mem_topo, count);
+
+}
 #endif //NVM_API_TESTS_H

@@ -2755,6 +2755,7 @@ static void convert_debug_log_entry_to_event(log_entry *p_log_entry, char *event
 
   for (; (*p_src_msg != '\n') && (*p_src_msg != 0); p_src_msg++, p_dst_msg++)
     *p_dst_msg = *p_src_msg;
+  *p_dst_msg = 0; // add the null terminator
 }
 
 NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)

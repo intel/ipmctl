@@ -1017,7 +1017,7 @@ FwCmdGetFirmwareImageInfo (
 /**
   Firmware command to get Power Management Policy Info (for FIS 1.3+)
 
-  @param[in] pDimm The Intel dcpmem module to retrieve Power Management Policy Info
+  @param[in] pDimm The Intel DCPMM to retrieve Power Management Policy Info
   @param[out] ppPayloadPowerManagementPolicy Area to place Power Management Policy Info data
     The caller is responsible to free the allocated memory with the FreePool function.
 

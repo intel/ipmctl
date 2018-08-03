@@ -152,7 +152,7 @@ GetRegionList()
 /**
   Clean the Interleave Set
 
-  @param[in, out] pDimmList: the list of DCPMEM modules
+  @param[in, out] pDimmList: the list of DCPMMs
   @param[in, out] pISList: the list of Interleave Sets to clean
 **/
 VOID
@@ -3399,7 +3399,7 @@ FindRelatedDimmsByRegions(
 
   NVDIMM_ENTRY();
 
-  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL || 
+  if (pDimms == NULL || pRelatedDimms == NULL || pRelatedDimmsNum == NULL ||
     DimmsNum > MAX_DIMMS) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;

@@ -30,7 +30,7 @@ struct Command ShowTopologyCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                   //!< properties
-  L"Show the topology of the DCPMEM modules installed in the host server"  , //!< help
+  L"Show the topology of the DCPMMs installed in the host server"  , //!< help
   ShowTopology
 };
 

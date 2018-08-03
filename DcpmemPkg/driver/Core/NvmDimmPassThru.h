@@ -855,10 +855,10 @@ typedef struct {
     Page: 0 (Current Boot Info)
 **/
 typedef struct {
-  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMEM DIMM since last AC cycle
-  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMEM DIMM since last AC cycle
-  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMEM DIMM has serviced since last AC cycle
-  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMEM DIMM has serviced since last AC cycle
+  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMM since last AC cycle
+  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMM since last AC cycle
+  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMM has serviced since last AC cycle
+  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMM has serviced since last AC cycle
   UINT8 Reserved[64];   //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE0;
 
@@ -869,10 +869,10 @@ typedef struct {
     Page: 1 (Lifetime Info)
  **/
 typedef struct {
-  UINT128 TotalMediaReads;          //!< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
-  UINT128 TotalMediaWrites;         //!< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
-  UINT128 TotalReadRequests;        //!< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
-  UINT128 TotalWriteRequests;       //!< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+  UINT128 TotalMediaReads;          //!< Lifetime number of 64 byte reads from media on the DCPMM
+  UINT128 TotalMediaWrites;         //!< Lifetime number of 64 byte writes to media on the DCPMM
+  UINT128 TotalReadRequests;        //!< Lifetime number of DDRT read transactions the DCPMM has serviced
+  UINT128 TotalWriteRequests;       //!< Lifetime number of DDRT write transactions the DCPMM has serviced
   UINT8 Reserved[64];   //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1;
 

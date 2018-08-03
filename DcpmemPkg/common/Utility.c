@@ -2802,8 +2802,8 @@ MemoryTypeToStr(
     case MEMORYTYPE_DDR4:
       pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_DDR4_STR);
       break;
-    case MEMORYTYPE_DCPMEM:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_DCPMEM_STR);
+    case MEMORYTYPE_DCPM:
+      pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_DCPM_STR);
       break;
     default:
       pTempStr =  CatSPrint(NULL, FORMAT_STR, MEMORY_TYPE_UNKNOWN_STR);

@@ -359,11 +359,11 @@ InitWorkarounds(
   The driver name in the ComponentNameProtocol should be delimited with spaces.
 
   Example usage:
-  pDriverName = L"Apache,Pass,Driver"
+  pDriverName = L"XXX,YYY,Driver"
 
   Will return a handle if in the system there is a driver loaded with names like:
-  "Apache Pass 1.0.0.0 Driver", "Pass Apache 1.0.0.0 Driver", "Apache Pass Test123 Driver",
-  "Driver Apache Pass Abc Driver", "Pass Driver Apa Apache", "Test123 Apache Driver Pass"
+  "XXX YYY 1.0.0.0 Driver", "YYY XXX 1.0.0.0 Driver", "XXX YYY Test123 Driver",
+  "Driver XXX YYY Abc Driver", "YYY Driver Apa XXX", "Test123 XXX Driver YYY"
 
   In case of more than one match in the system, the first handle will be returned.
 **/
@@ -494,17 +494,13 @@ VOID
 UnloadDcpmmDriversIfAny(
   )
 {
-  CONST CHAR16 *pBaseDriverWordsToFind = L"Apache,Pass,Driver";
-  CONST CHAR16 *pHiiDriverWordsToFind = L"Apache,Pass,HII,Driver";
   CONST CHAR16 *pIpmctlDriverWordsToFind = PMEM_MODULE_NAME_SEARCH L",Driver";
   CONST CHAR16 *pIpmctlHiiDriverWordsToFind = PMEM_MODULE_NAME_SEARCH L",HII,Driver";
   EFI_HANDLE DriverHandle = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
-  FindDriverByComponentName(pBaseDriverWordsToFind, &DriverHandle);
-  if (DriverHandle == NULL) {
-     FindDriverByComponentName(pIpmctlDriverWordsToFind, &DriverHandle);
-  }
+  FindDriverByComponentName(pIpmctlDriverWordsToFind, &DriverHandle);
+
   if (DriverHandle != NULL) {
     ReturnCode = gBS->UnloadImage(DriverHandle);
     if (!EFI_ERROR(ReturnCode)) {
@@ -516,11 +512,8 @@ UnloadDcpmmDriversIfAny(
     NVDIMM_DBG("Base driver not detected in the system.\n");
   }
 
+  FindDriverByComponentName(pIpmctlHiiDriverWordsToFind, &DriverHandle);
 
-  FindDriverByComponentName(pHiiDriverWordsToFind, &DriverHandle);
-  if (DriverHandle == NULL) {
-     FindDriverByComponentName(pIpmctlHiiDriverWordsToFind, &DriverHandle);
-  }
   if (DriverHandle != NULL) {
     ReturnCode = gBS->UnloadImage(DriverHandle);
     if (!EFI_ERROR(ReturnCode)) {
@@ -917,7 +910,7 @@ InitializeDimms()
    InitErrorAndWarningNvmStatusCodes();
 
    /**
-    enumerate DCPMEM modules
+    enumerate DCPMMs
    **/
 
    ReturnCodeNonBlocking = FillDimmList();
@@ -1178,7 +1171,7 @@ NvmDimmDriverDriverBindingStart(
    }
 
    /**
-   enumerate DCPMEM modules
+   enumerate DCPMMs
    **/
    ReturnCode = FillDimmList();
    if (EFI_ERROR(ReturnCode)) {

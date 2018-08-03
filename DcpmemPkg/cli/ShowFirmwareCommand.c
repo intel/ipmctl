@@ -125,7 +125,7 @@ ShowFirmware(
     goto Finish;
   }
 
-  /** Get DCPMEM modules list **/
+  /** Get DCPMMs list **/
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);

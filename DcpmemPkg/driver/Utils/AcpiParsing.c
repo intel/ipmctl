@@ -363,7 +363,7 @@ CheckIsMemoryModeAllowed(
         if (pCommonHeader->Flags) {
           Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
           pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
-          // check if at least one DCPMEM module is present
+          // check if at least one DCPMM is present
           while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_MODULE) {
             PMTT_MODULE *pModule = (PMTT_MODULE *)(((UINT8 *)pCommonHeader) + sizeof(pCommonHeader));
             // if DCPMEM is already set then continue to loop to find the offset of the next aggregated device

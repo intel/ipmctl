@@ -5,7 +5,7 @@
 
 /**
  * @file NvmTypes.h
- * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMEM modules.
+ * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs.
  */
 
 #ifndef _NVM_TYPES_H_
@@ -361,7 +361,7 @@ typedef struct _DIMM_INFO {
 
   // From global dimm struct
   UINT8 ManageabilityState;                 //!< if the DIMM is manageable by this SW
-  UINT8 IsNew;                              //!< if is incorporated with the rest of the DCPMEM modules in the system
+  UINT8 IsNew;                              //!< if is incorporated with the rest of the DCPMMs in the system
   UINT8 RebootNeeded;                       //!< Whether or not reboot is required to reconfigure dimm
   UINT32 SkuInformation;                    //!< Information about SKU modes
   UINT16 VendorId;                          //!< vendor id
@@ -457,19 +457,19 @@ typedef struct _MEMORY_RESOURCES_INFO {
 
 typedef struct _DIMM_PERFORMANCE_DATA {
   UINT16  DimmId;             //!< SMBIOS Type 17 handle corresponding to this memory device
-  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMEM DIMM since last AC cycle
-  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMEM DIMM since last AC cycle
-  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMEM DIMM has serviced since last AC cycle
-  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMEM DIMM has serviced since last AC cycle
-  UINT128 TotalMediaReads;    //!< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
-  UINT128 TotalMediaWrites;   //!< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
-  UINT128 TotalReadRequests;  //!< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
-  UINT128 TotalWriteRequests; //!< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the DCPMM since last AC cycle
+  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the DCPMM since last AC cycle
+  UINT128 ReadRequests;       //!< Number of DDRT read transactions the DCPMM has serviced since last AC cycle
+  UINT128 WriteRequests;      //!< Number of DDRT write transactions the DCPMM has serviced since last AC cycle
+  UINT128 TotalMediaReads;    //!< Lifetime number of 64 byte reads from media on the DCPMM
+  UINT128 TotalMediaWrites;   //!< Lifetime number of 64 byte writes to media on the DCPMM
+  UINT128 TotalReadRequests;  //!< Lifetime number of DDRT read transactions the DCPMM has serviced
+  UINT128 TotalWriteRequests; //!< Lifetime number of DDRT write transactions the DCPMM has serviced
   // These are deprecated in the FIS, but leaving these in to preserve functionality
   // of manufacturing command (MfgShowPerformanceCommand.c). They are set to 0s
   // in GetDimmsPerformanceData
-  UINT128 TotalBlockReadRequests;   //!< Lifetime number of BW read requests the DCPMEM DIMM has serviced
-  UINT128 TotalBlockWriteRequests;  //!< Lifetime number of BW write requests the DCPMEM DIMM has serviced
+  UINT128 TotalBlockReadRequests;   //!< Lifetime number of BW read requests the DCPMM has serviced
+  UINT128 TotalBlockWriteRequests;  //!< Lifetime number of BW write requests the DCPMM has serviced
 } DIMM_PERFORMANCE_DATA;
 
 /** Namespace information */
@@ -739,7 +739,7 @@ typedef struct _DEBUG_LOG_INFO {
 **/
 #define MEMORYTYPE_UNKNOWN  0
 #define MEMORYTYPE_DDR4     1
-#define MEMORYTYPE_DCPMEM   2
+#define MEMORYTYPE_DCPM     2
 
 /**
   @todo(after official SmBIOS spec release): update with correct values from SMBIOS spec

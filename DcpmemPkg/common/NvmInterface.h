@@ -6,7 +6,7 @@
  /**
  * @file NvmInterface.h
  * @brief Implementation of the EFI_NVMDIMMS_CONFIG_PROTOCOL, a custom protocol
- * to configure and manage DCPMEM modules
+ * to configure and manage DCPMMs
  */
 
 #ifndef _NVM_INTERFACE_H_
@@ -30,10 +30,10 @@
 typedef struct _EFI_DCPMM_CONFIG_PROTOCOL EFI_DCPMM_CONFIG_PROTOCOL;
 
 /**
-  Retrieve the number of DCPMEM modules in the system found in NFIT
+  Retrieve the number of DCPMMs in the system found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMEM modules found in NFIT.
+  @param[out] pDimmCount The number of DCPMMs found in NFIT.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -46,10 +46,10 @@ EFI_STATUS
 );
 
 /**
-  Retrieve the number of uninitialized DCPMEM modules in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMMs in the system found thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMEM modules found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -62,7 +62,7 @@ EFI_STATUS
   );
 
 /**
-  Retrieve the list of DCPMEM modules found in NFIT
+  Retrieve the list of DCPMMs found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -83,7 +83,7 @@ EFI_STATUS
 );
 
 /**
-  Retrieve the list of uninitialized DCPMEM modules found thru SMBUS
+  Retrieve the list of uninitialized DCPMMs found thru SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -354,7 +354,7 @@ EFI_STATUS
 
   @retval EFI_INVALID_PARAMETER when pLockState is NULL
   @retval EFI_OUT_OF_RESOURCES couldn't allocate memory for a structure
-  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMEM modules is detected
+  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMMs is detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
   @retval EFI_SUCCESS security state correctly set
@@ -397,7 +397,7 @@ Retrieve the region list
 @param[out] pRegions The region list
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
 @retval EFI_SUCCESS  The region list was returned properly
 @retval EFI_INVALID_PARAMETER pRegions is NULL.
 **/
@@ -418,7 +418,7 @@ Retrieve the details about the region specified with region id
 @param[out] pRegion A pointer to the region
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
 @retval EFI_SUCCESS The region was returned properly
 @retval EFI_INVALID_PARAMETER pRegion is NULL
 **/
@@ -508,7 +508,7 @@ EFI_STATUS
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
   @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
   @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_SUCCESS Update has completed successfully
 **/
 typedef
@@ -564,7 +564,7 @@ EFI_STATUS
   @param[in]  EnabledState New enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -658,7 +658,7 @@ EFI_STATUS
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -696,7 +696,7 @@ EFI_STATUS
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -728,7 +728,7 @@ EFI_STATUS
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -755,7 +755,7 @@ EFI_STATUS
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -781,7 +781,7 @@ EFI_STATUS
   @param[in] pDevicePath is a pointer to a device where dump file will be stored
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -806,7 +806,7 @@ EFI_STATUS
   @param[in] pFileString Buffer for Pool Goal configuration from file
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -882,7 +882,7 @@ EFI_STATUS
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID already exists in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Pool.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system.
 **/
 typedef
 EFI_STATUS
@@ -917,7 +917,7 @@ EFI_STATUS
   @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
   @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Pool.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system.
 
   Do not change property if NULL pointer provided
 **/
@@ -942,7 +942,7 @@ EFI_STATUS
   @retval EFI_SUCCESS if the operation was successful.
   @retval EFI_NOT_FOUND if a namespace with the provided GUID does not exist in the system.
   @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system.
 **/
 typedef
 EFI_STATUS
@@ -977,7 +977,7 @@ EFI_STATUS
   @param[out] pNamespacesCount - namespace count
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
   @retval EFI_SUCCESS All ok
@@ -1078,7 +1078,7 @@ EFI_STATUS
 
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
@@ -1278,7 +1278,7 @@ EFI_STATUS
   @param[IN] pPercentRemaining - Pointer to percentage remaining
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMEM modules has been detected in the system
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
 @retval EFI_INVALID_PARAMETER One or more parameters are invalid
 @retval EFI_SUCCESS All ok
 **/
@@ -1365,7 +1365,7 @@ EFI_STATUS
 );
 
 /**
-  Configuration and management of DCPMEM modules Protocol Interface
+  Configuration and management of DCPMMs Protocol Interface
 **/
 struct _EFI_DCPMM_CONFIG_PROTOCOL {
   UINT32 Version;

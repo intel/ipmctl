@@ -30,7 +30,7 @@
 #define MAX_REGIONS             44
 
 /**
-  Cache line size in bytes. Used by all of the platforms supporting Intel DCPMEM modules
+  Cache line size in bytes. Used by all of the platforms supporting Intel DCPMMs
 **/
 #define CACHE_LINE_SIZE 64
 

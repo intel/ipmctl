@@ -708,10 +708,10 @@ struct device_performance {
   // These next fields are 16 bytes in the fw spec, but it would take 100 years
   // of over 31 million reads/writes per second to reach the limit, so we
   // are just using 8 bytes here.
-  NVM_UINT64	bytes_read;     ///< Lifetime number of 64 byte reads from media on the DCPMEM DIMM
-  NVM_UINT64	host_reads;     ///< Lifetime number of DDRT read transactions the DCPMEM DIMM has serviced
-  NVM_UINT64	bytes_written;  ///< Lifetime number of 64 byte writes to media on the DCPMEM DIMM
-  NVM_UINT64	host_writes;    ///< Lifetime number of DDRT write transactions the DCPMEM DIMM has serviced
+  NVM_UINT64	bytes_read;     ///< Lifetime number of 64 byte reads from media on the DCPMM
+  NVM_UINT64	host_reads;     ///< Lifetime number of DDRT read transactions the DCPMM has serviced
+  NVM_UINT64	bytes_written;  ///< Lifetime number of 64 byte writes to media on the DCPMM
+  NVM_UINT64	host_writes;    ///< Lifetime number of DDRT write transactions the DCPMM has serviced
   NVM_UINT64	block_reads;    ///< Invalid field. "Lifetime number of BW read requests the DIMM has serviced"
   NVM_UINT64	block_writes;   ///< Invalid field. "Lifetime number of BW write requests the DIMM has serviced"
 };
@@ -968,7 +968,7 @@ struct config_goal {
   enum interleave_type	interleave_set_type[MAX_IS_PER_DIMM];  ///< type of interleave set
   NVM_UINT64		appdirect_size[MAX_IS_PER_DIMM];               ///< appdirect size
   enum interleave_size	imc_interleaving[MAX_IS_PER_DIMM];     ///< IMC interleaving
-  enum interleave_size	channel_interleaving[MAX_IS_PER_DIMM]; ///< Channel interleaving 
+  enum interleave_size	channel_interleaving[MAX_IS_PER_DIMM]; ///< Channel interleaving
   NVM_UINT8		appdirect_index[MAX_IS_PER_DIMM];                ///< appdirect Index
   enum config_goal_status status;                              ///< Status for the config goal. Ignored for input.
 };
@@ -1345,7 +1345,7 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
 
 /**
 * @brief Retrieve the number of memory devices installed in the system. This count includes
-* both DCPMEM modules and other memory devices, such as DRAM.
+* both DCPMMs and other memory devices, such as DRAM.
 * @pre The caller must have administrative privileges.
 * @remarks This method should be called before #nvm_get_memory_topology.
 * @param[out] count pointer to number of memory devices

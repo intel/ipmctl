@@ -5,7 +5,7 @@
 
 /**
   * @file NvmHealth.h
-  * @brief Health Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMEM modules.
+  * @brief Health Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs.
   */
 
 #ifndef _NVMHEALTH_H_

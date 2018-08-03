@@ -5,7 +5,7 @@
 
 /**
  * @file Types.h
- * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMEM modules. These types don't compile with VFR compiler and are kept separate.
+ * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs. These types don't compile with VFR compiler and are kept separate.
  */
 
 #ifndef _TYPES_H_
@@ -22,8 +22,8 @@
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#define PMEM_MODULE_NAME L"Intel(R) DCPMEM "  //short version for drivers list
-#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMEM" //comma separated search string
+#define PMEM_MODULE_NAME L"Intel(R) DCPM "  //short version for drivers list
+#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPM" //comma separated search string
 
 /*This should match the error_type definition in nvm_management.h*/
 #define ERROR_INJ_POISON                0X01

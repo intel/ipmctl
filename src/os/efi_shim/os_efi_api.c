@@ -189,11 +189,14 @@ passthru_playback(
       return EFI_END_OF_FILE;
     }
   }
+
+  pCmd->Status = pt_rec_resp.Status;
+
   g_pass_thru_playback_offset = ftell(f_passthru_ptr);
   fclose(f_passthru_ptr);
   INC_PASS_THRU_CNT();
 
-  return EFI_SUCCESS;
+  return pt_rec_resp.PassthruReturnCode;
 }
 
 EFI_STATUS
@@ -246,7 +249,8 @@ EFI_STATUS
 passthru_record_finalize(
   FILE *f_passthru_ptr,
   IN OUT FW_CMD *pCmd,
-  UINT32 DimmID
+  UINT32 DimmID,
+  EFI_STATUS PassthruReturnCode
 )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
@@ -295,6 +299,7 @@ passthru_record_finalize(
 
   pass_thru_record_resp pt_rec_resp;
   pt_rec_resp.DimmId = DimmID;
+  pt_rec_resp.PassthruReturnCode = PassthruReturnCode;
   pt_rec_resp.Status = pCmd->Status;
   pt_rec_resp.OutputPayloadSize = pCmd->OutputPayloadSize + pCmd->LargeOutputPayloadSize;
   if (1 != fwrite(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
@@ -362,8 +367,8 @@ PassThru(
 
   if (RECORD_ENABLED())
   {
-    RecordRc = passthru_record_finalize(f_passthru_ptr, pCmd, DimmID);
-    if (EFI_SUCCESS != Rc)
+    RecordRc = passthru_record_finalize(f_passthru_ptr, pCmd, DimmID, Rc);
+    if (EFI_SUCCESS != RecordRc)
     {
       return RecordRc;
     }

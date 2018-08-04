@@ -24,6 +24,7 @@ typedef struct _pass_thru_record_req
 
 typedef struct _pass_thru_record_resp
 {
+  EFI_STATUS PassthruReturnCode;
   UINT32 DimmId;
   UINT8 Status;
   UINT32 OutputPayloadSize;
@@ -179,9 +180,10 @@ completes recording functionality started in passthru_record_setup
 **/
 EFI_STATUS
 passthru_record_finalize(
-  FILE * file, 
-  IN OUT FW_CMD *pCmd, 
-  UINT32 DimmID
+  FILE * file,
+  IN OUT FW_CMD *pCmd,
+  UINT32 DimmID,
+  EFI_STATUS PassthruReturnCode
 );
 
 #endif //OS_EFI_API_H_

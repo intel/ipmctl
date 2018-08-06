@@ -2357,12 +2357,10 @@ GetPreferredDimmIdAsString(
   if (pResultString == NULL) {
     goto Finish;
   }
-#ifndef OS_BUILD
   ReturnCode = GetDimmIdentifierPreference(&DimmIdentifier);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-#endif
   ReturnCode = GetPreferredValueAsString(DimmId, pDimmUid, DimmIdentifier == DISPLAY_DIMM_ID_HANDLE,
     pResultString, ResultStringLen);
   if (EFI_ERROR(ReturnCode)) {

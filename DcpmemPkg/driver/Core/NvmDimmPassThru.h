@@ -422,7 +422,9 @@ typedef struct {
   TEMPERATURE MediaShutdownThreshold;
   TEMPERATURE MediaThrottlingStartThreshold;
   TEMPERATURE MediaThrottlingStopThreshold;
-  UINT8 Reserved[120];
+  TEMPERATURE ControllerThrottlingStartThreshold;
+  TEMPERATURE ControllerThrottlingStopThreshold;
+  UINT8 Reserved[116];
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD;
 
 /**

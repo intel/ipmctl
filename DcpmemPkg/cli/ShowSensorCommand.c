@@ -383,8 +383,9 @@ ShowSensor(
         **/
         if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, LOWER_THRESHOLD_CRITICAL_STR))) {
           switch (Index2) {
+          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
           case SENSOR_TYPE_MEDIA_TEMPERATURE:
-            // Only Media temperature sensor got lower critical threshold
+            // Only Media temperature sensor and Controller Temperature Sensor got lower critical threshold
             pTempBuff = GetSensorValue(DimmSensorsSet[Index2].CriticalLowerThreshold, DimmSensorsSet[Index2].Type);
             break;
           default:
@@ -400,8 +401,9 @@ ShowSensor(
         **/
         if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, UPPER_THRESHOLD_CRITICAL_STR))) {
           switch (Index2) {
+          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
           case SENSOR_TYPE_MEDIA_TEMPERATURE:
-            // Only Media temperature sensor got upper critical threshold
+        	  // Only Media temperature sensor and Controller Temperature Sensor got lower critical threshold
             pTempBuff = GetSensorValue(DimmSensorsSet[Index2].CriticalUpperThreshold, DimmSensorsSet[Index2].Type);
             break;
           default:

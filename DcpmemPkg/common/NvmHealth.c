@@ -77,17 +77,19 @@ GetSensorsInfo(
 
   /** Copy SMART & Health values **/
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = SensorInfo.MediaTemperature;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalLowerThreshold = SensorInfo.MediaThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalUpperThreshold = SensorInfo.MediaThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].FatalThreshold = SensorInfo.MediaTempShutdownThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = SensorInfo.ControllerTemperature;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].FatalThreshold = SensorInfo.ContrTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].CriticalLowerThreshold = SensorInfo.ControllerThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].CriticalUpperThreshold = SensorInfo.ControllerThrottlingStartThresh;
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
   DimmSensorsSet[SENSOR_TYPE_DIRTY_SHUTDOWNS].Value = SensorInfo.DirtyShutdowns;
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = SensorInfo.MediaErrorCount + SensorInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = SensorInfo.UpTime;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalLowerThreshold = SensorInfo.MediaThrottlingStopThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalUpperThreshold = SensorInfo.MediaThrottlingStartThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].FatalThreshold = SensorInfo.MediaTempShutdownThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].FatalThreshold = SensorInfo.ContrTempShutdownThresh;
 
   /** Determine Health State based on Health Status Bit Mask **/
   ConvertHealthBitmask(SensorInfo.HealthStatus, &DimmHealthState);

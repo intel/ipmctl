@@ -2346,6 +2346,10 @@ GetSmartAndHealth (
   /** Get Device Characteristics data **/
   pSensorInfo->ContrTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->ControllerShutdownThreshold);
+  pSensorInfo->ControllerThrottlingStartThresh =
+      TransformFwTempToRealValue(pDevCharacteristics->ControllerThrottlingStartThreshold);
+  pSensorInfo->ControllerThrottlingStopThresh =
+      TransformFwTempToRealValue(pDevCharacteristics->ControllerThrottlingStopThreshold);
   pSensorInfo->MediaTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->MediaShutdownThreshold);
   pSensorInfo->MediaThrottlingStartThresh =

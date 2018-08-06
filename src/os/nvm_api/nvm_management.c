@@ -151,6 +151,7 @@ NVM_API int nvm_init()
   return rc;
 cleanup_mutex:
   os_mutex_delete(g_api_mutex, NVM_API_MUTEX);
+  g_api_mutex = NULL;
   return rc;
 }
 

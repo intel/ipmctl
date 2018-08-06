@@ -222,11 +222,10 @@ int os_mutex_delete(OS_MUTEX *p_mutex, const char *name)
 	int rc = 1;
 	if (p_mutex)
 	{
-		HANDLE *p_handle = (HANDLE *)p_mutex;
+		HANDLE p_handle = (HANDLE)p_mutex;
 
 		// failure when CloseHandle(..) == 0
-		rc = (CloseHandle(*p_handle) != 0);
-        *p_handle = NULL;
+		rc = (CloseHandle(p_handle) != 0);
 
 	}
 	return rc;

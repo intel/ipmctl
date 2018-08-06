@@ -128,7 +128,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
 	//LogEnterExit logging(__FUNCTION__, __FILE__, __LINE__);
 
 	std::vector<std::string> dimmList;
-  int dimmCount = 0;
+  unsigned int dimmCount = 0;
   if (NVM_SUCCESS == nvm_get_number_of_devices(&dimmCount)) {
     // error getting dimm count
     if (dimmCount < 0)
@@ -156,7 +156,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
       // at least one dimm
       else if (dimmCount > 0)
       {
-        for (int i = 0; i < dimmCount; i++)
+        for (unsigned int i = 0; i < dimmCount; i++)
         {
           // only looks at manageable NVM-DIMMs
           if (dimms[i].manageability == MANAGEMENT_VALIDCONFIG)

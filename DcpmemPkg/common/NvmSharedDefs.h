@@ -178,7 +178,6 @@ typedef enum _NvmStatusCode {
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 
-#ifdef OS_BUILD
 typedef struct _PMON_REGISTERS {
   /**
   This will specify whether or not to return the extra smart data along with the PMON
@@ -233,6 +232,5 @@ typedef struct _PMON_REGISTERS {
   unsigned char       Reserved[20];
 }PMON_REGISTERS;
 
-#endif
 
 #endif /** _NVM_SHARED_DEFS_H_ **/

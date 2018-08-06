@@ -9,8 +9,9 @@
 
 #include <UefiBaseType.h>
 
-EFI_STATUS preferences_init(void);
+EFI_STATUS preferences_init(IN CONST char *p_filename);
 EFI_STATUS preferences_uninit(void);
+EFI_STATUS preferences_flush_the_file(void);
 
 EFI_STATUS preferences_get_var_ascii(
 	IN CONST char *name,

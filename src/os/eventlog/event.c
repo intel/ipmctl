@@ -38,7 +38,7 @@
 #define EVENT_MESSAGE_CONTROL_CHAR_STOP  '<'
 #define ENVIRONMENT_VARIABLE_CHAR_START '%'
 #define ENVIRONMENT_VARIABLE_CHAR_STOP  '%'
-#define ACTION_REQUIRED_FILE_PARSING_STRING "%s.ar"
+#define ACTION_REQUIRED_FILE_PARSING_STRING "%s%s.ar"
 
 /*
 * Log file structure local definiton, used as a cache so the file name
@@ -47,7 +47,8 @@
 log_file_struct g_log_file_table[SYSTEM_LOG_FILE_STRUCT_SIZE] =
 {
     {FALSE, FALSE, SYSTEM_LOG_EVENT_FILE_NAME, "", SYSTEM_LOG_EVENT_LIMIT, SYSTEM_EVENT_NOT_APPLICABLE, 0, 0},
-    {FALSE, FALSE, SYSTEM_LOG_DEBUG_FILE_NAME, "", SYSTEM_LOG_DEBUG_LIMIT, SYSTEM_EVENT_NOT_APPLICABLE, 0, 0}
+    {FALSE, FALSE, SYSTEM_LOG_DEBUG_FILE_NAME, "", SYSTEM_LOG_DEBUG_LIMIT, SYSTEM_EVENT_NOT_APPLICABLE, 0, 0},
+    {FALSE, TRUE, SYSTEM_LOG_AR_FILE_NAME, "", "", SYSTEM_EVENT_NOT_APPLICABLE, 0, 0 },
 };
 #define PTR_LAST_EVENT_ID(log_type) &g_log_file_table[log_type].last_event_id
 #define PTR_FILE_SIZE(log_type)     &g_log_file_table[log_type].number_of_lines
@@ -178,6 +179,33 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
 }
 
 /*
+* Get the *.ar full file name (path + name)form the ini file
+* If the g_log_file_table is not initialized funciton initializes file limits based on
+* the current ini file configuration
+* The return code other than SUCCESS indicates the file is not configured or there
+* the buffer is too small which emans the file cannot be used
+*/
+static EFI_STATUS get_the_ar_file_name(CHAR8 *p_file_name, UINTN file_name_buff_size, CHAR8 *p_device_uid)
+{
+  EFI_STATUS efi_status = EFI_SUCCESS;
+  CHAR8 temp_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
+  int stored_chars = 0;
+
+  efi_status = get_the_system_log_file_name(SYSTEM_LOG_AR_FILE, sizeof(temp_file_name), temp_file_name);
+  if (EFI_SUCCESS == efi_status) {
+      // the name has been read successfuly from the ini file
+      stored_chars = snprintf(p_file_name, file_name_buff_size, ACTION_REQUIRED_FILE_PARSING_STRING, temp_file_name, p_device_uid);
+      if (stored_chars < 0) {
+        efi_status = EFI_PROTOCOL_ERROR;
+      }
+      else if (stored_chars >= file_name_buff_size) {
+        efi_status = EFI_OUT_OF_RESOURCES;
+      }
+  }
+  return efi_status;
+}
+
+/*
 * Convert entry type string to the type mask
 * In case of error function returns 0 mask
 */
@@ -206,25 +234,25 @@ static char get_action_req_state_form_file(CHAR8 *device_uid)
     UINTN read_event_type = 0;
 
     // The action required file configured
-    snprintf(ar_file_name, sizeof(ar_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
-    // Check if file exists
-    h_file = fopen(ar_file_name, "r");
-    if (NULL != h_file)
-    {
+    if (EFI_SUCCESS == get_the_ar_file_name(ar_file_name, sizeof(ar_file_name), device_uid)) {
+      // Check if file exists
+      h_file = fopen(ar_file_name, "r");
+      if (NULL != h_file)
+      {
         // Read a first line and check if it makes any sense
         if (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
         {
-            read_event_type = AsciiStrHexToUintn(event_type_str);
-            if ((read_event_type & ~(SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_SEVERITY_MASK |
-                SYSTEM_EVENT_TYPE_NUMBER_MASK | SYSTEM_EVENT_TYPE_SOUT_MASK | SYSTEM_EVENT_TYPE_SYSLOG_MASK |
-                SYSTEM_EVENT_TYPE_SYSLOG_FILE_MASK)) == (SYSTEM_EVENT_TYPE_AR_STATUS_MASK | SYSTEM_EVENT_TYPE_AR_EVENT_MASK))
-            {
-                action_req = 1;
-            }
+          read_event_type = AsciiStrHexToUintn(event_type_str);
+          if ((read_event_type & ~(SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_SEVERITY_MASK |
+            SYSTEM_EVENT_TYPE_NUMBER_MASK | SYSTEM_EVENT_TYPE_SOUT_MASK | SYSTEM_EVENT_TYPE_SYSLOG_MASK |
+            SYSTEM_EVENT_TYPE_SYSLOG_FILE_MASK)) == (SYSTEM_EVENT_TYPE_AR_STATUS_MASK | SYSTEM_EVENT_TYPE_AR_EVENT_MASK))
+          {
+            action_req = 1;
+          }
         }
         fclose(h_file);
+      }
     }
-
     return action_req;
 }
 
@@ -533,34 +561,34 @@ static BOOLEAN check_skip_entry_status_for_event_actionreq_set(BOOLEAN not_match
     // Get the UID file name
     get_unified_id_form_event_entry(event_message, sizeof(dimm_uid), dimm_uid);
     // The action required file configured
-    snprintf(log_file_name, sizeof(log_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, dimm_uid);
-    // Event type cannot equal 0, it is stored in the log file means at least one bit needs to be set
-    h_file = fopen(log_file_name, "r+");
-    if (NULL != h_file)
-    {
+    if (EFI_SUCCESS == get_the_ar_file_name(log_file_name, sizeof(log_file_name), dimm_uid)) {
+      // Event type cannot equal 0, it is stored in the log file means at least one bit needs to be set
+      h_file = fopen(log_file_name, "r+");
+      if (NULL != h_file)
+      {
         // Remove the event type from the action required file
         while (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
         {
-            read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
-            if (read_event_type == event_type)
+          read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
+          if (read_event_type == event_type)
+          {
+            event_cat = SYSTEM_EVENT_TYPE_AR_EVENT_GET(event_type);
+            if (event_cat == ar_mask)
             {
-                event_cat = SYSTEM_EVENT_TYPE_AR_EVENT_GET(event_type);
-                if (event_cat == ar_mask)
-                {
-                    // We found the event in the action required file
-                    skip_entry = not_matching;
-                }
-                else
-                {
-                    // Skip that entry
-                    skip_entry = !not_matching;
-                }
-                break;
+              // We found the event in the action required file
+              skip_entry = not_matching;
             }
+            else
+            {
+              // Skip that entry
+              skip_entry = !not_matching;
+            }
+            break;
+          }
         }
         fclose(h_file);
+      }
     }
-
     return skip_entry;
 }
 
@@ -872,56 +900,56 @@ void write_system_event_to_stdout(enum system_event_type type, const char *sourc
 */
 static void add_event_to_action_req_file(UINT32 type, const CHAR8 *device_uid)
 {
-    char ar_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
-    FILE     *h_file = NULL;
-    NVM_EVENT_MSG event_type_str = { 0 };
-    char* new_file_buffer;
-    size_t new_file_buffer_size = 0;
-    UINT32 read_event_type = 0;
+  char ar_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
+  FILE     *h_file = NULL;
+  NVM_EVENT_MSG event_type_str = { 0 };
+  char* new_file_buffer;
+  size_t new_file_buffer_size = 0;
+  UINT32 read_event_type = 0;
 
-    // The action required file configured
-    sprintf_s(ar_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, ACTION_REQUIRED_FILE_PARSING_STRING, device_uid);
-
+  // The action required file configured
+  if (EFI_SUCCESS == get_the_ar_file_name(ar_file_name, sizeof(ar_file_name), (CHAR8 *)device_uid)) {
     if (SYSTEM_EVENT_TYPE_AR_EVENT_GET(type))
     {
-		    if (NULL == (h_file = fopen(ar_file_name, "a")))
-		    {
-			    return;
-		    }
-        // Create the event type string
-        sprintf_s(event_type_str, sizeof(event_type_str), "%08x\n", type);
-        // Add the event type to the action required file
-        fputs(event_type_str, h_file);
-        fclose(h_file);
+      if (NULL == (h_file = fopen(ar_file_name, "a")))
+      {
+        return;
+      }
+      // Create the event type string
+      sprintf_s(event_type_str, sizeof(event_type_str), "%08x\n", type);
+      // Add the event type to the action required file
+      fputs(event_type_str, h_file);
+      fclose(h_file);
     }
     else
     {
-        h_file = fopen(ar_file_name, "r+");
-        if (NULL != h_file)
-        {
-            new_file_buffer = allocate_buffer_for_file(h_file, &new_file_buffer_size);
-            if (NULL != new_file_buffer) {
-                // Remove the event type from the action required file
-                while (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
-                {
-                    read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
-                    if (((read_event_type ^ type) & (SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_NUMBER_MASK | SYSTEM_EVENT_TYPE_AR_STATUS_MASK)) != 0)
-                    {
-                        strcat_s(new_file_buffer, new_file_buffer_size, event_type_str);
-                    }
-                }
-		            h_file = freopen(ar_file_name, "w", h_file);
-                if (h_file != NULL) {
-                    fprintf(h_file, "%s", new_file_buffer);
-                    fclose(h_file);
-                }
-                free(new_file_buffer);
+      h_file = fopen(ar_file_name, "r+");
+      if (NULL != h_file)
+      {
+        new_file_buffer = allocate_buffer_for_file(h_file, &new_file_buffer_size);
+        if (NULL != new_file_buffer) {
+          // Remove the event type from the action required file
+          while (fgets(event_type_str, sizeof(event_type_str), h_file) != NULL)
+          {
+            read_event_type = (UINT32)AsciiStrHexToUintn(event_type_str);
+            if (((read_event_type ^ type) & (SYSTEM_EVENT_TYPE_CATEGORY_MASK | SYSTEM_EVENT_TYPE_NUMBER_MASK | SYSTEM_EVENT_TYPE_AR_STATUS_MASK)) != 0)
+            {
+              strcat_s(new_file_buffer, new_file_buffer_size, event_type_str);
             }
-            else {
-                fclose(h_file);
-            }
+          }
+          h_file = freopen(ar_file_name, "w", h_file);
+          if (h_file != NULL) {
+            fprintf(h_file, "%s", new_file_buffer);
+            fclose(h_file);
+          }
+          free(new_file_buffer);
         }
+        else {
+          fclose(h_file);
+        }
+      }
     }
+  }
 }
 
 /*
@@ -1044,7 +1072,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                     // Get the UID file name
                     get_unified_id_form_event_entry(event_message, sizeof(dimm_uid), dimm_uid);
                     // The action required file configured
-                    snprintf(log_file_name, sizeof(log_file_name), ACTION_REQUIRED_FILE_PARSING_STRING, dimm_uid);
+                    efi_status = get_the_ar_file_name(log_file_name, sizeof(log_file_name), dimm_uid);
                     break;
                 }
             }
@@ -1057,7 +1085,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
         return -1;
     }
     // Event type cannot equal 0, it is stored in the log file means at least one bit needs to be set
-    if (event_type)
+    if (event_type && (EFI_SUCCESS == efi_status))
     {
         h_file = fopen(log_file_name, "r+");
         if (NULL != h_file)

@@ -15,24 +15,39 @@
 #endif
 
 dictionary *gIni = NULL;
+const char *g_p_filename = NULL;
 
-EFI_STATUS preferences_init(void)
+EFI_STATUS preferences_init(IN CONST char *p_filename)
 {
-	gIni = nvm_ini_load_dictionary(INI_FILENAME);
+  if (NULL == g_p_filename) {
+    if (NULL == p_filename) {
+      g_p_filename = INI_FILENAME;
+    }
+    else {
+      g_p_filename = p_filename;
+    }
+  }
+  gIni = nvm_ini_load_dictionary(g_p_filename);
 
-	if (NULL == gIni)
-	{
-		return EFI_LOAD_ERROR;
-	}
+  if (NULL == gIni)
+  {
+    return EFI_LOAD_ERROR;
+  }
 
-	return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_uninit(void)
 {
-  nvm_ini_dump_to_file(gIni, INI_FILENAME);
+  nvm_ini_dump_to_file(gIni, g_p_filename);
   nvm_ini_free_dictionary(gIni);
-	return EFI_SUCCESS;
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS preferences_flush_the_file(void)
+{
+  nvm_ini_dump_to_file(gIni, g_p_filename);
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_get_var_ascii(IN CONST char    *name,

@@ -42,6 +42,7 @@ static BOOLEAN g_modified_config = FALSE;
 @brief  The default ini file content defined by the ipmctl_default.conf file
 */
 #define LOG_INSTALL_PATH ""
+#define TEMP_FILE_PATH ""
 const char p_g_ini_file[] = {
 #include "ipmctl_default.h"
 };

@@ -28,6 +28,7 @@
 #include <os_efi_simple_file_protocol.h>
 #include <os_efi_shell_parameters_protocol.h>
 #include <os_efi_preferences.h>
+#include <os_efi_api.h>
 #include <Common.h>
 #include <NvmDimmConfig.h>
 #include <NvmDimmPassThru.h>
@@ -53,7 +54,7 @@
 
 #define INVALID_DIMM_HANDLE     0
 OS_MUTEX *g_api_mutex;
-int g_dimm_cnt;
+unsigned int g_dimm_cnt;
 int g_basic_commands = 0;
 DIMM_INFO *g_dimms;
 int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle);
@@ -119,7 +120,7 @@ NVM_API int nvm_init()
   init_protocol_simple_file_system_protocol();
 
   // Initialize Preferences
-  if (EFI_SUCCESS != preferences_init())
+  if (EFI_SUCCESS != preferences_init(NULL))
   {
     NVDIMM_ERR("Failed to intialize preferences\n");
     rc = NVM_ERR_UNKNOWN;
@@ -166,6 +167,32 @@ NVM_API void nvm_uninit()
     os_mutex_delete(g_api_mutex, NVM_API_MUTEX);
     g_api_mutex = NULL;
   }
+}
+
+/**
+* @brief    Initialize the config file
+* Please notice that only the first call to the function changes the conf file
+* configuration, the following function calls have no effect and the conf file
+* configuration remains unchanged up to next applicaiton execution.
+*
+* @param    p_ini_file_name Pointer to the name of the ini file to read
+* @return   void
+*/
+NVM_API void nvm_conf_file_init(const char *p_ini_file_name)
+{
+  preferences_init(p_ini_file_name);
+}
+
+/**
+* @brief    Flush the config structre to the config file, the previous config
+* file content is being overwritten
+*
+* @param    NA
+* @return   void
+*/
+NVM_API void nvm_conf_file_flush()
+{
+  preferences_flush_the_file();
 }
 
 NVM_API void nvm_sync_lock_api()
@@ -425,12 +452,12 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket)
   return NVM_SUCCESS;
 }
 
-NVM_API int nvm_get_number_of_memory_topology_devices(int *count)
+NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   TOPOLOGY_DIMM_INFO *pDimmTopology = NULL;
-  int DdrDimmCnt = 0;
-  int DpcCnt = 0;
+  unsigned int DdrDimmCnt = 0;
+  unsigned int DpcCnt = 0;
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
@@ -467,10 +494,10 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   TOPOLOGY_DIMM_INFO *p_dimm_topology = NULL;
-  int topology_dimms_count = 0;
+  unsigned int topology_dimms_count = 0;
   int nvm_status;
-  int index;
-  int dpc_cnt = 0;
+  unsigned int index;
+  unsigned int dpc_cnt = 0;
 
   if (NULL == p_devices)
     return NVM_ERR_INVALID_PARAMETER;
@@ -512,7 +539,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
     return NVM_ERR_UNKNOWN;
   }
 
-  for (int i = 0; (index < count) && (i < dpc_cnt); index++,++i) {
+  for (unsigned int i = 0; (index < count) && (i < dpc_cnt); index++,++i) {
     p_devices[index].physical_id = pdimms[i].DimmID; // Memory device's physical identifier (SMBIOS handle)
     p_devices[index].memory_type = MEMORY_TYPE_NVMDIMM; // Type of memory device
     memcpy_s(p_devices[index].device_locator, NVM_DEVICE_LOCATOR_LEN, pdimms[i].DeviceLocator, NVM_DEVICE_LOCATOR_LEN); // Physically-labeled socket of device location
@@ -522,10 +549,10 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   return NVM_SUCCESS;
 }
 
-NVM_API int nvm_get_number_of_devices(int *count)
+NVM_API int nvm_get_number_of_devices(unsigned int *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int dimm_cnt;
+  unsigned int dimm_cnt;
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
@@ -568,8 +595,8 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
     return -1;
   }
 
-  int temp_count = 0;
-  int actual_count = 0;
+  unsigned int temp_count = 0;
+  unsigned int actual_count = 0;
   if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&actual_count)))
   {
     NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
@@ -2497,11 +2524,8 @@ EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
 
 NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE support_file_len)
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
   int rc = NVM_SUCCESS;
   unsigned int Index;
-  struct CommandInput Input;
-  struct Command Command;
 
 #define MAX_EXEC_CMDS 10
   CHAR16 exec_commands[MAX_EXEC_CMDS][100] = {
@@ -2708,8 +2732,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
     return NVM_ERR_UNKNOWN;
   }
   //flush dictionary to file
-  preferences_uninit();
-  preferences_init();
+  preferences_flush_the_file();
   return NVM_SUCCESS;
 }
 
@@ -2900,6 +2923,7 @@ enum sanitize_status {
 NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  int rc = NVM_SUCCESS;
   FW_CMD *cmd;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
@@ -2910,9 +2934,9 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   if (NULL == p_jobs)
     return -1;
 
-  if (NVM_SUCCESS != (ReturnCode = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", ReturnCode);
-    return ReturnCode;
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    return rc;
   }
 
   if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {

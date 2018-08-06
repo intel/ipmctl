@@ -1135,6 +1135,26 @@ NVM_API int nvm_init();
  */
 NVM_API void nvm_uninit();
 
+/**
+* @brief    Initialize the config file
+* Please notice that only the first call to the function changes the conf file
+* configuration, the following function calls have no effect and the conf file
+* configuration remains unchanged up to next applicaiton execution.
+*
+* @param    p_ini_file_name Pointer to the name of the ini file to read
+* @return   void
+*/
+NVM_API void nvm_conf_file_init(const char *p_ini_file_name);
+
+/**
+* @brief    Flush the config structre to the config file, the previous config
+* file content is being overwritten
+*
+* @param    NA
+* @return   void
+*/
+NVM_API void nvm_conf_file_flush();
+
 /*
  * system.c
  */
@@ -1354,7 +1374,7 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
 *       ::NVM_ERR_INVALID_PARAMETER @n
 *       ::NVM_ERR_UNKNOWN @n
 */
-NVM_API int nvm_get_number_of_memory_topology_devices(int *count);
+NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count);
 
 /**
  * @brief Retrieves basic topology information about all memory devices installed in the
@@ -1381,7 +1401,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *p_devices, const NVM
 *              ::NVM_ERR_INVALID_PARAMETER @n
 *              ::NVM_ERR_UNKNOWN @n
 */
-NVM_API int nvm_get_number_of_devices(int *count);
+NVM_API int nvm_get_number_of_devices(unsigned int *count);
 
 /**
  * @brief Retrieves #device_discovery information

@@ -93,9 +93,10 @@ typedef struct _log_entry
 */
 typedef enum
 {
-    SYSTEM_LOG_EVENT_FILE = 0,
-    SYSTEM_LOG_DEBUG_FILE = 1,
-    SYSTEM_LOG_FILE_STRUCT_SIZE
+  SYSTEM_LOG_EVENT_FILE = 0,
+  SYSTEM_LOG_DEBUG_FILE = 1,
+  SYSTEM_LOG_AR_FILE = 2,
+  SYSTEM_LOG_FILE_STRUCT_SIZE
 } log_file_type;
 
 /*

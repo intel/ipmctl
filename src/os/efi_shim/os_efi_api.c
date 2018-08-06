@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <safe_str_lib.h>
 #include <safe_mem_lib.h>
+#include <safe_lib.h>
 #define _read read
 #define _getch getchar
 #endif
@@ -253,8 +254,6 @@ passthru_record_finalize(
   EFI_STATUS PassthruReturnCode
 )
 {
-  EFI_STATUS Rc = EFI_SUCCESS;
-
   if (!RECORD_ENABLED())
   {
     NVDIMM_ERR("Recording mode not enabled. \n");
@@ -338,7 +337,6 @@ PassThru(
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   EFI_STATUS RecordRc = EFI_SUCCESS;
-  UINT32 ReturnCode;
   UINT32 DimmID;
   FILE *f_passthru_ptr = NULL;
 
@@ -519,7 +517,7 @@ initAcpiTables()
     return EFI_NOT_FOUND;
   }
 
-  if (NULL == &PtrNfitTable || NULL == &PtrPcatTable)
+  if (NULL == PtrNfitTable || NULL == PtrPcatTable)
   {
     NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
     return EFI_NOT_FOUND;
@@ -556,7 +554,6 @@ GetFirstAndBoundSmBiosStructPointer(
   OUT SMBIOS_VERSION *pSmbiosVersion
 )
 {
-  int rc = 0;
   FILE *f_ptr;
   smbios_table_recording recording;
 
@@ -567,7 +564,7 @@ GetFirstAndBoundSmBiosStructPointer(
   // One time initialization
   if (NULL == gSmbiosTable && !PLAYBACK_ENABLED())
   {
-    rc = get_smbios_table();
+    get_smbios_table();
   }
 
   if (RECORD_ENABLED())

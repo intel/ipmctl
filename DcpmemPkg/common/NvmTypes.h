@@ -839,7 +839,8 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_UP_TIME                    6                ///< Up-Time Sensor ID
 #define SENSOR_TYPE_POWER_CYCLES               7                ///< Power Cycles Sensor ID
 #define SENSOR_TYPE_FW_ERROR_COUNT             8                ///< Firmware Error Count Sensor ID
-#define SENSOR_TYPE_ALL                        9                ///< All Sensor IDs
+#define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
+#define SENSOR_TYPE_ALL                        10               ///< All Sensor IDs
 #define SENSOR_TYPE_COUNT                      SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
 
 /** @} */

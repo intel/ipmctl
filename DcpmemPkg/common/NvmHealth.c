@@ -88,6 +88,7 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
   DimmSensorsSet[SENSOR_TYPE_DIRTY_SHUTDOWNS].Value = SensorInfo.DirtyShutdowns;
+  DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS].Value = SensorInfo.UnlatchedDirtyShutdowns;
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = SensorInfo.MediaErrorCount + SensorInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = SensorInfo.UpTime;
 
@@ -179,6 +180,8 @@ SensorTypeToString(
       return UPTIME_STR;
     case SENSOR_TYPE_DIMM_HEALTH:
       return DIMM_HEALTH_STR;
+    case SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS:
+      return UNLATCHED_DIRTY_SHUTDOWNS_STR;
     default:
       return L"Unknown";
   }

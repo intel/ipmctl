@@ -22,10 +22,11 @@
 #define UPTIME_STR                      L"UpTime"
 #define FW_ERROR_COUNT_STR              L"FwErrorCount"
 #define DIMM_HEALTH_STR                 L"Health"
+#define UNLATCHED_DIRTY_SHUTDOWNS_STR   L"UnlatchedDirtyShutdowns"
 
 #define SENSORS_COMBINED \
   L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|DirtyShutdowns|PowerOnTime|" \
-  L"UpTime|PowerCycles|FwErrorCount"
+  L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdowns" \
 
 #define TEMPERATURE_MSR     L"C"
 #define SPARE_CAPACITY_MSR  L"%"

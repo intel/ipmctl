@@ -148,6 +148,7 @@ typedef struct _SENSOR_INFO {
   INT16 MediaThrottlingStopThresh;      ///< Media throttling stop temperature threshold in C
   INT16 ControllerThrottlingStartThresh;///< Controller throttling stop temperature threshold in C
   INT16 ControllerThrottlingStopThresh; ///< Controller throttling stop temperature threshold in C
+  UINT32 UnlatchedDirtyShutdowns;       ///< Unlatched Dirty Shutdowns count
 } SENSOR_INFO;
 
 /**

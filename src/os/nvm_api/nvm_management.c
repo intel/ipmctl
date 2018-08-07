@@ -2001,13 +2001,18 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
 
     p_previous_entry = p_log_entry;
     p_log_entry = p_log_entry->p_next;
+    if (p_log_entry && (p_log_entry->message_offset == p_previous_entry->message_offset)) {
+      // It looks the event log service could not allocate enough memory
+      // to get all entries and the next messages are pointing out to the same location
+      rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
+    }
     FreePool(p_previous_entry);
 
     p_current_event++;
     events_number--;
   }
   free(event_buffer);
-  return NVM_SUCCESS;
+  return rc;
 }
 
 NVM_API int nvm_purge_events(const struct event_filter *p_filter)
@@ -2873,13 +2878,18 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
 
     p_previous_entry = p_log_entry;
     p_log_entry = p_log_entry->p_next;
+    if (p_log_entry && (p_log_entry->message_offset == p_previous_entry->message_offset)) {
+      // It looks the event log service could not allocate enough memory
+      // to get all entries and the next messages are pointing out to the same location
+      rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
+    }
     FreePool(p_previous_entry);
 
     p_current_event++;
     events_number--;
   }
   free(event_buffer);
-  return NVM_SUCCESS;
+  return rc;
 }
 
 #pragma pack(push)

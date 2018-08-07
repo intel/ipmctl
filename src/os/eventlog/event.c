@@ -315,6 +315,11 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
     char *p_ctl_start = NULL;
     char *p_ctl_stop = NULL;
     char code_str[SYSTEM_LOG_CODE_STRING_SIZE] = { 0 };
+    int ret_val = 0;
+
+    if ((NULL == event_entry) || (NULL == p_event_buff_size) || (NULL == event_buffer)) {
+      return;
+    }
 
     if (0 == *p_event_buff_size) {
       // First entry, make room for null terminator char
@@ -334,9 +339,20 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
             // Coppy strings to the buffer
-            strncat_s(*event_buffer, *p_event_buff_size, event_entry, str_size);
-            strcat_s(*event_buffer, *p_event_buff_size, code_str);
-            strcat_s(*event_buffer, *p_event_buff_size, p_ctl_stop);
+            ret_val = strncat_s(*event_buffer, *p_event_buff_size, event_entry, str_size);
+            if (0 == ret_val) {
+                ret_val = strcat_s(*event_buffer, *p_event_buff_size, code_str);
+                if (0 == ret_val) {
+                    ret_val = strcat_s(*event_buffer, *p_event_buff_size, p_ctl_stop);
+                }
+            }
+            if (ret_val != 0) {
+                // The strcat function was not able to put data to the buffer,
+                // reduce the buffer size to the previous one and return the
+                // proper size to the caller
+                *event_buffer = realloc(*event_buffer, end_of_event_buffer);
+                *p_event_buff_size = end_of_event_buffer;
+            }
         }
     }
     else

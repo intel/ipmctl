@@ -69,6 +69,7 @@ extern void nvm_current_cmd(struct Command Command);
 #else
 #include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
+EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
 #endif
 EFI_GUID gNvmDimmDriverHealthGuid = EFI_DRIVER_HEALTH_PROTOCOL_GUID;
 

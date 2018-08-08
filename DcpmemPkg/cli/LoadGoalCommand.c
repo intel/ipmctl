@@ -74,6 +74,7 @@ LoadGoal(
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT32 SocketIndex = 0;
   BOOLEAN Confirmation = FALSE;
+  INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
 
   NVDIMM_ENTRY();
 
@@ -146,6 +147,19 @@ LoadGoal(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
     goto Finish;
+  }
+
+  // check if auto provision is enabled
+  RetrieveIntelDIMMConfig(&pIntelDIMMConfig);
+  if(pIntelDIMMConfig != NULL) {
+    if (pIntelDIMMConfig->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      Print(FORMAT_STR_NL, CLI_ERR_CREATE_GOAL_AUTO_PROV_ENABLED);
+      FreePool(pIntelDIMMConfig);
+      goto Finish;
+    } else {
+      FreePool(pIntelDIMMConfig);
+    }
   }
 
   // Check targets

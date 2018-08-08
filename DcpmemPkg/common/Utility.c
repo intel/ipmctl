@@ -30,6 +30,7 @@
 #endif
 
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
+extern EFI_GUID gIntelDimmConfigVariableGuid;
 CHAR16 gFnName[1024];
 
 #ifdef _MSC_VER
@@ -3475,4 +3476,58 @@ CopyMem_S(
 #else
   return CopyMem(DestinationBuffer, SourceBuffer, Length);
 #endif
+}
+
+/**
+  Retrives Intel Dimm Config EFI vars
+
+  User is responsible for freeing ppIntelDIMMConfig
+
+  @param[out] pIntelDIMMConfig Pointer to struct to fill with EFI vars
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+**/
+EFI_STATUS
+RetrieveIntelDIMMConfig(
+     OUT INTEL_DIMM_CONFIG **ppIntelDIMMConfig
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINTN VariableSize = 0;
+
+  NVDIMM_ENTRY();
+
+  *ppIntelDIMMConfig = AllocateZeroPool(sizeof(INTEL_DIMM_CONFIG));
+  if (*ppIntelDIMMConfig == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  VariableSize = sizeof(INTEL_DIMM_CONFIG);
+  ReturnCode = GET_VARIABLE(
+    INTEL_DIMM_CONFIG_VARIABLE_NAME,
+    gIntelDimmConfigVariableGuid,
+    &VariableSize,
+    *ppIntelDIMMConfig);
+
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not find IntelDIMMConfigs");
+    FREE_POOL_SAFE(*ppIntelDIMMConfig);
+    goto Finish;
+  }
+
+  NVDIMM_DBG("Revision: %d", (*ppIntelDIMMConfig)->Revision);
+  NVDIMM_DBG("ProvisionCapacityMode: %d", (*ppIntelDIMMConfig)->ProvisionCapacityMode);
+  NVDIMM_DBG("MemorySize: %d", (*ppIntelDIMMConfig)->MemorySize);
+  NVDIMM_DBG("PMType: %d", (*ppIntelDIMMConfig)->PMType);
+  NVDIMM_DBG("ProvisionNamespaceMode: %d", (*ppIntelDIMMConfig)->ProvisionNamespaceMode);
+  NVDIMM_DBG("NamespaceFlags: %d", (*ppIntelDIMMConfig)->NamespaceFlags);
+  NVDIMM_DBG("ProvisionCapacityStatus: %d", (*ppIntelDIMMConfig)->ProvisionCapacityStatus);
+  NVDIMM_DBG("ProvisionNamespaceStatus: %d", (*ppIntelDIMMConfig)->ProvisionNamespaceStatus);
+  NVDIMM_DBG("NamespaceLabelVersion: %d", (*ppIntelDIMMConfig)->NamespaceLabelVersion);
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }

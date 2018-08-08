@@ -1435,4 +1435,19 @@ CopyMem_S(
   IN CONST VOID  *SourceBuffer,
   IN UINTN       Length
 );
+
+/**
+  Retrives Intel Dimm Config EFI vars
+
+  User is responsible for freeing ppIntelDIMMConfig
+
+  @param[out] pIntelDIMMConfig Pointer to struct to fill with EFI vars
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+**/
+EFI_STATUS
+RetrieveIntelDIMMConfig(
+     OUT INTEL_DIMM_CONFIG **ppIntelDIMMConfig
+  );
 #endif /** _UTILITY_H_ **/

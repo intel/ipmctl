@@ -312,6 +312,7 @@ CreateGoal(
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT16 LabelVersionMajor = 0;
   UINT16 LabelVersionMinor = 0;
+  INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
 
   NVDIMM_ENTRY();
 
@@ -360,6 +361,19 @@ CreateGoal(
   /** Any valid units option will override the preferences **/
   if (UnitsOption != DISPLAY_SIZE_UNIT_UNKNOWN) {
     UnitsToDisplay = UnitsOption;
+  }
+
+  // check if auto provision is enabled
+  RetrieveIntelDIMMConfig(&pIntelDIMMConfig);
+  if(pIntelDIMMConfig != NULL) {
+    if (pIntelDIMMConfig->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      Print(FORMAT_STR_NL, CLI_ERR_CREATE_GOAL_AUTO_PROV_ENABLED);
+      FreePool(pIntelDIMMConfig);
+      goto Finish;
+    } else {
+      FreePool(pIntelDIMMConfig);
+    }
   }
 
   // check targets

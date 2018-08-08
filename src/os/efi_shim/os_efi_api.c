@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018, Intel Corporation.
- * SPDX-License-Identifier: BSD-3-Clause
- */
+* Copyright (c) 2018, Intel Corporation.
+* SPDX-License-Identifier: BSD-3-Clause
+*/
 #include <stdio.h>
 #include <memory.h>
 #include <Uefi.h>
@@ -456,19 +456,19 @@ initAcpiTables()
   {
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_NFIT, &PtrNfitTable)))
     {
-      Print(L"Failed to load the NFIT table from the record file.\n");
+      NVDIMM_WARN(L"Failed to load the NFIT table from the record file.\n");
       failures++;
     }
 
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PCAT, &PtrPcatTable)))
     {
-      Print(L"Failed to load the PCAT table from the record file.\n");
+      NVDIMM_WARN(L"Failed to load the PCAT table from the record file.\n");
       failures++;
     }
 
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PMTT, &PtrPMTTTable)))
     {
-      //Print(L"Failed to load the PMTT table from the record file.\n");
+      //NVDIMM_WARN(L"Failed to load the PMTT table from the record file.\n");
       //failures++;
     }
   }
@@ -476,17 +476,17 @@ initAcpiTables()
   {
     if (EFI_ERROR(get_nfit_table(&PtrNfitTable)))
     {
-      Print(L"Failed to get the NFIT table.\n");
+      NVDIMM_WARN(L"Failed to get the NFIT table.\n");
       failures++;
     }
     if (EFI_ERROR(get_pcat_table(&PtrPcatTable)))
     {
-      Print(L"Failed to get the PCAT table.\n");
+      NVDIMM_WARN(L"Failed to get the PCAT table.\n");
       failures++;
     }
     if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable)))
     {
-      //Print(L"Failed to get the PMTT table.\n");
+      //NVDIMM_WARN(L"Failed to get the PMTT table.\n");
       //failures++;
     }
 
@@ -494,17 +494,17 @@ initAcpiTables()
     {
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_NFIT, PtrNfitTable)))
       {
-        Print(L"Failed to save the NFIT table to the record file.\n");
+        NVDIMM_WARN(L"Failed to save the NFIT table to the record file.\n");
         failures++;
       }
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PCAT, PtrPcatTable)))
       {
-        Print(L"Failed to save the PCAT table to the record file.\n");
+        NVDIMM_WARN(L"Failed to save the PCAT table to the record file.\n");
         failures++;
       }
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PMTT, PtrPMTTTable)))
       {
-        //Print(L"Failed to save the PMTT table to the record file.\n");
+        //NVDIMM_WARN(L"Failed to save the PMTT table to the record file.\n");
         //failures++;
       }
     }
@@ -512,7 +512,6 @@ initAcpiTables()
 
   if (failures > 0)
   {
-    Print(L"Encountered %d failures.\n", failures);
     NVDIMM_WARN("Encountered %d failures.", failures);
     return EFI_NOT_FOUND;
   }
@@ -601,7 +600,7 @@ GetFirstAndBoundSmBiosStructPointer(
       {
         NVDIMM_ERR("SMBIOS table in file %s reports size of 0.\n", REC_FILE_SMBIOS);
       }
-      else 
+      else
       {
         gSmbiosTable = calloc(1, recording.size);
         if (NULL == gSmbiosTable)
@@ -2122,14 +2121,14 @@ SPrintLength(
   return vswprintf_s(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
 }
 /**
-  Makes Bios emulated pass thru call and returns the values
+Makes Bios emulated pass thru call and returns the values
 
-  @param[in]  pDimm    pointer to current Dimm
-  @param[out] pBsrValue   Value from passthru
+@param[in]  pDimm    pointer to current Dimm
+@param[out] pBsrValue   Value from passthru
 
-  @retval EFI_SUCCESS  The count was returned properly
-  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-  @retval Other errors failure of FW commands
+@retval EFI_SUCCESS  The count was returned properly
+@retval EFI_INVALID_PARAMETER One or more parameters are NULL
+@retval Other errors failure of FW commands
 **/
 
 EFI_STATUS

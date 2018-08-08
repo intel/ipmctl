@@ -681,6 +681,7 @@ GetDimmInfo (
   NAMESPACE *pCurNamespace = NULL;
   SENSOR_INFO SensorInfo;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
+  PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
   PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayload;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
@@ -697,6 +698,7 @@ GetDimmInfo (
 
   ZeroMem(&SensorInfo, sizeof(SensorInfo));
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
+  ZeroMem(&ViralPolicyPayload, sizeof(ViralPolicyPayload));
   ZeroMem(&PowerManagementPolicyPayload, sizeof(PowerManagementPolicyPayload));
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
   ZeroMem(&DmiDeviceMappedAddr, sizeof(DmiDeviceMappedAddr));
@@ -994,10 +996,19 @@ GetDimmInfo (
     } else {
       pDimmInfo->FirstFastRefresh = FIRST_FAST_REFRESH_DISABLED;
     }
-    pDimmInfo->ViralPolicyEnable = OptionalDataPolicyPayload.ViralPolicyEnable;
-    pDimmInfo->ViralStatus = OptionalDataPolicyPayload.ViralStatus;
   }
 
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_VIRAL_POLICY)
+  {
+    /* Get current FirstFastRefresh state */
+    ReturnCode = FwCmdGetViralPolicy(pDimm, &ViralPolicyPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_VIRAL_POLICY;
+    }
+
+    pDimmInfo->ViralPolicyEnable = ViralPolicyPayload.ViralPolicyEnable;
+    pDimmInfo->ViralStatus = ViralPolicyPayload.ViralStatus;
+  }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS)
   {
@@ -2329,13 +2340,12 @@ GetSmartAndHealth (
   pSensorInfo->PercentageRemainingValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
   pSensorInfo->MediaTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.MediaTemperature;
   pSensorInfo->ControllerTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.ControllerTemperature;
-  pSensorInfo->PercentageUsedValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageUsed;
   pSensorInfo->MediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->MediaTemperature);
   pSensorInfo->HealthStatus = pPayloadSmartAndHealth->HealthStatus;
   pSensorInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStatusReason) ?
          pPayloadSmartAndHealth->HealthStatusReason : (UINT16)HEALTH_STATUS_REASON_NONE;
   pSensorInfo->PercentageRemaining = pPayloadSmartAndHealth->PercentageRemaining;
-  pSensorInfo->PercentageUsed = pPayloadSmartAndHealth->PercentageUsed;
+
   pSensorInfo->LastShutdownStatus = pPayloadSmartAndHealth->LastShutdownStatus;
   /** Get Vendor specific data **/
   pSensorInfo->ControllerTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->ControllerTemperature);
@@ -7223,8 +7233,6 @@ Finish:
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] FirstFastRefresh - FirstFastRefresh value to set
-  @param[in] ViralPolicy - ViralPolicy value to set
-
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -7238,7 +7246,6 @@ SetOptionalConfigurationDataPolicy(
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT8 FirstFastRefresh,
-  IN     UINT8 ViralPolicy,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -7280,13 +7287,10 @@ SetOptionalConfigurationDataPolicy(
     }
     // Get the original values and overwrite only the ones requested
     InputPayload.FirstFastRefresh = OptionalDataPolicyPayload.FirstFastRefresh;
-    InputPayload.ViralPolicyEnable = OptionalDataPolicyPayload.ViralPolicyEnable;
     if (FirstFastRefresh != OPTIONAL_DATA_UNDEFINED) {
       InputPayload.FirstFastRefresh = FirstFastRefresh;
     }
-    if (ViralPolicy != OPTIONAL_DATA_UNDEFINED) {
-      InputPayload.ViralPolicyEnable = ViralPolicy;
-    }
+
     ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimms[Index], &InputPayload);
     if (EFI_ERROR(ReturnCode)) {
       if (ReturnCode == EFI_SECURITY_VIOLATION) {

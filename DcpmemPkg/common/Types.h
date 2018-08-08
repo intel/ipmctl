@@ -125,7 +125,6 @@ typedef struct _SENSOR_INFO {
   BOOLEAN PercentageRemainingValid;     ///< Indicates if PercentageRemaining is valid
   BOOLEAN MediaTemperatureValid;        ///< Indicates if MediaTemperature is valid
   BOOLEAN ControllerTemperatureValid;   ///< Indicates if ControllerTemperature is valid
-  BOOLEAN PercentageUsedValid;          ///< Indicates if PercentageUsed is valid (deprecated)
   BOOLEAN MediaTemperatureTrip;         ///< Indicates if Media Temperature alarm threshold has tripped
   BOOLEAN ControllerTemperatureTrip;    ///< Indicates if Controller Temperature alarm threshold has tripped
   BOOLEAN PercentageRemainingTrip;      ///< Indicates if Percentage Remaining alarm threshold has tripped
@@ -140,7 +139,6 @@ typedef struct _SENSOR_INFO {
   UINT8 HealthStatus;                   ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
   UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
   UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
-  UINT8 PercentageUsed;                 ///< Device life span as a percentage (deprecated)
   UINT32 ThermalErrorCount;             ///< Total count of thermal errors found in Error Log
   INT16 ContrTempShutdownThresh;        ///< Controller temperature shutdown threshold in C
   INT16 MediaTempShutdownThresh;        ///< Media temperature shutdown threshold in C

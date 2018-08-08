@@ -209,7 +209,6 @@
 #define PROPERTY_VALUE_NONE               L"None"
 #define PROPERTY_VALUE_SECTOR             L"Sector"
 #define FIRST_FAST_REFRESH_PROPERTY       L"FirstFastRefresh"
-#define VIRAL_POLICY_PROPERTY             L"ViralPolicy"
 #define ACCESS_TYPE_PROPERTY              L"AccessType"
 #define ERASE_CAPABLE_PROPERTY            L"EraseCapable"
 #define ENCRYPTION_PROPERTY               L"Encryption"

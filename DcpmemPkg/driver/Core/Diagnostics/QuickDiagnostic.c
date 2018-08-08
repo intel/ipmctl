@@ -332,9 +332,9 @@ SmartAndHealthCheck(
       pDimmStr, SensorInfo.PercentageRemaining, PercentageRemainingThreshold);
   }
 
-  if ((SensorInfo.PercentageUsedValid) && (SensorInfo.PercentageUsed > EMULATOR_DIMM_PERCENTAGE_USED_THR)) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_PERCENTAGE_USED_EXCEEDS_THR), EVENT_CODE_507, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, SensorInfo.PercentageUsed, EMULATOR_DIMM_PERCENTAGE_USED_THR);
+  if ((SensorInfo.PercentageRemainingValid) && (SensorInfo.PercentageRemaining < EMULATOR_DIMM_PERCENTAGE_REMAINING_THR)) {
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_PERCENTAGE_REMAINGING_BELOW_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+      pDimmStr, SensorInfo.PercentageRemaining, EMULATOR_DIMM_PERCENTAGE_REMAINING_THR);
   }
 
   //Package spare availability check
@@ -461,6 +461,10 @@ BootStatusDiagnosticsCheck(
     }
     if (Bsr.Separated_Current_FIS.MD == DIMM_BSR_MEDIA_DISABLED) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_MEDIA_DISABLED), EVENT_CODE_534, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+        pDimmStr);
+    }
+    if (Bsr.Separated_Current_FIS.RR == DIMM_BSR_REBOOT_REQUIRED) {
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_REBOOT_REQUIRED), EVENT_CODE_507, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }
   }

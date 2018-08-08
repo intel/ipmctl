@@ -2206,7 +2206,7 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PM_IDLE_STR);
   }
-  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.SurpriseReset) {
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.DdrtSurpriseReset) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR);
   }

@@ -107,7 +107,7 @@ typedef union {
     UINT8 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
     UINT8 S4PowerState                : 1; //!< S4 Power State received
     UINT8 PMIdle                      : 1; //!< PM Idle received
-    UINT8 SurpriseReset               : 1; //!< Surprise Reset received
+    UINT8 DdrtSurpriseReset           : 1; //!< Surprise Reset received
     UINT8                             : 2; //!< Reserved
     UINT8                             : 8; //!< Reserved
     UINT8                             : 8; //!< Reserved

@@ -30,7 +30,6 @@
 #define EMULATOR_DIMM_TEMPERATURE_THR     310  //!< 310K is about 35C
 #define EMULATOR_DIMM_PERCENTAGE_REMAINING      75   //!< 75% of percentage remaining
 #define EMULATOR_DIMM_PERCENTAGE_REMAINING_THR  5    //!< 5% of percentage remaining
-#define EMULATOR_DIMM_PERCENTAGE_USED_THR 90   //!< 90% of space is used
 #define DIMM_OUTPUT_PAYLOAD_SIZE          128  //!< The max size of the DIMM small output payload
 
 #define MAX_SMALL_OUTPUT_REG_COUNT      32
@@ -1373,6 +1372,24 @@ SetPlatformConfigDataOemPartition(
   IN     NVDIMM_CONFIGURATION_HEADER *pNewConf,
   IN     UINT32 NewConfSize
   );
+
+/**
+  Firmware command Get Viral Policy
+  Execute a FW command to check the security status of a DIMM
+
+  @param[in] pDimm The DIMM to retrieve viral policy
+  @param[out] pViralPolicyPayload buffer to retrieve DIMM FW response
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Paramter supplied is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval Various errors from FW
+**/
+EFI_STATUS
+FwCmdGetViralPolicy(
+  IN     DIMM *pDimm,
+  OUT    PT_VIRAL_POLICY_PAYLOAD *pViralPolicyPayload
+);
 
 /**
   Payload is the same for set and get operation

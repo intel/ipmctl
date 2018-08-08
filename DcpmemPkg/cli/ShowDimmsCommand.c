@@ -879,12 +879,12 @@ ShowDimms(
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_PACKAGE_SPARING) {
           /** PackageSparingEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PackageSparesAvailable **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** PackageSparingEnabled **/
@@ -906,24 +906,27 @@ ShowDimms(
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) {
           /** First fast refresh **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, FIRST_FAST_REFRESH_PROPERTY, UNKNOWN_ATTRIB_VAL);
-          }
-
-          /** ViralPolicyEnable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_POLICY_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, VIRAL_POLICY_STR, UNKNOWN_ATTRIB_VAL);
-          }
-
-          /** ViralStatus **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_STATE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, VIRAL_STATE_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FIRST_FAST_REFRESH_PROPERTY, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** First fast refresh **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, FIRST_FAST_REFRESH_PROPERTY, pDimms[Index].FirstFastRefresh);
           }
+        }
 
+        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_VIRAL_POLICY) {
+          /** ViralPolicyEnable **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_POLICY_STR))) {
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, VIRAL_POLICY_STR, UNKNOWN_ATTRIB_VAL);
+          }
+
+          /** ViralStatus **/
+          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_STATE_STR))) {
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, VIRAL_STATE_STR, UNKNOWN_ATTRIB_VAL);
+          }
+        }
+        else {
           /** ViralPolicyEnable **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_POLICY_STR))) {
             Print(FORMAT_3SPACE_STR_EQ_DEC_NL, VIRAL_POLICY_STR, pDimms[Index].ViralPolicyEnable);
@@ -938,12 +941,12 @@ ShowDimms(
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_POWER_MGMT) {
           /** PeakPowerBudget **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
-            Print(L"   " FORMAT_STR L"=%d mW\n", PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** AvgPowerBudget **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, AVG_POWER_BUDGET_STR))) {
-            Print(L"   " FORMAT_STR L"=%d mW\n", AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** PeakPowerBudget **/
@@ -1049,42 +1052,42 @@ ShowDimms(
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
           /** ErrorInjectionEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ERROR_INJECT_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ERROR_INJECT_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ERROR_INJECT_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** MediaTemperatureInjectionEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, MEDIA_TEMP_INJ_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEDIA_TEMP_INJ_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersEnabled **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGERS_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGERS_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersEnabledDetails **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGER_ENABLED_DETAILS_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_ENABLED_DETAILS_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PoisonErrorInjectionsCounter **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POISON_ERR_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, POISON_ERR_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PoisonErrorClearCounter **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_CLR_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POISON_ERR_CLR_CTR_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, POISON_ERR_CLR_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** MediaTemperatureInjectionsCounter **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, MEDIA_TEMP_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEDIA_TEMP_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersCounter **/
           if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGER_CTR_STR, UNKNOWN_ATTRIB_VAL);
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** ErrorInjectionEnabled **/

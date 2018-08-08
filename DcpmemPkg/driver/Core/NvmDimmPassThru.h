@@ -311,6 +311,7 @@ enum GetSetAdminFeatSubop {
   SubopDdrtIoInitInfo = 0x06,           //!< Get the DDRT initialization info
   SubopGetSupportedSkuFeatures = 0x07,  //!< Get/Set the data regarding supported DIMM SKU capabilities and features
   SubopLatchSystemShutdownState = 0x09, //!< Get/Set the last system shutdown state data
+  SubopViralPolicy = 0x0A,              //!< Get/Set the Viral Policy.
   SubopCommandAccessPolicy = 0xCA,      //!< Get/Set the command access policy
 };
 
@@ -482,8 +483,6 @@ typedef struct {
 **/
 typedef struct {
   UINT8 FirstFastRefresh;     //!< Enable / disable of acceleration of first refresh cycle
-  UINT8 ViralPolicyEnable;    //!< This shows curent state of Viral Policies
-  UINT8 ViralStatus;          //!< This determines the viral status
 } PT_OPTIONAL_DATA_POLICY_PAYLOAD;
 
 /**
@@ -627,6 +626,16 @@ typedef struct _SKU_INFORMATION {
 
 /**
   Passthrough Payload:
+    Opcode:    0x06h (Get Admin Features)
+    Sub-Opcode:  0x0Ah (Viral Policy)
+**/
+typedef struct {
+  UINT8 ViralPolicyEnable;     //!< Viral Policy Enable: 0 - Disabled, 1 - Enabled
+  UINT8 ViralStatus;           //!< Viral Status: 0 - Not Viral, 1 - Viral
+} PT_VIRAL_POLICY_PAYLOAD;
+
+/**
+  Passthrough Payload:
     Opcode:      0x07h (Set Admin Features)
     Sub-Opcode:  0x01h (Platform Config Data)
 **/
@@ -685,12 +694,12 @@ typedef union _SMART_VALIDATION_FLAGS {
   struct {
     UINT32 HealthStatus                     : 1;
     UINT32 PercentageRemaining              : 1;
-    UINT32 PercentageUsed                   : 1;
+    UINT32                                  : 1; //!< Reserved
     UINT32 MediaTemperature                 : 1;
     UINT32 ControllerTemperature            : 1;
-    UINT32 UnsafeShutdownCount               : 1;
+    UINT32 UnsafeShutdownCount              : 1;
     UINT32 AITDRAMStatus                    : 1;
-    UINT32 HealthStatusReason                : 1;
+    UINT32 HealthStatusReason               : 1;
     UINT32                                  : 1;  //!< Reserved
     UINT32 AlarmTrips                       : 1;
     UINT32 LastShutdownStatus               : 1;
@@ -757,12 +766,8 @@ typedef struct {
   UINT8 HealthStatus;
 
   UINT8 PercentageRemaining;          //!< remaining percentage remaining as a percentage of factory configured spare
-  /**
-    Device life span as a percentage.
-    100 = warranted life span of device has been reached however values up to 255 can be used.
-  **/
-  UINT8 PercentageUsed;
 
+  UINT8 Reserved2;
   /**
     Bits to signify whether or not values has tripped their respective thresholds.
     Bit 0: Spare Blocks trips (0 - not tripped, 1 - tripped)
@@ -784,7 +789,7 @@ typedef struct {
   UINT32 DirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
   UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - disabled, 1 - enabled)
   UINT16 HealthStatusReason;      //!<  Indicates why the module is in the current Health State
-  UINT8 Reserved2[8];
+  UINT8 Reserved3[8];
 
   /**
     00h:       Clean Shutdown

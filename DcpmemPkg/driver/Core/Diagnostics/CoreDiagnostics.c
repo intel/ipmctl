@@ -91,7 +91,9 @@ Converts the event code to the action required state
 BOOLEAN EventCodeToActionRequiredState(
   IN UINT32 Code)
 {
-  if ((EVENT_CODE_513 == Code) ||
+  if (
+    (EVENT_CODE_507 == Code) ||
+    (EVENT_CODE_513 == Code) ||
     (EVENT_CODE_514 == Code) ||
     (EVENT_CODE_515 == Code) ||
     (EVENT_CODE_519 == Code) ||

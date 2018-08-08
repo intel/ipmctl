@@ -51,7 +51,6 @@ struct Command SetDimmCommand =
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
-    {VIRAL_POLICY_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired}
     },                                                                //!< properties
   L"Set properties of one or more DIMMs.",                          //!< help
   SetDimm
@@ -102,14 +101,12 @@ SetDimm(
   CHAR16 *pNewPassphraseStatic = NULL;
   CHAR16 *pConfirmPassphraseStatic = NULL;
   CHAR16 *pFirstFastRefreshValue = NULL;
-  CHAR16 *pViralPolicyValue = NULL;
   CHAR16 *pTargetValue = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
   CHAR16 *pErrorMessage = NULL;
   UINT16 SecurityOperation = SECURITY_OPERATION_UNDEFINED;
   UINT8 FirstFastRefreshState = OPTIONAL_DATA_UNDEFINED;
-  UINT8 ViralPolicyState = OPTIONAL_DATA_UNDEFINED;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmHandle = 0;
   UINT32 DimmIndex = 0;
@@ -223,8 +220,7 @@ SetDimm(
       Here we check if input contains properties from different actions because they are not
       allowed together.
   **/
-  if (!EFI_ERROR(ContainsProperty(pCmd, FIRST_FAST_REFRESH_PROPERTY)) ||
-      !EFI_ERROR(ContainsProperty(pCmd, VIRAL_POLICY_PROPERTY))) {
+  if (!EFI_ERROR(ContainsProperty(pCmd, FIRST_FAST_REFRESH_PROPERTY))) {
       /** Found specified action **/
       ActionSpecified = TRUE;
   }
@@ -526,13 +522,12 @@ SetDimm(
   }
 
   /**
-    Set FirstFastRefresh and/or ViralPolicy
+    Set FirstFastRefresh
   **/
   GetPropertyValue(pCmd, FIRST_FAST_REFRESH_PROPERTY, &pFirstFastRefreshValue);
-  GetPropertyValue(pCmd, VIRAL_POLICY_PROPERTY, &pViralPolicyValue);
 
   // Call the driver protocol function if either of the property is requested to be set
-  if ((pFirstFastRefreshValue != NULL) || (pViralPolicyValue != NULL))
+  if (pFirstFastRefreshValue != NULL)
   {
     pCommandStatusMessage = CatSPrint(NULL, L"Modify DIMM");
     if (pFirstFastRefreshValue != NULL) {
@@ -546,17 +541,6 @@ SetDimm(
         goto FinishError;
       }
     }
-    if (pViralPolicyValue != NULL) {
-      if (StrCmp(pViralPolicyValue, PROPERTY_VALUE_0) == 0) {
-        ViralPolicyState = VIRAL_POLICY_DISABLED;
-      } else if (StrCmp(pViralPolicyValue, PROPERTY_VALUE_1) == 0) {
-        ViralPolicyState = VIRAL_POLICY_ENABLED;
-      } else {
-        Print(FORMAT_STR L": Error (%d) - " FORMAT_STR_NL, pCommandStatusMessage, EFI_INVALID_PARAMETER,
-               CLI_ERR_INCORRECT_VALUE_PROPERTY_VIRAL_POLICY);
-        goto FinishError;
-      }
-    }
 
     pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Modify");
     pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L"");
@@ -567,8 +551,7 @@ SetDimm(
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
-        ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
-            DimmStr, MAX_DIMM_UID_LENGTH);
+        ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
@@ -576,7 +559,7 @@ SetDimm(
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-              &pDimmIds[Index], 1, FirstFastRefreshState, ViralPolicyState, pCommandStatus);
+              &pDimmIds[Index], 1, FirstFastRefreshState, pCommandStatus);
           if (EFI_ERROR(ReturnCode)) {
             goto Finish;
           }
@@ -587,7 +570,7 @@ SetDimm(
       }
     } else {
       ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-          pDimmIds, DimmIdsCount, FirstFastRefreshState, ViralPolicyState, pCommandStatus);
+          pDimmIds, DimmIdsCount, FirstFastRefreshState, pCommandStatus);
       goto Finish;
     }
   }

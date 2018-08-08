@@ -1330,6 +1330,66 @@ Finish:
   return Rc;
 }
 
+
+
+/**
+  Firmware command Get Viral Policy
+  Execute a FW command to check the security status of a DIMM
+
+  @param[in] pDimm The DIMM to retrieve viral policy
+  @param[out] pViralPolicyPayload buffer to retrieve DIMM FW response
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Paramter supplied is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval Various errors from FW
+**/
+EFI_STATUS
+FwCmdGetViralPolicy(
+  IN     DIMM *pDimm,
+  OUT PT_VIRAL_POLICY_PAYLOAD *pViralPolicyPayload
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pViralPolicyPayload == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopViralPolicy;
+  pFwCmd->OutputPayloadSize = sizeof(*pViralPolicyPayload);
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
+  NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending PtGetViralPolicy command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    if (FW_ERROR(pFwCmd->Status)) {
+      ReturnCode = MatchFwReturnCode(pFwCmd->Status);
+    }
+    goto Finish;
+  }
+  CopyMem_S(pViralPolicyPayload, sizeof(*pViralPolicyPayload), pFwCmd->OutPayload, sizeof(*pViralPolicyPayload));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 /**
   Payload is the same for set and get operation
 **/

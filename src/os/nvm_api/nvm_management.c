@@ -803,6 +803,7 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   UINT16 dimm_id;
   int rc;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
+  PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
@@ -829,8 +830,13 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
 
+  ReturnCode = FwCmdGetViralPolicy(pDimm, &ViralPolicyPayload);
+  if (EFI_ERROR(ReturnCode))
+    return NVM_ERR_UNKNOWN;
+
   p_settings->first_fast_refresh = OptionalDataPolicyPayload.FirstFastRefresh;
-  p_settings->viral_policy = OptionalDataPolicyPayload.ViralPolicyEnable;
+  p_settings->viral_policy = ViralPolicyPayload.ViralPolicyEnable;
+  p_settings->viral_status = ViralPolicyPayload.ViralStatus;
 
   return NVM_SUCCESS;
 }
@@ -866,7 +872,6 @@ NVM_API int nvm_modify_device_settings(const NVM_UID      device_uid,
   }
 
   OptionalDataPolicyPayload.FirstFastRefresh = p_settings->first_fast_refresh;
-  OptionalDataPolicyPayload.ViralPolicyEnable = p_settings->viral_policy;
 
   ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimm, &OptionalDataPolicyPayload);
   if (EFI_ERROR(ReturnCode)) {

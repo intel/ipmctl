@@ -1297,8 +1297,6 @@ DumpFwDebugLog(
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] FirstFastRefresh - FirstFastRefresh value to set
-  @param[in] ViralPolicy - ViralPolicy value to set
-
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -1312,7 +1310,6 @@ SetOptionalConfigurationDataPolicy(
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
   IN     UINT8 FirstFastRefresh,
-  IN     UINT8 ViralPolicy,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

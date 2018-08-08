@@ -258,10 +258,11 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   (1 << 3)    ///< ARS status field will be populated: ARSStatus.
 #define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LastShutdownStatus, LastShutdownTime, AitDramEnabled.
 #define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerBudget.
-#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: FirstFastRefresh, ViralPolicyEnable, ViralStatus.
+#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: FirstFastRefresh.
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite DIMM status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
+#define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
 
 /**
@@ -278,8 +279,9 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_OVERWRITE_STATUS                (1 << 7)
 #define DIMM_INFO_ERROR_CAPACITY                        (1 << 8)
 #define DIMM_INFO_ERROR_FW_IMAGE_INFO                   (1 << 9)
-#define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 0xA)
-#define DIMM_INFO_ERROR_MAX                             (1 << 0xB)
+#define DIMM_INFO_ERROR_VIRAL_POLICY                    (1 << 10)
+#define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 11)
+#define DIMM_INFO_ERROR_MAX                             (1 << 12)
 
 // The "global dimm struct" is at &gNvmDimmData->PMEMDev.Dimms and is populated
 // at HII driver loading, so they are included by default on any call to GetDimmInfo()
@@ -335,6 +337,8 @@ typedef struct _DIMM_INFO {
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
   BOOLEAN FirstFastRefresh;                 //!< true if acceleration of the first refresh cycle is enabled
+
+  //DIMM_INFO_CATEGORY_VIRAL_POLICY
   BOOLEAN ViralPolicyEnable;                //!< true if viral policy is enabled
   BOOLEAN ViralStatus;                      //!< true if the status is viral
 
@@ -812,17 +816,10 @@ typedef struct _DEBUG_LOG_INFO {
 #define FIRST_FAST_REFRESH_MIXED     2
 
 /**
-  Viral Policy states
-**/
-#define VIRAL_POLICY_DISABLED 0
-#define VIRAL_POLICY_ENABLED  1
-#define VIRAL_POLICY_MIXED    2
-
-/**
   Namespace security capabilities.
 **/
 #define SECURITY_CAPABILITIES_ENCRYPTION_SUPPORTED  BIT0
-#define SECURITY_CAPABILITIES_ERASE_CAPABLE       BIT1
+#define SECURITY_CAPABILITIES_ERASE_CAPABLE         BIT1
 
 /* VFR compiler doesn't support enums, that's why we use defines */
 /**

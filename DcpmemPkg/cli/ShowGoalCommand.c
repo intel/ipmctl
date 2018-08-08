@@ -226,7 +226,7 @@ ShowGoalPrintDetailedView(
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 
-  SetDisplayInfo(L"ConfigGoal", ListView, NULL);
+  SetDisplayInfo(L"ConfigGoal", ListView, L"=");
 
   if (pRegionConfigsInfo == NULL || (DisplayOptionSet && pDisplayValues == NULL)) {
     goto Finish;

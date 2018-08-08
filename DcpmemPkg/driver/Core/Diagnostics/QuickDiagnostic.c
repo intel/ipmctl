@@ -418,6 +418,7 @@ BootStatusDiagnosticsCheck(
   }
 
    ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_DEVICE_ERROR;
     NVDIMM_WARN("Unable to get the DIMMs BSR.");
@@ -429,10 +430,10 @@ BootStatusDiagnosticsCheck(
         pDimmStr);
     } else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_INIT_FAILURE) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_FW_NOT_INITIALIZED), EVENT_CODE_520, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
-        pDimmStr);
+        pDimmStr, Bsr.Separated_Current_FIS.Major, Bsr.Separated_Current_FIS.Minor);
     } else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_CPU_EXCEPTION) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_CPU_EXCEPTION), EVENT_CODE_537, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
-        pDimmStr);
+        pDimmStr, Bsr.Separated_Current_FIS.Major, Bsr.Separated_Current_FIS.Minor);
     }
 
     GetDdrtIoInitInfo(NULL, pDimm->DimmID, &DdrtTrainingStatus);

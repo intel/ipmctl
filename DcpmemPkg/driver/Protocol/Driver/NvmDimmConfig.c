@@ -1050,9 +1050,9 @@ GetDimmInfo (
         pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_MEM_INFO_PAGE;
       }
       else {
-        pDimmInfo->ErrorInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_ENABLED_BIT;
-        pDimmInfo->MediaTemperatureInjectionEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT;
-        pDimmInfo->SoftwareTriggersEnabled = pPayloadMemInfoPage3->ErrorInjectStatus & ERR_INJECTION_SW_TRIGGER_ENABLED_BIT;
+        pDimmInfo->ErrorInjectionEnabled = (pPayloadMemInfoPage3->ErrorInjectStatus >> ERR_INJECTION_ENABLED_BIT) & ERR_INJECTION_ENABLED_BIT_MASK;
+        pDimmInfo->MediaTemperatureInjectionEnabled = (pPayloadMemInfoPage3->ErrorInjectStatus >> ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT) & ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT_MASK;
+        pDimmInfo->SoftwareTriggersEnabled = (pPayloadMemInfoPage3->ErrorInjectStatus >> ERR_INJECTION_SW_TRIGGER_ENABLED_BIT) & ERR_INJECTION_SW_TRIGGER_ENABLED_BIT_MASK;
         pDimmInfo->PoisonErrorInjectionsCounter = pPayloadMemInfoPage3->PoisonErrorInjectionsCounter;
         pDimmInfo->PoisonErrorClearCounter = pPayloadMemInfoPage3->PoisonErrorClearCounter;
         pDimmInfo->MediaTemperatureInjectionsCounter = pPayloadMemInfoPage3->MediaTemperatureInjectionsCounter;

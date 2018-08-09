@@ -2283,7 +2283,24 @@ ReadCmdLineShowOptions(
         *pFormatType = XML;
         SET_FORMAT_ESX_CUSTOM_FLAG(pCmd->pShowCtx);
       }
-      else ReturnCode = EFI_INVALID_PARAMETER;
+      else {
+        // Print out syntax specific help message for invalid -output option
+        CHAR16 * pHelpStr = getCommandHelp(pCmd, TRUE);
+        CHAR16 *pSyntaxTokStr = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, Toks[Index]);
+        if (NULL != pHelpStr) {
+          CHAR16 *pSyntaxHelp = CatSPrintClean(pSyntaxTokStr, FORMAT_NL_STR FORMAT_NL_STR, CLI_PARSER_DID_YOU_MEAN, pHelpStr);
+          LongPrint(pSyntaxHelp);
+          FREE_POOL_SAFE(pSyntaxHelp);
+        }
+        else
+        {
+          // in case the command is bad, try to print something helpful.
+          LongPrint(pSyntaxTokStr);
+          FREE_POOL_SAFE(pSyntaxTokStr);
+        }
+        FREE_POOL_SAFE(pHelpStr);
+        ReturnCode = EFI_INVALID_PARAMETER;
+      }
     }
   }
 

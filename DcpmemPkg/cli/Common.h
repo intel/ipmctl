@@ -49,7 +49,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
 // Common CLI error messages defined in specification
 #define CLI_ERR_OPENING_CONFIG_PROTOCOL            L"Error: Communication with the device driver failed."
-#define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMEM_CONFIG_PROTOCOL not found."
+#define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMM_CONFIG_PROTOCOL not found."
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
 #define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."

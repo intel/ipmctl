@@ -4818,7 +4818,7 @@ RecoverDimmFw(
     *pNvmStatus = NVM_ERR_SPD_NOT_ACCESSIBLE;
     goto Finish;
   }
-  if (DeviceId != SPD_DEVICE_ID_DCPMEM_GEN1) {
+  if (DeviceId != SPD_DEVICE_ID_DCPM_GEN1) {
     NVDIMM_ERR("Incompatible hardware revision 0x%x", DeviceId);
     *pNvmStatus = NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION;
     goto Finish;
@@ -7987,7 +7987,7 @@ GetSystemTopology(
         // override types to keep consistency with dimm_info values
         if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
           (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DDR4;
-        } else if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DCPMEM) {
+        } else if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DCPM) {
           (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DCPM;
         } else {
           (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_UNKNOWN;

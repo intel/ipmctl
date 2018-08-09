@@ -38,7 +38,7 @@ typedef struct _NVM_IS
 {
   LIST_ENTRY IsNode;
   UINT64 Signature;
-  UINT16 SocketId;                  //!< Identifies the processor socket containing the DCPMEM
+  UINT16 SocketId;                  //!< Identifies the processor socket containing the DCPMM
   UINT16 InterleaveSetIndex;
   UINT64 Size;                      //!< Current total capacity of the Interleave Setqq
   /**

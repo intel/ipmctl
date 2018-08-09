@@ -756,7 +756,7 @@ typedef struct _DEBUG_LOG_INFO {
   DIMM type
 **/
 #define SMBIOS_MEMORY_TYPE_DDR4   0x1A
-#define SMBIOS_MEMORY_TYPE_DCPMEM 0x18
+#define SMBIOS_MEMORY_TYPE_DCPM   0x18
 
 /**
   Package Sparing Capable

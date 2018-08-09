@@ -341,7 +341,7 @@ CheckIsMemoryModeAllowed(
 {
   BOOLEAN MMCanBeConfigured = FALSE;
   BOOLEAN IsDDR = FALSE;
-  BOOLEAN IsDCPMEM = FALSE;
+  BOOLEAN IsDCPM = FALSE;
 
   if (pPMTT == NULL) {
     goto Finish;
@@ -366,25 +366,25 @@ CheckIsMemoryModeAllowed(
           // check if at least one DCPMM is present
           while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_MODULE) {
             PMTT_MODULE *pModule = (PMTT_MODULE *)(((UINT8 *)pCommonHeader) + sizeof(pCommonHeader));
-            // if DCPMEM is already set then continue to loop to find the offset of the next aggregated device
-            if (!IsDCPMEM) {
-              // bit 2 is set then DCPMEM
-              if ((pCommonHeader->Flags & PMTT_DDR_DCPMEM_FLAG) && pModule->SizeOfDimm > 0) {
-                IsDCPMEM = TRUE;
-              } else if (!(pCommonHeader->Flags & PMTT_DDR_DCPMEM_FLAG) && pModule->SizeOfDimm > 0) {
+            // if IsDCPM is already set then continue to loop to find the offset of the next aggregated device
+            if (!IsDCPM) {
+              // bit 2 is set then DCPM
+              if ((pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && pModule->SizeOfDimm > 0) {
+                IsDCPM = TRUE;
+              } else if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && pModule->SizeOfDimm > 0) {
                 IsDDR = TRUE;
               }
             }
             Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
             pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
           } // end of Module
-          if (IsDDR && !IsDCPMEM) {
+          if (IsDDR && !IsDCPM) {
             MMCanBeConfigured = FALSE;
             goto Finish;
           }
           MMCanBeConfigured = TRUE;
           IsDDR = FALSE;
-          IsDCPMEM = FALSE;
+          IsDCPM = FALSE;
         } else {
           // iMC is disabled
           Offset += pCommonHeader->Length;

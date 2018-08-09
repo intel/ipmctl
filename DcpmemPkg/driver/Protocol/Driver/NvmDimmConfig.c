@@ -3229,7 +3229,11 @@ GetRegionMinimalInfo(
   pRegionMin->SocketId = pRegion->SocketId;
   DetermineRegionType(pRegion, &pRegionMin->RegionType);
   pRegionMin->Capacity = pRegion->Size;
-  pRegionMin->CookieId = pRegion->InterleaveSetCookie;
+  if (pRegion->InterleaveSetCookie != 0) {
+    pRegionMin->CookieId = pRegion->InterleaveSetCookie;
+  } else {
+    pRegionMin->CookieId = pRegion->InterleaveSetCookie_1_1;
+  }
 
   ReturnCode = DetermineRegionHealth(pRegion, &pRegionMin->Health);
   if (EFI_ERROR(ReturnCode)) {

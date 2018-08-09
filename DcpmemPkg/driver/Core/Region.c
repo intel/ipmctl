@@ -2220,6 +2220,7 @@ DeleteRegionsGoalConfigs(
     } else {
       pRelatedDimms[Index]->PcdSynced = TRUE;
       SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index], NVM_ERR_REGION_GOAL_NO_EXISTS_ON_DIMM);
+      Rc = EFI_INVALID_PARAMETER;
     }
   }
 

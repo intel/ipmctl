@@ -313,6 +313,11 @@ ShowDimms(
     goto Finish;
   }
 
+  if (0 == DimmCount && 0 == UninitializedDimmCount) {
+    Print(FORMAT_STR_NL, CLI_INFO_NO_DIMMS);
+    goto Finish;
+  }
+
   pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
   pUninitializedDimms = AllocateZeroPool(sizeof(*pUninitializedDimms) * UninitializedDimmCount);
 

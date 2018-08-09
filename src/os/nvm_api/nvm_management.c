@@ -253,7 +253,8 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
 
   nvm_status = nvm_init();
   if (NVM_ERR_INVALID_PERMISSIONS != nvm_status && NVM_SUCCESS != nvm_status) {
-    wprintf(L"Failed to intialize nvm library %d\n", nvm_status);
+    CHAR16* ErrStr = GetSingleNvmStatusCodeMessage(NULL, nvm_status);
+    wprintf(L"Failed to intialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
     return nvm_status;
   }
   rc = uefi_to_os_ret_val(UefiMain(0, NULL));

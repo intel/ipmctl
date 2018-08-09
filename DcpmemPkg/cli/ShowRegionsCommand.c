@@ -258,6 +258,11 @@ ShowRegions(
 
   pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, &RegionCount);
 
+  if (0 == RegionCount) {
+    Print(FORMAT_STR_NL, CLI_INFO_NO_REGIONS);
+    goto Finish;
+  }
+
   pRegions = AllocateZeroPool(sizeof(REGION_INFO) * RegionCount);
   if (pRegions == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);

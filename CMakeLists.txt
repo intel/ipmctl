@@ -173,7 +173,7 @@ endif()
 target_include_directories(ipmctl_os_interface PUBLIC
 	src/os
 	src/os/${OS_TYPE}
-	DcpmemPkg/common
+	DcpmPkg/common
 	src/os/nvm_api
 	src/os/s_string
 	${LIBSAFEC_INCLUDE_DIRS}
@@ -208,78 +208,78 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	src/os/nvm_api/nvm_management.c
 	src/os/nvm_api/nvm_output_parsing.c
 	src/os/s_string/s_str.c
-	DcpmemPkg/cli/NvmDimmCli.c
-	DcpmemPkg/cli/CommandParser.c
-	DcpmemPkg/cli/Common.c
-	DcpmemPkg/cli/ShowAcpiCommand.c
-	DcpmemPkg/cli/ShowSensorCommand.c
-	DcpmemPkg/cli/ShowDimmsCommand.c
-	DcpmemPkg/cli/ShowSocketsCommand.c
-	DcpmemPkg/cli/ShowMemoryResourcesCommand.c
-	DcpmemPkg/cli/ShowSystemCapabilitiesCommand.c
-	DcpmemPkg/cli/ShowFirmwareCommand.c
-	DcpmemPkg/cli/ShowPcdCommand.c
-	DcpmemPkg/cli/DeletePcdCommand.c
-	DcpmemPkg/cli/ShowRegionsCommand.c
-	DcpmemPkg/cli/CreateGoalCommand.c
-	DcpmemPkg/cli/ShowGoalCommand.c
-	DcpmemPkg/cli/DeleteGoalCommand.c
-	DcpmemPkg/cli/ShowErrorCommand.c
-	DcpmemPkg/cli/DumpDebugCommand.c
-	DcpmemPkg/cli/StartDiagnosticCommand.c
-	DcpmemPkg/cli/ShowPreferencesCommand.c
-	DcpmemPkg/cli/ShowTopologyCommand.c
-	DcpmemPkg/cli/SetPreferencesCommand.c
-	DcpmemPkg/cli/SetSensorCommand.c
-	DcpmemPkg/cli/LoadGoalCommand.c
-	DcpmemPkg/cli/DumpGoalCommand.c
-	DcpmemPkg/cli/SetDimmCommand.c
-	DcpmemPkg/cli/LoadCommand.c
-	DcpmemPkg/cli/DeleteDimmCommand.c
+	DcpmPkg/cli/NvmDimmCli.c
+	DcpmPkg/cli/CommandParser.c
+	DcpmPkg/cli/Common.c
+	DcpmPkg/cli/ShowAcpiCommand.c
+	DcpmPkg/cli/ShowSensorCommand.c
+	DcpmPkg/cli/ShowDimmsCommand.c
+	DcpmPkg/cli/ShowSocketsCommand.c
+	DcpmPkg/cli/ShowMemoryResourcesCommand.c
+	DcpmPkg/cli/ShowSystemCapabilitiesCommand.c
+	DcpmPkg/cli/ShowFirmwareCommand.c
+	DcpmPkg/cli/ShowPcdCommand.c
+	DcpmPkg/cli/DeletePcdCommand.c
+	DcpmPkg/cli/ShowRegionsCommand.c
+	DcpmPkg/cli/CreateGoalCommand.c
+	DcpmPkg/cli/ShowGoalCommand.c
+	DcpmPkg/cli/DeleteGoalCommand.c
+	DcpmPkg/cli/ShowErrorCommand.c
+	DcpmPkg/cli/DumpDebugCommand.c
+	DcpmPkg/cli/StartDiagnosticCommand.c
+	DcpmPkg/cli/ShowPreferencesCommand.c
+	DcpmPkg/cli/ShowTopologyCommand.c
+	DcpmPkg/cli/SetPreferencesCommand.c
+	DcpmPkg/cli/SetSensorCommand.c
+	DcpmPkg/cli/LoadGoalCommand.c
+	DcpmPkg/cli/DumpGoalCommand.c
+	DcpmPkg/cli/SetDimmCommand.c
+	DcpmPkg/cli/LoadCommand.c
+	DcpmPkg/cli/DeleteDimmCommand.c
 	src/os/cli_cmds/DumpSupportCommand.c
-	DcpmemPkg/cli/LoadRecoverCommand.c
-	DcpmemPkg/cli/ShowRegisterCommand.c
-	DcpmemPkg/cli/StartFormatCommand.c
-	DcpmemPkg/cli/ShowEventCommand.c
-	DcpmemPkg/cli/SetEventCommand.c
-	DcpmemPkg/cli/ShowPerformanceCommand.c
-	DcpmemPkg/cli/ShowHostServerCommand.c
-	DcpmemPkg/cli/ShowCmdAccessPolicyCommand.c
-	DcpmemPkg/common/FwUtility.c
-	DcpmemPkg/common/Utility.c
-	DcpmemPkg/common/NvmTables.c
-	DcpmemPkg/common/ShowAcpi.c
-	DcpmemPkg/common/NvmStatus.c
-	DcpmemPkg/common/NvmHealth.c
-	DcpmemPkg/common/LbaCommon.c
-	DcpmemPkg/common/Convert.c
-	DcpmemPkg/common/PcdCommon.c
-	DcpmemPkg/common/OsCommon.c
-	DcpmemPkg/common/DataSet.c
-	DcpmemPkg/common/Show.c
-	DcpmemPkg/common/Strings.c
-	DcpmemPkg/common/Nlog.c
-	DcpmemPkg/driver/Protocol/Driver/NvmDimmConfig.c
-	DcpmemPkg/driver/NvmDimmDriver.c
-	DcpmemPkg/driver/Core/Dimm.c
-	DcpmemPkg/driver/Core/Namespace.c
-	DcpmemPkg/driver/Core/NvmSecurity.c
-	DcpmemPkg/driver/Core/Region.c
-	DcpmemPkg/driver/Core/Btt.c
-	DcpmemPkg/driver/Core/Pfn.c
-	DcpmemPkg/driver/Core/Diagnostics/ConfigDiagnostic.c
-	DcpmemPkg/driver/Core/Diagnostics/CoreDiagnostics.c
-	DcpmemPkg/driver/Core/Diagnostics/FwDiagnostic.c
-	DcpmemPkg/driver/Core/Diagnostics/QuickDiagnostic.c
-	DcpmemPkg/driver/Core/Diagnostics/SecurityDiagnostic.c
-	DcpmemPkg/driver/Protocol/Device/NvmFirmwareManagement.c
-	DcpmemPkg/driver/Protocol/Device/StorageSecurityCommand.c
-	DcpmemPkg/driver/Protocol/Namespace/NvmDimmBlockIo.c
-	DcpmemPkg/driver/Utils/PlatformConfigData.c
-	DcpmemPkg/driver/Utils/AcpiParsing.c
-	DcpmemPkg/driver/Utils/Interleave.c
-	DcpmemPkg/driver/Utils/SmbiosUtility.c
-	DcpmemPkg/driver/Utils/DumpLoadPools.c
+	DcpmPkg/cli/LoadRecoverCommand.c
+	DcpmPkg/cli/ShowRegisterCommand.c
+	DcpmPkg/cli/StartFormatCommand.c
+	DcpmPkg/cli/ShowEventCommand.c
+	DcpmPkg/cli/SetEventCommand.c
+	DcpmPkg/cli/ShowPerformanceCommand.c
+	DcpmPkg/cli/ShowHostServerCommand.c
+	DcpmPkg/cli/ShowCmdAccessPolicyCommand.c
+	DcpmPkg/common/FwUtility.c
+	DcpmPkg/common/Utility.c
+	DcpmPkg/common/NvmTables.c
+	DcpmPkg/common/ShowAcpi.c
+	DcpmPkg/common/NvmStatus.c
+	DcpmPkg/common/NvmHealth.c
+	DcpmPkg/common/LbaCommon.c
+	DcpmPkg/common/Convert.c
+	DcpmPkg/common/PcdCommon.c
+	DcpmPkg/common/OsCommon.c
+	DcpmPkg/common/DataSet.c
+	DcpmPkg/common/Show.c
+	DcpmPkg/common/Strings.c
+	DcpmPkg/common/Nlog.c
+	DcpmPkg/driver/Protocol/Driver/NvmDimmConfig.c
+	DcpmPkg/driver/NvmDimmDriver.c
+	DcpmPkg/driver/Core/Dimm.c
+	DcpmPkg/driver/Core/Namespace.c
+	DcpmPkg/driver/Core/NvmSecurity.c
+	DcpmPkg/driver/Core/Region.c
+	DcpmPkg/driver/Core/Btt.c
+	DcpmPkg/driver/Core/Pfn.c
+	DcpmPkg/driver/Core/Diagnostics/ConfigDiagnostic.c
+	DcpmPkg/driver/Core/Diagnostics/CoreDiagnostics.c
+	DcpmPkg/driver/Core/Diagnostics/FwDiagnostic.c
+	DcpmPkg/driver/Core/Diagnostics/QuickDiagnostic.c
+	DcpmPkg/driver/Core/Diagnostics/SecurityDiagnostic.c
+	DcpmPkg/driver/Protocol/Device/NvmFirmwareManagement.c
+	DcpmPkg/driver/Protocol/Device/StorageSecurityCommand.c
+	DcpmPkg/driver/Protocol/Namespace/NvmDimmBlockIo.c
+	DcpmPkg/driver/Utils/PlatformConfigData.c
+	DcpmPkg/driver/Utils/AcpiParsing.c
+	DcpmPkg/driver/Utils/Interleave.c
+	DcpmPkg/driver/Utils/SmbiosUtility.c
+	DcpmPkg/driver/Utils/DumpLoadPools.c
 	MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathUtilities.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathToText.c
@@ -317,7 +317,7 @@ endif()
 add_library(ipmctl ${LIB_TYPE} ${LIBIPMCTL_SOURCE_FILES})
 
 target_include_directories(ipmctl PUBLIC
-	DcpmemPkg/cli
+	DcpmPkg/cli
 	src/os
 	src/os/efi_shim
 	src/os/ini
@@ -325,14 +325,14 @@ target_include_directories(ipmctl PUBLIC
 	src/os/nvm_api
 	src/os/s_string
 	src/os/cli_cmds
-	DcpmemPkg/common
-	DcpmemPkg/driver
-	DcpmemPkg/driver/Utils
-	DcpmemPkg/driver/Protocol/Driver
-	DcpmemPkg/driver/Core
-	DcpmemPkg/driver/Protocol/Namespace
-	DcpmemPkg/driver/Protocol/Device
-	DcpmemPkg/driver/Core/Diagnostics
+	DcpmPkg/common
+	DcpmPkg/driver
+	DcpmPkg/driver/Utils
+	DcpmPkg/driver/Protocol/Driver
+	DcpmPkg/driver/Core
+	DcpmPkg/driver/Protocol/Namespace
+	DcpmPkg/driver/Protocol/Device
+	DcpmPkg/driver/Core/Diagnostics
 	MdePkg
 	MdePkg/Include
 	MdePkg/Include/Protocol
@@ -358,7 +358,7 @@ if(MSVC)
 	SET_SOURCE_FILES_PROPERTIES(src/os/ini/ini.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/efi_shim/os_efi_preferences.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/nvm_api/nvm_management.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
-	SET_SOURCE_FILES_PROPERTIES(DcpmemPkg/cli/Common.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
+	SET_SOURCE_FILES_PROPERTIES(DcpmPkg/cli/Common.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/nvm_api/nvm_output_parsing.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/efi_shim/os_efi_shell_parameters_protocol.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 	SET_SOURCE_FILES_PROPERTIES(src/os/cli_cmds/DumpSupportCommand.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
@@ -452,7 +452,7 @@ if (NOT ESX_BUILD)
 		src/os
 		src/os/nvm_api
 		src/os/ini
-		DcpmemPkg/common
+		DcpmPkg/common
 		${LIBSAFEC_INCLUDE_DIRS}
 		)
 
@@ -466,8 +466,8 @@ endif()
 # Generate String Definitions
 #----------------------------------------------------------------------------------------------------
 set(STRING_DEFS_INPUT_FILES
-	${ROOT}/DcpmemPkg/common/NvmStatus.uni
-	${ROOT}/DcpmemPkg/driver/Core/Diagnostics/DiagnosticsMessages.uni
+	${ROOT}/DcpmPkg/common/NvmStatus.uni
+	${ROOT}/DcpmPkg/driver/Core/Diagnostics/DiagnosticsMessages.uni
 	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
 	)
 
@@ -513,7 +513,7 @@ FILE(GLOB NVM_HEADERS
 	src/os/nvm_api/export_api.h
 	src/os/nvm_api/nvm_management.h
 	src/os/nvm_api/nvm_types.h
-	DcpmemPkg/common/NvmSharedDefs.h
+	DcpmPkg/common/NvmSharedDefs.h
 	)
 
 FILE(COPY ${NVM_HEADERS}

@@ -4,6 +4,6 @@
 * text=auto
 
 src/os/** text eol=lf
-Dcpmempkg/** text eol=lf
+Dcpmpkg/** text eol=lf
 CMakeLists.txt text eol=lf
 CMake/** text eol=lf

@@ -200,7 +200,7 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
     }
     rc = ValidateAndConvertInput(pTypeValue, MinVal, MaxValue, &IntegerValue);
     if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
-      PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, PROPERTY_ERROR_INVALID_OUT_OF_RANGE, EFI_INVALID_PARAMETER);
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER);
       goto Finish;
     } else {
@@ -210,7 +210,7 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
           PRINT_SET_PREFERENCES_SUCCESS(pName, pTypeValue);
           SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS);
         } else {
-          PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, rc);
+          PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, PROPERTY_ERROR_SET_FAILED_UNKNOWN, rc);
           SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
         }
       }
@@ -297,11 +297,11 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Default DimmID Type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, NULL, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, NULL, PROPERTY_ERROR_DEFAULT_DIMM_NOT_PROVIDED, EFI_INVALID_PARAMETER);
     } else if ((Index = GetDimmIDIndex(pTypeValue)) >= DISPLAY_DIMM_ID_MAX_SIZE) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Incorrect default DimmID type");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, PROPERTY_ERROR_INCORRECT_DEFAULT_DIMM_TYPE, EFI_INVALID_PARAMETER);
     } else {
       DisplayPreferences.DimmIdentifier = Index;
       VariableSize = sizeof(DisplayPreferences.DimmIdentifier);
@@ -314,7 +314,7 @@ SetPreferences(
         PRINT_SET_PREFERENCES_SUCCESS(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue);
       } else {
         KEEP_ERROR(ReturnCode,TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, TempReturnCode);
+        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
       }
     }
   }
@@ -329,11 +329,11 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Display default size type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, NULL, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, NULL, PROPERTY_ERROR_DISPLAY_DEFAULT_NOT_PROVIDED, EFI_INVALID_PARAMETER);
     } else if ((Index = GetDisplaySizeIndex(pTypeValue)) >= DISPLAY_SIZE_MAX_SIZE) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Incorrect default size type");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, PROPERTY_ERROR_DEFAULT_INCORRECT_SIZE_TYPE, EFI_INVALID_PARAMETER);
     } else {
       DisplayPreferences.SizeUnit = Index;
       VariableSize = sizeof(DisplayPreferences.SizeUnit);
@@ -346,7 +346,7 @@ SetPreferences(
         PRINT_SET_PREFERENCES_SUCCESS(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue);
       } else {
         KEEP_ERROR(ReturnCode,TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, TempReturnCode);
+        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
       }
     }
   }
@@ -362,7 +362,7 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("AppDirect interleave setting type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, NULL, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, NULL, PROPERTY_ERROR_INTERLEAVE_TYPE_NOT_PROVIDED, EFI_INVALID_PARAMETER);
     } else {
       if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
         DriverPreferences.ChannelInterleaving = DEFAULT_CHANNEL_INTERLEAVE_SIZE;
@@ -370,7 +370,7 @@ SetPreferences(
       } else if ((TempReturnCode = GetAppDirectSettingsBitFields(pTypeValue, &DriverPreferences.ImcInterleaving, &DriverPreferences.ChannelInterleaving)) != EFI_SUCCESS) {
         KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
         NVDIMM_WARN("Incorrect AppDirect interleave setting type");
-        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, EFI_INVALID_PARAMETER);
+        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, PROPERTY_ERROR_APPDIR_INTERLEAVE_TYPE, EFI_INVALID_PARAMETER);
       }
 
       if (TempReturnCode == EFI_SUCCESS) {
@@ -379,7 +379,7 @@ SetPreferences(
           PRINT_SET_PREFERENCES_SUCCESS(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue);
         } else {
           TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, TempReturnCode);
+          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
           KEEP_ERROR(ReturnCode, TempReturnCode);
         }
       }
@@ -397,7 +397,7 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("AppDirect Granularity setting type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, NULL, EFI_INVALID_PARAMETER);
+      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, NULL, PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED, EFI_INVALID_PARAMETER);
     } else {
       if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
         DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_DEFAULT;
@@ -406,7 +406,7 @@ SetPreferences(
       } else {
         TempReturnCode = EFI_INVALID_PARAMETER;
         KEEP_ERROR(ReturnCode, TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, EFI_INVALID_PARAMETER);
+        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, PROPERTY_ERROR_INVALID_GRANULARITY, EFI_INVALID_PARAMETER);
       }
 
       if (TempReturnCode == EFI_SUCCESS) {
@@ -415,7 +415,7 @@ SetPreferences(
           PRINT_SET_PREFERENCES_SUCCESS(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue);
         } else {
           TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, TempReturnCode);
+          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
           KEEP_ERROR(ReturnCode, TempReturnCode);
         }
       }

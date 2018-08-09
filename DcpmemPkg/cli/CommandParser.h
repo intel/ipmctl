@@ -235,6 +235,18 @@
 #define ACTION_REQ_EVENTS_PROPERTY        L"ActionRequiredEvents"
 #define DBG_LOG_LEVEL                     L"DBG_LOG_LEVEL"
 #define CREATE_SUPP_NAME                  L"Name"
+#define PROPERTY_ERROR_UNKNOWN                      L"Reason for failure unknown"
+#define PROPERTY_ERROR_DEFAULT_DIMM_NOT_PROVIDED    L"Default DimmID Type not provided"
+#define PROPERTY_ERROR_INCORRECT_DEFAULT_DIMM_TYPE  L"Incorrect default DimmID type"
+#define PROPERTY_ERROR_DISPLAY_DEFAULT_NOT_PROVIDED L"Display default size type not provided"
+#define PROPERTY_ERROR_DEFAULT_INCORRECT_SIZE_TYPE  L"Incorrect default size type"
+#define PROPERTY_ERROR_INTERLEAVE_TYPE_NOT_PROVIDED L"AppDirect interleave setting type not provided"
+#define PROPERTY_ERROR_APPDIR_INTERLEAVE_TYPE       L"Incorrect AppDirect interleave setting type"
+#define PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED     L"AppDirect Granularity setting type not provided"
+#define PROPERTY_ERROR_INVALID_GRANULARITY          L"Invalid granularity"
+#define PROPERTY_ERROR_INVALID_OUT_OF_RANGE         L"Setting is invalid or out of range"
+#define PROPERTY_ERROR_SET_FAILED_UNKNOWN           L"Set operation failed"
+
 /** common help messages **/
 #define HELP_TEXT_DIMM_IDS              L"DimmIDs"
 #define HELP_TEXT_DIMM_ID               L"DimmID"

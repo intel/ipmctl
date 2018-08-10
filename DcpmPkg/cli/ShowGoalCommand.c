@@ -539,7 +539,7 @@ ShowGoal(
   }
 
   if (RegionConfigsCount == 0) {
-    Print(FORMAT_STR_NL, L"There are no goal configs defined in the system.");
+    Print(L"There are no goal configs defined in the system.\nPlease use 'show -region' to display currently valid persistent memory regions.\n");
     goto Finish;
   }
 

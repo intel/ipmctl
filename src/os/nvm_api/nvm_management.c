@@ -410,6 +410,11 @@ NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count)
     return NVM_ERR_UNKNOWN;
   }
 
+  if (count != socket_count)
+  {
+    return NVM_ERR_BAD_SIZE;
+  }
+
   for (index = 0; (index < count) && (index < socket_count); index++) {
     p_sockets[index].id = p_sockets_info[index].SocketId;                           // Zero-indexed NUMA node number
     p_sockets[index].mapped_memory_limit = p_sockets_info[index].MappedMemoryLimit; // Maximum allowed memory (via PCAT)
@@ -540,6 +545,12 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
     return NVM_ERR_UNKNOWN;
   }
 
+  if (dpc_cnt != count)
+  {
+    FreePool(pdimms);
+    return NVM_ERR_BAD_SIZE;
+  }
+
   for (unsigned int i = 0; (index < count) && (i < dpc_cnt); index++,++i) {
     p_devices[index].physical_id = pdimms[i].DimmID; // Memory device's physical identifier (SMBIOS handle)
     p_devices[index].memory_type = MEMORY_TYPE_NVMDIMM; // Type of memory device
@@ -588,54 +599,50 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return -1;
+    return nvm_status;
   }
 
   if (NULL == p_devices) {
     NVDIMM_ERR("NULL input parameter\n");
-    return -1;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
-  unsigned int temp_count = 0;
   unsigned int actual_count = 0;
   if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&actual_count)))
   {
     NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
-    return -1;
+    return NVM_ERR_OPERATION_FAILED;
   }
 
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  if(count > actual_count)
-    temp_count = actual_count;
-  else temp_count = count;
+  if(count != actual_count)
+  {
+    return NVM_ERR_BAD_SIZE;
+  }
 
   DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * actual_count);
   if (NULL == pdimms) {
     NVDIMM_ERR("Failed to allocate memory\n");
-    return -1;
+    return NVM_ERR_NOT_ENOUGH_FREE_SPACE;
   }
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)actual_count, DIMM_INFO_CATEGORY_NONE, pdimms);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     FreePool(pdimms);
-    return -1;
+    return NVM_ERR_OPERATION_FAILED;
   }
-  for (i = 0; i < temp_count; ++i)
+  for (i = 0; i < actual_count; ++i)
     dimm_info_to_device_discovery(&pdimms[i], &p_devices[i]);
   FreePool(pdimms);
-  return temp_count;
+  return NVM_SUCCESS;
 }
 
 NVM_API int nvm_get_devices_nfit(struct device_discovery *p_devices, const NVM_UINT8 count)
 {
   int rc = nvm_get_devices(p_devices, count);
 
-  if (rc < 0) {
-    return NVM_ERR_UNKNOWN;
-  }
-
-  return NVM_SUCCESS;
+  return rc;
 }
 
 NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
@@ -1987,6 +1994,7 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
   NVM_UID dimm_uid = { 0 };
   unsigned int event_id = 0;
   int rc = NVM_SUCCESS;
+  int nvm_status = 0;
 
   if (NULL == p_events) {
     return NVM_ERR_INVALIDPARAMETER;
@@ -1996,6 +2004,19 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+
+  int actual_count = 0;
+  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_events(p_filter, &actual_count)))
+  {
+    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
+    return NVM_ERR_OPERATION_FAILED;
+  }
+
+  if (count != actual_count)
+  {
+    return NVM_ERR_BAD_SIZE;
+  }
+
   event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
   // Get events form system log
   bytes_in_event_buffer = nvm_get_events_from_file(event_type_mask, dimm_uid, event_id, events_number, &p_log_entry, &event_buffer);
@@ -2867,6 +2888,7 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
   int bytes_in_event_buffer = 0;
   unsigned int event_type_mask = 0;
   int rc = NVM_SUCCESS;
+  int nvm_status = 0;
 
   if (NULL == p_logs)
     return NVM_ERR_INVALIDPARAMETER;
@@ -2875,6 +2897,19 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+
+  int actual_count = 0;
+  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_debug_logs(&actual_count)))
+  {
+    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
+    return NVM_ERR_OPERATION_FAILED;
+  }
+
+  if (count != actual_count)
+  {
+    return NVM_ERR_BAD_SIZE;
+  }
+
   event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
   // Get events form system log
   bytes_in_event_buffer = nvm_get_events_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE, events_number, &p_log_entry, &event_buffer);
@@ -2946,18 +2981,31 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   struct pt_payload_sanitize_dimm_status *p_sanitize_status;
   int job_index = 0;
   unsigned int i;
+  int nvm_status = 0;
 
   if (NULL == p_jobs)
-    return -1;
+    return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
 
+  unsigned int actual_count = 0;
+  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&actual_count)))
+  {
+    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
+    return NVM_ERR_OPERATION_FAILED;
+  }
+
+  if(count != actual_count)
+  {
+    return NVM_ERR_BAD_SIZE;
+  }
+
   if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
     NVDIMM_ERR("Failed to allocate memory\n");
-    return -1;
+    return NVM_ERR_NOT_ENOUGH_FREE_SPACE;
   }
 
   ZeroMem(cmd, sizeof(FW_CMD));
@@ -2967,7 +3015,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to get dimm list %d\n", (int)ReturnCode);
     FreePool(cmd);
-    return -1;
+    return NVM_ERR_OPERATION_FAILED;
   }
 
   for (i = 0; i < DimmCount; ++i) {
@@ -2978,7 +3026,6 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     cmd->Opcode = PtGetSecInfo;
     cmd->SubOpcode = 0x1;
     cmd->OutputPayloadSize = sizeof(struct pt_payload_sanitize_dimm_status);
-    //cmd->OutPayload = &sanitize_status;
 
     if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
       if (p_sanitize_status->state != SAN_IDLE) {
@@ -2999,7 +3046,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     }
   }
   FreePool(cmd);
-  return job_index;
+  return NVM_SUCCESS;
 }
 
 NVM_API int nvm_create_context()

@@ -129,6 +129,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
 
 	std::vector<std::string> dimmList;
   unsigned int dimmCount = 0;
+  int nvm_status = 0;
   if (NVM_SUCCESS == nvm_get_number_of_devices(&dimmCount)) {
     // error getting dimm count
     if (dimmCount < 0)
@@ -143,9 +144,9 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
     else if (dimmCount > 0)
     {
       struct device_discovery *dimms = new device_discovery[dimmCount];
-      dimmCount = nvm_get_devices(dimms, dimmCount);
+      nvm_status = nvm_get_devices(dimms, dimmCount);
       // error getting dimms
-      if (dimmCount < 0)
+      if (nvm_status != NVM_SUCCESS)
       {
         nvm_store_system_entry(LOG_SRC,
           SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_ERROR, SYSTEM_EVENT_CAT_MGMT_NUMB_7, false, true, true, false, 0),
@@ -154,7 +155,7 @@ std::vector<std::string> monitor::NvmMonitorBase::getDimmList()
           dimmCount);
       }
       // at least one dimm
-      else if (dimmCount > 0)
+      else
       {
         for (unsigned int i = 0; i < dimmCount; i++)
         {

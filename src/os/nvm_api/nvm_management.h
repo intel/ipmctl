@@ -1324,9 +1324,7 @@ NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory);
  *              This method should never return a value less than 1.
  * @param[in,out] count
  *              A pointer to an integer which contain the number of sockets on return.
- * @return
- *              Returns the number of nodes on success or one of the following @link #return_code
- *              return_codes: @endlink @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1338,13 +1336,14 @@ NVM_API int nvm_get_number_of_sockets(int *count);
  * @param[in,out] p_sockets
  *              An array of #socket structures allocated by the caller.
  * @param[in] count
- *              The size of the array
- * @return
- *              Returns the number of nodes on success or one of the following @link #return_code
- *              return_codes: @endlink @n
+ *              The number of elements in the array.
+ * @remarks To allocate the array of #socket structures,
+ * call #nvm_get_number_of_sockets before calling this method.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
+ *            ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count);
 
@@ -1356,8 +1355,7 @@ NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count);
  *              The NUMA node identifier
  * @param[in,out] p_socket
  *              A pointer to a #socket structure allocated by the caller.
- * @return
- *              Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1383,10 +1381,13 @@ NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count);
  * @pre The caller must have administrative privileges.
  * @param[out] p_devices pointer to #memory_topology array of size count
  * @param[in] count number of elements in p_devices array
- * @return
+ * @remarks To allocate the array of #memory_topology structures,
+ * call #nvm_get_number_of_memory_topology_devices before calling this method.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *              ::NVM_SUCCESS @n
  *              ::NVM_ERR_INVALID_PARAMETER @n
  *              ::NVM_ERR_UNKNOWN @n
+ *              ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_memory_topology(struct memory_topology *p_devices, const NVM_UINT8 count);
 
@@ -1397,7 +1398,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *p_devices, const NVM
 * @remarks This method should be called before #nvm_get_devices.
 * @remarks The number of devices can be 0.
 * @param[out] count pointer to count of devices
-* @return
+* @return Returns one of the following @link #return_code return_codes: @endlink @n
 *              ::NVM_SUCCESS @n
 *              ::NVM_ERR_INVALID_PARAMETER @n
 *              ::NVM_ERR_UNKNOWN @n
@@ -1411,13 +1412,15 @@ NVM_API int nvm_get_number_of_devices(unsigned int *count);
  * @param[in,out] p_devices
  *              An array of #device_discovery structures allocated by the caller.
  * @param[in] count
- *              The size of the array.
+ *              The number of elements in array.
  * @pre The caller must have administrative privileges.
  * @remarks To allocate the array of #device_discovery structures,
  * call #nvm_get_device_count before calling this method.
- * @return Returns the number of devices on success
- * or one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ *              ::NVM_SUCCESS @n
+ *              ::NVM_ERR_INVALID_PARAMETER @n
+ *              ::NVM_ERR_UNKNOWN @n
+ *              ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 count);
 
@@ -1429,14 +1432,16 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
 * @param[in,out] p_devices
 *              An array of #device_discovery structures allocated by the caller.
 * @param[in] count
-*              The size of the array.
+*              The number of elements in the array.
 * @pre The caller must have administrative privileges.
 * @remarks To allocate the array of #device_discovery structures,
 * call #nvm_get_device_count before calling this method.
-* @return Returns the number of devices on success
-* or one of the following @link #return_code return_codes: @endlink @n
+* @return Returns one of the following @link #return_code return_codes: @endlink @n
 *              ::NVM_SUCCESS @n
 *              ::NVM_ERR_UNKNOWN @n
+*              ::NVM_ERR_OPERATION_FAILED @n
+*              ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
+*              ::NVM_ERR_BAD_SIZE @n
 */
 NVM_API int nvm_get_devices_nfit(struct device_discovery *p_devices, const NVM_UINT8 count);
 
@@ -1686,7 +1691,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 * @param[in,out] p_sensors
 *              An array of #sensor structures allocated by the caller.
 * @param[in] count
-*              The size of the array.  Should be NVM_MAX_DEVICE_SENSORS.
+*              The number of elements in the array. Should be NVM_MAX_DEVICE_SENSORS.
 * @pre The caller has administrative privileges.
 * @pre The device is manageable.
 * @remarks Sensors are used to monitor a particular aspect of a device by
@@ -1886,9 +1891,10 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
  * @param[in] p_filter
  *              A pointer to an event_filter structure allocated by the caller to
  *              optionally filter the event count.
+ * @param[in,out] count
+ *              A pointer an integer that will contain the number of events
  * @pre The caller must have administrative privileges.
- * @return Returns the number of events on success or
- * one of the following @link #return_code return_codes: @endlink @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  */
@@ -1903,15 +1909,18 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
  * @param[in,out] p_events
  *              An array of #event structures allocated by the caller.
  * @param[in] count
- *              The size of the array.
+ *              The number of elements in the array.
  * @pre The caller must have administrative privileges.
  * @remarks The native API library stores a maximum of 10,000 events in the table,
  * rolling the table once the maximum is reached. However, the maximum number of events
  * is configurable by modifying the EVENT_LOG_MAX_ROWS value in the configuration database.
- * @return Returns the number of events on success or
- * one of the following @link #return_code return_codes: @endlink @n
+ * @remarks To allocate the array of #event structures,
+ * call #nvm_get_number_of_events before calling this method.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
+ *            ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_events(const struct event_filter *p_filter, struct event *p_events, const NVM_UINT16 count);
 
@@ -1921,8 +1930,7 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter, struct event *p_
  *              A pointer to an event_filter structure to optionally
  *              purge only specific events.
  * @pre The caller must have administrative privileges.
- * @return Returns the number of events removed or
- * one of the following @link #return_code return_codes: @endlink @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1958,12 +1966,11 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
  * @param[in,out] p_regions
  *              An array of #region structures allocated by the caller.
  * @param[in,out] count
- *              The size of the array set  by caller and returns the count of regions that were returned.
+ *              The number of elements in the array allocated by the caller and returns the count of regions that were returned.
  * @pre The caller has administrative privileges.
  * @remarks To allocate the array of #region structures,
  * call #nvm_get_region_count before calling this method.
- * @return Returns the number of regions on success
- * or one of the following @link #return_code return_codes: @endlink @n
+ * @return one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -2281,9 +2288,10 @@ NVM_API int nvm_purge_debug_log();
 
 /**
  * @brief Retrieve the number of debug log entries in the native API library database.
+ * @param[in,out] count
+ *              pointer an integer that will contain the number of debug log entries
  * @pre The caller must have administrative privileges.
- * @return Returns the number of debug log entries on success or
- * one of the following @link #return_code return_codes: @endlink @n
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2294,14 +2302,16 @@ NVM_API int nvm_get_number_of_debug_logs(int *count);
  * @param[in,out] p_logs
  *              An array of #log structures allocated by the caller.
  * @param[in] count
- *              The size of the array.
+ *              The number of elements in the array.
  * @pre The caller must have administrative privileges.
  * @remarks To allocate the array of #log structures,
- * call #nvm_get_debug_log_count before calling this method.
- * @return Returns the number of debug log entries on success
- * or one of the following @link #return_code return_codes: @endlink @n
+ * call #nvm_get_number_of_debug_logs before calling this method.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALIDPARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
+ *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
+ *            ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count);
 
@@ -2309,12 +2319,19 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count);
  * @brief Retrieves #job information about each device in the system
  * @param[in,out] p_jobs
  *              An array of #job structures allocated by the caller.
+ *              One for each device in the system.
  * @param[in] count
- *              The size of the array.
+ *              The number of elements in the array.
  * @pre The caller must have administrative privileges.
- * @return Returns the number of devices on success
- * or one of the following @link #return_code return_codes: @endlink @n
- *              -1 @n
+ * @remarks To allocate the array of #job structures,
+ * call #nvm_get_number_of_devices before calling this method.
+ * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_UNKNOWN @n
+ *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
+ *            ::NVM_ERR_OPERATION_FAILED @n
+ *            ::NVM_ERR_BAD_SIZE @n
  */
 NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count);
 

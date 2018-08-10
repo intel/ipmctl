@@ -55,6 +55,7 @@ OS_MUTEX *g_api_mutex;
 int g_dimm_cnt;
 int g_basic_commands = 0;
 DIMM_INFO *g_dimms;
+OS_MUTEX *g_dimms_mutex;
 int get_dimm_id(const char *uid, unsigned int *dimm_id, unsigned int *dimm_handle);
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device);
 int g_nvm_initialized = 0;
@@ -113,6 +114,12 @@ NVM_API int nvm_init()
     return NVM_ERR_UNKNOWN;
   }
 
+  if (NULL == (g_dimms_mutex = os_mutex_init("g_dimms"))) {
+    NVDIMM_ERR("Failed to intialize g_dimms mutex\n");
+    rc = NVM_ERR_UNKNOWN;
+    goto cleanup_mutex;
+  }
+
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
   init_protocol_bs();
   init_protocol_simple_file_system_protocol();
@@ -122,14 +129,14 @@ NVM_API int nvm_init()
   {
     NVDIMM_ERR("Failed to intialize preferences\n");
     rc = NVM_ERR_UNKNOWN;
-    goto cleanup_mutex;
+    goto cleanup_mutexes;
   }
 
   if (EFI_SUCCESS != NvmDimmDriverDriverEntryPoint(0, NULL))
   {
     NVDIMM_ERR("Nvm Dimm driver entry point failed.\n");
     rc = NVM_ERR_UNKNOWN;
-    goto cleanup_mutex;
+    goto cleanup_mutexes;
   }
 
   rc = os_check_admin_permissions();
@@ -143,6 +150,8 @@ NVM_API int nvm_init()
   }
   g_nvm_initialized = 1;
   return rc;
+cleanup_mutexes:
+  os_mutex_delete(g_dimms_mutex, "g_dimms");
 cleanup_mutex:
   os_mutex_delete(g_api_mutex, "nvm_api");
   return rc;
@@ -412,6 +421,10 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket)
       p_socket->id = p_sockets_info[index].SocketId;                                  // Zero-indexed NUMA node number
       p_socket->mapped_memory_limit = p_sockets_info[index].MappedMemoryLimit;        // Maximum allowed memory (via PCAT)
       p_socket->total_mapped_memory = p_sockets_info[index].TotalMappedMemory;        // Current occupied memory (via PCAT)
+    }
+    if (g_dimms_mutex) {
+      os_mutex_delete(g_dimms_mutex, "g_dimms");
+      g_dimms_mutex = NULL;
     }
   }
   return NVM_SUCCESS;
@@ -3060,23 +3073,42 @@ int get_dimm_id(const char *uid, unsigned int *dimm_id, unsigned int *dimm_handl
   int i;
 
   if (NULL == g_dimms) {
+    rc = NVM_SUCCESS;
+    DIMM_INFO *dimm_info;
+
+    os_mutex_lock(g_dimms_mutex);
+
+    if (g_dimms != NULL) {
+      goto done;
+    }
+
     if (NVM_SUCCESS != nvm_get_number_of_devices(&g_dimm_cnt)) {
       NVDIMM_ERR("Failed to get number of devices\n");
-      return NVM_ERR_UNKNOWN;
+      rc = NVM_ERR_UNKNOWN;
+      goto done;
     }
 
-    g_dimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * g_dimm_cnt);
-    if (NULL == g_dimms) {
+    dimm_info = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * g_dimm_cnt);
+    if (NULL == dimm_info) {
       NVDIMM_ERR("Failed to allocate memory\n");
-      return NVM_ERR_UNKNOWN;
+      rc = NVM_ERR_UNKNOWN;
+      goto done;
     }
 
-    rc = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)g_dimm_cnt, DIMM_INFO_CATEGORY_NONE, g_dimms);
+    rc = gNvmDimmDriverNvmDimmConfig.GetDimms(&gNvmDimmDriverNvmDimmConfig, (UINT32)g_dimm_cnt, DIMM_INFO_CATEGORY_NONE, dimm_info);
     if (EFI_ERROR(rc)) {
-      FreePool(g_dimms);
-      g_dimms = NULL;
+      FreePool(dimm_info);
       NVDIMM_ERR("GetDimms failed (%d)\n", rc);
-      return NVM_ERR_UNKNOWN;
+      rc = NVM_ERR_UNKNOWN;
+      goto done;
+    }
+
+    g_dimms = dimm_info;
+    
+done:
+    os_mutex_unlock(g_dimms_mutex);
+    if (rc != NVM_SUCCESS) {
+      return rc;
     }
   }
 

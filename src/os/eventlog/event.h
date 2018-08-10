@@ -12,6 +12,7 @@
 
 #include <os_types.h>
 #include <export_api.h>
+#include <NvmSharedDefs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,53 +118,73 @@ typedef struct _log_file_struct
 
 /*
 * Retrive a defined number of event log entries specified by the mask from the system event log
+*
+* @return The size of the event_buffer
 */
-NVM_API int nvm_get_system_entries(const char *source, unsigned int event_type_mask, int count, char **event_buffer);
+NVM_API size_t nvm_get_system_entries(const char *source, unsigned int event_type_mask, int count, char **event_buffer);
 
 /*
 * Store an event log entry in the system event log
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_store_system_entry(const char *source, unsigned int event_type, const char *device_uid, const char  *message, ...);
+NVM_API NvmStatusCode nvm_store_system_entry(const char *source, unsigned int event_type, const char *device_uid, const char  *message, ...);
 
 /*
 * Store an event log entry in the system event log, wide character message support
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_store_system_entry_widechar(const wchar_t *source, unsigned int event_type, const wchar_t *device_uid, const wchar_t  *message, ...);
+NVM_API NvmStatusCode nvm_store_system_entry_widechar(const wchar_t *source, unsigned int event_type, const wchar_t *device_uid, const wchar_t  *message, ...);
 
 /*
 * Return action required status for defined DIMM UID
+*
+* @return The action required status; 1 or 0
 */
 NVM_API char nvm_get_action_required(const char* dimm_uid);
 
 /*
 * Clear action required status for defined event ID
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_clear_action_required(unsigned int event_id);
+NVM_API NvmStatusCode nvm_clear_action_required(unsigned int event_id);
 
 /*
 * Remove all events matching the criteria form the log file
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_remove_events_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id);
+NVM_API NvmStatusCode nvm_remove_events_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id);
 
 /*
 * Get all events matching the criteria form the log file
+*
+* @return The event_buffer size
 */
-NVM_API int nvm_get_events_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id, int count, log_entry **pp_log_entry, char **event_buffer);
+NVM_API size_t nvm_get_events_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id, int count, log_entry **pp_log_entry, char **event_buffer);
 
 /*
 * Get all log entries matching the criteria form the log file
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_log_entries_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id, int count, log_entry **pp_log_entry);
+NVM_API NvmStatusCode nvm_get_log_entries_from_file(unsigned int event_type_mask, const char *dimm_uid, unsigned int event_id, int count, log_entry **pp_log_entry);
 
 /*
 * Get event id form the event entry
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_event_id_form_entry(char *event_entry, unsigned int *event_id);
+NVM_API NvmStatusCode nvm_get_event_id_form_entry(char *event_entry, unsigned int *event_id);
 
 /*
 * Get dimm uid form the event entry
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_uid_form_entry(char *event_entry, unsigned int size, char *dimm_uid);
+NVM_API NvmStatusCode nvm_get_uid_form_entry(char *event_entry, unsigned int size, char *dimm_uid);
 
 #ifdef __cplusplus
 }

@@ -671,7 +671,7 @@ static UINT32 get_event_id_form_entry(CHAR8* event_message)
 /*
 * Get the requested events form the system log file and prepare the string.
 * Function returns the event_buffer size.
-* The negative value indicates either the system log file access problem
+* The zero value indicates either the system log file access problem
 * or the system log file is not configured at all.
 * Function can return those entries in reversed order in case the
 * reversed bool flag is being set.
@@ -679,7 +679,7 @@ static UINT32 get_event_id_form_entry(CHAR8* event_message)
 * events which ARE NOT maching criteria are going to be returned, if FALSE
 * all events which ARE matching criteria are goint to be returned.
 */
-static int get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching, UINT32 event_type_mask, INT32 count, CONST CHAR8* dimm_uid, UINT32 event_id, log_entry **pp_log_entry, CHAR8 **event_buffer)
+static size_t get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching, UINT32 event_type_mask, INT32 count, CONST CHAR8* dimm_uid, UINT32 event_id, log_entry **pp_log_entry, CHAR8 **event_buffer)
 {
     EFI_STATUS efi_status = EFI_NOT_FOUND;
     char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
@@ -696,7 +696,7 @@ static int get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching, U
     else
         efi_status = get_the_system_log_file_name(SYSTEM_LOG_EVENT_FILE, sizeof(log_file_name), log_file_name);
     if (EFI_SUCCESS != efi_status)
-        return -1;
+        return 0;
 
     // The system event log file configured
     h_file = fopen(log_file_name, "r+");
@@ -774,7 +774,7 @@ static int get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching, U
     // Close the file
     fclose(h_file);
 
-    return (int) event_buff_size;
+    return event_buff_size;
 }
 
 /*
@@ -976,35 +976,39 @@ void log_system_event(enum system_event_type type, const char *source, const cha
 /*
 * Retrive an event log entry from the system event log
 */
-int get_system_events(char event_type_mask, int count, const char *source, char **event_buffer);
+size_t get_system_events(char event_type_mask, int count, const char *source, char **event_buffer);
 
 /*
 * Retrive a defined number of event log entries specified by the mask from the system event log
+*
+* @return The size of the event_buffer
 */
-NVM_API int nvm_get_system_entries(CONST CHAR8 *source, UINT32 event_type_mask, INT32 count, CHAR8 **event_buffer)
+NVM_API size_t nvm_get_system_entries(CONST CHAR8 *source, UINT32 event_type_mask, INT32 count, CHAR8 **event_buffer)
 {
-    int ret_value;
+    size_t buff_size;
 
     if ((event_buffer == NULL) || (*event_buffer != NULL))
     {
         // NULL pointer required
-        return -1;
+        return 0;
     }
 
-    ret_value = get_system_events_from_file(TRUE, FALSE, event_type_mask, count, NULL, SYSTEM_EVENT_NOT_APPLICABLE, NULL, event_buffer);
-    if (ret_value < 0)
+    buff_size = get_system_events_from_file(TRUE, FALSE, event_type_mask, count, NULL, SYSTEM_EVENT_NOT_APPLICABLE, NULL, event_buffer);
+    if (buff_size == 0)
     {
         // In case of the system file problem try to get those entries form
         // the system event log
-        ret_value = get_system_events(SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask), count, source, event_buffer);
+        buff_size = get_system_events(SYSTEM_EVENT_TYPE_SEVERITY_GET(event_type_mask), count, source, event_buffer);
     }
-    return ret_value;
+    return buff_size;
 }
 
 /*
 * Store an event log entry in the system event log
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event_type, const CHAR8 *device_uid, CONST CHAR8  *message, ...)
+NVM_API NvmStatusCode nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event_type, const CHAR8 *device_uid, CONST CHAR8  *message, ...)
 {
     VA_LIST args;
     NVM_EVENT_MSG event_message = { 0 };
@@ -1040,12 +1044,17 @@ NVM_API int nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event_type, con
             add_event_to_action_req_file(event_type, device_uid);
         }
     }
+    else {
+      return NVM_ERR_UNKNOWN;
+    }
 
-    return ret_code;
+    return NVM_SUCCESS;
 }
 
 /*
 * Return action required status for defined DIMM UID
+*
+* @return The action required status; 1 or 0
 */
 NVM_API char nvm_get_action_required(CONST CHAR8* dimm_uid)
 {
@@ -1054,8 +1063,10 @@ NVM_API char nvm_get_action_required(CONST CHAR8* dimm_uid)
 
 /*
 * Clear action required status for defined event ID
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_clear_action_required(UINT32 event_id)
+NVM_API NvmStatusCode nvm_clear_action_required(UINT32 event_id)
 {
     char log_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
     char dimm_uid[SYSTEM_LOG_FILE_NAME_MAX_LEN] = { 0 };
@@ -1098,7 +1109,7 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
     }
     else
     {
-        return -1;
+        return NVM_ERR_UNKNOWN;
     }
     // Event type cannot equal 0, it is stored in the log file means at least one bit needs to be set
     if (event_type && (EFI_SUCCESS == efi_status))
@@ -1125,20 +1136,22 @@ NVM_API int nvm_clear_action_required(UINT32 event_id)
                 free(new_file_buffer);
             } else {
                 fclose(h_file);
-                return -1;
+                return NVM_ERR_NO_MEM;
             }
         }
     }
 
-    return 0;
+    return NVM_SUCCESS;
 }
 
 /*
 * Remove all events matching the criteria form the log file
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dimm_uid, UINT32 event_id)
+NVM_API NvmStatusCode nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dimm_uid, UINT32 event_id)
 {
-  int Rc = 0;
+  NvmStatusCode Rc = NVM_SUCCESS;
   CHAR8 *event_buffer = NULL;
   INTN event_buffer_size = 0;
   FILE *h_file = NULL;
@@ -1175,7 +1188,7 @@ NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dim
       *p_values_init = FALSE;
     }
     else
-      Rc = -1;
+      Rc = NVM_ERR_UNKNOWN;
   }
   if (NULL != event_buffer) {
     // Free the buffer
@@ -1187,12 +1200,14 @@ NVM_API int nvm_remove_events_from_file(UINT32 event_type_mask, CONST CHAR8* dim
 
 /*
 * Get all events matching the criteria form the log file
+*
+* @return The event_buffer size
 */
-NVM_API int nvm_get_events_from_file(UINT32 event_type_mask, CONST CHAR8 *dimm_uid, UINT32 event_id, INT32 count, log_entry **pp_log_entry, CHAR8 **event_buffer)
+NVM_API size_t nvm_get_events_from_file(UINT32 event_type_mask, CONST CHAR8 *dimm_uid, UINT32 event_id, INT32 count, log_entry **pp_log_entry, CHAR8 **event_buffer)
 {
     if ((event_buffer == NULL) || (*event_buffer != NULL))
     {
-        return -1;
+        return 0;
     }
 
     return get_system_events_from_file(TRUE, FALSE, event_type_mask, count, dimm_uid, event_id, pp_log_entry, event_buffer);
@@ -1200,47 +1215,56 @@ NVM_API int nvm_get_events_from_file(UINT32 event_type_mask, CONST CHAR8 *dimm_u
 
 /*
 * Get all log entries matching the criteria form the log file
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_log_entries_from_file(UINT32 event_type_mask, CONST CHAR8 *dimm_uid, UINT32 event_id, INT32 count, log_entry **pp_log_entry)
+NVM_API NvmStatusCode nvm_get_log_entries_from_file(UINT32 event_type_mask, CONST CHAR8 *dimm_uid, UINT32 event_id, INT32 count, log_entry **pp_log_entry)
 {
     if ((pp_log_entry == NULL) || (*pp_log_entry != NULL))
     {
-        return -1;
+        return NVM_ERR_INVALIDPARAMETER;
     }
 
-    return get_system_events_from_file(TRUE, FALSE, event_type_mask, count, dimm_uid, event_id, pp_log_entry, NULL);
+    get_system_events_from_file(TRUE, FALSE, event_type_mask, count, dimm_uid, event_id, pp_log_entry, NULL);
+    return NVM_SUCCESS;
 }
 
 /*
 * Get event id form the event entry
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_event_id_form_entry(CHAR8 *event_entry, UINT32 *event_id)
+NVM_API NvmStatusCode nvm_get_event_id_form_entry(CHAR8 *event_entry, UINT32 *event_id)
 {
     if ((NULL == event_id) || (NULL == event_entry))
-        return -1;
+        return NVM_ERR_INVALIDPARAMETER;
 
     *event_id = get_event_id_form_entry(event_entry);
-    return 0;
+    return NVM_SUCCESS;
 }
 
 /*
 * Get dimm uid form the event entry
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_get_uid_form_entry(CHAR8 *event_entry, UINT32 size, CHAR8 *dimm_uid)
+NVM_API NvmStatusCode nvm_get_uid_form_entry(CHAR8 *event_entry, UINT32 size, CHAR8 *dimm_uid)
 {
     if ((NULL == dimm_uid) || (NULL == event_entry))
-        return -1;
+        return NVM_ERR_INVALIDPARAMETER;
 
     if (get_unified_id_form_event_entry(event_entry, size, dimm_uid) == 0)
-        return -2;
+        return NVM_ERR_UNKNOWN;
 
-    return 0;
+    return NVM_SUCCESS;
 }
 
 /*
 * Store an event log entry in the system event log, wide character message support
+*
+* @return NvmStatusCode
 */
-NVM_API int nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT32 event_type, CONST CHAR16 *device_uid, CONST CHAR16 *message, ...)
+NVM_API NvmStatusCode nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT32 event_type, CONST CHAR16 *device_uid, CONST CHAR16 *message, ...)
 {
   VA_LIST args;
   NVM_EVENT_MSG_W widechar_event_message = { 0 };
@@ -1251,7 +1275,7 @@ NVM_API int nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT32 event_t
   CHAR8 ascii_dimm_id[MAX_DIMM_UID_LENGTH] = { 0 };
 
   if ((NULL == source) || (NULL == message)) {
-    return -1;
+    return NVM_ERR_INVALIDPARAMETER;
   }
 
   // Convert the event message wide character string to ascii event string
@@ -1269,5 +1293,9 @@ NVM_API int nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT32 event_t
       nvm_store_system_entry(ascii_source, event_type, NULL, ascii_event_message);
     }
   }
-  return -1;
+  else {
+    return NVM_ERR_UNKNOWN;
+  }
+
+  return NVM_SUCCESS;
 }

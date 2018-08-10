@@ -456,56 +456,56 @@ initAcpiTables()
   {
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_NFIT, &PtrNfitTable)))
     {
-      NVDIMM_WARN(L"Failed to load the NFIT table from the record file.\n");
+      NVDIMM_WARN("Failed to load the NFIT table from the record file.\n");
       failures++;
     }
 
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PCAT, &PtrPcatTable)))
     {
-      NVDIMM_WARN(L"Failed to load the PCAT table from the record file.\n");
+      NVDIMM_WARN("Failed to load the PCAT table from the record file.\n");
       failures++;
     }
 
     if (EFI_ERROR(load_table_from_file(REC_FILE_ACPI_PMTT, &PtrPMTTTable)))
     {
-      //NVDIMM_WARN(L"Failed to load the PMTT table from the record file.\n");
-      //failures++;
+      NVDIMM_WARN("Failed to load the PMTT table from the record file.\n");
+      //failures++; //table allowed to be empty. Not a failure
     }
   }
   else
   {
     if (EFI_ERROR(get_nfit_table(&PtrNfitTable)))
     {
-      NVDIMM_WARN(L"Failed to get the NFIT table.\n");
+      NVDIMM_WARN("Failed to get the NFIT table.\n");
       failures++;
     }
     if (EFI_ERROR(get_pcat_table(&PtrPcatTable)))
     {
-      NVDIMM_WARN(L"Failed to get the PCAT table.\n");
+      NVDIMM_WARN("Failed to get the PCAT table.\n");
       failures++;
     }
     if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable)))
     {
-      //NVDIMM_WARN(L"Failed to get the PMTT table.\n");
-      //failures++;
+      NVDIMM_WARN("Failed to get the PMTT table.\n");
+      //failures++; //table allowed to be empty. Not a failure
     }
 
     if (RECORD_ENABLED())
     {
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_NFIT, PtrNfitTable)))
       {
-        NVDIMM_WARN(L"Failed to save the NFIT table to the record file.\n");
+        NVDIMM_WARN("Failed to save the NFIT table to the record file.\n");
         failures++;
       }
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PCAT, PtrPcatTable)))
       {
-        NVDIMM_WARN(L"Failed to save the PCAT table to the record file.\n");
+        NVDIMM_WARN("Failed to save the PCAT table to the record file.\n");
         failures++;
       }
       if (EFI_ERROR(save_table_to_file(REC_FILE_ACPI_PMTT, PtrPMTTTable)))
       {
-        //NVDIMM_WARN(L"Failed to save the PMTT table to the record file.\n");
-        //failures++;
+        NVDIMM_WARN("Failed to save the PMTT table to the record file.\n");
+        //failures++; //table allowed to be empty. Not a failure
       }
     }
   }

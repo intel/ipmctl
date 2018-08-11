@@ -77,20 +77,20 @@ DeleteDimm(
   if (pCmd == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
     ReturnCode = EFI_INVALID_PARAMETER;
-    goto FinishWithError;
+    goto Finish;
   }
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
-    goto FinishWithError;
+    goto Finish;
   }
 
  // Populate the list of DIMM_INFO structures with relevant information
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    goto FinishWithError;
+    goto Finish;
   }
 
   // initialize status structure
@@ -98,7 +98,7 @@ DeleteDimm(
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
-    goto FinishWithError;
+    goto Finish;
   }
 
   // check targets
@@ -107,12 +107,12 @@ DeleteDimm(
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
-      goto FinishWithError;
+      goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
       Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -121,12 +121,12 @@ DeleteDimm(
     ReturnCode = GetManageableDimmsNumberAndId(&DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-      goto FinishWithError;
+      goto Finish;
     }
     if (DimmIdsCount == 0) {
       Print(FORMAT_STR_NL, CLI_INFO_NO_MANAGEABLE_DIMMS);
       ReturnCode = EFI_NOT_FOUND;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -139,7 +139,7 @@ DeleteDimm(
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode != EFI_NOT_FOUND) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -148,7 +148,7 @@ DeleteDimm(
       (StrCmp(pPassphraseStatic, L"") != 0)) {
     Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
     ReturnCode = EFI_INVALID_PARAMETER;
-    goto FinishWithError;
+    goto Finish;
   }
 
   // Check -source option
@@ -160,24 +160,24 @@ DeleteDimm(
       ReturnCode = EFI_OUT_OF_RESOURCES;
       NVDIMM_ERR("Could not get -source value. Out of memory");
       Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-      goto FinishWithError;
+      goto Finish;
     }
 
     pLoadFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pLoadFilePath));
     if (pLoadFilePath == NULL) {
       Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto FinishWithError;
+      goto Finish;
     }
 
     ReturnCode = GetDeviceAndFilePath(pLoadUserPath, pLoadFilePath, &pDevicePathProtocol);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
-      goto FinishWithError;
+      goto Finish;
     }
     ReturnCode = ParseSourcePassFile(pLoadFilePath, pDevicePathProtocol, &pPassphrase, NULL);
     if (EFI_ERROR(ReturnCode)) {
-      goto FinishWithError;
+      goto Finish;
     }
 
   // Check if prompt
@@ -186,7 +186,7 @@ DeleteDimm(
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_PROMPT_INVALID);
       NVDIMM_DBG("Failed on PromptedInput");
-      goto FinishWithError;
+      goto Finish;
     }
   } else if (pPassphraseStatic != NULL) {
     pPassphrase = CatSPrint(NULL, FORMAT_STR, pPassphraseStatic);
@@ -214,7 +214,7 @@ DeleteDimm(
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
               SECURITY_OPERATION_ERASE_DEVICE, pPassphrase, NULL, pCommandStatus);
         if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
+          goto FinishCommandStatusSet;
         }
       } else {
         Print(L"Skipped erasing data from DIMM (" FORMAT_STR L")\n", DimmStr);
@@ -225,14 +225,14 @@ DeleteDimm(
     ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount,
           SECURITY_OPERATION_ERASE_DEVICE, pPassphrase, NULL, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
+      goto FinishCommandStatusSet;
     }
   }
 
-Finish:
+FinishCommandStatusSet:
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   DisplayCommandStatus(ERASE_STR, L"", pCommandStatus);
-FinishWithError:
+Finish:
   CleanUnicodeStringMemory(pPassphrase);
   CleanUnicodeStringMemory(pPassphraseStatic);
   FreeCommandStatus(&pCommandStatus);

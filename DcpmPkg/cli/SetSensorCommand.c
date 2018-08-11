@@ -77,20 +77,20 @@ SetSensor(
   if (pCmd == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
     ReturnCode = EFI_INVALID_PARAMETER;
-    goto FinishWithError;
+    goto Finish;
   }
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
-    goto FinishWithError;
+    goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    goto FinishWithError;
+    goto Finish;
   }
 
   // check targets
@@ -99,12 +99,12 @@ SetSensor(
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
-      goto FinishWithError;
+      goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
       Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -112,12 +112,12 @@ SetSensor(
     ReturnCode = GetManageableDimmsNumberAndId(&DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-      goto FinishWithError;
+      goto Finish;
     }
     if (DimmIdsCount == 0) {
       Print(FORMAT_STR_NL, CLI_INFO_NO_MANAGEABLE_DIMMS);
       ReturnCode = EFI_NOT_FOUND;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -130,7 +130,7 @@ SetSensor(
     } else {
       Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_NONCRIT_THRESHOLD);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
   if (!EFI_ERROR(ContainsProperty(pCmd, ENABLED_STATE_PROPERTY))) {
@@ -140,13 +140,13 @@ SetSensor(
     } else {
       Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
   if (!ValidPropertyAndValue) {
     Print(FORMAT_STR_NL, CLI_ERR_INCOMPLETE_SYNTAX);
     ReturnCode = EFI_INVALID_PARAMETER;
-    goto FinishWithError;
+    goto Finish;
   }
 
   if (ContainTarget(pCmd, SENSOR_TARGET)) {
@@ -160,7 +160,7 @@ SetSensor(
     } else {
       Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SENSOR);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -174,7 +174,7 @@ SetSensor(
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
-    goto FinishWithError;
+    goto Finish;
   }
 
   if (SensorId == SENSOR_TYPE_CONTROLLER_TEMPERATURE) {
@@ -202,7 +202,7 @@ SetSensor(
         ReturnCode = pNvmDimmConfigProtocol->SetAlarmThresholds(pNvmDimmConfigProtocol, &pDimmIds[Index], 1,
               SensorId, NonCriticalThreshold, EnabledState, pCommandStatus);
         if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
+          goto FinishCommandStatusSet;
         }
       } else {
         Print(L"Skipped modifying settings for DIMM (" FORMAT_STR L")\n", DimmStr);
@@ -213,16 +213,14 @@ SetSensor(
     ReturnCode = pNvmDimmConfigProtocol->SetAlarmThresholds(pNvmDimmConfigProtocol, &pDimmIds[Index], DimmIdsCount,
           SensorId, NonCriticalThreshold, EnabledState, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
+      goto FinishCommandStatusSet;
     }
   }
 
-Finish:
-  if (pCommandStatus != NULL) {
-    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-  }
+FinishCommandStatusSet:
+  ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   DisplayCommandStatus(pCommandStatusMessage, L" on", pCommandStatus);
-FinishWithError:
+Finish:
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pCommandStatusMessage);

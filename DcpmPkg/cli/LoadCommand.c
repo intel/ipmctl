@@ -114,13 +114,13 @@ Load (
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
-    goto FinishWithError;
+    goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    goto FinishWithError;
+    goto Finish;
   }
 
   // check targets
@@ -129,12 +129,12 @@ Load (
     ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
-      goto FinishWithError;
+      goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
       Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -142,12 +142,12 @@ Load (
     ReturnCode = GetManageableDimmsNumberAndId(&DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-      goto FinishWithError;
+      goto Finish;
     }
     if (DimmIdsCount == 0) {
       Print(FORMAT_STR_NL, CLI_INFO_NO_MANAGEABLE_DIMMS);
       ReturnCode = EFI_NOT_FOUND;
-      goto FinishWithError;
+      goto Finish;
     }
   }
 
@@ -228,7 +228,7 @@ Load (
        pFwImageInfo->ImageVersion.BuildNumber.Build);
     } else {
       Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
-      goto FinishWithError;
+      goto FinishCommandStatusSet;
     }
     DisplayCommandStatus(L"", L"", pCommandStatus);
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
@@ -270,7 +270,7 @@ Load (
         }
 
         if (EFI_ERROR(ReturnCode)) {
-          goto FinishWithError;
+          goto FinishCommandStatusSet;
         }
 
         ReturnCode = PollLongOpStatus(pNvmDimmConfigProtocol, pDimmIds[Index],
@@ -281,7 +281,7 @@ Load (
             ReturnCode = EFI_SUCCESS;
           } else {
             ResetCmdStatus(pCommandStatus, NVM_ERR_FIRMWARE_FAILED_TO_STAGE);
-            goto FinishWithError;
+            goto FinishCommandStatusSet;
           }
         }
         DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
@@ -289,7 +289,7 @@ Load (
     goto Finish;
   }
 
-FinishWithError:
+FinishCommandStatusSet:
   DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
 Finish:

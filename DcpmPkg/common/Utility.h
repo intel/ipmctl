@@ -69,23 +69,23 @@ typedef union {
 #define FW_UPDATE_SUBOPCODE 0x00
 
 // Last shutdown status string values
-#define LAST_SHUTDOWN_STATUS_PM_ADR_STR               L"PM ADR Command"
-#define LAST_SHUTDOWN_STATUS_PM_S3_STR                L"PM S3"
-#define LAST_SHUTDOWN_STATUS_PM_S5_STR                L"PM S5"
-#define LAST_SHUTDOWN_STATUS_DDRT_POWER_FAIL_STR      L"DDRT Power Fail Command"
+#define LAST_SHUTDOWN_STATUS_PM_ADR_STR               L"PM ADR Command Received"
+#define LAST_SHUTDOWN_STATUS_PM_S3_STR                L"PM S3 Received"
+#define LAST_SHUTDOWN_STATUS_PM_S5_STR                L"PM S5 Received"
+#define LAST_SHUTDOWN_STATUS_DDRT_POWER_FAIL_STR      L"DDRT Power Fail Command Received"
 #define LAST_SHUTDOWN_STATUS_PMIC_POWER_LOSS_STR      L"PMIC 12V/DDRT 1.2 Power Loss (PLI)"
-#define LAST_SHUTDOWN_STATUS_PM_WARM_RESET_STR        L"PM Warm Reset"
-#define LAST_SHUTDOWN_STATUS_THERMAL_SHUTDOWN_STR     L"Thermal Shutdown"
+#define LAST_SHUTDOWN_STATUS_PM_WARM_RESET_STR        L"PM Warm Reset Received"
+#define LAST_SHUTDOWN_STATUS_THERMAL_SHUTDOWN_STR     L"Thermal Shutdown Received"
 #define LAST_SHUTDOWN_STATUS_FW_FLUSH_COMPLETE_STR    L"Controller's FW State Flush Complete"
 #define LAST_SHUTDOWN_STATUS_UNKNOWN_STR              L"Unknown"
 
 // Last shutdown status extended string values
-#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                 L"Viral Interrupt"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR   L"Surprise Clock Stop"
+#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                 L"Viral Interrupt Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR   L"Surprise Clock Stop Received"
 #define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR       L"Write Data Flush Complete"
-#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4"
-#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset"
+#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4 Received"
+#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"

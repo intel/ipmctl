@@ -339,7 +339,7 @@ SmartAndHealthCheck(
 
   //Package spare availability check
   if ((DimmInfo.PackageSparingCapable == PACKAGE_SPARING_CAPABLE) && (DimmInfo.PackageSparesAvailable == PACKAGE_SPARES_NOT_AVAILABLE)) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_NO_SPARE_DIE_AVAILABLE), EVENT_CODE_529, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_NO_PACKAGE_SPARES_AVAILABLE), EVENT_CODE_529, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr);
   }
 

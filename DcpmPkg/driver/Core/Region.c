@@ -133,20 +133,23 @@ It's also initializing the region list if it's necessary.
 
 @retval pointer to the region list
 **/
-LIST_ENTRY *
-GetRegionList()
+EFI_STATUS
+GetRegionList(LIST_ENTRY **ppRegionList)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  if (!gNvmDimmData->PMEMDev.RegionsInitialized) {
+  if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
     ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
       &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
-    } else
-      gNvmDimmData->PMEMDev.RegionsInitialized = TRUE;
+    }
+    else
+      gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
   }
-  return &gNvmDimmData->PMEMDev.ISs; //IS is region
+  if (NULL != ppRegionList) {
+    *ppRegionList = &gNvmDimmData->PMEMDev.ISs; //IS is region
+  }
+  return ReturnCode;
 }
 
 /**
@@ -339,6 +342,7 @@ RetrieveISsFromPlatformConfigData(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS IReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
   NVDIMM_CONFIGURATION_HEADER *pPcdConfHeader = NULL;
@@ -369,8 +373,12 @@ RetrieveISsFromPlatformConfigData(
       }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_SUCCESS;
-      continue;
+      if (EFI_NO_RESPONSE == ReturnCode)
+        /* Save the return code here and continue with the execution for rest of the dimms.
+          This is done to make the UEFI initialization succeed. During UEFI init,
+          return code will be ignored but we have to error out when the actual command is executed. */
+        IReturnCode = ReturnCode;
+        continue;
     }
 
     if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
@@ -466,7 +474,8 @@ RetrieveISsFromPlatformConfigData(
     pPcdConfHeader = NULL;
   }
   FREE_POOL_SAFE(pPcdConfHeader);
-  return ReturnCode;
+
+  return IReturnCode != EFI_SUCCESS ? IReturnCode : ReturnCode;
 }
 
 

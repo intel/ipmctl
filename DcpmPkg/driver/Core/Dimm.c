@@ -24,7 +24,11 @@
 
 #define SMBIOS_TYPE_MEM_DEV             17
 #define SMBIOS_TYPE_MEM_DEV_MAPPED_ADDR 20
-
+#ifdef PCD_CACHE_ENABLED
+int gPCDCacheEnabled = 1;
+#else
+int gPCDCacheEnabled = 0;
+#endif
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
   512,  //  512 (default)
@@ -1840,11 +1844,11 @@ Finish:
   @retval EFI_OUT_OF_RESOURCES: memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetPlatformConfigData (
+FwCmdGetPlatformConfigData(
   IN     DIMM *pDimm,
   IN     UINT8 PartitionId,
-     OUT UINT8 **ppRawData
-  )
+  OUT UINT8 **ppRawData
+)
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   FW_CMD *pFwCmd = NULL;
@@ -1889,20 +1893,20 @@ FwCmdGetPlatformConfigData (
 
   *ppRawData = AllocateZeroPool(PcdSize);
   if (*ppRawData == NULL) {
-      NVDIMM_WARN("Can't allocate memory for Platform Config Data (%d bytes)", PcdSize);
-      Rc = EFI_OUT_OF_RESOURCES;
-      goto Finish;
+    NVDIMM_WARN("Can't allocate memory for Platform Config Data (%d bytes)", PcdSize);
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Finish;
   }
 
-#ifdef PCD_CACHE_ENABLED
-  if (pDimm->pPcdLsa && PartitionId == PCD_LSA_PARTITION_ID) {
-    CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdLsa, PcdSize);
-    goto Finish;
-  } else if (pDimm->pPcdOem && PartitionId == PCD_OEM_PARTITION_ID) {
-    CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdOem, PcdSize);
-    goto Finish;
+  if (gPCDCacheEnabled) {
+    if (pDimm->pPcdLsa && PartitionId == PCD_LSA_PARTITION_ID) {
+      CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdLsa, PcdSize);
+      goto Finish;
+    } else if (pDimm->pPcdOem && PartitionId == PCD_OEM_PARTITION_ID) {
+      CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdOem, PcdSize);
+      goto Finish;
+    }
   }
-#endif /* PCD_CACHE_ENABLED */
 
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
@@ -1946,7 +1950,7 @@ FwCmdGetPlatformConfigData (
         }
         goto Finish;
       }
-      CopyMem_S(pBuffer + Offset, PcdSize-Offset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+      CopyMem_S(pBuffer + Offset, PcdSize - Offset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
     }
   } else {
     /** Get PCD by large payload in single call **/
@@ -1971,35 +1975,34 @@ FwCmdGetPlatformConfigData (
     }
   }
 
-#ifdef PCD_CACHE_ENABLED
-  VOID *pTempCache = NULL;
-  UINTN pTempCacheSz = 0;
+  if (gPCDCacheEnabled) {
+    VOID *pTempCache = NULL;
+    UINTN pTempCacheSz = 0;
 
-  if (PartitionId == PCD_LSA_PARTITION_ID) {
-     pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
-     pTempCache = pDimm->pPcdLsa;
-     pTempCacheSz = pDimm->PcdLsaPartitionSize;
-  }
-  else if (PartitionId == PCD_OEM_PARTITION_ID) {
-     pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
-     pTempCache = pDimm->pPcdOem;
-     pTempCacheSz = pDimm->PcdOemPartitionSize;
-  }
+    if (PartitionId == PCD_LSA_PARTITION_ID) {
+      pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
+      pTempCache = pDimm->pPcdLsa;
+      pTempCacheSz = pDimm->PcdLsaPartitionSize;
+    }
+    else if (PartitionId == PCD_OEM_PARTITION_ID) {
+      pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
+      pTempCache = pDimm->pPcdOem;
+      pTempCacheSz = pDimm->PcdOemPartitionSize;
+    }
 
-  if (UseSmallPayload) {
-     CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
-     if (NULL != pTempCache) {
+    if (UseSmallPayload) {
+      CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
+      if (NULL != pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pBuffer, PcdSize);
-     }
-  }
-  else {
-     CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
-     if (NULL != pTempCache) {
+      }
+    } else {
+      CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
+      if (NULL != pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pFwCmd->LargeOutputPayload, PcdSize);
-     }
+      }
+    }
+    goto Finish;
   }
-  goto Finish;
-#endif /* PCD_CACHE_ENABLED */
   if (UseSmallPayload) {
     CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
   } else {
@@ -2222,17 +2225,16 @@ FwCmdGetPcdSmallPayload(
     goto Finish;
   }
 
+
   /*
   * PcdSize is 0 if Media is disabled.
   * PcdSize was retrieved at driver load time so it is possible that since load time there
   * was a fatal media error that this would not catch. We would then be returning cached data
   * from a media disabled DIMM instead of erroring out. This case is purposefully ignored.
   */
-  if (pDimm->PcdOemPartitionSize == 0) {
-    ReturnCode = EFI_NO_MEDIA;
-    goto Finish;
+  if (gPCDCacheEnabled && pDimm->PcdOemPartitionSize == 0) {
+    gPCDCacheEnabled = 0;
   }
-
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -2308,14 +2310,13 @@ GetPcdOemConfigDataUsingSmallPayload(
     goto Finish;
   }
 
-  if (pDimm->PcdOemPartitionSize == 0) {
-    Rc = EFI_NO_MEDIA;
-    goto Finish;
+// Disable the cache when media is disabled or when the fw is busy
+  if (gPCDCacheEnabled && pDimm->PcdOemPartitionSize == 0) {
+    gPCDCacheEnabled = 0;
   }
-#ifdef PCD_CACHE_ENABLED
+
   // Return the cached data
-  if (pDimm->pPcdOem)
-  {
+  if (gPCDCacheEnabled && pDimm->pPcdOem) {
     *ppRawData = AllocateZeroPool(pDimm->PcdOemSize);
     if (*ppRawData == NULL) {
       NVDIMM_WARN("Can't allocate memory for Platform Config Data (%d bytes)", pDimm->PcdOemSize);
@@ -2327,7 +2328,7 @@ GetPcdOemConfigDataUsingSmallPayload(
     *pRawDataSize = pDimm->PcdOemSize;
     goto Finish;
   }
-#endif /* PCD_CACHE_ENABLED */
+
   // Read first block which includes config header
   Rc = FwCmdGetPcdSmallPayload(pDimm, PCD_OEM_PARTITION_ID, 0, TmpBuf, sizeof(TmpBuf));
   if (EFI_ERROR(Rc)) {
@@ -2376,9 +2377,8 @@ GetPcdOemConfigDataUsingSmallPayload(
     }
   }
 
-#ifdef PCD_CACHE_ENABLED
-  if (OemDataSize > 0)
-  {
+
+  if ( gPCDCacheEnabled && OemDataSize > 0) {
     VOID *pTempCache = NULL;
 
     // Save data cache info
@@ -2389,7 +2389,6 @@ GetPcdOemConfigDataUsingSmallPayload(
       CopyMem_S(pTempCache, PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE, pBuffer, OemDataSize);
     }
   }
-#endif /* PCD_CACHE_ENABLED */
   //Assign new data to the requester data pointer
   *ppRawData = pBuffer;
   *pRawDataSize = OemDataSize;
@@ -2434,10 +2433,9 @@ FwCmdSetPlatformConfigData (
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
   BOOLEAN UseSmallPayload = FALSE;
-#ifdef PCD_CACHE_ENABLED
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
-#endif /* PCD_CACHE_ENABLED */
+
   NVDIMM_ENTRY();
 
   SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
@@ -2460,14 +2458,14 @@ FwCmdSetPlatformConfigData (
       Rc = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-#ifdef PCD_CACHE_ENABLED
-    if (NULL == pDimm->pPcdOem) {
-      pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
-		}
-    pDimm->PcdOemSize = RawDataSize;
-    pTempCache = pDimm->pPcdOem;
-    pTempCacheSz = PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE;
-#endif /* PCD_CACHE_ENABLED */
+    if (gPCDCacheEnabled) {
+      if (NULL == pDimm->pPcdOem) {
+        pDimm->pPcdOem = AllocateZeroPool(PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
+      }
+      pDimm->PcdOemSize = RawDataSize;
+      pTempCache = pDimm->pPcdOem;
+      pTempCacheSz = PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE;
+    }
     // If partition size is 0, then prevent write
     if (0 == pDimm->PcdOemPartitionSize) {
       Rc = EFI_INVALID_PARAMETER;
@@ -2475,13 +2473,13 @@ FwCmdSetPlatformConfigData (
     }
     PcdSize = RawDataSize;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
-#ifdef PCD_CACHE_ENABLED
-    if (NULL == pDimm->pPcdLsa) {
-      pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
+    if (gPCDCacheEnabled) {
+      if (NULL == pDimm->pPcdLsa) {
+        pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
+      }
+      pTempCache = pDimm->pPcdLsa;
+      pTempCacheSz = pDimm->PcdLsaPartitionSize;
     }
-    pTempCache = pDimm->pPcdLsa;
-    pTempCacheSz = pDimm->PcdLsaPartitionSize;
-#endif /* PCD_CACHE_ENABLED */
     PcdSize = pDimm->PcdLsaPartitionSize;
 	}
 	if (PcdSize == 0) {
@@ -2539,14 +2537,11 @@ FwCmdSetPlatformConfigData (
           Rc = MatchFwReturnCode(pFwCmd->Status);
         }
         goto Finish;
-      }
-#ifdef PCD_CACHE_ENABLED
-      else {
+      } else if (gPCDCacheEnabled){
         if (pTempCache) {
           CopyMem_S((INT8*)(pTempCache) + Offset, pTempCacheSz - Offset, InPayloadSetData.Data, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
         }
       }
-#endif /* PCD_CACHE_ENABLED */
     }
   } else {
     /** Set PCD by large payload in single call **/
@@ -2567,14 +2562,11 @@ FwCmdSetPlatformConfigData (
       if (FW_ERROR(pFwCmd->Status)) {
         Rc = MatchFwReturnCode(pFwCmd->Status);
       }
-    }
-#ifdef PCD_CACHE_ENABLED
-    else {
+    } else if (gPCDCacheEnabled) {
       if (pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pPartition, PcdSize);
       }
     }
-#endif /* PCD_CACHE_ENABLED */
   }
 
 Finish:
@@ -4724,7 +4716,7 @@ InitializeDimm (
     ReturnCode = FwCmdGetDimmPartitionInfo(pNewDimm, pPartitionInfoPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NOT_READY) {
+      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
@@ -4760,7 +4752,7 @@ InitializeDimm (
     ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_OEM_PARTITION_ID, &PcdSize);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NOT_READY) {
+      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
@@ -4773,7 +4765,7 @@ InitializeDimm (
     ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_LSA_PARTITION_ID, &PcdSize);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NOT_READY) {
+      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
@@ -5512,7 +5504,8 @@ GetPlatformConfigDataOemPartition (
   }
 
   if (EFI_ERROR(ReturnCode) || *ppPlatformConfigData == NULL) {
-    NVDIMM_WARN("Error calling Get Platform Config Data FW command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    NVDIMM_DBG("Error calling Get Platform Config Data FW command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+
     goto Finish;
   }
 
@@ -5674,8 +5667,10 @@ MatchFwReturnCode (
     break;
 
   case FW_DEVICE_BUSY:
+    ReturnCode = EFI_NO_RESPONSE;
+    break;
   case FW_MEDIA_DISABLED:
-    ReturnCode = EFI_NOT_READY;
+    ReturnCode = EFI_NO_MEDIA;
     break;
 
   case FW_INCORRECT_PASSPHRASE:

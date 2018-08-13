@@ -392,6 +392,7 @@ GetNewSequenceNumber(
   }
 #endif // MEMORY_CORRUPTIO_WA
   if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("GetPlatformConfigDataOemPartition returned EFIReturnCode:%d", ReturnCode);
     goto Finish;
   }
 

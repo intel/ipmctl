@@ -224,6 +224,11 @@ SmartAndHealthCheck(
 
   ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, &AitDramEnabled);
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_FW_BUSY), EVENT_CODE_541, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
+        pDimm->DeviceHandle.AsUint32);
+      goto Finish;
+    }
     NVDIMM_DBG("Failed to Get SMART Info from Dimm 0x%x", pDimm->DeviceHandle.AsUint32);
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     goto Finish;

@@ -59,6 +59,7 @@ RegisterLoadCommand (
   @retval EFI_INVALID_PARAMETER if the user input is invalid or the file validation fails
   @retval EFI_UNSUPPORTED if the driver is not loaded or there are no DCPMMs in the system.
   @retval EFI_NOT_FOUND if there is no DIMM with the user specified PID
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 Load (

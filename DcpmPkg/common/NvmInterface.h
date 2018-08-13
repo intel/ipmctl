@@ -288,6 +288,7 @@ EFI_STATUS
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 typedef
@@ -357,6 +358,7 @@ EFI_STATUS
   @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMMs is detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS security state correctly set
 **/
 typedef
@@ -381,6 +383,7 @@ EFI_STATUS
   @retval EFI_ABORTED PCAT tables not found
   @retval Other errors failure of FW commands
   @retval EFI_SUCCESS Success
+  @retval EFI_NO_RESPONSE FW busy on one or more dimms
 **/
 typedef
 EFI_STATUS
@@ -411,16 +414,17 @@ EFI_STATUS
 	);
 
 /**
-Retrieve the details about the region specified with region id
+  Retrieve the details about the region specified with region id
 
-@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
-@param[in] RegionId The region id of the region to retrieve
-@param[out] pRegion A pointer to the region
-@param[out] pCommandStatus Structure containing detailed NVM error codes
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
+  @param[in] RegionId The region id of the region to retrieve
+  @param[out] pRegion A pointer to the region
+  @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
-@retval EFI_SUCCESS The region was returned properly
-@retval EFI_INVALID_PARAMETER pRegion is NULL
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_SUCCESS The region was returned properly
+  @retval EFI_INVALID_PARAMETER pRegion is NULL
+  @retval EFI_NO_RESPONSE FW busy on one or more dimms
 **/
 typedef
 EFI_STATUS
@@ -660,6 +664,7 @@ EFI_STATUS
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 typedef
@@ -730,6 +735,7 @@ EFI_STATUS
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  EFI_DCPMM_CONFIG_DELETE_GOAL DeleteGoalConfig;
   @retval EFI_SUCCESS All Ok
 **/
 typedef
@@ -757,6 +763,7 @@ EFI_STATUS
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 typedef
@@ -783,6 +790,7 @@ EFI_STATUS
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 typedef
@@ -980,6 +988,7 @@ EFI_STATUS
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All ok
 **/
 typedef
@@ -1079,6 +1088,7 @@ EFI_STATUS
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 typedef
 EFI_STATUS

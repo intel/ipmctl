@@ -99,7 +99,7 @@ typedef struct _PMEM_DEV {
   LIST_ENTRY Namespaces;
 
   BOOLEAN DimmSkuConsistency;
-  BOOLEAN RegionsInitialized;
+  BOOLEAN RegionsAndNsInitialized;
   BOOLEAN NamespacesInitialized;
   BOOLEAN IsMemModeAllowedByBios;
 
@@ -271,6 +271,7 @@ AddStringToUnicodeTable(
   @retval EFI_INVALID_PARAMETER if any of pointer parameters in NULL
   @retval EFI_ABORTED if at least one DIMM is not responding.
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 ReenumerateNamespacesAndISs(

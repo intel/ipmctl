@@ -43,6 +43,7 @@ struct Command DeleteGoalCommand =
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_NOT_READY Invalid device state to perform action
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 DeleteGoal(

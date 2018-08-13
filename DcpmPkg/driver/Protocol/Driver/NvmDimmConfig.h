@@ -350,6 +350,7 @@ GetSecurityState(
   @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMMs detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS security state correctly set
 **/
 EFI_STATUS
@@ -431,6 +432,7 @@ GetAcpiPMTT(
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
   **/
 EFI_STATUS
@@ -455,6 +457,7 @@ GetPcd(
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -561,32 +564,34 @@ UpdateFw(
 
 
 /**
-Retrieve the number of regions in the system
+  Retrieve the number of regions in the system
 
-@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[out] pCount The number of regions found.
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[out] pCount The number of regions found.
 
-@retval EFI_SUCCESS  The count was returned properly
-@retval EFI_INVALID_PARAMETER pCount is NULL.
+  @retval EFI_SUCCESS  The count was returned properly
+  @retval EFI_INVALID_PARAMETER pCount is NULL.
+  @retval EFI_NO_RESPONSE FW busy on one or more dimms
 **/
 EFI_STATUS
 EFIAPI
 GetRegionCount(
-  IN    EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  OUT   UINT32 *pCount
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  OUT UINT32 *pCount
 );
 
 /**
-Retrieve the region list
+  Retrieve the region list
 
-@param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[in] Count The number of regions.
-@param[out] pRegions The region info list
-@param[out] pCommandStatus Structure containing detailed NVM error codes
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] Count The number of regions.
+  @param[out] pRegions The region info list
+  @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-@retval EFI_SUCCESS  The region list was returned properly
-@retval EFI_INVALID_PARAMETER pRegions is NULL.
-@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_SUCCESS  The region list was returned properly
+  @retval EFI_INVALID_PARAMETER pRegions is NULL.
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_NO_RESPONSE FW busy on one or more dimms
 **/
 EFI_STATUS
 EFIAPI
@@ -925,6 +930,7 @@ GetDriverApiVersion(
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All ok
 **/
 EFI_STATUS
@@ -953,6 +959,7 @@ EFIAPI GetNamespaces (
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -991,6 +998,7 @@ GetActualRegionsGoalCapacities(
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -1023,6 +1031,7 @@ CreateGoalConfig (
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -1051,6 +1060,7 @@ DeleteGoalConfig (
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -1077,6 +1087,7 @@ GetGoalConfigs(
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -1302,6 +1313,8 @@ DumpFwDebugLog(
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+
 **/
 EFI_STATUS
 EFIAPI

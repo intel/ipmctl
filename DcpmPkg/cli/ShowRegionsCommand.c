@@ -109,6 +109,7 @@ RegionHealthToString(
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 ShowRegions(
@@ -256,8 +257,15 @@ ShowRegions(
     UnitsToDisplay = UnitsOption;
   }
 
-  pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, &RegionCount);
-
+  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, &RegionCount);
+  if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    DisplayCommandStatus(L"Show region", L" on", pCommandStatus);
+    goto Finish;
+  }
   if (0 == RegionCount) {
     Print(FORMAT_STR_NL, CLI_INFO_NO_REGIONS);
     goto Finish;

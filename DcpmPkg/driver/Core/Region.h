@@ -169,8 +169,8 @@ GetRegionById(
 
   @retval pointer to the pool list
 **/
-LIST_ENTRY *
-GetRegionList();
+EFI_STATUS
+GetRegionList(LIST_ENTRY **ppRegionList);
 
 /**
   Clean the Interleave Set

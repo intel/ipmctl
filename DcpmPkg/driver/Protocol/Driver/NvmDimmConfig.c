@@ -1854,6 +1854,7 @@ Finish:
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -1916,6 +1917,8 @@ GetGoalConfigs(
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
+    } else if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     }
     NVDIMM_ERR("ERROR: RetrieveGoalConfigsFromPlatformConfigData");
     goto Finish;
@@ -2428,6 +2431,7 @@ Finish:
   @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMMs detected
   @retval EFI_DEVICE_ERROR setting state for a DIMM failed
   @retval EFI_NOT_FOUND a DIMM was not found
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS security state correctly set
 **/
 EFI_STATUS
@@ -2725,6 +2729,8 @@ SetSecurityState(
       if (ReturnCode == EFI_ACCESS_DENIED) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PASSPHRASE);
         goto Finish;
+      } else if (EFI_NO_RESPONSE == ReturnCode) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_BUSY_DEVICE);
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
       }
@@ -2991,6 +2997,7 @@ Finish:
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -3043,7 +3050,6 @@ GetPcd(
     }
 	if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
 		ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], &pPcdConfHeader);
-
 		if (ReturnCode == EFI_NO_MEDIA) {
 		  continue;
 		}
@@ -3054,6 +3060,10 @@ GetPcd(
 		}
 #endif // MEMORY_CORRUPTIO_WA
 		if (EFI_ERROR(ReturnCode)) {
+      if (ReturnCode == EFI_NO_RESPONSE) {
+        ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+        goto FinishError;
+      }
 			NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
 			SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
 			goto FinishError;
@@ -3126,6 +3136,7 @@ Finish:
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -3274,6 +3285,7 @@ Finish:
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER pCount is NULL.
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 EFIAPI
@@ -3284,12 +3296,12 @@ GetRegionCount(
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   LIST_ENTRY *pRegionNode = NULL;
-  LIST_ENTRY *pRegionList = GetRegionList();
+  LIST_ENTRY *pRegionList = NULL;
+
 
   NVDIMM_ENTRY();
-
   /**
-    check input parameters
+  check input parameters
   **/
   if (pCount == NULL) {
     NVDIMM_DBG("pCount is NULL");
@@ -3298,6 +3310,18 @@ GetRegionCount(
   }
 
   *pCount = 0;
+  Rc = ReenumerateNamespacesAndISs();
+  if (EFI_ERROR(Rc)) {
+    if (EFI_NO_RESPONSE == Rc) {
+      goto Finish;
+    }
+  }
+
+  Rc = GetRegionList(&pRegionList);
+  if (EFI_NO_RESPONSE == Rc) {
+    goto Finish;
+  }
+
   LIST_FOR_EACH(pRegionNode, pRegionList) {
     (*pCount)++;
   }
@@ -3359,6 +3383,7 @@ INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2)
   @retval EFI_SUCCESS  The region list was returned properly
   @retval EFI_INVALID_PARAMETER pRegions is NULL.
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_NO_RESPONSE FW busy on one or more dimms
 **/
 EFI_STATUS
 EFIAPI
@@ -3373,10 +3398,17 @@ GetRegions(
   UINT32 Index = 0;
   NVM_IS *pCurRegion = NULL;
   LIST_ENTRY *pCurRegionNode = NULL;
-  LIST_ENTRY *pRegionList = GetRegionList();
+  LIST_ENTRY *pRegionList = NULL;
 
   NVDIMM_ENTRY();
 
+  Rc = GetRegionList(&pRegionList);
+  if (EFI_ERROR(Rc)) {
+    if (EFI_NO_RESPONSE == Rc) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    goto Finish;
+  }
   /**
     check input parameters
   **/
@@ -3443,9 +3475,16 @@ GetRegion(
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   NVM_IS *pRegion = NULL;
-  LIST_ENTRY *pRegionList = GetRegionList();
-
+  LIST_ENTRY *pRegionList = NULL;
   NVDIMM_ENTRY();
+  Rc = ReenumerateNamespacesAndISs();
+  if (EFI_ERROR(Rc)) {
+    goto Finish;
+  }
+  Rc = GetRegionList(&pRegionList);
+  if (pRegionList == NULL) {
+    goto Finish;
+  }
   Rc = EFI_SUCCESS;
 
   if (pRegionInfo == NULL || pCommandStatus == NULL) {
@@ -5233,6 +5272,9 @@ GetActualRegionsGoalCapacities(
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
     goto Finish;
   }
 
@@ -5452,6 +5494,7 @@ Finish:
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -5573,7 +5616,9 @@ CreateGoalConfig(
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
   if (EFI_ERROR(ReturnCode)) {
-
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
     goto Finish;
   }
 
@@ -5813,6 +5858,7 @@ Finish:
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -5870,6 +5916,9 @@ DeleteGoalConfig (
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
     goto Finish;
   }
 
@@ -5918,6 +5967,7 @@ Finish:
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -5952,6 +6002,13 @@ DumpGoalConfig(
      goto Finish;
   }
 #endif
+  ReturnCode = ReenumerateNamespacesAndISs();
+  if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    goto Finish;
+  }
 
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;
@@ -5964,7 +6021,7 @@ DumpGoalConfig(
 #ifdef OS_BUILD
   //triggers PCD read
   GetMemoryResourcesInfo(pThis, &MemoryResourcesInfo);
-  GetRegionList();
+  GetRegionList(NULL);
 #endif
   /** Get an array of dimms' current config **/
   ReturnCode = GetDimmsCurrentConfig(&pDimmConfigs, &DimmConfigsNum);
@@ -6363,7 +6420,7 @@ Finish:
 	EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimms[MAX_DIMMS_PER_SOCKET];
   NVM_IS *pIS = NULL;
-  LIST_ENTRY *pRegionList = GetRegionList();
+  LIST_ENTRY *pRegionList = NULL;
   NAMESPACE *pNamespace = NULL;
   NAMESPACE_LABEL *pLabel = NULL;
   NAMESPACE_LABEL **ppLabels = NULL;
@@ -6397,10 +6454,13 @@ Finish:
 
   NVDIMM_ENTRY();
 
+  ReturnCode = GetRegionList(&pRegionList);
+
   if (pThis == NULL || pCommandStatus == NULL || ((DimmPid == DIMM_PID_NOTSET) == (RegionId == REGION_ID_NOTSET)) ||
-    BlockSize == 0 || pActualNamespaceCapacity == NULL || pNamespaceId == NULL) {
+    BlockSize == 0 || pActualNamespaceCapacity == NULL || pNamespaceId == NULL || EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
+
 
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;
@@ -6729,6 +6789,7 @@ Finish:
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
   @retval EFI_SUCCESS All ok
 **/
 EFI_STATUS
@@ -6748,7 +6809,13 @@ GetNamespaces (
   if (pThis == NULL || pNamespaceListNode == NULL || pNamespacesCount == NULL || pCommandStatus == NULL) {
     goto Finish;
   }
-
+  ReturnCode = ReenumerateNamespacesAndISs();
+  if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    goto Finish;
+  }
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
@@ -7242,6 +7309,7 @@ Finish:
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 EFIAPI
@@ -7299,6 +7367,8 @@ SetOptionalConfigurationDataPolicy(
     if (EFI_ERROR(ReturnCode)) {
       if (ReturnCode == EFI_SECURITY_VIOLATION) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
+      } else if (ReturnCode == EFI_NO_RESPONSE) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_BUSY_DEVICE);
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FW_SET_OPTIONAL_DATA_POLICY_FAILED);
       }
@@ -8828,6 +8898,7 @@ CheckPCDAutoConfVars(
 
   for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pConfHeader);
+
 #ifdef MEMORY_CORRUPTION_WA
   if (ReturnCode == EFI_DEVICE_ERROR) {
 		ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pConfHeader);

@@ -133,7 +133,7 @@ CleanNamespacesAndISs(
     Remove Interleave Sets
   **/
   CleanISLists(&gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
-
+  gNvmDimmData->PMEMDev.RegionsAndNsInitialized = FALSE;
 Finish:
 #endif
   return ReturnCode;
@@ -148,6 +148,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER if any of pointer parameters in NULL
   @retval EFI_ABORTED if at least one DIMM is not responding.
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 ReenumerateNamespacesAndISs(
@@ -161,17 +162,22 @@ ReenumerateNamespacesAndISs(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to clean namespaces and pools");
   }
-
   /** Initialize Interleave Sets **/
   ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
     &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      goto Finish;
+    }
     NVDIMM_WARN("Failed to retrieve the Interleave Set and Region list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
   }
 
   /** Initialize Namespaces (read LSA, enumerate every namespace) **/
   ReturnCode = InitializeNamespaces();
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      goto Finish;
+    }
     NVDIMM_WARN("Failed to re-initialize namespaces, error = " FORMAT_EFI_STATUS ".", ReturnCode);
   }
 
@@ -180,8 +186,10 @@ ReenumerateNamespacesAndISs(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed to install protocols on namespaces, error = " FORMAT_EFI_STATUS ".", ReturnCode);
   }
-#endif
+  gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
   NVDIMM_EXIT_I64(ReturnCode);
+Finish:
+#endif
   return ReturnCode;
 }
 

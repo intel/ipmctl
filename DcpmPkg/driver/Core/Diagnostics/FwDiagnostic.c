@@ -507,7 +507,7 @@ ThresholdsCheck(
 
   if (SensorInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, SensorInfo.MediaTempShutdownThresh);
+      pDimm->DeviceHandle.AsUint32, MediaTemperatureThreshold, SensorInfo.MediaTempShutdownThresh);
   }
 
   ReturnCode = GetAlarmThresholds(NULL,

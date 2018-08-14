@@ -141,13 +141,13 @@ SetDimm(
   UINT64 TemperatureInteger;
   UINT64 PoisonAddress;
   UINT64 PercentageRemaining;
-  UINT8  PoisonType = POISON_MEMORY_TYPE_PATROLSCRUB;
-  UINT8 ErrorInjectionTypeSet = 0;
-  UINT8 PoisonTypeValid = 0;
-  UINT8 ClearStatus = 0;
-  UINT8 FatalMediaError;
-  UINT8 PackageSparing;
-  UINT8 DirtyShutDown;
+  UINT64  PoisonType = POISON_MEMORY_TYPE_PATROLSCRUB;
+  UINT64 ErrorInjectionTypeSet = 0;
+  UINT64 PoisonTypeValid = 0;
+  UINT64 ClearStatus = 0;
+  UINT64 FatalMediaError;
+  UINT64 PackageSparing;
+  UINT64 DirtyShutDown;
 #endif //OS_BUILD
   NVDIMM_ENTRY();
 

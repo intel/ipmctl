@@ -3329,7 +3329,7 @@ PollLongOpStatus(
     }
     // Report back failure with the long op command
     if (EFI_ERROR(LongOpEfiStatus)) {
-      if (LongOpEfiStatus != EFI_NOT_READY) {
+      if (LongOpEfiStatus != EFI_NO_RESPONSE) {
         ReturnCode = LongOpEfiStatus;
         goto Finish;
       }

@@ -11,7 +11,6 @@
 #include <Types.h>
 #include <AcpiParsing.h>
 #include <IndustryStandard/SmBios.h>
-
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
 
@@ -56,12 +55,6 @@
 
 #define PT_LONG_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_MILLISECONDS(150)
 #define PT_UPDATEFW_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_SECONDS(4)
-
-#define SPD_INTEL_VENDOR_ID 0x8980
-#define SPD_DEVICE_ID 0x0000
-#define SPD_DEVICE_ID_05 0x0979
-#define SPD_DEVICE_ID_10 0x097A
-#define SPD_DEVICE_ID_15 0x097B
 
 typedef enum _BW_COMMAND_CODE {
   BwRead = 0,
@@ -173,9 +166,6 @@ typedef struct _DIMM {
   UINT32 FmtInterfaceCodeNum;
 
   FIRMWARE_VERSION FwVer;                  //!< Struct containing firmware version details
-  /** Minimum supported version of FW API: 1.2 **/
-  #define DEV_FW_API_VERSION_MAJOR_MIN   1
-  #define DEV_FW_API_VERSION_MINOR_MIN   2
 
   UINT64 RawCapacity;                      //!< PM + volatile
   UINT64 VolatileStart;                    //!< DPA start of the Volatile region
@@ -518,32 +508,6 @@ InitializeDimm(
   );
 
 /**
-  Check if the dimm interface code of this DIMM is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
-**/
-
-BOOLEAN
-IsDimmInterfaceCodeSupported(
-  IN     DIMM *pDimm
-  );
-
-
-/**
-  Check if the subsystem device ID of this DIMM is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
-**/
-BOOLEAN
-IsSubsystemDeviceIdSupported(
-  IN     DIMM *pDimm
-  );
-
-/**
   Check if the DIMM containing the specified DIMM ID is
   manageable by the driver
 
@@ -556,17 +520,7 @@ IsDimmIdManageable(
   IN     UINT16 DimmID
   );
 
-/**
-  Get manageability state for Dimm
 
-  @param[in] pDimm dimm that will be returned manageability state for
-
-  @retval BOOLEAN whether or not dimm is manageable
-**/
-BOOLEAN
-IsDimmManageable(
-  IN     DIMM *pDimm
-  );
 
 /**
   This function performs a DIMM information refresh through the
@@ -677,18 +631,6 @@ ParseFwApiVersion(
      OUT DIMM *pDimm,
   IN     PT_ID_DIMM_PAYLOAD *pPayload
   );
-
-/**
-  Check if current firmware API version is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
-**/
-BOOLEAN
-IsFwApiVersionSupported(
-  IN     DIMM *pDimm
-);
 
 /**
   Firmware command get security info
@@ -1674,5 +1616,54 @@ EFI_STATUS
 FwCmdGetSystemTime(
   IN     DIMM *pDimm,
   OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
+);
+
+/**
+Get manageability state for Dimm
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageable(
+  IN  DIMM *pDimm
+);
+
+
+/**
+Check if the dimm interface code of this DIMM is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsDimmInterfaceCodeSupported(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if the subsystem device ID of this DIMM is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsSubsystemDeviceIdSupported(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if current firmware API version is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsFwApiVersionSupported(
+  IN  DIMM *pDimm
 );
 #endif

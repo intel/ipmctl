@@ -39,6 +39,16 @@ typedef union {
   CpVersionSeparated Separated;
 } CONFIG_PROTOCOL_VERSION;
 
+/** Minimum supported version of FW API: 1.2 **/
+#define DEV_FW_API_VERSION_MAJOR_MIN   1
+#define DEV_FW_API_VERSION_MINOR_MIN   2
+
+#define SPD_INTEL_VENDOR_ID 0x8980
+#define SPD_DEVICE_ID 0x0000
+#define SPD_DEVICE_ID_05 0x0979
+#define SPD_DEVICE_ID_10 0x097A
+#define SPD_DEVICE_ID_15 0x097B
+
 #define MAX_CONFIG_DUMP_FILE_SIZE MIB_TO_BYTES(1)
 
 #define MAX_LINE_CHAR_LENGTH 400
@@ -1450,4 +1460,69 @@ EFI_STATUS
 RetrieveIntelDIMMConfig(
      OUT INTEL_DIMM_CONFIG **ppIntelDIMMConfig
   );
+
+
+/**
+Get manageability state for Dimm
+
+@param[in] SubsystemVendorId the SubsystemVendorId
+@param[in] interfaceCodeNum the number of interface codes
+@param[in] interfaceCodes the interface codes
+@param[in] SubsystemDeviceId the subsystem device ID
+@param[in] fwMajor the fw major version
+@param[in] fwMinor the fw minor version
+
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageableByValues(
+  IN  UINT16 SubsystemVendorId,
+  IN  UINT32 interfaceCodeNum,
+  IN  UINT16* interfaceCodes,
+  IN  UINT16 SubsystemDeviceId,
+  IN  UINT8 fwMajor,
+  IN  UINT8 fwMinor
+);
+
+/**
+Check if the dimm interface code of this DIMM is supported
+
+@param[in] interfaceCodeNum the number of interface codes
+@param[in] interfaceCodes the interface codes
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsDimmInterfaceCodeSupportedByValues(
+  IN  UINT32 interfaceCodeNum,
+  IN  UINT16* interfaceCodes
+);
+
+
+/**
+Check if the subsystem device ID of this DIMM is supported
+
+@param[in] SubsystemDeviceId the subsystem device ID
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsSubsystemDeviceIdSupportedByValues(
+  IN UINT16 SubsystemDeviceId
+);
+
+/**
+Check if current firmware API version is supported
+
+@param[in] major the major version
+@param[in] minor the minor version
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsFwApiVersionSupportedByValues(
+  IN   UINT8 major,
+  IN   UINT8 minor
+);
 #endif /** _UTILITY_H_ **/

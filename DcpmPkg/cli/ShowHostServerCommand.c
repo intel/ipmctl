@@ -201,9 +201,13 @@ EFI_STATUS IsDimmsMixedSkuCfg(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
 
    *pIsMixedSku = FALSE;
    *pIsSkuViolation = FALSE;
-
    for (i = 0; i < DimmCount; ++i)
    {
+      if (FALSE == IsDimmManageableByDimmInfo(&pDimms[i]))
+      {
+        continue;
+      }
+
       if (pDimms[i].SKUViolation)
       {
          *pIsSkuViolation = TRUE;
@@ -221,4 +225,31 @@ EFI_STATUS IsDimmsMixedSkuCfg(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
 Finish:
    FreePool(pDimms);
    return ReturnCode;
+}
+
+
+
+/**
+Get manageability state for Dimm
+
+@param[in] pDimm the DIMM_INFO struct
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageableByDimmInfo(
+  IN  DIMM_INFO *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsDimmManageableByValues(pDimm->SubsystemVendorId,
+    pDimm->InterfaceFormatCodeNum,
+    pDimm->InterfaceFormatCode,
+    pDimm->SubsystemDeviceId,
+    pDimm->FwVer.FwApiMajor,
+    pDimm->FwVer.FwApiMinor);
 }

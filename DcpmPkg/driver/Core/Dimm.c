@@ -18,6 +18,7 @@
 #include <NvmWorkarounds.h>
 #include <Convert.h>
 #include <NvmDimmDriver.h>
+
 #ifndef OS_BUILD
 #include "Smbus.h"
 #endif
@@ -1703,6 +1704,7 @@ FwCmdIdDimm (
 		goto Finish;
 	}
 	CopyMem_S(pPayload, sizeof(*pPayload), pFwCmd->OutPayload, sizeof(*pPayload));
+
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -4835,102 +4837,6 @@ out:
 }
 
 /**
-  Check if the dimm interface code of this DIMM is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
-**/
-BOOLEAN
-IsDimmInterfaceCodeSupported(
-  IN     DIMM *pDimm
-  )
-{
-  BOOLEAN Supported = FALSE;
-  UINT32 Index = 0;
-
-  for (Index = 0; Index < pDimm->FmtInterfaceCodeNum; Index++) {
-    if (DCPMM_FMT_CODE_APP_DIRECT == pDimm->FmtInterfaceCode[Index] ||
-        DCPMM_FMT_CODE_STORAGE == pDimm->FmtInterfaceCode[Index]) {
-      Supported = TRUE;
-      break;
-    }
-  }
-  return Supported;
-}
-
-/**
-  Check if the subsystem device ID of this DIMM is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
-**/
-BOOLEAN
-IsSubsystemDeviceIdSupported(
-  IN     DIMM *pDimm
-  )
-{
-  BOOLEAN Supported = FALSE;
-
-  if ((pDimm->SubsystemDeviceId >= SPD_DEVICE_ID_05) &&
-      (pDimm->SubsystemDeviceId <= SPD_DEVICE_ID_15)) {
-    Supported = TRUE;
-  }
-
-  return Supported;
-}
-
-/**
-  Check if current firmware API version is supported
-
-  @param[in] pDimm Dimm to check
-
-  @retval true if supported, false otherwise
- **/
-BOOLEAN
-IsFwApiVersionSupported(
-  IN     DIMM *pDimm
-)
-{
-  BOOLEAN VerSupported = TRUE;
-  UINT8 CurrFwApiMajorVersion = pDimm->FwVer.FwApiMajor;
-  UINT8 CurrFwApiMinorVersion = pDimm->FwVer.FwApiMinor;
-
-  if ((CurrFwApiMajorVersion < DEV_FW_API_VERSION_MAJOR_MIN) ||
-      (CurrFwApiMajorVersion == DEV_FW_API_VERSION_MAJOR_MIN &&
-      CurrFwApiMinorVersion < DEV_FW_API_VERSION_MINOR_MIN)) {
-    VerSupported = FALSE;
-  }
-  return VerSupported;
-}
-
-/**
-  Get manageability state for Dimm
-
-  @param[in] pDimm dimm that will be returned manageability state for
-
-  @retval BOOLEAN whether or not dimm is manageable
-**/
-BOOLEAN
-IsDimmManageable(
-  IN     DIMM *pDimm
-  )
-{
-  BOOLEAN Manageable = FALSE;
-
-  if (IsDimmInterfaceCodeSupported(pDimm) &&
-      (SPD_INTEL_VENDOR_ID == pDimm->SubsystemVendorId) &&
-      IsSubsystemDeviceIdSupported(pDimm) &&
-      IsFwApiVersionSupported(pDimm))
-  {
-    Manageable = TRUE;
-  }
-
-  return Manageable;
-}
-
-/**
   Check if the DIMM containing the specified DIMM ID is
   manageable by our software
 
@@ -6261,3 +6167,92 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+/**
+Get manageability state for Dimm
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageable(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsDimmManageableByValues(pDimm->SubsystemVendorId,
+    pDimm->FmtInterfaceCodeNum,
+    pDimm->FmtInterfaceCode,
+    pDimm->SubsystemDeviceId,
+    pDimm->FwVer.FwApiMajor,
+    pDimm->FwVer.FwApiMinor);
+}
+
+/**
+Check if the dimm interface code of this DIMM is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsDimmInterfaceCodeSupported(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsDimmInterfaceCodeSupportedByValues(pDimm->FmtInterfaceCodeNum,
+    pDimm->FmtInterfaceCode);
+}
+
+/**
+Check if the subsystem device ID of this DIMM is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsSubsystemDeviceIdSupported(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsSubsystemDeviceIdSupportedByValues(
+    pDimm->SubsystemDeviceId);
+}
+
+/**
+Check if current firmware API version is supported
+
+@param[in] pDimm the DIMM struct
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsFwApiVersionSupported(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsFwApiVersionSupportedByValues(pDimm->FwVer.FwApiMajor,
+    pDimm->FwVer.FwApiMinor);
+}
+

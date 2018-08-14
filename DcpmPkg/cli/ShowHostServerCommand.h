@@ -46,4 +46,19 @@ EFI_STATUS IsDimmsMixedSkuCfg(
    BOOLEAN *pIsMixedSku,
    BOOLEAN *pIsSkuViolation);
 
+
+
+/**
+Get manageability state for Dimm
+
+@param[in] pDimm the DIMM_INFO struct
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageableByDimmInfo(
+  IN  DIMM_INFO *pDimm
+);
+
+
 #endif /* _SRC_CLI_SHOWHOSTSERVERCOMMAND_H_ */

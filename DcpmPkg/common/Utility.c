@@ -3531,3 +3531,117 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+
+/**
+Get manageability state for Dimm
+
+@param[in] SubsystemVendorId the SubsystemVendorId
+@param[in] interfaceCodeNum the number of interface codes
+@param[in] interfaceCodes the interface codes
+@param[in] SubsystemDeviceId the subsystem device ID
+@param[in] fwMajor the fw major version
+@param[in] fwMinor the fw minor version
+
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageableByValues(
+  IN  UINT16 SubsystemVendorId,
+  IN  UINT32 interfaceCodeNum,
+  IN  UINT16* interfaceCodes,
+  IN  UINT16 SubsystemDeviceId,
+  IN  UINT8 fwMajor,
+  IN  UINT8 fwMinor
+)
+{
+  BOOLEAN Manageable = FALSE;
+
+  if (IsDimmInterfaceCodeSupportedByValues(interfaceCodeNum, interfaceCodes) &&
+    (SPD_INTEL_VENDOR_ID == SubsystemVendorId) &&
+    IsSubsystemDeviceIdSupportedByValues(SubsystemDeviceId) &&
+    IsFwApiVersionSupportedByValues(fwMajor, fwMinor))
+  {
+    Manageable = TRUE;
+  }
+
+  return Manageable;
+}
+
+/**
+Check if the dimm interface code of this DIMM is supported
+
+@param[in] interfaceCodeNum the number of interface codes
+@param[in] interfaceCodes the interface codes
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsDimmInterfaceCodeSupportedByValues(
+  IN  UINT32 interfaceCodeNum,
+  IN  UINT16* interfaceCodes
+)
+{
+  BOOLEAN Supported = FALSE;
+  UINT32 Index = 0;
+
+  if (interfaceCodes != NULL)
+  {
+    for (Index = 0; Index < interfaceCodeNum; Index++) {
+      if (DCPMM_FMT_CODE_APP_DIRECT == interfaceCodes[Index] ||
+        DCPMM_FMT_CODE_STORAGE == interfaceCodes[Index]) {
+        Supported = TRUE;
+        break;
+      }
+    }
+  }
+
+  return Supported;
+}
+
+/**
+Check if the subsystem device ID of this DIMM is supported
+
+@param[in] SubsystemDeviceId the subsystem device ID
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsSubsystemDeviceIdSupportedByValues(
+  IN UINT16 SubsystemDeviceId
+)
+{
+  BOOLEAN Supported = FALSE;
+
+  if ((SubsystemDeviceId >= SPD_DEVICE_ID_05) &&
+    (SubsystemDeviceId <= SPD_DEVICE_ID_15)) {
+    Supported = TRUE;
+  }
+
+  return Supported;
+}
+
+/**
+Check if current firmware API version is supported
+
+@param[in] major the major version
+@param[in] minor the minor version
+
+@retval true if supported, false otherwise
+**/
+BOOLEAN
+IsFwApiVersionSupportedByValues(
+  IN   UINT8 major,
+  IN   UINT8 minor
+)
+{
+  BOOLEAN VerSupported = TRUE;
+
+  if ((major < DEV_FW_API_VERSION_MAJOR_MIN) ||
+    (major == DEV_FW_API_VERSION_MAJOR_MIN &&
+      minor < DEV_FW_API_VERSION_MINOR_MIN)) {
+    VerSupported = FALSE;
+  }
+  return VerSupported;
+}

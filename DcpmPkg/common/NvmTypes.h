@@ -297,7 +297,6 @@ typedef struct _DIMM_INFO {
   CHAR16 DeviceLocator[DEVICE_LOCATOR_LEN]; //!< describing the physically-labeled socket or board position
   CHAR16 BankLabel[BANKLABEL_LEN];          //!< identifies the physically labeled bank
   FIRMWARE_VERSION FwVer;                   //!< FNV FW revision
-  FIRMWARE_VERSION FwApiVer;                //!< FNV FW API revision
   UINT16 DimmID;                            //!< SMBIOS Type 17 handle
   UINT16 SocketId;                          //!< socket id
   UINT16 InterfaceFormatCode[MAX_IFC_NUM];  //!< format interface codes

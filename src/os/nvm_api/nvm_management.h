@@ -606,8 +606,8 @@ struct device_discovery {
   // ACPI
   NVM_NFIT_DEVICE_HANDLE	device_handle;          ///< The unique device handle of the memory module
   NVM_UINT16		physical_id;            ///< The unique physical ID of the memory module
-  NVM_UINT16		vendor_id;              ///< The vendor identifier.
-  NVM_UINT16		device_id;              ///< The device identifier.
+  NVM_UINT16		vendor_id;              ///< The vendor identifier - Little Endian
+  NVM_UINT16		device_id;              ///< The device identifier - Little Endian
   NVM_UINT16		revision_id;            ///< The revision identifier.
   NVM_UINT16		channel_pos;            ///< The memory module's position in the memory channel
   NVM_UINT16		channel_id;             ///< The memory channel number
@@ -627,9 +627,9 @@ struct device_discovery {
   // Identify Intel DIMM Gen 1
   // add_identify_dimm_properties_to_device() in device.c
   NVM_UINT32				dimm_sku;
-  NVM_MANUFACTURER			manufacturer;                ///< The manufacturer ID code determined by JEDEC JEP-106
-  NVM_SERIAL_NUMBER			serial_number;               ///< Serial number assigned by the vendor.
-  NVM_UINT16				subsystem_vendor_id;             ///< vendor identifier of the DIMM non-volatile memory subsystem controller
+  NVM_MANUFACTURER			manufacturer;                ///< The manufacturer ID code determined by JEDEC JEP-106 - Little Endian
+  NVM_SERIAL_NUMBER			serial_number;               ///< Serial number assigned by the vendor - Little Endian
+  NVM_UINT16				subsystem_vendor_id;             ///< vendor identifier of the DIMM non-volatile memory subsystem controller - Little Endian
   NVM_UINT16				subsystem_device_id;            ///< device identifier of the DIMM non-volatile memory subsystem controller
   NVM_UINT16				subsystem_revision_id;          ///< revision identifier of the DIMM non-volatile memory subsystem controller
   NVM_BOOL				manufacturing_info_valid;       ///< manufacturing location and date validity

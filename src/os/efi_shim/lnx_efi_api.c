@@ -37,7 +37,7 @@ Loads a table as specified in the args
 @retval EFI_SUCCESS  The count was returned properly
 @retval Other errors failure of io
 **/
-EFI_STATUS *
+EFI_STATUS
 get_table(
   IN CHAR8* currentTableName,
   OUT EFI_ACPI_DESCRIPTION_HEADER ** table
@@ -90,7 +90,7 @@ get_pmtt_table(
   return get_table("PMTT", table);
 }
 
-EFI_STATUS *
+EFI_STATUS
 get_table(
   IN CHAR8* currentTableName,
   OUT EFI_ACPI_DESCRIPTION_HEADER ** table

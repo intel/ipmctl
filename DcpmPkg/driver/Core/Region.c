@@ -373,12 +373,13 @@ RetrieveISsFromPlatformConfigData(
       }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
-      if (EFI_NO_RESPONSE == ReturnCode)
+      if (EFI_NO_RESPONSE == ReturnCode) {
         /* Save the return code here and continue with the execution for rest of the dimms.
           This is done to make the UEFI initialization succeed. During UEFI init,
           return code will be ignored but we have to error out when the actual command is executed. */
         IReturnCode = ReturnCode;
-        continue;
+      }
+      continue;
     }
 
     if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {

@@ -32,6 +32,9 @@
  * The version is formatted as MM.mm.hh.bbbb where MM is the 2-digit major version (00-99), mm is the 2-digit minor version (00-99), hh is the 2-digit hot fix number (00-99), and bbbb is the 4-digit build number (0000-9999).
  * The following C macros and interfaces are provided to retrieve the native API version information.
  *
+ * @subsection Concurrency
+ * The Management Library is not thread-safe.
+ *
  * <table>
  * <tr><td>Synopsis</td><td><strong>int nvm_get_major_version</strong>();</td></tr>
  * <tr><td>Description</td><td>Retrieve the native API library major version number (00-99).</td></tr>

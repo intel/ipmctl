@@ -2686,6 +2686,10 @@ SetSecurityState(
       if (!(DimmSecurityState & SECURITY_MASK_LOCKED) &&
           !(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         SubOpcode = SubopSecEraseUnit;
+#ifndef OS_BUILD
+        /** Need to call WBINVD before secure erase **/
+	AsmWbinvd();
+#endif
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
         ReturnCode = EFI_DEVICE_ERROR;
@@ -2738,7 +2742,7 @@ SetSecurityState(
       goto Finish;
     }
 #ifndef OS_BUILD
-    /** Need to call WBINV after unlock or secure erase **/
+    /** Need to call WBINVD after unlock or secure erase **/
     if (SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE ||
         SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
 	AsmWbinvd();

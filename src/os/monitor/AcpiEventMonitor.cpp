@@ -183,7 +183,7 @@ void  monitor::AcpiMonitor::processNvmEvents(const unsigned int device_handle)
 /*
 * Generate a new system event for any new fw error log entries.
 * A system event includes Windows event, or msg in syslog depending on
-* underlying OS.  This will also add entries into the CR MGMT DB.
+* underlying OS.  This will also add entries into the DCPM MGMT DB.
 *
 * @param[in] uid - dimm that generated the event
 * @param[in] log_type - DEV_FW_ERR_LOG_MEDIA or DEV_FW_ERR_LOG_THERM

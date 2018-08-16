@@ -517,10 +517,8 @@ SetDimm(
         pDimmIds, DimmIdsCount,
         SecurityOperation,
         pPassphrase, pNewPassphrase, pCommandStatus);
-    if (EFI_ERROR(ReturnCode)) {
-      goto FinishCommandStatusSet;
-    }
-    goto Finish;
+
+    goto FinishCommandStatusSet;
   }
 
   /**

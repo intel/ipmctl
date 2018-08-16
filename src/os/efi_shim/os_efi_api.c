@@ -1881,8 +1881,12 @@ PromptedInput(
   {
     buff[PromptIndex] = _getch();
     if (RETURN_KEY == buff[PromptIndex] || LINE_FEED == buff[PromptIndex])
+    {
+      buff[PromptIndex] = '\0';
       break;
+    }
   }
+
   VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);
   if (NULL == ptr) {
     ReturnCode = EFI_OUT_OF_RESOURCES;

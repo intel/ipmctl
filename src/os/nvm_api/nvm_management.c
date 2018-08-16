@@ -93,10 +93,15 @@ NVM_API int nvm_init()
 {
   int rc = NVM_SUCCESS;
 
-  if (g_nvm_initialized)
-    return rc;
+  if (g_nvm_initialized) {
 
-  // Configure gOsShellParametersProtocol 
+    // Clear PCD cache on any API entry point
+    ClearPcdCacheOnDimmList();
+
+    return rc;
+  }
+
+  // Configure gOsShellParametersProtocol
   if (gOsShellParametersProtocol.StdOut == 0) {
     gOsShellParametersProtocol.StdOut = stdout;
   }

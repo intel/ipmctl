@@ -1666,4 +1666,12 @@ BOOLEAN
 IsFwApiVersionSupported(
   IN  DIMM *pDimm
 );
+
+/**
+Clears the PCD Cache on each DIMM in the global DIMM list
+
+@retval EFI_SUCCESS Success
+**/
+EFI_STATUS ClearPcdCacheOnDimmList(VOID);
+
 #endif

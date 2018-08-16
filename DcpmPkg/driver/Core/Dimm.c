@@ -6256,3 +6256,28 @@ IsFwApiVersionSupported(
     pDimm->FwVer.FwApiMinor);
 }
 
+/**
+Clears the PCD Cache on each DIMM in the global DIMM list
+
+@retval EFI_SUCCESS Success
+**/
+EFI_STATUS ClearPcdCacheOnDimmList(VOID)
+{
+#ifdef PCD_CACHE_ENABLED
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+
+  if (NULL != gNvmDimmData) {
+    LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+      if (NULL != pDimmNode) {
+        pDimm = DIMM_FROM_NODE(pDimmNode);
+        if (NULL != pDimm) {
+          // Free memory and set to NULL so won't be used by Get PCD calls
+          FREE_POOL_SAFE(pDimm->pPcdOem);
+        }
+      }
+    }
+  }
+#endif // PCD_CACHE_ENABLED
+  return EFI_SUCCESS;
+}

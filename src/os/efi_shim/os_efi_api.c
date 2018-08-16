@@ -2,6 +2,7 @@
 * Copyright (c) 2018, Intel Corporation.
 * SPDX-License-Identifier: BSD-3-Clause
 */
+#include <assert.h>
 #include <stdio.h>
 #include <memory.h>
 #include <Uefi.h>
@@ -717,6 +718,10 @@ IsDebugLoggerEnabled()
   return FALSE;
 }
 
+#ifdef NDEBUG
+void (*rel_assert) (void) = NULL;
+#endif // NDEBUG
+
 /**
 Prints a debug message to the debug output device if the specified error level is enabled.
 
@@ -754,7 +759,19 @@ DebugPrint(
       event_type_common |= SYSTEM_EVENT_TYPE_SOUT_SET(TRUE);
     event_type_common |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_TYPE_DEBUG);
   }
-  if (LOGGER_OFF == g_log_config.level)
+  if (ErrorLevel == OS_DEBUG_CRIT) {
+    // Send the debug entry to the logger
+    VA_START(args, Format);
+    AsciiVSPrint(event_message, size, Format, args);
+    VA_END(args);
+    nvm_store_system_entry(NVM_DEBUG_LOGGER_SOURCE, event_type_common | SYSTEM_EVENT_TYPE_SOUT_SET(TRUE) | SYSTEM_EVENT_TYPE_SYSLOG_FILE_SET(TRUE), NULL, event_message);
+#ifdef NDEBUG
+    rel_assert ();
+#else // NDEBUG
+    assert(FALSE);
+#endif // NDEBUG
+  }
+  else if (LOGGER_OFF == g_log_config.level)
     return;
   if (((LOG_ERROR == g_log_config.level) & (ErrorLevel == OS_DEBUG_ERROR)) ||
     ((LOG_WARNING == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN))) ||

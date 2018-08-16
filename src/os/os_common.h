@@ -18,6 +18,7 @@ DebugPrint(
 #define OS_DEBUG_INFO      0x00000040
 #define OS_DEBUG_WARN      0x00000002
 #define OS_DEBUG_ERROR     0x80000000
+#define OS_DEBUG_CRIT      0x80000001
 
 #define OS_NVDIMM_VERB(fmt, ...)  \
   DebugPrint(OS_DEBUG_VERBOSE, "NVDIMM-VERB:%s::%s:%d: " fmt "\n", \
@@ -39,7 +40,7 @@ DebugPrint(
     FileFromPath(__FILE__), __FUNCTION__, __LINE__, ## __VA_ARGS__)
 
 #define OS_NVDIMM_CRIT(fmt, ...) \
-  DebugPrint(OS_DEBUG_ERROR, "NVDIMM-ERR:%s::%s:%d: " fmt "\n", \
+  DebugPrint(OS_DEBUG_CRIT, "NVDIMM-ERR:%s::%s:%d: " fmt "\n", \
     FileFromPath(__FILE__), __FUNCTION__, __LINE__, ## __VA_ARGS__)
 
 #endif //OS_COMMON_H_

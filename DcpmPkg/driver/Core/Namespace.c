@@ -3801,9 +3801,16 @@ LabelIndexAreaToRawData(
     }
 
     CopyMem_S(pBuffer, TotalIndexSize, pNamespaceIndex, FreeOffset);
-    CopyMem_S(pBuffer + FreeOffset, TotalIndexSize - FreeOffset, pNamespaceIndex->pFree, NumFreeBytes);
 
-    pBuffer += pNamespaceIndex->MySize;
+    if (TotalIndexSize < FreeOffset) {
+      NVDIMM_ERR("TotalIndexSize is smaller than FreeOffset. Leads to negative destination buffer size.");
+      ReturnCode = EFI_BAD_BUFFER_SIZE;
+      goto Finish;
+    }
+      CopyMem_S(pBuffer + FreeOffset, TotalIndexSize - FreeOffset, pNamespaceIndex->pFree, NumFreeBytes);
+
+      pBuffer += pNamespaceIndex->MySize;
+      TotalIndexSize -= pNamespaceIndex->MySize;
 
     if (LabelIndex != ALL_INDEX_BLOCKS) {
       break;

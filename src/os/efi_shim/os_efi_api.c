@@ -37,7 +37,7 @@
 #define _read read
 #define _getch getchar
 #endif
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include <fcntl.h>
 #include "os_efi_hii_auto_gen_strings.h"
 #include "os_efi_simple_file_protocol.h"
@@ -831,7 +831,7 @@ AsciiVSPrint(
     return BufferSize;
 
   return vsnprintf_s(StartOfBuffer, BufferSize
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
     , BufferSize - 1
 #endif
     , FormatString, Marker);
@@ -1882,6 +1882,8 @@ PromptedInput(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   int PromptIndex;
+  char ThrowAway;
+  BOOLEAN NoReturn = TRUE;
 
   NVDIMM_ENTRY();
 
@@ -1894,24 +1896,36 @@ PromptedInput(
   char buff[MAX_PROMT_INPUT_SZ];
   memset(buff, 0, MAX_PROMT_INPUT_SZ);
 
-  for (PromptIndex = 0; PromptIndex < MAX_PROMT_INPUT_SZ; ++PromptIndex)
-  {
+  for (PromptIndex = 0; PromptIndex < (MAX_PROMT_INPUT_SZ - 1); ++PromptIndex) {
     buff[PromptIndex] = _getch();
-    if (RETURN_KEY == buff[PromptIndex] || LINE_FEED == buff[PromptIndex])
-    {
-      buff[PromptIndex] = '\0';
+    if (RETURN_KEY == buff[PromptIndex] || LINE_FEED == buff[PromptIndex]) {
+      //terminate string, advance index to indicate size
+      buff[PromptIndex++] = '\0';
+      NoReturn = FALSE;
       break;
     }
   }
 
-  VOID * ptr = AllocateZeroPool(MAX_PROMT_INPUT_SZ);
+  *ppReturnValue = NULL;
+  while (NoReturn) {
+    //we ran out of buffer before user pressed Enter
+    //consume stdin until Enter
+    ThrowAway = _getch();
+
+    if (RETURN_KEY == ThrowAway || LINE_FEED == ThrowAway) {
+      ReturnCode = EFI_BUFFER_TOO_SMALL;
+      goto Finish;
+    }
+  }
+
+  VOID * ptr = AllocateZeroPool((PromptIndex * (sizeof(CHAR16))));
   if (NULL == ptr) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
+
   *ppReturnValue = AsciiStrToUnicodeStr(buff, ptr);
-  if (ShowInput)
-    Print(*ppReturnValue);
+
 Finish:
   Print(L"\n");
   NVDIMM_EXIT_I64(ReturnCode);
@@ -2112,7 +2126,7 @@ AsciiSPrint(
   VA_LIST Marker;
   VA_START(Marker, FormatString);
   return vsnprintf_s(StartOfBuffer, BufferSize
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
     , BufferSize - 1
 #endif
     , FormatString, Marker);

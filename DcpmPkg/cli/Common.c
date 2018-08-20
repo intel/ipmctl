@@ -1839,7 +1839,7 @@ PromptYesNo(
   }
 
   ReturnCode = PromptedInput(PROMPT_CONTINUE_QUESTION, TRUE, TRUE, &pPromptReply);
-  if (NULL == pPromptReply) {
+  if ((NULL == pPromptReply) || (EFI_ERROR(ReturnCode))) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -1935,6 +1935,10 @@ ConsoleInput(
     else {
       if (!OnlyAlphanumeric || IsUnicodeAlnumCharacter(Key.UnicodeChar)) {
         StrnCatGrow(&pBuffer, &SizeInBytes, &Key.UnicodeChar, 1);
+        if (NULL == pBuffer) {
+           Print(L"Failure inputing characters.\n");
+           break;
+        }
         if (ShowInput) {
           Print(L"%c", Key.UnicodeChar);
         }

@@ -5619,7 +5619,6 @@ MatchFwReturnCode (
   @param[in] pDimm2 - second DIMM to compare SKU mode
 
   @retval NVM_SUCCESS - if everything went fine
-  @retval NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH - if Package Sparing conflict occurred
   @retval NVM_ERR_DIMM_SKU_MODE_MISMATCH - if mode conflict occurred
   @retval NVM_ERR_DIMM_SKU_SECURITY_MISMATCH - if security mode conflict occurred
 **/
@@ -5642,9 +5641,7 @@ IsDimmSkuModeMismatch(
     goto Finish;
   }
 
-  StatusCode = SkuComparison((pDimm1->SkuInformation.PackageSparingCapable == MODE_ENABLED),
-                             (pDimm2->SkuInformation.PackageSparingCapable == MODE_ENABLED),
-                             *(UINT32 *)&pDimm1->SkuInformation,
+  StatusCode = SkuComparison(*(UINT32 *)&pDimm1->SkuInformation,
                              *(UINT32 *)&pDimm2->SkuInformation);
 
 Finish:

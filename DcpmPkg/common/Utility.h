@@ -1206,20 +1206,15 @@ StringToDouble(
 /**
   Compare a PackageSparing capability, encryption, soft SKU capabilities and SKU mode types.
 
-  @param[in] PackageSparingCapable1 - first PackageSparingCapable to compare
-  @param[in] PackageSparingCapable2 - second PackageSparingCapable to compare
   @param[in] SkuInformation1 - first SkuInformation to compare
   @param[in] SkuInformation2 - second SkuInformation to compare
 
   @retval NVM_SUCCESS - if everything went fine
-  @retval NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH - if Package Sparing conflict occurred
   @retval NVM_ERR_DIMM_SKU_MODE_MISMATCH - if mode conflict occurred
   @retval NVM_ERR_DIMM_SKU_SECURITY_MISMATCH - if security mode conflict occurred
 **/
 NvmStatusCode
 SkuComparison(
-  IN     BOOLEAN PackageSparingCapable1,
-  IN     BOOLEAN PackageSparingCapable2,
   IN     UINT32 SkuInformation1,
   IN     UINT32 SkuInformation2
   );

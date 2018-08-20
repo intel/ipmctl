@@ -102,7 +102,6 @@ typedef enum _NvmStatusCode {
   NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE              = 142,  ///< Error: Improper config in file
   NVM_ERR_LOAD_DIMM_COUNT_MISMATCH                  = 148,  ///< Error: Mismatch in DIMMs
 
-  NVM_ERR_DIMM_SKU_PACKAGE_SPARING_MISMATCH         = 150,  ///< Error: SKU package sparing mismatch
   NVM_ERR_DIMM_SKU_MODE_MISMATCH                    = 151,  ///< Error: SKU mode mismatch
   NVM_ERR_DIMM_SKU_SECURITY_MISMATCH                = 152,  ///< Error: SKU security mismatch
 

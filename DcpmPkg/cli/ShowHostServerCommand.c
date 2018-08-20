@@ -213,9 +213,7 @@ EFI_STATUS IsDimmsMixedSkuCfg(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
          *pIsSkuViolation = TRUE;
       }
 
-      if (NVM_SUCCESS != SkuComparison(pDimms[0].PackageSparingCapable,
-                                       pDimms[i].PackageSparingCapable,
-                                       pDimms[0].SkuInformation,
+      if (NVM_SUCCESS != SkuComparison(pDimms[0].SkuInformation,
                                        pDimms[i].SkuInformation))
       {
          *pIsMixedSku = TRUE;

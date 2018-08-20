@@ -414,6 +414,11 @@ decode_nlog_binary(
     goto Finish;
   }
 Finish:
+  for (z = 0; z < old_arg_count; z++)
+  {
+    FREE_POOL_SAFE(old_args[z]);
+  }
+  FREE_POOL_SAFE(old_args);
   if (NULL != total_formatted_string)
   {
     FREE_POOL_SAFE(total_formatted_string);
@@ -557,7 +562,7 @@ load_nlog_dict(
   }
 
   file_lines = string_split(file_buffer, '\n', 0, &line_count);
-  if (line_count <= 1)
+  if (NULL == file_lines || line_count <= 1)
   {
     Print(L"Dictionary passed does not contain enough content.\n");
     goto Finish;
@@ -681,6 +686,7 @@ load_nlog_dict_v2(
     tail->FileName = parts[3];
     tail->LogString = parts[4];
     tail->next = NULL;
+    FREE_POOL_SAFE(parts);
   }
 
 Finish:

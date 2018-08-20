@@ -3729,6 +3729,10 @@ ParseAcpiTables(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+#ifdef OS_BUILD
+  FREE_POOL_SAFE(pNfit);
+  FREE_POOL_SAFE(pPcat);
+#endif // OS_BUILD
   NVDIMM_EXIT_I64(ReturnCode);
 
   return ReturnCode;

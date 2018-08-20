@@ -228,17 +228,20 @@ DumpDebugCommand(
         //append .txt to the extentionless string
         Length = Index;
         decoded_file_name = AllocateZeroPool((sizeof(CHAR16) * Length) + sizeof(CHAR16));
-        for (Index = 0; Index < Length; Index++)
-        {
-          decoded_file_name[Index] = pDumpUserPath[Index];
+        if (decoded_file_name) {
+          for (Index = 0; Index < Length; Index++)
+          {
+            decoded_file_name[Index] = pDumpUserPath[Index];
+          }
+          decoded_file_name = CatSPrintClean(decoded_file_name, L".txt");
         }
-
         FREE_POOL_SAFE(pDumpUserPath);
-        decoded_file_name = CatSPrintClean(decoded_file_name, L".txt");
       }
 
       Print(L"Loaded %d dictionary entries.\n", dict_entries);
-      decode_nlog_binary(decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
+      if (decoded_file_name) {
+        decode_nlog_binary(decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
+      }
     }
   }
 Finish:

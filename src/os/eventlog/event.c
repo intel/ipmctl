@@ -309,7 +309,7 @@ static char get_action_required_status(char *uid_string)
 */
 static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, CHAR8 **event_buffer)
 {
-    size_t end_of_event_buffer = *p_event_buff_size;
+    size_t end_of_event_buffer;
     size_t str_size;
     UINT32 event_type = 0;
     char *p_ctl_start = NULL;
@@ -320,6 +320,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
     if ((NULL == event_entry) || (NULL == p_event_buff_size) || (NULL == event_buffer)) {
       return;
     }
+    end_of_event_buffer = *p_event_buff_size;
 
     if (0 == *p_event_buff_size) {
       // First entry, make room for null terminator char

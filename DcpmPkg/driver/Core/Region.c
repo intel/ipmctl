@@ -1413,7 +1413,10 @@ RetrieveGoalConfigsFromPlatformConfigData(
       goto FinishError;
     }
 
-    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0) {
+    pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
+    pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
+
+    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0 || pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber) {
       pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
       pDimm->RegionsGoalConfig = FALSE;
       pDimm->PcdSynced = TRUE;
@@ -1421,8 +1424,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
       FREE_POOL_SAFE(pPcdConfHeader);
       continue;
     }
-
-    pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
 
     PcdInputValid = FALSE;
     if (pPcdConfInput->Header.Signature != NVDIMM_CONFIGURATION_INPUT_SIG) {
@@ -1527,7 +1528,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
 
     /** Unknown status as default **/
     pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_UNKNOWN;
-    pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
 
     if (pPcdConfHeader->ConfOutputStartOffset == 0 || pPcdConfHeader->ConfOutputDataSize == 0 ||
         pPcdConfInput->SequenceNumber != pPcdConfOutput->SequenceNumber) {

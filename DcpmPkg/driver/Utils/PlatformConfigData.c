@@ -45,7 +45,6 @@ GeneratePcdConfInput(
   NVDIMM_CONFIGURATION_HEADER *pConfHeader = NULL;
   NVDIMM_CURRENT_CONFIG *pPcdCurrentConf = NULL;
   UINT64 PmPartitionSize = 0;
-  BOOLEAN PcdCurrentConfValid = FALSE;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigEfiVar = NULL;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigIn = NULL;
 
@@ -125,18 +124,7 @@ GeneratePcdConfInput(
   } else {
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pConfHeader);
 
-    if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-      NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
-    } else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
-      NVDIMM_DBG("The Current Config table checksum is invalid.");
-    } else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-               (pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
-      NVDIMM_DBG("Revision of PCD Current Config table is invalid");
-    } else {
-      PcdCurrentConfValid = TRUE;
-    }
-
-    if (PcdCurrentConfValid) {
+    if (IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
       (*ppConfigInput)->Header.Revision = pPcdCurrentConf->Header.Revision;
     } else {
       NVDIMM_DBG("The data in Current Config table is invalid");
@@ -402,16 +390,7 @@ GetNewSequenceNumber(
   } else {
     pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
 
-    if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-      NVDIMM_WARN("Error: incorrect signature of the DIMM Config Output table");
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
-    } else if (pPcdConfOutput->Header.Length > pDimm->PcdOemPartitionSize) {
-      NVDIMM_WARN("Length of PCD Config Output header is greater than max PCD OEM partition size");
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
-    } else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
-      NVDIMM_WARN("The checksum of DIMM Config Output table is invalid.");
+    if (!IsPcdConfOutputHeaderValid(pPcdConfOutput, pDimm->PcdOemPartitionSize )) {
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
@@ -562,4 +541,109 @@ CompareDimmOrderInInterleaveSet6Way(
       return 0;
     }
   }
+}
+
+/**
+  Validate the PCD CIN header
+
+  @param[in] pPcdConfInput Pointer to the PCD CIN Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN IsPcdConfInputHeaderValid(NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput, UINT32 PcdOemPartitionSize)
+{
+  if (NULL == pPcdConfInput) {
+    NVDIMM_DBG("DIMM Config Input table is NULL");
+  }
+  else if (pPcdConfInput->Header.Signature != NVDIMM_CONFIGURATION_INPUT_SIG) {
+    NVDIMM_DBG("Incorrect signature of the DIMM Config Input table");
+  }
+  else if (pPcdConfInput->Header.Length > PcdOemPartitionSize) {
+    NVDIMM_DBG("Length of PCD Config Input header is greater than max PCD OEM partition size");
+  }
+  else if (!IsChecksumValid(pPcdConfInput, pPcdConfInput->Header.Length)) {
+    NVDIMM_DBG("The checksum of Config Input table is invalid.");
+  }
+  else if ((pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
+    (pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+    NVDIMM_DBG("Revision of PCD Config Input table is invalid");
+  }
+  else {
+    NVDIMM_DBG("The data in Config Input table is valid.");
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+  Validate the PCD COUT header
+
+  @param[in] pPcdConfOutput Pointer to the PCD COUT Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN IsPcdConfOutputHeaderValid(NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput, UINT32 PcdOemPartitionSize)
+{
+  if (NULL == pPcdConfOutput) {
+    NVDIMM_DBG("DIMM Config Output table is NULL");
+  }
+  else if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
+    NVDIMM_DBG("Icorrect signature of the DIMM Config Output table");
+  }
+  else if (pPcdConfOutput->Header.Length > PcdOemPartitionSize) {
+    NVDIMM_DBG("Length of PCD Config Output header is greater than max PCD OEM partition size");
+  }
+  else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
+    NVDIMM_DBG("The checksum of Config Output table is invalid.");
+  }
+  else if ((pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
+    (pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+    NVDIMM_DBG("Revision of PCD Config Output table is invalid");
+  }
+  else {
+    NVDIMM_DBG("The data in Config Output table is valid.");
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+  Validate the PCD CCUR header
+
+  @param[in] pPcdCurrentConf Pointer to the PCD CCUR Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN IsPcdCurrentConfHeaderValid(NVDIMM_CURRENT_CONFIG *pPcdCurrentConf, UINT32 PcdOemPartitionSize)
+{
+  if (NULL == pPcdCurrentConf) {
+    NVDIMM_DBG("DIMM Config Output table is NULL");
+  }
+  else if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
+    NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
+  }
+  else if (pPcdCurrentConf->Header.Length > PcdOemPartitionSize) {
+    NVDIMM_DBG("Length of PCD Current Config header is greater than max PCD OEM partition size");
+  }
+  else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
+    (pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+    NVDIMM_DBG("Revision of PCD Current Config table is invalid");
+  }
+  else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
+    NVDIMM_DBG("The Current Config table checksum is invalid.");
+  }
+  else {
+    NVDIMM_DBG("The data in Current Config table is valid.");
+    return TRUE;
+  }
+
+  return FALSE;
 }

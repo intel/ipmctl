@@ -391,29 +391,10 @@ RetrieveISsFromPlatformConfigData(
 
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
-    if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-      NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
+    if (!IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
       FreePool(pPcdConfHeader);
       pPcdConfHeader = NULL;
       continue;
-    } else if (pPcdCurrentConf->Header.Length > pDimm->PcdOemPartitionSize) {
-      NVDIMM_DBG("Length of PCD Current Config header is greater than max PCD OEM partition size");
-      FreePool(pPcdConfHeader);
-      pPcdConfHeader = NULL;
-      continue;
-    } else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-               (pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
-      NVDIMM_DBG("Revision of PCD Current Config table is invalid");
-      FreePool(pPcdConfHeader);
-      pPcdConfHeader = NULL;
-      continue;
-    } else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
-      NVDIMM_DBG("The Current Config table checksum is invalid.");
-      FreePool(pPcdConfHeader);
-      pPcdConfHeader = NULL;
-      continue;
-    } else {
-      NVDIMM_DBG("The data in Current Config table is valid.");
     }
 
     pDimm->ConfigStatus = (UINT8)pPcdCurrentConf->ConfigStatus;
@@ -1379,9 +1360,9 @@ RetrieveGoalConfigsFromPlatformConfigData(
   UINT32 RegionGoalsNum = 0;
   REGION_GOAL *pNewRegionGoal = NULL;
   BOOLEAN New = FALSE;
+  BOOLEAN ValidConfigGoal = TRUE;
   UINT32 SequenceIndex = 0;
   UINT8 PcdCinRev = 0;
-  BOOLEAN PcdInputValid = FALSE;
   NVDIMM_ENTRY();
 
   SetMem(pRegionGoals, sizeof(pRegionGoals), 0x0);
@@ -1413,57 +1394,39 @@ RetrieveGoalConfigsFromPlatformConfigData(
       goto FinishError;
     }
 
-    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0) {
-      pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
-      pDimm->RegionsGoalConfig = FALSE;
-      pDimm->PcdSynced = TRUE;
-      NVDIMM_DBG("There is no Config Input table.");
-      FREE_POOL_SAFE(pPcdConfHeader);
-      continue;
+    if (NULL != pPcdConfHeader) {
+      pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
+      pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
     }
 
-    pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
-    pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
+    ValidConfigGoal = TRUE;
 
-    if (pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber) {
-      pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
-      pDimm->RegionsGoalConfig = FALSE;
-      pDimm->PcdSynced = TRUE;
-      NVDIMM_DBG("Goal already applied.");
-      FREE_POOL_SAFE(pPcdConfHeader);
-      continue;
+    // If no PCD Header, CIN record then no goal
+    if ((NULL == pPcdConfHeader) || (pPcdConfHeader->ConfInputStartOffset == 0) || (pPcdConfHeader->ConfInputDataSize == 0)) {
+      NVDIMM_DBG("There is no Config Input table");
+      ValidConfigGoal = FALSE;
     }
-
-    PcdInputValid = FALSE;
-    if (pPcdConfInput->Header.Signature != NVDIMM_CONFIGURATION_INPUT_SIG) {
-      NVDIMM_DBG("Incorrect signature of the DIMM Config Input table");
-
-    } else if (pPcdConfInput->Header.Length > pDimm->PcdOemPartitionSize) {
-      NVDIMM_DBG("Length of PCD Config Input header is greater than max PCD OEM partition size");
-
-    } else if (!IsChecksumValid(pPcdConfInput, pPcdConfInput->Header.Length)) {
-      NVDIMM_DBG("The checksum of Config Input table is invalid.");
-
-    } else if ((pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-               (pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
-      NVDIMM_DBG("Revision of PCD Config Input table is invalid");
-
-    } else {
-      PcdInputValid = TRUE;
-    }
-
-    if (!PcdInputValid) {
+    // CIN is corrupt
+    else if (!IsPcdConfInputHeaderValid(pPcdConfInput, pDimm->PcdOemPartitionSize)) {
       pPcdConfHeader->ConfInputStartOffset = 0;
       pPcdConfHeader->ConfInputDataSize = 0;
+      NVDIMM_DBG("The Config Input table is corrupted, Ignoring it");
+      ValidConfigGoal = FALSE;
+    }
+    // If CIN and COUT sequence are the same, then goal attempted to be applied already
+    else if ((pPcdConfHeader->ConfOutputStartOffset != 0) && (pPcdConfHeader->ConfOutputDataSize != 0) &&
+      IsPcdConfOutputHeaderValid(pPcdConfOutput, pDimm->PcdOemPartitionSize) &&
+      (pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber)) {
+      NVDIMM_DBG("The config goal is already applied");
+      ValidConfigGoal = FALSE;
+    }
+
+    if (!ValidConfigGoal) {
       pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
       pDimm->RegionsGoalConfig = FALSE;
       pDimm->PcdSynced = TRUE;
-      NVDIMM_DBG("The Config Input table is corrupted, Ignoring it");
       FREE_POOL_SAFE(pPcdConfHeader);
       continue;
-
-    } else {
-      NVDIMM_DBG("The data in Config Input table is valid.");
     }
 
     PcdCinRev = pPcdConfInput->Header.Revision;
@@ -1547,25 +1510,9 @@ RetrieveGoalConfigsFromPlatformConfigData(
       continue;
     }
 
-    if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-      NVDIMM_DBG("Icorrect signature of the DIMM Config Output table");
+    if (!IsPcdConfOutputHeaderValid(pPcdConfOutput, pDimm->PcdOemPartitionSize)) {
       ReturnCode = EFI_ABORTED;
       goto FinishError;
-    } else if (pPcdConfOutput->Header.Length > pDimm->PcdOemPartitionSize) {
-      NVDIMM_DBG("Length of PCD Config Output header is greater than max PCD OEM partition size");
-      ReturnCode = EFI_ABORTED;
-      goto FinishError;
-    } else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
-      NVDIMM_DBG("The checksum of Config Output table is invalid.");
-      ReturnCode = EFI_ABORTED;
-      goto FinishError;
-    } else if ((pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-               (pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
-      NVDIMM_DBG("Revision of PCD Config Output table is invalid");
-      ReturnCode = EFI_ABORTED;
-      goto FinishError;
-    } else {
-      NVDIMM_DBG("The data in Config Output table is valid.");
     }
 
     if (pPcdConfOutput->ValidationStatus == CONFIG_OUTPUT_STATUS_SUCCESS) {

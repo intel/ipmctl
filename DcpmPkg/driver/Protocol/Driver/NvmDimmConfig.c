@@ -558,21 +558,7 @@ GetDimmMappedMemSize(
 
   pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
-  if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
-    NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
-    FreePool(pPcdConfHeader);
-    return EFI_VOLUME_CORRUPTED;
-  } else if (pPcdCurrentConf->Header.Length > pDimm->PcdOemPartitionSize) {
-    NVDIMM_DBG("Length of PCD Current Config header is greater than max PCD OEM partition size");
-    FreePool(pPcdConfHeader);
-    return EFI_VOLUME_CORRUPTED;
-  } else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-    (pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
-    NVDIMM_DBG("Revision of PCD Current Config table is invalid");
-    FreePool(pPcdConfHeader);
-    return EFI_VOLUME_CORRUPTED;
-  } else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
-    NVDIMM_DBG("The Current Config table checksum is invalid.");
+  if (!IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
     FreePool(pPcdConfHeader);
     return EFI_VOLUME_CORRUPTED;
   }

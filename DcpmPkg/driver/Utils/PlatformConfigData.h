@@ -129,6 +129,51 @@ CompareDimmOrderInInterleaveSet6Way(
   IN     VOID *pSecond
   );
 
+/**
+  Validate the PCD CIN header
+
+  @param[in] pPcdConfInput Pointer to the PCD CIN Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN 
+IsPcdConfInputHeaderValid(
+  IN  NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput, 
+  IN  UINT32 PcdOemPartitionSize
+);
+
+/**
+  Validate the PCD COUT header
+
+  @param[in] pPcdConfOutput Pointer to the PCD COUT Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN 
+IsPcdConfOutputHeaderValid(
+  IN  NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput, 
+  IN  UINT32 PcdOemPartitionSize
+);
+
+/**
+  Validate the PCD CCUR header
+
+  @param[in] pPcdCurrentConf Pointer to the PCD CCUR Header
+  @param[in] pSecond Max allowed size of the PCD OEM Partition
+
+  @retval TRUE if valid
+  @retval FALSE if invalid.
+**/
+BOOLEAN
+IsPcdCurrentConfHeaderValid(
+  IN  NVDIMM_CURRENT_CONFIG *pPcdCurrentConf,
+  IN  UINT32 PcdOemPartitionSize
+);
+
 #if defined(_MSC_VER)
 #pragma warning( pop )
 #endif

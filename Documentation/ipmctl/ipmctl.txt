@@ -1,0 +1,201 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl(1)
+=========
+
+NAME
+----
+ipmctl - Utility for managing Intel Optane DC persistent memory modules (DCPMM)
+
+SYNOPSIS
+--------
+[verse]
+ipmctl COMMAND [OPTIONS] [TARGETS] [PROPERTIES]
+
+OPTIONS
+-------
+-h::
+--help::
+  Run ipmctl help command.
+
+DESCRIPTION
+-----------
+Utility for managing Intel Optane DC persistent memory modules (DCPMM)
+
+Supports functionality to:
+
+- Discover DCPMMs on the platform.
+- Provision the platform memory configuration.
+- View and update the firmware on DCPMMs.
+- Configure data-at-rest security on DCPMMs.
+- Monitor DCPMM health.
+- Track performance of DCPMMs.
+- Debug and troubleshoot DCPMMs.
+
+COMMANDS
+--------
+
+=== DEVICE DISCOVERY
+Discover DCPMMs on the platform.
+
+*ipmctl-show-device*(1)::
+  Shows information about one or more DCPMMs
+
+*ipmctl-show-memory-resources*(1)::
+  Shows the total DCPMM memory resource allocation
+
+*ipmctl-show-socket(1)*::
+  Shows basic information about the physical processors
+
+*ipmctl-show-system-capabilities*(1)::
+  Shows the platform supported DCPMM capabilities
+
+*ipmctl-show-topology(1)*::
+  Shows the topology of the memory installed
+
+=== MEMORY SUBSYSTEM PROVISIONING
+Provision the platform memory configuration and configure data-at-rest security
+on DCPMMs.
+
+*ipmctl-change-device-passphrase*(1)::
+  Changes the security passphrase on DCPMM
+
+*ipmctl-change-device-security*(1)::
+  Changes the DCPMM security lock state
+
+*ipmctl-create-goal(1)*::
+   Creates a memory allocation goal on one or more DCPMM
+
+*ipmctl-delete-goal(1)*::
+  Creates a memory allocation goal on one or more DCPMM
+
+*ipmctl-dump-goal(1)*::
+   Stores the current system configuration in a file
+
+*ipmctl-enable-device-security(1)*::
+  Enable data-at-rest security on DCPMM
+
+*ipmctl-erase-device-data(1)*::
+  Erases the persistent data on one or more DCPMMs
+
+*ipmctl-load-goal(1)*::
+  Load a memory allocation goal from a file onto DCPMMs
+
+*ipmctl-show-goal(1)*::
+  Shows the memory allocation goal on one or more DCPMM
+
+*ipmctl-show-region(1)*::
+  Retrieves a list of persistent memory regions
+
+=== INSTRUMENTATION
+Monitor health and track performance of DCPMMs.
+
+*ipmctl-change-sensor*(1)::
+  Changes the threshold or enabled state for DCPMMs sensors
+
+*ipmctl-show-performance*(1)::
+  Shows performance metrics for one or more DCPMMs
+
+*ipmctl-show-sensor*(1)::
+  Shows health statistics for one or more DCPMMs
+
+=== SUPPORT AND MAINTENANCE
+View and update the firmware on DCPMMs. Other support and maintenance commands.
+
+*ipmctl-acknowledge-event*(1)::
+  Turns off the flag that signals a corrective action on an event
+
+*ipmctl-change-preference*(1)::
+  Modifies one or more user preferences
+
+*ipmctl-dump-support*(1)::
+  Dumps a support snapshot to a file
+
+*ipmctl-help*(1)::
+  Shows help for the supported commands
+
+*ipmctl-modify-device*(1)::
+  Changes the configurable setting(s) on one or more DCPMMs
+
+*ipmctl-show-events*(1)::
+  Shows DCPMM related events
+
+*ipmctl-show-firmware*(1)::
+  Shows detailed information about the firmware
+
+*ipmctl-show-host*(1)::
+  Shows basic information about the host server
+
+*ipmctl-show-preferences*(1)::
+  Displays a list of the DCPMM software user preferences
+
+*ipmctl-update-firmware*(1)::
+  Updates the firmware on one or more DCPMMs.
+
+*ipmctl-version*(1)::
+  Shows the DCPMM host software versions
+
+=== DEBUG
+Debug and troubleshoot DCPMMs.
+
+*ipmctl-dump-debug-log*(1)::
+  Dumps encoded firmware debug logs from DCPMM
+
+*ipmctl-inject-error*(1)::
+  Injects an error or clears a previously injected error
+
+*ipmctl-run-diagnostic*(1)::
+  Runs a diagnostic test
+
+*ipmctl-show-acpi*(1)::
+  Shows the system ACPI tables related to the DCPMMs
+
+*ipmctl-show-error-log*(1)::
+  Shows thermal or media errors on the specified DCPMMs
+
+*ipmctl-show-pcd*(1)::
+  Shows the platform configuration data for one or more DCPMMs
+
+SEE ALSO
+--------
+*ipmctl-show-device*(1),
+*ipmctl-show-memory-resources*(1),
+*ipmctl-show-socket*(1),
+*ipmctl-show-system-capabilities*(1),
+*ipmctl-show-topology*(1),
+*ipmctl-change-device-passphrase*(1),
+*ipmctl-change-device-security*(1),
+*ipmctl-create-goal*(1),
+*ipmctl-create-goal*(1),
+*ipmctl-delete-goal*(1),
+*ipmctl-dump-goal*(1),
+*ipmctl-enable-device-security*(1),
+*ipmctl-erase-device-data*(1),
+*ipmctl-load-goal*(1),
+*ipmctl-show-goal*(1),
+*ipmctl-show-region*(1),
+*ipmctl-change-sensor*(1),
+*ipmctl-show-performance*(1),
+*ipmctl-show-sensor*(1),
+*ipmctl-acknowledge-event*(1),
+*ipmctl-change-preference*(1),
+*ipmctl-dump-support*(1),
+*ipmctl-help*(1),
+*ipmctl-modify-device*(1),
+*ipmctl-show-events*(1),
+*ipmctl-show-firmware*(1),
+*ipmctl-show-host*(1),
+*ipmctl-show-preferences*(1),
+*ipmctl-update-firmware*(1),
+*ipmctl-version*(1),
+*ipmctl-dump-debug-log*(1),
+*ipmctl-inject-error*(1),
+*ipmctl-run-diagnostic*(1),
+*ipmctl-show-acpi*(1),
+*ipmctl-show-error-log*(1),
+*ipmctl-show-pcd*(1)
+
+NOTES
+-----
+https://github.com/intel/ipmctl

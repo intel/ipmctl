@@ -1,0 +1,135 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-update-firmware(1)
+=========================
+
+NAME
+----
+ipmctl-update-firmware - Updates the firmware on one or more DCPMMs
+
+DESCRIPTION
+-----------
+Updates the firmware on one or more DCPMMs. On the next power cycle, the
+firmware will become active.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl load [OPTIONS] -source (path) -dimm (DimmIds) [TARGETS]
+
+OPTIONS
+-------
+-x::
+-examine::
+  Verifies the target DIMM is compatible with and ready to receive the recovery
+  firmware image specified in the source option. Return the recovery firmware
+  image version.
+
+-f::
+-force::
+  Downgrading the firmware to an older version is a potentially destructive
+  operation which requires confirmation from the user for each DCPMM. This
+  option suppresses the confirmation when attempting to downgrade.
+
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Updates the firmware on specific DCPMMs by supplying one or more
+  comma-separated DCPMM identifiers. However, this is not recommended as it may
+  put the system in an undesirable state. The default is to update all
+  manageable DCPMMs.
+
+-recovery::
+  The recovery target forces the firmware update to attempt using SMBus instead
+  of DDRT. This is necessary in case the DDRT link is not trained. This update
+  method will be much slower than using the DDRT interface.
+
+-recovery FlashSPI::
+  The FlashSPI option is a modifier that forces an update of the entire SPI
+  Flash. This requires a specific flash image that is intended as full SPI flash
+  update. This update method is only possible if existing SPI firmware images
+  are all corrupt and cannot be loaded by the DIMM’s ROM.
+
+EXAMPLES
+--------
+Updates the firmware on all DCPMMs in the system to the image in sourcefile.pkg on
+the next power cycle.
+[verse]
+ipmctl load -source sourcefile.pkg -dimm
+
+Checks the firmware image in c:\sourcefile.pkg and retrieve the version.
+[verse]
+ipmctl load -examine -source sourcefile.pkg -dimm
+
+
+LIMITATIONS
+-----------
+The specified DCPMM(s) must be manageable by the host software.
+
+Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
+
+  - The product number (PN) cannot be changed.
+  - The revision number (RN) can be upgraded when PN is the same.
+  - The security revision number (SV) can be upgraded when PN.RN is the same. In
+    some configurations it can also be downgraded when PN.RN is the same; use the
+    examine option to determine if the security revision number can be downgraded.
+  - The build number (bbbb) can be upgraded or downgraded. However, if the firmware
+
+API version in the firmware image is lower than is supported by the host software
+and would make the DCPMM become unmanageable, the downgrade is not supported.
+
+Note: Once a firmware image is staged for execution, a power cycle is required before
+another firmware image of the same type (production or debug) can be staged for
+execution using this command.
+
+RETURN DATA
+-----------
+When the examine option is provided, the firmware image is checked and the
+version number and firmware type is provided. The firmware will either be
+valid for the DCPMM, a downgrade or invalid meaning it cannot be used for that
+DCPMM.
+
+SAMPLE OUTPUT
+-------------
+[verse]
+(file path): MM.mm.hh.bbbb | Unable to retrieve version from FW
+image.
+Load FW on DIMM (DimmID): (Valid|Invalid|Downgrade) [(with
+confirmation or the force option)]
+
+If the firmware is being downgraded and the force option is not provided, the user will
+be prompted to confirm the downgrade for each DCPMM.
+
+
+[verse]
+Downgrade firmware on DIMM (DimmID)? (y or [n]) Downgrade firmware
+on DIMM (DimmID)? (y or [n])
+...
+
+Otherwise, for each DCPMM, the CLI will indicate the status of the operation. If a failure
+occurs when updating multiple DCPMMs, the process will exit and not continue updating
+the remaining DCPMMs. The firmware will not become active until the next power cycle.
+Use the command Section 2.5.3, “Show Device Firmware” to view more detailed
+information about the active and staged firmware.
+
+[verse]
+Load FW on DIMM (DimmID): Success, a power cycle is required to
+activate the FW.
+Load FW on DIMM (DimmID): Success, a power cycle is required to
+activate the FW.
+...
+Load FW on DIMM (DimmID): Error (Code)-(Description)
+
+SEE ALSO
+--------

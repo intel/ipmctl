@@ -1,0 +1,111 @@
+// Copyright (c) 2019, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-show-preferences(1)
+==========================
+
+NAME
+----
+ipmctl-show-preferences - Displays a list of the DCPMM software user preferences
+
+DESCRIPTION
+-----------
+Displays a list of the DCPMM software user preferences and their current values.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -preferences
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+EXAMPLES
+--------
+Displays the current values for all the user preferences
+[verse]
+ipmctl show -preferences
+
+RETURN DATA
+-----------
+CLI_DEFAULT_DIMM_ID::
+  The default display of DCPMM identifiers. One of:
+  - UID: Use the DimmUID attribute as defined in the command Show Device.
+  - HANDLE: Use the DimmHandle attribute as defined in the command Show Device.
+    This is the default.
+
+CLI_DEFAULT_SIZE::
+  The default display of capacities in the CLI. One of:
+  - AUTO: Automatically choose the best format for each capacity in binary
+    multiples of bytes (i.e., B, MiB, GiB or TiB). This is the default.
+  - AUTO_10: AUTO_10: Automatically choose the best format for each capacity in
+    decimal multiples of bytes (i.e., B, MB, GB or TB).
+  - B: Displays all capacities in bytes.
+  - MB: Displays all capacities in megabytes.
+  - MiB: Displays all capacities in mebibytes.
+  - GB: Displays all capacities in gigabytes.
+  - GiB: Displays all capacities in gibibytes.
+  - TB: Displays all capacities in terabytes.
+  - TiB: Displays all capacities in tebibytes.
+
+PERFORMANCE_MONITOR_ENABLED::
+  Whether or not the monitor is periodically storing performance metrics for the
+  DCPMMs in the host server. One of:
+  - 0: Disabled
+  - 1: Enabled. This is the default.
+
+PERFORMANCE_MONITOR_INTERVAL_MINUTES::
+  The interval in minutes that the monitor is retrieving and storing performance
+  metrics (if enabled). The default value is 180 minutes.
+
+EVENT_MONITOR_ENABLED::
+  Whether or not the monitor is periodically checking for DCPMM events. One of:
+  - 0: Disabled
+  - 1: Enabled. This is the default.
+
+EVENT_MONITOR_INTERVAL_MINUTES::
+  The interval in minutes that the monitor is checking for and storing DCPMM
+  events (if enabled). The default value is 1 minute.
+
+EVENT_LOG_MAX::
+  The maximum number of events to keep in the management software. The default
+  value is 0, which indicates no limit.
+
+DBG_LOG_MAX::
+  The maximum number of debug log entries to keep in the management software. The
+  default value is 0, which indicates no limit.
+
+APPDIRECT_SETTINGS::
+  The interleave settings to use when creating App Direct capacity in the
+  format: (IMCSize_ChannelSize). The default is “RECOMMENDED” which uses the
+  BIOS recommended App Direct settings returned by the command Show System
+  Capabilities.
+
+APPDIRECT_GRANULARITY::
+  The minimum App Direct granularity per DCPMM supported by the command Create
+  Memory Allocation Goal. One of:
+  - RECOMMENDED: Use the recommended App Direct granularity of 32 GiB.
+  - 1: Allows 1 GiB App Direct granularity which may result in App Direct region
+    sizes that are not recommended.
+
+DBG_LOG_LEVEL::
+  Whether debug logging is enabled in the DCPMM host software. These logs
+  pertain to the operation of the command-line tool only and do not reflect any
+  logging functionality of the DCPMM. One of:
+  - 0: Logging is disabled. This is the default.
+  - 1: Log Errors.
+  - 2: Log Warnings, Errors.
+  - 3: Log Informational, Warnings, Errors.
+  - 4: Log Verbose, Informational, Warnings, Errors.
+
+SEE ALSO
+--------

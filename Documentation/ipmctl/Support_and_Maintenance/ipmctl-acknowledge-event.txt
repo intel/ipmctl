@@ -1,0 +1,61 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-acknowledge-event(1)
+===========================
+
+NAME
+----
+ipmctl-acknowledge-event - Turns off the flag that signals a corrective action
+on an event
+
+DESCRIPTION
+-----------
+Turns off the flag that signals a corrective action on an event. Refer to the
+Event Log Specification for detailed information about individual events.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl set [OPTIONS] -event (EventID) ActionRequired=(0)
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-event::
+  The identifier of the event to be acknowledged
+
+PROPERTIES
+----------
+ActionRequired=(0)::
+  A flag indicating whether the event needs a corrective action or
+  acknowledgment. One of:
+  - 0: Disable the action required flag.
+
+EXAMPLES
+--------
+ipmctl set -event 1 ActionRequired=0
+
+LIMITATIONS
+-----------
+An event can be acknowledged only if the action required flag is currently set.
+
+RETURN DATA
+-----------
+Simply returns the status of the operation. Sample output:
+[verse]
+Acknowledge Event: Success|Error (Code) - (Description)
+
+SEE ALSO
+--------

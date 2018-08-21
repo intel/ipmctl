@@ -1,0 +1,50 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-dump-support-data(1)
+===========================
+
+NAME
+----
+ipmctl-dump-support-data - Dumps a support snapshot to a file
+
+DESCRIPTION
+-----------
+Creates a support snapshot and dump support data to a file for off-line analysis
+by support personnel. Support data may include system log(s), error log(s),
+trace log(s), platform configuration, sensor information, and diagnostic
+results.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl dump [OPTIONS] -destination (path) -support
+
+OPTIONS
+-------
+-h::
+-help::
+    Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+EXAMPLES
+--------
+Stores the support data in the file dumpfile.dmp
+[verse]
+ipmctl dump -destination dumpfile.dmp -support
+
+RETURN DATA
+-----------
+Simply returns the status of the operation.
+
+SAMPLE OUTPUT
+-------------
+Dump support data: Success|Error (Code) - (Description)
+
+SEE ALSO
+--------

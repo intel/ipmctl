@@ -1,0 +1,100 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-dump-goal(1)
+===================
+
+NAME
+----
+ipmctl-dump-goal - Load a memory allocation goal from a file onto DCPMMs
+
+DESCRIPTION
+-----------
+Load a memory allocation goal from a file onto one or more DCPMMs.
+
+Note: Changing the memory configuration is a destructive operation which may
+result in loss of data stored in the persistent memory region. Therefore, data
+should be backed up to other storage before executing this command. Changing a
+memory allocation goal modifies how the platform maps persistent memory, but
+does not explicitly delete or modify user data found in persistent memory.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
+
+OPTIONS
+-------
+-f::
+-force::
+    Reconfiguring DCPMMs is a destructive operation which requires
+    confirmation from the user. This option suppresses the confirmation.
+
+-h::
+-help::
+    Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+    Changes the units that capacities are displayed in for this command. One of:
+    bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+    terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Loads the memory allocation goal onto specific DCPMMs by supplying one or more
+  comma separated DCPMM identifiers. The default is to load the memory
+  allocation goal onto all manageable DCPMMs.
+
+-socket (SocketIds)::
+  Loads the memory allocation goal onto all manageable DCPMMs on specific
+  sockets by supplying the socket target and one or more comma-separated socket
+  identifiers. The default is to load the memory allocation goal onto all
+  manageable DCPMMs on all sockets.
+
+EXAMPLES
+--------
+Loads the configuration settings stored in "config.txt" onto all the DCPMMs in
+the system as a memory allocation goal to be applied by the BIOS on the next
+reboot.
+[verse]
+ipmctl load -source config.txt -goal
+
+Loads the configuration settings stored in "config.txt" onto a specified set of
+DCPMMs as a memory allocation goal to be applied by the BIOS on the next reboot.
+[verse]
+ipmctl load -source config.txt -goal -dimm 1,2,3
+
+Loads the configuration settings stored in "config.txt" onto all manageable
+DCPMMs on sockets 1 and 2 as a memory allocation goal to be applied by the BIOS
+on the next reboot.
+[verse]
+ipmctl load -source config.txt -goal -socket 1,2
+
+LIMITATIONS
+-----------
+The specified DCPMM(s) must be manageable by the host software and unlocked if
+security is enabled. Namespaces associated with the requested DCPMM(s) must be
+deleted before running this command.
+
+The specified DCPMM(s) must be manageable by the host software and unlocked if
+security is enabled. Namespaces associated with the requested DCPMM(s) must be
+deleted before running this command.
+
+RETURN DATA
+-----------
+If successful, the CLI will display the memory allocation goal stored on each
+DCPMM as documented in the command Section 2.2.6, “Show Memory Allocation Goal.”
+If a failure occurs, an error code and message will be displayed. If a failure
+occurs when configuring multiple DCPMMs, the process will exit and remove the
+memory allocation goal from any DCPMMs that succeeded prior to the failure.
+
+SEE ALSO
+--------

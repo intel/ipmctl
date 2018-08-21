@@ -1,0 +1,81 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-show-socket(1)
+=====================
+
+NAME
+----
+ipmctl-show-socket - Shows basic information about the physical processors
+
+DESCRIPTION
+-----------
+Shows basic information about the physical processors in the host server.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -socket [TARGETS]
+
+OPTIONS
+-------
+-d (attributes)::
+-display (attributes)::
+  Filters the returned attributes by explicitly specifying a comma-separated
+  list of any of the attributes defined in the Return Data section.
+
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-socket (SocketIDs)::
+  Restricts output to the DIMMs installed on specific sockets by supplying the
+  socket target and one or more comma-separated socket identifiers. The default
+  is to display all sockets.
+
+EXAMPLES
+--------
+Displays information about all the processors.
+[verse]
+ipmctl show -socket
+
+Lists all properties for socket 1.
+[verse]
+ipmctl show -socket 1
+
+Retrieves specific properties for each processor.
+[verse]
+ipmctl show -d MappedMemoryLimit -socket
+
+RETURN DATA
+-----------
+Displays a table with the attributes listed below for each physical processor
+installed in the host server.
+
+SocketID::
+  (Default) The processor socket identifier.
+
+MappedMemoryLimit::
+  (Default) The maximum amount of memory that is allowed to be mapped into the
+  system physical address space for this processor based on its SKU.
+
+TotalMappedMemory::
+  (Default) The total amount of memory that is currently mapped into the system
+  physical address space for this processor.
+
+SEE ALSO
+--------

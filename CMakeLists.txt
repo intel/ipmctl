@@ -9,6 +9,8 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 get_filename_component(ROOT ./ ABSOLUTE)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake/Find")
+
 set(LIBIPMCTL_VERSION_MAJOR 2)
 set(LIBIPMCTL_VERSION_MINOR 0)
 set(LIBIPMCTL_VERSION_PATCH 1)
@@ -50,7 +52,7 @@ else()
 	set(CMAKE_BUILD_TYPE Debug)
 	add_definitions(
 		-DDEBUG_BUILD
-    -DPLAYBACK_RECORD_SUPPORTED
+		-DPLAYBACK_RECORD_SUPPORTED
 		)
 endif()
 
@@ -71,7 +73,8 @@ elseif(UNIX)
 	set(FILE_PREFIX lnx)
 
 	find_package(Threads REQUIRED)
-	find_package(PkgConfig)
+	find_package(PkgConfig REQUIRED)
+	find_package(asciidoctor)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
 	pkg_check_modules(SYSTEMD systemd)
 	pkg_check_modules(LIBSAFEC REQUIRED safec-3.3>=03032018.0-g570fa5)
@@ -433,6 +436,12 @@ set_target_properties(ipmctl-bin
 	PROPERTIES OUTPUT_NAME ipmctl
 	)
 
+if (ASCIIDOCTOR_FOUND)
+	add_dependencies(ipmctl-bin
+		manpage
+		)
+endif()
+
 if(MSVC)
 	set_target_properties(ipmctl-bin PROPERTIES LINK_FLAGS "/STACK:3000000")
 else()
@@ -595,13 +604,21 @@ if(LNX_BUILD)
 			)
 	endif()
 
-	install(FILES ${OUTPUT_DIR}/libipmctl.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+	install(FILES ${OUTPUT_DIR}/libipmctl.pc
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+		)
+
+	if(ASCIIDOCTOR_FOUND)
+		install(DIRECTORY ${OUTPUT_DIR}/manpage/
+			DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+			)
+	endif()
 endif()
 
 #----------------------------------------------------------------------------------------------------
 # Documentation
 #----------------------------------------------------------------------------------------------------
-# add a target to generate API documentation with Doxygen^M
+# add a target to generate API documentation with Doxygen
 find_package(Doxygen)
 
 
@@ -617,6 +634,102 @@ if(DOXYGEN_FOUND)
 		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
 		)
+endif()
+
+#----------------------------------------------------------------------------------------------------
+# Generate man pages with asciidoctor
+#----------------------------------------------------------------------------------------------------
+if(ASCIIDOCTOR_FOUND)
+	file(MAKE_DIRECTORY ${OUTPUT_DIR}/manpage)
+
+	set(MANPAGE_INPUT_FILES
+		${ROOT}/Documentation/ipmctl/ipmctl.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-device.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-memory-resources.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-socket.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilites.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-topology.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-create-goal.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-delete-goal.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-dump-goal.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-enable-device-security.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-erase-device-data.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-load-goal.txt
+		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-show-goal.txt
+		${ROOT}/Documentation/ipmctl/Persistent_Memory_Provisioning/ipmctl-show-region.txt
+		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-change-sensor.txt
+		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-performance.txt
+		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-sensor.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-acknowledge-event.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-change-perferences.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-dump-support-data.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-events.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-host.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-perferences.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-run-diagnostic.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-error-log.txt
+		)
+
+	set(MANPAGE_OUTPUT_FILES
+		${OUTPUT_DIR}/manpage/ipmctl.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-device.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-memory-resources.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-socket.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-system-capabilites.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-topology.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-change-device-passphrase.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-change-device-security.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-create-goal.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-delete-goal.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-dump-goal.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-enable-device-security.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-erase-device-data.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-load-goal.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-goal.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-region.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-change-sensor.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-performance.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-sensor.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-acknowledge-event.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-change-perferences.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-events.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-host.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-perferences.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-run-diagnostic.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-error-log.1.gz
+		)
+
+add_custom_target(manpage ALL
+	DEPENDS ${MANPAGE_OUTPUT_FILES} ${MANPAGE_INPUT_FILES}
+	)
+
+add_custom_command(OUTPUT ${MANPAGE_OUTPUT_FILES}
+	COMMAND ${ASCIIDOCTOR_BINARIES} -b manpage -amansource=ipmctl -amanmanual="ipmctl" -aipmctl_version=${BUILD_NUM} -D ${OUTPUT_DIR}/manpage ${MANPAGE_INPUT_FILES}
+	COMMAND gzip -f ${OUTPUT_DIR}/manpage/*.1
+	COMMENT "Generating man pages"
+	DEPENDS ${MANPAGE_INPUT_FILES}
+	)
 endif()
 
 # --------------------------------------------------------------------------------------------------

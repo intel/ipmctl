@@ -1,0 +1,99 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-show-error-log(1)
+========================
+
+NAME
+----
+ipmctl-show-error-log - Shows thermal or media errors on the specified DCPMMs
+
+DESCRIPTION
+-----------
+Shows thermal or media errors on the specified DCPMMs.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -error (Thermal|Media) [TARGETS] [PROPERTIES]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Filter output to events on a specific DCPMM by supplying the dimm target and
+  one DCPMM identifier.
+
+PROPERTIES
+----------
+SequenceNumber=::
+  Error log entries are stored with a sequence number starting with 1 and
+  rolling over back to 1 after 65535. Limit the error log entries returned by
+  providing a sequence number. Only errors with a sequence number equal to or
+  higher than provided will be returned. The default is 1.
+
+Level=::
+  Severity level of errors to be fetched. One of:
+  - High: High severity errors (Default)
+  - Low: Low severity errors
+
+Count=::
+  Max number of error entries to be fetched and printed.
+  The default is 8 for media errors and 16 for thermal errors.
+
+EXAMPLES
+--------
+Show all high thermal error log entries
+[verse]
+ipmctl show -error Thermal Level=High
+
+Show all low media error log entries
+[verse]
+ipmctl show -error Thermal Level=High
+
+LIMITATIONS
+-----------
+To successfully execute this command, the specified DCPMM(s) must be manageable
+by the host software.
+
+RETURN DATA
+-----------
+Prints errors of the specified type for the specified DCPMMs. If no errors are found, the
+following message will be printed:
+[verse]
+No errors found on DIMM (DimmID)
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Thermal Error occurred on Dimm (DimmID):
+System Timestamp : 1527273299
+Temperature : 88C
+Reported : 4 - Critical
+Temperature Type : 0 - Media Temperature
+Sequence Number : 1
+
+[verse]
+Media Error occurred on Dimm (DimmID):
+System Timestamp : 1527266471
+DPA : 0x000014c0
+PDA : 0x00000600
+Range : 4B
+Error Type : 4 - Locked/Illegal Access
+Error Flags : DPA Valid
+Transaction Type : 11 - CSR Write
+Sequence Number : 2
+
+SEE ALSO
+--------

@@ -1,0 +1,60 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-help(1)
+==============
+
+NAME
+----
+ipmctl-help - Shows help for the supported commands
+
+DESCRIPTION
+-----------
+Shows help for the supported commands.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl help [OPTIONS]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+EXAMPLES
+--------
+Lists all supported commands
+[verse]
+ipmctl help
+
+RETURN DATA
+-----------
+The default behavior is to display an introduction to CLI followed by a list of
+the supported commands. To display detailed help for a specific command, use the
+help option with that specific command
+
+SAMPLE OUTPUT
+-------------
+[verse]
+ipmctl help
+Commands:
+(name)
+(synopsis)
+(name)
+(synopsis)
+(name)
+(synopsis)
+(name)
+(synopsis)
+...
+
+SEE ALSO
+--------

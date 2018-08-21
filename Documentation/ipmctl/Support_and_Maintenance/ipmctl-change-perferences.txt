@@ -1,0 +1,126 @@
+// Copyright (c) 2019, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-change-preferences(1)
+============================
+
+NAME
+----
+ipmctl-change-preferences - Modifies one or more user preferences
+
+DESCRIPTION
+-----------
+Modifies one or more user preferences in the DCPMM software.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl set [OPTIONS] -preferences [PROPERTIES]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+PROPERTIES
+----------
+CLI_DEFAULT_DIMM_ID=::
+  The default display of DCPMM identifiers. One of:
+  - UID: Use the DimmUID attribute as defined in the command Section 2.1.3,
+    “Show Device.”
+  - HANDLE: Use the DimmHandle attribute as defined in the command Section
+    2.1.3, “Show Device. This is the default
+
+CLI_DEFAULT_SIZE=::
+  The default display of capacities in the CLI. One of:
+  - AUTO: Automatically choose the best format for each capacity in binary
+    multiples of bytes (i.e., B, MiB, GiB or TiB). This is the default.
+  - AUTO_10: Automatically choose the best format for each capacity in decimal
+    multiples of bytes (i.e., B, MB, GB or TB).
+  - B: Displays all capacities in bytes.
+  - MB: Displays all capacities in megabytes.
+  - MiB: Displays all capacities in mebibytes.
+  - GB: Displays all capacities in gigabytes.
+  - GiB: Displays all capacities in gibibytes.
+  - TB: Displays all capacities in terabytes.
+  - TiB: Displays all capacities in tebibytes.
+
+PERFORMANCE_MONITOR_ENABLED=::
+  Whether or not the monitor is periodically storing performance metrics for the
+  DCPMMs in the host server. One of:
+  - 0: Disable performance monitoring.
+  -1: Enable performance monitoring. This is the default.
+
+PERFORMANCE_MONITOR_INTERVAL_MINUTES=::
+  The interval in minutes that the monitor is storing performance metrics (if
+  enabled). The default value is 180 minutes and must be >= 1.
+
+EVENT_MONITOR_ENABLED=::
+  Whether or not the monitor is periodically checking for DCPMM events.
+  - 0: Disable event monitoring.
+  - 1: Enable event monitoring. This is the default.
+
+EVENT_MONITOR_INTERVAL_MINUTES=::
+  The interval in minutes that the monitor is checking for DCPMM events (if
+  enabled). The default value is 1 minutes and must be >= 1.
+
+EVENT_LOG_MAX=::
+  The maximum number of events to keep in the management software. The default
+  value is 0 (no limit). The valid range is 0 - 2,147,483,647.
+
+DBG_LOG_MAX=::
+  The maximum number of debug log entries to keep in the management software.
+  The default value is 0 (no limit). The valid range is 0 - 2,147,483,647.
+
+APPDIRECT_SETTINGS=::
+  The interleave settings to use when creating App Direct capacity in the
+  format: (IMCSize_ChannelSize). Must be one of the BIOS supported App Direct
+  settings returned by the command Section 2.1.5, “Show System Capabilities.” +
+  Note: ByOne is not a valid setting for this preference. The default is
+  “RECOMMENDED” which uses the BIOS recommended App Direct settings. +
+  Note: The same interleave settings are used for all the App Direct capacity in
+  the system. Therefore, if any App Direct capacity already exists, this
+  preference cannot be changed.
+
+APPDIRECT_GRANULARITY=::
+  The minimum App Direct granularity per DCPMM supported by the command Section
+  2.2.5, “Create Memory Allocation Goal.”. One of:
+  - RECOMMENDED: Use the recommended App Direct granularity of 32 GiB.
+  - 1: Allows 1 GiB App Direct granularity which may result in App Direct region
+       sizes that are not recommended.
+
+DBG_LOG_LEVEL=::
+  Whether debug logging is enabled in the DCPMM host software. These logs
+  pertain to the operation of the command-line tool only and do not reflect any
+  logging functionality of the DCPMM. One of:
+  - 0: Logging is disabled. This is the default.
+  - 1: Log Errors.
+  - 2: Log Warnings, Errors.
+  - 3: Log Informational, Warnings, Errors.
+  - 4: Log Verbose, Informational, Warnings, Errors.
+
+EXAMPLES
+--------
+Use DimmUID as the default DCPMM identifier, and display all capacities in bytes.
+[verse]
+ipmctl set -preferences CLI_DEFAULT_DIMM_ID=UID CLI_DEFAULT_SIZE=B
+
+RETURN DATA
+-----------
+Returns the status of the operation.
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Set (Property)=(Value): Success|Error (Code)-(Description)
+...
+
+SEE ALSO
+--------

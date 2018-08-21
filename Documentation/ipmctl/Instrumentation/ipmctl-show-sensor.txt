@@ -1,0 +1,169 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-show-sensor(1)
+=====================
+
+NAME
+----
+ipmctl-show-sensor - Shows health statistics for one or more DCPMMs
+
+DESCRIPTION
+-----------
+ipmctl-show-device to view more detailed information about a DCPMM.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
+
+OPTIONS
+-------
+-a::
+-all::
+  Shows all attributes.
+   +
+  Note: The all and display options are exclusive and may not be used together.
+
+-d (attributes)::
+-display (attributes)::
+  Filters the returned attributes by explicitly specifying a comma-separated
+  list of any of the attributes defined in the Return Data section.
+   +
+  Note: The all and display options are exclusive and may not be used together.
+
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+SENSORS
+-------
+Health::
+  (Default) The current DCPMM health as reported in the SMART log
+
+MediaTemperature::
+  (Default) The current DCPMM media temperature in Celsius
+
+ControllerTemperature::
+  (Default) The current DCPMM controller temperature in Celsius
+
+PercentageRemaining::
+  (Default) Remaining DCPMM’s life as a percentage value of factory expected
+  life span
+
+DirtyShutdowns::
+  (Default) The number of shutdowns without notification over the lifetime of
+  the DCPMM
+
+UnlatchedDirtyShutdowns::
+  (Default) The number of shutdowns without notification over the lifetime of
+  the DCPMM. This counter is the same as DirtyShutdowns except it will always be
+  incremented on a dirty shutdown, even if Latch System Shutdown Status was not
+  enabled
+
+PowerOnTime::
+  (Default) The total power-on time over the lifetime of the DCPMM
+
+UpTime::
+  (Default) The total power-on time since the last power cycle of the DCPMM
+
+PowerCycles::
+  (Default) The number of power cycles over the lifetime of the DCPMM
+
+FwErrorCount::
+  The total number of firmware error log entries
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Restricts output to the sensors on specific DCPMMs by supplying the DIMM
+  target and one or more comma-separated DCPMM identifiers. The default is to
+  display sensors for all manageable DCPMMs.
+
+EXAMPLES
+--------
+Gets all sensor information for all DCPMMs.
+[verse]
+ipmctl show -sensor
+
+Shows the media temperature sensor for the specified DCPMM.
+[verse]
+ipmctl show -sensor MediaTemperature -dimm 1234
+
+LIMITATIONS
+-----------
+The specified DCPMM(s) must be manageable by the host software.
+
+RETURN DATA
+-----------
+This command displays a table with a row for each sensor on each DCPMM. Applying
+a specific DCPMM or sensor type target limits the number of rows. Applying
+options can be used to expand or restrict the output.
+
+DimmID::
+  (Default) The DCPMM identifier
+
+Type::
+  (Default) The sensor type. Refer to the sensor table above.
+
+CurrentValue::
+  (Default) The current reading followed by the units of measurement
+  (e.g., 57 °C or 25%)
+
+CurrentState::
+  (Default) The current value in relation to the threshold settings
+  (if supported). One of:
+  - Unknown: The state cannot be determined.
+  - Normal: The current reading is within the normal range. This is the default
+    when the sensor does not support thresholds.
+  - NonCritical: The current reading is within the non-critical range. For
+    example, an alarm threshold has been reached.
+  - Critical: The current reading is within the critical range. For example, the
+    firmware has begun throttling down traffic to the DCPMM due to the
+    temperature.
+  - Fatal: The current reading is within the fatal range. For example, the
+    firmware is shutting down the DCPMM due to the temperature.
+
+LowerThresholdNonCritical::
+  The threshold value below which the state is considered “NonCritical”.
+
+UpperThresholdNonCritical::
+  The threshold value at or above which the state is considered “NonCritical”.
+
+LowerThresholdCritical::
+  The threshold value below which the state is considered “Critical”.
+
+UpperThresholdCritical::
+  The threshold value at or above which the state is considered "Critical".
+
+UpperThresholdFatal::
+  The threshold value at or above which the state is considered "Fatal".
+
+SettableThresholds::
+  A list of user settable thresholds. Zero or more of:
+  - "LowerThresholdNonCritical"
+  - "UpperThresholdNonCritical"
+
+SupportedThresholds::
+  A list of supported thresholds. Zero or more of:
+  - "LowerThresholdNonCritical"
+  - "UpperThresholdNonCritical"
+  - "LowerThresholdCritical"
+  - "UpperThresholdCritical"
+  - "UpperThresholdFatal"
+
+EnabledState::
+  Whether the critical threshold alarm is enabled, disabled or not applicable.
+  One of:
+  - 0: Disabled
+  - 1: Enabled
+  - N/A
+
+SEE ALSO
+--------

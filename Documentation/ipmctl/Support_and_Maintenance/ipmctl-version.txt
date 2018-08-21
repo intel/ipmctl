@@ -1,0 +1,54 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-version(1)
+=================
+
+NAME
+----
+ipmctl-version - Shows the DCPMM host software versions
+
+DESCRIPTION
+-----------
+Shows the DCPMM host software versions.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl version [OPTIONS]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+EXAMPLES
+--------
+Displays the available version information for the DCPMM software components
+[verse]
+ipmctl version
+
+RETURN DATA
+-----------
+By default returns the following inventory information.
+
+Component::
+  The name of the software component. One of:
+  - [Product Name] Software Version: The DCPMM management software version
+  - [Product Name] Driver Version: The vendor specific DCPMM driver version
+
+Version::
+  The current version of the software component if found or an error if not.
+
+  Note: If the software version is incompatible, the version will be
+  followed by an error message indicating such.
+
+SEE ALSO
+--------

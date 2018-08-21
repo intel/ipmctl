@@ -1,0 +1,66 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-dump-debug-log(1)
+========================
+
+NAME
+----
+ipmctl-dump-debug-log - Dumps encoded firmware debug logs from DCPMM
+
+DESCRIPTION
+-----------
+Dumps encoded firmware debug logs from the specified DCPMM and optionally
+decodes to human readable text.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl dump [OPTIONS] -destination (path) -debug -dimm (DimmIDs) [PROPERTIES]
+
+OPTIONS
+-------
+-h::
+-help::
+    Displays help for the command.
+
+TARGET
+------
+-dimm (DimmIDs)::
+  Dumps the debug log from a specfic DCPMM by supplying one DCPMM identifiers.
+
+PROPERTIES
+----------
+-dict (Path)::
+  Optional file path to the dictionary file. If supplied, -destination will
+  create both the binary debug log and a text file with decoded log data.
+
+EXAMPLES
+--------
+Dumps the debug log from DCPMM 0x0001
+[verse]
+ipmctl dump -destination log.bin -debug -dimm 0x0001
+
+Dumps the debug log from DCPMM 0x0001 providing a dictionary file
+[verse]
+ipmctl dump -destination log.bin -debug -dimm 0x0001 -dict nlog_dict.txt
+
+LIMITATIONS
+-----------
+To successfully execute this command, the specified DCPMM(s) must be manageable
+by the host software.
+
+RETURN DATA
+-----------
+Dumps the encoded and optionally decoded contents of the firmware debug logs for the
+specified DCPMM into the specified files.
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Successfully dump FW Debug logs to file (Path). (value) MB were
+written
+Failed to dump FW Debug logs to file (Path)
+
+SEE ALSO
+--------

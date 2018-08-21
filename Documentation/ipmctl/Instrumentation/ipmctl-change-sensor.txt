@@ -1,0 +1,102 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-change-sensor(1)
+=======================
+
+NAME
+----
+ipmctl-change-sensor - Changes the threshold or enabled state for DCPMMs sensors
+
+DESCRIPTION
+-----------
+Changes the non-critical threshold or enabled state for one or more DCPMMs
+sensors.
+Use the command Show Sensor to view the current settings.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
+NonCriticalThreshold=(temperature) EnabledState=(0|1)
+
+OPTIONS
+-------
+-f::
+-force::
+  Changing the sensor settings is a potentially destructive operation which
+  requires confirmation from the user for each DCPMM. This option suppresses the
+  confirmation
+
+-h::
+-help::
+    Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+SENSORS
+-------
+MediaTemperature::
+  The current DCPMM media temperature in Celsius. Valid values: 20-85
+
+ControllerTemperature::
+  The current DCPMM controller temperature in Celsius. Valid values:
+  20-105
+
+PercentageRemaining::
+  Remaining DCPMM’s life as a percentage value of factory expected
+  life span. Valid values: 1-99
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Restricts output to the sensors on specific DCPMMs by supplying the DIMM
+  target and one or more comma-separated DCPMM identifiers. The default is to
+  display sensors for all manageable DCPMMs.
+
+PROPERTIES
+----------
+NonCriticalThreshold::
+  The upper (for temperatures) or lower (for spare capacity) non-critical alarm
+  threshold of the sensor. If the current value of the sensor is at or above for
+  thermal, or at or below for capacity, the theshold value, then the sensor will
+  indicate a “NonCritical” state. Temperatures may be specified in degrees
+  Celsius to a precision of 1/16 a degree.
+
+EnabledState::
+  Enable or disable the non-critical threshold alarm. One of:
+  - 0: Disable
+  - 1: Enable
+
+EXAMPLES
+--------
+Changes the media temperature threshold to 51 on the specified DCPMM and enable
+the alarm.
+[verse]
+ipmctl set -sensor MediaTemperature –dimm 0x0001 NonCriticalThreshold=51
+EnabledState=1
+
+LIMITATIONS
+-----------
+The specified DCPMM(s) must be manageable by the host software.
+
+RETURN DATA
+-----------
+For each DCPMM, the CLI will indicate the status of the operation. If a failure occurs
+when modifying multiple DCPMMs, the process will exit and not continue modifying the
+remaining DCPMMs.
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Modify (Sensor) settings on DIMM (DimmID): Success
+...
+Modify (Sensor) settings on DIMM (DimmID): Error (Code) -
+(Description)
+
+SEE ALSO
+--------

@@ -109,6 +109,7 @@ make -f Makefile install DESTDIR=%{buildroot}
 %defattr(-,root,root)
 %{_bindir}/ipmctl-monitor
 %{_unitdir}/ipmctl-monitor.service
+%{_mandir}/man1/ipmctl*
 
 %files -n libipmctl
 %defattr(-,root,root)

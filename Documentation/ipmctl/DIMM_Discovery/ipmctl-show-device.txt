@@ -1,0 +1,493 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ipmctl-show-device(1)
+=====================
+
+NAME
+----
+ipmctl-show-device - Shows information about one or more DCPMMs
+
+DESCRIPTION
+-----------
+Shows information about one or more DCPMMs
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -dimm [TARGETS]
+
+OPTIONS
+-------
+-a::
+-all::
+  Shows all attributes.
+   +
+  Note: The all and display options are exclusive and may not be used together.
+
+-d (attributes)::
+-display (attributes)::
+  Filters the returned attributes by explicitly specifying a comma-separated
+  list of any of the attributes defined in the Return Data section.
+   +
+  Note: The all and display options are exclusive and may not be used together.
+
+-h::
+-help::
+  Displays help for the command.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-dimm (DimmIDs)::
+  Restricts output to specific DCPMMs by supplying the DIMM target and one or
+  more comma-separated DCPMM identifiers. The default is to display all DCPMMs.
+
+-socket (SocketIDs)::
+  Restricts output to the DCPMMs installed on specific sockets by supplying the
+  socket target and one or more comma-separated socket identifiers. The default
+  is to display all sockets.
+   +
+  Note: If ACPI PMTT table is not present, then DDR4 memory will not be
+  displayed in the filtered socket list.
+
+EXAMPLES
+--------
+Lists a few key fields for each DCPMM.
+[verse]
+ipmctl show -dimm
+
+Lists all properties for DCPMM 0x0001.
+[verse]
+ipmctl show -a -dimm 0x0001
+
+Retrieves specific properties for each DCPMM.
+[verse]
+ipmctl show -d HealthState,LockState -dimm
+
+RETURN DATA
+-----------
+The default behavior is to display a table with the default attributes listed
+below; applying options changes the output to a more detailed format. Limited
+information (noted in the table below) is applicable if the DCPMM is not
+manageable by the software as indicated by the “ManageabilityState” property.
+
+DimmID::
+  (Default)  The DCPMM identifier.
+
+Capacity::
+  (Default) The usable capacity of the DCPMM as reported by the
+  firmware.
+
+HealthState::
+  (Default) Overall DCPMM health. One of:
+  - Healthy
+  - Noncritical: Maintenance is required.
+  - Critical: Features or performance are degraded due to failure.
+  - Fatal: Data loss has occurred or is imminent. In this case, the
+    firmware will disable the media and access to user data and operations
+    that require use of the media will fail.
+  - Non-functional: The DCPMM is present but is non-responsive.
+  - Unmanageable: The DCPMM is not supported by this version of
+    the software
+  - Unknown: Unable to determine the DCPMM health state.
+
+HealthStateReason::
+  Indicates why the DCPMM is in the current Health State.
+  One or more of:
+  - None
+  - Percentage Remaining less than 1%
+  - Package Sparing occurred
+  - CAP Self-Test warning
+  - Percentage Remaining is 0
+  - Die Failure
+  - AIT DRAM disabled
+  - CAP Self-Test fail
+  - Critical internal failure
+   +
+  Refer to the Intel® Optane™ DC Persistent Memory Firmware
+  Interface Specification, document number 556488, Section 4.8
+  SMART and Health.
+
+ifdef::os_build[]
+ActionRequired::
+  (Default) If there are events for this device that require
+  corrective action or acknowledgment. Refer to the command Section 2.5.8,
+  “Show Events” for more information about events. One of:
+  - 0: No action required events
+  - 1: One or more action required events
+endif::os_build[]
+
+InterfaceFormatCode::
+  A comma-delimited list of the JEDEC standard format
+  interface code(s) for the DCPMM where each code is formatted as: code
+  (JEDEC Description or "Unknown").
+
+ManageabilityState::
+  Ability of the DCPMM host software to manage the DCPMM.
+  Manageability is determined by the interface format code, the vendor
+  identifier, device identifier and the firmware API version. One of:
+  - Manageable: The DCPMM is manageable by the software.
+  - Unmanageable: The DCPMM is not supported by this version of
+    the software.
+
+PhysicalID::
+  The DCPMM physical identifier (i.e., SMBIOS Type 17 handle)
+
+DimmHandle::
+  The DCPMM handle formatted as 0xABCD.
+  - A = Socket
+  - B = Memory Controller
+  - C = Channel
+  - D = Slot
+
+DimmUID::
+  The unique identifier of the DCPMM formatted as VVVV-ML-MDMDSNSNSNSN or
+  VVVV-SNSNSNSN (if the manufacturing information is not available) where:
+  - VVVV = VendorID
+  - ML = ManufacturingLocation
+  - MDMD = ManufacturingDate
+  - SNSNSNSN = SerialNumber
+
+SocketID::
+  The processor socket identifier (i.e., numa node) where the DCPMM is
+  installed.
+
+MemControllerID::
+  The associated memory controller identifier
+
+ChannelID::
+  The associated channel
+
+ChannelPos::
+  The DCPMM position in the channel
+
+MemoryType::
+  The memory type. One of:
+  - Unknown
+  - DDR4
+  - DCPMM
+
+VendorID::
+  The vendor identifier of the DCPMM
+
+DeviceID::
+  The device identifier of the DCPMM
+
+RevisionID::
+  The revision identifier of the DCPMM
+
+SubsystemVendorID::
+  The vendor identifier of the non-volatile memory subsystem controller.
+
+SubsystemDeviceID::
+  The device identifier of the non-volatile memory subsystem controller
+
+SubsystemRevisionID::
+  The revision identifier of the non-volatile memory subsystem controller
+
+ManufacturingInfoValid::
+  If the manufacturing location and date are valid. One of:
+  - 0: Not valid
+  - 1: Valid
+
+ManufacturingLocation::
+  The DCPMM manufacturing location assigned by the vendor or "N/A" if
+  ManufacturingInfoValid is 0.
+
+ManufacturingDate::
+  The DCPMM manufacturing date assigned by the vendor or "N/A" if
+  ManufacturingInfoValid is 0.
+
+SerialNumber::
+  The serial number assigned by the vendor
+
+PartNumber::
+  The part number assigned by the vendor
+
+DeviceLocator::
+  A string describing the physically-labeled socket or board position where the
+  memory device is located from the SMBIOS Type 17 Memory Device table.
+
+BankLabel::
+  A string that identifies the physically labeled bank where the memory device
+  is located from the SMBIOS Type 17 Memory Device table.
+
+DataWidth::
+  The width in bits used to store user data from the SMBIOS Type 17 Memory
+  Device table.
+
+TotalWidth::
+  The width in bits for data and error correction and/or data redundancy from
+  the SMBIOS Type 17 Memory Device table.
+
+Speed::
+  The maximum capable speed of the device in megahertz (MHz) from the SMBIOS
+  Type 17 Memory Device table.
+
+FormFactor::
+  The DCPMM form factor (i.e., SMBIOS Type 17 Memory Device Form Factor). One
+  of:
+  - Unknown
+  - DIMM
+  - SODIMM
+
+LockState::
+  (Default) The current security state of the persistent memory on the DCPMM.
+  One of:
+  - Unknown - The security state cannot be determined (e.g., when the
+    DCPMM is not manageable by the software).
+  - Disabled - Security is not enabled.
+  - Unlocked - Security is enabled and unlocked.
+  - Locked - Security is enabled and locked.
+  - Frozen - A reboot is required to change the security state.
+  - Exceeded - The passphrase limit has been reached. A power cycle is
+    required to change the security state.
+  - Not Supported - Security is not supported on the DCPMM.
+
+FWVersion::
+  (Default) The BCD-formatted revision of the active firmware in the format
+  PN.RN.SV.bbbb where:
+  * PN = 2-digit product number
+  * RN = 2-digit revision number
+  * SN = 2-digit security revision number
+  * bbbb = 4-digit build version
+  Value may be N/A if the DCPMM is not manageable by the software.
+
+FWAPIVersion::
+  The firmware supported interface revision in the format aa.bb where:
+  - aa = 2-digit major version
+  - bb = 2-digit minor version
+   +
+  The firmware interface is intended to be backwards compatible. Therefore,
+  the host software allows management of DCPMMs where this version is less than
+  or equal to the version stored in the host software. Value may be N/A if the
+  DCPMM is not manageable by the software
+
+ActionRequiredEvents::
+  A list of the events for this device that require corrective action or
+  acknowledgment in the format: Event [ID] - [Message]. Refer to the
+  command Show Events for more information about events.
+
+*The following information is only applicable when the DCPMM is manageable by the
+software as indicated by the "ManageabilityState".*
+
+ManufacturerID::
+  The manufacturer identifier of the DCPMM
+
+IsNew::
+  Whether or not the DCPMM is incorporated with the rest of the DCPMM in the
+  system. One of:
+  - 0: Configured
+  - 1: The DCPMM requires configuration.
+
+MemoryCapacity::
+  Usable DCPMM Memory Mode capacity
+
+AppDirectCapacity::
+  Usable DCPMM App Direct capacity
+
+UnconfiguredCapacity::
+  DCPMM capacity that is inaccessible because it is not mapped into the system
+  physical address space.
+
+InaccessibleCapacity::
+  DCPMM capacity that is inaccessible due to:
+  - licensing issue
+  - platform configuration prevents accessing this capacity. e.g. MemoryCapacity
+    is configured and available on a DCPMM but MemoryMode is not enabled by BIOS.
+
+ReservedCapacity::
+  DCPMM capacity reserved for proper alignment
+
+PeakPowerBudget::
+  If the DCPMM firmware power management policy is enabled, the power budget in
+  mW used for instantaneous power. Refer to FIS for allowable range and default
+  value.
+
+AvgPowerBudget::
+  If the DCPMM firmware power management policy is enabled, the power budget in
+  mW used for average power. Refer to FIS for allowable range and default value.
+
+PackageSparingCapable::
+  Whether or not the DCPMM supports package sparing. One of:
+  - 0: False
+  - 1: True
+
+PackageSparingEnabled::
+  Whether or not the DCPMM package sparing policy is enabled. One of:
+ - 0: Disabled
+ - 1: Enabled
+
+PackageSparesAvailable::
+  The number of spare devices available for package sparing
+
+LastShutdownStatus::
+  The status of the last shutdown of the DCPMM. One or more of:
+  - Unknown: The last shutdown status cannot be determined.
+  - FW Flush Complete: FW flush completed.
+  - PM ADR Command: Power management ADR command received.
+  - PM S3: Power management S3 command received.
+  - PM S5: Power management S5 command received.
+  - DDRT Power Fail Command: DDR power fail command received.
+  - PMIC 12V/DDRT 1.2V Power Loss (PLI)
+  - PM Warm Reset: Power management warm reset received.
+  - Thermal Shutdown: Thermal shutdown triggered.
+  - Controller’s FW State Flush Complete: Flush Completed.
+  - Viral Interrupt: Viral interrupt received.
+  - Surprise Clock Stop: Surprise clock stop received.
+  - Write Data Flush Complete: Write data flush completed.
+  - PM S4: Power management S4 command received.
+  - PM Idle: Power management idle received
+  -DDRT Surprise Reset: Surprise reset received
+
+LastShutdownTime::
+  The time the system was last shutdown.
+
+FirstFastRefresh::
+  Whether or not acceleration of the first refresh cycle is enabled for the
+  DCPMM. One of:
+  - 0: Disabled - This is the default.
+  - 1: Enabled - Customers will have to wait a pre-determined time (5-6 minutes)
+    before starting benchmark tests.
+
+ModesSupported::
+  A list of the modes supported by the DCPMM. Refer to the command
+  Show System Capabilities to determine the modes supported by the
+  platform. One or more of:
+  - Memory Mode: DCPMMs act as system memory under the control of the operating
+    system. In Memory Mode, any DDR in the platform will act as a cache working
+    in conjunction with the DCPMM.
+  - App Direct: DCPMMs and DDR act as independent memory resources under direct
+    load/store control of the application.
+
+SecurityCapabilities::
+  The security features supported by the DCPMM. Zero or more of:
+  - Encryption: The DCPMM supports persistent memory encryption by
+    setting a passphrase.
+  - Erase: The DCPMM is erasable.
+
+ConfigurationStatus::
+  The status of the DCPMM memory configuration. One of:
+  - Valid: The configuration is valid.
+  - Not Configured: The DCPMM has not been configured.
+  - Failed - Bad configuration: The configuration is corrupt.
+  - Failed - Broken interleave: This DCPMM is part of an interleave
+    set that is not complete.
+  - Failed - Reverted: The configuration failed and was reverted to the last
+    known good configuration.
+  - Failed - Unsupported: The configuration is not compatible with the
+    installed BIOS.
+  - Unknown: The configuration cannot be determined.
+
+SKUViolation::
+  The configuration of the DCPMM is unsupported due to a license issue. One of:
+  - 0: False
+  - 1: True
+
+ARSStatus::
+  The address range scrub (ARS) operation status for the DCPMM. One of:
+  - Unknown - The ARS operation status cannot be determined.
+  - Not started - An ARS operation was not run on the last boot.
+  - In progress - An ARS operation is currently in progress.
+  - Completed - An ARS operation completed since the last boot.
+  - Aborted - An ARS operation was started on the last boot but it did not
+    complete because it aborted.
+
+OverwriteStatus::
+  The overwrite DIMM operation status for the DCPMM. One of:
+  - Unknown - The overwrite DIMM operation status cannot be determined.
+  - Not started - A overwrite DIMM operation was not started on the last
+    boot.
+  - In progress - A overwrite DIMM operation is currently in progress.
+    Note: A reboot will be required when complete to use the DCPMM.
+  - Completed - A overwrite DIMM operation completed and a reboot is
+    required to use the DCPMM.
+
+ViralPolicy::
+  Whether viral policies are enabled on the DCPMM. One of:
+  - 0: Disabled - This is the default.
+  - 1: Enabled - The persistent memory on the DCPMM will be put into read-only
+    mode if the host operating system software detects an uncorrectable error
+    situation and indicates a viral state in order to prevent the spread of
+    damage.
+
+ViralState::
+  Whether the DCPMM is currently viral. One of:
+  - 0: Not Viral
+  - 1: Viral - The viral policies of the DCPMM have switched the
+    persistent memory to read-only mode due to the host operating system
+    software detecting an uncorrectable error situation and indicating a viral
+    state.
+
+AitDramEnabled::
+  If the DCPMM AIT DRAM is enabled. One of:
+  - 0: Disabled - The device will suffer performance degradation if the AIT
+    DRAM becomes disabled.
+  - 1: Enabled
+
+BootStatus::
+  The initialization status of the DCPMM as reported by the firmware in the boot
+  status register. One or more of:
+  - Unknown - The boot status register cannot be read.
+  - Success - No errors were reported during initialization.
+   +
+  *The following statuses indicate that the media is not functional and
+  therefore access to user data and operations that require use of the media
+  will fail.*
+  - Media Not Ready - The firmware did not complete media training.
+  - Media Error - The firmware detected an error during media training.
+  - Media Disabled - The firmware disabled the media due to a critical issue.
+   +
+  *The following statuses indicate that communication with the firmware is not
+  functional.*
+  - FW Assert - The firmware reported an assert during initialization.
+
+ErrorInjectionEnabled::
+  Error injection status.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+MediaTemperatureInjectionEnabled::
+  Media temperature injection status.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+
+SoftwareTriggersEnabled::
+  Software trigger status.
+  - 0: Disabled - This is the default.
+  - 1: At least one software trigger enabled.
+
+SoftwareTriggersEnabledDetail::
+  Comma separated list of software triggers currently enabled. One or more of:
+  - None
+  - Package Sparing
+  - Fatal Error
+  - Percentage Remaining
+  - Dirty Shutdown
+
+PoisonErrorInjectionsCounter::
+  This counter is incremented each time the set poison error is successfully
+  executed.
+
+PoisonErrorClearCounter::
+  This counter is incremented each time the clear poison error is successfully
+  executed.
+MediaTemperatureInjectionsCounter::
+  This counter is incremented each time the media temperature is injected.
+
+SoftwareTriggersCounter::
+  This counter is incremented each time a software trigger is enabled.
+
+SEE ALSO
+--------

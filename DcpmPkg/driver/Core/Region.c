@@ -1413,14 +1413,23 @@ RetrieveGoalConfigsFromPlatformConfigData(
       goto FinishError;
     }
 
-    pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
-    pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
-
-    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0 || pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber) {
+    if (NULL == pPcdConfHeader || pPcdConfHeader->ConfInputStartOffset == 0 || pPcdConfHeader->ConfInputDataSize == 0) {
       pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
       pDimm->RegionsGoalConfig = FALSE;
       pDimm->PcdSynced = TRUE;
-      NVDIMM_DBG("There is no Config Input table");
+      NVDIMM_DBG("There is no Config Input table.");
+      FREE_POOL_SAFE(pPcdConfHeader);
+      continue;
+    }
+
+    pPcdConfInput = GET_NVDIMM_PLATFORM_CONFIG_INPUT(pPcdConfHeader);
+    pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
+
+    if (pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber) {
+      pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
+      pDimm->RegionsGoalConfig = FALSE;
+      pDimm->PcdSynced = TRUE;
+      NVDIMM_DBG("Goal already applied.");
       FREE_POOL_SAFE(pPcdConfHeader);
       continue;
     }

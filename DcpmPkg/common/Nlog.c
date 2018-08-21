@@ -690,8 +690,10 @@ load_nlog_dict_v2(
   }
 
 Finish:
-  FREE_POOL_SAFE(parts[0]);
-  FREE_POOL_SAFE(parts[1]);
-  FREE_POOL_SAFE(parts);
+  if (parts != NULL) {
+    FREE_POOL_SAFE(parts[0]);
+    FREE_POOL_SAFE(parts[1]);
+    FREE_POOL_SAFE(parts);
+  }
   return head;
 }

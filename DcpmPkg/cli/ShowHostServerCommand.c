@@ -32,6 +32,14 @@ struct Command ShowHostServerCommand = {
   ShowHostServer
 };
 
+CHAR16 *mppAllowedShowHostServerDisplayValues[] = {
+  DISPLAYED_NAME_STR,
+  DISPLAYED_OS_NAME_STR,
+  DISPLAYED_OS_VERSION_STR,
+  DISPLAYED_MIXED_SKU_STR,
+  DISPLAYED_SKU_VIOLATION_STR
+};
+
 /**
   Execute the show host server command
 
@@ -90,6 +98,16 @@ ShowHostServer(
     NVDIMM_WARN("Options used together");
     Print(FORMAT_STR, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
     goto Finish;
+  }
+
+  /** check that the display parameters are correct (if display option is set) **/
+  if (DisplayOptionSet) {
+    ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowHostServerDisplayValues,
+        ALLOWED_DISP_VALUES_COUNT(mppAllowedShowHostServerDisplayValues));
+    if (EFI_ERROR(ReturnCode)) {
+      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
+      goto Finish;
+    }
   }
 
   ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;

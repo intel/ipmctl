@@ -95,6 +95,8 @@
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"
 #endif
+
+#define NOT_APPLICABLE_SHORT_STR    L"N/A"
 /*
  * Register the show dimms command
  */

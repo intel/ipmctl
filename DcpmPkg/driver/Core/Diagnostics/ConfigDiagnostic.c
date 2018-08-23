@@ -288,7 +288,7 @@ UpdateBrokenInterleaveSets(
       // for each dimm identifier in the table
       for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
         TmpDimmSerialNumber = pCurrentIdentInfo->DimmIdentification.Version1.DimmSerialNumber;
-        TmpDimmUid = pCurrentIdentInfo->DimmIdentification.Version2.Uid;
+        CopyMem_S(&TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER), &(pCurrentIdentInfo->DimmIdentification.Version2.Uid), sizeof(DIMM_UNIQUE_IDENTIFIER));
         if (PcdRevision_1) {
           pDimm = GetDimmBySerialNumber(&gNvmDimmData->PMEMDev.Dimms, TmpDimmSerialNumber);
         } else {
@@ -311,7 +311,7 @@ UpdateBrokenInterleaveSets(
             DimmIdFound = FALSE;
             for (DimmIdIndex = 0; DimmIdIndex < pBrokenISs[BrokenISArrayIndex].MissingDimmCount; DimmIdIndex++) {
               if (((PcdRevision_1) && (TmpDimmSerialNumber == pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[DimmIdIndex].SerialNumber)) ||
-                  ((!PcdRevision_1) && (CompareMem(&TmpDimmUid, &pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[DimmIdIndex],
+                  ((!PcdRevision_1) && (0 == CompareMem(&TmpDimmUid, &pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[DimmIdIndex],
                                         sizeof(DIMM_UNIQUE_IDENTIFIER))))){
                 DimmIdFound = TRUE;
                 break;
@@ -333,7 +333,7 @@ UpdateBrokenInterleaveSets(
             if (PcdRevision_1) {
               pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount].SerialNumber = TmpDimmSerialNumber;
             } else {
-	      CopyMem_S(&pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
+              CopyMem_S(&pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
                 &TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER));
             }
             pBrokenISs[*pBrokenISCount].MissingDimmCount++;
@@ -448,10 +448,9 @@ CheckPlatformConfigurationData(
 
     ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
-	  if (ReturnCode == EFI_DEVICE_ERROR)
-	  {
-		  ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pPcdConfHeader);
-	  }
+    if (ReturnCode == EFI_DEVICE_ERROR) {
+       ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pPcdConfHeader);
+    }
 #endif // MEMORY_CORRUPTION_WA
     if (!EFI_ERROR(ReturnCode)) {
       if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
@@ -521,7 +520,7 @@ CheckPlatformConfigurationData(
     switch (pPcdCurrentConf->ConfigStatus) {
     case DIMM_CONFIG_SUCCESS:
     case DIMM_CONFIG_NEW_DIMM:
-      PcdErrorType = PcdSuccess;
+       PcdErrorType = PcdSuccess;
       break;
     case DIMM_CONFIG_IS_INCOMPLETE:
       PcdErrorType = PcdErrorMissingDimm;
@@ -614,12 +613,12 @@ CheckPlatformConfigurationData(
   for (Index = 0; Index < BrokenISCount; Index++) {
     if (pBrokenISs[Index].MissingDimmCount > 0) {
       for (Index2 = 0; Index2 < pBrokenISs[Index].MissingDimmCount; Index2++) {
-	      if (pPcdOutputConf->Header.Revision == NVDIMM_CONFIGURATION_TABLES_REVISION_2) {
-	        pTmpDimmIdStr = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturerId),
-	        pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturingLocation,
-	        EndianSwapUint16(pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturingDate),
-          EndianSwapUint32(pBrokenISs[Index].MissingDimmIdentifier[Index2].SerialNumber));
-	      } else {
+        if (pPcdOutputConf->Header.Revision == NVDIMM_CONFIGURATION_TABLES_REVISION_2) {
+          pTmpDimmIdStr = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturerId),
+          pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturingLocation,
+          EndianSwapUint16(pBrokenISs[Index].MissingDimmIdentifier[Index2].ManufacturingDate),
+         EndianSwapUint32(pBrokenISs[Index].MissingDimmIdentifier[Index2].SerialNumber));
+        } else {
           pTmpDimmIdStr = CatSPrint(NULL, L"0x%08x", EndianSwapUint32(pBrokenISs[Index].MissingDimmIdentifier[Index2].SerialNumber));
         }
 

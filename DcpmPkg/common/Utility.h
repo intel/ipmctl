@@ -83,7 +83,7 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_PM_S3_STR                L"PM S3 Received"
 #define LAST_SHUTDOWN_STATUS_PM_S5_STR                L"PM S5 Received"
 #define LAST_SHUTDOWN_STATUS_DDRT_POWER_FAIL_STR      L"DDRT Power Fail Command Received"
-#define LAST_SHUTDOWN_STATUS_PMIC_POWER_LOSS_STR      L"PMIC 12V/DDRT 1.2 Power Loss (PLI)"
+#define LAST_SHUTDOWN_STATUS_PMIC_POWER_LOSS_STR      L"PMIC 12V/DDRT 1.2V Power Loss (PLI)"
 #define LAST_SHUTDOWN_STATUS_PM_WARM_RESET_STR        L"PM Warm Reset Received"
 #define LAST_SHUTDOWN_STATUS_THERMAL_SHUTDOWN_STR     L"Thermal Shutdown Received"
 #define LAST_SHUTDOWN_STATUS_FW_FLUSH_COMPLETE_STR    L"Controller's FW State Flush Complete"

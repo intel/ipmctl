@@ -36,6 +36,10 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 #define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
 #define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
 
+typedef struct _SET_IMAGE_ATTRIBUTES{
+  BOOLEAN Force;
+} SET_IMAGE_ATTRIBUTES;
+
 /**
   In addition to the function information from the library header.
 
@@ -162,6 +166,8 @@ SetImage (
   CHAR16 pImageContentError[] = L"Error: Invalid image file.";
   NVM_STATUS Status = NVM_ERR_OPERATION_NOT_STARTED;
   CONST CHAR16 *pSingleStatusCodeMessage = NULL;
+  SET_IMAGE_ATTRIBUTES *SetImageAttributes = (SET_IMAGE_ATTRIBUTES *)VendorCode;
+  BOOLEAN Force = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -194,7 +200,11 @@ SetImage (
     Progress(0);
   }
 
-  ReturnCode = UpdateDimmFw(GET_DIMM_FROM_INSTANCE(This)->pDimm->DimmID, Image, ImageSize, FALSE, &Status);
+  if (NULL != SetImageAttributes) {
+    Force = SetImageAttributes->Force;
+  }
+
+  ReturnCode = UpdateDimmFw(GET_DIMM_FROM_INSTANCE(This)->pDimm->DimmID, Image, ImageSize, Force, &Status);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmData->HiiHandle, Status);

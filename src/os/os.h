@@ -19,6 +19,9 @@
 #define	BYTES_PER_MIB	(unsigned long long)(1 << 20) // 1024^2
 #define	BYTES_PER_GIB	(BYTES_PER_MIB * BYTES_PER_KIB) // 1024^3
 #define	OS_PATH_LEN	PATH_MAX
+#define OS_NAME_MAX 100
+#define OS_VERSION_MAX 100
+
 typedef wchar_t OS_WPATH[OS_PATH_LEN];
 typedef char OS_PATH[OS_PATH_LEN];
 typedef void OS_MUTEX;

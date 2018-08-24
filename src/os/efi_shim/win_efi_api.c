@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys\timeb.h> 
 #include <Uefi.h>
 #include <Dimm.h>
 #include <win_scm2_passthrough.h>
@@ -41,6 +42,20 @@ struct RawSMBIOSData
   UINT8    SMBIOSTableData[];
 };
 __pragma(pack(pop))
+
+/**
+Gets the current timestamp in terms of milliseconds
+**/
+UINT64 GetCurrentMilliseconds()
+{
+  UINT64 retval = 0;
+
+  struct timeb t;
+  ftime(&t);
+  retval = (UINT64)((t.time * 1000) + t.millitm);
+
+  return retval;
+}
 
 /**
 Loads a table as specified in the args

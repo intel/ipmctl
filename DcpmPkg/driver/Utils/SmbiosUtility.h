@@ -89,11 +89,13 @@ GetNextSmbiosStruct (
   @param[out] pSmBiosStruct - pointer for first SmBios entry
   @param[out] pBoundSmBiosStruct - pointer for nonexistent (one after last) SmBios entry
 **/
+#ifndef OS_BUILD
 VOID
 GetFirstAndBoundSmBiosStructPointer(
-     OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
-     OUT SMBIOS_STRUCTURE_POINTER *pBoundSmBiosStruct,
-     OUT SMBIOS_VERSION *pSmbiosVersion
-  );
+  OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
+  OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
+  OUT SMBIOS_VERSION *pSmbiosVersion
+);
+#endif
 
 #endif /* _SMBIOSUTILITY_H_ */

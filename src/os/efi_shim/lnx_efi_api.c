@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <Uefi.h>
@@ -27,6 +28,30 @@ extern UINT8 gSmbiosMajorVersion;
 
 
 extern int get_acpi_table(const char *signature, struct acpi_table *p_table, const unsigned int size);
+
+/**
+Gets the current timestamp in terms of milliseconds
+**/
+UINT64 GetCurrentMilliseconds()
+{
+  UINT64 retval = 0;
+
+  time_t s;  // Seconds
+  struct timespec spec;
+
+  clock_gettime(CLOCK_REALTIME, &spec);
+
+  s = spec.tv_sec;
+  retval = spec.tv_nsec / 1.0e6; // Convert nanoseconds to milliseconds
+  if (retval > 999) {
+    s++;
+    retval = 0;
+  }
+
+  retval = (spec.tv_sec * 1000) + retval;
+
+  return retval;
+}
 
 /**
 Loads a table as specified in the args

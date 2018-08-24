@@ -11,9 +11,19 @@
 #include <Dimm.h>
 #include <UefiBaseType.h>
 #include <FwUtility.h>
+#include <time.h>
+
+typedef enum {
+  RtSmbios = 1,
+  RtAcpiNfit = 2,
+  RtAcpiPcat = 3,
+  RtAcpiPmtt = 4,
+  RtPassThru = 5,
+} RecordType;
 
 typedef struct _pass_thru_record_req
 {
+  UINT64 TotalMilliseconds;
   UINT32 DimmId;
   UINT8 Opcode;
   UINT8 SubOpcode;
@@ -24,12 +34,18 @@ typedef struct _pass_thru_record_req
 
 typedef struct _pass_thru_record_resp
 {
+  UINT64 TotalMilliseconds;
   EFI_STATUS PassthruReturnCode;
   UINT32 DimmId;
-  UINT8 Status;
   UINT32 OutputPayloadSize;
+  UINT8 Status;
   UINT8 Output[];
 }pass_thru_record_resp;
+
+/**
+Gets the current timestamp in terms of milliseconds
+**/
+UINT64 GetCurrentMilliseconds();
 
 VOID
 EFIAPI
@@ -37,7 +53,7 @@ GetVendorDriverVersion(CHAR16 * pVersion, UINTN VersionStrSize);
 
 /**
 Saves a copy of a table to a file
-
+@param[in] type - the type of recording entry
 @param[in] destFile - the file to save the passed table to
 @param[in] table - the table to save
 
@@ -46,8 +62,9 @@ Saves a copy of a table to a file
 **/
 EFI_STATUS
 save_table_to_file(
-  IN char* destFile,
-  IN EFI_ACPI_DESCRIPTION_HEADER *table
+  RecordType type,
+  char* destFile,
+  EFI_ACPI_DESCRIPTION_HEADER *table
 );
 
 /**
@@ -62,8 +79,9 @@ Loads a copy of a table from a file
 **/
 EFI_STATUS
 load_table_from_file(
-  IN char* sourceFile,
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  RecordType type,
+  char* sourceFile,
+  EFI_ACPI_DESCRIPTION_HEADER ** table
 );
 
 /**
@@ -184,6 +202,15 @@ passthru_record_finalize(
   IN OUT FW_CMD *pCmd,
   UINT32 DimmID,
   EFI_STATUS PassthruReturnCode
+);
+
+/**
+initializes a recording file
+
+@param[in]  recording_file_path    path to file
+**/
+EFI_STATUS init_record_file(
+  char * recording_file_path
 );
 
 /**

@@ -1880,17 +1880,29 @@ FwCmdGetPlatformConfigData(
     PcdSize = pDimm->PcdOemPartitionSize;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
     PcdSize = pDimm->PcdLsaPartitionSize;
+  } else {
+    Rc = EFI_UNSUPPORTED;
+    goto Finish;
   }
 
   /*
-   * PcdSize is 0 if Media is disabled.
-   * PcdSize was retrieved at driver load time so it is possible that since load time there
-   * was a fatal media error that this would not catch. We would then be returning cached data
-   * from a media disabled DIMM instead of erroring out. This case is purposefully ignored.
-   */
+  * PcdSize is 0 if Media is disabled.
+  * PcdSize was retrieved at driver load time so it is possible that since load time there
+  * was a fatal media error that this would not catch. We would then be returning cached data
+  * from a media disabled DIMM instead of erroring out.
+  * It could also be possbile that FW was busy during driver load time, so disable the cache.
+  */
   if (PcdSize == 0) {
-    Rc = EFI_NO_MEDIA;
-    goto Finish;
+    gPCDCacheEnabled = 0;
+    Rc = FwCmdGetPlatformConfigDataSize(pDimm, PartitionId, &PcdSize);
+    if (EFI_ERROR(Rc) || PcdSize == 0) {
+      NVDIMM_DBG("FW CMD Error: %d", Rc);
+      goto Finish;
+    } else if (PartitionId == PCD_OEM_PARTITION_ID){
+      pDimm->PcdOemPartitionSize = PcdSize;
+    } else if (PartitionId == PCD_LSA_PARTITION_ID) {
+      pDimm->PcdLsaPartitionSize = PcdSize;
+    }
   }
 
   *ppRawData = AllocateZeroPool(PcdSize);
@@ -1954,6 +1966,9 @@ FwCmdGetPlatformConfigData(
       }
       CopyMem_S(pBuffer + Offset, PcdSize - Offset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
     }
+#ifdef OS_BUILD
+    gPCDCacheEnabled = 1;
+#endif
   } else {
     /** Get PCD by large payload in single call **/
     pFwCmd->LargeOutputPayloadSize = PcdSize;
@@ -1975,6 +1990,9 @@ FwCmdGetPlatformConfigData(
       }
       goto Finish;
     }
+#ifdef OS_BUILD
+    gPCDCacheEnabled = 1;
+#endif
   }
 
   if (gPCDCacheEnabled) {
@@ -1985,8 +2003,7 @@ FwCmdGetPlatformConfigData(
       pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
       pTempCache = pDimm->pPcdLsa;
       pTempCacheSz = pDimm->PcdLsaPartitionSize;
-    }
-    else if (PartitionId == PCD_OEM_PARTITION_ID) {
+    } else if (PartitionId == PCD_OEM_PARTITION_ID) {
       pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
       pTempCache = pDimm->pPcdOem;
       pTempCacheSz = pDimm->PcdOemPartitionSize;
@@ -2229,10 +2246,11 @@ FwCmdGetPcdSmallPayload(
 
 
   /*
-  * PcdSize is 0 if Media is disabled.
+  * PcdSize is 0 if Media is disabled or FW is busy.
   * PcdSize was retrieved at driver load time so it is possible that since load time there
   * was a fatal media error that this would not catch. We would then be returning cached data
-  * from a media disabled DIMM instead of erroring out. This case is purposefully ignored.
+  * from a media disabled DIMM instead of erroring out.
+  * It could also be possbile that FW was busy during driver load time, so disable the cache.
   */
   if (gPCDCacheEnabled && pDimm->PcdOemPartitionSize == 0) {
     gPCDCacheEnabled = 0;
@@ -2353,6 +2371,7 @@ GetPcdOemConfigDataUsingSmallPayload(
 
   // Get size of OEM Config Data
   UINT32 OemDataSize = 0;
+  /*Instead of making one more Passthru call to get the PCD size, get it from the OemHeader*/
   Rc = GetPcdOemDataSize(pOemHeader, &OemDataSize);
   if (EFI_ERROR(Rc)) {
     goto Finish;
@@ -2360,6 +2379,7 @@ GetPcdOemConfigDataUsingSmallPayload(
 
   // Ensure buffer size is rounded up to next PCD_GET_SMALL_PAYLOAD_DATA_SIZE boundary
   UINT32 BufferSize = ((OemDataSize / PCD_GET_SMALL_PAYLOAD_DATA_SIZE) + 1) * PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
+  pDimm->PcdOemPartitionSize = OemDataSize;
   pBuffer = AllocateZeroPool(BufferSize);
   if (pBuffer == NULL) {
     NVDIMM_ERR("Can't allocate memory for PCD partition buffer (%d bytes)", BufferSize);

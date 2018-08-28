@@ -249,6 +249,15 @@ ShowErrorCommand(
 
   for(Index = 0; Index < DimmIdsNum; Index++) {
     ReturnedCount = RequestedCount;
+    ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
+        DimmStr, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
     ReturnCode = pNvmDimmConfigProtocol->GetErrorLog(pNvmDimmConfigProtocol,
       &pDimmIds[Index],
       1,
@@ -262,19 +271,9 @@ ShowErrorCommand(
       if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
         ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       }
-      break;
+      Print(L"Failed to get error logs from DIMM (" FORMAT_STR L")\n", DimmStr);
+      continue;
     }
-
-    ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-    ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
-        DimmStr, MAX_DIMM_UID_LENGTH);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
     if (ReturnedCount == 0) {
       Print(L"No errors found on DIMM (" FORMAT_STR L")\n", DimmStr);
     }
@@ -436,11 +435,6 @@ ShowErrorCommand(
         }
       }
     }
-  }
-
-  if (EFI_ERROR(ReturnCode)) {
-    Print(L"Failed to get error logs.\n");
-    goto Finish;
   }
 
 Finish:

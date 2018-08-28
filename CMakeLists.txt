@@ -629,7 +629,8 @@ if(DOXYGEN_FOUND)
 #----------------------------------------------------------------------------------------------------
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${ROOT}/output/${BUILD_TYPE}/Doxyfile @ONLY)
 	add_custom_target(doc-api
-		${DOXYGEN_EXECUTABLE} ${ROOT}/output/${BUILD_TYPE}/Doxyfile
+		mkdir -p ${ROOT}/output/${BUILD_TYPE}/docs
+		COMMAND ${DOXYGEN_EXECUTABLE} ${ROOT}/output/${BUILD_TYPE}/Doxyfile
 		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
 		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM

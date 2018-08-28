@@ -1223,7 +1223,7 @@ NVM_API NvmStatusCode nvm_get_log_entries_from_file(UINT32 event_type_mask, CONS
 {
     if ((pp_log_entry == NULL) || (*pp_log_entry != NULL))
     {
-        return NVM_ERR_INVALIDPARAMETER;
+        return NVM_ERR_INVALID_PARAMETER;
     }
 
     get_system_events_from_file(TRUE, FALSE, event_type_mask, count, dimm_uid, event_id, pp_log_entry, NULL);
@@ -1238,7 +1238,7 @@ NVM_API NvmStatusCode nvm_get_log_entries_from_file(UINT32 event_type_mask, CONS
 NVM_API NvmStatusCode nvm_get_event_id_form_entry(CHAR8 *event_entry, UINT32 *event_id)
 {
     if ((NULL == event_id) || (NULL == event_entry))
-        return NVM_ERR_INVALIDPARAMETER;
+        return NVM_ERR_INVALID_PARAMETER;
 
     *event_id = get_event_id_form_entry(event_entry);
     return NVM_SUCCESS;
@@ -1252,7 +1252,7 @@ NVM_API NvmStatusCode nvm_get_event_id_form_entry(CHAR8 *event_entry, UINT32 *ev
 NVM_API NvmStatusCode nvm_get_uid_form_entry(CHAR8 *event_entry, UINT32 size, CHAR8 *dimm_uid)
 {
     if ((NULL == dimm_uid) || (NULL == event_entry))
-        return NVM_ERR_INVALIDPARAMETER;
+        return NVM_ERR_INVALID_PARAMETER;
 
     if (get_unified_id_form_event_entry(event_entry, size, dimm_uid) == 0)
         return NVM_ERR_UNKNOWN;
@@ -1276,7 +1276,7 @@ NVM_API NvmStatusCode nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT
   CHAR8 ascii_dimm_id[MAX_DIMM_UID_LENGTH] = { 0 };
 
   if ((NULL == source) || (NULL == message)) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   // Convert the event message wide character string to ascii event string

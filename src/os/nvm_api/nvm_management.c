@@ -1684,7 +1684,7 @@ int fill_sensor_info(DIMM_SENSOR    DimmSensorsSet[SENSOR_TYPE_COUNT],
 {
   if ((int)type > (int)SENSOR_TYPE_COUNT) {
     NVDIMM_ERR_W(L"Sensor type (%d) not supported\n", (int)type);
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   } else {
     p_sensor->type = (enum sensor_type)DimmSensorsSet[type].Type;
     p_sensor->current_state = (enum sensor_status)DimmSensorsSet[type].State;
@@ -1980,7 +1980,7 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
   int rc = NVM_SUCCESS;
 
   if (NULL == count) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
@@ -2017,7 +2017,7 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
   int nvm_status = 0;
 
   if (NULL == p_events) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
@@ -2096,7 +2096,7 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count)
   int rc = NVM_SUCCESS;
 
   if (NULL == count)
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2132,7 +2132,7 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count)
   int rc = NVM_SUCCESS;
 
   if ((NULL == p_regions) || (NULL == count)) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
@@ -2196,7 +2196,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   unsigned int Index = 0;
 
   if (NULL == p_goal_input) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   // if no device UIDs force count to 0
@@ -2258,7 +2258,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
   unsigned int Index2 = 0;
 
   if (NULL == p_goal) {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   // if no device UIDs force count to 0
@@ -2627,7 +2627,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
   COMMAND_STATUS *pCommandStatus = NULL;
 
   if (NULL == p_error)
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode))
@@ -2666,7 +2666,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
   COMMAND_STATUS *pCommandStatus = NULL;
 
   if (NULL == p_error)
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode))
@@ -2706,7 +2706,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
   int rc = NVM_SUCCESS;
 
   if (NULL == p_diagnostic)
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
@@ -2767,7 +2767,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
 
   if (NULL == key || NULL == value)
   {
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
@@ -2911,7 +2911,7 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
   int nvm_status = 0;
 
   if (NULL == p_logs)
-    return NVM_ERR_INVALIDPARAMETER;
+    return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);

@@ -80,7 +80,7 @@
  * </table>
  *
  * @subsection Caller Privileges
- * Unless otherwise specified, all interfaces require the caller to have administrative/root privileges. The library will return NVM_ERR_INVALIDPERMISSIONS if not.
+ * Unless otherwise specified, all interfaces require the caller to have administrative/root privileges. The library will return NVM_ERR_INVALID_PERMISSIONS if not.
  *
  * @subsection Return Codes
  * Each interface returns a code indicating the status of the operation as defined in ::return_code. Use nvm_get_error to convert the code into a textual description. Specific codes that may be returned by a particular interface are defined in the "Returns" section of each interface.
@@ -1129,7 +1129,7 @@ struct job {
 
 /**
 * @brief  Initialize the library.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *  ::NVM_SUCCESS @n
 */
 NVM_API int nvm_init();
@@ -1146,7 +1146,7 @@ NVM_API void nvm_uninit();
 * configuration remains unchanged up to next applicaiton execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
-* @return   void
+* @return  void
 */
 NVM_API void nvm_conf_file_init(const char *p_ini_file_name);
 
@@ -1155,7 +1155,7 @@ NVM_API void nvm_conf_file_init(const char *p_ini_file_name);
 * file content is being overwritten
 *
 * @param    NA
-* @return   void
+* @return  void
 */
 NVM_API void nvm_conf_file_flush();
 
@@ -1170,7 +1170,7 @@ NVM_API void nvm_conf_file_flush();
  * @param[out] ctx Pointer to the context.  Note, this context needs to be freed
  * by acpi_event_free_ctx.
  *
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *  ::NVM_SUCCESS @n
  *  ::NVM_ERR_UNKNOWN @n
  */
@@ -1181,7 +1181,7 @@ NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void **ctx);
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *  ::NVM_SUCCESS @n
 */
 NVM_API int nvm_acpi_event_free_ctx(void *ctx);
@@ -1192,7 +1192,7 @@ NVM_API int nvm_acpi_event_free_ctx(void *ctx);
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
 * @param[out] dev_handle pointer to NFIT dimm handle associated with the context
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *  ::NVM_SUCCESS @n
 *  ::NVM_ERR_INVALID_PARAMETER @n
 */
@@ -1208,7 +1208,7 @@ NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void *ctx, unsigned int *dev_hand
 *   ::ACPI_EVENT_NOT_SIGNALLED
 *   ::ACPI_EVENT_UNKNOWN
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *  ::NVM_SUCCESS @n
 *  ::NVM_ERR_INVALID_PARAMETER @n
 */
@@ -1220,7 +1220,7 @@ NVM_API int nvm_acpi_event_get_event_state(void *ctx, enum acpi_event_type event
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
 * @param[in] mask mask of ACPI events to be monitored
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *  ::NVM_SUCCESS @n
 */
 NVM_API int nvm_acpi_event_set_monitor_mask(void *ctx, const unsigned int mask);
@@ -1231,7 +1231,7 @@ NVM_API int nvm_acpi_event_set_monitor_mask(void *ctx, const unsigned int mask);
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
 * @param[out] mask pointer to mask of events currently monitored
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 * ::NVM_SUCCESS @n
 * ::NVM_ERR_INVALID_PARAMETER @n
 */
@@ -1249,7 +1249,7 @@ NVM_API int nvm_acpi_event_get_monitor_mask(void *ctx, unsigned int *mask);
 *   ::ACPI_EVENT_TIMED_OUT_RESULT
 *   ::ACPI_EVENT_UNKNOWN_RESULT
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 * ::NVM_SUCCESS @n
 * ::NVM_ERR_INVALID_PARAMETER @n
 */
@@ -1262,7 +1262,7 @@ NVM_API int nvm_acpi_wait_for_event(void *acpi_event_contexts[], const NVM_UINT3
 * @param[out] dimm_id optional. pointer to get DIMM ID.
 * @param[out] dimm_handle optional. pointer to get DIMM Handle.
 *
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 * ::NVM_SUCCESS @n
 * ::NVM_ERR_UNKNOWN @n
 */
@@ -1275,7 +1275,7 @@ NVM_API int nvm_get_dimm_id(const NVM_UID device_uid, unsigned int *dimm_id, uns
 * @param[in] param_name name of configuration parameter
 * @param[in] default_val value to be returned if param_name is not found
 *
-* @return int value found in configuration or default_val if not found.
+* @returnint value found in configuration or default_val if not found.
 */
 NVM_API int nvm_get_config_int(const char *param_name, int default_val);
 /**
@@ -1284,7 +1284,7 @@ NVM_API int nvm_get_config_int(const char *param_name, int default_val);
  *              A caller supplied buffer to hold the host server name
  * @param[in] host_name_len
  *              The length of the host_name buffer. Should be = NVM_COMPUTERNAME_LEN.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *  ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1296,9 +1296,9 @@ NVM_API int nvm_get_host_name(char *host_name, const NVM_SIZE host_name_len);
  * @param[in,out] p_host
  *              A pointer to a #host structure allocated by the caller.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_host(struct host *p_host);
@@ -1310,9 +1310,9 @@ NVM_API int nvm_get_host(struct host *p_host);
  * @pre The caller must have administrative privileges.
  * @remarks If a version cannot be retrieved, the version is returned as all zeros.
  * @remarks DIMM firmware revisions are not included.
- * @return Returns one of the following return_codes:
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory);
@@ -1327,9 +1327,9 @@ NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory);
  *              This method should never return a value less than 1.
  * @param[in,out] count
  *              A pointer to an integer which contain the number of sockets on return.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_number_of_sockets(int *count);
@@ -1342,9 +1342,9 @@ NVM_API int nvm_get_number_of_sockets(int *count);
  *              The number of elements in the array.
  * @remarks To allocate the array of #socket structures,
  * call #nvm_get_number_of_sockets before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_BAD_SIZE @n
  */
@@ -1358,9 +1358,9 @@ NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count);
  *              The NUMA node identifier
  * @param[in,out] p_socket
  *              A pointer to a #socket structure allocated by the caller.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
@@ -1371,7 +1371,7 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket);
 * @pre The caller must have administrative privileges.
 * @remarks This method should be called before #nvm_get_memory_topology.
 * @param[out] count pointer to number of memory devices
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *       ::NVM_SUCCESS @n
 *       ::NVM_ERR_INVALID_PARAMETER @n
 *       ::NVM_ERR_UNKNOWN @n
@@ -1386,7 +1386,7 @@ NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count);
  * @param[in] count number of elements in p_devices array
  * @remarks To allocate the array of #memory_topology structures,
  * call #nvm_get_number_of_memory_topology_devices before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *              ::NVM_SUCCESS @n
  *              ::NVM_ERR_INVALID_PARAMETER @n
  *              ::NVM_ERR_UNKNOWN @n
@@ -1401,7 +1401,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *p_devices, const NVM
 * @remarks This method should be called before #nvm_get_devices.
 * @remarks The number of devices can be 0.
 * @param[out] count pointer to count of devices
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *              ::NVM_SUCCESS @n
 *              ::NVM_ERR_INVALID_PARAMETER @n
 *              ::NVM_ERR_UNKNOWN @n
@@ -1419,7 +1419,7 @@ NVM_API int nvm_get_number_of_devices(unsigned int *count);
  * @pre The caller must have administrative privileges.
  * @remarks To allocate the array of #device_discovery structures,
  * call #nvm_get_device_count before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *              ::NVM_SUCCESS @n
  *              ::NVM_ERR_INVALID_PARAMETER @n
  *              ::NVM_ERR_UNKNOWN @n
@@ -1439,7 +1439,7 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
 * @pre The caller must have administrative privileges.
 * @remarks To allocate the array of #device_discovery structures,
 * call #nvm_get_device_count before calling this method.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *              ::NVM_SUCCESS @n
 *              ::NVM_ERR_UNKNOWN @n
 *              ::NVM_ERR_OPERATION_FAILED @n
@@ -1455,7 +1455,7 @@ NVM_API int nvm_get_devices_nfit(struct device_discovery *p_devices, const NVM_U
  * @param[in,out] p_discovery
  *              A pointer to a #device_discovery structure allocated by the caller.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
@@ -1470,7 +1470,7 @@ NVM_API int nvm_get_device_discovery(const NVM_UID device_uid, struct device_dis
  *              A pointer to a #device_status structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
@@ -1488,7 +1488,7 @@ NVM_API int nvm_get_device_status(const NVM_UID device_uid, struct device_status
  *               A pointer to the output payload PMON registers
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
@@ -1503,7 +1503,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID device_uid, const NVM_UINT8 Sma
  *              Specifies which PMON Group to enable
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
@@ -1519,7 +1519,7 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID device_uid, NVM_UINT8 PMONGroup
  *              A pointer to a #device_settings structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1538,7 +1538,7 @@ NVM_API int nvm_get_device_settings(const NVM_UID device_uid, struct device_sett
  * the specific settings as desired.
  * @remarks A given property change may require similar changes to related devices to
  * represent a consistent correct configuration.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1553,7 +1553,7 @@ NVM_API int nvm_modify_device_settings(const NVM_UID device_uid, const struct de
  *              A pointer to a #device_details structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
@@ -1569,7 +1569,7 @@ NVM_API int nvm_get_device_details(const NVM_UID device_uid, struct device_detai
  *              A pointer to a #device_performance structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1584,7 +1584,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID device_uid, struct device_p
  *              A pointer to a #device_fw_info structure allocated by the caller.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1605,24 +1605,24 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID device_uid, struct device
  * @pre The device is manageable.
  * @remarks A FW update may require similar changes to related devices to
  * represent a consistent correct configuration.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_BADDEVICE @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_NOTMANAGEABLE @n
- *            ::NVM_ERR_DRIVERFAILED @n
- *            ::NVM_ERR_BADFILE @n
- *            ::NVM_ERR_DATATRANSFERERROR @n
- *            ::NVM_ERR_DEVICEERROR @n
- *            ::NVM_ERR_DEVICEBUSY @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_NO_MEM @n
+ *            ::NVM_ERR_BAD_DEVICE @n
+ *            ::NVM_ERR_INVALID_PERMISSIONS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND @n
+ *            ::NVM_ERR_DRIVER_FAILED @n
+ *            ::NVM_ERR_IMAGE_FILE_NOT_VALID @n
+ *            ::NVM_ERR_DATA_TRANSFER @n
+ *            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+ *            ::NVM_ERR_BUSY_DEVICE @n
  *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADFIRMWARE @n
- *            ::NVM_ERR_REQUIRESFORCE @n
- *            ::NVM_ERR_BADDRIVER @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only)
+ *            ::NVM_ERR_BAD_FW @n
+ *            ::NVM_ERR_DUMP_FILE_OPERATION_FAILED @n
+ *            ::NVM_ERR_GENERAL_OS_DRIVER_FAILURE @n
+ *            ::NVM_ERR_IMAGE_EXAMINE_INVALID @n
  */
 NVM_API int nvm_update_device_fw(const NVM_UID device_uid, const NVM_PATH path, const NVM_SIZE path_len, const NVM_BOOL force);
 
@@ -1642,24 +1642,22 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid, const NVM_PATH path, 
  * @pre The device is manageable.
  * @remarks A FW update may require similar changes to related devices to
  * represent a consistent correct configuration.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_BADFIRMWARE @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_BADDEVICE @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_NOTMANAGEABLE @n
- *            ::NVM_ERR_DRIVERFAILED @n
- *            ::NVM_ERR_BADFILE @n
- *            ::NVM_ERR_DATATRANSFERERROR @n
- *            ::NVM_ERR_DEVICEERROR @n
- *            ::NVM_ERR_DEVICEBUSY @n
- *            ::NVM_ERR_REQUIRESFORCE @n
+ *            ::NVM_ERR_BAD_FW @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_NO_MEM @n
+ *            ::NVM_ERR_BAD_DEVICE @n
+ *            ::NVM_ERR_INVALID_PERMISSIONS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND @n
+ *            ::NVM_ERR_DRIVER_FAILED @n
+ *            ::NVM_ERR_IMAGE_FILE_NOT_VALID @n
+ *            ::NVM_ERR_DATA_TRANSFER @n
+ *            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+ *            ::NVM_ERR_BUSY_DEVICE @n
  *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADDRIVER @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only)
+ *            ::NVM_ERR_GENERAL_OS_DRIVER_FAILURE @n
  */
 NVM_API int nvm_examine_device_fw(const NVM_UID device_uid, const NVM_PATH path, const NVM_SIZE path_len, NVM_VERSION image_version, const NVM_SIZE image_version_len);
 
@@ -1668,7 +1666,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid, const NVM_PATH path,
  * @param[in,out] p_capabilties
  *              A pointer to an #nvm_capabilities structure allocated by the caller.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1680,7 +1678,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
  * @param[in,out] p_capacities
  *              A pointer to an #device_capacities structure allocated by the caller.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -1701,7 +1699,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 * settings thresholds against a current value.
 * @remarks The number of sensors for a device is defined as NVM_MAX_DEVICE_SENSORS.
 * @remarks Sensor information is returned as part of the #device_details structure.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *            ::NVM_SUCCESS @n
 *            ::NVM_ERR_INVALID_PARAMETER @n
 *            ::NVM_ERR_UNKNOWN @n
@@ -1718,7 +1716,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors, 
 *              A pointer to a #sensor structure allocated by the caller.
 * @pre The caller has administrative privileges.
 * @pre The device is manageable.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *            ::NVM_SUCCESS @n
 *            ::NVM_ERR_INVALID_PARAMETER @n
 *            ::NVM_ERR_UNKNOWN @n
@@ -1736,7 +1734,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
 *              The modified settings.
 * @pre The caller has administrative privileges.
 * @pre The device is manageable.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *            ::NVM_SUCCESS @n
 *            ::NVM_ERR_INVALID_PARAMETER @n
 *            ::NVM_ERR_UNKNOWN @n
@@ -1771,8 +1769,8 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid, const enum sensor_
  * @pre The device passphrase limit has not been reached.
  * @post The device will be unlocked and frozen.
  * @post The device will be locked on the next reset.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_NOTSUPPORTED @n
+ * @return
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
  */
 NVM_API int nvm_set_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE old_passphrase, const NVM_SIZE old_passphrase_len, const NVM_PASSPHRASE new_passphrase, const NVM_SIZE new_passphrase_len);
 
@@ -1791,25 +1789,23 @@ NVM_API int nvm_set_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE ol
  * @pre The device passphrase limit has not been reached.
  * @post The device will be unlocked if it is currently locked.
  * @post Device security will be disabled.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *            ::NVM_ERR_BADDEVICE @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_NOTMANAGEABLE @n
- *            ::NVM_ERR_DRIVERFAILED @n
- *            ::NVM_ERR_SECURITYFROZEN @n
- *            ::NVM_ERR_SECURITYDISABLED @n
- *            ::NVM_ERR_LIMITPASSPHRASE @n
- *            ::NVM_ERR_BADPASSPHRASE @n
- *            ::NVM_ERR_DATATRANSFERERROR @n
- *            ::NVM_ERR_DEVICEERROR @n
- *            ::NVM_ERR_DEVICEBUSY @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_NO_MEM @n
+ *            ::NVM_ERR_BAD_DEVICE @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_INVALID_PERMISSIONS @n
+ *            ::NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND @n
+ *            ::NVM_ERR_DRIVER_FAILED @n
+ *            ::NVM_ERR_INVALID_SECURITY_OPERATION @n
+ *            ::NVM_ERR_INVALID_PASSPHRASE @n
+ *            ::NVM_ERR_PASSPHRASES_DO_NOT_MATCH @n
+ *            ::NVM_ERR_DATA_TRANSFER @n
+ *            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+ *            ::NVM_ERR_BUSY_DEVICE @n
  *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADDRIVER @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only)
+ *            ::NVM_ERR_GENERAL_OS_DRIVER_FAILURE @n
  */
 NVM_API int nvm_remove_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
 
@@ -1827,8 +1823,11 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE
  * @pre Device security is not frozen.
  * @pre The device passphrase limit has not been reached.
  * @post The device will be unlocked and frozen.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_NOTSUPPORTED @n
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_API_NOT_SUPPORTED @n
+ *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_unlock_device(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
 
@@ -1842,8 +1841,11 @@ NVM_API int nvm_unlock_device(const NVM_UID device_uid, const NVM_PASSPHRASE pas
  * @pre Current dimm security state is unlocked
  * @post dimm security state will be frozen
  * @post Device security will be changed.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *            ::NVM_ERR_NOTSUPPORTED @n
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_API_NOT_SUPPORTED @n
+ *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_freezelock_device(const NVM_UID device_uid);
 
@@ -1861,23 +1863,22 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid);
  * @pre Device security is disabled or sanitize antifreeze.
  * @post All user data is inaccessible.
  * @post Device security will be changed.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
- *		NVM_ERR_BADDEVICE @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_NOTMANAGEABLE @n
- *            ::NVM_ERR_DRIVERFAILED @n
- *            ::NVM_ERR_SECURITYFROZEN @n
- *            ::NVM_ERR_BADPASSPHRASE @n
- *            ::NVM_ERR_DATATRANSFERERROR @n
- *            ::NVM_ERR_DEVICEERROR @n
- *            ::NVM_ERR_DEVICEBUSY @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_NO_MEM @n
+ *            ::NVM_ERR_BAD_DEVICE @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_INVALID_PERMISSIONS @n
+ *            ::NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND @n
+ *            ::NVM_ERR_DRIVER_FAILED @n
+ *            ::NVM_ERR_INVALID_SECURITY_OPERATION @n
+ *            ::NVM_ERR_PASSPHRASES_DO_NOT_MATCH @n
+ *            ::NVM_ERR_DATA_TRANSFER @n
+ *            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+ *            ::NVM_ERR_BUSY_DEVICE @n
  *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADDRIVER @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only)
+ *            ::NVM_ERR_GENERAL_OS_DRIVER_FAILURE @n
  */
 NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
 
@@ -1897,9 +1898,12 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
  * @param[in,out] count
  *              A pointer an integer that will contain the number of events
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_API_NOT_SUPPORTED @n
+ *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *count);
 
@@ -1919,9 +1923,9 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
  * is configurable by modifying the EVENT_LOG_MAX_ROWS value in the configuration database.
  * @remarks To allocate the array of #event structures,
  * call #nvm_get_number_of_events before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
  *            ::NVM_ERR_BAD_SIZE @n
  */
@@ -1933,9 +1937,9 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter, struct event *p_
  *              A pointer to an event_filter structure to optionally
  *              purge only specific events.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_purge_events(const struct event_filter *p_filter);
@@ -1945,7 +1949,7 @@ NVM_API int nvm_purge_events(const struct event_filter *p_filter);
  * (i.e. setting action required field from true to false)
  * @param[in] event_id
  *              The event id of the event to be acknowledged.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -1957,9 +1961,9 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  * @remarks This method should be called before #nvm_get_regions.
  * @param[in,out] count
  *              A pointer an integer that will contain the number of region count on return
- * @return one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
@@ -1973,9 +1977,9 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
  * @pre The caller has administrative privileges.
  * @remarks To allocate the array of #region structures,
  * call #nvm_get_region_count before calling this method.
- * @return one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NO_MEM @n
  */
@@ -1996,9 +2000,9 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
  *              DIMM must be deleted first.
  * @remarks This operation stores the specified configuration goal on the DIMM
  *              for the BIOS to read on the next reboot.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *		NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal_input *p_goal);
@@ -2018,9 +2022,9 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  *              BIOS successfully processes it on reboot.
  *              Use @link nvm_delete_config_goal @endlink to erase a
  *              configuration goal from a DIMM.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *		NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @nNVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal *p_goal);
@@ -2034,9 +2038,9 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
  *              Number of devices in p_device_uids list.
  * @pre The caller has administrative privileges.
  * @pre The specified DIMM is manageable by the host software.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
- *		NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count);
@@ -2052,7 +2056,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  * @pre The caller has administrative privileges.
  * @pre The specified DIMM is manageable by the host software.
  * @pre The specified DIMM is currently configured.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_DUMP_FILE_OPERATION_FAILED @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -2075,7 +2079,7 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
  *              all DIMMs that are part of the interleave set must be included in the file.
  * @pre The specified DIMM must be >= the total capacity of the DIMM
  *              specified in the file.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_CREATE_GOAL_NOT_ALLOWED @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -2096,7 +2100,7 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
  *              For this reason, it is recommended that every application that uses the
  *              native API Library to perform the following check:
  *              if (#nvm_get_major_version() != NVM_VERSION_MAJOR)
- * @return The major version number of the library.
+ * @returnThe major version number of the library.
  */
 NVM_API int nvm_get_major_version();
 
@@ -2109,19 +2113,19 @@ NVM_API int nvm_get_major_version();
  *              the new feature.  Applications wishing to check for features that were added
  *		may do so by comparing the return value from #nvm_get_minor_version() against the
  *              minor number in this specification associated with the introduction of the new feature.
- * @return The minor version number of the library.
+ * @returnThe minor version number of the library.
  */
 NVM_API int nvm_get_minor_version();
 
 /**
  * @brief Retrieve the native API library hot fix version number.
- * @return The hot fix version number of the library.
+ * @returnThe hot fix version number of the library.
  */
 NVM_API int nvm_get_hotfix_number();
 
 /**
  * @brief Retrieve the native API library build version number.
- * @return The build version number of the library.
+ * @returnThe build version number of the library.
  */
 NVM_API int nvm_get_build_number();
 
@@ -2133,7 +2137,7 @@ NVM_API int nvm_get_build_number();
  *              A buffer for the version string allocated by the caller.
  * @param[in] str_len
  *              Size of the version_str buffer.  Should be NVM_VERSION_LEN.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  */
@@ -2157,7 +2161,7 @@ NVM_API int nvm_get_version(NVM_VERSION version_str, const NVM_SIZE str_len);
  * the state of the system.  Therefore, it will ignore errors during the information
  * gathering process and only generate errors for invalid input parameters
  * or if the support file is not able to be generated.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2175,9 +2179,9 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
  * @pre The device is manageable.
  * @pre This interface is only supported by the underlying DIMM firmware when it's in a
  * debug state.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct device_error *p_error);
@@ -2195,9 +2199,9 @@ NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct devic
  * @pre The device is manageable.
  * @pre This interface is only supported by the underlying DIMM firmware when it's in a
  * debug state.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const struct device_error *p_error);
@@ -2213,9 +2217,9 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const stru
  *              The number of diagnostic failures. To see full results use #nvm_get_events
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic *p_diagnostic, NVM_UINT32 *p_results);
@@ -2228,7 +2232,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic
  *              The preference name.
  * @param[in] value
  *              The preference value.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2238,7 +2242,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY key, const NVM_PREF
  * @brief Clear namespace label storage area in PCD on the specified DIMM.
  * @param[in] device_uid
  *              The device identifier.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_DIMM_NOT_FOUND @n
  *            ::NVM_ERR_UNKNOWN @n
@@ -2256,8 +2260,8 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid);
 /**
  * @brief Determine if the native API debug logging is enabled.
  * @pre The caller must have administrative privileges.
- * @return Returns true (1) if debug logging is enabled and false (0) if not,
- * or one of the following @link #return_code return_codes: @endlink @n
+ * @returnReturns true (1) if debug logging is enabled and false (0) if not,
+ * or
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2274,7 +2278,7 @@ NVM_API int nvm_debug_logging_enabled();
  * on the workload of the library.  It's recommended that debug logging is only
  * turned on during troubleshooting or debugging.
  * @remarks Changing the debug log level is NOT persistent.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2283,7 +2287,7 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled);
 /**
  * @brief Clear any debug logs captured by the native API library.
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2294,7 +2298,7 @@ NVM_API int nvm_purge_debug_log();
  * @param[in,out] count
  *              pointer an integer that will contain the number of debug log entries
  * @pre The caller must have administrative privileges.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_UNKNOWN @n
  */
@@ -2309,9 +2313,9 @@ NVM_API int nvm_get_number_of_debug_logs(int *count);
  * @pre The caller must have administrative privileges.
  * @remarks To allocate the array of #log structures,
  * call #nvm_get_number_of_debug_logs before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
  *            ::NVM_ERR_BAD_SIZE @n
@@ -2328,9 +2332,9 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count);
  * @pre The caller must have administrative privileges.
  * @remarks To allocate the array of #job structures,
  * call #nvm_get_number_of_devices before calling this method.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
  *            ::NVM_ERR_OPERATION_FAILED @n
@@ -2373,19 +2377,18 @@ struct device_pt_cmd {
  *              The device identifier.
  * @param p_cmd
  *              A pointer to a @link #device_pt_command @endlink structure defining the command to send.
- * @return Returns one of the following @link #return_code return_codes: @endlink @n
+ * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALIDPARAMETER @n
- *            ::NVM_ERR_INVALIDPERMISSIONS @n
- *            ::NVM_ERR_NOTSUPPORTED @n
- *            ::NVM_ERR_NOMEMORY @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_INVALID_PERMISSIONS @n
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_NO_MEM @n
  *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_BADDEVICE @n
- *            ::NVM_ERR_DRIVERFAILED
- *            ::NVM_ERR_DATATRANSFERERROR @n
- *            ::NVM_ERR_DEVICEERROR @n
- *            ::NVM_ERR_DEVICEBUSY @n
- *            ::NVM_ERR_NOSIMULATOR (Simulated builds only)
+ *            ::NVM_ERR_BAD_DEVICE @n
+ *            ::NVM_ERR_DRIVER_FAILED @n
+ *            ::NVM_ERR_DATA_TRANSFER @n
+ *            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+ *            ::NVM_ERR_BUSY_DEVICE @n
  */
 NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID device_uid, struct device_pt_cmd *p_cmd);
 
@@ -2396,18 +2399,18 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID device_uid, struct dev
 * @param[in] log_level Log entry log level (0: Low, 1: High)
 * @param[in] log_type Log entry log type (0: Media, 1: Thermal)
 * @param[out] error_entry pointer to buffer to store a single FW error log entry
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *            ::NVM_SUCCESS @n
 *            ::NVM_SUCCESS_NO_ERROR_LOG_ENTRY @n
-*            ::NVM_ERR_INVALIDPARAMETER @n
-*            ::NVM_ERR_INVALIDPERMISSIONS @n
-*            ::NVM_ERR_NOTSUPPORTED @n
-*            ::NVM_ERR_NOMEMORY @n
+*            ::NVM_ERR_INVALID_PARAMETER @n
+*            ::NVM_ERR_INVALID_PERMISSIONS @n
+*            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+*            ::NVM_ERR_NO_MEM @n
 *            ::NVM_ERR_UNKNOWN @n
-*            ::NVM_ERR_BADDEVICE @n
-*            ::NVM_ERR_DRIVERFAILED
-*            ::NVM_ERR_DEVICEERROR @n
-*            ::NVM_ERR_DEVICEBUSY @n
+*            ::NVM_ERR_BAD_DEVICE @n
+*            ::NVM_ERR_DRIVER_FAILED @n
+*            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+*            ::NVM_ERR_BUSY_DEVICE @n
 */
 NVM_API int nvm_get_fw_error_log_entry_cmd(const NVM_UID   device_uid, const unsigned short  seq_num, const unsigned char log_level, const unsigned char log_type, ERROR_LOG * error_entry);
 
@@ -2415,17 +2418,17 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(const NVM_UID   device_uid, const uns
 * @brief Retrieve a FW error log counters: current and oldest sequence number for each log type.
 * @param[in] device_uid The device identifier
 * @param[out] error_log_stats Pointer to #device_error_log_status.
-* @return Returns one of the following @link #return_code return_codes: @endlink @n
+* @return
 *            ::NVM_SUCCESS @n
-*            ::NVM_ERR_INVALIDPARAMETER @n
-*            ::NVM_ERR_INVALIDPERMISSIONS @n
-*            ::NVM_ERR_NOTSUPPORTED @n
-*            ::NVM_ERR_NOMEMORY @n
+*            ::NVM_ERR_INVALID_PARAMETER @n
+*            ::NVM_ERR_INVALID_PERMISSIONS @n
+*            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+*            ::NVM_ERR_NO_MEM @n
 *            ::NVM_ERR_UNKNOWN @n
-*            ::NVM_ERR_BADDEVICE @n
-*            ::NVM_ERR_DRIVERFAILED
-*            ::NVM_ERR_DEVICEERROR @n
-*            ::NVM_ERR_DEVICEBUSY @n
+*            ::NVM_ERR_BAD_DEVICE @n
+*            ::NVM_ERR_DRIVER_FAILED @n
+*            ::NVM_ERR_GENERAL_DEV_FAILURE @n
+*            ::NVM_ERR_BUSY_DEVICE @n
 */
 
 NVM_API int nvm_get_fw_err_log_stats(const NVM_UID device_uid, struct device_error_log_status *error_log_stats);

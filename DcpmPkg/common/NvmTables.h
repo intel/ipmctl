@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ /**
+ * @file NvmTables.h
+ * @brief ACPI Data Types for EFI_NVMDIMMS_CONFIG_PROTOCOL.
+ */
+
 #ifndef _NVMTABLES_H_
 #define _NVMTABLES_H_
 

@@ -167,8 +167,9 @@ typedef enum _NvmStatusCode {
   NVM_ERR_DATA_TRANSFER                             = 275,  ///< Error: Data transfer failed
   NVM_ERR_GENERAL_DEV_FAILURE                       = 276,  ///< Error: General device failure
   NVM_ERR_BAD_FW                                    = 277,  ///< Error: Bad FW
-  NVM_ERR_DRIVERFAILED                              = 288,  ///< Error: Driver failed
-  NVM_ERR_INVALIDPARAMETER                          = 289,  ///< Error: Invalid parameter
+  NVM_ERR_DRIVER_FAILED                             = 288,  ///< Error: Driver failed
+  NVM_ERR_DRIVERFAILED                              = 288,  ///< Error: Obsolete: Use NVM_ERR_DRIVER_FAILED
+  NVM_ERR_INVALIDPARAMETER                          = 289,  ///< Error: Obsolete: Use NVM_ERR_INVALID_PARAMETER
   NVM_ERR_OPERATION_NOT_SUPPORTED                   = 290,  ///< Error: Operation not supported
   NVM_ERR_RETRY_SUGGESTED                           = 291,  ///< Error: Retry suggested
 

@@ -271,17 +271,17 @@ ShowErrorCommand(
       if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
         ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       }
-      Print(L"Failed to get error logs from DIMM (" FORMAT_STR L")\n", DimmStr);
+      Print(L"Failed to get error logs from DIMM " FORMAT_STR L"\n", DimmStr);
       continue;
     }
     if (ReturnedCount == 0) {
-      Print(L"No errors found on DIMM (" FORMAT_STR L")\n", DimmStr);
+      Print(L"No errors found on DIMM " FORMAT_STR L"\n", DimmStr);
     }
     else {
       for (Index2 = 0; Index2 < ReturnedCount; Index2++) {
         pErrorType = (ErrorsArray[Index2].ErrorType == THERMAL_ERROR ?
         ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
-        Print(FORMAT_STR_SPACE L"on DIMM (" FORMAT_STR L"):\n", pErrorType, DimmStr);
+        Print(FORMAT_STR_SPACE L"on DIMM " FORMAT_STR L":\n", pErrorType, DimmStr);
         pTempStr = GetTimeFormatString(ErrorsArray[Index2].SystemTimestamp);
         Print(FORMAT_16STR L" : " FORMAT_STR_NL, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
         FREE_POOL_SAFE(pTempStr);

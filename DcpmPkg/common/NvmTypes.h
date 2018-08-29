@@ -99,7 +99,7 @@ typedef struct {
 #define FW_BUILD_STR_LEN               17
 #define FW_COMMIT_ID_LEN               40
 #define FW_COMMIT_ID_STR_LEN           41
-#define DATE_STR_LEN                   25
+#define DATE_STR_LEN                   29
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
 
 /** DIMM UID length, including null terminator **/

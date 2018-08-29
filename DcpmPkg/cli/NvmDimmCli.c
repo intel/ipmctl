@@ -670,13 +670,17 @@ EFI_STATUS showVersion(struct Command *pCmd)
     goto Finish;
   }
 
+#if !defined(__LINUX__)
   ReturnCode = pNvmDimmConfigProtocol->GetDriverApiVersion(pNvmDimmConfigProtocol, ApiVersion);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
+#endif
 
   Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " NVMDIMM_VERSION_STRING L"\n", PRODUCT_NAME, APP_DESCRIPTION);
+#if !defined(__LINUX__)
   Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " FORMAT_STR_NL, PRODUCT_NAME, DRIVER_API_DESCRIPTION, ApiVersion);
+#endif
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

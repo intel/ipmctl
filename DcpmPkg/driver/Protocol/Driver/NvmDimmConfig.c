@@ -2491,6 +2491,7 @@ SetSecurityState(
     // Check if input DIMMs are not part of a goal
     ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
     if (EFI_ERROR(ReturnCode)) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
     }
     pDimmList = &gNvmDimmData->PMEMDev.Dimms;

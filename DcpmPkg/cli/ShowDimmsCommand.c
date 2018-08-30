@@ -1280,7 +1280,8 @@ ShowDimms(
 
       /** SerialNumber **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SERIAL_NUMBER_STR))) {
-        Print(L"   " FORMAT_STR L"=0x%08x\n", SERIAL_NUMBER_STR, pUninitializedDimms[Index].SerialNumber);
+        Print(L"   " FORMAT_STR L"=0x%08x\n", SERIAL_NUMBER_STR,
+          EndianSwapUint32(pUninitializedDimms[Index].SerialNumber));
       }
 
       /** FwVersion **/

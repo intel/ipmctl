@@ -52,7 +52,6 @@ else()
 	set(CMAKE_BUILD_TYPE Debug)
 	add_definitions(
 		-DDEBUG_BUILD
-		-DPLAYBACK_RECORD_SUPPORTED
 		)
 endif()
 
@@ -114,6 +113,7 @@ add_definitions(
 	-DOS_BUILD
 	-DPCD_CACHE_ENABLED
 	-D__VERSION_NUMBER__=${IPMCTL_VERSION_STRING}
+	-DPLAYBACK_RECORD_SUPPORTED
 	)
 
 if(MSVC)

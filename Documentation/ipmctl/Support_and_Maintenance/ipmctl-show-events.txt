@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-events(1)
 =====================
+endif::manpage[]
 
 NAME
 ----
@@ -42,29 +44,30 @@ PROPERTIES
 ----------
 Category::
   Filters output to events of a specific category. One of:
-  - Diag: Filters output to diagnostic events.
-  - FW: Filters output to FW consistency diagnostic test events.
-  - Config: Filters output to platform config diagnostic test events.
-  - PM: Filters output to PM meta data diagnostic test events.
-  - Quick: Filters output to quick diagnostic test events.
-  - Security: Filters output to security diagnostic test events.
-  - Health: Filters output to device health events.
-  - Mgmt: Filters output to management software generated events.
+  - "Diag": Filters output to diagnostic events.
+  - "FW": Filters output to FW consistency diagnostic test events.
+  - "Config": Filters output to platform config diagnostic test events.
+  - "PM": Filters output to PM meta data diagnostic test events.
+  - "Quick": Filters output to quick diagnostic test events.
+  - "Security": Filters output to security diagnostic test events.
+  - "Health": Filters output to device health events.
+  - "Mgmt": Filters output to management software generated events.
 
 Severity::
   Filters output of events based on the severity of the event. One of:
-  - Info (default): Shows informational, warning, and error severity events.
-  - Warning: Shows warning and error events.
-  - Error: Shows error events.
+  - "Info": (Default) Shows informational, warning, and error severity events.
+  - "Warning": Shows warning and error events.
+  - "Error": Shows error events.
 
 ActionRequired::
   Filters output to events that require corrective action or acknowledgment.
-  - 0: Filters output to only show non-ActionRequired events.
-  - 1: Filters output to only show ActionRequired events.
+  - "0": Filters output to only show non-ActionRequired events.
+  - "1": Filters output to only show ActionRequired events.
 
 Count::
   Filters output of events limited to the specified count, starting with the
-  most recent. Count may be a value from 1 to 2,147,483,647. Default = 50
+  most recent. Count may be a value from [underline]#1 to 2,147,483,647#.
+  Default = 50
 
 EXAMPLES
 --------
@@ -100,6 +103,3 @@ Code::
 
 Message::
   The event message
-
-SEE ALSO
---------

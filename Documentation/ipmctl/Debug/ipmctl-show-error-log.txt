@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-error-log(1)
 ========================
+endif::manpage[]
 
 NAME
 ----
@@ -37,18 +39,18 @@ TARGETS
 
 PROPERTIES
 ----------
-SequenceNumber=::
+SequenceNumber::
   Error log entries are stored with a sequence number starting with 1 and
   rolling over back to 1 after 65535. Limit the error log entries returned by
   providing a sequence number. Only errors with a sequence number equal to or
   higher than provided will be returned. The default is 1.
 
-Level=::
+Level::
   Severity level of errors to be fetched. One of:
-  - High: High severity errors (Default)
-  - Low: Low severity errors
+  - "High": High severity errors (Default)
+  - "Low": Low severity errors
 
-Count=::
+Count::
   Max number of error entries to be fetched and printed.
   The default is 8 for media errors and 16 for thermal errors.
 
@@ -94,6 +96,3 @@ Error Type : 4 - Locked/Illegal Access
 Error Flags : DPA Valid
 Transaction Type : 11 - CSR Write
 Sequence Number : 2
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-inject-error(1)
 ======================
+endif::manpage[]
 
 NAME
 ----
@@ -41,11 +43,12 @@ PROPERTIES
 ----------
 This command only supports setting or clearing one type of error at a time.
 
-Clear=1::
-  Clears a previously injected error. This property must be combined with one of
-  the other properties indicating the previously injected error to clear.
+Clear::
+  - "1": Clears a previously injected error. This property must be combined with
+  one of the other properties indicating the previously injected error to clear.
 
-Temperature=::
+
+Temperature::
   Injects an artificial media temperature in degrees Celsius into the DCPMM. The
   firmware that is monitoring the temperature of the DCPMM will then be alerted
   and take necessary precautions to preserve the DCPMM. The value is injected
@@ -61,7 +64,7 @@ Temperature=::
   data.
   The temperature value will be ignored on clear.
 
-Poison=(address)::
+Poison::
   The physical address to poison. +
   *Note*: The address must be 256 byte aligned (e.g., 0x10000000, 0x10000100,
   0x10000200...). +
@@ -77,37 +80,39 @@ Poison=(address)::
   injection does not clear injected poison errors. Injected poison errors are
   persistent across power cycles and system resets.
 
-PoisonType=::
+PoisonType::
   The type of memory to poison. One of:
-  - PatrolScrub: Injects a poison error at the specified address simulating an
+  - "PatrolScrub": Injects a poison error at the specified address simulating an
     error found during a patrol scrub operation indifferent to how the memory is
     currently allocated, This is the default.
-  - MemoryMode: Injects a poison error at the specified address currently
+  - "MemoryMode": Injects a poison error at the specified address currently
     allocated in Memory Mode.
-  - AppDirect: Injects a poison error at the specified address currently
+  - "AppDirect": Injects a poison error at the specified address currently
     allocated as App Direct. +
     *Note*: If the address to poison is not currently allocated as the specified
     memory type, an error is returned.
 
-PackageSparing=1::
-  Triggers an artificial package sparing. If package sparing is enabled and the
-  DCPMM still has spares remaining, this will cause the firmware to report that
-  there are no spares remaining.
+PackageSparing::
+  - "1": Triggers an artificial package sparing. If package sparing is enabled
+  and the DCPMM still has spares remaining, this will cause the firmware to
+  report that there are no spares remaining.
 
-PercentageRemaining=::
-  Injects an artificial modfule life remaining percentage into the DCPMM. This
+PercentageRemaining::
+  Injects an artificial module life remaining percentage into the DCPMM. This
   will cause the firmware to take appropriate action based on the value and if
   necessary generate an error log and an alert and update the health status.
 
-FatalMediaError=1::
-  Injects a fake media fatal error which will cause the firmware to generate an
-  error log and an alert. +
-  *Note*: When media fatal error is injected, BSR Media Disabled status bit will
-  be set indicating media error, until the fatal error is cleared using disable
-  trigger input parameter to clear this injected fatal error.
+FatalMediaError::
+  - "1": Injects a fake media fatal error which will cause the firmware to
+  generate an error log and an alert.
 
-DirtyShutdown=1::
-  Injects an ADR failure resulting in dirty shutdown upon reboot.
+  NOTE: When media fatal error is injected, BSR Media Disabled status
+  bit will be set indicating media error, until the fatal error is
+  cleared using disable trigger input parameter to clear this injected
+  fatal error.
+
+DirtyShutdown::
+  - "1": Injects an ADR failure resulting in dirty shutdown upon reboot.
 
 EXAMPLES
 --------
@@ -185,6 +190,3 @@ Create a media fatal error on DCPMEM DIMM (DimmID): Success|Error
 (Code) - (Description)
 Clear injected media fatal error on DCPMEM DIMM (DimmID):
 Success|Error (Code) - (Description)
-
-SEE ALSO
---------

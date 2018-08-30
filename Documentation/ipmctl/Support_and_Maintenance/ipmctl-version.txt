@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-version(1)
 =================
+endif::manpage[]
 
 NAME
 ----
@@ -47,8 +49,5 @@ Component::
 Version::
   The current version of the software component if found or an error if not.
 
-  Note: If the software version is incompatible, the version will be
-  followed by an error message indicating such.
-
-SEE ALSO
---------
+NOTE: If the software version is incompatible, the version will be followed by
+an error message indicating such.

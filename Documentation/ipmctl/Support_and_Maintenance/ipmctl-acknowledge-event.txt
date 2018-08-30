@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-acknowledge-event(1)
 ===========================
+endif::manpage[]
 
 NAME
 ----
@@ -38,10 +40,10 @@ TARGETS
 
 PROPERTIES
 ----------
-ActionRequired=(0)::
+ActionRequired::
   A flag indicating whether the event needs a corrective action or
   acknowledgment. One of:
-  - 0: Disable the action required flag.
+  - "0": Disable the action required flag.
 
 EXAMPLES
 --------
@@ -56,6 +58,3 @@ RETURN DATA
 Simply returns the status of the operation. Sample output:
 [verse]
 Acknowledge Event: Success|Error (Code) - (Description)
-
-SEE ALSO
---------

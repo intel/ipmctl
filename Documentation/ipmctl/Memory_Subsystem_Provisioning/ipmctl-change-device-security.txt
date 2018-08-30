@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-change-device-security(1)
 ================================
+endif::manpage[]
 
 NAME
 ----
@@ -46,10 +48,10 @@ PROPERTIES
 ----------
 LockState::
   The desired lock state.
-  - Disabled: Removes the passphrase on an DCPMM to disable security. Permitted
+  - "Disabled": Removes the passphrase on an DCPMM to disable security. Permitted
     only when LockState is Unlocked.
-  - Unlocked: Unlocks the persistent memory on a locked DCPMM.
-  - Frozen: Prevents further lock state changes to the DCPMM until the next
+  - "Unlocked": Unlocks the persistent memory on a locked DCPMM.
+  - "Frozen": Prevents further lock state changes to the DCPMM until the next
     reboot.
 
 Passphrase::
@@ -103,6 +105,3 @@ Unlock DIMM (DimmID): Success
 Unlock DIMM (DimmID): Error (Code) - (Description)
 Remove passphrase from DIMM (DimmID): Success
 Remove passphrase from DIMM (DimmID): Error (Code) - (Description)
-
-SEE ALSO
---------

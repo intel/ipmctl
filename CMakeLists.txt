@@ -642,13 +642,14 @@ endif()
 #----------------------------------------------------------------------------------------------------
 if(ASCIIDOCTOR_FOUND)
 	file(MAKE_DIRECTORY ${OUTPUT_DIR}/manpage)
+	file(MAKE_DIRECTORY ${OUTPUT_DIR}/docs)
 
-	set(MANPAGE_INPUT_FILES
+	set(DOCUMENTATION_INPUT_FILES
 		${ROOT}/Documentation/ipmctl/ipmctl.txt
 		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-device.txt
 		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-memory-resources.txt
 		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-socket.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilites.txt
+		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilities.txt
 		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-topology.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
@@ -721,16 +722,16 @@ if(ASCIIDOCTOR_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-show-error-log.1.gz
 		)
 
-add_custom_target(manpage ALL
-	DEPENDS ${MANPAGE_OUTPUT_FILES} ${MANPAGE_INPUT_FILES}
-	)
+	add_custom_target(manpage ALL
+		DEPENDS ${MANPAGE_OUTPUT_FILES} ${DOCUMENTATION_INPUT_FILES}
+		)
 
-add_custom_command(OUTPUT ${MANPAGE_OUTPUT_FILES}
-	COMMAND ${ASCIIDOCTOR_BINARIES} -b manpage -amansource=ipmctl -amanmanual="ipmctl" -aipmctl_version=${BUILD_NUM} -D ${OUTPUT_DIR}/manpage ${MANPAGE_INPUT_FILES}
-	COMMAND gzip -f ${OUTPUT_DIR}/manpage/*.1
-	COMMENT "Generating man pages"
-	DEPENDS ${MANPAGE_INPUT_FILES}
-	)
+	add_custom_command(OUTPUT ${MANPAGE_OUTPUT_FILES}
+		COMMAND ${ASCIIDOCTOR_BINARIES} -b manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${DOCUMENTATION_INPUT_FILES}
+		COMMAND gzip -f ${OUTPUT_DIR}/manpage/*.1
+		COMMENT "Generating man pages"
+		DEPENDS ${DOCUMENTATION_INPUT_FILES}
+		)
 endif()
 
 # --------------------------------------------------------------------------------------------------

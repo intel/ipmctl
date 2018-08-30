@@ -1,8 +1,10 @@
 // Copyright (c) 2019, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-run-diagnostic(1)
 ========================
+endif::manpage[]
 
 NAME
 ----
@@ -93,6 +95,3 @@ State::
 
 Message::
   A free form textual description of the error.
-
-SEE ALSO
---------

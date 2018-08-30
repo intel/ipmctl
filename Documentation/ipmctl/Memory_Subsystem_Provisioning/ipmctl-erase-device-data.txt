@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-erase-device-data(1)
 ===========================
+endif::manpage[]
 
 NAME
 ----
@@ -78,8 +80,8 @@ in the "frozen" or "exceeded" lock states and any namespaces associated with the
 requested DCPMEM DIMM(s) must be deleted before running this command.
 
 ifdef::os_build[]
-Note: The command is subject to OS Vendor (OSV) support. If OSV does not provide support,
-the command will return “Not Supported.”
+NOTE: The command is subject to OS Vendor (OSV) support. If OSV does not provide
+support, the command will return “Not Supported.”
 endif::os_build[]
 
 RETURN DATA
@@ -99,6 +101,3 @@ SAMPLE OUTPUT
 [verse]
 Erase DIMM (DimmID): Success
 Erase DIMM (DimmID): Error (Code) - (Description)
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-performance(1)
 ==========================
+endif::manpage[]
 
 NAME
 ----
@@ -96,6 +98,3 @@ TotalReadRequest::
 
 TotalWriteRequest::
   Number of DDRT write transactions the DCPMM has serviced over its lifetime.
-
-SEE ALSO
---------

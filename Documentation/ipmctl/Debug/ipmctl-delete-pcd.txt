@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-delete-pcd(1)
 ====================
+endif::manpage[]
 
 NAME
 ----
@@ -62,6 +64,3 @@ RETURN DATA
 For each DCPMM, the CLI will indicate the status of the operation. If a failure occurs
 when deleting the platform configuration data from multiple DCPMMs, the process will
 continue deleting the remaining DCPMMs.
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-enable-device-security(1)
 ================================
+endif::manpage[]
 
 NAME
 ----
@@ -27,8 +29,8 @@ OPTIONS
 
 -source (path)::
   File path to a local file containing the new passphrase (1-32 characters).
-   +
-  Note: The file does not need to contain the ConfirmPassphrase property
+  
+NOTE: The file does not need to contain the ConfirmPassphrase property
 
 TARGETS
 -------
@@ -102,6 +104,3 @@ SAMPLE OUTPUT
 Set passphrase on DIMM (DimmID): Success
 ...
 Set passphrase on DIMM (DimmID): Error (Code) - (Description)
-
-SEE ALSO
---------

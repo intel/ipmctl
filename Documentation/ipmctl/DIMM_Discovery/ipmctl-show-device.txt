@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-device(1)
 =====================
+endif::manpage[]
 
 NAME
 ----
@@ -22,15 +24,15 @@ OPTIONS
 -a::
 -all::
   Shows all attributes.
-   +
-  Note: The all and display options are exclusive and may not be used together.
+
+NOTE: The all and display options are exclusive and may not be used together.
 
 -d (attributes)::
 -display (attributes)::
   Filters the returned attributes by explicitly specifying a comma-separated
   list of any of the attributes defined in the Return Data section.
-   +
-  Note: The all and display options are exclusive and may not be used together.
+
+NOTE: The all and display options are exclusive and may not be used together.
 
 -h::
 -help::
@@ -58,9 +60,9 @@ TARGETS
   Restricts output to the DCPMMs installed on specific sockets by supplying the
   socket target and one or more comma-separated socket identifiers. The default
   is to display all sockets.
-   +
-  Note: If ACPI PMTT table is not present, then DDR4 memory will not be
-  displayed in the filtered socket list.
+
+NOTE: If ACPI PMTT table is not present, then DDR4 memory will not be displayed
+in the filtered socket list.
 
 EXAMPLES
 --------
@@ -203,11 +205,11 @@ ManufacturingInfoValid::
   - 1: Valid
 
 ManufacturingLocation::
-  The DCPMM manufacturing location assigned by the vendor or "N/A" if
+The manufacturing location assigned by the vendor or "N/A" if
   ManufacturingInfoValid is 0.
 
 ManufacturingDate::
-  The DCPMM manufacturing date assigned by the vendor or "N/A" if
+  The manufacturing date assigned by the vendor or "N/A" if
   ManufacturingInfoValid is 0.
 
 SerialNumber::
@@ -411,7 +413,6 @@ OverwriteStatus::
   - Not started - A overwrite DIMM operation was not started on the last
     boot.
   - In progress - A overwrite DIMM operation is currently in progress.
-    Note: A reboot will be required when complete to use the DCPMM.
   - Completed - A overwrite DIMM operation completed and a reboot is
     required to use the DCPMM.
 
@@ -488,6 +489,3 @@ MediaTemperatureInjectionsCounter::
 
 SoftwareTriggersCounter::
   This counter is incremented each time a software trigger is enabled.
-
-SEE ALSO
---------

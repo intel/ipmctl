@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-change-sensor(1)
 =======================
+endif::manpage[]
 
 NAME
 ----
@@ -41,15 +43,17 @@ endif::os_build[]
 SENSORS
 -------
 MediaTemperature::
-  The current DCPMM media temperature in Celsius. Valid values: 20-85
+  The current DCPMM media temperature in Celsius. +
+  Valid values: [underline]#0-2047#
 
 ControllerTemperature::
-  The current DCPMM controller temperature in Celsius. Valid values:
-  20-105
+  The current DCPMM controller temperature in Celsius. +
+  Valid values [underline]#0-2047#
 
 PercentageRemaining::
   Remaining DCPMM’s life as a percentage value of factory expected
-  life span. Valid values: 1-99
+  life span. +
+  Valid values: [underline]#1-99#
 
 TARGETS
 -------
@@ -69,8 +73,8 @@ NonCriticalThreshold::
 
 EnabledState::
   Enable or disable the non-critical threshold alarm. One of:
-  - 0: Disable
-  - 1: Enable
+  - "0": Disable
+  - "1": Enable
 
 EXAMPLES
 --------
@@ -97,6 +101,3 @@ Modify (Sensor) settings on DIMM (DimmID): Success
 ...
 Modify (Sensor) settings on DIMM (DimmID): Error (Code) -
 (Description)
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-dump-goal(1)
 ===================
+endif::manpage[]
 
 NAME
 ----
@@ -12,7 +14,7 @@ DESCRIPTION
 -----------
 Load a memory allocation goal from a file onto one or more DCPMMs.
 
-Note: Changing the memory configuration is a destructive operation which may
+NOTE: Changing the memory configuration is a destructive operation which may
 result in loss of data stored in the persistent memory region. Therefore, data
 should be backed up to other storage before executing this command. Changing a
 memory allocation goal modifies how the platform maps persistent memory, but
@@ -95,6 +97,3 @@ DCPMM as documented in the command Section 2.2.6, “Show Memory Allocation Goal
 If a failure occurs, an error code and message will be displayed. If a failure
 occurs when configuring multiple DCPMMs, the process will exit and remove the
 memory allocation goal from any DCPMMs that succeeded prior to the failure.
-
-SEE ALSO
---------

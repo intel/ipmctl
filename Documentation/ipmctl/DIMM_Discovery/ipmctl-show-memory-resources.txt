@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-memory-resources(1)
 ===============================
+endif::manpage[]
 
 NAME
 ----
@@ -45,8 +47,8 @@ RETURN DATA
 -----------
 Returns the default attributes listed below.
 
-Note: Capacities from unmanageable DCPMMs are not included in the
-following aggregated totals.
+NOTE: Capacities from unmanageable DCPMMs are not included in the following
+aggregated totals.
 
 Capacity::
   Total system DCPMM capacity.
@@ -70,6 +72,3 @@ InaccessibleCapacity::
 
 ReservedCapacity::
   Total system DCPMM capacity reserved for proper alignment.
-
-SEE ALSO
---------

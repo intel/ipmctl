@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-dump-debug-log(1)
 ========================
+endif::manpage[]
 
 NAME
 ----
@@ -31,7 +33,7 @@ TARGET
 
 PROPERTIES
 ----------
--dict (Path)::
+-dict (path)::
   Optional file path to the dictionary file. If supplied, -destination will
   create both the binary debug log and a text file with decoded log data.
 
@@ -61,6 +63,3 @@ SAMPLE OUTPUT
 Successfully dump FW Debug logs to file (Path). (value) MB were
 written
 Failed to dump FW Debug logs to file (Path)
-
-SEE ALSO
---------

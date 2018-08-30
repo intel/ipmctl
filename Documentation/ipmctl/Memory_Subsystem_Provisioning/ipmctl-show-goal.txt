@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-show-goal(1)
 ===================
+endif::manpage[]
 
 NAME
 ----
@@ -26,15 +28,15 @@ OPTIONS
 -a::
 -all::
   Shows all attributes.
-   +
-  Note: The all and display options are exclusive and may not be used together.
+
+NOTE: The all and display options are exclusive and may not be used together.
 
 -d (attributes)::
 -display (attributes)::
   Filters the returned attributes by explicitly specifying a comma-separated
   list of any of the attributes defined in the Return Data section.
-   +
-  Note: The all and display options are exclusive and may not be used together.
+
+NOTE: The all and display options are exclusive and may not be used together.
 
 -h::
 -help::
@@ -152,6 +154,3 @@ If a new memory allocation goal has been created, a prompt to reboot will be
 presented.
 [verse]
 A reboot is required to process new memory allocation goals.
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-update-firmware(1)
 =========================
+endif::manpage[]
 
 NAME
 ----
@@ -89,9 +91,9 @@ Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
 API version in the firmware image is lower than is supported by the host software
 and would make the DCPMM become unmanageable, the downgrade is not supported.
 
-Note: Once a firmware image is staged for execution, a power cycle is required before
-another firmware image of the same type (production or debug) can be staged for
-execution using this command.
+NOTE: Once a firmware image is staged for execution, a power cycle is required
+before another firmware image of the same type (production or debug) can be
+staged for execution using this command.
 
 RETURN DATA
 -----------
@@ -130,6 +132,3 @@ Load FW on DIMM (DimmID): Success, a power cycle is required to
 activate the FW.
 ...
 Load FW on DIMM (DimmID): Error (Code)-(Description)
-
-SEE ALSO
---------

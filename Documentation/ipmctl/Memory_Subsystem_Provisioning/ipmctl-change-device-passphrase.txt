@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-change-device-passphrase(1)
 ==================================
+endif::manpage[]
 
 NAME
 ----
@@ -26,8 +28,8 @@ OPTIONS
 
 -source (path)::
   File path to a local file containing the new passphrase (1-32 characters).
-   +
-  Note: The file does not need to contain the ConfirmPassphrase property
+
+NOTE: The file does not need to contain the ConfirmPassphrase property
 
 TARGETS
 -------
@@ -109,6 +111,3 @@ SAMPLE OUTPUT
 Change passphrase on DIMM (DimmID): Success
 ...
 Change passphrase on DIMM (DimmID): Error (Code)-(Description)
-
-SEE ALSO
---------

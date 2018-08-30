@@ -1,8 +1,10 @@
 // Copyright (c) 2019, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-modify-device(1)
 =======================
+endif::manpage[]
 
 NAME
 ----
@@ -44,10 +46,10 @@ TARGETS
 
 PROPERTIES
 ----------
-FirstFastRefresh=(0|1)::
+FirstFastRefresh::
   Whether acceleration of the first refresh cycle is enabled. One of:
-  - 0: Disable - This is the default.
-  - 1: Enable - Customers will have to wait a pre-determined time (5-6 minutes)
+  - "0": Disable - This is the default.
+  - "1": Enable - Customers will have to wait a pre-determined time (5-6 minutes)
        before starting benchmark tests.
 
 EXAMPLES
@@ -71,6 +73,3 @@ SAMPLE OUTPUT
 [verse]
 Modify DIMM (DimmID): Success
 Modify DIMM (DimmID): Error (Code)-(Description)
-
-SEE ALSO
---------

@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-dump-goal(1)
 ===================
+endif::manpage[]
 
 NAME
 ----
@@ -111,7 +113,3 @@ ct2Mirrored,AppDirect2Index
 1,4417,64,64,0,0,0,0,0,0,0,0
 1,4433,64,64,0,0,0,0,0,0,0,0
 1,4449,64,64,0,0,0,0,0,0,0,0
-
-
-SEE ALSO
---------

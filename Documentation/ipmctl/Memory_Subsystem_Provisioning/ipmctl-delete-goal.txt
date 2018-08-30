@@ -1,8 +1,10 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
 ipmctl-delete-goal(1)
 =====================
+endif::manpage[]
 
 NAME
 ----
@@ -69,6 +71,3 @@ Delete memory allocation goal from DIMM (DimmID): Error:
 (Description) Delete memory allocation goal from DCPMEM DIMM
 (DimmID): Success
 ...
-
-SEE ALSO
---------

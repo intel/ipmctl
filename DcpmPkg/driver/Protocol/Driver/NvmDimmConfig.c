@@ -4549,7 +4549,8 @@ UpdateDimmFw(
   FW_IMAGE_HEADER *pFileHeader = NULL;
   CHAR16 *pErrorMessage = NULL;
 #ifdef OS_BUILD
-  BOOLEAN RetryOccurred = FALSE;
+  UINT8 RetryCountLimit = 2;
+  UINT8 CurrentRetryCount = 0;
 #endif
 #ifdef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   UINT64 PacketsCounter = 0;
@@ -4610,42 +4611,33 @@ UpdateDimmFw(
   CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
 
 #ifdef OS_BUILD
-  do
-  {
-     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
-     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-        if (FW_DEVICE_BUSY == pPassThruCommand->Status)
-        {
-           Print(L"Device 0x%x is busy, will retry...\n", pCurrentDimm->DimmID);
-           RetryOccurred = TRUE;
-           continue;
+  do {
+    ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+    if (EFI_ERROR(ReturnCode)) {
+      if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
+        if (++CurrentRetryCount < RetryCountLimit) {
+          continue;
+        } else {
+          *pNvmStatus = NVM_ERR_BUSY_DEVICE;
         }
-        else
-        {
-           if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED && RetryOccurred == TRUE)
-           {
-              break;
-           }
-
-           if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-              *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-           }
-           else {
-              *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-           }
-        }
-        goto Finish;
-     }
-  } while(FW_DEVICE_BUSY == pPassThruCommand->Status);
+      } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+      } else {
+        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+      }
+      goto Finish;
+    }
+  } while (pPassThruCommand->Status == FW_DEVICE_BUSY && CurrentRetryCount < RetryCountLimit);
 #else
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
-  if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
+  if (EFI_ERROR(ReturnCode)) {
      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-     if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-     }
-     else {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
+       *pNvmStatus = NVM_ERR_BUSY_DEVICE;
+     } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+     } else {
+       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
      }
      goto Finish;
   }
@@ -4674,7 +4666,9 @@ UpdateDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+    if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
+      *pNvmStatus = NVM_ERR_BUSY_DEVICE;
+    } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
     } else {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
@@ -4692,7 +4686,9 @@ UpdateDimmFw(
     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+      if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
+        *pNvmStatus = NVM_ERR_BUSY_DEVICE;
+      } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
       } else {
         *pNvmStatus = NVM_ERR_OPERATION_FAILED;
@@ -4708,7 +4704,9 @@ UpdateDimmFw(
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+    if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
+      *pNvmStatus = NVM_ERR_BUSY_DEVICE;
+    } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
     } else {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;

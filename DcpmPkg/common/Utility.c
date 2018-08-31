@@ -3664,16 +3664,16 @@ ControllerRidToStr(
       pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_A_STEP_STR, MetalStep,
         ControllerRid);
       break;
+    case CONTROLLER_REVISON_S_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_S_STEP_STR, MetalStep,
+        ControllerRid);
+      break;
     case CONTROLLER_REVISON_B_STEP:
       pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_B_STEP_STR, MetalStep,
         ControllerRid);
       break;
     case CONTROLLER_REVISON_C_STEP:
       pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_C_STEP_STR, MetalStep,
-        ControllerRid);
-      break;
-    case CONTROLLER_REVISON_D_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_D_STEP_STR, MetalStep,
         ControllerRid);
       break;
     default:

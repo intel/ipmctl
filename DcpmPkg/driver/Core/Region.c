@@ -3368,7 +3368,7 @@ FindRelatedDimmsByRegions(
   *pRelatedDimmsNum = 0;
 
   for (Index = 0; Index < DimmsNum; Index++) {
-    pRelatedDimms[(*pRelatedDimmsNum)] = pDimms[Index];
+    pRelatedDimms[Index] = pDimms[Index];
     (*pRelatedDimmsNum) += 1;
   }
 
@@ -3385,9 +3385,10 @@ FindRelatedDimmsByRegions(
         }
         else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
           ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
-
-          pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
-          (*pRelatedDimmsNum) += 1;
+          if (IsDimmManageable(pDimmPointer)) {
+             pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
+             (*pRelatedDimmsNum) += 1;
+          }
         }
       }
     }
@@ -3451,8 +3452,10 @@ FindRelatedDimmsByRegionGoalConfigs(
         else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
           ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
 
-          pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
-          (*pRelatedDimmsNum)++;
+          if (IsDimmManageable(pDimmPointer)) {
+             pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
+             (*pRelatedDimmsNum) += 1;
+          }
         }
       }
     }

@@ -54,6 +54,7 @@
 #define FORMAT_HEX                              L"0x%04x"
 #define FORMAT_EFI_STATUS                       "0x%lx"
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
+#define FORMAT_STEPPING                         L"%s%d (0x%04x)"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_STR_WITH_PARANTHESIS             L"(%ls)"
@@ -106,6 +107,7 @@
 #define FORMAT_HEX                              L"0x%04x"
 #define FORMAT_EFI_STATUS                       "0x%x"
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
+#define FORMAT_STEPPING                         L"%ls%d (0x%04x)"
 #endif // OS_BUILD
 
 #endif /** _FORMAT_STRINGS_H_ **/

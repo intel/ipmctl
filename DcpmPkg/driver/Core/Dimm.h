@@ -156,7 +156,7 @@ typedef struct _DIMM {
   UINT32 SerialNumber;
   CHAR8 PartNumber[PART_NUMBER_LEN];
   UINT16 Rid;                              //!< Revision ID
-  UINT16 SubsystemRid;                     //!< Revision ID of the subsystem memory controller
+  UINT16 SubsystemRid;                     //!< Revision ID of the subsystem memory controller from NFIT
   SKU_INFORMATION SkuInformation;
   /**
     Format interface code: Allows vendor hardware to be handled by a generic
@@ -219,6 +219,8 @@ typedef struct _DIMM {
   // Always allocated to be size of PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE
   VOID *pPcdOem;
   UINT32 PcdOemSize;
+
+  UINT16 ControllerRid;             //!< Revision ID of the subsystem memory controller from FIS
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')

@@ -65,6 +65,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   SUBSYSTEM_VENDOR_ID_STR,
   SUBSYSTEM_DEVICE_ID_STR,
   SUBSYSTEM_REVISION_ID_STR,
+  CONTROLLER_REVISION_ID_STR,
   MANUFACTURING_INFO_VALID,
   MANUFACTURING_LOCATION,
   MANUFACTURING_DATE,
@@ -236,6 +237,7 @@ ShowDimms(
   BOOLEAN BlockAddressable = FALSE;
   UINT16  BootStatusBitMask = 0;
   UINT32  Index3 = 0;
+  CHAR16 *pSteppingStr = NULL;
 #ifdef OS_BUILD
   CHAR16 *pActionReqStr = NULL;
 #endif // OS_BUILD
@@ -847,6 +849,15 @@ ShowDimms(
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_ID_STR))) {
           Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR,
             EndianSwapUint16(pDimms[Index].ManufacturerId));
+        }
+
+        /** ControllerRevisionId **/
+        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CONTROLLER_REVISION_ID_STR))) {
+          pSteppingStr = ControllerRidToStr(pDimms[Index].ControllerRid);
+          if (pSteppingStr != NULL) {
+            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, CONTROLLER_REVISION_ID_STR, pSteppingStr);
+            FREE_POOL_SAFE(pSteppingStr);
+          }
         }
 
         /** VolatileCapacity **/

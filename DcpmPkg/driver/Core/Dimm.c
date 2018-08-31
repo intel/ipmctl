@@ -4726,6 +4726,8 @@ InitializeDimm (
     NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
     pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
     ParseFwApiVersion(pNewDimm, pPayload);
+
+    pNewDimm->ControllerRid = pPayload->Rid;
   }
 
   if (IsDimmManageable(pNewDimm)) {

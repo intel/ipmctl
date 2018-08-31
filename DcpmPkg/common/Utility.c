@@ -3636,3 +3636,51 @@ IsFwApiVersionSupportedByValues(
   }
   return VerSupported;
 }
+
+
+/**
+  Convert controller revision id to string
+
+  @param[in] Controller revision id
+
+  @retval CLI string representation of the controller revision id
+**/
+CHAR16*
+ControllerRidToStr(
+  IN     UINT16 ControllerRid
+  )
+{
+  CHAR16 *pSteppingStr = NULL;
+  UINT8 BaseStep = 0;
+  UINT8 MetalStep = 0;
+
+  NVDIMM_ENTRY();
+
+  BaseStep = ControllerRid & CONTROLLER_REVISION_BASE_STEP_MASK;
+  MetalStep = ControllerRid & CONTROLLER_REVISION_METAL_STEP_MASK;
+
+  switch (BaseStep) {
+    case CONTROLLER_REVISON_A_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_A_STEP_STR, MetalStep,
+        ControllerRid);
+      break;
+    case CONTROLLER_REVISON_B_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_B_STEP_STR, MetalStep,
+        ControllerRid);
+      break;
+    case CONTROLLER_REVISON_C_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_C_STEP_STR, MetalStep,
+        ControllerRid);
+      break;
+    case CONTROLLER_REVISON_D_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_D_STEP_STR, MetalStep,
+        ControllerRid);
+      break;
+    default:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STR, CONTROLLER_STEPPING_UNKNOWN_STR);
+      break;
+  }
+
+  NVDIMM_EXIT();
+  return pSteppingStr;
+}

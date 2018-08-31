@@ -198,6 +198,8 @@ SubsystemDeviceID::
 
 SubsystemRevisionID::
   The revision identifier of the non-volatile memory subsystem controller
+  retrieved from NFIT. This field uses a different encoding than
+  ControllerRevisionID.
 
 ManufacturingInfoValid::
   If the manufacturing location and date are valid. One of:
@@ -287,6 +289,10 @@ software as indicated by the "ManageabilityState".*
 
 ManufacturerID::
   The manufacturer identifier of the DCPMM
+
+ControllerRevisionID:
+  The controller stepping and revision ID retrieved from the controller FW. This
+  field uses a different encoding than SubsystemRevisionID.
 
 IsNew::
   Whether or not the DCPMM is incorporated with the rest of the DCPMM in the

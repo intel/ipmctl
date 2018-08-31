@@ -38,6 +38,7 @@
 #define SUBSYSTEM_VENDOR_ID_STR     L"SubsystemVendorID"
 #define SUBSYSTEM_DEVICE_ID_STR     L"SubsystemDeviceID"
 #define SUBSYSTEM_REVISION_ID_STR   L"SubsystemRevisionID"
+#define CONTROLLER_REVISION_ID_STR  L"ControllerRevisionID"
 #define MANUFACTURING_INFO_VALID    L"ManufacturingInfoValid"
 #define MANUFACTURING_LOCATION      L"ManufacturingLocation"
 #define MANUFACTURING_DATE          L"ManufacturingDate"

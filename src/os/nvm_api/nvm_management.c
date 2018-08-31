@@ -3292,6 +3292,7 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   p_device->subsystem_vendor_id = p_dimm->SubsystemVendorId;
   p_device->subsystem_device_id = p_dimm->SubsystemDeviceId;
   p_device->subsystem_revision_id = p_dimm->SubsystemRid;
+  p_device->controller_revision_id = p_dimm->ControllerRid;
   p_device->manufacturing_info_valid = p_dimm->ManufacturingInfoValid;
   p_device->manufacturing_location = p_dimm->ManufacturingLocation;
   p_device->manufacturing_date = p_dimm->ManufacturingDate;

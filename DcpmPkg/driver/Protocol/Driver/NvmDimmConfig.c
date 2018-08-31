@@ -745,6 +745,7 @@ GetDimmInfo (
   pDimmInfo->SubsystemVendorId = pDimm->SubsystemVendorId;
   pDimmInfo->SubsystemDeviceId = pDimm->SubsystemDeviceId;
   pDimmInfo->SubsystemRid = pDimm->SubsystemRid;
+  pDimmInfo->ControllerRid = pDimm->ControllerRid;
 
   pDimmInfo->ManufacturingInfoValid = pDimm->ManufacturingInfoValid;
   pDimmInfo->ManufacturingLocation = pDimm->ManufacturingLocation;

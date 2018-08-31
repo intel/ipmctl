@@ -49,6 +49,21 @@ typedef union {
 #define SPD_DEVICE_ID_10 0x097A
 #define SPD_DEVICE_ID_15 0x097B
 
+#define CONTROLLER_REVISION_BASE_STEP_MASK 0x30
+#define CONTROLLER_REVISION_METAL_STEP_MASK 0x03
+
+#define CONTROLLER_REVISON_A_STEP 0x10
+#define CONTROLLER_REVISON_B_STEP 0x20
+#define CONTROLLER_REVISON_C_STEP 0x30
+#define CONTROLLER_REVISON_D_STEP 0x40
+
+#define CONTROLLER_REVISON_A_STEP_STR L"A"
+#define CONTROLLER_REVISON_B_STEP_STR L"B"
+#define CONTROLLER_REVISON_C_STEP_STR L"C"
+#define CONTROLLER_REVISON_D_STEP_STR L"D"
+
+#define CONTROLLER_STEPPING_UNKNOWN_STR L"Unknown stepping"
+
 #define MAX_CONFIG_DUMP_FILE_SIZE MIB_TO_BYTES(1)
 
 #define MAX_LINE_CHAR_LENGTH 400
@@ -1520,4 +1535,16 @@ IsFwApiVersionSupportedByValues(
   IN   UINT8 major,
   IN   UINT8 minor
 );
+
+/**
+  Convert controller revision id to string
+
+  @param[in] Controller revision id
+
+  @retval CLI string representation of the controller revision id
+**/
+CHAR16*
+ControllerRidToStr(
+  IN     UINT16 ControllerRid
+  );
 #endif /** _UTILITY_H_ **/

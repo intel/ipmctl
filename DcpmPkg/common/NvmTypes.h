@@ -101,6 +101,7 @@ typedef struct {
 #define FW_COMMIT_ID_STR_LEN           41
 #define DATE_STR_LEN                   29
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
+#define CONTROLLER_RID_LEN             12
 
 /** DIMM UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< DIMM UID hexadecimal-format representation length, including manufacturing fields
@@ -372,7 +373,7 @@ typedef struct _DIMM_INFO {
   UINT16 SubsystemVendorId;                 //!< Vendor id of the subsytem memory controller
   UINT16 SubsystemDeviceId;                 //!< Device id of the subsystem memory controler
   UINT16 Rid;                               //!< revision id
-  UINT16 SubsystemRid;                      //!< Revision id of the subsystem memory controller
+  UINT16 SubsystemRid;                      //!< Revision id of the subsystem memory controller from NFIT
   UINT16 ImcId;                             //!< memory controller id
   UINT16 ChannelId;                         //!< memory channel within an imc
   UINT16 ChannelPos;                        //!< position in the channel within an imc
@@ -394,6 +395,8 @@ typedef struct _DIMM_INFO {
 #ifdef OS_BUILD
   CHAR8 ActionRequired;                     //!< Action Required bit, the value stored in the <uid>.ar file (see event.c file)
 #endif // OS_BUILD
+
+  UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
 } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {

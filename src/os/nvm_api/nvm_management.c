@@ -249,6 +249,9 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     wprintf(L"Syntax Error: Exceeded input parameters limit.\n");
     return (int)uefi_to_os_ret_val(rc);
   }
+  else if (rc == EFI_LOAD_ERROR) {
+    return (int)uefi_to_os_ret_val(rc);
+  }
 
   if (gOsShellParametersProtocol.StdOut == stdout)
   {

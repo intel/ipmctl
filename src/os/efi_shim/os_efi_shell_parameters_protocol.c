@@ -19,6 +19,8 @@
 #ifdef _MSC_VER
 #include <io.h>
 #include <conio.h>
+#define access _access
+#define F_OK 0
 #else
 #include <unistd.h>
 #include <wchar.h>
@@ -204,7 +206,25 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
       //are consolidated to the same file.
       if(EFI_SUCCESS != (rc = init_record_file(g_recording_fullpath)))
       {
-          return rc;
+          wprintf(L"Failed to initialize the following recording file.\n%s\n", g_recording_fullpath);
+          return EFI_LOAD_ERROR;
+      }
+      else
+      {
+        wprintf(L"Recording to file: %s\n", g_recording_fullpath);
+      }
+    }
+    
+    if (g_playback_mode)
+    {
+      if (-1 == access(g_recording_fullpath, F_OK))
+      {
+        wprintf(L"The following playback file does not exist.\n%s\n", g_recording_fullpath);
+        return EFI_LOAD_ERROR;
+      }
+      else
+      {
+        wprintf(L"Playing back from file: %s\n", g_recording_fullpath);
       }
     }
   }

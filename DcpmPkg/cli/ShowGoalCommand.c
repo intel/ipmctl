@@ -36,7 +36,7 @@ struct Command ShowGoalCommand =
   {                                                                   //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {GOAL_TARGET, L"", L"", TRUE, ValueEmpty},
-    {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
+    {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
   L"Show region configuration goal stored on one or more DIMMs",        //!< help

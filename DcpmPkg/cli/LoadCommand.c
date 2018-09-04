@@ -29,7 +29,12 @@ struct Command LoadCommand =
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif
   },
-  {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
+  {                                                                   //!< targets
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
+#ifndef OS_BUILD
+    ,{RECOVERY_TARGET, L"", HELP_TEXT_FLASH_SPI, FALSE, ValueRequired}
+#endif
+  },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
   L"Update the firmware on one or more DIMMs",                        //!< help
   Load                                                                //!< run function

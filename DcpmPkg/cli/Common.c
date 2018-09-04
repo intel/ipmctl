@@ -1683,26 +1683,33 @@ ParseSourcePassFile(
     goto Finish;
   }
 
-  // Add size of L'\0' (UTF16) char
-  pFileString = ReallocatePool(FileBufferSize, FileBufferSize + sizeof(L'\0'), pFileBuffer);
-  if (pFileString == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-  NumberOfChars = (UINT32)(FileBufferSize / sizeof(CHAR16));
-  pFileString[NumberOfChars] = L'\0';
-  NumberOfChars++;
-
   // Verify if it is Unicode file:
-  if (pFileString[0] != UTF_16_BOM) {
-    Print(L"Error: The file is not in UTF16 format, BOM header missing.\n");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
+  //If it is not a Unicode File Convert the File String
+  if (*((CHAR16 *)pFileBuffer) != UTF_16_BOM) {
+    pFileString = AllocateZeroPool((FileBufferSize * sizeof(CHAR16)) + sizeof(L'\0'));
+    if (pFileString == NULL) {
+      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+    ReturnCode = SafeAsciiStrToUnicodeStr((const CHAR8 *)pFileBuffer, (UINT32)FileBufferSize, pFileString);
+    Index = 0;
+  }
+  else {
+    // Add size of L'\0' (UTF16) char
+    pFileString = ReallocatePool(FileBufferSize, FileBufferSize + sizeof(L'\0'), pFileBuffer);
+    if (pFileString == NULL) {
+      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+    Index = 1;
+    NumberOfChars = (UINT32)(FileBufferSize / sizeof(CHAR16));
+    pFileString[NumberOfChars] = L'\0';
   }
 
-  // Split input file to lines (but ignore byte order mark)
-  ppLinesBuffer = StrSplit(&pFileString[1], L'\n', &NumberOfLines);
+  // Split input file to lines
+  ppLinesBuffer = StrSplit(&pFileString[Index], L'\n', &NumberOfLines);
   if (ppLinesBuffer == NULL || NumberOfLines == 0) {
     Print(L"Error: The file is empty.\n");
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -1763,8 +1770,9 @@ Finish:
   for (Index = 0; ppLinesBuffer != NULL && Index < NumberOfLines; ++Index) {
     FREE_POOL_SAFE(ppLinesBuffer[Index]);
   }
-  FREE_POOL_SAFE(ppLinesBuffer);
+  FREE_POOL_SAFE(pFileBuffer);
   FREE_POOL_SAFE(pFileString);
+  FREE_POOL_SAFE(ppLinesBuffer);
   FREE_POOL_SAFE(pReadBuffer);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

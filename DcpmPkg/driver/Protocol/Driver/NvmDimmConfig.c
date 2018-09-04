@@ -4309,7 +4309,7 @@ ValidateImageVersion(
     goto Finish;
   }
 
-  if (pDimm->FwVer.FwRevision > pImage->ImageVersion.RevisionNumber.Version) {
+  if (!Force && pDimm->FwVer.FwRevision > pImage->ImageVersion.RevisionNumber.Version) {
     *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;

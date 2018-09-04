@@ -46,6 +46,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED               = 43,   ///< Error: Recovery access not enabled
   NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS             = 44,   ///< Error: Namespace exists - cannot execute request
 
+  NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING     = 59,   ///< Error: Image not compatible with this DCPMM
   NVM_ERR_FILENAME_NOT_PROVIDED                     = 60,   ///< Error: Filename not provided
   NVM_SUCCESS_IMAGE_EXAMINE_OK                      = 61,   ///< Success: Image OK
   NVM_ERR_IMAGE_FILE_NOT_VALID                      = 62,   ///< Error: Image file not valid

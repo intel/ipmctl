@@ -133,7 +133,13 @@ typedef struct {
   UINT32 PerPartIdLow;
   UINT32 ImageSize;
   API_VERSION FwApiVersion;
-  UINT8 Reserved[68];
+  UINT8 StageNumber;
+  UINT32 fwImageStartAddr;
+  UINT16 VendorId;
+  UINT16 DeviceId;
+  UINT16 RevisionId;
+  UINT8 NumberofStages;
+  UINT8 Reserved[56];
 } FW_IMAGE_HEADER;
 
 /**

@@ -4267,7 +4267,6 @@ Finish:
   return ReturnCode;
 }
 
-STATIC
 EFI_STATUS
 ValidateImageVersion(
   IN       FW_IMAGE_HEADER *pImage,
@@ -4281,7 +4280,6 @@ ValidateImageVersion(
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
-
 
   if (pImage == NULL || pDimm == NULL || pNvmStatus == NULL) {
     goto Finish;
@@ -4350,6 +4348,12 @@ ValidateImageVersion(
       (BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) == DEV_FW_API_VERSION_MAJOR_MIN &&
         BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit2) < DEV_FW_API_VERSION_MINOR_MIN)) {
     *pNvmStatus = NVM_ERR_FIRMWARE_API_NOT_VALID;
+    ReturnCode = EFI_ABORTED;
+    goto Finish;
+  }
+
+  if ((pDimm->ControllerRid != pImage->RevisionId)) {
+    *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING;
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -4423,11 +4427,6 @@ UpdateSmbusDimmFw(
     goto Finish;
   }
 
-  ReturnCode = ValidateImageVersion(pFileHeader, Force, pCurrentDimm, pNvmStatus);
-
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
 
   /**
     Prepare the FV PassThru command
@@ -4589,12 +4588,6 @@ UpdateDimmFw(
   if (!ValidateImage(pFileHeader, ImageBufferSize, &pErrorMessage)) {
     *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
     ReturnCode = EFI_ABORTED;
-    goto Finish;
-  }
-
-  ReturnCode = ValidateImageVersion(pFileHeader, Force, pCurrentDimm, pNvmStatus);
-
-  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -4963,6 +4956,7 @@ UpdateFw(
   UINTN BuffSize = 0;
   UINTN TempBuffSize = 0;
   NVM_STATUS NvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
+  BOOLEAN ValidImage = TRUE;
 
   ZeroMem(pDimms, sizeof(pDimms));
 
@@ -5035,53 +5029,55 @@ UpdateFw(
     goto Finish;
   }
 
-  if (Examine) {
-    // don't update, just get image information
-    if (pFwImageInfo == NULL) {
-      goto Finish;
-    }
-    for (Index = 0; Index < DimmsNum; Index++) {
-      if (Recovery && FlashSPI) {
-        // We will only be able to flash spi if we can access the
-        // spi interface over smbus
+  // don't update, just get image information
+  if (pFwImageInfo == NULL) {
+    goto Finish;
+  }
+  for (Index = 0; Index < DimmsNum; Index++) {
+    if (Recovery && FlashSPI) {
+      // We will only be able to flash spi if we can access the
+      // spi interface over smbus
 #ifdef OS_BUILD
-        // Spi check access will fail with unsupported on OS
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+      // Spi check access will fail with unsupported on OS
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
 #else
-        TempReturnCode = SpiCheckAccess(pDimms[Index]);
+      TempReturnCode = SpiCheckAccess(pDimms[Index]);
 #endif
+      if (EFI_ERROR(TempReturnCode)) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
+      } else {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+      }
+    } else {
+        TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
+
         if (EFI_ERROR(TempReturnCode)) {
-          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
+          if (TempReturnCode == EFI_ABORTED) {
+            ValidImage = FALSE;
+            if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
+              } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+              } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
+              } else if (NvmStatus == NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING);
+            }
+          }
         } else {
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
         }
-      } else {
-         TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
+      }
+  }
 
-         if (EFI_ERROR(TempReturnCode)) {
-           if (TempReturnCode == EFI_ABORTED) {
-             if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
-               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
-               } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
-               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-               } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
-               SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-             }
-           }
-         } else {
-           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
-         }
-       }
-    }
-    SetCmdStatus(pCommandStatus, NVM_SUCCESS);
-    pFwImageInfo->Date = pFileHeader->Date;
-    pFwImageInfo->ImageVersion = pFileHeader->ImageVersion;
-    pFwImageInfo->FirmwareType = pFileHeader->ImageType;
-    pFwImageInfo->ModuleVendor = pFileHeader->ModuleVendor;
-    pFwImageInfo->Size = pFileHeader->Size;
+  pFwImageInfo->Date = pFileHeader->Date;
+  pFwImageInfo->ImageVersion = pFileHeader->ImageVersion;
+  pFwImageInfo->FirmwareType = pFileHeader->ImageType;
+  pFwImageInfo->ModuleVendor = pFileHeader->ModuleVendor;
+  pFwImageInfo->Size = pFileHeader->Size;
 
-    ReturnCode = EFI_SUCCESS;
-  } else {
+  ReturnCode = EFI_SUCCESS;
+  if (!Examine && ValidImage) {
     // upload FW image to all specified DIMMs
     for (Index = 0; Index < DimmsNum; Index++) {
       if (Recovery && FlashSPI) {
@@ -5095,6 +5091,7 @@ UpdateFw(
 
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
     }
+    SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   }
 
 Finish:

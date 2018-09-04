@@ -496,6 +496,26 @@ UpdateDimmFw(
   );
 
 /**
+  Validate firmware Image version
+
+  @param[in] pImage the FW Image header
+  @param[in] Force is a BOOL which indicates whether to skip prompts
+  @param[in] pDimm Pointer to the Dimm whose FW is validated
+
+  @param[out] pNvmStatus NVM status code
+
+  @retval EFI_ABORTED One of the checks failed
+  @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
+  @retval EFI_SUCCESS Update has completed successfully
+**/
+EFI_STATUS
+ValidateImageVersion(
+  IN       FW_IMAGE_HEADER *pImage,
+  IN       BOOLEAN Force,
+  IN       DIMM *pDimm,
+  OUT  NVM_STATUS *pNvmStatus
+);
+/**
   Recover firmware of a specified NVDIMM
 
   @param[in] DimmPid Dimm ID of a NVDIMM on which recovery is to be performed

@@ -198,6 +198,9 @@ LoadGoal(
 
   ReturnCode = ParseSourceDumpFile(pLoadFilePath, pDevicePathProtocol, &pFileString);
   if (EFI_ERROR(ReturnCode)) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_INVALID_DATA_IN_FILE);
+    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    DisplayCommandStatus(CLI_INFO_LOAD_GOAL, L"", pCommandStatus);
     goto Finish;
   }
 

@@ -86,7 +86,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_REGION_NOT_HEALTHY                          = 119, ///< Error: Region not healthy
   NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_BLOCK_NAMESPACE = 120, ///< Error: Not enough space for block namespace
   NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namesapce
-  NVM_ERR_REGION_GOAL_NO_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on DIMM
+  NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on DIMM
   NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve DIMM requires at least 2 DIMMs
   NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS                = 124, ///< Error: Namespace exists
   NVM_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY  = 125, ///< Error: Remaining size not in last property

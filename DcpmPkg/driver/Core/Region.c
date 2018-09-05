@@ -2141,13 +2141,13 @@ DeleteRegionsGoalConfigs(
 
   NVDIMM_ENTRY();
 
-  SetMem(pRelatedDimms, sizeof(pRelatedDimms), 0x0);
-  SetMem(pExistingRegionsGoal, sizeof(pExistingRegionsGoal), 0x0);
-
   if (pDimms == NULL || pCommandStatus == NULL) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
+  SetMem(pRelatedDimms, sizeof(pRelatedDimms), 0x0);
+  SetMem(pExistingRegionsGoal, sizeof(pExistingRegionsGoal), 0x0);
 
   Rc = FindRelatedDimmsByRegionGoalConfigs(pDimms, DimmsNum, pRelatedDimms, &RelatedDimmsNum);
   if (EFI_ERROR(Rc)) {
@@ -2185,8 +2185,7 @@ DeleteRegionsGoalConfigs(
       pRelatedDimms[Index]->PcdSynced = FALSE;
     } else {
       pRelatedDimms[Index]->PcdSynced = TRUE;
-      SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index], NVM_ERR_REGION_GOAL_NO_EXISTS_ON_DIMM);
-      Rc = EFI_INVALID_PARAMETER;
+      SetObjStatusForDimm(pCommandStatus, pRelatedDimms[Index], NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM);
     }
   }
 

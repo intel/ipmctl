@@ -6683,6 +6683,9 @@ Update NAMESPACE_INDEX with NAMESPACE_LABEL(s)
     ReturnCode = InsertNamespaceLabels(pDimmRegion->pDimm, &ppLabels[Index2], 1,
       pNamespace->Major, pNamespace->Minor);
     if (EFI_ERROR(ReturnCode)) {
+      if (ReturnCode == EFI_SECURITY_VIOLATION) {
+        ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_SECURITY_STATE);
+      }
       //cleanup already written labels and exit
       LabelsToRemove = (UINT16)Index2;
       Index2 = 0;

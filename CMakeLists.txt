@@ -675,7 +675,6 @@ if(ASCIIDOCTOR_FOUND)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-perferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
-		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-run-diagnostic.txt
@@ -714,7 +713,6 @@ if(ASCIIDOCTOR_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-show-perferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-run-diagnostic.1.gz

@@ -48,6 +48,7 @@ int g_playback_mode = 0;
 char g_recordings_dir[PATH_MAX];
 char g_recording_filename[PATH_MAX];
 char g_recording_fullpath[PATH_MAX];
+CHAR16 g_recording_fullpath_u[PATH_MAX];
 
 typedef enum {
   DefaultMode,
@@ -79,6 +80,8 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
   char *p_tok_context = NULL;
   int new_argv_index = 1;
   int stripped_args = 0;
+  int x = 0;
+  UINTN length = 0;
   if (argc > MAX_INPUT_PARAMS) {
     return EFI_INVALID_PARAMETER;
   }
@@ -99,10 +102,10 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 
   for (int Index = 1; Index < argc; Index++) {
 #ifdef PLAYBACK_RECORD_SUPPORTED
-    if(g_rec_file_creation_mode == DefaultMode || g_rec_file_creation_mode == UserSpecifiedDir)
+    if (g_rec_file_creation_mode == DefaultMode || g_rec_file_creation_mode == UserSpecifiedDir)
     {
-      if(0 != s_strncmpi(argv[Index], STR_RECORD_MODE, strlen(STR_RECORD_MODE) + 1) &&
-          0 != s_strncmpi(argv[Index], STR_PLAYBACK_MODE, strlen(STR_PLAYBACK_MODE) + 1))
+      if (0 != s_strncmpi(argv[Index], STR_RECORD_MODE, strlen(STR_RECORD_MODE) + 1) &&
+        0 != s_strncmpi(argv[Index], STR_PLAYBACK_MODE, strlen(STR_PLAYBACK_MODE) + 1))
       {
         strcat_s(g_recording_filename, PATH_MAX, argv[Index]);
       }
@@ -149,7 +152,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
       g_playback_mode = 1;
       stripped_args = 1;
     }
-    
+
     //if pbr mode, check for optional arg (dir or filename)
     if (g_record_mode || g_playback_mode)
     {
@@ -188,7 +191,11 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
   {
     if (DefaultMode == g_rec_file_creation_mode || UserSpecifiedDir == g_rec_file_creation_mode)
     {
-      strcat_s(g_recordings_dir, PATH_MAX, "/");
+      length = strlen(g_recordings_dir);
+      if (g_recordings_dir[length - 1] != '/')
+      {
+        strcat_s(g_recordings_dir, PATH_MAX, "/");
+      }
       os_mkdir(g_recordings_dir);
       strcpy_s(g_recording_fullpath, PATH_MAX, g_recordings_dir);
       strcat_s(g_recording_fullpath, PATH_MAX, g_recording_filename);
@@ -199,32 +206,44 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
       os_mkdir(g_recording_fullpath);
     }
 
-    if(g_record_mode)
+    length = strlen(g_recording_fullpath);
+    for (x = 0; x < length; x++)
+    {
+#ifdef _MSC_VER
+      if (g_recording_fullpath[x] == '/') g_recording_fullpath[x] = '\\';
+#else
+      if (g_recording_fullpath[x] == '\\') g_recording_fullpath[x] = '/';
+#endif
+    }
+
+    AsciiStrnToUnicodeStrS(g_recording_fullpath, PATH_MAX, g_recording_fullpath_u, PATH_MAX, &length);
+
+    if (g_record_mode)
     {
       EFI_STATUS rc;
       //using smbios recording file path because currently all recordings
       //are consolidated to the same file.
-      if(EFI_SUCCESS != (rc = init_record_file(g_recording_fullpath)))
+      if (EFI_SUCCESS != (rc = init_record_file(g_recording_fullpath)))
       {
-          wprintf(L"Failed to initialize the following recording file.\n%s\n", g_recording_fullpath);
-          return EFI_LOAD_ERROR;
-      }
-      else
-      {
-        wprintf(L"Recording to file: %s\n", g_recording_fullpath);
-      }
-    }
-    
-    if (g_playback_mode)
-    {
-      if (-1 == access(g_recording_fullpath, F_OK))
-      {
-        wprintf(L"The following playback file does not exist.\n%s\n", g_recording_fullpath);
+        wprintf(L"Failed to initialize the following recording file.\n" FORMAT_STR L"\n", g_recording_fullpath_u);
         return EFI_LOAD_ERROR;
       }
       else
       {
-        wprintf(L"Playing back from file: %s\n", g_recording_fullpath);
+        wprintf(L"Recording to file: " FORMAT_STR L"\n", g_recording_fullpath_u);
+      }
+    }
+
+    if (g_playback_mode)
+    {
+      if (-1 == access(g_recording_fullpath_u, F_OK))
+      {
+        wprintf(L"The following playback file does not exist.\n" FORMAT_STR L"\n", g_recording_fullpath_u);
+        return EFI_LOAD_ERROR;
+      }
+      else
+      {
+        wprintf(L"Playing back from file: " FORMAT_STR L"\n", g_recording_fullpath_u);
       }
     }
   }

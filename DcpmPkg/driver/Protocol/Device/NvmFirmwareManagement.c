@@ -203,7 +203,7 @@ SetImage (
   }
   pFileHeader = (FW_IMAGE_HEADER *)Image;
 
-  ReturnCode = ValidateImageVersion(pFileHeader, FALSE, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
+  ReturnCode = ValidateImageVersion(pFileHeader, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmData->HiiHandle, Status);

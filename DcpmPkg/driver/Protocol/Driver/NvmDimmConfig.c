@@ -5049,7 +5049,7 @@ UpdateFw(
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
       }
     } else {
-        TempReturnCode = ValidateImageVersion(pFileHeader, FALSE, pDimms[Index], &NvmStatus);
+        TempReturnCode = ValidateImageVersion(pFileHeader, Force, pDimms[Index], &NvmStatus);
 
         if (EFI_ERROR(TempReturnCode)) {
           if (TempReturnCode == EFI_ABORTED) {

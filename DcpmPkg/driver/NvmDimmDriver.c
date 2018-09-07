@@ -14,7 +14,7 @@
 #include <IndustryStandard/Pci.h>
 #include <Protocol/DevicePath.h>
 #include <Library/BaseMemoryLib.h>
-#include <StorageSecurityCommand.h>
+#include <Protocol/StorageSecurityCommand.h>
 #include <Namespace.h>
 #include <Dimm.h>
 #include <Convert.h>
@@ -1091,7 +1091,7 @@ InitializeDimms()
     gDimmsUefiData[Index].StorageSecurityCommandInstance = gNvmDimmDriverStorageSecurityCommand;
     ReturnCode = gBS->InstallMultipleProtocolInterfaces(
         &gDimmsUefiData[Index].DeviceHandle,
-        &gNvmDimmStorageSecurityCommandProtocolGuid,
+        &gEfiStorageSecurityCommandProtocolGuid,
         &gDimmsUefiData[Index].StorageSecurityCommandInstance,
         NULL);
 
@@ -1543,7 +1543,7 @@ NvmDimmDriverDriverBindingStop(
 
         ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
           gDimmsUefiData[Index].DeviceHandle,
-          &gNvmDimmStorageSecurityCommandProtocolGuid, &gDimmsUefiData[Index].StorageSecurityCommandInstance,
+          &gEfiStorageSecurityCommandProtocolGuid, &gDimmsUefiData[Index].StorageSecurityCommandInstance,
           NULL
         );
 

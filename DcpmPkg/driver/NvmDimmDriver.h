@@ -76,7 +76,7 @@ extern UINT8  IntelDCPersistentMemoryDriverStrings[];
 #include "NvmDimmConfig.h"
 #include <NvmDimmPassThru.h>
 #include <NvmFirmwareManagement.h>
-#include <StorageSecurityCommand.h>
+#include <Protocol/StorageSecurityCommand.h>
 
 /**
   Protocol instances

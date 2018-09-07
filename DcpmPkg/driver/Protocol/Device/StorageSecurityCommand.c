@@ -10,7 +10,7 @@
 #include <NvmDimmPassThru.h>
 #include "NvmDimmDriver.h"
 #include "NvmSecurity.h"
-#include "StorageSecurityCommand.h"
+#include <Protocol/StorageSecurityCommand.h>
 
 /**
   Supported Security Protocols & Protocol Specific parameters
@@ -30,8 +30,6 @@ typedef struct {
   UINT8 Protocol[SUPPORTED_PROTOCOL_LIST_LENGTH];
 } PROTOCOL_INFORMATION;
 #pragma pack(pop)
-
-EFI_GUID gNvmDimmStorageSecurityCommandProtocolGuid = EFI_STORAGE_SECURITY_COMMAND_PROTOCOL_GUID;
 
 /**
   Instance of StorageSecurityCommandProtocol

@@ -1695,9 +1695,11 @@ ParseSourcePassFile(
     }
     ReturnCode = SafeAsciiStrToUnicodeStr((const CHAR8 *)pFileBuffer, (UINT32)FileBufferSize, pFileString);
     Index = 0;
+    FREE_POOL_SAFE(pFileBuffer);
   }
   else {
     // Add size of L'\0' (UTF16) char
+    // ReallocatePool frees pFileBuffer after completion. Do not need to call FREE_POOL_SAFE for pFileBuffer
     pFileString = ReallocatePool(FileBufferSize, FileBufferSize + sizeof(L'\0'), pFileBuffer);
     if (pFileString == NULL) {
       Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -1771,7 +1773,6 @@ Finish:
   for (Index = 0; ppLinesBuffer != NULL && Index < NumberOfLines; ++Index) {
     FREE_POOL_SAFE(ppLinesBuffer[Index]);
   }
-  FREE_POOL_SAFE(pFileBuffer);
   FREE_POOL_SAFE(pFileString);
   FREE_POOL_SAFE(ppLinesBuffer);
   FREE_POOL_SAFE(pReadBuffer);

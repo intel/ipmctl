@@ -18,6 +18,7 @@
 #include <Namespace.h>
 #include <Dimm.h>
 #include <Convert.h>
+#include <Protocol/NvdimmLabel.h>
 #ifndef OS_BUILD
 #include <Smbus.h>
 #endif
@@ -1066,7 +1067,7 @@ InitializeDimms()
     **/
     if (!IsDimmManageable(pDimm)) {
       /**
-        Install only firmware update & security protocols on a manageable DIMM.
+        Install only firmware update, security and label protocols on a manageable DIMM.
       **/
       Index++;
       continue;
@@ -1097,6 +1098,19 @@ InitializeDimms()
 
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to install Storage Security Command protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      goto Finish;
+    }
+
+    gDimmsUefiData[Index].NvdimmLabelProtocolInstance = gNvdimmLabelProtocol;
+
+    ReturnCode = gBS->InstallMultipleProtocolInterfaces(
+        &gDimmsUefiData[Index].DeviceHandle,
+        &gEfiNvdimmLabelProtocolGuid,
+        &gDimmsUefiData[Index].NvdimmLabelProtocolInstance,
+        NULL);
+
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to install NVDIMM label protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
       goto Finish;
     }
 

@@ -77,6 +77,7 @@ extern UINT8  IntelDCPersistentMemoryDriverStrings[];
 #include <NvmDimmPassThru.h>
 #include <NvmFirmwareManagement.h>
 #include <Protocol/StorageSecurityCommand.h>
+#include <Protocol/NvdimmLabel.h>
 
 /**
   Protocol instances
@@ -91,6 +92,7 @@ extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_FIRMWARE_MANAGEMENT_PROTOCOL gNvmDimmFirmwareManagementProtocol;
 extern EFI_STORAGE_SECURITY_COMMAND_PROTOCOL gNvmDimmDriverStorageSecurityCommand;
 extern EFI_BLOCK_IO_PROTOCOL gNvmDimmDriverBlockIo;
+extern EFI_NVDIMM_LABEL_PROTOCOL gNvdimmLabelProtocol;
 
 typedef struct _PMEM_DEV {
   LIST_ENTRY Dimms;
@@ -202,6 +204,7 @@ typedef struct {
   EFI_STORAGE_SECURITY_COMMAND_PROTOCOL StorageSecurityCommandInstance;
   EFI_DRIVER_HEALTH_PROTOCOL DriverHealthProtocolInstance;
   EFI_BLOCK_IO_PROTOCOL BlockIoProtocolInstance;
+  EFI_NVDIMM_LABEL_PROTOCOL NvdimmLabelProtocolInstance;
 } EFI_DIMMS_DATA;
 
 /**

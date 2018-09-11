@@ -240,18 +240,16 @@ LoadRecover(
     **/
   }
 
-  if (Examine) {
-    pFwImageInfo = AllocateZeroPool(sizeof(*pFwImageInfo));
-    if (pFwImageInfo == NULL) {
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
+  pFwImageInfo = AllocateZeroPool(sizeof(FW_IMAGE_INFO));
+  if (pFwImageInfo == NULL) {
+    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
   }
 
-  // Create callback that will print progress
   if (!Examine) {
-    gBS->CreateEvent((EVT_TIMER|EVT_NOTIFY_SIGNAL), PRINT_PRIORITY, PrintProgress, pCommandStatus, &ProgressEvent);
+    // Create callback that will print progress
+    gBS->CreateEvent((EVT_TIMER | EVT_NOTIFY_SIGNAL), PRINT_PRIORITY, PrintProgress, pCommandStatus, &ProgressEvent);
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);
   }
 
@@ -259,6 +257,7 @@ LoadRecover(
       (CHAR16 *) pWorkingDirectory, Examine, FALSE, TRUE, FlashSpi, pFwImageInfo, pCommandStatus);
 
   if (Examine && pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU) {
+    
     if (pFwImageInfo != NULL && pCommandStatus->GeneralStatus == NVM_SUCCESS) {
 
       Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
@@ -270,6 +269,7 @@ LoadRecover(
     } else {
       Print(FORMAT_STR FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
     }
+
     DisplayCommandStatus(L"", L"", pCommandStatus);
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     goto Finish;
@@ -277,6 +277,9 @@ LoadRecover(
     if (!EFI_ERROR(ReturnCode)) {
       Print(L"\n");
     }
+  }
+
+  if (!Examine) {
     gBS->CloseEvent(ProgressEvent);
   }
 

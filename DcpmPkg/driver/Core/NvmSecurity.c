@@ -227,11 +227,8 @@ IsConfiguringForCreateGoalAllowed(
   )
 {
     BOOLEAN IsAllowed = FALSE;
-    UINT8 SecurityState;
 
-    ZeroMem(&SecurityState, sizeof(SecurityState));
-    ConvertSecurityBitmask(SecurityFlag, &SecurityState);
-    IsAllowed = (SECURITY_DISABLED == SecurityState) ?	TRUE : FALSE;
+    IsAllowed = !(SecurityFlag & SECURITY_MASK_ENABLED);
 
     return IsAllowed;
 

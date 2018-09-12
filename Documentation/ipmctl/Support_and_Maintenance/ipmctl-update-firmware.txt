@@ -10,15 +10,15 @@ NAME
 ----
 ipmctl-update-firmware - Updates the firmware on one or more DCPMMs
 
-DESCRIPTION
------------
-Updates the firmware on one or more DCPMMs. On the next power cycle, the
-firmware will become active.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl load [OPTIONS] -source (path) -dimm (DimmIds) [TARGETS]
+
+DESCRIPTION
+-----------
+Updates the firmware on one or more DCPMMs. On the next power cycle, the
+firmware will become active.
 
 OPTIONS
 -------

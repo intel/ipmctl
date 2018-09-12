@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-host - Shows basic information about the host server
 
-DESCRIPTION
------------
-Shows basic information about the host server.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -system -host
+
+DESCRIPTION
+-----------
+Shows basic information about the host server.
 
 OPTIONS
 -------

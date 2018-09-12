@@ -74,6 +74,7 @@ elseif(UNIX)
 	find_package(Threads REQUIRED)
 	find_package(PkgConfig REQUIRED)
 	find_package(asciidoctor)
+	find_package(asciidoc)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
 	pkg_check_modules(SYSTEMD systemd)
 	pkg_check_modules(LIBSAFEC REQUIRED safec-3.3>=03032018.0-g570fa5)
@@ -436,7 +437,7 @@ set_target_properties(ipmctl-bin
 	PROPERTIES OUTPUT_NAME ipmctl
 	)
 
-if (ASCIIDOCTOR_FOUND)
+if (ASCIIDOCTOR_FOUND OR A2X_FOUND)
 	add_dependencies(ipmctl-bin
 		manpage
 		)
@@ -608,7 +609,7 @@ if(LNX_BUILD)
 		DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 		)
 
-	if(ASCIIDOCTOR_FOUND)
+	if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 		install(DIRECTORY ${OUTPUT_DIR}/manpage/
 			DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
 			)
@@ -640,7 +641,7 @@ endif()
 #----------------------------------------------------------------------------------------------------
 # Generate man pages with asciidoctor
 #----------------------------------------------------------------------------------------------------
-if(ASCIIDOCTOR_FOUND)
+if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 	file(MAKE_DIRECTORY ${OUTPUT_DIR}/manpage)
 	file(MAKE_DIRECTORY ${OUTPUT_DIR}/docs)
 
@@ -665,14 +666,14 @@ if(ASCIIDOCTOR_FOUND)
 		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-performance.txt
 		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-sensor.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-acknowledge-event.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-change-perferences.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-change-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-dump-support-data.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-events.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-host.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-perferences.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
@@ -687,7 +688,7 @@ if(ASCIIDOCTOR_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-show-device.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-memory-resources.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-socket.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-system-capabilites.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-system-capabilities.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-topology.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-change-device-passphrase.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-change-device-security.1.gz
@@ -703,14 +704,14 @@ if(ASCIIDOCTOR_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-show-performance.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-sensor.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-acknowledge-event.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-perferences.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-change-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-events.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-host.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-perferences.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
@@ -723,13 +724,28 @@ if(ASCIIDOCTOR_FOUND)
 	add_custom_target(manpage ALL
 		DEPENDS ${MANPAGE_OUTPUT_FILES} ${DOCUMENTATION_INPUT_FILES}
 		)
-
-	add_custom_command(OUTPUT ${MANPAGE_OUTPUT_FILES}
-		COMMAND ${ASCIIDOCTOR_BINARIES} -b manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${DOCUMENTATION_INPUT_FILES}
-		COMMAND gzip -f ${OUTPUT_DIR}/manpage/*.1
-		COMMENT "Generating man pages"
-		DEPENDS ${DOCUMENTATION_INPUT_FILES}
-		)
+	if(ASCIIDOCTOR_FOUND)
+		add_custom_command(OUTPUT ${MANPAGE_OUTPUT_FILES}
+			COMMAND ${ASCIIDOCTOR_BINARIES} -b manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${DOCUMENTATION_INPUT_FILES}
+			COMMAND gzip -f ${OUTPUT_DIR}/manpage/*.1
+			COMMENT "Generating man pages"
+			DEPENDS ${DOCUMENTATION_INPUT_FILES}
+			)
+	else()
+		list(LENGTH DOCUMENTATION_INPUT_FILES LEN)
+		math(EXPR INPUT_LENGTH "${LEN} -1")
+		foreach(INDEX RANGE ${INPUT_LENGTH})
+			list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
+			list(GET MANPAGE_OUTPUT_FILES ${INDEX} MAN_OUTPUT)
+			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
+			add_custom_command(OUTPUT ${MAN_OUTPUT}
+				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_INPUT} 
+				COMMAND gzip -f ${MAN_GZ_INPUT}
+				COMMENT "Generating man pages"
+				DEPENDS ${MAN_INPUT}
+				)
+		endforeach()
+	endif()
 endif()
 
 # --------------------------------------------------------------------------------------------------

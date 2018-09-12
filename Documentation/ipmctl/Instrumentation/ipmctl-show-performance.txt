@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-performance - Shows performance metrics for one or more DCPMMs
 
-DESCRIPTION
------------
-Shows performance metrics for one or more DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -performance [METRICS] [TARGETS]
+
+DESCRIPTION
+-----------
+Shows performance metrics for one or more DCPMMs.
 
 OPTIONS
 -------

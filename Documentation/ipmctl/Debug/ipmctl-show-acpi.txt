@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-acpi - Shows the system ACPI tables related to the DCPMMs
 
-DESCRIPTION
------------
-Shows the system ACPI tables related to the DCPMMs in the system.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -system (NFIT|PCAT|PMTT)
+
+DESCRIPTION
+-----------
+Shows the system ACPI tables related to the DCPMMs in the system.
 
 OPTIONS
 -------

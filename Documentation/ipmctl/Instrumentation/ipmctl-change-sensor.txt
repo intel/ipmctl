@@ -10,17 +10,17 @@ NAME
 ----
 ipmctl-change-sensor - Changes the threshold or enabled state for DCPMMs sensors
 
-DESCRIPTION
------------
-Changes the non-critical threshold or enabled state for one or more DCPMMs
-sensors.
-Use the command Show Sensor to view the current settings.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
 NonCriticalThreshold=(temperature) EnabledState=(0|1)
+
+DESCRIPTION
+-----------
+Changes the non-critical threshold or enabled state for one or more DCPMMs
+sensors.
+Use the command Show Sensor to view the current settings.
 
 OPTIONS
 -------

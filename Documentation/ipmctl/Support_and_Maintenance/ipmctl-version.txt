@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-version - Shows the DCPMM host software versions
 
-DESCRIPTION
------------
-Shows the DCPMM host software versions.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl version [OPTIONS]
+
+DESCRIPTION
+-----------
+Shows the DCPMM host software versions.
 
 OPTIONS
 -------

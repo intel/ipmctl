@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-firmware - Shows detailed information about the firmware
 
-DESCRIPTION
------------
-Shows detailed information about the firmware on one or more DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -firmware [TARGETS]
+
+DESCRIPTION
+-----------
+Shows detailed information about the firmware on one or more DCPMMs.
 
 OPTIONS
 -------

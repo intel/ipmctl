@@ -10,17 +10,17 @@ NAME
 ----
 ipmctl-dump-support-data - Dumps a support snapshot to a file
 
+SYNOPSIS
+--------
+[verse]
+ipmctl dump [OPTIONS] -destination (path) -support
+
 DESCRIPTION
 -----------
 Creates a support snapshot and dump support data to a file for off-line analysis
 by support personnel. Support data may include system log(s), error log(s),
 trace log(s), platform configuration, sensor information, and diagnostic
 results.
-
-SYNOPSIS
---------
-[verse]
-ipmctl dump [OPTIONS] -destination (path) -support
 
 OPTIONS
 -------

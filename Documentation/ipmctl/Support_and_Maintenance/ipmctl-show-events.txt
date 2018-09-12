@@ -10,17 +10,17 @@ NAME
 ----
 ipmctl-show-events - Shows DCPMM related events
 
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -event [TARGETS] [PROPERTIES]
+
 DESCRIPTION
 -----------
 Shows DCPMM related events. The options, targets, and properties can be used to
 filter the events. If no filters are provided, the default is to display up to
 50 events. Refer to the Event Log Specification for detailed information about
 events.
-
-SYNOPSIS
---------
-[verse]
-ipmctl show [OPTIONS] -event [TARGETS] [PROPERTIES]
 
 OPTIONS
 -------

@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-change-preferences - Modifies one or more user preferences
 
-DESCRIPTION
------------
-Modifies one or more user preferences in the DCPMM software.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -preferences [PROPERTIES]
+
+DESCRIPTION
+-----------
+Modifies one or more user preferences in the DCPMM software.
 
 OPTIONS
 -------

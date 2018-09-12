@@ -21,12 +21,13 @@ find_package_handle_standard_args(asciidoctor-pdf DEFAULT_MSG
                                   ASCIIDOCTOR_PDF_BINARY)
 
 mark_as_advanced(ASCIIDOCTOR_BINARY)
+mark_as_advanced(ASCIIDOCTOR_PDF_BINARY)
 
 set(ASCIIDOCTOR_BINARIES ${ASCIIDOCTOR_BINARY})
 set(ASCIIDOCTOR_PDF_BINARIES ${ASCIIDOCTOR_PDF_BINARY})
 
 if(NOT ASCIIDOCTOR_FOUND)
-	MESSAGE("No documentation will be generated.")
+	MESSAGE("Fallback to asciidoc")
 endif()
 
 if(NOT ASCIIDOCTOR-PDF_FOUND)

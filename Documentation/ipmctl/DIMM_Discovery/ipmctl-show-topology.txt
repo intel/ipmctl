@@ -10,15 +10,15 @@ NAME
 ----
 ipmctl-show-topology - Shows the topology of the memory installed
 
-DESCRIPTION
------------
-Shows the topology of the memory installed in the host server. Use the command
-ipmctl-show-device to view more detailed information about a DCPMM.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -topology [TARGETS]
+
+DESCRIPTION
+-----------
+Shows the topology of the memory installed in the host server. Use the command
+ipmctl-show-device to view more detailed information about a DCPMM.
 
 OPTIONS
 -------
@@ -61,7 +61,7 @@ TARGETS
   Restricts output to the DIMMs installed on specific sockets by supplying the
   socket target and one or more comma-separated socket identifiers. The default
   is to display all sockets.
-  
+
 NOTE: If ACPI PMTT table is not present, then DDR4 memory will not be
 displayed in the filtered socket list.
 

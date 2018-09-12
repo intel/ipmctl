@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-system-capabilities - Shows the platform supported DCPMM capabilities
 
-DESCRIPTION
------------
-Shows the total DCPMM memory resource allocation across the host server.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -system -capabilities
+
+DESCRIPTION
+-----------
+Shows the total DCPMM memory resource allocation across the host server.
 
 OPTIONS
 -------

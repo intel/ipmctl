@@ -10,17 +10,17 @@ NAME
 ----
 ipmctl-dump-goal - Stores the current system configuration in a file
 
+SYNOPSIS
+--------
+[verse]
+ipmctl dump [OPTIONS] -destination (path) -system -config
+
 DESCRIPTION
 -----------
 Store the currently configured memory allocation settings for all DCPMMs in the
 system to a file in order to replicate the configuration elsewhere. Apply the
 stored memory allocation settings using the command Section 2.2.8,
 “Load Memory Allocation Goal.”
-
-SYNOPSIS
---------
-[verse]
-ipmctl dump [OPTIONS] -destination (path) -system -config
 
 OPTIONS
 -------

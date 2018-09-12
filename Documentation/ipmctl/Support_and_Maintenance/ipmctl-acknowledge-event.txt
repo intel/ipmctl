@@ -10,16 +10,15 @@ NAME
 ----
 ipmctl-acknowledge-event - Turns off the flag that signals a corrective action
 on an event
+SYNOPSIS
+--------
+[verse]
+ipmctl set [OPTIONS] -event (EventID) ActionRequired=(0)
 
 DESCRIPTION
 -----------
 Turns off the flag that signals a corrective action on an event. Refer to the
 Event Log Specification for detailed information about individual events.
-
-SYNOPSIS
---------
-[verse]
-ipmctl set [OPTIONS] -event (EventID) ActionRequired=(0)
 
 OPTIONS
 -------

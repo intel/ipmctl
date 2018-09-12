@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-preferences - Displays a list of the DCPMM software user preferences
 
-DESCRIPTION
------------
-Displays a list of the DCPMM software user preferences and their current values.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -preferences
+
+DESCRIPTION
+-----------
+Displays a list of the DCPMM software user preferences and their current values.
 
 OPTIONS
 -------

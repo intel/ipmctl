@@ -10,15 +10,15 @@ NAME
 ----
 ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM
 
-DESCRIPTION
------------
-Changes the security passphrase on one or more DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -dimm [TARGETS] Passphrase=(string) NewPassphrase=(string)
 ConfirmPassphrase=(string)
+
+DESCRIPTION
+-----------
+Changes the security passphrase on one or more DCPMMs.
 
 OPTIONS
 -------

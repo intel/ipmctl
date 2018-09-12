@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-modify-device - Changes the configurable setting(s) on one or more DCPMMs
 
-DESCRIPTION
------------
-Changes the configurable setting(s) on one or more DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -dimm (DimmIDs) FirstFastRefresh=(0|1)
+
+DESCRIPTION
+-----------
+Changes the configurable setting(s) on one or more DCPMMs.
 
 OPTIONS
 -------

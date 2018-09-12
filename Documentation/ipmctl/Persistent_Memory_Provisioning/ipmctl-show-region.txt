@@ -10,21 +10,21 @@ NAME
 ----
 ipmctl-show-region - Retrieves a list of persistent memory regions
 
-DESCRIPTION
------------
-Retrieves a list of persistent memory regions of DCPMM capacity
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -region [TARGETS]
+
+DESCRIPTION
+-----------
+Retrieves a list of persistent memory regions of DCPMM capacity
 
 OPTIONS
 -------
 -a::
 -all::
   Shows all attributes.
-  
+
 NOTE: The all and display options are exclusive and may not be used together.
 
 -d (attributes)::

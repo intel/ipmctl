@@ -10,16 +10,16 @@ NAME
 ----
 ipmctl-enable-device-security - Enable data-at-rest security on DCPMM
 
-DESCRIPTION
------------
-Enable data-at-rest security for the persistent memory on one or more DCPMEM
-modules by setting a passphrase.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -dimm [TARGETS] NewPassphrase=(string)
 ConfirmPassphrase=(string)
+
+DESCRIPTION
+-----------
+Enable data-at-rest security for the persistent memory on one or more DCPMEM
+modules by setting a passphrase.
 
 OPTIONS
 -------
@@ -29,7 +29,7 @@ OPTIONS
 
 -source (path)::
   File path to a local file containing the new passphrase (1-32 characters).
-  
+
 NOTE: The file does not need to contain the ConfirmPassphrase property
 
 TARGETS

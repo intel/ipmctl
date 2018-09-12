@@ -8,16 +8,16 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-erase-device-security - Erases the persistent data on one or more DCPMMs
-
-DESCRIPTION
------------
-Erases the persistent data on one or more DCPMMs.
+ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs
 
 SYNOPSIS
 --------
 [verse]
 ipmctl delete [OPTIONS] -dimm [TARGETS] Passphrase=(string)
+
+DESCRIPTION
+-----------
+Erases the persistent data on one or more DCPMMs.
 
 OPTIONS
 -------

@@ -10,6 +10,11 @@ NAME
 ----
 ipmctl-delete-pcd - Clears the namespace label storage area partition
 
+SYNOPSIS
+--------
+[verse]
+ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd LSA
+
 DESCRIPTION
 -----------
 Clears the namespace label storage area partition in the platform configuration
@@ -17,11 +22,6 @@ data from one or more DCPMMs. This is a destructive operation which will clear
 the entire namespace label storage area including all namespaces labels and the
 namespace label index block in order to re-purpose the DCPMM(s) for use in a
 different operating system.
-
-SYNOPSIS
---------
-[verse]
-ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd LSA
 
 OPTIONS
 -------

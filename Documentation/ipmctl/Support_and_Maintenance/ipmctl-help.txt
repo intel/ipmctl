@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-help - Shows help for the supported commands
 
-DESCRIPTION
------------
-Shows help for the supported commands.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl help [OPTIONS]
+
+DESCRIPTION
+-----------
+Shows help for the supported commands.
 
 OPTIONS
 -------

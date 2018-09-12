@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-device - Shows information about one or more DCPMMs
 
-DESCRIPTION
------------
-Shows information about one or more DCPMMs
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -dimm [TARGETS]
+
+DESCRIPTION
+-----------
+Shows information about one or more DCPMMs
 
 OPTIONS
 -------

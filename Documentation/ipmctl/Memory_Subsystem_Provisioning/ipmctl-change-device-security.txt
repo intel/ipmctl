@@ -10,16 +10,16 @@ NAME
 ----
 ipmctl-change-device-security - Changes the DCPMM security lock state
 
-DESCRIPTION
------------
-Changes the data-at-rest security lock state for the persistent memory on one or more
-DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -dimm [TARGETS] Lockstate=(Unlocked|Disabled|Frozen)
 Passphrase=(string)
+
+DESCRIPTION
+-----------
+Changes the data-at-rest security lock state for the persistent memory on one or more
+DCPMMs.
 
 OPTIONS
 -------

@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
-ipmctl-dump-goal(1)
+ipmctl-load-goal(1)
 ===================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-goal - Load a memory allocation goal from a file onto DCPMMs
+ipmctl-load-goal - Load a memory allocation goal from a file onto DCPMMs
+
+SYNOPSIS
+--------
+[verse]
+ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
 
 DESCRIPTION
 -----------
@@ -19,11 +24,6 @@ result in loss of data stored in the persistent memory region. Therefore, data
 should be backed up to other storage before executing this command. Changing a
 memory allocation goal modifies how the platform maps persistent memory, but
 does not explicitly delete or modify user data found in persistent memory.
-
-SYNOPSIS
---------
-[verse]
-ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
 
 OPTIONS
 -------

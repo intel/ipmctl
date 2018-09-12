@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-sensor - Shows health statistics for one or more DCPMMs
 
-DESCRIPTION
------------
-ipmctl-show-device to view more detailed information about a DCPMM.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
+
+DESCRIPTION
+-----------
+ipmctl-show-device to view more detailed information about a DCPMM.
 
 OPTIONS
 -------

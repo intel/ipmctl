@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-memory-resources - Shows the total DCPMM memory resource allocation
 
-DESCRIPTION
------------
-Shows the total DCPMM memory resource allocation across the host server.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -memoryresources
+
+DESCRIPTION
+-----------
+Shows the total DCPMM memory resource allocation across the host server.
 
 OPTIONS
 -------

@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-delete-goal - Deletes the memory allocation goal from DCPMMs
 
-DESCRIPTION
------------
-Load a memory allocation goal from a file onto one or more DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl delete [OPTIONS] -goal [TARGETS]
+
+DESCRIPTION
+-----------
+Load a memory allocation goal from a file onto one or more DCPMMs.
 
 OPTIONS
 -------

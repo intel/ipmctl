@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-run-diagnostic - Runs a diagnostic test
 
-DESCRIPTION
------------
-Runs a diagnostic test.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl start [OPTIONS] -diagnostic (Quick|Config|Security|FW) -dimm(DIMMIDs)
+
+DESCRIPTION
+-----------
+Runs a diagnostic test.
 
 OPTIONS
 -------

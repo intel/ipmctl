@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-socket - Shows basic information about the physical processors
 
-DESCRIPTION
------------
-Shows basic information about the physical processors in the host server.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -socket [TARGETS]
+
+DESCRIPTION
+-----------
+Shows basic information about the physical processors in the host server.
 
 OPTIONS
 -------

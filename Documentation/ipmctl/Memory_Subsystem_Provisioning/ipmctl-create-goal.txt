@@ -10,6 +10,11 @@ NAME
 ----
 ipmctl-create-goal - Creates a memory allocation goal on one or more DCPMM
 
+SYNOPSIS
+--------
+[verse]
+ipmctl create [OPTIONS] -goal [TARGETS] [PROPERTIES]
+
 DESCRIPTION
 -----------
 Creates a memory allocation goal on one or more for the BIOS to read on the next
@@ -19,11 +24,6 @@ Persistent memory can then be utilized by creating a namespace.
 NOTE: Changing the memory configuration is a destructive operation which results
 in loss of data stored in the persistent memory region. Therefore, data should
 be backed up to other storage before executing this command.
-
-SYNOPSIS
---------
-[verse]
-ipmctl create [OPTIONS] -goal [TARGETS] [PROPERTIES]
 
 OPTIONS
 -------

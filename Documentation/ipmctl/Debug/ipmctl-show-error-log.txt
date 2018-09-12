@@ -10,14 +10,14 @@ NAME
 ----
 ipmctl-show-error-log - Shows thermal or media errors on the specified DCPMMs
 
-DESCRIPTION
------------
-Shows thermal or media errors on the specified DCPMMs.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl show [OPTIONS] -error (Thermal|Media) [TARGETS] [PROPERTIES]
+
+DESCRIPTION
+-----------
+Shows thermal or media errors on the specified DCPMMs.
 
 OPTIONS
 -------

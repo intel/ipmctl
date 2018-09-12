@@ -10,15 +10,15 @@ NAME
 ----
 ipmctl-dump-debug-log - Dumps encoded firmware debug logs from DCPMM
 
-DESCRIPTION
------------
-Dumps encoded firmware debug logs from the specified DCPMM and optionally
-decodes to human readable text.
-
 SYNOPSIS
 --------
 [verse]
 ipmctl dump [OPTIONS] -destination (path) -debug -dimm (DimmIDs) [PROPERTIES]
+
+DESCRIPTION
+-----------
+Dumps encoded firmware debug logs from the specified DCPMM and optionally
+decodes to human readable text.
 
 OPTIONS
 -------

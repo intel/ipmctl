@@ -2842,8 +2842,9 @@ FwCmdGetFWDebugLog (
 
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to get error log, LogPageOffset = %d\n", Index);
+      NVDIMM_WARN("Failed to get firmware debug log, LogPageOffset = %d\n", Index);
       if (FW_ERROR(pFwCmd->Status)) {
+        NVDIMM_WARN("Failed to get firmware debug log, FwCmdStatus: %d\n", pFwCmd->Status);
         ReturnCode = MatchFwReturnCode(pFwCmd->Status);
       }
       goto Finish;

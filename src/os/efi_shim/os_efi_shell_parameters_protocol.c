@@ -236,7 +236,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 
     if (g_playback_mode)
     {
-      if (-1 == access(g_recording_fullpath_u, F_OK))
+      if (-1 == access(g_recording_fullpath, F_OK))
       {
         wprintf(L"The following playback file does not exist.\n" FORMAT_STR L"\n", g_recording_fullpath_u);
         return EFI_LOAD_ERROR;

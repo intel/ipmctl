@@ -26,10 +26,6 @@ mark_as_advanced(A2X_BINARY)
 set(ASCIIDOC_BINARIES ${ASCIIDOC_BINARY})
 set(A2X_BINARIES ${A2X_BINARY})
 
-if(NOT ASCIIDOC_FOUND)
-	MESSAGE("Manpages will not be generated")
-endif()
-
-if(NOT A2X_FOUND)
+if((NOT ASCIIDOC_FOUND) AND (NOT A2X_FOUND) AND (NOT ASCIIDOCTOR_FOUND))
 	MESSAGE("Manpages will not be generated")
 endif()

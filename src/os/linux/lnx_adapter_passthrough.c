@@ -544,6 +544,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 						{
 							if (p_fw_cmd->OutputPayloadSize > 0)
 							{
+                rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
 								ndctl_cmd_vendor_get_output(p_vendor_cmd,
 											p_fw_cmd->OutPayload,
 												p_fw_cmd->OutputPayloadSize);

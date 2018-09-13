@@ -151,11 +151,6 @@ decode_nlog_binary(
       entry->prev = NULL;
     }
 
-    if (NULL == entry)
-    {
-      continue; //this is not a valid record
-    }
-
     //Move the pointer index to the next U32 and allocate space for a record
     if (record == NULL)
     {

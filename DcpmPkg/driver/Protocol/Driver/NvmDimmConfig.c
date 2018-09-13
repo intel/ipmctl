@@ -5863,6 +5863,7 @@ CreateGoalConfig(
 
 Finish:
   ClearInternalGoalConfigsInfo(&gNvmDimmData->PMEMDev.Dimms);
+  ClearPcdCacheOnDimmList();
   FREE_POOL_SAFE(ppDimms);
   FREE_POOL_SAFE(pDimmsSym);
   FREE_POOL_SAFE(pDimmsAsym);

@@ -16,6 +16,7 @@
 #include "ShowGoalCommand.h"
 #include <Convert.h>
 
+
 #define CREATE_GOAL_COMMAND_STATUS_HEADER       L"Create region configuration goal"
 #define CREATE_GOAL_COMMAND_STATUS_CONJUNCTION  L" on"
 

@@ -83,7 +83,7 @@ RETURN DATA
 The default behavior is to display a table with the default attributes listed
 below; applying options changes the output to a more detailed format. Limited
 information (noted in the table below) is applicable if the DCPMM is not
-manageable by the software as indicated by the “ManageabilityState” property.
+manageable by the software as indicated by the "ManageabilityState" property.
 
 DimmID::
   (Default)  The DCPMM identifier.
@@ -126,7 +126,7 @@ ifdef::os_build[]
 ActionRequired::
   (Default) If there are events for this device that require
   corrective action or acknowledgment. Refer to the command Section 2.5.8,
-  “Show Events” for more information about events. One of:
+  "Show Events" for more information about events. One of:
   - 0: No action required events
   - 1: One or more action required events
 endif::os_build[]

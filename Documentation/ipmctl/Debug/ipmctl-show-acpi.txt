@@ -30,9 +30,9 @@ TARGETS
 -system (NFIT|PCAT|PMTT)::
   The system ACPI table(s) to display. By default both the NFIT and PCAT tables
   are displayed. One of:
-  - “NFIT” - The NVDIMM Firmware Interface Table
-  - “PCAT” - The Platform Capabilities Table
-  - “PMTT” - The Platform Memory Topology Table
+  - "NFIT" - The NVDIMM Firmware Interface Table
+  - "PCAT" - The Platform Capabilities Table
+  - "PMTT" - The Platform Memory Topology Table
 
 Refer to the ACPI specification for detailed information about the ACPI tables.
 

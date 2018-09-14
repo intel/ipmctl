@@ -130,7 +130,7 @@ In order to successfully execute this command:
   Targets may be limited to individual DCPMMs or sockets, but all DCPMEM
   modules on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
-  Refer to the command Section 2.1.5 [TODO], “Show System Capabilities.” for a list of BIOS
+  Refer to the command Section 2.1.5 [TODO], "Show System Capabilities." for a list of BIOS
   supported modes.
 
 RETURN DATA
@@ -173,12 +173,12 @@ Mapped memory was limited based on the CPU SKU.
 
 Therefore, before making any changes to the configuration, a prompt is displayed
 showing the memory allocation goals that will be created on each DCPMM as
-documented in the command Section 2.2.6, ‚ “Show Memory Allocation Goal,” along
+documented in the command Section 2.2.6, ‚ "Show Memory Allocation Goal," along
 with any additional confirmation messages. The force option can be used to
 override this confirmation and proceed directly with creating the goals.
 [verse]
 The following configuration will be applied:
 SocketID DimmID MemorySize AppDirect1Size AppDirect2Size (Refer to
-the command Section 2.2.6, “Show Memory Allocation Goal”)
+the command Section 2.2.6, "Show Memory Allocation Goal")
 [Additional Confirmation Messages (see above)] Do you want to
 continue?

@@ -81,7 +81,7 @@ requested DCPMEM DIMM(s) must be deleted before running this command.
 
 ifdef::os_build[]
 NOTE: The command is subject to OS Vendor (OSV) support. If OSV does not provide
-support, the command will return “Not Supported.”
+support, the command will return "Not Supported."
 endif::os_build[]
 
 RETURN DATA

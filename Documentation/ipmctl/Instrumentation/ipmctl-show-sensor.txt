@@ -133,13 +133,13 @@ CurrentState::
     firmware is shutting down the DCPMM due to the temperature.
 
 LowerThresholdNonCritical::
-  The threshold value below which the state is considered “NonCritical”.
+  The threshold value below which the state is considered "NonCritical".
 
 UpperThresholdNonCritical::
-  The threshold value at or above which the state is considered “NonCritical”.
+  The threshold value at or above which the state is considered "NonCritical".
 
 LowerThresholdCritical::
-  The threshold value below which the state is considered “Critical”.
+  The threshold value below which the state is considered "Critical".
 
 UpperThresholdCritical::
   The threshold value at or above which the state is considered "Critical".

@@ -36,16 +36,16 @@ TARGETS
 -diagnostic (Quick|Config|Security|FW)::
   Run a specific test by supplying its name. By default all tests are run.
   One of:
-  - “Quick” - This test verifies that the DCPMM host mailbox is accessible and
+  - "Quick" - This test verifies that the DCPMM host mailbox is accessible and
     that basic health indicators can be read and are currently reporting
     acceptable values.
-  - “Config” - This test verifies that the BIOS platform configuration matches
+  - "Config" - This test verifies that the BIOS platform configuration matches
     the installed hardware and the platform configuration conforms to best known
     practices.
-  - “Security” - This test verifies that all DCPMMs have a consistent security
+  - "Security" - This test verifies that all DCPMMs have a consistent security
     state. It's a best practice to enable security on all DCPMMs rather than
     just some.
-  - “FW” - This test verifies that all DCPMMs of a given model have consistent
+  - "FW" - This test verifies that all DCPMMs of a given model have consistent
     FW installed and other FW modifiable attributes are set in accordance with
     best practices. +
     Note that the test does not have a means of verifying that
@@ -81,17 +81,17 @@ the relevant details. Each log contains the following information.
 
 TestName::
   The test name. One of:
-  - “Quick”
-  - “Config”
-  - “Security”
-  - “FW”
+  - "Quick"
+  - "Config"
+  - "Security"
+  - "FW"
 
 State::
   The severity of the error. One of:
-  - “Ok”
-  - “Warning”
-  - “Failed”
-  - “Aborted”
+  - "Ok"
+  - "Warning"
+  - "Failed"
+  - "Aborted"
 
 Message::
   A free form textual description of the error.

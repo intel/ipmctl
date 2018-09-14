@@ -19,8 +19,8 @@ DESCRIPTION
 -----------
 Shows the memory allocation goal on one or more DCPMMs. Once the goal is
 successfully applied by the BIOS, it is no longer displayed. Use the command
-Section 2.1.4, “Show Memory Resources” to view the system-wide memory resources
-or the command Section 2.4.1, “Show Persistent Memory” for detailed persistent
+Section 2.1.4, "Show Memory Resources" to view the system-wide memory resources
+or the command Section 2.4.1, "Show Persistent Memory" for detailed persistent
 memory information.
 
 OPTIONS

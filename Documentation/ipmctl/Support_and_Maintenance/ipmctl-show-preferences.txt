@@ -88,7 +88,7 @@ DBG_LOG_MAX::
 
 APPDIRECT_SETTINGS::
   The interleave settings to use when creating App Direct capacity in the
-  format: (IMCSize_ChannelSize). The default is “RECOMMENDED” which uses the
+  format: (IMCSize_ChannelSize). The default is "RECOMMENDED" which uses the
   BIOS recommended App Direct settings returned by the command Show System
   Capabilities.
 

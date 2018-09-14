@@ -79,7 +79,7 @@ There must not be any goal creation pending.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,
-command will return “Not Supported.”
+command will return "Not Supported."
 endif::os_build[]
 
 RETURN DATA

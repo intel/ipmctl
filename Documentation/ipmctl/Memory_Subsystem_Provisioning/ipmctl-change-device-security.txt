@@ -78,11 +78,12 @@ LIMITATIONS
 -----------
 To successfully execute this command, the caller must have the appropriate privileges
 and the specified DCPMMs must be manageable by the host software, have
-security enabled and not be in the "frozen" or "exceeded" lock states.
+security enabled, not be in the "frozen" or "exceeded" lock states, and not executing
+a long operation (ARS, Overwrite, FWUpdate).
 
 ifdef::os_build[]
 The command is subject to OS Vendor (OSV) support. If OSV does not provide support,
-the command may return “Not Supported.” Set LockState=Disabled is available
+the command may return "Not Supported." Set LockState=Disabled is available
 regardless of OSV support.
 endif::os_build[]
 

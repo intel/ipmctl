@@ -122,7 +122,7 @@ on DIMM (DimmID)? (y or [n])
 Otherwise, for each DCPMM, the CLI will indicate the status of the operation. If a failure
 occurs when updating multiple DCPMMs, the process will exit and not continue updating
 the remaining DCPMMs. The firmware will not become active until the next power cycle.
-Use the command Section 2.5.3, “Show Device Firmware” to view more detailed
+Use the command Section 2.5.3, "Show Device Firmware" to view more detailed
 information about the active and staged firmware.
 
 [verse]

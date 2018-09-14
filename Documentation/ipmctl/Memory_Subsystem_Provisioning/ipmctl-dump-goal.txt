@@ -20,7 +20,7 @@ DESCRIPTION
 Store the currently configured memory allocation settings for all DCPMMs in the
 system to a file in order to replicate the configuration elsewhere. Apply the
 stored memory allocation settings using the command Section 2.2.8,
-“Load Memory Allocation Goal.”
+"Load Memory Allocation Goal."
 
 OPTIONS
 -------

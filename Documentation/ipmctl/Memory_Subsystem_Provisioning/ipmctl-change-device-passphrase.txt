@@ -84,11 +84,11 @@ ConfirmPassphrase=""
 LIMITATIONS
 -----------
 The specified DCPMM must be manageable by the host software, have
-security enabled and not be in the “frozen” or “exceeded” lock states.
+security enabled and not be in the "frozen" or "exceeded" lock states.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,
-command will return “Not Supported.”
+command will return "Not Supported."
 endif::os_build[]
 
 RETURN DATA

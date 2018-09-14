@@ -29,7 +29,6 @@ struct Command ShowGoalCommand =
     {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired},
     {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}
 #ifdef OS_BUILD
-    , {ACTION_REQ_OPTION_SHORT, ACTION_REQ_OPTION, L"", L"", FALSE, ValueEmpty}
     , {OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired}
 #endif // OS_BUILD
   },
@@ -58,10 +57,6 @@ CHAR16 *mppAllowedShowGoalDisplayValues[] =
   APPDIRECT_2_SETTINGS_PROPERTY,
   APPDIRECT_2_INDEX_PROPERTY,
   STATUS_STR
-#ifdef OS_BUILD
-  ,ACTION_REQ_PROPERTY,
-  ACTION_REQ_EVENTS_PROPERTY
-#endif // OS_BUILD
 };
 
 /**
@@ -70,24 +65,11 @@ CHAR16 *mppAllowedShowGoalDisplayValues[] =
   @param[in] pRegionConfigsInfo - Region Config table to be printed
   @param[in] CurrentUnits The requested type of units to convert the capacity into
   @param[in] RegionConfigsCount - Number of elements in array
-  #ifdef OS_BUILD
-  @param[in] pDimmInfo - pointer to the dimm info list, if not NULL action required
-  will be displayed
-  #endif // OSBUILD
 
   @retval EFI_SUCCESS if printing is successful
   @retval EFI_INVALID_PARAMETER if input parameter is incorrect
 **/
-#ifdef OS_BUILD
-EFI_STATUS
-ShowGoalPrintTableView(
-  IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
-  IN    UINT16 CurrentUnits,
-  IN    UINT32 RegionConfigsCount,
-  IN    DIMM_INFO *pDimmInfo,
-  IN    BOOLEAN Buffered
-  )
-#else // OS_BUILD
+
 EFI_STATUS
 ShowGoalPrintTableView(
     IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
@@ -95,7 +77,6 @@ ShowGoalPrintTableView(
     IN    UINT32 RegionConfigsCount,
     IN    BOOLEAN Buffered
 )
-#endif // OSBUILD
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
@@ -105,9 +86,6 @@ ShowGoalPrintTableView(
   CHAR16 *pAppDirect1CapacityStr = NULL;
   CHAR16 *pAppDirect2CapacityStr = NULL;
   REGION_GOAL_PER_DIMM_INFO *pCurrentGoal = NULL;
-#ifdef OS_BUILD
-  CHAR16 *pActionReqStr = NULL;
-#endif // OS_BUILD
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 
@@ -117,22 +95,9 @@ ShowGoalPrintTableView(
 
   SetDisplayInfo(L"ConfigGoal", TableView, NULL);
 
-#ifdef OS_BUILD
-  if (pDimmInfo != NULL) {
-      // Print the action required status
-     NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_AR_HEADER, SOCKET_ID_TABLE_HEADER, DIMM_ID_TABLE_HEADER,
-          MEMORY_SIZE_TABLE_HEADER, APPDIRECT_1_SIZE_TABLE_HEADER,
-          APPDIRECT_2_SIZE_TABLE_HEADER, ACTION_REQUIRED_HEADER);
-  } else {
-     NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_HEADER, SOCKET_ID_TABLE_HEADER, DIMM_ID_TABLE_HEADER,
-          MEMORY_SIZE_TABLE_HEADER, APPDIRECT_1_SIZE_TABLE_HEADER,
-          APPDIRECT_2_SIZE_TABLE_HEADER);
-  }
-#else // OS_BUILD
   NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_HEADER, SOCKET_ID_TABLE_HEADER, DIMM_ID_TABLE_HEADER,
     MEMORY_SIZE_TABLE_HEADER, APPDIRECT_1_SIZE_TABLE_HEADER,
     APPDIRECT_2_SIZE_TABLE_HEADER);
-#endif // OS_BUILD
 
   for (Index = 0; Index < RegionConfigsCount; ++Index) {
     pCurrentGoal = &pRegionConfigsInfo[Index];
@@ -155,33 +120,12 @@ ShowGoalPrintTableView(
     KEEP_ERROR(ReturnCode, TempReturnCode);
 
     /** Print single row **/
-#ifdef OS_BUILD
-    if (pDimmInfo != NULL) {
-        pActionReqStr = CatSPrint(NULL, FORMAT_DEC, pDimmInfo[Index].ActionRequired);
-        // Print the action required status
-        NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_AR_SINGLE,
-            pCurrentGoal->SocketId,
-            DimmStr,
-            pVolatileCapacityStr,
-            pAppDirect1CapacityStr,
-            pAppDirect2CapacityStr,
-            pActionReqStr);
-    } else {
-       NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_SINGLE,
-            pCurrentGoal->SocketId,
-            DimmStr,
-            pVolatileCapacityStr,
-            pAppDirect1CapacityStr,
-            pAppDirect2CapacityStr);
-    }
-#else // OS_BUILD
     NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_SINGLE,
         pCurrentGoal->SocketId,
         DimmStr,
         pVolatileCapacityStr,
         pAppDirect1CapacityStr,
         pAppDirect2CapacityStr);
-#endif // OS_BUILD
 
     FREE_POOL_SAFE(pVolatileCapacityStr);
     FREE_POOL_SAFE(pAppDirect1CapacityStr);
@@ -307,48 +251,7 @@ ShowGoalPrintDetailedView(
       Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, STATUS_STR, pStatusString);
       FREE_POOL_SAFE(pStatusString);
     }
-#ifdef OS_BUILD
-    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH];
-    /** ActionRequired **/
-    if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQ_PROPERTY))) {
-        UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ACTION_REQ_PROPERTY, (UINT8) nvm_get_action_required(AsciiDimmUid));
-    }
-    /** ActionRequiredEvents **/
-    if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQ_EVENTS_PROPERTY))) {
-        CHAR8 *StringBuffer = NULL;
-        UnicodeStrToAsciiStrS(pCurrentGoal->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
-        nvm_get_events_from_file(SYSTEM_EVENT_TYPE_AR_STATUS_SET(TRUE) | SYSTEM_EVENT_TYPE_AR_EVENT_SET(TRUE),
-                                AsciiDimmUid, SYSTEM_EVENT_NOT_APPLICABLE,
-                                SYSTEM_EVENT_NOT_APPLICABLE, NULL, &StringBuffer);
-        if (NULL != StringBuffer) {
-            size_t StringLen = AsciiStrSize(StringBuffer) + 1;
-            CHAR16 *WStringBuffer = NULL;
-            WStringBuffer = (CHAR16 *)AllocateZeroPool(StringLen * sizeof(CHAR16));
-            if (NULL != WStringBuffer) {
-                if (RETURN_SUCCESS != AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
-                    ReturnCode = EFI_ABORTED;
-                    FREE_POOL_SAFE(StringBuffer);
-                    FREE_POOL_SAFE(WStringBuffer);
-                    goto Finish;
-                }
-            }
-            else {
-                ReturnCode = EFI_BUFFER_TOO_SMALL;
-                FREE_POOL_SAFE(StringBuffer);
-                goto Finish;
-            }
-            FREE_POOL_SAFE(StringBuffer);
-            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L"=");
-            Print(FORMAT_STR, WStringBuffer);
-            FREE_POOL_SAFE(WStringBuffer);
-        }
-        else {
-            Print(FORMAT_3SPACE_STR_NL, ACTION_REQ_EVENTS_PROPERTY L"=N/A");
-        }
-    }
     Print(FORMAT_STR_NL, L"");
-#endif // OS_BUILD
   }
 Finish:
   return ReturnCode;
@@ -386,9 +289,6 @@ ShowGoal(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   DISPLAY_PREFERENCES DisplayPreferences;
-#ifdef OS_BUILD
-  BOOLEAN ActionReqSet = FALSE;
-#endif // OS_BILD
 
   NVDIMM_ENTRY();
 
@@ -469,12 +369,7 @@ ShowGoal(
   if (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT)) {
     AllOptionSet = TRUE;
   }
-#ifdef OS_BUILD
-  /** if the action required option was specified **/
-  if (containsOption(pCmd, ACTION_REQ_OPTION) || containsOption(pCmd, ACTION_REQ_OPTION_SHORT)) {
-      ActionReqSet = TRUE;
-  }
-#endif // OS_BUILD
+
   /** if the display option was specified **/
   pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION);
   if (pDisplayValues) {
@@ -545,15 +440,7 @@ ShowGoal(
 
   if (!DisplayOptionSet && !AllOptionSet) {
     /** Default table view **/
-#ifdef OS_BUILD
-    if (ActionReqSet) {
-      ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, pDimms, TRUE);
-    } else {
-      ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, NULL, TRUE);
-    }
-#else // OS_BUILD
     ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, TRUE);
-#endif // OS_BUILD
   } else {
     /** Detailed view **/
     ReturnCode = ShowGoalPrintDetailedView(RegionConfigsInfo, RegionConfigsCount, AllOptionSet,

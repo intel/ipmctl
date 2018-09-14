@@ -219,11 +219,7 @@ CheckAndConfirmAlignments(
   NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, FORMAT_STR_NL, CLI_CREATE_GOAL_PROMPT_HEADER);
   NVDIMM_BUFFER_CONTROLLED_MSG(FALSE, L"\n");
 
-#ifdef OS_BUILD
-  ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, NULL, FALSE);
-#else // OS_BUILD
   ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, FALSE);
-#endif // OSBUILD
 
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -515,19 +511,9 @@ CreateGoal(
     LabelVersionMajor, LabelVersionMinor, pCommandStatus);
 
   if (!EFI_ERROR(ReturnCode)) {
-#ifdef OS_BUILD
-    if (Force) {
-      if (UnitsOption != DISPLAY_SIZE_UNIT_UNKNOWN) {
-          pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, L"show", UNITS_OPTION, UnitsToStr(UnitsToDisplay),
-              ACTION_REQ_OPTION, L"-goal");
-      } else {
-          pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR, L"show -ar -goal");
-      }
-    } else
-#endif // OS_BUILD
     if (UnitsOption != DISPLAY_SIZE_UNIT_UNKNOWN) {
       pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, L"show", UNITS_OPTION, UnitsToStr(UnitsToDisplay),
-                        L"-goal");
+              L"-goal");
     } else {
       pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR, L"show -goal");
     }

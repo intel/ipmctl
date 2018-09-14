@@ -80,10 +80,6 @@
 #define OUTPUT_OPTION_ESX_XML           L"esx"                                 //!< 'output' option value for esx xml
 #define OUTPUT_OPTION_ESX_TABLE_XML     L"esxtable"                            //!< 'output' option value for esx xml
 #define OUTPUT_OPTION_HELP              L"text|nvmxml"                         //!< 'output' option help text
-#ifdef OS_BUILD
-#define ACTION_REQ_OPTION               L"-actionreq"                          //!< 'action required' option name
-#define ACTION_REQ_OPTION_SHORT         L"-ar"                                 //!< 'action required' option short form
-#endif // OS_BUILD
 
 /** command targets **/
 #define DIMM_TARGET                          L"-dimm"                    //!< 'dimm' target name
@@ -233,7 +229,6 @@
 #define PROPERTY_VALUE_RECOMMENDED        L"RECOMMENDED"
 #define CATEGORY_PROPERTY                 L"Category"
 #define ACTION_REQ_PROPERTY               L"ActionRequired"
-#define ACTION_REQ_EVENTS_PROPERTY        L"ActionRequiredEvents"
 #define DBG_LOG_LEVEL                     L"DBG_LOG_LEVEL"
 #define CREATE_SUPP_NAME                  L"Name"
 #define PROPERTY_ERROR_UNKNOWN                      L"Reason for failure unknown"

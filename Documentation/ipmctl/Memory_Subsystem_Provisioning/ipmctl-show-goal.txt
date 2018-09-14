@@ -134,20 +134,6 @@ The status of the memory allocation goal. One of:
   - Failed - Unknown: The BIOS failed to process the memory allocation goal due
     to an unknown error.
 
-ifdef::os_build[]
-ActionRequired::
-  (Default) If there are events for the memory allocation goal on this DCPMEM
-  that require corrective action or acknowledgment. Refer to the command Show
-  Events for more information about events. One of:
-  - 0: No action required events
-  - 1: One or more action required events
-
-ActionRequiredEvents::
-  A list of the events for the memory allocation goal on this DCPMEM that
-  require corrective action or acknowledgment in the format: Event [ID] -
-  [Message]. Refer to the command Show Events for more information about events.
-endif::os_build[]
-
 SAMPLE OUTPUT
 -------------
 If a new memory allocation goal has been created, a prompt to reboot will be

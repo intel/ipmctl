@@ -236,6 +236,7 @@ ShowDimms(
   BOOLEAN ByteAddressable = FALSE;
   BOOLEAN BlockAddressable = FALSE;
   UINT16  BootStatusBitMask = 0;
+  UINT64  BootStatusRegister = 0;
   UINT32  Index3 = 0;
   CHAR16 *pSteppingStr = NULL;
 #ifdef OS_BUILD
@@ -1091,7 +1092,7 @@ ShowDimms(
         /** Boot Status **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
 
-          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[Index].DimmID, NULL, &BootStatusBitMask);
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[Index].DimmID, &BootStatusRegister, &BootStatusBitMask);
           if (EFI_ERROR(ReturnCode)) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
@@ -1099,6 +1100,11 @@ ShowDimms(
           }
           Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
+        }
+        /** Boot Status Register **/
+        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
+          Print(L"   " FORMAT_STR L"=0x%08x_%08x\n", BOOT_STATUS_REGISTER_STR,
+            ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF) );
         }
 
         if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
@@ -1279,7 +1285,7 @@ ShowDimms(
       /** Boot Status **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
 
-        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pUninitializedDimms[Index].DimmID, NULL, &BootStatusBitMask);
+        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pUninitializedDimms[Index].DimmID, &BootStatusRegister, &BootStatusBitMask);
         if (EFI_ERROR(ReturnCode)) {
           pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         } else {
@@ -1287,6 +1293,11 @@ ShowDimms(
         }
         Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
         FREE_POOL_SAFE(pAttributeStr);
+      }
+      /** Boot Status Register **/
+      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
+        Print(L"   " FORMAT_STR L"=0x%08x_%08x\n", BOOT_STATUS_REGISTER_STR,
+          ((BootStatusRegister >> 32) & 0xFFFFFFFF),(BootStatusRegister & 0xFFFFFFFF) );
       }
 
       /** SerialNumber **/

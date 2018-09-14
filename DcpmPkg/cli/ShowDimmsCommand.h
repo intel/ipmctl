@@ -44,6 +44,7 @@
 #define MANUFACTURING_DATE          L"ManufacturingDate"
 #define PART_NUMBER_STR             L"PartNumber"
 #define SERIAL_NUMBER_STR           L"SerialNumber"
+#define BOOT_STATUS_REGISTER_STR    L"BootStatusRegister"
 #define DEVICE_LOCATOR_STR          L"DeviceLocator"
 #define MEMORY_CONTROLLER_STR       L"MemControllerID"
 #define CHANNEL_ID_STR              L"ChannelID"

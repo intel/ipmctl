@@ -461,6 +461,9 @@ BootStatus::
   functional.*
   - FW Assert - The firmware reported an assert during initialization.
 
+ BootStatusRegister::
+  The raw hex value of the DCPMM Boot Status Register of the DCPMM
+
 ErrorInjectionEnabled::
   Error injection status.
   - 0: Disabled - This is the default.

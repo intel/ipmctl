@@ -5611,6 +5611,23 @@ CreateGoalConfig(
     goto Finish;
   }
 
+#ifdef OS_BUILD
+  if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
+    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
+      &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    } else {
+      gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
+    }
+  }
+
+  ReturnCode = InitializeNamespaces();
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to initialize Namespaces, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+  }
+#endif
+
   ReturnCode = IsNamespaceOnDimms(ppDimms, DimmsNum, &Found);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;

@@ -19,7 +19,7 @@
 #include <SmbiosUtility.h>
 #include <PlatformConfigData.h>
 #include "DriverHealth.h"
-#include <DumpLoadPools.h>
+#include <DumpLoadRegions.h>
 #include <NvmInterface.h>
 #include "NvmSecurity.h"
 #include <NvmWorkarounds.h>

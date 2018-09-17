@@ -308,7 +308,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/driver/Utils/AcpiParsing.c
 	DcpmPkg/driver/Utils/Interleave.c
 	DcpmPkg/driver/Utils/SmbiosUtility.c
-	DcpmPkg/driver/Utils/DumpLoadPools.c
+	DcpmPkg/driver/Utils/DumpLoadRegions.c
 	MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathUtilities.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathToText.c

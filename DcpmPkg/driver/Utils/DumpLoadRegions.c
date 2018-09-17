@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "DumpLoadPools.h"
+#include "DumpLoadRegions.h"
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/BaseLib.h>
@@ -38,8 +38,7 @@ WriteDumpFileHeader(
 
   AsciiSPrint(pHeaderBuffer, MAX_LINE_BYTE_LENGTH, "#SocketID,DimmHandle,Capacity,MemorySize,"
                                   "AppDirect1Size,AppDirect1Format,AppDirect1Mirrored,AppDirect1Index,"
-                                  "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index,"
-                                  "LabelVersionMajor,LabelVersionMinor\n");
+                                  "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index\n");
 
   ReturnCode = WriteAsciiLine(FileHandle, pHeaderBuffer);
   if (EFI_ERROR(ReturnCode)) {
@@ -110,7 +109,7 @@ DumpConfigToFile(
     }
 
     /** Prepare a line to save to file **/
-    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d,%d,%d\n",
+    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d\n",
         pDimmConfig->Socket,
         pDimmConfig->DeviceHandle,
         BYTES_TO_GIB(pDimmConfig->Capacity),
@@ -122,10 +121,7 @@ DumpConfigToFile(
         BYTES_TO_GIB(pDimmConfig->Persistent[SECOND_POOL_GOAL].PersistentSize),
         pDimmConfig->Persistent[SECOND_POOL_GOAL].InterleaveFormat.AsUint32,
         (pDimmConfig->Persistent[SECOND_POOL_GOAL].Mirror) ? 1 : 0,
-        pDimmConfig->Persistent[SECOND_POOL_GOAL].PersistentIndex,
-        pDimmConfig->LabelVersionMajor,
-        pDimmConfig->LabelVersionMinor
-        );
+        pDimmConfig->Persistent[SECOND_POOL_GOAL].PersistentIndex);
 
     /** Save the line to file **/
     ReturnCode = WriteAsciiLine(pFileHandle, pLineBuffer);

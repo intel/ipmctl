@@ -1675,4 +1675,19 @@ Clears the PCD Cache on each DIMM in the global DIMM list
 **/
 EFI_STATUS ClearPcdCacheOnDimmList(VOID);
 
+/**
+Set object status for DIMM
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM for which the object status is being set
+@param[in] Status Object status to set
+@param[in] If TRUE - clear all other status before setting this one
+**/
+VOID
+SetObjStatusForDimmWithErase(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM *pDimm,
+  IN     NVM_STATUS Status,
+  IN     BOOLEAN EraseFirst
+);
 #endif

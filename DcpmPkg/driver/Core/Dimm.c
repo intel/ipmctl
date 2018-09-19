@@ -5791,17 +5791,36 @@ Finish:
 }
 
 /**
+Set object status for DIMM
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM for which the object status is being set
+@param[in] Status Object status to set
+**/
+VOID
+SetObjStatusForDimm(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM *pDimm,
+  IN     NVM_STATUS Status
+)
+{
+  SetObjStatusForDimmWithErase(pCommandStatus, pDimm, Status, FALSE);
+}
+
+/**
   Set object status for DIMM
 
   @param[out] pCommandStatus Pointer to command status structure
   @param[in] pDimm DIMM for which the object status is being set
   @param[in] Status Object status to set
+  @param[in] If TRUE - clear all other status before setting this one
 **/
 VOID
-SetObjStatusForDimm(
+SetObjStatusForDimmWithErase(
      OUT COMMAND_STATUS *pCommandStatus,
   IN     DIMM *pDimm,
-  IN     NVM_STATUS Status
+  IN     NVM_STATUS Status,
+  IN     BOOLEAN EraseFirst
   )
 {
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];
@@ -5815,6 +5834,10 @@ SetObjStatusForDimm(
   if (EFI_ERROR(GetDimmUid(pDimm, DimmUid, MAX_DIMM_UID_LENGTH))) {
     NVDIMM_ERR("Error in GetDimmUid");
     return;
+  }
+
+  if (EraseFirst) {
+    EraseObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH);
   }
 
   SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH, Status);

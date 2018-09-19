@@ -29,7 +29,6 @@
 #include "ShowAcpiCommand.h"
 #include "ShowSmbiosCommand.h"
 #include "LoadCommand.h"
-#include "LoadRecoverCommand.h"
 #include "SetSensorCommand.h"
 #include "ShowSensorCommand.h"
 #include "CreateGoalCommand.h"
@@ -595,11 +594,6 @@ RegisterCommands(
 #endif // OS_BUILD
 
 #ifndef OS_BUILD
-  Rc = RegisterLoadRecoverCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
   /* Debug Utility commands */
 #ifndef MDEPKG_NDEBUG
   Rc = registerShowSmbiosCommand();

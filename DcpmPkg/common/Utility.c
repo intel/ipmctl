@@ -3684,3 +3684,72 @@ ControllerRidToStr(
   NVDIMM_EXIT();
   return pSteppingStr;
 }
+
+/**
+Set object status for DIMM_INFO
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM_INFO for which the object status is being set
+@param[in] Status Object status to set
+**/
+VOID
+SetObjStatusForDimmInfo(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM_INFO *pDimm,
+  IN     NVM_STATUS Status
+)
+{
+  SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, Status, FALSE);
+}
+
+/**
+Set object status for DIMM_INFO
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM_INFO for which the object status is being set
+@param[in] Status Object status to set
+@param[in] If TRUE - clear all other status before setting this one
+**/
+VOID
+SetObjStatusForDimmInfoWithErase(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM_INFO *pDimm,
+  IN     NVM_STATUS Status,
+  IN     BOOLEAN EraseFirst
+)
+{
+  UINT32 idx = 0;
+  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];
+  CHAR16 *TmpDimmUid = NULL;
+
+  if (pDimm == NULL || pCommandStatus == NULL) {
+    return;
+  }
+
+  for (idx = 0; idx < MAX_DIMM_UID_LENGTH; idx++) {
+    DimmUid[idx] = 0;
+  }
+
+
+  if (pDimm->VendorId != 0 && pDimm->ManufacturingInfoValid != FALSE && pDimm->SerialNumber != 0) {
+    TmpDimmUid = CatSPrint(NULL, L"%04x", EndianSwapUint16(pDimm->VendorId));
+    if (pDimm->ManufacturingInfoValid == TRUE) {
+      TmpDimmUid = CatSPrintClean(TmpDimmUid, L"-%02x-%04x", pDimm->ManufacturingLocation, EndianSwapUint16(pDimm->ManufacturingDate));
+    }
+    TmpDimmUid = CatSPrintClean(TmpDimmUid, L"-%08x", EndianSwapUint32(pDimm->SerialNumber));
+  }
+  else {
+    TmpDimmUid = CatSPrint(NULL, L"");
+  }
+
+  if (TmpDimmUid != NULL) {
+    StrnCpyS(DimmUid, MAX_DIMM_UID_LENGTH, TmpDimmUid, MAX_DIMM_UID_LENGTH - 1);
+    FREE_POOL_SAFE(TmpDimmUid);
+  } 
+
+  if (EraseFirst) {
+    EraseObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH);
+  }
+
+  SetObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH, Status);
+}

@@ -1547,4 +1547,35 @@ CHAR16*
 ControllerRidToStr(
   IN     UINT16 ControllerRid
   );
+
+/**
+Set object status for DIMM_INFO
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM_INFO for which the object status is being set
+@param[in] Status Object status to set
+**/
+VOID
+SetObjStatusForDimmInfo(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM_INFO *pDimm,
+  IN     NVM_STATUS Status
+);
+
+/**
+Set object status for DIMM_INFO
+
+@param[out] pCommandStatus Pointer to command status structure
+@param[in] pDimm DIMM_INFO for which the object status is being set
+@param[in] Status Object status to set
+@param[in] If TRUE - clear all other status before setting this one
+**/
+VOID
+SetObjStatusForDimmInfoWithErase(
+  OUT COMMAND_STATUS *pCommandStatus,
+  IN     DIMM_INFO *pDimm,
+  IN     NVM_STATUS Status,
+  IN     BOOLEAN EraseFirst
+);
 #endif /** _UTILITY_H_ **/
+

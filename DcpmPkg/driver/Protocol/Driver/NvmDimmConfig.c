@@ -4905,27 +4905,27 @@ Finish:
 }
 
 /**
-  Update firmware or training data in one or all NVDIMMs of the system
+Update firmware or training data in one or all NVDIMMs of the system
 
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[in] pFileName Name is a pointer to a file containing FW image
-  @param[in] pWorkingDirectory is a pointer to a path to FW image file
-  @param[in] Examine flag enables image verification only
-  @param[in] Force flag suppresses warning message in case of attempted downgrade
-  @param[in] Recovery flag determine that recovery update should be performed
-  @param[in] FlashSpi flag determine if the recovery update should be through the SPI
+@param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+@param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
+@param[in] DimmIdsCount Number of items in array of DIMM IDs
+@param[in] pFileName Name is a pointer to a file containing FW image
+@param[in] pWorkingDirectory is a pointer to a path to FW image file
+@param[in] Examine flag enables image verification only
+@param[in] Force flag suppresses warning message in case of attempted downgrade
+@param[in] Recovery flag determine that recovery update should be performed
+@param[in] FlashSpi flag determine if the recovery update should be through the SPI
 
-  @param[out] pFwImageInfo is a pointer to a structure containing FW image information
-    need to be provided if examine flag is set
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
+@param[out] pFwImageInfo is a pointer to a structure containing FW image information
+need to be provided if examine flag is set
+@param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-  @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-  @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
-  @retval EFI_SUCCESS Update has completed successfully
+@retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
+@retval EFI_NOT_FOUND there is no NVDIMM with such Pid
+@retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
+@retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+@retval EFI_SUCCESS Update has completed successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -4939,12 +4939,11 @@ UpdateFw(
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
   IN     BOOLEAN FlashSPI,
-     OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
+  OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
+  OUT COMMAND_STATUS *pCommandStatus
+)
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_STATUS TempReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
@@ -4955,56 +4954,48 @@ UpdateFw(
   UINTN BuffSize = 0;
   UINTN TempBuffSize = 0;
   NVM_STATUS NvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
-  BOOLEAN ValidImage = TRUE;
-  BOOLEAN* pDimmsCanBeRecovered = NULL;
-  UINT32 DimmsToRecover = 0;
+  BOOLEAN* pDimmsCanBeUpdated = NULL;
+  UINT32 DimmsToUpdate = 0;
+  UINT32 UpdateFailures = 0;
+  UINT32 VerificationFailures = 0;
+  UINT32 ForceRequiredDimms = 0;
 
   ZeroMem(pDimms, sizeof(pDimms));
 
   NVDIMM_ENTRY();
-
   if (pThis == NULL || pCommandStatus == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
+    pCommandStatus->GeneralStatus = NVM_ERR_INVALID_PARAMETER;
     goto Finish;
   }
 
+  pCommandStatus->ObjectType = ObjectTypeDimm;
+  pCommandStatus->GeneralStatus = NvmStatus;
+
   if (pFileName == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_FILENAME_NOT_PROVIDED);
+    pCommandStatus->GeneralStatus = NVM_ERR_FILENAME_NOT_PROVIDED;
     goto Finish;
   }
 
   if (!Recovery && !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-    ReturnCode = EFI_UNSUPPORTED;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
+    pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU;
     goto Finish;
   }
-
 
   if (!Recovery && FlashSPI) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
+    pCommandStatus->GeneralStatus = NVM_ERR_INVALID_PARAMETER;
     goto Finish;
   }
 
-  if (!Examine) {
-    pCommandStatus->ObjectType = ObjectTypeDimm;
-  }
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, pDimms, &DimmsNum, pCommandStatus);
 
-  TempReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, pDimms, &DimmsNum, pCommandStatus);
-
-  if (EFI_ERROR(TempReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to verify the target dimms");
+    pCommandStatus->GeneralStatus = NVM_ERR_DIMM_NOT_FOUND;
     goto Finish;
   }
 
   if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
-    for (Index = 0; Index < DimmsNum; ++Index) {
-      if (Examine) {
-        pCommandStatus->ObjectType = ObjectTypeDimm;
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-      } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_VALID);
-      }
-    }
-    ReturnCode = EFI_LOAD_ERROR;
+    pCommandStatus->GeneralStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
     NVDIMM_DBG("LoadFileAndCheckHeader Failed");
     goto Finish;
   }
@@ -5017,125 +5008,154 @@ UpdateFw(
     pFwImageInfo->Size = pFileHeader->Size;
   }
 
-  TempReturnCode = OpenFile(pFileName, &FileHandle, pWorkingDirectory, FALSE);
-  TempReturnCode = GetFileSize(FileHandle, &BuffSize);
+  ReturnCode = OpenFile(pFileName, &FileHandle, pWorkingDirectory, FALSE);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to open the file");
+    pCommandStatus->GeneralStatus = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
+
+  ReturnCode = GetFileSize(FileHandle, &BuffSize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed get the file size");
+    pCommandStatus->GeneralStatus = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
 
   pImageBuffer = AllocateZeroPool(BuffSize);
   if (pImageBuffer == NULL) {
     NVDIMM_ERR("Out of memory");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
+    pCommandStatus->GeneralStatus = NVM_ERR_UNKNOWN;
     goto Finish;
   }
 
   TempBuffSize = BuffSize;
-  TempReturnCode = FileHandle->Read(FileHandle, &BuffSize, pImageBuffer);
-  if (EFI_ERROR(TempReturnCode) || BuffSize != TempBuffSize) {
+  ReturnCode = FileHandle->Read(FileHandle, &BuffSize, pImageBuffer);
+  if (EFI_ERROR(ReturnCode) || BuffSize != TempBuffSize) {
     if (Examine) {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_IMAGE_EXAMINE_INVALID);
-    } else {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_IMAGE_FILE_NOT_VALID);
+      pCommandStatus->GeneralStatus = NVM_ERR_IMAGE_EXAMINE_INVALID;
     }
+    else {
+      pCommandStatus->GeneralStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
+    }
+
     goto Finish;
   }
 
-  // don't update, just get image information
-  if (TRUE == Examine) {
-    goto Finish;
-  }
-
-  pDimmsCanBeRecovered = AllocatePool(sizeof(BOOLEAN) * DimmsNum);
-
+  pDimmsCanBeUpdated = AllocatePool(sizeof(BOOLEAN) * DimmsNum);
   for (Index = 0; Index < DimmsNum; Index++) {
-    pDimmsCanBeRecovered[Index] = FALSE;
+    pDimmsCanBeUpdated[Index] = FALSE;
     if (Recovery && FlashSPI) {
       // We will only be able to flash spi if we can access the
       // spi interface over smbus
 #ifdef OS_BUILD
       // Spi check access will fail with unsupported on OS
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+      SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED, TRUE);
+      VerificationFailures++;
 #else
-      TempReturnCode = SpiCheckAccess(pDimms[Index]);
-#endif
-      if (EFI_ERROR(TempReturnCode)) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED);
-      } else {
-        pDimmsCanBeRecovered[Index] = TRUE;
-        DimmsToRecover++;
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+      ReturnCode = SpiCheckAccess(pDimms[Index]);
+      if (EFI_ERROR(ReturnCode)) {
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED, TRUE);
+        VerificationFailures++;
       }
-    } else {
-        TempReturnCode = ValidateImageVersion(pFileHeader, Force, pDimms[Index], &NvmStatus);
+      else {
+        pDimmsCanBeUpdated[Index] = TRUE;
+        DimmsToUpdate++;
+      }
+#endif
+    }
+    else {
+      ReturnCode = ValidateImageVersion(pFileHeader, Force, pDimms[Index], &NvmStatus);
 
-        if (EFI_ERROR(TempReturnCode)) {
-          if (TempReturnCode == EFI_ABORTED) {
-            ValidImage = FALSE;
-            if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
-              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION);
-              } else if (NvmStatus == NVM_ERR_FIRMWARE_VERSION_NOT_VALID) {
-              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-              } else if (NvmStatus == NVM_ERR_FIRMWARE_API_NOT_VALID) {
-              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_INVALID);
-              } else if (NvmStatus == NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING) {
-              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING);
-            }
+      if (EFI_ERROR(ReturnCode)) {
+        VerificationFailures++;
+        if (ReturnCode == EFI_ABORTED) {
+          if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+            SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION, TRUE);
+            ForceRequiredDimms++;
           }
-        } else {
-          pDimmsCanBeRecovered[Index] = TRUE;
-          DimmsToRecover++;
-          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK);
+          else {
+            SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
+          }
         }
       }
+      else {
+        pDimmsCanBeUpdated[Index] = TRUE;
+        DimmsToUpdate++;
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK, TRUE);
+      }
+    }
   }
 
-  if (DimmsToRecover == 0) {
-    Print(L"There are no DIMMs which can be updated\n");
-    ResetCmdStatus(pCommandStatus, NVM_ERR_GENERAL_DEV_FAILURE);
+  if (TRUE == Examine) {
+    if (VerificationFailures == 0) {
+      pCommandStatus->GeneralStatus = NVM_SUCCESS;
+    }
     goto Finish;
   }
 
-  ReturnCode = EFI_SUCCESS;
-  if (!Examine && ValidImage) {
-    // upload FW image to all specified DIMMs
-    for (Index = 0; Index < DimmsNum; Index++) {
-      if (pDimmsCanBeRecovered[Index] == FALSE) {
-        continue;
-      }
+  if (DimmsToUpdate == 0) {
+    if (pCommandStatus->GeneralStatus == NVM_ERR_OPERATION_NOT_STARTED) {
+      NVDIMM_DBG("Found no DIMMs to update - either none were passed or none passed the verification checks");
+      pCommandStatus->GeneralStatus = NVM_ERR_DIMM_NOT_FOUND;
+    }
+    goto Finish;
+  }
 
-      if (Recovery && FlashSPI) {
-        ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
-            pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
-      } else if (Recovery) {
-        ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
-      } else {
-        ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
-      }
+  // upload FW image to all specified DIMMs
+  for (Index = 0; Index < DimmsNum; Index++) {
+    if (pDimmsCanBeUpdated[Index] == FALSE) {
+      NVDIMM_DBG("Skipping dimm %d. It is marked as not being capable of this update", pDimms[Index]->DeviceHandle.AsUint32);
+      continue;
+    }
 
-      if (EFI_ERROR(ReturnCode)) {
-        if (NvmStatus == NVM_SUCCESS) {
-          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
-        }
-        else
-        {
-          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
-        }
+    if (Recovery && FlashSPI) {
+      ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
+        pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
+    }
+    else if (Recovery) {
+      ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
+    }
+    else {
+      ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
+    }
+
+    if (EFI_ERROR(ReturnCode)) {
+      UpdateFailures++;
+      if (NvmStatus == NVM_SUCCESS) {
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED, TRUE);
       }
       else
       {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NvmStatus);
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
       }
     }
+    else
+    {
+      SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
+    }
+  }
 
-    SetCmdStatus(pCommandStatus, NVM_SUCCESS);
+  if (0 == UpdateFailures && 0 == VerificationFailures) {
+    pCommandStatus->GeneralStatus = NVM_SUCCESS;
   }
 
 Finish:
+  if (ForceRequiredDimms > 0 && !Force) {
+    pCommandStatus->GeneralStatus = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+  if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
+    ReturnCode = EFI_ABORTED;
+  }
   if (FileHandle != NULL) {
     FileHandle->Close(FileHandle);
   }
   FREE_POOL_SAFE(pFileHeader);
   FREE_POOL_SAFE(pImageBuffer);
   FREE_POOL_SAFE(pErrorMessage);
-  FREE_POOL_SAFE(pDimmsCanBeRecovered);
+  FREE_POOL_SAFE(pDimmsCanBeUpdated);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

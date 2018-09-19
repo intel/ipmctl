@@ -374,4 +374,32 @@ CountNumberOfErrorsAndWarnings(
      OUT UINT64 *pNumberOfErrors
   );
 
+
+
+/**
+Erase all Nvm status codes
+
+@param[in/out] pObjectStatus pointer to object status (with Nvm Status bit field)
+**/
+VOID
+EraseNvmStatus(
+  IN OUT OBJECT_STATUS *pObjectStatus
+);
+
+/**
+Erase status for specified ID in command status list (or create a new one with no status)
+
+@param[in, out] pCommandStatus - command status
+@param[in] ObjectId - Id for specified object
+@param[in] pObjectIdStr - Id for specified object as string representation, OPTIONAL
+@param[in] ObjectIdStrLength - Max length of pObjectIdStr, OPTIONAL
+**/
+VOID
+EraseObjStatus(
+  IN OUT COMMAND_STATUS *pCommandStatus,
+  IN     UINT32 ObjectId,
+  IN     CHAR16 *pObjectIdStr OPTIONAL,
+  IN     UINT32 ObjectIdStrLength OPTIONAL
+); 
+
 #endif /** _NVM_STATUS_H_ **/

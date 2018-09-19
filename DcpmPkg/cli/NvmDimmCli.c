@@ -56,6 +56,11 @@
 #include "ShowHostServerCommand.h"
 #include "ShowPerformanceCommand.h"
 #include "ShowCmdAccessPolicyCommand.h"
+
+#if _BullseyeCoverage
+extern int cov_dumpData(void);
+#endif
+
 #ifdef __MFG__
 #include <mfg/MfgCommands.h>
 #endif
@@ -345,10 +350,12 @@ Finish:
   if (gNvmDimmCliHiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmCliHiiHandle);
   }
-  /** Bullseye dump here **/
+#if _BullseyeCoverage
+  cov_dumpData();
+#endif
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**
-  Disable recording AllocatePool and FreePool occurences, print list and clear it
+  Disable recording AllocatePool and FreePool occurrences, print list and clear it
   **/
   FlushPointerTrace((CHAR16 *)__WFUNCTION__);
 #endif

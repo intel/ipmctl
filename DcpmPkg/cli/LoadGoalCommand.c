@@ -312,7 +312,7 @@ ParseSourceDumpFile(
      goto Finish;
   }
 #endif
-  ReturnCode = ReadFile(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, &FileBufferSize, (VOID **) &pFileBuffer);
+  ReturnCode = FileRead(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, &FileBufferSize, (VOID **) &pFileBuffer);
   if (EFI_ERROR(ReturnCode) || pFileBuffer == NULL) {
     goto Finish;
   }

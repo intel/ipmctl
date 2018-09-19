@@ -1776,7 +1776,7 @@ Pow(
   @retval EFI_OUT_OF_RESOURCES if memory allocation fails.
 **/
 EFI_STATUS
-ReadFile(
+FileRead(
   IN      CHAR16 *pFilePath,
   IN      EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
   IN      CONST UINT64  MaxFileSize,

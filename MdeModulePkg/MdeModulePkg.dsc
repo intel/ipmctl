@@ -108,6 +108,8 @@
   FmpAuthenticationLib|MdeModulePkg/Library/FmpAuthenticationLibNull/FmpAuthenticationLibNull.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
 
+  libcov-printf|bullseye/uefi/libcov-printf.inf
+
 [LibraryClasses.EBC.PEIM]
   IoLib|MdePkg/Library/PeiIoLibCpuIo/PeiIoLibCpuIo.inf
 

@@ -23,6 +23,10 @@
 #include <Smbus.h>
 #endif
 
+#if _BullseyeCoverage
+extern int cov_dumpData(void);
+#endif
+
 #define FIRST_ERR(rc, newRc) { if (rc == EFI_SUCCESS) rc = newRc; }
 
 EFI_SYSTEM_TABLE *gSystemTable = NULL;
@@ -1657,7 +1661,9 @@ Finish:
 #else //not OS_BUILD
   uninitAcpiTables();
 #endif //not OS_BUILD
-  /** Bullseye dump here **/
+#if _BullseyeCoverage
+  cov_dumpData();
+#endif
   NVDIMM_DBG("Exiting DriverBindingStop, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

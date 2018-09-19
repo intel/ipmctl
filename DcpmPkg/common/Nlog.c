@@ -536,7 +536,7 @@ load_nlog_dict(
     goto Finish;
   }
 
-  status = ReadFile(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
+  status = FileRead(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
   if (EFI_ERROR(status) || NULL == file_buffer)
   {
     Print(L"Failed to open or read the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);

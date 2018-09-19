@@ -1677,7 +1677,7 @@ ParseSourcePassFile(
     goto Finish;
   }
 
-  ReturnCode = ReadFile(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, &FileBufferSize, (VOID **)&pFileBuffer);
+  ReturnCode = FileRead(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, &FileBufferSize, (VOID **)&pFileBuffer);
   if (EFI_ERROR(ReturnCode) || pFileBuffer == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_WRONG_FILE_PATH);
     ReturnCode = EFI_INVALID_PARAMETER;

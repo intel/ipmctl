@@ -1001,7 +1001,7 @@ Pow(
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
-ReadFile(
+FileRead(
   IN      CHAR16 *pFilePath,
   IN      EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
   IN      CONST UINT64  MaxFileSize,

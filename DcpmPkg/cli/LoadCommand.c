@@ -396,13 +396,13 @@ Load(
         ReturnCode = TempReturnCode;
         if (TempReturnCode == (EFI_INCOMPATIBLE_VERSION) || (TempReturnCode == EFI_UNSUPPORTED)) {
           NVDIMM_DBG("Long operation status for FwUpdate not supported");
-          SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimms[Index], NVM_SUCCESS, TRUE);
+          SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimms[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
         } else {
           SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimms[Index], NVM_ERR_FIRMWARE_FAILED_TO_STAGE, TRUE);
           StagingFailures++;
         }
       } else {
-        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimms[Index], NVM_SUCCESS, TRUE);
+        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimms[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
       }
     }
   } //for loop

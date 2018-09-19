@@ -4963,7 +4963,12 @@ UpdateFw(
   ZeroMem(pDimms, sizeof(pDimms));
 
   NVDIMM_ENTRY();
-  if (pThis == NULL || pCommandStatus == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
+
+  if (pCommandStatus == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (pThis == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
     pCommandStatus->GeneralStatus = NVM_ERR_INVALID_PARAMETER;
     goto Finish;
   }

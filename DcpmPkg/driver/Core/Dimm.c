@@ -3221,6 +3221,7 @@ FwCmdGetPMONRegisters(
   pFwCmd->Opcode = PtGetFeatures;
   pFwCmd->SubOpcode = SubopPMONRegisters;
   pFwCmd->InputPayload[0] = SmartDataMask;
+  pFwCmd->InputPayloadSize = sizeof(SmartDataMask);
   pFwCmd->OutputPayloadSize = sizeof(*pPayloadPMONRegisters);
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);

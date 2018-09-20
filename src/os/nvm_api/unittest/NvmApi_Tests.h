@@ -17,10 +17,14 @@ public:
 
 TEST_F(NvmApi_Tests, GetPmonRegs)
 {
-  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+  unsigned int dimm_cnt = 0;
   NVM_UINT8 SmartDataMask;
 
-  nvm_get_devices(p_devices, 1);
+  nvm_get_number_of_devices(&dimm_cnt);
+
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery) * dimm_cnt);
+
+  nvm_get_devices(p_devices, dimm_cnt);
   //Valid SmartDataMask 0x0 to 0x3
   for (SmartDataMask = 0; SmartDataMask < 4; SmartDataMask++)
   {
@@ -51,10 +55,13 @@ TEST_F(NvmApi_Tests, GetPmonRegs)
 
 TEST_F(NvmApi_Tests, SetPmonRegs)
 {
-  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+  unsigned int dimm_cnt = 0;
   NVM_UINT8 PMONGroupEnable;
 
-  nvm_get_devices(p_devices, 1);
+  nvm_get_number_of_devices(&dimm_cnt);
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery) * dimm_cnt);
+
+  nvm_get_devices(p_devices, dimm_cnt);
   //Valid PMON groups from 0xA to 0xF
   for (PMONGroupEnable = 10; PMONGroupEnable < 16; PMONGroupEnable++)
   {
@@ -67,9 +74,12 @@ TEST_F(NvmApi_Tests, SetPmonRegs)
 
 TEST_F(NvmApi_Tests, GetDeviceStatus)
 {
-  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+  unsigned int dimm_cnt = 0;
 
-  nvm_get_devices(p_devices, 1);
+  nvm_get_number_of_devices(&dimm_cnt);
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery) * dimm_cnt);
+
+  nvm_get_devices(p_devices, dimm_cnt);
   device_status *p_status = (device_status *)malloc(sizeof(device_status));
 
   EXPECT_EQ(nvm_get_device_status(p_devices->uid, p_status), NVM_SUCCESS);
@@ -82,10 +92,12 @@ TEST_F(NvmApi_Tests, GetDeviceStatus)
 TEST_F(NvmApi_Tests, GetDimmIdPassThru)
 {
   struct device_pt_cmd get_dimm_id_pt;
+  unsigned int dimm_cnt = 0;
 
-  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery));
+  nvm_get_number_of_devices(&dimm_cnt);
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery) * dimm_cnt);
 
-  nvm_get_devices(p_devices, 1);
+  nvm_get_devices(p_devices, dimm_cnt);
   get_dimm_id_pt.opcode = 0x1;
   get_dimm_id_pt.sub_opcode = 0x0;
   get_dimm_id_pt.output_payload_size = 128;

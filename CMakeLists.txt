@@ -71,6 +71,7 @@ endif()
 if(ESX_BUILD)
 	set(OS_TYPE esx)
 	set(FILE_PREFIX esx)
+	find_package(PythonInterp REQUIRED)
 elseif(UNIX)
 	set(LNX_BUILD 1)
 	set(OS_TYPE linux)
@@ -78,6 +79,7 @@ elseif(UNIX)
 
 	find_package(Threads REQUIRED)
 	find_package(PkgConfig REQUIRED)
+	find_package(PythonInterp REQUIRED)
 	find_package(asciidoctor)
 	find_package(asciidoc)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
@@ -87,6 +89,7 @@ elseif(MSVC)
 	set(WIN_BUILD 1)
 	set(OS_TYPE win)
 	set(FILE_PREFIX win)
+	find_package(PythonInterp REQUIRED)
 endif()
 
 message(BUILD_TYPE: ${CMAKE_BUILD_TYPE})
@@ -515,7 +518,7 @@ add_custom_target(stringdefs ALL
 	DEPENDS ${STRING_DEFS_OUTPUT_FILES} ${STRING_DEFS_INPUT_FILES})
 
 add_custom_command(OUTPUT ${STRING_DEFS_OUTPUT_FILES}
-	COMMAND python ${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
+	COMMAND ${PYTHON_EXECUTABLE} ${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
 	COMMENT "Generating String Definitions"
 	DEPENDS ${STRING_DEFS_INPUT_FILES}
 	)
@@ -536,7 +539,7 @@ endif()
 
 add_custom_command(OUTPUT ${OUTPUT_DIR}/ipmctl_default.conf
 	COMMAND ${CMAKE_C_COMPILER} ${MY_CMAKE_SYSROOT} ${PRECOMPILER_FLAG} ${ROOT}/src/os/ini/ipmctl_default.c > ${ROOT}/src/os/ini/ipmctl_default.i
-	COMMAND python ${ROOT}/src/os/ini/ini_auto_gen_default_config.py ${ROOT}/src/os/ini/ipmctl_default.i ${OUTPUT_DIR}/ipmctl_default.conf
+	COMMAND ${PYTHON_EXECUTABLE} ${ROOT}/src/os/ini/ini_auto_gen_default_config.py ${ROOT}/src/os/ini/ipmctl_default.i ${OUTPUT_DIR}/ipmctl_default.conf
 	COMMAND ${CMAKE_COMMAND} -E remove -f ${ROOT}/src/os/ini/ipmctl_default.i
 	COMMENT "Generating INI Default Config File"
 	)
@@ -553,6 +556,9 @@ FILE(GLOB NVM_HEADERS
 
 FILE(COPY ${NVM_HEADERS}
        DESTINATION ${OUTPUT_DIR})
+
+FILE(COPY install/linux/logrotate/ipmctl.conf
+	DESTINATION ${OUTPUT_DIR})
 
 if(LNX_BUILD)
 	include(GNUInstallDirs)
@@ -602,6 +608,10 @@ if(LNX_BUILD)
 
 	install(DIRECTORY output/ipmctl
 		DESTINATION ${CMAKE_INSTALL_LOCALSTATEDIR}/log
+		)
+
+	install(FILES ${OUTPUT_DIR}/ipmctl.conf
+		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
 		)
 
 	if(DEFINED INSTALL_SYSTEMDSYSTEMUNITDIR)

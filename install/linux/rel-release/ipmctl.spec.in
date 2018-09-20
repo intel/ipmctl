@@ -1,23 +1,27 @@
 %define build_version 99.99.99.9999
-%define _unpackaged_files_terminate_build 0
 
 Name:		ipmctl
 Version:	%{build_version}
 Release:	1%{?dist}
 Summary:	Utility for managing Intel Optane DC persistent memory modules
-License:	BSD-3-Clause
-Group:		Applications/System
+License:	BSD
 URL:		https://github.com/intel/ipmctl
-Source:		https://github.com/intel/ipmctl/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Source:		https://github.com/intel/ipmctl/archive/v%{version}/%{name}-%{version}.tar.gz
 ExclusiveArch:	x86_64
 
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 BuildRequires:	pkgconfig(libndctl)
 BuildRequires:	pkgconfig(safec-3.3)
 BuildRequires:	cmake
+%if 0%{?fedora}
 BuildRequires:	python2
+%endif
+%if 0%{?rhel}
+BuildRequires:	python
+%endif
 BuildRequires:	gcc
 BuildRequires:	gcc-c++
+BuildRequires:	asciidoctor
 Obsoletes:	ixpdimm-cli < 01.00.00.3000
 
 %description
@@ -36,18 +40,17 @@ Debug and troubleshoot DCPMMs.
 
 %package -n ipmctl-monitor
 Summary:	Daemon for monitoring the status of Intel DCPMM
-Group:		System Environment/Daemons
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 %{?systemd_requires}
 BuildRequires:	systemd
 Obsoletes:	ixpdimm-monitor < 01.00.00.3000
 
 %description -n ipmctl-monitor
-A monitor daemon for monitoring the health and status of Utility for managing Intel Optane DC persistent memory modules
+A monitor daemon for monitoring the health and status of Intel Optane DC
+persistent memory modules
 
 %package -n libipmctl
 Summary:	Library for Intel DCPMM management
-Group:		System/Libraries
 Obsoletes:	ixpdimm_sw < 01.00.00.3000
 Obsoletes:	libixpdimm-common < 01.00.00.3000
 Obsoletes:	libixpdimm-core < 01.00.00.3000
@@ -57,11 +60,11 @@ Obsoletes:	libixpdimm < 01.00.00.3000
 Obsoletes:	ixpdimm-data < 01.00.00.3000
 
 %description -n libipmctl
-An Application Programming Interface (API) library for managing Intel Optane DC persistent memory modules.
+An Application Programming Interface (API) library for managing Intel Optane DC
+persistent memory modules.
 
 %package -n libipmctl-devel
 Summary:	Development packages for libipmctl
-Group:		System/Libraries
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 Obsoletes:	ixpdimm-devel < 01.00.00.3000
 Obsoletes:	ixpdimm_sw-devel < 01.00.00.3000
@@ -82,11 +85,11 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DINSTALL_UNITDIR=%{_unitdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON
-make -f Makefile %{?_smp_mflags}
+%make_build
 
 %install
 %{!?_cmake_version: cd build}
-make -f Makefile install DESTDIR=%{buildroot}
+%make_install -f Makefile
 
 %post -n ipmctl-monitor
 %systemd_post ipmctl-monitor.service
@@ -102,33 +105,33 @@ make -f Makefile install DESTDIR=%{buildroot}
 %systemd_postun_with_restart ipmctl-monitor.service
 
 %files -n ipmctl
-%defattr(-,root,root)
 %{_bindir}/ipmctl
 
 %files -n ipmctl-monitor
-%defattr(-,root,root)
 %{_bindir}/ipmctl-monitor
 %{_unitdir}/ipmctl-monitor.service
 %{_mandir}/man1/ipmctl*
 
 %files -n libipmctl
-%defattr(-,root,root)
-%{_libdir}/libipmctl.so.*
+%{_libdir}/libipmctl.so.3*
 %dir %{_datadir}/doc/ipmctl
 %doc %{_datadir}/doc/ipmctl/ipmctl_default.conf
-%config %{_sysconfdir}/ipmctl.conf
-%dir %attr(644,root,root) %{_localstatedir}/log/ipmctl
+%config(noreplace) %{_sysconfdir}/ipmctl.conf
+%dir %{_localstatedir}/log/ipmctl
+%config(noreplace) %{_sysconfdir}/logrotate.d/ipmctl.conf
 
 %files -n libipmctl-devel
-%defattr(-,root,root)
 %{_libdir}/libipmctl.so
-%attr(644,root,root) %{_includedir}/nvm_types.h
-%attr(644,root,root) %{_includedir}/nvm_management.h
-%attr(644,root,root) %{_includedir}/export_api.h
-%attr(644,root,root) %{_includedir}/NvmSharedDefs.h
+%{_includedir}/nvm_types.h
+%{_includedir}/nvm_management.h
+%{_includedir}/export_api.h
+%{_includedir}/NvmSharedDefs.h
 %{_libdir}/pkgconfig/libipmctl.pc
 
 %changelog
-* Wed May 02 2018 Juston Li <juston.li@intel.com> - 01.00.00.3000
+* Mon Sep 17 2018 Juston Li <juston.li@intel.com> - 01.00.00.3262-1
+- Clean up spec for fedora review
+
+* Wed May 02 2018 Juston Li <juston.li@intel.com> - 01.00.00.3000-1
 - initial spec
 

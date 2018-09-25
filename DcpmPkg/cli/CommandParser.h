@@ -103,7 +103,6 @@
 #define SMBIOS_TARGET                        L"-smbios"                  ///< 'smbios' target name
 #define SUPPORT_TARGET                       L"-support"                 //!< 'support' target name
 #define EVENT_TARGET                         L"-event"                   //!< 'event' target name
-#define RECOVERY_TARGET                      L"-recovery"                //!< 'recovery' target name
 #define CONTROLLER_TEMPERATURE_TARGET_VALUE  L"ControllerTemperature"    //!< 'sensor' target value
 #define MEDIA_TEMPERATURE_TARGET_VALUE       L"MediaTemperature"         //!< 'sensor' target value
 #define SPARE_CAPACITY_TARGET_VALUE          L"PercentageRemaining"      //!< 'sensor' target value

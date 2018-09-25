@@ -166,7 +166,6 @@ SetImage (
   CHAR16 pImageContentError[] = L"Error: Invalid image file.";
   NVM_STATUS Status = NVM_ERR_OPERATION_NOT_STARTED;
   CONST CHAR16 *pSingleStatusCodeMessage = NULL;
-  FW_IMAGE_HEADER *pFileHeader = NULL;
   SET_IMAGE_ATTRIBUTES *SetImageAttributes = (SET_IMAGE_ATTRIBUTES *)VendorCode;
 
   BOOLEAN Force = FALSE;
@@ -201,18 +200,6 @@ SetImage (
   if (Progress != NULL) {
     Progress(0);
   }
-  pFileHeader = (FW_IMAGE_HEADER *)Image;
-
-  ReturnCode = ValidateImageVersion(pFileHeader, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_ABORTED;
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmData->HiiHandle, Status);
-    if (pSingleStatusCodeMessage != NULL) {
-      *AbortReason = AllocateCopyPool(StrSize(pSingleStatusCodeMessage), pSingleStatusCodeMessage);
-    }
-    NVDIMM_WARN("The Firmware Image provided is not Valid.\n");
-    goto Finish;
-}
 
   if (NULL != SetImageAttributes) {
     Force = SetImageAttributes->Force;

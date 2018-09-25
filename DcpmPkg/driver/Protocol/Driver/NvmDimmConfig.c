@@ -4301,6 +4301,7 @@ ValidateImageVersion(
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
+
   if (pDimm->FwVer.FwProduct != pImage->ImageVersion.ProductNumber.Version) {
     *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
     ReturnCode = EFI_ABORTED;
@@ -4413,7 +4414,7 @@ UpdateSmbusDimmFw(
   }
   pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
 
-  // upload FW image to specified DIMMs
+// upload FW image to specified DIMMs
   pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.UninitializedDimms);
   if (pCurrentDimm == NULL) {
     *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
@@ -4426,7 +4427,6 @@ UpdateSmbusDimmFw(
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
-
 
   /**
     Prepare the FV PassThru command
@@ -4963,7 +4963,6 @@ UpdateFw(
   ZeroMem(pDimms, sizeof(pDimms));
 
   NVDIMM_ENTRY();
-
   if (pCommandStatus == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -4992,7 +4991,6 @@ UpdateFw(
   }
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, pDimms, &DimmsNum, pCommandStatus);
-
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to verify the target dimms");
     pCommandStatus->GeneralStatus = NVM_ERR_DIMM_NOT_FOUND;
@@ -5000,7 +4998,10 @@ UpdateFw(
   }
 
   if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
-    pCommandStatus->GeneralStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
+    for (Index = 0; Index < DimmsNum; Index++) {
+      VerificationFailures++;
+      SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_VALID, TRUE);
+    }
     NVDIMM_DBG("LoadFileAndCheckHeader Failed");
     goto Finish;
   }
@@ -5048,11 +5049,17 @@ UpdateFw(
   }
 
   pDimmsCanBeUpdated = AllocatePool(sizeof(BOOLEAN) * DimmsNum);
+  if (pDimmsCanBeUpdated == NULL) {
+    NVDIMM_ERR("Out of memory");
+    pCommandStatus->GeneralStatus = NVM_ERR_NO_MEM;
+    goto Finish;
+  }
+
   for (Index = 0; Index < DimmsNum; Index++) {
     pDimmsCanBeUpdated[Index] = FALSE;
     if (Recovery && FlashSPI) {
-      // We will only be able to flash spi if we can access the
-      // spi interface over smbus
+      //We will only be able to flash spi if we can access the
+      //spi interface over smbus
 #ifdef OS_BUILD
       // Spi check access will fail with unsupported on OS
       SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED, TRUE);
@@ -5066,14 +5073,15 @@ UpdateFw(
       else {
         pDimmsCanBeUpdated[Index] = TRUE;
         DimmsToUpdate++;
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK, TRUE);
       }
 #endif
     }
     else {
       ReturnCode = ValidateImageVersion(pFileHeader, Force, pDimms[Index], &NvmStatus);
-
       if (EFI_ERROR(ReturnCode)) {
         VerificationFailures++;
+        pCommandStatus->GeneralStatus = NvmStatus;
         if (ReturnCode == EFI_ABORTED) {
           if (NvmStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
             SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION, TRUE);
@@ -5116,7 +5124,7 @@ UpdateFw(
 
     if (Recovery && FlashSPI) {
       ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
-        pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
+      pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
     }
     else if (Recovery) {
       ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
@@ -5128,10 +5136,12 @@ UpdateFw(
     if (EFI_ERROR(ReturnCode)) {
       UpdateFailures++;
       if (NvmStatus == NVM_SUCCESS) {
+        pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_FAILED;
         SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED, TRUE);
       }
       else
       {
+        pCommandStatus->GeneralStatus = NvmStatus;
         SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
       }
     }
@@ -5141,7 +5151,7 @@ UpdateFw(
     }
   }
 
-  if (0 == UpdateFailures && 0 == VerificationFailures) {
+  if (0 == UpdateFailures) {
     pCommandStatus->GeneralStatus = NVM_SUCCESS;
   }
 

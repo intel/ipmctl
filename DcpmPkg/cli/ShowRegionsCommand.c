@@ -4,7 +4,6 @@
  */
 
 #include <Library/ShellLib.h>
-
 #include "ShowRegionsCommand.h"
 #include <Debug.h>
 #include <Types.h>
@@ -14,7 +13,167 @@
 #include "Common.h"
 #ifdef OS_BUILD
 #include "BaseMemoryLib.h"
+#else
+#include <Library/BaseMemoryLib.h>
 #endif
+
+#define DS_ROOT_PATH                      L"/RegionList"
+#define DS_REGION_PATH                    L"/RegionList/Region"
+#define DS_DIMM_INDEX_PATH                L"/RegionList/Region[%d]"
+
+ 
+#ifdef OS_BUILD
+/*
+  *  PRINT LIST ATTRIBUTES
+  *  ---ISetID=0xce8049e0a393f6ea---
+  *     SocketID=0x00000000
+  *     PersistentMemoryType=AppDirect
+  *     Capacity=750.0 GiB
+  *     FreeCapacity=750.0 GiB
+  *     HealthState=Locked
+  *     DimmID=0x0001, 0x0011, 0x0021, 0x0101, 0x0111, 0x0121
+  *     ...
+  */
+PRINTER_LIST_ATTRIB ShowRegionListAttributes =
+{
+ {
+    {
+      REGION_NODE_STR,                                        //GROUP LEVEL TYPE
+      L"---" ISET_ID_STR L"=$(" ISET_ID_STR L")---",          //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                             //NULL or KEY VAL FORMAT STR
+      ISET_ID_STR L";" REGION_ID_STR                          //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+#else
+/*
+  *  PRINT LIST ATTRIBUTES
+  *  ---IRegionID=0x0001---
+  *     SocketID=0x00000000
+  *     PersistentMemoryType=AppDirect
+  *     Capacity=750.0 GiB
+  *     FreeCapacity=750.0 GiB
+  *     HealthState=Locked
+  *     DimmID=0x0001, 0x0011, 0x0021, 0x0101, 0x0111, 0x0121
+  *     ISetID=0xce8049e0a393f6ea
+  *     ...
+  */
+PRINTER_LIST_ATTRIB ShowRegionListAttributes =
+{
+ {
+    {
+      REGION_NODE_STR,                                        //GROUP LEVEL TYPE
+      L"---" REGION_ID_STR L"=$(" REGION_ID_STR L")---",      //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                             //NULL or KEY VAL FORMAT STR
+      REGION_ID_STR                                           //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+#endif
+
+
+#ifdef OS_BUILD
+/*
+*  PRINTER TABLE ATTRIBUTES (6 columns)
+*   SocketID | ISetID | PMEM Type | Capacity | Free Capacity | HealthState
+*   ======================================================================
+*   0x0001   | X      | X         | X        | X             | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
+{
+  {
+    {
+      SOCKET_ID_STR,                                          //COLUMN HEADER
+      SOCKET_MAX_STR_WIDTH,                                   //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM SOCKET_ID_STR             //COLUMN DATA PATH
+    },
+#ifdef OS_BUILD
+    {
+      ISET_ID_STR,                                            //COLUMN HEADER
+      ISET_ID_MAX_STR_WIDTH,                                  //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM ISET_ID_STR               //COLUMN DATA PATH
+    },
+#else
+    {
+      REGION_ID_STR,                                          //COLUMN HEADER
+      REGION_ID_MAX_STR_WIDTH,                                //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM REGION_ID_STR             //COLUMN DATA PATH
+    },
+#endif
+    {
+      PERSISTENT_MEM_SHORT_TYPE_STR,                          //COLUMN HEADER
+      PMEM_TYPE_MAX_STR_WIDTH,                                //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM PERSISTENT_MEM_TYPE_STR   //COLUMN DATA PATH
+    },
+    {
+      TOTAL_CAPACITY_STR,                                     //COLUMN HEADER
+      CAPACITY_MAX_STR_WIDTH,                                 //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM TOTAL_CAPACITY_STR        //COLUMN DATA PATH
+    },
+    {
+      FREE_CAPACITY_SHORT_STR,                                //COLUMN HEADER
+      FREE_CAPACITY_MAX_STR_WIDTH,                            //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM FREE_CAPACITY_STR         //COLUMN DATA PATH
+    },
+    {
+      REGION_HEALTH_STATE_STR,                                //COLUMN HEADER
+      HEALTH_SHORT_MAX_STR_WIDTH,                             //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM REGION_HEALTH_STATE_STR   //COLUMN DATA PATH
+    }
+  }
+};
+#else
+/*
+*  PRINTER TABLE ATTRIBUTES ( columns)
+*   RegionID | SocketID | PMEM Type | Capacity | Free Capacity | HealthState
+*   =================================================================================
+*   0x0001   | 0x0001   | X         | X        | X             | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
+{
+  {
+    {
+      REGION_ID_STR,                                        //COLUMN HEADER
+      REGION_ID_MAX_STR_WIDTH,                              //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM REGION_ID_STR           //COLUMN DATA PATH
+    },
+    {
+      SOCKET_ID_STR,                                        //COLUMN HEADER
+      SOCKET_MAX_STR_WIDTH,                                 //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM SOCKET_ID_STR           //COLUMN DATA PATH
+    },
+    {
+      PERSISTENT_MEM_SHORT_TYPE_STR,                         //COLUMN HEADER
+      PMEM_TYPE_MAX_STR_WIDTH,                               //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM PERSISTENT_MEM_TYPE_STR //COLUMN DATA PATH
+    },
+    {
+      TOTAL_CAPACITY_STR,                                   //COLUMN HEADER
+      CAPACITY_MAX_STR_WIDTH,                               //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM TOTAL_CAPACITY_STR     //COLUMN DATA PATH
+    },
+    {
+      FREE_CAPACITY_SHORT_STR,                              //COLUMN HEADER
+      FREE_CAPACITY_MAX_STR_WIDTH,                          //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM FREE_CAPACITY_STR      //COLUMN DATA PATH
+    },
+    {
+      REGION_HEALTH_STATE_STR,                                //COLUMN HEADER
+      HEALTH_SHORT_MAX_STR_WIDTH,                             //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM REGION_HEALTH_STATE_STR  //COLUMN DATA PATH
+    }
+  }
+};
+#endif
+
+PRINTER_DATA_SET_ATTRIBS ShowRegionsDataSetAttribs =
+{
+  &ShowRegionListAttributes,
+  &ShowRegionTableAttributes
+};
+
 /**
   Command syntax definition
 **/
@@ -34,9 +193,10 @@ struct Command ShowRegionsCommand =
     {REGION_TARGET, L"", L"RegionIDs", TRUE, ValueOptional},
     { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired },
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},             //!< properties
-  L"Show information about one or more Regions.",        //!< help
-  ShowRegions                                            //!< run function
+  {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
+  L"Show information about one or more Regions.",         //!< help
+  ShowRegions,                                            //!< run function
+  TRUE,                                                   //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowRegionsDisplayValues[] =
@@ -50,6 +210,8 @@ CHAR16 *mppAllowedShowRegionsDisplayValues[] =
   DIMM_ID_STR,
   ISET_ID_STR,
 };
+
+STATIC CHAR16 *CreateDimmsStr(REGION_INFO *pRegions);
 
 /**
   Register the show regions command
@@ -117,7 +279,6 @@ ShowRegions(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_STATUS TempReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 RegionCount = 0;
   REGION_INFO *pRegions = NULL;
@@ -128,31 +289,49 @@ ShowRegions(
   CHAR16 *pSocketsValue = NULL;
   CHAR16 *pRegionsValue = NULL;
   BOOLEAN AllOptionSet = FALSE;
-  BOOLEAN DisplayOptionSet = FALSE;
-  CHAR16 *pDisplayValues = NULL;
-  UINT32 Index = 0;
-  UINT32 DimmIdx = 0;
+  UINT32 RegionIndex = 0;
   BOOLEAN Found = FALSE;
   CHAR16 *pRegionTempStr = NULL;
-  BOOLEAN HeaderPrinted = FALSE;
   INTERLEAVE_FORMAT *pInterleaveFormat = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
-  CHAR16 *pFreeCapacityStr = NULL;
   CONST CHAR16 *pHealthStateStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   COMMAND_STATUS *pCommandStatus = NULL;
   UINT32 AppDirectRegionCount = 0;
+  CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
+  CHAR16 *pDimmIds = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
 
   NVDIMM_ENTRY();
   ReturnCode = EFI_SUCCESS;
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
+  if (NULL == pDispOptions) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowRegionsDisplayValues,
+    ALLOWED_DISP_VALUES_COUNT(mppAllowedShowRegionsDisplayValues), pDispOptions);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
+    goto Finish;
+  }
+
+  AllOptionSet = (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) || pDispOptions->AllOptionSet;
 
 #ifdef OS_BUILD
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
@@ -161,7 +340,7 @@ ShowRegions(
   /** initialize status structure **/
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -171,7 +350,7 @@ ShowRegions(
   **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
@@ -183,7 +362,7 @@ ShowRegions(
     pSocketsValue = GetTargetValue(pCmd, SOCKET_TARGET);
     ReturnCode = GetUintsFromString(pSocketsValue, &pSocketIds, &SocketsNum);
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
       goto Finish;
     }
     }
@@ -196,52 +375,16 @@ ShowRegions(
     ReturnCode = GetUintsFromString(pRegionsValue, &pRegionsIds, &RegionIdsNum);
 
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_REGION);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_REGION);
       goto Finish;
     }
   }
-  /**
-    if the all option was specified
-  **/
-  if (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT)) {
-    AllOptionSet = TRUE;
-  }
-  /**
-    if the display option was specified
-  **/
-  pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION);
-  if (pDisplayValues) {
-    DisplayOptionSet = TRUE;
-  } else {
-    pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION_SHORT);
-    if (pDisplayValues) {
-      DisplayOptionSet = TRUE;
-    }
-  }
 
-  /**
-    Make sure they didn't specify both the all and display options
-  **/
-  if (AllOptionSet && DisplayOptionSet) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  /** Check that the display parameters are correct (if display option is set) **/
-  if (DisplayOptionSet) {
-    ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowRegionsDisplayValues,
-        ALLOWED_DISP_VALUES_COUNT(mppAllowedShowRegionsDisplayValues));
-    if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
-      goto Finish;
-    }
-  }
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -263,18 +406,19 @@ ShowRegions(
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     }
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Show region", L" on", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Show region", L" on", pCommandStatus);
     goto Finish;
   }
   if (0 == RegionCount) {
-    Print(FORMAT_STR_NL, CLI_INFO_NO_REGIONS);
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
     goto Finish;
   }
 
   pRegions = AllocateZeroPool(sizeof(REGION_INFO) * RegionCount);
   if (pRegions == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -282,226 +426,185 @@ ShowRegions(
   if (EFI_ERROR(ReturnCode)) {
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-      DisplayCommandStatus(CLI_INFO_SHOW_REGION, L"", pCommandStatus);
+      PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_SHOW_REGION, L"", pCommandStatus);
     } else {
       ReturnCode = EFI_ABORTED;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     }
     NVDIMM_WARN("Failed to retrieve the REGION list");
     goto Finish;
   }
 
-  for (Index = 0; Index < RegionCount; Index++) {
-    if (((pRegions[Index].RegionType & PM_TYPE_AD) != 0) ||
-      ((pRegions[Index].RegionType & PM_TYPE_AD_NI) != 0)) {
+  for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
+    if (((pRegions[RegionIndex].RegionType & PM_TYPE_AD) != 0) ||
+      ((pRegions[RegionIndex].RegionType & PM_TYPE_AD_NI) != 0)) {
       AppDirectRegionCount++;
     }
   }
 
   if (AppDirectRegionCount == 0) {
-    Print(L"There are no Regions defined in the system.\n");
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
     goto Finish;
   }
 
-  /**
-    display a summary table of all regions
-  **/
-  if (!AllOptionSet && !DisplayOptionSet) {
-    for (Index = 0; Index < RegionCount; Index++) {
-      if (RegionIdsNum > 0 && !ContainUint(pRegionsIds, RegionIdsNum, pRegions[Index].RegionId)) {
-        continue;
-      }
+  for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
+    /**
+      Skip if the RegionId is not matching.
+    **/
+    if (RegionIdsNum > 0 && !ContainUint(pRegionsIds, RegionIdsNum, pRegions[RegionIndex].RegionId)) {
+      continue;
+    }
 
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pRegions[Index].SocketId)) {
-        continue;
-      }
+    /**
+      Skip if the socket is not matching.
+    **/
+    if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pRegions[RegionIndex].SocketId)) {
+      continue;
+    }
 
-      if (pRegions[Index].RegionType == PM_TYPE_STORAGE) {
-        continue;
-      }
+    if (pRegions[RegionIndex].RegionType == PM_TYPE_STORAGE) {
+      continue;
+    }
 
-      Found = TRUE;
+    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, RegionIndex);
 
-      pRegionTempStr = RegionTypeToString(pRegions[Index].RegionType);
+    Found = TRUE;
 
-      if (!HeaderPrinted) {
-        Print(FORMAT_SHOW_REGION_HEADER,
-#ifndef OS_BUILD
-              REGION_ID_STR,
-#endif
-              SOCKET_ID_STR,
-#ifdef OS_BUILD
-              ISET_ID_STR,
-#endif
-              PERSISTENT_MEM_TYPE_STR,
-              TOTAL_CAPACITY_STR,
-              FREE_CAPACITY_STR,
-              REGION_HEALTH_STATE_STR);
-        HeaderPrinted = TRUE;
-      }
+    /**
+    SocketId
+    **/
+    if (AllOptionSet ||
+      (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SOCKET_ID_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pRegions[RegionIndex].SocketId);
+    }
 
-      ReturnCode = MakeCapacityString(pRegions[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-      TempReturnCode = MakeCapacityString(pRegions[Index].FreeCapacity, UnitsToDisplay, TRUE, &pFreeCapacityStr);
-      pHealthStateStr = RegionHealthToString(pRegions[Index].Health);
-
-      Print(
-          // Only print the 'RegionID' if on UEFI
-#ifndef OS_BUILD
-          L"%8d "
-#endif
-          L"%8d "
-#ifdef OS_BUILD
-          L"0x%016llx "
-#endif
-          L"%23ls %9ls %12ls %11ls\n",
-#ifndef OS_BUILD
-          pRegions[Index].RegionId,
-#endif
-          pRegions[Index].SocketId,
-#ifdef OS_BUILD
-          pRegions[Index].CookieId,
-#endif
-          pRegionTempStr,
-        pCapacityStr,
-          pFreeCapacityStr,
-          pHealthStateStr);
-
-      FREE_POOL_SAFE(pCapacityStr);
-      FREE_POOL_SAFE(pFreeCapacityStr);
+    /**
+      Display all the persistent memory types supported by the region.
+    **/
+    if (AllOptionSet ||
+        (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PERSISTENT_MEM_TYPE_STR))) {
+      pRegionTempStr = RegionTypeToString(pRegions[RegionIndex].RegionType);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PERSISTENT_MEM_TYPE_STR, pRegionTempStr);
       FREE_POOL_SAFE(pRegionTempStr);
     }
-  } else { // display detailed view
-    for (Index = 0; Index < RegionCount; Index++) {
-      /**
-        Skip if the RegionId is not matching.
-      **/
-      if (RegionIdsNum > 0 && !ContainUint(pRegionsIds, RegionIdsNum, pRegions[Index].RegionId)) {
-        continue;
-      }
 
-      /**
-        Skip if the socket is not matching.
-      **/
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pRegions[Index].SocketId)) {
-        continue;
+    /**
+      Capacity
+    **/
+    if (AllOptionSet ||
+        (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TOTAL_CAPACITY_STR))) {
+      ReturnCode = MakeCapacityString(pRegions[RegionIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      if (EFI_ERROR(ReturnCode)) {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
+        goto Finish;
       }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_CAPACITY_STR, pCapacityStr);
+      FREE_POOL_SAFE(pCapacityStr);
+    }
 
-      if (pRegions[Index].RegionType == PM_TYPE_STORAGE) {
-        continue;
+    /**
+      FreeCapacity
+    **/
+    if (AllOptionSet ||
+        (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FREE_CAPACITY_STR))) {
+      ReturnCode = MakeCapacityString(pRegions[RegionIndex].FreeCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      if (EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
+          goto Finish;
       }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FREE_CAPACITY_STR, pCapacityStr);
+      FREE_POOL_SAFE(pCapacityStr);
+    }
 
-      Found = TRUE;
+    /**
+    HealthState
+    **/
+    if (AllOptionSet ||
+      (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, REGION_HEALTH_STATE_STR))) {
+      pHealthStateStr = RegionHealthToString(pRegions[RegionIndex].Health);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, REGION_HEALTH_STATE_STR, pHealthStateStr);
+    }
 
-      // Add a space between region groups
-      if (0 != Index) {
-        Print(L"\n");
-      }
+    /**
+    Dimms
+    **/
+    if (AllOptionSet ||
+      (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_ID_STR))) {
+      pDimmIds = CreateDimmsStr(&pRegions[RegionIndex]);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, pDimmIds);
+      FREE_POOL_SAFE(pDimmIds);
+    }
 
-      /**
-        RegionId
-      **/
-      /* always print the region ID */
-#ifdef OS_BUILD
-      Print(L"---" FORMAT_STR L"=0x%016llx---\n", ISET_ID_STR, pRegions[Index].CookieId);
-#else
-      Print(L"---" FORMAT_STR L"=%04d---\n", REGION_ID_STR, pRegions[Index].RegionId);
-#endif
+    /**
+    RegionID
+    **/
+    if (AllOptionSet ||
+      (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, REGION_ID_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, REGION_ID_STR, FORMAT_HEX, pRegions[RegionIndex].RegionId);
+    }
 
-      /**
-      SocketId
-      **/
-      if (AllOptionSet ||
-        (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-        Print(L"   " FORMAT_STR L"=0x%08x\n", SOCKET_ID_STR, pRegions[Index].SocketId);
-      }
-
-      /**
-        Display all the persistent memory types supported by the region.
-      **/
-      if (AllOptionSet ||
-          (DisplayOptionSet && ContainsValue(pDisplayValues, PERSISTENT_MEM_TYPE_STR))) {
-        pRegionTempStr = RegionTypeToString(pRegions[Index].RegionType);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PERSISTENT_MEM_TYPE_STR, pRegionTempStr);
-        FREE_POOL_SAFE(pRegionTempStr);
-      }
-
-      /**
-        Capacity
-      **/
-      if (AllOptionSet ||
-          (DisplayOptionSet && ContainsValue(pDisplayValues, TOTAL_CAPACITY_STR))) {
-        ReturnCode = MakeCapacityString(pRegions[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, TOTAL_CAPACITY_STR, pCapacityStr);
-        FREE_POOL_SAFE(pCapacityStr);
-      }
-
-      /**
-        FreeCapacity
-      **/
-      if (AllOptionSet ||
-          (DisplayOptionSet && ContainsValue(pDisplayValues, FREE_CAPACITY_STR))) {
-        TempReturnCode = MakeCapacityString(pRegions[Index].FreeCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
-        KEEP_ERROR(ReturnCode, TempReturnCode);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FREE_CAPACITY_STR, pCapacityStr);
-        FREE_POOL_SAFE(pCapacityStr);
-      }
-
-      /**
-      HealthState
-      **/
-      if (AllOptionSet ||
-        (DisplayOptionSet && ContainsValue(pDisplayValues, REGION_HEALTH_STATE_STR))) {
-        pHealthStateStr = RegionHealthToString(pRegions[Index].Health);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, REGION_HEALTH_STATE_STR, pHealthStateStr);
-      }
-
-      /**
-      Dimms
-      **/
-      if (AllOptionSet ||
-        (DisplayOptionSet && ContainsValue(pDisplayValues, DIMM_ID_STR))) {
-        Print(L"   " FORMAT_STR L"=", DIMM_ID_STR);
-        for (DimmIdx = 0; DimmIdx < pRegions[Index].DimmIdCount; DimmIdx++) {
-          if (DimmIdx > 0) {
-              Print(L", ");
-      }
-          Print(L"0x%04x", pRegions[Index].DimmId[DimmIdx]);
-      }
-        Print(L"\n");
-      }
-
-#ifndef OS_BUILD
-
-      /**
-      ISetID
-      **/
-      if (AllOptionSet ||
-          (DisplayOptionSet && ContainsValue(pDisplayValues, ISET_ID_STR))) {
-          Print(L"   " FORMAT_STR L"=0x%016llx\n", ISET_ID_STR, pRegions[Index].CookieId);
-      }
-#endif
-      }
-      }
+    /**
+    ISetID
+    **/
+    if (AllOptionSet ||
+      (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ISET_ID_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ISET_ID_STR, FORMAT_SHOW_ISET_ID, pRegions[RegionIndex].CookieId);
+    }
+}
 
   if (RegionIdsNum > 0 && !Found) {
-    Print(FORMAT_STR_SPACE L"" FORMAT_STR_NL, CLI_ERR_INVALID_REGION_ID, pCmd->targets[0].pTargetValueStr);
-    if (SocketsNum > 0) {
-      Print(L"The specified region id might not exist on the specified Socket(s).\n");
-    }
+    CHAR16 *ErrMsg = NULL;
     ReturnCode = EFI_NOT_FOUND;
+    ErrMsg = CatSPrint(NULL, FORMAT_STR_SPACE FORMAT_STR_NL, CLI_ERR_INVALID_REGION_ID, pCmd->targets[0].pTargetValueStr);
+    if (SocketsNum > 0) {
+      ErrMsg = CatSPrint(ErrMsg, CLI_ERR_REGION_TO_SOCKET_MAPPING);
+    }
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, ErrMsg);
+    FREE_POOL_SAFE(ErrMsg);
+    goto Finish;
   }
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowRegionsDataSetAttribs);
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   if (pRegions != NULL) {
-    for (Index = 0; Index < RegionCount; Index++) {
-      pInterleaveFormat = (INTERLEAVE_FORMAT *) pRegions[Index].PtrInterlaveFormats;
+    for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
+      pInterleaveFormat = (INTERLEAVE_FORMAT *) pRegions[RegionIndex].PtrInterlaveFormats;
       FREE_POOL_SAFE(pInterleaveFormat);
     }
   }
+  FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
+  FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pRegions);
-  FREE_POOL_SAFE(pDisplayValues);
   FREE_POOL_SAFE(pRegionsIds);
   FREE_POOL_SAFE(pSocketIds);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+}
+
+/**
+Create comma deliminted list of DimmIDs
+
+@param[in] pRegions - pointer to a REGION_INFO struct
+
+@retval Heap allocated string of DimmIDs (caller to free)
+**/
+STATIC CHAR16 *CreateDimmsStr(REGION_INFO *pRegions) {
+  CHAR16 *DimmsStr = NULL;
+  UINT16 DimmIdx;
+
+  if (NULL == pRegions) {
+    return NULL;
+  }
+
+  for (DimmIdx = 0; DimmIdx < pRegions->DimmIdCount; DimmIdx++) {
+    if (DimmIdx > 0) {
+      DimmsStr = CatSPrint(DimmsStr, DIMM_ID_STR_DELIM);
+    }
+    DimmsStr = CatSPrint(DimmsStr, FORMAT_HEX, pRegions->DimmId[DimmIdx]);
+  }
+  return DimmsStr;
 }

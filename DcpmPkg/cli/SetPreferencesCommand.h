@@ -9,13 +9,9 @@
 #include <Uefi.h>
 #include "CommandParser.h"
 
-#define CLI_SET_PREFERENCE_SUCCESS            L"Success"
+#define CLI_SET_PREFERENCE_SUCCESS            L"Set " FORMAT_STR L"=" FORMAT_STR L": Success\n"
+#define CLI_SET_PREFERENCE_ERROR              L"Set " FORMAT_STR L"=" FORMAT_STR L". Error: %d. " FORMAT_STR L"\n"
 
-#define PRINT_SET_PREFERENCES_EFI_ERR(PROPERTY, TYPE, SPECIFICS, RC) \
-  Print(L"Set " FORMAT_STR L"=" FORMAT_STR L". Error: %d. " FORMAT_STR L"\n", PROPERTY, TYPE, RC, SPECIFICS);
-
-#define PRINT_SET_PREFERENCES_SUCCESS(PROPERTY, TYPE) \
-  Print(L"Set " FORMAT_STR L"=" FORMAT_STR L": " FORMAT_STR L"\n", PROPERTY, TYPE, CLI_SET_PREFERENCE_SUCCESS);
 
 
 /**

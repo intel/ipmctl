@@ -10,6 +10,20 @@
 #include <Debug.h>
 #include <Types.h>
 
+#define PATH_KEY_DELIM        L"."
+#define DIMM_LIST_NODE_STR    L"DimmList"
+#define DIMM_NODE_STR         L"Dimm"
+#define SENSOR_LIST_NODE_STR  L"SensorList"
+#define SENSOR_NODE_STR       L"Sensor"
+#define PREFERENCES_NODE_STR  L"Preferences"
+#define SOCKET_NODE_STR       L"Socket"
+#define SOCKET_LIST_NODE_STR  L"SocketList"
+#define REGION_NODE_STR       L"Region"
+#define REGION_LIST_NODE_STR  L"RegionList"
+#define CONFIG_GOAL_NODE_STR  L"ConfigGoal"
+#define TOPOLOGY_NODE_STR     L"DimmTopology"
+#define DIAGNOSTIC_NODE_STR   L"Diagnostic"
+
 /*
 * Types of values supported in DataSets.
 */
@@ -112,6 +126,10 @@ UINT32 GetKeyCount(DATA_SET_CONTEXT *DataSetCtx);
 */
 EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val);
 /*
+* Set a unicode string value, where Val is a format string
+*/
+EFI_STATUS SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...);
+/*
 * Set an unsigned 64 bit value into the data set.
 */
 EFI_STATUS SetKeyValueUint64(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, UINT64 Val, TO_STRING_BASE Base);
@@ -195,4 +213,11 @@ EFI_STATUS SetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, VOID 
 * Retrieve user data from a particular key
 */
 VOID * GetKeyUserData(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key);
+
+#define FREE_DATASET_RECURSIVE_SAFE(DataSet) { \
+  if (DataSet != NULL) { \
+    FreeDataSet(DataSet); \
+    DataSet = NULL; \
+  } \
+};
 #endif /** _DATA_SET_H_**/

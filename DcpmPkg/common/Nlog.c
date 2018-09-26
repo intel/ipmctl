@@ -7,6 +7,7 @@
 
 VOID
 decode_nlog_binary(
+  struct Command *pCmd,
   CHAR16* decoded_file_name,
   UINT8* nlogbytes,
   UINT64 size,
@@ -44,6 +45,12 @@ decode_nlog_binary(
   BOOLEAN dictionary_entry_was_allocated_here = FALSE;
   BOOLEAN hash_not_found = FALSE;
   nlog_record* next;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pCmd != NULL) {
+    pPrinterCtx = pCmd->pPrintCtx;
+  }
 
   node_count = 0;
   for (x = 0; x < size; x += 4)
@@ -84,7 +91,7 @@ decode_nlog_binary(
         entry = AllocatePool(sizeof(nlog_dict_entry));
         if (NULL == entry)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
 
@@ -101,7 +108,7 @@ decode_nlog_binary(
         record = AllocatePool(sizeof(nlog_record));
         if (NULL == record)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
         record->DictEntry = entry;
@@ -109,13 +116,13 @@ decode_nlog_binary(
         record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
         record->ArgValues[0] = AllocatePool(sizeof(UINT32));
         if (NULL == record->ArgValues[0])
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
         *record->ArgValues[0] = entry->Hash;
@@ -136,7 +143,7 @@ decode_nlog_binary(
       entry = AllocatePool(sizeof(nlog_dict_entry));
       if (NULL == entry)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
 
@@ -157,7 +164,7 @@ decode_nlog_binary(
       record = AllocatePool(sizeof(nlog_record));
       if (NULL == record)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
 
@@ -176,7 +183,7 @@ decode_nlog_binary(
       x += 4;
       if (x >= size)
       {
-        Print(L"Unexpected end of buffer. 1\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Unexpected end of buffer. 1\n");
         goto Finish;
       }
       record->KernelTime = bytes_to_u32(&nlogbytes[x]);
@@ -189,7 +196,7 @@ decode_nlog_binary(
         record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
 
@@ -198,13 +205,13 @@ decode_nlog_binary(
           x += 4;
           if (x >= size)
           {
-            Print(L"Unexpected end of buffer. 3\n");
+            PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Unexpected end of buffer. 3\n");
             goto Finish;
           }
           record->ArgValues[y] = AllocatePool(sizeof(UINT32));
           if (NULL == record->ArgValues[y])
           {
-            Print(L"Failed to allocate space for decoded records\n");
+            PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
             goto Finish;
           }
 
@@ -219,7 +226,7 @@ decode_nlog_binary(
         append_strs = AllocatePool(sizeof(CHAR8*) * elements);
         if (NULL == append_strs)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
 
@@ -238,20 +245,20 @@ decode_nlog_binary(
         record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
 
         record->ArgValues[0] = AllocatePool(sizeof(UINT32));
         if (NULL == record->ArgValues[0])
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
         record->ArgValues[1] = AllocatePool(sizeof(UINT32));
         if (NULL == record->ArgValues[1])
         {
-          Print(L"Failed to allocate space for decoded records\n");
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
         *record->ArgValues[0] = v1.data.module_id;
@@ -284,7 +291,7 @@ decode_nlog_binary(
       append_strs = AllocatePool(sizeof(CHAR8*) * elements);
       if (NULL == append_strs)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
       append_strs[0] = old_format_str;
@@ -299,7 +306,7 @@ decode_nlog_binary(
       append_strs = AllocatePool(sizeof(CHAR8*) * elements);
       if (NULL == append_strs)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
       append_strs[0] = pad_left(kernel_str, 9, ' ', FALSE);
@@ -373,7 +380,7 @@ decode_nlog_binary(
   total_formatted_string = AllocatePool(bytes_needed);
   if (NULL == total_formatted_string)
   {
-    Print(L"Failed to allocate %lu bytes to dump the decoded output.\n", bytes_needed);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate %lu bytes to dump the decoded output.\n", bytes_needed);
     goto Finish;
   }
 
@@ -401,11 +408,11 @@ decode_nlog_binary(
     record = record->next;
   }
 
-  Print(L"Dumping %lu decoded records to file.\n", node_count);
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dumping %lu decoded records to file.\n", node_count);
   status = DumpToFile(decoded_file_name, total_formatted_string_size, total_formatted_string, TRUE);
   if (EFI_ERROR(status))
   {
-    Print(L"Failed to write record to file. (%lu)\n", status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to write record to file. (%lu)\n", status);
     goto Finish;
   }
 Finish:
@@ -506,6 +513,7 @@ get_nlog_entry(
 
 nlog_dict_entry*
 load_nlog_dict(
+  struct Command *pCmd,
   CHAR16 * pLoadUserPath,
   UINT32 * version,
   UINT64 * node_count
@@ -521,25 +529,32 @@ load_nlog_dict(
   UINT32 x = 0;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
   EFI_STATUS status;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pCmd != NULL) {
+    pPrinterCtx = pCmd->pPrintCtx;
+  }
+
   *node_count = 0;
 
   CHAR16 * pDictPath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDictPath));
   if (pDictPath == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
   status = GetDeviceAndFilePath(pLoadUserPath, pDictPath, &pDevicePathProtocol);
   if (EFI_ERROR(status))
   {
-    Print(L"Failed to locate the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to locate the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
     goto Finish;
   }
 
   status = FileRead(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
   if (EFI_ERROR(status) || NULL == file_buffer)
   {
-    Print(L"Failed to open or read the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to open or read the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
     goto Finish;
   }
 
@@ -559,31 +574,31 @@ load_nlog_dict(
   file_lines = string_split(file_buffer, '\n', 0, &line_count);
   if (NULL == file_lines || line_count <= 1)
   {
-    Print(L"Dictionary passed does not contain enough content.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dictionary passed does not contain enough content.\n");
     goto Finish;
   }
 
   string_splits = string_split(file_lines[0], NLOG_DICT_VERSION_SPLIT_CHAR, 2, &found_elements);
   if (NULL == string_splits)
   {
-    Print(L"Error in dict on line 1 - Found 0 elements, expected %lu\n", 2);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error in dict on line 1 - Found 0 elements, expected %lu\n", 2);
     goto Finish;
   }
 
   if (found_elements != 2)
   {
-    Print(L"Error in dict on line 1 - Found %lu elements, expected %lu\n", found_elements, 2);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error in dict on line 1 - Found %lu elements, expected %lu\n", found_elements, 2);
     goto Finish;
   }
 
   *version = a_to_u32(string_splits[1]);
   if (*version != 2)
   {
-    Print(L"Only version 2 dictionaries supported.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Only version 2 dictionaries supported.\n");
     goto Finish;
   }
 
-  head = load_nlog_dict_v2(&file_lines[1], (line_count - 1), node_count);
+  head = load_nlog_dict_v2(pCmd, &file_lines[1], (line_count - 1), node_count);
 
 Finish:
 
@@ -613,6 +628,7 @@ Finish:
 
 nlog_dict_entry*
 load_nlog_dict_v2(
+  struct Command *pCmd,
   CHAR8 ** lines,
   UINT64 line_count,
   UINT64 * node_count
@@ -624,6 +640,13 @@ load_nlog_dict_v2(
   CHAR8* line = NULL;
   UINT64 found_elements = 0;
   CHAR8** parts = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pCmd != NULL) {
+    pPrinterCtx = pCmd->pPrintCtx;
+  }
+
   *node_count = 0;
 
   for (x = 0; x < line_count; x++)
@@ -637,13 +660,13 @@ load_nlog_dict_v2(
     parts = string_split(line, NLOG_DICT_SPLIT_CHAR, NLOG_DICT_FIELDCOUNT, &found_elements);
     if (NULL == parts)
     {
-      Print(L"Error in dict on line %lu - Found NULL elements, expected %lu.\n", x + 1, NLOG_DICT_FIELDCOUNT);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error in dict on line %lu - Found NULL elements, expected %lu.\n", x + 1, NLOG_DICT_FIELDCOUNT);
       goto Finish;
     }
 
     if (found_elements != NLOG_DICT_FIELDCOUNT)
     {
-      Print(L"Error in dict on line %lu - Found %lu elements, expected %lu.\n", x + 1, found_elements, NLOG_DICT_FIELDCOUNT);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error in dict on line %lu - Found %lu elements, expected %lu.\n", x + 1, found_elements, NLOG_DICT_FIELDCOUNT);
       goto Finish;
     }
 
@@ -654,7 +677,7 @@ load_nlog_dict_v2(
       head = AllocatePool(sizeof(nlog_dict_entry));
       if (NULL == head)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
       tail = head;
@@ -664,7 +687,7 @@ load_nlog_dict_v2(
       tail->next = AllocatePool(sizeof(nlog_dict_entry));
       if (NULL == tail->next)
       {
-        Print(L"Failed to allocate space for decoded records\n");
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
       ((nlog_dict_entry*)tail->next)->prev = tail;

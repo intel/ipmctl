@@ -29,7 +29,8 @@ struct Command DumpGoalCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
   L"Store the region configuration goal from one or more DIMMs to a file",        //!< help
-  DumpGoal
+  DumpGoal,
+  TRUE
 };
 
 
@@ -53,27 +54,31 @@ DumpGoal(
   CHAR16 *pDumpUserPath = NULL;
   CHAR16 *pDumpFilePath = NULL;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePath = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   // NvmDimmConfigProtocol required
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   pDumpFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDumpFilePath));
   if (pDumpFilePath == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -83,7 +88,7 @@ DumpGoal(
     if (pDumpUserPath == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       NVDIMM_ERR("Could not get -destination value. Out of memory");
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
   }
@@ -91,13 +96,14 @@ DumpGoal(
   ReturnCode = GetDeviceAndFilePath(pDumpUserPath, pDumpFilePath, &pDevicePath);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_FILE_PATH);
     goto Finish;
   }
 
   // Initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -107,13 +113,13 @@ DumpGoal(
 
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   if (EFI_ERROR(ReturnCode)) {
-    DisplayCommandStatus(L"Dump pool configuration goal", L" on", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_DUMP_GOAL_MSG, CLI_DUMP_GOAL_ON_MSG, pCommandStatus);
   } else {
-     SetDisplayInfo(L"DumpGoal", ResultsView, NULL);
-    Print(L"Successfully dumped system configuration to file: " FORMAT_STR_NL, pDumpUserPath);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_CONFIG_SUCCESS, pDumpUserPath);
   }
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDumpFilePath);
   FREE_POOL_SAFE(pDumpUserPath);

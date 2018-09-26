@@ -302,8 +302,7 @@ Parse(
     ReturnCode = MatchCommand(pCommand, &gCommandList[Index]);
     if (!EFI_ERROR(ReturnCode)) {
       pCommand->run = gCommandList[Index].run;
-      pCommand->RunCleanup = gCommandList[Index].RunCleanup;
-      pCommand->UpdateCmdCtx = gCommandList[Index].UpdateCmdCtx;
+      pCommand->PrinterCtrlSupported = gCommandList[Index].PrinterCtrlSupported;
       break;
     }
   }
@@ -1388,7 +1387,7 @@ GetUnitsOption(
         *pUnitsToDisplay = DISPLAY_SIZE_UNIT_TIB;
       } else {
         ReturnCode = EFI_INVALID_PARAMETER;
-        Print(FORMAT_STR, CLI_ERR_INCORRECT_VALUE_OPTION_UNITS);
+        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_OPTION_UNITS);
         goto Finish;
       }
     } else {
@@ -1474,19 +1473,20 @@ ExecuteCmd(COMMAND *pCommand) {
   if (NULL == pCommand)
     return EFI_INVALID_PARAMETER;
 
-  if (NULL == (pCommand->pShowCtx = (SHOW_CMD_CONTEXT*)AllocateZeroPool(sizeof(SHOW_CMD_CONTEXT)))) {
-    return EFI_OUT_OF_RESOURCES;
+  //Here to support migration path from legacy print handling and new printer module
+  if (pCommand->PrinterCtrlSupported) {
+    if (EFI_SUCCESS != (Rc = PrinterCreateCtx(&pCommand->pPrintCtx))) {
+      return Rc;
+    }
+
+    if (EFI_SUCCESS != (Rc = ReadCmdLinePrintOptions(&pCommand->pPrintCtx->FormatType, pCommand))) {
+      goto Finish;
+    }
   }
-
-  if (EFI_SUCCESS != (Rc = ReadCmdLineShowOptions(&pCommand->pShowCtx->FormatType, pCommand))) {
-    goto Finish;
+  else {
+    //ensure printer ctx ptr is NULL
+    pCommand->pPrintCtx = NULL;
   }
-
-  if (pCommand->UpdateCmdCtx)
-    Rc = pCommand->UpdateCmdCtx(pCommand);
-
-  if (EFI_ERROR(Rc))
-    goto Finish;
 
   if (NULL == pCommand->run) {
     Rc = EFI_INVALID_PARAMETER;
@@ -1498,10 +1498,7 @@ ExecuteCmd(COMMAND *pCommand) {
   if (EFI_ERROR(Rc))
     goto Finish;
 
-  if (pCommand->RunCleanup)
-    Rc = pCommand->RunCleanup(pCommand);
-
 Finish:
-  FREE_POOL_SAFE(pCommand->pShowCtx);
+  PrinterDestroyCtx(pCommand->pPrintCtx);
   return Rc;
 }

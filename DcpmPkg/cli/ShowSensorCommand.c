@@ -13,7 +13,10 @@
 #include "NvmDimmCli.h"
 #include <Library/BaseMemoryLib.h>
 #include <NvmHealth.h>
+#include <DataSet.h>
+#include <Printer.h>
 
+#define DIMM_ID_STR                       L"DimmID"
 #define SENSOR_TYPE_STR                   L"Type"
 #define CURRENT_VALUE_STR                 L"CurrentValue"
 #define CURRENT_STATE_STR                 L"CurrentState"
@@ -25,6 +28,76 @@
 #define SETABLE_THRESHOLDS_STR            L"SettableThresholds"
 #define SUPPORTED_THRESHOLDS_STR          L"SupportedThresholds"
 #define ENABLED_STATE_STR                 L"EnabledState"
+
+#define DS_ROOT_PATH                      L"/SensorList"
+#define DS_DIMM_PATH                      L"/SensorList/Dimm"
+#define DS_DIMM_INDEX_PATH                L"/SensorList/Dimm[%d]"
+#define DS_SENSOR_PATH                    L"/SensorList/Dimm/Sensor"
+#define DS_SENSOR_INDEX_PATH              L"/SensorList/Dimm[%d]/Sensor[%d]"
+ /*
+ *  PRINT LIST ATTRIBUTES (2 levels: Dimm-->Sensor)
+ *  ---DimmId=0x0001---
+ *     ---Type=Health
+ *        CurrentVal=Healthy
+ *        CurrentState=Normal
+ *        ...
+ */
+PRINTER_LIST_ATTRIB ShowSensorListAttributes =
+{
+ {
+    {
+      DIMM_NODE_STR,                                                        //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",                        //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,                           //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                                           //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      SENSOR_NODE_STR,                                                      //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT L"---" SENSOR_TYPE_STR L"=$(" SENSOR_TYPE_STR L")",   //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,           //NULL or KEY VAL FORMAT STR
+      SENSOR_TYPE_STR                                                       //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+/*
+*  PRINTER TABLE ATTRIBUTES (4 columns)
+*   DimmID | Type | CurrentValue | CurrentState
+*   ===========================================
+*   0x0001 | X    | X            | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowSensorTableAttributes =
+{
+  {
+    {
+      DIMM_ID_STR,                                                                  //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                                                           //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR                                       //COLUMN DATA PATH
+    },
+    {
+      SENSOR_TYPE_STR,                                                              //COLUMN HEADER
+      SENSOR_TYPE_MAX_STR_WIDTH,                                                    //COLUMN MAX STR WIDTH
+      DS_SENSOR_PATH PATH_KEY_DELIM SENSOR_TYPE_STR                                 //COLUMN DATA PATH
+    },
+    {
+      CURRENT_VALUE_STR,                                                            //COLUMN HEADER
+      SENSOR_VALUE_MAX_STR_WIDTH,                                                   //COLUMN MAX STR WIDTH
+      DS_SENSOR_PATH PATH_KEY_DELIM CURRENT_VALUE_STR                               //COLUMN DATA PATH
+    },
+    {
+      CURRENT_STATE_STR,                                                            //COLUMN HEADER
+      SENSOR_STATE_MAX_STR_WIDTH,                                                   //COLUMN MAX STR WIDTH
+      DS_SENSOR_PATH PATH_KEY_DELIM CURRENT_STATE_STR                               //COLUMN DATA PATH
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowSensorDataSetAttribs =
+{
+  &ShowSensorListAttributes,
+  &ShowSensorTableAttributes
+};
 
 /** Command syntax definition **/
 struct Command ShowSensorCommand =
@@ -45,7 +118,8 @@ struct Command ShowSensorCommand =
     {L"", L"", L"", FALSE, ValueOptional},
   },                                                                  //!< properties
   L"Show health statistics ",                                         //!< help
-  ShowSensor
+  ShowSensor,
+  TRUE,                                                               //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowSensorDisplayValues[] =
@@ -63,6 +137,7 @@ CHAR16 *mppAllowedShowSensorDisplayValues[] =
   SUPPORTED_THRESHOLDS_STR,
   ENABLED_STATE_STR
 };
+
 
 /**
   Create the string from value for a sensor.
@@ -104,17 +179,19 @@ ShowSensor(
   CHAR16 *pDimmsValue = NULL;
   UINT32 DimmsCount = 0;
   DIMM_INFO *pDimms = NULL;
-  UINT32 Index = 0;
-  BOOLEAN DisplayOptionSet = FALSE;
-  BOOLEAN AllOptionSet = FALSE;
+  UINT32 DimmIndex = 0;
   BOOLEAN Found = FALSE;
-  CHAR16 *pDisplayValues = NULL;
-  UINT32 Index2 = 0;
+  UINT32 SensorIndex = 0;
   CHAR16 *pTempBuff = NULL;
   UINT32 SensorToDisplay = SENSOR_TYPE_ALL;
   COMMAND_STATUS *pCommandStatus = NULL;
   DIMM_SENSOR DimmSensorsSet[SENSOR_TYPE_COUNT];
   CHAR16 *pTargetValue = NULL;
+  DISPLAY_PREFERENCES DisplayPreferences;
+  CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
+
   struct {
       CHAR16 *pSensorStr;
       UINT32 Sensor;
@@ -127,8 +204,7 @@ ShowSensor(
       {DIRTY_SHUTDOWNS_STR, SENSOR_TYPE_DIRTY_SHUTDOWNS},
       {UPTIME_STR, SENSOR_TYPE_UP_TIME},
       {FW_ERROR_COUNT_STR, SENSOR_TYPE_FW_ERROR_COUNT},
-      {DIMM_HEALTH_STR, SENSOR_TYPE_DIMM_HEALTH},
-      {UNLATCHED_DIRTY_SHUTDOWNS_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS}
+      {DIMM_HEALTH_STR, SENSOR_TYPE_DIMM_HEALTH}
   };
   UINT32 SensorsNum = ARRAY_SIZE(Sensors);
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -138,57 +214,74 @@ ShowSensor(
 
   ZeroMem(DimmSensorsSet, sizeof(DimmSensorsSet));
   ZeroMem(DimmStr, sizeof(DimmStr));
+  ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
 
   if (pCmd == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
     ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
+    goto Finish;
+  }
+
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
+  if (NULL == pDispOptions) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowSensorDisplayValues,
+    ALLOWED_DISP_VALUES_COUNT(mppAllowedShowSensorDisplayValues), pDispOptions);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
     goto Finish;
   }
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed on InitializeCommandStatus");
     goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
+    ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Target value is not a valid Dimm ID");
       goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmsCount, pDimmIds, DimmIdsNum)){
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
 
   if (DimmIdsNum == 0) {
-    for (Index = 0; Index < DimmsCount; Index++) {
-      if (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
+    for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
+      if (pDimms[DimmIndex].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
         ShowAllManageableDimmFound = TRUE;
         break;
       }
     }
     if (ShowAllManageableDimmFound == FALSE) {
-      Print(FORMAT_STR_NL, CLI_INFO_NO_MANAGEABLE_DIMMS);
       ReturnCode = EFI_NOT_FOUND;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
       goto Finish;
     }
   }
@@ -201,277 +294,213 @@ ShowSensor(
 
   if (pTargetValue != NULL && StrLen(pTargetValue) > 0) {
     Found = FALSE;
-    for (Index = 0; Index < SensorsNum; Index++) {
-      if (StrICmp(pTargetValue, Sensors[Index].pSensorStr) == 0) {
-        SensorToDisplay = Sensors[Index].Sensor;
+    for (DimmIndex = 0; DimmIndex < SensorsNum; DimmIndex++) {
+      if (StrICmp(pTargetValue, Sensors[DimmIndex].pSensorStr) == 0) {
+        SensorToDisplay = Sensors[DimmIndex].Sensor;
         Found = TRUE;
         break;
       }
     }
 
     if (!Found) {
-      Print(L"The provided sensor: " FORMAT_STR L" is not valid.\n", pTargetValue);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"The provided sensor: " FORMAT_STR L" is not valid.\n", pTargetValue);
       goto Finish;
     }
   }
 
-  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowSensorDisplayValues,
-      ALLOWED_DISP_VALUES_COUNT(mppAllowedShowSensorDisplayValues),
-      &AllOptionSet,
-      &DisplayOptionSet,
-      &pDisplayValues);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
-    goto Finish;
-  }
-
-  // Print the table header
-  if (!AllOptionSet && !DisplayOptionSet) {
-    SetDisplayInfo(L"Sensor", TableView, NULL);
-    Print(FORMAT_SHOW_SENSOR_HEADER,
-      DIMM_ID_STR,
-      SENSOR_TYPE_STR,
-      CURRENT_VALUE_STR,
-      CURRENT_STATE_STR);
-  }
-  else {
-     SetDisplayInfo(L"Sensor", ListView2L, NULL);
-  }
-
-  for (Index = 0; Index < DimmsCount; Index++) {
-    if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+  for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
+    if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
       continue;
     }
 
-    if (pDimms[Index].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
+    if (pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
       continue;
     }
 
-    ReturnCode = GetSensorsInfo(pNvmDimmConfigProtocol, pDimms[Index].DimmID, DimmSensorsSet);
+    ReturnCode = GetSensorsInfo(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, DimmSensorsSet);
     if (EFI_ERROR(ReturnCode)) {
       /**
         We do not return on error. Just inform the user and skip to the next DIMM or end.
       **/
-      Print(L"Failed to read the sensors or thresholds values from DIMM %d. Code: " FORMAT_EFI_STATUS "\n",
-          pDimms[Index].DimmID, ReturnCode);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode,L"Failed to read the sensors or thresholds values from DIMM %d. Code: " FORMAT_EFI_STATUS "\n",
+        pDimms[DimmIndex].DimmID, ReturnCode);
       continue;
     }
 
-    ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+    ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid,
         DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to translate DIMM identifier to string\n");
       goto Finish;
     }
 
-    /**
-        Always print the DimmID for each DIMM.
-    **/
-    if (AllOptionSet || DisplayOptionSet) {
-      Print(L"---" FORMAT_STR L"=" FORMAT_STR L"---\n", DIMM_ID_STR, DimmStr);
-    }
+    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
 
-    for (Index2 = 0; Index2 < SENSOR_TYPE_COUNT; Index2++) {
+    for (SensorIndex = 0; SensorIndex < SENSOR_TYPE_COUNT; SensorIndex++) {
       if ((SensorToDisplay != SENSOR_TYPE_ALL
-          && DimmSensorsSet[Index2].Type != SensorToDisplay)) {
+          && DimmSensorsSet[SensorIndex].Type != SensorToDisplay)) {
         continue;
       }
 
-      if (!AllOptionSet && !DisplayOptionSet) {
-        pTempBuff = GetSensorValue(DimmSensorsSet[Index2].Value, DimmSensorsSet[Index2].Type);
-        if (pTempBuff == NULL) {
-          Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-          ReturnCode = EFI_OUT_OF_RESOURCES;
-          goto Finish;
-        }
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_SENSOR_INDEX_PATH, DimmIndex, SensorIndex);
 
+      /**
+        Type
+      **/
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SENSOR_TYPE_STR, SensorTypeToString(DimmSensorsSet[SensorIndex].Type));
+      /**
+        Value
+      **/
+      if (!pDispOptions->DisplayOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CURRENT_VALUE_STR))) {
+        pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].Value, DimmSensorsSet[SensorIndex].Type);
         /**
-         Health State
+          Only for Health State
         **/
-        if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
-            FREE_POOL_SAFE(pTempBuff);
-            pTempBuff = HealthToString(gNvmDimmCliHiiHandle, (UINT8)DimmSensorsSet[Index2].Value);
+        if (ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), DIMM_HEALTH_STR)) {
+            pTempBuff = HealthToString(gNvmDimmCliHiiHandle, (UINT8)DimmSensorsSet[SensorIndex].Value);
             if (pTempBuff == NULL) {
-              Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
               ReturnCode = EFI_OUT_OF_RESOURCES;
+              PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
               goto Finish;
             }
         }
-
-        Print(FORMAT_SHOW_SENSOR_HEADER,
-            DimmStr,
-            SensorTypeToString(DimmSensorsSet[Index2].Type),
-            pTempBuff,
-            SensorStateToString(DimmSensorsSet[Index2].State)
-            );
-
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_VALUE_STR, pTempBuff);
         FREE_POOL_SAFE(pTempBuff);
-      } else {
-        /**
-          Always print the Type for each selected sensor.
-        **/
-        Print(L"   ---" FORMAT_STR L"=" FORMAT_STR_NL,
-            SENSOR_TYPE_STR,
-            SensorTypeToString(DimmSensorsSet[Index2].Type));
-
-        /**
-          Value
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, CURRENT_VALUE_STR))) {
-          pTempBuff = GetSensorValue(DimmSensorsSet[Index2].Value, DimmSensorsSet[Index2].Type);
-         /**
-           Only for Health State
-          **/
-          if (ContainsValue(SensorTypeToString(DimmSensorsSet[Index2].Type), DIMM_HEALTH_STR)) {
-              FREE_POOL_SAFE(pTempBuff);
-              pTempBuff = HealthToString(gNvmDimmCliHiiHandle, (UINT8)DimmSensorsSet[Index2].Value);
-              if (pTempBuff == NULL) {
-                Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-                ReturnCode = EFI_OUT_OF_RESOURCES;
-                goto Finish;
-              }
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, CURRENT_VALUE_STR, pTempBuff);
-
-          FREE_POOL_SAFE(pTempBuff);
-        }
-        /**
-          State
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, CURRENT_STATE_STR))) {
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL,
-              CURRENT_STATE_STR,
-              SensorStateToString(DimmSensorsSet[Index2].State));
-        }
-
-        /**
-          LowerThresholdNonCritical
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, LOWER_THRESHOLD_NON_CRITICAL_STR))) {
-          switch (Index2) {
-          case SENSOR_TYPE_PERCENTAGE_REMAINING:
-            // Only percentage remaining sensor got lower non-critical threshold
-            pTempBuff = GetSensorValue(DimmSensorsSet[Index2].NonCriticalThreshold, DimmSensorsSet[Index2].Type);
-            break;
-          default:
-            pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-            break;
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, LOWER_THRESHOLD_NON_CRITICAL_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          UpperThresholdNonCritical
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, UPPER_THRESHOLD_NON_CRITICAL_STR))) {
-          switch (Index2) {
-          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-          case SENSOR_TYPE_MEDIA_TEMPERATURE:
-            // Only Controller/Media temperature sensor got upper non-critical threshold
-            pTempBuff = GetSensorValue(DimmSensorsSet[Index2].NonCriticalThreshold, DimmSensorsSet[Index2].Type);
-            break;
-          default:
-            pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-            break;
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, UPPER_THRESHOLD_NON_CRITICAL_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          LowerThresholdCritical
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, LOWER_THRESHOLD_CRITICAL_STR))) {
-          switch (Index2) {
-          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-          case SENSOR_TYPE_MEDIA_TEMPERATURE:
-            // Only Media temperature sensor and Controller Temperature Sensor got lower critical threshold
-            pTempBuff = GetSensorValue(DimmSensorsSet[Index2].CriticalLowerThreshold, DimmSensorsSet[Index2].Type);
-            break;
-          default:
-            pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-            break;
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, LOWER_THRESHOLD_CRITICAL_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          UpperThresholdCritical
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, UPPER_THRESHOLD_CRITICAL_STR))) {
-          switch (Index2) {
-          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-          case SENSOR_TYPE_MEDIA_TEMPERATURE:
-        	  // Only Media temperature sensor and Controller Temperature Sensor got lower critical threshold
-            pTempBuff = GetSensorValue(DimmSensorsSet[Index2].CriticalUpperThreshold, DimmSensorsSet[Index2].Type);
-            break;
-          default:
-            pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-            break;
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, UPPER_THRESHOLD_CRITICAL_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          UpperThresholdFatal
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, UPPER_THRESHOLD_FATAL_STR))) {
-          switch (Index2) {
-          case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-          case SENSOR_TYPE_MEDIA_TEMPERATURE:
-            // Only Controller/Media temperature sensor got upper fatal threshold
-            pTempBuff = GetSensorValue(DimmSensorsSet[Index2].FatalThreshold, DimmSensorsSet[Index2].Type);
-            break;
-          default:
-            pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-            break;
-          }
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, UPPER_THRESHOLD_FATAL_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          SettableThresholds
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, SETABLE_THRESHOLDS_STR))) {
-          pTempBuff = SensorThresholdsToString(DimmSensorsSet[Index2].SettableThresholds);
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, SETABLE_THRESHOLDS_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          SupportedThresholds
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, SUPPORTED_THRESHOLDS_STR))) {
-          pTempBuff = SensorThresholdsToString(DimmSensorsSet[Index2].SupportedThresholds);
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL, SUPPORTED_THRESHOLDS_STR, pTempBuff);
-          FREE_POOL_SAFE(pTempBuff);
-        }
-
-        /**
-          Enabled
-        **/
-        if (!DisplayOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, ENABLED_STATE_STR))) {
-          Print(FORMAT_6SPACE_STR_EQ FORMAT_STR_NL,
-              ENABLED_STATE_STR,
-              SensorEnabledStateToString(DimmSensorsSet[Index2].Enabled));
-        }
+      }
+      /**
+        State
+      **/
+      if (!pDispOptions->DisplayOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CURRENT_STATE_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_STATE_STR, SensorStateToString(DimmSensorsSet[SensorIndex].State));
       }
 
-      if (SensorToDisplay != SENSOR_TYPE_ALL) {
-        break;
+      /**
+        LowerThresholdNonCritical
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LOWER_THRESHOLD_NON_CRITICAL_STR))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_PERCENTAGE_REMAINING:
+          // Only spare capacity sensor got lower non-critical threshold
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].NonCriticalThreshold, DimmSensorsSet[SensorIndex].Type);
+          break;
+        default:
+          pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          break;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LOWER_THRESHOLD_NON_CRITICAL_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
       }
-    }
+
+      /**
+        UpperThresholdNonCritical
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, UPPER_THRESHOLD_NON_CRITICAL_STR))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Controller/Media temperature sensor got upper non-critical threshold
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].NonCriticalThreshold, DimmSensorsSet[SensorIndex].Type);
+          break;
+        default:
+          pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          break;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UPPER_THRESHOLD_NON_CRITICAL_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        LowerThresholdCritical
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LOWER_THRESHOLD_CRITICAL_STR))) {
+        switch (SensorIndex) {
+		case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Media temperature sensor got lower critical threshold
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].CriticalLowerThreshold, DimmSensorsSet[SensorIndex].Type);
+          break;
+        default:
+          pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          break;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LOWER_THRESHOLD_CRITICAL_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        UpperThresholdCritical
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, UPPER_THRESHOLD_CRITICAL_STR))) {
+        switch (SensorIndex) {
+		    case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Media temperature sensor got upper critical threshold
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].CriticalUpperThreshold, DimmSensorsSet[SensorIndex].Type);
+          break;
+        default:
+          pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          break;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UPPER_THRESHOLD_CRITICAL_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        UpperThresholdFatal
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, UPPER_THRESHOLD_FATAL_STR))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Controller/Media temperature sensor got upper fatal threshold
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].FatalThreshold, DimmSensorsSet[SensorIndex].Type);
+          break;
+        default:
+          pTempBuff = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          break;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UPPER_THRESHOLD_FATAL_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        SettableThresholds
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SETABLE_THRESHOLDS_STR))) {
+        pTempBuff = SensorThresholdsToString(DimmSensorsSet[SensorIndex].SettableThresholds);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SETABLE_THRESHOLDS_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        SupportedThresholds
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUPPORTED_THRESHOLDS_STR))) {
+        pTempBuff = SensorThresholdsToString(DimmSensorsSet[SensorIndex].SupportedThresholds);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SUPPORTED_THRESHOLDS_STR, pTempBuff);
+        FREE_POOL_SAFE(pTempBuff);
+      }
+
+      /**
+        Enabled
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ENABLED_STATE_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ENABLED_STATE_STR, SensorEnabledStateToString(DimmSensorsSet[SensorIndex].Enabled));
+      }
+      }
   }
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowSensorDataSetAttribs);
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
+  FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pDimmIds);
-  FREE_POOL_SAFE(pDisplayValues);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

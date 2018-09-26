@@ -218,26 +218,7 @@ void nvm_current_cmd(struct Command Command)
   g_cur_command = Command;
 }
 
-//temp, until uefi and os validation agree to
-//return code unification.
-EFI_STATUS uefi_to_os_ret_val(EFI_STATUS uefi_rc)
-{
-  EFI_STATUS rc = EFI_SUCCESS;
-  switch (uefi_rc)
-  {
-  case (0):
-    break;
-  case (2):
-    rc = 201;
-    break;
-  case (EFI_INVALID_PARAMETER):
-    rc = 201;
-    break;
-  default:
-    rc = 1;
-  }
-  return rc;
-}
+
 
 NVM_API int nvm_run_cli(int argc, char *argv[])
 {
@@ -247,10 +228,10 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   rc = init_protocol_shell_parameters_protocol(argc, argv);
   if (rc == EFI_INVALID_PARAMETER) {
     wprintf(L"Syntax Error: Exceeded input parameters limit.\n");
-    return (int)uefi_to_os_ret_val(rc);
+    return (int)UefiToOsReturnCode(rc);
   }
   else if (rc == EFI_LOAD_ERROR) {
-    return (int)uefi_to_os_ret_val(rc);
+    return (int)UefiToOsReturnCode(rc);
   }
 
   if (gOsShellParametersProtocol.StdOut == stdout)
@@ -265,7 +246,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     wprintf(L"Failed to intialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
     return nvm_status;
   }
-  rc = uefi_to_os_ret_val(UefiMain(0, NULL));
+  rc = UefiToOsReturnCode(UefiMain(0, NULL));
 
   //gOsShellParametersProtocol.StdOut will be overriden when
   //-o xml is used (temp hack)
@@ -3015,6 +2996,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   int job_index = 0;
   unsigned int i;
   int nvm_status = 0;
+  struct Command CmdStub;
 
   if (NULL == p_jobs)
     return NVM_ERR_INVALID_PARAMETER;
@@ -3044,7 +3026,8 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   ZeroMem(cmd, sizeof(FW_CMD));
   p_sanitize_status = (struct pt_payload_sanitize_dimm_status *)cmd->OutPayload;
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(&gNvmDimmDriverNvmDimmConfig, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  CmdStub.pPrintCtx = NULL;
+  ReturnCode = GetDimmList(&gNvmDimmDriverNvmDimmConfig, &CmdStub, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to get dimm list %d\n", (int)ReturnCode);
     FreePool(cmd);

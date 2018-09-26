@@ -13,6 +13,36 @@
 #include "Convert.h"
 #include "NvmTypes.h"
 
+#define DS_ROOT_PATH                        L"/DimmPerformanceList"
+#define DS_SOCKET_PATH                      L"/DimmPerformanceList/DimmPerformance"
+#define DS_SOCKET_INDEX_PATH                L"/DimmPerformanceList/DimmPerformance[%d]"
+
+ /*
+ *  PRINT LIST ATTRIBUTES
+ *  ---DimmId=0x0001---
+ *     MediaReads=0x000000000000000000000000cc3bb004
+ *     MediaWrites=0x00000000000000000000000049437ab4
+ *     ReadRequests=0x000000000000000000000000000c0008
+ *     ...
+ */
+PRINTER_LIST_ATTRIB ShowPerformanceListAttributes =
+{
+ {
+    {
+      L"DimmPerformance",                                   //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",        //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                           //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                           //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowPerformanceDataSetAttribs =
+{
+  &ShowPerformanceListAttributes,
+  NULL
+};
+
 EFI_STATUS
 ShowPerformance(IN struct Command *pCmd);
 
@@ -56,7 +86,8 @@ struct Command ShowPerformanceCommand =
         { L"", L"", L"", FALSE, ValueOptional },
     },
     L"Show performance statistics per DIMM",                            //!< help
-    ShowPerformance
+    ShowPerformance,
+    TRUE,                                               //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowPerformanceDisplayValues[] =
@@ -71,7 +102,7 @@ CHAR16 *mppAllowedShowPerformanceDisplayValues[] =
   DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
 };
 
-#define PERFORMANCE_DATA_FORMAT    L"=0x"FORMAT_UINT64_HEX FORMAT_UINT64_HEX"\n"
+#define PERFORMANCE_DATA_FORMAT    L"0x"FORMAT_UINT64_HEX FORMAT_UINT64_HEX
 
 
 EFI_STATUS GetDimmIdorDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
@@ -90,15 +121,15 @@ EFI_STATUS GetDimmIdorDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
 
 STATIC
 VOID
-PrintPerformanceData(UINT16 *DimmId, UINT32 DimmIdsNum, DIMM_INFO *AllDimmInfos,
+PrintPerformanceData(PRINT_CONTEXT *pPrinterCtx, UINT16 *DimmId, UINT32 DimmIdsNum, DIMM_INFO *AllDimmInfos,
     UINT32 DimmCount, DIMM_PERFORMANCE_DATA *pDimmsPerformanceData,
     BOOLEAN AllOptionSet, BOOLEAN DisplayOptionSet, CHAR16 *pDisplayOptionValue)
 {
   UINT32 AllDimmsIndex = 0;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-
-  SetDisplayInfo(L"DimmPerformance", ListView, NULL);
+  UINT32 DimmIndex = 0;
+  CHAR16 *pPath = NULL;
 
   // Account for multiple or no input dimms given
   for (AllDimmsIndex = 0; AllDimmsIndex < DimmCount; AllDimmsIndex++) {
@@ -115,64 +146,69 @@ PrintPerformanceData(UINT16 *DimmId, UINT32 DimmIdsNum, DIMM_INFO *AllDimmInfos,
       continue;
     }
 
-    Print(L"---" FORMAT_STR L"=" FORMAT_STR L"---\n", DIMM_ID_STR, DimmStr);
+    PRINTER_BUILD_KEY_PATH(&pPath, DS_SOCKET_INDEX_PATH, DimmIndex);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
 
     /** MediaReads **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_MEDIA_READS))) {
-      Print(DCPMM_PERFORMANCE_MEDIA_READS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_MEDIA_READS, PERFORMANCE_DATA_FORMAT, 
                   pDimmsPerformanceData[AllDimmsIndex].MediaReads.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].MediaReads.Uint64);
     }
 
     /** MediaWrites **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_MEDIA_WRITES))) {
-      Print(DCPMM_PERFORMANCE_MEDIA_WRITES PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_MEDIA_WRITES, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].MediaWrites.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].MediaWrites.Uint64);
     }
 
     /** ReadRequests **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_READ_REQUESTS))) {
-      Print(DCPMM_PERFORMANCE_READ_REQUESTS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_READ_REQUESTS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].ReadRequests.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].ReadRequests.Uint64);
     }
 
     /** WriteRequests **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_WRITE_REQUESTS))) {
-      Print(DCPMM_PERFORMANCE_WRITE_REQUESTS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_WRITE_REQUESTS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].WriteRequests.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].WriteRequests.Uint64);
     }
 
     /** TotalMediaReads **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_TOTAL_MEDIA_READS))) {
-      Print(DCPMM_PERFORMANCE_TOTAL_MEDIA_READS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_TOTAL_MEDIA_READS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].TotalMediaReads.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].TotalMediaReads.Uint64);
     }
 
     /** TotalMediaWrites **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES))) {
-      Print(DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].TotalMediaWrites.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].TotalMediaWrites.Uint64);
     }
 
     /** TotalReadRequests **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS))) {
-      Print(DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].TotalReadRequests.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].TotalReadRequests.Uint64);
     }
 
     /** TotalWriteRequests **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS))) {
-      Print(DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS PERFORMANCE_DATA_FORMAT,
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].TotalWriteRequests.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].TotalWriteRequests.Uint64);
     }
+
+    ++DimmIndex;
   }
+
+  FREE_POOL_SAFE(pPath);
 }
 
 /**
@@ -189,7 +225,6 @@ ShowPerformance(
   IN     struct Command *pCmd
 )
 {
-  COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 DimmCount;
@@ -204,46 +239,41 @@ ShowPerformance(
   BOOLEAN DisplayOptionSet = FALSE;
   CHAR16 *pPerformanceValueStr = NULL;
   UINT16 Index;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_ERR("pCmd parameter is NULL.\n");
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   // Make sure we can access the config protocol
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    NVDIMM_ERR("Communication with the device driver failed; ReturnCode 0x%x", ReturnCode);
     ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
-
-  // Initialize status structure
-  ReturnCode = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_ERR("Failed on InitializeCommandStatus; ReturnCode 0x%x", ReturnCode);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
+    ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Target value is not a valid Dimm ID");
       goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
@@ -269,19 +299,21 @@ ShowPerformance(
   ReturnCode = pNvmDimmConfigProtocol->GetDimmsPerformanceData(pNvmDimmConfigProtocol,
       &DimmCount, &pDimmsPerformanceData);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    NVDIMM_ERR("");
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // Print the data out
-  PrintPerformanceData(pDimmIds, DimmIdsNum, pDimms, DimmCount, pDimmsPerformanceData,
+  PrintPerformanceData(pPrinterCtx, pDimmIds, DimmIdsNum, pDimms, DimmCount, pDimmsPerformanceData,
       AllOptionSet, DisplayOptionSet, pPerformanceValueStr);
 
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPerformanceDataSetAttribs);
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimmsPerformanceData);
-  FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

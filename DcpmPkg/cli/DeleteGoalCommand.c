@@ -32,7 +32,8 @@ struct Command DeleteGoalCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
   L"Delete the region configuration goal from one or more DIMMs",        //!< help
-  DeleteGoal
+  DeleteGoal,
+  TRUE,                                                                  //!< enable print control support
 };
 
 
@@ -60,41 +61,42 @@ DeleteGoal(
   UINT32 SocketIdsCount = 0;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
-
+  PRINT_CONTEXT *pPrinterCtx = NULL;
   NVDIMM_ENTRY();
-
-  SetDisplayInfo(L"DeleteGoalResults", ResultsView, NULL);
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_DBG("pCmd parameter is NULL.\n");
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   /** Need NvmDimmConfigProtocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
       goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
@@ -103,7 +105,7 @@ DeleteGoal(
     pTargetValue = GetTargetValue(pCmd, SOCKET_TARGET);
     ReturnCode = GetUintsFromString(pTargetValue, &pSocketIds, &SocketIdsCount);
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
       NVDIMM_DBG("Failed on GetSocketsFromString");
       goto Finish;
     }
@@ -112,7 +114,7 @@ DeleteGoal(
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -122,9 +124,10 @@ DeleteGoal(
 
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
 
-  DisplayCommandStatus(L"Delete memory allocation goal", L" from", pCommandStatus);
+  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Delete memory allocation goal", L" from", pCommandStatus);
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pSocketIds);
   FREE_POOL_SAFE(pDimmIds);

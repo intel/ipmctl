@@ -18,6 +18,73 @@
 #include "event.h"
 #endif // OS_BUILD
 
+#define DS_ROOT_PATH                        L"/ConfigGoalList"
+#define DS_CONFIG_GOAL_PATH                 L"/ConfigGoalList/ConfigGoal"
+#define DS_CONFIG_GOAL_INDEX_PATH           L"/ConfigGoalList/ConfigGoal[%d]"
+
+ /*
+   *  PRINT LIST ATTRIBUTES
+   *  ---DimmID=0x0001---
+   *     SocketID=X
+   *     MemorySize=X
+   *     ...
+   */
+PRINTER_LIST_ATTRIB ShowGoalListAttributes =
+{
+ {
+    {
+      CONFIG_GOAL_NODE_STR,                                   //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",          //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                             //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                             //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+/*
+*  PRINTER TABLE ATTRIBUTES ( columns)
+*   SocketID | DimmID | MemorySize | AppDirect1Size | AppDirect2Size
+*   ================================================================
+*   0x0001   | X      |X           | X              | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowGoalTableAttributes =
+{
+  {
+    {
+      SOCKET_ID_STR,                                                //COLUMN HEADER
+      SOCKET_MAX_STR_WIDTH,                                         //COLUMN MAX STR WIDTH
+      DS_CONFIG_GOAL_PATH PATH_KEY_DELIM SOCKET_ID_STR              //COLUMN DATA PATH
+    },
+    {
+      DIMM_ID_STR,                                                  //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                                           //COLUMN MAX STR WIDTH
+      DS_CONFIG_GOAL_PATH PATH_KEY_DELIM DIMM_ID_STR                //COLUMN DATA PATH
+    },
+    {
+      MEMORY_SIZE_PROPERTY,                                         //COLUMN HEADER
+      MEMORY_SIZE_MAX_STR_WIDTH,                                    //COLUMN MAX STR WIDTH
+      DS_CONFIG_GOAL_PATH PATH_KEY_DELIM MEMORY_SIZE_PROPERTY       //COLUMN DATA PATH
+    },
+    {
+      APPDIRECT_1_SIZE_PROPERTY,                                    //COLUMN HEADER
+      MEMORY_SIZE_MAX_STR_WIDTH,                                    //COLUMN MAX STR WIDTH
+      DS_CONFIG_GOAL_PATH PATH_KEY_DELIM APPDIRECT_1_SIZE_PROPERTY  //COLUMN DATA PATH
+    },
+    {
+      APPDIRECT_2_SIZE_PROPERTY,                                    //COLUMN HEADER
+      MEMORY_SIZE_MAX_STR_WIDTH,                                    //COLUMN MAX STR WIDTH
+      DS_CONFIG_GOAL_PATH PATH_KEY_DELIM APPDIRECT_2_SIZE_PROPERTY  //COLUMN DATA PATH
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowGoalDataSetAttribs =
+{
+  &ShowGoalListAttributes,
+  &ShowGoalTableAttributes
+};
+
 /**
   Command syntax definition
 **/
@@ -39,7 +106,8 @@ struct Command ShowGoalCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
   L"Show region configuration goal stored on one or more DIMMs",        //!< help
-  ShowGoal
+  ShowGoal,
+  TRUE,                                               //!< enable print control support
 };
 
 
@@ -59,9 +127,11 @@ CHAR16 *mppAllowedShowGoalDisplayValues[] =
   STATUS_STR
 };
 
+
 /**
   Print results of show goal according to table view
 
+  @param[in] pCmd command from CLI
   @param[in] pRegionConfigsInfo - Region Config table to be printed
   @param[in] CurrentUnits The requested type of units to convert the capacity into
   @param[in] RegionConfigsCount - Number of elements in array
@@ -72,6 +142,7 @@ CHAR16 *mppAllowedShowGoalDisplayValues[] =
 
 EFI_STATUS
 ShowGoalPrintTableView(
+    IN     struct Command *pCmd,
     IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
     IN    UINT16 CurrentUnits,
     IN    UINT32 RegionConfigsCount,
@@ -86,6 +157,7 @@ ShowGoalPrintTableView(
   CHAR16 *pAppDirect1CapacityStr = NULL;
   CHAR16 *pAppDirect2CapacityStr = NULL;
   REGION_GOAL_PER_DIMM_INFO *pCurrentGoal = NULL;
+  CHAR16 *pPath = NULL;
 
   ZeroMem(DimmStr, sizeof(DimmStr));
 
@@ -93,14 +165,9 @@ ShowGoalPrintTableView(
     goto Finish;
   }
 
-  SetDisplayInfo(L"ConfigGoal", TableView, NULL);
-
-  NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_HEADER, SOCKET_ID_TABLE_HEADER, DIMM_ID_TABLE_HEADER,
-    MEMORY_SIZE_TABLE_HEADER, APPDIRECT_1_SIZE_TABLE_HEADER,
-    APPDIRECT_2_SIZE_TABLE_HEADER);
-
   for (Index = 0; Index < RegionConfigsCount; ++Index) {
     pCurrentGoal = &pRegionConfigsInfo[Index];
+    PRINTER_BUILD_KEY_PATH(&pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
 
     ReturnCode = GetPreferredDimmIdAsString(pCurrentGoal->DimmID, pCurrentGoal->DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
@@ -119,13 +186,11 @@ ShowGoalPrintTableView(
         CurrentUnits, TRUE, &pAppDirect2CapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
 
-    /** Print single row **/
-    NVDIMM_BUFFER_CONTROLLED_MSG(Buffered, FORMAT_SHOW_GOAL_SINGLE,
-        pCurrentGoal->SocketId,
-        DimmStr,
-        pVolatileCapacityStr,
-        pAppDirect1CapacityStr,
-        pAppDirect2CapacityStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pCurrentGoal->SocketId);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, DIMM_ID_STR, DimmStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, MEMORY_SIZE_PROPERTY, pVolatileCapacityStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY, pAppDirect1CapacityStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_2_SIZE_PROPERTY, pAppDirect2CapacityStr);
 
     FREE_POOL_SAFE(pVolatileCapacityStr);
     FREE_POOL_SAFE(pAppDirect1CapacityStr);
@@ -133,12 +198,16 @@ ShowGoalPrintTableView(
   }
 
 Finish:
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pCmd->pPrintCtx, DS_ROOT_PATH, &ShowGoalDataSetAttribs);
+  FREE_POOL_SAFE(pPath);
   return ReturnCode;
 }
 
 /**
   Print results of show goal according to detailed view
 
+  @param[in] pCmd command from CLI
   @param[in] pRegionConfigsInfo - Region Config table to be printed
   @param[in] RegionConfigsCount - Number of elements in array
   @param[in] AllOptionSet - Print all display options
@@ -151,6 +220,7 @@ Finish:
 **/
 EFI_STATUS
 ShowGoalPrintDetailedView(
+  IN    struct Command *pCmd,
   IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
   IN    UINT32 RegionConfigsCount,
   IN    BOOLEAN AllOptionSet,
@@ -167,10 +237,9 @@ ShowGoalPrintDetailedView(
   CHAR16 *pStatusString = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   CHAR16 *pCapacityStr = NULL;
+  CHAR16 *pPath = NULL;
 
   ZeroMem(DimmStr, sizeof(DimmStr));
-
-  SetDisplayInfo(L"ConfigGoal", ListView, L"=");
 
   if (pRegionConfigsInfo == NULL || (DisplayOptionSet && pDisplayValues == NULL)) {
     goto Finish;
@@ -179,6 +248,8 @@ ShowGoalPrintDetailedView(
   for (Index = 0; Index < RegionConfigsCount; ++Index) {
     pCurrentGoal = &pRegionConfigsInfo[Index];
 
+    PRINTER_BUILD_KEY_PATH(&pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
+
     /* always print dimmID */
     /** Dimm ID **/
     ReturnCode = GetPreferredDimmIdAsString(pCurrentGoal->DimmID, pCurrentGoal->DimmUid,
@@ -186,74 +257,76 @@ ShowGoalPrintDetailedView(
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
-    Print(L"---" FORMAT_STR L"=" FORMAT_STR L"---\n", DIMM_ID_STR, DimmStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, DIMM_ID_STR, DimmStr);
 
     /** Socket Id **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-      Print(L"   " FORMAT_STR L"=0x%04x\n", SOCKET_ID_STR, pCurrentGoal->SocketId);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pCurrentGoal->SocketId);
     }
     /** Volatile Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_SIZE_PROPERTY))) {
       ReturnCode = MakeCapacityString(ROUNDDOWN(pCurrentGoal->VolatileSize, SIZE_1GB), CurrentUnits,
           TRUE, &pCapacityStr);
-      Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEMORY_SIZE_PROPERTY, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, MEMORY_SIZE_PROPERTY, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect1Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SIZE_PROPERTY))) {
       TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[0], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      Print((pCurrentGoal->InterleaveSetType[0] == MIRRORED ? L"   " FORMAT_STR L"=" FORMAT_STR L" Mirrored\n" : L"   " FORMAT_STR L"=" FORMAT_STR L"\n"),
-          APPDIRECT_1_SIZE_PROPERTY, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY, 
+                                         pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect1Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_INDEX_PROPERTY))) {
       if (pCurrentGoal->AppDirectSize[0] == 0) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_1_INDEX_PROPERTY, L"N/A");
+        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_1_INDEX_PROPERTY, NOT_APPLICABLE_SHORT_STR);
       } else {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_1_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[0]);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_INDEX_PROPERTY, FORMAT_INT32, pCurrentGoal->AppDirectIndex[0]);
       }
     }
     /** AppDirect1Settings **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SETTINGS_PROPERTY))) {
       InterleaveSettingsToString(pCurrentGoal->AppDirectSize[0], pCurrentGoal->NumberOfInterleavedDimms[0],
           pCurrentGoal->ImcInterleaving[0], pCurrentGoal->ChannelInterleaving[0], &pSettingsString);
-      Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_1_SETTINGS_PROPERTY, pSettingsString);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_1_SETTINGS_PROPERTY, pSettingsString);
       FREE_POOL_SAFE(pSettingsString);
     }
     /** AppDirect2Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_SIZE_PROPERTY))) {
       TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[1], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      Print((pCurrentGoal->InterleaveSetType[1] == MIRRORED ? L"   " FORMAT_STR L"=" FORMAT_STR L" Mirrored\n" : L"   " FORMAT_STR L"=" FORMAT_STR L"\n"),
-          APPDIRECT_2_SIZE_PROPERTY, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_SIZE_PROPERTY,
+        pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect2Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_INDEX_PROPERTY))) {
       if (pCurrentGoal->AppDirectSize[1] == 0) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_2_INDEX_PROPERTY, L"N/A");
+        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_2_INDEX_PROPERTY, NOT_APPLICABLE_SHORT_STR);
       } else {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, APPDIRECT_2_INDEX_PROPERTY, pCurrentGoal->AppDirectIndex[1]);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_INDEX_PROPERTY, FORMAT_INT32, pCurrentGoal->AppDirectIndex[1]);
       }
     }
     /** AppDirect2Settings **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_SETTINGS_PROPERTY))) {
       InterleaveSettingsToString(pCurrentGoal->AppDirectSize[1], pCurrentGoal->NumberOfInterleavedDimms[1],
           pCurrentGoal->ImcInterleaving[1], pCurrentGoal->ChannelInterleaving[1], &pSettingsString);
-      Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_2_SETTINGS_PROPERTY, pSettingsString);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_2_SETTINGS_PROPERTY, pSettingsString);
       FREE_POOL_SAFE(pSettingsString);
     }
     /** Status **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, STATUS_STR))) {
       pStatusString = GoalStatusToString(gNvmDimmCliHiiHandle, pCurrentGoal->Status);
-      Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, STATUS_STR, pStatusString);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, STATUS_STR, pStatusString);
       FREE_POOL_SAFE(pStatusString);
     }
-    Print(FORMAT_STR_NL, L"");
   }
 Finish:
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pCmd->pPrintCtx, DS_ROOT_PATH, &ShowGoalDataSetAttribs);
+  FREE_POOL_SAFE(pPath);
   return ReturnCode;
 }
 /**
@@ -289,6 +362,8 @@ ShowGoal(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   DISPLAY_PREFERENCES DisplayPreferences;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
 
   NVDIMM_ENTRY();
 
@@ -297,25 +372,47 @@ ShowGoal(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
+  if (NULL == pDispOptions) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowGoalDisplayValues,
+    ALLOWED_DISP_VALUES_COUNT(mppAllowedShowGoalDisplayValues), pDispOptions);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
+    goto Finish;
+  }
+
+  pDisplayValues = pDispOptions->pDisplayValues;
+  AllOptionSet = pDispOptions->AllOptionSet;
+  DisplayOptionSet = pDispOptions->DisplayOptionSet;
+
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    goto Finish;
   }
 
   /** Need NvmDimmConfigProtocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -323,14 +420,14 @@ ShowGoal(
   // check targets
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
       goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
@@ -340,7 +437,7 @@ ShowGoal(
     pTargetValue = GetTargetValue(pCmd, SOCKET_TARGET);
     ReturnCode = GetUintsFromString(pTargetValue, &pSocketIds, &SocketIdsCount);
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
       NVDIMM_DBG("Failed on GetUintsFromString");
       goto Finish;
     }
@@ -348,8 +445,8 @@ ShowGoal(
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -365,35 +462,12 @@ ShowGoal(
     UnitsToDisplay = UnitsOption;
   }
 
-  /** if the all option was specified **/
-  if (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT)) {
-    AllOptionSet = TRUE;
-  }
-
-  /** if the display option was specified **/
-  pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION);
-  if (pDisplayValues) {
-    DisplayOptionSet = TRUE;
-  } else {
-    pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION_SHORT);
-    if (pDisplayValues) {
-      DisplayOptionSet = TRUE;
-    }
-  }
-
-  /** make sure they didn't specify both the all and display options **/
-  if (AllOptionSet && DisplayOptionSet) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_WARN("Options used together");
-    Print(FORMAT_STR_NL, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
-    goto Finish;
-  }
 
   if (ContainsValue(pDisplayValues, APPDIRECT_1_INDEX_PROPERTY) &&
       ContainsValue(pDisplayValues, APPDIRECT_INDEX_PROPERTY)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Values used together");
-    Print(FORMAT_STR_NL, CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER);
     goto Finish;
   }
 
@@ -401,18 +475,8 @@ ShowGoal(
       ContainsValue(pDisplayValues, APPDIRECT_SIZE_PROPERTY)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Values used together");
-    Print(FORMAT_STR_NL, CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER);
     goto Finish;
-  }
-
-  /** check that the display parameters are correct (if display option is set) **/
-  if (DisplayOptionSet) {
-    ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowGoalDisplayValues,
-      ALLOWED_DISP_VALUES_COUNT(mppAllowedShowGoalDisplayValues));
-    if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
-      goto Finish;
-    }
   }
 
   /** Fetch goal configs from driver **/
@@ -429,35 +493,42 @@ ShowGoal(
 
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Get region configuration goal", L" on", pCommandStatus);
+    PrinterSetCommandStatus(pPrinterCtx, ReturnCode, CLI_GET_REGION_MSG, CLI_GET_REGION_ON_MSG, pCommandStatus);
     goto Finish;
   }
 
   if (RegionConfigsCount == 0) {
-    Print(L"There are no goal configs defined in the system.\nPlease use 'show -region' to display currently valid persistent memory regions.\n");
+    //WA, to ensure ESX prints a message when no entries are found.
+    if (PRINTER_ESX_FORMAT_ENABLED(pPrinterCtx)) {
+      PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_NO_GOALS_MSG);
+    }
+    else {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_NO_GOALS_MSG);
+    }
     goto Finish;
   }
 
   if (!DisplayOptionSet && !AllOptionSet) {
     /** Default table view **/
-    ReturnCode = ShowGoalPrintTableView(RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, TRUE);
+    ReturnCode = ShowGoalPrintTableView(pCmd, RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, TRUE);
   } else {
     /** Detailed view **/
-    ReturnCode = ShowGoalPrintDetailedView(RegionConfigsInfo, RegionConfigsCount, AllOptionSet,
+    ReturnCode = ShowGoalPrintDetailedView(pCmd, RegionConfigsInfo, RegionConfigsCount, AllOptionSet,
                      DisplayOptionSet, UnitsToDisplay, pDisplayValues);
   }
 
   if (!EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, L"A reboot is required to process new memory allocation goals.");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_REBOOT_REQUIRED_MSG);
   }
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pSocketIds);
   FREE_POOL_SAFE(pSettingsString);
-  FREE_POOL_SAFE(pDisplayValues);
+  FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

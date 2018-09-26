@@ -17,6 +17,123 @@
 #include <NvmWorkarounds.h>
 #include <ShowTopologyCommand.h>
 #include <NvmHealth.h>
+#include <DataSet.h>
+#include <Printer.h>
+
+#define DS_ROOT_PATH                      L"/DimmList"
+#define DS_DIMM_PATH                      L"/DimmList/Dimm"
+#define DS_DIMM_INDEX_PATH                L"/DimmList/Dimm[%d]"
+
+#define AR_STR                            L"AR"
+
+ /*
+ *  PRINT LIST ATTRIBUTES
+ *  ---DimmId=0x0001---
+ *     Capacity=125.7 GiB
+ *     LockState=Locked
+ *     HealthState=Healthy
+ *     ...
+ */
+PRINTER_LIST_ATTRIB ShowDimmListAttributes =
+{
+ {
+    {
+      DIMM_NODE_STR,                                        //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",        //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                           //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                           //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+#ifdef OS_BUILD
+/*
+*  PRINTER TABLE ATTRIBUTES (6 columns)
+*   DimmID | Capacity | HealthState | ActionRequired | LockState | FWVersion
+*   ========================================================================
+*   0x0001 | X        | X           | X              | X         | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
+{
+  {
+    {
+      DIMM_ID_STR,                                //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                         //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR     //COLUMN DATA PATH
+    },
+    {
+      CAPACITY_STR,                               //COLUMN HEADER
+      CAPACITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM CAPACITY_STR    //COLUMN DATA PATH
+    },
+    {
+      HEALTH_STR,                                 //COLUMN HEADER
+      HEALTH_MAX_STR_WIDTH,                       //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
+    },
+    {
+      AR_STR,                                               //COLUMN HEADER
+      AR_MAX_STR_WIDTH,                                     //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM ACTION_REQUIRED_STR       //COLUMN DATA PATH
+    },
+    {
+      SECURITY_STR,                               //COLUMN HEADER
+      SECURITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM SECURITY_STR    //COLUMN DATA PATH
+    },
+    {
+      FW_VER_STR,                                 //COLUMN HEADER
+      FW_VERSION_MAX_STR_WIDTH,                   //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM FW_VER_STR      //COLUMN DATA PATH
+    }
+  }
+};
+#else
+/*
+*  PRINTER TABLE ATTRIBUTES (6 columns)
+*   DimmID | Capacity | LockState | HealthState | FWVersion
+*   ========================================================
+*   0x0001 | X        | X         | X           | X
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
+{
+  {
+    {
+      DIMM_ID_STR,                                //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                         //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR     //COLUMN DATA PATH
+    },
+    {
+      CAPACITY_STR,                               //COLUMN HEADER
+      CAPACITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM CAPACITY_STR    //COLUMN DATA PATH
+    },
+    {
+      SECURITY_STR,                               //COLUMN HEADER
+      SECURITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM SECURITY_STR    //COLUMN DATA PATH
+    },
+    {
+      HEALTH_STR,                                 //COLUMN HEADER
+      HEALTH_MAX_STR_WIDTH,                       //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
+    },
+    {
+      FW_VER_STR,                                 //COLUMN HEADER
+      FW_VERSION_MAX_STR_WIDTH,                   //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM FW_VER_STR      //COLUMN DATA PATH
+    }
+  }
+};
+#endif
+
+PRINTER_DATA_SET_ATTRIBS ShowDimmDataSetAttribs =
+{
+  &ShowDimmListAttributes,
+  &ShowDimmTableAttributes
+};
 
 /* Command syntax definition */
 struct Command ShowDimmsCommand =
@@ -40,9 +157,10 @@ struct Command ShowDimmsCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},               //!< properties
-  L"Show information about one or more DIMMs.", //!< help
-  ShowDimms                                              //!< run function
+  {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
+  L"Show information about one or more DIMMs.",           //!< help
+  ShowDimms,                                              //!< run function
+  TRUE,                                                   //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowDimmsDisplayValues[] =
@@ -215,13 +333,10 @@ ShowDimms(
   CHAR16 *pFormFactorStr = NULL;
   CHAR16 *pDimmsValue = NULL;
   CHAR16 TmpFwVerString[MAX(FW_VERSION_LEN, FW_API_VERSION_LEN)];
-  UINT32 Index = 0;
+  UINT32 DimmIndex = 0;
   UINT32 Index2 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
-  BOOLEAN AllOptionSet = FALSE;
-  BOOLEAN DisplayOptionSet = FALSE;
-  CHAR16 *pDisplayValues = NULL;
   BOOLEAN Found = FALSE;
   BOOLEAN ShowAll = FALSE;
   BOOLEAN ContainSocketTarget = FALSE;
@@ -231,7 +346,6 @@ ShowDimms(
   CHAR16 *pDimmErrStr = NULL;
   LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatusDetails;
   DISPLAY_PREFERENCES DisplayPreferences;
-  CHAR16 *pFormat = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   BOOLEAN ByteAddressable = FALSE;
   BOOLEAN BlockAddressable = FALSE;
@@ -239,9 +353,9 @@ ShowDimms(
   UINT64  BootStatusRegister = 0;
   UINT32  Index3 = 0;
   CHAR16 *pSteppingStr = NULL;
-#ifdef OS_BUILD
-  CHAR16 *pActionReqStr = NULL;
-#endif // OS_BUILD
+  CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
@@ -252,9 +366,26 @@ ShowDimms(
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_DBG("pCmd parameter is NULL.\n");
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
+  if (NULL == pDispOptions) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowDimmsDisplayValues,
+    ALLOWED_DISP_VALUES_COUNT(mppAllowedShowDimmsDisplayValues), pDispOptions);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
+    goto Finish;
+  }
+
   ContainSocketTarget = ContainTarget(pCmd, SOCKET_TARGET);
 
   /**
@@ -266,39 +397,15 @@ ShowDimms(
     if (EFI_ERROR(ReturnCode)) {
       /** Error Code returned by function above **/
       NVDIMM_DBG("GetUintsFromString returned error");
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET);
       goto Finish;
     }
   }
 
-  /** if the all option was specified **/
-  if (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT)) {
-    AllOptionSet = TRUE;
-  }
-  /** if the display option was specified **/
-  pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION);
-  if (pDisplayValues) {
-    DisplayOptionSet = TRUE;
-  } else {
-    pDisplayValues = getOptionValue(pCmd, DISPLAY_OPTION_SHORT);
-    if (pDisplayValues) {
-      DisplayOptionSet = TRUE;
-    }
-  }
-
-  /** make sure they didn't specify both the all and display options **/
-  if (AllOptionSet && DisplayOptionSet) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_WARN("Options used together");
-    Print(FORMAT_STR, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
-    goto Finish;
-  }
-
-
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -317,43 +424,33 @@ ShowDimms(
   /** make sure we can access the config protocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
 
-  /** check that the display parameters are correct (if display option is set) **/
-  if (DisplayOptionSet) {
-    ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowDimmsDisplayValues,
-        ALLOWED_DISP_VALUES_COUNT(mppAllowedShowDimmsDisplayValues));
-    if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
-      goto Finish;
-    }
-  }
-
   ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   if (0 == DimmCount && 0 == UninitializedDimmCount) {
-    Print(FORMAT_STR_NL, CLI_INFO_NO_DIMMS);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     goto Finish;
   }
 
@@ -362,7 +459,7 @@ ShowDimms(
 
   if (pDimms == NULL || pUninitializedDimms == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -371,7 +468,7 @@ ShowDimms(
       DIMM_INFO_CATEGORY_SECURITY | DIMM_INFO_CATEGORY_SMART_AND_HEALTH, pDimms);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
     goto Finish;
   }
@@ -381,7 +478,7 @@ ShowDimms(
 
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
     goto Finish;
   }
@@ -396,7 +493,7 @@ ShowDimms(
     CopyMem_S(pAllDimms, sizeof(*pAllDimms) * (DimmCount), pDimms, sizeof(*pDimms) * DimmCount);
     CopyMem_S(&pAllDimms[DimmCount], sizeof(*pAllDimms) * (UninitializedDimmCount), pUninitializedDimms, sizeof(*pUninitializedDimms) * UninitializedDimmCount);
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pDimmsValue, pAllDimms, DimmCount + UninitializedDimmCount, &pDimmIds,
+    ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pAllDimms, DimmCount + UninitializedDimmCount, &pDimmIds,
         &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Target value is not a valid Dimm ID");
@@ -406,105 +503,64 @@ ShowDimms(
 
   if (SocketsNum > 0) {
     Found = FALSE;
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (ContainUint(pSocketIds, SocketsNum, pDimms[Index].SocketId)) {
+    for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
+      if (ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
         Found = TRUE;
         break;
       }
     }
 
     if (!Found) {
-      Print(FORMAT_STR_NL, CLI_ERR_NO_DIMMS_ON_SOCKET);
       ReturnCode = EFI_NOT_FOUND;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_DIMMS_ON_SOCKET);
       NVDIMM_DBG("No DIMMs on provided Socket");
       goto Finish;
     }
   }
 
   /** display a summary table of all dimms **/
-  if (!AllOptionSet && !DisplayOptionSet) {
-    SetDisplayInfo(L"DIMM", TableView, NULL);
+  if (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) {
 
-    pFormat = FORMAT_SHOW_DIMM_HEADER;
-#ifdef OS_BUILD
-    Print(pFormat,
-        DIMM_ID_STR,
-        CAPACITY_STR,
-        HEALTH_STR,
-        ACTION_REQ_STR,
-        SECURITY_STR,
-        FW_VER_STR);
-#else // OS_BUILD
-    Print(pFormat,
-        DIMM_ID_STR,
-        CAPACITY_STR,
-        SECURITY_STR,
-        HEALTH_STR,
-        FW_VER_STR);
-#endif // OS_BUILD
-
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pDimms[Index].SocketId)) {
+    for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
+      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
         continue;
       }
 
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
         continue;
       }
 
-      ReturnCode = MakeCapacityString(pDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[Index].HealthState);
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
-      if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
+      ReturnCode = MakeCapacityString(pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
+
+      if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
         pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
       } else {
-        pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[Index].SecurityState);
+        pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityState);
       }
 
-      ConvertFwVersion(TmpFwVerString, pDimms[Index].FwVer.FwProduct,
-          pDimms[Index].FwVer.FwRevision, pDimms[Index].FwVer.FwSecurityVersion, pDimms[Index].FwVer.FwBuild);
+      ConvertFwVersion(TmpFwVerString, pDimms[DimmIndex].FwVer.FwProduct,
+          pDimms[DimmIndex].FwVer.FwRevision, pDimms[DimmIndex].FwVer.FwSecurityVersion, pDimms[DimmIndex].FwVer.FwBuild);
 
-      ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+      ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid,
           DimmStr, MAX_DIMM_UID_LENGTH);
       pDimmErrStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
 
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, pSecurityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
+
 #ifdef OS_BUILD
-      pActionReqStr = CatSPrint(NULL, FORMAT_DEC, pDimms[Index].ActionRequired);
-      pFormat = FORMAT_SHOW_DIMM_CONTENT;
-      if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-        Print(pFormat,
-          pDimmErrStr,
-          pCapacityStr,
-          pHealthStr,
-          pActionReqStr,
-          pSecurityStr,
-          TmpFwVerString);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTION_REQUIRED_STR, FORMAT_DEC, pDimms[DimmIndex].ActionRequired);
+#endif
+      if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, pDimmErrStr);
       } else {
-        Print(pFormat,
-          DimmStr,
-          pCapacityStr,
-          pHealthStr,
-          pActionReqStr,
-          pSecurityStr,
-          TmpFwVerString);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
       }
-#else // OS_BUILD
-      if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-        Print(pFormat,
-          pDimmErrStr,
-          pCapacityStr,
-          pSecurityStr,
-          pHealthStr,
-          TmpFwVerString);
-      } else {
-        Print(pFormat,
-          DimmStr,
-          pCapacityStr,
-          pSecurityStr,
-          pHealthStr,
-          TmpFwVerString);
-      }
-#endif // OS_BUILD
       FREE_POOL_SAFE(pDimmErrStr);
       FREE_POOL_SAFE(pHealthStr);
       FREE_POOL_SAFE(pSecurityStr);
@@ -513,68 +569,51 @@ ShowDimms(
 
     /** show dimms from Uninitialized list **/
 
-    for (Index = 0; Index < UninitializedDimmCount; Index++) {
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pUninitializedDimms[Index].SmbusAddress.Cpu)) {
+    for (DimmIndex = 0; DimmIndex < UninitializedDimmCount; DimmIndex++) {
+      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pUninitializedDimms[DimmIndex].SmbusAddress.Cpu)) {
         continue;
       }
 
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pUninitializedDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pUninitializedDimms[DimmIndex].DimmID)) {
         continue;
       }
 
-      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[Index].HealthState);
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmCount + DimmIndex);
+
+      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].HealthState);
 
       ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-        pUninitializedDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
+        pUninitializedDimms[DimmIndex].HealthStatusReason, &pHealthStateReasonStr);
       if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
 
-      ReturnCode = GetPreferredDimmIdAsString(pUninitializedDimms[Index].DimmHandle, NULL, DimmStr,
+      ReturnCode = GetPreferredDimmIdAsString(pUninitializedDimms[DimmIndex].DimmHandle, NULL, DimmStr,
           MAX_DIMM_UID_LENGTH);
       pDimmErrStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
 
-      ConvertFwVersion(TmpFwVerString, pUninitializedDimms[Index].FwVer.FwProduct,
-          pUninitializedDimms[Index].FwVer.FwRevision, pUninitializedDimms[Index].FwVer.FwSecurityVersion,
-          pUninitializedDimms[Index].FwVer.FwBuild);
+      ConvertFwVersion(TmpFwVerString, pUninitializedDimms[DimmIndex].FwVer.FwProduct,
+          pUninitializedDimms[DimmIndex].FwVer.FwRevision, pUninitializedDimms[DimmIndex].FwVer.FwSecurityVersion,
+          pUninitializedDimms[DimmIndex].FwVer.FwBuild);
 
-      TempReturnCode = MakeCapacityString(pUninitializedDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      TempReturnCode = MakeCapacityString(pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
+
+      if (pUninitializedDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, pDimmErrStr);
+      }
+      else {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      }
+
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, NOT_APPLICABLE_SHORT_STR);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
+
 #ifdef OS_BUILD
-      if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-        Print(pFormat,
-          pDimmErrStr,
-          pCapacityStr,
-          pHealthStr,
-          L"N/A",
-          L"",
-          TmpFwVerString);
-      } else {
-        Print(pFormat,
-          DimmStr,
-          pCapacityStr,
-          pHealthStr,
-          L"N/A",
-          L"",
-          TmpFwVerString);
-      }
-#else // OS_BUILD
-      if (pUninitializedDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-        Print(pFormat,
-          pDimmErrStr,
-          pCapacityStr,
-          L"",
-          pHealthStr,
-          TmpFwVerString);
-      } else {
-        Print(pFormat,
-          DimmStr,
-          pCapacityStr,
-          L"",
-          pHealthStr,
-          TmpFwVerString);
-      }
-#endif // OS_BUILD
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ACTION_REQUIRED_STR, NOT_APPLICABLE_SHORT_STR);
+#endif
       FREE_POOL_SAFE(pDimmErrStr);
       FREE_POOL_SAFE(pHealthStr);
       FREE_POOL_SAFE(pCapacityStr);
@@ -584,629 +623,625 @@ ShowDimms(
 
   /** display detailed view **/
   else {
-    SetDisplayInfo(L"DIMM", ListView, L"=");
-
     // Collect all properties if the user calls "show -a -dimm"
     ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
         DIMM_INFO_CATEGORY_ALL, pDimms);
-    ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;
+    ShowAll = (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) || pDispOptions->AllOptionSet;
 
     /** show dimms from Initialized list **/
-    for (Index = 0; Index < DimmCount; Index++) {
+    for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
       /** matching pid **/
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
         continue;
       }
 
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pDimms[Index].SocketId)) {
+      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
         continue;
       }
+
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
       /** always print the DimmID **/
-      ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid, DimmStr,
+      ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr,
           MAX_DIMM_UID_LENGTH);
-      if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-        Print(L"---" FORMAT_STR L"=" FORMAT_STR L"---\n", DIMM_ID_STR, UNKNOWN_ATTRIB_VAL);
+      if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, UNKNOWN_ATTRIB_VAL);
       } else {
-        Print(L"---" FORMAT_STR L"=" FORMAT_STR L"---\n", DIMM_ID_STR, DimmStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
       }
 
       /** Capacity **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
-        ReturnCode = MakeCapacityString(pDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, CAPACITY_STR, pCapacityStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CAPACITY_STR))) {
+        ReturnCode = MakeCapacityString(pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
         FREE_POOL_SAFE(pCapacityStr);
       }
 
       /** Security State **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SECURITY_STR))) {
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SECURITY_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
           pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         } else {
-          pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[Index].SecurityState);
+          pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityState);
         }
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SECURITY_STR, pSecurityStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, pSecurityStr);
         FREE_POOL_SAFE(pSecurityStr);
       }
 
       /** Health State **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[Index].HealthState);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STR))) {
+        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
 
       /** Health State Reason**/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STATE_REASON_STR))) {
         ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-          pDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
+          pDimms[DimmIndex].HealthStatusReason, &pHealthStateReasonStr);
         if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
         FREE_POOL_SAFE(pHealthStateReasonStr);
       }
 
       /** FwVersion **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FW_VER_STR))) {
-        ConvertFwVersion(TmpFwVerString, pDimms[Index].FwVer.FwProduct, pDimms[Index].FwVer.FwRevision,
-          pDimms[Index].FwVer.FwSecurityVersion, pDimms[Index].FwVer.FwBuild);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_VER_STR, TmpFwVerString);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_VER_STR))) {
+        ConvertFwVersion(TmpFwVerString, pDimms[DimmIndex].FwVer.FwProduct, pDimms[DimmIndex].FwVer.FwRevision,
+          pDimms[DimmIndex].FwVer.FwSecurityVersion, pDimms[DimmIndex].FwVer.FwBuild);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
       }
 
       /** FwApiVersion **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FW_API_VER_STR))) {
-        ConvertFwApiVersion(TmpFwVerString, pDimms[Index].FwVer.FwApiMajor, pDimms[Index].FwVer.FwApiMinor);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_API_VER_STR, TmpFwVerString);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_API_VER_STR))) {
+        ConvertFwApiVersion(TmpFwVerString, pDimms[DimmIndex].FwVer.FwApiMajor, pDimms[DimmIndex].FwVer.FwApiMinor);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_API_VER_STR, TmpFwVerString);
       }
 
       /** InterfaceFormatCode **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, INTERFACE_FORMAT_CODE_STR))) {
-        Print(L"   " FORMAT_STR L"=", INTERFACE_FORMAT_CODE_STR);
-        if (pDimms[Index].InterfaceFormatCodeNum <= MAX_IFC_NUM) {
-          for (Index2 = 0; Index2 < pDimms[Index].InterfaceFormatCodeNum; Index2++) {
-            if (pDimms[Index].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_APP_DIRECT) {
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, INTERFACE_FORMAT_CODE_STR))) {
+        if (pDimms[DimmIndex].InterfaceFormatCodeNum <= MAX_IFC_NUM) {
+          CHAR16 *tmpIfc = NULL;
+          for (Index2 = 0; Index2 < pDimms[DimmIndex].InterfaceFormatCodeNum; Index2++) {
+            if (pDimms[DimmIndex].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_APP_DIRECT) {
               ByteAddressable = TRUE;
-            } else if (pDimms[Index].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_STORAGE) {
+            } else if (pDimms[DimmIndex].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_STORAGE) {
               BlockAddressable = TRUE;
             }
           }
 
           if (ByteAddressable) {
-            Print(L"0x%04x ", DCPMM_FMT_CODE_APP_DIRECT);
-            Print(FORMAT_CODE_APP_DIRECT_STR);
+            tmpIfc = CatSPrint(tmpIfc, FORMAT_HEX L" ", DCPMM_FMT_CODE_APP_DIRECT);
+            tmpIfc = CatSPrint(tmpIfc, FORMAT_CODE_APP_DIRECT_STR);
           }
 
-          if (pDimms[Index].InterfaceFormatCodeNum > 1) {
-            Print(L", ");
+          if (pDimms[DimmIndex].InterfaceFormatCodeNum > 1) {
+            tmpIfc = CatSPrint(tmpIfc, L", ");
           }
 
           if (BlockAddressable) {
-            Print(L"0x%04x ", FORMAT_CODE_STORAGE_STR);
-            Print(FORMAT_CODE_STORAGE_STR);
+            tmpIfc = CatSPrint(tmpIfc, FORMAT_HEX L" ", FORMAT_CODE_STORAGE_STR);
+            tmpIfc = CatSPrint(tmpIfc, FORMAT_CODE_STORAGE_STR);
           }
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, INTERFACE_FORMAT_CODE_STR, tmpIfc);
+          FREE_POOL_SAFE(tmpIfc);
         }
-        Print(L"\n");
       }
 
       /** Manageability **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANAGEABILITY_STR))) {
-        pManageabilityStr = ManageabilityToString(pDimms[Index].ManageabilityState);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MANAGEABILITY_STR, pManageabilityStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANAGEABILITY_STR))) {
+        pManageabilityStr = ManageabilityToString(pDimms[DimmIndex].ManageabilityState);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANAGEABILITY_STR, pManageabilityStr);
         FREE_POOL_SAFE(pManageabilityStr);
       }
 
       /** PhysicalID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PHYSICAL_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, PHYSICAL_ID_STR, pDimms[Index].DimmID);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PHYSICAL_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pDimms[DimmIndex].DimmID);
       }
 
       /** DimmHandle **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIMM_HANDLE_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, DIMM_HANDLE_STR, pDimms[Index].DimmHandle);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_HANDLE_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIMM_HANDLE_STR, FORMAT_HEX, pDimms[DimmIndex].DimmHandle);
       }
 
       /** DimmUID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIMM_UID_STR))) {
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_UID) {
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, DIMM_UID_STR, UNKNOWN_ATTRIB_VAL);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_UID_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_UID_STR, UNKNOWN_ATTRIB_VAL);
         } else {
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, DIMM_UID_STR, pDimms[Index].DimmUid);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_UID_STR, pDimms[DimmIndex].DimmUid);
         }
       }
 
       /** SocketId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SOCKET_ID_STR, pDimms[Index].SocketId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SOCKET_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR,FORMAT_HEX, pDimms[DimmIndex].SocketId);
       }
 
       /** MemoryControllerId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_CONTROLLER_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MEMORY_CONTROLLER_STR, pDimms[Index].ImcId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_CONTROLLER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, FORMAT_HEX, pDimms[DimmIndex].ImcId);
       }
 
       /** ChannelID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, CHANNEL_ID_STR, pDimms[Index].ChannelId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CHANNEL_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_ID_STR, FORMAT_HEX, pDimms[DimmIndex].ChannelId);
       }
 
       /** ChannelPos **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_POS_STR))) {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, CHANNEL_POS_STR, pDimms[Index].ChannelPos);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CHANNEL_POS_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_POS_STR, FORMAT_INT32, pDimms[DimmIndex].ChannelPos);
       }
 
       /** MemoryType **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_TYPE_STR))) {
-        pAttributeStr = MemoryTypeToStr(pDimms[Index].MemoryType);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEMORY_TYPE_STR, pAttributeStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_TYPE_STR))) {
+        pAttributeStr = MemoryTypeToStr(pDimms[DimmIndex].MemoryType);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pAttributeStr);
         FREE_POOL_SAFE(pAttributeStr);
       }
 
       /** ManufacturerStr **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_STR))) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MANUFACTURER_STR, pDimms[Index].ManufacturerStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURER_STR, pDimms[DimmIndex].ManufacturerStr);
       }
 
       /** VendorId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VENDOR_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, VENDOR_ID_STR, EndianSwapUint16(pDimms[Index].VendorId));
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, VENDOR_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, VENDOR_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].VendorId));
       }
 
       /** DeviceId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DEVICE_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, DEVICE_ID_STR, EndianSwapUint16(pDimms[Index].DeviceId));
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DEVICE_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DEVICE_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].DeviceId));
       }
 
       /** RevisionId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, REVISION_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, REVISION_ID_STR, pDimms[Index].Rid);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, REVISION_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, REVISION_ID_STR, FORMAT_HEX, pDimms[DimmIndex].Rid);
       }
 
       /** SubsytemVendorId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_VENDOR_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_VENDOR_ID_STR,
-          EndianSwapUint16(pDimms[Index].SubsystemVendorId));
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_VENDOR_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_VENDOR_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].SubsystemVendorId));
       }
 
       /** SubsytemDeviceId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_DEVICE_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_DEVICE_ID_STR,  pDimms[Index].SubsystemDeviceId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_DEVICE_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_DEVICE_ID_STR, FORMAT_HEX, pDimms[DimmIndex].SubsystemDeviceId);
       }
 
       /** SubsytemRevisionId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_REVISION_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_REVISION_ID_STR, pDimms[Index].SubsystemRid);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_REVISION_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_REVISION_ID_STR, FORMAT_HEX, pDimms[DimmIndex].SubsystemRid);
       }
 
       /** DeviceLocator **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DEVICE_LOCATOR_STR))) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, DEVICE_LOCATOR_STR, pDimms[Index].DeviceLocator);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DEVICE_LOCATOR_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pDimms[DimmIndex].DeviceLocator);
       }
 
       /** ManufacturingInfoValid **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURING_INFO_VALID))) {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, MANUFACTURING_INFO_VALID, pDimms[Index].ManufacturingInfoValid);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURING_INFO_VALID))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURING_INFO_VALID, FORMAT_INT32, pDimms[DimmIndex].ManufacturingInfoValid);
       }
 
       /** ManufacturingLocation **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURING_LOCATION))) {
-        if (pDimms[Index].ManufacturingInfoValid) {
-          Print(L"   " FORMAT_STR L"=0x%02x\n", MANUFACTURING_LOCATION, pDimms[Index].ManufacturingLocation);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURING_LOCATION))) {
+        if (pDimms[DimmIndex].ManufacturingInfoValid) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURING_LOCATION, FORMAT_HEX_PREFIX FORMAT_UINT8_HEX, pDimms[DimmIndex].ManufacturingLocation);
         } else {
-          Print(L"   " FORMAT_STR L"=N/A\n", MANUFACTURING_LOCATION);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_LOCATION, NOT_APPLICABLE_SHORT_STR);
         }
       }
 
       /** ManufacturingDate **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURING_DATE))) {
-        if (pDimms[Index].ManufacturingInfoValid) {
-          Print(L"   " FORMAT_STR L"=%02x-%02x\n", MANUFACTURING_DATE, pDimms[Index].ManufacturingDate & 0xFF,
-              (pDimms[Index].ManufacturingDate >> 8) & 0xFF);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURING_DATE))) {
+        if (pDimms[DimmIndex].ManufacturingInfoValid) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURING_DATE, FORMAT_SHOW_DIMM_MANU_DATE, pDimms[DimmIndex].ManufacturingDate & 0xFF, (pDimms[DimmIndex].ManufacturingDate >> 8) & 0xFF);
         } else {
-          Print(L"   " FORMAT_STR L"=N/A\n", MANUFACTURING_DATE);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_DATE, NOT_APPLICABLE_SHORT_STR);
         }
       }
 
       /** SerialNumber **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SERIAL_NUMBER_STR))) {
-        Print(L"   " FORMAT_STR L"=0x%08x\n", SERIAL_NUMBER_STR, EndianSwapUint32(pDimms[Index].SerialNumber));
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SERIAL_NUMBER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SERIAL_NUMBER_STR, FORMAT_HEX_PREFIX FORMAT_UINT32_HEX, EndianSwapUint32(pDimms[DimmIndex].SerialNumber));
       }
 
       /** PartNumber **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PART_NUMBER_STR))) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PART_NUMBER_STR, pDimms[Index].PartNumber);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PART_NUMBER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PART_NUMBER_STR, pDimms[DimmIndex].PartNumber);
       }
 
       /** BankLabel **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BANK_LABEL_STR))) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BANK_LABEL_STR, pDimms[Index].BankLabel);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BANK_LABEL_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BANK_LABEL_STR, pDimms[DimmIndex].BankLabel);
       }
 
       /** DataWidth **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DATA_WIDTH_STR))) {
-        Print(L"   " FORMAT_STR L"=%d b\n", DATA_WIDTH_STR, pDimms[Index].DataWidth);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DATA_WIDTH_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DATA_WIDTH_STR, FORMAT_INT32 L" " BYTE_STR, pDimms[DimmIndex].DataWidth);
       }
 
       /** TotalWidth **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, TOTAL_WIDTH_STR))) {
-        Print(L"   " FORMAT_STR L"=%d b\n", TOTAL_WIDTH_STR, pDimms[Index].TotalWidth);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TOTAL_WIDTH_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, TOTAL_WIDTH_STR, FORMAT_INT32 L" " BYTE_STR, pDimms[DimmIndex].TotalWidth);
       }
 
       /** Speed **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SPEED_STR))) {
-        Print(L"   " FORMAT_STR L"=%d MHz\n", SPEED_STR, pDimms[Index].Speed);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SPEED_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SPEED_STR, FORMAT_INT32 L" " MEGA_HERTZ_STR, pDimms[DimmIndex].Speed);
       }
 
       /** FormFactor **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FORM_FACTOR_STR))) {
-        pFormFactorStr = FormFactorToString(pDimms[Index].FormFactor);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FORM_FACTOR_STR, pFormFactorStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FORM_FACTOR_STR))) {
+        pFormFactorStr = FormFactorToString(pDimms[DimmIndex].FormFactor);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FORM_FACTOR_STR, pFormFactorStr);
         FREE_POOL_SAFE(pFormFactorStr);
       }
 
       /** If Dimm is Manageable, print rest of the attributes **/
-      if (pDimms[Index].ManageabilityState) {
+      if (pDimms[DimmIndex].ManageabilityState) {
         /** ManufacturerId **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MANUFACTURER_ID_STR))) {
-          Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MANUFACTURER_ID_STR,
-            EndianSwapUint16(pDimms[Index].ManufacturerId));
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURER_ID_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURER_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].ManufacturerId));
         }
 
         /** ControllerRevisionId **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CONTROLLER_REVISION_ID_STR))) {
-          pSteppingStr = ControllerRidToStr(pDimms[Index].ControllerRid);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CONTROLLER_REVISION_ID_STR))) {
+          pSteppingStr = ControllerRidToStr(pDimms[DimmIndex].ControllerRid);
           if (pSteppingStr != NULL) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, CONTROLLER_REVISION_ID_STR, pSteppingStr);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CONTROLLER_REVISION_ID_STR, pSteppingStr);
             FREE_POOL_SAFE(pSteppingStr);
           }
         }
 
         /** VolatileCapacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_MODE_CAPACITY_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_MODE_CAPACITY_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEMORY_MODE_CAPACITY_STR, pCapacityStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_MODE_CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);
         }
 
         /** AppDirectCapacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_MODE_CAPACITY_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, APPDIRECT_MODE_CAPACITY_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[Index].AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, APPDIRECT_MODE_CAPACITY_STR, pCapacityStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);
         }
 
         /** UnconfiguredCapacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, UNCONFIGURED_CAPACITY_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, UNCONFIGURED_CAPACITY_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[Index].UnconfiguredCapacity, UnitsToDisplay, TRUE,
+            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].UnconfiguredCapacity, UnitsToDisplay, TRUE,
                 &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, UNCONFIGURED_CAPACITY_STR, pCapacityStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UNCONFIGURED_CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);
         }
 
         /** InaccessibleCapacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, INACCESSIBLE_CAPACITY_STR))) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, INACCESSIBLE_CAPACITY_STR))) {
           KEEP_ERROR(ReturnCode, TempReturnCode);
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[Index].InaccessibleCapacity, UnitsToDisplay, TRUE,
+            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].InaccessibleCapacity, UnitsToDisplay, TRUE,
                 &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, INACCESSIBLE_CAPACITY_STR, pCapacityStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, INACCESSIBLE_CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);
         }
 
         /** ReservedCapacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, RESERVED_CAPACITY_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, RESERVED_CAPACITY_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[Index].ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, RESERVED_CAPACITY_STR, pCapacityStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, RESERVED_CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);
         }
 
         /** PackageSparingCapable **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_CAPABLE_STR))) {
-          Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_CAPABLE_STR, pDimms[Index].PackageSparingCapable);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PACKAGE_SPARING_CAPABLE_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PACKAGE_SPARING_CAPABLE_STR, FORMAT_INT32, pDimms[DimmIndex].PackageSparingCapable);
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_PACKAGE_SPARING) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_PACKAGE_SPARING) {
           /** PackageSparingEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PACKAGE_SPARING_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PackageSparesAvailable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PACKAGE_SPARES_AVAILABLE_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** PackageSparingEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARING_ENABLED_STR, pDimms[Index].PackageSparingEnabled);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PACKAGE_SPARING_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PACKAGE_SPARING_ENABLED_STR, FORMAT_INT32, pDimms[DimmIndex].PackageSparingEnabled);
           }
 
           /** PackageSparesAvailable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, PACKAGE_SPARES_AVAILABLE_STR, pDimms[Index].PackageSparesAvailable);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PACKAGE_SPARES_AVAILABLE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PACKAGE_SPARES_AVAILABLE_STR, FORMAT_INT32, pDimms[DimmIndex].PackageSparesAvailable);
           }
         }
 
         /** IsNew **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, IS_NEW_STR))) {
-          Print(FORMAT_3SPACE_STR_EQ_DEC_NL, IS_NEW_STR, pDimms[Index].IsNew);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, IS_NEW_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, IS_NEW_STR, FORMAT_INT32, pDimms[DimmIndex].IsNew);
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) {
           /** First fast refresh **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FIRST_FAST_REFRESH_PROPERTY, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FIRST_FAST_REFRESH_PROPERTY, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** First fast refresh **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, FIRST_FAST_REFRESH_PROPERTY, pDimms[Index].FirstFastRefresh);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, FIRST_FAST_REFRESH_PROPERTY, FORMAT_INT32, pDimms[DimmIndex].FirstFastRefresh);
           }
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_VIRAL_POLICY) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_VIRAL_POLICY) {
           /** ViralPolicyEnable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_POLICY_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, VIRAL_POLICY_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, VIRAL_POLICY_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VIRAL_POLICY_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** ViralStatus **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_STATE_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, VIRAL_STATE_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, VIRAL_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VIRAL_STATE_STR, UNKNOWN_ATTRIB_VAL);
           }
         }
         else {
           /** ViralPolicyEnable **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_POLICY_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, VIRAL_POLICY_STR, pDimms[Index].ViralPolicyEnable);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, VIRAL_POLICY_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, VIRAL_POLICY_STR, FORMAT_INT32, pDimms[DimmIndex].ViralPolicyEnable);
           }
 
           /** ViralStatus **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, VIRAL_STATE_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, VIRAL_STATE_STR, pDimms[Index].ViralStatus);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, VIRAL_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, VIRAL_STATE_STR, FORMAT_INT32, pDimms[DimmIndex].ViralStatus);
           }
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_POWER_MGMT) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_POWER_MGMT) {
           /** PeakPowerBudget **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PEAK_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** AvgPowerBudget **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, AVG_POWER_BUDGET_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** PeakPowerBudget **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PEAK_POWER_BUDGET_STR))) {
-            Print(L"   " FORMAT_STR L"=%d mW\n", PEAK_POWER_BUDGET_STR, pDimms[Index].PeakPowerBudget);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PEAK_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PEAK_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].PeakPowerBudget);
           }
 
           /** AvgPowerBudget **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, AVG_POWER_BUDGET_STR))) {
-            Print(L"   " FORMAT_STR L"=%d mW\n", AVG_POWER_BUDGET_STR, pDimms[Index].AvgPowerBudget);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].AvgPowerBudget);
           }
         }
 
         /** LastShutdownStatusDetails **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, LAST_SHUTDOWN_STATUS_STR))) {
-          LastShutdownStatusDetails.AsUint32 = pDimms[Index].LastShutdownStatusDetails;
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LAST_SHUTDOWN_STATUS_STR))) {
+          LastShutdownStatusDetails.AsUint32 = pDimms[DimmIndex].LastShutdownStatusDetails;
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
             pAttributeStr = LastShutdownStatusToStr(LastShutdownStatusDetails);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** LastShutdownTime **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, LAST_SHUTDOWN_TIME_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LAST_SHUTDOWN_TIME_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = GetTimeFormatString(pDimms[Index].LastShutdownTime);
+            pAttributeStr = GetTimeFormatString(pDimms[DimmIndex].LastShutdownTime);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, LAST_SHUTDOWN_TIME_STR, pAttributeStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LAST_SHUTDOWN_TIME_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** ModesSupported **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MODES_SUPPORTED_STR))) {
-          pAttributeStr = ModesSupportedToStr(pDimms[Index].ModesSupported);
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MODES_SUPPORTED_STR, pAttributeStr);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MODES_SUPPORTED_STR))) {
+          pAttributeStr = ModesSupportedToStr(pDimms[DimmIndex].ModesSupported);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MODES_SUPPORTED_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** SecurityCapabilities **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SECURITY_CAPABILITIES_STR))) {
-          pAttributeStr = SecurityCapabilitiesToStr(pDimms[Index].SecurityCapabilities);
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SECURITY_CAPABILITIES_STR, pAttributeStr);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SECURITY_CAPABILITIES_STR))) {
+          pAttributeStr = SecurityCapabilitiesToStr(pDimms[DimmIndex].SecurityCapabilities);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_CAPABILITIES_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** ConfigurationStatus **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DIMM_CONFIG_STATUS_STR))) {
-          pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[Index].ConfigStatus];
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, DIMM_CONFIG_STATUS_STR, pAttributeStr);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_CONFIG_STATUS_STR))) {
+          pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[DimmIndex].ConfigStatus];
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_CONFIG_STATUS_STR, pAttributeStr);
         }
 
         /** SKUViolation **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SKU_VIOLATION_STR))) {
-          pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[Index].ConfigStatus];
-          Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SKU_VIOLATION_STR, pDimms[Index].SKUViolation);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SKU_VIOLATION_STR))) {
+          pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[DimmIndex].ConfigStatus];
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SKU_VIOLATION_STR, FORMAT_INT32, pDimms[DimmIndex].SKUViolation);
         }
 
         /** ARSStatus **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ARS_STATUS_STR))) {
-          pAttributeStr = ARSStatusToStr(pDimms[Index].ARSStatus);
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ARS_STATUS_STR, pAttributeStr);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ARS_STATUS_STR))) {
+          pAttributeStr = ARSStatusToStr(pDimms[DimmIndex].ARSStatus);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ARS_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** OverwriteDimmStatus **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, OVERWRITE_STATUS_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_OVERWRITE_STATUS) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, OVERWRITE_STATUS_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_OVERWRITE_STATUS) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = OverwriteDimmStatusToStr(pDimms[Index].OverwriteDimmStatus);
+            pAttributeStr = OverwriteDimmStatusToStr(pDimms[DimmIndex].OverwriteDimmStatus);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, OVERWRITE_STATUS_STR, pAttributeStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, OVERWRITE_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
         /** AitDramEnabled **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, AIT_DRAM_ENABLED_STR))) {
-          if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, AIT_DRAM_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AIT_DRAM_ENABLED_STR))) {
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, AIT_DRAM_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, AIT_DRAM_ENABLED_STR, pDimms[Index].AitDramEnabled);
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AIT_DRAM_ENABLED_STR, FORMAT_INT32, pDimms[DimmIndex].AitDramEnabled);
           }
         }
 
         /** Boot Status **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR))) {
 
-          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[Index].DimmID, &BootStatusRegister, &BootStatusBitMask);
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &BootStatusRegister, &BootStatusBitMask);
           if (EFI_ERROR(ReturnCode)) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
             pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
           }
-          Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BOOT_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
         /** Boot Status Register **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
-          Print(L"   " FORMAT_STR L"=0x%08x_%08x\n", BOOT_STATUS_REGISTER_STR,
-            ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF) );
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, BOOT_STATUS_REGISTER_STR, FORMAT_HEX_PREFIX FORMAT_UINT32_HEX L"_" FORMAT_UINT32_HEX, ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF));
         }
 
-        if (pDimms[Index].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
           /** ErrorInjectionEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ERROR_INJECT_ENABLED_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ERROR_INJECT_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_INJECT_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_INJECT_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** MediaTemperatureInjectionEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_ENABLED_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEDIA_TEMP_INJ_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEDIA_TEMP_INJ_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEDIA_TEMP_INJ_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGERS_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SW_TRIGGERS_ENABLED_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersEnabledDetails **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_ENABLED_DETAILS_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SW_TRIGGER_ENABLED_DETAILS_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PoisonErrorInjectionsCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, POISON_ERR_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, POISON_ERR_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** PoisonErrorClearCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_CLR_CTR_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, POISON_ERR_CLR_CTR_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POISON_ERR_CLR_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, POISON_ERR_CLR_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** MediaTemperatureInjectionsCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_CTR_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, MEDIA_TEMP_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEDIA_TEMP_INJ_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEDIA_TEMP_INJ_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
 
           /** SoftwareTriggersCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_CTR_STR))) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_CTR_STR, UNKNOWN_ATTRIB_VAL);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SW_TRIGGER_CTR_STR, UNKNOWN_ATTRIB_VAL);
           }
         } else {
           /** ErrorInjectionEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ERROR_INJECT_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ERROR_INJECT_ENABLED_STR, pDimms[Index].ErrorInjectionEnabled);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_INJECT_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ERROR_INJECT_ENABLED_STR, FORMAT_INT32, pDimms[DimmIndex].ErrorInjectionEnabled);
           }
 
           /** MediaTemperatureInjectionEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, MEDIA_TEMP_INJ_ENABLED_STR,
-              pDimms[Index].MediaTemperatureInjectionEnabled);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEDIA_TEMP_INJ_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEDIA_TEMP_INJ_ENABLED_STR, FORMAT_INT32, pDimms[DimmIndex].MediaTemperatureInjectionEnabled);
           }
 
           /** SoftwareTriggersEnabled **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGERS_ENABLED_STR, pDimms[Index].SoftwareTriggersEnabled);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGERS_ENABLED_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SW_TRIGGERS_ENABLED_STR, FORMAT_INT32, pDimms[DimmIndex].SoftwareTriggersEnabled);
           }
 
           /** SoftwareTriggersEnabledDetails **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
-            pAttributeStr = SoftwareTriggersEnabledToStr(pDimms[Index].SoftwareTriggersEnabledDetails);
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, SW_TRIGGER_ENABLED_DETAILS_STR, pAttributeStr);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_ENABLED_DETAILS_STR))) {
+            pAttributeStr = SoftwareTriggersEnabledToStr(pDimms[DimmIndex].SoftwareTriggersEnabledDetails);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SW_TRIGGER_ENABLED_DETAILS_STR, pAttributeStr);
             FREE_POOL_SAFE(pAttributeStr);
           }
 
           /** PoisonErrorInjectionsCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POISON_ERR_INJ_CTR_STR, pDimms[Index].PoisonErrorInjectionsCounter);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POISON_ERR_INJ_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, POISON_ERR_INJ_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].PoisonErrorInjectionsCounter);
           }
 
           /** PoisonErrorClearCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, POISON_ERR_CLR_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, POISON_ERR_CLR_CTR_STR, pDimms[Index].PoisonErrorClearCounter);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POISON_ERR_CLR_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, POISON_ERR_CLR_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].PoisonErrorClearCounter);
           }
 
           /** MediaTemperatureInjectionsCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEDIA_TEMP_INJ_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, MEDIA_TEMP_INJ_CTR_STR, pDimms[Index].MediaTemperatureInjectionsCounter);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEDIA_TEMP_INJ_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEDIA_TEMP_INJ_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].MediaTemperatureInjectionsCounter);
           }
 
           /** SoftwareTriggersCounter **/
-          if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SW_TRIGGER_CTR_STR))) {
-            Print(FORMAT_3SPACE_STR_EQ_DEC_NL, SW_TRIGGER_CTR_STR, pDimms[Index].SoftwareTriggersCounter);
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_CTR_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SW_TRIGGER_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].SoftwareTriggersCounter);
           }
         }
 #ifdef OS_BUILD
     /** ActionRequired **/
-    if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQUIRED_STR))) {
-      Print(FORMAT_3SPACE_STR_EQ_DEC_NL, ACTION_REQUIRED_STR, pDimms[Index].ActionRequired);
+    if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTION_REQUIRED_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTION_REQUIRED_STR, FORMAT_INT32, pDimms[DimmIndex].ActionRequired);
     }
 
     /** ActionRequiredEvents **/
-    if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, ACTION_REQUIRED_EVENTS_STR))) {
-      Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, ACTION_REQUIRED_EVENTS_STR, L"N/A");
+    if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTION_REQUIRED_EVENTS_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ACTION_REQUIRED_EVENTS_STR, NOT_APPLICABLE_SHORT_STR);
     }
 #endif
       }
       else {
         for (Index3 = 0; Index3 < ALLOWED_DISP_VALUES_COUNT(pOnlyManageableAllowedDisplayValues); Index3++) {
-          if (ContainsValue(pDisplayValues, pOnlyManageableAllowedDisplayValues[Index3])) {
-            Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, pOnlyManageableAllowedDisplayValues[Index3], NOT_APPLICABLE_SHORT_STR);
+          if (ContainsValue(pDispOptions->pDisplayValues, pOnlyManageableAllowedDisplayValues[Index3])) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, pOnlyManageableAllowedDisplayValues[Index3], NOT_APPLICABLE_SHORT_STR);
           }
         }
       }
@@ -1214,125 +1249,130 @@ ShowDimms(
 
     /** show dimms from Uninitialized list **/
 
-    for (Index = 0; Index < UninitializedDimmCount; Index++) {
+    for (DimmIndex = 0; DimmIndex < UninitializedDimmCount; DimmIndex++) {
       /** matching pid **/
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pUninitializedDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pUninitializedDimms[DimmIndex].DimmID)) {
         continue;
       }
 
-      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pUninitializedDimms[Index].SmbusAddress.Cpu)) {
+      if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pUninitializedDimms[DimmIndex].SmbusAddress.Cpu)) {
         continue;
       }
 
-      /** always print the Dimm Handle **/
-      Print(L"---" FORMAT_STR L"=0x%04x---\n", DIMM_ID_STR, pUninitializedDimms[Index].DimmHandle);
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex + DimmCount);
+
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIMM_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].DimmHandle);
 
       /** Capacity **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
-        ReturnCode = MakeCapacityString(pUninitializedDimms[Index].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, CAPACITY_STR, pCapacityStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CAPACITY_STR))) {
+        ReturnCode = MakeCapacityString(pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
         FREE_POOL_SAFE(pCapacityStr);
       }
 
       /** Health State **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STR))) {
-        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[Index].HealthState);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STR, pHealthStr);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STR))) {
+        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].HealthState);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);
       }
       /** Health State reason**/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, HEALTH_STATE_REASON_STR))) {
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STATE_REASON_STR))) {
         ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmCliHiiHandle,
-          pUninitializedDimms[Index].HealthStatusReason, &pHealthStateReasonStr);
+          pUninitializedDimms[DimmIndex].HealthStatusReason, &pHealthStateReasonStr);
         if (pHealthStateReasonStr == NULL || EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STATE_REASON_STR, pHealthStateReasonStr);
         FREE_POOL_SAFE(pHealthStateReasonStr);
       }
 
       // TODO: Order of Attributes need to be defined in spec still
       /** SubsytemDeviceId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_DEVICE_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_DEVICE_ID_STR, pUninitializedDimms[Index].SubsystemDeviceId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_DEVICE_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_DEVICE_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].SubsystemDeviceId);
       }
 
       /** SubsytemRevisionId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SUBSYSTEM_REVISION_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SUBSYSTEM_REVISION_ID_STR, pUninitializedDimms[Index].SubsystemRid);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_REVISION_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_REVISION_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].SubsystemRid);
       }
 
       /** SocketId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, SOCKET_ID_STR, pUninitializedDimms[Index].SocketId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SOCKET_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].SocketId);
       }
 
       /** MemoryControllerId **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_CONTROLLER_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, MEMORY_CONTROLLER_STR, pUninitializedDimms[Index].ImcId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_CONTROLLER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].ImcId);
       }
 
       /** ChannelID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_ID_STR))) {
-        Print(FORMAT_3SPACE_EQ_0X04HEX_NL, CHANNEL_ID_STR, pUninitializedDimms[Index].ChannelId);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CHANNEL_ID_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].ChannelId);
       }
 
       /** ChannelPos **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_POS_STR))) {
-        Print(FORMAT_3SPACE_STR_EQ_DEC_NL, CHANNEL_POS_STR, pUninitializedDimms[Index].ChannelPos);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CHANNEL_POS_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_POS_STR, FORMAT_INT32, pUninitializedDimms[DimmIndex].ChannelPos);
       }
 
       /** Boot Status **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_STR))) {
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR))) {
 
-        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pUninitializedDimms[Index].DimmID, &BootStatusRegister, &BootStatusBitMask);
+        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pUninitializedDimms[DimmIndex].DimmID, &BootStatusRegister, &BootStatusBitMask);
         if (EFI_ERROR(ReturnCode)) {
           pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         } else {
           pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
         }
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, BOOT_STATUS_STR, pAttributeStr);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BOOT_STATUS_STR, pAttributeStr);
         FREE_POOL_SAFE(pAttributeStr);
       }
+
       /** Boot Status Register **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
-        Print(L"   " FORMAT_STR L"=0x%08x_%08x\n", BOOT_STATUS_REGISTER_STR,
-          ((BootStatusRegister >> 32) & 0xFFFFFFFF),(BootStatusRegister & 0xFFFFFFFF) );
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, BOOT_STATUS_REGISTER_STR, FORMAT_HEX_PREFIX FORMAT_UINT32_HEX L"_" FORMAT_UINT32_HEX, ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF));
       }
 
       /** SerialNumber **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SERIAL_NUMBER_STR))) {
-        Print(L"   " FORMAT_STR L"=0x%08x\n", SERIAL_NUMBER_STR,
-          EndianSwapUint32(pUninitializedDimms[Index].SerialNumber));
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SERIAL_NUMBER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SERIAL_NUMBER_STR, FORMAT_HEX_PREFIX FORMAT_UINT32_HEX, EndianSwapUint32(pUninitializedDimms[DimmIndex].SerialNumber));
       }
 
       /** FwVersion **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FW_VER_STR))) {
-        ConvertFwVersion(TmpFwVerString, pUninitializedDimms[Index].FwVer.FwProduct,
-        pUninitializedDimms[Index].FwVer.FwRevision, pUninitializedDimms[Index].FwVer.FwSecurityVersion,
-        pUninitializedDimms[Index].FwVer.FwBuild);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_VER_STR, TmpFwVerString);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_VER_STR))) {
+        ConvertFwVersion(TmpFwVerString, pUninitializedDimms[DimmIndex].FwVer.FwProduct,
+        pUninitializedDimms[DimmIndex].FwVer.FwRevision, pUninitializedDimms[DimmIndex].FwVer.FwSecurityVersion,
+        pUninitializedDimms[DimmIndex].FwVer.FwBuild);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
       }
 
       /** FwApiVersion **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, FW_API_VER_STR))) {
-        ConvertFwApiVersion(TmpFwVerString, pUninitializedDimms[Index].FwVer.FwApiMajor,
-            pUninitializedDimms[Index].FwVer.FwApiMinor);
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, FW_API_VER_STR, TmpFwVerString);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_API_VER_STR))) {
+        ConvertFwApiVersion(TmpFwVerString, pUninitializedDimms[DimmIndex].FwVer.FwApiMajor,
+            pUninitializedDimms[DimmIndex].FwVer.FwApiMinor);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_API_VER_STR, TmpFwVerString);
       }
 
       /** PartNumber **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PART_NUMBER_STR))) {
-        Print(FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL, PART_NUMBER_STR, pUninitializedDimms[Index].PartNumber);
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PART_NUMBER_STR))) {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PART_NUMBER_STR, pUninitializedDimms[DimmIndex].PartNumber);
       }
     }
   }
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowDimmDataSetAttribs);
+
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
+  FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pAllDimms);
   FREE_POOL_SAFE(pDimmIds);
-  FREE_POOL_SAFE(pDisplayValues);
   FREE_POOL_SAFE(pUninitializedDimms);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);

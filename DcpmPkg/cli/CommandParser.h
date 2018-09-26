@@ -9,7 +9,7 @@
 #include <Uefi.h>
 #include <Debug.h>
 #include <Types.h>
-#include <Show.h>
+#include <Printer.h>
 
 #define DISP_NAME_LEN       32    //!< Display string length (used when formatting output in alternative formats)
 #define DISP_DELIMS_LEN     10    //!< Deliminter string length (used when formatting output in alternative formats)
@@ -334,6 +334,7 @@ enum DisplayType {
   DiagView      = 7
 };
 
+
 /**
   Defines the parts of a CLI command
 **/
@@ -346,14 +347,13 @@ struct Command
   struct property properties[MAX_PROPERTIES];
   CONST CHAR16 *pHelp;
   EFI_STATUS (*run)(struct Command *pCmd); //!< Execute the command
-  EFI_STATUS (*UpdateCmdCtx)(struct Command *pCmd);
-  EFI_STATUS (*RunCleanup)(struct Command *pCmd);
+  BOOLEAN PrinterCtrlSupported;
   BOOLEAN Hidden; //!< Never print
   BOOLEAN ShowHelp;
   UINT8 CommandId;
   UINT8 DispType;
   CHAR16 DispName[DISP_NAME_LEN];
-  SHOW_CMD_CONTEXT *pShowCtx;
+  PRINT_CONTEXT *pPrintCtx;
 } COMMAND;
 
 typedef

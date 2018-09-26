@@ -31,7 +31,7 @@ struct Command DumpDebugCommandSyntax =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
   L"Dump firmware debug log",                                       //!< help
-  DumpDebugCommand                                                  //!< run function
+  DumpDebugCommand, TRUE                                                  //!< run function
 };
 
 /**
@@ -87,43 +87,46 @@ DumpDebugCommand(
   nlog_dict_entry* dict_head = NULL;
   UINT32 dict_version;
   UINT64 dict_entries;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
 
   if (pCmd == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   /** Open Config protocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   /** get specific DIMM pid passed in, set it **/
   pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-  ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIdsFilter, &DimmIdsFilterNum);
+  ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIdsFilter, &DimmIdsFilterNum);
   if (EFI_ERROR(ReturnCode) || (pDimmIdsFilter == NULL)) {
     NVDIMM_WARN("Target value is not a valid Dimm ID");
     goto Finish;
   }
   if (DimmIdsFilterNum > 1) {
     NVDIMM_WARN("Target value is not a valid Dimm ID");
-    Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_DIMM);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_DIMM);
     goto Finish;
   }
 
   if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIdsFilter, DimmIdsFilterNum)) {
-    Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
     goto Finish;
   }
 
@@ -133,12 +136,13 @@ DumpDebugCommand(
     if (pDumpUserPath == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       NVDIMM_ERR("Could not get -destination value. Out of memory.");
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
   }
   else {
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_PARSER_DETAILED_ERR_OPTION_REQUIRED, DESTINATION_OPTION);
     goto Finish;
   }
 
@@ -147,7 +151,7 @@ DumpDebugCommand(
     if (pDictUserPath == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       NVDIMM_ERR("Could not get -dict value. Out of memory.");
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
 
@@ -155,19 +159,20 @@ DumpDebugCommand(
     {
       ReturnCode = EFI_END_OF_FILE;
       NVDIMM_ERR("Could not check for existence of the dictionary file.");
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
 
     if (!dictExists)
     {
-      Print(L"The passed dictionary file doesn't exist.\n");
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"The passed dictionary file doesn't exist.\n");
     }
   }
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_DEVICE_ERROR;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     goto Finish;
   }
 
@@ -179,7 +184,7 @@ DumpDebugCommand(
   if (EFI_ERROR(ReturnCode)) {
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-      DisplayCommandStatus(CLI_INFO_DUMP_DEBUG_LOG, L"", pCommandStatus);
+      PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_DEBUG_LOG, L"", pCommandStatus);
       goto Finish;
     }
   }
@@ -188,22 +193,22 @@ DumpDebugCommand(
   ReturnCode = DumpToFile(pDumpUserPath, BytesWritten, pDebugBuffer, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_VOLUME_FULL) {
-      Print(L"Not enough space to save file " FORMAT_STR L" with size %lu\n", pDumpUserPath, CurrentDebugBufferSize);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Not enough space to save file " FORMAT_STR L" with size %lu\n", pDumpUserPath, CurrentDebugBufferSize);
     }
     else {
-      Print(L"Failed to dump FW Debug logs to file (" FORMAT_STR L")\n", pDumpUserPath);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to dump FW Debug logs to file (" FORMAT_STR L")\n", pDumpUserPath);
     }
   }
   else {
-    Print(L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%lu) MiB were written.\n",
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%lu) MiB were written.\n",
       pDumpUserPath, BYTES_TO_MIB(BytesWritten));
 
     if (dictExists)
     {
-      dict_head = load_nlog_dict(pDictUserPath, &dict_version, &dict_entries);
+      dict_head = load_nlog_dict(pCmd, pDictUserPath, &dict_version, &dict_entries);
       if (!dict_head)
       {
-        Print(L"Failed to load the dictionary file " FORMAT_STR L"\n", pDictUserPath);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to load the dictionary file " FORMAT_STR L"\n", pDictUserPath);
         goto Finish;
       }
 
@@ -238,13 +243,15 @@ DumpDebugCommand(
         FREE_POOL_SAFE(pDumpUserPath);
       }
 
-      Print(L"Loaded %d dictionary entries.\n", dict_entries);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Loaded %d dictionary entries.\n", dict_entries);
       if (decoded_file_name) {
-        decode_nlog_binary(decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
+        decode_nlog_binary(pCmd, decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
       }
     }
   }
+
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   while (dict_head)
   {
     next = dict_head->next;

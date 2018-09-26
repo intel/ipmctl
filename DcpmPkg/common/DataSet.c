@@ -101,10 +101,6 @@ VOID FreeDataSetMem(DATA_SET *DataSet) {
       FreePool(DataSet->Name);
     }
 
-    if(DataSet->UserData) {
-      FreePool(DataSet->UserData);
-    }
-
     FreePool(DataSet);
   }
 
@@ -582,9 +578,33 @@ KEY_VAL * CreateKeyVal(DATA_SET_CONTEXT *DataSetCtx) {
 /*
 * Set a unicode string value
 */
+EFI_STATUS SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...) {
+  DATA_SET *DataSet = (DATA_SET*)DataSetCtx;
+  CHAR16 *TempMsg = NULL;
+  VA_LIST Marker;
+  EFI_STATUS RetCode = EFI_SUCCESS;
+
+  if (NULL == Key || NULL == Val || NULL == DataSet) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  VA_START(Marker, Val);
+  TempMsg = CatVSPrint(NULL, Val, Marker);
+  VA_END(Marker);
+
+  RetCode = SetKeyValueWideStr(DataSetCtx, Key, TempMsg);
+
+  FREE_POOL_SAFE(TempMsg);
+  return RetCode;
+}
+
+/*
+* Set a unicode string value
+*/
 EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val) {
   DATA_SET *DataSet = (DATA_SET*)DataSetCtx;
   KEY_VAL *KeyVal = NULL;
+
 
   if (NULL == Key || NULL == Val || NULL == DataSet) {
     return EFI_INVALID_PARAMETER;
@@ -612,12 +632,11 @@ EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, c
   if (NULL == (KeyVal->Value = AllocatePool(StrSize(Val)))) {
     return EFI_OUT_OF_RESOURCES;
   }
-  CopyMem(KeyVal->Value,(VOID*)Val, StrSize(Val));
+  CopyMem(KeyVal->Value, (VOID*)Val, StrSize(Val));
   KeyVal->ValueToString = KeyVal->Value;
   SetAncestorsDirty(DataSetCtx);
   return EFI_SUCCESS;
 }
-
 /*
 * Retrieve a unicode string from the data set.
 */

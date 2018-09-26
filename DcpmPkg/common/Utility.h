@@ -283,6 +283,17 @@ typedef union {
   } \
 };
 
+#define FREE_CMD_DISPLAY_OPTIONS_SAFE(pCmdOptions) { \
+  if (pCmdOptions != NULL) { \
+    if(pCmdOptions->pDisplayValues != NULL) { \
+      FreePool((VOID *)pCmdOptions->pDisplayValues); \
+      pCmdOptions->pDisplayValues = NULL; \
+    } \
+    FreePool((VOID *)pCmdOptions); \
+    pCmdOptions = NULL; \
+  } \
+};
+
 /**
   Persist the first error encountered.
   @param[in,out] ReturnCode

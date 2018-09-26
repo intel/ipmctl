@@ -11,8 +11,10 @@
 #define REGION_ID_STR                   L"RegionID"
 #define ISET_ID_STR                     L"ISetID"
 #define PERSISTENT_MEM_TYPE_STR         L"PersistentMemoryType"
+#define PERSISTENT_MEM_SHORT_TYPE_STR   L"Pmem Type"
 #define TOTAL_CAPACITY_STR              L"Capacity"
 #define FREE_CAPACITY_STR               L"FreeCapacity"
+#define FREE_CAPACITY_SHORT_STR         L"Free"
 #define REGION_HEALTH_STATE_STR         L"HealthState"
 
 /** Region Health States */
@@ -21,6 +23,8 @@
 #define PENDING_STATE                   L"Pending"
 #define LOCKED_STATE                    L"Locked"
 #define UNKNOWN_STATE                   L"Unknown"
+
+#define DIMM_ID_STR_DELIM               L", "
 
 /**
   Register the show regions command

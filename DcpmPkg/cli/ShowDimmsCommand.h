@@ -99,6 +99,9 @@
 #endif
 
 #define NOT_APPLICABLE_SHORT_STR    L"N/A"
+#define MILI_WATT_STR               L"mW"
+#define MEGA_HERTZ_STR              L"MHz"
+#define BYTE_STR                    L"b"
 /*
  * Register the show dimms command
  */

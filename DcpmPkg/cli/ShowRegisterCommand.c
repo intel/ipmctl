@@ -115,7 +115,7 @@ ShowRegister(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -124,7 +124,7 @@ ShowRegister(
   pDimmValues = GetTargetValue(pCmd, DIMM_TARGET);
   if (pDimmValues != NULL) {
     if (StrLen(pDimmValues) > 0) {
-      ReturnCode = GetDimmIdsFromString(pDimmValues, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
+      ReturnCode = GetDimmIdsFromString(pCmd, pDimmValues, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Target value is not a valid DIMM ID");
         goto Finish;

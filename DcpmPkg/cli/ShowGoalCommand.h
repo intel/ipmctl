@@ -16,6 +16,13 @@
 #endif
 
 #define STATUS_STR                      L"Status"
+#define NOT_APPLICABLE_SHORT_STR        L"N/A"
+#define CLI_REBOOT_REQUIRED_MSG         L"A reboot is required to process new memory allocation goals.\n"
+#define CLI_NO_GOALS_MSG                L"There are no goal configs defined in the system.\nPlease use 'show -region' to display currently valid persistent memory regions.\n"
+#define CLI_GET_REGION_MSG              L"Get region configuration goal"
+#define CLI_GET_REGION_ON_MSG           L" on"
+#define MIRRORED_STR                    L" Mirrored"
+#define CLI_CREATE_SUCCESS_STATUS       L"Created following region configuration goal\n"
 
 #include <Uefi.h>
 
@@ -32,6 +39,7 @@ RegisterShowGoalCommand();
 /**
   Print results of show goal according to table view
 
+  @param[in] pCmd command from CLI
   @param[in] pRegionConfigsInfo - Region Config table to be printed
   @param[in] CurrentUnits The requested type of units to convert the capacity into
   @param[in] RegionConfigsCount - Number of elements in array
@@ -40,6 +48,7 @@ RegisterShowGoalCommand();
 **/
 EFI_STATUS
 ShowGoalPrintTableView(
+    IN    struct Command *pCmd,
     IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
     IN    UINT16 CurrentUnits,
     IN    UINT32 RegionConfigsCount,

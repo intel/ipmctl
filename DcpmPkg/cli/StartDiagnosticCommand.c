@@ -13,6 +13,44 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
 
+#define DS_ROOT_PATH                       L"/DiagnosticList"
+#define DS_DIAGNOSTIC_PATH                 L"/DiagnosticList/Diagnostic"
+#define DS_DIAGNOSTIC_INDEX_PATH           L"/DiagnosticList/Diagnostic[%d]"
+
+#define TEST_NAME_STR                      L"TestName"
+#define STATE_STR                          L"State"
+#define MESSAGE_STR                        L"Message"
+
+#define DIAG_MSG_DELIM                     L":"
+#define DIAG_ENTRY_EOL                     L'\n'
+#define DIAG_MSG_EXTRA_SPACE               L"  "
+
+ /*
+    *  PRINT LIST ATTRIBUTES
+    *  ---Diagnostic=Quick---
+    *     State=Ok
+    *     Message=X
+    */
+PRINTER_LIST_ATTRIB StartDiagListAttributes =
+{
+ {
+    {
+      DIAGNOSTIC_NODE_STR,                                          //GROUP LEVEL TYPE
+      L"---" DIAGNOSTIC_NODE_STR L"=$(" TEST_NAME_STR L")---",      //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                   //NULL or KEY VAL FORMAT STR
+      TEST_NAME_STR                                                 //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS StartDiagDataSetAttribs =
+{
+  &StartDiagListAttributes,
+  NULL
+};
+
+
+
 /**
   Command syntax definition
 **/
@@ -32,8 +70,12 @@ COMMAND StartDiagnosticCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                        //!< properties
   L"Run a diagnostic test on one or more DIMMs",                  //!< help
-  StartDiagnosticCmd
+  StartDiagnosticCmd,
+  TRUE
 };
+
+EFI_STATUS
+ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results);
 
 /**
   Get Diagnostic types to be executed from COMMAND
@@ -118,6 +160,7 @@ StartDiagnosticCmd(
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT8 DimmIdPreference = DISPLAY_DIMM_ID_HANDLE;
   CHAR16 *pFinalDiagnosticsResult = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
 
@@ -127,36 +170,40 @@ StartDiagnosticCmd(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  pPrinterCtx = pCmd->pPrintCtx;
+
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
   DimmIdPreference = DisplayPreferences.DimmIdentifier;
 
   ChosenDiagTests = GetDiagnosticTestType(pCmd);
   if (ChosenDiagTests == DIAGNOSTIC_TEST_UNKNOWN || ((ChosenDiagTests & DIAGNOSTIC_TEST_ALL) != ChosenDiagTests)) {
-      Print(FORMAT_STR_SPACE FORMAT_STR_NL, CLI_ERR_WRONG_DIAGNOSTIC_TARGETS, ALL_DIAGNOSTICS_TARGETS);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_DIAGNOSTIC_TARGETS, ALL_DIAGNOSTICS_TARGETS);
       goto Finish;
   }
 
   // NvmDimmConfigProtocol required
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
@@ -164,14 +211,14 @@ StartDiagnosticCmd(
 
   if (pDimms == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_NONE, pDimms);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
     goto Finish;
   }
@@ -179,7 +226,7 @@ StartDiagnosticCmd(
   // check targets
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pDimmTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pDimmTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    ReturnCode = GetDimmIdsFromString(pCmd, pDimmTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
@@ -204,23 +251,12 @@ StartDiagnosticCmd(
     }
   }
 
-  //Print Cli diagnostics result
-#ifdef OS_BUILD //todo, implement ST->ConOut in OS, for now just Print it
-  if (NULL != pFinalDiagnosticsResult) {
-    Print(pFinalDiagnosticsResult);
-  }
-  else {
-    NVDIMM_ERR("The final diagnostic result string not allocated; NULL pointer");
-  }
-#else
-  if ((pFinalDiagnosticsResult != NULL) && ((gST != NULL) && (gST->ConOut != NULL))) {
-    ReturnCode = gST->ConOut->OutputString(gST->ConOut, pFinalDiagnosticsResult);
-    if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS);
-    }
-  }
-#endif
+  ProcessDiagResults(pPrinterCtx, pFinalDiagnosticsResult);
+
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &StartDiagDataSetAttribs);
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   // free all memory structures
   FREE_POOL_SAFE(pFinalDiagnosticsResult);
   FREE_POOL_SAFE(pDimmIds);
@@ -249,3 +285,59 @@ RegisterStartDiagnosticCommand(
   return ReturnCode;
 }
 
+EFI_STATUS
+ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
+  CHAR16 **ppSplitDiagResultLines = NULL;
+  UINT32 NumTokens = 0;
+  UINT32 Index = 0;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  BOOLEAN ParsingMessage = FALSE;
+  UINT32 DiagResultCnt = 0;
+  CHAR16 *pPath = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  if (NULL == pPrinterCtx || NULL == Results) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ppSplitDiagResultLines = StrSplit(Results, DIAG_ENTRY_EOL, &NumTokens);
+  if (ppSplitDiagResultLines == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  for (Index = 0; Index < NumTokens; ++Index) {
+
+    if (!StrLen(ppSplitDiagResultLines[Index])) {
+      ParsingMessage = FALSE;
+      FREE_POOL_SAFE(pPath);
+      continue;
+    }
+    if (StrStr(ppSplitDiagResultLines[Index], TEST_NAME_STR DIAG_MSG_DELIM)) {
+      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIAGNOSTIC_INDEX_PATH, DiagResultCnt);
+      if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
+        pTempStr += 2;
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pTempStr);
+      }
+      ParsingMessage = FALSE;
+      DiagResultCnt++;
+    }
+    else if (pPath && StrStr(ppSplitDiagResultLines[Index], STATE_STR DIAG_MSG_DELIM)) {
+      if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
+        pTempStr += 2;
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, STATE_STR, pTempStr);
+      }
+      ParsingMessage = FALSE;
+    }
+    else if (pPath && StrStr(ppSplitDiagResultLines[Index], MESSAGE_STR DIAG_MSG_DELIM)) {
+      ParsingMessage = TRUE;
+    }
+    else if (pPath && ParsingMessage) {
+      PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, ppSplitDiagResultLines[Index]);
+      PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, DIAG_MSG_EXTRA_SPACE);
+    }
+  }
+
+  FREE_POOL_SAFE(pPath);
+  FreeStringArray(ppSplitDiagResultLines, NumTokens);
+  return ReturnCode;
+}

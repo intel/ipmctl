@@ -14,6 +14,8 @@
 #include "Common.h"
 #include <Utility.h>
 
+#define DS_ROOT_PATH                        L"/HostServer"
+
 /**
   Command syntax definition
 **/
@@ -29,7 +31,8 @@ struct Command ShowHostServerCommand = {
    {HOST_TARGET, L"", L"", TRUE, ValueEmpty }},                                                //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                                      //!< properties
   L"Show basic information about the host server.",                                             //!< help
-  ShowHostServer
+  ShowHostServer,
+  TRUE
 };
 
 CHAR16 *mppAllowedShowHostServerDisplayValues[] = {
@@ -65,6 +68,8 @@ ShowHostServer(
   BOOLEAN DisplayOptionSet = FALSE;
   BOOLEAN ShowAll = FALSE;
   CHAR16 *pDisplayValues = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
 
   NVDIMM_ENTRY();
 
@@ -72,9 +77,11 @@ ShowHostServer(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   /** if the all option was specified **/
   if (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT)) {
@@ -96,7 +103,7 @@ ShowHostServer(
   if (AllOptionSet && DisplayOptionSet) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Options used together");
-    Print(FORMAT_STR, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
     goto Finish;
   }
 
@@ -105,7 +112,7 @@ ShowHostServer(
     ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowHostServerDisplayValues,
         ALLOWED_DISP_VALUES_COUNT(mppAllowedShowHostServerDisplayValues));
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
       goto Finish;
     }
   }
@@ -114,8 +121,8 @@ ShowHostServer(
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -124,44 +131,46 @@ ShowHostServer(
   **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   ReturnCode = GetHostServerInfo(&HostServerinfo);
   if (EFI_ERROR(ReturnCode)) {
-     Print(L"Error: GetHostServerInfo Failed\n");
-     goto Finish;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetHostServerInfo Failed\n");
+    goto Finish;
   }
 
 
-  ReturnCode = IsDimmsMixedSkuCfg(pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
+  ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
   if (EFI_ERROR(ReturnCode)) {
      goto Finish;
   }
 
-  SetDisplayInfo(L"HostServer", ListView, NULL);
+  PRINTER_BUILD_KEY_PATH(&pPath, DS_ROOT_PATH);
 
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_NAME_STR))) {
-    Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_NAME_STR, HostServerinfo.Name);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_NAME_STR, HostServerinfo.Name);
   }
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_OS_NAME_STR))) {
-    Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_OS_NAME_STR, HostServerinfo.OsName);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_OS_NAME_STR, HostServerinfo.OsName);
   }
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_OS_VERSION_STR))) {
-    Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_OS_VERSION_STR, HostServerinfo.OsVersion);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_OS_VERSION_STR, HostServerinfo.OsVersion);
   }
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_MIXED_SKU_STR))) {
-    Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_MIXED_SKU_STR, (IsMixedSku == TRUE) ? L"1" : L"0");
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_MIXED_SKU_STR, (IsMixedSku == TRUE) ? L"1" : L"0");
   }
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_SKU_VIOLATION_STR))) {
-    Print(FORMAT_STR L": " FORMAT_STR_NL, DISPLAYED_SKU_VIOLATION_STR, (IsSkuViolation == TRUE) ? L"1" : L"0");
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_SKU_VIOLATION_STR, (IsSkuViolation == TRUE) ? L"1" : L"0");
   }
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   NVDIMM_EXIT_I64(ReturnCode);
   FREE_POOL_SAFE(pDisplayValues);
+  FREE_POOL_SAFE(pPath);
   return  ReturnCode;
 }
 
@@ -185,62 +194,63 @@ RegisterShowHostServerCommand(
   return ReturnCode;
 }
 
-EFI_STATUS IsDimmsMixedSkuCfg(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
-      BOOLEAN *pIsMixedSku,
-      BOOLEAN *pIsSkuViolation)
+EFI_STATUS IsDimmsMixedSkuCfg(PRINT_CONTEXT *pPrinterCtx,
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  BOOLEAN *pIsMixedSku,
+  BOOLEAN *pIsSkuViolation)
 {
-   EFI_STATUS ReturnCode = EFI_SUCCESS;
-   UINT32 DimmCount = 0;
-   DIMM_INFO *pDimms = NULL;
-   UINT32 i;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT32 DimmCount = 0;
+  DIMM_INFO *pDimms = NULL;
+  UINT32 i;
 
-   ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
-   if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-      return ReturnCode;
-   }
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    return ReturnCode;
+  }
 
-   pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
+  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
 
-   if (pDimms == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
-      return ReturnCode;
-   }
-   /** retrieve the DIMM list **/
-   ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-      DIMM_INFO_CATEGORY_PACKAGE_SPARING, pDimms);
-   if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_ABORTED;
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-      NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
-      goto Finish;
-   }
+  if (pDimms == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    return ReturnCode;
+  }
+  /** retrieve the DIMM list **/
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
+    DIMM_INFO_CATEGORY_PACKAGE_SPARING, pDimms);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+    goto Finish;
+  }
 
-   *pIsMixedSku = FALSE;
-   *pIsSkuViolation = FALSE;
-   for (i = 0; i < DimmCount; ++i)
-   {
-      if (FALSE == IsDimmManageableByDimmInfo(&pDimms[i]))
-      {
-        continue;
-      }
+  *pIsMixedSku = FALSE;
+  *pIsSkuViolation = FALSE;
+  for (i = 0; i < DimmCount; ++i)
+  {
+    if (FALSE == IsDimmManageableByDimmInfo(&pDimms[i]))
+    {
+      continue;
+    }
 
-      if (pDimms[i].SKUViolation)
-      {
-         *pIsSkuViolation = TRUE;
-      }
+    if (pDimms[i].SKUViolation)
+    {
+      *pIsSkuViolation = TRUE;
+    }
 
-      if (NVM_SUCCESS != SkuComparison(pDimms[0].SkuInformation,
-                                       pDimms[i].SkuInformation))
-      {
-         *pIsMixedSku = TRUE;
-      }
-   }
+    if (NVM_SUCCESS != SkuComparison(pDimms[0].SkuInformation,
+      pDimms[i].SkuInformation))
+    {
+      *pIsMixedSku = TRUE;
+    }
+  }
 
 Finish:
-   FreePool(pDimms);
-   return ReturnCode;
+  FreePool(pDimms);
+  return ReturnCode;
 }
 
 

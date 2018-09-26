@@ -32,7 +32,8 @@ struct Command DumpSupportCommandSyntax = {
     { L"", L"", L"", FALSE, ValueOptional }
   },
   L"Capture a snapshot of the system state for support purposes",   //!< help
-  DumpSupportCommand                                                //!< run function
+  DumpSupportCommand,                                                //!< run function
+  TRUE
 };
 
 typedef struct _DUMP_SUPPORT_CMD
@@ -93,14 +94,18 @@ DumpSupportCommand(
   struct Command Command;
   CHAR8 *pDumpUserPathAscii = NULL;
   FILE *hFile = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
-  SetDisplayInfo(L"DumpSupport", ResultsView, NULL);
 
   if (pCmd == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   /* Check -destination option */
   if (containsOption(pCmd, DESTINATION_OPTION)) {
@@ -108,19 +113,20 @@ DumpSupportCommand(
     if (pDumpUserPath == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       NVDIMM_ERR("Could not get -destination value. Out of memory.");
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
   }
   else {
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_PARSER_ERR_INVALID_OPTION_VALUES);
     goto Finish;
   }
 
   if(NULL == (pDumpUserPathAscii = AllocatePool((StrLen(pDumpUserPath) + 1) * sizeof(CHAR8))))
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -128,7 +134,7 @@ DumpSupportCommand(
   if(NULL == (hFile = fopen(pDumpUserPathAscii, "w+")))
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
   gOsShellParametersProtocol.StdOut = (SHELL_FILE_HANDLE) hFile;
@@ -150,9 +156,10 @@ DumpSupportCommand(
   fclose(gOsShellParametersProtocol.StdOut);
   gOsShellParametersProtocol.StdOut = stdout;
 
-  Print(CLI_INFO_DUMP_SUPPORT_SUCCESS, pDumpUserPath);
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_SUPPORT_SUCCESS L"\n", pDumpUserPath);
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDumpUserPath);
   FREE_POOL_SAFE(pDumpUserPathAscii);

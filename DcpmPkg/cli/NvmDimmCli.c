@@ -129,7 +129,8 @@ struct Command VersionCommand =
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE}},                     //!< properties
   L"Display the CLI version.",                //!< help
-  showVersion                                 //!< run function
+  showVersion,                                 //!< run function
+  TRUE
 };
 
 /*
@@ -319,8 +320,8 @@ UefiMain(
       if (Command.ShowHelp) {
         showHelp(&Command);
       } else {
-#ifdef OS_BUILD //WA, remove after all CMDs impl "Show Interface"
-        if (Command.UpdateCmdCtx) {
+#ifdef OS_BUILD //WA, remove after all CMDs convert to "unified printing" mechanism
+        if (Command.PrinterCtrlSupported) {
           gOsShellParametersProtocol.StdOut = stdout;
         }
 #endif
@@ -653,6 +654,29 @@ EFI_STATUS showHelp(struct Command *pCmd)
   return ReturnCode;
 }
 
+#define DS_ROOT_PATH                          L"/SoftwareList"
+#define DS_SOFTWARE_PATH                      L"/SoftwareList/Software"
+#define DS_SOFTWARE_INDEX_PATH                L"/SoftwareList/Software[%d]"
+
+
+PRINTER_LIST_ATTRIB ShowVersionListAttributes =
+{
+ {
+    {
+      L"Software",                            //GROUP LEVEL TYPE
+      L"$(Component) Version $(Version)",     //NULL or GROUP LEVEL HEADER
+      NULL,                                   //NULL or KEY VAL FORMAT STR
+      L"Component;Version"                    //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowVersionDataSetAttribs =
+{
+  &ShowVersionListAttributes,
+  NULL
+};
+
 /*
  * Print the CLI app version
  */
@@ -661,30 +685,49 @@ EFI_STATUS showVersion(struct Command *pCmd)
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 ApiVersion[FW_API_VERSION_LEN] = {0};
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  CHAR16 *pPath = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"Software", TableTabView, NULL);
+  if (pCmd == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
+    goto Finish;
+  }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
-#if !defined(__LINUX__)
+#ifndef OS_BUILD
   ReturnCode = pNvmDimmConfigProtocol->GetDriverApiVersion(pNvmDimmConfigProtocol, ApiVersion);
   if (EFI_ERROR(ReturnCode)) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 #endif
 
-  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " NVMDIMM_VERSION_STRING L"\n", PRODUCT_NAME, APP_DESCRIPTION);
-#if !defined(__LINUX__)
-  Print(FORMAT_STR_SPACE FORMAT_STR_SPACE L"Version " FORMAT_STR_NL, PRODUCT_NAME, DRIVER_API_DESCRIPTION, ApiVersion);
+  PRINTER_BUILD_KEY_PATH(&pPath, DS_SOFTWARE_INDEX_PATH, 0);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " APP_DESCRIPTION);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", NVMDIMM_VERSION_STRING);
+
+#ifndef OS_BUILD
+  PRINTER_BUILD_KEY_PATH(&pPath, DS_SOFTWARE_INDEX_PATH, 1);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " DRIVER_API_DESCRIPTION);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", ApiVersion);
 #endif
 
+  //Specify table attributes
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowVersionDataSetAttribs);
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

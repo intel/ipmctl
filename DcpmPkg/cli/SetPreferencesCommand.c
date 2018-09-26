@@ -59,7 +59,8 @@ struct Command SetPreferencesCommand =
 #endif
   },
   L"Set user preferences",                  //!< help
-  SetPreferences
+  SetPreferences,
+  TRUE
 };
 
 STATIC
@@ -130,7 +131,6 @@ GetAppDirectSettingsBitFields(
 
   if (pAppDirectSettings == NULL || pImcBitField == NULL || pChannelBitField == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
@@ -181,43 +181,43 @@ Finish:
 
 EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MinVal, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
 {
-  EFI_STATUS rc = EFI_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 *pTypeValue = NULL;
   UINT64 IntegerValue;
 
-  if ((rc = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
-    if (EFI_ERROR(rc)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+  if ((ReturnCode = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
 
-    rc = GetPropertyValue(pCmd, pName, &pTypeValue);
-    if (EFI_ERROR(rc)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    ReturnCode = GetPropertyValue(pCmd, pName, &pTypeValue);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
       goto Finish;
     }
-    rc = ValidateAndConvertInput(pTypeValue, MinVal, MaxValue, &IntegerValue);
-    if (EFI_ERROR(rc) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
-      PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, PROPERTY_ERROR_INVALID_OUT_OF_RANGE, EFI_INVALID_PARAMETER);
+    ReturnCode = ValidateAndConvertInput(pTypeValue, MinVal, MaxValue, &IntegerValue);
+    if (EFI_ERROR(ReturnCode) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, pName, pTypeValue, ReturnCode, PROPERTY_ERROR_INVALID_OUT_OF_RANGE);
       SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER);
       goto Finish;
     } else {
-      if (rc == EFI_SUCCESS) {
-        rc = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
-        if (!EFI_ERROR(rc)) {
-          PRINT_SET_PREFERENCES_SUCCESS(pName, pTypeValue);
+      if (ReturnCode == EFI_SUCCESS) {
+        ReturnCode = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
+        if (!EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, pName, pTypeValue);
           SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS);
         } else {
-          PRINT_SET_PREFERENCES_EFI_ERR(pName, pTypeValue, PROPERTY_ERROR_SET_FAILED_UNKNOWN, rc);
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, pName, pTypeValue, ReturnCode, PROPERTY_ERROR_SET_FAILED_UNKNOWN);
           SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
         }
       }
     }
   }
 Finish:
-  return rc;
+  return ReturnCode;
 }
 #endif
 
@@ -245,30 +245,33 @@ SetPreferences(
   UINT8 Index = 0;
   CHAR16 *pTypeValue = NULL;
   UINTN VariableSize = 0;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
-
-  SetDisplayInfo(L"SetPreferences", ResultsView, NULL);
 
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  pPrinterCtx = pCmd->pPrintCtx;
+
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    goto Finish;
   }
 
   /** Need NvmDimmConfigProtocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
@@ -276,20 +279,20 @@ SetPreferences(
   ReturnCode = pNvmDimmConfigProtocol->GetDriverPreferences(pNvmDimmConfigProtocol, &DriverPreferences, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Set preferences", L" on", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Set preferences", L" on", pCommandStatus);
     goto Finish;
   }
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-   Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
-   ReturnCode = EFI_NOT_FOUND;
-   goto Finish;
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
+    goto Finish;
   }
 
   if ((TempReturnCode = ContainsProperty(pCmd, CLI_DEFAULT_DIMM_ID_PROPERTY)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(TempReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       KEEP_ERROR(ReturnCode, TempReturnCode);
       goto Finish;
     }
@@ -297,11 +300,11 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Default DimmID Type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, NULL, PROPERTY_ERROR_DEFAULT_DIMM_NOT_PROVIDED, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_DIMM_ID_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_DEFAULT_DIMM_NOT_PROVIDED);
     } else if ((Index = GetDimmIDIndex(pTypeValue)) >= DISPLAY_DIMM_ID_MAX_SIZE) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Incorrect default DimmID type");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, PROPERTY_ERROR_INCORRECT_DEFAULT_DIMM_TYPE, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_INCORRECT_DEFAULT_DIMM_TYPE);
     } else {
       DisplayPreferences.DimmIdentifier = Index;
       VariableSize = sizeof(DisplayPreferences.DimmIdentifier);
@@ -311,29 +314,29 @@ SetPreferences(
         VariableSize,
         &DisplayPreferences.DimmIdentifier);
       if (!EFI_ERROR(TempReturnCode)) {
-        PRINT_SET_PREFERENCES_SUCCESS(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue);
       } else {
         KEEP_ERROR(ReturnCode,TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_DIMM_ID_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_UNKNOWN);
       }
     }
   }
 
   if ((TempReturnCode = ContainsProperty(pCmd, CLI_DEFAULT_SIZE_PROPERTY)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(TempReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
       KEEP_ERROR(ReturnCode, TempReturnCode);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
     TempReturnCode = GetPropertyValue(pCmd, CLI_DEFAULT_SIZE_PROPERTY, &pTypeValue);
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Display default size type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, NULL, PROPERTY_ERROR_DISPLAY_DEFAULT_NOT_PROVIDED, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_SIZE_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_DISPLAY_DEFAULT_NOT_PROVIDED);
     } else if ((Index = GetDisplaySizeIndex(pTypeValue)) >= DISPLAY_SIZE_MAX_SIZE) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("Incorrect default size type");
-      PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, PROPERTY_ERROR_DEFAULT_INCORRECT_SIZE_TYPE, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_DEFAULT_INCORRECT_SIZE_TYPE);
     } else {
       DisplayPreferences.SizeUnit = Index;
       VariableSize = sizeof(DisplayPreferences.SizeUnit);
@@ -343,18 +346,18 @@ SetPreferences(
         VariableSize,
         &DisplayPreferences.SizeUnit);
       if (TempReturnCode == EFI_SUCCESS) {
-        PRINT_SET_PREFERENCES_SUCCESS(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, CLI_DEFAULT_SIZE_PROPERTY, pTypeValue);
       } else {
         KEEP_ERROR(ReturnCode,TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, CLI_DEFAULT_SIZE_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_UNKNOWN);
       }
     }
   }
 
   if ((TempReturnCode = ContainsProperty(pCmd, APP_DIRECT_SETTINGS_PROPERTY)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
       KEEP_ERROR(ReturnCode, TempReturnCode);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
 
@@ -362,7 +365,7 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("AppDirect interleave setting type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, NULL, PROPERTY_ERROR_INTERLEAVE_TYPE_NOT_PROVIDED, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_SETTINGS_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_INTERLEAVE_TYPE_NOT_PROVIDED);
     } else {
       if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
         DriverPreferences.ChannelInterleaving = DEFAULT_CHANNEL_INTERLEAVE_SIZE;
@@ -370,17 +373,17 @@ SetPreferences(
       } else if ((TempReturnCode = GetAppDirectSettingsBitFields(pTypeValue, &DriverPreferences.ImcInterleaving, &DriverPreferences.ChannelInterleaving)) != EFI_SUCCESS) {
         KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
         NVDIMM_WARN("Incorrect AppDirect interleave setting type");
-        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, PROPERTY_ERROR_APPDIR_INTERLEAVE_TYPE, EFI_INVALID_PARAMETER);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_APPDIR_INTERLEAVE_TYPE);
       }
 
       if (TempReturnCode == EFI_SUCCESS) {
         TempReturnCode = pNvmDimmConfigProtocol->SetDriverPreferences(pNvmDimmConfigProtocol, &DriverPreferences, pCommandStatus);
         if (TempReturnCode == EFI_SUCCESS) {
-          PRINT_SET_PREFERENCES_SUCCESS(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue);
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, APP_DIRECT_SETTINGS_PROPERTY, pTypeValue);
         } else {
           TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
           KEEP_ERROR(ReturnCode, TempReturnCode);
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_SETTINGS_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_UNKNOWN);
         }
       }
     }
@@ -388,7 +391,7 @@ SetPreferences(
 
   if ((TempReturnCode = ContainsProperty(pCmd, APP_DIRECT_GRANULARITY_PROPERTY)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       KEEP_ERROR(ReturnCode, TempReturnCode);
       goto Finish;
     }
@@ -397,7 +400,7 @@ SetPreferences(
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
       NVDIMM_WARN("AppDirect Granularity setting type not provided");
-      PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, NULL, PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED, EFI_INVALID_PARAMETER);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED);
     } else {
       if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
         DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_DEFAULT;
@@ -406,17 +409,17 @@ SetPreferences(
       } else {
         TempReturnCode = EFI_INVALID_PARAMETER;
         KEEP_ERROR(ReturnCode, TempReturnCode);
-        PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, PROPERTY_ERROR_INVALID_GRANULARITY, EFI_INVALID_PARAMETER);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_INVALID_GRANULARITY);
       }
 
       if (TempReturnCode == EFI_SUCCESS) {
         TempReturnCode = pNvmDimmConfigProtocol->SetDriverPreferences(pNvmDimmConfigProtocol, &DriverPreferences, pCommandStatus);
         if (TempReturnCode == EFI_SUCCESS) {
-          PRINT_SET_PREFERENCES_SUCCESS(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue);
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue);
         } else {
           TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-          PRINT_SET_PREFERENCES_EFI_ERR(APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, PROPERTY_ERROR_UNKNOWN, TempReturnCode);
           KEEP_ERROR(ReturnCode, TempReturnCode);
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_UNKNOWN);
         }
       }
     }
@@ -435,6 +438,7 @@ SetPreferences(
 #endif
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

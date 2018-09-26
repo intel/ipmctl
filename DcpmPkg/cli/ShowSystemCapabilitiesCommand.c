@@ -13,6 +13,9 @@
 #include <Convert.h>
 #include "Common.h"
 
+#define DS_ROOT_PATH                        L"/SystemCapabilities"
+
+
 /**
   Command syntax definition
 **/
@@ -32,7 +35,8 @@ struct Command ShowSystemCapabilitiesCommand = {
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                      //!< properties
   L"Show information about BIOS memory management capabilities.",
-  ShowSystemCapabilities
+  ShowSystemCapabilities,
+  TRUE
 };
 
 CHAR16 *mppAllowedShowSystemCapabilitiesDisplayValues[] = {
@@ -69,22 +73,22 @@ CHAR16 *mppAllowedShowSystemCapabilitiesDisplayValues[] = {
 STATIC
 VOID
 PrintAllowedVolatileMode(
+  IN    PRINT_CONTEXT *pPrinterCtx,
+  IN    CHAR16 *pPath,
   IN    CURRENT_MEMORY_MODE MemoryMode
   )
 {
-  Print(FORMAT_STR L"=", VOLATILE_MODE_ALLOWED_STR);
   switch (MemoryMode.MemoryModeSplit.AllowedVolatileMode) {
   case VOLATILE_MODE_1LM:
-    Print(ONE_LM_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_STR);
     break;
   case VOLATILE_MODE_MEMORY:
-    Print(MEMORY_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, MEMORY_STR);
     break;
   default:
-    Print(UNKNOWN_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, UNKNOWN_STR);
     break;
   }
-  Print(L"\n");
 }
 
 /**
@@ -95,22 +99,22 @@ PrintAllowedVolatileMode(
 STATIC
 VOID
 PrintCurrentVolatileMode(
+  IN    PRINT_CONTEXT *pPrinterCtx,
+  IN    CHAR16 *pPath,
   IN    CURRENT_MEMORY_MODE MemoryMode
   )
 {
-  Print(FORMAT_STR L"=", VOLATILE_MODE_CURRENT_STR);
   switch (MemoryMode.MemoryModeSplit.CurrentVolatileMode) {
   case VOLATILE_MODE_1LM:
-    Print(ONE_LM_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, ONE_LM_STR);
     break;
   case VOLATILE_MODE_MEMORY:
-    Print(MEMORY_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, MEMORY_STR);
     break;
   default:
-    Print(UNKNOWN_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, UNKNOWN_STR);
     break;
   }
-  Print(L"\n");
 }
 
 /**
@@ -121,25 +125,25 @@ PrintCurrentVolatileMode(
 STATIC
 VOID
 PrintAllowedAppDirectMode(
+  IN    PRINT_CONTEXT *pPrinterCtx,
+  IN    CHAR16 *pPath,
   IN    CURRENT_MEMORY_MODE MemoryMode
   )
 {
-  Print(FORMAT_STR L"=", APPDIRECT_MODE_ALLOWED_STR);
   switch (MemoryMode.MemoryModeSplit.PersistentMode) {
   case PERSISTENT_MODE_DISABLED:
-    Print(DISABLED_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, DISABLED_STR);
     break;
   case PERSISTENT_MODE_APP_DIRECT:
-    Print(APPDIRECT_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, APPDIRECT_STR);
     break;
   case PERSISTENT_MODE_APP_DIRECT_CACHE:
-    Print(APPDIRECT_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, APPDIRECT_STR);
     break;
   default:
-    Print(UNKNOWN_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, UNKNOWN_STR);
     break;
   }
-  Print(L"\n");
 }
 
 /**
@@ -150,34 +154,37 @@ PrintAllowedAppDirectMode(
 STATIC
 VOID
 PrintSupportedMemoryModes(
+  IN    PRINT_CONTEXT *pPrinterCtx,
+  IN    CHAR16 *pPath,
   IN    SUPPORTED_MEMORY_MODE MemoryModes
   )
 {
   BOOLEAN First = TRUE;
+  CHAR16 *Val = NULL;
 
-  Print(FORMAT_STR L"=", OPERATING_MODE_SUPPORT_STR);
   if (MemoryModes.MemoryModesFlags.OneLm) {
-    Print(ONE_LM_STR);
+    Val = CatSPrint(Val, ONE_LM_STR);
     First = FALSE;
   }
   if (MemoryModes.MemoryModesFlags.Memory) {
     if (First) {
       First = FALSE;
     } else {
-      Print(L", ");
+      Val = CatSPrint(Val, L", ");
     }
-    Print(MEMORY_STR);
+    Val = CatSPrint(Val, MEMORY_STR);
   }
   if (MemoryModes.MemoryModesFlags.AppDirect) {
     if (First) {
       First = FALSE;
     }
     else {
-      Print(L", ");
+      Val = CatSPrint(Val, L", ");
     }
-    Print(APPDIRECT_STR);
+    Val = CatSPrint(Val, APPDIRECT_STR);
   }
-  Print(L"\n");
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, OPERATING_MODE_SUPPORT_STR, Val);
+  FREE_POOL_SAFE(Val);
 }
 
 /**
@@ -207,6 +214,8 @@ ShowSystemCapabilities(
   CURRENT_MEMORY_MODE TempCurrentMode;
   SUPPORTED_MEMORY_MODE TempSupportedMode;
   DISPLAY_PREFERENCES DisplayPreferences;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
 
   NVDIMM_ENTRY();
 
@@ -215,14 +224,16 @@ ShowSystemCapabilities(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  pPrinterCtx = pCmd->pPrintCtx;
+
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -243,14 +254,14 @@ ShowSystemCapabilities(
   **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetSystemCapabilitiesInfo(pNvmDimmConfigProtocol, &SystemCapabilitiesInfo);
   if (EFI_ERROR(ReturnCode)) {
-    Print(L"Error: GetSystemCapabilitiesInfo Failed\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     goto Finish;
   }
 
@@ -268,7 +279,7 @@ ShowSystemCapabilities(
     ReturnCode = CheckDisplayList(pDisplayValues, mppAllowedShowSystemCapabilitiesDisplayValues,
         ALLOWED_DISP_VALUES_COUNT(mppAllowedShowSystemCapabilitiesDisplayValues));
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY);
       goto Finish;
     }
   }
@@ -276,48 +287,50 @@ ShowSystemCapabilities(
   ShowAll = (containsOption(pCmd, ALL_OPTION) || containsOption(pCmd, ALL_OPTION_SHORT));
 
   if (FilterOutput && ShowAll) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER);
     goto Finish;
   }
 
-  SetDisplayInfo(L"SystemCapabilities", ListView, NULL);
+  PRINTER_BUILD_KEY_PATH(&pPath, DS_ROOT_PATH);
 
   /** Values shown by default **/
   if (FilterOutput == ContainsValue(pDisplayValues, PLATFORM_CONFIG_SUPPORT_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, PLATFORM_CONFIG_SUPPORT_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PLATFORM_CONFIG_SUPPORT_STR, FORMAT_INT32,
         BIT_GET(SystemCapabilitiesInfo.PlatformConfigSupported, PLATFROM_CONFIG_SUPPORTED_BIT));
   }
   if (FilterOutput == ContainsValue(pDisplayValues, MEMORY_ALIGNMENT_STR)) {
     TempReturnCode = MakeCapacityString(Pow(2, SystemCapabilitiesInfo.InterleaveAlignmentSize),
                         UnitsToDisplay, TRUE, &pCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
-    Print(FORMAT_STR L"=" FORMAT_STR_NL, MEMORY_ALIGNMENT_STR, pCapacityStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_ALIGNMENT_STR, pCapacityStr);
     FREE_POOL_SAFE(pCapacityStr);
   }
   TempCurrentMode.MemoryMode = SystemCapabilitiesInfo.CurrentOperatingMode;
   if (FilterOutput == ContainsValue(pDisplayValues, VOLATILE_MODE_ALLOWED_STR)) {
-    PrintAllowedVolatileMode(TempCurrentMode);
+    PrintAllowedVolatileMode(pPrinterCtx, pPath, TempCurrentMode);
   }
   if (FilterOutput == ContainsValue(pDisplayValues, VOLATILE_MODE_CURRENT_STR)) {
-    PrintCurrentVolatileMode(TempCurrentMode);
+    PrintCurrentVolatileMode(pPrinterCtx, pPath, TempCurrentMode);
   }
   if (FilterOutput == ContainsValue(pDisplayValues, APPDIRECT_MODE_ALLOWED_STR)) {
-    PrintAllowedAppDirectMode(TempCurrentMode);
+    PrintAllowedAppDirectMode(pPrinterCtx, pPath, TempCurrentMode);
   }
   /** Values shown when -d/-a option specified **/
   if (ShowAll || ContainsValue(pDisplayValues, OPERATING_MODE_SUPPORT_STR)) {
     TempSupportedMode.MemoryModes = SystemCapabilitiesInfo.OperatingModeSupport;
-    PrintSupportedMemoryModes(TempSupportedMode);
+    PrintSupportedMemoryModes(pPrinterCtx, pPath, TempSupportedMode);
   }
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_SUPPORTED_STR)) {
     PrintAppDirectSettings(
+      pCmd,
       (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
       SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
       FALSE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
   }
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECCOMENDED_STR)) {
     PrintAppDirectSettings(
+      pCmd,
       (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
       SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
       TRUE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
@@ -325,75 +338,76 @@ ShowSystemCapabilities(
   if (ShowAll || ContainsValue(pDisplayValues, MIN_NAMESPACE_SIZE_STR)) {
     TempReturnCode = MakeCapacityString(SystemCapabilitiesInfo.MinNsSize, UnitsToDisplay, TRUE, &pCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
-    Print(FORMAT_STR L"=" FORMAT_STR_NL, MIN_NAMESPACE_SIZE_STR, pCapacityStr);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MIN_NAMESPACE_SIZE_STR, pCapacityStr);
     FREE_POOL_SAFE(pCapacityStr);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_MIRROR_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, APPDIRECT_MIRROR_SUPPORTED_STR, SystemCapabilitiesInfo.AppDirectMirrorSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, APPDIRECT_MIRROR_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.AppDirectMirrorSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, DIMM_SPARE_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, DIMM_SPARE_SUPPORTED_STR, SystemCapabilitiesInfo.DimmSpareSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIMM_SPARE_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.DimmSpareSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_MIGRATION_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, APPDIRECT_MIGRATION_SUPPORTED_STR, SystemCapabilitiesInfo.AppDirectMigrationSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, APPDIRECT_MIGRATION_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.AppDirectMigrationSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, RENAME_NAMESPACE_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, RENAME_NAMESPACE_SUPPORTED_STR, SystemCapabilitiesInfo.RenameNsSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, RENAME_NAMESPACE_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.RenameNsSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, GROW_APPDIRECT_NAMESPACE_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, GROW_APPDIRECT_NAMESPACE_SUPPORTED_STR, SystemCapabilitiesInfo.GrowPmNsSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, GROW_APPDIRECT_NAMESPACE_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.GrowPmNsSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, SHRINK_APPDIRECT_NAMESPACE_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, SHRINK_APPDIRECT_NAMESPACE_SUPPORTED_STR, SystemCapabilitiesInfo.ShrinkPmNsSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SHRINK_APPDIRECT_NAMESPACE_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.ShrinkPmNsSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, INITIATE_SCRUB_SUPPORTED)) {
-    Print(FORMAT_STR_EQ_DEC_NL, INITIATE_SCRUB_SUPPORTED, SystemCapabilitiesInfo.InitiateScrubSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, INITIATE_SCRUB_SUPPORTED, FORMAT_INT32, SystemCapabilitiesInfo.InitiateScrubSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, ASYNCHRONOUS_DRAM_REFRESH_SUPPORTED_STR)) {
-	  Print(FORMAT_STR_EQ_DEC_NL, ASYNCHRONOUS_DRAM_REFRESH_SUPPORTED_STR, SystemCapabilitiesInfo.AdrSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ASYNCHRONOUS_DRAM_REFRESH_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.AdrSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, ERASE_DEVICE_DATA_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, ERASE_DEVICE_DATA_SUPPORTED_STR, SystemCapabilitiesInfo.EraseDeviceDataSupported);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ERASE_DEVICE_DATA_SUPPORTED_STR, FORMAT_INT32, SystemCapabilitiesInfo.EraseDeviceDataSupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, ENABLE_DEVICE_SECURITY_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, ENABLE_DEVICE_SECURITY_SUPPORTED_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ENABLE_DEVICE_SECURITY_SUPPORTED_STR, FORMAT_INT32,
       SystemCapabilitiesInfo.EnableDeviceSecuritySupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, DISABLE_DEVICE_SECURITY_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, DISABLE_DEVICE_SECURITY_SUPPORTED_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DISABLE_DEVICE_SECURITY_SUPPORTED_STR, FORMAT_INT32,
       SystemCapabilitiesInfo.DisableDeviceSecuritySupported); // supported for both OS and UEFI
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, UNLOCK_DEVICE_SECURITY_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, UNLOCK_DEVICE_SECURITY_SUPPORTED_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, UNLOCK_DEVICE_SECURITY_SUPPORTED_STR, FORMAT_INT32,
       SystemCapabilitiesInfo.UnlockDeviceSecuritySupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, FREEZE_DEVICE_SECURITY_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, FREEZE_DEVICE_SECURITY_SUPPORTED_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, FREEZE_DEVICE_SECURITY_SUPPORTED_STR, FORMAT_INT32,
       SystemCapabilitiesInfo.FreezeDeviceSecuritySupported);
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, CHANGE_DEVICE_PASSPHRASE_SUPPORTED_STR)) {
-    Print(FORMAT_STR_EQ_DEC_NL, CHANGE_DEVICE_PASSPHRASE_SUPPORTED_STR,
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANGE_DEVICE_PASSPHRASE_SUPPORTED_STR, FORMAT_INT32,
       SystemCapabilitiesInfo.ChangeDevicePassphraseSupported);
   }
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
   FREE_POOL_SAFE(pDisplayValues);
-
+  FREE_POOL_SAFE(pPath);
   NVDIMM_EXIT_I64(ReturnCode);
   return  ReturnCode;
 }

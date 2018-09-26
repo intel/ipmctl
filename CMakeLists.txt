@@ -274,7 +274,6 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/cli/LoadCommand.c
 	DcpmPkg/cli/DeleteDimmCommand.c
 	src/os/cli_cmds/DumpSupportCommand.c
-	DcpmPkg/cli/LoadRecoverCommand.c
 	DcpmPkg/cli/ShowRegisterCommand.c
 	DcpmPkg/cli/StartFormatCommand.c
 	DcpmPkg/cli/ShowEventCommand.c
@@ -293,7 +292,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/common/PcdCommon.c
 	DcpmPkg/common/OsCommon.c
 	DcpmPkg/common/DataSet.c
-	DcpmPkg/common/Show.c
+	DcpmPkg/common/Printer.c
 	DcpmPkg/common/Strings.c
 	DcpmPkg/common/Nlog.c
 	DcpmPkg/driver/Protocol/Driver/NvmDimmConfig.c

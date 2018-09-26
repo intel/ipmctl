@@ -63,6 +63,7 @@ decode_nlog_binary command
 */
 VOID
 decode_nlog_binary(
+  struct Command *pCmd,
   CHAR16* decoded_file_name,
   UINT8* nlogbytes,
   UINT64 size,
@@ -95,6 +96,7 @@ load_nlog_dict command
 */
 nlog_dict_entry*
 load_nlog_dict(
+  struct Command *pCmd,
   IN CHAR16 * pDictPath,
   OUT UINT32 * version,
   OUT UINT64 * node_count
@@ -111,6 +113,7 @@ load_nlog_dict_v2 command
 */
 nlog_dict_entry*
 load_nlog_dict_v2(
+  struct Command *pCmd,
   IN CHAR8 ** lines,
   IN UINT64 line_count,
   OUT UINT64 * node_count

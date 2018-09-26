@@ -18,14 +18,14 @@
 
 #define COMMON_LOG_ENTRY()
 #define COMMON_LOG_ERROR(error) \
-	printf(error "\n")
+	//printf(error "\n")
 
 #define COMMON_LOG_EXIT_RETURN_I(rc)
 #define COMMON_LOG_DEBUG_F(fmt, ...) \
-	printf(fmt "\n", __VA_ARGS__)
+	//printf(fmt "\n", __VA_ARGS__)
 
 #define COMMON_LOG_ERROR_F(fmt, ...)\
-	printf(fmt "\n", __VA_ARGS__)
+	//printf(fmt "\n", __VA_ARGS__)
 
 #define COMMON_LOG_DEBUG(str)
 #define COMMON_LOG_EXIT()

@@ -53,7 +53,8 @@ struct Command SetDimmCommand =
     {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
     },                                                                //!< properties
   L"Set properties of one or more DIMMs.",                          //!< help
-  SetDimm
+  SetDimm,
+  TRUE
 };
 CHAR16* GetCorrectClearMessageBasedOnProperty(UINT16 ErrorInjectType) {
   CHAR16 *ClearOutputPropertyString = NULL;
@@ -126,6 +127,7 @@ SetDimm(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
 #ifdef OS_BUILD
   /*Inject error*/
@@ -153,24 +155,26 @@ SetDimm(
 #endif //OS_BUILD
   NVDIMM_ENTRY();
 
-  SetDisplayInfo(L"SetDimm", ResultsView, NULL);
-
   ZeroMem(DimmStr, sizeof(DimmStr));
 
   if (pCmd == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  pPrinterCtx = pCmd->pPrintCtx;
+
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -178,7 +182,7 @@ SetDimm(
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -186,28 +190,28 @@ SetDimm(
   // check targets
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmIdsFromString");
       goto Finish;
     }
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
 
   /** If no dimm IDs are specified get IDs from all dimms **/
   if (DimmIdsCount == 0) {
-      ReturnCode = GetManageableDimmsNumberAndId(&DimmIdsCount, &pDimmIds);
+      ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, &DimmIdsCount, &pDimmIds);
       if (EFI_ERROR(ReturnCode)) {
-        Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
         goto Finish;
       }
       if (DimmIdsCount == 0) {
-          Print(FORMAT_STR_NL, CLI_INFO_NO_MANAGEABLE_DIMMS);
           ReturnCode = EFI_NOT_FOUND;
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
           goto Finish;
       }
   }
@@ -266,8 +270,8 @@ SetDimm(
     if (!EFI_ERROR(ContainsProperty(pCmd, POISON_TYPE_INJ_PROPERTY))) {
         GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
         if ((ActionSpecified && pPoisonAddress == NULL) || !ActionSpecified) {
-          Print(FORMAT_STR_NL, CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS);
           ReturnCode = EFI_INVALID_PARAMETER;
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS);
           goto Finish;
         }
     }
@@ -318,22 +322,22 @@ SetDimm(
     /*Clear error injection requires exacly one  error injection type being set*/
     if (!EFI_ERROR(ContainsProperty(pCmd, CLEAR_ERROR_INJ_PROPERTY))) {
         if ((ActionSpecified && !ErrorInjectionTypeSet) || !ActionSpecified) {
-          Print(FORMAT_STR_NL, CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED);
           ReturnCode = EFI_INVALID_PARAMETER;
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED);
           goto Finish;
         }
     }
 #endif //OS_BUILD
   /** Syntax error - mixed properties from different set -dimm commands **/
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
     goto Finish;
   }
   /** Syntax error - no properties specified. **/
   if (!ActionSpecified) {
-    Print(FORMAT_STR_NL, CLI_ERR_INCOMPLETE_SYNTAX);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCOMPLETE_SYNTAX);
     goto Finish;
   }
 
@@ -347,8 +351,8 @@ SetDimm(
 
   pLoadFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pLoadFilePath));
   if (pLoadFilePath == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -383,8 +387,8 @@ SetDimm(
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_UNLOCKED) == 0) ||
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0))) {
       pErrorMessage = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, L"NewPassphrase=");
-      Print(FORMAT_STR_NL, pErrorMessage);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pErrorMessage);
       goto Finish;
 
     } else if (pLockStatePropertyValue != NULL && pConfirmPassphraseStatic != NULL &&
@@ -392,8 +396,8 @@ SetDimm(
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_UNLOCKED) == 0) ||
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0))) {
       pErrorMessage = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, L"ConfirmPassphrase=");
-      Print(FORMAT_STR_NL, pErrorMessage);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pErrorMessage);
       goto Finish;
 
     } else if (pLockStatePropertyValue != NULL && pPassphraseStatic != NULL &&
@@ -414,8 +418,8 @@ SetDimm(
       pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L"");
 
     } else {
-      Print(FORMAT_STR_NL, CLI_ERR_INCOMPLETE_SYNTAX);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCOMPLETE_SYNTAX);
       goto Finish;
     }
 
@@ -428,8 +432,8 @@ SetDimm(
     // Check -source option
     if (containsOption(pCmd, SOURCE_OPTION) && !LockStateFrozen) {
       if (OneOfPassphrasesIsNotEmpty) {
-        Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
         goto Finish;
       }
 
@@ -437,17 +441,18 @@ SetDimm(
       if (pLoadUserPath == NULL) {
         ReturnCode = EFI_OUT_OF_RESOURCES;
         NVDIMM_ERR("Could not get -source value. Out of memory");
-        Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
         goto Finish;
       }
 
       ReturnCode = GetDeviceAndFilePath(pLoadUserPath, pLoadFilePath, &pDevicePathProtocol);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Failed to get file path (" FORMAT_EFI_STATUS ")", ReturnCode);
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_FILE_PATH);
         goto Finish;
       }
 
-      ReturnCode = ParseSourcePassFile(pLoadFilePath, pDevicePathProtocol, &pPassphrase, &pNewPassphrase);
+      ReturnCode = ParseSourcePassFile(pCmd, pLoadFilePath, pDevicePathProtocol, &pPassphrase, &pNewPassphrase);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("ParseSourcePassFile failed (" FORMAT_EFI_STATUS ")", ReturnCode);
         goto Finish;
@@ -455,8 +460,8 @@ SetDimm(
       // Check if required passwords have been found in the file
       if ((pPassphrase == NULL && pPassphraseStatic != NULL) ||
           (pNewPassphrase == NULL && pNewPassphraseStatic != NULL)) {
-        Print(FORMAT_STR_NL, CLI_ERR_WRONG_FILE_DATA);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_FILE_DATA);
         goto Finish;
       // NewPassphrase and ConfirmPassphrase occur together
       } else if (pNewPassphrase != NULL) {
@@ -465,17 +470,17 @@ SetDimm(
     // Check prompts
     } else {
       if (OneOfPassphrasesIsEmpty && OneOfPassphrasesIsNotEmpty) {
-        Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
         goto Finish;
       }
       // Check prompt request Passphrase
       if (pPassphraseStatic != NULL && StrCmp(pPassphraseStatic, L"") == 0) {
         ReturnCode = PromptedInput(L"Enter passphrase:\n", FALSE, FALSE, &pPassphrase);
         if (EFI_ERROR(ReturnCode)) {
-          Print(FORMAT_STR_NL, CLI_ERR_PROMPT_INVALID);
-          NVDIMM_DBG("Failed on PromptedInput");
           ReturnCode = EFI_INVALID_PARAMETER;
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
+          NVDIMM_DBG("Failed on PromptedInput");
           goto Finish;
         }
       } else if (pPassphraseStatic != NULL) {
@@ -486,9 +491,9 @@ SetDimm(
       if (pNewPassphraseStatic != NULL && StrCmp(pNewPassphraseStatic, L"") == 0) {
         ReturnCode = PromptedInput(L"Enter new passphrase:", FALSE, FALSE, &pNewPassphrase);
         if (EFI_ERROR(ReturnCode)) {
-          Print(FORMAT_STR_NL, CLI_ERR_PROMPT_INVALID);
-          NVDIMM_DBG("Failed on PromptedInput");
           ReturnCode = EFI_INVALID_PARAMETER;
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
+          NVDIMM_DBG("Failed on PromptedInput");
           goto Finish;
         }
       } else if (pNewPassphraseStatic != NULL) {
@@ -499,7 +504,7 @@ SetDimm(
       if (pConfirmPassphraseStatic != NULL && StrCmp(pConfirmPassphraseStatic, L"") == 0) {
         ReturnCode = PromptedInput(L"Confirm passphrase:", FALSE, FALSE, &pConfirmPassphrase);
         if (EFI_ERROR(ReturnCode)) {
-          Print(FORMAT_STR_NL, CLI_ERR_PROMPT_INVALID);
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
           NVDIMM_DBG("Failed on PromptedInput");
           goto Finish;
         }
@@ -538,7 +543,8 @@ SetDimm(
       } else if (StrCmp(pFirstFastRefreshValue, PROPERTY_VALUE_1) == 0) {
         FirstFastRefreshState = FIRST_FAST_REFRESH_ENABLED;
       } else {
-        Print(FORMAT_STR L": Error (%d) - " FORMAT_STR_NL, pCommandStatusMessage, EFI_INVALID_PARAMETER,
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR L": Error (%d) - " FORMAT_STR_NL, pCommandStatusMessage, EFI_INVALID_PARAMETER,
                CLI_ERR_INCORRECT_VALUE_PROPERTY_FIRST_FAST_REFRESH);
         goto Finish;
       }
@@ -551,13 +557,15 @@ SetDimm(
       for (Index = 0; Index < DimmIdsCount; Index++) {
         ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
         if (EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
           goto Finish;
         }
         ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
         if (EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
           goto Finish;
         }
-        Print(L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
@@ -566,7 +574,7 @@ SetDimm(
             goto FinishCommandStatusSet;
           }
         } else {
-          Print(L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
+          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
           continue;
         }
       }
@@ -603,7 +611,7 @@ SetDimm(
     ErrInjectType = ERROR_INJ_TEMPERATURE;
     ReturnCode = GetU64FromString(pTemperature, &TemperatureValue);
     if (!ReturnCode) {
-      Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
@@ -619,16 +627,16 @@ SetDimm(
       ReturnCode =  IsHexValue(pPoisonAddress, FALSE);
     // ReturnCode here indicates if it is hex value
       if (!ReturnCode) {
-        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Poison'\n", CLI_SYNTAX_ERROR,
-          pPoisonAddress, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Poison'\n", CLI_SYNTAX_ERROR,
+          pPoisonAddress, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         goto Finish;
       }
     ReturnCode = GetU64FromString(pPoisonAddress, &PoisonAddressValue);
     if (EFI_ERROR(ReturnCode)) {
-      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Poison'\n", CLI_SYNTAX_ERROR,
-        pPoisonAddress, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Poison'\n", CLI_SYNTAX_ERROR,
+        pPoisonAddress, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       goto Finish;
     }
   }
@@ -647,8 +655,8 @@ SetDimm(
           }
       }
       if (!PoisonTypeValid) {
-        Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_POISON_TYPE);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_POISON_TYPE);
         goto Finish;
       }
   }
@@ -662,9 +670,9 @@ SetDimm(
     ReturnCode = GetU64FromString(pPackageSparing, (UINT64 *)&PackageSparing);
 
       if (!ReturnCode || 1 != PackageSparing) {
-        Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PackageSparing'\n", CLI_SYNTAX_ERROR,
-          pPackageSparing, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PackageSparing'\n", CLI_SYNTAX_ERROR,
+          pPackageSparing, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
         goto Finish;
       }
       ErrInjectType = ERROR_INJ_PACKAGE_SPARING;
@@ -678,9 +686,9 @@ SetDimm(
     ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemainingValue);
 
     if (!ReturnCode || PercentageRemainingValue > 100) {
-      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
-        pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
+        pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       goto Finish;
     }
     ErrInjectType = ERROR_INJ_PERCENTAGE_REMAINING;
@@ -694,9 +702,9 @@ SetDimm(
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pFatalMediaError, &FatalMediaError);
     if (!ReturnCode || 1 != FatalMediaError) {
-      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'FatalMediaError'\n", CLI_SYNTAX_ERROR,
-        pFatalMediaError, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'FatalMediaError'\n", CLI_SYNTAX_ERROR,
+        pFatalMediaError, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       goto Finish;
     }
     ErrInjectType = ERROR_INJ_FATAL_MEDIA_ERR;
@@ -711,9 +719,9 @@ SetDimm(
     ReturnCode = GetU64FromString(pDirtyShutDown, &DirtyShutDown);
 
     if (!ReturnCode ||  1 != DirtyShutDown) {
-      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'DirtyShutDown'\n", CLI_SYNTAX_ERROR, pDirtyShutDown,
-        CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'DirtyShutDown'\n", CLI_SYNTAX_ERROR, pDirtyShutDown,
+        CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       goto Finish;
     }
     ErrInjectType = ERROR_INJ_DIRTY_SHUTDOWN;
@@ -727,9 +735,9 @@ SetDimm(
     ReturnCode = GetU64FromString(pClearErrorInj, &ClearStatus);
 
     if (!ReturnCode ||  1 != ClearStatus) {
-      Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Clear'\n", CLI_SYNTAX_ERROR, ClearStatus,
-        CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Clear'\n", CLI_SYNTAX_ERROR, ClearStatus,
+        CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       goto Finish;
     }
   }
@@ -744,8 +752,9 @@ SetDimm(
 #endif
 FinishCommandStatusSet:
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-  DisplayCommandStatus(pCommandStatusMessage, pCommandStatusPreposition, pCommandStatus);
+  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, pCommandStatusPreposition, pCommandStatus);
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   CleanUnicodeStringMemory(pLockStatePropertyValue);
   CleanUnicodeStringMemory(pPassphraseStatic);

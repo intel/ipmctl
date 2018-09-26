@@ -8,6 +8,9 @@
 
 #include <Uefi.h>
 
+#define CLI_DUMP_GOAL_MSG              L"Dump pool configuration goal"
+#define CLI_DUMP_GOAL_ON_MSG           L" on"
+
 /**
   Register the Dump Goal command
 

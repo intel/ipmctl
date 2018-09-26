@@ -12,11 +12,11 @@
 #include <NvmLimits.h>
 #include <Convert.h>
 #include <DataSet.h>
-#include <Show.h>
+#include <Printer.h>
 #include "Common.h"
 
-STATIC EFI_STATUS
-UpdateCmdCtx(struct Command *pCmd);
+#define DS_MEMORY_RESOURCES_PATH                    L"/MemoryResources"
+
 /**
   Command syntax definition
 **/
@@ -31,7 +31,13 @@ struct Command ShowMemoryResourcesCommand = {
   {{L"", L"", L"", FALSE, ValueOptional}},                                            //!< properties
   L"Show information about total DIMM resource allocation.",                          //!< help
   ShowMemoryResources,
-  UpdateCmdCtx
+  TRUE,                                                                               //!< enable print control support
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowMemResourcesDataSetAttribs =
+{
+  NULL,
+  NULL
 };
 
 /**
@@ -57,25 +63,25 @@ ShowMemoryResources(
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
-  DATA_SET_CONTEXT *DataSet;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
-
-  DataSet = CreateDataSet(NULL, L"MemoryResources", NULL);
 
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
   SetMem(&MemoryResourcesInfo, sizeof(MemoryResourcesInfo), 0x0);
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    ShowCmdError(NULL, ReturnCode, CLI_ERR_NO_COMMAND);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
+
+  pPrinterCtx = pCmd->pPrintCtx;
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
-    ShowCmdError(pCmd->pShowCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;
   }
 
@@ -103,55 +109,43 @@ ShowMemoryResources(
 
   ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
   if (EFI_ERROR(ReturnCode)) {
-    ShowCmdError(pCmd->pShowCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
     goto Finish;
   }
 
   ReturnCode = MakeCapacityString(MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.UnconfiguredCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
   TempReturnCode = MakeCapacityString(MemoryResourcesInfo.ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  if (EFI_SUCCESS != (ReturnCode = SetKeyValueWideStr(DataSet, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr))) {
-    goto Finish;
-  }
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  ShowCmdData(DataSet, pCmd->pShowCtx);
-
 Finish:
-  FreeDataSet(DataSet);
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, &ShowMemResourcesDataSetAttribs);
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   NVDIMM_EXIT_I64(ReturnCode);
 
   return  ReturnCode;
@@ -174,20 +168,5 @@ RegisterShowMemoryResourcesCommand(
   ReturnCode = RegisterCommand(&ShowMemoryResourcesCommand);
 
   NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-Executes right before execution of the actual CMD handler.
-This gives an opportunity to modify values in the Command
-context (struct Command).
-
-@param[in] pCmd command from CLI
-
-@retval EFI_STATUS
-**/
-STATIC EFI_STATUS
-UpdateCmdCtx(struct Command *pCmd) {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
   return ReturnCode;
 }

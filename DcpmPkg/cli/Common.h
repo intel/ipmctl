@@ -14,6 +14,12 @@ extern OBJECT_STATUS gAllErrorNvmStatuses;
 extern OBJECT_STATUS gAllWarningNvmStatuses;
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 
+typedef struct _CMD_DISPLAY_OPTIONS {
+  BOOLEAN DisplayOptionSet;
+  BOOLEAN AllOptionSet;
+  CHAR16 *pDisplayValues;
+}CMD_DISPLAY_OPTIONS;
+
 /** common display options **/
 #define SOCKET_ID_STR               L"SocketID"
 #define DIMM_ID_STR                 L"DimmID"
@@ -63,6 +69,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_ERR_WRONG_REGISTER                L"Error: Register not found"
 #define CLI_ERR_INVALID_PASSPHRASE_FROM_FILE  L"Error: The file contains empty or bad formatted passphrases."
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
+#define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 
 // Common CLI error messages defined in specification
 #define CLI_ERR_NO_COMMAND                                    L"Syntax Error: No input."
@@ -142,7 +149,11 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
 #define CLI_INJECT_ERROR_FAILED                                   L"Error: Inject error command failed"
-
+#define CLI_ERR_NOT_UTF16                                         L"Error: The file is not in UTF16 format, BOM header missing.\n"
+#define CLI_ERR_EMPTY_FILE                                        L"Error: The file is empty.\n"
+#define CLI_ERR_NO_SOCKET_SKU_SUPPORT                             L"Platform does not support socket SKU limits.\n"
+#define CLI_ERR_SOCKET_NOT_FOUND                                  L"Socket not found. Invalid SocketID: %d\n"
+#define CLI_ERR_CAPACITY_STRING                                   L"Error: Failed creating the capacity string."
 
 #define CLI_INFO_LOAD_FW                                      L"Load FW"
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
@@ -191,6 +202,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting DIMM(s)..."
 
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
+#define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL
 
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2
@@ -214,6 +226,8 @@ extern EFI_GUID gNvmDimmCliVariableGuid;
   responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
+             printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
   @param[out] ppDimms A pointer to the dimm list found in NFIT.
@@ -227,6 +241,7 @@ extern EFI_GUID gNvmDimmCliVariableGuid;
 EFI_STATUS
 GetDimmList(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO **ppDimms,
      OUT UINT32 *pDimmCount
@@ -268,6 +283,7 @@ GetUintsFromString(
     Array[1]: 30
     Array[2]: 34
 
+  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
   @param[in] pDimmString The dimm target string to parse.
   @param[in] pDimmInfo The dimm list found in NFIT.
   @param[in] DimmCount Size of the pDimmInfo array.
@@ -281,6 +297,7 @@ GetUintsFromString(
 **/
 EFI_STATUS
 GetDimmIdsFromString(
+  IN     struct Command *pCmd,
   IN     CHAR16 *pDimmString,
   IN     DIMM_INFO *pDimmInfo,
   IN     UINT32 DimmCount,
@@ -371,6 +388,7 @@ CheckDisplayList(
 /**
   Gets number of Manageable Dimms and their IDs and Handles
 
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -381,9 +399,11 @@ CheckDisplayList(
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 );
+
 /**
   Checks if user has specified the options -a|-all and -d|-display.
   Those two flags exclude each other so the function also checks
@@ -397,14 +417,14 @@ GetManageableDimmsNumberAndId(
     strings considered as the valid values for the -d|-display option.
   @param[in] AllowedDisplayValuesCount is a UINT32 value that represents
     the number of elements in the array pointed by ppAllowedDisplayValues.
-  @param[out] pAllOptionSet is a pointer to a BOOLEAN value that will
+  @param[out] pDispOptions contains the following.
+    A BOOLEAN value that will
     represent the presence of the -a|-all option in the Command pointed
     by pCommand.
-  @param[out] pDisplayOptionSet is a pointer to a BOOLEAN value that will
+    A BOOLEAN value that will
     represent the presence of the -d|-display option in the Command pointed
     by pCommand.
-  @param[out] ppDisplayOptionValue is a pointer to an Unicode string
-    pointer. If the -d|-display option is present, this pointer will
+    A pointer to an Unicode string. If the -d|-display option is present, this pointer will
     be set to the option value Unicode string.
 
   @retval EFI_SUCCESS the check went fine, there were no errors
@@ -418,20 +438,8 @@ CheckAllAndDisplayOptions(
   IN     struct Command *pCommand,
   IN     CHAR16 **ppAllowedDisplayValues,
   IN     UINT32 AllowedDisplayValuesCount,
-     OUT BOOLEAN *pAllOptionSet,
-     OUT BOOLEAN *pDisplayOptionSet,
-     OUT CHAR16 **ppDisplayOptionValue
-  );
-
-/**
-  Checks if the DIMMs Sku is mixed.
-  If it is - displays a message to notify the user.
-  Also if there was an error while getting the
-  DIMMs status a proper message is printed.
-**/
-VOID
-WarnUserIfSkuIsMixed(
-  );
+  OUT CMD_DISPLAY_OPTIONS *pDispOptions
+);
 
 /**
   Display command status with specified command message.
@@ -600,6 +608,7 @@ DumpToFile (
 /**
   Prints supported or recommended appdirect settings
 
+  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
   @param[in] pFormatList pointer to variable length interleave formats array
   @param[in] FormatNum number of the appdirect settings formats
   @param[in] PrintRecommended if TRUE Recommended settings will be printed
@@ -608,6 +617,7 @@ DumpToFile (
 **/
 VOID
 PrintAppDirectSettings(
+  IN    struct Command *pCmd,
   IN    INTERLEAVE_FORMAT *pFormatList,
   IN    UINT16 FormatNum,
   IN    BOOLEAN PrintRecommended,
@@ -617,6 +627,7 @@ PrintAppDirectSettings(
 /**
   Read source file and return current passphrase to unlock device.
 
+  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
   @param[in] pFileHandle File handler to read Passphrase from
   @param[in] pDevicePath - handle to obtain generic path/location information concerning the
                           physical device or logical device. The device path describes the location of the device
@@ -630,6 +641,7 @@ PrintAppDirectSettings(
 **/
 EFI_STATUS
 ParseSourcePassFile(
+  IN     struct Command *pCmd,
   IN     CHAR16 *pFilePath,
   IN     EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
      OUT CHAR16 **ppCurrentPassphrase OPTIONAL,
@@ -885,9 +897,31 @@ Retrieve the User Cli Display Preferences CMD line arguements.
 @retval EFI_SUCCESS All ok
 **/
 EFI_STATUS
-ReadCmdLineShowOptions(
-  IN OUT SHOW_FORMAT_TYPE *pFormatType,
+ReadCmdLinePrintOptions(
+  IN OUT PRINT_FORMAT_TYPE *pFormatType,
   IN struct Command *pCmd
 );
 
+/**
+  Helper to recreate -o args in string format
+
+  @param[in] pCmd command from CLI
+  @param[out] ppOutputStr resulting -o string
+  @retval EFI_SUCCESS success
+  @retval EFI_INVALID_PARAMETER pCmd or ppOutputStr is NULL
+**/
+EFI_STATUS
+CreateCmdLineOutputStr(
+  IN     struct Command *pCmd,
+  OUT     CHAR16 **ppOutputStr
+);
+
+/**
+  Convert UEFI return codes to legacy OS return codes
+
+  @param[in] UefiReturnCode - return code to Convert
+
+  @retval - Converted OS ReturnCode
+**/
+EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode);
 #endif /** _COMMON_H_ **/

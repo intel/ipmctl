@@ -202,7 +202,7 @@ Load(
   DimmTotalCount += NonFunctionalDimmCount;
 
   /*Get the list of functional and non-functional dimms*/
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -251,7 +251,7 @@ Load(
   pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
   if (pTargetValue != NULL && StrLen(pTargetValue) > 0) {
 
-    ReturnCode = GetDimmIdsFromString(pTargetValue, pCandidateList, CandidateListCount, &pDimmIds, &DimmTargetCount);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pCandidateList, CandidateListCount, &pDimmIds, &DimmTargetCount);
     if (pDimmIds == NULL) {
       goto Finish;
     }

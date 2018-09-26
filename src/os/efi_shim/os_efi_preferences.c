@@ -27,7 +27,7 @@ EFI_STATUS preferences_init(IN CONST char *p_filename)
       g_p_filename = p_filename;
     }
   }
-  gIni = nvm_ini_load_dictionary(g_p_filename);
+  nvm_ini_load_dictionary(&gIni, g_p_filename);
 
   if (NULL == gIni)
   {

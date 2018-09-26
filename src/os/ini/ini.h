@@ -26,10 +26,12 @@ typedef struct _dictionary {
 
 /**
 @brief    Open/Create ini file and parse it
-@param    p_ini_file_name Name of the ini file to read
+@param    pp_dictionray Pointer to the dictionary context pointer
+@param    p_ini_file_name Pointer to the name of the ini file to read
 @return   Pointer to newly allocated dictionary - DO NOT MODIFY IT!
+          In case of error a NULL pointer is being returned
 */
-NVM_API dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name);
+dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_ini_file_name);
 
 /**
 @brief    Free the dictionary structure

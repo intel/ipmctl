@@ -26,23 +26,16 @@
 #define W_OK			0x2
 #endif
 
- /**
- @brief  Main dictionary context. This pointer is being initialized by
- the nvm_ini_load_dictionary function and freed by the nvm_ini_free_dictionary
- function
- */
-static dictionary *p_g_dictionary = NULL;
-
-/**
-@brief global to detect if any preferences were modified
-*/
-static BOOLEAN g_modified_config = FALSE;
-
 /**
 @brief  The default ini file content defined by the ipmctl_default.conf file
 */
-#define LOG_INSTALL_PATH ""
-#define TEMP_FILE_PATH ""
+#if defined(__LINUX__) || defined(__ESX__)
+#define LOG_INSTALL_PATH "/var/log/ipmctl/"
+#define TEMP_FILE_PATH "/var/log/ipmctl/"
+#else
+#define LOG_INSTALL_PATH "%APPDATA%\\Intel\\ipmctl\\"
+#define TEMP_FILE_PATH "%APPDATA%\\Intel\\ipmctl\\"
+#endif
 const char p_g_ini_file[] = {
 #include "ipmctl_default.h"
 };
@@ -172,6 +165,43 @@ inline static int nvm_convert_string_to_int(char *p_value, int fail_value)
 }
 
 /**
+@brief Copy line form the buffer - fgets for buffer
+*/
+inline static char *sgets(char *dest, int len, char *src)
+{
+  if ((NULL == dest) || (NULL == src) || (0 == len)) {
+    return NULL;
+  }
+
+  // Copy data
+  while ((*src != '\n') && (*src != 0) && (len > 0)) {
+    *dest++ = *src++;
+    len--;
+  }
+
+  if (*src == '\n') {
+    if (len > 0) {
+      *dest++ = *src;
+      len--;
+    }
+    if (len == 0) {
+      dest--; // Destination buffer is too small,
+              // replace the last char with null terminator
+    }
+    *dest = 0;
+    // Skip end of line character
+    src++;
+  }
+  else if ((*src == 0) || (len == 0)) {
+    *dest = 0;
+    // End of the buffer
+    src = NULL;
+  }
+
+  return src;
+}
+
+/**
 Global definitions and typedefs and macros
 */
 #define NVM_INI_VALUE_TOKEN   "="
@@ -181,16 +211,15 @@ Global definitions and typedefs and macros
 typedef char NVM_INI_ENTRY[NVM_INI_ENTRY_LEN]; // Ini entry string
 typedef char NVM_INI_FILENAME[NVM_INI_PATH_FILE_LEN]; // Ini entry string
 typedef wchar_t NVM_INI_FILENAME_W[NVM_INI_PATH_FILE_LEN];
-static NVM_INI_FILENAME g_ini_path_filename = { 0 };
-static NVM_INI_FILENAME_W g_ini_path_filename_w = { 0 };
 
 /**
 @brief    Open/Create ini file and parse it
+@param    pp_dictionray Pointer to the dictionary context pointer
 @param    p_ini_file_name Pointer to the name of the ini file to read
 @return   Pointer to newly allocated dictionary - DO NOT MODIFY IT!
           In case of error a NULL pointer is being returned
 */
-dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
+dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_ini_file_name)
 {
   FILE *h_file = NULL;
   NVM_INI_ENTRY ini_entry_string = { 0 };
@@ -201,61 +230,78 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
   dictionary *p_current_entry = NULL;
   size_t string_size = 0;
   size_t ini_entry_sz_chars;
+  NVM_INI_FILENAME ini_path_filename = { 0 };
+  NVM_INI_FILENAME_W ini_path_filename_w = { 0 };
+  BOOLEAN no_conf_file = FALSE;
+  char *ret_ptr = NULL;
+  long file_size = 0;
 
   // Check inputs
-  if (NULL == p_ini_file_name) {
+  if ((NULL == pp_dictionary) || (NULL == p_ini_file_name)) {
     return NULL;
   }
 
   // Check if the dictionary is already loaded
-  if (NULL != p_g_dictionary) {
-    return p_g_dictionary;
+  if (NULL != *pp_dictionary) {
+    goto Finish;
   }
 
-  g_modified_config = FALSE;
-
   // Try to open the file
-  snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s", p_ini_file_name);
-  h_file = fopen(g_ini_path_filename, "r");
+  snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
+  h_file = fopen(ini_path_filename, "r");
   if (NULL == h_file) {
-    snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
-    h_file = fopen(g_ini_path_filename, "r");
+    snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
+    h_file = fopen(ini_path_filename, "r");
     if (NULL == h_file) {
-      // File does not exists, lets create the new one
-      snprintf(g_ini_path_filename, sizeof(g_ini_path_filename), "%s", p_ini_file_name);
-      h_file = fopen(g_ini_path_filename, "a");
-      if (NULL == h_file) {
-        return NULL;
-      }
-      // Copy the default content to the file and flush the file
-      fprintf(h_file, p_g_ini_file);
-      h_file = freopen(g_ini_path_filename, "r", h_file);
-      if (NULL == h_file) {
-        return NULL;
-      }
+      // File does not exists, lets use hardcoded data
+      ret_ptr = (char *) p_g_ini_file;
+      no_conf_file = TRUE;
     }
   }
 
   // Create the dictionary context
-  while (NULL != fgets(ini_entry_string, sizeof(ini_entry_string), h_file)) {
+  if (FALSE == no_conf_file) {
+    // Check the file size
+    fseek(h_file, 0, SEEK_END);
+    file_size = ftell(h_file);
+    fseek(h_file, 0, SEEK_SET);
+    if (0 == file_size) {
+      AsciiStrToUnicodeStrS(ini_path_filename, ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
+      wprintf(L"Error: Could not parse configuration file: %ls\n", ini_path_filename_w);
+#if defined(__LINUX__)
+      wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
+#else
+      wprintf(L"The default configuration can be found here: ipmctl_default.conf\n");
+#endif
+      // File size improper, lets use hardcoded data
+      ret_ptr = (char *) p_g_ini_file;
+      no_conf_file = TRUE;
+    }
+    else {
+      // Get line form the file
+      ret_ptr = fgets(ini_entry_string, sizeof(ini_entry_string), h_file);
+    }
+  }
+  if (TRUE == no_conf_file) {
+    // Create dictionary context based on hardcoded data
+    ret_ptr = sgets(ini_entry_string, sizeof(ini_entry_string), ret_ptr);
+  }
+  while (ret_ptr != NULL) {
     // Allocate next entry
-    if (NULL == p_g_dictionary) {
-      p_g_dictionary = (dictionary *)calloc(1, sizeof(dictionary));
-      if (NULL == p_g_dictionary) {
-        // Close the file
-        fclose(h_file);
-        return NULL;
+    if (NULL == *pp_dictionary) {
+      *pp_dictionary = (dictionary *)calloc(1, sizeof(dictionary));
+      if (NULL == *pp_dictionary) {
+        goto Finish;
       }
-      p_current_entry = p_g_dictionary;
+      p_current_entry = *pp_dictionary;
     }
     else {
       p_current_entry->p_next = (dictionary *)calloc(1, sizeof(dictionary));
       if (NULL == p_current_entry->p_next) {
         // Free already allocated memory
-        nvm_ini_free_dictionary(p_g_dictionary);
-        // Close the file
-        fclose(h_file);
-        return NULL;
+        nvm_ini_free_dictionary(*pp_dictionary);
+        *pp_dictionary = NULL;
+        goto Finish;
       }
       p_current_entry = p_current_entry->p_next;
     }
@@ -291,37 +337,26 @@ dictionary *nvm_ini_load_dictionary(const char *p_ini_file_name)
     string_size = (size_t)(strlen(p_comment));
     nvm_set_value(&p_current_entry->p_comment, p_comment, string_size);
     // Update the total count and switch to next entry
-    p_g_dictionary->numb_of_entries += 1;
-  }
-
-  // handle special case with empty file
-  if (p_g_dictionary == NULL) {
-    if (NULL == g_ini_path_filename) {
-      wprintf(L"Error: Could not parse configuration file: NULL\n");
+    (*pp_dictionary)->numb_of_entries += 1;
+    // Get another entry
+    if (TRUE == no_conf_file) {
+      // Get another line from hardcoded buffer
+      ret_ptr = sgets(ini_entry_string, sizeof(ini_entry_string), ret_ptr);
     }
     else {
-      AsciiStrToUnicodeStrS(g_ini_path_filename, g_ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
-      wprintf(L"Error: Could not parse configuration file: %ls\n", g_ini_path_filename_w);
+      // Get another line form the file
+      ret_ptr = fgets(ini_entry_string, sizeof(ini_entry_string), h_file);
     }
-#if defined(__LINUX__)
-    wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
-#else
-    wprintf(L"The default configuration can be found here: ipmctl_default.conf\n");
-#endif
-    // create an empty dictionary so the command will run with default configuration
-    p_g_dictionary = (dictionary *)calloc(1, sizeof(dictionary));
-    if (NULL == p_g_dictionary) {
-      // Close the file
-      fclose(h_file);
-      return NULL;
-    }
-    }
-
-  // Close the file
-  fclose(h_file);
-
-  return p_g_dictionary;
   }
+
+Finish:
+  // Close the file
+  if (NULL != h_file) {
+    fclose(h_file);
+  }
+
+  return *pp_dictionary;
+}
 
 /**
 @brief    Free the dictionary structure
@@ -393,18 +428,9 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
 
   p_key_value = nvm_dictionary_get_set_value(p_dictionary, p_key, p_value);
   if (NULL == p_key_value) {
-    if (NULL == g_ini_path_filename) {
-      wprintf(L"Error: Could not find preference in configuration file: NULL\n");
-    }
-    else {
-      AsciiStrToUnicodeStrS(g_ini_path_filename, g_ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
-      wprintf(L"Error: Could not find preference in configuration file: %ls\n", g_ini_path_filename_w);
-    }
+    wprintf(L"Error: Could not find preference in configuration file\n");
     return -1;
   }
-
-  // set global that the config has been modified
-  g_modified_config = TRUE;
 
   return 0;
 }
@@ -418,6 +444,7 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
 int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
 {
   FILE *h_file;
+  NVM_INI_FILENAME ini_path_filename = { 0 };
 
   // Check inputs
   if ((NULL == p_dictionary) || (NULL == p_ini_file_name)) {
@@ -425,20 +452,21 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
   }
 
   // nothing to do if no entries or no modified values
-  if ((p_dictionary->numb_of_entries == 0) ||
-    (!g_modified_config)) {
+  if (p_dictionary->numb_of_entries == 0) {
     return 0;
   }
 
   // Open and truncated the file
-  if (0 == *g_ini_path_filename) {
-    h_file = fopen(p_ini_file_name, "w");
-  }
-  else {
-    h_file = fopen(g_ini_path_filename, "w");
-  }
-  if (NULL == h_file) {
-    return -1;
+  // Try to open the file
+  snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
+  h_file = fopen(ini_path_filename, "r");
+  if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
+    snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
+    h_file = fopen(ini_path_filename, "r");
+    if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
+      // Hardcoded data used, nothing to save
+      return -1;
+    }
   }
 
   // Copy the dictionary to the file

@@ -108,7 +108,7 @@ typedef struct _recording_file
   UINT32 reserved4;
   UINT32 reserved5;
 }recording_file;
-#pragma pop()
+#pragma pack(pop)
 
 typedef struct _smbios_table_recording
 {

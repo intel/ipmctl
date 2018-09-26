@@ -74,6 +74,14 @@ RunFwDiagnostics(
     }
   }
 
+  ReturnCode = CheckFirstFastRefreshConsistency(ppDimms, DimmCount, ppResult, pDiagState);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for first fast refresh settings consistency failed");
+    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
+      goto FinishError;
+    }
+  }
+
   for (Index = 0; Index < DimmCount; Index++) {
     if (ppDimms[Index] == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -448,6 +456,87 @@ Finish:
   return ReturnCode;
 }
 
+/**
+Check First Fast Refresh consistency for the specified DIMMs, and accordingly append to
+the fw diagnostics result.
+Also, accordingly modifies the test-state.
+
+@param[in] ppDimms The DIMM pointers list
+@param[in] DimmCount DIMMs count
+@param[in out] ppResultStr Pointer to the result string of fw diagnostics message
+@param[out] pDiagState Pointer to the fw diagnostics test state. Possible states:
+            DIAG_STATE_MASK_OK, DIAG_STATE_MASK_WARNING, DIAG_STATE_MASK_FAILED,
+            DIAG_STATE_MASK_ABORTED
+
+@retval EFI_SUCCESS Test executed correctly
+@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
+@retval EFI_OUT_OF_RESOURCES when memory allocation fails.
+**/
+EFI_STATUS
+CheckFirstFastRefreshConsistency(
+  IN     DIMM **ppDimms,
+  IN     CONST UINT16 DimmCount,
+  IN OUT CHAR16 **ppResultStr,
+  OUT UINT8 *pDiagState
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM_INFO *pDimms = NULL;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  UINTN Index = 0;
+  UINT8 FirstFastRefresh = 0;
+
+  NVDIMM_ENTRY();
+
+  if (DimmCount == 0 || ppDimms == NULL || DimmCount > MAX_DIMMS ||
+    ppResultStr == NULL || pDiagState == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    if (pDiagState != NULL) {
+      *pDiagState |= DIAG_STATE_MASK_ABORTED;
+    }
+    goto Finish;
+  }
+
+  /** make sure we can access the config protocol **/
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_DEVICE_ERROR;
+    *pDiagState |= DIAG_STATE_MASK_ABORTED;
+    NVDIMM_WARN("Unable to access protocol.");
+    goto Finish;
+  }
+
+  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
+  if (pDimms == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    NVDIMM_ERR("Could not allocate memory");
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
+    DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY, pDimms);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmCount; Index++) {
+    /** ViralPolicyState equals to state of the first DIMM, rest of DIMMs must be in the same state **/
+    if (Index == 0) {
+      FirstFastRefresh = pDimms[0].FirstFastRefresh;
+    }
+    if (pDimms[Index].FirstFastRefresh != FirstFastRefresh) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_INCONSISTENT_FIRST_FAST_REFRESH), EVENT_CODE_911, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState);
+      goto Finish;
+    }
+  }
+
+Finish:
+  FREE_POOL_SAFE(pDimms);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 /**
 Get the smart and health data and checks the Media Temperature,
 Controller Temperature and Spare Block thresholds.

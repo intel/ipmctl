@@ -106,11 +106,11 @@ API for development of Intel Optane DC persistent memory management utilities.
 
 %files -n ipmctl
 %{_bindir}/ipmctl
+%{_mandir}/man1/ipmctl*
 
 %files -n ipmctl-monitor
 %{_bindir}/ipmctl-monitor
 %{_unitdir}/ipmctl-monitor.service
-%{_mandir}/man1/ipmctl*
 
 %files -n libipmctl
 %{_libdir}/libipmctl.so.3*

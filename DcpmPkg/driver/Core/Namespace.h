@@ -451,7 +451,6 @@ GetNamespaceById(
 
   @retval Return values from IoNamespaceBlock function
 **/
-INLINE
 EFI_STATUS
 ReadNamespaceBlock(
   IN     NAMESPACE *pNamespace,
@@ -472,7 +471,6 @@ ReadNamespaceBlock(
   @retval EFI_SUCCESS on a successful write
   @retval Error return values from IoNamespaceBlock function
 **/
-INLINE
 EFI_STATUS
 WriteNamespaceBlock(
   IN     NAMESPACE *pNamespace,
@@ -904,7 +902,6 @@ GetRealRawSizeAndRealBlockSize(
   @retval EFI_SUCCESS on a successful read
   @retval Error return values from IoNamespaceBlock function
 **/
-INLINE
 EFI_STATUS
 ReadNamespaceBytes(
   IN     NAMESPACE *pNamespace,

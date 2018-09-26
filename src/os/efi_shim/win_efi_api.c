@@ -102,7 +102,7 @@ passthru_os(
 
 EFI_STATUS
 get_nfit_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER * table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
 )
 {
   return get_table('ACPI', 'TIFN', table);
@@ -110,7 +110,7 @@ get_nfit_table(
 
 EFI_STATUS
 get_pcat_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER * table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
 )
 {
   return get_table('ACPI', 'TACP', table);
@@ -118,7 +118,7 @@ get_pcat_table(
 
 EFI_STATUS
 get_pmtt_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER * table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
 )
 {
   return get_table('ACPI', 'TTMP', table);

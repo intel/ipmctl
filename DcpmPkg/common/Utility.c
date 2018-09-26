@@ -23,6 +23,7 @@
 #include <Convert.h>
 #ifdef OS_BUILD
 #include <os.h>
+#include <string.h>
 #endif
 
 #if defined(__LINUX__)
@@ -1409,7 +1410,7 @@ CatSPrintClean(
   )
 {
   CHAR16 *pResult = NULL;
-  VA_LIST ArgList = {0};
+  VA_LIST ArgList;
 
   VA_START(ArgList, pFormatString);
   pResult = CatVSPrint(pString, pFormatString, ArgList);
@@ -3460,7 +3461,7 @@ CopyMem_S(
 )
 {
 #ifdef OS_BUILD
-  int status = memcpy_s(DestinationBuffer, DestLength, SourceBuffer, Length);
+  int status = memcpy_s(DestinationBuffer, DestLength, SourceBuffer, (rsize_t)Length);
   if(status != 0)
     NVDIMM_CRIT("Memcpy_s failed with ErrorCode: %x", status);
   return DestinationBuffer;

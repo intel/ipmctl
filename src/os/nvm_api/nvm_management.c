@@ -2052,7 +2052,7 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
 
   event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
   // Get events form system log
-  bytes_in_event_buffer = nvm_get_events_from_file(event_type_mask, dimm_uid, event_id, events_number, &p_log_entry, &event_buffer);
+  bytes_in_event_buffer = (int)nvm_get_events_from_file(event_type_mask, dimm_uid, event_id, events_number, &p_log_entry, &event_buffer);
   while ((bytes_in_event_buffer > 0) && (events_number > 0)) {
     p_event_message = event_buffer + p_log_entry->message_offset;
     convert_log_entry_to_event(p_log_entry, p_event_message, p_current_event);
@@ -2945,7 +2945,7 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
 
   event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
   // Get events form system log
-  bytes_in_event_buffer = nvm_get_events_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE, events_number, &p_log_entry, &event_buffer);
+  bytes_in_event_buffer = (int)nvm_get_events_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE, events_number, &p_log_entry, &event_buffer);
   while ((bytes_in_event_buffer > 0) && (events_number > 0)) {
     p_event_message = event_buffer + p_log_entry->message_offset;
     convert_debug_log_entry_to_event(p_log_entry, p_event_message, p_current_event);
@@ -3249,7 +3249,7 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
 {
   EFI_STATUS rc;
   CHAR16 uid_wide[MAX_DIMM_UID_LENGTH];
-  int i;
+  unsigned int i;
 
   if (NULL == g_dimms) {
     if (NVM_SUCCESS != nvm_get_number_of_devices(&g_dimm_cnt)) {

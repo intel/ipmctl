@@ -140,7 +140,7 @@ bool serviceInit(std::string serviceName)
 	bool result = true;
 
 	SERVICE_TABLE_ENTRY service_table[] = {
-			{g_serviceName, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
+			{g_serviceName, ServiceMain},
 			{NULL, NULL}
 	};
 
@@ -173,7 +173,8 @@ BOOL setServiceStatus(DWORD state, BOOL block_controls, DWORD win32_exit_code, D
 /*
 * Service Control Handler. This is called when the SCM sends the "Stop" signal
 */
-void ServiceCtrlHandler(DWORD ctrl)
+
+void WINAPI ServiceCtrlHandler(DWORD ctrl)
 {
 	BOOL stop_service = FALSE;
 	TCHAR szMsg[1024];

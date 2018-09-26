@@ -175,7 +175,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 
     if (!stripped_args)
     {
-      int argvSize = strlen(argv[Index]);
+      int argvSize = (int)strlen(argv[Index]);
       VOID * ptr = AllocateZeroPool((argvSize + 1) * sizeof(wchar_t));
       if (NULL == ptr) {
         FreePool(gOsShellParametersProtocol.Argv);

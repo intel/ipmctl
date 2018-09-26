@@ -9402,6 +9402,11 @@ InjectError(
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
       }
+      if (pPercentageRemaining == NULL) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_PARAMETER);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        goto Finish;
+      }
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = SPARE_BLOCK_PERCENTAGE_TRIGGER;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Enable = !ClearStatus;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Value = *pPercentageRemaining;

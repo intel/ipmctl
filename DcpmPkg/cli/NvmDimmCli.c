@@ -169,7 +169,8 @@ UefiMain(
   ZeroMem(&Command, sizeof(Command));
 
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
-  NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%x\n", (UINT64)&UefiMain);
+  NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
+
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**

@@ -164,7 +164,7 @@ Finish:
 }
 
 #ifdef OS_BUILD
-EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, INT64 MinVal, UINT64 MaxValue, UINT64 *IntegerEq) {
+EFI_STATUS ValidateAndConvertInput(CHAR16 *InputString, UINT64 MinVal, UINT64 MaxValue, UINT64 *IntegerEq) {
 
   EFI_STATUS rc = EFI_INVALID_PARAMETER;
   if (!GetU64FromString(InputString, IntegerEq)) {
@@ -179,7 +179,7 @@ Finish:
   return rc;
 }
 
-EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN INT64 MinVal, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
+EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN CONST CHAR8 *pIfNotFoundWarning, IN UINT64 MinVal, IN UINT64 MaxValue, OUT COMMAND_STATUS* pCommandStatus)
 {
   EFI_STATUS rc = EFI_SUCCESS;
   CHAR16 *pTypeValue = NULL;

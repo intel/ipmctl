@@ -637,7 +637,7 @@ PassThru(
 
   DimmID = pCmd->DimmID;
   pCmd->DimmID = pDimm->DeviceHandle.AsUint32;
-  Rc = passthru_os(pDimm, pCmd, Timeout);
+  Rc = passthru_os(pDimm, pCmd, (long)Timeout);
   INC_PASS_THRU_CNT();
   pCmd->DimmID = DimmID;
 
@@ -1153,9 +1153,9 @@ AsciiVSPrint(
   if (0 == BufferSize)
     return BufferSize;
 
-  return vsnprintf_s(StartOfBuffer, BufferSize
+  return vsnprintf_s(StartOfBuffer, (const size_t)BufferSize
 #ifdef _MSC_VER
-    , BufferSize - 1
+    , (size_t)(BufferSize - 1)
 #endif
     , FormatString, Marker);
 }
@@ -1250,7 +1250,7 @@ ZeroMem(
   IN UINTN  Length
 )
 {
-  memset(Buffer, 0, Length);
+  memset(Buffer, 0, (size_t)Length);
   return Buffer;
 }
 
@@ -1296,7 +1296,7 @@ CopyMem(
   IN UINTN       Length
 )
 {
-  memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
+  memcpy_s(DestinationBuffer, (rsize_t)Length, SourceBuffer, (rsize_t)Length);
   return DestinationBuffer;
 }
 
@@ -1332,7 +1332,7 @@ CompareMem(
   IN UINTN       Length
 )
 {
-  return memcmp(DestinationBuffer, SourceBuffer, Length);
+  return memcmp(DestinationBuffer, SourceBuffer, (size_t)Length);
 }
 
 /**
@@ -1530,7 +1530,7 @@ CatVSPrint(
   }
 
   if (String != NULL) {
-    wcscpy_s(BufferToReturn, SizeRequired / sizeof(CHAR16), String);
+    wcscpy_s(BufferToReturn, (rsize_t)(SizeRequired / sizeof(CHAR16)), String);
   }
   vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
 
@@ -1597,7 +1597,7 @@ AllocatePool(
   IN UINTN  AllocationSize
 )
 {
-  return malloc(AllocationSize);
+  return malloc((size_t)AllocationSize);
 }
 
 /**
@@ -1619,7 +1619,7 @@ AllocateZeroPool(
   IN UINTN  AllocationSize
 )
 {
-  return calloc(AllocationSize, 1);
+  return calloc((size_t)AllocationSize, 1);
 }
 
 /**
@@ -1646,9 +1646,9 @@ AllocateCopyPool(
   IN CONST VOID  *Buffer
 )
 {
-  void * ptr = calloc(AllocationSize, 1);
+  void * ptr = calloc((size_t)AllocationSize, 1);
   if (NULL != ptr) {
-    memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
+    memcpy_s(ptr, (rsize_t)AllocationSize, Buffer, (rsize_t)AllocationSize);
   }
   return ptr;
 }
@@ -1682,7 +1682,7 @@ ReallocatePool(
   IN VOID   *OldBuffer  OPTIONAL
 )
 {
-  return realloc(OldBuffer, NewSize);
+  return realloc(OldBuffer, (size_t)NewSize);
 }
 
 /**
@@ -1816,7 +1816,7 @@ SetMem(
   IN UINT8  Value
 )
 {
-  memset(Buffer, Value, Length);
+  memset(Buffer, Value, (size_t)Length);
   return Buffer;
 }
 
@@ -2355,7 +2355,7 @@ UnicodeSPrint(
 {
   VA_LIST Marker;
   VA_START(Marker, FormatString);
-  return vswprintf_s(StartOfBuffer, BufferSize / sizeof(CHAR16), FormatString, Marker);
+  return vswprintf_s(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
 }
 
 /**
@@ -2401,7 +2401,7 @@ UnicodeVSPrint(
   IN  VA_LIST        Marker
 )
 {
-  return vswprintf_s(StartOfBuffer, BufferSize / sizeof(CHAR16), FormatString, Marker);
+  return vswprintf_s(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
 }
 
 /**
@@ -2448,9 +2448,9 @@ AsciiSPrint(
 {
   VA_LIST Marker;
   VA_START(Marker, FormatString);
-  return vsnprintf_s(StartOfBuffer, BufferSize
+  return vsnprintf_s(StartOfBuffer, (size_t)BufferSize
 #ifdef _MSC_VER
-    , BufferSize - 1
+    , (size_t)(BufferSize - 1)
 #endif
     , FormatString, Marker);
 }

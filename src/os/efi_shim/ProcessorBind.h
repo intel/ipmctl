@@ -6,6 +6,13 @@
 #ifndef __PROCESSOR_BIND_H__
 #define __PROCESSOR_BIND_H__
 #include <stddef.h>
+
+#if defined(_MSC_EXTENSIONS)
+// This include is needed for defining _ReturnAddress in Base.h on Windows builds
+// Since Base.h includes ProcessorBind.h, we don't have to modify Base.h! (it's
+// part of the UEFI base library and we'd like to not modify it)
+#include <intrin.h>
+#endif
 ///
 /// Define the processor type so other code can make processor based choices
 ///
@@ -84,6 +91,27 @@
 // This warning is caused by empty (after preprocessing) source file. For precompiled header only.
 //
 #pragma warning ( disable : 4206 )
+
+//
+// DebugLib.h (in the assumed unmodifiable UEFI codebase) is re-defining _DEBUG and _ASSERT macros
+// which are both used in Microsoft libraries. Unfortunately I can't do a
+// #pragma warning disable inside of DebugLib.h because we don't want to modify the library.
+// After a few attempts, it appears can't do custom things (like disable a particular warning)
+// for header files in cmake. That would be the ideal solution.
+//
+// So, it falls to modifying .c files to ignore the warnings. Just about every file
+// in our codebase includes DebugLib.h directly or indirectly.
+// If you comment the below statement, you'll see tons of warnings.
+//
+// While I can add "SET_SOURCE_FILES_PROPERTIES( <filename.c> PROPERTIES COMPILE_FLAGS /wd4005)"
+// (to pick just one workaround out of several) for each
+// of the ~120 UEFI lib files that include DebugLib.h in CMakeLists.txt,
+// it'll be some amount of work and need updating.
+// Instead, I'm comfortable disabling macro re-definition warnings for all Microsoft builds
+// because we also build for Linux and UEFI, so any real macro re-definitions will show up
+// when we compile on the build server.
+//
+#pragma warning ( disable : 4005 )
 
 #endif
 

@@ -260,7 +260,7 @@ ShowEvent(
     ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
 	if (NULL != StringBuffer) {
-		size_t StringLen = AsciiStrSize(StringBuffer) + 1;
+		size_t StringLen = (size_t)(AsciiStrSize(StringBuffer) + 1);
 		WStringBuffer = (CHAR16 *) AllocateZeroPool(StringLen * sizeof(CHAR16));
 		if (NULL != WStringBuffer) {
 			if (RETURN_SUCCESS != AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {

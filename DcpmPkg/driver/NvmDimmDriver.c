@@ -39,20 +39,6 @@ EFI_GUID gNvmDimmNgnvmGuid = NVMDIMM_DRIVER_NGNVM_GUID;
 EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
 
 /**
-  Adds the DIMM name for the use of the ComponentName protocols.
-
-  @param[in] DimmIndex, the index of the DIMM that the caller wants to register the name for.
-
-  @retval EFI_SUCCESS if the name was added successfully
-  Other return values from the function AddStringToUnicodeTable.
-**/
-STATIC
-EFI_STATUS
-RegisterDimmName(
-  IN     UINT32 DimmIndex
-  );
-
-/**
   Array of dimms UEFI-related data structures.
 **/
 EFI_DIMMS_DATA gDimmsUefiData[MAX_DIMMS];
@@ -299,6 +285,11 @@ NvmDimmDriverUnload(
   return ReturnCode;
 }
 
+
+
+#ifndef OS_BUILD
+
+
 /**
   This function reads the driver workarounds flags from the
   shell variable and sets the proper flags or values in the driver.
@@ -306,58 +297,7 @@ NvmDimmDriverUnload(
   This function exists only in the debug version of the driver.
 **/
 #if defined(DYNAMIC_WA_ENABLE)
-STATIC
-VOID
-InitWorkarounds(
-  )
-{
-  CHAR16 *pShellVar = NULL;
-  CHAR16 **ppShellVarSplit = NULL;
-  UINT32 ShellTokensCount = 0;
-  UINT32 Index = 0;
 
-  pShellVar = GetEnvVariable(DYNAMIC_WA_ENV_VARIABLE_NAME);
-
-  if (pShellVar != NULL) {
-    if (NULL == (ppShellVarSplit = StrSplit(pShellVar, L',', &ShellTokensCount))) {
-      return;
-    }
-
-    for (Index = 0; Index < ShellTokensCount; Index++) {
-      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_ALWAYS_LOAD, sizeof(WA_FLAG_ALWAYS_LOAD)) == 0) {
-        Print(L"INFO: 'Always load' workaround enabled in the driver.\n");
-        gNvmDimmData->AlwaysLoadDriver = TRUE;
-        continue;
-      }
-
-      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_SIMICS, sizeof(WA_FLAG_SIMICS)) == 0) {
-        Print(L"INFO: 'Simics' workaround enabled in the driver.\n");
-        gNvmDimmData->SimicsWorkarounds = TRUE;
-        continue;
-      }
-
-      if (CompareMem(ppShellVarSplit[Index],
-          WA_FLAG_UNLOAD_OTHER_DRIVERS, sizeof(WA_FLAG_UNLOAD_OTHER_DRIVERS)) == 0) {
-        Print(L"INFO: 'Unload loaded drivers before load' workaround enabled in the driver.\n");
-        gNvmDimmData->UnloadExistingDrivers = TRUE;
-        continue;
-      }
-
-      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_IGNORE_UID_NUMS, sizeof(WA_FLAG_IGNORE_UID_NUMS)) == 0) {
-        Print(L"INFO: Ignoring the same NVDIMM UID numbers workaround enabled in the driver.\n");
-        gNvmDimmData->IgnoreTheSameUIDNumbers = TRUE;
-        continue;
-      }
-
-      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_NO_PCD_INIT, sizeof(WA_FLAG_NO_PCD_INIT)) == 0) {
-        Print(L"INFO: Disable PCD read during initialization workaround enabled in the driver.\n");
-        gNvmDimmData->PcdUsageDisabledOnInit = TRUE;
-        continue;
-      }
-    }
-    FreeStringArray(ppShellVarSplit, ShellTokensCount);
-  }
-}
 
 /**
   Finds a driver handle for the given driver name keywords.
@@ -387,7 +327,6 @@ FindDriverByComponentName(
      OUT EFI_HANDLE *pDriverHandle
   )
 {
-#ifndef OS_BUILD
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINTN HandleCount = 0;
   EFI_HANDLE *pHandleBuffer = NULL;
@@ -491,7 +430,58 @@ FindDriverByComponentName(
 Finish:
   FREE_POOL_SAFE(pHandleBuffer);
   NVDIMM_EXIT();
-#endif
+}
+STATIC
+VOID
+InitWorkarounds(
+  )
+{
+  CHAR16 *pShellVar = NULL;
+  CHAR16 **ppShellVarSplit = NULL;
+  UINT32 ShellTokensCount = 0;
+  UINT32 Index = 0;
+
+  pShellVar = GetEnvVariable(DYNAMIC_WA_ENV_VARIABLE_NAME);
+
+  if (pShellVar != NULL) {
+    if (NULL == (ppShellVarSplit = StrSplit(pShellVar, L',', &ShellTokensCount))) {
+      return;
+    }
+
+    for (Index = 0; Index < ShellTokensCount; Index++) {
+      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_ALWAYS_LOAD, sizeof(WA_FLAG_ALWAYS_LOAD)) == 0) {
+        Print(L"INFO: 'Always load' workaround enabled in the driver.\n");
+        gNvmDimmData->AlwaysLoadDriver = TRUE;
+        continue;
+      }
+
+      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_SIMICS, sizeof(WA_FLAG_SIMICS)) == 0) {
+        Print(L"INFO: 'Simics' workaround enabled in the driver.\n");
+        gNvmDimmData->SimicsWorkarounds = TRUE;
+        continue;
+      }
+
+      if (CompareMem(ppShellVarSplit[Index],
+          WA_FLAG_UNLOAD_OTHER_DRIVERS, sizeof(WA_FLAG_UNLOAD_OTHER_DRIVERS)) == 0) {
+        Print(L"INFO: 'Unload loaded drivers before load' workaround enabled in the driver.\n");
+        gNvmDimmData->UnloadExistingDrivers = TRUE;
+        continue;
+      }
+
+      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_IGNORE_UID_NUMS, sizeof(WA_FLAG_IGNORE_UID_NUMS)) == 0) {
+        Print(L"INFO: Ignoring the same NVDIMM UID numbers workaround enabled in the driver.\n");
+        gNvmDimmData->IgnoreTheSameUIDNumbers = TRUE;
+        continue;
+      }
+
+      if (CompareMem(ppShellVarSplit[Index], WA_FLAG_NO_PCD_INIT, sizeof(WA_FLAG_NO_PCD_INIT)) == 0) {
+        Print(L"INFO: Disable PCD read during initialization workaround enabled in the driver.\n");
+        gNvmDimmData->PcdUsageDisabledOnInit = TRUE;
+        continue;
+      }
+    }
+    FreeStringArray(ppShellVarSplit, ShellTokensCount);
+  }
 }
 
 /**
@@ -539,8 +529,45 @@ UnloadDcpmmDriversIfAny(
   }
 
 }
-
 #endif /** DYNAMIC_WA_ENABLE **/
+
+/**
+  RegisterDimmName
+  Adds the DIMM name for the use of the ComponentName protocols.
+
+  @param[in] DimmIndex, the index of the DIMM that the caller wants to register the name for.
+
+  @retval EFI_SUCCESS if the name was added successfully
+  Other return values from the function AddStringToUnicodeTable.
+**/
+STATIC
+EFI_STATUS
+RegisterDimmName(
+  IN     UINT32 DimmIndex
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  CHAR16 *pDimmNameString = NULL;
+
+  NVDIMM_ENTRY();
+
+  pDimmNameString = CatSPrint(NULL, PMEM_DIMM_NAME, gDimmsUefiData[DimmIndex].pDimm->DimmID);
+
+  if (pDimmNameString != NULL) {
+    ReturnCode = AddStringToUnicodeTable(pDimmNameString, &gDimmsUefiData[DimmIndex].pDimmName);
+  } else {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    NVDIMM_WARN("Failed to allocate memory for DIMM name.\n");
+  }
+
+  FREE_POOL_SAFE(pDimmNameString);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+#endif /**!OS_BUILD **/
+
+
 
 /**
   Driver entry point
@@ -553,9 +580,11 @@ NvmDimmDriverDriverEntryPoint(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_LOADED_IMAGE_PROTOCOL *pLoadedImage = NULL;
   EFI_HANDLE ExistingDriver = NULL;
   DRIVER_PREFERENCES DriverPreferences;
+#ifndef OS_BUILD
+  EFI_LOADED_IMAGE_PROTOCOL *pLoadedImage = NULL;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -864,40 +893,6 @@ Finish:
 }
 
 /**
-  RegisterDimmName
-  Adds the DIMM name for the use of the ComponentName protocols.
-
-  @param[in] DimmIndex, the index of the DIMM that the caller wants to register the name for.
-
-  @retval EFI_SUCCESS if the name was added successfully
-  Other return values from the function AddStringToUnicodeTable.
-**/
-STATIC
-EFI_STATUS
-RegisterDimmName(
-  IN     UINT32 DimmIndex
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  CHAR16 *pDimmNameString = NULL;
-
-  NVDIMM_ENTRY();
-
-  pDimmNameString = CatSPrint(NULL, L"Intel Persistent Memory DIMM %d Controller", gDimmsUefiData[DimmIndex].pDimm->DimmID);
-
-  if (pDimmNameString != NULL) {
-    ReturnCode = AddStringToUnicodeTable(pDimmNameString, &gDimmsUefiData[DimmIndex].pDimmName);
-  } else {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    NVDIMM_WARN("Failed to allocate memory for DIMM name.\n");
-  }
-
-  FREE_POOL_SAFE(pDimmNameString);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
   This function makes calls to the dimms required to initialize the driver.
 
   @retval EFI_SUCCESS if no errors.
@@ -909,14 +904,16 @@ InitializeDimms()
    EFI_STATUS ReturnCode = EFI_SUCCESS;
    EFI_STATUS ReturnCodeNonBlocking = EFI_SUCCESS;
    UINT32 Index = 0;
-   EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
    DIMM *pDimm = NULL;
    DIMM *pDimm2 = NULL;
    LIST_ENTRY *pDimmNode = NULL;
    LIST_ENTRY *pDimmNode2 = NULL;
-   BOOLEAN PcdUsage = TRUE;
    CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
    CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
+#ifndef OS_BUILD
+   BOOLEAN PcdUsage = TRUE;
+   EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
+#endif
    /**
     Init container keeping operation statuses with wanring, error and info level messages.
    **/
@@ -978,10 +975,12 @@ InitializeDimms()
       }
     }
    }
+
+#ifndef OS_BUILD
+
 #if defined(DYNAMIC_WA_ENABLE)
    PcdUsage = !gNvmDimmData->PcdUsageDisabledOnInit;
 #endif
-#ifndef OS_BUILD
    if (PcdUsage) {
     /**
       Initialize Interleave Sets
@@ -1002,7 +1001,7 @@ InitializeDimms()
       NVDIMM_WARN("Failed to initialize Namespaces, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     }
    }
-#endif
+#endif // !OS_BUILD
    Index = 0;
    for (pDimmNode = GetFirstNode(&gNvmDimmData->PMEMDev.Dimms);
       !IsNull(&gNvmDimmData->PMEMDev.Dimms, pDimmNode);
@@ -1119,7 +1118,7 @@ InitializeDimms()
     }
 
     Index++;
-#endif //OS_BUILD
+#endif // !OS_BUILD
    }
 #ifndef OS_BUILD
    ReturnCode = InstallProtocolsOnNamespaces();
@@ -1128,7 +1127,7 @@ InitializeDimms()
     NVDIMM_WARN("Failed to install Block Namespace devices, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     goto Finish;
    }
-#endif
+#endif // !OS_BUILD
 Finish:
 
    return ReturnCode;
@@ -1149,13 +1148,10 @@ NvmDimmDriverDriverBindingStart(
 {
    EFI_STATUS ReturnCode = EFI_SUCCESS;
    UINT32 Index = 0;
-   EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
    DIMM *pDimm = NULL;
    DIMM *pDimm2 = NULL;
    LIST_ENTRY *pDimmNode = NULL;
    LIST_ENTRY *pDimmNode2 = NULL;
-   VOID *pDummy = 0;
-   BOOLEAN PcdUsage = TRUE;
    CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
    CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
 
@@ -1240,9 +1236,6 @@ NvmDimmDriverDriverBindingStart(
          }
       }
    }
-#if defined(DYNAMIC_WA_ENABLE)
-   PcdUsage = !gNvmDimmData->PcdUsageDisabledOnInit;
-#endif
 
    Index = 0;
    for (pDimmNode = GetFirstNode(&gNvmDimmData->PMEMDev.Dimms);
@@ -1277,7 +1270,7 @@ Finish:
    NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
 }
-#else
+#else // !OS_BUILD
 /**
 Starts a device controller or a bus controller.
 **/
@@ -1458,7 +1451,7 @@ FinishSkipClose:
 	NVDIMM_EXIT_I64(ReturnCode);
 	return ReturnCode;
 }
-#endif //OS_BUILD
+#endif // !OS_BUILD
 /**
   Stops a device controller or a bus controller.
 **/
@@ -1908,8 +1901,8 @@ GetDimmEfiDataIndex(
   IN     EFI_HANDLE DimmHandle OPTIONAL
   )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
 #ifndef OS_BUILD
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT16 Index = 0;
   if (DimmHandle != NULL) {
     ReturnCode = HandleToPID(DimmHandle, NULL, &DimmPid);

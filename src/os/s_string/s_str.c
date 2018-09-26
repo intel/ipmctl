@@ -413,13 +413,13 @@ int s_strncmpi(const char *const str1, const char *const str2, size_t size)
 	if (str1 && str2 && (size != 0))
 	{
 		ret = 1;
-		int idx = 0;
+		unsigned int idx = 0;
 		while ((idx < size) && (toupper(str1[idx]) == toupper(str2[idx])))
 		{
 			idx++;
 		}
 
-		if (idx == (int)size)
+		if (idx == size)
 		{
 			// return zero if the entire string matches up to the input size
 			ret = 0;
@@ -444,13 +444,13 @@ int s_strncmp(const char *const str1, const char *const str2, size_t size)
 	if (str1 && str2 && (size != 0))
 	{
 		ret = 1;
-		int idx = 0;
+		unsigned int idx = 0;
 		while ((idx < size) && (str1[idx] == str2[idx]))
 		{
 			idx++;
 		}
 
-		if (idx == (int)size)
+		if (idx == size)
 		{
 			// return zero if the entire string matches up to the input size
 			ret = 0;

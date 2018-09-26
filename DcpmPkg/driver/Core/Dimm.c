@@ -55,6 +55,23 @@ VOID
   VOID *pLinearAddress
   );
 
+#ifndef OS_BUILD
+
+struct {
+  UINT32 Eax;
+  union {
+    struct {
+      UINT32 Unused:23;
+      BOOLEAN ClFlushOpt:1; // EBX.CLFLUSHOPT[bit 23]
+      BOOLEAN ClWb:1; // EBX.CLWB[bit 24]
+      UINT32 Unused2:7;
+    } Separated;
+    UINT32 AsUint32;
+  } Ebx;
+  UINT32 Ecx;
+  UINT32 Edx;
+} CpuInfo;
+
 /**
   InitializeCpuCommands
 
@@ -66,22 +83,6 @@ VOID
 InitializeCpuCommands(
   )
 {
-#ifndef OS_BUILD
-	struct {
-		UINT32 Eax;
-		union {
-			struct {
-        UINT32 Unused:23;
-        BOOLEAN ClFlushOpt:1; // EBX.CLFLUSHOPT[bit 23]
-        BOOLEAN ClWb:1; // EBX.CLWB[bit 24]
-        UINT32 Unused2:7;
-			} Separated;
-			UINT32 AsUint32;
-		} Ebx;
-		UINT32 Ecx;
-		UINT32 Edx;
-	} CpuInfo;
-
   SetMem(&CpuInfo, sizeof(CpuInfo), 0x0);
 
   AsmCpuidEcx(CPUID_NEWMEM_FUNCTIONS_EAX, CPUID_NEWMEM_FUNCTIONS_ECX,
@@ -94,8 +95,10 @@ InitializeCpuCommands(
     NVDIMM_DBG("Flushing assigned to ClFlush.");
     gClFlush = &AsmFlushCl;
   }
-#endif
+
 }
+
+#endif /** !OS_BUILD **/
 
 /**
   Get dimm by Dimm ID

@@ -138,16 +138,18 @@ SetDimm(
   CHAR16 *pDirtyShutDown = NULL;
   CHAR16 *pClearErrorInj = NULL;
   UINT16 ErrInjectType = ERROR_INJ_TYPE_INVALID;
-  UINT64 TemperatureInteger;
-  UINT64 PoisonAddress;
-  UINT64 PercentageRemaining;
-  UINT64  PoisonType = POISON_MEMORY_TYPE_PATROLSCRUB;
+  UINT64 TemperatureValue = 0;
+  UINT64 PoisonAddressValue = 0;
+  UINT64 PercentageRemainingValue = 0;
+  UINT64 PoisonTypeValue = POISON_MEMORY_TYPE_PATROLSCRUB;
+
+
   UINT64 ErrorInjectionTypeSet = 0;
   UINT64 PoisonTypeValid = 0;
   UINT64 ClearStatus = 0;
-  UINT64 FatalMediaError;
-  UINT64 PackageSparing;
-  UINT64 DirtyShutDown;
+  UINT64 FatalMediaError = 0;
+  UINT64 PackageSparing = 0;
+  UINT64 DirtyShutDown = 0;
 #endif //OS_BUILD
   NVDIMM_ENTRY();
 
@@ -599,7 +601,7 @@ SetDimm(
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_TEMPERATURE_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ErrInjectType = ERROR_INJ_TEMPERATURE;
-    ReturnCode = GetU64FromString(pTemperature, &TemperatureInteger);
+    ReturnCode = GetU64FromString(pTemperature, &TemperatureValue);
     if (!ReturnCode) {
       Print(FORMAT_STR_NL, CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX);
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -622,7 +624,7 @@ SetDimm(
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
-    ReturnCode = GetU64FromString(pPoisonAddress, &PoisonAddress);
+    ReturnCode = GetU64FromString(pPoisonAddress, &PoisonAddressValue);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Poison'\n", CLI_SYNTAX_ERROR,
         pPoisonAddress, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
@@ -641,7 +643,7 @@ SetDimm(
       for (Index = 0; Index < POISON_MEMORY_TYPE_COUNT; ++Index) {
           if (0 == StrCmp(pPoisonType, pPoisonMemoryTypeStr[Index])) {
               PoisonTypeValid = 1;
-              PoisonType = (UINT8)Index + 1;
+              PoisonTypeValue = (UINT8)Index + 1;
           }
       }
       if (!PoisonTypeValid) {
@@ -673,9 +675,9 @@ SetDimm(
   if (pPercentageRemaining != NULL) {
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_PERCENTAGE_REMAINING_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-    ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemaining);
+    ReturnCode = GetU64FromString(pPercentageRemaining, &PercentageRemainingValue);
 
-    if (!ReturnCode || PercentageRemaining > 100) {
+    if (!ReturnCode || PercentageRemainingValue > 100) {
       Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'PercentageRemaining'\n", CLI_SYNTAX_ERROR,
         pPercentageRemaining, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -690,7 +692,7 @@ SetDimm(
   if (pFatalMediaError != NULL) {
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-    ReturnCode = GetU64FromString(pFatalMediaError, (UINT64 *)&FatalMediaError);
+    ReturnCode = GetU64FromString(pFatalMediaError, &FatalMediaError);
     if (!ReturnCode || 1 != FatalMediaError) {
       Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'FatalMediaError'\n", CLI_SYNTAX_ERROR,
         pFatalMediaError, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY);
@@ -706,7 +708,7 @@ SetDimm(
   if (pDirtyShutDown != NULL) {
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_DIRTY_SHUT_DOWN_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-    ReturnCode = GetU64FromString(pDirtyShutDown, (UINT64 *)&DirtyShutDown);
+    ReturnCode = GetU64FromString(pDirtyShutDown, &DirtyShutDown);
 
     if (!ReturnCode ||  1 != DirtyShutDown) {
       Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'DirtyShutDown'\n", CLI_SYNTAX_ERROR, pDirtyShutDown,
@@ -722,7 +724,7 @@ SetDimm(
   if (pClearErrorInj != NULL) {
     pCommandStatusMessage = CatSPrint(NULL, GetCorrectClearMessageBasedOnProperty(ErrInjectType), pPoisonAddress);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
-    ReturnCode = GetU64FromString(pClearErrorInj, (UINT64 *)&ClearStatus);
+    ReturnCode = GetU64FromString(pClearErrorInj, &ClearStatus);
 
     if (!ReturnCode ||  1 != ClearStatus) {
       Print(FORMAT_STR FORMAT_STR_SINGLE_QUOTE FORMAT_STR L" 'Clear'\n", CLI_SYNTAX_ERROR, ClearStatus,
@@ -733,8 +735,8 @@ SetDimm(
   }
   if (ErrInjectType != ERROR_INJ_TYPE_INVALID) {
     ReturnCode = pNvmDimmConfigProtocol->InjectError(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount,
-    (UINT8)ErrInjectType, ClearStatus, &TemperatureInteger,
-    &PoisonAddress, &PoisonType, (UINT8 *)&PercentageRemaining, pCommandStatus);
+    (UINT8)ErrInjectType, (UINT8)ClearStatus, &TemperatureValue,
+    &PoisonAddressValue, (UINT8 *)&PoisonTypeValue, (UINT8 *)&PercentageRemainingValue, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto FinishCommandStatusSet;
     }

@@ -172,7 +172,7 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
             efi_status = EFI_BUFFER_TOO_SMALL;
         else {
             // the name has been read successfuly from the ini file
-            memcpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+            memcpy_s(file_name, (rsize_t)file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
         }
     }
     return efi_status;
@@ -194,7 +194,7 @@ static EFI_STATUS get_the_ar_file_name(CHAR8 *p_file_name, UINTN file_name_buff_
   efi_status = get_the_system_log_file_name(SYSTEM_LOG_AR_FILE, sizeof(temp_file_name), temp_file_name);
   if (EFI_SUCCESS == efi_status) {
       // the name has been read successfuly from the ini file
-      stored_chars = snprintf(p_file_name, file_name_buff_size, ACTION_REQUIRED_FILE_PARSING_STRING, temp_file_name, p_device_uid);
+      stored_chars = snprintf(p_file_name, (size_t)file_name_buff_size, ACTION_REQUIRED_FILE_PARSING_STRING, temp_file_name, p_device_uid);
       if (stored_chars < 0) {
         efi_status = EFI_PROTOCOL_ERROR;
       }
@@ -335,7 +335,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
         // Add the event code string
         AsciiSPrint(code_str, SYSTEM_LOG_CODE_STRING_SIZE, "%03d", SYSTEM_EVENT_TYPE_NUMBER_GET(event_type));
         // Increase buffer size
-        *p_event_buff_size += str_size + AsciiStrLen(code_str) + AsciiStrLen(p_ctl_stop);
+        *p_event_buff_size += str_size + (size_t)AsciiStrLen(code_str) + (size_t)AsciiStrLen(p_ctl_stop);
         *event_buffer = realloc(*event_buffer, *p_event_buff_size);
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
@@ -360,7 +360,7 @@ static void store_entry_in_buffer(char *event_entry, size_t *p_event_buff_size, 
     {
         // No cotrol characters in the entry
         // Increase buffer size
-        *p_event_buff_size += AsciiStrLen(event_entry);
+        *p_event_buff_size += (size_t)AsciiStrLen(event_entry);
         *event_buffer = realloc(*event_buffer, *p_event_buff_size);
         if (NULL != *event_buffer) {
             ((char*)*event_buffer)[end_of_event_buffer] = 0;
@@ -783,7 +783,7 @@ static size_t get_system_events_from_file(BOOLEAN reversed, BOOLEAN not_matching
 */
 static inline void *allocate_buffer_for_file(FILE *h_file, size_t *buff_size)
 {
-    UINTN file_size = 0;
+    size_t file_size = 0;
     void *file_buffer = NULL;
 
     // Check the file size

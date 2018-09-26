@@ -1227,10 +1227,8 @@ FileExists(
   OUT BOOLEAN* pExists
 )
 {
-  EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
-  EFI_FILE_HANDLE pFileHandle = NULL;
-  CHAR16 *pDumpFilePath = NULL;
 
+  EFI_FILE_HANDLE pFileHandle = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   *pExists = FALSE;
 
@@ -1241,8 +1239,9 @@ FileExists(
   ReturnCode = OpenFile(pDumpUserPath, &pFileHandle, NULL, FALSE);
   *pExists = ReturnCode != EFI_NOT_FOUND;
   ReturnCode = EFI_SUCCESS;
-  goto Finish;
 #else
+  EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
+  CHAR16 *pDumpFilePath = NULL;
 
   pDumpFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDumpFilePath));
   if (pDumpFilePath == NULL) {
@@ -1264,7 +1263,9 @@ FileExists(
   }
 #endif
 Finish:
+#ifndef OS_BUILD
   FREE_POOL_SAFE(pDumpFilePath);
+#endif
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -1358,7 +1359,7 @@ DumpToFile(
     FreePool(path);
     return EFI_INVALID_PARAMETER;
   }
-  size_t bytes_written = fwrite(pBuffer, 1, BufferSize, destFile);
+  size_t bytes_written = fwrite(pBuffer, 1, (size_t)BufferSize, destFile);
   if (bytes_written != BufferSize) {
     NVDIMM_WARN("Failed to write file (%s) errno: (%d)", path, errno);
     ReturnCode = EFI_INVALID_PARAMETER;

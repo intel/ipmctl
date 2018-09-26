@@ -64,7 +64,7 @@ int fw_mb_err_to_nvm_lib_err(int status, struct fw_cmd *p_fw_cmd)
 	COMMON_LOG_ENTRY();
 	int ret = NVM_SUCCESS;
 
-   p_fw_cmd->Status = DSM_EXTENDED_ERROR(status);
+	p_fw_cmd->Status = DSM_EXTENDED_ERROR(status);
 	switch (DSM_EXTENDED_ERROR(status))
 	{
 	case MB_SUCCESS:

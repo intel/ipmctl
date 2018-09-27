@@ -229,7 +229,7 @@ Load(
     {
       CandidateListCount = FunctionalDimmCount + NonFunctionalDimmCount;
       pAllDimms = AllocateZeroPool(sizeof(*pAllDimms) * CandidateListCount);
-      if (pNonFunctionalDimms == NULL) {
+      if (pAllDimms == NULL) {
         ReturnCode = EFI_OUT_OF_RESOURCES;
         Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
         goto Finish;
@@ -398,20 +398,6 @@ Load(
         (CHAR16 *)pWorkingDirectory, Examine, Force, Recovery, FlashSPI, pFwImageInfo, pCommandStatus);
 
       if (Examine) {
-        if (Index == 0) {
-          if (pFwImageInfo != NULL) {
-
-            Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
-              pFileName,
-              pFwImageInfo->ImageVersion.ProductNumber.Version,
-              pFwImageInfo->ImageVersion.RevisionNumber.Version,
-              pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
-              pFwImageInfo->ImageVersion.BuildNumber.Build);
-          } else {
-            Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
-          }
-        }
-
         continue;
       }
 
@@ -463,6 +449,28 @@ Load(
     }
   } //for loop
 
+
+  if (Examine) {
+    if (pFwImageInfo != NULL) {
+
+      //only print non 0.0.0.0 versions...
+      if (pFwImageInfo->ImageVersion.ProductNumber.Version != 0 ||
+        pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
+        pFwImageInfo->ImageVersion.SecurityVersionNumber.Version != 0 ||
+        pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
+        Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
+          pFileName,
+          pFwImageInfo->ImageVersion.ProductNumber.Version,
+          pFwImageInfo->ImageVersion.RevisionNumber.Version,
+          pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
+          pFwImageInfo->ImageVersion.BuildNumber.Build);
+      }
+    }
+    else {
+      Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+    }
+  }
+
 Finish:
   DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
 
@@ -482,10 +490,10 @@ Finish:
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pAllDimms);
   FREE_POOL_SAFE(pOptionsValue);
+  FREE_POOL_SAFE(pDimmTargetIds);
 
   if (TargetsIsNewList) {
     FREE_POOL_SAFE(pDimmTargets);
-    FREE_POOL_SAFE(pDimmTargetIds);
   }
 
   NVDIMM_EXIT_I64(ReturnCode);

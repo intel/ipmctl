@@ -683,10 +683,13 @@ PRINTER_DATA_SET_ATTRIBS ShowVersionDataSetAttribs =
 EFI_STATUS showVersion(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  CHAR16 ApiVersion[FW_API_VERSION_LEN] = {0};
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pPath = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+#if !defined(__LINUX__)
+  CHAR16 ApiVersion[FW_API_VERSION_LEN] = {0};
+#endif
+
   NVDIMM_ENTRY();
 
   if (pCmd == NULL) {
@@ -705,7 +708,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
     goto Finish;
   }
 
-#ifndef OS_BUILD
+#if !defined(__LINUX__)
   ReturnCode = pNvmDimmConfigProtocol->GetDriverApiVersion(pNvmDimmConfigProtocol, ApiVersion);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
@@ -717,7 +720,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " APP_DESCRIPTION);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", NVMDIMM_VERSION_STRING);
 
-#ifndef OS_BUILD
+#if !defined(__LINUX__)
   PRINTER_BUILD_KEY_PATH(&pPath, DS_SOFTWARE_INDEX_PATH, 1);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " DRIVER_API_DESCRIPTION);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", ApiVersion);

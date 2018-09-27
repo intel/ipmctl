@@ -206,7 +206,9 @@ void FreeDataSetNameInfo(DS_NAME_INFO *NameInfo) {
 /*
 * Retrieve a data set by specifying a path in the form of /sensorlist/dimm[0]/sensor[1]
 */
-DATA_SET_CONTEXT *GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...) {
+DATA_SET_CONTEXT *
+EFIAPI
+GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...) {
   CHAR16 **DataSetToks = NULL;
   UINT32 NumDataSetToks = 0;
   UINT32 Index = 0;
@@ -578,7 +580,7 @@ KEY_VAL * CreateKeyVal(DATA_SET_CONTEXT *DataSetCtx) {
 /*
 * Set a unicode string value
 */
-EFI_STATUS SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...) {
+EFI_STATUS EFIAPI SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...) {
   DATA_SET *DataSet = (DATA_SET*)DataSetCtx;
   CHAR16 *TempMsg = NULL;
   VA_LIST Marker;

@@ -404,7 +404,9 @@ EFI_STATUS SetDataSetPrinterAttribs(
 /*
 * Helper that builds a path to a dataset node
 */
-CHAR16 *BuildPath(
+CHAR16 *
+EFIAPI
+BuildPath(
   CHAR16 *Format,
   ...
 );
@@ -426,7 +428,9 @@ EFI_STATUS PrinterDestroyCtx(
 /*
 * Handle string messages
 */
-EFI_STATUS PrinterSetMsg(
+EFI_STATUS
+EFIAPI
+PrinterSetMsg(
   IN    PRINT_CONTEXT *pPrintCtx,
   IN    EFI_STATUS Status,
   IN    CHAR16 *pMsg,

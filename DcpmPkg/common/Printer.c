@@ -1026,7 +1026,7 @@ static EFI_STATUS CreateDataSetLookupItem(DATA_SET_LOOKUP_ITEM **ppDataSetLookup
 /*
 * Handle string messages
 */
-EFI_STATUS PrinterSetMsg(
+EFI_STATUS EFIAPI PrinterSetMsg(
   IN    PRINT_CONTEXT *pPrintCtx,
   IN    EFI_STATUS Status,
   IN    CHAR16 *pMsg,
@@ -1349,7 +1349,9 @@ Finish:
 /*
 * Helper that builds a path to a dataset node
 */
-CHAR16 *BuildPath(CHAR16 *Format, ...) {
+CHAR16 *
+EFIAPI
+BuildPath(CHAR16 *Format, ...) {
   CHAR16 *NewPath = NULL;
   VA_LIST Marker;
 

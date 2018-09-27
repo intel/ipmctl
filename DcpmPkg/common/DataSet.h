@@ -88,7 +88,7 @@ VOID FreeDataSet(DATA_SET_CONTEXT *DataSetCtx);
 /*
 * Retrieve a data set by specifying a path in the form of /sensorlist/dimm[0]/sensor[1]
 */
-DATA_SET_CONTEXT *GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...);
+DATA_SET_CONTEXT * EFIAPI GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...);
 /*
 * Get the name of a data set
 */
@@ -128,7 +128,7 @@ EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, c
 /*
 * Set a unicode string value, where Val is a format string
 */
-EFI_STATUS SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...);
+EFI_STATUS EFIAPI SetKeyValueWideStrFormat(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, const CHAR16 *Val, ...);
 /*
 * Set an unsigned 64 bit value into the data set.
 */

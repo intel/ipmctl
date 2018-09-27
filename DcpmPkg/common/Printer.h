@@ -18,25 +18,25 @@
 #define SHOW_LIST_IDENT               L"   "
 
 #define ID_MAX_STR_WIDTH                    10
-#define DIMM_MAX_STR_WIDTH                  7
+#define DIMM_MAX_STR_WIDTH                  22
 #define CAPACITY_MAX_STR_WIDTH              11
 #define HEALTH_MAX_STR_WIDTH                19 //worst-case - "Noncritical failure"
 #define HEALTH_SHORT_MAX_STR_WIDTH          17
-#define AR_MAX_STR_WIDTH                    4
+#define AR_MAX_STR_WIDTH                    15
 #define SECURITY_MAX_STR_WIDTH              13 //worst-case - "Not Supported"
 #define FW_VERSION_MAX_STR_WIDTH            13
 #define ACTIVE_FW_VERSION_MAX_STR_WIDTH     16
 #define STAGED_FW_VERSION_MAX_STR_WIDTH     16
 #define SENSOR_TYPE_MAX_STR_WIDTH           30
-#define SENSOR_VALUE_MAX_STR_WIDTH          13
+#define SENSOR_VALUE_MAX_STR_WIDTH          20
 #define SENSOR_STATE_MAX_STR_WIDTH          15
-#define SOCKET_MAX_STR_WIDTH                8
+#define SOCKET_MAX_STR_WIDTH                9
 #define MAPPED_MEMORY_LIMIT_MAX_STR_WIDTH   18
 #define TOTAL_MAPPED_MEMORY_MAX_STR_WIDTH   18
 #define ISET_ID_MAX_STR_WIDTH               20
 #define REGION_ID_MAX_STR_WIDTH             8
-#define PMEM_TYPE_MAX_STR_WIDTH             13
-#define FREE_CAPACITY_MAX_STR_WIDTH         10
+#define PMEM_TYPE_MAX_STR_WIDTH             24
+#define FREE_CAPACITY_MAX_STR_WIDTH         13
 #define MEMORY_SIZE_MAX_STR_WIDTH           18
 #define MEMORY_TYPE_MAX_STR_WIDTH           10
 #define DEVICE_LOCATOR_MAX_STR_WIDTH        15
@@ -133,7 +133,7 @@ typedef struct _PRINTER_LIST_ATTRIB {
 
 typedef struct _TABLE_COLUMN_ATTRIB {
   CONST CHAR16 *ColumnHeader;
-  CONST UINT32 ColumnMaxStrLen;
+  UINT32 ColumnMaxStrLen;
   CONST CHAR16 *ColumnDataSetPath;
 }TABLE_COLUMN_ATTRIB;
 

@@ -102,7 +102,7 @@ PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
     },
 #endif
     {
-      PERSISTENT_MEM_SHORT_TYPE_STR,                          //COLUMN HEADER
+      PERSISTENT_MEM_TYPE_STR,                          //COLUMN HEADER
       PMEM_TYPE_MAX_STR_WIDTH,                                //COLUMN MAX STR WIDTH
       DS_REGION_PATH PATH_KEY_DELIM PERSISTENT_MEM_TYPE_STR   //COLUMN DATA PATH
     },
@@ -112,7 +112,7 @@ PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
       DS_REGION_PATH PATH_KEY_DELIM TOTAL_CAPACITY_STR        //COLUMN DATA PATH
     },
     {
-      FREE_CAPACITY_SHORT_STR,                                //COLUMN HEADER
+      FREE_CAPACITY_STR,                                      //COLUMN HEADER
       FREE_CAPACITY_MAX_STR_WIDTH,                            //COLUMN MAX STR WIDTH
       DS_REGION_PATH PATH_KEY_DELIM FREE_CAPACITY_STR         //COLUMN DATA PATH
     },
@@ -145,9 +145,9 @@ PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
       DS_REGION_PATH PATH_KEY_DELIM SOCKET_ID_STR           //COLUMN DATA PATH
     },
     {
-      PERSISTENT_MEM_SHORT_TYPE_STR,                         //COLUMN HEADER
-      PMEM_TYPE_MAX_STR_WIDTH,                               //COLUMN MAX STR WIDTH
-      DS_REGION_PATH PATH_KEY_DELIM PERSISTENT_MEM_TYPE_STR //COLUMN DATA PATH
+      PERSISTENT_MEM_TYPE_STR,                                //COLUMN HEADER
+      PMEM_TYPE_MAX_STR_WIDTH,                                //COLUMN MAX STR WIDTH
+      DS_REGION_PATH PATH_KEY_DELIM PERSISTENT_MEM_TYPE_STR   //COLUMN DATA PATH
     },
     {
       TOTAL_CAPACITY_STR,                                   //COLUMN HEADER
@@ -155,7 +155,7 @@ PRINTER_TABLE_ATTRIB ShowRegionTableAttributes =
       DS_REGION_PATH PATH_KEY_DELIM TOTAL_CAPACITY_STR     //COLUMN DATA PATH
     },
     {
-      FREE_CAPACITY_SHORT_STR,                              //COLUMN HEADER
+      FREE_CAPACITY_STR,                                    //COLUMN HEADER
       FREE_CAPACITY_MAX_STR_WIDTH,                          //COLUMN MAX STR WIDTH
       DS_REGION_PATH PATH_KEY_DELIM FREE_CAPACITY_STR      //COLUMN DATA PATH
     },

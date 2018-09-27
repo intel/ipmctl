@@ -47,6 +47,7 @@ typedef enum {
 
 typedef struct _PRV_TABLE_INFO {
   PRINTER_TABLE_ATTRIB *AllTableAttribs;
+  PRINTER_TABLE_ATTRIB *ModifiedTableAttribs;
   CHAR16 *CurrentPath;
   CHAR16 *PrinterNode;
 }PRV_TABLE_INFO;
@@ -510,6 +511,65 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
 }
 
 /**
+Callback routine for determining max column widths of a text table
+
+@param[in] DataSetCtx: current data set node
+@param[in] CurPath: path to current data set node in the form of: /sensorlist/dimm/sensor
+@param[in] UserData: pointer to PRV_TABLE_INFO (defines user defined table/column attributes)
+@param[in] ParentUserData: a string that represents the current table row (note, last node in branch
+           is responsible for printing the row)
+
+@retval CHAR16* that represents the table row.
+@retval NULL on error
+**/
+static VOID * CalculateTextTableDimensionCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, IN VOID *UserData, IN VOID *ParentUserData) {
+  PRV_TABLE_INFO *PrvTableInfo = (PRV_TABLE_INFO *)UserData;
+  PRINTER_TABLE_ATTRIB *Attribs;
+  PRINTER_TABLE_ATTRIB *ModifiedAttribs;
+  CHAR16 *TempCurPath = CatSPrint(CurPath, L".");
+  UINT32 ColumnIndex = 0;
+  UINTN NumColumns = 0;
+  UINTN MaxCellChars = 0;
+  CHAR16 *EmptyCell = L"X";
+  CHAR16 *KeyVal;
+
+  if (NULL == UserData || NULL == TempCurPath) {
+    return NULL;
+  }
+
+
+  Attribs = (PRINTER_TABLE_ATTRIB *)PrvTableInfo->AllTableAttribs;
+  ModifiedAttribs = (PRINTER_TABLE_ATTRIB *)PrvTableInfo->ModifiedTableAttribs;
+  NumColumns = NumTableColumns(Attribs);
+
+  //Loop through all column attributes defined by the CLI cmd handler
+  for (ColumnIndex = 0; ColumnIndex < NumColumns; ++ColumnIndex) {
+    //column attributes defines which key/value pairs to display in each column.
+    //This is done by specifying a path to a key in the form of: /sensorlist/dimm/sensor.keyname.
+    //TempCurPath represents the current node in path form with a '.' at the end, i.e. /sensorlist/dimm/sensor.
+    if (0 == StrnCmp(TempCurPath, Attribs->ColumnAttribs[ColumnIndex].ColumnDataSetPath, StrLen(TempCurPath))) {
+      //Found a path in column attributes that points to our current node, try to retrieve the
+      //associated value.
+      GetKeyValueWideStr(DataSetCtx, TextTableFindKeyInPath(Attribs->ColumnAttribs[ColumnIndex].ColumnDataSetPath), &KeyVal, NULL);
+      if (NULL == KeyVal) {
+        KeyVal = EmptyCell;
+      }
+      MaxCellChars = StrLen(KeyVal) + 1;
+
+      if (MaxCellChars < Attribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen && MaxCellChars > ModifiedAttribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen) {
+        ModifiedAttribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen = (UINT32)MaxCellChars;
+      }
+      //reset to original max width specified by the attributes table
+      else if (MaxCellChars >= Attribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen) {
+        ModifiedAttribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen = Attribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen;
+      }
+    }
+  }
+  return NULL;
+}
+
+
+/**
 The node that represents the last cell in a row is responsible for printing the entire row.
 This is a helper to create a path in the form of /sensorlist/dimm/sensor
 that points to a particular "printer node".
@@ -611,6 +671,41 @@ VOID PrintDataSetAsTextTable(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB 
   PrvTableInfo.PrinterNode = TextTableGetPrinterNodePath(Attribs);
   //Print the body of the table
   RecurseDataSet(DataSetCtx, TextTableCb, NULL, (VOID*)&PrvTableInfo, TRUE);
+}
+
+/*
+* Determine column widths of a text table
+*/
+VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB * Attribs, PRINTER_TABLE_ATTRIB * ModifiedAttribs) {
+
+  UINT32 Index = 0;
+  PRV_TABLE_INFO PrvTableInfo;
+  CHAR16 *TableHeaderStart = CatSPrint(NULL, L"");
+  UINTN NumColumns = NumTableColumns(Attribs);
+  UINTN ColumnHeaderStrLen = 0;
+
+  if (NULL == Attribs || NULL == ModifiedAttribs) {
+    NVDIMM_CRIT("CMDs must specify a PRINTER_TABLE_ATTRIB when displaying text tables\n");
+    return;
+  }
+
+  if (NULL == TableHeaderStart) {
+    return;
+  }
+
+  //calculate max column header widths
+  for (Index = 0; Index < NumColumns; ++Index) {
+    ColumnHeaderStrLen = StrLen(Attribs->ColumnAttribs[Index].ColumnHeader) + 1;
+    if (ColumnHeaderStrLen < Attribs->ColumnAttribs[Index].ColumnMaxStrLen) {
+      ModifiedAttribs->ColumnAttribs[Index].ColumnMaxStrLen = (UINT32)ColumnHeaderStrLen;
+    }
+  }
+
+  PrvTableInfo.AllTableAttribs = Attribs;
+  PrvTableInfo.ModifiedTableAttribs = ModifiedAttribs;
+  PrvTableInfo.PrinterNode = TextTableGetPrinterNodePath(Attribs);
+  //calculate max column widths based on table content
+  RecurseDataSet(DataSetCtx, CalculateTextTableDimensionCb, NULL, (VOID*)&PrvTableInfo, TRUE);
 }
 
 /*
@@ -747,18 +842,31 @@ static VOID PrintAsText(DATA_SET_CONTEXT *DataSetCtx, PRINT_CONTEXT *PrintCtx) {
   PRINTER_DATA_SET_ATTRIBS *Attribs = (PRINTER_DATA_SET_ATTRIBS *)GetDataSetUserData(DataSetCtx);
   PRINTER_LIST_ATTRIB *ListAttribs = NULL;
   PRINTER_TABLE_ATTRIB *TableAttribs = NULL;
-
-  if (Attribs) {
-    ListAttribs = Attribs->pListAttribs;
-    TableAttribs = Attribs->pTableAttribs;
-  }
+  PRINTER_TABLE_ATTRIB *ModifiedTableAttribs = (PRINTER_TABLE_ATTRIB *)AllocateZeroPool(sizeof(PRINTER_TABLE_ATTRIB));
 
   if (PrintCtx->FormatTypeFlags.Flags.List) {
+    if (Attribs) {
+      ListAttribs = Attribs->pListAttribs;
+    }
     PrintTextList(DataSetCtx, ListAttribs);
   }
   else if (PrintCtx->FormatTypeFlags.Flags.Table) {
-    PrintDataSetAsTextTable(DataSetCtx, TableAttribs);
+    if (Attribs) {
+      TableAttribs = Attribs->pTableAttribs;
+      if(TableAttribs) {
+        CopyMem_S(ModifiedTableAttribs, sizeof(PRINTER_TABLE_ATTRIB), TableAttribs, sizeof(PRINTER_TABLE_ATTRIB));
+      }
+    }
+    else
+    {
+      NVDIMM_CRIT("CMDs must specify a PRINTER_TABLE_ATTRIB when displaying text tables\n");
+      goto Finish;
+    }
+    CalculateTextTableDimensions(DataSetCtx, TableAttribs, ModifiedTableAttribs);
+    PrintDataSetAsTextTable(DataSetCtx, ModifiedTableAttribs);
   }
+Finish:
+  FREE_POOL_SAFE(ModifiedTableAttribs);
 }
 
 /*

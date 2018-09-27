@@ -26,8 +26,6 @@
 #define EVENT_ENTRY_ID_MAX_STR_WIDTH       8
 #define EVENT_ENTRY_SEVERITY_STR           L"Severity"
 #define EVENT_ENTRY_SEVERITY_MAX_STR_WIDTH 13
-#define EVENT_AR_STR                       L"AR"
-#define EVENT_AR_MAX_STR_WIDTH             4
 #define EVENT_ACTION_REQ_STR               L"ActionRequired"
 #define EVENT_ENTRY_CODE_STR               L"Code"
 #define EVENT_ENTRY_CODE_MAX_STR_WIDTH     5
@@ -60,8 +58,8 @@ PRINTER_TABLE_ATTRIB ShowEventsTableAttributes =
       DS_EVENT_PATH PATH_KEY_DELIM EVENT_ENTRY_SEVERITY_STR   //COLUMN DATA PATH
     },
     {
-      EVENT_AR_STR,                                           //COLUMN HEADER
-      EVENT_AR_MAX_STR_WIDTH,                                 //COLUMN MAX STR WIDTH
+      EVENT_ACTION_REQ_STR,                                   //COLUMN HEADER
+      AR_MAX_STR_WIDTH,                                       //COLUMN MAX STR WIDTH
       DS_EVENT_PATH PATH_KEY_DELIM EVENT_ACTION_REQ_STR       //COLUMN DATA PATH
     },
     {

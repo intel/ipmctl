@@ -24,7 +24,6 @@
 #define DS_DIMM_PATH                      L"/DimmList/Dimm"
 #define DS_DIMM_INDEX_PATH                L"/DimmList/Dimm[%d]"
 
-#define AR_STR                            L"AR"
 
  /*
  *  PRINT LIST ATTRIBUTES
@@ -73,7 +72,7 @@ PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
       DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
     },
     {
-      AR_STR,                                               //COLUMN HEADER
+      ACTION_REQUIRED_STR,                                  //COLUMN HEADER
       AR_MAX_STR_WIDTH,                                     //COLUMN MAX STR WIDTH
       DS_DIMM_PATH PATH_KEY_DELIM ACTION_REQUIRED_STR       //COLUMN DATA PATH
     },

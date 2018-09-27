@@ -1296,7 +1296,7 @@ CopyMem(
   IN UINTN       Length
 )
 {
-  memcpy_s(DestinationBuffer, (rsize_t)Length, SourceBuffer, (rsize_t)Length);
+  memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
   return DestinationBuffer;
 }
 
@@ -1530,7 +1530,7 @@ CatVSPrint(
   }
 
   if (String != NULL) {
-    wcscpy_s(BufferToReturn, (rsize_t)(SizeRequired / sizeof(CHAR16)), String);
+    wcscpy_s(BufferToReturn, (SizeRequired / sizeof(CHAR16)), String);
   }
   vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
 
@@ -1648,7 +1648,7 @@ AllocateCopyPool(
 {
   void * ptr = calloc((size_t)AllocationSize, 1);
   if (NULL != ptr) {
-    memcpy_s(ptr, (rsize_t)AllocationSize, Buffer, (rsize_t)AllocationSize);
+    memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
   }
   return ptr;
 }

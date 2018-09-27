@@ -3461,7 +3461,7 @@ CopyMem_S(
 )
 {
 #ifdef OS_BUILD
-  int status = memcpy_s(DestinationBuffer, DestLength, SourceBuffer, (rsize_t)Length);
+  int status = memcpy_s(DestinationBuffer, DestLength, SourceBuffer, Length);
   if(status != 0)
     NVDIMM_CRIT("Memcpy_s failed with ErrorCode: %x", status);
   return DestinationBuffer;

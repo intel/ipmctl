@@ -23,7 +23,9 @@
 
 #define DIAG_MSG_DELIM                     L":"
 #define DIAG_ENTRY_EOL                     L'\n'
+#define DIAG_CR                            L'\r'
 #define DIAG_MSG_EXTRA_SPACE               L"  "
+#define DIAG_NEW_LINE_STR                  L"\n"
 
  /*
     *  PRINT LIST ATTRIBUTES
@@ -295,6 +297,7 @@ ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
   UINT32 DiagResultCnt = 0;
   CHAR16 *pPath = NULL;
   CHAR16 *pTempStr = NULL;
+  BOOLEAN FirstLineOfMessage = FALSE;
 
   if (NULL == pPrinterCtx || NULL == Results) {
     return EFI_INVALID_PARAMETER;
@@ -306,12 +309,12 @@ ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
   }
 
   for (Index = 0; Index < NumTokens; ++Index) {
-
-    if (!StrLen(ppSplitDiagResultLines[Index])) {
+    if (!StrLen(ppSplitDiagResultLines[Index]) || ppSplitDiagResultLines[Index][0] == DIAG_CR) {
       ParsingMessage = FALSE;
       FREE_POOL_SAFE(pPath);
       continue;
     }
+
     if (StrStr(ppSplitDiagResultLines[Index], TEST_NAME_STR DIAG_MSG_DELIM)) {
       PRINTER_BUILD_KEY_PATH(&pPath, DS_DIAGNOSTIC_INDEX_PATH, DiagResultCnt);
       if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
@@ -330,10 +333,14 @@ ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
     }
     else if (pPath && StrStr(ppSplitDiagResultLines[Index], MESSAGE_STR DIAG_MSG_DELIM)) {
       ParsingMessage = TRUE;
+      FirstLineOfMessage = TRUE;
     }
     else if (pPath && ParsingMessage) {
+      if (!FirstLineOfMessage) {
+        PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, DIAG_NEW_LINE_STR);
+      }
       PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, ppSplitDiagResultLines[Index]);
-      PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, DIAG_MSG_EXTRA_SPACE);
+      FirstLineOfMessage = FALSE;
     }
   }
 

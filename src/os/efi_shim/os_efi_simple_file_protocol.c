@@ -104,14 +104,14 @@ file_open(
   if (NULL == pFp)
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+    goto Error;
   }
   *pFp = gFileProtocol;
   pFp->Revision = (UINT64)AllocateZeroPool(sizeof(FILE_CONTEXT));
   if (0 == pFp->Revision)
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+    goto Error;
   }
 
   pFc = cast_to_file_context_ptr(pFp->Revision);
@@ -146,25 +146,29 @@ file_open(
   if (-1 == pFc->fd)
   {
     ReturnCode = get_last_error();
-    goto Finish;
+    goto Error;
   }
-  *NewHandle = pFp;
 
-Finish:
+  *NewHandle = pFp;
+  goto Finish;
+
+Error:
   FREE_POOL_SAFE(pFc);
+  FREE_POOL_SAFE(pFp);
+Finish:
   return ReturnCode;
 }
 
 EFI_STATUS
 file_close(
-  IN EFI_FILE_PROTOCOL  *This
+  IN EFI_FILE_PROTOCOL  *pFp
 )
 {
   FILE_CONTEXT *pFc;
 
-  if (This != &gFileProtocol)
+  if (pFp != &gFileProtocol)
   {
-    pFc = cast_to_file_context_ptr(This->Revision);
+    pFc = cast_to_file_context_ptr(pFp->Revision);
     if (NULL != pFc && 0 != pFc->fd)
     {
       _close(pFc->fd);
@@ -174,9 +178,12 @@ file_close(
     if (NULL != pFc)
     {
       FreePool(pFc);
-      This->Revision = 0x0;
+      pFp->Revision = 0x0;
     }
+
+    FreePool(pFp);
   }
+
   return EFI_SUCCESS;
 }
 

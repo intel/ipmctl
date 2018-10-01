@@ -698,6 +698,16 @@ SetDimm(
    Fatal Media Error Inj property
   **/
   if (pFatalMediaError != NULL) {
+#ifdef _MSC_VER // Windows
+    // We can't recover from an injected fatal media error in Windows
+    // because nvmdimm.sys requires GetCommandEffectLog to work and that
+    // command requires the media to be up because it uses the large payload. Therefore
+    // redirect people to use the Microsoft tools for doing this that ignores the
+    // lack of a Command Effect Log for the dimm.
+    Print(CLI_ERR_INJECT_FATAL_ERROR_UNSUPPORTED_ON_OS);
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+#endif // _MSC_VER
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
     ReturnCode = GetU64FromString(pFatalMediaError, &FatalMediaError);

@@ -204,6 +204,8 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
 #define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL
 
+#define CLI_ERR_INJECT_FATAL_ERROR_UNSUPPORTED_ON_OS          L"Injecting a Fatal Media error is unsupported on this OS.\nPlease contact your OSV for assistance in performing this action."
+
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2
 

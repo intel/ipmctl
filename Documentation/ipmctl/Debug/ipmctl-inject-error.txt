@@ -111,6 +111,9 @@ FatalMediaError::
   cleared using disable trigger input parameter to clear this injected
   fatal error.
 
+  NOTE: Injecting a Fatal Media error is unsupported on Windows. Please
+  contact Microsoft for assistance in performing this action.
+
 DirtyShutdown::
   - "1": Injects an ADR failure resulting in dirty shutdown upon reboot.
 

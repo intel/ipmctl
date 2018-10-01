@@ -24,8 +24,10 @@
 #endif
 
 #if _BullseyeCoverage
+#ifndef OS_BUILD
 extern int cov_dumpData(void);
-#endif
+#endif // !OS_BUILD
+#endif // _BullseyeCoverage
 
 #define FIRST_ERR(rc, newRc) { if (rc == EFI_SUCCESS) rc = newRc; }
 
@@ -1655,8 +1657,10 @@ Finish:
   uninitAcpiTables();
 #endif //not OS_BUILD
 #if _BullseyeCoverage
+#ifndef OS_BUILD
   cov_dumpData();
-#endif
+#endif // !OS_BUILD
+#endif // _BullseyeCoverage
   NVDIMM_DBG("Exiting DriverBindingStop, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

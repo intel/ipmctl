@@ -58,8 +58,10 @@
 #include "ShowCmdAccessPolicyCommand.h"
 
 #if _BullseyeCoverage
+#ifndef OS_BUILD
 extern int cov_dumpData(void);
-#endif
+#endif // !OS_BUILD
+#endif // _BullseyeCoverage
 
 #ifdef __MFG__
 #include <mfg/MfgCommands.h>
@@ -353,8 +355,10 @@ Finish:
     HiiRemovePackages(gNvmDimmCliHiiHandle);
   }
 #if _BullseyeCoverage
+#ifndef OS_BUILD
   cov_dumpData();
-#endif
+#endif // !OS_BUILD
+#endif // _BullseyeCoverage
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**
   Disable recording AllocatePool and FreePool occurrences, print list and clear it

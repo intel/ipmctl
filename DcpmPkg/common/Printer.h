@@ -298,10 +298,8 @@ do { \
 */
 #define PRINTER_BUILD_KEY_PATH(path, fmt, ...) \
 do { \
-  if(path && *path) { \
-    FREE_POOL_SAFE(*path); \
-  } \
-  *path = BuildPath(fmt,  ## __VA_ARGS__); \
+  FREE_POOL_SAFE(path); \
+  path = BuildPath(fmt,  ## __VA_ARGS__); \
 } while (0)
 
 /**Set a wide str into a dataset that resides in the "set buffer"**/

@@ -110,7 +110,7 @@ ShowPreferences(
     goto Finish;
   }
 
-  PRINTER_BUILD_KEY_PATH(&pPath, DS_ROOT_PATH);
+  PRINTER_BUILD_KEY_PATH(pPath, DS_ROOT_PATH);
 
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CLI_DEFAULT_DIMM_ID_PROPERTY, GetDimmIDStr(DisplayPreferences.DimmIdentifier));
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CLI_DEFAULT_SIZE_PROPERTY, GetDisplaySizeStr(DisplayPreferences.SizeUnit));

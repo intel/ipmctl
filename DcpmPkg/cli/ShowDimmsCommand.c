@@ -529,7 +529,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
       ReturnCode = MakeCapacityString(pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
       pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
@@ -577,7 +577,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmCount + DimmIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmCount + DimmIndex);
 
       pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].HealthState);
 
@@ -638,7 +638,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
       /** always print the DimmID **/
       ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr,
@@ -1258,7 +1258,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex + DimmCount);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex + DimmCount);
 
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIMM_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].DimmHandle);
 

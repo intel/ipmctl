@@ -292,7 +292,7 @@ ShowSystemCapabilities(
     goto Finish;
   }
 
-  PRINTER_BUILD_KEY_PATH(&pPath, DS_ROOT_PATH);
+  PRINTER_BUILD_KEY_PATH(pPath, DS_ROOT_PATH);
 
   /** Values shown by default **/
   if (FilterOutput == ContainsValue(pDisplayValues, PLATFORM_CONFIG_SUPPORT_STR)) {

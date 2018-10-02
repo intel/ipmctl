@@ -148,7 +148,7 @@ ShowHostServer(
      goto Finish;
   }
 
-  PRINTER_BUILD_KEY_PATH(&pPath, DS_ROOT_PATH);
+  PRINTER_BUILD_KEY_PATH(pPath, DS_ROOT_PATH);
 
   if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DISPLAYED_NAME_STR))) {
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DISPLAYED_NAME_STR, HostServerinfo.Name);

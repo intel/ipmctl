@@ -234,10 +234,10 @@ ShowCmdAccessPolicy(
   }
 
   for (DimmIndex = 0; DimmIndex < DimmIdsCount; DimmIndex++) {
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_UINT16(pPrinterCtx, pPath, DIMM_ID_STR, pDimmIds[DimmIndex], HEX);
     for (OpCodeIndex = 0; OpCodeIndex < CapCount; OpCodeIndex++) {
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_OPCODE_INDEX_PATH, DimmIndex, OpCodeIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_OPCODE_INDEX_PATH, DimmIndex, OpCodeIndex);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, OPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Opcode, HEX);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, SUBOPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].SubOpcode, HEX);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, RESTRICTED_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Restricted, DECIMAL);

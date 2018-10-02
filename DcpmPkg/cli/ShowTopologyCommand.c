@@ -293,7 +293,7 @@ ShowTopology(
       pMemoryType = MemoryTypeToStr(pDimms[Index].MemoryType);
       ReturnCode = MakeCapacityString(pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pMemoryType);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
@@ -316,7 +316,7 @@ ShowTopology(
             UnitsToDisplay, TRUE, &pCapacityStr);
         KEEP_ERROR(ReturnCode, TempReturnCode);
 
-        PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
+        PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pMemoryType);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
@@ -352,7 +352,7 @@ ShowTopology(
         goto Finish;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
 
       /** always print the DimmlID **/
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
@@ -418,7 +418,7 @@ ShowTopology(
     if (!ContainTarget(pCmd, DIMM_TARGET)) {
       for (Index = 0; Index < TopologyDimmsNumber; Index++) {
 
-        PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
+        PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
 
         /** Always Print DimmIDs **/
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);

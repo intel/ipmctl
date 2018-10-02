@@ -452,7 +452,7 @@ AddEventData(PRINT_CONTEXT *pPrinterCtx, CHAR16 *EventEntry) {
     return EFI_INVALID_PARAMETER;
   }
 
-  PRINTER_BUILD_KEY_PATH(&pPath, DS_EVENT_INDEX_PATH, EventCnt);
+  PRINTER_BUILD_KEY_PATH(pPath, DS_EVENT_INDEX_PATH, EventCnt);
 
   ppSplitEventEntryToken = StrSplit(EventEntry, EVENT_ENTRY_TOKEN_DELIM, &NumTokens);
   if (ppSplitEventEntryToken == NULL) {

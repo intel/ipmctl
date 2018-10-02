@@ -167,7 +167,7 @@ ShowGoalPrintTableView(
 
   for (Index = 0; Index < RegionConfigsCount; ++Index) {
     pCurrentGoal = &pRegionConfigsInfo[Index];
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
 
     ReturnCode = GetPreferredDimmIdAsString(pCurrentGoal->DimmID, pCurrentGoal->DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
@@ -248,7 +248,7 @@ ShowGoalPrintDetailedView(
   for (Index = 0; Index < RegionConfigsCount; ++Index) {
     pCurrentGoal = &pRegionConfigsInfo[Index];
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_CONFIG_GOAL_INDEX_PATH, Index);
 
     /* always print dimmID */
     /** Dimm ID **/

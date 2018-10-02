@@ -335,7 +335,7 @@ ShowSensor(
       goto Finish;
     }
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
 
     for (SensorIndex = 0; SensorIndex < SENSOR_TYPE_COUNT; SensorIndex++) {
@@ -344,7 +344,7 @@ ShowSensor(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_SENSOR_INDEX_PATH, DimmIndex, SensorIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_SENSOR_INDEX_PATH, DimmIndex, SensorIndex);
 
       /**
         Type

@@ -467,7 +467,7 @@ ShowRegions(
       continue;
     }
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_INDEX_PATH, RegionIndex);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, RegionIndex);
 
     Found = TRUE;
 

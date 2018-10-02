@@ -279,7 +279,7 @@ ShowSockets(
       continue;
     }
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_SOCKET_INDEX_PATH, Index);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_SOCKET_INDEX_PATH, Index);
 
     /** SocketID **/
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pSockets[Index].SocketId);

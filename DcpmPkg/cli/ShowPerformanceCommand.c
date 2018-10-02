@@ -146,12 +146,12 @@ PrintPerformanceData(PRINT_CONTEXT *pPrinterCtx, UINT16 *DimmId, UINT32 DimmIdsN
       continue;
     }
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_SOCKET_INDEX_PATH, DimmIndex);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_SOCKET_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
 
     /** MediaReads **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayOptionValue, DCPMM_PERFORMANCE_MEDIA_READS))) {
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_MEDIA_READS, PERFORMANCE_DATA_FORMAT, 
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_PERFORMANCE_MEDIA_READS, PERFORMANCE_DATA_FORMAT,
                   pDimmsPerformanceData[AllDimmsIndex].MediaReads.Uint64_1,
                   pDimmsPerformanceData[AllDimmsIndex].MediaReads.Uint64);
     }

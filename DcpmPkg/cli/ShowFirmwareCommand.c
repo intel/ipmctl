@@ -242,7 +242,7 @@ ShowFirmware(
       goto Finish;
     }
 
-    PRINTER_BUILD_KEY_PATH(&pPath, DS_DIMM_FW_INDEX_PATH, Index);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_FW_INDEX_PATH, Index);
 
     /** DimmID **/
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);

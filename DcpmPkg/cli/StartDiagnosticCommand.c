@@ -316,7 +316,7 @@ ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
     }
 
     if (StrStr(ppSplitDiagResultLines[Index], TEST_NAME_STR DIAG_MSG_DELIM)) {
-      PRINTER_BUILD_KEY_PATH(&pPath, DS_DIAGNOSTIC_INDEX_PATH, DiagResultCnt);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIAGNOSTIC_INDEX_PATH, DiagResultCnt);
       if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
         pTempStr += 2;
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pTempStr);

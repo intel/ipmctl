@@ -732,6 +732,8 @@ EFI_STATUS showVersion(struct Command *pCmd)
 
   //Specify table attributes
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowVersionDataSetAttribs);
+  //Force as list
+  PRINTER_ENABLE_LIST_TABLE_FORMAT(pPrinterCtx);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);

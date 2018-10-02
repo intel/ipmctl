@@ -405,6 +405,14 @@ passthru_playback(
   }
   g_pass_thru_playback_offset += pt_rec_req.InputPayloadSize;
 
+  if (0 != fseek(f_passthru_ptr, pt_rec_req.InputLargePayloadSize, SEEK_CUR))
+  {
+    NVDIMM_ERR("Failed seeking into playback file\n");
+    return EFI_END_OF_FILE;
+  }
+  g_pass_thru_playback_offset += pt_rec_req.InputLargePayloadSize;
+
+
   if (1 != fread(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
   {
     NVDIMM_ERR("Failed to read the response packet from the recording file\n");
@@ -412,23 +420,17 @@ passthru_playback(
   }
   g_pass_thru_playback_offset += sizeof(pass_thru_record_resp);
 
-  if (0 == pt_rec_resp.OutputPayloadSize)
+  if (pt_rec_resp.OutputLargePayloadSize)
   {
-    NVDIMM_ERR("Payload size is reporting 0 in the recording file\n");
-    return EFI_END_OF_FILE;
-  }
-
-  if (pt_rec_resp.OutputPayloadSize > IN_PAYLOAD_SIZE)
-  {
-    pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputPayloadSize;
-    if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
+    pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputLargePayloadSize;
+    if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputLargePayloadSize, 1, f_passthru_ptr))
     {
       NVDIMM_ERR("Failed to read the LargeOutputPayload from the recording file\n");
       return EFI_END_OF_FILE;
     }
-    g_pass_thru_playback_offset += pt_rec_resp.OutputPayloadSize;
+    g_pass_thru_playback_offset += pt_rec_resp.OutputLargePayloadSize;
   }
-  else
+  else if(pt_rec_resp.OutputPayloadSize)
   {
     pCmd->OutputPayloadSize = pt_rec_resp.OutputPayloadSize;
     if (1 != fread(pCmd->OutPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
@@ -538,7 +540,8 @@ passthru_record_finalize(
   pt_rec_req.Opcode = pCmd->Opcode;
   pt_rec_req.SubOpcode = pCmd->SubOpcode;
   pt_rec_req.TotalMilliseconds = GetCurrentMilliseconds();
-  pt_rec_req.InputPayloadSize = pCmd->InputPayloadSize + pCmd->LargeInputPayloadSize;
+  pt_rec_req.InputPayloadSize = pCmd->InputPayloadSize;
+  pt_rec_req.InputLargePayloadSize = pCmd->LargeInputPayloadSize;
 
   size_t bytes_written = 0;
   bytes_written = fwrite(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr);
@@ -558,7 +561,8 @@ passthru_record_finalize(
     }
     total_write_sz += pCmd->InputPayloadSize;
   }
-  else if (pCmd->LargeInputPayloadSize)
+
+  if (pCmd->LargeInputPayloadSize)
   {
     if (1 != fwrite(pCmd->LargeInputPayload, pCmd->LargeInputPayloadSize, 1, f_passthru_ptr))
     {
@@ -573,7 +577,9 @@ passthru_record_finalize(
   pt_rec_resp.PassthruReturnCode = PassthruReturnCode;
   pt_rec_resp.Status = pCmd->Status;
   pt_rec_resp.TotalMilliseconds = GetCurrentMilliseconds();
-  pt_rec_resp.OutputPayloadSize = pCmd->OutputPayloadSize + pCmd->LargeOutputPayloadSize;
+  pt_rec_resp.OutputPayloadSize = pCmd->OutputPayloadSize;
+  pt_rec_resp.OutputLargePayloadSize = pCmd->LargeOutputPayloadSize;
+
   if (1 != fwrite(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
   {
     NVDIMM_ERR("Failed to write the response payload to the recording file \n");

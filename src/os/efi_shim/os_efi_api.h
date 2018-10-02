@@ -28,6 +28,7 @@ typedef struct _pass_thru_record_req
   UINT8 Opcode;
   UINT8 SubOpcode;
   UINT32 InputPayloadSize;
+  UINT32 InputLargePayloadSize;
   UINT8 Input[];
 }pass_thru_record_req;
 
@@ -38,6 +39,7 @@ typedef struct _pass_thru_record_resp
   EFI_STATUS PassthruReturnCode;
   UINT32 DimmId;
   UINT32 OutputPayloadSize;
+  UINT32 OutputLargePayloadSize;
   UINT8 Status;
   UINT8 Output[];
 }pass_thru_record_resp;

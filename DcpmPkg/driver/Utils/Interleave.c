@@ -8,77 +8,29 @@
 #include "Namespace.h"
 #include "Region.h"
 #include <Library/PrintLib.h>
-#include <Interleave.h>
 
-#define CHANNELS_PER_IMC                3
-#define DIMM_LOCATION(iMC, channel)     (2 * (channel % CHANNELS_PER_IMC) + iMC)
+#define DIMM_LOCATION(iMC, channel, iMCsPerCPU, channelsPeriMC)     (iMCsPerCPU * (channel % channelsPeriMC) + iMC)
 #define DIMM_POPULATED(map, dimmIndex)  ((map >> dimmIndex) & 0x1)
 #define CLEAR_DIMM(map, dimmIndex)      map &= ~(0x1 << dimmIndex)
 
-// 2 memory controllers, 3 channels
-// where bit placement represents the
-// DIMMs ordered as such:
-// ---------
-//         IMC0       IMC1
-// CH0 | 0b000001 | 0b000010 |
-// CH1 | 0b000100 | 0b001000 |
-// CH2 | 0b010000 | 0b100000 |
-// ---------
-#define END_OF_INTERLEAVE_SETS  0
-const UINT32 INTERLEAVE_SETS[] =
-{
-                0x3F,     //0b111111 x6
+ /**
+   Remove the dimm from the list of dimms and update the other
+   dimms in the list to shift left by 1.
 
-                0x0F,     //0b001111 x4
-                0x3C,     //0b111100 x4
-                0x33,     //0b110011 x4
+   @param[in out] pDimmsList The current list of DIMMs
+   @param[in out] pDimmsListNum The number of DIMMs
+   @param[in out] pDimm The DIMM to be removed from pDimmsList
 
-                0x15,     //0b010101 x3
-                0x2A,     //0b101010 x3
-
-                // favor across memory controller
-                0x03,     //0b000011 x2
-                0x0C,     //0b001100 x2
-                0x30,     //0b110000 x2
-
-                // before across channel
-                0x05,     //0b000101 x2
-                0x0A,     //0b001010 x2
-                0x14,     //0b010100 x2
-                0x28,     //0b101000 x2
-                0x11,     //0b010001 x2
-                0x22,     //0b100010 x2
-
-                // lastly x1
-                0x01,     //0b000001 x1
-                0x02,     //0b000010 x1
-                0x04,     //0b000100 x1
-                0x08,     //0b001000 x1
-                0x10,     //0b010000 x1
-                0x20,     //0b100000 x1
-
-                END_OF_INTERLEAVE_SETS
-};
-
-
-/**
-  Remove the dimm from the list of dimms and update the other
-  dimms in the list to shift left by 1.
-
-  @param[in out] pDimmsList The current list of DIMMs
-  @param[in out] pDimmsListNum The number of DIMMs
-  @param[in out] pDimm The DIMM to be removed from pDimmsList
-
-  @retval EFI_SUCCESS
-  @retval EFI_INVALID_PARAMETER If input parameters are null
-**/
+   @retval EFI_SUCCESS
+   @retval EFI_INVALID_PARAMETER If input parameters are null
+ **/
 STATIC
 EFI_STATUS
 RemoveDimmFromList(
   IN OUT DIMM *pDimmsList[],
   IN OUT UINT32 *pDimmsListNum,
   IN     DIMM *pDimm
-  )
+)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
@@ -100,7 +52,7 @@ RemoveDimmFromList(
 
   if (Found) {
     for (; Index < (*pDimmsListNum - 1); Index++) {
-      pDimmsList[Index] = pDimmsList[Index+1];
+      pDimmsList[Index] = pDimmsList[Index + 1];
     }
     (*pDimmsListNum)--;
   }
@@ -109,7 +61,6 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
 /**
   Remove the dimm array from the list of dimms and update the number
   of dimms in the list.
@@ -169,6 +120,8 @@ GetDimmsFromListMatchingInterleaveSet(
   IN     DIMM *pDimms[],
   IN     UINT32 DimmsNum,
   IN     const UINT32 InterleaveMap,
+  IN     UINT8 iMCNum,
+  IN     UINT8 ChannelNum,
   IN OUT DIMM *pDimmsInterleaved[],
   IN OUT UINT32 *pDimmsUsed
   )
@@ -185,14 +138,14 @@ GetDimmsFromListMatchingInterleaveSet(
     goto Finish;
   }
 
+
   for (Index = 0; Index < DimmsNum; Index++) {
-    DimmIndex = DIMM_LOCATION(pDimms[Index]->ImcId, pDimms[Index]->ChannelId);
+    DimmIndex = DIMM_LOCATION(pDimms[Index]->ImcId, pDimms[Index]->ChannelId, iMCNum, ChannelNum);
     if (DIMM_POPULATED(InterleaveMap, DimmIndex)) {
       pDimmsInterleaved[(*pDimmsUsed)++] = pDimms[Index];
       CLEAR_DIMM(DimmsNotFound, DimmIndex);
     }
   }
-
   if (DimmsNotFound != 0) {
     *pDimmsUsed = 0;
   }
@@ -224,6 +177,9 @@ FindBestInterleavingForDimms(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
+  UINT8 NumOfiMCsPerCPU = 0;
+  UINT8 NumOfChannelsPeriMC = 0;
+  const UINT32 *pInterleaveSet = NULL;
 
   NVDIMM_ENTRY();
 
@@ -232,8 +188,13 @@ FindBestInterleavingForDimms(
     goto Finish;
   }
 
-  for (Index = 0; (*pDimmsUsed == 0) && (INTERLEAVE_SETS[Index] != END_OF_INTERLEAVE_SETS); Index++) {
-    GetDimmsFromListMatchingInterleaveSet(pDimms, DimmsNum, INTERLEAVE_SETS[Index], pDimmsInterleaved, pDimmsUsed);
+  ReturnCode = GetTopologyAndInterleaveSetMapInfoBasedOnProcessorType(&NumOfiMCsPerCPU, &NumOfChannelsPeriMC, NULL, &pInterleaveSet);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  for (Index = 0; (*pDimmsUsed == 0) && (pInterleaveSet[Index] != END_OF_INTERLEAVE_SETS); Index++) {
+    GetDimmsFromListMatchingInterleaveSet(pDimms, DimmsNum, pInterleaveSet[Index], NumOfiMCsPerCPU, NumOfChannelsPeriMC, pDimmsInterleaved, pDimmsUsed);
   }
 
   if (*pDimmsUsed == 0) {

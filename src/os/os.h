@@ -7,6 +7,8 @@
 #define	OS_H_
 #ifdef	_MSC_VER
 #include <stdlib.h>
+#include <limits.h>
+#include <intrin.h>
 #define PATH_MAX _MAX_PATH
 #define	OS_PATH_SEP	"\\"
 #else
@@ -99,6 +101,13 @@ extern int os_get_os_version(char *os_version, const unsigned int os_version_len
 extern int os_get_os_type();
 extern int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities);
 extern int os_check_admin_permissions();
+
+/*
+ Get CPUID info for different OSs. Depending on the inputRequestType,
+  regs[0...3] will be populated with register values eax....edx
+*/
+extern int getCPUID(unsigned int *regs, int registerCount, int inputRequestType);
+
 int wait_for_sec(unsigned int seconds);
 
 #endif

@@ -488,3 +488,16 @@ int os_mkdir(OS_PATH path)
   }
   return 0;
 }
+
+/*
+ Get CPUID info for Linux. Depending on the inputRequestType,
+  regs[0...3] will be populated with register values eax....edx
+*/
+int getCPUID(unsigned int *regs, int registerCount, int inputRequestType) {
+  int rc = NVM_ERR_INVALIDPARAMETER;
+  if (registerCount < 4) {
+    return rc;
+  }
+  __get_cpuid(inputRequestType, &(regs[0]), &(regs[1]), &(regs[2]), &(regs[3]));
+  return NVM_SUCCESS;
+}

@@ -13,6 +13,11 @@
 #include <Protocol/Driver/NvmDimmConfig.h>
 #include <Dimm.h>
 #include <NvmTypes.h>
+#include "ProcessorAndTopologyInfo.h"
+#ifdef OS_BUILD
+#include <os_efi_api.h>
+#endif // OS_BUILD
+
 
 /**
   Perform interleaving across DIMMs and create goals

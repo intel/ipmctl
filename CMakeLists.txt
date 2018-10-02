@@ -111,10 +111,6 @@ if(INTERNAL_MFG)
         include(CMake/mfg.cmake)
 endif()
 
-if(EXISTS "${ROOT}/CMake/internal.cmake")
-        include("${ROOT}/CMake/internal.cmake")
-endif()
-
 #----------------------------------------------------------------------------------------------------
 # Project wide defines and flags
 #----------------------------------------------------------------------------------------------------
@@ -313,6 +309,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/driver/Protocol/Namespace/NvmDimmBlockIo.c
 	DcpmPkg/driver/Utils/PlatformConfigData.c
 	DcpmPkg/driver/Utils/AcpiParsing.c
+	DcpmPkg/driver/Utils/ProcessorAndTopologyInfo.c
 	DcpmPkg/driver/Utils/Interleave.c
 	DcpmPkg/driver/Utils/SmbiosUtility.c
 	DcpmPkg/driver/Utils/DumpLoadRegions.c
@@ -338,7 +335,9 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	MdePkg/Library/BaseLib/DivU64x32.c
 	${LIBIPMCTL_MFG_FILES}
 	)
-
+if(EXISTS "${ROOT}/CMake/internal.cmake")
+        include("${ROOT}/CMake/internal.cmake")
+endif()
 # OS Files
 list(APPEND LIBIPMCTL_SOURCE_FILES
 	src/os/efi_shim/${FILE_PREFIX}_efi_api.c

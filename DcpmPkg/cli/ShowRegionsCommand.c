@@ -410,7 +410,7 @@ ShowRegions(
     goto Finish;
   }
   if (0 == RegionCount) {
-    ReturnCode = EFI_NOT_FOUND;
+    ReturnCode = EFI_SUCCESS;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
     goto Finish;
   }
@@ -443,7 +443,7 @@ ShowRegions(
   }
 
   if (AppDirectRegionCount == 0) {
-    ReturnCode = EFI_NOT_FOUND;
+    ReturnCode = EFI_SUCCESS;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
     goto Finish;
   }

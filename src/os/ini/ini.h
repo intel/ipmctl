@@ -72,6 +72,6 @@ NVM_API int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const
 @param    p_filename Pointer to the file name
 @return   int 0 if Ok, -1 otherwise
 */
-NVM_API int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_filename);
+NVM_API int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_filename, int force_file_update);
 
 #endif // !_INI_H_

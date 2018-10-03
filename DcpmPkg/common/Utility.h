@@ -407,8 +407,8 @@ typedef union {
   BufferSize,                                                     \
   (VOID*)Buffer))
 #else
-#define SET_VARIABLE_NV(VarName,VendorGuid,BufferSize,Buffer) preferences_set_var(VarName,VendorGuid,(void*)Buffer,BufferSize)
-#define SET_STR_VARIABLE_NV(VarName,VendorGuid,VarVal) preferences_set_var_string_wide(VarName,VendorGuid, VarVal)
+#define SET_VARIABLE_NV(VarName,VendorGuid,BufferSize,Buffer) preferences_set_var(VarName,VendorGuid,(void*)Buffer,BufferSize); preferences_flush_the_file()
+#define SET_STR_VARIABLE_NV(VarName,VendorGuid,VarVal) preferences_set_var_string_wide(VarName,VendorGuid, VarVal); preferences_flush_the_file()
 #endif
 
 /**

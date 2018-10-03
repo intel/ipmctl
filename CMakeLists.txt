@@ -599,7 +599,7 @@ if(LNX_BUILD)
 		)
 
 	install(FILES ${OUTPUT_DIR}/ipmctl_default.conf
-		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ipmctl
 		RENAME ipmctl.conf
 		)
 

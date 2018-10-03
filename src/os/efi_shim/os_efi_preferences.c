@@ -39,14 +39,14 @@ EFI_STATUS preferences_init(IN CONST char *p_filename)
 
 EFI_STATUS preferences_uninit(void)
 {
-  nvm_ini_dump_to_file(gIni, g_p_filename);
+  nvm_ini_dump_to_file(gIni, g_p_filename, FALSE);
   nvm_ini_free_dictionary(gIni);
   return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_flush_the_file(void)
 {
-  nvm_ini_dump_to_file(gIni, g_p_filename);
+  nvm_ini_dump_to_file(gIni, g_p_filename, TRUE);
   return EFI_SUCCESS;
 }
 

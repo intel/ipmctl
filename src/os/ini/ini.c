@@ -12,6 +12,7 @@
 #include <Debug.h>
 #include "ini.h"
 #include <s_str.h>
+#include "os.h"
 
 #if defined(__LINUX__)
 #include <safe_str_lib.h>
@@ -19,7 +20,7 @@
 
 #if defined(__LINUX__) || defined(__ESX__)
 #define APP_DATA_FILE_PATH    ""
-#define INI_INSTALL_FILEPATH	"/etc/"
+#define INI_INSTALL_FILEPATH	"/usr/share/ipmctl/"
 #else
 #define APP_DATA_FILE_PATH    getenv("APPDATA")
 #define INI_INSTALL_FILEPATH	"\\Intel\\ipmctl\\"
@@ -231,7 +232,6 @@ dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_in
   size_t string_size = 0;
   size_t ini_entry_sz_chars;
   NVM_INI_FILENAME ini_path_filename = { 0 };
-  NVM_INI_FILENAME_W ini_path_filename_w = { 0 };
   BOOLEAN no_conf_file = FALSE;
   char *ret_ptr = NULL;
   long file_size = 0;
@@ -266,13 +266,6 @@ dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_in
     file_size = ftell(h_file);
     fseek(h_file, 0, SEEK_SET);
     if (0 == file_size) {
-      AsciiStrToUnicodeStrS(ini_path_filename, ini_path_filename_w, NVM_INI_PATH_FILE_LEN);
-      wprintf(L"Error: Could not parse configuration file: %ls\n", ini_path_filename_w);
-#if defined(__LINUX__)
-      wprintf(L"The default configuration can be found here: /usr/share/doc/ipmctl/ipmctl_default.conf\n");
-#else
-      wprintf(L"The default configuration can be found here: ipmctl_default.conf\n");
-#endif
       // File size improper, lets use hardcoded data
       ret_ptr = (char *) p_g_ini_file;
       no_conf_file = TRUE;
@@ -441,7 +434,7 @@ int nvm_ini_set_value(dictionary *p_dictionary, const char *p_key, const char *p
 @param    p_ini_file_name Pointer to the name of the ini file to read
 @return   int 0 if Ok, -1 otherwise
 */
-int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
+int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, int force_file_update)
 {
   FILE *h_file;
   NVM_INI_FILENAME ini_path_filename = { 0 };
@@ -461,8 +454,16 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name)
   snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
   h_file = fopen(ini_path_filename, "r");
   if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
-    snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
-    h_file = fopen(ini_path_filename, "r");
+    if (force_file_update) {
+      snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH);
+      os_mkdir(ini_path_filename);
+      snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
+      h_file = fopen(ini_path_filename, "w");
+    }
+    else {
+      snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
+      h_file = fopen(ini_path_filename, "r");
+    }
     if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
       // Hardcoded data used, nothing to save
       return -1;

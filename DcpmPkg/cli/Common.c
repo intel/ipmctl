@@ -310,11 +310,10 @@ GetDimmIdsFromString(
       if ((!pIsDimmIdNumber[Index] && StrICmp(ppDimmIdTokensStr[Index], pDimmInfo[Index2].DimmUid) == 0) ||
         (pIsDimmIdNumber[Index] && pDimmInfo[Index2].DimmHandle == pParsedDimmIdNumber[Index]))
       {
-        // Note: For uninitialized dimms, the DimmID is always 0x0
-        // It can cause havok later on if you care about those dimms
-        // We should switch to using DimmHandle at some point, as we
-        // don't accept DimmID as a command line dimm specifier!
-        // (we only accept positional handle and uid)
+        // This DimmID is unique for all dimms on the platform regardless of
+        // state and is assigned by UEFI FW. We use it for all our APIs.
+        // Handle seems to be a better identifier since it corresponds to the
+        // position on the board, but this is good enough and cheap to look up.
         (*ppDimmIds)[Index] = pDimmInfo[Index2].DimmID;
         DimmIdFound = TRUE;
         break;

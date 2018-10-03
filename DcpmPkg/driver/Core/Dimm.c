@@ -1189,7 +1189,6 @@ InitializeDimmFieldsFromNfit(
   pDimm->ISsNum = 0;
   if (pNvDimmRegionTbl != NULL) {
     pDimm->SocketId = (UINT16) pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId;
-    // BIOS sets this to 0x0 for every non-functional (non-booting) dimm
     pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
     pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
     pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;

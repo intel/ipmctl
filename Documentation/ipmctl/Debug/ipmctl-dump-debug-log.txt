@@ -8,7 +8,8 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-debug-log - Dumps encoded firmware debug logs from DCPMM
+ipmctl-dump-debug-log - Dumps encoded firmware debug logs from DCPMM and
+optionally decodes to human readable text.
 
 SYNOPSIS
 --------

@@ -1298,7 +1298,7 @@ EFI_STATUS PrinterProcessSetBuffer(
     if (BUFF_STR_TYPE == BufferedObject->Type) {
       BUFFERED_STR *pTempBs = (BUFFERED_STR *)BufferedObject->Obj;
       if (PRINT_XML != PrinterMode) {
-        Print(pTempBs->pStr);
+        PrintTextWithNewLine(pTempBs->pStr);
       }
       FREE_POOL_SAFE(pTempBs->pStr);
       pPrintCtx->BufferedMsgCnt--;
@@ -1317,7 +1317,7 @@ EFI_STATUS PrinterProcessSetBuffer(
       BUFFERED_COMMAND_STATUS *pTempCs = (BUFFERED_COMMAND_STATUS *)BufferedObject->Obj;
       CreateCmdStatusMsg(&FullMsg, pTempCs->pStatusMessage, pTempCs->pStatusPreposition, pTempCs->pCommandStatus);
       if (PRINT_XML != PrinterMode) {
-        Print(FullMsg);
+        PrintTextWithNewLine(FullMsg);
       }
       FreeCommandStatus(&pTempCs->pCommandStatus);
       FREE_POOL_SAFE(pTempCs->pStatusMessage);

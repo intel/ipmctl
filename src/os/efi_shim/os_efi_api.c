@@ -422,6 +422,11 @@ passthru_playback(
 
   if (pt_rec_resp.OutputLargePayloadSize)
   {
+    if (pt_rec_resp.OutputLargePayloadSize > OUT_MB_SIZE) {
+      NVDIMM_ERR("OutputLargePayloadSize exceeded maximum large output payload size (%d bytes)\n", OUT_MB_SIZE);
+      return EFI_END_OF_FILE;
+    }
+
     pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputLargePayloadSize;
     if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputLargePayloadSize, 1, f_passthru_ptr))
     {

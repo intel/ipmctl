@@ -2038,6 +2038,13 @@ GetAlarmThresholds (
     goto Finish;
   }
 
+  if ((SensorId != SENSOR_TYPE_MEDIA_TEMPERATURE) &&
+    (SensorId != SENSOR_TYPE_CONTROLLER_TEMPERATURE) &&
+    (SensorId != SENSOR_TYPE_PERCENTAGE_REMAINING)) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
+    goto Finish;
+  }
+
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
     SetObjStatus(pCommandStatus, DimmPid, NULL, 0, NVM_ERR_DIMM_NOT_FOUND);

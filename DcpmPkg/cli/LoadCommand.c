@@ -374,21 +374,27 @@ Load(
     gBS->CreateEvent((EVT_TIMER | EVT_NOTIFY_SIGNAL), PRINT_PRIORITY, PrintProgress, pCommandStatus, &ProgressEvent);
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);
 
-    ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, pDimmTargetIds, DimmTargetCount, pRelativeFileName,
-      (CHAR16 *)pWorkingDirectory, Examine, FALSE, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
+    for (Index = 0; Index < DimmTargetCount; Index++) {
+      ReturnCode = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
+        (CHAR16 *)pWorkingDirectory, Examine, FALSE, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
 
-    gBS->CloseEvent(ProgressEvent);
-
-    if (!EFI_ERROR(ReturnCode)) {
-      pCommandStatus->GeneralStatus = NVM_SUCCESS;
-      ReturnCode = EFI_SUCCESS;
-      for (Index = 0; Index < DimmTargetCount; Index++) {
+      if (!EFI_ERROR(ReturnCode)) {
+        ReturnCode = GetPreferredDimmIdAsString(pDimmTargets[Index].DimmHandle, pDimmTargets[Index].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
+        Print(L"\rLoad firmware on DIMM (" FORMAT_STR L") Progress: 100%%", DimmStr);
+        ReturnCode = EFI_SUCCESS;
         SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
       }
-      Print(L"\n");
     }
+
+    gBS->CloseEvent(ProgressEvent);
+    Print(L"\n");
+
   } else { // Not Recovery or this is Examine
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
+    if (!Examine) {
+      Print(L"Starting update on %d dimm(s)...\n", DimmTargetCount);
+    }
+
     for (Index = 0; Index < DimmTargetCount; Index++) {
 
       pCommandStatus->GeneralStatus = NVM_SUCCESS; //ensure that only the last error gets reported

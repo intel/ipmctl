@@ -4997,6 +4997,15 @@ UpdateFw(
     goto Finish;
   }
 
+  ReturnCode = OpenFile(pFileName, &FileHandle, pWorkingDirectory, FALSE);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    pCommandStatus->GeneralStatus = NVM_ERR_FILE_NOT_FOUND;
+    goto Finish;
+  }
+
+  FileHandle->Close(FileHandle);
+
   if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
     for (Index = 0; Index < DimmsNum; Index++) {
       VerificationFailures++;

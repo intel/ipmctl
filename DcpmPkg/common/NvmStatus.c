@@ -616,6 +616,9 @@ GetSingleNvmStatusCodeMessage(
   case NVM_SUCCESS_NO_EVENT_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_SUCCESS_NO_EVENT_FOUND), NULL);
 
+  case NVM_ERR_FILE_NOT_FOUND:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_FILE_NOT_FOUND), NULL);
+
   default:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_DEFAULT), NULL);
   }

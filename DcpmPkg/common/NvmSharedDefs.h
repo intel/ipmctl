@@ -176,8 +176,9 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_SPD_NOT_ACCESSIBLE                        = 300,  ///< Error: SPD not accessible
   NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION            = 301,  ///< Error: Incompatible hardware revision
-  
+
   NVM_SUCCESS_NO_EVENT_FOUND                        = 302,  ///< Error: No events found in the event log
+  NVM_ERR_FILE_NOT_FOUND                            = 303,  ///< Error: No events found in the event log
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

@@ -208,6 +208,7 @@ ShowTopology(
 
   AllOptionSet = pDispOptions->AllOptionSet;
   DisplayOptionSet = pDispOptions->DisplayOptionSet;
+  pDisplayValues = pDispOptions->pDisplayValues;
 
   ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
   if (EFI_ERROR(ReturnCode)) {
@@ -490,7 +491,6 @@ Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
   FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
-  FREE_POOL_SAFE(pDisplayValues);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pMemoryType);
   FREE_POOL_SAFE(pDimmIds);

@@ -189,12 +189,24 @@ SendData (
     NVDIMM_DBG("FW command: Opcode=%x, SubOpcode=%x", Opcode, SubOpcode);
 
     if (Opcode == PtSetSecInfo) {
+      if (SubOpcode == SubopSecEraseUnit) {
+        /** Need to call WBINVD before secure erase **/
+        AsmWbinvd();
+      }
+
       ReturnCode =
         SetDimmSecurityState(Dimm->pDimm, Opcode, SubOpcode, (UINT16)PayloadBufferSize, PayloadBuffer, PT_TIMEOUT_INTERVAL);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("Failed on SetDimmSecurityState, status=" FORMAT_EFI_STATUS "", ReturnCode);
         goto Finish;
       }
+
+      if ((SubOpcode == SubopSecEraseUnit) ||
+          (SubOpcode == SubopUnlockUnit)) {
+        /** Need to call WBINVD after unlock or secure erase **/
+        AsmWbinvd();
+      }
+
     } else {
       //Opcode not supported
       NVDIMM_WARN("Command not supported: Opcode=%x, SubOpcode=%x", Opcode, SubOpcode);

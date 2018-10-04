@@ -305,7 +305,6 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/driver/Core/Diagnostics/QuickDiagnostic.c
 	DcpmPkg/driver/Core/Diagnostics/SecurityDiagnostic.c
 	DcpmPkg/driver/Protocol/Device/NvmFirmwareManagement.c
-	DcpmPkg/driver/Protocol/Device/StorageSecurityCommand.c
 	DcpmPkg/driver/Protocol/Namespace/NvmDimmBlockIo.c
 	DcpmPkg/driver/Utils/PlatformConfigData.c
 	DcpmPkg/driver/Utils/AcpiParsing.c

@@ -4665,13 +4665,6 @@ InitializeDimm (
 
   if (pNewDimm->pCtrlTbl != NULL) {
     pNewDimm->NvDimmStateFlags = pNewDimm->pCtrlTbl->NvDimmStateFlags;
-    if ((BIT6 & pNewDimm->NvDimmStateFlags) != 0) {
-       NVDIMM_WARN("Bit6 is set in NVDIMM State Flags, this dimm is non-functional.");
-       // This could be due to various issues such as a device initialization error,
-       // device error, insufficient hardware resources to map the device, or a disabled device.
-       ReturnCode = EFI_DEVICE_ERROR;
-       goto after_dimm;
-    }
 
     if (pNewDimm->pCtrlTbl->InterleaveStructureIndex != 0) {
       ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pCtrlTbl->InterleaveStructureIndex, &pMbITbl);

@@ -488,6 +488,10 @@ Finish:
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   }
 
+  if (Examine && pCommandStatus->GeneralStatus == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+    ReturnCode = EFI_SUCCESS;
+  }
+
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pFileName);
   FREE_POOL_SAFE(pFwImageInfo);

@@ -5012,6 +5012,7 @@ UpdateFw(
   }
 
   FileHandle->Close(FileHandle);
+  FileHandle = NULL;
 
   if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
     for (Index = 0; Index < DimmsNum; Index++) {

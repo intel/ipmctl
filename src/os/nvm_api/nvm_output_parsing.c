@@ -328,10 +328,10 @@ int output_to_esx_xml_results(
 {
    wint_t c;
    wprintf(ESX_XML_FILE_BEGIN);
-   wprintf(ESX_XML_LIST_STRING_BEGIN);
+   wprintf(ESX_XML_STRING_BEGIN);
    while ((c = getwc(fd)) != WEOF)
       putwchar(c);
-   wprintf(ESX_XML_LIST_STRING_END);
+   wprintf(ESX_XML_STRING_END);
    wprintf(ESX_XML_FILE_END);
    return 0;
 }

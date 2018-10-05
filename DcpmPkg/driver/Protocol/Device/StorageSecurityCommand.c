@@ -50,7 +50,7 @@ ReceiveData (
   NVDIMM_ENTRY();
   EFI_STATUS ReturnCode = EFI_UNSUPPORTED;
 
-  UINT8 SecurityState = 0;
+  UINT32 SecurityState = 0;
   UINT8 Opcode, SubOpcode;
   PROTOCOL_INFORMATION SupportedProtocolsData = {
     .Reserved = {0},

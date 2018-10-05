@@ -214,6 +214,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   DIMM_UID_STR,
   MODES_SUPPORTED_STR,
   SECURITY_CAPABILITIES_STR,
+  MASTER_PASS_ENABLED_STR,
   DIMM_CONFIG_STATUS_STR,
   SKU_VIOLATION_STR,
   ARS_STATUS_STR,
@@ -269,6 +270,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   LAST_SHUTDOWN_TIME_STR,
   MODES_SUPPORTED_STR,
   SECURITY_CAPABILITIES_STR,
+  MASTER_PASS_ENABLED_STR,
   DIMM_CONFIG_STATUS_STR,
   SKU_VIOLATION_STR,
   ARS_STATUS_STR,
@@ -1086,6 +1088,13 @@ ShowDimms(
           FREE_POOL_SAFE(pAttributeStr);
         }
 
+        /** MasterPassphraseEnabled **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet &&
+            ContainsValue(pDispOptions->pDisplayValues, MASTER_PASS_ENABLED_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MASTER_PASS_ENABLED_STR, FORMAT_INT32,
+            pDimms[DimmIndex].MasterPassphraseEnabled);
+        }
+
         /** ConfigurationStatus **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_CONFIG_STATUS_STR))) {
           pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[DimmIndex].ConfigStatus];
@@ -1094,7 +1103,6 @@ ShowDimms(
 
         /** SKUViolation **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SKU_VIOLATION_STR))) {
-          pAttributeStr = mppAllowedShowDimmsConfigStatuses[pDimms[DimmIndex].ConfigStatus];
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SKU_VIOLATION_STR, FORMAT_INT32, pDimms[DimmIndex].SKUViolation);
         }
 

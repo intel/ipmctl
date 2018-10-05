@@ -915,7 +915,9 @@ GetDimmInfo (
       NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURITY_INFO;
     }
-    ConvertSecurityBitmask(pSecurityPayload->SecurityStatus, &pDimmInfo->SecurityState);
+    ConvertSecurityBitmask(pSecurityPayload->SecurityStatus.AsUint32, &pDimmInfo->SecurityState);
+
+    pDimmInfo->MasterPassphraseEnabled = (BOOLEAN) pSecurityPayload->SecurityStatus.Separated.MasterPassphraseEnabled;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_PACKAGE_SPARING)
@@ -1174,6 +1176,20 @@ IsSecurityOpSupported(
       Result = TRUE;
     }
     break;
+
+  case SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE:
+    if (SystemCapabilitiesInfo.ChangeMasterPassphraseSupported == FEATURE_SUPPORTED) {
+      Result = TRUE;
+    }
+    break;
+
+
+  case SECURITY_OPERATION_MASTER_ERASE_DEVICE:
+    if (SystemCapabilitiesInfo.MasterEraseDeviceDataSupported == FEATURE_SUPPORTED) {
+      Result = TRUE;
+    }
+    break;
+
   }
 
 Finish:
@@ -1776,8 +1792,8 @@ GetSecurityState(
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
-  UINT8 SystemSecurityState = 0;
-  UINT8 DimmSecurityState = 0;
+  UINT32 SystemSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   BOOLEAN IsMixed = FALSE;
 
   NVDIMM_ENTRY();
@@ -2448,7 +2464,7 @@ SetSecurityState(
   UINT8 SubOpcode = 0;
   CHAR8 AsciiPassword[PASSPHRASE_BUFFER_SIZE + 1];
   UINT32 Index = 0;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   PT_SET_SECURITY_PAYLOAD *pSecurityPayload = NULL;
   BOOLEAN NamespaceFound = FALSE;
   BOOLEAN AreNotPartOfPendingGoal = TRUE;
@@ -2485,7 +2501,9 @@ SetSecurityState(
       SecurityOperation != SECURITY_OPERATION_DISABLE_PASSPHRASE &&
       SecurityOperation != SECURITY_OPERATION_UNLOCK_DEVICE &&
       SecurityOperation != SECURITY_OPERATION_ERASE_DEVICE &&
-      SecurityOperation != SECURITY_OPERATION_FREEZE_DEVICE) {
+      SecurityOperation != SECURITY_OPERATION_FREEZE_DEVICE &&
+      SecurityOperation != SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE &&
+      SecurityOperation != SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_SECURITY_OPERATION);
   }
 
@@ -2678,9 +2696,28 @@ SetSecurityState(
         Security Erase (H->E state transition according to FW Interface Spec)
         SecurityState=Enabled,NotLocked,NotFrozen -> LockState=Disabled
       **/
+      if (DimmSecurityState & SECURITY_MASK_MASTER_ENABLED) {
+        if (pPassphrase == NULL) {
+          ResetCmdStatus(pCommandStatus, NVM_ERR_PASSPHRASE_NOT_PROVIDED);
+          ReturnCode = EFI_INVALID_PARAMETER;
+          goto Finish;
+        }
+      }
+
+      ReturnCode = IsNamespaceOnDimms(&pDimms[Index], 1, &NamespaceFound);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
+      if (NamespaceFound) {
+        ReturnCode = EFI_ABORTED;
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS);
+        goto Finish;
+      }
+
       if (!(DimmSecurityState & SECURITY_MASK_LOCKED) &&
           !(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         SubOpcode = SubopSecEraseUnit;
+	pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
 #ifndef OS_BUILD
         /** Need to call WBINVD before secure erase **/
 	AsmWbinvd();
@@ -2688,6 +2725,73 @@ SetSecurityState(
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
         ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+
+    } else if (SecurityOperation == SECURITY_OPERATION_FREEZE_DEVICE) {
+      /**
+        Freeze Lock (H->F1 or B->F2 state transition according to FW Interface Spec)
+        SecurityState=Enabled,NotLocked,NotFrozen,Disabled & LockState=Frozen
+       **/
+      if (!(DimmSecurityState & SECURITY_MASK_FROZEN) &&
+          !(DimmSecurityState & SECURITY_MASK_LOCKED)) {
+        SubOpcode = SubopSecFreezeLock;
+      } else {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+
+    } else if (SecurityOperation == SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE) {
+      /**
+        SecurityState=Disabled,MasterPassphraseEnabled
+        Master Passphrase count expired via NVM_ERR
+      **/
+      if (!(DimmSecurityState & SECURITY_MASK_MASTER_ENABLED)) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
+        ReturnCode = EFI_UNSUPPORTED;
+        goto Finish;
+      }
+
+      if ((DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED)) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
+        ReturnCode = EFI_SECURITY_VIOLATION;
+        goto Finish;
+      }
+
+      if (!(DimmSecurityState & SECURITY_MASK_ENABLED)) {
+        if (pPassphrase == NULL) {
+          ResetCmdStatus(pCommandStatus, NVM_ERR_PASSPHRASE_NOT_PROVIDED);
+          ReturnCode = EFI_INVALID_PARAMETER;
+          goto Finish;
+        }
+        if (pNewPassphrase == NULL) {
+          ResetCmdStatus(pCommandStatus, NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED);
+          ReturnCode = EFI_INVALID_PARAMETER;
+          goto Finish;
+        }
+        SubOpcode = SubopSetMasterPass;
+      } else {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+
+    } else if (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
+      /**
+        Security Erase (H->E state transition according to FW Interface Spec)
+        SecurityState=MasterPassphraseEnabled,Enabled,NotLocked,NotFrozen -> LockState=Disabled
+        NotSecurityCountExpired
+      **/
+      if (!(DimmSecurityState & SECURITY_MASK_MASTER_ENABLED)) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
+        ReturnCode = EFI_UNSUPPORTED;
+        goto Finish;
+      }
+
+      if ((DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED)) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
+        ReturnCode = EFI_SECURITY_VIOLATION;
         goto Finish;
       }
 
@@ -2701,14 +2805,20 @@ SetSecurityState(
         goto Finish;
       }
 
-    } else if (SecurityOperation == SECURITY_OPERATION_FREEZE_DEVICE) {
-      /**
-        Freeze Lock (H->F1 or B->F2 state transition according to FW Interface Spec)
-        SecurityState=Enabled,NotLocked,NotFrozen,Disabled & LockState=Frozen
-       **/
-      if (!(DimmSecurityState & SECURITY_MASK_FROZEN) &&
-          !(DimmSecurityState & SECURITY_MASK_LOCKED)) {
-        SubOpcode = SubopSecFreezeLock;
+      if (!(DimmSecurityState & SECURITY_MASK_LOCKED) &&
+          !(DimmSecurityState & SECURITY_MASK_FROZEN)) {
+        if (pPassphrase == NULL) {
+          ResetCmdStatus(pCommandStatus, NVM_ERR_PASSPHRASE_NOT_PROVIDED);
+          ReturnCode = EFI_INVALID_PARAMETER;
+          goto Finish;
+        }
+
+        SubOpcode = SubopSecEraseUnit;
+	pSecurityPayload->PassphraseType = SECURITY_MASTER_PASSPHRASE;
+#ifndef OS_BUILD
+        /** Need to call WBINVD before secure erase **/
+        AsmWbinvd();
+#endif
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
         ReturnCode = EFI_DEVICE_ERROR;
@@ -2730,6 +2840,8 @@ SetSecurityState(
         goto Finish;
       } else if (EFI_NO_RESPONSE == ReturnCode) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_BUSY_DEVICE);
+      } else if (ReturnCode == EFI_UNSUPPORTED) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
       }
@@ -3152,7 +3264,7 @@ DeletePcd(
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsCount = 0;
   UINT32 Index = 0;
-  UINT8 SecurityState = 0;
+  UINT32 SecurityState = 0;
 
   NVDIMM_ENTRY();
 
@@ -4208,6 +4320,7 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->UnlockDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_NOT_SUPPORTED;
+  pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_NOT_SUPPORTED;
 #else
   pSysCapInfo->EraseDeviceDataSupported = FEATURE_SUPPORTED;
   pSysCapInfo->EnableDeviceSecuritySupported = FEATURE_SUPPORTED;
@@ -4215,7 +4328,10 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->UnlockDeviceSecuritySupported = FEATURE_SUPPORTED;
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_SUPPORTED;
+  pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_SUPPORTED;
 #endif
+
+  pSysCapInfo->ChangeMasterPassphraseSupported = FEATURE_SUPPORTED;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -5292,7 +5408,7 @@ GetActualRegionsGoalCapacities(
   UINT32 Index2 = 0;
   BOOLEAN Found = FALSE;
   MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   DIMM *pDimmsOnSocket[MAX_DIMMS];
   UINT32 NumDimmsOnSocket = 0;
   UINT64 TotalInputVolatileSize = 0;
@@ -5601,7 +5717,7 @@ CreateGoalConfig(
   REGION_GOAL_DIMM *pDimmsAsymPerSocket = NULL;
   UINT32 DimmsAsymNumPerSocket = 0;
   DIMM *pReserveDimm = NULL;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   UINT64 VolatileSize = 0;
   UINT64 ReservedSize = 0;
   BOOLEAN Found = FALSE;
@@ -5971,7 +6087,7 @@ DeleteGoalConfig (
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   UINT32 Index = 0;
 
   SetMem(pDimms, sizeof(pDimms), 0x0);
@@ -6234,7 +6350,7 @@ LoadGoalConfig(
   UINT16 DimmIDs[MAX_DIMMS_PER_SOCKET];
   UINT32 DimmIDsNum = 0;
   COMMAND_STATUS *pCmdStatusInternal = NULL;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   UINT8 PersistentMemType = 0;
   UINT32 VolatilePercent = 0;
   UINT32 ReservedPercent = 0;
@@ -8722,7 +8838,7 @@ AutomaticCreateGoal(
   NAMESPACE_INFO *pCurNamespace = NULL;
   DIMM **ppDimms = NULL;
   UINT32 DimmsNum = 0;
-  UINT8 DimmSecurityState = 0;
+  UINT32 DimmSecurityState = 0;
   UINT32 Index = 0;
 
   NVDIMM_ENTRY();
@@ -9247,7 +9363,7 @@ InjectError(
     DIMM *pDimms[MAX_DIMMS];
     UINT32 DimmsNum = 0;
     UINT32 Index = 0;
-    UINT8 SecurityState = SECURITY_UNKNOWN;
+    UINT32 SecurityState = 0;
     PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pPayloadPackageSparingPolicy = NULL;
 
     SetMem(pDimms, sizeof(pDimms), 0x0);
@@ -9397,7 +9513,7 @@ InjectError(
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
           continue;
         }
-        if (SecurityState == SECURITY_LOCKED) {
+        if (SecurityState & SECURITY_MASK_LOCKED) {
           NVDIMM_DBG("Invalid security check- poison inject error cannot be applied");
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
           ReturnCode = EFI_INVALID_PARAMETER;

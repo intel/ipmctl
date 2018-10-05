@@ -278,6 +278,7 @@ enum GetSecInfoSubop {
 **/
 enum SetSecInfoSubop {
   SubopOverwriteDimm = 0x01,
+  SubopSetMasterPass  = 0xF0,           //!< Changes the security master passphrase
   SubopSetPass  = 0xF1,                 //!< Changes the security administrator passphrase
   SubopDisablePass = 0xF2,              //!< Disables the current password on a drive
   SubopUnlockUnit = 0xF3,               //!< Unlocks the persistent region
@@ -463,8 +464,32 @@ typedef struct {
     Sub-Opcode: 0x00h (Get Security State)
 **/
 typedef struct {
-  UINT8 SecurityStatus;
-  UINT8 Resrvd[127];
+  union {
+    struct {
+      UINT32 Reserved1                  : 1;
+      UINT32 SecurityEnabled            : 1;
+      UINT32 SecurityLocked             : 1;
+      UINT32 SecurityFrozen             : 1;
+      UINT32 UserSecurityCountExpired   : 1;
+      UINT32 SecurityNotSupported       : 1; //!< This SKU does not support Security Feature Set
+      UINT32 BIOSSecurityNonceSet       : 1;
+      UINT32 Reserved2                  : 1;
+      UINT32 MasterPassphraseEnabled    : 1;
+      UINT32 MasterSecurityCountExpired : 1;
+      UINT32 Reserved3                  : 22;
+    } Separated;
+    UINT32 AsUint32;
+  } SecurityStatus;
+
+  union {
+    struct {
+      UINT32 SecurityErasePolicy  : 1; //!< 0 - Never been set, 1 - Secure Erase Policy opted in
+      UINT32 Reserved             :31;
+    } Separated;
+    UINT32 AsUint32;
+  } OptInStatus;
+
+  UINT8 Reserved[120];
 } PT_GET_SECURITY_PAYLOAD;
 
 /**
@@ -473,9 +498,11 @@ typedef struct {
     Sub-Opcode: 0xF1h (Set Passphrase)
 **/
 typedef struct {
-  INT8 PassphraseCurrent[PASSPHRASE_BUFFER_SIZE]; //!< 31:0 The current security passphrase
-  UINT8 Reserved[32];                             //!< 63:32 Reserved
-  INT8 PassphraseNew[PASSPHRASE_BUFFER_SIZE];     //!< The new passphrase to be set/changed to
+  UINT8 PassphraseCurrent[PASSPHRASE_BUFFER_SIZE]; //!< 31:0 The current security passphrase
+  UINT8 PassphraseType;                            //!< 32 Passphrase Type for secure erase
+  UINT8 Reserved1[31];                             //!< 63:33 Reserved
+  UINT8 PassphraseNew[PASSPHRASE_BUFFER_SIZE];     //!< 64:95 The new passphrase to be set/changed to
+  UINT8 Reserved2[32];                             //!< 127:96 Reserved
 } PT_SET_SECURITY_PAYLOAD;
 
 /**

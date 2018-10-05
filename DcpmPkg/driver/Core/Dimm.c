@@ -1526,7 +1526,8 @@ FwCmdGetSecurityInfo(
 
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetSecInfo;
-  pFwCmd->OutputPayloadSize = 8;
+  pFwCmd->SubOpcode= SubopGetSecState;
+  pFwCmd->OutputPayloadSize = sizeof(*pSecurityPayload);
 
   Rc = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(Rc)) {
@@ -1536,6 +1537,7 @@ FwCmdGetSecurityInfo(
     }
     goto Finish;
   }
+
   CopyMem_S(pSecurityPayload, sizeof(*pSecurityPayload), pFwCmd->OutPayload, sizeof(*pSecurityPayload));
 
 Finish:
@@ -4814,10 +4816,10 @@ InitializeDimm (
         Otherwise we will get more errors on each feature that we will try to use.
       **/
       ReturnCode = EFI_SUCCESS;
-      pDimmSecurityPayload->SecurityStatus = 0;
+      pDimmSecurityPayload->SecurityStatus.AsUint32 = 0;
     }
 
-    pNewDimm->EncryptionEnabled = ((pDimmSecurityPayload->SecurityStatus & SECURITY_MASK_ENABLED) != 0);
+    pNewDimm->EncryptionEnabled = (BOOLEAN) pDimmSecurityPayload->SecurityStatus.Separated.SecurityEnabled;
 
     if (pNewDimm->pDataTbl != NULL && pNewDimm->pDataTbl->InterleaveStructureIndex != 0) {
       ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pDataTbl->InterleaveStructureIndex, &pBwITbl);

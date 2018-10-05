@@ -193,3 +193,15 @@ ChangeDevicePassphraseSupported::
   Whether Change Device Passphrase is supported.
   - 0: Not supported
   - 1: Supported
+
+ChangeMasterPassphraseSupported::
+  Whether Change Master Passphrase is supported.
+  - 0: Not supported
+  - 1: Supported
+
+MasterEraseDeviceDataSupported::
+  Whether Master Erase Device Data is supported.
+  - 0: Not supported
+  - 1: Supported
+
+

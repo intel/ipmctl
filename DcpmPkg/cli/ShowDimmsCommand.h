@@ -75,6 +75,7 @@
 #define DIMM_UID_STR                L"DimmUID"
 #define MODES_SUPPORTED_STR         L"ModesSupported"
 #define SECURITY_CAPABILITIES_STR   L"SecurityCapabilities"
+#define MASTER_PASS_ENABLED_STR     L"MasterPassphraseEnabled"
 #define DIMM_CONFIG_STATUS_STR      L"ConfigurationStatus"
 #define SKU_VIOLATION_STR           L"SKUViolation"
 #define ARS_STATUS_STR              L"ARSStatus"

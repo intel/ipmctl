@@ -66,7 +66,7 @@ IsNamespaceLocked(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT8 SecurityState = 0;
+  UINT32 SecurityState = 0;
   BOOLEAN IsStorageNamespace = FALSE;
   DIMM **ppDimms = NULL;
   UINT32 DimmsNum = 0;
@@ -2197,7 +2197,7 @@ RetrieveNamespacesFromLsa(
 
 // Save an extra FIS call in OS. OS just needs to size for region capacity used
 #ifndef OS_BUILD
-        UINT8 SecurityState = 0;
+        UINT32 SecurityState = 0;
         ReturnCode = GetDimmSecurityState(pDimm, PT_TIMEOUT_INTERVAL, &SecurityState);
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_DBG("Failed to get DIMM security state.");

@@ -26,7 +26,7 @@ EFIAPI
 GetDimmSecurityState(
   IN     DIMM *pDimm,
   IN     UINT64 Timeout,
-     OUT UINT8 *pSecurityState
+     OUT UINT32 *pSecurityState
   );
 
 /**
@@ -63,7 +63,7 @@ SetDimmSecurityState(
 **/
 VOID
 ConvertSecurityBitmask(
-  IN     UINT8 SecurityFlag,
+  IN     UINT32 SecurityFlag,
      OUT UINT8 *pSecurityState
   );
 
@@ -77,7 +77,7 @@ ConvertSecurityBitmask(
 **/
 BOOLEAN
 IsConfiguringAllowed(
-  IN     UINT8 SecurityFlag
+  IN     UINT32 SecurityFlag
   );
 
 /**
@@ -90,7 +90,7 @@ IsConfiguringAllowed(
 **/
 BOOLEAN
 IsConfiguringForCreateGoalAllowed(
-  IN     UINT8 SecurityFlag
+  IN     UINT32 SecurityFlag
   );
 
 #endif /** _NVM_SECURITY_H_ **/

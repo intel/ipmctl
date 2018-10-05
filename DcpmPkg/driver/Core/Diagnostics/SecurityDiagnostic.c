@@ -32,7 +32,7 @@ RunSecurityDiagnostics(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 *pInconsistentSecurityStatesStr = NULL;
   UINT8 DimmSecurityState = 0;
-  UINT8 SecurityFlag = 0;
+  UINT32 SecurityFlag = 0;
   UINT8 SecurityStateCount[SECURITY_STATES_COUNT];
   BOOLEAN InconsistencyFlag = FALSE;
   UINT8 Index = 0;

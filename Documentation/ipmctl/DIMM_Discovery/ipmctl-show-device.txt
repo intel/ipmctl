@@ -386,6 +386,12 @@ SecurityCapabilities::
     setting a passphrase.
   - Erase: The DCPMM is erasable.
 
+MasterPassphraseEnabled::
+  This property indicates if masterpassphrase is enabled. If it is disabled,
+  then it cannot be enabled. One of:
+  - 0: Disabled - Cannot be enabled
+  - 1: Enabled - Master passphrase can be changed. Cannot be disabled.
+
 ConfigurationStatus::
   The status of the DCPMM memory configuration. One of:
   - Valid: The configuration is valid.

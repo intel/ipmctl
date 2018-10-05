@@ -575,10 +575,11 @@ struct memory_topology {
  * Structure that describes the security capabilities of a device
  */
 struct device_security_capabilities {
-  NVM_BOOL	passphrase_capable;     ///< DIMM supports the nvm_(set|remove)_passphrase command
-  NVM_BOOL	unlock_device_capable;  ///< DIMM supports the nvm_unlock_device command
-  NVM_BOOL	erase_crypto_capable;   ///< DIMM supports nvm_erase command with the CRYPTO
-  NVM_UINT8     reserved[5];            ///< reserved
+  NVM_BOOL	passphrase_capable;         ///< DIMM supports the nvm_(set|remove)_passphrase command
+  NVM_BOOL	unlock_device_capable;      ///< DIMM supports the nvm_unlock_device command
+  NVM_BOOL	erase_crypto_capable;       ///< DIMM supports nvm_erase command with the CRYPTO
+  NVM_BOOL      master_passphrase_capable;  ///< DIMM supports set master passphrase command
+  NVM_UINT8     reserved[4];                ///< reserved
 };
 
 /**
@@ -667,7 +668,8 @@ struct device_discovery {
   // (requires a DSM call) are used to set this value.
   enum manageability_state manageability;
   NVM_UINT16				controller_revision_id;          ///< revision identifier of the DIMM non-volatile memory subsystem controller from FIS
-  NVM_UINT8                             reserved[48];                    ///< reserved
+  NVM_BOOL				master_passphrase_enabled;	 ///< If 1, master passphrase is enabled on the DCPMM
+  NVM_UINT8                             reserved[47];                    ///< reserved
 };
 
 struct fw_error_log_sequence_numbers {
@@ -1916,6 +1918,39 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid);
  *            ::NVM_ERR_GENERAL_OS_DRIVER_FAILURE @n
  */
 NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
+
+/**
+ * @brief If data at rest security is not enabled and master passphrase is enabled
+ * in the DIMM security state, this method modifies the master passphrase.
+ * Can only be modified once per boot.
+ * @param[in] device_uid
+ *              The device identifier.
+ * @param[in] old_master_passphrase
+ *              The current master passphrase.
+ * @param[in] old_master_passphrase_len
+ *              String length of old_master_passphrase,
+ *              should be <= NVM_PASSPHRASE_LEN.
+ * @param[in] new_master_passphrase
+ *              The new master passphrase.
+ * @param[in] new_master_passphrase_len
+ *              String length of new_master_passphrase, should be <= NVM_PASSPHRASE_LEN.
+ * @pre The caller has administrative privileges.
+ * @pre The device is manageable.
+ * @pre The device master passphrase is enabled.
+ * @pre Device security is not enabled.
+ * @pre The device master passphrase limit has not been reached.
+ * @pre The device master passphrase has not been changed on this boot
+ * @return
+ *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
+ *            ::NVM_ERR_SECURITY_COUNT_EXPIRED @n
+ *            ::NVM_ERR_INVALID_SECURITY_STATE@n
+ *            ::NVM_ERR_PASSPHRASE_NOT_PROVIDED@n
+ */
+NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
+                                      const NVM_PASSPHRASE old_master_passphrase,
+                                      const NVM_SIZE old_master_passphrase_len,
+                                      const NVM_PASSPHRASE new_master_passphrase,
+                                      const NVM_SIZE new_master_passphrase_len);
 
 /**
  * @}

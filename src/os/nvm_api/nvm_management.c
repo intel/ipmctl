@@ -1647,6 +1647,68 @@ Finish:
   return rc;
 }
 
+NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
+             const NVM_PASSPHRASE old_master_passphrase, const NVM_SIZE old_master_passphrase_len,
+             const NVM_PASSPHRASE new_master_passphrase, const NVM_SIZE new_master_passphrase_len)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  int rc = NVM_ERR_API_NOT_SUPPORTED;
+  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
+  COMMAND_STATUS *p_command_status = NULL;
+  UINT16 dimm_id;
+  unsigned int dimm_handle;
+  CHAR16 UnicodeOldMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
+  CHAR16 UnicodeNewMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
+
+  SetMem(UnicodeOldMasterPassphrase, sizeof(UnicodeOldMasterPassphrase), 0x0);
+  SetMem(UnicodeNewMasterPassphrase, sizeof(UnicodeNewMasterPassphrase), 0x0);
+
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    return rc;
+  }
+
+  ReturnCode = InitializeCommandStatus(&p_command_status);
+  if (EFI_ERROR(ReturnCode)) {
+    rc = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
+      &SystemCapabilitiesInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    rc = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
+
+  if (!SystemCapabilitiesInfo.ChangeMasterPassphraseSupported) {
+    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
+  }
+
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, &dimm_handle))) {
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
+    goto Finish;
+  }
+
+  AsciiStrToUnicodeStrS(old_master_passphrase, UnicodeOldMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
+  AsciiStrToUnicodeStrS(new_master_passphrase, UnicodeNewMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, &dimm_id,
+    1, SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE, UnicodeOldMasterPassphrase,
+    UnicodeNewMasterPassphrase, p_command_status);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    rc = p_command_status->GeneralStatus;
+    goto Finish;
+  }
+
+Finish:
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
+  FreeCommandStatus(&p_command_status);
+  return rc;
+}
+
 static void get_sensor_units(const enum sensor_type type, struct sensor *psensor)
 {
   switch (type) {
@@ -3301,6 +3363,7 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   UnicodeStrToAsciiStr(p_dimm->DimmUid, p_device->uid);
   p_device->lock_state = p_dimm->SecurityState;
   p_device->manageability = p_dimm->ManageabilityState;
+  p_device->master_passphrase_enabled = p_dimm->MasterPassphraseEnabled;
 }
 
 int get_fw_err_log_stats(

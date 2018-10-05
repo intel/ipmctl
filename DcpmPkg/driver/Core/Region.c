@@ -4128,7 +4128,7 @@ GetSecurityStateForDimm(
     NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
-  ConvertSecurityBitmask(pSecurityPayload->SecurityStatus, &SecurityState);
+  ConvertSecurityBitmask(pSecurityPayload->SecurityStatus.AsUint32, &SecurityState);
   /** If any of the DIMM on the IS is locked, then break **/
   if (SecurityState == SECURITY_LOCKED) {
     *pIsLocked = TRUE;

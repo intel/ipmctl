@@ -146,4 +146,35 @@ TEST_F(NvmApi_Tests, SetPreferences)
 {
   int retval = nvm_set_user_preference("PERFORMANCE_MONITOR_INTERVAL_MINUTES","2");
 }
+
+/*
+ * This should be harmless as unless the passphrase is "secret" it should just return
+ * unsupported or incorrect master passphrase. If the passphrase is "secret" we will
+ * just set it to "secret again.
+ */
+
+TEST_F(NvmApi_Tests, SetMasterPassphrase)
+{
+  unsigned int dimm_cnt = 0;
+
+  char *passphrase = "secret";
+
+  NVM_PASSPHRASE new_passphrase = {0};
+  NVM_PASSPHRASE old_passphrase = {0};
+
+  memcpy(new_passphrase, passphrase, sizeof(passphrase));
+  memcpy(old_passphrase, passphrase, sizeof(passphrase));
+
+  nvm_get_number_of_devices(&dimm_cnt);
+  device_discovery *p_devices = (device_discovery *)malloc(sizeof(device_discovery) * dimm_cnt);
+
+  nvm_get_devices(p_devices, dimm_cnt);
+
+  for (unsigned int i = 0; i < dimm_cnt; i++) {
+    EXPECT_EQ(nvm_set_master_passphrase(p_devices[i].uid, old_passphrase, 32, new_passphrase, 32),
+              NVM_ERR_OPERATION_NOT_SUPPORTED);
+  }
+
+  free(p_devices);
+}
 #endif //NVM_API_TESTS_H

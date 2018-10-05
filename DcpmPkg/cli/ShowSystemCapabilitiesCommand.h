@@ -42,6 +42,9 @@
 #define UNLOCK_DEVICE_SECURITY_SUPPORTED_STR     L"UnlockDeviceSecuritySupported"
 #define FREEZE_DEVICE_SECURITY_SUPPORTED_STR     L"FreezeDeviceSecuritySupported"
 #define CHANGE_DEVICE_PASSPHRASE_SUPPORTED_STR   L"ChangeDevicePassphraseSupported"
+#define CHANGE_MASTER_PASSPHRASE_SUPPORTED_STR   L"ChangeMasterPassphraseSupported"
+#define MASTER_ERASE_DEVICE_DATA_SUPPORTED_STR   L"MasterEraseDeviceDataSupported"
+
 #define APPDIRECT_STR                            L"App Direct"
 #define MEMORY_STR                               L"Memory Mode"
 #define ONE_LM_STR                               L"1LM"

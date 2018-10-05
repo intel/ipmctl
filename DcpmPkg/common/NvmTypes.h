@@ -397,6 +397,7 @@ typedef struct _DIMM_INFO {
 #endif // OS_BUILD
 
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
+  BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
 } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {
@@ -450,6 +451,8 @@ typedef struct _SYSTEM_CAPABILITIES_INFO {
   BOOLEAN UnlockDeviceSecuritySupported;
   BOOLEAN FreezeDeviceSecuritySupported;
   BOOLEAN ChangeDevicePassphraseSupported;
+  BOOLEAN ChangeMasterPassphraseSupported;
+  BOOLEAN MasterEraseDeviceDataSupported;
 } SYSTEM_CAPABILITIES_INFO;
 
 typedef struct _MEMORY_RESOURCES_INFO {
@@ -646,13 +649,15 @@ typedef struct _DEBUG_LOG_INFO {
   @}
   Security operations
 **/
-#define SECURITY_OPERATION_UNDEFINED          0
-#define SECURITY_OPERATION_SET_PASSPHRASE     1
-#define SECURITY_OPERATION_CHANGE_PASSPHRASE  2
-#define SECURITY_OPERATION_DISABLE_PASSPHRASE 3
-#define SECURITY_OPERATION_UNLOCK_DEVICE      4
-#define SECURITY_OPERATION_FREEZE_DEVICE      5
-#define SECURITY_OPERATION_ERASE_DEVICE       6
+#define SECURITY_OPERATION_UNDEFINED                0
+#define SECURITY_OPERATION_SET_PASSPHRASE           1
+#define SECURITY_OPERATION_CHANGE_PASSPHRASE        2
+#define SECURITY_OPERATION_DISABLE_PASSPHRASE       3
+#define SECURITY_OPERATION_UNLOCK_DEVICE            4
+#define SECURITY_OPERATION_FREEZE_DEVICE            5
+#define SECURITY_OPERATION_ERASE_DEVICE             6
+#define SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE 7
+#define SECURITY_OPERATION_MASTER_ERASE_DEVICE      8
 
 /**
   Security states
@@ -666,6 +671,12 @@ typedef struct _DEBUG_LOG_INFO {
 #define SECURITY_NOT_SUPPORTED    6
 #define SECURITY_STATES_COUNT     7
 #define SECURITY_MIXED_STATE      8 // Mixed security state in all dims view
+
+/**
+  Passphrase Type
+**/
+#define SECURITY_USER_PASSPHRASE    0x0
+#define SECURITY_MASTER_PASSPHRASE  0x1
 
 /**
   Address Range Scrub (ARS) Status

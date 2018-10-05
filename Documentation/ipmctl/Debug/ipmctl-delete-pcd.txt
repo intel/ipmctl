@@ -21,7 +21,12 @@ Clears the namespace label storage area partition in the platform configuration
 data from one or more DCPMMs. This is a destructive operation which will clear
 the entire namespace label storage area including all namespaces labels and the
 namespace label index block in order to re-purpose the DCPMM(s) for use in a
-different operating system.
+different operating system. All data on any deleted namespace(s) becomes
+inaccessible.
+
+NOTE: Deleting PCD LSA partition data removes any logical OS namespace mapping
+to the persistent memory data, but does not explicitly delete or modify user
+data found in persistent memory.
 
 OPTIONS
 -------

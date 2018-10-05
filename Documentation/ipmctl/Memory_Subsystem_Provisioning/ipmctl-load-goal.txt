@@ -21,9 +21,11 @@ Load a memory allocation goal from a file onto one or more DCPMMs.
 
 NOTE: Changing the memory configuration is a destructive operation which may
 result in loss of data stored in the persistent memory region. Therefore, data
-should be backed up to other storage before executing this command. Changing a
-memory allocation goal modifies how the platform maps persistent memory, but
-does not explicitly delete or modify user data found in persistent memory.
+should be backed up to other storage before executing this command.
+
+NOTE: Loading a memory allocation goal modifies how the platform maps persistent
+memory, but does not explicitly delete or modify user data found in persistent
+memory.
 
 OPTIONS
 -------

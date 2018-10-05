@@ -25,6 +25,10 @@ NOTE: Changing the memory configuration is a destructive operation which results
 in loss of data stored in the persistent memory region. Therefore, data should
 be backed up to other storage before executing this command.
 
+NOTE: Creating a memory allocation goal modifies how the platform maps persistent
+memory, but does not explicitly delete or modify user data found in persistent
+memory.
+
 OPTIONS
 -------
 

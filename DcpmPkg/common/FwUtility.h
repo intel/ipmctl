@@ -60,6 +60,9 @@ typedef struct {
   UINT8 Opcode;
   UINT8 SubOpcode;
   UINT8 Status;
+#ifdef OS_BUILD
+  UINT8 DsmStatus;
+#endif
 } FW_CMD;
 #pragma pack(pop)
 

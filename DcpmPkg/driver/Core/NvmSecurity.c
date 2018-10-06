@@ -60,7 +60,7 @@ GetDimmSecurityState(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on PassThru.");
     if FW_ERROR(pPassThruCommand->Status) {
-      ReturnCode = MatchFwReturnCode(pPassThruCommand->Status);
+      FW_CMD_ERROR_TO_EFI_STATUS(pPassThruCommand, ReturnCode);
     }
     goto FinishFreeMem;
   }
@@ -138,7 +138,7 @@ SetDimmSecurityState(
   if(EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed on PassThru");
     if (FW_ERROR(pPassThruCommand->Status)) {
-      ReturnCode = MatchFwReturnCode(pPassThruCommand->Status);
+      FW_CMD_ERROR_TO_EFI_STATUS(pPassThruCommand, ReturnCode);
     }
     goto FinishFreeMem;
   }

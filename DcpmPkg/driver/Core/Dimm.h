@@ -14,6 +14,21 @@
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
 
+#ifdef OS_BUILD
+#define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
+  if (FW_ERROR(pFwCmd->Status)) { \
+    ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
+  } \
+  else if (DSM_ERROR(pFwCmd->DsmStatus)) { \
+      ReturnCode = MatchDsmReturnCode(pFwCmd->DsmStatus); \
+  }
+#else
+#define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
+  if (FW_ERROR(pFwCmd->Status)) { \
+    ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
+  }
+#endif
+
 //---> Turn on/off large payload support
 #define USE_LARGE_PAYLOAD
 //<---
@@ -1426,6 +1441,20 @@ EFI_STATUS
 MatchFwReturnCode (
   IN     UINT8 FwStatus
   );
+
+#ifdef OS_BUILD
+/**
+  Matches DSM return code to one of available EFI_STATUS EFI base types
+
+  @param[in] DsmStatus - status byte returned from FW command
+
+  @retval - Appropriate EFI_STATUS
+**/
+EFI_STATUS
+MatchDsmReturnCode(
+  IN     UINT8 DsmStatus
+);
+#endif
 
 /**
   Check if SKU conflict occurred.

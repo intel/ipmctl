@@ -59,12 +59,11 @@ enum mb_error {
 };
 
 
-int fw_mb_err_to_nvm_lib_err(int status, struct fw_cmd *p_fw_cmd)
+int fw_mb_err_to_nvm_lib_err(int status)
 {
 	COMMON_LOG_ENTRY();
 	int ret = NVM_SUCCESS;
 
-	p_fw_cmd->Status = DSM_EXTENDED_ERROR(status);
 	switch (DSM_EXTENDED_ERROR(status))
 	{
 	case MB_SUCCESS:
@@ -140,7 +139,7 @@ int fw_mb_err_to_nvm_lib_err(int status, struct fw_cmd *p_fw_cmd)
 }
 
 
-int dsm_err_to_nvm_lib_err(unsigned int status, struct fw_cmd *p_fw_cmd)
+int dsm_err_to_nvm_lib_err(unsigned int status)
 {
 	COMMON_LOG_ENTRY();
 	int rc = NVM_SUCCESS;
@@ -168,7 +167,7 @@ int dsm_err_to_nvm_lib_err(unsigned int status, struct fw_cmd *p_fw_cmd)
 			rc = NVM_ERR_UNKNOWN;
 			break;
 		case DSM_VENDOR_SPECIFIC_ERR:
-			rc = fw_mb_err_to_nvm_lib_err(status, p_fw_cmd);
+			rc = fw_mb_err_to_nvm_lib_err(status);
 			break;
 		default:
 			rc = NVM_ERR_GENERAL_OS_DRIVER_FAILURE;

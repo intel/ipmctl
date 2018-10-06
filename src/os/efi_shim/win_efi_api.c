@@ -95,6 +95,7 @@ passthru_os(
   {
     Rc = EFI_DEVICE_ERROR;
     pCmd->Status = DSM_EXTENDED_ERROR(dsm_status);
+    pCmd->DsmStatus = DSM_VENDOR_ERROR(dsm_status);
   }
 
   return Rc;

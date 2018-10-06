@@ -14,6 +14,10 @@
 #include "NvmLimits.h"
 #include "NvmSharedDefs.h"
 
+#ifdef OS_BUILD
+#include <os_types.h>
+#endif
+
 /** Return code status values as identified by #NvmStatusCode */
 typedef INT16 NVM_STATUS;
 

@@ -4381,7 +4381,7 @@ SendUpdatePassThru(
 #endif
   if (EFI_ERROR(ReturnCode)) {
     if (FW_ERROR(pPassThruCommand->Status)) {
-      ReturnCode = MatchFwReturnCode(pPassThruCommand->Status);
+      FW_CMD_ERROR_TO_EFI_STATUS(pPassThruCommand, ReturnCode);
     }
     goto Finish;
   }

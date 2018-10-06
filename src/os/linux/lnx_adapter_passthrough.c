@@ -18,6 +18,10 @@
 #include <os_types.h>
 #define DEV_SMALL_PAYLOAD_SIZE	128 /* 128B - Size for a passthrough command small payload */
 
+#define DSM_TO_NVM_ERROR(dsm_vendor_error, p_fw_cmd) \
+  p_fw_cmd->Status = DSM_EXTENDED_ERROR(dsm_vendor_error); \
+  p_fw_cmd->DsmStatus = DSM_VENDOR_ERROR(dsm_vendor_error); \
+
 
 #define	BIOS_INPUT(NAME, IN_LEN)		\
 struct NAME {								\
@@ -115,7 +119,7 @@ int bios_get_payload_size(struct ndctl_dimm *p_dimm, struct pt_bios_get_size *p_
 				if ((dsm_vendor_err_status = ndctl_cmd_get_firmware_status(p_vendor_cmd))
 						!= DSM_VENDOR_SUCCESS)
 				{
-					rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+          DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 					COMMON_LOG_ERROR_F("BIOS get failed:DSM returned error %d for command with "
 							"Opcode - 0x%x SubOpcode - 0x%x ", dsm_vendor_err_status,
 							p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
@@ -221,7 +225,7 @@ int bios_write_large_payload(struct ndctl_dimm *p_dimm, struct fw_cmd *p_fw_cmd)
 										ndctl_cmd_get_firmware_status(p_vendor_cmd))
 												!= DSM_VENDOR_SUCCESS)
 								{
-									rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+                  DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 									COMMON_LOG_ERROR_F("BIOS write failed: "
 											"DSM returned error %d for command with "
 											"Opcode- 0x%x SubOpcode- 0x%x ", dsm_vendor_err_status,
@@ -335,7 +339,7 @@ int bios_read_large_payload(struct ndctl_dimm *p_dimm, struct fw_cmd *p_fw_cmd)
 									ndctl_cmd_get_firmware_status(p_vendor_cmd)) !=
 											DSM_VENDOR_SUCCESS)
 							{
-								rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+                DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 								COMMON_LOG_ERROR_F("BIOS read failed: "
 										"DSM returned error %d for command with "
 										"Opcode - 0x%x SubOpcode - 0x%x ", dsm_vendor_err_status,
@@ -523,7 +527,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 
 						if (dsm_vendor_err_status == DSM_VENDOR_RETRY_SUGGESTED)
 						{
-							rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+              DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 							COMMON_LOG_ERROR_F("RETRY %i IOCTL passthrough failed: "
 								"DSM returned error %d for command with "
 										"Opcode - 0x%x SubOpcode - 0x%x \n", retry, dsm_vendor_err_status,
@@ -533,7 +537,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 						}
 						else if (dsm_vendor_err_status != DSM_VENDOR_SUCCESS)
 						{
-							rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+              DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 							COMMON_LOG_ERROR_F("IOCTL passthrough failed: "
 								"DSM returned error %d for command with "
 										"Opcode - 0x%x SubOpcode - 0x%x \n", dsm_vendor_err_status,
@@ -544,7 +548,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 						{
 							if (p_fw_cmd->OutputPayloadSize > 0)
 							{
-                rc = dsm_err_to_nvm_lib_err(dsm_vendor_err_status, p_fw_cmd);
+                DSM_TO_NVM_ERROR(dsm_vendor_err_status, p_fw_cmd);
 								ndctl_cmd_vendor_get_output(p_vendor_cmd,
 											p_fw_cmd->OutPayload,
 												p_fw_cmd->OutputPayloadSize);

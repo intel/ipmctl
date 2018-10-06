@@ -123,6 +123,7 @@ enum dsm_vendor_error {
    DSM_VENDOR_SPECIFIC_ERR = 0x0007,
 };
 
+#define DSM_ERROR(A)        (A != DSM_VENDOR_SUCCESS)
 #define IN_MB_SIZE          (1 << 20)   //!< Size of the OS mailbox large input payload
 #define OUT_MB_SIZE         (1 << 20)   //!< Size of the OS mailbox large output payload
 #define IN_PAYLOAD_SIZE     (128)       //!< Total size of the input payload registers
@@ -146,9 +147,12 @@ struct fw_cmd {
    unsigned char Opcode;
    unsigned char SubOpcode;
    unsigned char Status;
+   unsigned char DsmStatus;
 };
 #pragma pack(pop)
 
-int fw_mb_err_to_nvm_lib_err(int status, struct fw_cmd *p_fw_cmd);
-int dsm_err_to_nvm_lib_err(unsigned int status, struct fw_cmd *p_fw_cmd);
+#define DSM_ERROR(A)                  (A != DSM_VENDOR_SUCCESS)
+
+int fw_mb_err_to_nvm_lib_err(int status);
+int dsm_err_to_nvm_lib_err(unsigned int status);
 #endif // _OS_TYPES_H_

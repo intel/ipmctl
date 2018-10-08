@@ -34,7 +34,8 @@
   CHAR16 *pTempHiiString = HiiGetString(gNvmDimmData->HiiHandle, String, NULL); \
   CHAR16 *pTempHiiString1 = CatSPrintClean(NULL, pTempHiiString, ## __VA_ARGS__); \
   FREE_POOL_SAFE(pTempHiiString); \
-  APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString1, StateMask, ppResult, pState); \
+  if (pTempHiiString1) \
+    APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString1, StateMask, ppResult, pState); \
 }
 
  /** Diagnostics State bitmasks **/

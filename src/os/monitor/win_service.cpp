@@ -267,34 +267,36 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 
 				size_t handleCount = monitors.size() + 1; // +1 to also add g_serviceStopEvent
 				HANDLE *handles = new HANDLE[handleCount];
-				for (size_t i = 0; i < monitors.size(); i++)
-				{
-					handles[i] =
-							CreateThread(NULL, 0, WorkerThread, (LPVOID) (monitors[i]), 0, NULL);
-				}
+        if (handles) {
+          for (size_t i = 0; i < monitors.size(); i++)
+          {
+            handles[i] =
+              CreateThread(NULL, 0, WorkerThread, (LPVOID)(monitors[i]), 0, NULL);
+          }
 
-				// In the case there are no monitor items, adding the stop event will keep the
-				// service running until a Service Stop Event occurs.
-				handles[handleCount - 1] = g_serviceStopEvent;
+          // In the case there are no monitor items, adding the stop event will keep the
+          // service running until a Service Stop Event occurs.
+          handles[handleCount - 1] = g_serviceStopEvent;
 
-				// now running
-				setServiceStatus(SERVICE_RUNNING, false, NO_ERROR, 0);
+          // now running
+          setServiceStatus(SERVICE_RUNNING, false, NO_ERROR, 0);
 
-				// wait for all threads to end and Service Stop Event
-				WaitForMultipleObjects((DWORD)handleCount, handles, true, INFINITE);
+          // wait for all threads to end and Service Stop Event
+          WaitForMultipleObjects((DWORD)handleCount, handles, true, INFINITE);
 
-				// clean up
-				for (size_t i = 0; i < handleCount; i++)
-				{
-					CloseHandle(handles[i]);
-				}
+          // clean up
+          for (size_t i = 0; i < handleCount; i++)
+          {
+            CloseHandle(handles[i]);
+          }
 
-                delete handles;
+          delete handles;
 
-				monitor::NvmMonitorBase::deleteMonitors(monitors);
-				//close_lib_store();
+          monitor::NvmMonitorBase::deleteMonitors(monitors);
+          //close_lib_store();
 
-				setServiceStatus(SERVICE_STOPPED, FALSE, NO_ERROR, 0);
+          setServiceStatus(SERVICE_STOPPED, FALSE, NO_ERROR, 0);
+        }
 			}
 			else
 			{

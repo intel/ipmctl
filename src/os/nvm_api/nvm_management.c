@@ -937,7 +937,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   p_details->total_width = dimm_info.TotalWidth;                                          // The width in bits for data and ECC and/or redundancy.
   p_details->speed = dimm_info.Speed;                                                     // The speed in nanoseconds.
   memcpy_s(p_details->device_locator, NVM_DEVICE_LOCATOR_LEN, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
-  memcpy_s(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, NVM_BANK_LABEL_LEN);                 // The bank label
+  memcpy_s(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, sizeof(dimm_info.BankLabel));                 // The bank label
   p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
   p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
         p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
@@ -1483,6 +1483,7 @@ NVM_API int nvm_set_passphrase(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
       &SystemCapabilitiesInfo);
@@ -1573,6 +1574,7 @@ NVM_API int nvm_unlock_device(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
       &SystemCapabilitiesInfo);
@@ -1601,6 +1603,7 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid)
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
       &SystemCapabilitiesInfo);
@@ -1630,6 +1633,7 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
       &SystemCapabilitiesInfo);
@@ -1668,6 +1672,7 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
+  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   ReturnCode = InitializeCommandStatus(&p_command_status);
   if (EFI_ERROR(ReturnCode)) {

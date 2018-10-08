@@ -140,7 +140,7 @@ size_t g_pass_thru_playback_offset = 0;
 
 struct debug_logger_config
 {
-  CHAR8 initialized : 1;
+  UINT8 initialized : 1;
   CHAR8 stdout_enabled;
   CHAR8 file_enabled;
   CHAR8 level;

@@ -170,6 +170,8 @@ static int write_large_input_payload(int scm_err, unsigned int *p_dsm_status, un
                current_offset += transfer_size;
                i++;
           }
+
+          free(p_input_payload);
       } else {
                scm_err = -1;
       }

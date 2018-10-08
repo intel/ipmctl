@@ -22,7 +22,16 @@
 #define APP_DATA_FILE_PATH    ""
 #define INI_INSTALL_FILEPATH	"/usr/share/ipmctl/"
 #else
-#define APP_DATA_FILE_PATH    getenv("APPDATA")
+char * get_win_appdata_ptr(void)
+{
+  char * p_appdata = NULL;
+  if ((p_appdata = getenv("APPDATA")) == NULL)
+    return "";
+  else
+    return p_appdata;
+}
+
+#define APP_DATA_FILE_PATH    get_win_appdata_ptr()
 #define INI_INSTALL_FILEPATH	"\\Intel\\ipmctl\\"
 #define W_OK			0x2
 #endif

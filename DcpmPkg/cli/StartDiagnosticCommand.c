@@ -68,7 +68,7 @@ COMMAND StartDiagnosticCommand =
   },
   {                                                               //!< targets
     {DIAGNOSTIC_TARGET, L"", ALL_DIAGNOSTICS_TARGETS, TRUE, ValueOptional},
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                        //!< properties
   L"Run a diagnostic test on one or more DIMMs",                  //!< help

@@ -57,8 +57,8 @@ PercentageRemaining::
 
 TARGETS
 -------
--dimm (DimmIDs)::
-  Restricts output to the sensors on specific DCPMMs by supplying the DIMM
+-dimm [(DimmIDs)]::
+  Restricts output to the sensors on specific DCPMMs by optionally supplying the DIMM
   target and one or more comma-separated DCPMM identifiers. The default is to
   display sensors for all manageable DCPMMs.
 

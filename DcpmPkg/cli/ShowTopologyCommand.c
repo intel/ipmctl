@@ -95,7 +95,7 @@ struct Command ShowTopologyCommand =
   },
   {                                                                      //!< targets
     {TOPOLOGY_TARGET, L"", L"", TRUE, ValueEmpty},
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                   //!< properties
@@ -253,7 +253,7 @@ ShowTopology(
   if (ContainTarget(pCmd, DIMM_TARGET)) {
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
-    if (EFI_ERROR(ReturnCode) || pDimmIds == NULL) {
+    if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
   }

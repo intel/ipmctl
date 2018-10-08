@@ -53,8 +53,8 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDs)::
-  Restricts output to specific DIMMs by supplying the DIMM target and one or
+-dimm [(DimmIDs)]::
+  Restricts output to specific DIMMs by optionally supplying the DIMM target and one or
   more comma-separated DIMM identifiers. The default is to display all DIMMs.
 
 -socket (SocketIDs)::

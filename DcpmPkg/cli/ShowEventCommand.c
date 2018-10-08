@@ -100,7 +100,7 @@ struct Command ShowEventCommand =
     },
     {                                                                   //!< targets
         { EVENT_TARGET, L"", L"", TRUE, ValueEmpty },
-        { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired }
+        { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional }
     },
     {																	//!< properties
         { SEVERITY_PROPERTY, L"", HELP_TEXT_EVENT_SEVERITY_PROPERTY, FALSE, ValueRequired },

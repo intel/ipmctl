@@ -26,7 +26,7 @@ struct Command DeleteGoalCommand =
 #endif
   },
   {                                                                   //!< targets
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueRequired},
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {GOAL_TARGET, L"", L"", TRUE, ValueEmpty},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },

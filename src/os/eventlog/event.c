@@ -172,7 +172,7 @@ static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_si
             efi_status = EFI_BUFFER_TOO_SMALL;
         else {
             // the name has been read successfuly from the ini file
-            memcpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+            strncpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
         }
     }
     return efi_status;

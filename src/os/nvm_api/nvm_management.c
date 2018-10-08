@@ -692,7 +692,8 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
 
    //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
    p_status->health = p_dimm->HealthState;                         // Overall device health.
-   p_status->last_shutdown_status_details = p_dimm->LastShutdownStatusDetails;    // State of last DIMM shutdown.
+   p_status->last_shutdown_status_details = p_dimm->LatchedLastShutdownStatusDetails;    // State of last DIMM shutdown.
+   p_status->unlatched_last_shutdown_status_details = p_dimm->UnlatchedLastShutdownStatusDetails;
    p_status->last_shutdown_time = p_dimm->LastShutdownTime;        // Time of the last shutdown - seconds since 1 January 1970
    p_status->ait_dram_enabled = p_dimm->AitDramEnabled;            // Whether or not the AIT DRAM is enabled.
 
@@ -706,7 +707,7 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
    p_status->sku_violation = p_dimm->SKUViolation;         // The DIMM configuration is unsupported due to a license issue.
    p_status->config_status = p_dimm->ConfigStatus;         // Status of last configuration request.
    p_status->is_missing = FALSE;                           // If the device is missing.
-   //p_status->last_shutdown_status_extended[3];//Extendeded fields as per FIS 1.6
+   //p_status->latched_last_shutdown_status_extended[3];//Extended fields as per FIS 1.6
    //p_status->mixed_sku; // One or more DIMMs have different SKUs.
    //p_status->new_error_count; // Count of new fw errors from the DIMM
    //p_status->newest_error_log_timestamp; // Timestamp of the newest log entry in the fw error log
@@ -1281,7 +1282,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
       if (image_version_len > NVM_VERSION_LEN) {
         sprintf_s(image_version, NVM_VERSION_LEN, "%d.%d.%d.%d", p_fw_image_info->ImageVersion.ProductNumber.Version,
           p_fw_image_info->ImageVersion.RevisionNumber.Version,
-          p_fw_image_info->ImageVersion.SecurityVersionNumber.Version,
+          p_fw_image_info->ImageVersion.SecurityRevisionNumber.Version,
           p_fw_image_info->ImageVersion.BuildNumber.Build);
       }
     }
@@ -1726,9 +1727,10 @@ static void get_sensor_units(const enum sensor_type type, struct sensor *psensor
   case SENSOR_POWERONTIME:
     psensor->units = UNIT_SECONDS;
     break;
-  case SENSOR_DIRTYSHUTDOWNS:
+  case SENSOR_LATCHED_DIRTY_SHUTDOWN_COUNT:
   case SENSOR_FWERRORLOGCOUNT:
   case SENSOR_HEALTH:
+  case SENSOR_UNLATCHED_DIRTY_SHUTDOWN_COUNT:
     psensor->units = UNIT_COUNT;
     break;
   }

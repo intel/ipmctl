@@ -636,7 +636,8 @@ SetAlarmThresholds (
   * Temperature
   * Alarm Trips set (Temperature/Spare Blocks)
   * Device life span as a percentage
-  * Last shutdown status
+  * Latched Last shutdown status
+  * Unlatched Last shutdown status
   * Dirty shutdowns
   * Last shutdown time
   * AIT DRAM status
@@ -647,7 +648,8 @@ SetAlarmThresholds (
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
   @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLastShutdownStatusDetails pointer to store last shutdown status details. See @ref LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
+  @param[out] pLatchedLastShutdownStatusDetails pointer to store latched last shutdown status details. See @ref LATCHED_LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
+  @param[out] pUnlatchedLastShutdownStatusDetails pointer to store unlatched last shutdown status details. See @ref UNLATCHED_LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
   @param[out] pLastShutdownTime pointer to store the time the system was last shutdown. Number of seconds since 1 January 1970. See FIS field LST for additional details.
   @param[out] pAitDramEnabled pointer to store the state of AIT DRAM. See @ref AIT_DRAM_STATUS.
 
@@ -659,7 +661,8 @@ GetSmartAndHealth (
   IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
   IN  UINT16 DimmPid,
   OUT SENSOR_INFO *pSensorInfo,
-  OUT UINT32 *pLastShutdownStatusDetails OPTIONAL,
+  OUT UINT32 *pLatchedLastShutdownStatusDetails OPTIONAL,
+  OUT UINT32 *pUnlatchedLastShutdownStatusDetails OPTIONAL,
   OUT UINT64 *pLastShutdownTime OPTIONAL,
   OUT UINT8 *pAitDramEnabled OPTIONAL
   );

@@ -209,7 +209,9 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   CHANNEL_POS_STR,
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_BUDGET_STR,
-  LAST_SHUTDOWN_STATUS_STR,
+  MAX_AVG_POWER_BUDGET_STR,
+  LATCHED_LAST_SHUTDOWN_STATUS_STR,
+  UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
   DIMM_HANDLE_STR,
   DIMM_UID_STR,
   MODES_SUPPORTED_STR,
@@ -266,7 +268,9 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   VIRAL_STATE_STR,
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_BUDGET_STR,
-  LAST_SHUTDOWN_STATUS_STR,
+  MAX_AVG_POWER_BUDGET_STR,
+  LATCHED_LAST_SHUTDOWN_STATUS_STR,
+  UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
   LAST_SHUTDOWN_TIME_STR,
   MODES_SUPPORTED_STR,
   SECURITY_CAPABILITIES_STR,
@@ -284,7 +288,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   POISON_ERR_INJ_CTR_STR,
   POISON_ERR_CLR_CTR_STR,
   MEDIA_TEMP_INJ_CTR_STR,
-  SW_TRIGGER_CTR_STR
+  SW_TRIGGER_CTR_STR,
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
@@ -345,7 +349,8 @@ ShowDimms(
   CHAR16 *pAttributeStr =  NULL;
   CHAR16 *pCapacityStr = NULL;
   CHAR16 *pDimmErrStr = NULL;
-  LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatusDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LatchedLastShutdownStatusDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS_COMBINED UnlatchedLastShutdownStatusDetails;
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   BOOLEAN ByteAddressable = FALSE;
@@ -357,12 +362,14 @@ ShowDimms(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
+  BOOLEAN FIS_1_13 = FALSE;
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
   ZeroMem(DimmStr, sizeof(DimmStr));
-  ZeroMem(&LastShutdownStatusDetails, sizeof(LastShutdownStatusDetails));
+  ZeroMem(&LatchedLastShutdownStatusDetails, sizeof(LatchedLastShutdownStatusDetails));
+  ZeroMem(&UnlatchedLastShutdownStatusDetails, sizeof(UnlatchedLastShutdownStatusDetails));
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -641,6 +648,10 @@ ShowDimms(
       }
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+
+      if (pDimms[DimmIndex].FwVer.FwApiMajor == 1 && pDimms[DimmIndex].FwVer.FwApiMinor >= 13) {
+        FIS_1_13 = TRUE;
+      }
 
       /** always print the DimmID **/
       ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr,
@@ -1051,15 +1062,41 @@ ShowDimms(
           }
         }
 
-        /** LastShutdownStatusDetails **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LAST_SHUTDOWN_STATUS_STR))) {
-          LastShutdownStatusDetails.AsUint32 = pDimms[DimmIndex].LastShutdownStatusDetails;
+        if ((pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS) || (!FIS_1_13)) {
+          /** MaxAveragePowerBudget **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_AVG_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
+          }
+        }
+        else {
+          /** MaxAveragePowerBudget **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_AVG_POWER_BUDGET_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVG_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].MaxAveragePowerBudget);
+          }
+        }
+
+        /** LatchedLastShutdownStatusDetails **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LATCHED_LAST_SHUTDOWN_STATUS_STR))) {
+          LatchedLastShutdownStatusDetails.AsUint32 = pDimms[DimmIndex].LatchedLastShutdownStatusDetails;
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = LastShutdownStatusToStr(LastShutdownStatusDetails);
+            pAttributeStr = LastShutdownStatusToStr(LatchedLastShutdownStatusDetails);
           }
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LATCHED_LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
+          FREE_POOL_SAFE(pAttributeStr);
+        }
+
+        /** UnlatchedLastShutdownStatusDetails **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, UNLATCHED_LAST_SHUTDOWN_STATUS_STR))) {
+          UnlatchedLastShutdownStatusDetails.AsUint32 = pDimms[DimmIndex].UnlatchedLastShutdownStatusDetails;
+          if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+            pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+          }
+          else {
+            pAttributeStr = LastShutdownStatusToStr(UnlatchedLastShutdownStatusDetails);
+          }
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UNLATCHED_LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
 
@@ -1232,6 +1269,8 @@ ShowDimms(
           if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_CTR_STR))) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SW_TRIGGER_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].SoftwareTriggersCounter);
           }
+
+
         }
 #ifdef OS_BUILD
     /** ActionRequired **/

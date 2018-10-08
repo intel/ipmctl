@@ -222,7 +222,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, &AitDramEnabled);
+  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, NULL, &AitDramEnabled);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_FW_BUSY), EVENT_CODE_541, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
@@ -233,8 +233,8 @@ SmartAndHealthCheck(
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     goto Finish;
   }
-  if (SensorInfo.LastShutdownStatus) {
-    // LastShutdownStatus != 0 - Dirty Shutdown
+  if (SensorInfo.LatchedLastShutdownStatus) {
+    // LatchedLastShutdownStatus != 0 - Dirty Shutdown
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_DIRTY_SHUTDOWN), EVENT_CODE_530, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32);
   }

@@ -133,8 +133,9 @@ typedef struct _SENSOR_INFO {
   INT16 MediaTemperature;               ///< Current Media Temperature in C
   INT16 ControllerTemperature;          ///< Current Controller Temperature in C
   UINT8 PercentageRemaining;            ///< Remaining module's life as a percentage value of factory expected life span (0-100)
-  UINT32 DirtyShutdowns;                ///< Dirty Shutdowns count
-  UINT8 LastShutdownStatus;             ///< Last Shutdown Status. See FIS field LSS for additional details
+  UINT32 LatchedDirtyShutdowns;         ///< Latched Dirty Shutdowns count
+  UINT8 LatchedLastShutdownStatus;      ///< Latched Last Shutdown Status. See FIS field LSS for additional details
+  UINT8 UnlatchedLastShutdownStatus;
   UINT32 PowerOnTime;                   ///< Lifetime DIMM has been powered on in seconds. See FIS field POT for additional details
   UINT32 UpTime;                        ///< DIMM uptime in seconds since last AC cycle. See FIS field UT for additional details
   UINT64 PowerCycles;                   ///< Number of DIMM power cycles. See FIS field PC for additional details
@@ -148,7 +149,7 @@ typedef struct _SENSOR_INFO {
   INT16 MediaThrottlingStopThresh;      ///< Media throttling stop temperature threshold in C
   INT16 ControllerThrottlingStartThresh;///< Controller throttling stop temperature threshold in C
   INT16 ControllerThrottlingStopThresh; ///< Controller throttling stop temperature threshold in C
-  UINT32 UnlatchedDirtyShutdowns;       ///< Unlatched Dirty Shutdowns count
+  UINT32 UnlatchedDirtyShutdownCount;   ///< Unlatched Dirty Shutdowns count
 } SENSOR_INFO;
 
 /**

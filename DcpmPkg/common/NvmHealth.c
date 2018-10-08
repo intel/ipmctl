@@ -70,7 +70,7 @@ GetSensorsInfo(
   **/
   InitSensorsSet(DimmSensorsSet);
 
-  ReturnCode = pNvmDimmConfigProtocol->GetSmartAndHealth(pNvmDimmConfigProtocol, DimmID, &SensorInfo, NULL, NULL, NULL);
+  ReturnCode = pNvmDimmConfigProtocol->GetSmartAndHealth(pNvmDimmConfigProtocol, DimmID, &SensorInfo, NULL, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -87,8 +87,8 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
-  DimmSensorsSet[SENSOR_TYPE_DIRTY_SHUTDOWNS].Value = SensorInfo.DirtyShutdowns;
-  DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS].Value = SensorInfo.UnlatchedDirtyShutdowns;
+  DimmSensorsSet[SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWNS].Value = SensorInfo.LatchedDirtyShutdowns;
+  DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS].Value = SensorInfo.UnlatchedDirtyShutdownCount;
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = SensorInfo.MediaErrorCount + SensorInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = SensorInfo.UpTime;
 
@@ -172,8 +172,8 @@ SensorTypeToString(
       return POWER_CYCLES_STR;
     case SENSOR_TYPE_POWER_ON_TIME:
       return POWER_ON_TIME_STR;
-    case SENSOR_TYPE_DIRTY_SHUTDOWNS:
-      return DIRTY_SHUTDOWNS_STR;
+    case SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWNS:
+      return LATCHED_DIRTY_SHUTDOWN_COUNT_STR;
     case SENSOR_TYPE_FW_ERROR_COUNT:
       return FW_ERROR_COUNT_STR;
     case SENSOR_TYPE_UP_TIME:
@@ -181,7 +181,7 @@ SensorTypeToString(
     case SENSOR_TYPE_DIMM_HEALTH:
       return DIMM_HEALTH_STR;
     case SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS:
-      return UNLATCHED_DIRTY_SHUTDOWNS_STR;
+      return UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR;
     default:
       return L"Unknown";
   }

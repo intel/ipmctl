@@ -249,11 +249,12 @@ enum sensor_type {
   SENSOR_MEDIA_TEMPERATURE = 1,    ///< Device media temperature in degrees Celsius.
   SENSOR_CONTROLLER_TEMPERATURE = 2,    ///< Device media temperature in degrees Celsius.
   SENSOR_PERCENTAGE_REMAINING = 3,    ///< Amount of percentage remaining as a percentage.
-  SENSOR_DIRTYSHUTDOWNS = 4,    ///< Device shutdowns without notification.
+  SENSOR_LATCHED_DIRTY_SHUTDOWN_COUNT = 4,    ///< Device shutdowns without notification.
   SENSOR_POWERONTIME = 5,    ///< Total power-on time over the lifetime of the device.
   SENSOR_UPTIME = 6,    ///< Total power-on time since the last power cycle of the device.
   SENSOR_POWERCYCLES = 7,    ///< Number of power cycles over the lifetime of the device.
   SENSOR_FWERRORLOGCOUNT = 8,    ///< The total number of firmware error log entries.
+  SENSOR_UNLATCHED_DIRTY_SHUTDOWN_COUNT = 9,    ///!< Number of times that the FW received an unexpected power loss
 };
 
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;
@@ -696,7 +697,7 @@ struct device_status {
   NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
   NVM_BOOL			is_missing;                             ///< If the device is missing.
   NVM_UINT8			package_spares_available;               ///< Number of package spares on the DIMM that are available.
-  NVM_UINT32		last_shutdown_status_details;         ///< Extendeded fields as per FIS 1.6 (LSS Details/Extended Details)
+  NVM_UINT32		last_shutdown_status_details;           ///< Extended fields as per FIS 1.6 (Latched LSS Details/Extended Details)
   enum config_status		config_status;                  ///< Status of last configuration request.
   NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970
   NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DIMMs have different SKUs.
@@ -711,7 +712,8 @@ struct device_status {
   NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on DIMM
   NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DIMM
   struct device_error_log_status	error_log_status;               ///> DEPRECATED;
-  NVM_UINT8                             reserved[56];                   ///< reserved
+  NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per FIS 1.13+ (Unlatched LSS Details/Extended Details)
+  NVM_UINT8                             reserved[52];                   ///< reserved
 };
 
 /**

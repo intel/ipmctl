@@ -328,6 +328,9 @@ AvgPowerBudget::
   If the DCPMM firmware power management policy is enabled, the power budget in
   mW used for average power. Refer to FIS for allowable range and default value.
 
+MaxAveragePowerBudget::
+   Maximum average power budget supported by the DCPMM
+
 PackageSparingCapable::
   Whether or not the DCPMM supports package sparing. One of:
   - 0: False
@@ -341,7 +344,7 @@ PackageSparingEnabled::
 PackageSparesAvailable::
   The number of spare devices available for package sparing
 
-LastShutdownStatus::
+LatchedLastShutdownStatus::
   The status of the last shutdown of the DCPMM. One or more of:
   - Unknown: The last shutdown status cannot be determined.
   - FW Flush Complete: FW flush completed.
@@ -358,7 +361,29 @@ LastShutdownStatus::
   - Write Data Flush Complete: Write data flush completed.
   - PM S4: Power management S4 command received.
   - PM Idle: Power management idle received
-  -DDRT Surprise Reset: Surprise reset received
+  - DDRT Surprise Reset: Surprise reset received
+
+UnlatchedLastShutdownStatus::
+  The status of the last shutdown status of the DCPMM. Same ﬁelds as the 
+  Latched Last Shutdown Status with the only difference that LLS details 
+  on a dirty shutdown is logged, even if the Latch System Shutdown Status
+  was not enabled. One or more of:
+  - Unknown: The last shutdown status cannot be determined.
+  - FW Flush Complete: FW flush completed.
+  - PM ADR Command: Power management ADR command received.
+  - PM S3: Power management S3 command received.
+  - PM S5: Power management S5 command received.
+  - DDRT Power Fail Command: DDR power fail command received.
+  - PMIC 12V/DDRT 1.2V Power Loss (PLI)
+  - PM Warm Reset: Power management warm reset received.
+  - Thermal Shutdown: Thermal shutdown triggered.
+  - Controller’s FW State Flush Complete: Flush Completed.
+  - Viral Interrupt: Viral interrupt received.
+  - Surprise Clock Stop: Surprise clock stop received.
+  - Write Data Flush Complete: Write data flush completed.
+  - PM S4: Power management S4 command received.
+  - PM Idle: Power management idle received
+  - DDRT Surprise Reset: Surprise reset received
 
 LastShutdownTime::
   The time the system was last shutdown.

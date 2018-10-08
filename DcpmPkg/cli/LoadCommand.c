@@ -462,13 +462,13 @@ Load(
       //only print non 0.0.0.0 versions...
       if (pFwImageInfo->ImageVersion.ProductNumber.Version != 0 ||
         pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
-        pFwImageInfo->ImageVersion.SecurityVersionNumber.Version != 0 ||
+        pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version != 0 ||
         pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
         Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
           pFileName,
           pFwImageInfo->ImageVersion.ProductNumber.Version,
           pFwImageInfo->ImageVersion.RevisionNumber.Version,
-          pFwImageInfo->ImageVersion.SecurityVersionNumber.Version,
+          pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version,
           pFwImageInfo->ImageVersion.BuildNumber.Build);
       }
     }

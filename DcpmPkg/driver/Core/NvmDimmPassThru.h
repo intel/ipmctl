@@ -428,7 +428,8 @@ typedef struct {
   TEMPERATURE MediaThrottlingStopThreshold;
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
-  UINT8 Reserved[116];
+  UINT16 MaxAveragePowerBudget;
+  UINT8 Reserved[114];
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD;
 
 /**
@@ -726,12 +727,12 @@ typedef union _SMART_VALIDATION_FLAGS {
     UINT32                                  : 1; //!< Reserved
     UINT32 MediaTemperature                 : 1;
     UINT32 ControllerTemperature            : 1;
-    UINT32 UnsafeShutdownCount              : 1;
+    UINT32 LatchedDirtyShutdownCount        : 1;
     UINT32 AITDRAMStatus                    : 1;
     UINT32 HealthStatusReason               : 1;
     UINT32                                  : 1;  //!< Reserved
     UINT32 AlarmTrips                       : 1;
-    UINT32 LastShutdownStatus               : 1;
+    UINT32 LatchedLastShutdownStatus        : 1;
     UINT32 SizeOfVendorSpecificDataValid    : 1;
     UINT32                                  : 20; //!< Reserved
   } Separated;
@@ -741,7 +742,7 @@ typedef struct {
   UINT64 PowerCycles;       //!< Number of DIMM power cycles
   UINT64 PowerOnTime;       //!< Lifetime hours the DIMM has been powered on (represented in seconds)
   UINT64 UpTime;            //!< Current uptime of the DIMM for the current power cycle
-  UINT32 DirtyShutdowns;   //!< This is the # of times that the FW received an unexpected power loss
+  UINT32 UnlatchedDirtyShutdownCount;   //!< This is the # of times that the FW received an unexpected power loss
 
   /**
     Display the status of the last shutdown that occurred
@@ -754,7 +755,7 @@ typedef struct {
     Bit 6: Thermal Shutdown Received (0 - Did not occur, 1 Thermal Shutdown Triggered)
     Bit 7: Controller Flush Complete (0 - Did not occur, 1 - Completed)
   **/
-  LAST_SHUTDOWN_STATUS_DETAILS LastShutdownDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS LatchedLastShutdownDetails;
 
   UINT64 LastShutdownTime;
 
@@ -768,9 +769,39 @@ typedef struct {
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/
-  LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED LastShutdownExtendedDetails;
+  LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED LatchedLastShutdownExtendedDetails;
 
-  UINT8 Reserved[52];
+  UINT8 Reserved[2];
+
+   /**
+    Display the status of the last shutdown that occurred
+    Bit 0: PM ADR Command (0 - Not Received, 1 - Received)
+    Bit 1: PM S3 (0 - Not Received, 1 - Received)
+    Bit 2: PM S5 (0 - Not Received, 1 - Received)
+    Bit 3: DDRT Power Fail Command Received (0 - Not Received, 1 - Received)
+    Bit 4: PMIC Power Loss (0 - Not Received, 1 - PMIC Power Loss)
+    Bit 5: PM Warm Reset (0 - Not Received, 1 - Received)
+    Bit 6: Thermal Shutdown Received (0 - Did not occur, 1 Thermal Shutdown Triggered)
+    Bit 7: Controller Flush Complete (0 - Did not occur, 1 - Completed)
+  **/
+  LAST_SHUTDOWN_STATUS_DETAILS UnlatchedLastShutdownDetails;
+
+  /**
+    Display extended details of the last shutdown that occured
+    Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
+    Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
+    Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
+    Bit 3: S4 Power State (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
+    Bit 6-23: Reserved
+  **/
+  LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED UnlatchedLastShutdownExtendedDetails;
+
+  TEMPERATURE MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
+  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius. 
+
+  UINT8 Reserved1[42];
 } SMART_INTEL_SPECIFIC_DATA;
 
 /**
@@ -815,8 +846,8 @@ typedef struct {
   TEMPERATURE MediaTemperature;      //!< Current temperature in Celcius. This is the highest die temperature reported.
   TEMPERATURE ControllerTemperature; //!< Current temperature in Celcius. This is the temperature of the controller.
 
-  UINT32 DirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
-  UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - disabled, 1 - enabled)
+  UINT32 LatchedDirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
+  UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - failure occurred, 1 - loaded)
   UINT16 HealthStatusReason;      //!<  Indicates why the module is in the current Health State
   UINT8 Reserved3[8];
 
@@ -824,7 +855,7 @@ typedef struct {
     00h:       Clean Shutdown
     01h - FFh: Not Clean Shutdown
   **/
-  UINT8 LastShutdownStatus;
+  UINT8 LatchedLastShutdownStatus;
   UINT32 VendorSpecificDataSize; //!< Size of Vendor specific structure
   SMART_INTEL_SPECIFIC_DATA VendorSpecificData;
 } PT_PAYLOAD_SMART_AND_HEALTH;

@@ -2141,11 +2141,11 @@ Finish:
 }
 
 /**
-  Convert Last Shutdown Status to string
+  Convert Latched Last Shutdown Status to string
 
-  @param[in] LastShutdownStatus structure
+  @param[in] LatchedLastShutdownStatus structure
 
-  @retval CLI string representation of last shudown status
+  @retval CLI string representation of latched last shudown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
@@ -2219,7 +2219,6 @@ LastShutdownStatusToStr(
   NVDIMM_EXIT();
   return pStatusStr;
 }
-
 
 /**
   Converts the dimm health state reason to its  HII string equivalent

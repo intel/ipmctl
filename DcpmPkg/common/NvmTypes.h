@@ -257,13 +257,14 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_SECURITY                     (1 << 1)    ///< Security fields will be populated: SecurityState.
 #define DIMM_INFO_CATEGORY_PACKAGE_SPARING              (1 << 2)    ///< Package sparing fields will be populated: PackageSparingEnabled, PackageSparesAvailable.
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   (1 << 3)    ///< ARS status field will be populated: ARSStatus.
-#define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LastShutdownStatus, LastShutdownTime, AitDramEnabled.
+#define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LatchedLastShutdownStatus, LastShutdownTime, AitDramEnabled.
 #define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerBudget.
 #define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: FirstFastRefresh.
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite DIMM status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
+#define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
 
 /**
@@ -283,6 +284,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_VIRAL_POLICY                    (1 << 10)
 #define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 11)
 #define DIMM_INFO_ERROR_MAX                             (1 << 12)
+#define DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS                (1 << 13)
 
 // The "global dimm struct" is at &gNvmDimmData->PMEMDev.Dimms and is populated
 // at HII driver loading, so they are included by default on any call to GetDimmInfo()
@@ -327,7 +329,8 @@ typedef struct _DIMM_INFO {
   //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
   UINT8 HealthState;                        //!< overall health state
   UINT16 HealthStatusReason;                //!< Health state reason(s)
-  UINT32 LastShutdownStatusDetails;         //!< The detailed status of the last shutdown of the DIMM.
+  UINT32 LatchedLastShutdownStatusDetails;  //!< The detailed status of the last shutdown of the DIMM.
+  UINT32 UnlatchedLastShutdownStatusDetails; //!< The detailed status of the last shutdown of the DIMM.
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
@@ -397,6 +400,7 @@ typedef struct _DIMM_INFO {
 #endif // OS_BUILD
 
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
+  UINT16 MaxAveragePowerBudget;             //!< Maximum average power budget supported by the Module in mW
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
 } DIMM_INFO;
 
@@ -844,7 +848,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_MEDIA_TEMPERATURE          1                ///< Media Temperature Sensor ID
 #define SENSOR_TYPE_CONTROLLER_TEMPERATURE     2                ///< Controller Temperature Sensor ID
 #define SENSOR_TYPE_PERCENTAGE_REMAINING       3                ///< Percentage Remaining Sensor ID
-#define SENSOR_TYPE_DIRTY_SHUTDOWNS            4                ///< Dirty Shutdowns Count Sensor ID
+#define SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWNS    4                ///< Latched Dirty Shutdowns Count Sensor ID
 #define SENSOR_TYPE_POWER_ON_TIME              5                ///< Power On Time Sensor ID
 #define SENSOR_TYPE_UP_TIME                    6                ///< Up-Time Sensor ID
 #define SENSOR_TYPE_POWER_CYCLES               7                ///< Power Cycles Sensor ID

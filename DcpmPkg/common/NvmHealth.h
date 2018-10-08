@@ -17,16 +17,16 @@
 #define CONTROLLER_TEMPERATURE_STR      L"ControllerTemperature"
 #define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
 #define POWER_ON_TIME_STR               L"PowerOnTime"
-#define DIRTY_SHUTDOWNS_STR             L"DirtyShutdowns"
+#define LATCHED_DIRTY_SHUTDOWN_COUNT_STR  L"LatchedDirtyShutdownCount"
 #define POWER_CYCLES_STR                L"PowerCycles"
 #define UPTIME_STR                      L"UpTime"
 #define FW_ERROR_COUNT_STR              L"FwErrorCount"
 #define DIMM_HEALTH_STR                 L"Health"
-#define UNLATCHED_DIRTY_SHUTDOWNS_STR   L"UnlatchedDirtyShutdowns"
+#define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR   L"UnlatchedDirtyShutdownCount"
 
 #define SENSORS_COMBINED \
-  L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|DirtyShutdowns|PowerOnTime|" \
-  L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdowns" \
+  L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|LatchedDirtyShutdownCount|PowerOnTime|" \
+  L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdownCount" \
 
 #define TEMPERATURE_MSR     L"C"
 #define SPARE_CAPACITY_MSR  L"%"

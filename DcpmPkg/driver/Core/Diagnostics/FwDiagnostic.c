@@ -574,7 +574,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, NULL);
+  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to Get SMART Info from Dimm handle 0x%x", pDimm->DeviceHandle.AsUint32);
     *pDiagState |= DIAG_STATE_MASK_ABORTED;

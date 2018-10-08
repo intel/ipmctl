@@ -356,6 +356,10 @@ ShowErrorCommand(
               Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
                 pMediaErrorInfo->ErrorType, ERROR_TYPE_SMART_CHANGE_STR);
               break;
+            case ERROR_TYPE_PERSISTENT_WRITE_ECC:
+              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
+                pMediaErrorInfo->ErrorType, ERROR_TYPE_PERSISTENT_WRITE_ECC_STR);
+              break;
             default:
               Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
                 pMediaErrorInfo->ErrorType, ERROR_TYPE_UNKNOWN_STR);

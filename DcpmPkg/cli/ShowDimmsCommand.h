@@ -68,7 +68,8 @@
 #define MEMORY_TYPE_STR             L"MemoryType"
 #define PEAK_POWER_BUDGET_STR       L"PeakPowerBudget"
 #define AVG_POWER_BUDGET_STR        L"AvgPowerBudget"
-#define LAST_SHUTDOWN_STATUS_STR    L"LastShutdownStatus"
+#define LATCHED_LAST_SHUTDOWN_STATUS_STR L"LatchedLastShutdownStatus"
+#define UNLATCHED_LAST_SHUTDOWN_STATUS_STR L"UnlatchedLastShutdownStatus"
 #define LAST_SHUTDOWN_TIME_STR      L"LastShutdownTime"
 #define PHYSICAL_ID_STR             L"PhysicalID"
 #define DIMM_HANDLE_STR             L"DimmHandle"
@@ -94,6 +95,7 @@
 #define MEDIA_TEMP_INJ_CTR_STR      L"MediaTemperatureInjectionsCounter"
 #define SW_TRIGGER_CTR_STR          L"SoftwareTriggersCounter"
 #define SW_TRIGGER_ENABLED_DETAILS_STR L"SoftwareTriggersEnabledDetails"
+#define MAX_AVG_POWER_BUDGET_STR    L"MaxAveragePowerBudget"
 #ifdef OS_BUILD
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"

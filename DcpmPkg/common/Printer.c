@@ -126,6 +126,10 @@ static CHAR16 *TextListExpandStr(IN DATA_SET_CONTEXT *DataSetCtx, IN const CHAR1
       //allocate enough memory to copy the string that sits between pointers
       //plus 1 char worth of mem for NULL term to make it a string
       MacroKeyName = AllocateZeroPool(((UINTN)OriginalStrTmpEnd - (UINTN)OriginalStrTmpBegin) + sizeof(CHAR16));
+      if (NULL == MacroKeyName) {
+        NVDIMM_CRIT("AllocateZeroPool returned NULL\n");
+        goto Finish;
+      }
       CopyMem(MacroKeyName, OriginalStrTmpBegin, ((UINTN)OriginalStrTmpEnd - (UINTN)OriginalStrTmpBegin));
       //Get the value associated with the key identifier
       //TempKey[2] - skips past "$(" prefix
@@ -355,11 +359,21 @@ This is a helper to determine if a particular node is the "printer node".
 **/
 static BOOLEAN TextTableIsPrinterNode(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, IN PRV_TABLE_INFO *PrvTableInfo) {
   CHAR16 *TmpStr = CatSPrint(CurPath,L".");
-  if(!PrvTableInfo) {
-    return FALSE;
+  BOOLEAN IsPrinter = FALSE;
+
+  if (NULL == TmpStr) {
+    NVDIMM_CRIT("CatSPrint returned NULL\n");
+    goto Finish;
   }
-  BOOLEAN IsPrinter = (0 == StrnCmp(TmpStr, PrvTableInfo->PrinterNode, StrLen(TmpStr)));
-  FreePool(TmpStr);
+
+  if(NULL == PrvTableInfo) {
+    goto Finish;
+  }
+
+  IsPrinter = (0 == StrnCmp(TmpStr, PrvTableInfo->PrinterNode, StrLen(TmpStr)));
+
+Finish:
+  FREE_POOL_SAFE(TmpStr);
   return IsPrinter;
 }
 
@@ -436,7 +450,7 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
   CHAR16 *EmptyCell = L"X";
 
   if(NULL == UserData || NULL == CurRowText || NULL == TempCurPath) {
-    return NULL;
+    goto Finish;
   }
 
   LastNodeInBranch = TextTableIsPrinterNode(DataSetCtx, CurPath, PrvTableInfo);
@@ -506,6 +520,9 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
     }
     Print(TEXT_NEW_LINE);
   }
+
+Finish:
+  FREE_POOL_SAFE(TempCurPath);
   //return a string that represents the current row.
   return CurRowText;
 }
@@ -534,7 +551,7 @@ static VOID * CalculateTextTableDimensionCb(IN DATA_SET_CONTEXT *DataSetCtx, IN 
   CHAR16 *KeyVal;
 
   if (NULL == UserData || NULL == TempCurPath) {
-    return NULL;
+    goto Finish;
   }
 
 
@@ -565,6 +582,9 @@ static VOID * CalculateTextTableDimensionCb(IN DATA_SET_CONTEXT *DataSetCtx, IN 
       }
     }
   }
+
+Finish:
+  FREE_POOL_SAFE(TempCurPath);
   return NULL;
 }
 
@@ -610,7 +630,7 @@ VOID PrintDataSetAsTextTable(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB 
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   PRV_TABLE_INFO PrvTableInfo;
-  CHAR16 *TableHeaderStart = CatSPrint(NULL, L"");
+  CHAR16 *TableHeaderStart = NULL;
   CHAR16 *TableHeaderEnd = NULL;
   UINTN RowSizeInBytes = 0;
   UINTN RowSizeInChars = 0;
@@ -621,6 +641,7 @@ VOID PrintDataSetAsTextTable(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB 
     return;
   }
 
+  TableHeaderStart = CatSPrint(NULL, L"");
   if (NULL == TableHeaderStart) {
     return;
   }
@@ -680,16 +701,11 @@ VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_AT
 
   UINT32 Index = 0;
   PRV_TABLE_INFO PrvTableInfo;
-  CHAR16 *TableHeaderStart = CatSPrint(NULL, L"");
   UINTN NumColumns = NumTableColumns(Attribs);
   UINTN ColumnHeaderStrLen = 0;
 
   if (NULL == Attribs || NULL == ModifiedAttribs) {
     NVDIMM_CRIT("CMDs must specify a PRINTER_TABLE_ATTRIB when displaying text tables\n");
-    return;
-  }
-
-  if (NULL == TableHeaderStart) {
     return;
   }
 
@@ -844,6 +860,11 @@ static VOID PrintAsText(DATA_SET_CONTEXT *DataSetCtx, PRINT_CONTEXT *PrintCtx) {
   PRINTER_TABLE_ATTRIB *TableAttribs = NULL;
   PRINTER_TABLE_ATTRIB *ModifiedTableAttribs = (PRINTER_TABLE_ATTRIB *)AllocateZeroPool(sizeof(PRINTER_TABLE_ATTRIB));
 
+  if (NULL == ModifiedTableAttribs) {
+    NVDIMM_CRIT("AllocateZeroPool returned NULL\n");
+    return;
+  }
+
   if (PrintCtx->FormatTypeFlags.Flags.List) {
     if (Attribs) {
       ListAttribs = Attribs->pListAttribs;
@@ -897,7 +918,12 @@ static VOID PrintAsXml(DATA_SET_CONTEXT *DataSetCtx, PRINT_CONTEXT *PrintCtx) {
 * Print to stdout and ensure newline
 */
 static VOID PrintTextWithNewLine(CHAR16 *Msg) {
-  UINTN MsgLen = StrLen(Msg);
+  UINTN MsgLen = 0;
+
+  if (NULL == Msg) {
+    return;
+  }
+  MsgLen = StrLen(Msg);
   Print(Msg);
   if (MsgLen && Msg[MsgLen - 1] != L'\n') {
     Print(L"\n");
@@ -1157,6 +1183,7 @@ EFI_STATUS EFIAPI PrinterSetMsg(
   //here for backwards compatibility
   if (NULL == pPrintCtx || !pPrintCtx->FormatTypeFlags.Flags.Buffered) {
     PrintTextWithNewLine(FullMsg);
+    FREE_POOL_SAFE(FullMsg);
     return EFI_SUCCESS;
   }
 
@@ -1322,6 +1349,7 @@ EFI_STATUS PrinterProcessSetBuffer(
       FreeCommandStatus(&pTempCs->pCommandStatus);
       FREE_POOL_SAFE(pTempCs->pStatusMessage);
       FREE_POOL_SAFE(pTempCs->pStatusPreposition);
+      FREE_POOL_SAFE(FullMsg);
       pPrintCtx->BufferedCmdStatusCnt--;
     }
     FREE_POOL_SAFE(BufferedObject->Obj);

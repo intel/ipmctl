@@ -185,7 +185,6 @@ DumpDebugCommand(
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_DEBUG_LOG, L"", pCommandStatus);
-      FREE_POOL_SAFE(pDumpUserPath);
       goto Finish;
     }
   }
@@ -199,7 +198,6 @@ DumpDebugCommand(
     else {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to dump FW Debug logs to file (" FORMAT_STR L")\n", pDumpUserPath);
     }
-    FREE_POOL_SAFE(pDumpUserPath);
   }
   else {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%lu) MiB were written.\n",
@@ -228,7 +226,7 @@ DumpDebugCommand(
       if (FALSE == Found)
       {
         //no extention was found, just append
-        decoded_file_name = CatSPrintClean(pDumpUserPath, L".txt");
+        decoded_file_name = CatSPrint(pDumpUserPath, L".txt");
       }
       else
       {
@@ -242,16 +240,12 @@ DumpDebugCommand(
           }
           decoded_file_name = CatSPrintClean(decoded_file_name, L".txt");
         }
-        FREE_POOL_SAFE(pDumpUserPath);
       }
 
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Loaded %d dictionary entries.\n", dict_entries);
       if (decoded_file_name) {
         decode_nlog_binary(pCmd, decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
       }
-    }
-    else {
-      FREE_POOL_SAFE(pDumpUserPath);
     }
   }
 
@@ -272,6 +266,7 @@ Finish:
   FREE_POOL_SAFE(pDictUserPath);
   FREE_POOL_SAFE(pDimmIdsFilter);
   FREE_POOL_SAFE(pDebugBuffer);
+  FREE_POOL_SAFE(pDumpUserPath);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

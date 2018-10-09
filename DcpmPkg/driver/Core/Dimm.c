@@ -2535,6 +2535,7 @@ FwCmdSetPlatformConfigData (
       InPayloadSetData.Offset = Offset;
       CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pPartition + Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
       CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
+      pFwCmd->OutputPayloadSize = 0;
       ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("Error detected when sending Platform Config Data (Offset=%d ReturnCode=" FORMAT_EFI_STATUS ", FWStatus=%d)", Offset, ReturnCode, pFwCmd->Status);

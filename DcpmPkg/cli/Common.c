@@ -1575,7 +1575,7 @@ PrintAppDirectSettings(
       }
 
       if (!First) {
-        pTempBuffer = CatSPrint(pTempBuffer, L", ");
+        pTempBuffer = CatSPrintClean(pTempBuffer, L", ");
       }
       else {
         First = FALSE;
@@ -1583,25 +1583,25 @@ PrintAppDirectSettings(
 
       if (Mode == PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD) {
         if (InterleaveWay == INTERLEAVE_SET_1_WAY) {
-          pTempBuffer = CatSPrint(pTempBuffer, L"x1 (ByOne)");
+          pTempBuffer = CatSPrintClean(pTempBuffer, L"x1 (ByOne)");
         }
         else {
-          pTempBuffer = CatSPrint(pTempBuffer, L"x%d - " FORMAT_STR L" iMC x " FORMAT_STR L" Channel (", WayNumber, mpImcSize[ImcStringIndex], mpChannelSize[ChannelStringIndex]);
-          pTempBuffer = CatSPrint(pTempBuffer, FORMAT_STR L"_" FORMAT_STR L")", mpImcSize[ImcStringIndex], mpChannelSize[ChannelStringIndex]);
+          pTempBuffer = CatSPrintClean(pTempBuffer, L"x%d - " FORMAT_STR L" iMC x " FORMAT_STR L" Channel (", WayNumber, mpImcSize[ImcStringIndex], mpChannelSize[ChannelStringIndex]);
+          pTempBuffer = CatSPrintClean(pTempBuffer, FORMAT_STR L"_" FORMAT_STR L")", mpImcSize[ImcStringIndex], mpChannelSize[ChannelStringIndex]);
         }
       }
       else if (Mode == PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD) {
         if (InterleaveWay == INTERLEAVE_SET_1_WAY) {
-          pTempBuffer = CatSPrint(pTempBuffer, L"x1 (ByOne)");
+          pTempBuffer = CatSPrintClean(pTempBuffer, L"x1 (ByOne)");
         }
         else {
-          pTempBuffer = CatSPrint(pTempBuffer, L"x%d - " FORMAT_STR L" iMC x " FORMAT_STR L" Channel (" FORMAT_STR L"_" FORMAT_STR L")", WayNumber, mpImcSize[ImcStringIndex],
+          pTempBuffer = CatSPrintClean(pTempBuffer, L"x%d - " FORMAT_STR L" iMC x " FORMAT_STR L" Channel (" FORMAT_STR L"_" FORMAT_STR L")", WayNumber, mpImcSize[ImcStringIndex],
             mpChannelSize[ChannelStringIndex], mpImcSize[ImcStringIndex], mpChannelSize[ChannelStringIndex]);
         }
       }
     }
   }
-  pTempBuffer = CatSPrint(pTempBuffer, L"\n");
+  pTempBuffer = CatSPrintClean(pTempBuffer, L"\n");
   PRINTER_SET_MSG(pCmd->pPrintCtx, EFI_SUCCESS, pTempBuffer);
   FREE_POOL_SAFE(pTempBuffer);
 }
@@ -2330,13 +2330,13 @@ CreateCmdLineOutputStr(
   *ppOutputStr = CatSPrint(*ppOutputStr, OUTPUT_OPTION_SHORT L" ");
 
   if (pCmd->pPrintCtx->FormatTypeFlags.Flags.EsxCustom) {
-    *ppOutputStr = CatSPrint(*ppOutputStr, OUTPUT_OPTION_ESX_TABLE_XML L" ");
+    *ppOutputStr = CatSPrintClean(*ppOutputStr, OUTPUT_OPTION_ESX_TABLE_XML L" ");
   }
   else if (pCmd->pPrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
-    *ppOutputStr = CatSPrint(*ppOutputStr, OUTPUT_OPTION_ESX_XML L" ");
+    *ppOutputStr = CatSPrintClean(*ppOutputStr, OUTPUT_OPTION_ESX_XML L" ");
   }
   else {
-    *ppOutputStr = CatSPrint(*ppOutputStr, OUTPUT_OPTION_NVMXML L" ");
+    *ppOutputStr = CatSPrintClean(*ppOutputStr, OUTPUT_OPTION_NVMXML L" ");
   }
   return EFI_SUCCESS;
 }

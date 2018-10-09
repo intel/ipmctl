@@ -4755,6 +4755,7 @@ UpdateDimmFw(
 
 #ifdef OS_BUILD
   do {
+    pPassThruCommand->OutputPayloadSize = 0;
     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
     if (EFI_ERROR(ReturnCode)) {
       if (pPassThruCommand->Status == FW_DEVICE_BUSY) {

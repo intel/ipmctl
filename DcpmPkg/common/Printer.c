@@ -483,7 +483,7 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
       }
       
       if (NULL == (CurRowText = ReallocatePool(StrSize(CurRowText), RowSizeInBytes, CurRowText))) {
-        return NULL;
+        goto Finish;
       }
       //Make EndOfRowText point to end of the already processed row
       EndOfRowText = &CurRowText[StrLen(CurRowText)];

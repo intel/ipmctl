@@ -456,7 +456,8 @@ AddEventData(PRINT_CONTEXT *pPrinterCtx, CHAR16 *EventEntry) {
 
   ppSplitEventEntryToken = StrSplit(EventEntry, EVENT_ENTRY_TOKEN_DELIM, &NumTokens);
   if (ppSplitEventEntryToken == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
   }
 
   if (EVENT_ENTRY_TOKEN_CNT != NumTokens) {

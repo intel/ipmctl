@@ -199,6 +199,7 @@ DumpDebugCommand(
     else {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to dump FW Debug logs to file (" FORMAT_STR L")\n", pDumpUserPath);
     }
+    FREE_POOL_SAFE(pDumpUserPath);
   }
   else {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Successfully dumped FW Debug logs to file (" FORMAT_STR L"). (%lu) MiB were written.\n",
@@ -248,6 +249,9 @@ DumpDebugCommand(
       if (decoded_file_name) {
         decode_nlog_binary(pCmd, decoded_file_name, pDebugBuffer, BytesWritten, dict_version, dict_head);
       }
+    }
+    else {
+      FREE_POOL_SAFE(pDumpUserPath);
     }
   }
 

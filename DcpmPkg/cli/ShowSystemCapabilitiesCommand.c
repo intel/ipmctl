@@ -172,18 +172,18 @@ PrintSupportedMemoryModes(
     if (First) {
       First = FALSE;
     } else {
-      Val = CatSPrint(Val, L", ");
+      Val = CatSPrintClean(Val, L", ");
     }
-    Val = CatSPrint(Val, MEMORY_STR);
+    Val = CatSPrintClean(Val, MEMORY_STR);
   }
   if (MemoryModes.MemoryModesFlags.AppDirect) {
     if (First) {
       First = FALSE;
     }
     else {
-      Val = CatSPrint(Val, L", ");
+      Val = CatSPrintClean(Val, L", ");
     }
-    Val = CatSPrint(Val, APPDIRECT_STR);
+    Val = CatSPrintClean(Val, APPDIRECT_STR);
   }
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, OPERATING_MODE_SUPPORT_STR, Val);
   FREE_POOL_SAFE(Val);

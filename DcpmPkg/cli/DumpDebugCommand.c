@@ -185,6 +185,7 @@ DumpDebugCommand(
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_DEBUG_LOG, L"", pCommandStatus);
+      FREE_POOL_SAFE(pDumpUserPath);
       goto Finish;
     }
   }

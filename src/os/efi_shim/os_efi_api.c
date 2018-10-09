@@ -195,6 +195,7 @@ EFI_STATUS init_record_file(char * recording_file_path)
   if (1 != bytes_written)
   {
     NVDIMM_ERR("Failed to write the recording file headaer\n");
+    fclose(f_ptr);
     return EFI_END_OF_FILE;
   }
 
@@ -381,19 +382,22 @@ passthru_playback(
   if (EFI_SUCCESS != seek_to_record_offset(RtPassThru, f_passthru_ptr, &record_size))
   {
     NVDIMM_ERR("Failed seeking to the passthru partition\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
 
   if (0 != fseek(f_passthru_ptr, g_pass_thru_playback_offset, SEEK_CUR))
   {
     NVDIMM_ERR("Failed seeking into playback file\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
 
   if (1 != fread(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr))
   {
     NVDIMM_ERR("Failed to read the request packet from the recording file\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
   g_pass_thru_playback_offset += sizeof(pass_thru_record_req);
 
@@ -401,14 +405,16 @@ passthru_playback(
   if (0 != fseek(f_passthru_ptr, pt_rec_req.InputPayloadSize, SEEK_CUR))
   {
     NVDIMM_ERR("Failed seeking into playback file\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
   g_pass_thru_playback_offset += pt_rec_req.InputPayloadSize;
 
   if (0 != fseek(f_passthru_ptr, pt_rec_req.InputLargePayloadSize, SEEK_CUR))
   {
     NVDIMM_ERR("Failed seeking into playback file\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
   g_pass_thru_playback_offset += pt_rec_req.InputLargePayloadSize;
 
@@ -416,7 +422,8 @@ passthru_playback(
   if (1 != fread(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
   {
     NVDIMM_ERR("Failed to read the response packet from the recording file\n");
-    return EFI_END_OF_FILE;
+    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+    goto Finish;
   }
   g_pass_thru_playback_offset += sizeof(pass_thru_record_resp);
 
@@ -424,14 +431,16 @@ passthru_playback(
   {
     if (pt_rec_resp.OutputLargePayloadSize > OUT_MB_SIZE) {
       NVDIMM_ERR("OutputLargePayloadSize exceeded maximum large output payload size (%d bytes)\n", OUT_MB_SIZE);
-      return EFI_END_OF_FILE;
+      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+      goto Finish;
     }
 
     pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputLargePayloadSize;
     if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputLargePayloadSize, 1, f_passthru_ptr))
     {
       NVDIMM_ERR("Failed to read the LargeOutputPayload from the recording file\n");
-      return EFI_END_OF_FILE;
+      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+      goto Finish;
     }
     g_pass_thru_playback_offset += pt_rec_resp.OutputLargePayloadSize;
   }
@@ -441,13 +450,16 @@ passthru_playback(
     if (1 != fread(pCmd->OutPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
     {
       NVDIMM_ERR("Failed to read the OutputPayload from the recording file\n");
-      return EFI_END_OF_FILE;
+      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
+      goto Finish;
     }
     g_pass_thru_playback_offset += pt_rec_resp.OutputPayloadSize;
   }
   pCmd->Status = pt_rec_resp.Status;
+  INC_PASS_THRU_CNT(); 
+
+Finish:
   fclose(f_passthru_ptr);
-  INC_PASS_THRU_CNT();
 
   return pt_rec_resp.PassthruReturnCode;
 }
@@ -475,7 +487,7 @@ passthru_record_setup(
   if (0 != open_result)
   {
     NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PATH);
-    return EFI_END_OF_FILE;
+    return EFI_LOAD_ERROR;
   }
 
   //seek it to pass thru partition
@@ -642,6 +654,9 @@ PassThru(
     RecordRc = passthru_record_setup(&f_passthru_ptr, pCmd);
     if (EFI_SUCCESS != RecordRc)
     {
+      if (EFI_LOAD_ERROR != RecordRc) {
+        fclose(f_passthru_ptr);
+      }
       return RecordRc;
     }
   }
@@ -657,6 +672,7 @@ PassThru(
     RecordRc = passthru_record_finalize(f_passthru_ptr, pCmd, DimmID, Rc);
     if (EFI_SUCCESS != RecordRc)
     {
+      fclose(f_passthru_ptr);
       return RecordRc;
     }
   }
@@ -884,75 +900,78 @@ GetFirstAndBoundSmBiosStructPointer(
     recording.size = gSmbiosTableSize;
 
     errno_t open_result = fopen_s(&f_ptr, REC_FILE_PATH, "rb+");
-    if (0 == open_result && NULL != gSmbiosTable)
+    if (0 == open_result)
     {
-      //seek it to smbios partition
-      if (EFI_SUCCESS != (ReturnCode = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
-      {
-        NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
-        ReturnCode = EFI_END_OF_FILE;
-      }
+      if (NULL != gSmbiosTable) {
+        //seek it to smbios partition
+        if (EFI_SUCCESS != (ReturnCode = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
+        {
+          NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
+          ReturnCode = EFI_END_OF_FILE;
+        }
 
-      if (1 != fwrite(&recording, sizeof(smbios_table_recording), 1, f_ptr))
-      {
-        NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
-        ReturnCode = EFI_END_OF_FILE;
+        if (1 != fwrite(&recording, sizeof(smbios_table_recording), 1, f_ptr))
+        {
+          NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
+          ReturnCode = EFI_END_OF_FILE;
+        }
+        if (1 != fwrite(gSmbiosTable, gSmbiosTableSize, 1, f_ptr))
+        {
+          NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
+          ReturnCode = EFI_END_OF_FILE;
+        }
+        update_record_size(RtSmbios, f_ptr, sizeof(smbios_table_recording) + gSmbiosTableSize, FALSE);
       }
-      if (1 != fwrite(gSmbiosTable, gSmbiosTableSize, 1, f_ptr))
-      {
-        NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
-        ReturnCode = EFI_END_OF_FILE;
-      }
-      update_record_size(RtSmbios, f_ptr, sizeof(smbios_table_recording) + gSmbiosTableSize, FALSE);
       fclose(f_ptr);
     }
   }
   else if (PLAYBACK_ENABLED() && NULL == gSmbiosTable)
   {
     errno_t open_result = fopen_s(&f_ptr, REC_FILE_PATH, "rb+");
-    if (0 == open_result && NULL == gSmbiosTable)
+    if (0 == open_result)
     {
-      //seek it to pass thru partition
-      if (EFI_SUCCESS != (rc = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
-      {
-        NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
-        ReturnCode = EFI_END_OF_FILE;
-      }
-
-      if (1 != fread(&recording, sizeof(smbios_table_recording), 1, f_ptr))
-      {
-        NVDIMM_ERR("Failed to read from recording file: %s\n", REC_FILE_PATH);
-        ReturnCode = EFI_END_OF_FILE;
-      }
-
-      if (0 == recording.size)
-      {
-        NVDIMM_ERR("SMBIOS table in file %s reports size of 0.\n", REC_FILE_PATH);
-        ReturnCode = EFI_END_OF_FILE;
-      }
-      else
-      {
-        gSmbiosTable = calloc(1, recording.size);
-        if (NULL == gSmbiosTable)
+      if (NULL == gSmbiosTable) {
+        //seek it to pass thru partition
+        if (EFI_SUCCESS != (rc = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
         {
-          NVDIMM_ERR("Unable to alloc for SMBIOS table\n");
+          NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
+          ReturnCode = EFI_END_OF_FILE;
+        }
+
+        if (1 != fread(&recording, sizeof(smbios_table_recording), 1, f_ptr))
+        {
+          NVDIMM_ERR("Failed to read from recording file: %s\n", REC_FILE_PATH);
+          ReturnCode = EFI_END_OF_FILE;
+        }
+
+        if (0 == recording.size)
+        {
+          NVDIMM_ERR("SMBIOS table in file %s reports size of 0.\n", REC_FILE_PATH);
           ReturnCode = EFI_END_OF_FILE;
         }
         else
         {
-          size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
-          if (bytesRead != 1)
+          gSmbiosTable = calloc(1, recording.size);
+          if (NULL == gSmbiosTable)
           {
-            NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_PATH, bytesRead, recording.size);
+            NVDIMM_ERR("Unable to alloc for SMBIOS table\n");
             ReturnCode = EFI_END_OF_FILE;
           }
+          else
+          {
+            size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
+            if (bytesRead != 1)
+            {
+              NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_PATH, bytesRead, recording.size);
+              ReturnCode = EFI_END_OF_FILE;
+            }
+          }
+
+          gSmbiosMajorVersion = recording.major;
+          gSmbiosMinorVersion = recording.minor;
+          gSmbiosTableSize = recording.size;
         }
-
-        gSmbiosMajorVersion = recording.major;
-        gSmbiosMinorVersion = recording.minor;
-        gSmbiosTableSize = recording.size;
       }
-
       fclose(f_ptr);
     }
   }

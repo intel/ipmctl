@@ -244,6 +244,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   if (NVM_ERR_INVALID_PERMISSIONS != nvm_status && NVM_SUCCESS != nvm_status) {
     CHAR16* ErrStr = GetSingleNvmStatusCodeMessage(NULL, nvm_status);
     wprintf(L"Failed to intialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
+    FREE_POOL_SAFE(ErrStr);
     return nvm_status;
   }
   rc = UefiToOsReturnCode(UefiMain(0, NULL));

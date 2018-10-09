@@ -558,7 +558,7 @@ ShowRegions(
     ReturnCode = EFI_NOT_FOUND;
     ErrMsg = CatSPrint(NULL, FORMAT_STR_SPACE FORMAT_STR_NL, CLI_ERR_INVALID_REGION_ID, pCmd->targets[0].pTargetValueStr);
     if (SocketsNum > 0) {
-      ErrMsg = CatSPrint(ErrMsg, CLI_ERR_REGION_TO_SOCKET_MAPPING);
+      ErrMsg = CatSPrintClean(ErrMsg, CLI_ERR_REGION_TO_SOCKET_MAPPING);
     }
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, ErrMsg);
     FREE_POOL_SAFE(ErrMsg);
@@ -602,9 +602,9 @@ STATIC CHAR16 *CreateDimmsStr(REGION_INFO *pRegions) {
 
   for (DimmIdx = 0; DimmIdx < pRegions->DimmIdCount; DimmIdx++) {
     if (DimmIdx > 0) {
-      DimmsStr = CatSPrint(DimmsStr, DIMM_ID_STR_DELIM);
+      DimmsStr = CatSPrintClean(DimmsStr, DIMM_ID_STR_DELIM);
     }
-    DimmsStr = CatSPrint(DimmsStr, FORMAT_HEX, pRegions->DimmId[DimmIdx]);
+    DimmsStr = CatSPrintClean(DimmsStr, FORMAT_HEX, pRegions->DimmId[DimmIdx]);
   }
   return DimmsStr;
 }

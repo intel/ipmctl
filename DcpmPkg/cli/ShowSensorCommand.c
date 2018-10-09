@@ -354,7 +354,6 @@ ShowSensor(
         Value
       **/
       if (!pDispOptions->DisplayOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CURRENT_VALUE_STR))) {
-        pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].Value, DimmSensorsSet[SensorIndex].Type);
         /**
           Only for Health State
         **/
@@ -366,6 +365,10 @@ ShowSensor(
               goto Finish;
             }
         }
+        else {
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].Value, DimmSensorsSet[SensorIndex].Type);
+        }
+
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_VALUE_STR, pTempBuff);
         FREE_POOL_SAFE(pTempBuff);
       }

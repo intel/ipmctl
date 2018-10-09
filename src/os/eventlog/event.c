@@ -19,6 +19,7 @@
 #include <Debug.h>
 #include <PrintLib.h>
 #include "s_str.h"
+#include "os.h"
 
 #if defined(__LINUX__)
 #include <safe_str_lib.h>
@@ -125,57 +126,71 @@ static void remove_control_characters(CHAR8 *string)
 */
 static EFI_STATUS get_the_system_log_file_name(log_file_type file, UINTN file_size, CHAR8 *file_name)
 {
-    EFI_STATUS efi_status = EFI_SUCCESS;
-    EFI_GUID guid = { 0 };
-    CHAR8 temp_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
-    CHAR8 environment_variable[ENVIRONMENT_VARIABLE_MAX_LEN];
-    CHAR8 *p_env_variable_path;
-    CHAR8 *p_env_start = NULL;
-    CHAR8 *p_env_stop = NULL;
+  EFI_STATUS efi_status = EFI_SUCCESS;
+  EFI_GUID guid = { 0 };
+  CHAR8 temp_file_name[SYSTEM_LOG_FILE_NAME_MAX_LEN];
+  CHAR8 environment_variable[ENVIRONMENT_VARIABLE_MAX_LEN];
+  CHAR8 *p_env_variable_path;
+  CHAR8 *p_env_start = NULL;
+  CHAR8 *p_env_stop = NULL;
+  static BOOLEAN temp_dir_created = FALSE;
 
-    if (FALSE == g_log_file_table[file].name_initialized) {
-        // The system log file name not configured yet, check the preferences
-        efi_status = preferences_get_string_ascii(g_log_file_table[file].ini_entry_name, guid, SYSTEM_LOG_FILE_NAME_MAX_LEN, g_log_file_table[file].file_name);
-        if (EFI_SUCCESS == efi_status) {
-            // Overwrite environment variables
-            // Find the environment variable control chars 
-            p_env_start = strchr(g_log_file_table[file].file_name, ENVIRONMENT_VARIABLE_CHAR_START);
-            if (NULL != p_env_start)
-            {
-                p_env_start++; // start + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_START char
-                p_env_stop = strchr(p_env_start, ENVIRONMENT_VARIABLE_CHAR_STOP);
-                if (NULL != p_env_stop) {
-                  // Replace the environment variable with the real value
-                  environment_variable[0] = 0; // Initialize the environemt variable string as empty
-                  strncat_s(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start);
-                  if (NULL != (p_env_variable_path = getenv(environment_variable))) {
-                    snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", p_env_variable_path);
-                  }
-                  p_env_stop++; // stop + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_STOP char
-                  strcat_s(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
-                  // Store the proper file name
-                  strncpy_s(g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
-                }
-            }
-            g_log_file_table[file].name_initialized = TRUE;
-        }
+  // Check if the TEMP_FILE_DIR exists and create it if not
+  if (FALSE == temp_dir_created) {
+    if (FALSE == g_log_file_table[SYSTEM_LOG_AR_FILE].name_initialized) {
+      efi_status = preferences_get_string_ascii(g_log_file_table[SYSTEM_LOG_AR_FILE].ini_entry_name, guid, SYSTEM_LOG_FILE_NAME_MAX_LEN, g_log_file_table[SYSTEM_LOG_AR_FILE].file_name);
+      if (EFI_SUCCESS == efi_status) {
+        g_log_file_table[SYSTEM_LOG_AR_FILE].name_initialized = TRUE;
+      }
     }
-    if (FALSE == g_log_file_table[file].value_initialized) {
-        // Initialize the file limits
-        // Don't worry about the returns status, the limit_value doesn't have to be configured
-        UINTN limit_value_size = sizeof(g_log_file_table[file].limit_value);
-        preferences_get_var_ascii(g_log_file_table[file].ini_entry_limit, guid, (void *)&g_log_file_table[file].limit_value, &limit_value_size);
-        g_log_file_table[file].value_initialized = TRUE;
-    }
+    // Create the TMEP_FILE_DIR
+    os_mkdir(g_log_file_table[SYSTEM_LOG_AR_FILE].file_name);
+    temp_dir_created = TRUE;
+  }
+
+  if (FALSE == g_log_file_table[file].name_initialized) {
+    // The system log file name not configured yet, check the preferences
+    efi_status = preferences_get_string_ascii(g_log_file_table[file].ini_entry_name, guid, SYSTEM_LOG_FILE_NAME_MAX_LEN, g_log_file_table[file].file_name);
     if (EFI_SUCCESS == efi_status) {
-        if (file_size < sizeof(g_log_file_table[file].file_name))
-            efi_status = EFI_BUFFER_TOO_SMALL;
-        else {
-            // the name has been read successfuly from the ini file
-            strncpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+      // Overwrite environment variables
+      // Find the environment variable control chars 
+      p_env_start = strchr(g_log_file_table[file].file_name, ENVIRONMENT_VARIABLE_CHAR_START);
+      if (NULL != p_env_start)
+      {
+        p_env_start++; // start + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_START char
+        p_env_stop = strchr(p_env_start, ENVIRONMENT_VARIABLE_CHAR_STOP);
+        if (NULL != p_env_stop) {
+          // Replace the environment variable with the real value
+          environment_variable[0] = 0; // Initialize the environemt variable string as empty
+          strncat_s(environment_variable, ENVIRONMENT_VARIABLE_MAX_LEN, p_env_start, p_env_stop - p_env_start);
+          if (NULL != (p_env_variable_path = getenv(environment_variable))) {
+            snprintf(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, "%s", p_env_variable_path);
+          }
+          p_env_stop++; // stop + 1 cause we have to skip the ENVIRONMENT_VARIABLE_CHAR_STOP char
+          strcat_s(temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, p_env_stop);
+          // Store the proper file name
+          strncpy_s(g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN, temp_file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
         }
+      }
+      g_log_file_table[file].name_initialized = TRUE;
     }
-    return efi_status;
+  }
+  if (FALSE == g_log_file_table[file].value_initialized) {
+    // Initialize the file limits
+    // Don't worry about the returns status, the limit_value doesn't have to be configured
+    UINTN limit_value_size = sizeof(g_log_file_table[file].limit_value);
+    preferences_get_var_ascii(g_log_file_table[file].ini_entry_limit, guid, (void *)&g_log_file_table[file].limit_value, &limit_value_size);
+    g_log_file_table[file].value_initialized = TRUE;
+  }
+  if (EFI_SUCCESS == efi_status) {
+    if (file_size < sizeof(g_log_file_table[file].file_name))
+      efi_status = EFI_BUFFER_TOO_SMALL;
+    else {
+      // the name has been read successfuly from the ini file
+      strncpy_s(file_name, file_size, g_log_file_table[file].file_name, SYSTEM_LOG_FILE_NAME_MAX_LEN);
+    }
+  }
+  return efi_status;
 }
 
 /*

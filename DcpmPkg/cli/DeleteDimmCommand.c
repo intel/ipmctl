@@ -211,7 +211,7 @@ DeleteDimm(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Erasing DIMM (" FORMAT_STR L").", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Erasing DIMM " FORMAT_STR L".", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
@@ -220,7 +220,7 @@ DeleteDimm(
           goto FinishCommandStatusSet;
         }
       } else {
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from DIMM (" FORMAT_STR L")\n", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from DIMM " FORMAT_STR L"\n", DimmStr);
         continue;
       }
     }

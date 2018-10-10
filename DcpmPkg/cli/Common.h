@@ -610,21 +610,20 @@ DumpToFile (
 /**
   Prints supported or recommended appdirect settings
 
-  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
   @param[in] pFormatList pointer to variable length interleave formats array
   @param[in] FormatNum number of the appdirect settings formats
   @param[in] PrintRecommended if TRUE Recommended settings will be printed
              if FALSE Supported settings will be printed
   @param[in] Mode Set mode to print different format
+  @retval String representing AppDirect settings.  Null on error.
 **/
-VOID
+CHAR16*
 PrintAppDirectSettings(
-  IN    struct Command *pCmd,
   IN    INTERLEAVE_FORMAT *pFormatList,
   IN    UINT16 FormatNum,
   IN    BOOLEAN PrintRecommended,
   IN    UINT8 Mode
-  );
+);
 
 /**
   Read source file and return current passphrase to unlock device.

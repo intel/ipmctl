@@ -218,6 +218,7 @@ ShowSystemCapabilities(
   DISPLAY_PREFERENCES DisplayPreferences;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
+  CHAR16 *TempAppDirSettings = NULL;
 
   NVDIMM_ENTRY();
 
@@ -323,20 +324,7 @@ ShowSystemCapabilities(
     TempSupportedMode.MemoryModes = SystemCapabilitiesInfo.OperatingModeSupport;
     PrintSupportedMemoryModes(pPrinterCtx, pPath, TempSupportedMode);
   }
-  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_SUPPORTED_STR)) {
-    PrintAppDirectSettings(
-      pCmd,
-      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
-      SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
-      FALSE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
-  }
-  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECCOMENDED_STR)) {
-    PrintAppDirectSettings(
-      pCmd,
-      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
-      SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
-      TRUE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
-  }
+
   if (ShowAll || ContainsValue(pDisplayValues, MIN_NAMESPACE_SIZE_STR)) {
     TempReturnCode = MakeCapacityString(SystemCapabilitiesInfo.MinNsSize, UnitsToDisplay, TRUE, &pCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
@@ -415,6 +403,23 @@ ShowSystemCapabilities(
       SystemCapabilitiesInfo.MasterEraseDeviceDataSupported);
   }
 
+  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_SUPPORTED_STR)) {
+    TempAppDirSettings = PrintAppDirectSettings(
+      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
+      SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
+      FALSE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_SUPPORTED_STR, TempAppDirSettings);
+    FREE_POOL_SAFE(TempAppDirSettings);
+  }
+
+  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECCOMENDED_STR)) {
+    TempAppDirSettings = PrintAppDirectSettings(
+      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
+      SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
+      TRUE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_RECCOMENDED_STR, TempAppDirSettings);
+    FREE_POOL_SAFE(TempAppDirSettings);
+  }
 
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);

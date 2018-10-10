@@ -1439,16 +1439,15 @@ Finish:
 /**
   Prints supported or recommended appdirect settings
 
-  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
   @param[in] pFormatList pointer to variable length interleave formats array
   @param[in] FormatNum number of the appdirect settings formats
   @param[in] PrintRecommended if TRUE Recommended settings will be printed
              if FALSE Supported settings will be printed
   @param[in] Mode Set mode to print different format
+  @retval String representing AppDirect settings.  Null on error.
 **/
-VOID
+CHAR16*
 PrintAppDirectSettings(
-  IN    struct Command *pCmd,
   IN    INTERLEAVE_FORMAT *pFormatList,
   IN    UINT16 FormatNum,
   IN    BOOLEAN PrintRecommended,
@@ -1464,18 +1463,9 @@ PrintAppDirectSettings(
   BOOLEAN First = TRUE;
   CHAR16 *pTempBuffer = NULL;
 
-  if (pFormatList == NULL || pCmd == NULL) {
+  if (pFormatList == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
-    return;
-  }
-
-  if (Mode == PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD) {
-    if (PrintRecommended) {
-      pTempBuffer = CatSPrint(pTempBuffer, L"RecommendedAppDirectSettings=");
-    }
-    else {
-      pTempBuffer = CatSPrint(pTempBuffer, L"SupportedAppDirectSettings=");
-    }
+    NULL;
   }
 
   for (Index = 0; Index < FormatNum; Index++) {
@@ -1601,9 +1591,7 @@ PrintAppDirectSettings(
       }
     }
   }
-  pTempBuffer = CatSPrintClean(pTempBuffer, L"\n");
-  PRINTER_SET_MSG(pCmd->pPrintCtx, EFI_SUCCESS, pTempBuffer);
-  FREE_POOL_SAFE(pTempBuffer);
+  return pTempBuffer;
 }
 
 /**

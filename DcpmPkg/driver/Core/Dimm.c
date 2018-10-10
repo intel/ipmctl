@@ -2705,7 +2705,7 @@ Finish:
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetFWDebugLogSize(
+FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
      OUT UINT64 *pLogSizeInMb
   )
@@ -2752,42 +2752,46 @@ Finish:
 }
 
 /**
-  Firmware command to get debug logs
+  Firmware command to get a specified debug log
 
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] LogSizeInMbs - number of MB to be fetched
-  @param[out] pBytesWritten - number of MB fetched
-  @param[out] ppOutPayload - pointer to buffer start
+  @param[in]  pDimm Target DIMM structure pointer
+  @param[in]  LogSource Debug log source buffer to retrieve
+  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
+  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: The caller is responsible for freeing the returned buffers
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetFWDebugLog (
+FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
-  IN     UINT64 LogSizeInMbs,
-     OUT UINT64 *pBytesWritten,
-     OUT VOID *pOutputBuffer,
-  IN UINTN OutputBufferSz
+  IN     UINT8 LogSource,
+     OUT VOID **ppDebugLogBuffer,
+     OUT UINTN *pDebugLogBufferSize,
+     OUT COMMAND_STATUS *pCommandStatus
   )
 {
   FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT8 Index = 0;
-  UINT64 CurrentLogSizeInMbs = 0;
-  UINT64 LogSizeToFetchInMbs = 0;
+  UINT64 CurrentDebugLogSizeInMbs = 0;
+  UINT64 LogSizeBytesToFetch = 0;
   PT_INPUT_PAYLOAD_FW_DEBUG_LOG *pInputPayload = NULL;
+  UINT64 ChunkSize = 0;
+  UINT64 BytesToWrite = 0;
+  UINT64 BytesWritten = 0;
+  UINT8 LogAction = 0;
 
   NVDIMM_ENTRY();
 
-  if (pOutputBuffer == NULL || pBytesWritten == NULL || LogSizeInMbs == 0) {
-    // If LogSizeInMbs is zero, this function shouldn't be called.
+  if (pDimm == NULL || ppDebugLogBuffer == NULL || pDebugLogBufferSize == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
-
-  *pBytesWritten = 0;
 
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
@@ -2795,14 +2799,56 @@ FwCmdGetFWDebugLog (
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetFWDebugLogSize(pDimm, &CurrentLogSizeInMbs);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_DEVICE_ERROR;
+  // Populate log size bytes to fetch
+  switch (LogSource)
+  {
+    case FW_DEBUG_LOG_SOURCE_MEDIA:
+      LogAction = ActionGetDbgLogPage;
+      ReturnCode = FwCmdGetFwDebugLogSize(pDimm, &CurrentDebugLogSizeInMbs);
+      if (EFI_ERROR(ReturnCode)) {
+        if (ReturnCode == EFI_SECURITY_VIOLATION) {
+          SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_INVALID_SECURITY_STATE);
+        } else {
+          SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE);
+        }
+        goto Finish;
+      }
+      LogSizeBytesToFetch = MIB_TO_BYTES(CurrentDebugLogSizeInMbs);
+      break;
+    case FW_DEBUG_LOG_SOURCE_SRAM:
+      LogAction = ActionGetSramLogPage;
+      LogSizeBytesToFetch = SRAM_LOG_PAGE_SIZE_BYTES;
+      break;
+    case FW_DEBUG_LOG_SOURCE_SPI:
+      LogAction = ActionGetSpiLogPage;
+      LogSizeBytesToFetch = SPI_LOG_PAGE_SIZE_BYTES;
+      break;
+    default:
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+  }
+
+  if (LogSizeBytesToFetch == 0)
+  {
+    SetObjStatusForDimm(pCommandStatus, pDimm, NVM_INFO_FW_DBG_LOG_NO_LOGS_TO_FETCH);
+    ReturnCode = EFI_NOT_STARTED;
     goto Finish;
   }
-  LogSizeToFetchInMbs = MIN(LogSizeInMbs, CurrentLogSizeInMbs);
-  /** Fetch whole buffer, iterate by 1Mb chunk size **/
-  for (Index = 0; Index < LogSizeToFetchInMbs; ++Index) {
+
+  *ppDebugLogBuffer = AllocateZeroPool(LogSizeBytesToFetch);
+  if (*ppDebugLogBuffer == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  // Default for DDRT large payload transactions. 128 bytes for smbus
+  ChunkSize = MIB_TO_BYTES(1);
+
+  /** Fetch whole buffer, iterate by chunk size **/
+  Index = 0;
+  BytesWritten = 0;
+
+  while (BytesWritten < LogSizeBytesToFetch) {
     ZeroMem(pFwCmd, sizeof(*pFwCmd));
     pFwCmd->DimmID = pDimm->DimmID;
     pFwCmd->Opcode = PtGetLog;
@@ -2811,7 +2857,7 @@ FwCmdGetFWDebugLog (
     pFwCmd->OutputPayloadSize = 0;
     pFwCmd->LargeOutputPayloadSize = OUT_MB_SIZE;
     pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
-    pInputPayload->LogAction = ActionGetDbgLogPage;
+    pInputPayload->LogAction = LogAction;
     pInputPayload->LogPageOffset = Index;
 
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
@@ -2821,9 +2867,13 @@ FwCmdGetFWDebugLog (
       goto Finish;
     }
 
-    CopyMem_S((UINT8 *)pOutputBuffer + *pBytesWritten, OutputBufferSz - *pBytesWritten, pFwCmd->LargeOutputPayload, MIB_TO_BYTES(1));
-    *pBytesWritten = MIB_TO_BYTES(Index + 1);
+    BytesToWrite = MIN(LogSizeBytesToFetch - BytesWritten, ChunkSize);
+    CopyMem_S((UINT8 *)*ppDebugLogBuffer + BytesWritten, BytesToWrite, pFwCmd->LargeOutputPayload, BytesToWrite);
+    Index++;
+    BytesWritten += BytesToWrite;
   }
+  *(pDebugLogBufferSize) = BytesWritten;
+
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -5559,12 +5609,16 @@ MatchFwReturnCode (
     ReturnCode = EFI_SECURITY_VIOLATION;
     break;
 
+  case FW_DATA_NOT_SET:
+    ReturnCode = EFI_NOT_STARTED;
+    break;
+
   case FW_TIMEOUT_OCCURED:
     ReturnCode = EFI_TIMEOUT;
     break;
 
   case FW_SYSTEM_TIME_NOT_SET:
-  case FW_DATA_NOT_SET:
+
   case FW_REVISION_FAILURE:
   case FW_INCOMPATIBLE_DIMM_TYPE:
   case FW_ABORTED:

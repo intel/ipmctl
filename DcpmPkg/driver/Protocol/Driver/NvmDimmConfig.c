@@ -113,6 +113,7 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   ModifyNamespace,
   DeleteNamespace,
   GetErrorLog,
+  GetFwDebugLog,
   DumpFwDebugLog,
   SetOptionalConfigurationDataPolicy,
   RetrieveDimmRegisters,
@@ -7451,34 +7452,39 @@ Finish:
 }
 
 /**
-  Dump FW logging level
+  Get the debug log from a specified dimm and fw debug log source
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] LogPageOffset - log page offset
-  @param[out] OutputDebugLogSize - size of output debug buffer
-  @param[out] ppDebugLogs - pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[in] LogSource debug log source buffer to retrieve
+  @param[in] Reserved for future use. Must be 0 for now.
+  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug log
+  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: The caller is responsible for freeing the returned buffer
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
 **/
 EFI_STATUS
 EFIAPI
-DumpFwDebugLog(
+GetFwDebugLog(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmDimmID,
-     OUT VOID **ppDebugLogs,
-     OUT UINT64 *pBytesWritten,
+  IN     UINT16 DimmID,
+  IN     UINT8 LogSource,
+  IN     UINT32 Reserved,
+     OUT VOID **ppDebugLogBuffer,
+     OUT UINTN *pDebugLogBufferSize,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT64 LogSizeInMib = 0;
   DIMM *pDimm = NULL;
-  UINT64 DebugLogSize = 0;
   NVDIMM_ENTRY();
 
-  if (pThis == NULL || pBytesWritten == NULL || pCommandStatus == NULL) {
+  if (pThis == NULL || ppDebugLogBuffer == NULL || pDebugLogBufferSize == NULL ||
+      pCommandStatus == NULL || Reserved != 0 || LogSource > FW_DEBUG_LOG_SOURCE_MAX) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;
   }
@@ -7489,7 +7495,7 @@ DumpFwDebugLog(
     goto Finish;
   }
 
-  pDimm = GetDimmByPid(DimmDimmID, &gNvmDimmData->PMEMDev.Dimms);
+  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
     goto Finish;
@@ -7500,30 +7506,8 @@ DumpFwDebugLog(
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetFWDebugLogSize(pDimm, &LogSizeInMib);
-  if (EFI_ERROR(ReturnCode)) {
-    if (ReturnCode == EFI_SECURITY_VIOLATION) {
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_INVALID_SECURITY_STATE);
-    } else {
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE);
-    }
-    goto Finish;
-  }
+  ReturnCode = FwCmdGetFwDebugLog(pDimm, LogSource, ppDebugLogBuffer, pDebugLogBufferSize, pCommandStatus);
 
-  if (LogSizeInMib == 0) {
-    SetObjStatusForDimm(pCommandStatus, pDimm, NVM_INFO_FW_DBG_LOG_NO_LOGS_TO_FETCH);
-    goto Finish; // No data to be dumped on disk. It is not an error.
-  }
-
-  DebugLogSize = MIB_TO_BYTES(LogSizeInMib);
-
-  *ppDebugLogs = AllocateZeroPool(DebugLogSize);
-  if (*ppDebugLogs == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  ReturnCode = FwCmdGetFWDebugLog(pDimm, DebugLogSize, pBytesWritten, *ppDebugLogs, DebugLogSize);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_SECURITY_VIOLATION) {
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE);
@@ -7535,6 +7519,39 @@ DumpFwDebugLog(
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Dump FW debug logs
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
+  @param[out] pBytesWritten size of output buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: This function is deprecated. Please use the new function GetFwDebugLog.
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
+**/
+EFI_STATUS
+EFIAPI
+DumpFwDebugLog(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 DimmID,
+     OUT VOID **ppDebugLogs,
+     OUT UINT64 *pBytesWritten,
+     OUT COMMAND_STATUS *pCommandStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 Reserved = 0;
+
+  ReturnCode = GetFwDebugLog(pThis, DimmID, FW_DEBUG_LOG_SOURCE_MEDIA,
+      Reserved, ppDebugLogs, pBytesWritten, pCommandStatus);
+
   return ReturnCode;
 }
 

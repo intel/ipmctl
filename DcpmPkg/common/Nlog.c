@@ -380,7 +380,7 @@ decode_nlog_binary(
   total_formatted_string = AllocatePool(bytes_needed);
   if (NULL == total_formatted_string)
   {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate %lu bytes to dump the decoded output.\n", bytes_needed);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate %lu bytes to dump the decoded output\n", bytes_needed);
     goto Finish;
   }
 
@@ -408,13 +408,14 @@ decode_nlog_binary(
     record = record->next;
   }
 
-  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dumping %lu decoded records to file.\n", node_count);
   status = DumpToFile(decoded_file_name, total_formatted_string_size, total_formatted_string, TRUE);
   if (EFI_ERROR(status))
   {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to write record to file. (%lu)\n", status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to write record to file (%lu)\n", status);
     goto Finish;
   }
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Decoded %lu records to file (" FORMAT_STR ")\n", node_count, decoded_file_name);
+
 Finish:
   for (z = 0; z < old_arg_count; z++)
   {

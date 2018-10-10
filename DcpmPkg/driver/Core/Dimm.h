@@ -727,25 +727,27 @@ FwCmdGetErrorLog (
   );
 
 /**
-  Firmware command to get debug logs
+  Firmware command to get a specified debug log
 
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] LogSizeInMbs - number of MB to be fetched
-  @param[out] pBytesWritten - number of MB fetched
-  @param[out] ppOutPayload - pointer to buffer start
-  @param[in] OutputBufferSz - size of ppOutPayload in bytes
+  @param[in]  pDimm Target DIMM structure pointer
+  @param[in]  LogSource Debug log source buffer to retrieve
+  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
+  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: The caller is responsible for freeing the returned buffers
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetFWDebugLog(
+FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
-  IN     UINT64 LogSizeInMbs,
-     OUT UINT64 *pBytesWritten,
-     OUT VOID *ppOutPayload,
-  IN UINTN OutputBufferSz
+  IN     UINT8 LogSource,
+     OUT VOID **ppDebugLogBuffer,
+     OUT UINTN *pDebugLogBufferSize,
+     OUT COMMAND_STATUS *pCommandStatus
   );
 
  /**
@@ -759,7 +761,7 @@ FwCmdGetFWDebugLog(
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
-FwCmdGetFWDebugLogSize(
+FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
      OUT UINT64 *pLogSizeInMb
   );

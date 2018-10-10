@@ -1008,21 +1008,53 @@ GetErrorLog(
   );
 
 /**
-  Dump FW logging level
+  Get the debug log from a specified dimm and fw debug log source
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] LogPageOffset - log page offset
-  @param[out] OutputDebugLogSize - size of output debug buffer
-  @param[out] ppDebugLogs - pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[in] LogSource debug log source buffer to retrieve
+  @param[in] Reserved for future use. Must be 0 for now.
+  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug log
+  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  Note: The caller is responsible for freeing the returned buffer
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
+**/
+EFI_STATUS
+EFIAPI
+GetFwDebugLog(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 DimmID,
+  IN     UINT8 LogSource,
+  IN     UINT32 Reserved,
+     OUT VOID **ppDebugLogBuffer,
+     OUT UINTN *pDebugLogBufferSize,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
+
+
+/**
+  Dump FW debug logs
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
+  @param[out] pBytesWritten size of output buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: This function is deprecated. Please use the new function GetFwDebugLog.
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
 **/
 EFI_STATUS
 EFIAPI
 DumpFwDebugLog(
   IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
-  IN     UINT16 DimmDimmID,
+  IN     UINT16 DimmID,
      OUT VOID **ppDebugLogs,
      OUT UINT64 *pBytesWritten,
      OUT COMMAND_STATUS *pCommandStatus

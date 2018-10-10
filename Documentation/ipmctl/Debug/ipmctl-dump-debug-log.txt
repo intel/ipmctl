@@ -8,17 +8,17 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-debug-log - Dumps encoded firmware debug logs from DCPMM and
-optionally decodes to human readable text.
+ipmctl-dump-debug-log - Dumps encoded firmware debug logs from specified
+DCPMMs and optionally decodes to human readable text.
 
 SYNOPSIS
 --------
 [verse]
-ipmctl dump [OPTIONS] -destination (path) -debug -dimm (DimmIDs) [PROPERTIES]
+ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug -dimm (DimmIDs) [PROPERTIES]
 
 DESCRIPTION
 -----------
-Dumps encoded firmware debug logs from the specified DCPMM and optionally
+Dumps encoded firmware debug logs from specified DCPMMs and optionally
 decodes to human readable text.
 
 OPTIONS
@@ -29,24 +29,26 @@ OPTIONS
 
 TARGET
 ------
--dimm (DimmIDs)::
-  Dumps the debug log from a specfic DCPMM by supplying one DCPMM identifiers.
+-destination (file_prefix)::
+  The command will create files that use the given filename as a prefix
+  and append the dimm UID, dimm handle, debug log source, and the appropriate
+  file type (.bin for encoded logs, .txt for decoded logs) onto the end.
+[verse]
+file_prefix_dimmUid_dimmHandle_logsource.[bin,txt]
 
-PROPERTIES
-----------
 -dict (path)::
-  Optional file path to the dictionary file. If supplied, -destination will
-  create both the binary debug log and a text file with decoded log data.
+  Optional file path to the dictionary file. If supplied, the command will
+  create both the binary debug log and a text file with decoded log data with
+  the file prefix specified by -destination.
+
+-dimm (DimmIDs)::
+  Dumps the debug logs from the specified DCPMMs.
 
 EXAMPLES
 --------
-Dumps the debug log from DCPMM 0x0001
+Dumps and decodes the debug log from DCPMM 0x0001 and 0x0011 using the dictionary file
 [verse]
-ipmctl dump -destination log.bin -debug -dimm 0x0001
-
-Dumps the debug log from DCPMM 0x0001 providing a dictionary file
-[verse]
-ipmctl dump -destination log.bin -debug -dimm 0x0001 -dict nlog_dict.txt
+ipmctl dump -destination file_prefix -dict nlog_dict.txt -debug -dimm 0x0001,0x0011
 
 LIMITATIONS
 -----------
@@ -55,12 +57,14 @@ by the host software.
 
 RETURN DATA
 -----------
-Dumps the encoded and optionally decoded contents of the firmware debug logs for the
-specified DCPMM into the specified files.
+Dumps the encoded and optionally decoded contents of all 3 firmware debug log
+sources for the specified DCPMMs. Output file names are generated based on the
+-destination parameter above.
 
 SAMPLE OUTPUT
 -------------
 [verse]
-Successfully dump FW Debug logs to file (Path). (value) MB were
-written
-Failed to dump FW Debug logs to file (Path)
+Dumped media FW debug logs to file (file_prefix_8089-A1-1816-00000016_0x0001_media.bin)
+Decoded 456 records to file (file_prefix_8089-A1-1816-00000016_0x0001_media.txt)
+No spi FW debug logs found
+

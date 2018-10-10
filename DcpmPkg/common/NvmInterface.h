@@ -1033,13 +1033,43 @@ EFI_STATUS
 );
 
 /**
-  Dump FW logging level
+  Get the debug log from a specified dimm and fw debug log source
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] LogPageOffset - log page offset
-  @param[out] OutputDebugLogSize - size of output debug buffer
-  @param[out] pDebugLogs - output buffer of debug messages
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[in] LogSource debug log source buffer to retrieve
+  @param[in] Reserved for future use. Must be 0 for now.
+  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug log
+  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: The caller is responsible for freeing the returned buffer
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
+**/
+typedef
+EFI_STATUS
+  (EFIAPI *EFI_DCPMM_CONFIG_GET_FW_DEBUG_LOG) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 DimmID,
+  IN     UINT8 LogSource,
+  IN     UINT32 Reserved,
+     OUT VOID **ppDebugLogBuffer,
+     OUT UINTN *pDebugLogBufferSize,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
+
+/**
+  Dump FW debug logs
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
+  @param[out] pBytesWritten size of output buffer
+  @param[out] pCommandStatus structure containing detailed NVM error codes
+
+  Note: This function is deprecated. Please use the new function GetFwDebugLog.
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
@@ -1419,6 +1449,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;
   EFI_DCPMM_CONFIG_DELETE_NAMESPACE DeleteNamespace;
   EFI_DCPMM_CONFIG_GET_ERROR_LOG GetErrorLog;
+  EFI_DCPMM_CONFIG_GET_FW_DEBUG_LOG GetFwDebugLog;
   EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG DumpFwDebugLog;
   EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY SetOptionalConfigurationDataPolicy;
   EFI_DCPMM_CONFIG_RETRIEVE_DIMM_REGISTERS RetrieveDimmRegisters;

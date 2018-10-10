@@ -874,10 +874,16 @@ typedef struct {
   UINT8 Reserved4[105];
 } PT_PAYLOAD_FW_IMAGE_INFO;
 
+
+#define SRAM_LOG_PAGE_SIZE_BYTES KIB_TO_BYTES(2)
+#define SPI_LOG_PAGE_SIZE_BYTES  KIB_TO_BYTES(2)
+
 enum GetFWDebugLogLogAction {
   ActionRetrieveDbgLogSize = 0x00,
   ActionGetDbgLogPage = 0x01,
-  ActionInvalid = 0x02,
+  ActionGetSramLogPage = 0x02,
+  ActionGetSpiLogPage = 0x03,
+  ActionInvalid = 0x04,
 };
 
 /**

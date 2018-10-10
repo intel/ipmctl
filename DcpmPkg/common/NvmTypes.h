@@ -1093,4 +1093,11 @@ Start Diagnostic Command tests codes
 #define DIAGNOSTIC_TEST_FW          (BIT3)
 #define DIAGNOSTIC_TEST_ALL         (DIAGNOSTIC_TEST_QUICK | DIAGNOSTIC_TEST_CONFIG | DIAGNOSTIC_TEST_SECURITY | DIAGNOSTIC_TEST_FW)
 
+/** Get FW Debug Log Source Definitions */
+#define FW_DEBUG_LOG_SOURCE_MEDIA   0
+#define FW_DEBUG_LOG_SOURCE_SRAM    1
+#define FW_DEBUG_LOG_SOURCE_SPI     2
+#define FW_DEBUG_LOG_SOURCE_MAX     2
+#define NUM_FW_DEBUG_LOG_SOURCES    3
+
 #endif /** _NVM_TYPES_H_ **/

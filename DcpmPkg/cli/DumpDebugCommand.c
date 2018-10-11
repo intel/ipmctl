@@ -211,6 +211,9 @@ DumpDebugCommand(
           pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSources]);
       decoded_file_name = CatSPrint(pDumpUserPath, L"_" FORMAT_STR L"_0x%04x_" FORMAT_STR L".txt",
           pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSources]);
+      if (raw_file_name == NULL || decoded_file_name == NULL) {
+        goto FreeAndContinue;
+      }
 
 
       ReturnCode = pNvmDimmConfigProtocol->GetFwDebugLog(pNvmDimmConfigProtocol,

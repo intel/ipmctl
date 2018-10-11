@@ -237,6 +237,8 @@ GetSockets(
 /**
   Retrieve an SMBIOS table type 17 or type 20 for a specific DIMM
 
+  Function available in the DEBUG build only!
+
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] Pid The ID of the DIMM to retrieve
   @param[in] Type The Type of SMBIOS table to retrieve. Valid values: 17, 20.

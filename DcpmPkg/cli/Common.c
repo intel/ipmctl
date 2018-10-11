@@ -1465,7 +1465,7 @@ PrintAppDirectSettings(
 
   if (pFormatList == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
-    NULL;
+    return NULL;
   }
 
   for (Index = 0; Index < FormatNum; Index++) {

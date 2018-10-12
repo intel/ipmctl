@@ -67,7 +67,7 @@ PROPERTIES
 NonCriticalThreshold::
   The upper (for temperatures) or lower (for spare capacity) non-critical alarm
   threshold of the sensor. If the current value of the sensor is at or above for
-  thermal, or at or below for capacity, the theshold value, then the sensor will
+  thermal, or below for capacity, the theshold value, then the sensor will
   indicate a "NonCritical" state. Temperatures may be specified in degrees
   Celsius to a precision of 1/16 a degree.
 

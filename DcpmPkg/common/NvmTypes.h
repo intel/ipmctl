@@ -106,7 +106,7 @@ typedef struct {
 /** DIMM UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< DIMM UID hexadecimal-format representation length, including manufacturing fields
 #define MIN_DIMM_UID_LENGTH      14   //!< DIMM UID hexadecimal-format representation length, excluding manufacturing fields
-#define NVM_EVENT_MSG_LEN 1024 // Length of event message string
+#define NVM_EVENT_MSG_LEN        1024 // Length of event message string
 
 #ifdef OS_BUILD
 #define	NVM_SYSLOG_SOURCE	"NVM_MGMT"

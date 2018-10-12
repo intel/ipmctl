@@ -1029,10 +1029,12 @@ NVM_API NvmStatusCode nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event
     VA_LIST args;
     NVM_EVENT_MSG event_message = { 0 };
     UINT32 size = sizeof(event_message);
-    int ret_code;
+    int ret_code = 0;
 
     VA_START(args, message);
-    ret_code = (int) AsciiVSPrint(event_message, size, message, args);
+    if (*((UINT32 *) args) != DO_NOT_PARSE_ARGS) {
+      ret_code = (int)AsciiVSPrint(event_message, size, message, args);
+    }
     VA_END(args); // Cleans up the list
     if (ret_code > -1 && ret_code < (int)size)
     {
@@ -1303,10 +1305,10 @@ NVM_API NvmStatusCode nvm_store_system_entry_widechar(CONST CHAR16 *source, UINT
     UnicodeStrToAsciiStr(source, ascii_source);
     if (NULL != device_uid) {
       UnicodeStrToAsciiStr(device_uid, ascii_dimm_id);
-      nvm_store_system_entry(ascii_source, event_type, ascii_dimm_id, ascii_event_message);
+      nvm_store_system_entry(ascii_source, event_type, ascii_dimm_id, ascii_event_message, DO_NOT_PARSE_ARGS);
     }
     else {
-      nvm_store_system_entry(ascii_source, event_type, NULL, ascii_event_message);
+      nvm_store_system_entry(ascii_source, event_type, NULL, ascii_event_message, DO_NOT_PARSE_ARGS);
     }
   }
   else {

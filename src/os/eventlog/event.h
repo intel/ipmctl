@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+// Do not parse args marker for the nvm_store_system_entry function
+#define DO_NOT_PARSE_ARGS 0xDEADBABE
+
 // SYSTEM_EVENT_CAT_MGMT
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_1        1 //call to void logStartError(std::string msg)
 #define SYSTEM_EVENT_CAT_MGMT_NUMB_2        2 // 

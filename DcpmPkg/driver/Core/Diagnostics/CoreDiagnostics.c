@@ -184,14 +184,14 @@ SendTheEventAndAppendToDiagnosticsResult(
             UnicodeStrToAsciiStrS(DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH);
             nvm_store_system_entry(NVM_SYSLOG_SOURCE,
                 SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, Code, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
-                AsciiDimmUid, pAsciiStrToAppend);
+                AsciiDimmUid, pAsciiStrToAppend, DO_NOT_PARSE_ARGS);
         }
     }
     else
     {
         nvm_store_system_entry(NVM_SYSLOG_SOURCE,
             SYSTEM_EVENT_CREATE_EVENT_TYPE(Category, EventSeverity, Code, FALSE, StoreInSystemLog, TRUE, TRUE, ActionReqState),
-            NULL, pAsciiStrToAppend);
+            NULL, pAsciiStrToAppend, DO_NOT_PARSE_ARGS);
     }
 
     FREE_POOL_SAFE(pAsciiStrToAppend);

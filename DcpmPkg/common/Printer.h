@@ -321,6 +321,8 @@ do { \
   EFI_STATUS rc; \
   CHAR16 *prev_val = NULL; \
   CHAR16 *concat_val = NULL; \
+  UINTN appendLen = 0; \
+  UINTN prevLen = 0; \
   DATA_SET_CONTEXT *pDataSet = NULL; \
   if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
     NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
@@ -328,7 +330,21 @@ do { \
   if( EFI_SUCCESS != (rc = GetKeyValueWideStr(pDataSet, key_name, &prev_val, L""))) { \
     NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
   } \
-  concat_val = CatSPrint(prev_val,val); \
+  if(NULL != prev_val) { \
+    prevLen = StrLen(prev_val); \
+  } \
+  if(NULL != (CHAR16 *) val) { \
+    appendLen = StrLen(val); \
+  } \
+  concat_val = (CHAR16*)AllocateZeroPool((prevLen + appendLen + 1) * sizeof(CHAR16)); \
+  if(NULL != concat_val) { \
+    if(NULL != prev_val) { \
+      StrCpyS(concat_val, prevLen + appendLen + 1, prev_val); \
+    } \
+    if(NULL != (CHAR16 *) val) { \
+      StrCpyS(concat_val + prevLen, appendLen + 1, val); \
+    } \
+  } \
   if( EFI_SUCCESS != (rc = SetKeyValueWideStr(pDataSet, key_name, concat_val))) { \
     NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
   } \

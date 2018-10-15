@@ -234,7 +234,7 @@ GetSockets(
      OUT SOCKET_INFO **ppSockets
   );
 
-/**
+/*
   Retrieve an SMBIOS table type 17 or type 20 for a specific DIMM
 
   Function available in the DEBUG build only!
@@ -245,7 +245,7 @@ GetSockets(
   @param[out] pTable A pointer to the SMBIOS table
 
   @retval EFI_SUCCESS or an error code (more details in Base.h)
-**/
+*/
 EFI_STATUS
 EFIAPI
 GetDimmSmbiosTable(

@@ -13,16 +13,16 @@
 
 #include "NvmInterface.h"
 
-#define SPARE_CAPACITY_STR              L"PercentageRemaining"
-#define CONTROLLER_TEMPERATURE_STR      L"ControllerTemperature"
-#define MEDIA_TEMPERATURE_STR           L"MediaTemperature"
-#define POWER_ON_TIME_STR               L"PowerOnTime"
-#define LATCHED_DIRTY_SHUTDOWN_COUNT_STR  L"LatchedDirtyShutdownCount"
-#define POWER_CYCLES_STR                L"PowerCycles"
-#define UPTIME_STR                      L"UpTime"
-#define FW_ERROR_COUNT_STR              L"FwErrorCount"
-#define DIMM_HEALTH_STR                 L"Health"
-#define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR   L"UnlatchedDirtyShutdownCount"
+#define SPARE_CAPACITY_STR                    L"PercentageRemaining"
+#define CONTROLLER_TEMPERATURE_STR            L"ControllerTemperature"
+#define MEDIA_TEMPERATURE_STR                 L"MediaTemperature"
+#define POWER_ON_TIME_STR                     L"PowerOnTime"
+#define LATCHED_DIRTY_SHUTDOWN_COUNT_STR      L"LatchedDirtyShutdownCount"
+#define POWER_CYCLES_STR                      L"PowerCycles"
+#define UPTIME_STR                            L"UpTime"
+#define FW_ERROR_COUNT_STR                    L"FwErrorCount"
+#define DIMM_HEALTH_STR                       L"Health"
+#define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR    L"UnlatchedDirtyShutdownCount"
 
 #define SENSORS_COMBINED \
   L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|LatchedDirtyShutdownCount|PowerOnTime|" \

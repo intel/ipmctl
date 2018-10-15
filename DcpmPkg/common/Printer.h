@@ -19,7 +19,7 @@
 
 #define ID_MAX_STR_WIDTH                    10
 #define DIMM_MAX_STR_WIDTH                  22
-#define CAPACITY_MAX_STR_WIDTH              11
+#define CAPACITY_MAX_STR_WIDTH              25
 #define HEALTH_MAX_STR_WIDTH                19 //worst-case - "Noncritical failure"
 #define HEALTH_SHORT_MAX_STR_WIDTH          17
 #define AR_MAX_STR_WIDTH                    15

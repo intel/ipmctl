@@ -1035,6 +1035,9 @@ NVM_API NvmStatusCode nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event
     if (*((UINT32 *) args) != DO_NOT_PARSE_ARGS) {
       ret_code = (int)AsciiVSPrint(event_message, size, message, args);
     }
+    else {
+      ret_code = strcpy_s(event_message, sizeof(event_message), message);
+    }
     VA_END(args); // Cleans up the list
     if (ret_code > -1 && ret_code < (int)size)
     {

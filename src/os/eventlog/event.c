@@ -454,7 +454,7 @@ static char* fgetsrev(char* str, int num, FILE * stream)
     rc = fgets(str, num, stream);
     if (NULL == rc)
         return rc;
-    // Stor information about reached begin of file
+    // Store information about reached begin of file
     if (pos == 0)
     {
         b_o_f = TRUE;

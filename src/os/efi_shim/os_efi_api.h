@@ -258,4 +258,15 @@ UnicodeSPrint(
   ...
 );
 
+/**
+  Function returns value of the first argument form the VA_LIST casted as 32bit
+  unsigned int
+
+  The funciton is used by the event logger to get the DO_NOT_PARSE_ARGS magic number
+
+  @param[in]  args    VA_LIST arguments
+**/
+UINT32
+get_first_arg_from_va_list(VA_LIST args);
+
 #endif //OS_EFI_API_H_

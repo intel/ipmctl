@@ -1032,7 +1032,7 @@ NVM_API NvmStatusCode nvm_store_system_entry (CONST CHAR8 *source,  UINT32 event
     int ret_code = 0;
 
     VA_START(args, message);
-    if (*((UINT32 *) args) != DO_NOT_PARSE_ARGS) {
+    if (get_first_arg_from_va_list(args) != DO_NOT_PARSE_ARGS) {
       ret_code = (int)AsciiVSPrint(event_message, size, message, args);
     }
     else {

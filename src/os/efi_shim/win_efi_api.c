@@ -257,3 +257,9 @@ get_smbios_table(
 {
   return get_smbios_table_alloc(&gSmbiosTable, &gSmbiosTableSize, &gSmbiosMajorVersion, &gSmbiosMinorVersion);
 }
+
+UINT32
+get_first_arg_from_va_list(VA_LIST args)
+{
+  return *((UINT32 *)args);
+}

@@ -428,7 +428,7 @@ static long int find_last_line_in_file(FILE * stream)
     // Jump over the previous EOL char
     pos -= 2;
     // Find the previous line
-    while (fgetc(stream) != '\n')
+    while ((fgetc(stream) != '\n') && (pos != 0))
     {
         if (fseek(stream, --pos, SEEK_SET) != 0)
             return 0;
@@ -450,6 +450,10 @@ static char* fgetsrev(char* str, int num, FILE * stream)
     // Check if we reached begin of file
     if (b_o_f)
         return NULL;
+    // Check if the pointer is not skipping the first char
+    if (pos == 1) {
+      fseek(stream, --pos, SEEK_SET); // Read out the first char
+    }
     // Get the line
     rc = fgets(str, num, stream);
     if (NULL == rc)

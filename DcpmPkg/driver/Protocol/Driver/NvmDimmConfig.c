@@ -3565,6 +3565,7 @@ GetRegions(
   Rc = InitializeNamespaces();
   if (EFI_ERROR(Rc)) {
     NVDIMM_WARN("Failed to initialize Namespaces, error = " FORMAT_EFI_STATUS ".", Rc);
+    Rc = EFI_SUCCESS; // we don't want to fail the GetRegions function in case the Namespace Initialization error
   }
 #endif
 

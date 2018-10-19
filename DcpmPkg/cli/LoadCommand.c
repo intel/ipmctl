@@ -246,7 +246,12 @@ Load(
       pCandidateList = pAllDimms;
     }
   }
-
+  /*If it is FlashSPI and there are no nonfunctional dimms */
+  if (FlashSPI && CandidateListCount == 0) {
+    ReturnCode = EFI_NOT_FOUND;
+    Print(FORMAT_STR_NL, CLI_INFO_NO_NON_FUNCTIONAL_DIMMS);
+    goto Finish;
+  }
   /*Screen for user specific IDs*/
   pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
   if (pTargetValue != NULL && StrLen(pTargetValue) > 0) {

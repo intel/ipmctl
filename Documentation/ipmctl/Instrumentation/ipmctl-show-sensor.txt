@@ -59,15 +59,15 @@ PercentageRemaining::
   (Default) Remaining DCPMM’s life as a percentage value of factory expected
   life span
 
-DirtyShutdowns::
+LatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
   the DCPMM
 
-UnlatchedDirtyShutdowns::
+UnlatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
-  the DCPMM. This counter is the same as DirtyShutdowns except it will always be
-  incremented on a dirty shutdown, even if Latch System Shutdown Status was not
-  enabled
+  the DCPMM. This counter is the same as LatchedDirtyShutdownCount except it will
+  always be incremented on a dirty shutdown, even if Latch System Shutdown Status
+  was not enabled
 
 PowerOnTime::
   (Default) The total power-on time over the lifetime of the DCPMM

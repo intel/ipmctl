@@ -722,11 +722,8 @@ GenerateNamespaceId(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Namespaces) {
     pNamespace = NAMESPACE_FROM_NODE(pNode, NamespaceNode);
-    if (pNamespace->NamespaceId == NamespaceId + 1) {
+    if (pNamespace->NamespaceId > NamespaceId) {
       NamespaceId = pNamespace->NamespaceId;
-    }
-    else if (pNamespace->NamespaceId > NamespaceId) {
-      break;
     }
   }
   NamespaceId++;
@@ -1973,7 +1970,7 @@ RetrieveNamespacesFromLsa(
 
     pNamespace->Flags.AsUint32 = pNamespaceLabel->Flags.AsUint32;
     pNamespace->Signature = NAMESPACE_SIGNATURE;
-    pNamespace->NamespaceId = (UINT16) Index;
+    pNamespace->NamespaceId = GenerateNamespaceId();
     pNamespace->Enabled = FALSE;
     pNamespace->HealthState = NAMESPACE_HEALTH_OK;
     CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), &pNamespaceLabel->Name, NSLABEL_NAME_LEN);

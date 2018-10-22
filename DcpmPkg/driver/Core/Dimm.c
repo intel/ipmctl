@@ -1628,16 +1628,18 @@ GetDimmARSStatusFromARSPayload(
 
   *pDimmARSStatus = ARS_STATUS_UNKNOWN;
 
-  if (pARSPayload->Enable) {
-    *pDimmARSStatus = ARS_STATUS_IN_PROGRESS;
-  } else if (pARSPayload->DPACurrentAddress < pARSPayload->DPAEndAddress) {
+  if ((pARSPayload->DPACurrentAddress == pARSPayload->DPAEndAddress) && !(pARSPayload->Enable)) {
+    *pDimmARSStatus = ARS_STATUS_COMPLETED;
+  }  else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) &&
+             (pARSPayload->DPACurrentAddress < pARSPayload->DPAEndAddress) &&
+             !(pARSPayload->Enable)) {
     *pDimmARSStatus = ARS_STATUS_ABORTED;
-  } else if (pARSPayload->DPACurrentAddress == pARSPayload->DPAEndAddress) {
-    if (pARSPayload->DPACurrentAddress == 0x00) {
-      *pDimmARSStatus = ARS_STATUS_NOT_STARTED;
-    } else {
-      *pDimmARSStatus = ARS_STATUS_COMPLETED;
-    }
+  } else if ((pARSPayload->DPACurrentAddress == 0x00) || (pARSPayload->DPACurrentAddress == pARSPayload->DPAStartAddress)) {
+    *pDimmARSStatus = ARS_STATUS_NOT_STARTED;
+  } else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) && (pARSPayload->Enable)) {
+    *pDimmARSStatus = ARS_STATUS_IN_PROGRESS;
+  } else {
+    *pDimmARSStatus = ARS_STATUS_UNKNOWN;
   }
 
 Finish:

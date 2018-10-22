@@ -436,13 +436,16 @@ SKUViolation::
   - 1: True
 
 ARSStatus::
-  The address range scrub (ARS) operation status for the DCPMM. One of:
+  The address range scrub (ARS) operation status for the DCPMM. The status is a
+  reflection of the last requested ARS, but not necessarily within the current
+  platform power cycle. One of:
   - Unknown - The ARS operation status cannot be determined.
-  - Not started - An ARS operation was not run on the last boot.
+  - Not started - An ARS operation has not started.
   - In progress - An ARS operation is currently in progress.
-  - Completed - An ARS operation completed since the last boot.
-  - Aborted - An ARS operation was started on the last boot but it did not
-    complete because it aborted.
+  - Completed - The last ARS operation has completed.
+  - Aborted - An last ARS operation was aborted.
+
+
 
 OverwriteStatus::
   The overwrite DIMM operation status for the DCPMM. One of:

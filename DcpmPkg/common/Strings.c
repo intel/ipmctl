@@ -293,7 +293,6 @@ nlog_format(
   UINT64 chars_per_int = 15;
   UINT32 current_value = 0;
 
-
   if (NULL == values || !values_length)
   {
     return string_copy(format);
@@ -314,6 +313,7 @@ nlog_format(
   str_len = 0;
   while (*format_head)
   {
+    //advance the format head until a format specifier is found
     if (*format_head != '%')
     {
       str_len++;
@@ -321,11 +321,17 @@ nlog_format(
       continue;
     }
 
+    //found a format specifier now copy everything preceeding it into a return buffer
     if (str_len)
     {
       MyMemCopy(retval_head, str_len, format_start);
       retval_head += str_len;
-      format_head++; //consume the %
+      format_start += str_len;
+    }
+
+    //can happen if no chars between format specifiers, i.e. %02x%04
+    if (*format_head == '%') {
+      format_head++;
       format_start = format_head;
     }
 

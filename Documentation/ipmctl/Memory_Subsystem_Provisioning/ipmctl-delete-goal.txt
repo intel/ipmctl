@@ -73,6 +73,6 @@ SAMPLE OUTPUT
 [verse]
 Delete memory allocation goal from DIMM (DimmID): Success
 Delete memory allocation goal from DIMM (DimmID): Error:
-(Description) Delete memory allocation goal from DCPMEM DIMM
+(Description) Delete memory allocation goal from DCPMM
 (DimmID): Success
 ...

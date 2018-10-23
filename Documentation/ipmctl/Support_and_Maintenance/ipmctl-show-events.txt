@@ -67,7 +67,7 @@ ActionRequired::
 Count::
   Filters output of events limited to the specified count, starting with the
   most recent. Count may be a value from [underline]#1 to 2,147,483,647#.
-  Default = 50
+  Default = 50.
 
 EXAMPLES
 --------

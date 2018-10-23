@@ -46,7 +46,8 @@ file_prefix_dimmUid_dimmHandle_logsource.[bin,txt]
 
 EXAMPLES
 --------
-Dumps and decodes the debug log from DCPMM 0x0001 and 0x0011 using the dictionary file
+Dumps and decodes the debug log from DCPMM 0x0001 and 0x0011 using the
+dictionary file.
 [verse]
 ipmctl dump -destination file_prefix -dict nlog_dict.txt -debug -dimm 0x0001,0x0011
 

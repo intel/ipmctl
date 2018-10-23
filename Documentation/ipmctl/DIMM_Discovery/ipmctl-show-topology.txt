@@ -80,7 +80,7 @@ MemoryType::
   (Default) The DIMM type. One of:
   - Unknown
   - DDR4
-  - DCPMM
+  - DCPM
 
 Capacity::
   (Default) The raw capacity of the DIMM as reported in the SMBIOS Type 17

@@ -67,7 +67,7 @@ system.
 [verse]
 ipmctl delete -dimm Passphrase=123
 
-Erases all the persistent data on all DCPMEM DIMMs by having the CLI prompt for
+Erases all the persistent data on all DCPMMs by having the CLI prompt for
 the current passphrase.
 [verse]
 ipmctl delete -dimm Passphrase=""
@@ -75,9 +75,9 @@ ipmctl delete -dimm Passphrase=""
 LIMITATIONS
 -----------
 To successfully execute this command, the caller must have the appropriate privileges
-and the specified DCPMEM DIMM(s) must be manageable by the host software, not be
+and the specified DCPMM(s) must be manageable by the host software, not be
 in the "frozen" or "exceeded" lock states and any namespaces associated with the
-requested DCPMEM DIMM(s) must be deleted before running this command.
+requested DCPMM(s) must be deleted before running this command.
 
 ifdef::os_build[]
 NOTE: The command is subject to OS Vendor (OSV) support. If OSV does not provide

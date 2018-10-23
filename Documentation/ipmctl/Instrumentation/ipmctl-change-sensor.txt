@@ -28,7 +28,7 @@ OPTIONS
 -force::
   Changing the sensor settings is a potentially destructive operation which
   requires confirmation from the user for each DCPMM. This option suppresses the
-  confirmation
+  confirmation.
 
 -h::
 -help::

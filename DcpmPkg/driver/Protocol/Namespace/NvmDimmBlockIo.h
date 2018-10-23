@@ -3,6 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ /**
+ * @file NvmDimmBlockIo.h
+ * @brief Implementation of the EFI_BLOCK_IO_PROTOCOL for Intel Optane DC
+ *  Persistent Memory Namespaces.
+ */
+
 #ifndef _NVM_DIMM_BLOCKIO_H_
 #define _NVM_DIMM_BLOCKIO_H_
 

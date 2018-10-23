@@ -36,9 +36,9 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Stores the support data in the file dumpfile.dmp
+Stores the support data in the file dumpfile.txt.
 [verse]
-ipmctl dump -destination dumpfile.dmp -support
+ipmctl dump -destination dumpfile.txt -support
 
 RETURN DATA
 -----------

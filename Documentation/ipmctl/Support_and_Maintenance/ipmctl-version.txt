@@ -33,7 +33,7 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Displays the available version information for the DCPMM software components
+Displays the available version information for the DCPMM software components.
 [verse]
 ipmctl version
 

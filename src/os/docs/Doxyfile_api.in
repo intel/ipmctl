@@ -38,7 +38,7 @@ PROJECT_NAME           = "Intel(R) Optane(TM) DC Persistent Memory Software Mana
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = 1.9.2
+PROJECT_NUMBER         = 1.10.1
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -58,7 +58,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = docs/nvm_api
+OUTPUT_DIRECTORY       =
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -855,7 +855,7 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           =
+EXAMPLE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/Documentation/ipmctl/
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
@@ -1052,7 +1052,7 @@ IGNORE_PREFIX          =
 # If the GENERATE_HTML tag is set to YES, doxygen will generate HTML output
 # The default value is: YES.
 
-GENERATE_HTML          = YES
+GENERATE_HTML          = NO
 
 # The HTML_OUTPUT tag is used to specify where the HTML docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1664,7 +1664,7 @@ EXTRA_PACKAGES         =
 # to HTML_HEADER.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_HEADER           =
+LATEX_HEADER           = nvm_management_api_latex_header.tex
 
 # The LATEX_FOOTER tag can be used to specify a personal LaTeX footer for the
 # generated LaTeX document. The footer should contain everything after the last

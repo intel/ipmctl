@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -dimm [TARGETS]
 
 DESCRIPTION
 -----------
-Shows information about one or more DCPMMs
+Shows information about one or more DCPMMs.
 
 OPTIONS
 -------
@@ -118,8 +118,8 @@ HealthStateReason::
   - CAP Self-Test fail
   - Critical internal failure
    +
-  Refer to the Intel® Optane™ DC Persistent Memory Firmware
-  Interface Specification, document number 556488, Section 4.8
+  Refer to the _Intel® Optane™ DC Persistent Memory Firmware
+  Interface Specification_, document number 556488, Section 4.8
   SMART and Health.
 
 ifdef::os_build[]
@@ -163,7 +163,7 @@ DimmUID::
   - SNSNSNSN = SerialNumber
 
 SocketID::
-  The processor socket identifier (i.e., numa node) where the DCPMM is
+  The processor socket identifier (i.e., NUMA node) where the DCPMM is
   installed.
 
 MemControllerID::
@@ -207,12 +207,12 @@ ManufacturingInfoValid::
   - 1: Valid
 
 ManufacturingLocation::
-The manufacturing location assigned by the vendor or "N/A" if
-  ManufacturingInfoValid is 0.
+  The manufacturing location assigned by the vendor or "N/A" if ManufacturingInfoValid
+  is 0.
 
 ManufacturingDate::
-  The manufacturing date assigned by the vendor or "N/A" if
-  ManufacturingInfoValid is 0.
+  The manufacturing date assigned by the vendor or "N/A" if ManufacturingInfoValid
+  is 0.
 
 SerialNumber::
   The serial number assigned by the vendor
@@ -267,6 +267,7 @@ FWVersion::
   * RN = 2-digit revision number
   * SN = 2-digit security revision number
   * bbbb = 4-digit build version
+
   Value may be N/A if the DCPMM is not manageable by the software.
 
 FWAPIVersion::
@@ -277,12 +278,14 @@ FWAPIVersion::
   The firmware interface is intended to be backwards compatible. Therefore,
   the host software allows management of DCPMMs where this version is less than
   or equal to the version stored in the host software. Value may be N/A if the
-  DCPMM is not manageable by the software
+  DCPMM is not manageable by the software.
 
+ifdef::os_build[]
 ActionRequiredEvents::
   A list of the events for this device that require corrective action or
   acknowledgment in the format: Event [ID] - [Message]. Refer to the
   command Show Events for more information about events.
+endif::os_build[]
 
 *The following information is only applicable when the DCPMM is manageable by the
 software as indicated by the "ManageabilityState".*
@@ -290,7 +293,7 @@ software as indicated by the "ManageabilityState".*
 ManufacturerID::
   The manufacturer identifier of the DCPMM
 
-ControllerRevisionID:
+ControllerRevisionID::
   The controller stepping and revision ID retrieved from the controller FW. This
   field uses a different encoding than SubsystemRevisionID.
 
@@ -313,8 +316,9 @@ UnconfiguredCapacity::
 InaccessibleCapacity::
   DCPMM capacity that is inaccessible due to:
   - licensing issue
-  - platform configuration prevents accessing this capacity. e.g. MemoryCapacity
-    is configured and available on a DCPMM but MemoryMode is not enabled by BIOS.
+  - platform configuration prevents accessing this capacity. For example,
+  MemoryCapacity is configured and available on a DCPMM but MemoryMode is not
+  enabled by BIOS.
 
 ReservedCapacity::
   DCPMM capacity reserved for proper alignment
@@ -364,7 +368,7 @@ LatchedLastShutdownStatus::
   - DDRT Surprise Reset: Surprise reset received
 
 UnlatchedLastShutdownStatus::
-  The status of the last shutdown status of the DCPMM. Same ﬁelds as the 
+  The status of the last shutdown status of the DCPMM. Same fields as the
   Latched Last Shutdown Status with the only difference that LLS details 
   on a dirty shutdown is logged, even if the Latch System Shutdown Status
   was not enabled. One or more of:
@@ -412,7 +416,7 @@ SecurityCapabilities::
   - Erase: The DCPMM is erasable.
 
 MasterPassphraseEnabled::
-  This property indicates if masterpassphrase is enabled. If it is disabled,
+  This property indicates if master passphrase is enabled. If it is disabled,
   then it cannot be enabled. One of:
   - 0: Disabled - Cannot be enabled
   - 1: Enabled - Master passphrase can be changed. Cannot be disabled.
@@ -450,10 +454,10 @@ ARSStatus::
 OverwriteStatus::
   The overwrite DIMM operation status for the DCPMM. One of:
   - Unknown - The overwrite DIMM operation status cannot be determined.
-  - Not started - A overwrite DIMM operation was not started on the last
+  - Not started - An overwrite DIMM operation was not started on the last
     boot.
-  - In progress - A overwrite DIMM operation is currently in progress.
-  - Completed - A overwrite DIMM operation completed and a reboot is
+  - In progress - An overwrite DIMM operation is currently in progress.
+  - Completed - An overwrite DIMM operation completed and a reboot is
     required to use the DCPMM.
 
 ViralPolicy::

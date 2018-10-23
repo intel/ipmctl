@@ -41,7 +41,7 @@ RETURN DATA
 -----------
 The default behavior is to display an introduction to CLI followed by a list of
 the supported commands. To display detailed help for a specific command, use the
-help option with that specific command
+help option with that specific command.
 
 SAMPLE OUTPUT
 -------------

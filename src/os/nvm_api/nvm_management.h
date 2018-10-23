@@ -11,6 +11,8 @@
  *
  * @mainpage Intel Optane DC Persistent Memory Software Management API
  *
+ * @license This project is licensed under the BSD-3-Clause License.
+ *
  * @section Introduction
  * The native management API is provided as a convenience for the developers of management utilities.
  * The library serves as an abstraction layer above the underlying driver and operating system.
@@ -25,7 +27,7 @@
  *      - NvmSharedDefs.h: Return code definitions.
  *      - export_api.h: Export definitions for libararies.
  *
- * Please be sure to link with the -lipmctl option when compiling.
+ * Be sure to link with the -lipmctl option when compiling.
  *
  * @subsection Versioning
  * The Management Library is versioned in two ways.  First, standard shared library versioning techniques are used so that the OS run-time linkers can combine applications with the appropriate version of the library if possible.  Second, C macros are provided to allow an application to determine and react to different versions of the library in different run-time environments.
@@ -138,7 +140,7 @@ extern "C"
   arr[0] = (unsigned char)(val & 0xFF);
 
 /**
- * Encode the temperature as a NVM_UINT32
+ * Encode the temperature as a NVM_UINT32.
  */
 static inline NVM_UINT32 nvm_encode_temperature(NVM_REAL32 value)
 {
@@ -149,7 +151,7 @@ static inline NVM_UINT32 nvm_encode_temperature(NVM_REAL32 value)
 }
 
 /**
- * Decode a NVM_UINT32 as a temperature
+ * Decode a NVM_UINT32 as a temperature.
  */
 static inline NVM_REAL32 nvm_decode_temperature(NVM_UINT32 value)
 {
@@ -186,7 +188,7 @@ enum manageability_state {
 };
 
 /**
- * Security and Sanitize state of the DIMM.
+ * Security and Sanitize state of the DCPMM.
  */
 enum lock_state {
   LOCK_STATE_UNKNOWN		= 0,    ///< Device lock state can not be determined.
@@ -202,7 +204,7 @@ enum lock_state {
  * The device type.
  */
 enum memory_type {
-  MEMORY_TYPE_UNKNOWN	= 0,    ///< The type of DIMM cannot be determined.
+  MEMORY_TYPE_UNKNOWN	= 0,    ///< The type of DCPMM cannot be determined.
   MEMORY_TYPE_DDR4	= 1,      ///< DDR4.
   MEMORY_TYPE_NVMDIMM	= 2     ///< NGNVM.
 };
@@ -212,12 +214,12 @@ enum memory_type {
  */
 enum device_form_factor {
   DEVICE_FORM_FACTOR_UNKNOWN	= 0,  ///< The form factor cannot be determined.
-  DEVICE_FORM_FACTOR_DIMM		= 8,    ///< DIMM.
+  DEVICE_FORM_FACTOR_DIMM		= 8,    ///< DCPMM.
   DEVICE_FORM_FACTOR_SODIMM	= 12,   ///< SODIMM.
 };
 
 /**
- * The address range scrub (ARS) operation status for the DIMM
+ * The address range scrub (ARS) operation status for the DCPMM
  */
 enum device_ars_status {
   DEVICE_ARS_STATUS_UNKNOWN,      ///< ARS status unknown
@@ -228,13 +230,13 @@ enum device_ars_status {
 };
 
 /**
- * The overwrite DIMM operation status for the DIMM
+ * The overwrite DCPMM operation status for the DCPMM
  */
 enum device_overwritedimm_status {
-  DEVICE_OVERWRITEDIMM_STATUS_UNKNOWN,      ///< Overwrite DIMM status unknown
-  DEVICE_OVERWRITEDIMM_STATUS_NOTSTARTED,   ///< Overwrite DIMM not started
-  DEVICE_OVERWRITEDIMM_STATUS_INPROGRESS,   ///< Overwrite DIMM in-progress
-  DEVICE_OVERWRITEDIMM_STATUS_COMPLETE      ///< Overwrite DIMM complete
+  DEVICE_OVERWRITEDIMM_STATUS_UNKNOWN,      ///< Overwrite DCPMM status unknown
+  DEVICE_OVERWRITEDIMM_STATUS_NOTSTARTED,   ///< Overwrite DCPMM not started
+  DEVICE_OVERWRITEDIMM_STATUS_INPROGRESS,   ///< Overwrite DCPMM in-progress
+  DEVICE_OVERWRITEDIMM_STATUS_COMPLETE      ///< Overwrite DCPMM complete
 };
 
 /**
@@ -245,7 +247,7 @@ enum device_overwritedimm_status {
  * @endinternal
  */
 enum sensor_type {
-  SENSOR_HEALTH = 0,    ///< DIMM health as reported in the SMART log
+  SENSOR_HEALTH = 0,    ///< DCPMM health as reported in the SMART log
   SENSOR_MEDIA_TEMPERATURE = 1,    ///< Device media temperature in degrees Celsius.
   SENSOR_CONTROLLER_TEMPERATURE = 2,    ///< Device media temperature in degrees Celsius.
   SENSOR_PERCENTAGE_REMAINING = 3,    ///< Amount of percentage remaining as a percentage.
@@ -362,10 +364,10 @@ enum poison_memory_type {
  * Diagnostic test type
  */
 enum diagnostic_test {
-  DIAG_TYPE_QUICK           = 0,    ///< verifies manageable DIMM host mailbox is accessible and basic health
+  DIAG_TYPE_QUICK           = 0,    ///< verifies manageable DCPMM host mailbox is accessible and basic health
   DIAG_TYPE_PLATFORM_CONFIG = 1,    ///< verifies BIOS config matches installed HW
-  DIAG_TYPE_SECURITY        = 2,    ///< verifies all manageable DIMMS have consistent security state
-  DIAG_TYPE_FW_CONSISTENCY  = 3     ///< verifies all DIMMS have consistent FW and attributes
+  DIAG_TYPE_SECURITY        = 2,    ///< verifies all manageable DCPMMs have consistent security state
+  DIAG_TYPE_FW_CONSISTENCY  = 3     ///< verifies all DCPMMs have consistent FW and attributes
 };
 
 /**
@@ -434,11 +436,11 @@ enum app_direct_mode {
 };
 
 /**
- * Detailed status of last DIMM shutdown
+ * Detailed status of last DCPMM shutdown
  */
 enum shutdown_status {
   SHUTDOWN_STATUS_UNKNOWN = 0,                ///< The last shutdown status cannot be determined.
-  SHUTDOWN_STATUS_PM_ADR = 1 << 0,            ///< Async DIMM Refresh command received
+  SHUTDOWN_STATUS_PM_ADR = 1 << 0,            ///< Async DCPMM Refresh command received
   SHUTDOWN_STATUS_PM_S3 = 1 << 1,             ///< PM S3 received
   SHUTDOWN_STATUS_PM_S5 = 1 << 2,             ///< PM S5 received
   SHUTDOWN_STATUS_DDRT_POWER_FAIL = 1 << 3,   ///< DDRT power fail command received
@@ -449,7 +451,7 @@ enum shutdown_status {
 };
 
 /**
- * Extended detailed status of last DIMM shutdown
+ * Extended detailed status of last DCPMM shutdown
  */
 
 enum shutdown_status_extended {
@@ -539,8 +541,8 @@ struct host {
   enum os_type	os_type;                        ///<OS type.
   char		os_name[NVM_OSNAME_LEN];        ///< OS name string.
   char		os_version[NVM_OSVERSION_LEN];  ///< OS version string.
-  NVM_BOOL	mixed_sku;                      ///< One or more DIMMs have different SKUs.
-  NVM_BOOL	sku_violation;                  ///< Configuration of DIMMs are unsupported due to a license issue.
+  NVM_BOOL	mixed_sku;                      ///< One or more DCPMMs have different SKUs.
+  NVM_BOOL	sku_violation;                  ///< Configuration of DCPMMs are unsupported due to a license issue.
   NVM_UINT8     reserved[56];                   ///< reserved
 };
 
@@ -576,21 +578,21 @@ struct memory_topology {
  * Structure that describes the security capabilities of a device
  */
 struct device_security_capabilities {
-  NVM_BOOL	passphrase_capable;         ///< DIMM supports the nvm_(set|remove)_passphrase command
-  NVM_BOOL	unlock_device_capable;      ///< DIMM supports the nvm_unlock_device command
-  NVM_BOOL	erase_crypto_capable;       ///< DIMM supports nvm_erase command with the CRYPTO
-  NVM_BOOL      master_passphrase_capable;  ///< DIMM supports set master passphrase command
+  NVM_BOOL	passphrase_capable;         ///< DCPMM supports the nvm_(set|remove)_passphrase command
+  NVM_BOOL	unlock_device_capable;      ///< DCPMM supports the nvm_unlock_device command
+  NVM_BOOL	erase_crypto_capable;       ///< DCPMM supports nvm_erase command with the CRYPTO
+  NVM_BOOL      master_passphrase_capable;  ///< DCPMM supports set master passphrase command
   NVM_UINT8     reserved[4];                ///< reserved
 };
 
 /**
- * Structure that describes the capabilities supported by a DIMM
+ * Structure that describes the capabilities supported by a DCPMM
  */
 struct device_capabilities {
-  NVM_BOOL	package_sparing_capable;        ///< DIMM supports package sparing
-  NVM_BOOL	memory_mode_capable;            ///< DIMM supports memory mode
-  NVM_BOOL	storage_mode_capable;           ///< DIMM supports storage mode
-  NVM_BOOL	app_direct_mode_capable;        ///< DIMM supports app direct mode
+  NVM_BOOL	package_sparing_capable;        ///< DCPMM supports package sparing
+  NVM_BOOL	memory_mode_capable;            ///< DCPMM supports memory mode
+  NVM_BOOL	storage_mode_capable;           ///< DCPMM supports storage mode
+  NVM_BOOL	app_direct_mode_capable;        ///< DCPMM supports app direct mode
   NVM_UINT8     reserved[4];                    ///< reserved
 };
 
@@ -601,7 +603,7 @@ struct device_capabilities {
  * identify a device.  It is intended that this structure will not change over time to
  * allow the native API library to communicate with older and newer revisions of devices.
  * @internal
- * Keep this structure to data from the Identify DIMM command and calculated data.
+ * Keep this structure to data from the Identify DCPMM command and calculated data.
  * @endinternal
  */
 struct device_discovery {
@@ -626,25 +628,25 @@ struct device_discovery {
   NVM_UINT16		node_controller_id;     ///< The node controller ID.
 
   // SMBIOS
-  enum memory_type	memory_type; ///<	The type of memory used by the DIMM.
+  enum memory_type	memory_type; ///<	The type of memory used by the DCPMM.
 
   ///////////////////////////////////////////////////////////////////////////
 
 
 
-  // Slow (>15ms per passthrough ioctl) properties stored on each DIMM
+  // Slow (>15ms per passthrough ioctl) properties stored on each DCPMM
   ///////////////////////////////////////////////////////////////////////////
-  // Identify Intel DIMM Gen 1
+  // Identify Intel DCPMM Gen 1
   // add_identify_dimm_properties_to_device() in device.c
   NVM_UINT32				dimm_sku;
   NVM_MANUFACTURER			manufacturer;                ///< The manufacturer ID code determined by JEDEC JEP-106 - Little Endian
   NVM_SERIAL_NUMBER			serial_number;               ///< Serial number assigned by the vendor - Little Endian
-  NVM_UINT16				subsystem_vendor_id;             ///< vendor identifier of the DIMM non-volatile memory subsystem controller - Little Endian
-  NVM_UINT16				subsystem_device_id;            ///< device identifier of the DIMM non-volatile memory subsystem controller
-  NVM_UINT16				subsystem_revision_id;          ///< revision identifier of the DIMM non-volatile memory subsystem controller from NFIT
+  NVM_UINT16				subsystem_vendor_id;             ///< vendor identifier of the DCPMM non-volatile memory subsystem controller - Little Endian
+  NVM_UINT16				subsystem_device_id;            ///< device identifier of the DCPMM non-volatile memory subsystem controller
+  NVM_UINT16				subsystem_revision_id;          ///< revision identifier of the DCPMM non-volatile memory subsystem controller from NFIT
   NVM_BOOL				manufacturing_info_valid;       ///< manufacturing location and date validity
-  NVM_UINT8				manufacturing_location;         ///< DIMM manufacturing location assigned by vendor only valid if manufacturing_info_valid=1
-  NVM_UINT16				manufacturing_date;             ///< Date the DIMM was manufactured, assigned by vendor only valid if manufacturing_info_valid=1
+  NVM_UINT8				manufacturing_location;         ///< DCPMM manufacturing location assigned by vendor only valid if manufacturing_info_valid=1
+  NVM_UINT16				manufacturing_date;             ///< Date the DCPMM was manufactured, assigned by vendor only valid if manufacturing_info_valid=1
   char					part_number[NVM_PART_NUM_LEN];  ///< The manufacturer's model part number
   NVM_VERSION				fw_revision;                    ///< The current active firmware revision.
   NVM_VERSION				fw_api_version;                 ///< API version of the currently running FW
@@ -659,16 +661,16 @@ struct device_discovery {
 
   // Get Security State
   // add_security_state_to_device() in device.c
-  enum lock_state				lock_state; // Indicates if the DIMM is in a locked security state
+  enum lock_state				lock_state; // Indicates if the DCPMM is in a locked security state
   ///////////////////////////////////////////////////////////////////////////
 
-  // Whether the dimm is manageable or not is derived based on what calls are
+  // Whether the DCPMM is manageable or not is derived based on what calls are
   // made to populate this struct. If partial properties are requested, then
   // only those properties are used to derive this value. If all properties are
   // requested, then the partial properties plus the firmware API version
   // (requires a DSM call) are used to set this value.
   enum manageability_state manageability;
-  NVM_UINT16				controller_revision_id;          ///< revision identifier of the DIMM non-volatile memory subsystem controller from FIS
+  NVM_UINT16				controller_revision_id;          ///< revision identifier of the DCPMM non-volatile memory subsystem controller from FIS
   NVM_BOOL				master_passphrase_enabled;	 ///< If 1, master passphrase is enabled on the DCPMM
   NVM_UINT8                             reserved[47];                    ///< reserved
 };
@@ -696,21 +698,21 @@ struct device_status {
   NVM_BOOL			is_new;                                 ///< Unincorporated with the rest of the devices.
   NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
   NVM_BOOL			is_missing;                             ///< If the device is missing.
-  NVM_UINT8			package_spares_available;               ///< Number of package spares on the DIMM that are available.
+  NVM_UINT8			package_spares_available;               ///< Number of package spares on the DCPMM that are available.
   NVM_UINT32		last_shutdown_status_details;           ///< Extended fields as per FIS 1.6 (Latched LSS Details/Extended Details)
   enum config_status		config_status;                  ///< Status of last configuration request.
   NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970
-  NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DIMMs have different SKUs.
-  NVM_BOOL			sku_violation;                          ///< The DIMM configuration is unsupported due to a license issue.
-  NVM_BOOL			viral_state;                            ///< Current viral status of DIMM.
-  enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the DIMM
-  enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DIMM operation status for the DIMM
-  NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the DIMM
+  NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DCPMMs have different SKUs.
+  NVM_BOOL			sku_violation;                          ///< The DCPMM configuration is unsupported due to a license issue.
+  NVM_BOOL			viral_state;                            ///< Current viral status of DCPMM.
+  enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the DCPMM
+  enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DCPMM operation status for the DCPMM
+  NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the DCPMM
   NVM_UINT64			newest_error_log_timestamp;             ///< DEPRECATED Timestamp of the newest log entry in the fw error log
   NVM_BOOL			ait_dram_enabled;                       ///< Whether or not the AIT DRAM is enabled.
-  NVM_UINT64			boot_status;                            ///< The status of the DIMM as reported by the firmware in the BSR
-  NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on DIMM
-  NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DIMM
+  NVM_UINT64			boot_status;                            ///< The status of the DCPMM as reported by the firmware in the BSR
+  NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on DCPMM
+  NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DCPMM
   struct device_error_log_status	error_log_status;               ///> DEPRECATED;
   NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per FIS 1.13+ (Unlatched LSS Details/Extended Details)
   NVM_UINT8                             reserved[52];                   ///< reserved
@@ -729,8 +731,8 @@ struct device_performance {
   NVM_UINT64	host_reads;     ///< Lifetime number of DDRT read transactions the DCPMM has serviced
   NVM_UINT64	bytes_written;  ///< Lifetime number of 64 byte writes to media on the DCPMM
   NVM_UINT64	host_writes;    ///< Lifetime number of DDRT write transactions the DCPMM has serviced
-  NVM_UINT64	block_reads;    ///< Invalid field. "Lifetime number of BW read requests the DIMM has serviced"
-  NVM_UINT64	block_writes;   ///< Invalid field. "Lifetime number of BW write requests the DIMM has serviced"
+  NVM_UINT64	block_reads;    ///< Invalid field. "Lifetime number of BW read requests the DCPMM has serviced"
+  NVM_UINT64	block_writes;   ///< Invalid field. "Lifetime number of BW write requests the DCPMM has serviced"
   NVM_UINT8     reserved[8];   ///< reserved
 };
 
@@ -776,14 +778,14 @@ struct sensor {
  * Device partition capacities (in bytes) used for a single device or aggregated across the server.
  */
 struct device_capacities {
-  NVM_UINT64	capacity;                       ///< The total DIMM capacity in bytes.
-  NVM_UINT64	memory_capacity;                ///< The total DIMM capacity in bytes for memory mode.
-  NVM_UINT64	app_direct_capacity;            ///< The total DIMM capacity in bytes for app direct mode.
-  NVM_UINT64	mirrored_app_direct_capacity;   ///< The total DIMM mirrored app direct capacity.
-  NVM_UINT64	storage_capacity;               ///< DIMM capacity allocated that can be used as storage.
-  NVM_UINT64	unconfigured_capacity;          ///< Unconfigured DIMM capacity. Can be used as storage.
-  NVM_UINT64	inaccessible_capacity;          ///< DIMM capacity not licensed for this DIMM SKU.
-  NVM_UINT64	reserved_capacity;              ///< DIMM capacity reserved for metadata.
+  NVM_UINT64	capacity;                       ///< The total DCPMM capacity in bytes.
+  NVM_UINT64	memory_capacity;                ///< The total DCPMM capacity in bytes for memory mode.
+  NVM_UINT64	app_direct_capacity;            ///< The total DCPMM capacity in bytes for app direct mode.
+  NVM_UINT64	mirrored_app_direct_capacity;   ///< The total DCPMM mirrored app direct capacity.
+  NVM_UINT64	storage_capacity;               ///< DCPMM capacity allocated that can be used as storage.
+  NVM_UINT64	unconfigured_capacity;          ///< Unconfigured DCPMM capacity. Can be used as storage.
+  NVM_UINT64	inaccessible_capacity;          ///< DCPMM capacity not licensed for this DCPMM SKU.
+  NVM_UINT64	reserved_capacity;              ///< DCPMM capacity reserved for metadata.
   NVM_UINT8     reserved[64];                   ///< reserved
 };
 
@@ -821,14 +823,14 @@ struct device_fw_info {
 struct device_details {
   struct device_discovery     discovery;                                ///< Basic device identifying information.
   struct device_status		status;                                 ///< Device health and status.
-  struct device_fw_info       fw_info;                                  ///< The firmware image information for the PMem DIMM.
+  struct device_fw_info       fw_info;                                  ///< The firmware image information for the PMem DCPMM.
   NVM_UINT8			padding[2];                             ///< struct alignment
   struct device_performance	performance;                            ///< A snapshot of the performance metrics.
   struct sensor			sensors[NVM_MAX_DEVICE_SENSORS];        ///< Device sensors.
   struct device_capacities	capacities;                             ///< Partition information
 
   // from SMBIOS Type 17 Table
-  enum device_form_factor		form_factor;                            ///< The type of DIMM.
+  enum device_form_factor		form_factor;                            ///< The type of DCPMM.
   NVM_UINT64                  data_width;                               ///< The width in bits used to store user data.
   NVM_UINT64                  total_width;                              ///< The width in bits for data and ECC and/or redundancy.
   NVM_UINT64			speed;                                  ///< The speed in nanoseconds.
@@ -859,7 +861,7 @@ struct memory_capabilities {
 struct platform_capabilities {
   NVM_BOOL			bios_config_support;            ///< available BIOS support for DCPM config changes
   NVM_BOOL			bios_runtime_support;           ///< runtime interface used to validate management configuration
-  NVM_BOOL			memory_mirror_supported;        ///< indicates if DIMM mirror is supported
+  NVM_BOOL			memory_mirror_supported;        ///< indicates if DCPMM mirror is supported
   NVM_BOOL			storage_mode_supported;         ///< is storage mode supported
   NVM_BOOL			memory_spare_supported;         ///< pm spare is supported
   NVM_BOOL			memory_migration_supported;     ///< pm memory migration is supported
@@ -872,25 +874,25 @@ struct platform_capabilities {
 };
 
 /**
- * DIMM software-supported features
+ * DCPMM software-supported features
  */
 struct nvm_features {
   NVM_BOOL	get_platform_capabilities;      ///< get platform supported capabilities
-  NVM_BOOL	get_devices;                    ///< retrieve the list of DIMMs installed on the server
-  NVM_BOOL	get_device_smbios;              ///< retrieve the SMBIOS information for DIMMs
-  NVM_BOOL	get_device_health;              ///< retrieve the health status for DIMMs
-  NVM_BOOL	get_device_settings;            ///< retrieve DIMM settings
-  NVM_BOOL	modify_device_settings;         ///< modify DIMM settings
-  NVM_BOOL	get_device_security;            ///< retrieve DIMM security state
-  NVM_BOOL	modify_device_security;         ///< modify DIMM security settings
-  NVM_BOOL	get_device_performance;         ///< retrieve DIMM performance metrics
-  NVM_BOOL	get_device_firmware;            ///< retrieve DIMM firmware version
-  NVM_BOOL	update_device_firmware;         ///< update the firmware version on DIMMs
-  NVM_BOOL	get_sensors;                    ///< get health sensors on DIMMs
-  NVM_BOOL	modify_sensors;                 ///< modify the DIMM health sensor settings
-  NVM_BOOL	get_device_capacity;            ///< retrieve how DIMM capacity is mapped by BIOS
-  NVM_BOOL	modify_device_capacity;         ///< modify how the DIMM capacity is provisioned
-  NVM_BOOL	get_regions;                    ///< retrieve regions of DIMM capacity
+  NVM_BOOL	get_devices;                    ///< retrieve the list of DCPMMs installed on the server
+  NVM_BOOL	get_device_smbios;              ///< retrieve the SMBIOS information for DCPMMs
+  NVM_BOOL	get_device_health;              ///< retrieve the health status for DCPMMs
+  NVM_BOOL	get_device_settings;            ///< retrieve DCPMM settings
+  NVM_BOOL	modify_device_settings;         ///< modify DCPMM settings
+  NVM_BOOL	get_device_security;            ///< retrieve DCPMM security state
+  NVM_BOOL	modify_device_security;         ///< modify DCPMM security settings
+  NVM_BOOL	get_device_performance;         ///< retrieve DCPMM performance metrics
+  NVM_BOOL	get_device_firmware;            ///< retrieve DCPMM firmware version
+  NVM_BOOL	update_device_firmware;         ///< update the firmware version on DCPMMs
+  NVM_BOOL	get_sensors;                    ///< get health sensors on DCPMMs
+  NVM_BOOL	modify_sensors;                 ///< modify the DCPMM health sensor settings
+  NVM_BOOL	get_device_capacity;            ///< retrieve how DCPMM capacity is mapped by BIOS
+  NVM_BOOL	modify_device_capacity;         ///< modify how the DCPMM capacity is provisioned
+  NVM_BOOL	get_regions;                    ///< retrieve regions of DCPMM capacity
   NVM_BOOL	get_namespaces;                 ///< retrieve the list of namespaces allocated from regions
   NVM_BOOL	get_namespace_details;          ///< retrieve detailed info about each namespace
   NVM_BOOL	create_namespace;               ///< create a new namespace
@@ -907,10 +909,10 @@ struct nvm_features {
   NVM_BOOL	pm_metadata_diagnostic;         ///< persistent memory metadata diagnostic
   NVM_BOOL	security_diagnostic;            ///< security diagnostic
   NVM_BOOL	fw_consistency_diagnostic;      ///< firmware consistency diagnostic
-  NVM_BOOL	memory_mode;                    ///< access DIMM capacity as memory
-  NVM_BOOL	app_direct_mode;                ///< access DIMM persistent memory in App Direct Mode
-  NVM_BOOL	storage_mode;                   ///< access DIMM persistent memory in Storage Mode
-  NVM_BOOL	error_injection;                ///< error injection on DIMMs
+  NVM_BOOL	memory_mode;                    ///< access DCPMM capacity as memory
+  NVM_BOOL	app_direct_mode;                ///< access DCPMM persistent memory in App Direct Mode
+  NVM_BOOL	storage_mode;                   ///< access DCPMM persistent memory in Storage Mode
+  NVM_BOOL	error_injection;                ///< error injection on DCPMMs
   NVM_UINT8	reserved[28];			///< reserved
 };
 
@@ -924,25 +926,25 @@ struct sw_capabilities {
 };
 
 /**
- * Aggregation of DIMM SKU capabilities across all manageable DIMMs in the system.
+ * Aggregation of DCPMM SKU capabilities across all manageable DCPMMs in the system.
  */
 struct dimm_sku_capabilities {
-  NVM_BOOL	mixed_sku;      ///< One or more DIMMs have different SKUs.
-  NVM_BOOL	sku_violation;  ///< One or more DIMMs are in violation of their SKU.
-  NVM_BOOL	memory_sku;     ///< One or more DIMMs support memory mode.
-  NVM_BOOL	app_direct_sku; ///< One or more DIMMs support app direct mode.
-  NVM_BOOL	storage_sku;    ///< One or more DIMMs support storage mode.
+  NVM_BOOL	mixed_sku;      ///< One or more DCPMMs have different SKUs.
+  NVM_BOOL	sku_violation;  ///< One or more DCPMMs are in violation of their SKU.
+  NVM_BOOL	memory_sku;     ///< One or more DCPMMs support memory mode.
+  NVM_BOOL	app_direct_sku; ///< One or more DCPMMs support app direct mode.
+  NVM_BOOL	storage_sku;    ///< One or more DCPMMs support storage mode.
   NVM_UINT8	reserved[3];	///< reserved
 };
 
 /**
- * Combined DIMM capabilities
+ * Combined DCPMM capabilities
  */
 struct nvm_capabilities {
   struct nvm_features		nvm_features;           ///< supported features of the PMM software
   struct sw_capabilities	sw_capabilities;        ///< driver supported capabilities
   struct platform_capabilities	platform_capabilities;  ///< platform-supported capabilities
-  struct dimm_sku_capabilities	sku_capabilities;       ///< aggregated DIMM SKU capabilities
+  struct dimm_sku_capabilities	sku_capabilities;       ///< aggregated DCPMM SKU capabilities
   NVM_UINT8			reserved[56];		///< reserved
 };
 
@@ -957,7 +959,7 @@ struct interleave_set {
   struct interleave_format	settings; ///< interleave format settings
   NVM_UINT8			socket_id;        ///< socket ID
   NVM_UINT8			dimm_count;       ///< number of dimms in member dimms
-  NVM_UID				dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< UID of dimm
+  NVM_UID				dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< UID of DCPMM
   NVM_BOOL			mirrored;         ///< Is mirrored
   enum interleave_set_health	health; ///< health status
   enum encryption_status		encryption;  ///< on if lockstates of all dimms is enabled
@@ -975,30 +977,30 @@ struct region {
   NVM_UINT64		free_capacity;  ///< Available size of the region in bytes.
   NVM_INT16		socket_id;        ///< socket ID
   NVM_UINT16		dimm_count;     ///< The number of dimms in this region.
-  NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique ID's of underlying DIMMs.
-  enum region_health	health; ///< Rolled up health of the underlying DIMMs.
+  NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique ID's of underlying DCPMMs.
+  enum region_health	health; ///< Rolled up health of the underlying DCPMMs.
   NVM_UINT8		reserved[40];		///< reserved
 };
 
 /**
- * Describes the configuration goal for a particular DIMM.
+ * Describes the configuration goal for a particular DCPMM.
  */
 struct config_goal_input {
   NVM_UINT8	persistent_mem_type;      ///< Persistent memory type: 0x1 - AppDirect, 0x2 - AppDirect Non-Interleaved
   NVM_UINT32	volatile_percent;       ///< Volatile region size in percents
   NVM_UINT32	reserved_percent;       ///< Amount of AppDirect memory to not map in percents
-  NVM_UINT32	reserve_dimm;           ///< Reserve one DIMM for use as not interleaved AppDirect memory: 0x0 - RESERVE_DIMM_NONE, 0x1 - STORAGE (NOT SUPPORTED), 0x2 - RESERVE_DIMM_AD_NOT_INTERLEAVED
+  NVM_UINT32	reserve_dimm;           ///< Reserve one DCPMM for use as not interleaved AppDirect memory: 0x0 - RESERVE_DIMM_NONE, 0x1 - STORAGE (NOT SUPPORTED), 0x2 - RESERVE_DIMM_AD_NOT_INTERLEAVED
   NVM_UINT16	namespace_label_major;  ///< Major version of label to init: 0x1 (only supported major version)
   NVM_UINT16	namespace_label_minor;  ///< Minor version of label to init: 0x1 or 0x2 (only supported minor versions)
   NVM_UINT8	reserved[44];		///< reserved
 };
 
 struct config_goal {
-  NVM_UID			dimm_uid;                                        ///< DIMM UID
+  NVM_UID			dimm_uid;                                        ///< DCPMM UID
   NVM_UINT16		socket_id;                                     ///< Socket ID
   NVM_UINT32		persistent_regions;                            ///< count of persistent regions
-  NVM_UINT64		volatile_size;                                 ///< Gibibytes of memory mode capacity on the DIMM.
-  NVM_UINT64		storage_capacity;                              ///< Gibibytes of storage capacity on the DIMM.
+  NVM_UINT64		volatile_size;                                 ///< Gibibytes of memory mode capacity on the DCPMM.
+  NVM_UINT64		storage_capacity;                              ///< Gibibytes of storage capacity on the DCPMM.
   enum interleave_type	interleave_set_type[MAX_IS_PER_DIMM];  ///< type of interleave set
   NVM_UINT64		appdirect_size[MAX_IS_PER_DIMM];               ///< appdirect size
   enum interleave_size	imc_interleaving[MAX_IS_PER_DIMM];     ///< IMC interleaving
@@ -1123,7 +1125,7 @@ struct diagnostic {
 };
 
 /**
- * Describes the identity of a system's physical processor in a NUMA context
+ * Describes the identity of a system's physical processor in a NUMA context.
  */
 struct socket {
   NVM_UINT16	id;                                             ///< Zero-indexed NUMA node number
@@ -1143,7 +1145,7 @@ struct socket {
 
 /** Describes the status of a job */
 struct job {
-  NVM_UID			uid;                ///< UID of the DIMM
+  NVM_UID			uid;                ///< UID of the DCPMM
   NVM_UINT8		percent_complete;   ///< Percent complete
   enum nvm_job_status	status;     ///< Job status
   enum nvm_job_type	type;         ///< Job type
@@ -1179,10 +1181,10 @@ NVM_API int nvm_init();
 NVM_API void nvm_uninit();
 
 /**
-* @brief    Initialize the config file
-* Please notice that only the first call to the function changes the conf file
-* configuration, the following function calls have no effect and the conf file
-* configuration remains unchanged up to next applicaiton execution.
+* @brief    Initialize the config file. Only the first call to the
+* function changes the conf file configuration, the following
+* function calls have no effect and the conf file configuration
+* remains unchanged up to next applicaiton execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
 * @return  void
@@ -1203,9 +1205,9 @@ NVM_API void nvm_conf_file_flush();
  */
 
  /**
- * @brief Create a context for a particular dimm to be used by all other acpi_event_* APIs
+ * @brief Create a context for a particular DCPMM to be used by all other acpi_event_* APIs
  *
- * @param[in] dimm_handle NFIT dimm handle
+ * @param[in] dimm_handle NFIT DCPMM handle
  * @param[out] ctx Pointer to the context.  Note, this context needs to be freed
  * by acpi_event_free_ctx.
  *
@@ -1226,10 +1228,10 @@ NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void **ctx);
 NVM_API int nvm_acpi_event_free_ctx(void *ctx);
 
 /**
-* @brief Retrieve the NFIT dimm handle associated with the context.
+* @brief Retrieve the NFIT DCPMM handle associated with the context.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
-* @param[out] dev_handle pointer to NFIT dimm handle associated with the context
+* @param[out] dev_handle pointer to NFIT DCPMM handle associated with the context
 *
 * @return
 *  ::NVM_SUCCESS @n
@@ -1238,7 +1240,7 @@ NVM_API int nvm_acpi_event_free_ctx(void *ctx);
 NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void *ctx, unsigned int *dev_handle);
 
 /**
-* @brief Retrieve an ACPI notification state of a DIMM.
+* @brief Retrieve an ACPI notification state of a DCPMM.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
 * @param[in] event_type event type to retrieve
@@ -1278,7 +1280,7 @@ NVM_API int nvm_acpi_event_get_monitor_mask(void *ctx, unsigned int *mask);
 
 /**
 * @brief Wait for an asynchronous ACPI notification. This function will return when the timeout expires or an acpi notification
-* occurs for any dimm, whichever happens first.
+* occurs for any DCPMM, whichever happens first.
 *
 * @param[in] acpi_event_contexts Array of contexts
 * @param[in] dimm_cnt Number of contexts in the array
@@ -1295,11 +1297,11 @@ NVM_API int nvm_acpi_event_get_monitor_mask(void *ctx, unsigned int *mask);
 NVM_API int nvm_acpi_wait_for_event(void *acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result *event_result);
 
 /**
-* @brief Convert DIMM UID to DIMM ID and/or DIMM Handle
+* @brief Convert DCPMM UID to DCPMM ID and/or DCPMM Handle
 *
-* @param[in] device_uid UID of the DIMM
-* @param[out] dimm_id optional. pointer to get DIMM ID.
-* @param[out] dimm_handle optional. pointer to get DIMM Handle.
+* @param[in] device_uid UID of the DCPMM
+* @param[out] dimm_id optional. pointer to get DCPMM ID.
+* @param[out] dimm_handle optional. pointer to get DCPMM Handle.
 *
 * @return
 * ::NVM_SUCCESS @n
@@ -1343,12 +1345,12 @@ NVM_API int nvm_get_host_name(char *host_name, const NVM_SIZE host_name_len);
 NVM_API int nvm_get_host(struct host *p_host);
 
 /**
- * @brief Retrieve a list of installed software versions related to DIMM management.
+ * @brief Retrieve a list of installed software versions related to DCPMM management.
  * @param[in,out] p_inventory
  *              A pointer to a #sw_inventory structure allocated by the caller.
  * @pre The caller must have administrative privileges.
  * @remarks If a version cannot be retrieved, the version is returned as all zeros.
- * @remarks DIMM firmware revisions are not included.
+ * @remarks DCPMM firmware revisions are not included.
  * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
@@ -1713,7 +1715,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid, const NVM_PATH path,
 NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
 
 /**
- * @brief Retrieve the aggregate capacities across all manageable DIMMs in the system.
+ * @brief Retrieve the aggregate capacities across all manageable DCPMMs in the system.
  * @param[in,out] p_capacities
  *              A pointer to an #device_capacities structure allocated by the caller.
  * @pre The caller must have administrative privileges.
@@ -1725,7 +1727,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties);
 NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 
 /**
-* @brief Retrieve all the health sensors for the specified DIMM.
+* @brief Retrieve all the health sensors for the specified DCPMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in,out] p_sensors
@@ -1746,7 +1748,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities);
 NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors, const NVM_UINT16 count);
 
 /**
-* @brief Retrieve a specific health sensor from the specified DIMM.
+* @brief Retrieve a specific health sensor from the specified DCPMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type
@@ -1764,7 +1766,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
 
 /**
 * @brief Change the critical threshold on the specified health sensor for the specified
-* DIMM.
+* DCPMM.
 * @param[in] device_uid
 *              The device identifier.
 * @param[in] s_type
@@ -1783,7 +1785,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid, const enum sensor_
 /**
  * @}
  * @defgroup Security
- * These functions manage the security state of Intel DC Persistent Memory DIMMs
+ * These functions manage the security state of Intel Optane DC Persistent Memory Modules.
  * @{
  */
 
@@ -1835,7 +1837,7 @@ NVM_API int nvm_set_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE ol
  *            ::NVM_ERR_BAD_DEVICE @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_INVALID_PERMISSIONS @n
- *            ::NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND @n
+ *            ::NVM_ERR_MANAGEABLE_DCPMM_NOT_FOUND @n
  *            ::NVM_ERR_DRIVER_FAILED @n
  *            ::NVM_ERR_INVALID_SECURITY_OPERATION @n
  *            ::NVM_ERR_INVALID_PASSPHRASE @n
@@ -1871,14 +1873,14 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid, const NVM_PASSPHRASE
 NVM_API int nvm_unlock_device(const NVM_UID device_uid, const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len);
 
 /**
- * @brief Prevent security lock state changes to the dimm until the next reboot
+ * @brief Prevent security lock state changes to the DCPMM until the next reboot
  * @param[in] device_uid
  *              The device identifier.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
  * @pre The device supports unlocking a device.
- * @pre Current dimm security state is unlocked
- * @post dimm security state will be frozen
+ * @pre Current DCPMM security state is unlocked.
+ * @post DCPMM security state will be frozen.
  * @post Device security will be changed.
  * @return
  *            ::NVM_SUCCESS @n
@@ -1923,7 +1925,7 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
 
 /**
  * @brief If data at rest security is not enabled and master passphrase is enabled
- * in the DIMM security state, this method modifies the master passphrase.
+ * in the DCPMM security state, this method modifies the master passphrase.
  * @param[in] device_uid
  *              The device identifier.
  * @param[in] old_master_passphrase
@@ -1940,7 +1942,7 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
  * @pre The device master passphrase is enabled.
  * @pre Device security is not enabled.
  * @pre The device master passphrase limit has not been reached.
- * @pre The device master passphrase has not been changed on this boot
+ * @pre The device master passphrase has not been changed on this boot.
  * @return
  *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n
  *            ::NVM_ERR_SECURITY_COUNT_EXPIRED @n
@@ -1957,7 +1959,7 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
  * @}
  * @defgroup Events
  * These functions provide access to various events generated from
- * Intel DC Persistent Memory DIMMs
+ * Intel Optane DC Persistent Memory Modules.
  * @{
  */
 
@@ -2057,7 +2059,7 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
 NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
 
 /**
- * @brief Modify how the DIMM capacity is provisioned by the BIOS on the next reboot.
+ * @brief Modify how the DCPMM capacity is provisioned by the BIOS on the next reboot.
  * @param p_device_uids
  *              Pointer to list of device uids to configure.
  *              If NULL, all devices on platform will be configured.
@@ -2066,10 +2068,10 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
  * @param p_goal
  *              Values that defines how regions are created.
  * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
+ * @pre The specified DCPMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
- *              DIMM must be deleted first.
- * @remarks This operation stores the specified configuration goal on the DIMM
+ *              DCPMM must be deleted first.
+ * @remarks This operation stores the specified configuration goal on the DCPMM
  *              for the BIOS to read on the next reboot.
  * @return
  *            ::NVM_SUCCESS @n
@@ -2079,7 +2081,7 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
 NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal_input *p_goal);
 
 /**
- * @brief Retrieve the configuration goal from the specified DIMM.
+ * @brief Retrieve the configuration goal from the specified DCPMM.
  * @param p_device_uids
  *              Pointer to list of device uids to retrieve config goal from.
  *              If NULL, retrieve goal configs from all devices on platform.
@@ -2088,11 +2090,11 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  * @param p_goal
  *              A pointer to a list of config_goal structures allocated by the caller.
  * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
- * @remarks A configuration goal is stored on the DIMM until the
+ * @pre The specified DCPMM is manageable by the host software.
+ * @remarks A configuration goal is stored on the DCPMM until the
  *              BIOS successfully processes it on reboot.
  *              Use @link nvm_delete_config_goal @endlink to erase a
- *              configuration goal from a DIMM.
+ *              configuration goal from a DCPMM.
  * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @nNVM_SUCCESS @n
@@ -2101,14 +2103,14 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal *p_goal);
 
 /**
- * @brief Erase the region configuration goal from the specified DIMM.
+ * @brief Erase the region configuration goal from the specified DCPMM.
  * @param p_device_uids
  *              Pointer to list of device uids to erase the region config goal.
  *              If NULL, all devices on platform will have their region config goal erased.
  * @param device_uids_count
  *              Number of devices in p_device_uids list.
  * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
+ * @pre The specified DCPMM is manageable by the host software.
  * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_INVALID_PARAMETER @n
@@ -2117,7 +2119,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
 NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count);
 
 /**
- * @brief Store the configuration settings of how the DIMM capacity
+ * @brief Store the configuration settings of how the DCPMM capacity
  * is currently provisioned to a file in order to duplicate the
  * configuration elsewhere.
  * @param file
@@ -2125,8 +2127,8 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  * @param file_len
  *              String length of file, should be < #NVM_PATH_LEN.
  * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
- * @pre The specified DIMM is currently configured.
+ * @pre The specified DCPMM is manageable by the host software.
+ * @pre The specified DCPMM is currently configured.
  * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_DUMP_FILE_OPERATION_FAILED @n
@@ -2135,7 +2137,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
 NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 
 /**
- * @brief Modify how the DIMM capacity is provisioned by the BIOS on the
+ * @brief Modify how the DCPMM capacity is provisioned by the BIOS on the
  * next reboot by applying the configuration goal previously stored in the
  * specified file with @link nvm_dump_config @endlink.
  * @param file
@@ -2143,12 +2145,12 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
  * @param file_len
  *              String length of file, should be < NVM_PATH_LEN.
  * @pre The caller has administrative privileges.
- * @pre The specified DIMM is manageable by the host software.
+ * @pre The specified DCPMM is manageable by the host software.
  * @pre Any existing namespaces created from capacity on the
- *              DIMM must be deleted first.
+ *              DCPMM must be deleted first.
  * @pre If the configuration goal contains any app direct memory,
- *              all DIMMs that are part of the interleave set must be included in the file.
- * @pre The specified DIMM must be >= the total capacity of the DIMM
+ *              all DCPMMs that are part of the interleave set must be included in the file.
+ * @pre The specified DCPMM must be >= the total capacity of the DCPMM
  *              specified in the file.
  * @return
  *            ::NVM_SUCCESS @n
@@ -2160,7 +2162,7 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 /**
  * @}
  * @defgroup Support
- * These functions provide various support functionality of Intel DC Persistent Memory DIMMs.
+ * These functions provide various support functionality of Intel Optane DC Persistent Memory Modules.
  * @{
  */
 
@@ -2248,7 +2250,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
  *              error information allocated by the caller.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @pre This interface is only supported by the underlying DIMM firmware when it's in a
+ * @pre This interface is only supported by the underlying DCPMM firmware when it is in a
  * debug state.
  * @return
  *            ::NVM_SUCCESS @n
@@ -2259,7 +2261,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct devic
 
 /**
  * @brief Clear an injected error into the device specified for debugging purposes.
- *        From a FIS perspective, it's setting the enable/disable field to disable for
+ *        From a FIS perspective, it is setting the enable/disable field to disable for
  *        the specified injected error type.
  * @param[in] device_uid
  *              The device identifier.
@@ -2268,7 +2270,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID device_uid, const struct devic
  *              error information allocated by the caller.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
- * @pre This interface is only supported by the underlying DIMM firmware when it's in a
+ * @pre This interface is only supported by the underlying DCPMM firmware when it is in a
  * debug state.
  * @return
  *            ::NVM_SUCCESS @n
@@ -2285,7 +2287,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const stru
  *              A pointer to a #diagnostic structure containing the
  *              diagnostic to run allocated by the caller.
  * @param[in,out] p_results
- *              The number of diagnostic failures. To see full results use #nvm_get_events
+ *              The number of diagnostic failures. To see full results use #nvm_get_events.
  * @pre The caller has administrative privileges.
  * @pre The device is manageable.
  * @return
@@ -2296,7 +2298,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid, const stru
 NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic *p_diagnostic, NVM_UINT32 *p_results);
 
 /**
- * @brief Set the user preference config value in DIMM software.  See the Change Preferences section of the CLI
+ * @brief Set the user preference config value in DCPMM software.  See the Change Preferences section of the CLI
  * specification for a list of supported preferences and values.  Note, this API does not verify if the property key
  * is supported, or if the value is supported per the CLI specification.
  * @param[in] key
@@ -2310,7 +2312,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic
 NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY key, const NVM_PREFERENCE_VALUE value);
 
 /**
- * @brief Clear namespace label storage area in PCD on the specified DIMM.
+ * @brief Clear namespace label storage area in PCD on the specified DCPMM.
  * @param[in] device_uid
  *              The device identifier.
  * @return
@@ -2324,7 +2326,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid);
  * @}
  * @defgroup Logging
  * These functions manage the logging features of
- * Intel Persistent Memory Control software.
+ * Intel Optane DC Persistent Memory Control software.
  * @{
  */
 
@@ -2425,7 +2427,7 @@ NVM_API int nvm_free_context(const NVM_BOOL force);
 
 /**
  * A device pass-through command. Refer to the FW specification
- * for specific details about the individual fields
+ * for specific details about the individual fields.
  */
 struct device_pt_cmd {
   NVM_UINT8	opcode;                         ///< Command opcode.

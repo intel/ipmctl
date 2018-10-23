@@ -109,7 +109,7 @@ ipmctl create -goal MemoryMode=20 PersistentMemoryType=AppDirectNotInterleaved
 
 Configures the DCPMM capacity across the entire system with 25% of the
 capacity in Memory Mode, 25% reserved and the remaining 50% as App Direct.
-Configures the DCPMEM DIMM capacity across the entire system with 25% of the
+Configures the DCPMM capacity across the entire system with 25% of the
 capacity in Memory Mode and the remaining 75% as App Direct.
 [verse]
 ipmctl create -goal MemoryMode=25 PersistentMemoryType=AppDirect Reserved=25
@@ -131,11 +131,19 @@ In order to successfully execute this command:
   Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to
   other storage before executing this command.
-  Targets may be limited to individual DCPMMs or sockets, but all DCPMEM
-  modules on affected sockets must be configured when the command finishes. If the
+  Targets may be limited to individual DCPMMs or sockets, but all DCPMMs
+  on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
-  Refer to the command Section 2.1.5 [TODO], "Show System Capabilities." for a list of BIOS
+  Refer to <<2.1.5 Show System Capabilities>> for a list of BIOS
   supported modes.
+
+- Some requests are dependent on BIOS and/or platform configuration. For details, refer
+  to the _Intel® Optane™ DC Persistent Memory Software Memory Allocation Rules_,
+  document number 564194. For example: 
+ - Provisioning DCPMMs for Memory Mode while BIOS is configured for 1LM only
+   will result in unused capacity.
+ - Provisioning DCPMMs for Memory Mode while not all iMCs have at least one DCPMM
+   will result in unused capacity.
 
 RETURN DATA
 -----------

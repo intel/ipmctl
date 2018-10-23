@@ -4,10 +4,37 @@
  */
 
 /**
- * @file NvmDimmConfig.h
- * @brief Implementation of the EFI_NVMDIMMS_CONFIG_PROTOCOL, a custom protocol
- * to configure and manage DCPMMs
- */
+* @file NvmDimmConfig.h
+* @brief Implementation of the EFI_DCPMM_CONFIG_PROTOCOL, a custom protocol
+* to configure and manage DCPMMs
+*
+* @mainpage Intel Optane DC Persistent Memory Software UEFI FW Protocols
+*
+* @section Introduction
+* This document provides descriptions of protocols implemented by the Intel DC
+* Persistent Memory Driver for UEFI FW. Protocols implemented include:
+* - EFI_DRIVER_BINDING_PROTOCOL
+* - EFI_COMPONENT_NAME_PROTOCOL & EFI_COMPONENT_NAME2_PROTOCOL
+* - EFI_DRIVER_DIAGNOSTICS_PROTOCOL & EFI_DRIVER_DIAGNOSTICS2_PROTOCOL
+*  - Provides diagnostic tests for the specified DCPMM
+* - EFI_DRIVER_HEALTH_PROTOCOL
+*  - Provides standardized health status for the specified DCPMM
+* - EFI_DCPMM_CONFIG_PROTOCOL
+*  - Provides configuration management for the specified DCPMM, including:
+*   - Discovery
+*   - Provisioning
+*   - Health & Instrumentation
+*   - Support and Maintenance
+*   - Diagnostics & Debug
+* - EFI_FIRMWARE_MANAGEMENT_PROTOCOL
+*  - Provides standardized DCPMM firmware management
+* - EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
+*  - Provides standardizd DCPMM security functionality
+* - EFI_BLOCK_IO_PROTOCOL
+*  - Provides BLOCK IO access to the specificed DPCMM Namespaces
+* - EFI_NVDIMM_LABEL_PROTOCOL
+*  - Provides standardized access to the specified DCPMM Labels
+*/
 
 #ifndef _NVMDIMM_CONFIG_H_
 #define _NVMDIMM_CONFIG_H_
@@ -94,7 +121,8 @@ typedef enum {
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pDimmCount The number of DCPMMs found in NFIT.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -109,7 +137,8 @@ GetDimmCount(
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -128,7 +157,8 @@ GetUninitializedDimmCount(
   the properties from the pDimms struct(s) will be populated.
   @param[out] pDimms The dimm list found in NFIT.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -146,7 +176,8 @@ GetDimms(
   @param[in] DimmCount The size of pDimms.
   @param[out] pDimms The dimm list found thru SMBUS.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -166,7 +197,8 @@ GetUninitializedDimms(
   the properties from the pDimm struct will be populated.
   @param[out] pDimmInfo A pointer to the dimm found in NFIT
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -187,7 +219,8 @@ GetDimm(
   Counter data
   @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -206,7 +239,8 @@ GetPMONRegisters(
   @param[in] PMONGroupEnable Specifies which PMON Group to enable
   @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -224,7 +258,8 @@ SetPMONRegisters(
   @param[out] pSocketCount The size of the list of sockets.
   @param[out] ppSockets Pointer to the list of sockets.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -244,8 +279,9 @@ GetSockets(
   @param[in] Type The Type of SMBIOS table to retrieve. Valid values: 17, 20.
   @param[out] pTable A pointer to the SMBIOS table
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
-*/
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
 EFI_STATUS
 EFIAPI
 GetDimmSmbiosTable(
@@ -267,7 +303,8 @@ GetDimmSmbiosTable(
   @param[out] pSecurityState security state of a DIMM or all DIMMs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -294,7 +331,8 @@ GetSecurityState(
   @param[in] pNewPassphrase a pointer to string with new passphrase
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -314,7 +352,8 @@ SetSecurityState(
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] ppNFit A pointer to the output NFIT table
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -329,7 +368,8 @@ GetAcpiNFit (
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] ppPcat output buffer with PCAT tables
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -344,7 +384,8 @@ GetAcpiPcat (
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] ppPMTTtbl output buffer with PMTT tables
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -359,14 +400,15 @@ GetAcpiPMTT(
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param{in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
+  @param[in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
   @param[out] pDimmPcdInfoCount Number of items in Dimm PCD Info
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
   **/
 EFI_STATUS
 EFIAPI
@@ -388,7 +430,8 @@ GetPcd(
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -409,7 +452,8 @@ DeletePcd(
 
   @param[out] pNvmStatus NVM status code
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -431,7 +475,8 @@ UpdateDimmFw(
   @param[out] pNvmStatus NVM error code
   @param[out] pCommandStatus  command status list
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -461,7 +506,8 @@ RecoverDimmFw(
     need to be provided if examine flag is set
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -486,7 +532,8 @@ UpdateFw(
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pCount The number of regions found.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -503,7 +550,8 @@ GetRegionCount(
   @param[out] pRegions The region info list
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -522,7 +570,8 @@ GetRegions(
   @param[out] pRegion A pointer to the region info
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -539,7 +588,8 @@ GetRegion(
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[out] pMemoryResourcesInfo structure filled with required information
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -555,7 +605,8 @@ GetMemoryResourcesInfo(
   @param[out] pDimmCount pointer to the number of dimms on list
   @param[out] pDimmsPerformanceData list of dimms' performance data
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -573,7 +624,8 @@ GetDimmsPerformanceData(
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[out] pSysCapInfo is a pointer to table with System Capabilities information
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -592,7 +644,8 @@ GetSystemCapabilitiesInfo(
   @param[out] pEnabledState Current enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -616,7 +669,8 @@ GetAlarmThresholds (
   @param[in]  EnabledState New enable state for sensor
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -649,13 +703,14 @@ SetAlarmThresholds (
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
+  @param[out] pSensorInfo pointer to structure containing all Health and Smarth variables.
   @param[out] pLatchedLastShutdownStatusDetails pointer to store latched last shutdown status details. See @ref LATCHED_LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
   @param[out] pUnlatchedLastShutdownStatusDetails pointer to store unlatched last shutdown status details. See @ref UNLATCHED_LAST_SHUTDOWN_STATUS_DETAILS_COMBINED for details. See FIS for additional details.
   @param[out] pLastShutdownTime pointer to store the time the system was last shutdown. Number of seconds since 1 January 1970. See FIS field LST for additional details.
   @param[out] pAitDramEnabled pointer to store the state of AIT DRAM. See @ref AIT_DRAM_STATUS.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -675,7 +730,8 @@ GetSmartAndHealth (
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[out] pVersion output version in string format MM.mm. M = Major, m = minor.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -692,7 +748,8 @@ GetDriverApiVersion(
   @param[out] pNamespacesCount Count of namespaces on the list
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI GetNamespaces (
@@ -718,7 +775,8 @@ EFIAPI GetNamespaces (
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -754,7 +812,8 @@ GetActualRegionsGoalCapacities(
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -784,7 +843,8 @@ CreateGoalConfig (
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -810,7 +870,8 @@ DeleteGoalConfig (
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -830,11 +891,12 @@ GetGoalConfigs(
   Dump region goal configuration into the file
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pFilePath Name is a pointer to a dump file path
+  @param[in] pFilePath is a pointer to a dump file path
   @param[in] pDevicePath is a pointer to a device where dump file will be stored
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
+  @param[out] pCommandStatus structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -856,7 +918,8 @@ DumpGoalConfig(
   @param[in] pFileString Buffer for Region Goal configuration from file
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -880,7 +943,8 @@ LoadGoalConfig(
   @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
   @param[out] ppResult Pointer to the combined result string
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -914,7 +978,8 @@ StartDiagnostic(
   @param[out] pNamespaceId Pointer to the ID of the namespace that is created
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -946,7 +1011,8 @@ CreateNamespace(
     may cause data corruption
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 
   Do not change property if NULL pointer provided
 **/
@@ -969,7 +1035,8 @@ ModifyNamespace(
   @param[in] NamespaceId the ID of the namespace to be removed.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -993,7 +1060,8 @@ DeleteNamespace(
   @param[out] pErrorLogs - output array of errors. Allocated to elmeent count indicated by pErrorLogCount
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1012,15 +1080,15 @@ GetErrorLog(
 /**
   Get the debug log from a specified dimm and fw debug log source
 
+  Note: The caller is responsible for freeing the returned buffer
+
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmID identifier of what dimm to get log pages from
   @param[in] LogSource debug log source buffer to retrieve
   @param[in] Reserved for future use. Must be 0 for now.
-  @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug log
-  @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
+  @param[out] ppDebugLogBuffer an allocated buffer containing the raw debug log
+  @param[out] pDebugLogBufferSize the size of the raw debug log buffer
   @param[out] pCommandStatus structure containing detailed NVM error codes
-
-  Note: The caller is responsible for freeing the returned buffer
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
@@ -1066,12 +1134,13 @@ DumpFwDebugLog(
   Set Optional Configuration Data Policy using FW command
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
-  @param[in] DimmIdsCount - number of elements in pDimmIds
-  @param[in] FirstFastRefresh - FirstFastRefresh value to set
+  @param[in] pDimmIds pointer to array of UINT16 Dimm ids to set
+  @param[in] DimmIdsCount number of elements in pDimmIds
+  @param[in] FirstFastRefresh FirstFastRefresh value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 
 **/
 EFI_STATUS
@@ -1088,15 +1157,16 @@ SetOptionalConfigurationDataPolicy(
   Get requested number of specific DIMM registers for given DIMM id
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[in] DimmId - ID of a DIMM.
-  @param[out] pBsr - Pointer to buffer for Boot Status register, contains
+  @param[in] DimmId ID of a DIMM.
+  @param[out] pBsr Pointer to buffer for Boot Status register, contains
               high and low 4B register.
-  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status Register
-  @param[in] SmallOutputRegisterCount - Number of small output registers to get, max 32.
-  @param[out] pFwMailboxOutput - Pointer to buffer for Host Fw Mailbox small output Register.
+  @param[out] pFwMailboxStatus Pointer to buffer for Host Fw Mailbox Status Register
+  @param[in] SmallOutputRegisterCount Number of small output registers to get, max 32.
+  @param[out] pFwMailboxOutput Pointer to buffer for Host Fw Mailbox small output Register.
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1111,8 +1181,9 @@ RetrieveDimmRegisters(
   );
 
 /**
-  Pass Thru command to FW
+  Pass Through Command to FW
   Sends a command to FW and waits for response from firmware
+  NOTE: Available only in debug driver.
 
   @param[in,out] pCmd A firmware command structure
   @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
@@ -1120,7 +1191,8 @@ RetrieveDimmRegisters(
              If Timeout is greater than zero, then this function will return EFI_TIMEOUT if the time required to execute
              the receive data command is greater than Timeout.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1138,7 +1210,8 @@ PassThruCommand(
   @param[in]  Recovery - Perform on non-functional dimms
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1160,7 +1233,8 @@ DimmFormat(
   @param[out] pReservedCapacity required reserved capacity
   @param[out] pInaccessibleCapacity required inaccessible capacity
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1181,7 +1255,8 @@ GetCapacities(
   @param[out] ppTopologyDimm Structure containing information about DDR4 entries from SMBIOS.
   @param[out] pTopologyDimmsNumber Number of DDR4 entries found in SMBIOS.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1200,7 +1275,8 @@ GetSystemTopology(
 
   @param[out] pARSStatus pointer to the current system ARS status.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1216,7 +1292,8 @@ GetARSStatus(
   @param[out] pDriverPreferences pointer to the current driver preferences.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)k
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)k
 **/
 EFI_STATUS
 EFIAPI
@@ -1233,7 +1310,8 @@ GetDriverPreferences(
   @param[in] pDriverPreferences pointer to the desired driver preferences.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1250,7 +1328,8 @@ SetDriverPreferences(
   @param[in] DimmID DimmID of device to retrieve support data from
   @param[out] pDdrtTrainingStatus pointer to the dimms DDRT training status
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1271,7 +1350,8 @@ GetDdrtIoInitInfo(
   @param[out] pEstimatedTimeLeft pointer to time to completion BCD
   @param[out] pFwStatus pointer to completed mailbox status code
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1291,16 +1371,16 @@ GetLongOpStatus(
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
-
-  @param[IN] ErrorInjType - Error Inject type
-  @param[IN] ClearStatus - Is clear status set
-  @param[IN] pInjectTemperatureValue - Pointer to inject temperature
-  @param[IN] pInjectPoisonAddress - Pointer to inject poison address
-  @param[IN] pPoisonType - Pointer to poison type
-  @param[IN] pPercentageRemaining - Pointer to percentage remaining
+  @param[in] ErrorInjType - Error Inject type
+  @param[in] ClearStatus - Is clear status set
+  @param[in] pInjectTemperatureValue - Pointer to inject temperature
+  @param[in] pInjectPoisonAddress - Pointer to inject poison address
+  @param[in] pPoisonType - Pointer to poison type
+  @param[in] pPercentageRemaining - Pointer to percentage remaining
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1327,7 +1407,8 @@ InjectError(
   @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
   @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1356,7 +1437,8 @@ GetBSRAndBootStatusBitMask(
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -1376,12 +1458,15 @@ VerifyTargetDimms(
 
 /**
   Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
+  NOTE: Available only in debug driver.
+
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] DimmID Handle of the DIMM
   @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
   @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
 
-  @retval EFI_SUCCESS or an error code (more details in Base.h)
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI

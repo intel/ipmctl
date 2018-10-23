@@ -21,7 +21,7 @@ set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
 set(IPMCTL_SPEC_VERSION_MAJOR 1)
-set(IPMCTL_SPEC_VERSION_MINOR 12)
+set(IPMCTL_SPEC_VERSION_MINOR 13)
 set(IPMCTL_DRAFT "-draft")
 set(IPMCTL_SPEC_VERSION_STRING ${IPMCTL_SPEC_VERSION_MAJOR}.${IPMCTL_SPEC_VERSION_MINOR}${IPMCTL_DRAFT})
 
@@ -645,12 +645,13 @@ if(DOXYGEN_FOUND)
 #----------------------------------------------------------------------------------------------------
 # Generate NVM C API documentation with Doxygen
 #----------------------------------------------------------------------------------------------------
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${ROOT}/output/${BUILD_TYPE}/Doxyfile @ONLY)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api @ONLY)
 	add_custom_target(doc-api
-		mkdir -p ${ROOT}/output/${BUILD_TYPE}/docs
-		COMMAND ${DOXYGEN_EXECUTABLE} ${ROOT}/output/${BUILD_TYPE}/Doxyfile
+		mkdir -p ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
+		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/Documentation/nvm_management_api/nvm_management_api_latex_header.tex ${CMAKE_BINARY_DIR}/docs/nvm_api/
+		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api
 		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
-		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}
+		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
 		)
 endif()

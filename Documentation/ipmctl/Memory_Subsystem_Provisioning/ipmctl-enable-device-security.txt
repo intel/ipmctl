@@ -18,8 +18,8 @@ ConfirmPassphrase=(string)
 
 DESCRIPTION
 -----------
-Enable data-at-rest security for the persistent memory on one or more DCPMEM
-modules by setting a passphrase.
+Enable data-at-rest security for the persistent memory on one or more DCPMMs
+by setting a passphrase.
 
 OPTIONS
 -------
@@ -35,10 +35,10 @@ NOTE: The file does not need to contain the ConfirmPassphrase property
 TARGETS
 -------
 -dimm (DimmIDs)::
-  Set the passphrase on specific DCPMEM modules by supplying one or more comma
-  separated DCPMEM module identifiers. However, this is not recommended as it
+  Set the passphrase on specific DCPMMs by supplying one or more comma
+  separated DCPMM identifiers. However, this is not recommended as it
   may put the system in an undesirable state. The default is to set the
-  passphrase on all manageable DCPMEM modules.
+  passphrase on all manageable DCPMMs.
 
 PROPERTIES
 ----------
@@ -59,14 +59,14 @@ Set a passphrase on DIMM 0x0001.
 [verse]
 ipmctl set -dimm 0x0001 NewPassphrase=123 ConfirmPassphrase=123
 
-Sets a passphrase on DCPMEM module 1234 by supplying the passphrase in the file
+Sets a passphrase on DCPMM 0x0001 by supplying the passphrase in the file
 mypassphrase.file. In this example, the format of the file would be:
 
 #ascii +
 NewPassphrase=myNewPassphrase
 
 [verse]
-ipmctl set -source mypassphrase.file -dimm 1234 NewPassphrase="" ConfirmPassphrase=""
+ipmctl set -source mypassphrase.file -dimm 0x0001 NewPassphrase="" ConfirmPassphrase=""
 
 LIMITATIONS
 -----------
@@ -85,7 +85,7 @@ endif::os_build[]
 RETURN DATA
 -----------
 If empty strings are provided for the passphrase properties and the source option is not
-included, the user will be prompted (once for all DCPMEM modules) to enter the new
+included, the user will be prompted (once for all DCPMMs) to enter the new
 passphrase and then again to confirm the new passphrase as described below. The
 passphrase characters will be hidden.
 
@@ -93,10 +93,9 @@ New passphrase: \\****
  +
 Confirm new passphrase: \****
 
-For each DCPMEM module, the CLI will indicate the status of the set passphrase
-operation. If a failure occurs when setting the passphrase on multiple DCPMEM
-modules, the process will exit and not continue updating the remaining DCPMEM
-modules.
+For each DCPMM, the CLI will indicate the status of the set passphrase
+operation. If a failure occurs when setting the passphrase on multiple DCPMMs,
+the process will exit and not continue updating the remaining DCPMMs.
 
 SAMPLE OUTPUT
 ------------

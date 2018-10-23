@@ -89,9 +89,8 @@ Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
     some configurations it can also be downgraded when PN.RN is the same; use the
     examine option to determine if the security revision number can be downgraded.
   - The build number (bbbb) can be upgraded or downgraded. However, if the firmware
-
-API version in the firmware image is lower than is supported by the host software
-and would make the DCPMM become unmanageable, the downgrade is not supported.
+    API version in the firmware image is lower than is supported by the host software
+    and would make the DCPMM become unmanageable, the downgrade is not supported.
 
 NOTE: Once a firmware image is staged for execution, a power cycle is required
 before another firmware image of the same type (production or debug) can be

@@ -50,7 +50,7 @@ Lists a few key fields for the server.
 [verse]
 ipmctl show -system -host
 
-Displays the host server operating system name
+Displays the host server operating system name.
 [verse]
 ipmctl show -d osname -system -host
 
@@ -72,11 +72,11 @@ MixedSKU::
   (Default) One or more DCPMMs in the system have different SKUs. One of:
   - 0: False
   - 1: True - In this case, the host software operates in a read-only mode and
-  does not allow changes to the DCPMEM DIMMs and their associated capacity.
+  does not allow changes to the DCPMMs and their associated capacity.
 
 SKUViolation::
   (Default) One or more DCPMMs in the system has an unsupported configuration
   due to a license issue. One of:
   - 0: False
   - 1: True - In this case, the host software operates in a read-only mode and
-  does not allow changes to the DCPMMs and their associated capacity
+  does not allow changes to the DCPMMs and their associated capacity.

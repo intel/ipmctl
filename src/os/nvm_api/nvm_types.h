@@ -263,7 +263,7 @@ enum acpi_event_type
 #define MAX_ERROR_LOG_SZ 64
 
 /**
- * Describes an error log
+ * Describes an error log.
  */
 typedef struct _ERROR_LOG {
   NVM_UINT16 DimmID;                        ///< The DimmID
@@ -273,7 +273,7 @@ typedef struct _ERROR_LOG {
 } ERROR_LOG;
 
 /**
- * Describes a thermal error log
+ * Describes a thermal error log.
  */
 typedef struct _THERMAL_ERROR_LOG_PER_DIMM {
   NVM_INT16   Temperature;        ///< In celsius
@@ -284,7 +284,7 @@ typedef struct _THERMAL_ERROR_LOG_PER_DIMM {
 } THERMAL_ERROR_LOG;
 
 /**
- * Describes a media error log
+ * Describes a media error log.
  */
 typedef struct _MEDIA_ERROR_LOG_PER_DIMM {
   NVM_UINT64  Dpa;                ///< Specifies DPA address of error

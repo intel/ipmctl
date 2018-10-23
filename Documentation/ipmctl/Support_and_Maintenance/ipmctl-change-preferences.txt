@@ -54,6 +54,27 @@ CLI_DEFAULT_SIZE::
   - "TB": Displays all capacities in terabytes.
   - "TiB": Displays all capacities in tebibytes.
 
+APPDIRECT_SETTINGS::
+  The interleave settings to use when creating App Direct capacity in the
+  format: [underline]#(IMCSize_ChannelSize)#. Must be one of the BIOS supported
+  App Direct settings returned by the command Section 2.1.5,
+  "Show System Capabilities."
+
+NOTE: ByOne is not a valid setting for this preference. The default is
+"RECOMMENDED" which uses the BIOS recommended App Direct settings.
+
+NOTE: The same interleave settings are used for all the App Direct capacity in
+the system. Therefore, if any App Direct capacity already exists, this
+preference cannot be changed.
+
+APPDIRECT_GRANULARITY::
+  The minimum App Direct granularity per DCPMM supported by the command Section
+  2.2.5, "Create Memory Allocation Goal.". One of:
+  - "RECOMMENDED": Use the recommended App Direct granularity of 32 GiB.
+  - "1": Allows 1 GiB App Direct granularity which may result in App Direct region
+       sizes that are not recommended.
+
+ifdef::os_build[]
 PERFORMANCE_MONITOR_ENABLED::
   Whether or not the monitor is periodically storing performance metrics for the
   DCPMMs in the host server. One of:
@@ -82,26 +103,6 @@ DBG_LOG_MAX::
   The default value is 0 (no limit). The valid range is
   [underline]#0 - 2,147,483,647#.
 
-APPDIRECT_SETTINGS::
-  The interleave settings to use when creating App Direct capacity in the
-  format: [underline]#(IMCSize_ChannelSize)#. Must be one of the BIOS supported
-  App Direct settings returned by the command Section 2.1.5,
-  "Show System Capabilities."
-
-NOTE: ByOne is not a valid setting for this preference. The default is
-"RECOMMENDED" which uses the BIOS recommended App Direct settings.
-
-NOTE: The same interleave settings are used for all the App Direct capacity in
-the system. Therefore, if any App Direct capacity already exists, this
-preference cannot be changed.
-
-APPDIRECT_GRANULARITY::
-  The minimum App Direct granularity per DCPMM supported by the command Section
-  2.2.5, "Create Memory Allocation Goal.". One of:
-  - "RECOMMENDED": Use the recommended App Direct granularity of 32 GiB.
-  - "1": Allows 1 GiB App Direct granularity which may result in App Direct region
-       sizes that are not recommended.
-
 DBG_LOG_LEVEL::
   Whether debug logging is enabled in the DCPMM host software. These logs
   pertain to the operation of the command-line tool only and do not reflect any
@@ -111,6 +112,7 @@ DBG_LOG_LEVEL::
   - "2": Log Warnings, Errors.
   - "3": Log Informational, Warnings, Errors.
   - "4": Log Verbose, Informational, Warnings, Errors.
+#endif::os_build[]
 
 EXAMPLES
 --------

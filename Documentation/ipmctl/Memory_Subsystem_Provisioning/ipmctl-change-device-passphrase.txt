@@ -59,8 +59,8 @@ ConfirmPassphrase::
 
 EXAMPLES
 --------
-Changes the passphrase from mypassphrase to mynewpassphrase on all DCPMEM
-modules.
+Changes the passphrase from mypassphrase to mynewpassphrase on all DCPMMs.
+
 [verse]
 ipmctl set -dimm Passphrase=mypassphrase NewPassphrase=mynewpassphrase
  ConfirmPassphrase=mynewpassphrase

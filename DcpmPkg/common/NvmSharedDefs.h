@@ -186,17 +186,17 @@ typedef struct _PMON_REGISTERS {
   /**
   This will specify whether or not to return the extra smart data along with the PMON
   Counter data.
-  0x0 - No Smart Data DDRT or Media
-  0x1 - DDRT Data only to be returned
-  0x2 - Media Data only to be returned
-  0x3 - DDRT & Media Data to be returned
-  All other values reserved
+  - 0x0 - No Smart Data DDRT or Media.
+  - 0x1 - DDRT Data only to be returned.
+  - 0x2 - Media Data only to be returned.
+  - 0x3 - DDRT & Media Data to be returned.
+  - All other values reserved.
   **/
   unsigned char       SmartDataMask;
   unsigned char       Reserved1[3];
   /**
   This will specify which group that is currently enabled. If no groups are enabled Group
-  F will be returned
+  F will be returned.
   **/
   unsigned char       GroupEnabled;
   unsigned char       Reserved2[19];

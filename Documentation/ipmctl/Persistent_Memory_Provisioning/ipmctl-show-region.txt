@@ -126,4 +126,4 @@ ISetID::
 endif::os_build[]
 
 DimmID::
-  A list of all the DIMMs that are part of this reg
+  A list of all the DIMMs that are part of this reg.

@@ -26,6 +26,10 @@
 #define NAMESPACE_SIGNATURE                SIGNATURE_64('N', 'A', 'M', 'E', 'S', 'P', 'C', 'E')
 #define NAMESPACE_FROM_NODE(a, FieldName)  CR(a, NAMESPACE, FieldName, NAMESPACE_SIGNATURE)
 
+#define BYTE_MASK 0xFF
+#define BYTE_SHIFT 8
+#define CREATE_NAMESPACE_ID(InterleaveSetIndex, NamespaceIndex) (((UINT8) (InterleaveSetIndex & BYTE_MASK)) << BYTE_SHIFT) + (UINT8)(NamespaceIndex & BYTE_MASK)
+
 typedef struct {
   DIMM *pDimm;
   UINT64 Dpa;
@@ -397,7 +401,7 @@ RandomizeBuffer(
 UINT16
 EFIAPI
 GenerateNamespaceId(
-  VOID
+  IN UINT16 RequestedInterleaveSetIndex
   );
 
 /**

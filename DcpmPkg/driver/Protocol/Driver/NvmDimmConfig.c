@@ -6784,7 +6784,7 @@ Build NAMESPACE structure
     goto Finish;
   }
 
-  pNamespace->NamespaceId = GenerateNamespaceId();
+  pNamespace->NamespaceId = GenerateNamespaceId(RegionId);
   pNamespace->Enabled = TRUE;
   pNamespace->Signature = NAMESPACE_SIGNATURE;
   pNamespace->Flags.Values.ReadOnly = FALSE;

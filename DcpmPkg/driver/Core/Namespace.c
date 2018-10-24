@@ -708,22 +708,32 @@ RandomizeBuffer(
 
 /**
   Generate a NamespaceId value
+  Namespace Id is a 16bit value and consists of the InterleaveSetIndex/RegionId
+  (upper 8bits) and slot index (lower 8 bits).
+  Neigher InterleaveSetIndex nor slot index can equal zero. The lowest namespace
+  Id value is 0x0101.
 
   @retval The generated ID
 **/
 UINT16
 EFIAPI
-GenerateNamespaceId(
+GenerateNamespaceId(UINT16 RequestedInterleaveSetIndex
   )
 {
   NAMESPACE *pNamespace = NULL;
   LIST_ENTRY *pNode = NULL;
-  UINT16 NamespaceId = 0;
+  UINT16 NamespaceId = CREATE_NAMESPACE_ID(RequestedInterleaveSetIndex, 0);
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Namespaces) {
     pNamespace = NAMESPACE_FROM_NODE(pNode, NamespaceNode);
-    if (pNamespace->NamespaceId > NamespaceId) {
+    if (pNamespace->pParentIS->InterleaveSetIndex != RequestedInterleaveSetIndex) {
+      continue; // Find the namespace with requested interleave set index
+    }
+    if (pNamespace->NamespaceId == NamespaceId + 1) {
       NamespaceId = pNamespace->NamespaceId;
+    }
+    else if (pNamespace->NamespaceId > NamespaceId) {
+      break;
     }
   }
   NamespaceId++;
@@ -1970,7 +1980,6 @@ RetrieveNamespacesFromLsa(
 
     pNamespace->Flags.AsUint32 = pNamespaceLabel->Flags.AsUint32;
     pNamespace->Signature = NAMESPACE_SIGNATURE;
-    pNamespace->NamespaceId = GenerateNamespaceId();
     pNamespace->Enabled = FALSE;
     pNamespace->HealthState = NAMESPACE_HEALTH_OK;
     CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), &pNamespaceLabel->Name, NSLABEL_NAME_LEN);
@@ -2266,7 +2275,8 @@ RetrieveNamespacesFromLsa(
         pNamespace->Enabled = FALSE;
       }
     }
-
+    // Get the Index of the last namespace Id for the previous interleave set
+    pNamespace->NamespaceId = CREATE_NAMESPACE_ID(pNamespace->pParentIS->InterleaveSetIndex, Index);
     InsertTailList(pNamespacesList, &pNamespace->NamespaceNode);
 
     if (pNamespace->HealthState != NAMESPACE_HEALTH_CRITICAL &&

@@ -953,14 +953,21 @@ int os_get_os_type()
 int os_mkdir(OS_PATH path)
 {
   char* p;
-  for (p = strchr(path + 1, '/'); p; p = strchr(p + 1, '/'))
+  char seperator = '/';
+  if (NULL == strchr(path + 1, '/') && NULL != strchr(path + 1, '\\'))
+  {
+    seperator = '\\';
+  }
+
+  for (p = strchr(path + 1, seperator); p; p = strchr(p + 1, seperator))
   {
     *p = '\0';
     if (_mkdir(path) == -1) {
-      if (errno != EEXIST) { *p = '/'; return -1; }
+      if (errno != EEXIST) { *p = seperator; return -1; }
     }
-    *p = '/';
+    *p = seperator;
   }
+
   return 0;
 }
 

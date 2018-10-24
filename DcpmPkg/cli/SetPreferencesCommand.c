@@ -246,6 +246,7 @@ SetPreferences(
   CHAR16 *pTypeValue = NULL;
   UINTN VariableSize = 0;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  UINT16 PropertyCnt = 0;
 
   NVDIMM_ENTRY();
 
@@ -264,6 +265,20 @@ SetPreferences(
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    goto Finish;
+  }
+
+  //verify we have atleast one preference to set.
+  ReturnCode = GetPropertyCount(pCmd, &PropertyCnt);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    goto Finish;
+  }
+  else if (0 == PropertyCnt) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("Preference not specified\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCOMPLETE_SYNTAX);
     goto Finish;
   }
 

@@ -1159,6 +1159,39 @@ GetPropertyValue(
   return ReturnCode;
 }
 
+/**
+  Get the number of properties
+    @param[in] pCmd is a pointer to the struct Command that contains the user input.
+    @param[out] pPropertyCount represents the number of properties defined on the command line
+
+    @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+    @retval EFI_SUCCESS
+**/
+EFI_STATUS
+GetPropertyCount(
+  IN     CONST struct Command *pCmd,
+  IN     UINT16 *pPropertyCount
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  INT32 Index;
+  NVDIMM_ENTRY();
+
+  if (pCmd == NULL || pPropertyCount == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *pPropertyCount = 0;
+  for (Index = 0; Index < MAX_PROPERTIES; Index++) {
+    if (pCmd->properties[Index].PropertyName[0] != 0) {
+      *pPropertyCount += 1;
+    }
+  }
+
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 /*
  * Check if a specific option is found
  */

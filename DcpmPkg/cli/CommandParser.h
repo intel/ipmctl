@@ -468,6 +468,20 @@ ContainsCharacter(
   );
 
 /**
+  Get the number of properties
+    @param[in] pCmd is a pointer to the struct Command that contains the user input.
+    @param[out] pPropertyCount represents the number of properties defined on the command line
+
+    @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+    @retval EFI_SUCCESS
+**/
+EFI_STATUS
+GetPropertyCount(
+  IN     CONST struct Command *pCmd,
+  IN     UINT16 *pPropertyCount
+);
+
+/**
   Check if a specific property is found
     @param[in] pCmd is a pointer to the struct Command that contains the user input.
     @param[in] pProperty is a CHAR16 string that represents the property we want to find.

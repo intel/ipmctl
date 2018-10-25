@@ -31,10 +31,10 @@ TARGET
 ------
 -destination (file_prefix)::
   The command will create files that use the given filename as a prefix
-  and append the dimm UID, dimm handle, debug log source, and the appropriate
+  and append the DCPMM UID, DCPMM handle, debug log source, and the appropriate
   file type (.bin for encoded logs, .txt for decoded logs) onto the end.
 [verse]
-file_prefix_dimmUid_dimmHandle_logsource.[bin,txt]
+file_prefix_Uid_Handle_logsource.[bin,txt]
 
 -dict (path)::
   Optional file path to the dictionary file. If supplied, the command will

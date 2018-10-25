@@ -13,13 +13,13 @@ ipmctl-dump-support-data - Dumps a support snapshot to a file
 SYNOPSIS
 --------
 [verse]
-ipmctl dump [OPTIONS] -destination (path) -support
+ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -support
 
 DESCRIPTION
 -----------
 Creates a support snapshot and dump support data to a file for off-line analysis
 by support personnel. Support data may include system log(s), error log(s),
-trace log(s), platform configuration, sensor information, and diagnostic
+trace log(s), platform configuration, sensor information, events and diagnostic
 results.
 
 OPTIONS
@@ -34,11 +34,21 @@ ifdef::os_build[]
     Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
+TARGET
+------
+-destination (file_prefix)::
+  This command creates a text file with a name starting with the given file_prefix option and dumps the platform support information into it.
+  In addition, this command also outputs the debug log information in separate files. Refer to <<2.6.3 Dump Debug Log>> for more details.
+
+-dict (path)::
+  Optional file path to the dictionary file. If supplied, the command will
+  create both the binary debug log and a text file with decoded log data with
+  the file prefix specified by -destination. This option is used only to dump the debug log information.
 EXAMPLES
 --------
-Stores the support data in the file dumpfile.txt.
+Creates a text file named dumpfile_platform_support_info.txt and stores the platform supported data in that file. Also, dumps the debug log info in the related files that start with the file name dumpfile_*. Refer to <<2.6.3 Dump Debug Log>> for more info on the output files.
 [verse]
-ipmctl dump -destination dumpfile.txt -support
+ipmctl dump -destination dumpfile_ -dict nlog_dict.1.1.0.0000.txt -support
 
 RETURN DATA
 -----------
@@ -46,4 +56,4 @@ Simply returns the status of the operation.
 
 SAMPLE OUTPUT
 -------------
-Dump support data: Success|Error (Code) - (Description)
+Dump support data succesfully written to dumpfile_platform_support_info.txt

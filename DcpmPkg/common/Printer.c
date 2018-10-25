@@ -950,7 +950,7 @@ static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCod
 */
 static VOID PrintXmlEndErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (!PrintCtx->FormatTypeFlags.Flags.EsxCustom && !PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
-    Print(L"<Error/>\n");
+    Print(L"</Error>\n");
   }
 }
 

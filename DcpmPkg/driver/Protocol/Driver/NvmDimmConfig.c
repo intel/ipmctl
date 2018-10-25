@@ -989,7 +989,7 @@ GetDimmInfo (
 
     pDimmInfo->MaxAveragePowerBudget = pDevCharacteristics->MaxAveragePowerBudget;
   }
-  
+
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY)
   {
     /* Get current FirstFastRefresh state */
@@ -6616,7 +6616,7 @@ Finish:
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
-  @param[in] pName - Namespace name.
+  @param[in] pName - Namespace name. If NULL, name will be empty.
   @param[in] Enabled boolean value to decide when the driver should hide this
     namespace to the OS
   @param[in] Mode -  boolean value to decide when the namespace
@@ -6675,7 +6675,6 @@ Finish:
   UINT32 Flags = 0;
   LIST_ENTRY *pNode = NULL;
   BOOLEAN FailFlag = FALSE;
-  CHAR16 *pTempName16 = NULL;
   DIMM_REGION *pDimmRegion = NULL;
   UINT64 ISAvailableCapacity = 0;
   BOOLEAN CapacitySpecified = FALSE;
@@ -6805,25 +6804,8 @@ Build NAMESPACE structure
   pNamespace->Flags.Values.Updating = TRUE;
   pNamespace->pParentIS = pIS;
 
-  // No name was provided by the user, lets use our default
-  if (pName == NULL) {
-    pTempName16 = CatSPrint(NULL, L"NvDimmVol%d", pNamespace->NamespaceId);
-    // If we failed to allocate the Dimm name - no big deal, just leave it as it is
-    if (pTempName16 != NULL) {
-        pName = AllocateZeroPool((StrLen(pTempName16) + 1) * sizeof(CHAR8));
-      if (pName != NULL) {
-          UnicodeStrToAsciiStrS(pTempName16, pName, StrLen(pTempName16) + 1);
-      }
-    }
-  }
-
-  // Lets leave this check in case that the allocation failed
   if (pName != NULL) {
     CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), pName, MIN(AsciiStrLen(pName), NSLABEL_NAME_LEN));
-    // If we allocated the buffer here, not in the CLI - we need to free it after its copied
-    if (pTempName16 != NULL) {
-      FREE_POOL_SAFE(pName);
-    }
   }
 
   GenerateRandomGuid(&NamespaceGUID);
@@ -7015,7 +6997,6 @@ Finish:
     FREE_POOL_SAFE(pNamespace);
     ReturnCode = EFI_ABORTED;
   }
-  FREE_POOL_SAFE(pTempName16);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

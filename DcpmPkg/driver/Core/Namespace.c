@@ -2,6 +2,8 @@
  * Copyright (c) 2018, Intel Corporation.
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#include <Uefi.h>
+#include <Library/RngLib.h>
 #include <Debug.h>
 #include <Types.h>
 #include "Namespace.h"
@@ -14,6 +16,7 @@
 #include <Convert.h>
 #include "AsmCommands.h"
 #include <Version.h>
+
 
 extern EFI_SYSTEM_TABLE *gSystemTable;
 extern EFI_DIMMS_DATA gDimmsUefiData[MAX_DIMMS];
@@ -740,6 +743,7 @@ GenerateNamespaceId(UINT16 RequestedInterleaveSetIndex
   return NamespaceId;
 }
 
+
 /**
   Generate a random (version 4) GUID
 
@@ -752,12 +756,11 @@ GenerateRandomGuid(
      OUT GUID *pResultGuid
   )
 {
+#ifndef OS_BUILD
   GUID GeneratedGuid;
 
   SetMem(&GeneratedGuid, sizeof(GeneratedGuid), 0x0);
-
-  RandomizeBuffer((UINT8 *) &GeneratedGuid, sizeof(GeneratedGuid));
-
+  GetRandomNumber128((UINT64*)&GeneratedGuid);
   // Set the version of the GUID to the 4th version (Random GUID)
   GeneratedGuid.Data3 |= 0x4000; // 0b0100000000000000 Make sure that the 4 bits are set
   GeneratedGuid.Data3 &= 0x4FFF; // 0b0100111111111111 Zero other bits from the highest hex
@@ -767,7 +770,9 @@ GenerateRandomGuid(
   GeneratedGuid.Data4[0] &= 0xBF; // 0b10111111 Clear the 7th bit
 
   CopyMem_S(pResultGuid, sizeof(*pResultGuid), &GeneratedGuid, sizeof(*pResultGuid));
+#endif
 }
+
 
 /**
   Function changes Namespace slot status to a required state.

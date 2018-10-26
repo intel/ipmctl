@@ -6686,7 +6686,7 @@ Finish:
   UINT64 MaxSize = 0;
   MEMMAP_RANGE AppDirectRange;
   BOOLEAN UseLatestLabelVersion = FALSE;
-
+  NAMESPACE *pNamespace1 = NULL;
   ZeroMem(pDimms, sizeof(pDimms));
   ZeroMem(&NamespaceGUID, sizeof(NamespaceGUID));
   ZeroMem(&AppDirectRange, sizeof(AppDirectRange));
@@ -6808,7 +6808,17 @@ Build NAMESPACE structure
     CopyMem_S(&pNamespace->Name, sizeof(pNamespace->Name), pName, MIN(AsciiStrLen(pName), NSLABEL_NAME_LEN));
   }
 
+  GenerateNSGUID:
   GenerateRandomGuid(&NamespaceGUID);
+
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Namespaces) {
+    pNamespace1 = NAMESPACE_FROM_NODE(pNode, NamespaceNode);
+    if (CompareMem(&pNamespace1->NamespaceGuid, &NamespaceGUID, NSGUID_LEN) == 0)
+    {
+      goto GenerateNSGUID;
+    }
+  }
+
   CopyMem_S(&pNamespace->NamespaceGuid, sizeof(pNamespace->NamespaceGuid), &NamespaceGUID, NSGUID_LEN);
   /** Provision Namespace Capacity using only Region Id **/
   ReturnCode = AllocateNamespaceCapacity(NULL, pIS, pActualNamespaceCapacity, pNamespace);
@@ -7000,7 +7010,6 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
 
 /**
   Get namespaces info

@@ -844,18 +844,18 @@ typedef struct _DEBUG_LOG_INFO {
  * Sensor IDs for the various sensor types
  * @{
  */
-#define SENSOR_TYPE_DIMM_HEALTH                0                ///< DIMM Health Sensor ID
-#define SENSOR_TYPE_MEDIA_TEMPERATURE          1                ///< Media Temperature Sensor ID
-#define SENSOR_TYPE_CONTROLLER_TEMPERATURE     2                ///< Controller Temperature Sensor ID
-#define SENSOR_TYPE_PERCENTAGE_REMAINING       3                ///< Percentage Remaining Sensor ID
-#define SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWNS    4                ///< Latched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_POWER_ON_TIME              5                ///< Power On Time Sensor ID
-#define SENSOR_TYPE_UP_TIME                    6                ///< Up-Time Sensor ID
-#define SENSOR_TYPE_POWER_CYCLES               7                ///< Power Cycles Sensor ID
-#define SENSOR_TYPE_FW_ERROR_COUNT             8                ///< Firmware Error Count Sensor ID
-#define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWNS  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_ALL                        10               ///< All Sensor IDs
-#define SENSOR_TYPE_COUNT                      SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
+#define SENSOR_TYPE_DIMM_HEALTH                     0                ///< DIMM Health Sensor ID
+#define SENSOR_TYPE_MEDIA_TEMPERATURE               1                ///< Media Temperature Sensor ID
+#define SENSOR_TYPE_CONTROLLER_TEMPERATURE          2                ///< Controller Temperature Sensor ID
+#define SENSOR_TYPE_PERCENTAGE_REMAINING            3                ///< Percentage Remaining Sensor ID
+#define SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWN_COUNT    4                ///< Latched Dirty Shutdowns Count Sensor ID
+#define SENSOR_TYPE_POWER_ON_TIME                   5                ///< Power On Time Sensor ID
+#define SENSOR_TYPE_UP_TIME                         6                ///< Up-Time Sensor ID
+#define SENSOR_TYPE_POWER_CYCLES                    7                ///< Power Cycles Sensor ID
+#define SENSOR_TYPE_FW_ERROR_COUNT                  8                ///< Firmware Error Count Sensor ID
+#define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
+#define SENSOR_TYPE_ALL                             10               ///< All Sensor IDs
+#define SENSOR_TYPE_COUNT                           SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
 
 /** @} */
 

@@ -2384,7 +2384,7 @@ GetSmartAndHealth (
   pSensorInfo->UpTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.UpTime;
   pSensorInfo->PowerCycles = pPayloadSmartAndHealth->VendorSpecificData.PowerCycles;
   pSensorInfo->PowerOnTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.PowerOnTime;
-  pSensorInfo->LatchedDirtyShutdowns = pPayloadSmartAndHealth->LatchedDirtyShutdownCount;
+  pSensorInfo->LatchedDirtyShutdownCount = pPayloadSmartAndHealth->LatchedDirtyShutdownCount;
   pSensorInfo->UnlatchedDirtyShutdownCount = pPayloadSmartAndHealth->VendorSpecificData.UnlatchedDirtyShutdownCount;
   /** Get Device Characteristics data **/
   pSensorInfo->ContrTempShutdownThresh =

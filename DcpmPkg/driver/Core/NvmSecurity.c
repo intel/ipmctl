@@ -172,8 +172,6 @@ ConvertSecurityBitmask(
 
   if (SecurityFlag & SECURITY_MASK_NOT_SUPPORTED) {
     *pSecurityState = SECURITY_NOT_SUPPORTED;
-  } else if (SecurityFlag & SECURITY_MASK_FROZEN) {
-    *pSecurityState = SECURITY_FROZEN;
   } else if (SecurityFlag & SECURITY_MASK_ENABLED) {
     if (SecurityFlag & SECURITY_MASK_COUNTEXPIRED) {
       *pSecurityState = SECURITY_PW_MAX;
@@ -181,9 +179,15 @@ ConvertSecurityBitmask(
       *pSecurityState = SECURITY_LOCKED;
     } else {
       *pSecurityState = SECURITY_UNLOCKED;
+      if (SecurityFlag & SECURITY_MASK_FROZEN) {
+        *pSecurityState = SECURITY_UNLOCKED_FROZEN;
+      }
     }
   } else {
     *pSecurityState = SECURITY_DISABLED;
+    if (SecurityFlag & SECURITY_MASK_FROZEN) {
+      *pSecurityState = SECURITY_DISABLED_FROZEN;
+    }
   }
 
   NVDIMM_EXIT();

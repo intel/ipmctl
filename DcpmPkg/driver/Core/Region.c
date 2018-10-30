@@ -752,7 +752,7 @@ DetermineRegionHealth(
     pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
     pDimm = pDimmRegion->pDimm;
     /** Check if any of the DIMMs are locked **/
-    ReturnCode = GetSecurityStateForDimm(pDimm, &IsLocked);
+    ReturnCode = IsDimmLocked(pDimm, &IsLocked);
     if (EFI_ERROR(ReturnCode)) {
       goto FinishAdvance;
     }
@@ -784,7 +784,7 @@ DetermineRegionHealth(
       pDimm = pRegion->pDimmsBlockOnly[Index];
 
       /** Check if the dimm is locked **/
-      ReturnCode = GetSecurityStateForDimm(pDimm, &IsLocked);
+      ReturnCode = IsDimmLocked(pDimm, &IsLocked);
       if (EFI_ERROR(ReturnCode)) {
         goto FinishAdvance;
       }
@@ -4089,17 +4089,17 @@ Finish:
 }
 
 /**
-  Get security state for the DIMM
+  Check if security state of specified DIMM is locked
 
   @param[in] pDimm The current DIMM
-  @param[out] pIsLocked TRUE if any of the dimm is locked, else FALSE
+  @param[out] pIsLocked TRUE if security state of specified dimm is locked
 
   @retval EFI_SUCCESS
-  #retval EFI_INVALID_PARAMETER If IS is null
+  #retval EFI_INVALID_PARAMETER one or more parameters are NULL
   @retval EFI_OUT_OF_RESOURCES Allocation failed
 **/
 EFI_STATUS
-GetSecurityStateForDimm(
+IsDimmLocked(
   IN     DIMM *pDimm,
      OUT BOOLEAN *pIsLocked
   )

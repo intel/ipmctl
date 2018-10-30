@@ -44,6 +44,7 @@ TARGET
   Optional file path to the dictionary file. If supplied, the command will
   create both the binary debug log and a text file with decoded log data with
   the file prefix specified by -destination. This option is used only to dump the debug log information.
+
 EXAMPLES
 --------
 Creates a text file named dumpfile_platform_support_info.txt and stores the platform supported data in that file. Also, dumps the debug log info in the related files that start with the file name dumpfile_*. Refer to <<2.6.3 Dump Debug Log>> for more info on the output files.

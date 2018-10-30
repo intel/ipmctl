@@ -112,7 +112,7 @@ DBG_LOG_LEVEL::
   - "2": Log Warnings, Errors.
   - "3": Log Informational, Warnings, Errors.
   - "4": Log Verbose, Informational, Warnings, Errors.
-#endif::os_build[]
+endif::os_build[]
 
 EXAMPLES
 --------

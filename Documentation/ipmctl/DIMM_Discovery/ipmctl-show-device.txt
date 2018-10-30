@@ -253,9 +253,12 @@ LockState::
   - Unknown - The security state cannot be determined (e.g., when the
     DCPMM is not manageable by the software).
   - Disabled - Security is not enabled.
+  - Disabled, Frozen - Security is not enabled. A reboot is required 
+    to change the security state.
   - Unlocked - Security is enabled and unlocked.
+  - Unlocked, Frozen - Security is enabled and unlocked. A reboot is required
+    to change the security state.
   - Locked - Security is enabled and locked.
-  - Frozen - A reboot is required to change the security state.
   - Exceeded - The passphrase limit has been reached. A power cycle is
     required to change the security state.
   - Not Supported - Security is not supported on the DCPMM.

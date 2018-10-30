@@ -540,22 +540,6 @@ VerifySKUSupportForCreateGoal(
   );
 
 /**
-  Get security state for the DIMM
-
-  @param[in]  pDimm The current DIMM
-  @param[out] pIsLocked Return true if the secruity state is locked
-
-  @retval EFI_INVALID_PARAMETER Input parameter is NULL
-  @retval EFI_OUT_OF_RESOURCES Allocation failed
-  @retval EFI_SUCCESS
-**/
-EFI_STATUS
-GetSecurityStateForDimm(
-  IN     DIMM *pDimm,
-     OUT BOOLEAN *pIsLocked
-  );
-
-/**
   Check for new goal configs for the DIMM
 
   @param[in] pDimm The current DIMM
@@ -569,8 +553,6 @@ FindIfNewGoalOnDimm(
   IN     DIMM *pDimm,
      OUT BOOLEAN *pHasNewGoal
   );
-
-
 
 /**
 Calculate free Region capacity
@@ -919,17 +901,17 @@ FindIfNewGoalOnDimm(
   );
 
 /**
-  Get security state for the DIMM
+  Check if security state of specified DIMM is locked
 
   @param[in] pDimm The current DIMM
-  @param[out] pIsLocked TRUE if any of the dimm is locked, else FALSE
+  @param[out] pIsLocked TRUE if security state of specified dimm is locked
 
   @retval EFI_SUCCESS
-  #retval EFI_INVALID_PARAMETER If IS is null
+  #retval EFI_INVALID_PARAMETER one or more parameters are NULL
   @retval EFI_OUT_OF_RESOURCES Allocation failed
 **/
 EFI_STATUS
-GetSecurityStateForDimm(
+IsDimmLocked(
   IN     DIMM *pDimm,
      OUT BOOLEAN *pIsLocked
   );

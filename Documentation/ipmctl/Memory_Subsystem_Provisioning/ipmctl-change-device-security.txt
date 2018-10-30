@@ -78,8 +78,8 @@ LIMITATIONS
 -----------
 To successfully execute this command, the caller must have the appropriate privileges
 and the specified DCPMMs must be manageable by the host software, have
-security enabled, not be in the "frozen" or "exceeded" lock states, and not executing
-a long operation (ARS, Overwrite, FWUpdate).
+security enabled, not be in the "Unlocked, Frozen", "Disabled, Frozen", or "Exceeded" 
+lock states, and not executing a long operation (ARS, Overwrite, FWUpdate).
 
 ifdef::os_build[]
 The command is subject to OS Vendor (OSV) support. If OSV does not provide support,

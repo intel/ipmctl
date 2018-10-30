@@ -2466,6 +2466,11 @@ SecurityToString(
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
+  case SECURITY_DISABLED_FROZEN:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_DISABLED_FROZEN), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
   case SECURITY_LOCKED:
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_LOCKED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
@@ -2476,8 +2481,8 @@ SecurityToString(
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
-  case SECURITY_FROZEN:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_FROZEN), NULL);
+  case SECURITY_UNLOCKED_FROZEN:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_UNLOCKED_FROZEN), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;

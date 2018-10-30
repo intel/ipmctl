@@ -666,15 +666,16 @@ typedef struct _DEBUG_LOG_INFO {
 /**
   Security states
 **/
-#define SECURITY_UNKNOWN          0
-#define SECURITY_DISABLED         1
-#define SECURITY_LOCKED           2
-#define SECURITY_UNLOCKED         3
-#define SECURITY_FROZEN           4
-#define SECURITY_PW_MAX           5
-#define SECURITY_NOT_SUPPORTED    6
-#define SECURITY_STATES_COUNT     7
-#define SECURITY_MIXED_STATE      8 // Mixed security state in all dims view
+#define SECURITY_UNKNOWN              0
+#define SECURITY_DISABLED             1
+#define SECURITY_LOCKED               2
+#define SECURITY_UNLOCKED             3
+#define SECURITY_DISABLED_FROZEN      4
+#define SECURITY_UNLOCKED_FROZEN      5
+#define SECURITY_PW_MAX               6
+#define SECURITY_NOT_SUPPORTED        7
+#define SECURITY_STATES_COUNT         8
+#define SECURITY_MIXED_STATE          9 // Mixed security state in all dims view
 
 /**
   Passphrase Type

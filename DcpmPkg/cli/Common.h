@@ -127,7 +127,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together"
 #define CLI_ERR_PROPERTIES_CAPACITY_BLOCKCOUNT_USED_TOGETHER  L"Syntax Error: Properties Capacity and BlockCount can not be used together"
 
-#define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%"
+#define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
 
 #define CLI_INFO_NO_DIMMS                                     L"No DIMMs in the system."
 #define CLI_INFO_NO_REGIONS                                   L"There are no Regions defined in the system."

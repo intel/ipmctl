@@ -250,6 +250,32 @@ GetDimmList(
   );
 
 /**
+  Retrieve a populated array and count of all DIMMs (initiliazed and uninitialized in the system. The caller is
+  responsible for freeing the returned array
+
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
+             printed to stdout, otherwise will be directed to the printer module.
+  @param[in] dimmInfoCategories Categories that will be populated in
+             the DIMM_INFO struct.
+  @param[out] ppDimms A pointer to the dimm list found in NFIT.
+  @param[out] pDimmCount A pointer to the number of DIMMs found in NFIT.
+
+  @retval EFI_SUCCESS  the dimm list was returned properly
+  @retval EFI_INVALID_PARAMETER one or more parameters are NULL
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_NOT_FOUND dimm not found
+**/
+EFI_STATUS
+GetAllDimmList(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     struct Command *pCmd,
+  IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
+  OUT DIMM_INFO **ppDimms,
+  OUT UINT32 *pDimmCount
+);
+
+/**
   Parse the string and return the array of unsigned integers
 
   Example

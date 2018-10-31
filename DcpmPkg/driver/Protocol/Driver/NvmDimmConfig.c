@@ -641,6 +641,75 @@ InitializeNfitDimmInfoFieldsFromDimm(
   }
 }
 
+/*
+ * Helper function for initializing information from the SMBIOS
+ */
+EFI_STATUS
+FillSmbiosInfo(IN OUT DIMM_INFO *pDimmInfo)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
+  SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
+  SMBIOS_VERSION SmbiosVersion;
+  UINT64 CapacityFromSmbios = 0;
+
+  ReturnCode = GetDmiMemdevInfo(pDimmInfo->DimmID, &DmiPhysicalDev, &DmiDeviceMappedAddr, &SmbiosVersion);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failure to retrieve SMBIOS tables");
+  }
+
+  /* SMBIOS type 17 table info */
+  if (DmiPhysicalDev.Type17 != NULL) {
+    if (DmiPhysicalDev.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
+      if (DmiPhysicalDev.Type17->TypeDetail.Nonvolatile) {
+        pDimmInfo->MemoryType = MEMORYTYPE_DCPM;
+      }
+      else {
+        pDimmInfo->MemoryType = MEMORYTYPE_DDR4;
+      }
+    }
+    else {
+      pDimmInfo->MemoryType = MEMORYTYPE_UNKNOWN;
+    }
+
+    pDimmInfo->FormFactor = DmiPhysicalDev.Type17->FormFactor;
+    pDimmInfo->DataWidth = DmiPhysicalDev.Type17->DataWidth;
+    pDimmInfo->TotalWidth = DmiPhysicalDev.Type17->TotalWidth;
+    pDimmInfo->Speed = DmiPhysicalDev.Type17->Speed;
+
+    ReturnCode = GetSmbiosCapacity(DmiPhysicalDev.Type17->Size, DmiPhysicalDev.Type17->ExtendedSize,
+      SmbiosVersion, &CapacityFromSmbios);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve capacity from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
+    }
+
+    pDimmInfo->CapacityFromSmbios = CapacityFromSmbios;
+
+    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+      DmiPhysicalDev.Type17->DeviceLocator,
+      pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
+    }
+    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+      DmiPhysicalDev.Type17->BankLocator,
+      pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
+    }
+    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+      DmiPhysicalDev.Type17->Manufacturer,
+      pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
+    }
+  }
+  else {
+    NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmHandle);
+  }
+  return ReturnCode;
+}
+
 /**
   Init DIMM_INFO structure for given Initialized DIMM
 
@@ -681,7 +750,6 @@ GetDimmInfo (
   UINT64 LastShutdownTime = 0;
   UINT8 AitDramEnabled = 0;
   UINT32 Index = 0;
-  UINT64 CapacityFromSmbios = 0;
 
   NVDIMM_ENTRY();
 
@@ -757,58 +825,7 @@ GetDimmInfo (
   pDimmInfo->ManufacturerId = pDimm->Manufacturer;
   pDimmInfo->SerialNumber = pDimm->SerialNumber;
 
-  ReturnCode = GetDmiMemdevInfo(pDimmInfo->DimmID, &DmiPhysicalDev, &DmiDeviceMappedAddr, &SmbiosVersion);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("Failure to retrieve SMBIOS tables");
-  }
-
-  /* SMBIOS type 17 table info */
-  if (DmiPhysicalDev.Type17 != NULL) {
-    if (DmiPhysicalDev.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
-      if (DmiPhysicalDev.Type17->TypeDetail.Nonvolatile) {
-        pDimmInfo->MemoryType = MEMORYTYPE_DCPM;
-      } else {
-        pDimmInfo->MemoryType = MEMORYTYPE_DDR4;
-      }
-    } else {
-      pDimmInfo->MemoryType = MEMORYTYPE_UNKNOWN;
-    }
-
-    pDimmInfo->FormFactor = DmiPhysicalDev.Type17->FormFactor;
-    pDimmInfo->DataWidth = DmiPhysicalDev.Type17->DataWidth;
-    pDimmInfo->TotalWidth = DmiPhysicalDev.Type17->TotalWidth;
-    pDimmInfo->Speed = DmiPhysicalDev.Type17->Speed;
-
-    ReturnCode = GetSmbiosCapacity(DmiPhysicalDev.Type17->Size, DmiPhysicalDev.Type17->ExtendedSize,
-                                    SmbiosVersion, &CapacityFromSmbios);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve capacity from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
-    }
-
-    pDimmInfo->CapacityFromSmbios = CapacityFromSmbios;
-
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
-                DmiPhysicalDev.Type17->DeviceLocator,
-                pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
-    }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
-                DmiPhysicalDev.Type17->BankLocator,
-                pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
-    }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
-                DmiPhysicalDev.Type17->Manufacturer,
-                pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
-    }
-  } else {
-    NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmHandle);
-  }
-
+  ReturnCode = FillSmbiosInfo(pDimmInfo);
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
 #ifdef OS_BUILD
   if (ReturnCode == EFI_SUCCESS) {
@@ -1527,7 +1544,8 @@ GetUninitializedDimms(
 
     pCurDimm = DIMM_FROM_NODE(pNode);
     InitializeNfitDimmInfoFieldsFromDimm(pCurDimm, &(pDimms[Index]));
-
+    FillSmbiosInfo(&(pDimms[Index]));
+    pDimms[Index].MemoryType = MEMORYTYPE_DCPM;
     AsciiStrToUnicodeStrS(pCurDimm->PartNumber, pDimms[Index].PartNumber, PART_NUMBER_STR_LEN);
 
     pDimms[Index].FwVer = pCurDimm->FwVer;

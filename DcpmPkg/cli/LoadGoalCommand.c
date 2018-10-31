@@ -33,7 +33,7 @@ struct Command LoadGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load stored pool configuration goal for specific DIMMs",            //!< help
+  L"Load stored configuration goal for specific DIMMs",            //!< help
   LoadGoal
 };
 

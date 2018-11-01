@@ -8300,8 +8300,8 @@ GetSystemTopology(
 
   while (SmBiosStruct.Raw < BoundSmBiosStruct.Raw) {
     if (SmBiosStruct.Hdr != NULL) {
-      IsTopologyDimm = ((SmBiosStruct.Hdr->Type == SMBIOS_TYPE_MEM_DEV && !SmBiosStruct.Type17->TypeDetail.Nonvolatile
-             && SmBiosStruct.Type17->Size != 0) ? TRUE : FALSE);
+      IsTopologyDimm = ((SmBiosStruct.Hdr->Type == SMBIOS_TYPE_MEM_DEV && SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4 &&
+        !SmBiosStruct.Type17->TypeDetail.Nonvolatile) ? TRUE : FALSE);
       if (IsTopologyDimm) {
         (*ppTopologyDimm)[Index].DimmID = SmBiosStruct.Hdr->Handle;
         (*ppTopologyDimm)[Index].SocketID = GetDdr4Socket(SmBiosStruct.Hdr->Handle, &PmttInfo);

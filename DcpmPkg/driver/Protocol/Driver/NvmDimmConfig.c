@@ -661,12 +661,18 @@ FillSmbiosInfo(IN OUT DIMM_INFO *pDimmInfo)
   /* SMBIOS type 17 table info */
   if (DmiPhysicalDev.Type17 != NULL) {
     if (DmiPhysicalDev.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
+      //Prior to SMBIOS MemoryType 0x1F (Logical non-volatile), DCPM's were identified by
+      //MemoryType 0x1A (DDR4) with TypeDetail[Nonvolatile] set.
+      //Leaving here for backwards compatibility
       if (DmiPhysicalDev.Type17->TypeDetail.Nonvolatile) {
         pDimmInfo->MemoryType = MEMORYTYPE_DCPM;
       }
       else {
         pDimmInfo->MemoryType = MEMORYTYPE_DDR4;
       }
+    }
+    else if (DmiPhysicalDev.Type17->MemoryType == SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE) {
+      pDimmInfo->MemoryType = MEMORYTYPE_DCPM;
     }
     else {
       pDimmInfo->MemoryType = MEMORYTYPE_UNKNOWN;

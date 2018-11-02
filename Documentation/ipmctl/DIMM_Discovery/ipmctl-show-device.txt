@@ -155,11 +155,11 @@ DimmHandle::
   - D = Slot
 
 DimmUID::
-  The unique identifier of the DCPMM formatted as VVVV-ML-MDMDSNSNSNSN or
+  The unique identifier of the DCPMM formatted as VVVV-ML-MMYYSNSNSNSN or
   VVVV-SNSNSNSN (if the manufacturing information is not available) where:
   - VVVV = VendorID
   - ML = ManufacturingLocation
-  - MDMD = ManufacturingDate
+  - MMYY = ManufacturingDate
   - SNSNSNSN = SerialNumber
 
 SocketID::
@@ -450,9 +450,7 @@ ARSStatus::
   - Not started - An ARS operation has not started.
   - In progress - An ARS operation is currently in progress.
   - Completed - The last ARS operation has completed.
-  - Aborted - An last ARS operation was aborted.
-
-
+  - Aborted - The last ARS operation was aborted.
 
 OverwriteStatus::
   The overwrite DIMM operation status for the DCPMM. One of:

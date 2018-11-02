@@ -35,10 +35,10 @@ PROPERTIES
 ----------
 CLI_DEFAULT_DIMM_ID::
   The default display of DCPMM identifiers. One of:
-  - "UID": Use the DimmUID attribute as defined in the command Section 2.1.3,
-    "Show Device."
-  - "HANDLE": Use the DimmHandle attribute as defined in the command Section
-    2.1.3, "Show Device. This is the default
+  - "UID": Use the DimmUID attribute as defined in the section
+  <<2.1.3 Show Device>>.
+  - "HANDLE": Use the DimmHandle attribute as defined in section
+    <<2.1.3 Show Device>>. This is the default
 
 CLI_DEFAULT_SIZE::
   The default display of capacities in the CLI. One of:

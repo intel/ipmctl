@@ -49,7 +49,8 @@ undesirable state. The default is to erase all manageable DCPMMs.
 PROPERTIES
 ----------
 Passphrase::
-  If security state is disabled, then passphrase must not be supplied. +
+  If security state is disabled, then passphrase is not required and will be ignored
+  if supplied. +
   If security state is enabled, then a passphrase must be supplied. +
   The current passphrase (1-32 characters). For better passphrase protection, specify
   an empty string (e.g., Passphrase="") to be prompted for the passphrase or to use a

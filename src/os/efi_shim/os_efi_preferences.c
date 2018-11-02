@@ -53,7 +53,7 @@ EFI_STATUS preferences_flush_the_file(void)
 EFI_STATUS preferences_get_var_ascii(IN CONST char    *name,
 	IN CONST EFI_GUID  guid,
 	OUT VOID           *value,
-	OUT UINTN          *size OPTIONAL)
+	OUT UINT32          *size OPTIONAL)
 {
 	int val = nvm_ini_get_int_value(gIni, name, -1);
 	if (-1 == val)

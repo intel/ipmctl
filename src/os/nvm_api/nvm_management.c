@@ -3230,7 +3230,7 @@ NVM_API int nvm_get_config_int(const char *param_name, int default_val)
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
-  preferences_get_var_ascii(param_name, g, (void *)&val, (UINTN *)&size);
+  preferences_get_var_ascii(param_name, g, (void *)&val, (UINT32 *)&size);
   return val;
 }
 

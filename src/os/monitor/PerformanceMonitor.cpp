@@ -21,6 +21,12 @@
 monitor::PerformanceMonitor::PerformanceMonitor()
 	: NvmMonitorBase(PERFORMANCE_MONITOR_NAME)
 {
+  int configResult;
+  configResult = nvm_get_config_int("PERFORMANCE_MONITOR_INTERVAL_MINUTES", 1);
+  m_intervalSeconds = (size_t)configResult * 60;
+
+  configResult = nvm_get_config_int("PERFORMANCE_MONITOR_ENABLED", 0);
+  m_enabled = configResult != 0;
 }
 
 monitor::PerformanceMonitor::~PerformanceMonitor()

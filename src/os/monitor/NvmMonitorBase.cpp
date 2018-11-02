@@ -29,19 +29,9 @@ monitor::NvmMonitorBase::NvmMonitorBase(std::string const &name)
 		: m_name(name)
 {
 	m_abort = false;
-	// get values from Database
-	std::string intervalKey = m_name + MONITOR_INTERVAL_SUFFIX_KEY;
-	std::string enabledKey = m_name + MONITOR_ENABLED_SUFFIX_KEY;
 
 	m_intervalSeconds = DEFAULT_INTERVAL_SECONDS;
 	m_enabled = DEFAULT_MONITOR_ENABLED;
-
-	int configResult;
-	configResult = nvm_get_config_int(intervalKey.c_str(), 1);
-	m_intervalSeconds = (size_t)configResult * 60;
-
-	configResult = nvm_get_config_int(enabledKey.c_str(), 0);
-	m_enabled = configResult != 0;
 
   nvm_store_system_entry(LOG_SRC,
     SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_312, false, true, true, false, 0),

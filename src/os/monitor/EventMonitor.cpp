@@ -16,6 +16,12 @@
 monitor::EventMonitor::EventMonitor() :
 	NvmMonitorBase(EVENT_MONITOR_NAME)
 {
+  int configResult;
+  configResult = nvm_get_config_int("EVENT_MONITOR_INTERVAL_MINUTES", 1);
+  m_intervalSeconds = (size_t)configResult * 60;
+
+  configResult = nvm_get_config_int("EVENT_MONITOR_ENABLED", 0);
+  m_enabled = configResult != 0;
 }
 
 monitor::EventMonitor::~EventMonitor()

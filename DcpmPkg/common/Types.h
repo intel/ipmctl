@@ -22,8 +22,8 @@
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#define PMEM_MODULE_NAME L"Intel(R) DCPM "  //short version for drivers list
-#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPM" //comma separated search string
+#define PMEM_MODULE_NAME L"Intel(R) DCPMM "  //short version for drivers list
+#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMM" //comma separated search string
 
 #define PMEM_DIMM_NAME  L"Intel Persistent Memory DIMM %d Controller"
 

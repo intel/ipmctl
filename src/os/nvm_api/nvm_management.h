@@ -859,7 +859,7 @@ struct memory_capabilities {
  * Supported features and capabilities BIOS supports
  */
 struct platform_capabilities {
-  NVM_BOOL			bios_config_support;            ///< available BIOS support for DCPM config changes
+  NVM_BOOL			bios_config_support;            ///< available BIOS support for DCPMM config changes
   NVM_BOOL			bios_runtime_support;           ///< runtime interface used to validate management configuration
   NVM_BOOL			memory_mirror_supported;        ///< indicates if DCPMM mirror is supported
   NVM_BOOL			storage_mode_supported;         ///< is storage mode supported

@@ -368,7 +368,7 @@ CheckIsMemoryModeAllowed(
             PMTT_MODULE *pModule = (PMTT_MODULE *)(((UINT8 *)pCommonHeader) + sizeof(pCommonHeader));
             // if IsDCPM is already set then continue to loop to find the offset of the next aggregated device
             if (!IsDCPM) {
-              // bit 2 is set then DCPM
+              // bit 2 is set then DCPMM
               if ((pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && pModule->SizeOfDimm > 0) {
                 IsDCPM = TRUE;
               } else if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && pModule->SizeOfDimm > 0) {

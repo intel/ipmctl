@@ -143,7 +143,7 @@ typedef union {
 #define OVERWRITE_DIMM_STATUS_COMPLETED_STR    L"Completed"
 
 // Memory type string values
-#define MEMORY_TYPE_DCPM_STR     L"DCPM"
+#define MEMORY_TYPE_DCPM_STR     L"Logical Non-Volatile Device"
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 

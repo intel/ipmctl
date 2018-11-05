@@ -38,7 +38,7 @@
 #define PMEM_TYPE_MAX_STR_WIDTH             24
 #define FREE_CAPACITY_MAX_STR_WIDTH         13
 #define MEMORY_SIZE_MAX_STR_WIDTH           18
-#define MEMORY_TYPE_MAX_STR_WIDTH           10
+#define MEMORY_TYPE_MAX_STR_WIDTH           30
 #define DEVICE_LOCATOR_MAX_STR_WIDTH        15
 
 

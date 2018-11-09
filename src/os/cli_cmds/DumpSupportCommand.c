@@ -220,11 +220,11 @@ DumpSupportCommand(
       PrintAndExecuteCommand(pCmdInputWithDimmId);
     }
     if (pDictUserPath != NULL) {
-      pCmdInputWithDimmId = CatSPrint(NULL, STR_DUMP_DEST, pDumpUserPath);
-      pCmdInputWithDimmId = CatSPrint(pCmdInputWithDimmId, WITH_DIC_OPTION, pDictUserPath, pDimms[DimmIndex].DimmHandle);
+      pCmdInputWithDimmId = CatSPrintClean(NULL, STR_DUMP_DEST, pDumpUserPath);
+      pCmdInputWithDimmId = CatSPrintClean(pCmdInputWithDimmId, WITH_DIC_OPTION, pDictUserPath, pDimms[DimmIndex].DimmHandle);
     } else {
-      pCmdInputWithDimmId = CatSPrint(NULL, STR_DUMP_DEST, pDumpUserPath);
-      pCmdInputWithDimmId = CatSPrint(pCmdInputWithDimmId, WITHOUT_DICT_OPTION, pDimms[DimmIndex].DimmHandle);
+      pCmdInputWithDimmId = CatSPrintClean(NULL, STR_DUMP_DEST, pDumpUserPath);
+      pCmdInputWithDimmId = CatSPrintClean(pCmdInputWithDimmId, WITHOUT_DICT_OPTION, pDimms[DimmIndex].DimmHandle);
     }
     PrintAndExecuteCommand(pCmdInputWithDimmId);
     FREE_POOL_SAFE(pCmdInputWithDimmId);

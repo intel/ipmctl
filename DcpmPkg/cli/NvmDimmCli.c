@@ -486,13 +486,13 @@ RegisterCommands(
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
+#endif
   Rc = RegisterDeletePcdCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-#endif
+
   Rc = RegisterShowErrorCommand();
   if (EFI_ERROR(Rc)) {
     goto done;

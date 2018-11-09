@@ -313,6 +313,30 @@ EFI_STATUS
   );
 
 /**
+Clear PCD configs
+
+@param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+@param[in] pDimmIds Pointer to an array of DIMM IDs
+@param[in] DimmIdsCount Number of items in array of DIMM IDs
+@param[in] ConfigIdMask Bitmask that defines which config to delete
+@param[out] pCommandStatus Structure containing detailed NVM error codes
+
+@retval EFI_SUCCESS Success
+@retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+@retval EFI_NO_RESPONSE FW busy for one or more dimms
+@retval EFI_OUT_OF_RESOURCES Memory allocation failure
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_DELETE_PCD_CONFIG) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT32 ConfigIdMask,
+  OUT COMMAND_STATUS *pCommandStatus
+  );
+
+/**
   Check NVM device security state
 
   Function checks security state of a set of DIMMs. It sets security state
@@ -1467,6 +1491,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY GetCommandAccessPolicy;
   EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/
+  EFI_DCPMM_CONFIG_DELETE_PCD_CONFIG ModifyPcdConfig;
 };
 
 #endif /** _NVM_INTERFACE_H_ **/

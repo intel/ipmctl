@@ -8,17 +8,22 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-delete-pcd - Clears the namespace label storage area partition
+ipmctl-delete-pcd - Clears select partition data from the PCD
 
 SYNOPSIS
 --------
 [verse]
-ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd LSA
-
+ifndef::os_build[]
+ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd (Config|LSA)
+endif::os_build[]
+ifdef::os_build[]
+ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd (Config)
+endif::os_build[]
 DESCRIPTION
 -----------
-Clears the namespace label storage area partition in the platform configuration
-data from one or more DCPMMs. This is a destructive operation which will clear
+ifndef::os_build[]
+When LSA is specified, the namespace label storage area partition in the platform configuration
+data from one or more DCPMMs is cleared. This is a destructive operation which will clear
 the entire namespace label storage area including all namespaces labels and the
 namespace label index block in order to re-purpose the DCPMM(s) for use in a
 different operating system. All data on any deleted namespace(s) becomes
@@ -27,6 +32,13 @@ inaccessible.
 NOTE: Deleting PCD LSA partition data removes any logical OS namespace mapping
 to the persistent memory data, but does not explicitly delete or modify user
 data found in persistent memory.
+endif::os_build[]
+
+When Config is specified, the Current, Input, and Output Data Size and Start Offset values in
+the Configuration header are set to zero, making those tables invalid.
+
+NOTE: This action can be useful when moving DCPMMs from one system to another, as goal creation
+rules may restrict provisioning dimms with an existing configuration.
 
 OPTIONS
 -------
@@ -46,16 +58,29 @@ TARGETS
   Deletes the namespace label storage area on specific DCPMMs by supplying one
   or more comma-separated DCPMM identifiers. The default is to delete the
   namespace label storage area for all manageable DCPMMs.
-
--pcd LSA::
-  Clears the namespace label storage area partition in the platform
-  configuration data. The management configuration data is not cleared.
-
+ifndef::os_build[]
+-pcd (Config|LSA)::
+  Restricts clearing select partition data in the platform
+  configuration data area.
+  The default is to clear both. One of:
+  - Config - Configuration management information
+  - LSA - Namespace label storage area
+endif::os_build[]
+ifdef::os_build[]
+-pcd Config::
+  Clears the configuration management information
+endif::os_build[]
 EXAMPLES
 --------
+ifndef::os_build[]
 Clears the namespace label storage area from all manageable DCPMMs
 [verse]
-show -dimm -pcd Config
+delete -dimm -pcd LSA
+endif::os_build[]
+
+Clears the Cin, Cout, Ccur tables from all manageable DCPMMs
+[verse]
+delete -dimm -pcd Config
 
 LIMITATIONS
 -----------

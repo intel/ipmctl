@@ -79,6 +79,7 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define NFIT_PLATFORM_CAPABILITIES_BIT0     0x1
 #define NFIT_MEMORY_CONTROLLER_FLUSH_BIT1   (NFIT_PLATFORM_CAPABILITIES_BIT0 << 0x1)
 
+
 /**
   The update goes in 3 steps: initialization, data, end, where the data step can be done many times.
   Each of those steps must be done at least one, so the minimum number of packets will be 3.
@@ -432,6 +433,8 @@ GetPcd(
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
+
+  Note: This function is deprecated. Please use the new function DeletePcdConfig.
 **/
 EFI_STATUS
 EFIAPI
@@ -441,6 +444,30 @@ DeletePcd(
   IN     UINT32 DimmIdsCount,
      OUT COMMAND_STATUS *pCommandStatus
   );
+
+/**
+Modifies select partition data from the PCD
+
+@param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+@param[in] pDimmIds Pointer to an array of DIMM IDs
+@param[in] DimmIdsCount Number of items in array of DIMM IDs
+@param[in] ConfigIdMask Bitmask that defines which config to delete. See @ref DELETE_PCD_CONFIG_ALL_MASK
+@param[out] pCommandStatus Structure containing detailed NVM error codes
+
+@retval EFI_SUCCESS Success
+@retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+@retval EFI_NO_RESPONSE FW busy for one or more dimms
+@retval EFI_OUT_OF_RESOURCES Memory allocation failure
+**/
+EFI_STATUS
+EFIAPI
+ModifyPcdConfig(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT32 ConfigIdMask,
+    OUT COMMAND_STATUS *pCommandStatus
+);
 
 /**
   Update firmware or training data of a specified NVDIMM

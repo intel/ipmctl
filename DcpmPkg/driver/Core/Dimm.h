@@ -1721,4 +1721,19 @@ SetObjStatusForDimmWithErase(
   IN     NVM_STATUS Status,
   IN     BOOLEAN EraseFirst
 );
+
+/**
+Determine the total size of PCD Config Data area by finding the largest
+offset any of the 3 data sets.
+
+@param[in]  pOemHeader    Pointer to NVDIMM Configuration Header
+@param[out] pOemDataSize  Size of the PCD Config Data
+
+@retval EFI_INVALID_PARAMETER NULL pointer for DIMM structure provided
+@retval EFI_SUCCESS           Success
+**/
+EFI_STATUS GetPcdOemDataSize(
+  NVDIMM_CONFIGURATION_HEADER *pOemHeader,
+  UINT32 *pOemDataSize
+);
 #endif

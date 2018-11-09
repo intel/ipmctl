@@ -1102,4 +1102,11 @@ Start Diagnostic Command tests codes
 #define FW_DEBUG_LOG_SOURCE_MAX     2
 #define NUM_FW_DEBUG_LOG_SOURCES    3
 
+
+/** Defines for the ModifyPcdConfig API */
+#define DELETE_PCD_CONFIG_LSA_MASK    (BIT0) //!< Delete the namespace partition
+#define DELETE_PCD_CONFIG_CIN_MASK    (BIT1) //!< Zero Configuration Input Data Size and Start Offset in the Configuration Header
+#define DELETE_PCD_CONFIG_COUT_MASK   (BIT2) //!< Zero Configuration Output Data Size and Start Offset in the Configuration Header
+#define DELETE_PCD_CONFIG_CCUR_MASK   (BIT3) //!< Zero Current Configuration Data Size and Start Offset in the Configuration Header
+#define DELETE_PCD_CONFIG_ALL_MASK    (DELETE_PCD_CONFIG_LSA_MASK | DELETE_PCD_CONFIG_CIN_MASK | DELETE_PCD_CONFIG_COUT_MASK | DELETE_PCD_CONFIG_CCUR_MASK) ///< @ref DELETE_PCD_CONFIG_ALL_MASK
 #endif /** _NVM_TYPES_H_ **/

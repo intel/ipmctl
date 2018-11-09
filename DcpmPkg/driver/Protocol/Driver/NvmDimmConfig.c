@@ -130,8 +130,10 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   // Debug Only
 #ifndef MDEPKG_NDEBUG
   GetCommandAccessPolicy,
-  PassThruCommand
+  PassThruCommand,
 #endif /* MDEPKG_NDEBUG */
+
+  ModifyPcdConfig
 };
 
 #ifdef OS_BUILD
@@ -3362,6 +3364,155 @@ DeletePcd(
   ReenumerateNamespacesAndISs();
 
 Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+Modifies select partition data from the PCD
+
+@param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+@param[in] pDimmIds Pointer to an array of DIMM IDs
+@param[in] DimmIdsCount Number of items in array of DIMM IDs
+@param[in] ConfigIdMask Bitmask that defines which config to delete
+@param[out] pCommandStatus Structure containing detailed NVM error codes
+
+@retval EFI_SUCCESS Success
+@retval EFI_INVALID_PARAMETER One or more input parameters are NULL
+@retval EFI_NO_RESPONSE FW busy for one or more dimms
+@retval EFI_OUT_OF_RESOURCES Memory allocation failure
+**/
+EFI_STATUS
+EFIAPI
+ModifyPcdConfig(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT32 ConfigIdMask,
+  OUT COMMAND_STATUS *pCommandStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS TmpReturnCode = EFI_SUCCESS;
+  DIMM *pDimms[MAX_DIMMS];
+  UINT32 DimmsCount = 0;
+  UINT32 Index = 0;
+  UINT32 SecurityState = 0;
+  NVDIMM_CONFIGURATION_HEADER *pConfigHeader = NULL;
+  UINT32 ConfigSize = 0;
+
+  NVDIMM_ENTRY();
+
+  ZeroMem(pDimms, sizeof(pDimms));
+
+  if (pThis == NULL || pCommandStatus == NULL) {
+    goto Finish;
+  }
+
+  //only allow valid config id options
+  if (0x0 == ConfigIdMask || 0x0 != (ConfigIdMask & ~DELETE_PCD_CONFIG_ALL_MASK)) {
+    goto Finish;
+  }
+
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsCount,
+    pCommandStatus);
+  if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
+    goto Finish;
+  }
+
+  //iterate through all dimms
+  for (Index = 0; Index < DimmsCount; Index++) {
+
+    TmpReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &SecurityState);
+    if (EFI_ERROR(TmpReturnCode)) {
+      KEEP_ERROR(ReturnCode, TmpReturnCode);
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
+      NVDIMM_DBG("Failed to get DIMM security state");
+      goto Finish;
+    }
+
+    //don't allow deleting anything from PCD if device is locked
+    if (!IsConfiguringAllowed(SecurityState)) {
+      KEEP_ERROR(ReturnCode, EFI_ACCESS_DENIED);
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
+      NVDIMM_DBG("Locked DIMM discovered : 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+      continue;
+    }
+
+    //zero LSA
+    if (ConfigIdMask & DELETE_PCD_CONFIG_LSA_MASK) {
+      TmpReturnCode = ZeroLabelStorageArea(pDimms[Index]->DimmID);
+      if (EFI_ERROR(TmpReturnCode)) {
+        KEEP_ERROR(ReturnCode, TmpReturnCode);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+        NVDIMM_DBG("Error in zero-ing the LSA: " FORMAT_EFI_STATUS "", TmpReturnCode);
+        continue;
+      }
+      else {
+        NVDIMM_DBG("Zero'ed the LSA on DIMM : 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+      }
+    }
+
+    //if any of the PCD configuration bits were set
+    if (ConfigIdMask & (DELETE_PCD_CONFIG_CIN_MASK | DELETE_PCD_CONFIG_COUT_MASK | DELETE_PCD_CONFIG_CCUR_MASK)) {
+
+      FREE_POOL_SAFE(pConfigHeader);
+      //read partion 1 where CCUR/CIN/COUT resides
+      //we are only going to modify the DATA SIZE and START OFFSET values in the header before writing it back out
+      TmpReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], &pConfigHeader);
+      if (EFI_ERROR(TmpReturnCode)) {
+        KEEP_ERROR(ReturnCode, TmpReturnCode);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
+        NVDIMM_DBG("Failed to get PCD");
+        continue;
+      }
+
+      //determine the size of the PCD partition, which will be used at the end to write the partion back to PCD
+      TmpReturnCode = GetPcdOemDataSize(pConfigHeader, &ConfigSize);
+      if (EFI_ERROR(TmpReturnCode)) {
+        KEEP_ERROR(ReturnCode, TmpReturnCode);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+        NVDIMM_DBG("Failed to get PCD size");
+        continue;
+      }
+
+      //clear CIN
+      if (ConfigIdMask & DELETE_PCD_CONFIG_CIN_MASK) {
+        pConfigHeader->ConfInputDataSize = 0x0;
+        pConfigHeader->ConfInputStartOffset = 0x0;
+      }
+
+      //clear COUT
+      if (ConfigIdMask & DELETE_PCD_CONFIG_COUT_MASK) {
+        pConfigHeader->ConfOutputDataSize = 0x0;
+        pConfigHeader->ConfOutputStartOffset = 0x0;
+      }
+
+      //clear CCUR
+      if (ConfigIdMask & DELETE_PCD_CONFIG_CCUR_MASK) {
+        pConfigHeader->CurrentConfDataSize = 0x0;
+        pConfigHeader->CurrentConfStartOffset = 0x0;
+      }
+
+      //values in partition have changed so we need to recalculate the checksum before writing back to PCD
+      GenerateChecksum(pConfigHeader, pConfigHeader->Header.Length, PCAT_TABLE_HEADER_CHECKSUM_OFFSET);
+
+      //write full partition 1 back to PCD with updated values
+      TmpReturnCode = SetPlatformConfigDataOemPartition(pDimms[Index], pConfigHeader, ConfigSize);
+      if (EFI_ERROR(TmpReturnCode)) {
+        KEEP_ERROR(ReturnCode, TmpReturnCode);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
+        NVDIMM_DBG("Failed to set PCD");
+        continue;
+      }
+    }
+    SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+  }
+
+  ReenumerateNamespacesAndISs();
+
+Finish:
+  FREE_POOL_SAFE(pConfigHeader);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

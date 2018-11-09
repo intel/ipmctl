@@ -457,6 +457,7 @@ if(MSVC)
 	set_target_properties(ipmctl-bin PROPERTIES LINK_FLAGS "/STACK:3000000")
 else()
 	target_compile_options(ipmctl-bin PRIVATE "-fPIE")
+    set_target_properties(ipmctl-bin PROPERTIES LINK_FLAGS "-pie")
 endif()
 
 #---------------------------------------------------------------------------------------------------
@@ -498,6 +499,7 @@ if (NOT ESX_BUILD)
 
 if(UNIX)
         target_compile_options(ipmctl-monitor PRIVATE "-fPIE")
+        set_target_properties(ipmctl-monitor PROPERTIES LINK_FLAGS "-pie")
 endif()
 
 endif()

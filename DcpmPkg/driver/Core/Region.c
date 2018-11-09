@@ -1872,6 +1872,24 @@ MapRegionsGoal(
       }
     }
   }
+  /** Ensure index is unique across all dimms in the system, not just dimms targeted for goal creation.
+      This can happen when adding new dimms to the system with previously configured regions.
+  **/
+  if (0x0 == AvailableISIndex) {
+    /** Get the largest interleave set index in existing regions on DIMMs. **/
+    LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+      pDimm = DIMM_FROM_NODE(pDimmNode);
+      if (!IsDimmManageable(pDimm)) {
+        continue;
+      }
+      for (Index = 0; Index < MAX_IS_PER_DIMM; Index++) {
+        if (NULL != pDimm->pISs[Index] && pDimm->pISs[Index]->InterleaveSetIndex > AvailableISIndex) {
+          AvailableISIndex = pDimm->pISs[Index]->InterleaveSetIndex;
+        }
+      }
+    }
+  }
+
   /** We have found the largest index. The next one is available. **/
   AvailableISIndex++;
 
@@ -3372,21 +3390,26 @@ FindRelatedDimmsByRegions(
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
-    for (Index2 = 0; Index2 < pDimms[Index]->ISsNum; Index2++) {
-      LIST_FOR_EACH(pDimmRegionNode, &pDimms[Index]->pISs[Index2]->DimmRegionList) {
-        pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
-        pDimmPointer = pDimmRegion->pDimm;
+    //only check if dimm has been configured by bios, otherwise
+    //could be a dimm from a broken interleave set (moved from a different platform)
+    if (DIMM_CONFIG_SUCCESS == pDimms[Index]->ConfigStatus)
+    {
+      for (Index2 = 0; Index2 < pDimms[Index]->ISsNum; Index2++) {
+        LIST_FOR_EACH(pDimmRegionNode, &pDimms[Index]->pISs[Index2]->DimmRegionList) {
+          pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
+          pDimmPointer = pDimmRegion->pDimm;
 
-        if (*pRelatedDimmsNum >= MAX_DIMMS) {
-          NVDIMM_ERR("Found more Dimms than %d. Not possible in theory.", MAX_DIMMS);
-          Rc = EFI_ABORTED;
-          goto Finish;
-        }
-        else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
-          ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
-          if (IsDimmManageable(pDimmPointer)) {
-             pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
-             (*pRelatedDimmsNum) += 1;
+          if (*pRelatedDimmsNum >= MAX_DIMMS) {
+            NVDIMM_ERR("Found more Dimms than %d. Not possible in theory.", MAX_DIMMS);
+            Rc = EFI_ABORTED;
+            goto Finish;
+          }
+          else if (!IsPointerInArray((VOID **)pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
+            ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
+            if (IsDimmManageable(pDimmPointer)) {
+              pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
+              (*pRelatedDimmsNum) += 1;
+            }
           }
         }
       }

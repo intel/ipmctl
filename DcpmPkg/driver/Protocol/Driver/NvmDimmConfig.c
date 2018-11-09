@@ -5590,6 +5590,7 @@ GetActualRegionsGoalCapacities(
     if (NumDimmsOnSocket <= 0) {
       continue;
     }
+
     /** Calculate volatile percent **/
     ReturnCode = CalculateDimmCapacityFromPercent(pDimmsOnSocket, NumDimmsOnSocket, *pVolatilePercent, &ActualVolatileSize);
       if (EFI_ERROR(ReturnCode)) {

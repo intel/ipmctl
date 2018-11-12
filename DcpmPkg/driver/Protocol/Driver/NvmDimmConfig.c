@@ -8188,7 +8188,8 @@ GetCapacities(
     // No useable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
   } else {
-    *pUnconfiguredCapacity = pDimm->PmCapacity - AppDirectCapacity;
+    // Difference between the Persistent Partition and the SPA mapped capacity
+    *pInaccessibleCapacity += pDimm->PmCapacity - AppDirectCapacity;
   }
 
   ReturnCode = EFI_SUCCESS;

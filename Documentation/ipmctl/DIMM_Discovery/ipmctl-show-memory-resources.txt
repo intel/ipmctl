@@ -60,15 +60,68 @@ AppDirectCapacity::
   Total usable system DCPMM App Direct capacity.
 
 UnconfiguredCapacity::
-  Total system DCPMM capacity that is inaccessible because it is not mapped
-  into the system physical address space.
-
-InaccessibleCapacity::
-  Total system DCPMM capacity that is inaccessible due to:
-  - licensing issue
-  - platform configuration prevents accessing this capacity. e.g. MemoryCapacity is
-    configured and available on a DCPMM but MemoryMode is not enabled by
-    BIOS.
+  Total system DCPMM capacity that is unusable because it has not been configured.
 
 ReservedCapacity::
-  Total system DCPMM capacity reserved for proper alignment.
+  Total system DCPMM capacity reserved for proper alignment. This capacity is not
+  available for any use.
+
+InaccessibleCapacity::
+  Total system DCPMM capacity that is inaccessible due any of:
+  - Platform configuration prevents accessing this capacity. e.g. MemoryCapacity is
+    configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
+  - Capacity is inaccessible because it is not mapped into the system physical
+    address space (SPA). This is usually due to platform firmware memory alignment requirements.
+  - DCPMM configured capacity but SKU prevents usage. e.g. AppDirectCapcity but
+    DCPMM SKU is MemoryMode only.
+
+DETAILS
+-------
+DCPMMs are partitioned into Memory and Persistent partitions. These partitions must
+be aligned to 1 GiB boundaries. Any capacity that falls outside the Memory and
+Persistent partitions is ReservedCapacity and is not useable.
+
+Furthermore, platform firmware alignment restrictions may result in some capacity from the
+Persistent partition not mapped to system physical address (SPA) space. This memory is considered
+InaccessibleCapacity and is not usable.
+
+Definitions:
+
+Capacity::
+  Raw Capacity reported by DCPMM DIMM Partition Info
+
+Memory Partition Capacity::
+  Volatile Capacity reported by DCPMM DIMM Partition Info
+
+Persistent Partition Capacity::
+  Persistent Capacity reported by DCPMM DIMM Partition Info
+
+Volatile Memory Size::
+  Usable voliatile memory capacity as reported by platform FW
+  via _Intel NVDIMM Current Config->Volatile Memory Size Mapped into SPA_ field
+
+Persistent Memory Size::
+  Usable persistent memory capacity as reported by platform FW via
+  _Intel NVDIMM Current Config->Persistent Memory Size Mapped into SPA_ field
+
+DCPMM DIMM Partition Info::
+  DIMM Partition Info provided by DCPMM firmware. See _Intel(R) Optane(TM)
+  DC Persistent Memory Module Firmware Interface Specification_ for details.
+
+Intel NVDIMM Current Config::
+  See _Intel(R) NVM Dimm Management Software-Firmware Interface Specification_
+  for details.
+
+Calculations:
+
+[verse]
+MemoryCapacity = Volatile Memory Capacity
+
+[verse]
+AppDirectCapacity = Persistent Memory Size
+
+[verse]
+InaccessibleCapacity = Persistent Partition Capacity - Persistent Memory Size
+
+[verse]
+ReservedCapacity = Capacity - Memory Partition Capacity - Persistent Partition Capacity

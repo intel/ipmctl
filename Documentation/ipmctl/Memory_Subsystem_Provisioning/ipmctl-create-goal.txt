@@ -21,13 +21,7 @@ Creates a memory allocation goal on one or more for the BIOS to read on the next
 reboot in order to map the DCPMM capacity into the system address space.
 Persistent memory can then be utilized by creating a namespace.
 
-NOTE: Changing the memory configuration is a destructive operation which results
-in loss of data stored in the persistent memory region. Therefore, data should
-be backed up to other storage before executing this command.
-
-NOTE: Creating a memory allocation goal modifies how the platform maps persistent
-memory, but does not explicitly delete or modify user data found in persistent
-memory.
+include::../ipmctl-change-goal-config-warning.txt[]
 
 OPTIONS
 -------
@@ -139,7 +133,7 @@ In order to successfully execute this command:
 
 - Some requests are dependent on BIOS and/or platform configuration. For details, refer
   to the _Intel® Optane™ DC Persistent Memory Software Memory Allocation Rules_,
-  document number 564194. For example: 
+  document number 564194. For example:
  - Provisioning DCPMMs for Memory Mode while BIOS is configured for 1LM only
    will result in unused capacity.
  - Provisioning DCPMMs for Memory Mode while not all iMCs have at least one DCPMM

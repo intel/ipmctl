@@ -20,10 +20,6 @@ DESCRIPTION
 Deletes the memory allocation goal from one or more DCPMMs. This command only
 deletes a memory allocation goal request that has not been processed by BIOS.
 
-NOTE: Deleting a memory allocation goal modifies how the platform maps persistent
-memory, but does not explicitly delete or modify user data found in persistent
-memory.
-
 OPTIONS
 -------
 -h::

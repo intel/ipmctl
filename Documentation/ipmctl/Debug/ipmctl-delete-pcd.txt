@@ -19,6 +19,7 @@ endif::os_build[]
 ifdef::os_build[]
 ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd (Config)
 endif::os_build[]
+
 DESCRIPTION
 -----------
 ifndef::os_build[]
@@ -44,7 +45,7 @@ OPTIONS
 -------
 -f::
 -force::
-  Deleting the namespace label storage area is a destructive operation which
+  Deleting the PCD data is a destructive operation which
   requires confirmation from the user for each DCPMM. This option suppresses the
   confirmation.
 
@@ -55,9 +56,9 @@ OPTIONS
 TARGETS
 -------
 -dimm (DimmIDs)::
-  Deletes the namespace label storage area on specific DCPMMs by supplying one
+  Deletes the PCD data on specific DCPMMs by supplying one
   or more comma-separated DCPMM identifiers. The default is to delete the
-  namespace label storage area for all manageable DCPMMs.
+  PCD data for all manageable DCPMMs.
 ifndef::os_build[]
 -pcd (Config|LSA)::
   Restricts clearing select partition data in the platform
@@ -70,6 +71,7 @@ ifdef::os_build[]
 -pcd Config::
   Clears the configuration management information
 endif::os_build[]
+
 EXAMPLES
 --------
 ifndef::os_build[]

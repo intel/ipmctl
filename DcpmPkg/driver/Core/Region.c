@@ -366,10 +366,10 @@ RetrieveISsFromPlatformConfigData(
       continue;
     }
 
-    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, &pPcdConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
       if (ReturnCode == EFI_DEVICE_ERROR) {
-        ReturnCode = GetPlatformConfigDataOemPartition(pDimm, &pPcdConfHeader);
+        ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
       }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
@@ -1384,10 +1384,10 @@ RetrieveGoalConfigsFromPlatformConfigData(
       continue;
     }
 
-    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, &pPcdConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
   if (ReturnCode == EFI_DEVICE_ERROR) {
-    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, &pPcdConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
@@ -3174,10 +3174,10 @@ SendConfigInputToDimm(
   }
 
   /** Get current Platform Config Data from dimm **/
-  Rc = GetPlatformConfigDataOemPartition(pDimm, &pConfHeader);
+  Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
   if (Rc == EFI_DEVICE_ERROR) {
-	  Rc = GetPlatformConfigDataOemPartition(pDimm, &pConfHeader);
+	  Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
   }
 #endif // MEMORY_CORRUPTIO_WA
   if (EFI_ERROR(Rc)) {

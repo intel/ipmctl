@@ -446,10 +446,10 @@ CheckPlatformConfigurationData(
       continue;
     }
 
-    ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pPcdConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
     if (ReturnCode == EFI_DEVICE_ERROR) {
-       ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pPcdConfHeader);
+       ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pPcdConfHeader);
     }
 #endif // MEMORY_CORRUPTION_WA
     if (!EFI_ERROR(ReturnCode)) {

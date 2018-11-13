@@ -1294,22 +1294,26 @@ ClearInterleavedBuffer(
   );
 
 /**
-  Get Platform Config Data oem partition and check a correctness of header.
+  Get Platform Config Data OEM partition Intel config region and check a correctness of header.
+  We only return the actua PCD config data, from the first 64KiB of Intel FW/SW config metadata.
+  The latter 64KiB is reserved for OEM use.
 
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
   @param[in] pDimm The Intel NVM Dimm to retrieve PCD from
+  @param[in] RetoreCorrupt If true will generate a default PCD when a corrupt header is found
   @param[out] ppPlatformConfigData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR Incorrect PCD header
-  @retval Other return codes from FwCmdGetPlatformConfigData
+  @retval Other return codes from GetPcdOemConfigDataUsingSmallPayload
 **/
 EFI_STATUS
 GetPlatformConfigDataOemPartition(
   IN     DIMM *pDimm,
-     OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
-  );
+  IN     BOOLEAN RestoreCorrupt,
+  OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
+);
 
 /**
   Set Platform Config Data OEM Partition Intel config region.

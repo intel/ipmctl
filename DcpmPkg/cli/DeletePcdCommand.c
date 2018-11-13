@@ -212,6 +212,14 @@ DeletePcdCmd(
   pCommandStatusMessage = CatSPrint(NULL, L"Clear " FORMAT_STR L"partition(s)", pDisplayTargets);
 
   if (!Force) {
+    Print(L"WARNING: Modifying the Platform Configuration Data can result in loss of data!\n");
+    ReturnCode = PromptYesNo(&Confirmation);
+    if (EFI_ERROR(ReturnCode) || !Confirmation) {
+      ReturnCode = EFI_NOT_STARTED;
+      goto Finish;
+    }
+    Print(L"\n");
+
     for (Index = 0; Index < DimmIdsCount; Index++) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
 

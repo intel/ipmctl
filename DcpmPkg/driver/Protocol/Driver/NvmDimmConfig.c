@@ -548,7 +548,7 @@ GetDimmMappedMemSize(
     return EFI_NOT_READY;
   }
 
-  ReturnCode = GetPlatformConfigDataOemPartition(pDimm, &pPcdConfHeader);
+  ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   if (EFI_ERROR(ReturnCode)) {
     return EFI_DEVICE_ERROR;
   }
@@ -3212,14 +3212,14 @@ GetPcd(
       goto FinishError;
     }
 	if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
-		ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], &pPcdConfHeader);
+		ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
 		if (ReturnCode == EFI_NO_MEDIA) {
 		  continue;
 		}
 #ifdef MEMORY_CORRUPTION_WA
 		if (ReturnCode == EFI_DEVICE_ERROR)
 		{
-			ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], &pPcdConfHeader);
+			ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
 		}
 #endif // MEMORY_CORRUPTIO_WA
 		if (EFI_ERROR(ReturnCode)) {
@@ -3459,7 +3459,7 @@ ModifyPcdConfig(
       FREE_POOL_SAFE(pConfigHeader);
       //read partion 1 where CCUR/CIN/COUT resides
       //we are only going to modify the DATA SIZE and START OFFSET values in the header before writing it back out
-      TmpReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], &pConfigHeader);
+      TmpReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], TRUE, &pConfigHeader);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
@@ -9323,11 +9323,11 @@ CheckPCDAutoConfVars(
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
-    ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pConfHeader);
 
 #ifdef MEMORY_CORRUPTION_WA
   if (ReturnCode == EFI_DEVICE_ERROR) {
-		ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], &pConfHeader);
+		ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pConfHeader);
 	}
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {

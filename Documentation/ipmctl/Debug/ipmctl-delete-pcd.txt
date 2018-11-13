@@ -41,6 +41,9 @@ the Configuration header are set to zero, making those tables invalid.
 NOTE: This action can be useful when moving DCPMMs from one system to another, as goal creation
 rules may restrict provisioning dimms with an existing configuration.
 
+WARNING: *This command may result in data loss. Data should be backed up
+to other storage before executing this command*.
+
 OPTIONS
 -------
 -f::

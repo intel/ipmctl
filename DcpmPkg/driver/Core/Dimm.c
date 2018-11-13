@@ -5396,6 +5396,7 @@ GenerateOemPcdHeader (
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
   @param[in] pDimm The Intel NVM Dimm to retrieve PCD from
+  @param[in] RetoreCorrupt If true will generate a default PCD when a corrupt header is found
   @param[out] ppPlatformConfigData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS Success
@@ -5405,6 +5406,7 @@ GenerateOemPcdHeader (
 EFI_STATUS
 GetPlatformConfigDataOemPartition (
   IN     DIMM *pDimm,
+  IN     BOOLEAN RestoreCorrupt,
      OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
   )
 {
@@ -5419,8 +5421,8 @@ GetPlatformConfigDataOemPartition (
 
   /** Get current Platform Config Data oem partition from dimm **/
   ReturnCode = GetPcdOemConfigDataUsingSmallPayload(pDimm, (UINT8 **)ppPlatformConfigData, &PcdDataSize);
-  if(EFI_NOT_FOUND == ReturnCode) {
-    NVDIMM_WARN("Empty Platform Configuration Data Discovered, Generating new OemPcdHeader");
+  if(EFI_NOT_FOUND == ReturnCode || (RestoreCorrupt && EFI_VOLUME_CORRUPTED == ReturnCode)) {
+    NVDIMM_WARN("Generating new OemPcdHeader due to missing or corrupt PCD config header.");
     *ppPlatformConfigData = AllocateZeroPool(sizeof(NVDIMM_CONFIGURATION_HEADER));
   if (*ppPlatformConfigData == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;

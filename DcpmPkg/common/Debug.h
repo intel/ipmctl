@@ -66,7 +66,7 @@ static INLINE CHAR16 *FileFromPath(CHAR16 *path)
   int index = 0;
   while (path[i] != L'\0')
   {
-    if (path[i] == L'/')
+    if (path[i] == L'\\')
     {
       index = i;
     }

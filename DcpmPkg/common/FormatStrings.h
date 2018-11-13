@@ -15,6 +15,7 @@
 #define FORMAT_STR_NL                           L"%s\n"
 #define FORMAT_NL_STR                           L"\n%s"
 #define FORMAT_STR_NL_NL                        L"%s\n\n"
+#define FORMAT_NL_NL_STR                        L"\n\n%s"
 #define FORMAT_STR_SPACE                        L"%s "
 #define SPACE_FORMAT_STR_SPACE                  L" %s "
 #define FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL  L"   %s=%s\n"

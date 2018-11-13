@@ -39,12 +39,12 @@ extern UINTN EFIAPI PrintNoBuffer(CHAR16* fmt, ...);
   } while (0)
 #endif
 
-#ifdef OS_BUILD
 #ifdef _MSC_VER
 #define SUB_DIR_CHAR '\\'
 #else // MSVC
 #define SUB_DIR_CHAR '/'
 #endif // MSVC
+#ifdef OS_BUILD
 static INLINE CHAR8 *FileFromPath(CHAR8 *path)
 {
     int i = 0;
@@ -66,7 +66,7 @@ static INLINE CHAR16 *FileFromPath(CHAR16 *path)
   int index = 0;
   while (path[i] != L'\0')
   {
-    if (path[i] == L'\\')
+    if (path[i] == SUB_DIR_CHAR)
     {
       index = i;
     }

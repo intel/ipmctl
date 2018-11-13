@@ -2207,9 +2207,7 @@ DeleteRegionsGoalConfigs(
     }
   }
 
-  for (Index = 0; Index < ExistingRegionsGoalNum; Index++) {
-    FreePool(pExistingRegionsGoal[Index]);
-  }
+  ClearRegionsGoal(pRelatedDimms, RelatedDimmsNum, pExistingRegionsGoal, ExistingRegionsGoalNum);
 
 Finish:
   NVDIMM_EXIT_I64(Rc);
@@ -3536,6 +3534,44 @@ FindUniqueRegionsGoal(
         (*pRegionsGoalNum)++;
       }
     }
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(Rc);
+  return Rc;
+}
+
+
+EFI_STATUS
+ClearRegionsGoal(
+  IN     DIMM *pDimms[],
+  IN     UINT32 DimmsNum,
+  IN     REGION_GOAL **pRegionsGoal,
+  IN     UINT32 ExistingRegionsGoalNum
+)
+{
+  EFI_STATUS Rc = EFI_SUCCESS;
+  UINT32 Index = 0;
+  UINT32 Index2 = 0;
+  UINT32 Index3 = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pDimms == NULL || pRegionsGoal == NULL) {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmsNum; Index++) {
+    for (Index2 = 0; Index2 < pDimms[Index]->RegionsGoalNum; Index2++) {
+      if (pDimms[Index]->pRegionsGoal[Index2] == pRegionsGoal[Index3]) {
+        pDimms[Index]->pRegionsGoal[Index2] = NULL;
+      }
+    }
+  }
+
+  for (Index = 0; Index < ExistingRegionsGoalNum; Index++) {
+    FreePool(pRegionsGoal[Index]);
   }
 
 Finish:

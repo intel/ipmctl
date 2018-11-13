@@ -808,6 +808,23 @@ FindUniqueRegionsGoal(
   );
 
 /**
+  Cleans up pointers that are about to be freed so that double-free doesn't take place later on
+
+  @param[in] pDimms Input array of pointers to dimms
+  @param[in] DimmsNum Number of pointers in pDimms
+  @param[in] pRegionsGoal to list of regions containing the candidate pointers
+  @param[in] pRegionsGoalNum the number of region goal items
+
+  **/
+EFI_STATUS
+ClearRegionsGoal(
+  IN     DIMM *pDimms[],
+  IN     UINT32 DimmsNum,
+  IN     REGION_GOAL **pRegionsGoal,
+  IN     UINT32 pRegionsGoalNum
+);
+
+/**
   Create REGION goal
 
   @param[in] pRegionGoalTemplate Pointer to REGION goal template

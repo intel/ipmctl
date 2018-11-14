@@ -92,7 +92,7 @@ typedef struct {
 #define SECURITYCAPABILITES_LEN        18 // @todo confirm label length
 #define IFC_STRING_LEN                255
 #define MEMORY_MODES_LEN               40 // @todo confirm label length
-#define MEMORY_TYPE                    18 // @todo confirm label length
+#define MEMORY_TYPE                    30 
 #define BOOT_STATUS_LEN               100
 #define FW_UPDATE_STATUS_LEN           64
 #define FW_BUILD_LEN                   16

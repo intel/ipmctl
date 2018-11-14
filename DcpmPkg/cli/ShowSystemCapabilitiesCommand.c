@@ -12,6 +12,7 @@
 #include <NvmLimits.h>
 #include <Convert.h>
 #include "Common.h"
+#include "NvmDimmCli.h"
 
 #define DS_ROOT_PATH                        L"/SystemCapabilities"
 
@@ -303,7 +304,7 @@ ShowSystemCapabilities(
         BIT_GET(SystemCapabilitiesInfo.PlatformConfigSupported, PLATFROM_CONFIG_SUPPORTED_BIT));
   }
   if (FilterOutput == ContainsValue(pDisplayValues, MEMORY_ALIGNMENT_STR)) {
-    TempReturnCode = MakeCapacityString(Pow(2, SystemCapabilitiesInfo.InterleaveAlignmentSize),
+    TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, Pow(2, SystemCapabilitiesInfo.InterleaveAlignmentSize),
                         UnitsToDisplay, TRUE, &pCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_ALIGNMENT_STR, pCapacityStr);
@@ -326,7 +327,7 @@ ShowSystemCapabilities(
   }
 
   if (ShowAll || ContainsValue(pDisplayValues, MIN_NAMESPACE_SIZE_STR)) {
-    TempReturnCode = MakeCapacityString(SystemCapabilitiesInfo.MinNsSize, UnitsToDisplay, TRUE, &pCapacityStr);
+    TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, SystemCapabilitiesInfo.MinNsSize, UnitsToDisplay, TRUE, &pCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MIN_NAMESPACE_SIZE_STR, pCapacityStr);
     FREE_POOL_SAFE(pCapacityStr);

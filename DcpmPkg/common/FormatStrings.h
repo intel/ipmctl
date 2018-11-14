@@ -64,6 +64,7 @@
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 #define FORMAT_STEPPING                         L"%s%d (0x%04x)"
 #define FORMAT_HEX_PREFIX                       L"0x"
+#define FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS      L"%0*d"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_STR_WITH_PARANTHESIS             L"(%ls)"
@@ -125,6 +126,7 @@
 #define FORMAT_GUID                             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 #define FORMAT_STEPPING                         L"%ls%d (0x%04x)"
 #define FORMAT_HEX_PREFIX                       L"0x"
+#define FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS      L"%0*d"
 #endif // OS_BUILD
 
 #endif /** _FORMAT_STRINGS_H_ **/

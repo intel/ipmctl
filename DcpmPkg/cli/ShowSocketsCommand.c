@@ -286,7 +286,7 @@ ShowSockets(
 
     /** MappedMemoryLimit **/
     if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAPPED_MEMORY_LIMIT_STR))) {
-      ReturnCode = MakeCapacityString(pSockets[Index].MappedMemoryLimit, UnitsToDisplay, TRUE, &pMappedMemLimitStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pSockets[Index].MappedMemoryLimit, UnitsToDisplay, TRUE, &pMappedMemLimitStr);
         if (EFI_ERROR(ReturnCode)) {
             PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
             goto Finish;
@@ -297,7 +297,7 @@ ShowSockets(
 
     /** TotalMappedMemory **/
     if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TOTAL_MAPPED_MEMORY_STR))) {
-      ReturnCode = MakeCapacityString(pSockets[Index].TotalMappedMemory, UnitsToDisplay, TRUE, &pTotalMappedMemStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pSockets[Index].TotalMappedMemory, UnitsToDisplay, TRUE, &pTotalMappedMemStr);
         if (EFI_ERROR(ReturnCode)) {
             PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
             goto Finish;

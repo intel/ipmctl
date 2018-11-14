@@ -1749,6 +1749,8 @@ Pow(
   UINT64 Result = Base;
   UINT32 Index = 0;
 
+  NVDIMM_ENTRY();
+
   if (Exponent == 0) {
     return 1;
   }
@@ -1757,6 +1759,7 @@ Pow(
     Result *= Base;
   }
 
+  NVDIMM_EXIT();
   return Result;
 }
 
@@ -2936,47 +2939,69 @@ Finish:
 }
 
 /**
-  Convert from units type to a string
+  Populates the units string based on the particular capacity unit
+  @param[in] pData A pointer to the main HII data structure
+  @param[in] Units The input unit to be converted into its HII string
+  @param[out] ppUnitsStr A pointer to the HII units string. Dynamically allocated memory and must be released by calling function.
 
-  @param[in] UnitsToDisplay The type of units to be used
-
-  @retval String representation of the units type
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for units string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
 **/
-CHAR16*
-UnitsToStr(
-  IN     UINT16 UnitsToDisplay
+EFI_STATUS
+UnitsToStr (
+  IN     EFI_HII_HANDLE HiiHandle,
+  IN     UINT16 Units,
+     OUT CHAR16 **ppUnitsStr
   )
 {
-  CHAR16 *pTempStr = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
 
-  switch (UnitsToDisplay) {
+  NVDIMM_ENTRY();
+
+  if ((ppUnitsStr == NULL)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  switch (Units) {
     case DISPLAY_SIZE_UNIT_B:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_B_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_B), NULL);
       break;
     case DISPLAY_SIZE_UNIT_MB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_MB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_MB), NULL);
       break;
     case DISPLAY_SIZE_UNIT_MIB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_MIB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_MIB), NULL);
       break;
     case DISPLAY_SIZE_UNIT_GB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_GB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_GB), NULL);
       break;
     case DISPLAY_SIZE_UNIT_GIB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_GIB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_GIB), NULL);
       break;
     case DISPLAY_SIZE_UNIT_TB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_TB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_TB), NULL);
       break;
     case DISPLAY_SIZE_UNIT_TIB:
-      pTempStr =  CatSPrint(NULL, FORMAT_STR, UNITS_TIB_STR);
+      *ppUnitsStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_CAPACITY_UNIT_TIB), NULL);
       break;
     default:
+      ReturnCode = EFI_INVALID_PARAMETER;
       NVDIMM_DBG("Invalid units type!");
-      break;
+      goto Finish;
   }
-  return pTempStr;
+
+  if (*ppUnitsStr == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
+
 
 /**
   Convert last firmware update status to string.

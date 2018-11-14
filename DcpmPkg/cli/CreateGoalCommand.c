@@ -312,6 +312,7 @@ CreateGoal(
   BOOLEAN Valid = FALSE;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  CHAR16 *pUnitsStr = NULL;
   CHAR16 *pCommandStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT16 LabelVersionMajor = 0;
@@ -530,7 +531,8 @@ CreateGoal(
     }
 
     if (UnitsOption != DISPLAY_SIZE_UNIT_UNKNOWN) {
-      pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, SHOW_VERB, pShowGoalOutputArgs, UNITS_OPTION, UnitsToStr(UnitsToDisplay), GOAL_TARGET);
+      CHECK_RESULT(UnitsToStr(gNvmDimmCliHiiHandle, UnitsToDisplay, &pUnitsStr), Finish);
+      pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, SHOW_VERB, pShowGoalOutputArgs, UNITS_OPTION, pUnitsStr, GOAL_TARGET);
     } else {
       pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR FORMAT_STR, SHOW_VERB, pShowGoalOutputArgs, GOAL_TARGET);
     }
@@ -568,6 +570,7 @@ FinishSkipPrinterProcess:
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pShowGoalOutputArgs);
+  FREE_POOL_SAFE(pUnitsStr);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

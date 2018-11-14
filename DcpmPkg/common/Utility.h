@@ -225,7 +225,11 @@ typedef union {
 #define BYTES_TO_GB(Size)         ((Size)/1000/1000/1000)
 #define KIB_TO_BYTES(Size)        ((Size) * BYTES_IN_KIB)
 #define MIB_TO_BYTES(Size)        ((Size) * BYTES_IN_MEBIBYTE)
+#define MB_TO_BYTES(Size)         ((Size) * BYTES_IN_MEGABYTE)
 #define GIB_TO_BYTES(Size)        ((Size) * BYTES_IN_GIBIBYTE)
+#define GB_TO_BYTES(Size)         ((Size) * BYTES_IN_GIGABYTE)
+#define TIB_TO_BYTES(Size)        ((Size) * BYTES_IN_TEBIBYTE)
+#define TB_TO_BYTES(Size)         ((Size) * BYTES_IN_TERABYTE)
 #define KIB_TO_MIB(Size)          ((Size)>>10)
 #define GIB_TO_MIB(Size)          ((Size)<<10)
 #define MIB_TO_GIB(Size)          ((Size)>>10)
@@ -241,7 +245,6 @@ typedef union {
 
 #define GIB_TO_GB(Size) (BYTES_TO_GB(GIB_TO_BYTES(Size)))
 #define GB_TO_GIB(Size) (BYTES_TO_GIB(GB_TO_BYTES(Size)))
-#define GB_TO_BYTES(Size)         ((Size)*1000*1000*1000)
 
 #define BYTES_IN_TERABYTE (BYTES_IN_GIGABYTE * BYTES_IN_KB)
 #define BYTES_IN_GIGABYTE (BYTES_IN_MEGABYTE * BYTES_IN_KB)
@@ -1318,15 +1321,20 @@ BubbleSort(
   );
 
 /**
-  Convert from units type to a string
+  Populates the units string based on the particular capacity unit
+  @param[in] pData A pointer to the main HII data structure
+  @param[in] Units The input unit to be converted into its HII string
+  @param[out] ppUnitsStr A pointer to the HII units string. Dynamically allocated memory and must be released by calling function.
 
-  @param[in] UnitsToDisplay The type of units to be used
-
-  @retval String representation of the units type
+  @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for units string
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
 **/
-CHAR16*
-UnitsToStr(
-  IN     UINT16 UnitsToDisplay
+EFI_STATUS
+UnitsToStr (
+  IN     EFI_HII_HANDLE HiiHandle,
+  IN     UINT16 Units,
+     OUT CHAR16 **ppUnitsStr
   );
 
 /**

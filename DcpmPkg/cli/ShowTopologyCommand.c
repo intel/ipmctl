@@ -292,7 +292,7 @@ ShowTopology(
       }
 
       pMemoryType = MemoryTypeToStr(pDimms[Index].MemoryType);
-      ReturnCode = MakeCapacityString(pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
@@ -313,7 +313,7 @@ ShowTopology(
           continue;
         }
         pMemoryType = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
-        TempReturnCode = MakeCapacityString(pTopologyDimms[Index].VolatileCapacity,
+        TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pTopologyDimms[Index].VolatileCapacity,
             UnitsToDisplay, TRUE, &pCapacityStr);
         KEEP_ERROR(ReturnCode, TempReturnCode);
 
@@ -367,7 +367,7 @@ ShowTopology(
 
       /** Capacity **/
       if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
-        TempReturnCode = MakeCapacityString(pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
+        TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
         KEEP_ERROR(ReturnCode, TempReturnCode);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
         FREE_POOL_SAFE(pCapacityStr);
@@ -434,7 +434,8 @@ ShowTopology(
         /** Capacity **/
         if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
           //Convert Megabytes to Gigabytes and get digits after point from number
-          TempReturnCode = MakeCapacityString(pTopologyDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+          TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle,
+              pTopologyDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
           KEEP_ERROR(ReturnCode, TempReturnCode);
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
           FREE_POOL_SAFE(pCapacityStr);

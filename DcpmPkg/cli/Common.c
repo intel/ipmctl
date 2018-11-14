@@ -2219,6 +2219,7 @@ AllDimmsInListAreManageable(
   BOOLEAN Manageable = TRUE;
   UINT32 AllDimmListIndex = 0;
   UINT32 DimmsToCheckIndex = 0;
+  NVDIMM_ENTRY();
 
   for (DimmsToCheckIndex = 0; DimmsToCheckIndex < DimmsToCheckCount; DimmsToCheckIndex++) {
     for (AllDimmListIndex = 0; AllDimmListIndex < AllDimmCount; AllDimmListIndex++) {

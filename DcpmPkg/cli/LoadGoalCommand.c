@@ -12,6 +12,7 @@
 #include "CommandParser.h"
 #include "LoadGoalCommand.h"
 #include "Common.h"
+#include "NvmDimmCli.h"
 
 /**
   Command syntax definition
@@ -72,6 +73,7 @@ LoadGoal(
   UINT32 DimmCount = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  CHAR16 *pUnitsStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT32 SocketIndex = 0;
   BOOLEAN Confirmation = FALSE;
@@ -228,7 +230,8 @@ LoadGoal(
 
   if (!EFI_ERROR(ReturnCode)) {
     if (UnitsOption != DISPLAY_SIZE_UNIT_UNKNOWN) {
-      pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, L"show", UNITS_OPTION, UnitsToStr(UnitsToDisplay),
+      CHECK_RESULT(UnitsToStr(gNvmDimmCliHiiHandle, UnitsToDisplay, &pUnitsStr), Finish);
+      pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR_SPACE FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR, L"show", UNITS_OPTION, pUnitsStr,
                         L"-goal");
     } else {
       pCommandStr = CatSPrintClean(pCommandStr, FORMAT_STR, L"show -goal");
@@ -273,6 +276,7 @@ Finish:
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pLoadUserPath);
+  FREE_POOL_SAFE(pUnitsStr);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -174,15 +174,15 @@ ShowGoalPrintTableView(
       goto Finish;
     }
 
-    TempReturnCode = MakeCapacityString(ROUNDDOWN(pCurrentGoal->VolatileSize, SIZE_1GB), CurrentUnits,
+    TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, ROUNDDOWN(pCurrentGoal->VolatileSize, SIZE_1GB), CurrentUnits,
         TRUE, &pVolatileCapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
 
-    TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[0],
+    TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[0],
         CurrentUnits, TRUE, &pAppDirect1CapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
 
-    TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[1],
+    TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[1],
         CurrentUnits, TRUE, &pAppDirect2CapacityStr);
     KEEP_ERROR(ReturnCode, TempReturnCode);
 
@@ -265,14 +265,14 @@ ShowGoalPrintDetailedView(
     }
     /** Volatile Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_SIZE_PROPERTY))) {
-      ReturnCode = MakeCapacityString(ROUNDDOWN(pCurrentGoal->VolatileSize, SIZE_1GB), CurrentUnits,
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, ROUNDDOWN(pCurrentGoal->VolatileSize, SIZE_1GB), CurrentUnits,
           TRUE, &pCapacityStr);
       PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, MEMORY_SIZE_PROPERTY, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect1Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SIZE_PROPERTY))) {
-      TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[0], CurrentUnits, TRUE, &pCapacityStr);
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[0], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY, 
                                          pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
@@ -295,7 +295,7 @@ ShowGoalPrintDetailedView(
     }
     /** AppDirect2Size **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_SIZE_PROPERTY))) {
-      TempReturnCode = MakeCapacityString(pCurrentGoal->AppDirectSize[1], CurrentUnits, TRUE, &pCapacityStr);
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[1], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_SIZE_PROPERTY,
         pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);

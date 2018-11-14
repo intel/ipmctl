@@ -11,6 +11,7 @@
 #include <NvmLimits.h>
 #include <Convert.h>
 #include "Common.h"
+#include "NvmDimmCli.h"
 #ifdef OS_BUILD
 #include "BaseMemoryLib.h"
 #else
@@ -494,7 +495,7 @@ ShowRegions(
     **/
     if (AllOptionSet ||
         (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TOTAL_CAPACITY_STR))) {
-      ReturnCode = MakeCapacityString(pRegions[RegionIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pRegions[RegionIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
       if (EFI_ERROR(ReturnCode)) {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
         goto Finish;
@@ -508,7 +509,7 @@ ShowRegions(
     **/
     if (AllOptionSet ||
         (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FREE_CAPACITY_STR))) {
-      ReturnCode = MakeCapacityString(pRegions[RegionIndex].FreeCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pRegions[RegionIndex].FreeCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
       if (EFI_ERROR(ReturnCode)) {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CAPACITY_STRING);
           goto Finish;

@@ -8,43 +8,6 @@
 #include <Library/PrintLib.h>
 
 /**
-  Return a string of digits after decimal point.
-
-  Number: 12.3456, NumberOfDigits: 2, Result: 34
-
-  @param[in] Number Number to retrieve digits from
-  @param[in] NumberOfDigits Number of digits after point to retrieve
-
-  @result Digits after point
-**/
-CHAR16*
-GetDigitsStrAfterPointFromNumber(
-  IN     double Number,
-  IN     UINT32 NumberOfDigits
-  )
-{
-  CHAR16 *pDigitsStr = NULL;
-  double PostDecimal = 0.0;
-  UINT32 Index = 0;
-  UINT32 PostDecimalInt = 0;
-  UINT32 Digit = 0;
-  UINT32 PreviousDigits = 0;
-
-  PostDecimal = Number - (UINT32) Number;
-
-  for (Index = 1; Index <= NumberOfDigits; Index++) {
-    PostDecimalInt = (UINT32) (Pow(10, Index) * PostDecimal);
-    Digit = PostDecimalInt - (10 * PreviousDigits);
-
-    pDigitsStr = CatSPrintClean(pDigitsStr, L"%d", Digit);
-
-    PreviousDigits = PostDecimalInt;
-  }
-
-  return pDigitsStr;
-}
-
-/**
   Convert GUID structure to string
   Caller is responsible for FreePool on this pointer
 
@@ -786,55 +749,102 @@ GetU64FromString (
 }
 /**
   A helper function to convert a capacity value in bytes as per the requested units
+  to a printable string.
 
   @param[in] Capacity The input capacity in bytes
   @param[in] Units The requested type of units to convert the capacity into
-  @param[out] pConvertedCapacity Pointer to the converted capacity value
+  @param[out] pFormattedSizeString Pointer to the converted size string
+
+  Note: The caller is responsible for freeing the returned string
+  Note: The returned value will always be less than the actual value
+  (don't over-report size)
 
   @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
   @retval EFI_SUCCESS The conversion was successful
 **/
 EFI_STATUS
-ConvertCapacityPerUnits (
+GetFormattedSizeString (
   IN     UINT64 Capacity,
   IN     UINT16 Units,
-     OUT double *pConvertedCapacity
+  IN     UINT32 NumberOfDigitsAfterDecimal,
+     OUT CHAR16 **ppFormattedSizeString
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-
+  UINT64 ValueBeforeDecimal = 0;
+  UINT64 RemainderBytes = 0;
+  UINT64 ValueAfterDecimal = 0;
   NVDIMM_ENTRY();
 
-  if (pConvertedCapacity == NULL) {
+  if (ppFormattedSizeString == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
+  // Note: This function is using integers for computation instead of floats
+  // to avoid triggering the precision bit in the MXCSR register.
+
+  /*
+  // Example run-through. Result should be 2.1 KiB
+  Value = 2048 + (1024+6)/10 = 2151
+  1024 = Bytes in KiB
+
+  Before = 2151 / 1024 = 2
+  RemainderBytes = (2151 - (Before * 1024)) = 103
+  After = (RemainderBytes * (10^Digits))/1024 = 1
+  */
   switch(Units) {
     case DISPLAY_SIZE_UNIT_B:
-      *pConvertedCapacity = (double) Capacity;
+      ValueBeforeDecimal = Capacity;
+      ValueAfterDecimal = 0;
       break;
     case DISPLAY_SIZE_UNIT_MIB:
-      *pConvertedCapacity = BYTES_TO_MIB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_MIB(Capacity);
+      RemainderBytes = Capacity - MIB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_MIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     case DISPLAY_SIZE_UNIT_MB:
-      *pConvertedCapacity = BYTES_TO_MB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_MB(Capacity);
+      RemainderBytes = Capacity - MB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_MB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     case DISPLAY_SIZE_UNIT_GIB:
-      *pConvertedCapacity = BYTES_TO_GIB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_GIB(Capacity);
+      RemainderBytes = Capacity - GIB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_GIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     case DISPLAY_SIZE_UNIT_GB:
-      *pConvertedCapacity = BYTES_TO_GB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_GB(Capacity);
+      RemainderBytes = Capacity - GB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_GB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     case DISPLAY_SIZE_UNIT_TIB:
-      *pConvertedCapacity = BYTES_TO_TIB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_TIB(Capacity);
+      RemainderBytes = Capacity - TIB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_TIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     case DISPLAY_SIZE_UNIT_TB:
-      *pConvertedCapacity = BYTES_TO_TB_DOUBLE(Capacity);
+      ValueBeforeDecimal = BYTES_TO_TB(Capacity);
+      RemainderBytes = Capacity - TB_TO_BYTES(ValueBeforeDecimal);
+      ValueAfterDecimal = BYTES_TO_TB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
       break;
     default:
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
+  }
+
+  // If bytes / no decimal digits then no decimal needed
+  if (Units == DISPLAY_SIZE_UNIT_B || NumberOfDigitsAfterDecimal == 0) {
+    *ppFormattedSizeString = CatSPrintClean(*ppFormattedSizeString, FORMAT_UINT64, ValueBeforeDecimal);
+  } else {
+    *ppFormattedSizeString = CatSPrintClean(*ppFormattedSizeString, FORMAT_UINT64 "." FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS,
+        ValueBeforeDecimal, (UINTN)NumberOfDigitsAfterDecimal, ValueAfterDecimal);
+  }
+
+  if (*ppFormattedSizeString == NULL) {
+    NVDIMM_DBG("Could not allocate string");
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
   }
 
 Finish:
@@ -845,6 +855,7 @@ Finish:
 /**
   Make the capacity string based on the requested units
 
+  @param[in] HiiHandle The handle for the hii instance (used for string pack)
   @param[in] Capacity The input capacity in bytes
   @param[in] CurrentUnits The requested type of units to convert the capacity into
   @param[in] AppendUnits Flag to append units to the resulting capacity string
@@ -855,6 +866,7 @@ Finish:
 **/
 EFI_STATUS
 MakeCapacityString (
+  IN     EFI_HII_HANDLE HiiHandle,
   IN     UINT64 Capacity,
   IN     UINT16 CurrentUnits,
   IN     BOOLEAN AppendUnits,
@@ -863,9 +875,10 @@ MakeCapacityString (
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT16 UnitsSelector = 0;
-  double ConvertedCapacity = 0.0;
   CHAR16 *pUnitsStr = NULL;
-  CHAR16 *pDigitsStr = NULL;
+  CHAR16 *pUnitsStr2 = NULL;
+  CHAR16 *pFormattedSizeString = NULL;
+
 
   NVDIMM_ENTRY();
 
@@ -882,34 +895,20 @@ MakeCapacityString (
     UnitsSelector = GetBestDisplayForCapacity(Capacity, CurrentUnits);
   }
 
-  if (UnitsSelector != DISPLAY_SIZE_UNIT_B) {
-    ReturnCode = ConvertCapacityPerUnits(Capacity, UnitsSelector, &ConvertedCapacity);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-  }
+  CHECK_RESULT(GetFormattedSizeString(Capacity, UnitsSelector, DIGITS_AFTER_DECIMAL_ONE, &pFormattedSizeString), Finish);
 
   if (!AppendUnits) {
-    pUnitsStr = CatSPrintClean(pUnitsStr, L"");
+    pUnitsStr = CatSPrintClean(NULL, L"");
   } else {
-    pUnitsStr = CatSPrintClean(pUnitsStr, L" " FORMAT_STR, UnitsToStr(UnitsSelector));
+    CHECK_RESULT(UnitsToStr(HiiHandle, UnitsSelector, &pUnitsStr2), Finish);
+    pUnitsStr = CatSPrintClean(NULL, L" " FORMAT_STR, pUnitsStr2);
   }
 
-  pDigitsStr = GetDigitsStrAfterPointFromNumber(ConvertedCapacity, 1);
-  if (pDigitsStr == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  if (UnitsSelector == DISPLAY_SIZE_UNIT_B) {
-    *ppCapacityStr = CatSPrintClean(*ppCapacityStr, FORMAT_UINT64 FORMAT_STR, Capacity, pUnitsStr);
-  } else {
-    *ppCapacityStr = CatSPrintClean(*ppCapacityStr, FORMAT_UINT64 L"." FORMAT_STR FORMAT_STR, (UINT64)ConvertedCapacity, pDigitsStr, pUnitsStr);
-  }
+  *ppCapacityStr = CatSPrintClean(*ppCapacityStr, FORMAT_STR FORMAT_STR, pFormattedSizeString, pUnitsStr);
 
 Finish:
   FREE_POOL_SAFE(pUnitsStr);
-  FREE_POOL_SAFE(pDigitsStr);
+  FREE_POOL_SAFE(pFormattedSizeString);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

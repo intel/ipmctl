@@ -14,6 +14,7 @@
 #include <DataSet.h>
 #include <Printer.h>
 #include "Common.h"
+#include "NvmDimmCli.h"
 
 #define DS_MEMORY_RESOURCES_PATH                    L"/MemoryResources"
 
@@ -113,32 +114,32 @@ ShowMemoryResources(
     goto Finish;
   }
 
-  ReturnCode = MakeCapacityString(MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
 
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(MemoryResourcesInfo.VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(MemoryResourcesInfo.AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(MemoryResourcesInfo.UnconfiguredCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.UnconfiguredCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(MemoryResourcesInfo.InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(MemoryResourcesInfo.ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);

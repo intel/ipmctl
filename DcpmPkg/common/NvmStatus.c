@@ -1095,6 +1095,8 @@ GetObjectStatus(
   OBJECT_STATUS *pObjectStatus = NULL;
   OBJECT_STATUS *pSearchedObj = NULL;
 
+  NVDIMM_ENTRY();
+
   if (pCommandStatus == NULL) {
     goto Finish;
   }

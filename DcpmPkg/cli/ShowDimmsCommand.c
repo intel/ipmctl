@@ -540,7 +540,7 @@ ShowDimms(
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
-      ReturnCode = MakeCapacityString(pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
       pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
 
       if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
@@ -604,7 +604,7 @@ ShowDimms(
           pUninitializedDimms[DimmIndex].FwVer.FwRevision, pUninitializedDimms[DimmIndex].FwVer.FwSecurityVersion,
           pUninitializedDimms[DimmIndex].FwVer.FwBuild);
 
-      TempReturnCode = MakeCapacityString(pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
 
       if (pUninitializedDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
@@ -664,7 +664,7 @@ ShowDimms(
 
       /** Capacity **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CAPACITY_STR))) {
-        ReturnCode = MakeCapacityString(pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+        ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
         FREE_POOL_SAFE(pCapacityStr);
       }
@@ -915,7 +915,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_MODE_CAPACITY_STR, pCapacityStr);
@@ -927,7 +927,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_CAPACITY_STR, pCapacityStr);
@@ -939,7 +939,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].UnconfiguredCapacity, UnitsToDisplay, TRUE,
+            TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].UnconfiguredCapacity, UnitsToDisplay, TRUE,
                 &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
@@ -953,7 +953,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].InaccessibleCapacity, UnitsToDisplay, TRUE,
+            TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].InaccessibleCapacity, UnitsToDisplay, TRUE,
                 &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
@@ -966,7 +966,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_CAPACITY) {
             pCapacityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            TempReturnCode = MakeCapacityString(pDimms[DimmIndex].ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+            TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
             KEEP_ERROR(ReturnCode, TempReturnCode);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, RESERVED_CAPACITY_STR, pCapacityStr);
@@ -1311,7 +1311,7 @@ ShowDimms(
 
       /** Capacity **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CAPACITY_STR))) {
-        ReturnCode = MakeCapacityString(pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
+        ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
         FREE_POOL_SAFE(pCapacityStr);
       }

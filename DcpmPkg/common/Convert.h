@@ -16,21 +16,7 @@
 //!< Macro that rounds down x value to the Next value with y multiplier
 #define ROUNDDOWN(N, S) ((N) - ((N)%(S)))
 
-/**
-  Return a string of digits after decimal point.
-
-  Number: 12.3456, NumberOfDigits: 2, Result: 34
-
-  @param[in] Number Number to retrieve digits from
-  @param[in] NumberOfDigits Number of digits after point to retrieve
-
-  @result Digits after point
-**/
-CHAR16*
-GetDigitsStrAfterPointFromNumber(
-  IN     double Number,
-  IN     UINT32 NumberOfDigits
-  );
+#define DIGITS_AFTER_DECIMAL_ONE 1
 
 /**
   Convert GUID structure to string
@@ -336,25 +322,9 @@ GetU64FromString (
   );
 
 /**
-  A helper function to convert a capacity value in bytes as per the requested units
-
-  @param[in] Capacity The input capacity in bytes
-  @param[in] Units The requested type of units to convert the capacity into
-  @param[out] pConvertedCapacity Pointer to the converted capacity value
-
-  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
-  @retval EFI_SUCCESS The conversion was successful
-**/
-EFI_STATUS
-ConvertCapacityPerUnits (
-  IN     UINT64 Capacity,
-  IN     UINT16 Units,
-     OUT double *pConvertedCapacity
-);
-
-/**
   Make the capacity string based on the requested units
 
+  @param[in] HiiHandle The handle for the hii instance (used for string pack)
   @param[in] Capacity The input capacity in bytes
   @param[in] CurrentUnits The requested type of units to convert the capacity into
   @param[in] AppendUnits Flag to append units to the resulting capacity string
@@ -365,11 +335,35 @@ ConvertCapacityPerUnits (
 **/
 EFI_STATUS
 MakeCapacityString (
+  IN     EFI_HII_HANDLE HiiHandle,
   IN     UINT64 Capacity,
   IN     UINT16 CurrentUnits,
   IN     BOOLEAN AppendUnits,
      OUT CHAR16 **ppCapacityStr
   );
+
+/**
+  A helper function to convert a capacity value in bytes as per the requested units
+  to a printable string.
+
+  @param[in] Capacity The input capacity in bytes
+  @param[in] Units The requested type of units to convert the capacity into
+  @param[out] pFormattedSizeString Pointer to the converted size string
+
+  Note: The caller is responsible for freeing the returned string
+  Note: The returned value will always be less than the actual value
+  (don't over-report size)
+
+  @retval EFI_INVALID_PARAMETER if one or more input parameters are invalid
+  @retval EFI_SUCCESS The conversion was successful
+**/
+EFI_STATUS
+GetFormattedSizeString (
+  IN     UINT64 Capacity,
+  IN     UINT16 Units,
+  IN     UINT32 NumberOfDigitsAfterDecimal,
+     OUT CHAR16 **ppFormattedSizeString
+);
 
 /**
   Gets the best possible units to display capacity

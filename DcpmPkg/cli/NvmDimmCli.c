@@ -214,7 +214,7 @@ UefiMain(
     goto Finish;
   }
 
-	gNvmDimmCliHiiHandle = HiiAddPackages(&gNvmDimmCliHiiGuid, ImageHandle, ipmctlStrings, NULL);
+  gNvmDimmCliHiiHandle = HiiAddPackages(&gNvmDimmCliHiiGuid, ImageHandle, ipmctlStrings, NULL);
   if (gNvmDimmCliHiiHandle == NULL) {
     NVDIMM_WARN("Unable to add string package to Hii");
     goto Finish;

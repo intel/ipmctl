@@ -3548,7 +3548,7 @@ GetRegionMinimalInfo(
     goto Finish;
   }
 
-  pRegionMin->RegionId = pRegion->InterleaveSetIndex;
+  pRegionMin->RegionId = pRegion->RegionId;
   pRegionMin->SocketId = pRegion->SocketId;
   DetermineRegionType(pRegion, &pRegionMin->RegionType);
   pRegionMin->Capacity = pRegion->Size;
@@ -7254,7 +7254,7 @@ GetNamespaces (
     pNamespaceInfo->NamespaceMode = pNamespace->IsBttEnabled ? SECTOR_MODE :
                                     ((pNamespace->IsPfnEnabled) ? FSDAX_MODE : NONE_MODE);
 
-    pNamespaceInfo->RegionId = pNamespace->pParentIS->InterleaveSetIndex;
+    pNamespaceInfo->RegionId = pNamespace->pParentIS->RegionId;
 
     pNamespaceInfo->Signature = NAMESPACE_INFO_SIGNATURE;
     InsertTailList(pNamespaceListNode, (LIST_ENTRY *) pNamespaceInfo->NamespaceInfoNode);

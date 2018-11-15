@@ -40,6 +40,7 @@ typedef struct _NVM_IS
   UINT64 Signature;
   UINT16 SocketId;                  //!< Identifies the processor socket containing the DCPMM
   UINT16 InterleaveSetIndex;
+  UINT16 RegionId;                 //!< Used to uniquely identify regions as InterleavesetIndex is not unique enough
   UINT64 Size;                      //!< Current total capacity of the Interleave Setqq
   /**
     bit0 set - IS_STATE_INIT_FAILURE - Interleave Set or dimm region (one or more) initialization failure
@@ -108,6 +109,7 @@ typedef struct _REGION_GOAL {
 EFI_STATUS
 InitializeIS(
   IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
+  IN     UINT16 RegionId,
      OUT NVM_IS **ppIS
   );
 
@@ -221,10 +223,14 @@ FreeISResources(
   Allocate and initialize the dimm region by using Interleave Information table from Platform Config Data
 
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
-  @param[in] pIS Interleave Set parent for new dimm region
+  @param[in] pISList List of interleaveset formed so far
   @param[in] pIdentificationInfo Identification Information table
+  @param[in] pInterleaveInfo Interleave information for the particular dimm
   @param[in] PcdConfRevision Revision of the PCD Config tables
+  @param[out] pRegionId The next consecutive region id
+  @param[out] ppNewIS Interleave Set parent for new dimm region
   @param[out] ppDimmRegion new allocated dimm region will be put here
+  @param[out] pISAlreadyExists TRUE if Interleave Set already exists
 
   @retval EFI_SUCCESS
   @retval EFI_NOT_FOUND the Dimm related with DimmRegion has not been found on the Dimm list
@@ -233,11 +239,15 @@ FreeISResources(
 EFI_STATUS
 InitializeDimmRegion(
   IN     LIST_ENTRY *pDimmList,
-  IN     NVM_IS *pIS,
+  IN     LIST_ENTRY *pISList,
   IN     NVDIMM_IDENTIFICATION_INFORMATION *pIdentificationInfo,
+  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
   IN     UINT8 PcdConfRevision,
-     OUT DIMM_REGION **ppDimmRegion
-  );
+  OUT    UINT16 *pRegionId,
+  OUT    NVM_IS **ppNewIS,
+  OUT DIMM_REGION **ppDimmRegion,
+  OUT    BOOLEAN *pISAlreadyExists
+);
 
 /**
   Retrieve Interleave Sets by using Platform Config Data from Intel NVM Dimms
@@ -266,6 +276,7 @@ RetrieveISsFromPlatformConfigData(
   @param[in] pInterleaveInfo Interleave Information table retrieve from DIMM
   @param[in] PcdCurrentConfRevision PCD Current Config table revision
   @param[in] pDimm the DIMM from which Interleave Information table was retrieved
+  @param[in, out] pRegionId Unique id for region
   @param[out] pISList Head of the list for Interleave Sets
 
   @retval EFI_SUCCESS
@@ -278,6 +289,7 @@ RetrieveISFromInterleaveInformationTable(
   IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
   IN     UINT8 PcdCurrentConfRevision,
   IN     DIMM *pDimm,
+  IN OUT UINT16 *pRegionId,
      OUT LIST_ENTRY *pISList
   );
 

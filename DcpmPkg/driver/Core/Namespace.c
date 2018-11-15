@@ -720,17 +720,16 @@ RandomizeBuffer(
 **/
 UINT16
 EFIAPI
-GenerateNamespaceId(UINT16 RequestedInterleaveSetIndex
-  )
+GenerateNamespaceId(UINT16 RequestedRegionId)
 {
   NAMESPACE *pNamespace = NULL;
   LIST_ENTRY *pNode = NULL;
-  UINT16 NamespaceId = CREATE_NAMESPACE_ID(RequestedInterleaveSetIndex, 0);
+  UINT16 NamespaceId = CREATE_NAMESPACE_ID(RequestedRegionId, 0);
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Namespaces) {
     pNamespace = NAMESPACE_FROM_NODE(pNode, NamespaceNode);
-    if (pNamespace->pParentIS->InterleaveSetIndex != RequestedInterleaveSetIndex) {
-      continue; // Find the namespace with requested interleave set index
+    if (pNamespace->pParentIS->RegionId != RequestedRegionId) {
+      continue; // Find the namespace with requested Region ID
     }
     if (pNamespace->NamespaceId == NamespaceId + 1) {
       NamespaceId = pNamespace->NamespaceId;
@@ -2281,7 +2280,7 @@ RetrieveNamespacesFromLsa(
       }
     }
     // Get the Index of the last namespace Id for the previous interleave set
-    pNamespace->NamespaceId = CREATE_NAMESPACE_ID(pNamespace->pParentIS->InterleaveSetIndex, Index);
+    pNamespace->NamespaceId = CREATE_NAMESPACE_ID(pNamespace->pParentIS->RegionId, Index);
     InsertTailList(pNamespacesList, &pNamespace->NamespaceNode);
 
     if (pNamespace->HealthState != NAMESPACE_HEALTH_CRITICAL &&

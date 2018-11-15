@@ -24,6 +24,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 EFI_STATUS
 InitializeIS(
   IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
+  IN     UINT16 RegionId,
      OUT NVM_IS **ppIS
   )
 {
@@ -46,6 +47,7 @@ InitializeIS(
   (*ppIS)->Size = 0;
   (*ppIS)->State = IS_STATE_HEALTHY;
   (*ppIS)->InterleaveSetIndex = pInterleaveInfo->InterleaveSetIndex;
+  (*ppIS)->RegionId = RegionId;
   (*ppIS)->InterleaveFormatChannel = pInterleaveInfo->InterleaveFormatChannel;
   (*ppIS)->InterleaveFormatImc = pInterleaveInfo->InterleaveFormatImc;
   (*ppIS)->InterleaveFormatWays = pInterleaveInfo->InterleaveFormatWays;
@@ -116,7 +118,7 @@ GetRegionById(
   NVDIMM_ENTRY();
   LIST_FOR_EACH(pNode, pRegionList) {
     pRegion = IS_FROM_NODE(pNode);
-    if (pRegion->InterleaveSetIndex == RegionId) {
+    if (pRegion->RegionId == RegionId) {
       pTargetRegion = pRegion;
       break;
     }
@@ -233,10 +235,14 @@ Finish:
   Allocate and initialize the dimm region by using Interleave Information table from Platform Config Data
 
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
-  @param[in] pIS Interleave Set parent for new dimm region
+  @param[in] pISList List of interleaveset formed so far
   @param[in] pIdentificationInfo Identification Information table
+  @param[in] pInterleaveInfo Interleave information for the particular dimm
   @param[in] PcdConfRevision Revision of the PCD Config tables
+  @param[out] pRegionId The next consecutive region id
+  @param[out] ppNewIS Interleave Set parent for new dimm region
   @param[out] ppDimmRegion new allocated dimm region will be put here
+  @param[out] pISAlreadyExists TRUE if Interleave Set already exists
 
   @retval EFI_SUCCESS
   @retval EFI_NOT_FOUND the Dimm related with DimmRegion has not been found on the Dimm list
@@ -245,27 +251,36 @@ Finish:
 EFI_STATUS
 InitializeDimmRegion(
   IN     LIST_ENTRY *pDimmList,
-  IN     NVM_IS *pIS,
+  IN     LIST_ENTRY *pISList,
   IN     NVDIMM_IDENTIFICATION_INFORMATION *pIdentificationInfo,
+  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
   IN     UINT8 PcdConfRevision,
-     OUT DIMM_REGION **ppDimmRegion
+  OUT    UINT16 *pRegionId,
+  OUT    NVM_IS **ppNewIS,
+  OUT    DIMM_REGION **ppDimmRegion,
+  OUT    BOOLEAN *pISAlreadyExists
   )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   DIMM *pDimm = NULL;
   UINT16 ManufacturerInPcd = 0;
   UINT32 SerialNumberInPcd = 0;
+  LIST_ENTRY *pISNode = NULL;
+  NVM_IS *pExistingIS = NULL;
+  DIMM_REGION *pDimmRegion = NULL;
+  LIST_ENTRY *pDimmRegionNode = NULL;
   DIMM_UNIQUE_IDENTIFIER DimmUidInPcd;
-
   NVDIMM_ENTRY();
 
   ZeroMem(&DimmUidInPcd, sizeof(DimmUidInPcd));
 
-  if (pDimmList == NULL || pIS == NULL || pIdentificationInfo == NULL || ppDimmRegion == NULL) {
+  if (pDimmList == NULL || pISList == NULL || pIdentificationInfo == NULL || pInterleaveInfo == NULL ||
+     pRegionId == NULL || ppDimmRegion == NULL || ppNewIS == NULL || pISAlreadyExists == NULL) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
+  *pISAlreadyExists = FALSE;
   if ((PcdConfRevision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
       (PcdConfRevision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
     Rc = EFI_INVALID_PARAMETER;
@@ -298,24 +313,54 @@ InitializeDimmRegion(
     NVDIMM_DBG("Dimm not found using the Identification Information table");
     goto Finish;
   }
-
-  *ppDimmRegion = AllocateZeroPool(sizeof(DIMM_REGION));
-
-  if (*ppDimmRegion == NULL) {
-    Rc = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+  /**
+   Check if Interleave Set already exists for this Interleave Set Index
+ **/
+  LIST_FOR_EACH(pISNode, pISList) {
+    pExistingIS = IS_FROM_NODE(pISNode);
+    if (pExistingIS->InterleaveSetIndex == pInterleaveInfo->InterleaveSetIndex) {
+      LIST_FOR_EACH(pDimmRegionNode, &pExistingIS->DimmRegionList) {
+        pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
+        /**
+          Addressing the corner case where a dimm is moved from another system and has the same interleaveset index
+        **/
+        if (pDimm->SerialNumber == pDimmRegion->pDimm->SerialNumber) {
+          *pISAlreadyExists = TRUE;
+          goto Finish;
+        }
+      }
+    }
   }
+  if (!(*pISAlreadyExists)) {
+    /* As this method is called inside the for loop for each dimm Interleave Information table,
+      it could be that ppNewIS is initialized the first time. Ignore it if it is already intialized and added to the list. Avoiding duplicates.*/
+    if (*ppNewIS == NULL) {
+      Rc = InitializeIS(pInterleaveInfo, *pRegionId, ppNewIS);
+      if (EFI_ERROR(Rc) || *ppNewIS == NULL) {
+        Rc = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      (*pRegionId)++;
+      InsertTailList(pISList, &((*ppNewIS)->IsNode));
+    }
 
-  (*ppDimmRegion)->pDimm = pDimm;
+    *ppDimmRegion = AllocateZeroPool(sizeof(DIMM_REGION));
 
-  ASSERT(pDimm->ISsNum < MAX_IS_PER_DIMM);
-  pDimm->pISs[pDimm->ISsNum] = pIS;
-  pDimm->ISsNum++;
+    if (*ppDimmRegion == NULL) {
+      Rc = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
 
-  (*ppDimmRegion)->Signature = DIMM_REGION_SIGNATURE;
-  (*ppDimmRegion)->PartitionOffset = pIdentificationInfo->PartitionOffset;
-  (*ppDimmRegion)->PartitionSize = pIdentificationInfo->PmPartitionSize;
+    (*ppDimmRegion)->pDimm = pDimm;
 
+    ASSERT(pDimm->ISsNum < MAX_IS_PER_DIMM);
+    pDimm->pISs[pDimm->ISsNum] = *ppNewIS;
+    pDimm->ISsNum++;
+
+    (*ppDimmRegion)->Signature = DIMM_REGION_SIGNATURE;
+    (*ppDimmRegion)->PartitionOffset = pIdentificationInfo->PartitionOffset;
+    (*ppDimmRegion)->PartitionSize = pIdentificationInfo->PmPartitionSize;
+  }
 Finish:
   NVDIMM_EXIT_I64(Rc);
   return Rc;
@@ -352,6 +397,7 @@ RetrieveISsFromPlatformConfigData(
   PCAT_TABLE_HEADER *pCurPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
   UINT32 Index = 0;
+  UINT16 RegionId = 1; // region id  used internally to distinguish different regions. Will be used when creating namespace.
 
   if (pDimmList == NULL || pISList == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -431,7 +477,8 @@ RetrieveISsFromPlatformConfigData(
         pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *) pCurPcatTable;
 
         RetrieveISFromInterleaveInformationTable(pFitHead, pDimmList, pInterleaveInfo,
-          pPcdCurrentConf->Header.Revision, pDimm, pISList);
+          pPcdCurrentConf->Header.Revision, pDimm, &RegionId,
+          pISList);
 
         pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pInterleaveInfo->Header.Length);
       } else if (pCurPcatTable->Type == PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE) {
@@ -506,6 +553,7 @@ CompareRegionOffsetInDimmRegion(
   @param[in] pInterleaveInfo Interleave Information table retrieve from DIMM
   @param[in] PcdCurrentConfRevision PCD Current Config table revision
   @param[in] pDimm the DIMM from which Interleave Information table was retrieved
+  @param[in out] pRegionId Unique id for region
   @param[out] pISList Head of the list for Interleave Sets
 
   @retval EFI_SUCCESS
@@ -518,71 +566,60 @@ RetrieveISFromInterleaveInformationTable(
   IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
   IN     UINT8 PcdCurrentConfRevision,
   IN     DIMM *pDimm,
+  IN OUT UINT16 *pRegionId,
      OUT LIST_ENTRY *pISList
   )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   NVM_IS *pIS = NULL;
-  LIST_ENTRY *pISNode = NULL;
   DIMM_REGION *pDimmRegion = NULL;
-  BOOLEAN ISExists = FALSE;
   UINT32 Index = 0;
   UINT32 IsRegionIndex = 0;
   NVDIMM_IDENTIFICATION_INFORMATION *pCurrentIdentInfo = NULL;
   BOOLEAN UseLatestVersion = FALSE;
+  BOOLEAN ISAlreadyExists = FALSE;
 
   NVDIMM_ENTRY();
 
-  if (pDimmList == NULL || pInterleaveInfo == NULL || pDimm == NULL || pISList == NULL) {
+  if (pFitHead == NULL || pDimmList == NULL || pInterleaveInfo == NULL ||
+    pDimm == NULL || pRegionId  == NULL || pISList == NULL) {
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   /**
-    Check if Interleave Set already exists for this Interleave Set Index
+    Initialize Interleave Set and Dimm Regions
   **/
-  for (pISNode = GetFirstNode(pISList);
-      !IsNull(pISList, pISNode);
-      pISNode = GetNextNode(pISList, pISNode)) {
-    pIS = IS_FROM_NODE(pISNode);
-    if (pIS->InterleaveSetIndex == pInterleaveInfo->InterleaveSetIndex) {
-      ISExists = TRUE;
-      break;
-    }
-  }
+    pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *) &pInterleaveInfo->pIdentificationInfoList;
 
-  if (!ISExists) {
-    /**
-      Initialize Interleave Set and Dimm Regions
-    **/
-    if (!EFI_ERROR(InitializeIS(pInterleaveInfo, &pIS)) && pIS != NULL) {
-      InsertTailList(pISList, &pIS->IsNode);
-      pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *) &pInterleaveInfo->pIdentificationInfoList;
-
-      for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
-        Rc = InitializeDimmRegion(pDimmList, pIS, pCurrentIdentInfo, PcdCurrentConfRevision, &pDimmRegion);
-        if ((EFI_ERROR(Rc) && Rc != EFI_NOT_FOUND) || pDimmRegion == NULL)  {
-          pIS->State |= IS_STATE_INIT_FAILURE;
-          NVDIMM_DBG("One of parameters was NULL or out of memory");
-        } else {
-          if (Rc == EFI_NOT_FOUND) {
-            pIS->State |= IS_STATE_DIMM_MISSING;
-            NVDIMM_DBG("The Dimm related with the DimmRegion has not been found on the Dimm list");
-          } else {
-            InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
-
-            IsRegionIndex = pDimmRegion->pDimm->IsRegionsNum;
-            ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
-            pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
-            pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
-
-            pIS->Size += pDimmRegion->PartitionSize;
-          }
-        }
-        pCurrentIdentInfo++;
+    for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
+      Rc = InitializeDimmRegion(pDimmList, pISList, pCurrentIdentInfo, pInterleaveInfo, PcdCurrentConfRevision, pRegionId, &pIS, &pDimmRegion, &ISAlreadyExists);
+      // pIS will be null when the IS already exist or when there is no memory to do malloc. In either case go to Finish.
+      if (ISAlreadyExists || pIS == NULL) {
+        goto Finish;
       }
+      if ((EFI_ERROR(Rc) && Rc != EFI_NOT_FOUND) || pDimmRegion == NULL) {
+        pIS->State |= IS_STATE_INIT_FAILURE;
+        NVDIMM_DBG("One of parameters was NULL or out of memory");
+      } else {
+        if (Rc == EFI_NOT_FOUND) {
+          pIS->State |= IS_STATE_DIMM_MISSING;
+          NVDIMM_DBG("The Dimm related with the DimmRegion has not been found on the Dimm list");
+        } else {
+          InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
 
-      Rc = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
+          IsRegionIndex = pDimmRegion->pDimm->IsRegionsNum;
+          ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
+          pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
+          pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
+
+          pIS->Size += pDimmRegion->PartitionSize;
+        }
+      }
+      pCurrentIdentInfo++;
+    }
+    Rc = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
+    if (pIS != NULL) {
       if (EFI_ERROR(Rc)) {
         pIS->State |= IS_STATE_SPA_MISSING;
         NVDIMM_DBG("Couldn't retrieve AppDirect I/O structures from NFIT.");
@@ -600,7 +637,8 @@ RetrieveISFromInterleaveInformationTable(
         if (EFI_ERROR(Rc)) {
           goto Finish;
         }
-      } else {
+      }
+      else {
         Rc = CalculateISetCookieVer1_1(pFitHead, pIS);
         if (EFI_ERROR(Rc)) {
           goto Finish;
@@ -612,13 +650,7 @@ RetrieveISFromInterleaveInformationTable(
       if (EFI_ERROR(Rc)) {
         goto Finish;
       }
-
-    } else {
-      Rc = EFI_OUT_OF_RESOURCES;
-      NVDIMM_DBG("Unable to initialize Interleave Set: out of resources");
-      goto Finish;
     }
-  }
 
 Finish:
   NVDIMM_EXIT_I64(Rc);

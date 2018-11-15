@@ -28,7 +28,7 @@
 
 #define BYTE_MASK 0xFF
 #define BYTE_SHIFT 8
-#define CREATE_NAMESPACE_ID(InterleaveSetIndex, NamespaceIndex) (((UINT8) (InterleaveSetIndex & BYTE_MASK)) << BYTE_SHIFT) + (UINT8)(NamespaceIndex & BYTE_MASK)
+#define CREATE_NAMESPACE_ID(RegionId, NamespaceIndex) (((UINT8) (RegionId & BYTE_MASK)) << BYTE_SHIFT) + (UINT8)(NamespaceIndex & BYTE_MASK)
 
 typedef struct {
   DIMM *pDimm;
@@ -401,7 +401,7 @@ RandomizeBuffer(
 UINT16
 EFIAPI
 GenerateNamespaceId(
-  IN UINT16 RequestedInterleaveSetIndex
+  IN UINT16 RegionId
   );
 
 /**

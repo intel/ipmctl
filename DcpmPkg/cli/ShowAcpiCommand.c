@@ -130,6 +130,7 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
     } else {
       Print(L"---Platform Memory Topology Table---\n");
       PrintPMTT(pPMTT);
+      FREE_POOL_SAFE(pPMTT);
     }
   }
 

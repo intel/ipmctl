@@ -383,7 +383,7 @@ GetAcpiPcat (
   Retrieve the PMTT ACPI table
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-  @param[out] ppPMTTtbl output buffer with PMTT tables
+  @param[out] ppPMTTtbl output buffer with PMTT tables. This buffer must be freed by caller.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)

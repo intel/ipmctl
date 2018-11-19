@@ -837,13 +837,15 @@ initAcpiTables()
   if (failures > 0)
   {
     NVDIMM_WARN("Encountered %d failures.", failures);
-    return EFI_NOT_FOUND;
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   if (NULL == PtrNfitTable || NULL == PtrPcatTable)
   {
     NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
-    return EFI_NOT_FOUND;
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
   else
   {
@@ -852,11 +854,16 @@ initAcpiTables()
     if (EFI_ERROR(ReturnCode))
     {
       NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
-      return EFI_NOT_FOUND;
+      ReturnCode = EFI_NOT_FOUND;
+      goto Finish;
     }
   }
+Finish:
+    FREE_POOL_SAFE(PtrNfitTable);
+    FREE_POOL_SAFE(PtrPcatTable);
+    FREE_POOL_SAFE(PtrPMTTTable);
 
-  return EFI_SUCCESS;
+  return ReturnCode;
 }
 
 EFI_STATUS
@@ -865,7 +872,6 @@ uninitAcpiTables(
 {
   FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
   FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPMTTTble);
   return EFI_SUCCESS;
 }
 

@@ -3114,7 +3114,7 @@ Finish:
 Retrieve the PMTT ACPI table
 
 @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
-@param[out] ppPmtt output buffer with PMTT tables
+@param[out] ppPMTTtbl output buffer with PMTT tables. This buffer must be freed by caller.
 
 @retval EFI_SUCCESS Ok
 @retval EFI_OUT_OF_RESOURCES Problem with allocating memory
@@ -3133,13 +3133,34 @@ GetAcpiPMTT(
     goto Finish;
   }
 
-  if (gNvmDimmData->PMEMDev.pPMTTTble != NULL) {
-    *ppPMTTtbl = gNvmDimmData->PMEMDev.pPMTTTble;
-  ReturnCode = EFI_SUCCESS;
-  } else {
-    NVDIMM_DBG("PMTT does not exist");
+#ifdef OS_BUILD
+  ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl);
+  if (EFI_ERROR(ReturnCode) || NULL == *ppPMTTtbl) {
+    NVDIMM_DBG("Failed to retrieve PMTT table.");
     ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+}
+#else
+  EFI_ACPI_DESCRIPTION_HEADER *pTempPMTTtbl = NULL;
+  UINT32 PmttTableLength = 0;
+  ReturnCode = GetAcpiTables(gST, NULL, NULL, &pTempPMTTtbl);
+  if (EFI_ERROR(ReturnCode) || NULL == pTempPMTTtbl) {
+    NVDIMM_DBG("Failed to retrieve PMTT table.");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
+
+  // Allocate and copy the buffer to be consistent with OS call
+  PmttTableLength = pTempPMTTtbl->Length;
+  *ppPMTTtbl = AllocatePool(PmttTableLength);
+  if (NULL == *ppPMTTtbl) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  CopyMem_S(*ppPMTTtbl, PmttTableLength, pTempPMTTtbl, PmttTableLength);
+
+#endif
 
 Finish:
   return ReturnCode;
@@ -4028,20 +4049,14 @@ ParseAcpiTables(
   }
   if (pPMTT != NULL) {
     *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((PMTT_TABLE *) pPMTT);
-    gNvmDimmData->PMEMDev.pPMTTTble = (PMTT_TABLE *) pPMTT;
   } else {
     // if PMTT table is Not available skip  MM allowed check and let bios handle it
     *pIsMemoryModeAllowed = TRUE;
-    gNvmDimmData->PMEMDev.pPMTTTble = (PMTT_TABLE *) pPMTT;
   }
 
   ReturnCode = EFI_SUCCESS;
 
 Finish:
-#ifdef OS_BUILD
-  FREE_POOL_SAFE(pNfit);
-  FREE_POOL_SAFE(pPcat);
-#endif // OS_BUILD
   NVDIMM_EXIT_I64(ReturnCode);
 
   return ReturnCode;
@@ -4076,7 +4091,7 @@ GetAcpiTables(
 
   NVDIMM_ENTRY();
 
-  if (pSystemTable == NULL || ppNfit == NULL || ppPcat == NULL || ppPMTT == NULL) {
+  if ((pSystemTable == NULL) || (ppNfit == NULL && ppPcat == NULL && ppPMTT == NULL)) {
     goto Finish;
   }
 
@@ -4114,9 +4129,17 @@ GetAcpiTables(
     goto Finish;
   }
 
-  *ppNfit = NULL;
-  *ppPcat = NULL;
-  *ppPMTT = NULL;
+  if (NULL != ppNfit) {
+    *ppNfit = NULL;
+  }
+
+  if (NULL != ppPcat) {
+    *ppPcat = NULL;
+  }
+
+  if (NULL != ppPMTT) {
+    *ppPMTT = NULL;
+  }
 
   /**
     Find the Fixed ACPI Description Table (FADT)
@@ -4126,22 +4149,25 @@ GetAcpiTables(
     Tmp = *(UINT64 *) ((UINT8 *) pRsdt + Index);
     pCurrentTable = (EFI_ACPI_DESCRIPTION_HEADER *) (UINT64 *) (UINTN) Tmp;
 
-    if (pCurrentTable->Signature == NFIT_TABLE_SIG) {
+    if ((NULL != ppNfit) && (pCurrentTable->Signature == NFIT_TABLE_SIG)) {
       NVDIMM_DBG("Found the NFIT table");
       *ppNfit = pCurrentTable;
     }
 
-    if (pCurrentTable->Signature == PCAT_TABLE_SIG) {
+    if ((NULL != ppPcat) && (pCurrentTable->Signature == PCAT_TABLE_SIG)) {
       NVDIMM_DBG("Found the PCAT table");
       *ppPcat = pCurrentTable;
     }
 
-    if (pCurrentTable->Signature == PMTT_TABLE_SIG) {
+    if ((NULL != ppPMTT) && (pCurrentTable->Signature == PMTT_TABLE_SIG)) {
       NVDIMM_DBG("Found the PMTT table");
       *ppPMTT = pCurrentTable;
     }
 
-    if (*ppNfit != NULL && *ppPcat != NULL && *ppPMTT != NULL) {
+    // Break if we find all tables looking for
+    if (((NULL == ppNfit) || (*ppNfit != NULL)) &&
+      ((NULL == ppPcat) || (*ppPcat != NULL)) &&
+      ((NULL == ppPMTT) || (*ppPMTT != NULL))) {
       break;
     }
   }
@@ -4149,8 +4175,10 @@ GetAcpiTables(
   /**
     Failed to find the at least one of the tables
   **/
-  if (*ppNfit == NULL || *ppPcat == NULL) {
-    NVDIMM_WARN("Unable to find the NFIT or PCAT table.");
+  if (((NULL != ppNfit) && (NULL == *ppNfit)) ||
+    ((NULL != ppPcat) && (NULL == *ppPcat)) ||
+    ((NULL != ppPMTT) && (NULL == *ppPMTT))) {
+    NVDIMM_WARN("Unable to find requested ACPI table.");
     ReturnCode = EFI_LOAD_ERROR;
     goto Finish;
   }
@@ -8367,7 +8395,8 @@ MapSockets(
 #endif
 
 Finish:
-   return;
+  FREE_POOL_SAFE(pPMTT);
+  return;
 }
 
 /**

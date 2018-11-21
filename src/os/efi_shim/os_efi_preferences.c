@@ -53,7 +53,7 @@ EFI_STATUS preferences_flush_the_file(void)
 EFI_STATUS preferences_get_var_ascii(IN CONST char    *name,
 	IN CONST EFI_GUID  guid,
 	OUT VOID           *value,
-	OUT UINT32          *size OPTIONAL)
+	OUT UINTN          *size OPTIONAL)
 {
 	int val = nvm_ini_get_int_value(gIni, name, -1);
 	if (-1 == val)
@@ -102,9 +102,9 @@ EFI_STATUS preferences_get_string_ascii(IN CONST char    *name,
 }
 
 EFI_STATUS preferences_get_var(IN CONST CHAR16    *name,
-	IN CONST EFI_GUID  guid,
-	OUT VOID           *value,
-	OUT UINTN          *size OPTIONAL)
+  IN CONST EFI_GUID  guid,
+  OUT VOID           *value,
+  OUT UINTN          *size OPTIONAL)
 {
 	char tmp[256];
 	UnicodeStrToAsciiStr(name, tmp);
@@ -112,9 +112,9 @@ EFI_STATUS preferences_get_var(IN CONST CHAR16    *name,
 }
 
 EFI_STATUS preferences_get_var_string_wide(IN CONST CHAR16    *name,
-	IN CONST EFI_GUID  guid,
-	OUT CHAR16         *value,
-	OUT UINTN          *size OPTIONAL)
+  IN CONST EFI_GUID  guid,
+  OUT CHAR16         *value,
+  OUT UINTN          *size OPTIONAL)
 {
 	char key[256];
 	const char * ascii_str;

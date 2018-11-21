@@ -3222,7 +3222,7 @@ Finish:
 NVM_API int nvm_get_config_int(const char *param_name, int default_val)
 {
   int val = default_val;
-  int size = sizeof(val);
+  unsigned long long size = sizeof(val);
   EFI_GUID g = { 0x0, 0x0, 0x0, { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 } };
   int rc = NVM_SUCCESS;
 
@@ -3230,7 +3230,7 @@ NVM_API int nvm_get_config_int(const char *param_name, int default_val)
     NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
     return rc;
   }
-  preferences_get_var_ascii(param_name, g, (void *)&val, (UINT32 *)&size);
+  preferences_get_var_ascii(param_name, g, (void *)&val, &size);
   return val;
 }
 

@@ -11,6 +11,7 @@
 #include <Dimm.h>
 #include <UefiBaseType.h>
 #include <FwUtility.h>
+#include <SmbiosUtility.h>
 #include <time.h>
 
 typedef enum {
@@ -268,5 +269,20 @@ UnicodeSPrint(
 **/
 UINT32
 get_first_arg_from_va_list(VA_LIST args);
+
+
+/**
+  Fill SmBios structures for first and bound entry
+
+  @param[out] pSmBiosStruct - pointer for first SmBios entry
+  @param[out] pBoundSmBiosStruct - pointer for nonexistent (one after last) SmBios entry
+  @param[out] pSmbiosVersion - pointer to the version of SMBIOS tables retrieved
+**/
+EFI_STATUS
+GetFirstAndBoundSmBiosStructPointer(
+  OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
+  OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
+  OUT SMBIOS_VERSION *pSmbiosVersion
+);
 
 #endif //OS_EFI_API_H_

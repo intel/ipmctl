@@ -56,6 +56,7 @@
 #include "ShowHostServerCommand.h"
 #include "ShowPerformanceCommand.h"
 #include "ShowCmdAccessPolicyCommand.h"
+#include "DeletePcdCommand.h"
 
 #if _BullseyeCoverage
 #ifndef OS_BUILD

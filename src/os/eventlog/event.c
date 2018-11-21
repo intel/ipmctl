@@ -20,6 +20,7 @@
 #include <PrintLib.h>
 #include "s_str.h"
 #include "os.h"
+#include <os_efi_api.h>
 
 #if defined(__LINUX__)
 #include <safe_str_lib.h>

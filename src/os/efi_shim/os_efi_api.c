@@ -27,6 +27,7 @@
 #include <conio.h>
 #include <time.h>
 #include <wchar.h>
+#include <string.h>
 #else
 #include <unistd.h>
 #include <wchar.h>
@@ -130,7 +131,7 @@ typedef struct _smbios_table_recording
 #define PASS_THRU_OFFSET (ACPI_PMTT_OFFSET + ACPI_PMTT_SIZE) //40k
 
 int g_pass_thru_cnt = 0;
-size_t g_pass_thru_playback_offset = 0;
+long g_pass_thru_playback_offset = 0;
 
 #define REC_FILE_PATH g_recording_fullpath
 #define PLAYBACK_ENABLED() g_playback_mode
@@ -206,7 +207,6 @@ EFI_STATUS init_record_file(char * recording_file_path)
 EFI_STATUS update_record_size(RecordType type, FILE * file_stream, UINT32 size, BOOLEAN increment)
 {
   recording_file rc;
-  UINT32 offset;
 
   //seek to the begining of the file
   if (0 != fseek(file_stream, 0, SEEK_SET))
@@ -305,13 +305,13 @@ EFI_STATUS seek_to_record_offset(RecordType type, FILE * file_stream, UINT32 *re
   if (0 != fseek(file_stream, 0, SEEK_SET))
   {
     NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return -1;
+    return EFI_DEVICE_ERROR;
   }
 
   if (1 != fread(&rc, sizeof(recording_file), 1, file_stream))
   {
     NVDIMM_ERR("Failed to read the recording file header\n");
-    return -1;
+    return EFI_DEVICE_ERROR;
   }
 
   switch (type)
@@ -338,14 +338,14 @@ EFI_STATUS seek_to_record_offset(RecordType type, FILE * file_stream, UINT32 *re
     break;
   default:
     NVDIMM_ERR("Unknown record type\n");
-    return -1;
+    return EFI_INVALID_PARAMETER;
   }
 
   //seek to the begining of the record type partition
   if (0 != fseek(file_stream, offset, SEEK_SET))
   {
     NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return -1;
+    return EFI_DEVICE_ERROR;
   }
   return EFI_SUCCESS;
 }
@@ -539,7 +539,6 @@ passthru_record_finalize(
   EFI_STATUS PassthruReturnCode
 )
 {
-  EFI_STATUS Rc = EFI_SUCCESS;
   UINT32 total_write_sz = 0;
   if (!RECORD_ENABLED())
   {
@@ -701,18 +700,21 @@ save_table_to_file(
   if (EFI_SUCCESS != (Rc = seek_to_record_offset(type, f_ptr, &record_size)))
   {
     NVDIMM_ERR("Failed seeking to the ACPI partition\n");
-    return Rc;
+    goto Finish;
   }
 
   if (table && 1 != fwrite(table, table->Length, 1, f_ptr))
   {
     Rc = EFI_END_OF_FILE;
+    goto Finish;
   }
 
   if (table)
   {
     Rc = update_record_size(type, f_ptr, table->Length, FALSE);
   }
+
+Finish:
   fclose(f_ptr);
   return Rc;
 }
@@ -741,7 +743,7 @@ load_table_from_file(
   if (EFI_SUCCESS != (Rc = seek_to_record_offset(type, f_ptr, &size)))
   {
     NVDIMM_ERR("Failed seeking to the ACPI partition\n");
-    return Rc;
+    goto Finish;
   }
 
   if (!size)
@@ -763,6 +765,7 @@ load_table_from_file(
     }
   }
 
+Finish:
   fclose(f_ptr);
   return Rc;
 }
@@ -883,8 +886,7 @@ GetFirstAndBoundSmBiosStructPointer(
   OUT SMBIOS_VERSION *pSmbiosVersion
 )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;;
-  int rc = 0;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   FILE *f_ptr;
   smbios_table_recording recording;
   UINT32 record_size = 0;
@@ -926,7 +928,7 @@ GetFirstAndBoundSmBiosStructPointer(
           NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
           ReturnCode = EFI_END_OF_FILE;
         }
-        update_record_size(RtSmbios, f_ptr, sizeof(smbios_table_recording) + gSmbiosTableSize, FALSE);
+        update_record_size(RtSmbios, f_ptr, (UINT32)(sizeof(smbios_table_recording) + gSmbiosTableSize), FALSE);
       }
       fclose(f_ptr);
     }
@@ -938,7 +940,7 @@ GetFirstAndBoundSmBiosStructPointer(
     {
       if (NULL == gSmbiosTable) {
         //seek it to pass thru partition
-        if (EFI_SUCCESS != (rc = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
+        if (EFI_SUCCESS != seek_to_record_offset(RtSmbios, f_ptr, &record_size))
         {
           NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
           ReturnCode = EFI_END_OF_FILE;
@@ -950,9 +952,9 @@ GetFirstAndBoundSmBiosStructPointer(
           ReturnCode = EFI_END_OF_FILE;
         }
 
-        if (0 == recording.size)
+        if (SMBIOS_SIZE < recording.size || 0 == recording.size)
         {
-          NVDIMM_ERR("SMBIOS table in file %s reports size of 0.\n", REC_FILE_PATH);
+          NVDIMM_ERR("SMBIOS table in file %s reports size of %d.\n", REC_FILE_PATH, recording.size);
           ReturnCode = EFI_END_OF_FILE;
         }
         else

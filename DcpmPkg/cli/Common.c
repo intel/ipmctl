@@ -1304,8 +1304,16 @@ FileExists(
 #ifdef OS_BUILD
   pFileHandle = NULL;
   ReturnCode = OpenFile(pDumpUserPath, &pFileHandle, NULL, FALSE);
-  *pExists = ReturnCode != EFI_NOT_FOUND;
-  ReturnCode = EFI_SUCCESS;
+  if (EFI_NOT_FOUND == ReturnCode)
+  {
+    *pExists = FALSE;
+    ReturnCode = EFI_SUCCESS;
+  }
+  else if (EFI_SUCCESS == ReturnCode)
+  {
+    *pExists = TRUE;
+    pFileHandle->Close(pFileHandle);
+  }
 #else
   EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
   CHAR16 *pDumpFilePath = NULL;
@@ -1327,11 +1335,11 @@ FileExists(
     *pExists = TRUE;
     pFileHandle->Close(pFileHandle);
   }
-#endif
+
 Finish:
-#ifndef OS_BUILD
   FREE_POOL_SAFE(pDumpFilePath);
 #endif
+
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

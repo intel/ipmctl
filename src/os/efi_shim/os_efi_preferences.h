@@ -17,7 +17,7 @@ EFI_STATUS preferences_get_var_ascii(
 	IN CONST char *name,
 	IN CONST EFI_GUID  guid,
 	OUT VOID  *value,
-	OUT UINT32  *size OPTIONAL);
+	OUT UINTN  *size OPTIONAL);
 
 EFI_STATUS preferences_get_string_ascii(
     IN CONST char      *name,

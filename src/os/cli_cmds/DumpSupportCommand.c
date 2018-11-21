@@ -216,7 +216,7 @@ DumpSupportCommand(
     PrintHeaderInfo(pPrintDIMMHeaderInfo);
     FREE_POOL_SAFE(pPrintDIMMHeaderInfo);
     for (Index = 0; Index < MAX_DIMM_SPECIFIC_CMDS; ++Index) {
-      pCmdInputWithDimmId = CatSPrint(NULL, &(DumpCmdsPerDimm[Index].cmd), pDimms[DimmIndex].DimmHandle);
+      pCmdInputWithDimmId = CatSPrint(NULL, DumpCmdsPerDimm[Index].cmd, pDimms[DimmIndex].DimmHandle);
       PrintAndExecuteCommand(pCmdInputWithDimmId);
     }
     if (pDictUserPath != NULL) {

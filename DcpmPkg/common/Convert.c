@@ -837,7 +837,7 @@ GetFormattedSizeString (
   if (Units == DISPLAY_SIZE_UNIT_B || NumberOfDigitsAfterDecimal == 0) {
     *ppFormattedSizeString = CatSPrintClean(*ppFormattedSizeString, FORMAT_UINT64, ValueBeforeDecimal);
   } else {
-    *ppFormattedSizeString = CatSPrintClean(*ppFormattedSizeString, FORMAT_UINT64 "." FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS,
+    *ppFormattedSizeString = CatSPrintClean(*ppFormattedSizeString, FORMAT_UINT64 L"." FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS,
         ValueBeforeDecimal, (UINTN)NumberOfDigitsAfterDecimal, ValueAfterDecimal);
   }
 

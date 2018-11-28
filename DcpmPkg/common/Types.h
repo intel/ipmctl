@@ -138,7 +138,7 @@ typedef struct _SENSOR_INFO {
   UINT32 PowerOnTime;                   ///< Lifetime DIMM has been powered on in seconds. See FIS field POT for additional details
   UINT32 UpTime;                        ///< DIMM uptime in seconds since last AC cycle. See FIS field UT for additional details
   UINT64 PowerCycles;                   ///< Number of DIMM power cycles. See FIS field PC for additional details
-  UINT8 HealthStatus;                   ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
+  UINT8 HealthStatus;                  ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
   UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
   UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
   UINT32 ThermalErrorCount;             ///< Total count of thermal errors found in Error Log

@@ -196,7 +196,7 @@ SmartAndHealthCheck(
   IN     CHAR16 *pDimmStr,
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
-  )
+)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   SENSOR_INFO SensorInfo;
@@ -218,7 +218,7 @@ SmartAndHealthCheck(
     if (pDiagState != NULL) {
       *pDiagState |= DIAG_STATE_MASK_ABORTED;
     }
-     ReturnCode = EFI_INVALID_PARAMETER;
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
@@ -261,10 +261,14 @@ SmartAndHealthCheck(
       pActualHealthStr = CatSPrintClean(pActualHealthStr, FORMAT_STR_WITH_PARANTHESIS, pActualHealthReasonStr);
     }
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BAD_HEALTH_STATE), EVENT_CODE_504, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, pActualHealthStr);
+        pDimmStr, pActualHealthStr);
 
     FREE_POOL_SAFE(pActualHealthStr);
     FREE_POOL_SAFE(pActualHealthReasonStr);
+
+  } else if ((pDimm->NvDimmStateFlags & BIT6) == BIT6) {
+    // If BIT6 is set FW did not map a region to SPA on DIMM
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_ACPI_NVDIMM_SPA_NOT_MAPPED), EVENT_CODE_542, DIAG_STATE_MASK_OK, ppResultStr, pDiagState, pDimmStr);
   }
 
   ReturnCode = GetDimm(&gNvmDimmData->NvmDimmConfig, pDimm->DimmID,

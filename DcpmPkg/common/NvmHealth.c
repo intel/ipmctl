@@ -325,7 +325,7 @@ ConvertHealthBitmask(
     *pHealthState = HEALTH_CRITICAL_FAILURE;
   } else if (HealthMask & HealthStatusNoncritical) {
     *pHealthState = HEALTH_NON_CRITICAL_FAILURE;
-  } else if (HealthMask == CONTROLLER_HEALTH_NORMAL) {
+  }  else if (HealthMask == CONTROLLER_HEALTH_NORMAL) {
     *pHealthState = HEALTH_HEALTHY;
   } else {
     *pHealthState = HEALTH_UNKNOWN;

@@ -981,7 +981,7 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
     if (HEALTH_UNMANAGEABLE != pDimmInfo->HealthState) {
-    ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
+       ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
     }
     pDimmInfo->HealthStatusReason = SensorInfo.HealthStatusReason;
     pDimmInfo->LatchedLastShutdownStatusDetails = LatchedLastShutdownStatusDetails;

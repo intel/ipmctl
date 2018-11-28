@@ -36,7 +36,7 @@
 #define ISET_ID_MAX_STR_WIDTH               20
 #define REGION_ID_MAX_STR_WIDTH             8
 #define PMEM_TYPE_MAX_STR_WIDTH             24
-#define FREE_CAPACITY_MAX_STR_WIDTH         13
+#define FREE_CAPACITY_MAX_STR_WIDTH         25
 #define MEMORY_SIZE_MAX_STR_WIDTH           18
 #define MEMORY_TYPE_MAX_STR_WIDTH           30
 #define DEVICE_LOCATOR_MAX_STR_WIDTH        15

@@ -17,7 +17,7 @@ ipmctl version [OPTIONS]
 
 DESCRIPTION
 -----------
-Shows the DCPMM host software versions.
+Shows the DCPMM host software versions. 
 
 OPTIONS
 -------
@@ -50,4 +50,6 @@ Version::
   The current version of the software component if found or an error if not.
 
 NOTE: If the software version is incompatible, the version will be followed by
-an error message indicating such.
+an error message indicating such. If DCPMMs are found with a 
+FIS implementation higher than supported by the SW version, this command
+will print a warning.

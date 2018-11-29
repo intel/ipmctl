@@ -690,9 +690,15 @@ EFI_STATUS showVersion(struct Command *pCmd)
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pPath = NULL;
+  UINT32 DimmIndex = 0;
+  UINT32 DimmCount = 0;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  DIMM_INFO *pDimms = NULL;
+  UINT32 DimmFromTheFutureCount = 0;
+  CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
+
 #if !defined(__LINUX__)
-  CHAR16 ApiVersion[FW_API_VERSION_LEN] = {0};
+  CHAR16 ApiVersion[FW_API_VERSION_LEN] = { 0 };
 #endif
 
   NVDIMM_ENTRY();
@@ -730,6 +736,58 @@ EFI_STATUS showVersion(struct Command *pCmd)
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " DRIVER_API_DESCRIPTION);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", ApiVersion);
 #endif
+
+  /*Check FIS against compiled version in this SW... warn if the FIS version from FW is > version from this SW*/
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    goto Finish;
+  }
+
+  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
+  if (NULL == pDimms) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
+    DIMM_INFO_CATEGORY_ALL, pDimms);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_WARN("Failed to retrieve the DCPMM inventory found in NFIT");
+    goto Finish;
+  }
+
+  for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
+    ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      ReturnCode = EFI_ABORTED;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine DCPMM id for DCPMM ID %d", pDimms[DimmIndex].DimmHandle);
+      goto Finish;
+    }
+
+    if (pDimms[DimmIndex].FwVer.FwApiMajor > MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR ||
+      (pDimms[DimmIndex].FwVer.FwApiMajor == MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
+        pDimms[DimmIndex].FwVer.FwApiMinor > MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR)) {
+      DimmFromTheFutureCount++;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"DCPMM " FORMAT_STR L" supports FIS %d.%d\r\n",
+        DimmStr,
+        pDimms[DimmIndex].FwVer.FwApiMajor,
+        pDimms[DimmIndex].FwVer.FwApiMinor,
+        MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
+        MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR);
+    }
+
+  }
+
+  if (DimmFromTheFutureCount > 0) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"%d DCPMM(s) are above FIS %d.%d. Please update to the latest SW.\r\n",
+      DimmFromTheFutureCount,
+      MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
+      MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR);
+  }
 
   //Specify table attributes
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowVersionDataSetAttribs);

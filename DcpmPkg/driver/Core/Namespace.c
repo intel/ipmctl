@@ -532,7 +532,15 @@ UninstallNamespaceProtocols(
   DimmDataIndex = GetDimmEfiDataIndex(0, pNamespace->pParentDimm, NULL);
   if (DimmDataIndex != DIMM_PID_INVALID) {
     DimmHandle = gDimmsUefiData[DimmDataIndex].DeviceHandle;
+    NVDIMM_DBG("DimmDataIndex -- gDimmsUefiData[%d].DeviceHandle = %d", DimmDataIndex, DimmHandle);
+  } else {
+    NVDIMM_DBG("DimmDataIndex (%d) = DIMM_PID_INVALID... DimmHandle was not set", DimmDataIndex);
   }
+
+  NVDIMM_DBG("DimmHandle = %d", DimmHandle);
+  NVDIMM_DBG("gNvmDimmData->ControllerHandle = %d", gNvmDimmData->ControllerHandle);
+  NVDIMM_DBG("gNvmDimmData->DriverHandle = %d", gNvmDimmData->DriverHandle);
+  NVDIMM_DBG("pNamespace->BlockIoHandle = %d", pNamespace->BlockIoHandle);
 
   ReturnCode = gBS->CloseProtocol(
     (pNamespace->Flags.Values.Local) ? DimmHandle : gNvmDimmData->ControllerHandle,
@@ -542,7 +550,40 @@ UninstallNamespaceProtocols(
   );
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to detach the block device from parent device. Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
+    NVDIMM_WARN("Failed to detach the block device from parent device.");
+    NVDIMM_WARN("Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
+
+    if (pNamespace->Flags.Values.Local) {
+      NVDIMM_DBG("CloseProtocol failed using DimmHandle.");
+      NVDIMM_DBG("Attempting CloseProtocol with ControllerHandle");
+      ReturnCode = gBS->CloseProtocol(
+        gNvmDimmData->ControllerHandle,
+        &gEfiDevicePathProtocolGuid,
+        gNvmDimmData->DriverHandle,
+        pNamespace->BlockIoHandle
+      );
+
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_WARN("Failed to detach the block device from parent device.");
+        NVDIMM_WARN("Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
+        goto Finish;
+      }
+    } else {
+      NVDIMM_DBG("CloseProtocol failed using ControllerHandle.");
+      NVDIMM_DBG("Attempting CloseProtocol with DimmHandle");
+      ReturnCode = gBS->CloseProtocol(
+        DimmHandle,
+        &gEfiDevicePathProtocolGuid,
+        gNvmDimmData->DriverHandle,
+        pNamespace->BlockIoHandle
+      );
+
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_WARN("Failed to detach the block device from parent device.");
+        NVDIMM_WARN("Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
+        goto Finish;
+      }
+    }
   }
 
   ReturnCode = gBS->UninstallMultipleProtocolInterfaces(

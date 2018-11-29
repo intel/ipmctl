@@ -912,6 +912,9 @@ InitializeDimms()
    LIST_ENTRY *pDimmNode2 = NULL;
    CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
    CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
+
+   NVDIMM_ENTRY();
+
 #ifndef OS_BUILD
    BOOLEAN PcdUsage = TRUE;
    EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
@@ -1036,6 +1039,8 @@ InitializeDimms()
             gDimmsUefiData[Index].pDevicePath,
             NULL);
 
+    NVDIMM_DBG("gBS->InstallMultipleProtocolInterfaces(...)[%d] ReturnCode = %d", Index, ReturnCode);
+    NVDIMM_DBG("gDimmsUefiData[%d].DeviceHandle was set to %d", Index, gDimmsUefiData[Index].DeviceHandle);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to install Device Path protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
       goto Finish;
@@ -1131,7 +1136,7 @@ InitializeDimms()
    }
 #endif // !OS_BUILD
 Finish:
-
+   NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
 
 }

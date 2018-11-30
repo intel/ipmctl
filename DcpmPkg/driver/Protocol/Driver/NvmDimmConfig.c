@@ -2484,7 +2484,7 @@ Finish:
   @param[in] pDimmIds Pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] SecurityOperation Security Operation code
-  @param[in] pPassphrase a pointer to string with current passphrase
+  @param[in] pPassphrase a pointer to string with current passphrase. For default Master Passphrase (0's) use a zero length, null terminated string.
   @param[in] pNewPassphrase a pointer to string with new passphrase
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -2766,8 +2766,7 @@ SetSecurityState(
         goto Finish;
       }
 
-      if (!(DimmSecurityState & SECURITY_MASK_LOCKED) &&
-          !(DimmSecurityState & SECURITY_MASK_FROZEN)) {
+      if (!(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         SubOpcode = SubopSecEraseUnit;
 	pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
 #ifndef OS_BUILD
@@ -2847,18 +2846,7 @@ SetSecurityState(
         goto Finish;
       }
 
-      ReturnCode = IsNamespaceOnDimms(&pDimms[Index], 1, &NamespaceFound);
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
-      }
-      if (NamespaceFound) {
-        ReturnCode = EFI_ABORTED;
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS);
-        goto Finish;
-      }
-
-      if (!(DimmSecurityState & SECURITY_MASK_LOCKED) &&
-          !(DimmSecurityState & SECURITY_MASK_FROZEN)) {
+      if (!(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         if (pPassphrase == NULL) {
           ResetCmdStatus(pCommandStatus, NVM_ERR_PASSPHRASE_NOT_PROVIDED);
           ReturnCode = EFI_INVALID_PARAMETER;

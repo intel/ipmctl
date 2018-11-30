@@ -398,6 +398,7 @@ BootStatusDiagnosticsCheck(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_BSR Bsr;
   BOOLEAN FIS_1_4 = FALSE;
+  BOOLEAN FIS_1_14 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
@@ -424,6 +425,10 @@ BootStatusDiagnosticsCheck(
 
   if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4) {
     FIS_1_4 = TRUE;
+  }
+  /* Check to make sure the FW Version is bigger than 1.14*/
+  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor >= 14) {
+    FIS_1_14 = TRUE;
   }
 
    ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
@@ -461,6 +466,13 @@ BootStatusDiagnosticsCheck(
         (!FIS_1_4 && (Bsr.Separated_Current_FIS.DR != DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY))) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DRAM_NOT_READY), EVENT_CODE_533, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
+    }
+    if (FIS_1_14) {
+      if ((Bsr.Separated_Current_FIS.DTS == DDRT_TRAINING_NOT_COMPLETE) ||
+        (Bsr.Separated_Current_FIS.DTS == DDRT_TRAINING_FAILURE)) {
+        APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_DDRT_TRAINING_NOT_COMPLETE_FAILED), EVENT_CODE_543, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+          pDimmStr);
+      }
     }
     if (Bsr.Separated_Current_FIS.MR == DIMM_BSR_MEDIA_NOT_TRAINED) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_MEDIA_NOT_READY), EVENT_CODE_514, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,

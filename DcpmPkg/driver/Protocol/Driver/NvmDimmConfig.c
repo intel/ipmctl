@@ -4390,8 +4390,10 @@ initAcpiTables(
     Find the Differentiated System Description Table (DSDT) from EFI_SYSTEM_TABLE
   **/
   ReturnCode = GetAcpiTables(gST, &pNfit, &pPcat, &pPMTT);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to get NFIT or PCAT or PMTT table.");
+  // The PMTT is optional, in that case the pointer stays NULL, it is not an ERROR condition
+  if (((EFI_LOAD_ERROR != ReturnCode) && (EFI_SUCCESS != ReturnCode)) ||
+    ((EFI_LOAD_ERROR == ReturnCode) && (NULL != pPMTT))) {
+    NVDIMM_WARN("Failed to get NFIT or PCAT table.");
     goto Finish;
   }
 

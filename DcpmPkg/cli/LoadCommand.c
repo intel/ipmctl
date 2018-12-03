@@ -203,7 +203,7 @@ Load(
 
   /*Get the list of functional and non-functional dimms*/
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
     goto Finish;
   }
 

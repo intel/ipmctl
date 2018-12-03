@@ -237,6 +237,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   POISON_ERR_CLR_CTR_STR,
   MEDIA_TEMP_INJ_CTR_STR,
   SW_TRIGGER_CTR_STR,
+  BOOT_STATUS_REGISTER_STR,
 #ifdef OS_BUILD
   ACTION_REQUIRED_STR,
   ACTION_REQUIRED_EVENTS_STR
@@ -289,6 +290,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   POISON_ERR_CLR_CTR_STR,
   MEDIA_TEMP_INJ_CTR_STR,
   SW_TRIGGER_CTR_STR,
+  BOOT_STATUS_REGISTER_STR
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
@@ -1170,8 +1172,10 @@ ShowDimms(
           }
         }
 
-        /** Boot Status **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR))) {
+        /** Boot Status and/or Boot Status Register **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && 
+          (ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR) ||
+            ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR)))) {
 
           ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &BootStatusRegister, &BootStatusBitMask);
           if (EFI_ERROR(ReturnCode)) {
@@ -1179,13 +1183,19 @@ ShowDimms(
           } else {
             pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
           }
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BOOT_STATUS_STR, pAttributeStr);
-          FREE_POOL_SAFE(pAttributeStr);
+
+          if (ShowAll || (pDispOptions->DisplayOptionSet &&
+            ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BOOT_STATUS_STR, pAttributeStr);
+            FREE_POOL_SAFE(pAttributeStr);
+          }
+
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, BOOT_STATUS_REGISTER_STR, 
+              FORMAT_HEX_PREFIX FORMAT_UINT32_HEX L"_" FORMAT_UINT32_HEX, ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF));
+          }
         }
-        /** Boot Status Register **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, BOOT_STATUS_REGISTER_STR, FORMAT_HEX_PREFIX FORMAT_UINT32_HEX L"_" FORMAT_UINT32_HEX, ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF));
-        }
+
 
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
           /** ErrorInjectionEnabled **/
@@ -1410,7 +1420,6 @@ ShowDimms(
   }
   //Specify table attributes
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowDimmDataSetAttribs);
-
 
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);

@@ -84,7 +84,9 @@ elseif(UNIX)
 	find_package(asciidoc)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
 	pkg_check_modules(SYSTEMD systemd)
+if(NOT SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK)
 	pkg_check_modules(LIBSAFEC REQUIRED safec-3.3>=03032018.0-g570fa5)
+endif()
 elseif(MSVC)
 	set(WIN_BUILD 1)
 	set(OS_TYPE win)
@@ -198,7 +200,7 @@ target_link_libraries(ipmctl_os_interface
 	${CMAKE_THREAD_LIBS_INIT}
 	)
 
-if(LNX_BUILD)
+if(LNX_BUILD AND (NOT SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK))
 	target_link_libraries(ipmctl_os_interface
 		${LIBSAFEC_LIBRARIES}
 		)
@@ -485,10 +487,17 @@ if (NOT ESX_BUILD)
 
 	add_executable(ipmctl-monitor ${IPMCTL_MONITOR_SOURCE_FILES})
 
+if(NOT SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK)
 	target_link_libraries(ipmctl-monitor
 		ipmctl
 		${LIBSAFEC_LIBRARIES}
 		)
+else()
+	target_link_libraries(ipmctl-monitor
+		ipmctl
+		)
+endif()
+
 
 	target_include_directories(ipmctl-monitor PUBLIC
 		src/os
@@ -778,4 +787,6 @@ endif()
 
 if(ESX_BUILD)
 	include(CMake/esx.cmake)
+elseif(UNIX AND SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK)
+	include(CMake/safeclib.cmake)
 endif()

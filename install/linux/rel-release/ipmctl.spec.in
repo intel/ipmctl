@@ -86,6 +86,7 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DINSTALL_UNITDIR=%{_unitdir} \
     -DRELEASE=ON \
+    -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
     -DRPM_BUILD=ON
 %else
 %cmake -DBUILDNUM=%{version} -DCMAKE_INSTALL_PREFIX=/ \
@@ -100,6 +101,7 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DINSTALL_UNITDIR=%{_unitdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON \
+    -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
 	-DWHITLEY=ON
 %endif
 %make_build

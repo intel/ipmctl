@@ -110,9 +110,8 @@ DCPMM.
 SAMPLE OUTPUT
 -------------
 [verse]
-(file path): MM.mm.hh.bbbb | Unable to retrieve version from FW
-image.
-Load FW on DIMM (DimmID): (Valid|Invalid|Downgrade) [(with
+(file path): MM.mm.hh.bbbb
+Load FW on DIMM (DimmID): (Valid|Downgrade) [(with
 confirmation or the force option)]
 
 If the firmware is being downgraded and the force option is not provided, the user will
@@ -136,4 +135,4 @@ activate the FW.
 Load FW on DIMM (DimmID): Success, a power cycle is required to
 activate the FW.
 ...
-Load FW on DIMM (DimmID): Error (Code)-(Description)
+Load FW on DIMM (DimmID): Error (Code) - (Description)

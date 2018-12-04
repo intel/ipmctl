@@ -65,7 +65,7 @@ PlatformConfigSupported::
   (Default) Whether the platform level configuration of DCPMMs can be modified
   with the host software. One of:
   - 0: Changes must be made in the BIOS.
-  - 1: The command Section 2.2.5, "Create Memory Allocation Goal" is supported.
+  - 1: The command *_Create Memory Allocation Goal_* is supported.
     Alignment (Default) Capacity alignment requirement for all memory types as reported by the BIOS.
 
 AllowedVolatileMode::
@@ -94,7 +94,7 @@ AllowedAppDirectMode::
 
 ModesSupported::
   A list of DCPMM modes supported by the BIOS. Refer to the command
-  Section 2.1.3, "Show Device" to determine the modes supported by the individual
+  *_Show Device_* to determine the modes supported by the individual
   DCPMMs. One or more of:
   - 1LM: One-level volatile mode. All memory resources in the platform are
     independently accessible, and not captive of the other resources.
@@ -107,13 +107,13 @@ ModesSupported::
 SupportedAppDirectSettings::
   The BIOS supported list of App Direct interleave settings in the format:
   - x[Way] - [(IMCSize) iMC x (ChannelSize) Channel] followed by the input
-    format for the command Section 2.5.7, "Change Preferences":
+    format for the command *_Change Preferences_*:
     (ByOne|(IMCSize)_(ChannelSize)).
 
 RecommendedAppDirectSettings::
   The BIOS recommended list of App Direct interleave settings in the format:
   - x[Way] - [(IMCSize) iMC x (ChannelSize) Channel] followed by the input format for
-  the command Section 2.5.7, "Change Preferences":
+  the command *_Change Preferences_*:
   (ByOne|(IMCSize)_(ChannelSize)).
 
 MinNamespaceSize::

@@ -46,3 +46,5 @@ RETURN DATA
 -----------
 Returns the formatted data from the requested ACPI tables and their sub-tables. Refer
 to the ACPI specification for detailed information about the format of the ACPI tables.
+
+NOTE: All data is presented in ACPI little endian format.

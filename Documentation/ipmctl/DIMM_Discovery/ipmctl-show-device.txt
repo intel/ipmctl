@@ -85,6 +85,8 @@ below; applying options changes the output to a more detailed format. Limited
 information (noted in the table below) is applicable if the DCPMM is not
 manageable by the software as indicated by the "ManageabilityState" property.
 
+NOTE: Some data is endian-swapped for human readability.
+
 DimmID::
   (Default)  The DCPMM identifier.
 
@@ -145,7 +147,7 @@ ManageabilityState::
     the software.
 
 PhysicalID::
-  The DCPMM physical identifier (i.e., SMBIOS Type 17 handle)
+  The DCPMM physical identifier (i.e., SMBIOS Type 17 handle).
 
 DimmHandle::
   The DCPMM handle formatted as 0xABCD.
@@ -167,13 +169,13 @@ SocketID::
   installed.
 
 MemControllerID::
-  The associated memory controller identifier
+  The associated memory controller identifier.
 
 ChannelID::
-  The associated channel
+  The associated channel.
 
 ChannelPos::
-  The DCPMM position in the channel
+  The DCPMM position in the channel.
 
 MemoryType::
   The memory type. One of:
@@ -182,19 +184,22 @@ MemoryType::
   - Logical Non-Volatile Device
 
 VendorID::
-  The vendor identifier of the DCPMM
+  The vendor identifier of the DCPMM.
+  This value is presented in big endian format.
 
 DeviceID::
-  The device identifier of the DCPMM
+  The device identifier of the DCPMM.
+  This value is presented in big endian format.
 
 RevisionID::
-  The revision identifier of the DCPMM
+  The revision identifier of the DCPMM.
 
 SubsystemVendorID::
   The vendor identifier of the non-volatile memory subsystem controller.
+  This value is presented in big endian format.
 
 SubsystemDeviceID::
-  The device identifier of the non-volatile memory subsystem controller
+  The device identifier of the non-volatile memory subsystem controller.
 
 SubsystemRevisionID::
   The revision identifier of the non-volatile memory subsystem controller
@@ -215,7 +220,8 @@ ManufacturingDate::
   is 0.
 
 SerialNumber::
-  The serial number assigned by the vendor
+  The serial number assigned by the vendor.
+  This value is presented in big endian format.
 
 PartNumber::
   The part number assigned by the vendor
@@ -294,7 +300,8 @@ endif::os_build[]
 software as indicated by the "ManageabilityState".*
 
 ManufacturerID::
-  The manufacturer identifier of the DCPMM
+  The manufacturer identifier of the DCPMM.
+  This value is presented in big endian format.
 
 ControllerRevisionID::
   The controller stepping and revision ID retrieved from the controller FW. This
@@ -307,10 +314,10 @@ IsNew::
   - 1: The DCPMM requires configuration.
 
 MemoryCapacity::
-  Usable DCPMM Memory Mode capacity
+  Usable DCPMM Memory Mode capacity.
 
 AppDirectCapacity::
-  Usable DCPMM App Direct capacity
+  Usable DCPMM App Direct capacity.
 
 UnconfiguredCapacity::
   DCPMM capacity that is inaccessible because it is not mapped into the system
@@ -324,7 +331,7 @@ InaccessibleCapacity::
   enabled by BIOS.
 
 ReservedCapacity::
-  DCPMM capacity reserved for proper alignment
+  DCPMM capacity reserved for proper alignment.
 
 PeakPowerBudget::
   If the DCPMM firmware power management policy is enabled, the power budget in
@@ -336,7 +343,7 @@ AvgPowerBudget::
   mW used for average power. Refer to FIS for allowable range and default value.
 
 MaxAveragePowerBudget::
-   Maximum average power budget supported by the DCPMM
+   Maximum average power budget supported by the DCPMM.
 
 PackageSparingCapable::
   Whether or not the DCPMM supports package sparing. One of:
@@ -349,7 +356,7 @@ PackageSparingEnabled::
  - 1: Enabled
 
 PackageSparesAvailable::
-  The number of spare devices available for package sparing
+  The number of spare devices available for package sparing.
 
 LatchedLastShutdownStatus::
   The status of the last shutdown of the DCPMM. One or more of:

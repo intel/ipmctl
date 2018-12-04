@@ -41,6 +41,10 @@ the Configuration header are set to zero, making those tables invalid.
 NOTE: This action can be useful when moving DCPMMs from one system to another, as goal creation
 rules may restrict provisioning dimms with an existing configuration.
 
+NOTE: When Config is specified, only PCD partition 1 is modified. If the platform is rebooted
+prior to creating a new goal on any targeted DCPMMs, UEFI platform firmware will detect the
+missing tables and, if possible, restore previous config using the PCD partition 0 tables.
+
 WARNING: *This command may result in data loss. Data should be backed up
 to other storage before executing this command*.
 

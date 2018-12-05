@@ -687,13 +687,13 @@ SystemTimeCheck(
   // Validate resulats
   if ((time_t) SystemTimePayload.UnixTime < raw_start_time) {
     CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_LOWER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, pTmpStr, (raw_start_time - SystemTimePayload.UnixTime));
     FREE_POOL_SAFE(pTmpStr)
   }
   else if ((time_t) SystemTimePayload.UnixTime > raw_end_time) {
     CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_GREATER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, pTmpStr, (SystemTimePayload.UnixTime - raw_end_time));
     FREE_POOL_SAFE(pTmpStr);
   }

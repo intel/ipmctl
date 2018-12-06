@@ -540,18 +540,28 @@ ShowRegions(
     /**
     RegionID
     **/
+#ifdef OS_BUILD
     if (AllOptionSet ||
       (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, REGION_ID_STR))) {
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, REGION_ID_STR, FORMAT_HEX, pRegions[RegionIndex].RegionId);
     }
+#else
+    /** Always include for non OS builds **/
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, REGION_ID_STR, FORMAT_HEX, pRegions[RegionIndex].RegionId);
+#endif
 
     /**
     ISetID
     **/
+#ifdef OS_BUILD
+    /** Always include for OS builds **/
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ISET_ID_STR, FORMAT_SHOW_ISET_ID, pRegions[RegionIndex].CookieId);
+#else
     if (AllOptionSet ||
       (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ISET_ID_STR))) {
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ISET_ID_STR, FORMAT_SHOW_ISET_ID, pRegions[RegionIndex].CookieId);
     }
+#endif
 }
 
   if (RegionIdsNum > 0 && !Found) {

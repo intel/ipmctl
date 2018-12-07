@@ -96,7 +96,7 @@ struct Command ShowTopologyCommand =
   {                                                                      //!< targets
     {TOPOLOGY_TARGET, L"", L"", TRUE, ValueEmpty},
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
-    {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired}
+    {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                   //!< properties
   L"Show the topology of the DCPMMs installed in the host server"  , //!< help

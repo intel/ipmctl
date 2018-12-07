@@ -341,7 +341,9 @@ ShowDimms(
   CHAR16 *pDimmsValue = NULL;
   CHAR16 TmpFwVerString[MAX(FW_VERSION_LEN, FW_API_VERSION_LEN)];
   UINT32 DimmIndex = 0;
+  UINT32 Index1 = 0;
   UINT32 Index2 = 0;
+  UINT32 Index3 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN Found = FALSE;
@@ -359,12 +361,12 @@ ShowDimms(
   BOOLEAN BlockAddressable = FALSE;
   UINT16  BootStatusBitMask = 0;
   UINT64  BootStatusRegister = 0;
-  UINT32  Index3 = 0;
   CHAR16 *pSteppingStr = NULL;
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
   BOOLEAN FIS_1_13 = FALSE;
+  BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
@@ -378,6 +380,10 @@ ShowDimms(
     NVDIMM_DBG("pCmd parameter is NULL.\n");
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
+  }
+
+  for (Index1 = 0; Index1 < MAX_DIMMS; Index1++) {
+    DimmIsOkToDisplay[Index1] = FALSE;
   }
 
   pPrinterCtx = pCmd->pPrintCtx;
@@ -509,12 +515,29 @@ ShowDimms(
       NVDIMM_WARN("Target value is not a valid Dimm ID");
       goto Finish;
     }
+
+    /*Mark each dimm as ok to display based on the dimms passed by the user*/
+    for (Index1 = 0; Index1 < DimmCount + UninitializedDimmCount; Index1++) {
+      for (Index2 = 0; Index2 < DimmIdsNum; Index2++) {
+        if (pAllDimms[Index1].DimmID == pDimmIds[Index2]) {
+          DimmIsOkToDisplay[Index1] = TRUE;
+        }
+      }
+    }
+  }
+  else {
+    /*Since no dimms were specified, mark them all as ok to display*/
+    for (DimmIndex = 0; DimmIndex < MAX_DIMMS; DimmIndex++) {
+      DimmIsOkToDisplay[DimmIndex] = TRUE;
+    }
   }
 
   if (SocketsNum > 0) {
     Found = FALSE;
+    /*Only display sockets which match the dimms that the user has indicated*/
     for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
-      if (ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
+      if (DimmIsOkToDisplay[DimmIndex] == TRUE &&
+          ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
         Found = TRUE;
         break;
       }
@@ -522,7 +545,12 @@ ShowDimms(
 
     if (!Found) {
       ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_DIMMS_ON_SOCKET);
+      if (DimmIdsNum > 0) {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET);
+      } else {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_DIMMS_ON_SOCKET);
+      }
+
       NVDIMM_DBG("No DIMMs on provided Socket");
       goto Finish;
     }

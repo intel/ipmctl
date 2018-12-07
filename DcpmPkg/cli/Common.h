@@ -59,6 +59,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
 #define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."
+#define CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET            L"Error: None of the specified dimm(s) belong to the specified socket(s)."
 #define CLI_ERR_INVALID_SOCKET_ID             L"Error: The socket identifier is not valid."
 #define CLI_ERR_OUT_OF_MEMORY                 L"Error: There is not enough memory to complete the requested operation."
 #define CLI_ERR_WRONG_FILE_PATH               L"Error: Wrong file path."

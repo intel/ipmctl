@@ -168,6 +168,7 @@ ShowTopology(
   CHAR16 *pPath = NULL;
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   UINT32 TopoCnt = 0;
+  BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
 
   NVDIMM_ENTRY();
 
@@ -182,6 +183,9 @@ ShowTopology(
   }
 
   pPrinterCtx = pCmd->pPrintCtx;
+  for (Index = 0; Index < MAX_DIMMS; Index++) {
+    DimmIsOkToDisplay[Index] = FALSE;
+  }
 
   pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
   if (NULL == pDispOptions) {
@@ -256,20 +260,41 @@ ShowTopology(
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
+
+    /*Mark each dimm as ok to display based on the dimms passed by the user*/
+    for (Index = 0; Index < DimmCount; Index++) {
+      for (Index2 = 0; Index2 < DimmIdsNum; Index2++) {
+        if (pDimms[Index].DimmID == pDimmIds[Index2]) {
+          DimmIsOkToDisplay[Index] = TRUE;
+        }
+      }
+    }
+  } else {
+    /*Since no dimms were specified, mark them all as ok to display*/
+    for (Index = 0; Index < MAX_DIMMS; Index++) {
+      DimmIsOkToDisplay[Index] = TRUE;
+    }
   }
 
   /** Check if proper -socket target is given **/
   for (Index = 0; Index < SocketsNum; Index++) {
     Found = FALSE;
+    /*Only display dimms which match the socket(s) specified *and* that the user has indicated*/
     for (Index2 = 0; Index2 < DimmCount; Index2++) {
-      if (pSockets[Index] == pDimms[Index2].SocketId) {
+      if (DimmIsOkToDisplay[Index2] == TRUE &&
+          pSockets[Index] == pDimms[Index2].SocketId) {
         Found = TRUE;
         break;
       }
     }
     if (!Found) {
       ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INVALID_SOCKET_ID);
+      if (DimmIdsNum > 0)
+      {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET);
+      } else {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INVALID_SOCKET_ID);
+      }
       NVDIMM_WARN("Invalid Socket ID");
       goto Finish;
     }

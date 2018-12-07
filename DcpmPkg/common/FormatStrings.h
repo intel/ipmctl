@@ -9,7 +9,7 @@
 
 #ifndef OS_BUILD
 #define FORMAT_STR                              L"%s"
-#define FORMAT_STR_WITH_PARANTHESIS             L"(%s)"
+#define FORMAT_STR_WITH_PARANTHESIS             L" (%s)"
 #define FORMAT_STR_SINGLE_QUOTE                 L"'%ls'"
 #define FORMAT_DYN_STR                          L"%*s"
 #define FORMAT_STR_NL                           L"%s\n"
@@ -67,7 +67,7 @@
 #define FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS      L"%0*d"
 #else // OS_BUILD
 #define FORMAT_STR                              L"%ls"
-#define FORMAT_STR_WITH_PARANTHESIS             L"(%ls)"
+#define FORMAT_STR_WITH_PARANTHESIS             L" (%ls)"
 #define FORMAT_DYN_STR                          L"%*ls"
 #define FORMAT_STR_NL                           L"%ls\n"
 #define FORMAT_NL_STR                           L"\n%ls"

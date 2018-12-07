@@ -65,7 +65,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_WRONG_FILE_DATA               L"Error: Wrong data in the file."
 #define CLI_ERR_INTERNAL_ERROR                L"Error: Internal function error."
 #define CLI_ERR_PROMPT_INVALID                L"Error: Invalid data input."
-#define CLI_ERR_WRONG_DIAGNOSTIC_TARGETS      L"Error: Invalid diagnostics target, valid values are:"
+#define CLI_ERR_WRONG_DIAGNOSTIC_TARGETS      L"Error: Invalid diagnostics target, valid values are: " FORMAT_STR
 #define CLI_ERR_WRONG_REGISTER                L"Error: Register not found"
 #define CLI_ERR_INVALID_PASSPHRASE_FROM_FILE  L"Error: The file contains empty or bad formatted passphrases."
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."

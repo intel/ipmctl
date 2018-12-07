@@ -117,8 +117,7 @@
 #define FW_TEST_TARGET_VALUE                 L"FW"                       //!< 'diagnostic' target value
 #define ERROR_TARGET_THERMAL_VALUE           L"Thermal"                  //!< 'error' target value
 #define ERROR_TARGET_MEDIA_VALUE             L"Media"                    //!< 'error' target value
-#define ALL_DIAGNOSTICS_TARGETS \
-  L"Quick|Config|Security|FW"                                            //!< diagnostics targets combined
+#define ALL_DIAGNOSTICS_TARGETS              L"Quick|Config|Security|FW" //!< diagnostics targets combined
 #define PCD_CONFIG_TARGET_VALUE              L"Config"
 #define PCD_LSA_TARGET_VALUE                 L"LSA"
 #define NFIT_TARGET_VALUE                    L"NFIT"                     //!< 'system' target value

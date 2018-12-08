@@ -203,8 +203,13 @@ Load(
 
   /*Get the list of functional and non-functional dimms*/
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
-  if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
-    goto Finish;
+  if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode == EFI_NOT_FOUND) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+    }
+    else {
+      goto Finish;
+    }
   }
 
   DimmTotalCount += FunctionalDimmCount;

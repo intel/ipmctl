@@ -131,6 +131,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
 
 #define CLI_INFO_NO_DIMMS                                     L"No DIMMs in the system."
+#define CLI_INFO_NO_FUNCTIONAL_DIMMS                          L"No functional DIMMs in the system."
 #define CLI_INFO_NO_REGIONS                                   L"There are no Regions defined in the system."
 #define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable DIMMs in the system."
 #define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional DIMMs in the system."

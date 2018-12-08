@@ -30,6 +30,11 @@
 #include <lnx_adapter.h>
 
 #define	LOCALE_DIR	"/usr/share/locale"
+#define FTOK_PROJ_ID 'R' // Today proj_id is an int, but still only 8 bits are used. 
+                        // Typical usage has an ASCII character proj_id, 
+                        // that is why the behavior is said to be undefined when proj_id is zero.
+#define SHM_PERM_FLG 0666 // permissions granted to the owner, group, and others.
+
 /*
  * Return the base path for the language catalog
  */
@@ -146,7 +151,7 @@ OS_MUTEX * os_mutex_init(const char *name)
 		{
 			pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
 			// create a shared memory id
-			int shmid = shmget(atoi(name), sizeof (pthread_mutex_t), IPC_CREAT | 0666);
+			int shmid = shmget(ftok(name, FTOK_PROJ_ID), sizeof (pthread_mutex_t), IPC_CREAT | SHM_PERM_FLG);
 			if (shmid != -1)
 			{
 				// attach to the shared memory
@@ -205,20 +210,26 @@ int os_mutex_unlock(OS_MUTEX *p_mutex)
  */
 int os_mutex_delete(OS_MUTEX *p_mutex, const char *name)
 {
-	int rc = 1;
-	if (p_mutex)
-	{
-		// failure when pthread_mutex_destroy(..) != 0
-		rc = (pthread_mutex_destroy((pthread_mutex_t *)p_mutex) == 0);
+  int rc = 1;
+  if (p_mutex)
+  {
+    // failure when pthread_mutex_destroy(..) != 0
+    rc = (pthread_mutex_destroy((pthread_mutex_t *)p_mutex) == 0);
 
-		// detach the shared memory
-		if (name)
-		{
-			shmdt(p_mutex);
-		}
-                free(p_mutex);
-	}
-	return rc;
+    // detach and remove the shared memory
+    if (name)
+    {
+      shmdt(p_mutex);
+      // remove the shared memory
+      int shmid = shmget(ftok(name, FTOK_PROJ_ID), sizeof(pthread_mutex_t), SHM_PERM_FLG);
+      if (shmid != -1)
+      {
+        shmctl(shmid, IPC_RMID, NULL);
+      }
+    }
+    free(p_mutex);
+  }
+  return rc;
 }
 
 /*

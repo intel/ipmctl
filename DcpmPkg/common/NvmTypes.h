@@ -492,8 +492,8 @@ typedef struct _NAMESPACE_INFO {
   UINT8 NamespaceGuid[NSGUID_LEN];              //!< UUID per RFC 4122
   UINT16 NamespaceId;                           //!< Namespace ID
   UINT8 Name[NLABEL_NAME_LEN_WITH_TERMINATOR];  //!< Optional name 63 characters + (NULL-terminator)
-  CHAR16 Capacity[UINT128_DIGITS];              //!< Capacity string
-  CHAR16 FreeCapacity[UINT128_DIGITS];          //!< Remaining Capacity String
+  CHAR16 Reserved1[UINT128_DIGITS];             //!< Unused
+  CHAR16 Reserved2[UINT128_DIGITS];             //!< Unused
   UINT16 HealthState;                           //!< Health state. Ok, Warning, Critical, Broken Mirror.
   UINT16 RegionId;                              //!< ID of related region/IS
   UINT64 BlockSize;                             //!< Internal Block Size to calculate Capacity

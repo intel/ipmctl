@@ -71,6 +71,15 @@
 #define PT_LONG_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_MILLISECONDS(150)
 #define PT_UPDATEFW_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_SECONDS(4)
 
+//
+// Translate between the NFIT device handle node/socket pair and an absolute socket index
+// The 4 bit Socket ID field allows a maximum of 16 sockets per node
+//
+#define NFIT_SOCKETS_PER_NODE                                   16
+#define SOCKET_INDEX_TO_NFIT_SOCKET_ID(_skt)                    (_skt % NFIT_SOCKETS_PER_NODE)
+#define SOCKET_INDEX_TO_NFIT_NODE_ID(_skt)                      (_skt / NFIT_SOCKETS_PER_NODE)
+#define NFIT_NODE_SOCKET_TO_SOCKET_INDEX(_nodeId, _socketId)    ((_nodeId * NFIT_SOCKETS_PER_NODE) + (_socketId))
+
 typedef enum _BW_COMMAND_CODE {
   BwRead = 0,
   BwWrite = 1

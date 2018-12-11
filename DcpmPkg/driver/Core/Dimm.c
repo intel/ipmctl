@@ -314,9 +314,10 @@ GetDimmBySmbusAddress(
     Slot = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemChannel * SLOTS_PER_CHANNEL +
         pCurDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
 
-    if (pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId == Address.Cpu &&
-        pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId == Address.Imc &&
-        Slot == Address.Slot) {
+    if ((NFIT_NODE_SOCKET_TO_SOCKET_INDEX (pCurDimm->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+      pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId) == Address.Cpu) &&
+        (pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId == Address.Imc) &&
+        (Slot == Address.Slot)) {
       pTargetDimm = pCurDimm;
       break;
     }
@@ -1191,7 +1192,8 @@ InitializeDimmFieldsFromNfit(
   pDimm->Configured = FALSE;
   pDimm->ISsNum = 0;
   if (pNvDimmRegionTbl != NULL) {
-    pDimm->SocketId = (UINT16) pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId;
+    pDimm->SocketId = (UINT16)NFIT_NODE_SOCKET_TO_SOCKET_INDEX(pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+      pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId);
     pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
     pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
     pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;

@@ -110,7 +110,7 @@ CreateCommandStatusString(
   Disable previously saved status code
 
   @param[in] pObjectStatus pointer to object status (with Nvm Status bit field)
-  @param[in] NvmStatusCode code to check if is set
+  @param[in] Code code to check if is set
 **/
 VOID
 ClearNvmStatus(
@@ -123,7 +123,7 @@ ClearNvmStatus(
 
   @param[in, out] pObjectStatus pointer to object status (with Nvm Status bit field)
   @param[in] ObjectId - object for clearing status
-  @param[in] NvmStatusCode code to check if is set
+  @param[in] Status Status code to check if is set
 
   @retval TRUE - if Object Status has got code set
   @retval FALSE - else
@@ -139,7 +139,7 @@ IsSetNvmStatusForObject(
   Check if Object status got proper NVM status code set.
 
   @param[in] pObjectStatus pointer to object status (with Nvm Status bit field)
-  @param[in] NvmStatusCode code to check if is set
+  @param[in] Code code to check if is set
 
   @retval TRUE - if Object Status has got code set
   @retval FALSE - else
@@ -154,7 +154,7 @@ IsSetNvmStatus(
   Set proper code in Object status
 
   @param[in] pObjectStatus pointer to object status (with Nvm Status bit field)
-  @param[in] NvmStatusCode code to set
+  @param[in] Code code to set
 **/
 VOID
 SetNvmStatus(
@@ -250,9 +250,9 @@ GetAllNvmStatusCodeMessages(
 /**
   Clear Nvm status code for given object ID
 
-  @param[in/out] pObjectStatus pointer to object status (with Nvm Status bit field)
+  @param[in,out] pObjectStatus pointer to object status (with Nvm Status bit field)
   @param[in] ObjectId - object for checking status
-  @param[in] NvmStatusCode code to clear
+  @param[in] Code code to clear
 
   @retval TRUE - if Object Status has got code set
   @retval FALSE - else
@@ -268,8 +268,8 @@ ClearNvmStatusForObject(
   Translate NVM operation return code into
   Unicode string representing its brief description.
 
-  @param[in] EFI HANDLE the HiiHandle to the HII database that contains NvmStatus strings
-  @param[in] NvmStatusCode the status code returned from
+  @param[in] HiiHandle EFI HANDLE to the HII database that contains NvmStatus strings
+  @param[in] Code the status code returned from
     a NVM command.
 
   @retval Pointer to a decoded string. Memory is dynamically allocated. It should be freed by caller.
@@ -277,7 +277,7 @@ ClearNvmStatusForObject(
 CHAR16 *
 GetSingleNvmStatusCodeMessage(
   IN     EFI_HANDLE    HiiHandle,
-  IN     NvmStatusCode NvmStatusCodeVar
+  IN     NvmStatusCode Code
   );
 
 /**
@@ -383,7 +383,7 @@ CountNumberOfErrorsAndWarnings(
 /**
 Erase all Nvm status codes
 
-@param[in/out] pObjectStatus pointer to object status (with Nvm Status bit field)
+@param[in,out] pObjectStatus pointer to object status (with Nvm Status bit field)
 **/
 VOID
 EraseNvmStatus(

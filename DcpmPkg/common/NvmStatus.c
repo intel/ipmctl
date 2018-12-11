@@ -283,7 +283,7 @@ InitErrorAndWarningNvmStatusCodes()
   Unicode string representing its brief description.
 
   @param[in] EFI HANDLE the HiiHandle to the HII database that contains NvmStatus strings
-  @param[in] NvmStatusCode the status code returned from
+  @param[in] Code the status code returned from
     a NVM command.
 
   @retval Pointer to a decoded string. Memory is dynamically allocated. It should be freed by caller.
@@ -291,13 +291,13 @@ InitErrorAndWarningNvmStatusCodes()
 CHAR16 *
 GetSingleNvmStatusCodeMessage(
   IN     EFI_HANDLE    HiiHandle,
-  IN     NvmStatusCode NvmStatusCodeVar
+  IN     NvmStatusCode Code
 )
 {
   CHAR16 *pTempString = NULL;
   CHAR16 *pTempString1 = NULL;
 
-  switch (NvmStatusCodeVar) {
+  switch (Code) {
 
   case NVM_SUCCESS:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_SUCCESS), NULL);

@@ -233,7 +233,7 @@ ConvertHealthBitmask(
   freeing the returned string
 
   @param[in] HiiHandle handle to the HII database that contains i18n strings
-  @param[in] Health State - Numeric Value of the Health State.
+  @param[in] HealthState - Numeric Value of the Health State.
       Defined in NvmTypes.h
 
   @retval String representation of the health state

@@ -495,7 +495,7 @@ UpdateDimmFw(
 /**
   Recover firmware of a specified NVDIMM
 
-  @param[in] DimmPid Dimm ID of a NVDIMM on which recovery is to be performed
+  @param[in] DimmHandle Dimm ID of a NVDIMM on which recovery is to be performed
   @param[in] pImageBuffer is a pointer to FW image
   @param[in] ImageBufferSize is Image size in bytes
 
@@ -527,7 +527,7 @@ RecoverDimmFw(
   @param[in] Examine flag enables image verification only
   @param[in] Force flag suppresses warning message in case of attempted downgrade
   @param[in] Recovery flag determine that recovery update should be performed
-  @param[in] FlashSpi flag determine if the recovery update should be through the SPI
+  @param[in] FlashSPI flag determine if the recovery update should be through the SPI
 
   @param[out] pFwImageInfo is a pointer to a structure containing FW image information
     need to be provided if examine flag is set
@@ -594,7 +594,7 @@ GetRegions(
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] RegionId The region id of the region to retrieve
-  @param[out] pRegion A pointer to the region info
+  @param[out] pRegionInfo A pointer to the region info
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS Success
@@ -968,7 +968,7 @@ LoadGoalConfig(
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] DiagnosticTests bitfield with selected diagnostic tests to be started
   @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
-  @param[out] ppResult Pointer to the combined result string
+  @param[out] ppResultStr Pointer to the combined result string
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -990,13 +990,11 @@ StartDiagnostic(
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] RegionId the ID of the region that the Namespace is supposed to be created.
-  @param[in] DimmId the PID of the Dimm that the Storage Namespace is supposed to be created.
+  @param[in] DimmPid the PID of the Dimm that the Storage Namespace is supposed to be created.
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
   @param[in] pName - Namespace name.
-  @param[in] Enabled boolean value to decide when the driver should hide this
-    namespace to the OS
   @param[in] Mode -  boolean value to decide when the namespace
     should have the BTT arena included
   @param[in] ForceAll Suppress all warnings
@@ -1372,7 +1370,7 @@ GetDdrtIoInitInfo(
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
   @param[in] DimmID DimmID of device to retrieve status from
   @param[in] pOpcode pointer to opcode of long op command to check
-  @param[in] pOpcode pointer to subopcode of long op command to check
+  @param[in] pSubOpcode pointer to subopcode of long op command to check
   @param[out] pPercentComplete pointer to percentage current command has completed
   @param[out] pEstimatedTimeLeft pointer to time to completion BCD
   @param[out] pFwStatus pointer to completed mailbox status code

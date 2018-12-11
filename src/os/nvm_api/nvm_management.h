@@ -1195,7 +1195,6 @@ NVM_API void nvm_conf_file_init(const char *p_ini_file_name);
 * @brief    Flush the config structre to the config file, the previous config
 * file content is being overwritten
 *
-* @param    NA
 * @return  void
 */
 NVM_API void nvm_conf_file_flush();
@@ -1751,7 +1750,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors, 
 * @brief Retrieve a specific health sensor from the specified DCPMM.
 * @param[in] device_uid
 *              The device identifier.
-* @param[in] s_type
+* @param[in] type
 *              The specific #sensor_type to retrieve.
 * @param[in,out] p_sensor
 *              A pointer to a #sensor structure allocated by the caller.
@@ -1769,9 +1768,9 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
 * DCPMM.
 * @param[in] device_uid
 *              The device identifier.
-* @param[in] s_type
+* @param[in] type
 *              The specific #sensor_type to modify.
-* @param[in] p_sensor_settings
+* @param[in] p_settings
 *              The modified settings.
 * @pre The caller has administrative privileges.
 * @pre The device is manageable.
@@ -2063,7 +2062,7 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
  * @param p_device_uids
  *              Pointer to list of device uids to configure.
  *              If NULL, all devices on platform will be configured.
- * @param device_uids_couut
+ * @param device_uids_count
  *              Number of devices in p_device_uids list.
  * @param p_goal
  *              Values that defines how regions are created.

@@ -4691,14 +4691,14 @@ InitializeDimm (
 
   if ((SPD_INTEL_VENDOR_ID == pNewDimm->SubsystemVendorId) &&
     IsSubsystemDeviceIdSupported(pNewDimm)) {
-
+#ifndef OS_BUILD
     pNewDimm->pHostMailbox = CreateMailbox(pNewDimm, pMbITbl);
 
     if (!pNewDimm->pHostMailbox) {
       ReturnCode = EFI_DEVICE_ERROR;
       goto after_dimm;
     }
-
+#endif // OS_BUILD
     pPayload = AllocateZeroPool(sizeof(*pPayload));
     if (!pPayload) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -4846,7 +4846,9 @@ InitializeDimm (
   goto out;
 
 after_mailbox:
+#ifndef OS_BUILD
   FreeMailbox(pNewDimm->pHostMailbox);
+#endif // OS_BUILD
 after_dimm:
   FREE_POOL_SAFE(pNewDimm);
   *ppDimm = NULL;
@@ -4904,7 +4906,9 @@ FreeDimm(
   if (pDimm == NULL) {
     return;
   }
+#ifndef OS_BUILD
   FreeMailbox(pDimm->pHostMailbox);
+#endif // OS_BUILD
   FreeBlockWindow(pDimm->pBw);
   FREE_POOL_SAFE(pDimm);
   NVDIMM_EXIT();

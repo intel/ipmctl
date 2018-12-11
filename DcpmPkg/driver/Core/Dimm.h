@@ -198,7 +198,11 @@ typedef struct _DIMM {
   UINT8 LsaStatus;                         //!< The status of the LSA partition parsing for this DIMM
 
   BLOCK_WINDOW *pBw;
+#ifndef OS_BUILD
   MAILBOX *pHostMailbox;
+#else // OS_BUILD
+  VOID *Reserved;
+#endif // OS_BUILD
   NvDimmRegionTbl *pCtrlTbl;      //!< ptr to the table used to configure the mailbox
   SpaRangeTbl *pCtrlSpaTbl;       //!> ptr to the spa range table associated with the mailbox table
   NvDimmRegionTbl *pDataTbl;      //!< ptr to the table used to configure the block windows

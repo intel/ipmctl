@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018, Intel Corporation.
- * SPDX-License-Identifier: BSD-3-Clause
- */
+* Copyright (c) 2018, Intel Corporation.
+* SPDX-License-Identifier: BSD-3-Clause
+*/
 
 #include "Nlog.h"
 
@@ -88,7 +88,7 @@ decode_nlog_binary(
       if (entry == NULL)
       {
         hash_not_found = TRUE;
-        entry = AllocatePool(sizeof(nlog_dict_entry));
+        entry = AllocateZeroPool(sizeof(nlog_dict_entry));
         if (NULL == entry)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -105,21 +105,22 @@ decode_nlog_binary(
         entry->next = NULL;
         entry->prev = NULL;
 
-        record = AllocatePool(sizeof(nlog_record));
+        record = AllocateZeroPool(sizeof(nlog_record));
         if (NULL == record)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
+
         record->DictEntry = entry;
         record->KernelTime = 0;
-        record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
+        record->ArgValues = AllocateZeroPool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
-        record->ArgValues[0] = AllocatePool(sizeof(UINT32));
+        record->ArgValues[0] = AllocateZeroPool(sizeof(UINT32));
         if (NULL == record->ArgValues[0])
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -140,7 +141,7 @@ decode_nlog_binary(
         continue;
       }
 
-      entry = AllocatePool(sizeof(nlog_dict_entry));
+      entry = AllocateZeroPool(sizeof(nlog_dict_entry));
       if (NULL == entry)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -161,7 +162,7 @@ decode_nlog_binary(
     //Move the pointer index to the next U32 and allocate space for a record
     if (record == NULL)
     {
-      record = AllocatePool(sizeof(nlog_record));
+      record = AllocateZeroPool(sizeof(nlog_record));
       if (NULL == record)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -169,12 +170,25 @@ decode_nlog_binary(
       }
 
       record->id = node_count;
-      record->DictEntry = entry;
       record->ArgValues = NULL;
       record->FormattedString = NULL;
       record->prev = NULL;
       record->next = NULL;
       record->KernelTime = 0;
+    }
+
+    if (record->DictEntry == NULL && entry != NULL) {
+      record->DictEntry = entry;
+    }
+
+    if (head == NULL) {
+      head = record;
+      tail = record;
+    }
+    else {
+      tail->next = record;
+      record->prev = tail;
+      tail = record;
     }
 
     //get the timestamp
@@ -193,7 +207,7 @@ decode_nlog_binary(
       */
       if (record->DictEntry->Args > 0)
       {
-        record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
+        record->ArgValues = AllocateZeroPool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -208,7 +222,7 @@ decode_nlog_binary(
             PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Unexpected end of buffer. 3\n");
             goto Finish;
           }
-          record->ArgValues[y] = AllocatePool(sizeof(UINT32));
+          record->ArgValues[y] = AllocateZeroPool(sizeof(UINT32));
           if (NULL == record->ArgValues[y])
           {
             PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -223,7 +237,7 @@ decode_nlog_binary(
       if (FALSE == inv2section)
       {
         elements = 3 + record->DictEntry->Args;
-        append_strs = AllocatePool(sizeof(CHAR8*) * elements);
+        append_strs = AllocateZeroPool(sizeof(CHAR8*) * elements);
         if (NULL == append_strs)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -242,20 +256,20 @@ decode_nlog_binary(
         old_arg_count = record->DictEntry->Args;
 
         record->DictEntry->Args = old_arg_count + 2;
-        record->ArgValues = AllocatePool(record->DictEntry->Args * sizeof(UINT32*));
+        record->ArgValues = AllocateZeroPool(record->DictEntry->Args * sizeof(UINT32*));
         if (NULL == record->ArgValues)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
 
-        record->ArgValues[0] = AllocatePool(sizeof(UINT32));
+        record->ArgValues[0] = AllocateZeroPool(sizeof(UINT32));
         if (NULL == record->ArgValues[0])
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
           goto Finish;
         }
-        record->ArgValues[1] = AllocatePool(sizeof(UINT32));
+        record->ArgValues[1] = AllocateZeroPool(sizeof(UINT32));
         if (NULL == record->ArgValues[1])
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -267,7 +281,7 @@ decode_nlog_binary(
 
         for (z = 0; z < old_arg_count; z++)
         {
-          record->ArgValues[z + 2] = AllocatePool(sizeof(UINT32));
+          record->ArgValues[z + 2] = AllocateZeroPool(sizeof(UINT32));
           *record->ArgValues[z + 2] = *old_args[z];
         }
 
@@ -288,7 +302,7 @@ decode_nlog_binary(
     {
       elements = 2;
       old_format_str = record->FormattedString;
-      append_strs = AllocatePool(sizeof(CHAR8*) * elements);
+      append_strs = AllocateZeroPool(sizeof(CHAR8*) * elements);
       if (NULL == append_strs)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -303,7 +317,7 @@ decode_nlog_binary(
       elements = 8;
       kernel_str = u32_to_a(record->KernelTime, FALSE, 0, FALSE);
       old_format_str = record->FormattedString;
-      append_strs = AllocatePool(sizeof(CHAR8*) * elements);
+      append_strs = AllocateZeroPool(sizeof(CHAR8*) * elements);
       if (NULL == append_strs)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
@@ -344,28 +358,17 @@ decode_nlog_binary(
       record->ArgValues = NULL;
     }
 
-    if (dictionary_entry_was_allocated_here)
+    if (entry != NULL && dictionary_entry_was_allocated_here)
     {
       FREE_POOL_SAFE(entry->FileName);
       FREE_POOL_SAFE(entry->LogLevel);
       FREE_POOL_SAFE(entry->LogString);
       FREE_POOL_SAFE(entry);
+      entry = NULL;
       record->DictEntry = NULL;
     }
 
     node_count++;
-
-    if (NULL == tail)
-    {
-      head = record;
-      tail = head;
-    }
-    else
-    {
-      tail->next = record;
-      record->prev = tail;
-      tail = record;
-    }
   }
 
   /*
@@ -377,7 +380,7 @@ decode_nlog_binary(
 
   bytes_needed = (sizeof(CHAR8*) * total_formatted_string_size) + sizeof(CHAR8*);
 
-  total_formatted_string = AllocatePool(bytes_needed);
+  total_formatted_string = AllocateZeroPool(bytes_needed);
   if (NULL == total_formatted_string)
   {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate %lu bytes to dump the decoded output\n", bytes_needed);
@@ -421,6 +424,7 @@ Finish:
   {
     FREE_POOL_SAFE(old_args[z]);
   }
+
   FREE_POOL_SAFE(old_args);
   if (NULL != total_formatted_string)
   {
@@ -436,39 +440,7 @@ Finish:
     FREE_POOL_SAFE(append_strs);
   }
 
-  if (NULL != record)
-  {
-    FREE_POOL_SAFE(record->FormattedString);
-    if (NULL != record->DictEntry && NULL != record->ArgValues)
-    {
-      for (z = 0; z < record->DictEntry->Args; z++)
-      {
-        FREE_POOL_SAFE(record->ArgValues[z]);
-      }
-    }
-
-    FREE_POOL_SAFE(record->ArgValues);
-    record->ArgValues = NULL;
-
-    if (NULL != entry && record->DictEntry == entry)
-    {
-      FREE_POOL_SAFE(record->DictEntry->LogLevel);
-      FREE_POOL_SAFE(record->DictEntry->LogString);
-      FREE_POOL_SAFE(record->DictEntry->FileName);
-      FREE_POOL_SAFE(record->DictEntry);
-      entry = NULL;
-    }
-  }
-
-  if (NULL != entry)
-  {
-    FREE_POOL_SAFE(entry->LogLevel);
-    FREE_POOL_SAFE(entry->LogString);
-    FREE_POOL_SAFE(entry->FileName);
-    FREE_POOL_SAFE(entry);
-  }
-
-  while (head)
+  while (head != NULL)
   {
     next = head->next;
     if (head->ArgValues)
@@ -488,6 +460,14 @@ Finish:
 
     FREE_POOL_SAFE(head);
     head = next;
+  }
+
+  if (entry != NULL && dictionary_entry_was_allocated_here)
+  {
+    FREE_POOL_SAFE(entry->FileName);
+    FREE_POOL_SAFE(entry->LogLevel);
+    FREE_POOL_SAFE(entry->LogString);
+    FREE_POOL_SAFE(entry);
   }
 }
 
@@ -675,17 +655,19 @@ load_nlog_dict_v2(
 
     if (head == NULL)
     {
-      head = AllocatePool(sizeof(nlog_dict_entry));
+      head = AllocateZeroPool(sizeof(nlog_dict_entry));
       if (NULL == head)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
       tail = head;
+      tail->prev = NULL;
+      tail->next = NULL;
     }
     else
     {
-      tail->next = AllocatePool(sizeof(nlog_dict_entry));
+      tail->next = AllocateZeroPool(sizeof(nlog_dict_entry));
       if (NULL == tail->next)
       {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");

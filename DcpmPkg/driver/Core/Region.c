@@ -2928,13 +2928,16 @@ ReduceCapacityForSocketSKU(
     TotalRequestedMemoryOnSocket += pSocketSkuInfoTable->TotalMemorySizeMappedToSpa;
 
     for (Index = 0; Index < NumDimmsOnSocket; Index++) {
-      if (TotalRequestedMemoryOnSocket < pDimmsOnSocket[Index]->MappedPersistentCapacity) {
-        NVDIMM_DBG("Mapping negative capacity");
-        ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-        ReturnCode = EFI_UNSUPPORTED;
-        goto Finish;
+      if (TRUE == pDimmsOnSocket[Index]->Configured) {
+        if (TotalRequestedMemoryOnSocket < pDimmsOnSocket[Index]->MappedPersistentCapacity) {
+          NVDIMM_DBG("Mapping negative capacity");
+          ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+          ReturnCode = EFI_UNSUPPORTED;
+          goto Finish;
+        }
+
+        TotalRequestedMemoryOnSocket -= pDimmsOnSocket[Index]->MappedPersistentCapacity;
       }
-      TotalRequestedMemoryOnSocket -= pDimmsOnSocket[Index]->MappedPersistentCapacity;
     }
 
     // if we will be removing all MemoryMode from the socket we need to add in the DDR4

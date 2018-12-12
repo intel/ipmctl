@@ -16,6 +16,10 @@
 //!< Macro that rounds down x value to the Next value with y multiplier
 #define ROUNDDOWN(N, S) ((N) - ((N)%(S)))
 
+//!< Macro that rounds up or down to the closest divisor
+//!< Negative divisors are not supported
+#define ROUND_CLOSEST(N, D) ((((N) < 0) ^ ((D) < 0)) ? (((N) - (D)/2)/(D)) : (((N) + (D)/2)/(D)))
+
 #define DIGITS_AFTER_DECIMAL_ONE 1
 
 /**

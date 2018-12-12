@@ -747,6 +747,7 @@ GetU64FromString (
 
   return TRUE;
 }
+
 /**
   A helper function to convert a capacity value in bytes as per the requested units
   to a printable string.
@@ -774,6 +775,8 @@ GetFormattedSizeString (
   UINT64 ValueBeforeDecimal = 0;
   UINT64 RemainderBytes = 0;
   UINT64 ValueAfterDecimal = 0;
+  // Truncate to an extra decimal place, then round
+  UINT32 NumberOfDigitsAfterDecimalTruncate = NumberOfDigitsAfterDecimal + 1;
   NVDIMM_ENTRY();
 
   if (ppFormattedSizeString == NULL) {
@@ -801,37 +804,40 @@ GetFormattedSizeString (
     case DISPLAY_SIZE_UNIT_MIB:
       ValueBeforeDecimal = BYTES_TO_MIB(Capacity);
       RemainderBytes = Capacity - MIB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_MIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_MIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     case DISPLAY_SIZE_UNIT_MB:
       ValueBeforeDecimal = BYTES_TO_MB(Capacity);
       RemainderBytes = Capacity - MB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_MB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_MB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     case DISPLAY_SIZE_UNIT_GIB:
       ValueBeforeDecimal = BYTES_TO_GIB(Capacity);
       RemainderBytes = Capacity - GIB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_GIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_GIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     case DISPLAY_SIZE_UNIT_GB:
       ValueBeforeDecimal = BYTES_TO_GB(Capacity);
       RemainderBytes = Capacity - GB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_GB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_GB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     case DISPLAY_SIZE_UNIT_TIB:
       ValueBeforeDecimal = BYTES_TO_TIB(Capacity);
       RemainderBytes = Capacity - TIB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_TIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_TIB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     case DISPLAY_SIZE_UNIT_TB:
       ValueBeforeDecimal = BYTES_TO_TB(Capacity);
       RemainderBytes = Capacity - TB_TO_BYTES(ValueBeforeDecimal);
-      ValueAfterDecimal = BYTES_TO_TB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimal)));
+      ValueAfterDecimal = BYTES_TO_TB(RemainderBytes * (Pow(10, NumberOfDigitsAfterDecimalTruncate)));
       break;
     default:
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
   }
+
+  // Round up/down to the nearest decimal requested
+  ValueAfterDecimal = ROUND_CLOSEST(ValueAfterDecimal, 10);
 
   // If bytes / no decimal digits then no decimal needed
   if (Units == DISPLAY_SIZE_UNIT_B || NumberOfDigitsAfterDecimal == 0) {

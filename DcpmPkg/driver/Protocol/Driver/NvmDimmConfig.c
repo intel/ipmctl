@@ -5487,7 +5487,7 @@ UpdateFw(
       ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
     }
 
-    if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode != EFI_SUCCESS) {
       UpdateFailures++;
       if (NvmStatus == NVM_SUCCESS) {
         pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_FAILED;
@@ -5518,6 +5518,7 @@ Finish:
   if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
     ReturnCode = EFI_ABORTED;
   }
+
   if (FileHandle != NULL) {
     FileHandle->Close(FileHandle);
   }

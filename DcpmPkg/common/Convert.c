@@ -750,10 +750,11 @@ GetU64FromString (
 
 /**
   A helper function to convert a capacity value in bytes as per the requested units
-  to a printable string.
+  to a printable string. Value will be round to NumberOfDigitsAfterDecimal.
 
   @param[in] Capacity The input capacity in bytes
   @param[in] Units The requested type of units to convert the capacity into
+  @param[in] NumberOfDigitsAfterDecimal Number of digits to round to after the decimal point
   @param[out] pFormattedSizeString Pointer to the converted size string
 
   Note: The caller is responsible for freeing the returned string
@@ -838,6 +839,13 @@ GetFormattedSizeString (
 
   // Round up/down to the nearest decimal requested
   ValueAfterDecimal = ROUND_CLOSEST(ValueAfterDecimal, 10);
+
+  // If rounded up to 10, need to fix it up.
+  if (Pow(10, NumberOfDigitsAfterDecimal) == ValueAfterDecimal)
+  {
+    ValueBeforeDecimal += 1;
+    ValueAfterDecimal = 0;
+  }
 
   // If bytes / no decimal digits then no decimal needed
   if (Units == DISPLAY_SIZE_UNIT_B || NumberOfDigitsAfterDecimal == 0) {

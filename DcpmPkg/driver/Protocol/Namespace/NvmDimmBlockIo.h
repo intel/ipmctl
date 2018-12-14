@@ -5,8 +5,8 @@
 
  /**
  * @file NvmDimmBlockIo.h
- * @brief Implementation of the EFI_BLOCK_IO_PROTOCOL for Intel Optane DC
- *  Persistent Memory Namespaces.
+ * @brief Implementation of the EFI_BLOCK_IO_PROTOCOL for
+ * Intel(R) Optane(TM) DC Persistent Memory Module Namespaces.
  */
 
 #ifndef _NVM_DIMM_BLOCKIO_H_

@@ -63,8 +63,11 @@ UnconfiguredCapacity::
   Total system DCPMM capacity that is unusable because it has not been configured.
 
 ReservedCapacity::
-  Total system DCPMM capacity reserved for proper alignment. This capacity is not
-  available for any use.
+  Total system DCPMM persistent memory capacity that is reserved. This capacity
+  is the persistent memory partition capacity less any App Direct capacity
+  rounded to App Direct alignment. Reserved capacity typically results from
+  a Memory Allocation Goal request that specifices the Reserved property. This
+  capacity not mapped to system physical address (SPA) space.
 
 InaccessibleCapacity::
   Total system DCPMM capacity that is inaccessible due any of:

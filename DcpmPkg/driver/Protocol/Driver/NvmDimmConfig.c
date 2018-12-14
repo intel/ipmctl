@@ -8185,14 +8185,15 @@ GetCapacities(
       ReservedCapacity = GetReservedCapacity(pDimm);
     }
   }
-
+  // PM partition inaccessible due to alignment/rounding
+  *pInaccessibleCapacity = pDimm->PmCapacity - AppDirectCapacity - ReservedCapacity;
   *pReservedCapacity = ReservedCapacity;
 
   if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
-    *pVolatileCapacity = VolatileCapacity;
+    *pVolatileCapacity += VolatileCapacity;
   } else {
     // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
-    *pInaccessibleCapacity = ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
+    *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
   }
 
   if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
@@ -8207,8 +8208,9 @@ GetCapacities(
     // No useable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
   } else {
-    // Difference between the Persistent Partition and the SPA mapped capacity
-    *pInaccessibleCapacity += pDimm->PmCapacity - AppDirectCapacity;
+    // Any capacity not mapped to a partition
+    *pInaccessibleCapacity += pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
+
   }
 
   ReturnCode = EFI_SUCCESS;

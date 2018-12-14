@@ -9,7 +9,7 @@
  * It is intended to be used by clients of the Native Management API
  * in order to perform management actions.
  *
- * @mainpage Intel Optane DC Persistent Memory Software Management API
+ * @mainpage Intel(R) Optane(TM) DC Persistent Memory Software Management API
  *
  * @license This project is licensed under the BSD-3-Clause License.
  *
@@ -1784,7 +1784,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid, const enum sensor_
 /**
  * @}
  * @defgroup Security
- * These functions manage the security state of Intel Optane DC Persistent Memory Modules.
+ * These functions manage the security state of DCPMMs.
  * @{
  */
 
@@ -1958,7 +1958,7 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
  * @}
  * @defgroup Events
  * These functions provide access to various events generated from
- * Intel Optane DC Persistent Memory Modules.
+ * DCPMMs.
  * @{
  */
 
@@ -2161,7 +2161,7 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file, const NVM_SIZE file_len);
 /**
  * @}
  * @defgroup Support
- * These functions provide various support functionality of Intel Optane DC Persistent Memory Modules.
+ * These functions provide various support functionality of DCPMMs.
  * @{
  */
 
@@ -2325,7 +2325,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid);
  * @}
  * @defgroup Logging
  * These functions manage the logging features of
- * Intel Optane DC Persistent Memory Control software.
+ * DCPMM software.
  * @{
  */
 

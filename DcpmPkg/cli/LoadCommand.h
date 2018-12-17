@@ -32,4 +32,21 @@ Load(
   IN     struct Command *pCmd
   );
 
+/**
+  For a given DIMM, this will evaluate what the return code should be
+  @param[in] examine - if the examine flag was sent by the user
+  @param[in] dimmReturnCode - the return code returned by the call to update the FW
+  @param[in] dimmNvmStatus - the NVM status returned by the call to update the FW
+  @param[out] generalNvmStatus - the NVM status to be applied to the general command status
+
+  @retval the return code
+**/
+EFI_STATUS
+GetDimmReturnCode(
+  IN     BOOLEAN examine,
+  IN EFI_STATUS dimmReturnCode,
+  IN NVM_STATUS dimmNvmStatus,
+  OUT NVM_STATUS * pGeneralNvmStatus
+  );
+
 #endif /** _LOADCOMMAND_H_ **/

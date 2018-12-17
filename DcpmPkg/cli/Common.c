@@ -103,7 +103,6 @@ GetDimmList(
 
   if (*pDimmCount == 0) {
     ReturnCode = EFI_NOT_FOUND;
-    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     goto Finish;
   }
 

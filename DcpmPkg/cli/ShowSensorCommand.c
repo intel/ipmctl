@@ -257,6 +257,9 @@ ShowSensor(
   // Populate the list of DIMM_INFO structures with relevant information
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
   if (EFI_ERROR(ReturnCode)) {
+    if(ReturnCode == EFI_NOT_FOUND) {
+        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+    }
     goto Finish;
   }
 

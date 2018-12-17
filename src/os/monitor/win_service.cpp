@@ -290,7 +290,7 @@ void WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
             CloseHandle(handles[i]);
           }
 
-          delete handles;
+          delete [] handles;
 
           monitor::NvmMonitorBase::deleteMonitors(monitors);
           //close_lib_store();

@@ -363,9 +363,12 @@ EFI_STATUS findVerb(UINTN *pStart, struct CommandInput *pInput, struct Command *
     if (g_basic_commands) {
       // This should be updated when there are other comamnds a non-root user can run
       Print(L"A non-root user is restricted to run only version command\n");
+    } else {
+#endif
+      SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_VERB_EXPECTED, pInput->ppTokens[*pStart]));
+#ifdef OS_BUILD
     }
 #endif
-    SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_VERB_EXPECTED, pInput->ppTokens[*pStart]));
   }
 
   NVDIMM_EXIT_I64(rc);

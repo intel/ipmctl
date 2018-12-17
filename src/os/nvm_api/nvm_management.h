@@ -778,15 +778,15 @@ struct sensor {
  * Device partition capacities (in bytes) used for a single device or aggregated across the server.
  */
 struct device_capacities {
-  NVM_UINT64	capacity;                       ///< The total DCPMM capacity in bytes.
-  NVM_UINT64	memory_capacity;                ///< The total DCPMM capacity in bytes for memory mode.
-  NVM_UINT64	app_direct_capacity;            ///< The total DCPMM capacity in bytes for app direct mode.
-  NVM_UINT64	mirrored_app_direct_capacity;   ///< The total DCPMM mirrored app direct capacity.
-  NVM_UINT64	storage_capacity;               ///< DCPMM capacity allocated that can be used as storage.
-  NVM_UINT64	unconfigured_capacity;          ///< Unconfigured DCPMM capacity. Can be used as storage.
-  NVM_UINT64	inaccessible_capacity;          ///< DCPMM capacity not licensed for this DCPMM SKU.
-  NVM_UINT64	reserved_capacity;              ///< DCPMM capacity reserved for metadata.
-  NVM_UINT8     reserved[64];                   ///< reserved
+  NVM_UINT64  capacity;                       ///< The total DCPMM capacity in bytes.
+  NVM_UINT64  memory_capacity;                ///< The total DCPMM capacity in bytes for memory mode.
+  NVM_UINT64  app_direct_capacity;            ///< The total DCPMM capacity in bytes for app direct mode.
+  NVM_UINT64  mirrored_app_direct_capacity;   ///< The total DCPMM mirrored app direct capacity.
+  NVM_UINT64  storage_capacity;               ///< DCPMM capacity allocated that can be used as storage.
+  NVM_UINT64  unconfigured_capacity;          ///< Unconfigured DCPMM capacity. Can be used as storage.
+  NVM_UINT64  inaccessible_capacity;          ///< DCPMM capacity that is not acccessible.
+  NVM_UINT64  reserved_capacity;              ///< DCPMM app direct capacity reserved and unmapped to SPA.
+  NVM_UINT8   reserved[64];                   ///< reserved
 };
 
 /**

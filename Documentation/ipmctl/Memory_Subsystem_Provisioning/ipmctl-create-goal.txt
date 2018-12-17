@@ -80,10 +80,10 @@ NamespaceLabelVersion::
     - "1.1": Legacy 1.1 namespace label support
 
 Reserved::
-    Reserve a percentage [underline]#(0-100)# of the requested DCPMM capacity
+    Reserve a percentage [underline]#(0-100)# of the requested DCPMM App Direct capacity
     that will not be mapped into the system physical address space and will be
-    presented as Unconfigured Capacity with Show Device and Show Memory
-    Resources.
+    presented as Reserved Capacity with Show Device and Show Memory Resources
+    Commands.
 
 EXAMPLES
 --------

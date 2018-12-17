@@ -5708,7 +5708,8 @@ Finish:
 }
 
 /**
-  Calculate a size of capacity lost to volatile alignment and space that is not partitioned
+  Calculate a size of capacity considered Reserved. It is the aligned PM
+  capacity less the AD capacity
 
   @param[in] Dimm to retrieve reserved size for
 
@@ -5719,7 +5720,7 @@ GetReservedCapacity(
   IN     DIMM *pDimm
   )
 {
-  return pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
+  return ROUNDDOWN(pDimm->PmCapacity, REGION_PERSISTENT_SIZE_ALIGNMENT_B) - pDimm->MappedPersistentCapacity;
 }
 
 #define FW_TEMPERATURE_CONST_1 625

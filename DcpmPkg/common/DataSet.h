@@ -23,6 +23,7 @@
 #define CONFIG_GOAL_NODE_STR  L"ConfigGoal"
 #define TOPOLOGY_NODE_STR     L"DimmTopology"
 #define DIAGNOSTIC_NODE_STR   L"Diagnostic"
+#define NAMESPACE_NODE_STR    L"Namespace"
 
 /*
 * Types of values supported in DataSets.

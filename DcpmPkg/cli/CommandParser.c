@@ -1505,18 +1505,24 @@ EFI_STATUS
 ExecuteCmd(COMMAND *pCommand) {
 
   EFI_STATUS Rc = EFI_SUCCESS;
+  BOOLEAN CreatedPrintCtx = FALSE;
 
   if (NULL == pCommand)
     return EFI_INVALID_PARAMETER;
 
   //Here to support migration path from legacy print handling and new printer module
   if (pCommand->PrinterCtrlSupported) {
-    if (EFI_SUCCESS != (Rc = PrinterCreateCtx(&pCommand->pPrintCtx))) {
-      return Rc;
-    }
+    // create Printer Context if not given one to use
+    if (pCommand->pPrintCtx == NULL)
+    {
+      CreatedPrintCtx = TRUE;
+      if (EFI_SUCCESS != (Rc = PrinterCreateCtx(&pCommand->pPrintCtx))) {
+        return Rc;
+      }
 
-    if (EFI_SUCCESS != (Rc = ReadCmdLinePrintOptions(&pCommand->pPrintCtx->FormatType, pCommand))) {
-      goto Finish;
+      if (EFI_SUCCESS != (Rc = ReadCmdLinePrintOptions(&pCommand->pPrintCtx->FormatType, pCommand))) {
+        goto Finish;
+      }
     }
   }
   else {
@@ -1535,6 +1541,9 @@ ExecuteCmd(COMMAND *pCommand) {
     goto Finish;
 
 Finish:
-  PrinterDestroyCtx(pCommand->pPrintCtx);
+  // clean up Printer context only if created in this routine call
+  if (CreatedPrintCtx == TRUE) {
+    PrinterDestroyCtx(pCommand->pPrintCtx);
+  }
   return Rc;
 }

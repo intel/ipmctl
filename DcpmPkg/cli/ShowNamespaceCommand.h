@@ -17,6 +17,18 @@
 #include "Common.h"
 #include <NvmHealth.h>
 
+#define NAMESPACE_ID_STR            L"NamespaceId"
+#define NAME_STR                    L"Name"
+#define CAPACITY_STR                L"Capacity"
+#define HEALTH_STATE_STR            L"HealthState"
+#define REGION_ID_STR               L"RegionID"
+#define BLOCK_SIZE_STR              L"BlockSize"
+#define MODE_STR                    L"Mode"
+#define LABEL_VERSION_STR           L"LabelVersion"
+#define NAMESPACE_GUID_STR          L"NamespaceGuid"
+#define REGION_ID_STR               L"RegionID"
+
+
 /**
   Register the show namespace command
 

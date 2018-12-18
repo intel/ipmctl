@@ -58,6 +58,11 @@ ReceiveData (
     .Protocol = {SECURITY_PROTOCOL_INFORMATION, SECURITY_PROTOCOL_FW_COMMANDS}
   };
 
+  if (NULL == This) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   EFI_DIMMS_DATA *Dimm = BASE_CR(This, EFI_DIMMS_DATA, StorageSecurityCommandInstance);
 
   if ((PayloadBuffer == NULL || PayloadTransferSize == NULL) && PayloadBufferSize != 0) {
@@ -164,8 +169,12 @@ SendData (
 {
   NVDIMM_ENTRY();
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-
   UINT8 Opcode, SubOpcode;
+
+  if (NULL == This) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
   EFI_DIMMS_DATA *Dimm = BASE_CR(This, EFI_DIMMS_DATA, StorageSecurityCommandInstance);
 

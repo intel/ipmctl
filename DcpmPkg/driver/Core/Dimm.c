@@ -2114,6 +2114,12 @@ EFI_STATUS ValidatePcdOemHeader(
     return EFI_VOLUME_CORRUPTED;
   }
 
+  if ((pOemHeader->Header.Revision > NVDIMM_CONFIGURATION_HEADER_REVISION) ||
+  (pOemHeader->Header.Revision < NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION)){
+    NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
+    return EFI_VOLUME_CORRUPTED;
+  }
+
   if (pOemHeader->Header.Length > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
     NVDIMM_WARN("Length of PCD header is greater than PCD OEM partition size");
     return EFI_VOLUME_CORRUPTED;

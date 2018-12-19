@@ -3880,7 +3880,10 @@ GetMemoryResourcesInfo(
     pMemoryResourcesInfo->RawCapacity += pDimm->RawCapacity;
 
 #ifdef OS_BUILD
-	GetDimmMappedMemSize(pDimm);
+	ReturnCode = GetDimmMappedMemSize(pDimm);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
 #endif // OS_BUILD
 
     ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity,

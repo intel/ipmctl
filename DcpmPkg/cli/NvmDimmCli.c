@@ -165,6 +165,8 @@ UefiMain(
   SHELL_FILE_HANDLE StdIn = NULL;
   UINTN HandleCount = 0;
   EFI_HANDLE *pHandleBuffer = NULL;
+  CHAR16 *pCurrentDriverName;
+  EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
 #endif
 
   NVDIMM_ENTRY();
@@ -174,7 +176,6 @@ UefiMain(
 
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
-
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**
@@ -232,6 +233,28 @@ UefiMain(
     Rc = EFI_NOT_FOUND;
     goto Finish;
   }
+
+  Rc = OpenNvmDimmProtocol(
+    gEfiComponentNameProtocolGuid,
+    (VOID**)&pComponentName, NULL);
+  if (EFI_ERROR(Rc)) {
+    NVDIMM_DBG("Failed to open the Component Name protocol, error = " FORMAT_EFI_STATUS "", Rc);
+    goto Finish;
+  }
+
+  //Get current driver name
+  Rc = pComponentName->GetDriverName(
+    pComponentName, "eng", &pCurrentDriverName);
+  if (EFI_ERROR(Rc)) {
+    NVDIMM_DBG("Could not get the driver name, error = " FORMAT_EFI_STATUS "", Rc);
+    goto Finish;
+  }
+
+  //Compare to the CLI version and print warning if there is a version mismatch
+  if (StrCmp(PMEM_MODULE_NAME NVMDIMM_VERSION_STRING L" Driver", pCurrentDriverName) != 0) {
+    Print(FORMAT_STR_NL, CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH);
+  }
+
 #else
   Argc = gEfiShellParametersProtocol->Argc;
   ppArgv = gEfiShellParametersProtocol->Argv;

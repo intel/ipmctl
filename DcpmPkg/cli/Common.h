@@ -72,6 +72,8 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 
+#define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
+
 // Common CLI error messages defined in specification
 #define CLI_ERR_NO_COMMAND                                    L"Syntax Error: No input."
 #define CLI_ERR_INCOMPLETE_SYNTAX                             L"Syntax Error: Incomplete syntax."

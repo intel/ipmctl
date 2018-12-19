@@ -72,7 +72,7 @@ GetImageInfo (
 
   SetMem(&Uint32Version, sizeof(Uint32Version), 0x0);
 
-  if (pImageInfoSize == NULL) {
+  if (NULL == pImageInfoSize || NULL == pImageInfo || NULL == This) {
     goto Finish;
   }
 
@@ -172,12 +172,8 @@ SetImage (
 
   NVDIMM_ENTRY();
 
-  if (ImageIndex < 1 || ImageIndex > SUPPORTED_DESCRIPTOR_COUNT) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if (Image == NULL) {
+  if (NULL == This || NULL == Image || NULL == VendorCode || NULL == AbortReason ||
+      ImageIndex < 1 || ImageIndex > SUPPORTED_DESCRIPTOR_COUNT) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -235,28 +231,45 @@ GetPackageInfo (
 {
   DIMM *pDimm = NULL;
   CHAR16 FwVersion[FW_VERSION_LEN];
+  CONST UINT64 NvmFwMgmtAttributesSupported = PACKAGE_ATTRIBUTE_VERSION_UPDATABLE | PACKAGE_ATTRIBUTE_RESET_REQUIRED;
 
   SetMem(&FwVersion, sizeof(FwVersion), 0x0);
 
-  *PackageVersion = PACKAGE_VERSION_DEFINED_BY_PACKAGE_NAME;
+  if (NULL == This)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
 
-  pDimm = GET_DIMM_FROM_INSTANCE(This)->pDimm;
+  if (NULL != PackageVersion) {
+    *PackageVersion = PACKAGE_VERSION_DEFINED_BY_PACKAGE_NAME;
+  }
 
-  ConvertFwVersion(FwVersion, pDimm->FwVer.FwProduct, pDimm->FwVer.FwRevision, pDimm->FwVer.FwSecurityVersion, pDimm->FwVer.FwBuild);
+  if (NULL != PackageVersionName) {
 
-  *PackageVersionName = AllocateCopyPool(sizeof(FwVersion), FwVersion);
+    pDimm = GET_DIMM_FROM_INSTANCE(This)->pDimm;
+
+    ConvertFwVersion(FwVersion, pDimm->FwVer.FwProduct, pDimm->FwVer.FwRevision, pDimm->FwVer.FwSecurityVersion, pDimm->FwVer.FwBuild);
+
+    *PackageVersionName = AllocateCopyPool(sizeof(FwVersion), FwVersion);
+  }
 
   /**
     Zero means that we don't support updating the Package Version Name.
   **/
-  *PackageVersionNameMaxLen = 0;
+  if (NULL != PackageVersionNameMaxLen) {
+    *PackageVersionNameMaxLen = 0;
+  }
 
-  *AttributesSupported = PACKAGE_ATTRIBUTE_VERSION_UPDATABLE | PACKAGE_ATTRIBUTE_RESET_REQUIRED;
+  if (NULL != AttributesSupported) {
+    *AttributesSupported = NvmFwMgmtAttributesSupported;
+  }
 
   /**
     We can't change the settings so what is supported is also set.
   **/
-  *AttributesSetting = *AttributesSupported;
+  if (NULL != AttributesSetting) {
+    *AttributesSetting = NvmFwMgmtAttributesSupported;
+  }
   /**
     This function returns UNSUPPORTED or SUCCESS,
     since we support it, we can't return any error codes.

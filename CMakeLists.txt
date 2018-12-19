@@ -165,6 +165,28 @@ if(LNX_BUILD)
 	endif()
 endif()
 
+if(MSVC)
+	if(VCREDIST_STATIC)
+		# Force vcredist to be linked static
+		# Keep this after all other compiler flag setup
+		set(CompilerFlags
+				CMAKE_CXX_FLAGS
+				CMAKE_CXX_FLAGS_DEBUG
+				CMAKE_CXX_FLAGS_RELEASE
+				CMAKE_CXX_FLAGS_RELWITHDEBINFO
+				CMAKE_C_FLAGS
+				CMAKE_C_FLAGS_DEBUG
+				CMAKE_C_FLAGS_RELEASE
+				CMAKE_C_FLAGS_RELWITHDEBINFO
+				)
+		foreach(CompilerFlag ${CompilerFlags})
+		  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+		endforeach()
+		message("VCREDIST: STATIC")
+	else()
+		message("VCREDIST: SHARED")
+	endif()
+endif()
 #----------------------------------------------------------------------------------------------------
 # OS driver interface library
 #----------------------------------------------------------------------------------------------------

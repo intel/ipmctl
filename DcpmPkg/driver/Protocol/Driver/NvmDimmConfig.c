@@ -7603,7 +7603,7 @@ GetErrorLog(
 
   NVDIMM_ENTRY();
 
-  if (pThis == NULL || pCommandStatus == NULL || pErrorLogCount == NULL ||
+  if (pThis == NULL || pCommandStatus == NULL || pErrorLogCount == NULL || pErrorLogs == NULL ||
       (pDimmIds == NULL && DimmsCount > 0)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;

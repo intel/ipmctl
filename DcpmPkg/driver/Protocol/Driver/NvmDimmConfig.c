@@ -9662,8 +9662,14 @@ InjectError(
           ReturnCode = EFI_DEVICE_ERROR;
           continue;
         }
-        if (pDimms[Index]->SkuInformation.PackageSparingCapable &&
-          pPayloadPackageSparingPolicy->Supported && pPayloadPackageSparingPolicy->Enable) {
+        /* If the package sparing policy has been enabled and executed,
+           Support Bit will be 0x00 but the Enable Bit will still be 0x01
+           to indicate that the dimm has PackageSparing Policy Enabled before.
+         */
+        if (pDimms[Index]->SkuInformation.PackageSparingCapable && pPayloadPackageSparingPolicy->Enable &&
+           ((!ClearStatus && pPayloadPackageSparingPolicy->Supported) ||
+            (ClearStatus && !pPayloadPackageSparingPolicy->Supported))) {
+          //Inject the error if PackageSparing policy is available and is supported
           ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
           if (EFI_ERROR(ReturnCode)) {
             SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);

@@ -45,6 +45,36 @@ CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
   4224  //  (512+16)*8
 };
 
+#ifdef OS_BUILD
+#define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
+
+/*
+* Function get the ini configuration only on the first call
+*
+* It returns TRUE in case of large payload access is disabled and FALSE otherwise
+*/
+static BOOLEAN config_large_payload_disabled()
+{
+  static BOOLEAN config_large_payload_initialized = FALSE;
+  static UINT8 large_payload_disabled = 0;
+  EFI_STATUS efi_status;
+  EFI_GUID guid = { 0 };
+  UINTN size;
+
+  if (config_large_payload_initialized)
+    return large_payload_disabled;
+
+  size = sizeof(large_payload_disabled);
+  efi_status = GET_VARIABLE(INI_PREFERENCES_LARGE_PAYLOAD_DISABLED, guid, &size, &large_payload_disabled);
+  if ((EFI_SUCCESS != efi_status) || (large_payload_disabled > 1))
+    return FALSE;
+
+  config_large_payload_initialized = TRUE;
+
+  return (BOOLEAN)large_payload_disabled;
+}
+#endif // OS_BUILD
+
 /**
   Global pointers to the new processor assembler commands:
 
@@ -1853,7 +1883,11 @@ FwCmdGetPlatformConfigData(
   UINT8 *pBuffer = NULL;
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_large_payload_disabled();
+#else
   BOOLEAN UseSmallPayload = FALSE;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -2447,7 +2481,11 @@ FwCmdSetPlatformConfigData (
   UINT8 *pPartition = NULL;
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_large_payload_disabled();
+#else
   BOOLEAN UseSmallPayload = FALSE;
+#endif
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
 

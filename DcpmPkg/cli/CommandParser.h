@@ -11,19 +11,20 @@
 #include <Types.h>
 #include <Printer.h>
 
-#define DISP_NAME_LEN       32    //!< Display string length (used when formatting output in alternative formats)
-#define DISP_DELIMS_LEN     10    //!< Deliminter string length (used when formatting output in alternative formats)
-#define VERB_LEN            16    //!< Verb string length
-#define TARGET_LEN          32    //!< Target name string length
-#define TARGET_VALUE_LEN    4096  //!< Target value string length for maximum-possible DIMM IDs
-#define OPTION_LEN          16    //!< Option name string length
-#define OPTION_VALUE_LEN    1024  //!< Option value string length
-#define PROPERTY_KEY_LEN    128   //!< Property name string length
-#define PROPERTY_VALUE_LEN  128   //!< Property value string length
-#define MAX_TARGETS         8     //!< Maximum number of targets in a single command
-#define MAX_OPTIONS         8     //!< Maximum number of options in a single command
-#define MAX_PROPERTIES      20    //!< Maximum number of properties in a single command
-#define MAX_TOKENS          50    //!< Maximum number of tokens per line
+#define DISP_NAME_LEN             32    //!< Display string length (used when formatting output in alternative formats)
+#define DISP_DELIMS_LEN           10    //!< Deliminter string length (used when formatting output in alternative formats)
+#define VERB_LEN                  16    //!< Verb string length
+#define TARGET_LEN                32    //!< Target name string length
+#define TARGET_VALUE_LEN          4096  //!< Target value string length for maximum-possible DIMM IDs
+#define OPTION_LEN                16    //!< Option name string length
+#define OPTION_VALUE_LEN          1024  //!< Option value string length
+#define PARSER_OPTION_VALUE_LEN   2048  //!< Option value string length for command parser
+#define PROPERTY_KEY_LEN          128   //!< Property name string length
+#define PROPERTY_VALUE_LEN        128   //!< Property value string length
+#define MAX_TARGETS               8     //!< Maximum number of targets in a single command
+#define MAX_OPTIONS               8     //!< Maximum number of options in a single command
+#define MAX_PROPERTIES            20    //!< Maximum number of properties in a single command
+#define MAX_TOKENS                50    //!< Maximum number of tokens per line
 
 /** command keywords **/
 #define LOAD_VERB     L"load"
@@ -293,7 +294,7 @@ struct option
 {
   CHAR16 OptionNameShort[OPTION_LEN];
   CHAR16 OptionName[OPTION_LEN];
-  CHAR16 OptionValue[OPTION_VALUE_LEN];
+  CHAR16 *pOptionValueStr;
   CONST CHAR16 *pHelp;
   BOOLEAN Required;
   UINT8 ValueRequirement;

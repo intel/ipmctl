@@ -82,6 +82,9 @@ FreeCommandStructure(
     for (Index = 0; Index < MAX_TARGETS; Index++) {
       FREE_POOL_SAFE(pCommand->targets[Index].pTargetValueStr);
     }
+    for (Index = 0; Index < MAX_OPTIONS; Index++) {
+      FREE_POOL_SAFE(pCommand->options[Index].pOptionValueStr);
+    }
   }
 }
 
@@ -250,6 +253,14 @@ Parse(
   for (Index = 0; Index < MAX_TARGETS; Index++) {
     pCommand->targets[Index].pTargetValueStr = AllocateZeroPool(TARGET_VALUE_LEN * sizeof(CHAR16));
     if (!pCommand->targets[Index].pTargetValueStr) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      break;
+    }
+  }
+
+  for (Index = 0; Index < MAX_OPTIONS; Index++) {
+    pCommand->options[Index].pOptionValueStr = AllocateZeroPool(PARSER_OPTION_VALUE_LEN * sizeof(CHAR16));
+    if (!pCommand->options[Index].pOptionValueStr) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       break;
     }
@@ -441,11 +452,12 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
             (*pStart)++;
             /** check for an option value **/
             if ( ((pInput->TokenCount - *pStart) >= 1) && (pInput->ppTokens[*pStart][0] != '-') ) {
-              if (StrLen(pInput->ppTokens[*pStart]) > OPTION_VALUE_LEN) {
+              if (StrLen(pInput->ppTokens[*pStart]) > PARSER_OPTION_VALUE_LEN) {
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
-                StrnCpyS(pCommand->options[matchedOptions].OptionValue, OPTION_VALUE_LEN, pInput->ppTokens[*pStart], OPTION_VALUE_LEN - 1);
+                StrnCpyS(pCommand->options[matchedOptions].pOptionValueStr, PARSER_OPTION_VALUE_LEN,
+                  pInput->ppTokens[*pStart], PARSER_OPTION_VALUE_LEN - 1);
                 (*pStart)++;
               }
             }
@@ -731,7 +743,7 @@ MatchOptions(
         }
         // check if value is optional or required
         if (pMatch->options[Index2].ValueRequirement != ValueOptional) {
-          if (pInput->options[Index].OptionValue && StrLen(pInput->options[Index].OptionValue) > 0) {
+          if (pInput->options[Index].pOptionValueStr && StrLen(pInput->options[Index].pOptionValueStr) > 0) {
             if (pMatch->options[Index2].ValueRequirement == ValueRequired) {
               MatchCount++;
             } else {
@@ -1267,7 +1279,7 @@ CHAR16* getOptionValue(CONST struct Command *pCmd,
     if (StrICmp(pCmd->options[i].OptionName, option) == 0 ||
       StrICmp(pCmd->options[i].OptionNameShort, option) == 0)
     {
-      value = CatSPrint(NULL, FORMAT_STR, pCmd->options[i].OptionValue);
+      value = CatSPrint(NULL, FORMAT_STR, pCmd->options[i].pOptionValueStr);
       break;
     }
   }

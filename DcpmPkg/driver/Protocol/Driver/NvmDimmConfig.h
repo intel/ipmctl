@@ -1478,6 +1478,21 @@ VerifyTargetDimms(
 	OUT COMMAND_STATUS *pCommandStatus
 );
 
+/**
+  Examine a given DIMM to see if a long op is in progress and report it back
+
+  @param[in] pDimm The dimm to check the status of
+  @param[out] pNvmStatus The status of the dimm's long op status. NVM_SUCCESS = No long op status is under way.
+
+  @retval EFI_SUCCESS if the request for long op status was successful (whether a long op status is under way or not)
+  @retval EFI_... the error preventing the check for the long op status
+**/
+EFI_STATUS
+CheckForLongOpStatusInProgress(
+  IN     DIMM *pDimm,
+  OUT    NVM_STATUS *pNvmStatus
+);
+
 // Debug Only
 #ifndef MDEPKG_NDEBUG
 

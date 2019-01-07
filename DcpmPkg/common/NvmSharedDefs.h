@@ -179,6 +179,9 @@ typedef enum _NvmStatusCode {
 
   NVM_SUCCESS_NO_EVENT_FOUND                        = 302,  ///< Error: No events found in the event log
   NVM_ERR_FILE_NOT_FOUND                            = 303,  ///< Error: No events found in the event log
+  NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS                = 304,  ///< Error: No events found in the event log
+  NVM_ERR_FWUPDATE_IN_PROGRESS                      = 305,  ///< Error: No events found in the event log
+  NVM_ERR_UNKNOWN_LONG_OP_IN_PROGRESS               = 306,  ///< Error: No events found in the event log
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

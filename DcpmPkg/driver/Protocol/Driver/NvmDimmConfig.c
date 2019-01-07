@@ -5307,6 +5307,9 @@ UpdateFw(
   UINT32 VerificationFailures = 0;
   UINT32 ForceRequiredDimms = 0;
 
+  EFI_STATUS LongOpStatusReturnCode = 0;
+  NVM_STATUS LongOpNvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
+
   ZeroMem(pDimms, sizeof(pDimms));
 
   NVDIMM_ENTRY();
@@ -5429,7 +5432,6 @@ UpdateFw(
       }
       else {
         pDimmsCanBeUpdated[Index] = TRUE;
-        DimmsToUpdate++;
         SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK, TRUE);
       }
 #endif
@@ -5451,7 +5453,6 @@ UpdateFw(
       }
       else {
         pDimmsCanBeUpdated[Index] = TRUE;
-        DimmsToUpdate++;
         SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_SUCCESS_IMAGE_EXAMINE_OK, TRUE);
       }
     }
@@ -5462,6 +5463,14 @@ UpdateFw(
       pCommandStatus->GeneralStatus = NVM_SUCCESS;
     }
     goto Finish;
+  }
+
+  //count up the number of DIMMs to update
+  DimmsToUpdate = 0;
+  for (Index = 0; Index < DimmsNum; Index++) {
+    if (pDimmsCanBeUpdated[Index] == TRUE) {
+      DimmsToUpdate++;
+    }
   }
 
   if (DimmsToUpdate == 0) {
@@ -5475,7 +5484,7 @@ UpdateFw(
   // upload FW image to all specified DIMMs
   for (Index = 0; Index < DimmsNum; Index++) {
     if (pDimmsCanBeUpdated[Index] == FALSE) {
-      NVDIMM_DBG("Skipping dimm %d. It is marked as not being capable of this update", pDimms[Index]->DeviceHandle.AsUint32);
+      NVDIMM_DBG("Skipping dimm %d. It is marked as not being currently capable of this update", pDimms[Index]->DeviceHandle.AsUint32);
       continue;
     }
 
@@ -5492,14 +5501,23 @@ UpdateFw(
 
     if (ReturnCode != EFI_SUCCESS) {
       UpdateFailures++;
-      if (NvmStatus == NVM_SUCCESS) {
-        pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_FAILED;
-        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED, TRUE);
+
+      //Perform a check to see if it was a long operation that blocked the update and get more details about it
+      LongOpStatusReturnCode = CheckForLongOpStatusInProgress(pDimms[Index], &LongOpNvmStatus);
+      if (LongOpStatusReturnCode == EFI_SUCCESS && LongOpNvmStatus != NVM_SUCCESS) {
+        pCommandStatus->GeneralStatus = LongOpNvmStatus;
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], LongOpNvmStatus, TRUE);
       }
-      else
-      {
-        pCommandStatus->GeneralStatus = NvmStatus;
-        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
+      else {
+        if (NvmStatus == NVM_SUCCESS) {
+          pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_FAILED;
+          SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED, TRUE);
+        }
+        else
+        {
+          pCommandStatus->GeneralStatus = NvmStatus;
+          SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NvmStatus, TRUE);
+        }
       }
     }
     else
@@ -5529,6 +5547,64 @@ Finish:
   FREE_POOL_SAFE(pImageBuffer);
   FREE_POOL_SAFE(pErrorMessage);
   FREE_POOL_SAFE(pDimmsCanBeUpdated);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Examine a given DIMM to see if a long op is in progress and report it back
+
+  @param[in] pDimm The dimm to check the status of
+  @param[out] pNvmStatus The status of the dimm's long op status. NVM_SUCCESS = No long op status is under way.
+
+  @retval EFI_SUCCESS if the request for long op status was successful (whether a long op status is under way or not)
+  @retval EFI_... the error preventing the check for the long op status
+**/
+EFI_STATUS
+CheckForLongOpStatusInProgress(
+  IN     DIMM *pDimm,
+  OUT    NVM_STATUS *pNvmStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT8 LongOpStatusCode = 0;
+  PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS LongOpStatus;
+  EFI_STATUS LongOpCheckRetCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pNvmStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *pNvmStatus = NVM_SUCCESS;
+  LongOpCheckRetCode = FwCmdGetLongOperationStatus(pDimm, &LongOpStatusCode, &LongOpStatus);
+  if (EFI_ERROR(LongOpCheckRetCode)) {
+    //fatal error
+    *pNvmStatus = NVM_ERR_UNKNOWN;
+    ReturnCode = LongOpCheckRetCode;
+    goto Finish;
+  }
+  else if (LongOpStatus.Status != FW_DEVICE_BUSY) {
+    //no long op in progress
+    goto Finish;
+  }
+
+  if (LongOpStatus.CmdOpcode == PtGetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
+    *pNvmStatus = NVM_ERR_ARS_IN_PROGRESS;
+  }
+  else if (LongOpStatus.CmdOpcode == PtUpdateFw && LongOpStatus.CmdSubcode == SubopUpdateFw) {
+    *pNvmStatus = NVM_ERR_FWUPDATE_IN_PROGRESS;
+  }
+  else if (LongOpStatus.CmdOpcode == PtSetSecInfo && LongOpStatus.CmdSubcode == SubopOverwriteDimm) {
+    *pNvmStatus = NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS;
+  }
+  else {
+    *pNvmStatus = NVM_ERR_UNKNOWN_LONG_OP_IN_PROGRESS;
+  }
+
+Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

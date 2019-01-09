@@ -372,7 +372,7 @@ decode_nlog_binary(
   }
 
   /*
-  build the massive output string and dump it to the file
+  build the output string and dump it to the file
   */
   decode_header = string_copy("TIMESTAMP ::              FILE           ::   LEVEL :: LOG\n=====================================================================================\n");
   header_length = string_length(decode_header);
@@ -420,12 +420,16 @@ decode_nlog_binary(
   PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Decoded %lu records to file (" FORMAT_STR ")\n", node_count, decoded_file_name);
 
 Finish:
-  for (z = 0; z < old_arg_count; z++)
+
+  if (NULL != old_args)
   {
-    FREE_POOL_SAFE(old_args[z]);
+    for (z = 0; z < old_arg_count; z++)
+    {
+      FREE_POOL_SAFE(old_args[z]);
+    }
+    FREE_POOL_SAFE(old_args);
   }
 
-  FREE_POOL_SAFE(old_args);
   if (NULL != total_formatted_string)
   {
     FREE_POOL_SAFE(total_formatted_string);
@@ -491,6 +495,45 @@ get_nlog_entry(
   return NULL;
 }
 
+/*
+Loads test binary dumps for the purpose of decoding them
+*/
+VOID **
+LoadBinaryFile(
+  CHAR16 * pLoadUserPath,
+  OUT  UINT64 *bytes_read)
+{
+  EFI_STATUS status;
+  EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
+  VOID *buffer = NULL;
+
+  CHAR16 * pDictPath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDictPath));
+  if (pDictPath == NULL) {
+    Print(L"Failed to allocate memory for the path\n");
+    goto Finish;
+  }
+
+  status = GetDeviceAndFilePath(pLoadUserPath, pDictPath, &pDevicePathProtocol);
+  if (EFI_ERROR(status))
+  {
+    Print(L"GetDeviceAndFilePath Failed\n");
+    goto Finish;
+  }
+
+  status = FileRead(pDictPath, pDevicePathProtocol, 0x1FFFFFFF, bytes_read, (VOID **)&buffer);
+  if (EFI_ERROR(status) || NULL == buffer)
+  {
+    Print(L"FileRead Failed\n");
+    *bytes_read = 0;
+    goto Finish;
+  }
+Finish:
+  if (pDictPath != NULL) {
+    FREE_POOL_SAFE(pDictPath);
+  }
+
+  return buffer;
+}
 
 nlog_dict_entry*
 load_nlog_dict(
@@ -698,3 +741,4 @@ Finish:
   }
   return head;
 }
+

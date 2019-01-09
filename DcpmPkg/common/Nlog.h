@@ -119,4 +119,11 @@ load_nlog_dict_v2(
   OUT UINT64 * node_count
 );
 
+/*
+Loads test binary dumps for the purpose of decoding them
+*/
+VOID **
+LoadBinaryFile(
+  CHAR16 * pLoadUserPath,
+  OUT  UINT64 *bytes_read);
 #endif

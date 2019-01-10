@@ -1124,4 +1124,19 @@ GetRawCapacity(
   IN     NAMESPACE *pNamespace
   );
 
+/**
+  Checks to see if a given address block collides with one or more of the addresses BIOS has marked as bad
+
+  @param[in] Address The base address
+  @param[in] Length The address range size
+
+  @retval EFI_SUCCESS If the range does not collide with an ARS address
+  @retval EFI_DEVICE_ERROR If the range is found to collide with one or more addresses from BIOS
+**/
+EFI_STATUS
+IsAddressRangeInArsList(
+  IN     UINT64  Address,
+  IN     UINT64  Length
+);
+
 #endif /** _NAMESPACE_H_ **/

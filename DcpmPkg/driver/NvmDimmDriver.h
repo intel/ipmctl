@@ -269,6 +269,8 @@ AddStringToUnicodeTable(
   If a DIMM is unaccessible, all of the ISs and namespaces
   that it was a part of will be removed.
 
+  @param[in] DoDriverCleanup, if the caller wants namespaces cleaned up including unloading protocols
+
   @retval EFI_SUCCESS if all DIMMs are working.
   @retval EFI_INVALID_PARAMETER if any of pointer parameters in NULL
   @retval EFI_ABORTED if at least one DIMM is not responding.
@@ -277,6 +279,7 @@ AddStringToUnicodeTable(
 **/
 EFI_STATUS
 ReenumerateNamespacesAndISs(
+  IN BOOLEAN DoDriverCleanup
   );
 
 /**

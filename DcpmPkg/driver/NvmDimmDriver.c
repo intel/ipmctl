@@ -137,6 +137,8 @@ Finish:
   If a DIMM is unaccessible, all of the ISs and namespaces
   that it was a part of will be removed.
 
+  @param[in] DoDriverCleanup, if the caller wants namespaces cleaned up including unloading protocols
+
   @retval EFI_SUCCESS if all DIMMs are working.
   @retval EFI_INVALID_PARAMETER if any of pointer parameters in NULL
   @retval EFI_ABORTED if at least one DIMM is not responding.
@@ -145,15 +147,18 @@ Finish:
 **/
 EFI_STATUS
 ReenumerateNamespacesAndISs(
+  IN BOOLEAN DoDriverCleanup
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 #ifndef OS_BUILD
   NVDIMM_ENTRY();
 
-  ReturnCode = CleanNamespacesAndISs();
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to clean namespaces and pools");
+  if (DoDriverCleanup == TRUE) {
+    ReturnCode = CleanNamespacesAndISs();
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to clean namespaces and pools");
+    }
   }
   /** Initialize Interleave Sets **/
   ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,

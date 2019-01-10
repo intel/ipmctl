@@ -2923,7 +2923,7 @@ SetSecurityState(
 
 Finish:
   if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
-    TempReturnCode = ReenumerateNamespacesAndISs();
+    TempReturnCode = ReenumerateNamespacesAndISs(TRUE);
     if (EFI_ERROR(TempReturnCode)) {
       NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=" FORMAT_EFI_STATUS "", TempReturnCode);
     }
@@ -3370,7 +3370,7 @@ DeletePcd(
     NVDIMM_DBG("Zero'ed the LSA on DIMM : 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
   }
 
-  ReenumerateNamespacesAndISs();
+  ReenumerateNamespacesAndISs(TRUE);
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -3409,6 +3409,7 @@ ModifyPcdConfig(
   UINT32 SecurityState = 0;
   NVDIMM_CONFIGURATION_HEADER *pConfigHeader = NULL;
   UINT32 ConfigSize = 0;
+  BOOLEAN DoCLeanNamespaceAndIs = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -3450,6 +3451,7 @@ ModifyPcdConfig(
 
     //zero LSA
     if (ConfigIdMask & DELETE_PCD_CONFIG_LSA_MASK) {
+      DoCLeanNamespaceAndIs = TRUE;
       TmpReturnCode = ZeroLabelStorageArea(pDimms[Index]->DimmID);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
@@ -3518,7 +3520,7 @@ ModifyPcdConfig(
     SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
   }
 
-  ReenumerateNamespacesAndISs();
+  ReenumerateNamespacesAndISs(DoCLeanNamespaceAndIs);
 
 Finish:
   FREE_POOL_SAFE(pConfigHeader);
@@ -3631,7 +3633,7 @@ GetRegionCount(
   }
 
   *pCount = 0;
-  Rc = ReenumerateNamespacesAndISs();
+  Rc = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(Rc)) {
     if (EFI_NO_RESPONSE == Rc) {
       goto Finish;
@@ -3799,7 +3801,7 @@ GetRegion(
   NVM_IS *pRegion = NULL;
   LIST_ENTRY *pRegionList = NULL;
   NVDIMM_ENTRY();
-  Rc = ReenumerateNamespacesAndISs();
+  Rc = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(Rc)) {
     goto Finish;
   }
@@ -6516,7 +6518,7 @@ DumpGoalConfig(
      goto Finish;
   }
 #endif
-  ReturnCode = ReenumerateNamespacesAndISs();
+  ReturnCode = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -7316,7 +7318,7 @@ GetNamespaces (
   if (pThis == NULL || pNamespaceListNode == NULL || pNamespacesCount == NULL || pCommandStatus == NULL) {
     goto Finish;
   }
-  ReturnCode = ReenumerateNamespacesAndISs();
+  ReturnCode = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -7616,7 +7618,7 @@ DeleteNamespace(
   } else if (RangesRemoved < pNamespace->RangesCount) {
     // Not all labels removed, NS configuration structure has been broken
     // NS will be removed but need to re-enumerate volumes and pools
-    ReenumerateNamespacesAndISs();
+    ReenumerateNamespacesAndISs(TRUE);
 
     ResetCmdStatus(pCommandStatus, NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN);
     ReturnCode = EFI_ABORTED;

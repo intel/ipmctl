@@ -5594,7 +5594,7 @@ CheckForLongOpStatusInProgress(
     goto Finish;
   }
 
-  if (LongOpStatus.CmdOpcode == PtGetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
+  if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
     *pNvmStatus = NVM_ERR_ARS_IN_PROGRESS;
   }
   else if (LongOpStatus.CmdOpcode == PtUpdateFw && LongOpStatus.CmdSubcode == SubopUpdateFw) {

@@ -1292,6 +1292,8 @@ NvmDimmDriverDriverBindingStart(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   VOID *pDummy = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
+  DCPMM_ARS_ERROR_RECORD * ArsBadRecords = NULL;
+  UINT32 ArsBadRecordsCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -1408,6 +1410,15 @@ NvmDimmDriverDriverBindingStart(
       NVDIMM_ERR("Failed while checking memory map, error = " FORMAT_EFI_STATUS ".", ReturnCode);
       goto Finish;
    }
+
+   /**
+     load the ARS list
+   **/
+   ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
+   if (EFI_ERROR(ReturnCode)) {
+     NVDIMM_WARN("Failed to load the ARS list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+   }
+
   /**
     Initialize DIMMs, ISets and namespaces
   **/

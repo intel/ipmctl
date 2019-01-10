@@ -8,6 +8,7 @@
 #include <Library/BaseLib.h>
 #include <Guid/Acpi.h>
 #include "NvmDimmConfig.h"
+#include "DcpmmFis.h"
 #include "NvmTypes.h"
 #include <AcpiParsing.h>
 #include <Dimm.h>
@@ -10043,3 +10044,86 @@ Finish:
 
 #endif // !MDEPKG_NDEBUG
 
+/**
+  This function makes calls to the dimms required to initialize the driver.
+
+  @param[out] ppArsRecords a list of ARS records
+  @param[out] pRecordCount the length of the ARS record list
+
+  @retval EFI_SUCCESS if no errors.
+  @retval EFI_xxxx depending on error encountered.
+**/
+EFI_STATUS
+LoadArsList(
+  OUT DCPMM_ARS_ERROR_RECORD ** ppArsRecords,
+  OUT UINT32 * pRecordCount)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+#ifndef OS_BUILD
+  EFI_STATUS FisOpenReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_FIS_PROTOCOL * pNvmDimmFisProtocol = NULL;
+  static BOOLEAN sListAlreadyLoaded = FALSE;
+  static EFI_GUID sNvmDimmFisProtocolGuid = EFI_DCPMM_FIS_GUID;
+  static DCPMM_ARS_ERROR_RECORD * sArsBadRecords = NULL;
+  static UINT32 sArsBadRecordsCount = 0;
+
+  NVDIMM_ENTRY();
+
+  if (sListAlreadyLoaded == TRUE) {
+    NVDIMM_DBG("ARS list already loaded.\n");
+    goto Finish;
+  }
+
+  /*If the FIS protocol isn't in place, allow the call to exit without distruption*/
+  FisOpenReturnCode = gBS->LocateProtocol(&sNvmDimmFisProtocolGuid, NULL, (VOID **)&pNvmDimmFisProtocol);
+  if (EFI_ERROR(FisOpenReturnCode)) {
+    if (FisOpenReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_WARN("FIS protocol not found");
+      ReturnCode = EFI_PROTOCOL_ERROR;
+    }
+    else {
+      NVDIMM_WARN("Communication with the device driver failed (fis protocol)");
+      ReturnCode = EFI_PROTOCOL_ERROR;
+    }
+    goto Finish;
+  }
+  else {
+    /*Since the open succeeded, react to actual failures with the FIS protocol*/
+
+    //First check how many records exist by passing NULL
+    sArsBadRecordsCount = 0;
+    ReturnCode = pNvmDimmFisProtocol->DcpmmArsStatus(&sArsBadRecordsCount, NULL);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Could not obtain the ARS bad address list count");
+      sArsBadRecordsCount = 0;
+      goto Finish;
+    }
+
+    //if there are records, allocate the space for them and obtain them
+    if (sArsBadRecordsCount > 0) {
+      sArsBadRecords = (DCPMM_ARS_ERROR_RECORD *)AllocateZeroPool(sizeof(DCPMM_ARS_ERROR_RECORD) * sArsBadRecordsCount);
+      if (sArsBadRecords == NULL) {
+        NVDIMM_WARN("Failed to allocate memory for the bad ARS records");
+        sArsBadRecordsCount = 0;
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+
+      ReturnCode = pNvmDimmFisProtocol->DcpmmArsStatus(&sArsBadRecordsCount, sArsBadRecords);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_WARN("Could not obtain the ARS bad address list");
+        FreePool(sArsBadRecords);
+        sArsBadRecordsCount = 0;
+        goto Finish;
+      }
+    }
+  }
+
+  sListAlreadyLoaded = TRUE;
+Finish:
+  *ppArsRecords = sArsBadRecords;
+  *pRecordCount = sArsBadRecordsCount;
+  NVDIMM_EXIT_I64(ReturnCode);
+#endif
+  return ReturnCode;
+}

@@ -14,6 +14,7 @@
 
 #include <IndustryStandard/SmBios.h>
 #include "NvmStatus.h"
+#include "DcpmmFis.h"
 #include "NvmTypes.h"
 #include "NvmTables.h"
 #include <FwUtility.h>

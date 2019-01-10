@@ -7,6 +7,7 @@
 #include <Debug.h>
 #include <Types.h>
 #include "Namespace.h"
+#include "DcpmmFis.h"
 #include <AcpiParsing.h>
 #include "Region.h"
 #include "NvmSecurity.h"
@@ -2863,6 +2864,11 @@ AppDirectIo(
   pSpaStart = (UINT8 *) pNamespace->SpaNamespaceBase;
   pAddress = pSpaStart + Offset;
 
+  ReturnCode = IsAddressRangeInArsList((UINT64)pAddress, Nbytes);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   if (ReadOperation) {
     CopyMem(pBuffer, pAddress, Nbytes);
   } else {
@@ -5668,4 +5674,65 @@ GetRawCapacity(
   )
 {
   return GetPhysicalBlockSize(pNamespace->BlockSize) * pNamespace->BlockCount;
+}
+
+/**
+  Checks to see if a given address block collides with one or more of the addresses BIOS has marked as bad
+
+  @param[in] Address an array of bad addresses as returned from BIOS
+  @param[in] Length the number of bad addresses
+
+  @retval EFI_SUCCESS If the range does not collide
+  @retval EFI_DEVICE_ERROR If the range is found to collide with one or more addresses from BIOS
+**/
+EFI_STATUS
+IsAddressRangeInArsList(
+  IN     UINT64  Address,
+  IN     UINT64  Length
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+#ifndef OS_BUILD
+  UINT32 Index = 0;
+  UINT64 BadBlockStart = 0;
+  UINT64 BadBlockEnd = 0;
+  UINT64 CheckBlockStart = Address;
+  UINT64 CheckBlockEnd = Address + Length - 1;
+  DCPMM_ARS_ERROR_RECORD * ArsBadRecords = NULL;
+  UINT32 ArsBadRecordsCount = 0;
+
+
+  NVDIMM_ENTRY();
+
+  ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Failed to load the ARS list. Cannot check for collisions.\n");
+    goto Finish;
+  }
+
+  if (ArsBadRecordsCount == 0) {
+    NVDIMM_DBG("There are no bad addresses in the ARS list.\n");
+    goto Finish;
+  }
+
+  if (NULL != ArsBadRecords && ArsBadRecordsCount > 0) {
+    //Check that address range does not contain one of the bad addresses identified by BIOS
+    for (Index = 0; Index < ArsBadRecordsCount; Index++) {
+      BadBlockStart = ArsBadRecords[Index].SpaOfErrLoc;
+      BadBlockEnd = ArsBadRecords[Index].SpaOfErrLoc + ArsBadRecords[Index].Length - 1;
+      if ((CheckBlockStart >= BadBlockStart   && CheckBlockStart <= BadBlockEnd)   || //the request starts at an address in the bad range
+          (CheckBlockStart >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd)   || //the request fits entirly in a bad range
+          (BadBlockStart   >= CheckBlockStart && BadBlockEnd     <= CheckBlockEnd) || //the bad range fits entirely in the check range
+          (CheckBlockEnd   >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd))     //the request ends at an address in the bad range
+      {
+        ReturnCode = EFI_DEVICE_ERROR;
+        NVDIMM_DBG("Collision detected with the ARS list");
+        goto Finish;
+      }
+    }
+  }
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+#endif
+  return ReturnCode;
 }

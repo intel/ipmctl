@@ -462,16 +462,9 @@ Load(
         continue;
       }
 
-      ReturnCodes[Index] = PollLongOpStatus(pNvmDimmConfigProtocol, pDimmTargetIds[Index],
-        FW_UPDATE_OPCODE, FW_UPDATE_SUBOPCODE, LONG_OP_FW_UPDATE_TIMEOUT);
-      if (EFI_ERROR(ReturnCodes[Index])) {
-        NvmCodes[Index] = NVM_ERR_FIRMWARE_FAILED_TO_STAGE;
-        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NVM_ERR_FIRMWARE_FAILED_TO_STAGE, TRUE);
-      } else {
-        NvmCodes[Index] = NVM_SUCCESS_FW_RESET_REQUIRED;
-        ReturnCodes[Index] = EFI_SUCCESS;
-        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
-      }
+      NvmCodes[Index] = NVM_SUCCESS_FW_RESET_REQUIRED;
+      ReturnCodes[Index] = EFI_SUCCESS;
+      SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
     }
   } //for loop
 

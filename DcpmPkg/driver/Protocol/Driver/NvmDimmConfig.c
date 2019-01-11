@@ -8,7 +8,9 @@
 #include <Library/BaseLib.h>
 #include <Guid/Acpi.h>
 #include "NvmDimmConfig.h"
+#ifndef OS_BUILD
 #include "DcpmmFis.h"
+#endif
 #include "NvmTypes.h"
 #include <AcpiParsing.h>
 #include <Dimm.h>
@@ -10044,6 +10046,7 @@ Finish:
 
 #endif // !MDEPKG_NDEBUG
 
+#ifndef OS_BUILD
 /**
   This function makes calls to the dimms required to initialize the driver.
 
@@ -10059,7 +10062,6 @@ LoadArsList(
   OUT UINT32 * pRecordCount)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef OS_BUILD
   EFI_STATUS FisOpenReturnCode = EFI_SUCCESS;
   EFI_DCPMM_FIS_PROTOCOL * pNvmDimmFisProtocol = NULL;
   static BOOLEAN sListAlreadyLoaded = FALSE;
@@ -10124,6 +10126,6 @@ Finish:
   *ppArsRecords = sArsBadRecords;
   *pRecordCount = sArsBadRecordsCount;
   NVDIMM_EXIT_I64(ReturnCode);
-#endif
   return ReturnCode;
 }
+#endif

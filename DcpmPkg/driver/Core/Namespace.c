@@ -7,7 +7,9 @@
 #include <Debug.h>
 #include <Types.h>
 #include "Namespace.h"
+#ifndef OS_BUILD
 #include "DcpmmFis.h"
+#endif
 #include <AcpiParsing.h>
 #include "Region.h"
 #include "NvmSecurity.h"
@@ -5676,6 +5678,7 @@ GetRawCapacity(
   return GetPhysicalBlockSize(pNamespace->BlockSize) * pNamespace->BlockCount;
 }
 
+#ifndef OS_BUILD
 /**
   Checks to see if a given address block collides with one or more of the addresses BIOS has marked as bad
 
@@ -5692,7 +5695,6 @@ IsAddressRangeInArsList(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef OS_BUILD
   UINT32 Index = 0;
   UINT64 BadBlockStart = 0;
   UINT64 BadBlockEnd = 0;
@@ -5733,6 +5735,6 @@ IsAddressRangeInArsList(
   }
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
-#endif
   return ReturnCode;
 }
+#endif

@@ -1519,6 +1519,7 @@ GetCommandAccessPolicy(
 
 #endif // !MDEPKG_NDEBUG
 
+#ifndef OS_BUILD
 /**
   This function makes calls to the dimms required to initialize the driver.
 
@@ -1532,5 +1533,6 @@ EFI_STATUS
 LoadArsList(
   OUT DCPMM_ARS_ERROR_RECORD ** ppArsRecords,
   OUT UINT32 * pRecordCount);
+#endif
 
 #endif /* _NVMDIMM_CONFIG_H_ */

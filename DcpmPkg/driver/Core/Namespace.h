@@ -1124,6 +1124,7 @@ GetRawCapacity(
   IN     NAMESPACE *pNamespace
   );
 
+#ifndef OS_BUILD
 /**
   Checks to see if a given address block collides with one or more of the addresses BIOS has marked as bad
 
@@ -1138,5 +1139,6 @@ IsAddressRangeInArsList(
   IN     UINT64  Address,
   IN     UINT64  Length
 );
+#endif
 
 #endif /** _NAMESPACE_H_ **/

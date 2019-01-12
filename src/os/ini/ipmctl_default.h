@@ -45,7 +45,7 @@
 "# If the value equals 1 the large payload access to the dimm is disabled\n"
 "# If the value equals 0 the large payload access is allowed\n"
 "# The other values will be ignored and won't affect the large payload access\n"
-"LARGE_PAYLOAD_DISABLED = 0\n"
+"LARGE_PAYLOAD_DISABLED = 1\n"
 "\n"
 "# Application temporary files path configuration\n"
 "# The app is going to use the path to store various files required\n"

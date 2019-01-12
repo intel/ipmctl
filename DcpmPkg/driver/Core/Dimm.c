@@ -46,14 +46,12 @@ CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
 };
 
 #ifdef OS_BUILD
-#define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
-
 /*
 * Function get the ini configuration only on the first call
 *
 * It returns TRUE in case of large payload access is disabled and FALSE otherwise
 */
-static BOOLEAN config_large_payload_disabled()
+BOOLEAN config_is_large_payload_disabled()
 {
   static BOOLEAN config_large_payload_initialized = FALSE;
   static UINT8 large_payload_disabled = 0;
@@ -1857,6 +1855,123 @@ Finish:
 }
 
 /**
+  Firmware command access/read Platform Config Data using small payload only.
+
+  The function allows to specify the requested data offset and the size.
+  The funciton is going to allocate the ppRawData buffer if it is not allocated.
+  The buffer's minimal size is the size of the Partition!
+
+  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+  @param[in] PartitionId Partition number to get data from
+  @param[in] ReqOffset Data read starting point
+  @param[in] ReqDataSize Number of bytes to read
+  @param[out] Pointer to the buffer pointer for storing retrieved data
+
+  @retval EFI_SUCCESS: Success, otherwise: Error
+**/
+EFI_STATUS
+FwGetPCDFromOffsetSmallPayload(
+  IN  DIMM *pDimm,
+  IN  UINT8 PartitionId,
+  IN  UINT32 ReqOffset,
+  IN  UINT32 ReqDataSize,
+  OUT UINT8 **ppRawData)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  FW_CMD *pFwCmd = NULL;
+  PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
+  UINT32 StartingPageOffset = ((ReqOffset / PCD_GET_SMALL_PAYLOAD_DATA_SIZE)*PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+  UINT32 ReadOffset = 0;
+  UINT32 PcdSize = 0;
+
+  SetMem(&InputPayload, sizeof(InputPayload), 0x0);
+
+  if (pDimm == NULL || ppRawData == NULL || 0 == ReqDataSize) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (PartitionId == PCD_OEM_PARTITION_ID) {
+    PcdSize = pDimm->PcdOemPartitionSize;
+  }
+  else if (PartitionId == PCD_LSA_PARTITION_ID) {
+    PcdSize = pDimm->PcdLsaPartitionSize;
+  }
+  else {
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+  }
+
+  /*
+  * PcdSize is 0 if Media is disabled.
+  * PcdSize was retrieved at driver load time so it is possible that since load time there
+  * was a fatal media error that this would not catch.
+  */
+  if (PcdSize == 0) {
+    ReturnCode = FwCmdGetPlatformConfigDataSize(pDimm, PartitionId, &PcdSize);
+    if (EFI_ERROR(ReturnCode) || PcdSize == 0) {
+      NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
+      goto Finish;
+    }
+    else if (PartitionId == PCD_OEM_PARTITION_ID) {
+      pDimm->PcdOemPartitionSize = PcdSize;
+    }
+    else if (PartitionId == PCD_LSA_PARTITION_ID) {
+      pDimm->PcdLsaPartitionSize = PcdSize;
+    }
+  }
+
+  if (PcdSize < (StartingPageOffset + ReqDataSize)) {
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
+  if (NULL == *ppRawData)
+  {
+    *ppRawData = AllocateZeroPool(PcdSize);
+    if (*ppRawData == NULL) {
+      NVDIMM_WARN("Can't allocate memory for Platform Config Data (%d bytes)", PcdSize);
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /**
+    Retrieve the PCD/LSA data
+  **/
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopPlatformDataInfo;
+  InputPayload.PartitionId = PartitionId;
+  InputPayload.CmdOptions.RetrieveOption = PCD_CMD_OPT_PARTITION_DATA;
+  pFwCmd->InputPayloadSize = sizeof(InputPayload);
+  /** Get PCD by small payload in loop in 128 byte chunks **/
+  pFwCmd->LargeOutputPayloadSize = 0;
+  pFwCmd->OutputPayloadSize = PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
+  InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
+  for (ReadOffset = StartingPageOffset; ReadOffset < (ReqOffset+ReqDataSize); ReadOffset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
+    InputPayload.Offset = ReadOffset;
+    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = " FORMAT_EFI_STATUS ")", ReadOffset, ReturnCode);
+      FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+      goto Finish;
+    }
+    CopyMem_S(*ppRawData + ReadOffset, PcdSize - ReadOffset, pFwCmd->OutPayload, PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
+  }
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  return ReturnCode;
+}
+
+/**
   Firmware command get Platform Config Data.
   Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
@@ -1884,7 +1999,7 @@ FwCmdGetPlatformConfigData(
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
 #ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_large_payload_disabled();
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
 #else
   BOOLEAN UseSmallPayload = FALSE;
 #endif
@@ -2456,6 +2571,104 @@ Finish:
 }
 
 /**
+  Firmware command access/write Platform Config Data using small payload only.
+
+  The function allows to specify the requested data offset and the size.
+  The buffer's minimal size is the size of the Partition!
+  The offset and the data size needs to be alligned to the SET_SMALL_PAYLOAD_DATA_SIZE
+  which is 64 bytes.
+
+  @param[in] pDimm The Intel NVM Dimm to send Platform Config Data to
+  @param[in] PartitionId Partition number for data to be send to
+  @param[in] pRawData Pointer to a data buffer that will be sent to the DIMM
+  @param[in] ReqOffset Data write starting point
+  @param[in] ReqDataSize Number of bytes to write
+
+  @retval EFI_SUCCESS: Success, otherwise: Error
+**/
+EFI_STATUS
+FwSetPCDFromOffsetSmallPayload(
+  IN  DIMM *pDimm,
+  IN  UINT8 PartitionId,
+  IN  UINT8 *pRawData,
+  IN  UINT32 ReqOffset,
+  IN  UINT32 ReqDataSize)
+{
+
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  FW_CMD *pFwCmd = NULL;
+  PT_INPUT_PAYLOAD_SET_DATA_PLATFORM_CONFIG_DATA InPayloadSetData;
+  UINT32 StartingPageOffset = ((ReqOffset / PCD_SET_SMALL_PAYLOAD_DATA_SIZE)*PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+  UINT32 WriteOffset = 0;
+
+  SetMem(&InPayloadSetData, sizeof(InPayloadSetData), 0x0);
+
+  if ((pDimm == NULL) || (pRawData == NULL) ||
+    ((ReqOffset+ReqDataSize) > PCD_PARTITION_SIZE) ||
+    (0 == ReqDataSize) ||
+    (ReqOffset % PCD_SET_SMALL_PAYLOAD_DATA_SIZE) ||
+    (ReqDataSize % PCD_SET_SMALL_PAYLOAD_DATA_SIZE)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (PartitionId == PCD_OEM_PARTITION_ID) {
+    // Using small payload transactions.
+    // Only allow up to 64kb to protect upper 64kb for OEM data.
+    if ((ReqOffset + ReqDataSize) > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
+      ReturnCode = EFI_BUFFER_TOO_SMALL;
+      goto Finish;
+    }
+    // If partition size is 0, then prevent write
+    if (0 == pDimm->PcdOemPartitionSize) {
+      ReturnCode = EFI_BAD_BUFFER_SIZE;
+      goto Finish;
+    }
+  }
+  else if (PartitionId == PCD_LSA_PARTITION_ID) {
+    // If partition size is 0, then prevent write
+    if (0 == pDimm->PcdLsaPartitionSize) {
+      ReturnCode = EFI_BAD_BUFFER_SIZE;
+      goto Finish;
+    }
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /**
+    Set the Platform Config Data
+  **/
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtSetAdminFeatures;
+  pFwCmd->SubOpcode = SubopPlatformDataInfo;
+  InPayloadSetData.PartitionId = PartitionId;
+  pFwCmd->InputPayloadSize = sizeof(InPayloadSetData);
+  /** Set PCD by small payload in loop in 64 byte chunks **/
+  InPayloadSetData.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
+  pFwCmd->LargeInputPayloadSize = 0;
+  for (WriteOffset = StartingPageOffset; WriteOffset < (ReqOffset+ReqDataSize); WriteOffset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
+    InPayloadSetData.Offset = WriteOffset;
+    CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pRawData + WriteOffset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
+    pFwCmd->OutputPayloadSize = 0;
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Error detected when sending Platform Config Data (Offset=%d ReturnCode=" FORMAT_EFI_STATUS ", FWStatus=%d)", WriteOffset, ReturnCode, pFwCmd->Status);
+      FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+      goto Finish;
+    }
+  }
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  return ReturnCode;
+}
+
+/**
   Firmware command set Platform Config Data.
   Execute a FW command to send REGIONs configuration to the Platform Config Data.
 
@@ -2482,7 +2695,7 @@ FwCmdSetPlatformConfigData (
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
 #ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_large_payload_disabled();
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
 #else
   BOOLEAN UseSmallPayload = FALSE;
 #endif

@@ -10063,6 +10063,7 @@ LoadArsList(
   OUT DCPMM_ARS_ERROR_RECORD ** ppArsRecords,
   OUT UINT32 * pRecordCount)
 {
+  UINT32 x = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS FisOpenReturnCode = EFI_SUCCESS;
   EFI_DCPMM_FIS_PROTOCOL * pNvmDimmFisProtocol = NULL;
@@ -10081,13 +10082,12 @@ LoadArsList(
   /*If the FIS protocol isn't in place, allow the call to exit without distruption*/
   FisOpenReturnCode = gBS->LocateProtocol(&sNvmDimmFisProtocolGuid, NULL, (VOID **)&pNvmDimmFisProtocol);
   if (EFI_ERROR(FisOpenReturnCode)) {
+    ReturnCode = EFI_PROTOCOL_ERROR;
     if (FisOpenReturnCode == EFI_NOT_FOUND) {
       NVDIMM_WARN("FIS protocol not found");
-      ReturnCode = EFI_PROTOCOL_ERROR;
     }
     else {
       NVDIMM_WARN("Communication with the device driver failed (fis protocol)");
-      ReturnCode = EFI_PROTOCOL_ERROR;
     }
     goto Finish;
   }
@@ -10119,6 +10119,12 @@ LoadArsList(
         FreePool(sArsBadRecords);
         sArsBadRecordsCount = 0;
         goto Finish;
+      }
+
+      for (; x < sArsBadRecordsCount; x++)
+      {
+        NVDIMM_DBG("ArsBadRecords[%d] = 0x%llx, len = 0x%llx, nfit handle = 0x%llx",
+          x, sArsBadRecords[x].SpaOfErrLoc, sArsBadRecords[x].Length, sArsBadRecords[x].NfitHandle);
       }
     }
   }

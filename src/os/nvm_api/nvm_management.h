@@ -1924,11 +1924,13 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid, const NVM_PASSPHRASE pass
 
 /**
  * @brief If data at rest security is not enabled and master passphrase is enabled
- * in the DCPMM security state, this method modifies the master passphrase.
+ * in the DCPMM security state, this method modifies the master passphrase. On 
+ * Microsoft(R) Windows(TM) this functionality may be prohibited if there are any
+ * namespaces present.
  * @param[in] device_uid
  *              The device identifier.
  * @param[in] old_master_passphrase
- *              The current master passphrase.
+ *              The current master passphrase. For default Master Passphrase (0's) use a zero length, null terminated string.
  * @param[in] old_master_passphrase_len
  *              String length of old_master_passphrase,
  *              should be <= NVM_PASSPHRASE_LEN.

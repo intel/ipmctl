@@ -1698,6 +1698,11 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
     goto Finish;
   }
 
+  if (new_master_passphrase == NULL || new_master_passphrase_len == 0 || new_master_passphrase[0] == '\0') {
+    rc = NVM_ERR_PASSPHRASE_NOT_PROVIDED;
+    goto Finish;
+  }
+
   AsciiStrToUnicodeStrS(old_master_passphrase, UnicodeOldMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
   AsciiStrToUnicodeStrS(new_master_passphrase, UnicodeNewMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
 

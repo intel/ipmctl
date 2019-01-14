@@ -69,6 +69,8 @@ DumpDebugCommand(
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT32 DimmCount = 0;
+  UINT32 InitializedDimmCount = 0;
+  UINT32 UninitializedDimmCount = 0;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   CHAR16 *pTargetValue = NULL;
@@ -85,7 +87,7 @@ DumpDebugCommand(
   UINT64 dict_entries;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *SourceNames[NUM_FW_DEBUG_LOG_SOURCES] = {L"media", L"sram", L"spi"};
-  UINT8 IndexSources = 0;
+  UINT8 IndexSource = 0;
   VOID *RawLogBuffer = NULL;
   UINT64 RawLogBufferSizeBytes = 0;
   INT8 SuccessesPerDimm[MAX_DIMMS];
@@ -113,7 +115,8 @@ DumpDebugCommand(
     goto Finish;
   }
 
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms,
+      &DimmCount, &InitializedDimmCount, &UninitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -185,19 +188,20 @@ DumpDebugCommand(
     // Initialize to -1 so we can ignore dimms that aren't specified
     SuccessesPerDimm[Index] = -1;
 
-    // If dimms were specified, filter them out here
+    // If a dimm was not specified, filter it out here
     if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
       continue;
     }
 
-    // Initialize specified dimms to 0
+    // Initialize the successes of the specified dimm to 0
+    // Used to calculate if we return an error or not to CLI
     SuccessesPerDimm[Index] = 0;
 
     // For easier reading
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"\n");
 
     // Collect logs from every debug log source on each dimm
-    for (IndexSources = 0; IndexSources < NUM_FW_DEBUG_LOG_SOURCES; IndexSources++) {
+    for (IndexSource = 0; IndexSource < NUM_FW_DEBUG_LOG_SOURCES; IndexSource++) {
 
       // Re-initialize pCommandStatus messages for each dimm and debug log source
       ReturnCode = InitializeCommandStatus(&pCommandStatus);
@@ -211,29 +215,29 @@ DumpDebugCommand(
       // We want to re-use pDumpUserPath, so use CatSPrint instead of
       // CatSPrintClean
       raw_file_name = CatSPrint(pDumpUserPath, L"_" FORMAT_STR L"_0x%04x_" FORMAT_STR L".bin",
-          pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSources]);
+          pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSource]);
       decoded_file_name = CatSPrint(pDumpUserPath, L"_" FORMAT_STR L"_0x%04x_" FORMAT_STR L".txt",
-          pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSources]);
+          pDimms[Index].DimmUid, pDimms[Index].DimmHandle, SourceNames[IndexSource]);
       if (raw_file_name == NULL || decoded_file_name == NULL) {
         goto FreeAndContinue;
       }
 
 
       ReturnCode = pNvmDimmConfigProtocol->GetFwDebugLog(pNvmDimmConfigProtocol,
-          pDimms[Index].DimmID, IndexSources, Reserved, &RawLogBuffer, &RawLogBufferSizeBytes, pCommandStatus);
+          pDimms[Index].DimmID, IndexSource, Reserved, &RawLogBuffer, &RawLogBufferSizeBytes, pCommandStatus);
 
       if (EFI_ERROR(ReturnCode)) {
         if (ReturnCode == EFI_NOT_STARTED) {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode,
             L"No " FORMAT_STR L" FW debug logs found\n",
-            SourceNames[IndexSources]);
+            SourceNames[IndexSource]);
           goto FreeAndContinue;
         }
         if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
           ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode,
             L"Unexpected error in retrieving " FORMAT_STR L" FW debug logs\n",
-            SourceNames[IndexSources]);
+            SourceNames[IndexSource]);
           PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_DUMP_DEBUG_LOG, L" ", pCommandStatus);
           goto FreeAndContinue;
         }
@@ -250,13 +254,13 @@ DumpDebugCommand(
         else {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode,
               L"Failed to dump " FORMAT_STR L" FW debug logs to file (" FORMAT_STR L")\n",
-              SourceNames[IndexSources], raw_file_name);
+              SourceNames[IndexSource], raw_file_name);
         }
         goto FreeAndContinue;
       }
 
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dumped " FORMAT_STR L" FW debug logs to file (" FORMAT_STR L")\n",
-            SourceNames[IndexSources], raw_file_name);
+            SourceNames[IndexSource], raw_file_name);
 
       /** Decode FW debug log **/
       if (dictExists) {
@@ -267,6 +271,7 @@ DumpDebugCommand(
       SuccessesPerDimm[Index]++;
 
 FreeAndContinue:
+
       FREE_POOL_SAFE(raw_file_name);
       FREE_POOL_SAFE(decoded_file_name);
       FREE_POOL_SAFE(RawLogBuffer);
@@ -302,6 +307,7 @@ Finish:
       ReturnCode = EFI_DEVICE_ERROR;
     }
   }
+
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

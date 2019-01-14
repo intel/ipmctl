@@ -341,7 +341,7 @@ typedef union {
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: 0x%x", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
       goto Label;                                             \
     }                                                         \
   } while (0)
@@ -350,7 +350,7 @@ typedef union {
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: 0x%x", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
     }                                                         \
   } while (0)
 

@@ -311,52 +311,7 @@ GetDimmByIndex(
 }
 
 /**
-  Get DIMM by Smbus address in global structure
 
-  @param[in] Address - Smbus address of Dimm
-  @param[in] pDimms - The head of the dimm list
-
-  @retval Found Dimm or NULL
-**/
-DIMM *
-GetDimmBySmbusAddress(
-  IN     SMBUS_DIMM_ADDR Address,
-  IN     LIST_ENTRY *pDimms
-  )
-{
-  DIMM *pCurDimm = NULL;
-  DIMM *pTargetDimm = NULL;
-  LIST_ENTRY *pCurDimmNode = NULL;
-  UINT32 Slot = 0;
-
-  NVDIMM_ENTRY();
-
-  if (pDimms == NULL) {
-    goto Finish;
-  }
-
-  LIST_FOR_EACH(pCurDimmNode, pDimms) {
-    pCurDimm = DIMM_FROM_NODE(pCurDimmNode);
-
-    // NfitDeviceHandle is bit struct, no data los in here
-    Slot = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemChannel * SLOTS_PER_CHANNEL +
-        pCurDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
-
-    if ((NFIT_NODE_SOCKET_TO_SOCKET_INDEX (pCurDimm->DeviceHandle.NfitDeviceHandle.NodeControllerId,
-      pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId) == Address.Cpu) &&
-        (pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId == Address.Imc) &&
-        (Slot == Address.Slot)) {
-      pTargetDimm = pCurDimm;
-      break;
-    }
-  }
-
-Finish:
-  NVDIMM_EXIT();
-  return pTargetDimm;
-}
-
-/**
   Get max Dimm ID
   Scan the dimm list for a max Dimm ID
 
@@ -2959,6 +2914,7 @@ Finish:
   Firmware command to get debug logs size in MB
 
   @param[in] pDimm Target DIMM structure pointer
+  @param[in] UseSmbus - get the debug log over smbus
   @param[out] pLogSizeInMb - number of MB of Logs to be fetched
 
   @retval EFI_SUCCESS Success
@@ -2968,6 +2924,7 @@ Finish:
 EFI_STATUS
 FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
+  IN     BOOLEAN UseSmbus,
      OUT UINT64 *pLogSizeInMb
   )
 {
@@ -2996,8 +2953,16 @@ FwCmdGetFwDebugLogSize(
   pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
   pInputPayload->LogAction = ActionRetrieveDbgLogSize;
 
-  /** Get FW debug log page (in MBs) **/
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (UseSmbus) {
+#ifndef OS_BUILD
+    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
+#else
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+#endif // !OS_BUILD
+  } else {
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  }
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to get FW debug log size");
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -3017,6 +2982,7 @@ Finish:
 
   @param[in]  pDimm Target DIMM structure pointer
   @param[in]  LogSource Debug log source buffer to retrieve
+  @param[in]  UseSmbus - get the debug log over smbus
   @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
   @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
   @param[out] pCommandStatus structure containing detailed NVM error codes
@@ -3031,6 +2997,7 @@ EFI_STATUS
 FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
   IN     UINT8 LogSource,
+  IN     BOOLEAN UseSmbus,
      OUT VOID **ppDebugLogBuffer,
      OUT UINTN *pDebugLogBufferSize,
      OUT COMMAND_STATUS *pCommandStatus
@@ -3038,14 +3005,15 @@ FwCmdGetFwDebugLog (
 {
   FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT8 Index = 0;
+  UINT32 LogPageOffset = 0;
   UINT64 CurrentDebugLogSizeInMbs = 0;
   UINT64 LogSizeBytesToFetch = 0;
   PT_INPUT_PAYLOAD_FW_DEBUG_LOG *pInputPayload = NULL;
   UINT64 ChunkSize = 0;
-  UINT64 BytesToWrite = 0;
-  UINT64 BytesWritten = 0;
+  UINT64 BytesToCopy = 0;
+  UINT64 BytesReadTotal = 0;
   UINT8 LogAction = 0;
+  UINT8 *OutputPayload = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3065,7 +3033,7 @@ FwCmdGetFwDebugLog (
   {
     case FW_DEBUG_LOG_SOURCE_MEDIA:
       LogAction = ActionGetDbgLogPage;
-      ReturnCode = FwCmdGetFwDebugLogSize(pDimm, &CurrentDebugLogSizeInMbs);
+      ReturnCode = FwCmdGetFwDebugLogSize(pDimm, UseSmbus, &CurrentDebugLogSizeInMbs);
       if (EFI_ERROR(ReturnCode)) {
         if (ReturnCode == EFI_SECURITY_VIOLATION) {
           SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_INVALID_SECURITY_STATE);
@@ -3102,38 +3070,55 @@ FwCmdGetFwDebugLog (
     goto Finish;
   }
 
+  pFwCmd->Opcode = PtGetLog;
+  pFwCmd->SubOpcode = SubopFwDbg;
+  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
+  pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
+  pInputPayload->LogAction = LogAction;
+
   // Default for DDRT large payload transactions. 128 bytes for smbus
-  ChunkSize = MIB_TO_BYTES(1);
-
-  /** Fetch whole buffer, iterate by chunk size **/
-  Index = 0;
-  BytesWritten = 0;
-
-  while (BytesWritten < LogSizeBytesToFetch) {
-    ZeroMem(pFwCmd, sizeof(*pFwCmd));
-    pFwCmd->DimmID = pDimm->DimmID;
-    pFwCmd->Opcode = PtGetLog;
-    pFwCmd->SubOpcode = SubopFwDbg;
-    pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
+  if (UseSmbus) {
+    ChunkSize = SMALL_PAYLOAD_SIZE;
+    OutputPayload = pFwCmd->OutPayload;
+    pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_SMALL;
+    pFwCmd->OutputPayloadSize = SMALL_PAYLOAD_SIZE;
+    pFwCmd->LargeOutputPayloadSize = 0;
+  } else {
+    ChunkSize = MIB_TO_BYTES(1);
+    OutputPayload = pFwCmd->LargeOutputPayload;
+    pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_LARGE;
     pFwCmd->OutputPayloadSize = 0;
     pFwCmd->LargeOutputPayloadSize = OUT_MB_SIZE;
-    pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
-    pInputPayload->LogAction = LogAction;
-    pInputPayload->LogPageOffset = Index;
+  }
 
-    ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+  /** Fetch whole buffer, iterate by chunk size **/
+  LogPageOffset = 0;
+  BytesReadTotal = 0;
+  while (BytesReadTotal < LogSizeBytesToFetch) {
+
+    pInputPayload->LogPageOffset = LogPageOffset;
+    if (UseSmbus) {
+#ifndef OS_BUILD
+      ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#else
+      ReturnCode = EFI_UNSUPPORTED;
+      goto Finish;
+#endif // !OS_BUILD
+    } else {
+      ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+    }
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to get firmware debug log, LogPageOffset = %d\n", Index);
+      NVDIMM_WARN("Failed to get firmware debug log, LogPageOffset = %d\n", LogPageOffset);
       FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
       goto Finish;
     }
 
-    BytesToWrite = MIN(LogSizeBytesToFetch - BytesWritten, ChunkSize);
-    CopyMem_S((UINT8 *)*ppDebugLogBuffer + BytesWritten, BytesToWrite, pFwCmd->LargeOutputPayload, BytesToWrite);
-    Index++;
-    BytesWritten += BytesToWrite;
+    BytesToCopy = MIN(LogSizeBytesToFetch - BytesReadTotal, ChunkSize);
+    CopyMem_S((UINT8 *)*ppDebugLogBuffer + BytesReadTotal, BytesToCopy, OutputPayload, BytesToCopy);
+    LogPageOffset++;
+    BytesReadTotal += BytesToCopy;
   }
-  *(pDebugLogBufferSize) = BytesWritten;
+  *(pDebugLogBufferSize) = BytesReadTotal;
 
 
 Finish:

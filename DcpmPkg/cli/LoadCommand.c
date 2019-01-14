@@ -15,9 +15,6 @@
 #include "NvmDimmCli.h"
 #include "Common.h"
 
-#define PROGRESS_EVENT_TIMEOUT    EFI_TIMER_PERIOD_SECONDS(1)
-#define PRINT_PRIORITY            8
-
  /**
    Command syntax definition
  **/
@@ -87,7 +84,6 @@ Load(
   BOOLEAN Examine = FALSE;
   BOOLEAN Force = FALSE;
   FW_IMAGE_INFO *pFwImageInfo = NULL;
-  BOOLEAN Confirmation = 0;
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -108,6 +104,7 @@ Load(
   UINT32 DimmTargetCount = 0;
   UINT32 CandidateListCount = 0;
   BOOLEAN TargetsIsNewList = FALSE;
+  BOOLEAN Confirmation = 0;
   EFI_STATUS ReturnCodes[MAX_DIMMS];
   NVM_STATUS NvmCodes[MAX_DIMMS];
   NVM_STATUS generalNvmStatus = NVM_SUCCESS;
@@ -328,19 +325,6 @@ Load(
 
     Print(L"\n");
   }
-
-
-  if (Recovery && !Examine) {
-    // Warn about disabling TSOD for SMBUS operations
-    Print(CLI_RECOVER_DIMM_TSOD_REMINDER_STR);
-
-    ReturnCode = PromptYesNo(&Confirmation);
-    if (EFI_ERROR(ReturnCode) || !Confirmation) {
-      ReturnCode = EFI_NOT_STARTED;
-      goto Finish;
-    }
-  }
-
 
   /**
     In this case the user could have typed "FS0:\..."

@@ -9,7 +9,7 @@
 #include <Guid/Acpi.h>
 #include "NvmDimmConfig.h"
 #ifndef OS_BUILD
-#include "DcpmmFis.h"
+#include <Dcpmm.h>
 #endif
 #include "NvmTypes.h"
 #include <AcpiParsing.h>
@@ -7751,10 +7751,11 @@ GetFwDebugLog(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
+  BOOLEAN UseSmbus = FALSE;
   NVDIMM_ENTRY();
 
   if (pThis == NULL || ppDebugLogBuffer == NULL || pDebugLogBufferSize == NULL ||
-      pCommandStatus == NULL || Reserved != 0 || LogSource > FW_DEBUG_LOG_SOURCE_MAX) {
+    pCommandStatus == NULL || Reserved != 0 || LogSource > FW_DEBUG_LOG_SOURCE_MAX) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;
   }
@@ -7766,21 +7767,32 @@ GetFwDebugLog(
   }
 
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
+#ifndef OS_BUILD
+  if (pDimm == NULL) {
+    pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
+    if (pDimm != NULL) {
+      UseSmbus = TRUE;
+    }
+  }
+#endif // OS_BUILD
+  // If we still can't find the dimm, fail out
   if (pDimm == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
     goto Finish;
   }
 
-  if (!IsDimmManageable(pDimm)) {
+  if (!UseSmbus && !IsDimmManageable(pDimm)) {
     SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, NULL, 0, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetFwDebugLog(pDimm, LogSource, ppDebugLogBuffer, pDebugLogBufferSize, pCommandStatus);
+  ReturnCode = FwCmdGetFwDebugLog(pDimm, LogSource, UseSmbus, ppDebugLogBuffer, pDebugLogBufferSize, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_SECURITY_VIOLATION) {
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE);
+    } else if (ReturnCode == EFI_NO_MEDIA) {
+      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_MEDIA_DISABLED);
     } else {
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_OPERATION_FAILED);
     }
@@ -8137,7 +8149,7 @@ FillDimmList(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   EFI_STATUS TmpReturnCode = EFI_SUCCESS;
-  NvmStatusCode StatusCode= NVM_SUCCESS;
+  NvmStatusCode StatusCode = NVM_SUCCESS;
   LIST_ENTRY *pNode = NULL;
   DIMM *pCurDimm = NULL;
   DIMM *pPrevDimm = NULL;
@@ -8169,6 +8181,17 @@ FillDimmList(
       }
     }
     pPrevDimm = pCurDimm;
+  }
+
+  // Fill in smbus address for functional dimms too
+  // Derive from NFIT properties
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pCurDimm = DIMM_FROM_NODE(pNode);
+    pCurDimm->SmbusAddress.Cpu = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId);
+    pCurDimm->SmbusAddress.Imc = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
+    pCurDimm->SmbusAddress.Slot =
+        (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
+        pCurDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
   }
 
   NVDIMM_DBG("Found %d DCPMMs", ListSize);
@@ -10065,10 +10088,10 @@ LoadArsList(
 {
   UINT32 x = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_STATUS FisOpenReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_FIS_PROTOCOL * pNvmDimmFisProtocol = NULL;
+  EFI_STATUS DcpmmProtocolOpenReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_PROTOCOL * pDcpmmProtocol = NULL;
   static BOOLEAN sListAlreadyLoaded = FALSE;
-  static EFI_GUID sNvmDimmFisProtocolGuid = EFI_DCPMM_FIS_GUID;
+  static EFI_GUID sDcpmmProtocolGuid = EFI_DCPMM_GUID;
   static DCPMM_ARS_ERROR_RECORD * sArsBadRecords = NULL;
   static UINT32 sArsBadRecordsCount = 0;
 
@@ -10080,14 +10103,13 @@ LoadArsList(
   }
 
   /*If the FIS protocol isn't in place, allow the call to exit without distruption*/
-  FisOpenReturnCode = gBS->LocateProtocol(&sNvmDimmFisProtocolGuid, NULL, (VOID **)&pNvmDimmFisProtocol);
-  if (EFI_ERROR(FisOpenReturnCode)) {
-    ReturnCode = EFI_PROTOCOL_ERROR;
-    if (FisOpenReturnCode == EFI_NOT_FOUND) {
-      NVDIMM_WARN("FIS protocol not found");
+  DcpmmProtocolOpenReturnCode = gBS->LocateProtocol(&sDcpmmProtocolGuid, NULL, (VOID **)&pDcpmmProtocol);
+  if (EFI_ERROR(DcpmmProtocolOpenReturnCode)) {
+    if (DcpmmProtocolOpenReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_WARN("Dcpmm protocol not found");
     }
     else {
-      NVDIMM_WARN("Communication with the device driver failed (fis protocol)");
+      NVDIMM_WARN("Communication with the device driver failed (dcpmm protocol)");
     }
     goto Finish;
   }
@@ -10096,7 +10118,7 @@ LoadArsList(
 
     //First check how many records exist by passing NULL
     sArsBadRecordsCount = 0;
-    ReturnCode = pNvmDimmFisProtocol->DcpmmArsStatus(&sArsBadRecordsCount, NULL);
+    ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, NULL);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Could not obtain the ARS bad address list count");
       sArsBadRecordsCount = 0;
@@ -10113,7 +10135,7 @@ LoadArsList(
         goto Finish;
       }
 
-      ReturnCode = pNvmDimmFisProtocol->DcpmmArsStatus(&sArsBadRecordsCount, sArsBadRecords);
+      ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, sArsBadRecords);
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Could not obtain the ARS bad address list");
         FreePool(sArsBadRecords);

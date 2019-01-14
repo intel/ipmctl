@@ -71,6 +71,9 @@
 #define PT_LONG_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_MILLISECONDS(150)
 #define PT_UPDATEFW_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_SECONDS(4)
 
+#define DEBUG_LOG_PAYLOAD_TYPE_LARGE 0
+#define DEBUG_LOG_PAYLOAD_TYPE_SMALL 1
+
 //
 // Translate between the NFIT device handle node/socket pair and an absolute socket index
 // The 4 bit Socket ID field allows a maximum of 16 sockets per node
@@ -417,21 +420,6 @@ GetDimmByIndex(
   IN     struct _PMEM_DEV *pDev
   );
 
-
-/**
-  Get DIMM by Smbus address in global structure
-
-  @param[in] Address - Smbus address of Dimm
-  @param[in] pDimms - The head of the dimm list
-
-  @retval Found Dimm or NULL
-**/
-DIMM *
-GetDimmBySmbusAddress(
-  IN     SMBUS_DIMM_ADDR Address,
-  IN     LIST_ENTRY *pDimms
-  );
-
 /**
   Get max Dimm ID
   Scan the dimm list for a max Dimm ID
@@ -754,6 +742,7 @@ FwCmdGetErrorLog (
 
   @param[in]  pDimm Target DIMM structure pointer
   @param[in]  LogSource Debug log source buffer to retrieve
+  @param[in]  UseSmbus - get the debug log over smbus
   @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
   @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
   @param[out] pCommandStatus structure containing detailed NVM error codes
@@ -768,6 +757,7 @@ EFI_STATUS
 FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
   IN     UINT8 LogSource,
+  IN     BOOLEAN UseSmbus,
      OUT VOID **ppDebugLogBuffer,
      OUT UINTN *pDebugLogBufferSize,
      OUT COMMAND_STATUS *pCommandStatus
@@ -777,6 +767,7 @@ FwCmdGetFwDebugLog (
   Firmware command to get debug logs size in MB
 
   @param[in] pDimm Target DIMM structure pointer
+  @param[in]  UseSmbus - get the debug log size over smbus
   @param[out] pLogSizeInMb - number of MB of Logs to be fetched
 
   @retval EFI_SUCCESS Success
@@ -786,6 +777,7 @@ FwCmdGetFwDebugLog (
 EFI_STATUS
 FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
+  IN     BOOLEAN UseSmbus,
      OUT UINT64 *pLogSizeInMb
   );
 /**

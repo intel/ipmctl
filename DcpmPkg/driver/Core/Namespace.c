@@ -1978,6 +1978,7 @@ RetrieveNamespacesFromLsa(
   BOOLEAN BttFound = FALSE;
   BOOLEAN PfnFound = FALSE;
   UINT64 RawCapacity = 0;
+  BOOLEAN NamespaceIsPoisoned = FALSE;
   BOOLEAN Use_Namespace1_1 = FALSE;
   EFI_GUID ZeroGuid;
 
@@ -2268,8 +2269,8 @@ RetrieveNamespacesFromLsa(
 #endif
 
         LabelsFound++;
-        NVDIMM_DBG("Label (%d/%d) of App Direct Namespace %g found",
-            LabelsFound, pNamespaceLabel->NumberOfLabels, pNamespace->NamespaceGuid);
+        NVDIMM_DBG("Label (%d/%d) of App Direct Namespace %g foundDPA = 0x%lx",
+          LabelsFound, pNamespaceLabel->NumberOfLabels, pNamespace->NamespaceGuid, pNamespaceLabel2->Dpa);
         pNamespace->Range[pNamespace->RangesCount].Dpa = pNamespaceLabel2->Dpa;
         pNamespace->Range[pNamespace->RangesCount].Size = pNamespaceLabel2->RawSize;
         pNamespace->Range[pNamespace->RangesCount].pDimm = pDimm;
@@ -2290,9 +2291,20 @@ RetrieveNamespacesFromLsa(
         pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
       }
 
-      if (pNamespace->pParentIS != NULL && pNamespace->HealthState != NAMESPACE_HEALTH_OK) {
-        if (pNamespace->pParentIS->State != IS_STATE_HEALTHY) {
-          switch (pNamespace->pParentIS->State) {
+#ifndef OS_BUILD
+      NamespaceIsPoisoned = FALSE;
+      NVDIMM_DBG("Namespace found: pNamespace->SpaNamespaceBase = 0x%llx, pNamespace->UsableSize = 0x%llx", pNamespace->SpaNamespaceBase, pNamespace->UsableSize);
+      if (EFI_DEVICE_ERROR == IsAddressRangeInArsList(pNamespace->SpaNamespaceBase, pNamespace->UsableSize)) {
+        NVDIMM_DBG("This namespace collides with an address in the ARS list");
+        pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
+        NamespaceIsPoisoned = TRUE;
+      }
+#endif
+
+      if (FALSE == NamespaceIsPoisoned) {
+        if (pNamespace->pParentIS != NULL && pNamespace->HealthState != NAMESPACE_HEALTH_OK) {
+          if (pNamespace->pParentIS->State != IS_STATE_HEALTHY) {
+            switch (pNamespace->pParentIS->State) {
             case IS_STATE_INIT_FAILURE:
             case IS_STATE_DIMM_MISSING:
               if (pNamespace->pParentIS->MirrorEnable) {
@@ -2306,13 +2318,14 @@ RetrieveNamespacesFromLsa(
             default:
               pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
               break;
+            }
           }
+        } else if (pNamespace->pParentIS == NULL) {
+          // We will hit this case if there are no IS in the system or if we couldn't find any IS
+          // with a valid cookie to match the labels.
+          FREE_POOL_SAFE(pNamespace);
+          continue;
         }
-      } else if (pNamespace->pParentIS == NULL) {
-        // We will hit this case if there are no IS in the system or if we couldn't find any IS
-        // with a valid cookie to match the labels.
-        FREE_POOL_SAFE(pNamespace);
-        continue;
       }
 
       // Sanity check
@@ -5707,6 +5720,13 @@ IsAddressRangeInArsList(
   NVDIMM_ENTRY();
 
   ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
+  if (EFI_PROTOCOL_ERROR == ReturnCode)
+  {
+    ReturnCode = EFI_SUCCESS;
+    NVDIMM_DBG("Failed to load the ARS list (protocol missing?) Cannot check for collisions.\n");
+    goto Finish;
+  }
+
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Failed to load the ARS list. Cannot check for collisions.\n");
     goto Finish;
@@ -5722,6 +5742,9 @@ IsAddressRangeInArsList(
     for (Index = 0; Index < ArsBadRecordsCount; Index++) {
       BadBlockStart = ArsBadRecords[Index].SpaOfErrLoc;
       BadBlockEnd = ArsBadRecords[Index].SpaOfErrLoc + ArsBadRecords[Index].Length - 1;
+
+      NVDIMM_DBG("Checking address 0x%llx, len 0x%llx against bad ARS address 0x%llx, len 0x%llx", Address, Length, ArsBadRecords[Index].SpaOfErrLoc, ArsBadRecords[Index].Length);
+
       if ((CheckBlockStart >= BadBlockStart   && CheckBlockStart <= BadBlockEnd)   || //the request starts at an address in the bad range
           (CheckBlockStart >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd)   || //the request fits entirly in a bad range
           (BadBlockStart   >= CheckBlockStart && BadBlockEnd     <= CheckBlockEnd) || //the bad range fits entirely in the check range

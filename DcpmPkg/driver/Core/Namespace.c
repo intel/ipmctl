@@ -1315,10 +1315,12 @@ ReadLabelStorageArea(
     // At first read the Index size only form the beginning of the LSA
     IndexSize = sizeof((*ppLsa)->Index);
     ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
-    // Read the IndexSize again plus 2 times siez of the Free Mask starting at the end of the previoues read
-    Offset = IndexSize;
-    IndexSize += 2 * LABELS_TO_FREE_BYTES(ROUNDUP(((LABEL_STORAGE_AREA *)pRawData)->Index[0].NumberOfLabels, NSINDEX_FREE_ALIGN));
-    ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
+    if (EFI_SUCCESS == ReturnCode) {
+      // Read the IndexSize again plus 2 times siez of the Free Mask starting at the end of the previoues read
+      Offset = IndexSize;
+      IndexSize += 2 * LABELS_TO_FREE_BYTES(ROUNDUP(((LABEL_STORAGE_AREA *)pRawData)->Index[0].NumberOfLabels, NSINDEX_FREE_ALIGN));
+      ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
+    }
   }
   else {
     ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID, &pRawData);
@@ -1907,7 +1909,7 @@ CompareDpaInRange(
     return 0;
   }
 }
-
+#ifndef OS_BUILD
 /**
   Recover a partially updated namespace label set
   Clear the updating bit and use the name from label in pos 0
@@ -2036,7 +2038,7 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
+#endif // OS_BUID
 /**
   Retrieve Namespaces information from provided LSA structure.
 
@@ -2245,7 +2247,7 @@ RetrieveNamespacesFromLsa(
         NVDIMM_DBG("Unexpected TypeGuid for AppDirect NS");
         continue;
       }
-
+#ifndef OS_BUILD
       // Iterate over DIMMs to check for partial update
       LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
         pDimm = DIMM_FROM_NODE(pNode);
@@ -2276,7 +2278,7 @@ RetrieveNamespacesFromLsa(
         }
         FREE_POOL_SAFE(pNamespaceLabel2);
       }
-
+#endif // OS_BUILD
       // Iterate over DIMMs to collect labels to assemble AppDirect NS
       LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
         pDimm = DIMM_FROM_NODE(pNode);

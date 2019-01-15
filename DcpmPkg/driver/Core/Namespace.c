@@ -1284,6 +1284,16 @@ ReadLabelStorageArea(
   UINT8 *pTo = NULL;
   UINT8 *pFrom = NULL;
   UINT32 Index = 0;
+  UINT32 IndexSize = 0;
+  UINT32 Offset = 0;
+  UINT32 AlignPageIndex = 0;
+  UINT32 PageSize = 0;
+  UINT8 PageIndexMask = 0;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
+#else
+  BOOLEAN UseSmallPayload = FALSE;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -1300,7 +1310,19 @@ ReadLabelStorageArea(
   }
 
   NVDIMM_DBG("Reading LSA for DIMM %x ...", pDimm->DeviceHandle.AsUint32);
-  ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID, &pRawData);
+
+  if (UseSmallPayload) {
+    // At first read the Index size only form the beginning of the LSA
+    IndexSize = sizeof((*ppLsa)->Index);
+    ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
+    // Read the IndexSize again plus 2 times siez of the Free Mask starting at the end of the previoues read
+    Offset = IndexSize;
+    IndexSize += 2 * LABELS_TO_FREE_BYTES(ROUNDUP(((LABEL_STORAGE_AREA *)pRawData)->Index[0].NumberOfLabels, NSINDEX_FREE_ALIGN));
+    ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
+  }
+  else {
+    ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID, &pRawData);
+  }
   if (ReturnCode == EFI_NO_MEDIA) {
     goto Finish;
   }
@@ -1352,19 +1374,50 @@ ReadLabelStorageArea(
   }
 
   // Copy the Label area
-  if (UseNamespace1_1) {
-    pTo = (UINT8 *) (*ppLsa)->pLabels;
-    pFrom = pRawData + LabelIndexSize;
-
-    for (Index = 0; Index < (*ppLsa)->Index[CurrentIndex].NumberOfLabels; Index++) {
-      CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
-      pTo += sizeof(*((*ppLsa)->pLabels));
-      pFrom += sizeof(NAMESPACE_LABEL_1_1);
+  if (UseSmallPayload) {
+    // Copy the Label area
+    if (UseNamespace1_1) {
+      PageSize = sizeof(NAMESPACE_LABEL_1_1);
     }
-  } else {
-    CopyMem_S((*ppLsa)->pLabels, LabelSize, pRawData + LabelIndexSize, LabelSize);
-  }
+    else {
+      PageSize = sizeof(NAMESPACE_LABEL);
+    }
 
+    for (AlignPageIndex = 0; AlignPageIndex < (*ppLsa)->Index[CurrentIndex].NumberOfLabels; AlignPageIndex += NSINDEX_FREE_ALIGN) {
+      // Check if we have any namespaces defined for these slots
+      if ((*ppLsa)->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)] != FREE_BLOCKS_MASK_ALL_SET) {
+        // Find the label to read
+        for(PageIndexMask = (*ppLsa)->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)], Index = 0;
+          PageIndexMask != 0; PageIndexMask >>= 1, Index++) {
+          if (BIT0 != (PageIndexMask & BIT0)) {
+            // Calculate the offest to read, one label per read only
+            Offset = (UINT32)(LabelIndexSize + (PageSize * (AlignPageIndex + Index)));
+            // Read data
+            ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, PageSize, &pRawData);
+            // Copy data to the LSA struct
+            pFrom = pRawData + Offset;
+            pTo = ((UINT8 *)(*ppLsa)->pLabels) + (sizeof(NAMESPACE_LABEL) * (AlignPageIndex + Index));
+            CopyMem_S(pTo, PageSize, pFrom, PageSize);
+          }
+        }
+      }
+    }
+  }
+  else {
+    if (UseNamespace1_1) {
+      pTo = (UINT8 *)(*ppLsa)->pLabels;
+      pFrom = pRawData + LabelIndexSize;
+
+      for (Index = 0; Index < (*ppLsa)->Index[CurrentIndex].NumberOfLabels; Index++) {
+        CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
+        pTo += sizeof(*((*ppLsa)->pLabels));
+        pFrom += sizeof(NAMESPACE_LABEL_1_1);
+      }
+        }
+    else {
+      CopyMem_S((*ppLsa)->pLabels, LabelSize, pRawData + LabelIndexSize, LabelSize);
+    }
+  }
   ReturnCode = EFI_SUCCESS;
 
   goto Finish;
@@ -1401,15 +1454,23 @@ WriteLabelStorageArea(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
   UINT8 *pRawData = NULL;
-  UINT16 CurrentIndex = 0;
   UINT64 TotalPcdSize = 0;
-  UINT64 LabelIndexSize = 0;
+  UINT8 *pTo = NULL;
+  UINT32 Index = 0;
   UINT64 LabelSize = 0;
+  UINT16 CurrentIndex = 0;
+  UINT64 LabelIndexSize = 0;
   UINT8 *pIndexArea = NULL;
   BOOLEAN UseNamespace_1_1 = FALSE;
-  UINT8 *pTo = NULL;
   UINT8 *pFrom = NULL;
-  UINT32 Index = 0;
+  UINT32 AlignPageIndex = 0;
+  UINT32 PageSize = 0;
+  UINT8 PageIndexMask = 0;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
+#else
+  BOOLEAN UseSmallPayload = FALSE;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -1438,10 +1499,12 @@ WriteLabelStorageArea(
      UseNamespace_1_1 = TRUE;
   }
 
-  pRawData = AllocateZeroPool(TotalPcdSize);
-  if (pRawData == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+  if (FALSE == UseSmallPayload) {
+    pRawData = AllocateZeroPool(TotalPcdSize);
+    if (pRawData == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
   }
 
   ReturnCode = LabelIndexAreaToRawData(pLsa, ALL_INDEX_BLOCKS, &pIndexArea);
@@ -1451,29 +1514,65 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  // Copy the Label index area
-  CopyMem_S(pRawData, TotalPcdSize, pIndexArea, LabelIndexSize);
-
-  // Copy the label area
-  if (UseNamespace_1_1) {
-    pFrom = (UINT8 *) pLsa->pLabels;
-    pTo = pRawData + LabelIndexSize;
-
-    for (Index = 0; Index < pLsa->Index[CurrentIndex].NumberOfLabels; Index++) {
-      CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
-      pFrom += sizeof(*(pLsa->pLabels));
-      pTo += sizeof(NAMESPACE_LABEL_1_1);
+  if (UseSmallPayload) {
+    // Copy the Label index area
+    ReturnCode = FwSetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, pIndexArea, 0, (UINT32)LabelIndexSize);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
     }
-  } else {
-    CopyMem_S(pRawData + LabelIndexSize, TotalPcdSize - LabelIndexSize, pLsa->pLabels, LabelSize);
-  }
 
-  NVDIMM_DBG("Writing LSA to DIMM %x ...", pDimm->DeviceHandle.AsUint32);
-  ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID,
-    pRawData, pDimm->PcdLsaPartitionSize);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("FwCmdSetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
-    goto Finish;
+    // Copy the Label area
+    if (UseNamespace_1_1) {
+      PageSize = sizeof(NAMESPACE_LABEL_1_1);
+    }
+    else {
+      PageSize = sizeof(NAMESPACE_LABEL);
+    }
+
+    for (AlignPageIndex = 0; AlignPageIndex < pLsa->Index[CurrentIndex].NumberOfLabels; AlignPageIndex += NSINDEX_FREE_ALIGN) {
+      // Check if we have at least one namespace to copy
+      if (pLsa->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)] != FREE_BLOCKS_MASK_ALL_SET) {
+        // Find the label to write
+        for (PageIndexMask = pLsa->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)], Index = 0;
+          PageIndexMask != 0; PageIndexMask >>= 1, Index++) {
+          if (BIT0 != (PageIndexMask & BIT0)) {
+            // Calculate the offset to write, one label per write only
+            pFrom = ((UINT8 *)(pLsa->pLabels) + (sizeof(NAMESPACE_LABEL) * (AlignPageIndex + Index)));
+            ReturnCode = FwSetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, pFrom, (UINT32)(LabelIndexSize + (PageSize * (AlignPageIndex + Index))), PageSize);
+            if (EFI_ERROR(ReturnCode)) {
+              goto Finish;
+            }
+          }
+        }
+      }
+    }
+  }
+  else {
+    // Copy the Label index area
+    CopyMem_S(pRawData, TotalPcdSize, pIndexArea, LabelIndexSize);
+
+    // Copy the label area
+    if (UseNamespace_1_1) {
+      pFrom = (UINT8 *)pLsa->pLabels;
+      pTo = pRawData + LabelIndexSize;
+
+      for (Index = 0; Index < pLsa->Index[CurrentIndex].NumberOfLabels; Index++) {
+        CopyMem_S(pTo, sizeof(NAMESPACE_LABEL_1_1), pFrom, sizeof(NAMESPACE_LABEL_1_1));
+        pFrom += sizeof(*(pLsa->pLabels));
+        pTo += sizeof(NAMESPACE_LABEL_1_1);
+      }
+    }
+    else {
+      CopyMem_S(pRawData + LabelIndexSize, TotalPcdSize - LabelIndexSize, pLsa->pLabels, LabelSize);
+    }
+
+    NVDIMM_DBG("Writing LSA to DIMM %x ...", pDimm->DeviceHandle.AsUint32);
+    ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID,
+      pRawData, pDimm->PcdLsaPartitionSize);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FwCmdSetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
+      goto Finish;
+    }
   }
 
 Finish:
@@ -3938,11 +4037,13 @@ InitializeLabelStorageArea(
     goto Finish;
   }
 
+#ifndef OS_BUILD
   ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
   if (ReturnCode != EFI_NOT_FOUND) {
     // Here we have a validated LSA or a corrupted LSA, just pass the result up
     goto Finish;
   }
+#endif // OS_BUILD
 
   /**
     If ReadLabelStorageArea fails to validate the DIMM LSA, it frees the buffer
@@ -4099,6 +4200,7 @@ InitializeAllLabelStorageAreas(
       continue;
     }
 
+#ifndef OS_BUILD
     if (ppDimms[Index]->LsaStatus != LSA_NOT_INIT) {
       ReturnCode = ZeroLabelStorageArea(ppDimms[Index]->DimmID);
       if (EFI_ERROR(ReturnCode)) {
@@ -4108,6 +4210,7 @@ InitializeAllLabelStorageAreas(
         goto Finish;
       }
     }
+#endif // OS_BUILD
 
     ReturnCode = InitializeLabelStorageArea(ppDimms[Index], LabelVersionMajor, LabelVersionMinor);
     if (EFI_ERROR(ReturnCode)) {

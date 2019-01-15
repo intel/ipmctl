@@ -279,6 +279,16 @@ typedef struct _MEMMAP_RANGE {
 #define MEMMAP_RANGE_SIGNATURE     SIGNATURE_64('M', 'M', 'A', 'P', 'R', 'N', 'G', 'E')
 #define MEMMAP_RANGE_FROM_NODE(a)  CR(a, MEMMAP_RANGE, MemmapNode, MEMMAP_RANGE_SIGNATURE)
 
+#ifdef OS_BUILD
+#define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
+/*
+* Function get the ini configuration only on the first call
+*
+* It returns TRUE in case of large payload access is disabled and FALSE otherwise
+*/
+BOOLEAN config_is_large_payload_disabled();
+#endif // OS_BUILD
+
 EFI_STATUS
 DimmInit(
   IN     struct _PMEM_DEV *pDev
@@ -793,6 +803,30 @@ FwCmdDeviceCharacteristics (
   );
 
 /**
+  Firmware command access/read Platform Config Data using small payload only.
+
+  The function allows to specify the requested data offset and the size.
+  The function is going to allocate the ppRawData buffer if it is not allocated.
+  The buffer's minimal size is the size of the Partition!
+
+  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+  @param[in] PartitionId Partition number to get data from
+  @param[in] ReqOffset Data read starting point
+  @param[in] ReqDataSize Number of bytes to read
+  @param[out] Pointer to the buffer pointer for storing retrieved data
+
+  @retval EFI_SUCCESS Success
+  @retval Error code
+**/
+EFI_STATUS
+FwGetPCDFromOffsetSmallPayload(
+  IN  DIMM *pDimm,
+  IN  UINT8 PartitionId,
+  IN  UINT32 ReqOffset,
+  IN  UINT32 ReqDataSize,
+  OUT UINT8 **ppRawData);
+
+/**
   Firmware command get Platform Config Data.
   Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
@@ -814,30 +848,6 @@ FwCmdGetPlatformConfigData(
   );
 
 /**
-Firmware command get Platform Config Data.
-Execute a FW command to get information about DIMM regions and REGIONs configuration.
-
-The caller is responsible for a memory deallocation of the ppPlatformConfigData
-
-@param[in] pDimm The Intel NVM Dimm to retrieve identity info on
-@param[in] PartitionId Partition number to get data from
-@param[in] DataOffset Data read starting point
-@param[in] DataSize Number of bytes to read
-@param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
-
-@retval EFI_SUCCESS: Success
-@retval EFI_OUT_OF_RESOURCES: memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetPcdDataFromOffset(
-	IN     DIMM *pDimm,
-	IN     UINT8 PartitionId,
-	IN     UINT32 *pDataOffset,
-	IN     UINT32 *pDataSize,
-	OUT    UINT8 *ppRawData
-);
-
-/**
   Firmware command to get the PCD size
 
   @param[in] pDimm The target DIMM
@@ -854,6 +864,29 @@ FwCmdGetPlatformConfigDataSize (
   IN     UINT8 PartitionId,
      OUT UINT32 *pPcdSize
   );
+
+/**
+  Firmware command access/write Platform Config Data using small payload only.
+
+  The function allows to specify the requested data offset and the size.
+  The buffer's minimal size is the size of the Partition!
+
+  @param[in] pDimm The Intel NVM Dimm to send Platform Config Data to
+  @param[in] PartitionId Partition number for data to be send to
+  @param[in] pRawData Pointer to a data buffer that will be sent to the DIMM
+  @param[in] ReqOffset Data write starting point
+  @param[in] ReqDataSize Number of bytes to write
+
+  @retval EFI_SUCCESS Success
+  @retval Error code
+**/
+EFI_STATUS
+FwSetPCDFromOffsetSmallPayload(
+  IN  DIMM *pDimm,
+  IN  UINT8 PartitionId,
+  IN  UINT8 *pRawData,
+  IN  UINT32 ReqOffset,
+  IN  UINT32 ReqDataSize);
 
 /**
   Firmware command set Platform Config Data.

@@ -28,6 +28,9 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
 #define MAX_SHELL_PROTOCOL_HANDLES  2
 
+#define PROGRESS_EVENT_TIMEOUT    EFI_TIMER_PERIOD_SECONDS(1)
+#define PRINT_PRIORITY            8
+
 // FW log level string values
 #define FW_LOG_LEVEL_DISABLED_STR   L"Disabled"
 #define FW_LOG_LEVEL_ERROR_STR      L"Error"
@@ -160,7 +163,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
 #define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
 #define CLI_INFO_ON                                           L" on"
-#define CLI_PROGRESS_STR                                      L"\rLoad firmware on DIMM (0x%04x) Progress: %d%%"
+#define CLI_PROGRESS_STR                                      L"\rOperation on DIMM (0x%04x) Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"
 #define CLI_INJECT_MFG                                        L"MFG Inject command"
@@ -195,7 +198,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM [" FORMAT_STR L"]?"
 
 #define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm: "
-#define CLI_RECOVER_DIMM_TSOD_REMINDER_STR                    L"Warning: Make sure TSOD polling is disabled!\n"
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
 #define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
@@ -251,16 +253,22 @@ GetDimmList(
   );
 
 /**
-  Retrieve a populated array and count of all DIMMs (initiliazed and uninitialized in the system. The caller is
-  responsible for freeing the returned array
+  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
-  @param[out] ppDimms A pointer to the dimm list found in NFIT.
-  @param[out] pDimmCount A pointer to the number of DIMMs found in NFIT.
+  @param[out] ppDimms A pointer to a combined DCPMM list (initialized and
+              uninitialized) from NFIT. The initialized DIMM_INFO entries
+              occur first, then the uninitialized DIMM_INFO entries. So
+              0 to pInitializedDimmCount-1 = initialized dimms, and
+              pInitializedDimmCount to pDimmCount - 1 contain the uninitialized entries
+  @param[out] pDimmCount A pointer to the total number of DCPMMs found in NFIT.
+  @param[out] pInitializedDimmCount A pointer to the number of initialized DCPMMs in ppDimms
+  @param[out] pUninitializedDimmCount A pointer to the number of uninitialized DCPMMs in ppDimms.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -273,7 +281,9 @@ GetAllDimmList(
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
-  OUT UINT32 *pDimmCount
+  OUT UINT32 *pDimmCount,
+  OUT UINT32 *pInitializedDimmCount,
+  OUT UINT32 *pUninitializedDimmCount
 );
 
 /**

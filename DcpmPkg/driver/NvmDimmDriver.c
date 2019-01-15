@@ -19,6 +19,7 @@
 #include <Dimm.h>
 #include <Convert.h>
 #include <Protocol/NvdimmLabel.h>
+#include <ProcessorAndTopologyInfo.h>
 #ifndef OS_BUILD
 #include <Smbus.h>
 #endif
@@ -280,6 +281,13 @@ NvmDimmDriverUnload(
   /** Disable recording AllocatePool and FreePool occurrences, print list and clear it **/
   FlushPointerTrace((CHAR16 *)__WFUNCTION__);
 #endif
+
+  TempReturnCode = UninitializeSmbusAccess();
+  if (EFI_ERROR(TempReturnCode)) {
+    FIRST_ERR(ReturnCode, TempReturnCode);
+    NVDIMM_DBG("Failed to uninstall smbus access, error = 0x%llx.", TempReturnCode);
+  }
+
 
   if (EFI_ERROR(ReturnCode) && DriverAlreadyUnloaded) {
     NVDIMM_WARN("The driver was not properly initialized or was unloaded before, error = " FORMAT_EFI_STATUS ".", TempReturnCode);
@@ -706,6 +714,7 @@ NvmDimmDriverDriverEntryPoint(
     NVDIMM_WARN("Failed to install the EfiDriverHealthProtocol, error = 0x%llx.", ReturnCode);
     goto Finish;
   }
+
 #endif // UEFI
 Finish:
 #ifndef OS_BUILD
@@ -946,7 +955,7 @@ InitializeDimms()
    // For right now, this only fills in additional smbus information for
    // uninitialized dimms listed in the NFIT *only* (not any that aren't listed
    // in the NFIT)
-   ReturnCodeNonBlocking = FillUninitializedDimmList();
+   ReturnCodeNonBlocking = PopulateUninitializedDimmList();
    if (EFI_ERROR(ReturnCodeNonBlocking)) {
     NVDIMM_WARN("Failed on Smbus dimm list init, error = " FORMAT_EFI_STATUS ".", ReturnCodeNonBlocking);
    }
@@ -1422,6 +1431,13 @@ NvmDimmDriverDriverBindingStart(
    ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
    if (EFI_ERROR(ReturnCode)) {
      NVDIMM_WARN("Failed to load the ARS list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+   }
+
+   // Ignore return code as we don't want to block the ability to work
+   // with functional dimms
+   InitializeSmbusAccess();
+   if (EFI_ERROR(ReturnCode)) {
+     NVDIMM_WARN("Failed to start SMBUS access, error = 0x%llx.\nContinuing...", ReturnCode);
    }
 
   /**

@@ -132,16 +132,22 @@ Finish:
 
 
 /**
-  Retrieve a populated array and count of all DIMMs (initiliazed and uninitialized in the system. The caller is
-  responsible for freeing the returned array
+  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
-  @param[out] ppDimms A pointer to the dimm list found in NFIT.
-  @param[out] pDimmCount A pointer to the number of DIMMs found in NFIT.
+  @param[out] ppDimms A pointer to a combined DCPMM list (initialized and
+              uninitialized) from NFIT. The initialized DIMM_INFO entries
+              occur first, then the uninitialized DIMM_INFO entries. So
+              0 to pInitializedDimmCount-1 = initialized DCPMMs, and
+              pInitializedDimmCount to pDimmCount - 1 contain the uninitialized DCPMMs
+  @param[out] pDimmCount A pointer to the total number of DCPMMs found in NFIT.
+  @param[out] pInitializedDimmCount A pointer to the number of initialized DCPMMs in ppDimms
+  @param[out] pUninitializedDimmCount A pointer to the number of uninitialized DCPMMs in ppDimms.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -154,40 +160,42 @@ GetAllDimmList(
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
-  OUT UINT32 *pDimmCount
+  OUT UINT32 *pDimmCount,
+  OUT UINT32 *pInitializedDimmCount,
+  OUT UINT32 *pUninitializedDimmCount
 )
 {
-  UINT32 UninitializedDimmCount = 0;
-  UINT32 InitializedDimmCount = 0;
+
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   NVDIMM_ENTRY();
 
-  if (pNvmDimmConfigProtocol == NULL || ppDimms == NULL || pDimmCount == NULL || pCmd == NULL) {
+  if (pNvmDimmConfigProtocol == NULL || ppDimms == NULL || pDimmCount == NULL || pCmd == NULL ||
+      pInitializedDimmCount == NULL || pUninitializedDimmCount == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &InitializedDimmCount);
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, pInitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on GetDimmCount.");
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
+  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, pUninitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
 
-  if (0 == (InitializedDimmCount + UninitializedDimmCount)) {
+  if (0 == (*pInitializedDimmCount + *pUninitializedDimmCount)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     goto Finish;
   }
-  *pDimmCount = InitializedDimmCount + UninitializedDimmCount;
+  *pDimmCount = *pInitializedDimmCount + *pUninitializedDimmCount;
   *ppDimms = AllocateZeroPool(sizeof(**ppDimms) * (*pDimmCount));
 
   if (*ppDimms == NULL) {
@@ -197,14 +205,15 @@ GetAllDimmList(
   }
 
   /** retrieve the DIMM list **/
-  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, InitializedDimmCount, dimmInfoCategories, *ppDimms);
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, *pInitializedDimmCount, dimmInfoCategories, *ppDimms);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed to retrieve the DIMM inventory");
     goto FinishError;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, UninitializedDimmCount, *ppDimms + InitializedDimmCount);
+  // Append the uninitialized dimms after the initialized dimms in the dimms array
+  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, *pUninitializedDimmCount, &((*ppDimms)[*pInitializedDimmCount]));
 
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
@@ -2139,12 +2148,6 @@ PrintProgress(
   }
 
   pCommandStatus = (COMMAND_STATUS*)pContext;
-  BOOLEAN
-    EFIAPI
-    IsListEmpty(
-      IN      CONST LIST_ENTRY          *ListHead
-    );
-
   if (!IsListInitialized(pCommandStatus->ObjectStatusList) && !IsListEmpty(&pCommandStatus->ObjectStatusList)) {
     goto Finish;
   }

@@ -8,7 +8,7 @@
 #include <Types.h>
 #include "Namespace.h"
 #ifndef OS_BUILD
-#include "DcpmmFis.h"
+#include <Dcpmm.h>
 #endif
 #include <AcpiParsing.h>
 #include "Region.h"

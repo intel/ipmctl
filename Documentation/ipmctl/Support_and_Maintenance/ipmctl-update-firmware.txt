@@ -91,10 +91,6 @@ Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
   - The build number (bbbb) can be upgraded or downgraded. However, if the firmware
     API version in the firmware image is lower than is supported by the host software
     and would make the DCPMM become unmanageable, the downgrade is not supported.
-ifndef::os_build[]
-  - The recover option uses SMBus to communicate with the DCPMM and requires TSOD
-  to be disabled.
-endif::os_build[]
 
 NOTE: Once a firmware image is staged for execution, a power cycle is required
 before another firmware image of the same type (production or debug) can be

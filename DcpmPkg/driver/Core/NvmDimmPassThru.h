@@ -894,7 +894,8 @@ enum GetFWDebugLogLogAction {
 typedef struct {
   UINT8   LogAction;
   UINT32  LogPageOffset;
-  UINT8   Reserved[123];
+  UINT8   PayloadType;
+  UINT8   Reserved[122];
 } PT_INPUT_PAYLOAD_FW_DEBUG_LOG;
 
 typedef struct {

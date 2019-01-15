@@ -27,7 +27,7 @@
 #define ACTUAL_MODEL(value)    ((EXTENDED_MODEL(value) << 4)  | ((value >> 4) & 0xF))
 
 /* Get the topology and InterleaveSetMap Info based on the processor type
-  @param[out] OPTIONAL - number of iMCs per CPU.
+  @param[out] piMCNum OPTIONAL - number of iMCs per CPU.
   @param[out] pChannelNum OPTIONAL - number of channles per iMC
   @param[out] pDimmsperIMC OPTIONAL - number of dimms per iMC
   @param[out] ppInterleaveMap OPTIONAL- return InterleaveSetMap based on the processor type

@@ -695,10 +695,8 @@ GetNvDimmRegionTableForPid(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 Index = 0;
-#ifndef OS_BUILD
   SpaRangeTbl *pSpaRangeTbl = NULL;
   UINT16 SpaIndexInNvDimmRegion = 0;
-#endif // OS_BIULD
   BOOLEAN Found = FALSE;
 
   if (pFitHead == NULL || Pid == DIMM_PID_ALL || Pid == DIMM_PID_INVALID || ppNvDimmRegionTbl == NULL) {
@@ -712,7 +710,6 @@ GetNvDimmRegionTableForPid(
       continue;
     }
 
-#ifndef OS_BUILD
     SpaIndexInNvDimmRegion = pFitHead->ppNvDimmRegionTbles[Index]->SpaRangeDescriptionTableIndex;
     Found = TRUE;
 
@@ -730,9 +727,6 @@ GetNvDimmRegionTableForPid(
         Found = FALSE;
       }
     }
-#else // OS_BUILD
-    Found = TRUE;
-#endif // OS_BIULD
 
     if (Found) {
       *ppNvDimmRegionTbl = pFitHead->ppNvDimmRegionTbles[Index];

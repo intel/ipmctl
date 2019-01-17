@@ -152,6 +152,37 @@ typedef struct {
 // Copied March 2018 from spi_memory_map_ekvs1.h
 #define SPI_DIRECTORY_VERSION 1
 
+
+/**
+  Tests a FW version to see if it is an undefined version
+
+  @param  FwProduct
+  @param  FwRevision
+  @param  FwSecurityVersion
+  @param  FwBuild
+
+  @return TRUE if relevant fields are all 0.
+
+**/
+#define FW_VERSION_UNDEFINED_BYVERS(FwProduct, FwRevision, FwSecurityVersion, FwBuild) (FwProduct == 0 && \
+                                              FwRevision == 0 && \
+                                              FwSecurityVersion == 0 && \
+                                              FwBuild == 0)
+
+/**
+  Tests a FW version to see if it is an undefined version
+
+  @param  FirmareVersionStruct           a FIRMWARE_VERSION struct
+
+  @return TRUE if relevant fields are all 0.
+
+**/
+#define FW_VERSION_UNDEFINED(FirmareVersionStruct) FW_VERSION_UNDEFINED_BYVERS(\
+                                               FirmareVersionStruct.FwProduct, \
+                                               FirmareVersionStruct.FwRevision, \
+                                               FirmareVersionStruct.FwSecurityVersion, \
+                                               FirmareVersionStruct.FwBuild)
+
 typedef struct {
   UINT16 DirectoryVersion;
   UINT16 DirectorySize;

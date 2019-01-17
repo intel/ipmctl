@@ -139,7 +139,7 @@ ConvertFwVersion(
 
   NVDIMM_ENTRY();
 
-  if ((Product == 0) && (Revision == 0) && (SecurityVersion == 0) && (Build == 0)) {
+  if (FW_VERSION_UNDEFINED_BYVERS(Product, Revision, SecurityVersion, Build)) {
     tmp = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
   } else {
     tmp = CatSPrint(NULL, L"%02d.%02d.%02d.%04d", Product, Revision, SecurityVersion, Build);

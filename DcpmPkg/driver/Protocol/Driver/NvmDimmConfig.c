@@ -7064,6 +7064,12 @@ Build NAMESPACE structure
   pNamespace->Enabled = TRUE;
   pNamespace->Signature = NAMESPACE_SIGNATURE;
   pNamespace->Flags.Values.ReadOnly = FALSE;
+  if (RegionCount == 1) {
+    pNamespace->Flags.Values.Local = TRUE;
+  }
+  else {
+    pNamespace->Flags.Values.Local = FALSE;
+  }
   pNamespace->NamespaceType = NamespaceType;
   if (Mode) {
     pNamespace->IsBttEnabled = TRUE;

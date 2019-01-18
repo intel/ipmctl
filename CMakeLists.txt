@@ -35,8 +35,7 @@ else()
 			RESULT_VARIABLE GIT_RETURN_CODE
 			)
 		# strip leading string in git tag
-		string(REGEX REPLACE "CR_MGMT_" "" IPMCTL_VERSION_STRING "${IPMCTL_VERSION_STRING}")
-		string(REGEX REPLACE "v" "" IPMCTL_VERSION_STRING "${IPMCTL_VERSION_STRING}")
+		string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)" IPMCTL_VERSION_STRING "${IPMCTL_VERSION_STRING}")
 		# strip ending newline
 		string(REGEX REPLACE "\n" "" IPMCTL_VERSION_STRING "${IPMCTL_VERSION_STRING}")
 	endif()

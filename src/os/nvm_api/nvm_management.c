@@ -3212,10 +3212,10 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     rc = NVM_ERR_UNKNOWN;
+    goto Finish;
   }
 
   if (0 == max_errors) {
-  
     rc = NVM_SUCCESS_NO_ERROR_LOG_ENTRY;
   }
 

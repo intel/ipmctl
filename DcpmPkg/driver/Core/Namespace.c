@@ -1910,7 +1910,8 @@ CompareDpaInRange(
   }
 }
 
-#ifndef OS_BUILD
+#if 0
+// This flow may not work properly under certain scenarios.
 /**
   Recover a partially updated namespace label set
   Clear the updating bit and use the name from label in pos 0
@@ -2039,7 +2040,8 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-#endif // OS_BUILD
+#endif
+
 /**
   Retrieve Namespaces information from provided LSA structure.
 
@@ -2248,7 +2250,13 @@ RetrieveNamespacesFromLsa(
         NVDIMM_DBG("Unexpected TypeGuid for AppDirect NS");
         continue;
       }
-#ifndef OS_BUILD
+
+#if 0
+      // This flow is incomplete and may result in corrupt LSA
+      // OSV's advise preference for UEFI to skip any automated recovery
+      // Leave recovery to the OS
+      // Logic after still validates the labels are consistent
+
       // Iterate over DIMMs to check for partial update
       LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
         pDimm = DIMM_FROM_NODE(pNode);
@@ -2279,7 +2287,8 @@ RetrieveNamespacesFromLsa(
         }
         FREE_POOL_SAFE(pNamespaceLabel2);
       }
-#endif // OS_BUILD
+#endif
+
       // Iterate over DIMMs to collect labels to assemble AppDirect NS
       LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
         pDimm = DIMM_FROM_NODE(pNode);

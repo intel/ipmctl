@@ -208,26 +208,8 @@ NvmDimmDriverUnload(
   UINTN HandleCount = 0;
   UINTN Index = 0;
   CONST BOOLEAN DriverAlreadyUnloaded = (gNvmDimmData == NULL);
-  UINTN BufSize = 0;
-  EFI_HANDLE *Buffer = NULL;
 
   NVDIMM_ENTRY();
-
-  ReturnCode = gBS->LocateHandleBuffer(ByProtocol, &gNfitBindingProtocolGuid, NULL, &BufSize, &Buffer);
-  if (ReturnCode == EFI_SUCCESS) {
-    ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
-      Buffer[0],
-      &gEfiDevicePathProtocolGuid,
-      &gNvmDimmDriverDevicePath,
-      NULL);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to install the gEfiDevicePathProtocolGuid, error = 0x%llx.", ReturnCode);
-    }
-  }
-
-  if (Buffer != NULL) {
-    FreePool(Buffer);
-  }
 
   /** Retrieve array of all handles in the handle database **/
   ReturnCode = gBS->LocateHandleBuffer(AllHandles, NULL, NULL, &HandleCount, &pHandleBuffer);
@@ -617,9 +599,6 @@ NvmDimmDriverDriverEntryPoint(
   DRIVER_PREFERENCES DriverPreferences;
 #ifndef OS_BUILD
   EFI_LOADED_IMAGE_PROTOCOL *pLoadedImage = NULL;
-  EFI_HANDLE *Buffer = NULL;
-  UINTN BufSize = 0;
-  UINTN Index = 0;
 #endif
 
   NVDIMM_ENTRY();
@@ -751,27 +730,6 @@ Finish:
     }
   } else {  /** clean - call unload manually if we failed to initialize the driver **/
     NvmDimmDriverUnload(ImageHandle);
-  }
-
-  /**
-    Install device path protocol so reconnect will find handle
-  **/
-  ReturnCode = gBS->LocateHandleBuffer(ByProtocol, &gNfitBindingProtocolGuid, NULL, &BufSize, &Buffer);
-  if (ReturnCode == EFI_SUCCESS) {
-    for (Index = 0; Index < BufSize; Index++) {
-      ReturnCode = gBS->InstallMultipleProtocolInterfaces(
-        &Buffer[Index],
-        &gEfiDevicePathProtocolGuid,
-        &gNvmDimmDriverDevicePath,
-        NULL);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Failed to install the gEfiDevicePathProtocolGuid, error = 0x%llx.", ReturnCode);
-      }
-    }
-  }
-
-  if (Buffer != NULL) {
-    FreePool(Buffer);
   }
 
 #endif

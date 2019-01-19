@@ -25,6 +25,8 @@ EPEL 7 packages can be found at: https://copr.fedorainfracloud.org/coprs/jhli/ip
 
 OpenSUSE and SLES packages can be found at: https://build.opensuse.org/package/show/home:jhli/ipmctl
 
+Ubuntu packages can be found at: https://launchpad.net/~jhli/+archive/ubuntu/ipmctl
+
 ### libsafec
 
 

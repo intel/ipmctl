@@ -296,3 +296,12 @@ void log_system_event(enum system_event_type type, const char *source, const cha
 	}
 }
 
+/**
+Sleeps for a given number of microseconds.
+
+Note - Windows sleeps in millisecond intervals.
+**/
+int bs_sleep(int microseconds) {
+  Sleep(microseconds / 1000);
+  return 0;
+}

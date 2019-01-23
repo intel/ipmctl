@@ -199,13 +199,24 @@ close_event(
 	return EFI_SUCCESS;
 }
 
+/**
+Sleeps for a given number of microseconds.
+
+Note - Windows sleeps in millisecond intervals.
+**/
+EFI_STATUS
+bs_sleep(
+  IN UINTN microseconds
+);
+
 int init_protocol_bs()
 {
-	gOsBootServices.LocateHandleBuffer = BsLocateHandleBuffer;
-	gOsBootServices.OpenProtocol = BsOpenProtocol;
-	gOsBootServices.CloseEvent = close_event;
-	gOsBootServices.CreateEvent = create_event;
-	gOsBootServices.WaitForEvent = wait_for_event;
-	gOsBootServices.SetTimer = set_timer;
-	return 0;
+  gOsBootServices.LocateHandleBuffer = BsLocateHandleBuffer;
+  gOsBootServices.OpenProtocol = BsOpenProtocol;
+  gOsBootServices.CloseEvent = close_event;
+  gOsBootServices.CreateEvent = create_event;
+  gOsBootServices.WaitForEvent = wait_for_event;
+  gOsBootServices.SetTimer = set_timer;
+  gOsBootServices.Stall = bs_sleep;
+  return 0;
 }

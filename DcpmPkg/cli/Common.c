@@ -1242,6 +1242,10 @@ MatchCliReturnCode(
     ReturnCode = EFI_UNSUPPORTED;
     break;
 
+  case NVM_ERR_FIRMWARE_ALREADY_LOADED:
+    ReturnCode = EFI_ALREADY_STARTED;
+    break;
+
   default:
     ReturnCode = EFI_ABORTED;
     break;
@@ -2695,6 +2699,12 @@ EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode)
     break;
   case (EFI_INVALID_PARAMETER):
     ReturnCode = 201;
+    break;
+  case (EFI_ALREADY_STARTED):
+    //this number is arbitrary, but should be distinct. 
+    //In the case of FW udpate, it indicates that all DIMMs 
+    //have a staged FW binary
+    ReturnCode = 20;
     break;
   default:
     ReturnCode = 1;

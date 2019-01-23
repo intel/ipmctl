@@ -12,7 +12,7 @@
 #include <Types.h>
 
 #define MAX_CHECKS_FOR_SUCCESSFUL_STAGING 40
-#define MICROSECS_PERIOD_BETWEEN_STAGING_CHECKS 250000
+#define MICROSECONDS_PERIOD_BETWEEN_STAGING_CHECKS 250000
 /**
   Register the load command
 **/
@@ -62,8 +62,6 @@ GetDimmReturnCode(
   @param[in] pNvmCodes - The current list of NVM codes for the FW work of each DIMM
   @param[in] pDimmTargets - The list of DIMMs for which a FW update was attempted
   @param[in] pDimmTargetsNum - The list length of the pDimmTargets list
-  @param[in] StagedFwDimmIds - The list of IDs for the dimms which reported a successful image transmission
-  @param[in] StagedFwDimmIdsNum - The list length of the StagedFwDimmIds list
 
   @retval EFI_SUCCESS - All dimms staged their fw as expected.
   @retval EFI_xxxx - One or more DIMMS did not stage their FW as expected.
@@ -76,8 +74,20 @@ BlockForFwStage(
   IN   EFI_STATUS *pReturnCodes,
   IN   NVM_STATUS *pNvmCodes,
   IN   DIMM_INFO *pDimmTargets,
-  IN   UINT32 pDimmTargetsNum,
-  IN   UINT16 *StagedFwDimmIds,
-  IN   UINT16 StagedFwDimmIdsNum
+  IN   UINT32 pDimmTargetsNum
+);
+
+/**
+Check to see if a FW has already been staged on a DIMM
+
+@param[in] pCmd - The command object
+@param[in] pNvmDimmConfigProtocol - The open config protocol
+@param[in] DimmID - The ID of the dimm to check. Must be a functional DIMM
+**/
+BOOLEAN
+FwHasBeenStaged(
+  IN   struct Command *pCmd,
+  IN   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN   UINT16 DimmID
 );
 #endif /** _LOADCOMMAND_H_ **/

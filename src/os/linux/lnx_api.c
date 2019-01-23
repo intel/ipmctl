@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <os_types.h>
+#include <unistd.h>
 
  /*
  * Map event type enum to event type defined in message file
@@ -58,3 +59,10 @@ void log_system_event(enum system_event_type type, const char *source, const cha
 	closelog();
 }
 
+/**
+Sleeps for a given number of microseconds.
+**/
+int bs_sleep(int microseconds) {
+  usleep(microseconds);
+  return 0;
+}

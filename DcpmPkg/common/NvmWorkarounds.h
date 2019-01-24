@@ -62,6 +62,11 @@
 #define WA_BLOCK_IO_READ_TWICE
 
 /**
+  This makes any reads on Large Payload Mailbox to be made twice.
+**/
+#define WA_LARGE_PAYLOAD_READ_TWICE
+
+/**
   Make Mailbox writes post in the absence of WPQFlush
 **/
 //#define WA_NO_WPQFLUSH

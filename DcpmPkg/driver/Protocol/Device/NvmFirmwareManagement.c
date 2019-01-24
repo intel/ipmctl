@@ -172,7 +172,7 @@ SetImage (
 
   NVDIMM_ENTRY();
 
-  if (NULL == This || NULL == Image || NULL == VendorCode || NULL == AbortReason ||
+  if (NULL == This || NULL == Image || NULL == AbortReason ||
       ImageIndex < 1 || ImageIndex > SUPPORTED_DESCRIPTOR_COUNT) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;

@@ -2606,7 +2606,7 @@ FwSetPCDFromOffsetSmallPayload(
   pFwCmd->LargeInputPayloadSize = 0;
   for (WriteOffset = StartingPageOffset; WriteOffset < (ReqOffset+ReqDataSize); WriteOffset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
     InPayloadSetData.Offset = WriteOffset;
-    CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pRawData + WriteOffset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+    CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pRawData + (WriteOffset - StartingPageOffset), PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
     CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
     pFwCmd->OutputPayloadSize = 0;
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);

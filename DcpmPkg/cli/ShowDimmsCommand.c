@@ -142,6 +142,7 @@ struct Command ShowDimmsCommand =
     options
   **/
   {
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty},
     {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired},
     {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}

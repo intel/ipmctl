@@ -179,12 +179,6 @@ if(NULL != Ctx) { \
   Ctx->FormatTypeFlags.Flags.EsxCustom = 1; \
 } \
 
-/**Not yet supported (-o verbose)**/
-#define PRINTER_ENABLE_VERBOSE(Ctx) \
-if(NULL != Ctx) { \
-  Ctx->FormatTypeFlags.Flags.Verbose = 1; \
-} \
-
 /**Set printer format attributes directly to a dataset obj**/
 #define PRINTER_CONFIGURE_DATA_SET_ATTRIBS(DataSet, Attributes) \
 if(NULL != DataSet && NULL != Attributes) { \

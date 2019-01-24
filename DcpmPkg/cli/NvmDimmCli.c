@@ -87,6 +87,9 @@ EFI_HANDLE gNvmDimmCliHiiHandle = (EFI_HANDLE)0x1;
 extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 #else
 EFI_HANDLE gNvmDimmCliHiiHandle = NULL;
+#ifndef MDEPKG_NDEBUG
+extern volatile   UINT32  _gPcd_BinaryPatch_PcdDebugPrintErrorLevel;
+#endif //MDEPKG_NDEBUG
 #endif
 
 #define NVMDIMM_CLI_HII_GUID \
@@ -105,6 +108,7 @@ struct Command HelpCommand =
 {
   HELP_VERB,                                  //!< verb
   {
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }, //!< options
 #endif // OS_BUILD
@@ -123,6 +127,7 @@ struct Command VersionCommand =
 {
   VERSION_VERB,                               //!< verb
   {
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #else
@@ -167,6 +172,20 @@ UefiMain(
   EFI_HANDLE *pHandleBuffer = NULL;
   CHAR16 *pCurrentDriverName;
   EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
+#endif
+
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+  /** For UEFI pre-parse CLI arguments for verbose logging **/
+  if (gEfiShellParametersProtocol != NULL) {
+    for (Index = 1; Index < gEfiShellParametersProtocol->Argc; Index++) {
+      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION)
+        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION_SHORT)) {
+        PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
+      }
+    }
+  }
+#endif
 #endif
 
   NVDIMM_ENTRY();

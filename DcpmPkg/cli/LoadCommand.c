@@ -22,6 +22,7 @@ struct Command LoadCommand =
 {
   LOAD_VERB,                                                          //!< verb
   {                                                                   //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", EXAMINE_OPTION_HELP, FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, FALSE, ValueEmpty},
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, TRUE, ValueRequired}

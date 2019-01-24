@@ -18,7 +18,9 @@
 struct Command DumpGoalCommand =
 {
   DUMP_VERB,                                                                      //!< verb
-  {{L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired}   //!< options
+  {                                                                               //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired}
 #ifdef OS_BUILD
   ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif

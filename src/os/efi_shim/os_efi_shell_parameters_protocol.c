@@ -50,6 +50,8 @@ char g_recording_filename[PATH_MAX];
 char g_recording_fullpath[PATH_MAX];
 CHAR16 g_recording_fullpath_u[PATH_MAX];
 
+static BOOLEAN g_verbose_debug_print_enabled = FALSE;
+
 typedef enum {
   DefaultMode,
   UserSpecifiedDir,
@@ -65,7 +67,8 @@ RecordingDirMode g_rec_file_creation_mode = DefaultMode;
 #define STR_ESXXML              "esx"
 #define STR_ESXTABLE            "esxtable"
 #define STR_TEXT                "text"
-#define STR_VERBOSE             "verbose"
+#define STR_DASH_VERBOSE_LONG   "-verbose"
+#define STR_DASH_VERBOSE_SHORT  "-v"
 #define STR_DASH_FAST_LONG      "-fast"
 #ifdef PLAYBACK_RECORD_SUPPORTED
 #define STR_RECORD_MODE         "-record"
@@ -173,6 +176,12 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
     }
 #endif
 
+    if (0 == s_strncmpi(argv[Index], STR_DASH_VERBOSE_LONG, strlen(STR_DASH_VERBOSE_LONG) + 1)
+      || 0 == s_strncmpi(argv[Index], STR_DASH_VERBOSE_SHORT, strlen(STR_DASH_VERBOSE_SHORT) + 1))
+    {
+      g_verbose_debug_print_enabled = TRUE;
+    }
+
     if (!stripped_args)
     {
       int argvSize = (int)strlen(argv[Index]);
@@ -270,4 +279,9 @@ int uninit_protocol_shell_parameters_protocol()
     FreePool(gOsShellParametersProtocol.Argv);
   }
   return EFI_SUCCESS;
+}
+
+BOOLEAN is_verbose_debug_print_enabled()
+{
+  return g_verbose_debug_print_enabled;
 }

@@ -20,6 +20,7 @@ extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 struct Command DumpSupportCommandSyntax = {
   DUMP_VERB,                                                      //!< verb
   {                                                                 //!< options
+    { VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty },
     { L"", DESTINATION_PREFIX_OPTION, L"", DESTINATION_PREFIX_OPTION_HELP, TRUE, ValueRequired },
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired },

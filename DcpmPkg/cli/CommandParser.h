@@ -76,12 +76,13 @@
 #define PROPERTY_VALUE_NO_YES_IGN_HELP  L"No|Yes|Ignore"                       //!< Property: No, Yes or Ignore
 #define OUTPUT_OPTION_SHORT             L"-o"                                  //!< 'output' option name short form
 #define OUTPUT_OPTION                   L"-output"                             //!< 'output' option
-#define OUTPUT_OPTION_VERBOSE           L"verbose"                             //!< 'output' option value for verbose
 #define OUTPUT_OPTION_TEXT              L"text"                                //!< 'output' option value for text
 #define OUTPUT_OPTION_NVMXML            L"nvmxml"                              //!< 'output' option value for nvmxml
 #define OUTPUT_OPTION_ESX_XML           L"esx"                                 //!< 'output' option value for esx xml
 #define OUTPUT_OPTION_ESX_TABLE_XML     L"esxtable"                            //!< 'output' option value for esx xml
 #define OUTPUT_OPTION_HELP              L"text|nvmxml"                         //!< 'output' option help text
+#define VERBOSE_OPTION_SHORT            L"-v"                                  //!< 'verbose' option short form
+#define VERBOSE_OPTION                  L"-verbose"                            //!< 'verbose' option name
 
 /** command targets **/
 #define DIMM_TARGET                          L"-dimm"                    //!< 'dimm' target name

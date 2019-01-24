@@ -23,7 +23,9 @@
 **/
 struct Command ShowMemoryResourcesCommand = {
   SHOW_VERB,                                                                          //!< verb
-  {{UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}   //!< options
+  {                                                                                   //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, FALSE, ValueRequired}
 #ifdef OS_BUILD
   ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif

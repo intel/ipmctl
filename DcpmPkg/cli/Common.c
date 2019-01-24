@@ -2358,10 +2358,7 @@ ReadCmdLinePrintOptions(
 
   if (NULL != (Toks = StrSplit(OutputOptions, L',', &NumToks))) {
     for (Index = 0; Index < NumToks; ++Index) {
-      if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_VERBOSE)) {
-        PRINTER_ENABLE_VERBOSE(pCmd->pPrintCtx);
-      }
-      else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_TEXT)) {
+      if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_TEXT)) {
         *pFormatType = TEXT;
       }
       else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_NVMXML)) {

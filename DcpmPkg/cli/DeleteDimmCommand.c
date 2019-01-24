@@ -25,6 +25,7 @@ struct Command DeleteDimmCommand =
 {
   DELETE_VERB,                                                           //!< verb
   {                                                                      //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired},
 #ifdef OS_BUILD

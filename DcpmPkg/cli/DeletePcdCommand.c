@@ -16,8 +16,9 @@
 struct Command DeletePcdCommand =
 {
   DELETE_VERB,                                                                     //!< verb
-  {
-    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty}               //!< options
+  {                                                                                //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty}
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif

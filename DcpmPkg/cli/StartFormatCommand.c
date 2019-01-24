@@ -20,6 +20,7 @@ struct Command StartFormatCommand =
 {
   START_VERB,                                                            //!< verb
   {                                                                      //!< options
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
     {L"", RECOVER_OPTION, L"", L"", FALSE, ValueEmpty}
 #ifdef OS_BUILD

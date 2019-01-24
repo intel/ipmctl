@@ -65,6 +65,7 @@ extern int g_record_mode;
 extern int g_playback_mode;
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 extern char g_recording_fullpath[PATH_MAX];
+extern BOOLEAN is_verbose_debug_print_enabled();
 
 
 UINT8 *gSmbiosTable = NULL;
@@ -1024,6 +1025,11 @@ static void get_logger_config(struct debug_logger_config *p_log_config)
   efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_DEBUG_FILE_ENABLED, guid, &size, &p_log_config->file_enabled);
   if (EFI_SUCCESS != efi_status)
     return;
+  if (is_verbose_debug_print_enabled())
+  {
+    p_log_config->stdout_enabled = TRUE;
+    p_log_config->level = LOG_VERBOSE;
+  }
 
   p_log_config->initialized = TRUE;
 }

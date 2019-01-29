@@ -68,6 +68,14 @@ EFI_DRIVER_BINDING_PROTOCOL gNvmDimmDriverDriverBinding = {
 **/
 NVMDIMMDRIVER_DATA *gNvmDimmData = NULL;
 
+#ifndef OS_BUILD
+/**
+  Track the NFIT protocol dimm handles that we've installed Device Path on
+**/
+static EFI_HANDLE *gInstalledDevicePathProtocolHandles = NULL;
+static UINTN gNumberOfDevicePathProtocolsInstalled = 0;
+#endif
+
 /**
   Driver specific Vendor Device Path definition.
 **/
@@ -103,6 +111,84 @@ ACPI_NVDIMM_DEVICE_PATH gNvmDimmDevicePathNode = {
     0 // Device handle to be set for each DIMM
 };
 
+#ifndef OS_BUILD
+/**
+  Function installs EfiDevicePathProtocolGuid on handles
+  for NfitBinding protocols unless it is already tracking
+  handles.
+
+  @retval EFI_SUCCESS Protocol installed successfully
+  @retval EFI_NOT_FOUND No Handles found
+  Error return codes from LocateHandleBuffer and InstallMultipleProtocolInterfaces
+**/
+EFI_STATUS
+InstallProtoEfiDevicePathProtocolToNfitBinding(
+)
+{
+  EFI_HANDLE *Buffer = NULL;
+  UINTN BufSize = 0;
+  UINTN Index = 0;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  /**
+  If already installed just return
+  **/
+  if ((gInstalledDevicePathProtocolHandles != NULL) &&
+    (gNumberOfDevicePathProtocolsInstalled > 0)) {
+    NVDIMM_WARN("Install already recorded.");
+    goto Finish;
+  }
+
+  /**
+  check sanity and try to clean up if needed
+  **/
+  if ((gInstalledDevicePathProtocolHandles != NULL) &&
+    (gNumberOfDevicePathProtocolsInstalled == 0)) {
+    NVDIMM_ERR("gNumberOfDevicePathProtocolsInstalled is 0 and gInstalledDevicePathProtocolHandles is not NULL.");
+      FREE_POOL_SAFE(gInstalledDevicePathProtocolHandles);
+      gInstalledDevicePathProtocolHandles = NULL;
+  } else if ((gInstalledDevicePathProtocolHandles == NULL) &&
+    (gNumberOfDevicePathProtocolsInstalled != 0)) {
+    NVDIMM_ERR("gNumberOfDevicePathProtocolsInstalled is not 0 and gInstalledDevicePathProtocolHandles is NULL.");
+      gNumberOfDevicePathProtocolsInstalled = 0;
+  }
+
+  /**
+  Install device path protocol so reconnect will find handle
+  **/
+  ReturnCode = gBS->LocateHandleBuffer(ByProtocol, &gNfitBindingProtocolGuid, NULL, &BufSize, &Buffer);
+  if (ReturnCode == EFI_SUCCESS) {
+    gNumberOfDevicePathProtocolsInstalled = BufSize;
+    gInstalledDevicePathProtocolHandles = AllocateZeroPool(gNumberOfDevicePathProtocolsInstalled * sizeof(EFI_HANDLE));
+    if (gInstalledDevicePathProtocolHandles == NULL) {
+      NVDIMM_WARN("Failed to allocate storage for gInstalledDevicePathProtocolHandles.");
+      gNumberOfDevicePathProtocolsInstalled = 0;
+      goto Finish;
+    }
+    for (Index = 0; Index < BufSize; Index++) {
+      ReturnCode = gBS->InstallMultipleProtocolInterfaces(
+        &Buffer[Index],
+        &gEfiDevicePathProtocolGuid,
+        &gNvmDimmDriverDevicePath,
+        NULL);
+      if (EFI_ERROR(ReturnCode)) {
+        gInstalledDevicePathProtocolHandles[Index] = NULL;  /** NULL so skip when freeing **/
+        NVDIMM_WARN("Failed to install the gEfiDevicePathProtocolGuid, error = 0x%llx.", ReturnCode);
+      } else {
+        gInstalledDevicePathProtocolHandles[Index] = Buffer[Index];  /** record the handle if successful **/
+      }
+    }
+  } else if (ReturnCode == EFI_NOT_FOUND) {  /** nothing found so make sure we are not tracking any handles **/
+    gInstalledDevicePathProtocolHandles = NULL;
+    gNumberOfDevicePathProtocolsInstalled = 0;
+  }
+
+Finish:
+  FREE_POOL_SAFE(Buffer);
+  return ReturnCode;
+}
+
+#endif // UEFI
 /**
   Function tries to remove all of the block namespaces protocols, then it
   removes all of the enumerated namespaces from the LSA and also the regions.
@@ -211,6 +297,36 @@ NvmDimmDriverUnload(
 
   NVDIMM_ENTRY();
 
+  /**
+  Uninstall EfiDevicePathProtocol on handles recorded earlier.
+  **/
+  if ((gNumberOfDevicePathProtocolsInstalled > 0) && (gInstalledDevicePathProtocolHandles != NULL)) {
+    for (Index = 0; Index < gNumberOfDevicePathProtocolsInstalled; Index++) {
+      if (gInstalledDevicePathProtocolHandles[Index] != NULL) {
+        ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
+          gInstalledDevicePathProtocolHandles[Index],
+          &gEfiDevicePathProtocolGuid,
+          &gNvmDimmDriverDevicePath,
+          NULL);
+        if (EFI_ERROR(ReturnCode)) {
+          NVDIMM_ERR("Uninstall of EfiDevicePathProtocolGuid failed with code 0x%llx.", ReturnCode);
+        }
+      } else {
+        NVDIMM_WARN("NULL handle encountered in gInstalledDevicePathProtocolHandles.");
+      }
+    }
+    gNumberOfDevicePathProtocolsInstalled = 0;
+    FREE_POOL_SAFE(gInstalledDevicePathProtocolHandles);
+    gInstalledDevicePathProtocolHandles = NULL;
+  } else if ((gNumberOfDevicePathProtocolsInstalled == 0) && (gInstalledDevicePathProtocolHandles != NULL)) {
+    NVDIMM_WARN("gNumberOfDevicePathProtocolsInstalled is 0 and gInstalledDevicePathProtocolHandles is not NULL.");
+    FREE_POOL_SAFE(gInstalledDevicePathProtocolHandles);
+    gInstalledDevicePathProtocolHandles = NULL;
+  } else if ((gNumberOfDevicePathProtocolsInstalled != 0) && (gInstalledDevicePathProtocolHandles == NULL)) {
+    NVDIMM_WARN("gNumberOfDevicePathProtocolsInstalled is not 0 and gInstalledDevicePathProtocolHandles is NULL.");
+    gNumberOfDevicePathProtocolsInstalled = 0;
+  }
+
   /** Retrieve array of all handles in the handle database **/
   ReturnCode = gBS->LocateHandleBuffer(AllHandles, NULL, NULL, &HandleCount, &pHandleBuffer);
   if (EFI_ERROR(ReturnCode)) {
@@ -282,11 +398,6 @@ NvmDimmDriverUnload(
   FlushPointerTrace((CHAR16 *)__WFUNCTION__);
 #endif
 
-  TempReturnCode = UninitializeSmbusAccess();
-  if (EFI_ERROR(TempReturnCode)) {
-    FIRST_ERR(ReturnCode, TempReturnCode);
-    NVDIMM_DBG("Failed to uninstall smbus access, error = 0x%llx.", TempReturnCode);
-  }
 
 
   if (EFI_ERROR(ReturnCode) && DriverAlreadyUnloaded) {
@@ -714,6 +825,9 @@ NvmDimmDriverDriverEntryPoint(
     NVDIMM_WARN("Failed to install the EfiDriverHealthProtocol, error = 0x%llx.", ReturnCode);
     goto Finish;
   }
+
+
+  InstallProtoEfiDevicePathProtocolToNfitBinding();
 
 #endif // UEFI
 Finish:
@@ -1325,42 +1439,6 @@ NvmDimmDriverDriverBindingStart(
    gNvmDimmData->ControllerHandle = ControllerHandle;
 
    /**
-   Install device path protocol
-   **/
-   ReturnCode = gBS->InstallMultipleProtocolInterfaces(
-      &ControllerHandle,
-      &gEfiDevicePathProtocolGuid,
-      &gNvmDimmDriverDevicePath,
-      NULL);
-   if (EFI_ERROR(ReturnCode)) {
-      /**
-      We might get this error if we already have the device path protocol installed.
-      Lets try to open it.
-      **/
-      if (ReturnCode == EFI_INVALID_PARAMETER) {
-         ReturnCode = gBS->OpenProtocol(
-            ControllerHandle,
-            &gEfiDevicePathProtocolGuid,
-            (VOID **)&gNvmDimmData->pControllerDevicePathInstance,
-            pThis->DriverBindingHandle,
-            NULL,
-            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
-         );
-
-         if (EFI_ERROR(ReturnCode)) {
-            NVDIMM_WARN("Failed to install Device Path protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
-            goto Finish;
-         } else {
-            gNvmDimmData->UninstallDevicePath = FALSE; //!< The device path was already installed - do not uninstall it
-         }
-      } else {
-         NVDIMM_WARN("Failed to install Device Path protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
-      }
-   } else {
-      gNvmDimmData->UninstallDevicePath = TRUE; //!< We installed the device path - need to uninstall it on Stop()
-   }
-
-   /**
    Install EFI_DCPMM_CONFIG_PROTOCOL on the driver handle
    **/
    ReturnCode = gBS->InstallMultipleProtocolInterfaces(&gNvmDimmData->DriverHandle,
@@ -1383,6 +1461,22 @@ NvmDimmDriverDriverBindingStart(
       ControllerHandle,
       EFI_OPEN_PROTOCOL_BY_DRIVER
    );
+
+   /**
+   If failed to open then try to install and retry open.
+   **/
+   if (ReturnCode != EFI_SUCCESS) {
+      InstallProtoEfiDevicePathProtocolToNfitBinding();
+
+      ReturnCode = gBS->OpenProtocol(
+         ControllerHandle,
+         &gEfiDevicePathProtocolGuid,
+         (VOID **)&gNvmDimmData->pControllerDevicePathInstance,
+         pThis->DriverBindingHandle,
+         ControllerHandle,
+         EFI_OPEN_PROTOCOL_BY_DRIVER
+      );
+   }
 
    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to open Device Path protocol, error = " FORMAT_EFI_STATUS ".", ReturnCode);
@@ -1647,21 +1741,12 @@ NvmDimmDriverDriverBindingStop(
     NVDIMM_WARN("Failed to uninstall the NvmDimmConfig protocol, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
   }
 
-  /**
-    Uninstall device path
-  **/
-  if (gNvmDimmData->UninstallDevicePath) {
-    TempReturnCode = gBS->UninstallMultipleProtocolInterfaces(
-        ControllerHandle,
-        &gEfiDevicePathProtocolGuid, &gNvmDimmDriverDevicePath,
-        NULL);
-    if (EFI_ERROR(TempReturnCode)) {
-      FIRST_ERR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Failed to uninstall the device path protocol, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
-    } else {
-      gNvmDimmData->UninstallDevicePath = FALSE; //!< Remember that we had already uninstalled the device path
-    }
+  TempReturnCode = UninitializeSmbusAccess();
+  if (EFI_ERROR(TempReturnCode)) {
+    FIRST_ERR(ReturnCode, TempReturnCode);
+    NVDIMM_DBG("Failed to uninstall smbus access, error = 0x%llx.", TempReturnCode);
   }
+
   TempReturnCode = SmbusDeinit();
   if (EFI_ERROR(TempReturnCode)) {
     FIRST_ERR(ReturnCode, TempReturnCode);

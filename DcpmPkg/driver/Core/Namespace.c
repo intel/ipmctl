@@ -1390,7 +1390,8 @@ ReadLabelStorageArea(
       if ((*ppLsa)->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)] != FREE_BLOCKS_MASK_ALL_SET) {
         // Find the label to read
         for(PageIndexMask = (*ppLsa)->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)], Index = 0;
-          Index < NSINDEX_FREE_ALIGN; PageIndexMask >>= 1, Index++) {
+          (Index < NSINDEX_FREE_ALIGN) && ((AlignPageIndex + Index) < (*ppLsa)->Index[CurrentIndex].NumberOfLabels);
+          PageIndexMask >>= 1, Index++) {
           if (BIT0 != (PageIndexMask & BIT0)) {
             // Calculate the offest to read, one label per read only
             Offset = (UINT32)(LabelIndexSize + (PageSize * (AlignPageIndex + Index)));
@@ -1536,7 +1537,8 @@ WriteLabelStorageArea(
       if (pLsa->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)] != FREE_BLOCKS_MASK_ALL_SET) {
         // Find the label to write
         for (PageIndexMask = pLsa->Index[CurrentIndex].pFree[LABELS_TO_FREE_BYTES(AlignPageIndex)], Index = 0;
-          Index < NSINDEX_FREE_ALIGN; PageIndexMask >>= 1, Index++) {
+          (Index < NSINDEX_FREE_ALIGN) && ((AlignPageIndex + Index) < pLsa->Index[CurrentIndex].NumberOfLabels);
+          PageIndexMask >>= 1, Index++) {
           if (BIT0 != (PageIndexMask & BIT0)) {
             // Calculate the offset to write, one label per write only
             pFrom = ((UINT8 *)(pLsa->pLabels) + (sizeof(NAMESPACE_LABEL) * (AlignPageIndex + Index)));

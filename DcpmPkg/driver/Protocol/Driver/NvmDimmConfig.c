@@ -2925,7 +2925,8 @@ SetSecurityState(
   }
 
 Finish:
-  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
+  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE || 
+    SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
     TempReturnCode = ReenumerateNamespacesAndISs(TRUE);
     if (EFI_ERROR(TempReturnCode)) {
       NVDIMM_DBG("Unable to re-enumerate namespace on unlocked DIMMs. ReturnCode=" FORMAT_EFI_STATUS "", TempReturnCode);

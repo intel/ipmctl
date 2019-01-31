@@ -442,6 +442,7 @@ Load(
         ReturnCodes[Index] = PromptYesNo(&Confirmation);
         if (EFI_ERROR(ReturnCodes[Index]) || !Confirmation) {
           NvmCodes[Index] = NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED;
+          ReturnCodes[Index] = EFI_ABORTED;
           SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
           continue;
         }

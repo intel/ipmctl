@@ -7360,6 +7360,7 @@ GetNamespaces (
 
     pNamespaceInfo->NamespaceMode = pNamespace->IsBttEnabled ? SECTOR_MODE :
                                     ((pNamespace->IsPfnEnabled) ? FSDAX_MODE : NONE_MODE);
+    pNamespaceInfo->NamespaceType = pNamespace->NamespaceType;
 
     pNamespaceInfo->RegionId = pNamespace->pParentIS->RegionId;
 

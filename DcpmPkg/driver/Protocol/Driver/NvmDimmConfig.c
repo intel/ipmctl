@@ -7065,6 +7065,7 @@ Build NAMESPACE structure
   pNamespace->Signature = NAMESPACE_SIGNATURE;
   pNamespace->Flags.Values.ReadOnly = FALSE;
 
+#ifdef WA_ENABLE_LOCAL_FLAG_ON_NS_LABEL_1_2
   // Label spec 1.1 LOCAL flag only used for storage mode
   // Label spec 1.2 LOCAL flag *may* be used for interleave sets on a single device
   if(!(pNamespace->Major == 1 && pNamespace->Minor < 2)) {
@@ -7075,6 +7076,7 @@ Build NAMESPACE structure
       pNamespace->Flags.Values.Local = FALSE;
     }
   }
+#endif // WA_ENABLE_LOCAL_FLAG_ON_NS_LABEL_1_2
 
   pNamespace->NamespaceType = NamespaceType;
   if (Mode) {

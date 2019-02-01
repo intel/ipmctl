@@ -70,3 +70,10 @@
   Make Mailbox writes post in the absence of WPQFlush
 **/
 //#define WA_NO_WPQFLUSH
+
+/**
+  Enable setting the local flag on namespace labels version 1.2
+  Some OSs not compatible with this flag
+**/
+//#define WA_ENABLE_LOCAL_FLAG_ON_NS_LABEL_1_2
+

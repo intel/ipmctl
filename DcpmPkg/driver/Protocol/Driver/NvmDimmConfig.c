@@ -8200,7 +8200,9 @@ FillDimmList(
   // Derive from NFIT properties
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pCurDimm = DIMM_FROM_NODE(pNode);
-    pCurDimm->SmbusAddress.Cpu = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId);
+    pCurDimm->SmbusAddress.Cpu = (UINT8)(NFIT_NODE_SOCKET_TO_SOCKET_INDEX(
+      pCurDimm->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+      pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId));
     pCurDimm->SmbusAddress.Imc = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
     pCurDimm->SmbusAddress.Slot =
         (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +

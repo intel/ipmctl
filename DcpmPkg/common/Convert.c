@@ -982,7 +982,12 @@ GetPreferredValueAsString(
   }
 
   if (pString == NULL || NumberPreferred) {
-    UnicodeSPrint(pResultString, (ResultStringLen - 1) * sizeof(*pResultString), L"0x%04x", Number);
+    if (Number > 0xFFFF) {
+      UnicodeSPrint(pResultString, (ResultStringLen - 1) * sizeof(*pResultString), L"0x%08x", Number);
+    }
+    else {
+      UnicodeSPrint(pResultString, (ResultStringLen - 1) * sizeof(*pResultString), L"0x%04x", Number);
+    }
   } else {
     StrnCpyS(pResultString, ResultStringLen, pString, ResultStringLen - 1);
   }

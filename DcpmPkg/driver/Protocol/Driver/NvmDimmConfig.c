@@ -7067,12 +7067,18 @@ Build NAMESPACE structure
   pNamespace->Enabled = TRUE;
   pNamespace->Signature = NAMESPACE_SIGNATURE;
   pNamespace->Flags.Values.ReadOnly = FALSE;
-  if (RegionCount == 1) {
-    pNamespace->Flags.Values.Local = TRUE;
+
+  // Label spec 1.1 LOCAL flag only used for storage mode
+  // Label spec 1.2 LOCAL flag *may* be used for interleave sets on a single device
+  if(!(pNamespace->Major == 1 && pNamespace->Minor < 2)) {
+    if (RegionCount == 1) {
+      pNamespace->Flags.Values.Local = TRUE;
+    }
+    else {
+      pNamespace->Flags.Values.Local = FALSE;
+    }
   }
-  else {
-    pNamespace->Flags.Values.Local = FALSE;
-  }
+
   pNamespace->NamespaceType = NamespaceType;
   if (Mode) {
     pNamespace->IsBttEnabled = TRUE;

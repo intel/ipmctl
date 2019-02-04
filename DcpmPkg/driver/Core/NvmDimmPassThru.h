@@ -1008,6 +1008,12 @@ enum GetErrorLogType {
   ErrorLogTypeInvalid = 0x02,
 };
 
+enum GetErrorLogInfo {
+  ErrorLogInfoEntries = 0x00,
+  ErrorLogInfoData = 0x01,
+  ErrorLogInfoInvalid = 0x02,
+};
+
 enum GetErrorLogPayloadReturn {
   ErrorLogSmallPayload = 0x00,
   ErrorLogLargePayload = 0x01,

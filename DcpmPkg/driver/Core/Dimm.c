@@ -3014,6 +3014,11 @@ FwCmdGetFwDebugLog (
   UINT64 BytesReadTotal = 0;
   UINT8 LogAction = 0;
   UINT8 *OutputPayload = NULL;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
+#else
+  BOOLEAN UseSmallPayload = FALSE;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -3077,7 +3082,7 @@ FwCmdGetFwDebugLog (
   pInputPayload->LogAction = LogAction;
 
   // Default for DDRT large payload transactions. 128 bytes for smbus
-  if (UseSmbus) {
+  if (UseSmbus || UseSmallPayload) {
     ChunkSize = SMALL_PAYLOAD_SIZE;
     OutputPayload = pFwCmd->OutPayload;
     pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_SMALL;
@@ -4389,12 +4394,19 @@ GetAndParseFwErrorLogForDimm(
   PT_INPUT_PAYLOAD_GET_ERROR_LOG InputPayload;
   VOID *pLargeOutputPayload = NULL;
   PT_OUTPUT_PAYLOAD_GET_ERROR_LOG OutPayloadGetErrorLog;
+  LOG_INFO_DATA_RETURN OutPayloadGetErrorLogInfoData;
   BOOLEAN FIS_1_2 = FALSE;
   UINT16 ReturnCount = 0;
   TEMPERATURE Temperature;
+#ifdef OS_BUILD
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
+#else
+  BOOLEAN UseSmallPayload = FALSE;
+#endif
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
   ZeroMem(&OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog));
+  ZeroMem(&OutPayloadGetErrorLogInfoData, sizeof(OutPayloadGetErrorLogInfoData));
   ZeroMem(&Temperature, sizeof(Temperature));
 
   if (pDimm == NULL || pErrorsFetched == NULL || pErrorLogs == NULL) {
@@ -4412,7 +4424,6 @@ GetAndParseFwErrorLogForDimm(
   InputPayload.LogParameters.Separated.LogLevel = HighLevel ? ErrorLogHighPriority : ErrorLogLowPriority;
   InputPayload.LogParameters.Separated.LogType = ThermalError ? ErrorLogTypeThermal : ErrorLogTypeMedia;
   InputPayload.SequenceNumber = SequenceNumber;
-  InputPayload.LogParameters.Separated.LogEntriesPayloadReturn = ErrorLogLargePayload;
   if (FIS_1_2) {
     InputPayload.RequestCount.RequestCountFis1_2 =
         (MaxErrorsToSave >= MAX_UINT8) ? MAX_UINT8 : (UINT8) MaxErrorsToSave;
@@ -4421,25 +4432,81 @@ GetAndParseFwErrorLogForDimm(
         (MaxErrorsToSave >= MAX_UINT16) ? MAX_UINT16 : (UINT16) MaxErrorsToSave;
   }
 
-  ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog),
+  if (UseSmallPayload) {
+    InputPayload.LogParameters.Separated.LogInfo = ErrorLogInfoData;
+
+    ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLogInfoData, sizeof(OutPayloadGetErrorLogInfoData),
+      pLargeOutputPayload, 0);
+
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to fetch error log for Dimm %x\n", pDimm->DeviceHandle.AsUint32);
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+
+    UINT16 PayloadsProcessed = 0;
+    InputPayload.LogParameters.Separated.LogInfo = ErrorLogInfoEntries;
+    InputPayload.LogParameters.Separated.LogEntriesPayloadReturn = ErrorLogSmallPayload;
+    InputPayload.SequenceNumber = OutPayloadGetErrorLogInfoData.OldestSequenceNum;
+    UINT16 LogEntrySize = ThermalError ? sizeof(PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY) : sizeof(PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_MEDIA_ENTRY);
+    UINT16 SmallPayloadRawSize = 0;
+    UINT64 LargeOutputOffset = (UINT64)pLargeOutputPayload;
+
+    while (ReturnCount < OutPayloadGetErrorLogInfoData.MaxLogEntries) {
+      ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog),
+        pLargeOutputPayload, 0);
+
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_WARN("Failed to fetch error log for Dimm %x\n", pDimm->DeviceHandle.AsUint32);
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+
+      if (0 == OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount) {
+        break;
+      }
+
+      SmallPayloadRawSize = (LogEntrySize * OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount);
+      CopyMem_S((VOID *)LargeOutputOffset,
+        SmallPayloadRawSize,
+        OutPayloadGetErrorLog.Params.FIS_1_3.LogEntries, 
+        SmallPayloadRawSize);
+
+      if (OUT_MB_SIZE >= LargeOutputOffset + SmallPayloadRawSize - (UINT64)pLargeOutputPayload) {
+        LargeOutputOffset += SmallPayloadRawSize;
+      }
+      else {
+        NVDIMM_WARN("Buffer limit reached while fetching error log for Dimm %x\n", pDimm->DeviceHandle.AsUint32);
+        break;
+      }
+
+      InputPayload.SequenceNumber += OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
+      ReturnCount += OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
+      PayloadsProcessed++;
+    }
+  }
+  else {
+    InputPayload.LogParameters.Separated.LogEntriesPayloadReturn = ErrorLogLargePayload;
+
+    ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog),
       pLargeOutputPayload, OUT_MB_SIZE);
 
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to fetch error log for Dimm %x\n", pDimm->DeviceHandle.AsUint32);
-    ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to fetch error log for Dimm %x\n", pDimm->DeviceHandle.AsUint32);
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+
+    ReturnCount = (FIS_1_2) ? OutPayloadGetErrorLog.Params.FIS_1_2.ReturnInfo.Separated.ReturnCount :
+      OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
   }
 
-  if ((FIS_1_2 && OutPayloadGetErrorLog.Params.FIS_1_2.ReturnInfo.Separated.ReturnCount > 0) ||
-      (!FIS_1_2 && OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount > 0)) {
+  if (ReturnCount > 0) {
     if (ThermalError) {
       pThermalLogEntry = (PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY *) pLargeOutputPayload;
     } else {
       pMediaLogEntry = (PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_MEDIA_ENTRY *) pLargeOutputPayload;
     }
-
-    ReturnCount = (FIS_1_2) ? OutPayloadGetErrorLog.Params.FIS_1_2.ReturnInfo.Separated.ReturnCount :
-        OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
 
     for (Index = 0; Index < ReturnCount; ++Index) {
       pErrorLogs[Index].DimmID = pDimm->DimmID;

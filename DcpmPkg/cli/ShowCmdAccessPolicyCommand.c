@@ -71,7 +71,7 @@ PRINTER_TABLE_ATTRIB ShowCapTableAttributes =
   {
     {
       DIMM_ID_STR,                                                          //COLUMN HEADER
-      TABLE_MIN_HEADER_LENGTH(DIMM_ID_STR),                                 //COLUMN MAX STR WIDTH
+      DIMM_MAX_STR_WIDTH,	                                            //COLUMN MAX STR WIDTH
       DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR                               //COLUMN DATA PATH
     },
     {
@@ -149,6 +149,9 @@ ShowCmdAccessPolicy(
   COMMAND_ACCESS_POLICY_ENTRY *pCapEntries = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
+  UINT32 DimmHandle = 0;
+  UINT32 DimmIdIndex = 0;
+  CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
 
   NVDIMM_ENTRY();
 
@@ -235,11 +238,23 @@ ShowCmdAccessPolicy(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
-  }
-
-  for (DimmIndex = 0; DimmIndex < DimmIdsCount; DimmIndex++) {
+    /*
+      Retrieve DimmHandle and DimmIdindex for given DimmId
+    */
+    ReturnCode = GetDimmHandleByPid(pDimmIds[DimmIndex], pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
+    }
+    /*
+      Retrieve DimmId as string based on preferences
+     */
+    ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIdIndex].DimmHandle, pDimms[DimmIdIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
-    PRINTER_SET_KEY_VAL_UINT16(pPrinterCtx, pPath, DIMM_ID_STR, pDimmIds[DimmIndex], HEX);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
     for (OpCodeIndex = 0; OpCodeIndex < CapCount; OpCodeIndex++) {
       PRINTER_BUILD_KEY_PATH(pPath, DS_OPCODE_INDEX_PATH, DimmIndex, OpCodeIndex);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, OPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Opcode, HEX);

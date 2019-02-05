@@ -87,6 +87,16 @@
  * @subsection Return Codes
  * Each interface returns a code indicating the status of the operation as defined in ::return_code. Use nvm_get_error to convert the code into a textual description. Specific codes that may be returned by a particular interface are defined in the "Returns" section of each interface.
  *
+ * @subsection Microsoft Windows* Notes and Limitations
+ * The Windows driver that enables ipmctl communication to Intel's DCPMMs prevents
+ * executing commands that change configuration of any DCPMM when there is a related
+ * logical disk (namespace) associated with that DCPMM. This is done to protect user
+ * data. If a logical disk (namespace) is associated with the target DCPMM, the
+ * command will return an error. The logical disk (namespace) must first be deleted
+ * before attempting to execute commands that change configuration.
+ *
+ * Generally, all commands that retrieve status will succeed regardless of logical
+ * disk presence.
  */
 
 #ifndef _NVM_MANAGEMENT_H_

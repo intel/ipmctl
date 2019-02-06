@@ -2373,7 +2373,6 @@ GetSmartAndHealth (
   DIMM *pDimm = NULL;
   PT_PAYLOAD_SMART_AND_HEALTH *pPayloadSmartAndHealth = NULL;
   PT_DEVICE_CHARACTERISTICS_PAYLOAD *pDevCharacteristics = NULL;
-  BOOLEAN FIS_1_3 = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -2381,11 +2380,6 @@ GetSmartAndHealth (
   if (pDimm == NULL || !IsDimmManageable(pDimm) || pSensorInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
-  }
-
-  // @todo Remove FIS 1.3 backwards compatibility workaround
-  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 3) {
-    FIS_1_3 = TRUE;
   }
 
   ReturnCode = FwCmdGetSmartAndHealth(pDimm, &pPayloadSmartAndHealth);
@@ -2455,11 +2449,9 @@ GetSmartAndHealth (
   if (pAitDramEnabled != NULL) {
     *pAitDramEnabled = pPayloadSmartAndHealth->AITDRAMStatus;
 
-    if (!FIS_1_3) {
-      if ((pPayloadSmartAndHealth->ValidationFlags.Separated.AITDRAMStatus == 0) &&
-          (pPayloadSmartAndHealth->HealthStatus < HealthStatusCritical)) {
-        *pAitDramEnabled = AIT_DRAM_ENABLED;
-      }
+    if ((pPayloadSmartAndHealth->ValidationFlags.Separated.AITDRAMStatus == 0) &&
+      (pPayloadSmartAndHealth->HealthStatus < HealthStatusCritical)) {
+      *pAitDramEnabled = AIT_DRAM_ENABLED;
     }
   }
 

@@ -4395,7 +4395,6 @@ GetAndParseFwErrorLogForDimm(
   VOID *pLargeOutputPayload = NULL;
   PT_OUTPUT_PAYLOAD_GET_ERROR_LOG OutPayloadGetErrorLog;
   LOG_INFO_DATA_RETURN OutPayloadGetErrorLogInfoData;
-  BOOLEAN FIS_1_2 = FALSE;
   UINT16 ReturnCount = 0;
   TEMPERATURE Temperature;
 #ifdef OS_BUILD
@@ -4413,8 +4412,6 @@ GetAndParseFwErrorLogForDimm(
     goto Finish;
   }
 
-  FIS_1_2 = pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 2;
-
   pLargeOutputPayload = AllocateZeroPool(OUT_MB_SIZE);
   if (pLargeOutputPayload == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -4424,13 +4421,7 @@ GetAndParseFwErrorLogForDimm(
   InputPayload.LogParameters.Separated.LogLevel = HighLevel ? ErrorLogHighPriority : ErrorLogLowPriority;
   InputPayload.LogParameters.Separated.LogType = ThermalError ? ErrorLogTypeThermal : ErrorLogTypeMedia;
   InputPayload.SequenceNumber = SequenceNumber;
-  if (FIS_1_2) {
-    InputPayload.RequestCount.RequestCountFis1_2 =
-        (MaxErrorsToSave >= MAX_UINT8) ? MAX_UINT8 : (UINT8) MaxErrorsToSave;
-  } else {
-    InputPayload.RequestCount.RequestCountFis1_3 =
-        (MaxErrorsToSave >= MAX_UINT16) ? MAX_UINT16 : (UINT16) MaxErrorsToSave;
-  }
+  InputPayload.RequestCount = (MaxErrorsToSave >= MAX_UINT16) ? MAX_UINT16 : (UINT16) MaxErrorsToSave;
 
   if (UseSmallPayload) {
     InputPayload.LogParameters.Separated.LogInfo = ErrorLogInfoData;
@@ -4462,14 +4453,14 @@ GetAndParseFwErrorLogForDimm(
         goto Finish;
       }
 
-      if (0 == OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount) {
+      if (0 == OutPayloadGetErrorLog.ReturnCount) {
         break;
       }
 
-      SmallPayloadRawSize = (LogEntrySize * OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount);
+      SmallPayloadRawSize = (LogEntrySize * OutPayloadGetErrorLog.ReturnCount);
       CopyMem_S((VOID *)LargeOutputOffset,
         SmallPayloadRawSize,
-        OutPayloadGetErrorLog.Params.FIS_1_3.LogEntries, 
+        OutPayloadGetErrorLog.LogEntries, 
         SmallPayloadRawSize);
 
       if (OUT_MB_SIZE >= LargeOutputOffset + SmallPayloadRawSize - (UINT64)pLargeOutputPayload) {
@@ -4480,8 +4471,8 @@ GetAndParseFwErrorLogForDimm(
         break;
       }
 
-      InputPayload.SequenceNumber += OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
-      ReturnCount += OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
+      InputPayload.SequenceNumber += OutPayloadGetErrorLog.ReturnCount;
+      ReturnCount += OutPayloadGetErrorLog.ReturnCount;
       PayloadsProcessed++;
     }
   }
@@ -4497,8 +4488,7 @@ GetAndParseFwErrorLogForDimm(
       goto Finish;
     }
 
-    ReturnCount = (FIS_1_2) ? OutPayloadGetErrorLog.Params.FIS_1_2.ReturnInfo.Separated.ReturnCount :
-      OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount;
+    ReturnCount = OutPayloadGetErrorLog.ReturnCount;
   }
 
   if (ReturnCount > 0) {
@@ -4523,9 +4513,7 @@ GetAndParseFwErrorLogForDimm(
 
         pThermalErrorInfo->Reported = (UINT8)pThermalLogEntry->HostReportedTempData.Separated.Reported;
         pThermalErrorInfo->Type = (UINT8)pThermalLogEntry->HostReportedTempData.Separated.Type;
-        if (!FIS_1_2) {
-          pThermalErrorInfo->SequenceNum = pThermalLogEntry->SequenceNum;
-        }
+        pThermalErrorInfo->SequenceNum = pThermalLogEntry->SequenceNum;
 
         pThermalLogEntry++;
       } else {
@@ -4542,9 +4530,7 @@ GetAndParseFwErrorLogForDimm(
         pMediaErrorInfo->Interrupt = pMediaLogEntry->ErrorFlags.Spearated.Interrupt;
         pMediaErrorInfo->Viral = pMediaLogEntry->ErrorFlags.Spearated.Viral;
         pMediaErrorInfo->TransactionType = pMediaLogEntry->TransactionType;
-        if (!FIS_1_2) {
-          pMediaErrorInfo->SequenceNum = pMediaLogEntry->SequenceNum;
-        }
+        pMediaErrorInfo->SequenceNum = pMediaLogEntry->SequenceNum;
 
         pMediaLogEntry++;
       }

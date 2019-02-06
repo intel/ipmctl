@@ -64,10 +64,6 @@ typedef struct {
 #define DIMM_BSR_MEDIA_ERROR 0x2
 #define DIMM_BSR_MEDIA_DISABLED 0x1
 
-// @todo Remove FIS 1.4 backwards compatibility workaround
-// FIS <= 1.4
-#define DIMM_BSR_AIT_DRAM_READY 0x1
-
 // FIS >= 1.5
 #define DIMM_BSR_AIT_DRAM_NOTTRAINED 0x0
 #define DIMM_BSR_AIT_DRAM_TRAINED_NOTLOADED 0x1
@@ -81,28 +77,8 @@ typedef struct {
 #define REGISTER_BSR_STR  L"BSR"
 #define REGISTER_OS_STR   L"OS"
 
-// @todo Remove FIS 1.4 backwards compatibility workaround
 typedef union {
   UINT64 AsUint64;
-  struct {
-    UINT64 Major : 8;
-    UINT64 Minor : 8;
-    UINT64 MR : 2;
-    UINT64 DT : 1;
-    UINT64 PCR : 1;
-    UINT64 MBR : 1;
-    UINT64 WTS : 1;
-    UINT64 FRCF : 1;
-    UINT64 CR : 1;
-    UINT64 MD: 1;
-    UINT64 OIE: 1;
-    UINT64 OIWE: 1;
-    UINT64 Rsvd : 5;
-    UINT64 Assertion : 1;
-    UINT64 MI_Stalled: 1;
-    UINT64 DR: 1;
-    UINT64 Rsvd1 : 29;
-  } Separated_FIS_1_4;
   struct {
     UINT64 Major : 8;       //7:0
     UINT64 Minor : 8;       //15:8

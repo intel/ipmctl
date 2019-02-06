@@ -1065,10 +1065,7 @@ typedef struct {
     } Separated;
   } LogParameters;
   UINT16 SequenceNumber;     //!< Log entries with sequence number equal or higher than the provided will be returned
-  union {
-    UINT8 RequestCountFis1_2;
-    UINT16 RequestCountFis1_3;
-  } RequestCount;            //!< Max number of log entries requested for this access
+  UINT16 RequestCount;       //!< Max number of log entries requested for this access
   UINT8 Reserved[123];
 } PT_INPUT_PAYLOAD_GET_ERROR_LOG;
 
@@ -1088,23 +1085,8 @@ typedef struct _LOG_INFO_DATA_RETURN {
      Sub-Opcode:  0x05h (Error Log)
 **/
 typedef struct {
-  union {
-    struct {
-      UINT16 NumTotalEntries;
-      union {
-        UINT8 AsUint8;
-        struct {
-          UINT8 ReturnCount : 7;
-          UINT8 OverrunFlag : 1;
-        } Separated;
-      } ReturnInfo;
-      UINT8 LogEntries[125];
-    } FIS_1_2;
-    struct {
-      UINT16 ReturnCount;           //!< Number of log entries returned
-      UINT8 LogEntries[126];        //!< Media log entry table
-    } FIS_1_3;
-  } Params;
+    UINT16 ReturnCount;           //!< Number of log entries returned
+    UINT8 LogEntries[126];        //!< Media log entry table
 } PT_OUTPUT_PAYLOAD_GET_ERROR_LOG;
 
 /**

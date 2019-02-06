@@ -204,7 +204,6 @@ SmartAndHealthCheck(
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
   UINT8 AitDramEnabled = 0;
-  BOOLEAN FIS_1_3 = FALSE;
   DIMM_INFO DimmInfo;
   CHAR16 *pActualHealthStr = NULL;
   CHAR16 *pActualHealthReasonStr = NULL;
@@ -242,11 +241,14 @@ SmartAndHealthCheck(
   if (SensorInfo.HealthStatus != CONTROLLER_HEALTH_NORMAL) {
     if ((SensorInfo.HealthStatus & HealthStatusFatal) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_FATAL_FAILURE), NULL);
-    } else if ((SensorInfo.HealthStatus & HealthStatusCritical) != 0) {
+    }
+    else if ((SensorInfo.HealthStatus & HealthStatusCritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CRITICAL_FAILURE), NULL);
-    } else if ((SensorInfo.HealthStatus & HealthStatusNoncritical) != 0) {
+    }
+    else if ((SensorInfo.HealthStatus & HealthStatusNoncritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NON_CRITICAL_FAILURE), NULL);
-    } else {
+    }
+    else {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
     }
 
@@ -261,21 +263,22 @@ SmartAndHealthCheck(
       pActualHealthStr = CatSPrintClean(pActualHealthStr, FORMAT_STR_WITH_PARANTHESIS, pActualHealthReasonStr);
     }
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BAD_HEALTH_STATE), EVENT_CODE_504, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-        pDimmStr, pActualHealthStr);
+      pDimmStr, pActualHealthStr);
 
     FREE_POOL_SAFE(pActualHealthStr);
     FREE_POOL_SAFE(pActualHealthReasonStr);
 
-  } else if ((pDimm->NvDimmStateFlags & BIT6) == BIT6) {
+  }
+  else if ((pDimm->NvDimmStateFlags & BIT6) == BIT6) {
     // If BIT6 is set FW did not map a region to SPA on DIMM
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_ACPI_NVDIMM_SPA_NOT_MAPPED), EVENT_CODE_542, DIAG_STATE_MASK_OK, ppResultStr, pDiagState, pDimmStr);
   }
 
   ReturnCode = GetDimm(&gNvmDimmData->NvmDimmConfig, pDimm->DimmID,
-      DIMM_INFO_CATEGORY_PACKAGE_SPARING |
-      DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY |
-      DIMM_INFO_CATEGORY_FW_IMAGE_INFO,
-      &DimmInfo);
+    DIMM_INFO_CATEGORY_PACKAGE_SPARING |
+    DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY |
+    DIMM_INFO_CATEGORY_FW_IMAGE_INFO,
+    &DimmInfo);
 
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -291,11 +294,11 @@ SmartAndHealthCheck(
 
   //Temperature and capacity checks
   ReturnCode = GetAlarmThresholds(NULL,
-      pDimm->DimmID,
-      SENSOR_TYPE_MEDIA_TEMPERATURE,
-      &MediaTemperatureThreshold,
-      NULL,
-      NULL);
+    pDimm->DimmID,
+    SENSOR_TYPE_MEDIA_TEMPERATURE,
+    &MediaTemperatureThreshold,
+    NULL,
+    NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     NVDIMM_DBG("Failed to get %s alarm threshold DimmID 0x%x", MEDIA_TEMPERATURE_STR, pDimm->DeviceHandle.AsUint32);
@@ -308,11 +311,11 @@ SmartAndHealthCheck(
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
-      pDimm->DimmID,
-      SENSOR_TYPE_CONTROLLER_TEMPERATURE,
-      &ControllerTemperatureThreshold,
-      NULL,
-      NULL);
+    pDimm->DimmID,
+    SENSOR_TYPE_CONTROLLER_TEMPERATURE,
+    &ControllerTemperatureThreshold,
+    NULL,
+    NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     NVDIMM_DBG("Failed to get %s alarm threshold DimmID 0x%x", CONTROLLER_TEMPERATURE_STR, pDimm->DeviceHandle.AsUint32);
@@ -325,11 +328,11 @@ SmartAndHealthCheck(
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
-      pDimm->DimmID,
-      SENSOR_TYPE_PERCENTAGE_REMAINING,
-      &PercentageRemainingThreshold,
-      NULL,
-      NULL);
+    pDimm->DimmID,
+    SENSOR_TYPE_PERCENTAGE_REMAINING,
+    &PercentageRemainingThreshold,
+    NULL,
+    NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     NVDIMM_DBG("Failed to get %s alarm threshold DimmID 0x%x", SPARE_CAPACITY_STR, pDimm->DeviceHandle.AsUint32);
@@ -357,15 +360,9 @@ SmartAndHealthCheck(
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_VIRAL_STATE), EVENT_CODE_523, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
   }
 
-  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 3) {
-    FIS_1_3 = TRUE;
-  }
-
   //AIT DRAM disbaled check
-  if (!FIS_1_3) {
-    if (AitDramEnabled == AIT_DRAM_DISABLED) {
-      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DISABLED), EVENT_CODE_535, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
-    }
+  if (AitDramEnabled == AIT_DRAM_DISABLED) {
+    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DISABLED), EVENT_CODE_535, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
   }
 
 Finish:
@@ -397,7 +394,6 @@ BootStatusDiagnosticsCheck(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_BSR Bsr;
-  BOOLEAN FIS_1_4 = FALSE;
   BOOLEAN FIS_1_14 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
@@ -423,9 +419,6 @@ BootStatusDiagnosticsCheck(
     goto Finish;
   }
 
-  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4) {
-    FIS_1_4 = TRUE;
-  }
   /* Check to make sure the FW Version is bigger than 1.14*/
   if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor >= 14) {
     FIS_1_14 = TRUE;
@@ -462,8 +455,7 @@ BootStatusDiagnosticsCheck(
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_MAILBOX_NOT_READY), EVENT_CODE_539, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }
-    if ((FIS_1_4 && (Bsr.Separated_FIS_1_4.DR != DIMM_BSR_AIT_DRAM_READY)) ||
-        (!FIS_1_4 && (Bsr.Separated_Current_FIS.DR != DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY))) {
+    if (Bsr.Separated_Current_FIS.DR != DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DRAM_NOT_READY), EVENT_CODE_533, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }

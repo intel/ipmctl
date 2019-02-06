@@ -93,7 +93,6 @@ ShowRegister(
   UINT32 DimmCount = 0;
   DIMM_INFO *pDimms = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-  BOOLEAN FIS_1_4 = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -175,11 +174,6 @@ ShowRegister(
       continue;
     }
 
-    // @todo Remove FIS 1.4 backwards compatibility workaround
-    if (pDimms[Index].FwVer.FwApiMajor == 1 && pDimms[Index].FwVer.FwApiMinor <= 4) {
-      FIS_1_4 = TRUE;
-    }
-
     ReturnCode = pNvmDimmConfigProtocol->RetrieveDimmRegisters(pNvmDimmConfigProtocol,
         pDimms[Index].DimmID, &Bsr.AsUint64, &FwMailboxStatus,
         FW_MB_SMALL_OUTPUT_REG_USED, &FwMailboxOutput, pCommandStatus);
@@ -196,7 +190,6 @@ ShowRegister(
     Print(L"---" FORMAT_STR L"=" FORMAT_STR L" Registers---\n", DIMM_ID_STR, DimmStr);
     if (ContainsValue(pRegisterValues, REGISTER_BSR_STR) || ShowAllRegisters) {
       Print(L"Boot Status:                0x%016lx\n", Bsr.AsUint64);
-      // @todo Remove FIS 1.4 backwards compatibility workaround
       Print(L"  [07:00] MajorCheckpoint ------ = 0x%x\n", Bsr.Separated_Current_FIS.Major);
       Print(L"  [15:08] MinorCheckpoint ------ = 0x%x\n", Bsr.Separated_Current_FIS.Minor);
       Print(L"  [17:16] MR (Media Ready) ----- = 0x%x (00:notReady; 1:Ready; 2:Error; 3:Rsv)\n", Bsr.Separated_Current_FIS.MR);
@@ -209,19 +202,10 @@ ShowRegister(
       Print(L"  [24:24] MD (Media Disabled) -- = 0x%x (0:User Data is accessible; 1:User Data is not accessible)\n", Bsr.Separated_Current_FIS.MD);
       Print(L"  [25:25] OIE (SVN Downgrade Opt-In Enable) ----- = 0x%x (0:Not Enabled; 1:Enabled)\n", Bsr.Separated_Current_FIS.OIE);
       Print(L"  [26:26] OIWE (SVN Downgrade Opt-In Was Enabled) = 0x%x (0:Never Enabled; 1:Has Been Enabled)\n",
-             Bsr.Separated_Current_FIS.OIWE);
-      if (FIS_1_4) {
-        Print(L"  [31:27] Rsvd ----------------- = 0x%x\n", Bsr.Separated_FIS_1_4.Rsvd);
-        Print(L"  [32:32] Assertion ------------ = 0x%x (1:FW has hit an assert - debug only)\n", Bsr.Separated_FIS_1_4.Assertion);
-        Print(L"  [33:33] MI_Stalled ----------- = 0x%x (1:FW has stalled media interface engine - debug only)\n",
-               Bsr.Separated_FIS_1_4.MI_Stalled);
-        Print(L"  [34:34] DR (DRAM Ready(AIT)) --= 0x%x (0:notReady; 1:Ready)\n", Bsr.Separated_FIS_1_4.DR);
-        Print(L"  [63:35] Rsvd ----------------- = 0x%x\n\n", Bsr.Separated_FIS_1_4.Rsvd1);
-      } else {
-        Print(L"  [28:27] DR (DRAM Ready(AIT)) --= 0x%x (0:Not trained,Not Loaded; 1:Trained,Not Loaded; 2:Error; 3:Trained,Loaded(Ready))\n", Bsr.Separated_Current_FIS.DR);
-        Print(L"  [29:29] RR (Reboot Required)= 0x%x (0:No reset is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)\n", Bsr.Separated_Current_FIS.RR);
-        Print(L"  [30:63] Rsvd ----------------- = 0x%x\n", Bsr.Separated_Current_FIS.Rsvd);
-      }
+        Bsr.Separated_Current_FIS.OIWE);
+      Print(L"  [28:27] DR (DRAM Ready(AIT)) --= 0x%x (0:Not trained,Not Loaded; 1:Trained,Not Loaded; 2:Error; 3:Trained,Loaded(Ready))\n", Bsr.Separated_Current_FIS.DR);
+      Print(L"  [29:29] RR (Reboot Required)= 0x%x (0:No reset is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)\n", Bsr.Separated_Current_FIS.RR);
+      Print(L"  [30:63] Rsvd ----------------- = 0x%x\n", Bsr.Separated_Current_FIS.Rsvd);
     }
     if (ContainsValue(pRegisterValues, REGISTER_OS_STR) || ShowAllRegisters) {
       Print(L"FW Mailbox Status:          0x%016lx\n", FwMailboxStatus);

@@ -33,7 +33,11 @@ decode_nlog_binary(
   UINT64 old_arg_count = 0;
   nlog_version_v1 v1;
   nlog_version_v2 v2;
-  CHAR8* kernel_str = NULL;
+  CHAR16* kernel_str = NULL;
+  CHAR8* ascii_kernel_str = NULL;
+  CHAR8* system_time_set_log = "System Time Set";
+  UINTN ascii_kernel_str_size = 0;
+  UINT32 system_time_set = 0;
   CHAR8* old_format_str = NULL;
   CHAR8* decode_header = NULL;
   UINT64 header_length = 0;
@@ -315,7 +319,6 @@ decode_nlog_binary(
     else
     {
       elements = 8;
-      kernel_str = u32_to_a(record->KernelTime, FALSE, 0, FALSE);
       old_format_str = record->FormattedString;
       append_strs = AllocateZeroPool(sizeof(CHAR8*) * elements);
       if (NULL == append_strs)
@@ -323,7 +326,27 @@ decode_nlog_binary(
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to allocate space for decoded records\n");
         goto Finish;
       }
-      append_strs[0] = pad_left(kernel_str, 9, ' ', FALSE);
+
+      // Look for log eg: \"System Time Set at boot. Time: 0x0_55bbb4a6\". Convert to time format string only for real kernel time and not system ticks.
+      if (((system_time_set != 0) && (record->KernelTime >= system_time_set)) || (AsciiStrnCmp(record->FormattedString + 1, system_time_set_log, string_length(system_time_set_log)) == 0))
+      {
+        system_time_set = record->KernelTime;
+        kernel_str = GetTimeFormatString((UINT64)record->KernelTime);
+        if (NULL == kernel_str)
+        {
+          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to convert the timestamp into readable string format\n");
+          goto Finish;
+        }
+        ascii_kernel_str_size = StrLen(kernel_str) + 1;
+        ascii_kernel_str = AllocateZeroPool(sizeof(CHAR8) * ascii_kernel_str_size);
+        UnicodeStrToAsciiStrS(kernel_str, ascii_kernel_str, ascii_kernel_str_size);
+        append_strs[0] = pad_left(ascii_kernel_str, 28, ' ', TRUE);
+      }
+      else
+      {
+        ascii_kernel_str = u32_to_a(record->KernelTime, FALSE, 0, FALSE);
+        append_strs[0] = pad_left(ascii_kernel_str, 28, ' ', TRUE);
+      }
       append_strs[1] = string_copy(" :: ");
       append_strs[2] = pad_left(record->DictEntry->FileName, 27, ' ', FALSE);
       append_strs[3] = string_copy(" :: ");

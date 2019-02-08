@@ -164,9 +164,9 @@ PrintPcatTable(
     pSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE *) pTable;
     Print(L"SocketSkuInfoTable\n"
         L"SocketID: 0x%x\n"
-        L"MappedMemorySizeLimit: %ld\n"
-        L"TotalMemorySizeMappedToSpa: %ld\n"
-        L"CachingMemorySize: %ld\n",
+        L"MappedMemorySizeLimit: " FORMAT_UINT64 L"\n"
+        L"TotalMemorySizeMappedToSpa: " FORMAT_UINT64 L"\n"
+        L"CachingMemorySize: " FORMAT_UINT64 L"\n",
         pSocketSkuInfoTable->SocketId,
         pSocketSkuInfoTable->MappedMemorySizeLimit,
         pSocketSkuInfoTable->TotalMemorySizeMappedToSpa,

@@ -97,6 +97,7 @@ Load(
   UINT16 *pDimmTargetIds = NULL;
   UINT32 NonFunctionalDimmCount = 0;
   UINT32 FunctionalDimmCount = 0;
+  UINT32 StagedFwUpdates = 0;
   DIMM_INFO *pAllDimms = NULL;
   DIMM_INFO *pNonFunctionalDimms = NULL;
   DIMM_INFO *pFunctionalDimms = NULL;
@@ -369,6 +370,7 @@ Load(
     goto Finish;
   }
 
+  pCommandStatus->ObjectType = ObjectTypeDimm;
   if (Recovery && !Examine) {
 
     // Create callback that will print progress
@@ -404,9 +406,10 @@ Load(
 
       //if the FW is already staged and this isn't an examine operation, the outcome is already known
       if (FALSE == Examine && TRUE == FwHasBeenStaged(pCmd, pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID)) {
-        NvmCodes[Index] = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
+        pCommandStatus->GeneralStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+        NvmCodes[Index] = pCommandStatus->GeneralStatus;
         ReturnCodes[Index] = MatchCliReturnCode(NvmCodes[Index]);
+        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
         continue;
       }
 
@@ -456,6 +459,8 @@ Load(
       } else if (EFI_ERROR(ReturnCodes[Index])) {
         continue;
       }
+
+      StagedFwUpdates++;
     } //for loop
 
     if (Examine) {
@@ -477,7 +482,7 @@ Load(
       else {
         Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
       }
-    } else {
+    } else if(StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
       Loop until they all report a staged version

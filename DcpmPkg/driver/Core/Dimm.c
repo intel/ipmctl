@@ -6405,7 +6405,7 @@ FwCmdGetCommandAccessPolicy(
 
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetAdminFeatures;
-  pFwCmd->SubOpcode = SubopDimmPartitionInfo;
+  pFwCmd->SubOpcode = SubopCommandAccessPolicy;
   pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY);
 
   pInputCAP = (PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->InputPayload;

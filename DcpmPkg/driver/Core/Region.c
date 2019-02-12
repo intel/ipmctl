@@ -3167,6 +3167,19 @@ ApplyGoalConfigsToDimms(
   SetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
 Finish:
+  if (EFI_ERROR(ReturnCode) && (EFI_INVALID_PARAMETER != ReturnCode)) {
+    // Create Goal ERROR! Try to remove Configuration Input table from Platform Config Data
+    LIST_FOR_EACH(pDimmNode, pDimmList) {
+      pDimm = DIMM_FROM_NODE(pDimmNode);
+      if (!IsDimmManageable(pDimm)) {
+        continue;
+      }
+      if (pDimm->PcdSynced) {
+        continue;
+      }
+      SendConfigInputToDimm(pDimm, NULL);
+    }
+  }
   FREE_POOL_SAFE(pNewConfigInput);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

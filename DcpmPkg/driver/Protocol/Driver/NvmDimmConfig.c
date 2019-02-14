@@ -10134,7 +10134,7 @@ LoadArsList(
     //First check how many records exist by passing NULL
     sArsBadRecordsCount = 0;
     ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, NULL);
-    if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode != EFI_NOT_READY && EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Could not obtain the ARS bad address list count");
       sArsBadRecordsCount = 0;
       goto Finish;
@@ -10151,7 +10151,7 @@ LoadArsList(
       }
 
       ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, sArsBadRecords);
-      if (EFI_ERROR(ReturnCode)) {
+      if (ReturnCode != EFI_NOT_READY && EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Could not obtain the ARS bad address list");
         FreePool(sArsBadRecords);
         sArsBadRecordsCount = 0;

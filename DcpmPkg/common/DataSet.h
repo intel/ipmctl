@@ -24,6 +24,8 @@
 #define TOPOLOGY_NODE_STR     L"DimmTopology"
 #define DIAGNOSTIC_NODE_STR   L"Diagnostic"
 #define NAMESPACE_NODE_STR    L"Namespace"
+#define ACPI_MODE_STR         L"Acpi"
+#define ACPITYPE_MODE_STR     L"Type"
 
 /*
 * Types of values supported in DataSets.

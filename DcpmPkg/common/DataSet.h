@@ -26,6 +26,7 @@
 #define NAMESPACE_NODE_STR    L"Namespace"
 #define ACPI_MODE_STR         L"Acpi"
 #define ACPITYPE_MODE_STR     L"Type"
+#define REGISTER_MODE_STR     L"Register"
 
 /*
 * Types of values supported in DataSets.

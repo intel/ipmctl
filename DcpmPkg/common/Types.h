@@ -37,7 +37,7 @@
 #define ERROR_INJ_TYPE_INVALID          0x08
 
 #define MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR    1
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    14
+#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    15
 
 /**
   The device path type for our driver and HII driver.

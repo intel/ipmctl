@@ -93,6 +93,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS     = 126,  ///< Error: Persistent memory must be applied to all DIMMs
   NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU        = 127,  ///< Warning: Mapped memory reduced due to CPU SKU limit
   NVM_ERR_REGION_GOAL_AUTO_PROV_ENABLED             = 128,  ///< Error: Automatic provision enabled
+  NVM_ERR_CREATE_NAMESPACE_NOT_ALLOWED              = 129,  ///< Error: Create namespace not allowed
 
   NVM_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED          = 130,  ///< Error: Failed to open file with write mode
   NVM_ERR_DUMP_NO_CONFIGURED_DIMMS                  = 131,  ///< Error: No configured DIMMs

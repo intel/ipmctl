@@ -6962,8 +6962,15 @@ Finish:
   ZeroMem(pDimms, sizeof(pDimms));
   ZeroMem(&NamespaceGUID, sizeof(NamespaceGUID));
   ZeroMem(&AppDirectRange, sizeof(AppDirectRange));
+  REGION_INFO Region;
+  LIST_ENTRY *pDimmList = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+  BOOLEAN AreNotPartOfPendingGoal = TRUE;
+  DIMM *pCurrentDimm = NULL;
 
   NVDIMM_ENTRY();
+
+  SetMem(&Region, sizeof(Region), 0x0);
 
   ReturnCode = GetRegionList(&pRegionList);
 
@@ -6993,6 +7000,44 @@ Finish:
   if (pIS == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_NOT_FOUND);
     ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  ReturnCode = GetRegion(pThis, RegionId, &Region, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  if (EFI_ERROR(ReturnCode)) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    goto Finish;
+  }
+
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
+  // Loop through all dimms associated with specified region until a match is found
+  for (Index = 0; (Index < Region.DimmIdCount) && (AreNotPartOfPendingGoal == TRUE); Index++) {
+    UINT32 NodeCount = 0;
+    LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+      pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+      if (pCurrentDimm == NULL) {
+        NVDIMM_DBG("Failed on Get Dimm from node %d", NodeCount);
+        ReturnCode = EFI_NOT_FOUND;
+        goto Finish;
+      }
+      NodeCount++;
+      // Valid match found and goal config is pending
+      if ((pCurrentDimm->DeviceHandle.AsUint32 == Region.DimmId[Index]) &&
+        (pCurrentDimm->GoalConfigStatus == GOAL_CONFIG_STATUS_NEW)) {
+        AreNotPartOfPendingGoal = FALSE;
+        break;
+      }
+    }
+  }
+
+  if (!AreNotPartOfPendingGoal) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_NAMESPACE_NOT_ALLOWED);
+    ReturnCode = EFI_ACCESS_DENIED;
     goto Finish;
   }
 

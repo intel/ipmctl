@@ -21,6 +21,10 @@ DESCRIPTION
 Dumps encoded firmware debug logs from specified DCPMMs and optionally
 decodes to human readable text.
 
+ifndef::os_build[]
+NOTE: For any non-functional DCPMMs logs will be retreived via SMBus.
+endif::os_build[]
+
 OPTIONS
 -------
 -h::

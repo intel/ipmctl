@@ -10,6 +10,10 @@ NAME
 ----
 ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs
 
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
+
 SYNOPSIS
 --------
 [verse]
@@ -82,7 +86,7 @@ namespaces associated with the requested DCPMM(s) must be deleted before running
 command.
 
 ifdef::os_build[]
-NOTE: The command is subject to OS Vendor (OSV) support. If OSV does not provide
+The command is subject to OS Vendor (OSV) support. If OSV does not provide
 support, the command will return "Not Supported."
 endif::os_build[]
 

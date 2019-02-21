@@ -21,6 +21,11 @@ Creates a memory allocation goal on one or more for the BIOS to read on the next
 reboot in order to map the DCPMM capacity into the system address space.
 Persistent memory can then be utilized by creating a namespace.
 
+NOTE: The capacity values presented by this command are a target goal or
+request to platform firmware. The actual capacity values are subject to
+change due to rounding and alignment requirements. If the goal request is
+invalid or not possible it may be rejected by platform firmware.
+
 include::../ipmctl-change-goal-config-warning.txt[]
 
 OPTIONS

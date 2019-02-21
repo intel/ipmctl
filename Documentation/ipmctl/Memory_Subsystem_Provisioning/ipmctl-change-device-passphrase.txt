@@ -10,6 +10,10 @@ NAME
 ----
 ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM
 
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
+
 SYNOPSIS
 --------
 [verse]

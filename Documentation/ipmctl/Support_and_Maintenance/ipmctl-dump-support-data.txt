@@ -22,6 +22,22 @@ by support personnel. Support data may include system log(s), error log(s),
 trace log(s), platform configuration, sensor information, events and diagnostic
 results.
 
+Commands executed:
+* version
+* show -memoryresources
+* show -a -system -capabilities
+* show -a -topology
+* start -diagnostic
+* show -event
+* show -system
+
+Commands executed per DCPMM:
+* show -a -dimm
+* show -a -sensor -dimm
+* show -pcd -dimm
+* show -error media -dimm
+* show -error thermal -dimm
+
 OPTIONS
 -------
 -h::

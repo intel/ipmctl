@@ -102,7 +102,9 @@ HealthState::
   - Fatal: Data loss has occurred or is imminent. In this case, the
     firmware will disable the media and access to user data and operations
     that require use of the media will fail.
-  - Non-functional: The DCPMM is present but is non-responsive.
+  - Non-functional: The DCPMM is present but is non-responsive via the DDRT
+  communication path. It may be possible to communicate with this DCPMM via SMBus
+  for a subset of commands.
   - Unmanageable: The DCPMM is not supported by this version of
     the software
   - Unknown: Unable to determine the DCPMM health state.

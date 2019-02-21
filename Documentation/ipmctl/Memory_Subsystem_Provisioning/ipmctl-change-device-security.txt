@@ -10,6 +10,12 @@ NAME
 ----
 ipmctl-change-device-security - Changes the DCPMM security lock state
 
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+An exception is if the DCPMM is Unlocked Seurity State, then transitioning to Disabled
+is permitted.
+endif::os_build[]
+
 SYNOPSIS
 --------
 [verse]

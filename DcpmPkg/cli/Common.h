@@ -74,6 +74,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INVALID_PASSPHRASE_FROM_FILE  L"Error: The file contains empty or bad formatted passphrases."
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
+#define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
 

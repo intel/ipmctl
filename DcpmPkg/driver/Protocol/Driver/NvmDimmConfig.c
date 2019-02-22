@@ -1963,7 +1963,7 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
@@ -2562,7 +2562,7 @@ SetSecurityState(
   // Prevent user from enabling security when goal is pending due to BIOS restrictions
   if (SecurityOperation == SECURITY_OPERATION_SET_PASSPHRASE) {
     // Check if input DIMMs are not part of a goal
-    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
@@ -5763,10 +5763,13 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    else if (ReturnCode == EFI_VOLUME_CORRUPTED) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
     }
     goto Finish;
   }
@@ -6125,7 +6128,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6426,11 +6429,13 @@ DeleteGoalConfig (
     }
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
-  if (EFI_ERROR(ReturnCode)) {
-    if (EFI_NO_RESPONSE == ReturnCode) {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
-    }
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
   }
 
@@ -7008,7 +7013,7 @@ Finish:
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
@@ -9694,7 +9699,7 @@ CheckGoalStatus(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

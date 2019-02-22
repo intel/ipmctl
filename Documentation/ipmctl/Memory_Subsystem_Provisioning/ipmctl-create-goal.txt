@@ -35,6 +35,7 @@ OPTIONS
 -force::
     Reconfiguring DCPMMs is a destructive operation which requires
     confirmation from the user. This option suppresses the confirmation.
+    This option can also be used to recover/override corrupted Platform Configuration Data (PCD).
 
 -h::
 -help::

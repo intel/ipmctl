@@ -496,6 +496,9 @@ ShowGoal(
     pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PCD_CORRUPTED);
+    }
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     PrinterSetCommandStatus(pPrinterCtx, ReturnCode, CLI_GET_REGION_MSG, CLI_GET_REGION_ON_MSG, pCommandStatus);
     goto Finish;

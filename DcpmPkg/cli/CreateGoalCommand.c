@@ -209,6 +209,9 @@ CheckAndConfirmAlignments(
     pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
+    if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PCD_CORRUPTED);
+    }
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CREATE_GOAL_COMMAND_STATUS_HEADER, CLI_INFO_ON, pCommandStatus);
     goto Finish;

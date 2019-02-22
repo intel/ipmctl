@@ -126,6 +126,9 @@ DeleteGoal(
   ReturnCode = pNvmDimmConfigProtocol->DeleteGoalConfig(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pSocketIds,
       SocketIdsCount, pCommandStatus);
 
+  if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_PCD_CORRUPTED);
+  }
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
 
   PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Delete memory allocation goal", L" from", pCommandStatus);

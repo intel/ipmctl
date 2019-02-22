@@ -12,14 +12,15 @@
 #include "Debug.h"
 #include "Convert.h"
 
-/**
-  show -error syntax definition
-**/
+ /**
+   show -error syntax definition
+ **/
 struct Command ShowErrorCommandSyntax =
 {
   SHOW_VERB,                                                           //!< verb
   {                                                                    //!< options
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty},
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #else
@@ -36,11 +37,146 @@ struct Command ShowErrorCommandSyntax =
     {COUNT_PROPERTY, L"", HELP_TEXT_ERROR_LOG_COUNT_PROPERTY, FALSE, ValueRequired}
   },                                                                  //!< properties
   L"Show error log for given DIMM",                                   //!< help
-  ShowErrorCommand                                                    //!< run function
+  ShowErrorCommand,                                                   //!< run function
+  TRUE
+};
+
+#define DS_ROOT_PATH                        L"/ErrorList"
+#define DS_DIMM_PATH                        L"/ErrorList/Dimm"
+#define DS_DIMM_INDEX_PATH                  L"/ErrorList/Dimm[%d]"
+#define DS_ERROR_PATH                       L"/ErrorList/Dimm/Error"
+#define DS_ERROR_INDEX_PATH                 L"/ErrorList/Dimm[%d]/Error[%d]"
+
+/**
+  List heading names
+**/
+#define ERROR_STR L"Error"
+
+CHAR16 *mppAllowedShowErrorDisplayValues[] =
+{
+  DIMM_ID_STR,
+  ERROR_STR
+};
+
+
+/*
+*  SHOW MEDIA ERROR ATTRIBUTES (3 columns)
+*   DimmID | System Timestamp    | Error Type
+*   ==========================================
+*   0x0001 | 01/01/1998 00:03:30 |      x
+*   ...
+*/
+PRINTER_TABLE_ATTRIB ShowMediaErrorTableAttributes =
+{
+  {
+    {
+      DIMM_ID_STR,                                                          //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                                                   //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR                               //COLUMN DATA PATH
+    },
+    {
+      ERROR_SYSTEM_TIMESTAMP_STR,                                           //COLUMN HEADER
+      SENSOR_VALUE_MAX_STR_WIDTH,                                           //COLUMN MAX STR WIDTH
+      DS_ERROR_PATH PATH_KEY_DELIM ERROR_SYSTEM_TIMESTAMP_STR               //COLUMN DATA PATH
+    },
+    {
+      ERROR_MEDIA_ERROR_TYPE_STR,                                           //COLUMN HEADER
+      ERROR_MAX_STR_WIDTH,                                                  //COLUMN MAX STR WIDTH
+      DS_ERROR_PATH PATH_KEY_DELIM ERROR_MEDIA_ERROR_TYPE_STR               //COLUMN DATA PATH
+    },
+  }
+};
+
+/*
+*  SHOW THERMAL ERROR ATTRIBUTES (4 columns)
+*   DimmID | System Timestamp     | Temperature | Reported
+*   =======================================================
+*   0x0001 |             x        |      x      |    x
+*   ...
+*/
+
+PRINTER_TABLE_ATTRIB ShowThermalErrorTableAttributes =
+{
+  {
+    {
+      DIMM_ID_STR,                                                          //COLUMN HEADER
+      DIMM_MAX_STR_WIDTH,                                                   //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR                               //COLUMN DATA PATH
+    },
+    {
+      ERROR_SYSTEM_TIMESTAMP_STR,                                           //COLUMN HEADER
+      SENSOR_VALUE_MAX_STR_WIDTH,                                           //COLUMN MAX STR WIDTH
+      DS_ERROR_PATH PATH_KEY_DELIM ERROR_SYSTEM_TIMESTAMP_STR               //COLUMN DATA PATH
+    },
+    {
+      ERROR_THERMAL_TEMPERATURE_STR,                                        //COLUMN HEADER
+      TABLE_MIN_HEADER_LENGTH(ERROR_THERMAL_TEMPERATURE_STR),               //COLUMN MAX STR WIDTH
+      DS_ERROR_PATH PATH_KEY_DELIM ERROR_THERMAL_TEMPERATURE_STR            //COLUMN DATA PATH
+    },
+    {
+      ERROR_THERMAL_REPORTED_STR,                                           //COLUMN HEADER
+      SENSOR_STATE_MAX_STR_WIDTH,                                           //COLUMN MAX STR WIDTH
+      DS_ERROR_PATH PATH_KEY_DELIM ERROR_THERMAL_REPORTED_STR               //COLUMN DATA PATH
+    },
+  }
+};
+
+// List view for Media error
+PRINTER_LIST_ATTRIB ShowMediaErrorListAttributes =
+{
+ {
+    {
+      DIMM_NODE_STR,                                                        //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",                        //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,                           //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                                           //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      ERROR_STR,                                                            //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT L"---" ERROR_STR L"=$(" ERROR_STR L")",               //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,           //NULL or KEY VAL FORMAT STR
+      ERROR_STR                                                             //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+// List view for Thermal error
+PRINTER_LIST_ATTRIB ShowThermalErrorListAttributes =
+{
+ {
+    {
+      DIMM_NODE_STR,                                                        //GROUP LEVEL TYPE
+      L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",                        //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,                           //NULL or KEY VAL FORMAT STR
+      DIMM_ID_STR                                                           //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      ERROR_STR,                                                            //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT L"---" ERROR_STR L"=$(" ERROR_STR L")",               //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L"=" FORMAT_STR,           //NULL or KEY VAL FORMAT STR
+      ERROR_STR                                                             //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+
+};
+PRINTER_DATA_SET_ATTRIBS ShowMediaErrorDataSetAttribs =
+{
+  &ShowMediaErrorListAttributes,
+  &ShowMediaErrorTableAttributes
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowThermalErrorDataSetAttribs =
+{
+  &ShowThermalErrorListAttributes,
+  &ShowThermalErrorTableAttributes
 };
 
 /**
-  Register syntax of show -error
+  Register the show -error command
+
+  @retval EFI_SUCCESS success
+  @retval EFI_ABORTED registering failure
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
 RegisterShowErrorCommand(
@@ -97,6 +233,11 @@ ShowErrorCommand(
   UINT16 ManageableListIndex = 0;
   UINT64 RangeInBytes = 0;
   CHAR16 *pTempStr = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
+  CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
+  BOOLEAN FoundMediaErrorFlag = FALSE;
+  UINT8 MediaErrorInfoCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -105,7 +246,27 @@ ShowErrorCommand(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    goto Finish;
+  }
+
+  /**
+    Printing will still work via compability mode if NULL so no need to check for NULL.
+  **/
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  pDispOptions = AllocateZeroPool(sizeof(CMD_DISPLAY_OPTIONS));
+  if (NULL == pDispOptions) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    goto Finish;
+  }
+
+  ReturnCode = CheckAllAndDisplayOptions(pCmd, mppAllowedShowErrorDisplayValues,
+    ALLOWED_DISP_VALUES_COUNT(mppAllowedShowErrorDisplayValues), pDispOptions);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("CheckAllAndDisplayOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
     goto Finish;
   }
 
@@ -113,31 +274,33 @@ ShowErrorCommand(
   pTargetValue = GetTargetValue(pCmd, ERROR_TARGET);
   if (pTargetValue == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_INCOMPLETE_SYNTAX);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCOMPLETE_SYNTAX);
     goto Finish;
   }
 
   if (StrICmp(pTargetValue, ERROR_TARGET_THERMAL_VALUE) == 0) {
     ThermalError = TRUE;
-  } else if (StrICmp(pTargetValue, ERROR_TARGET_MEDIA_VALUE) == 0) {
+  }
+  else if (StrICmp(pTargetValue, ERROR_TARGET_MEDIA_VALUE) == 0) {
     ThermalError = FALSE;
-  } else {
+  }
+  else {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_TARGET_ERROR);
     goto Finish;
   }
 
   /** Open Config protocol **/
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -145,8 +308,8 @@ ShowErrorCommand(
   // Populate the list of DIMM_INFO structures with relevant information
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
-    if(ReturnCode == EFI_NOT_FOUND) {
-        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+    if (ReturnCode == EFI_NOT_FOUND) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
     }
     goto Finish;
   }
@@ -159,9 +322,9 @@ ShowErrorCommand(
       NVDIMM_WARN("Target value is not a valid Dimm ID");
       goto Finish;
     }
-    if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsNum)){
-      Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
+    if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsNum)) {
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
   }
@@ -172,17 +335,19 @@ ShowErrorCommand(
     IsNumber = GetU64FromString(pPropertyValue, &ParsedNumber);
     if (!IsNumber) {
       NVDIMM_WARN("Sequence number value is not a number");
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM);
       goto Finish;
-    } else if (ParsedNumber > ERROR_LOG_MAX_SEQUENCE_NUMBER) {
+    }
+    else if (ParsedNumber > ERROR_LOG_MAX_SEQUENCE_NUMBER) {
       NVDIMM_WARN("Sequence number value %d is greater than maximum %d", ParsedNumber, ERROR_LOG_MAX_SEQUENCE_NUMBER);
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM);
       goto Finish;
     }
     SequenceNum = (UINT16)ParsedNumber;
-  } else {
+  }
+  else {
     // If sequence number property doesn't exists is ok, it is optional param, using default value
     ReturnCode = EFI_SUCCESS;
   }
@@ -192,15 +357,18 @@ ShowErrorCommand(
     // If level property exists, check it validity
     if (StrICmp(pPropertyValue, LEVEL_HIGH_PROPERTY_VALUE) == 0) {
       HighLevel = TRUE;
-    } else if (StrICmp(pPropertyValue, LEVEL_LOW_PROPERTY_VALUE) == 0) {
+    }
+    else if (StrICmp(pPropertyValue, LEVEL_LOW_PROPERTY_VALUE) == 0) {
       HighLevel = FALSE;
-    } else {
+    }
+    else {
       ReturnCode = EFI_INVALID_PARAMETER;
       NVDIMM_WARN("Invalid Error Level. Error Level can be %s or %s", LEVEL_HIGH_PROPERTY_VALUE, LEVEL_LOW_PROPERTY_VALUE);
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL);
       goto Finish;
     }
-  } else {
+  }
+  else {
     // If level property doesn't exists is ok, it is optional param, using default value
     HighLevel = TRUE;
     ReturnCode = EFI_SUCCESS;
@@ -212,17 +380,19 @@ ShowErrorCommand(
     IsNumber = GetU64FromString(pPropertyValue, &ParsedNumber);
     if (!IsNumber) {
       NVDIMM_WARN("Count value is not a number");
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT);
       goto Finish;
-    } else if (ParsedNumber > ERROR_LOG_MAX_COUNT) {
+    }
+    else if (ParsedNumber > ERROR_LOG_MAX_COUNT) {
       NVDIMM_WARN("Count value %d is greater than maximum %d", ParsedNumber, ERROR_LOG_MAX_COUNT);
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT);
       ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT);
       goto Finish;
     }
     RequestedCount = (UINT32)ParsedNumber;
-  } else {
+  }
+  else {
     // If count property doesn't exists is ok, it is optional param, using default value
     ReturnCode = EFI_SUCCESS;
   }
@@ -232,7 +402,8 @@ ShowErrorCommand(
     FREE_POOL_SAFE(pDimmIds);
     pDimmIds = AllocateZeroPool(sizeof(*pDimmIds) * DimmIdsNum);
     if (pDimmIds == NULL) {
-      Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       NVDIMM_WARN("Failed on memory allocation.");
       goto Finish;
     }
@@ -251,14 +422,16 @@ ShowErrorCommand(
     goto Finish;
   }
 
-  for(Index = 0; Index < DimmIdsNum; Index++) {
+  for (Index = 0; Index < DimmIdsNum; Index++) {
     ReturnedCount = RequestedCount;
     ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
     if (EFI_ERROR(ReturnCode)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
     ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid,
-        DimmStr, MAX_DIMM_UID_LENGTH);
+      DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
@@ -275,177 +448,249 @@ ShowErrorCommand(
       if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
         ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       }
-      Print(L"Failed to get error logs from DIMM " FORMAT_STR L"\n", DimmStr);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to get error logs from DIMM " FORMAT_STR L"\n", DimmStr);
       continue;
     }
     if (ReturnedCount == 0) {
-      Print(L"No errors found on DIMM " FORMAT_STR L"\n", DimmStr);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"No errors found on DIMM " FORMAT_STR L"\n", DimmStr);
     }
     else {
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, Index);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+
       for (Index2 = 0; Index2 < ReturnedCount; Index2++) {
         pErrorType = (ErrorsArray[Index2].ErrorType == THERMAL_ERROR ?
-        ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
-        Print(FORMAT_STR_SPACE L"on DIMM " FORMAT_STR L":\n", pErrorType, DimmStr);
-        pTempStr = GetTimeFormatString(ErrorsArray[Index2].SystemTimestamp);
-        Print(FORMAT_16STR L" : " FORMAT_STR_NL, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
+          ERROR_THERMAL_OCCURRED_STR : ERROR_MEDIA_OCCURRED_STR);
+
+        PRINTER_BUILD_KEY_PATH(pPath, DS_ERROR_INDEX_PATH, Index, Index2);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_STR, pErrorType);
+
+        pTempStr = GetTimeFormatString(ErrorsArray[Index2].SystemTimestamp, FALSE);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_SYSTEM_TIMESTAMP_STR, pTempStr);
+
         FREE_POOL_SAFE(pTempStr);
 
         if (ErrorsArray[Index2].ErrorType == THERMAL_ERROR) {
           pThermalErrorInfo = (THERMAL_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
-          Print(FORMAT_16STR L" : %d" FORMAT_STR_NL, ERROR_THERMAL_TEMPERATURE_STR, pThermalErrorInfo->Temperature, TEMPERATURE_MSR);
+          PRINTER_SET_KEY_VAL_UINT16(pPrinterCtx, pPath, ERROR_THERMAL_TEMPERATURE_STR, pThermalErrorInfo->Temperature, DECIMAL);
+
           // Thermal Reported
           if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_USER_ALARM) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
-                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_USER_ALARM_STR);
-          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_LOW) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
-                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_LOW_STR);
-          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_HIGH) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
-                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_HIGH_STR);
-          } else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_CRITICAL) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
-                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_CRITICAL_STR);
-          } else {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_REPORTED_STR,
-                pThermalErrorInfo->Reported, ERROR_THERMAL_REPORTED_UNKNOWN_STR);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_REPORTED_USER_ALARM_STR);
+          }
+          else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_LOW) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_REPORTED_LOW_STR);
+          }
+          else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_HIGH) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_REPORTED_HIGH_STR);
+          }
+          else if (pThermalErrorInfo->Reported == ERROR_THERMAL_REPORTED_CRITICAL) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_REPORTED_CRITICAL_STR);
+          }
+          else {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_REPORTED_UNKNOWN_STR);
           }
           // Temperature Type
-          if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
-                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_MEDIA_STR);
-          } else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CONTROLLER) {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
-                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_CONTROLLER_STR);
-          } else {
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_THERMAL_TYPE_STR,
-                pThermalErrorInfo->Type, ERROR_THERMAL_TYPE_UNKNOWN_STR);
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
+            if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_MEDIA_STR);
+            }
+            else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CONTROLLER) {
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_CONTROLLER_STR);
+            }
+            else {
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_UNKNOWN_STR);
+            }
           }
-          Print(FORMAT_16STR L" : %d\n", ERROR_SEQUENCE_NUMBER, pThermalErrorInfo->SequenceNum);
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
+            PRINTER_SET_KEY_VAL_UINT16(pPrinterCtx, pPath, ERROR_SEQUENCE_NUMBER, pThermalErrorInfo->SequenceNum, DECIMAL);
+          }
         }
         else {
+
           pMediaErrorInfo = (MEDIA_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
-          Print(FORMAT_16STR L" : 0x%08llx\n", ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa);
-          Print(FORMAT_16STR L" : 0x%08llx\n", ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda);
-          // Range in bytes
-          RangeInBytes = Pow(2, pMediaErrorInfo->Range);
-          Print(FORMAT_16STR L" : %lldB\n", ERROR_MEDIA_RANGE_STR, RangeInBytes);
+
           // Error Type
           switch (pMediaErrorInfo->ErrorType) {
-            case ERROR_TYPE_UNCORRECTABLE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_UNCORRECTABLE_STR);
-              break;
-            case ERROR_TYPE_DPA_MISMATCH:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_DPA_MISMATCH_STR);
-              break;
-            case ERROR_TYPE_AIT_ERROR:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_AIT_ERROR_STR);
-              break;
-            case ERROR_TYPE_DATA_PATH_ERROR:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_DATA_PATH_ERROR_STR);
-              break;
-            case ERROR_TYPE_LOCKED_ILLEGAL_ACCESS:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_LOCKED_ILLEGAL_ACCESS_STR);
-              break;
-            case ERROR_TYPE_PERCENTAGE_REMAINING:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_PERCENTAGE_REMAINING_STR);
-              break;
-            case ERROR_TYPE_SMART_CHANGE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_SMART_CHANGE_STR);
-              break;
-            case ERROR_TYPE_PERSISTENT_WRITE_ECC:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_PERSISTENT_WRITE_ECC_STR);
-              break;
-            default:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_ERROR_TYPE_STR,
-                pMediaErrorInfo->ErrorType, ERROR_TYPE_UNKNOWN_STR);
-              break;
+          case ERROR_TYPE_UNCORRECTABLE:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_UNCORRECTABLE, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_UNCORRECTABLE_STR);
+            break;
+          case ERROR_TYPE_DPA_MISMATCH:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_DPA_MISMATCH, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_DPA_MISMATCH_STR);
+            break;
+          case ERROR_TYPE_AIT_ERROR:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_AIT_ERROR, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_AIT_ERROR_STR);
+            break;
+          case ERROR_TYPE_DATA_PATH_ERROR:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_DATA_PATH_ERROR, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_DATA_PATH_ERROR_STR);
+            break;
+          case ERROR_TYPE_LOCKED_ILLEGAL_ACCESS:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_LOCKED_ILLEGAL_ACCESS, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_LOCKED_ILLEGAL_ACCESS_STR);
+            break;
+          case ERROR_TYPE_PERCENTAGE_REMAINING:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERCENTAGE_REMAINING, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERCENTAGE_REMAINING_STR);
+            break;
+          case ERROR_TYPE_SMART_CHANGE:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_SMART_CHANGE, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_SMART_CHANGE_STR);
+            break;
+          case ERROR_TYPE_PERSISTENT_WRITE_ECC:
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERSISTENT_WRITE_ECC, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERSISTENT_WRITE_ECC_STR);
+            break;
+          default:
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_UNKNOWN_STR);
+            break;
           }
-          // Error Flags
-          Print(FORMAT_16STR L" : ", ERROR_MEDIA_ERROR_FLAGS_STR);
-          if (pMediaErrorInfo->PdaValid) {
-            Print(FORMAT_STR L" ", ERROR_FLAGS_PDA_VALID_STR);
-          }
-          if (pMediaErrorInfo->DpaValid) {
-            Print(FORMAT_STR L" ", ERROR_FLAGS_DPA_VALID_STR);
-          }
-          if (pMediaErrorInfo->Interrupt) {
-            Print(FORMAT_STR L" ", ERROR_FLAGS_INTERRUPT_STR);
-          }
-          if (pMediaErrorInfo->Viral) {
-            Print(FORMAT_STR L" ", ERROR_FLAGS_VIRAL_STR);
-          }
-          Print(L"\n");
+
           // Transaction Type
-          switch (pMediaErrorInfo->TransactionType) {
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_TRANSACTION_TYPE_STR))) {
+            switch (pMediaErrorInfo->TransactionType) {
             case TRANSACTION_TYPE_2LM_READ:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_2LM_READ_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_2LM_READ, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_2LM_READ_STR);
               break;
             case TRANSACTION_TYPE_2LM_WRITE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_2LM_WRITE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_2LM_WRITE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_2LM_WRITE_STR);
               break;
             case TRANSACTION_TYPE_PM_READ:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PM_READ_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PM_READ, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PM_READ_STR);
               break;
             case TRANSACTION_TYPE_PM_WRITE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PM_WRITE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PM_WRITE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PM_WRITE_STR);
               break;
             case TRANSACTION_TYPE_AIT_READ:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_AIT_READ_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_AIT_READ, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_AIT_READ_STR);
               break;
             case TRANSACTION_TYPE_AIT_WRITE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_AIT_WRITE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_AIT_WRITE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_AIT_WRITE_STR);
               break;
             case TRANSACTION_TYPE_WEAR_LEVEL_MOVE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_WEAR_LEVEL_MOVE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_WEAR_LEVEL_MOVE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_WEAR_LEVEL_MOVE_STR);
               break;
             case TRANSACTION_TYPE_PATROL_SCRUB:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_PATROL_SCRUB_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PATROL_SCRUB, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PATROL_SCRUB_STR);
               break;
             case TRANSACTION_TYPE_CSR_READ:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_CSR_READ_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_CSR_READ, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_CSR_READ_STR);
               break;
             case TRANSACTION_TYPE_CSR_WRITE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_CSR_WRITE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_CSR_WRITE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_CSR_WRITE_STR);
               break;
             case TRANSACTION_TYPE_ARS:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_ARS_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_ARS, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_ARS_STR);
               break;
             case TRANSACTION_TYPE_UNAVAILABLE:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_UNAVAILABLE_STR);
+              PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_UNAVAILABLE, HEX);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_UNAVAILABLE_STR);
               break;
             default:
-              Print(FORMAT_16STR L" : %d - " FORMAT_STR L"\n", ERROR_MEDIA_TRANSACTION_TYPE_STR,
-                pMediaErrorInfo->TransactionType, TRANSACTION_TYPE_UNKNOWN_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_UNKNOWN_STR);
               break;
+            }
           }
-          Print(FORMAT_16STR L" : %d\n", ERROR_SEQUENCE_NUMBER, pMediaErrorInfo->SequenceNum);
+
+          // Media Error info flags
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_ERROR_FLAGS_STR))) {
+            if (pMediaErrorInfo->PdaValid) {
+              MediaErrorInfoCount = MediaErrorInfoCount | pMediaErrorInfo->PdaValid;
+            }
+            if (pMediaErrorInfo->DpaValid) {
+              MediaErrorInfoCount = MediaErrorInfoCount | (pMediaErrorInfo->DpaValid << 1);
+            }
+            if (pMediaErrorInfo->Interrupt) {
+              MediaErrorInfoCount = MediaErrorInfoCount | (pMediaErrorInfo->Interrupt << 2);
+            }
+            PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, MediaErrorInfoCount, HEX);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_MSG_EXTRA_SPACE);
+
+            if (pMediaErrorInfo->PdaValid) {
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_FLAGS_PDA_VALID_STR);
+              FoundMediaErrorFlag = TRUE;
+            }
+            if (pMediaErrorInfo->DpaValid) {
+              if (FoundMediaErrorFlag == TRUE) {
+                PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_MSG_COMA_CHAR);
+              }
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_FLAGS_DPA_VALID_STR);
+              FoundMediaErrorFlag = TRUE;
+            }
+            if (pMediaErrorInfo->Interrupt) {
+              if (FoundMediaErrorFlag == TRUE) {
+                PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_MSG_COMA_CHAR);
+              }
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_FLAGS_STR, ERROR_FLAGS_INTERRUPT_STR);
+            }
+            FoundMediaErrorFlag = FALSE;
+            MediaErrorInfoCount = 0;
+          }
+
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_DPA_STR))) {
+            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa, HEX);
+          }
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_PDA_STR))) {
+            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda, HEX);
+          }
+          // Range in bytes
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_RANGE_STR))) {
+            RangeInBytes = Pow(2, pMediaErrorInfo->Range);
+            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, RangeInBytes, DECIMAL);
+            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, ERROR_MSG_BYTE_CHAR);
+          }
+
+          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
+            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_SEQUENCE_NUMBER, pMediaErrorInfo->SequenceNum, DECIMAL);
+          }
         }
       }
     }
   }
 
+  if (ThermalError == FALSE) {
+    PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowMediaErrorDataSetAttribs);
+  }
+  else {
+    PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowThermalErrorDataSetAttribs);
+  }
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
   DisplayCommandStatus(L"Show error", L" on", pCommandStatus);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);

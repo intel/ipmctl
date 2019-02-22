@@ -1136,7 +1136,7 @@ ShowDimms(
           if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           } else {
-            pAttributeStr = GetTimeFormatString(pDimms[DimmIndex].LastShutdownTime);
+            pAttributeStr = GetTimeFormatString(pDimms[DimmIndex].LastShutdownTime, TRUE);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LAST_SHUTDOWN_TIME_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);

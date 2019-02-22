@@ -372,6 +372,19 @@ do { \
   } \
 } while (0)
 
+/**Set a UINT64 into a dataset that resides in the "set buffer"**/
+#define PRINTER_SET_KEY_VAL_UINT64(ctx, key_path, key_name, val, base) \
+do { \
+  EFI_STATUS rc; \
+  DATA_SET_CONTEXT *pDataSet = NULL; \
+  if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
+    NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
+  } \
+  if( EFI_SUCCESS != (rc = SetKeyValueUint64(pDataSet, key_name, val, base))) { \
+    NVDIMM_CRIT("Failed to Set KeyVal pair (" FORMAT_EFI_STATUS ")", rc); \
+  } \
+} while (0)
+
 /**Set a UINT8 into a dataset that resides in the "set buffer"**/
 #define PRINTER_SET_KEY_VAL_UINT8(ctx, key_path, key_name, val, base) \
 do { \

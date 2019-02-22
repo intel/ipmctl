@@ -3131,7 +3131,7 @@ EndianSwapUint16(
 
   @retval Human readable time string
 **/
-CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds)
+CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds, BOOLEAN verbose )
 {
   int TimeSeconds = 0,
       TimeMinutes = 0,
@@ -3202,17 +3202,31 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds)
 
   TimeMonthday = NumberOfFullDays + 1;
 
-  pTimeFormatString = CatSPrintClean(pTimeFormatString,
-    FORMAT_STR_SPACE FORMAT_STR L" %02d %02d:%02d:%02d UTC %d",
-    DayOfWeek[TimeWeekday],
-    Month[TimeMonth],
-    TimeMonthday,
-    TimeHours,
-    TimeMinutes,
-    TimeSeconds,
-    TimeYear + CENTURY_MARKER
-    );
-
+  switch (verbose) {
+  case TRUE:
+    pTimeFormatString = CatSPrintClean(pTimeFormatString,
+      FORMAT_STR_SPACE FORMAT_STR L" %02d %02d:%02d:%02d UTC %d",
+      DayOfWeek[TimeWeekday],
+      Month[TimeMonth],
+      TimeMonthday,
+      TimeHours,
+      TimeMinutes,
+      TimeSeconds,
+      TimeYear + CENTURY_MARKER
+    );    // With verbose TRUE, timestamp looks like "Thu Jan 01 00:03:30 UTC 1998"
+    break;
+  default:
+    pTimeFormatString = CatSPrintClean(pTimeFormatString,
+      L"%02d/%02d/%d %02d:%02d:%02d",
+      ++TimeMonth,
+      TimeMonthday,
+      TimeYear + CENTURY_MARKER,
+      TimeHours,
+      TimeMinutes,
+      TimeSeconds
+    ); // With Default verbose, timestamp looks like "12/03/2018 14:55:21"
+    break;
+  }
 return pTimeFormatString;
 }
 

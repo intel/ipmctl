@@ -10,8 +10,16 @@
 #include "NvmInterface.h"
 #include "Common.h"
 
-#define ERROR_THERMAL_OCCURRED_STR       L"Thermal Error occurred"
-#define ERROR_MEDIA_OCCURRED_STR         L"Media Error occurred"
+#define ERROR_MAX_STR_WIDTH           36
+#define ERROR_MIN_STR_WIDTH           8
+
+#define ERROR_MSG_EXTRA_SPACE         L" - "
+#define ERROR_MSG_BYTE_CHAR           L"B"
+#define ERROR_MSG_COMA_CHAR           L", "
+
+
+#define ERROR_THERMAL_OCCURRED_STR       L"Thermal"
+#define ERROR_MEDIA_OCCURRED_STR         L"Media"
 #define ERROR_SYSTEM_TIMESTAMP_STR       L"System Timestamp"
 #define ERROR_THERMAL_TEMPERATURE_STR    L"Temperature"
 #define ERROR_THERMAL_REPORTED_STR       L"Reported"

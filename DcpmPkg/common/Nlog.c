@@ -331,7 +331,7 @@ decode_nlog_binary(
       if (((system_time_set != 0) && (record->KernelTime >= system_time_set)) || (AsciiStrnCmp(record->FormattedString + 1, system_time_set_log, string_length(system_time_set_log)) == 0))
       {
         system_time_set = record->KernelTime;
-        kernel_str = GetTimeFormatString((UINT64)record->KernelTime);
+        kernel_str = GetTimeFormatString((UINT64)record->KernelTime, TRUE);
         if (NULL == kernel_str)
         {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to convert the timestamp into readable string format\n");

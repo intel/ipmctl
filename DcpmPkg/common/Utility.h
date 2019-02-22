@@ -1398,7 +1398,8 @@ EndianSwapUint16(
   @retval Human readable time string
 **/
 CHAR16 *GetTimeFormatString (
-    IN UINT64 TimeInSeconds
+    IN UINT64 TimeInSeconds,
+    IN BOOLEAN verbose
     );
 
 /**

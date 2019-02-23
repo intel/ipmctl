@@ -894,47 +894,6 @@ Finish:
 }
 
 /**
-  Print namespace operation status
-
-  @param[in] pCommandStatus - Command status
-  @param[in] pStatusOperation - Type of operation
-  @param[in] pStatusFailure - Failure text
-  @param[in] NamespaceGuid - Namespace ID
-
-  @retval EFI_INVALID_PARAMETER if pCommandStatus is NULL
-  @retval EFI_SUCCESS
-**/
-EFI_STATUS
-DisplayNamespaceOperationStatus(
-  IN     COMMAND_STATUS *pCommandStatus,
-  IN     CONST CHAR16 *pStatusOperation,
-  IN     CONST CHAR16 *pStatusFailure,
-  IN     UINT16 NamespaceId
-)
-{
-  CHAR16 *pSingleStatusCodeMessage = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pCommandStatus == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (!NVM_ERROR(pCommandStatus->GeneralStatus)) {
-    Print(FORMAT_STR_SPACE L"namespace (0x%04x): Success\n", pStatusOperation, NamespaceId);
-  }
-  else {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, pCommandStatus->GeneralStatus);
-    Print(FORMAT_STR_SPACE L"namespace (0x%04x): " FORMAT_STR L" (%d) (" FORMAT_STR L")\n", pStatusOperation, NamespaceId, pStatusFailure,
-      pCommandStatus->GeneralStatus, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
-
-  NVDIMM_EXIT();
-  return EFI_SUCCESS;
-}
-
-/**
   Retrieve property by name and assign its value to UINT64.
 
   @param[in] pCmd Command containing the property

@@ -151,11 +151,19 @@ CreateCommandStatusString(
         goto Finish;
       }
 
-      pPrefixString = CatSPrint(NULL, FORMAT_STR FORMAT_STR FORMAT_STR FORMAT_STR L": ",
-        pStatusMessage,
-        pStatusPreposition,
-        pObjectTypeString,
-        ObjectStr);
+      if ((pObjectTypeString == NULL) || (pObjectTypeString[0] == L'\0')) {
+        pPrefixString = CatSPrint(NULL, FORMAT_STR FORMAT_STR FORMAT_STR  FORMAT_STR L": ",
+          pStatusMessage,
+          pStatusPreposition,
+          pObjectTypeString,
+          ObjectStr);
+      } else {
+        pPrefixString = CatSPrint(NULL, FORMAT_STR FORMAT_STR L" " FORMAT_STR L" " FORMAT_STR L": ",
+          pStatusMessage,
+          pStatusPreposition,
+          pObjectTypeString,
+          ObjectStr);
+      }
 
       pAllStatusCodeMessages = GetAllNvmStatusCodeMessages(HiiHandle, pObjectStatus, pPrefixString);
       pCurrentString = CatSPrintClean(pCurrentString, FORMAT_STR, pAllStatusCodeMessages);

@@ -507,25 +507,6 @@ DisplayCommandStatus (
   );
 
 /**
-  Print namespace operation status
-
-  @param[in] pCommandStatus - Command status
-  @param[in] pStatusOperation - Type of operation
-  @param[in] pStatusFailure - Failure text
-  @param[in] NamespaceGuid - Namespace ID
-
-  @retval EFI_INVALID_PARAMETER if pCommandStatus is NULL
-  @retval EFI_SUCCESS
-**/
-EFI_STATUS
-DisplayNamespaceOperationStatus (
-  IN     COMMAND_STATUS *pCommandStatus,
-  IN     CONST CHAR16 *pStatusOperation,
-  IN     CONST CHAR16 *pStatusFailure,
-  IN     UINT16 NamespaceId
-  );
-
-/**
   Retrieve property by name and assign its value to UINT64.
 
   @param[in] pCmd Command containing the property

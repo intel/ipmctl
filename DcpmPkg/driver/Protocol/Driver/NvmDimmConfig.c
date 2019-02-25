@@ -3405,7 +3405,6 @@ ModifyPcdConfig(
   UINT32 SecurityState = 0;
   NVDIMM_CONFIGURATION_HEADER *pConfigHeader = NULL;
   UINT32 ConfigSize = 0;
-  BOOLEAN DoCLeanNamespaceAndIs = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -3447,7 +3446,6 @@ ModifyPcdConfig(
 
     //zero LSA
     if (ConfigIdMask & DELETE_PCD_CONFIG_LSA_MASK) {
-      DoCLeanNamespaceAndIs = TRUE;
       TmpReturnCode = ZeroLabelStorageArea(pDimms[Index]->DimmID);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
@@ -3516,7 +3514,7 @@ ModifyPcdConfig(
     SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
   }
 
-  ReenumerateNamespacesAndISs(DoCLeanNamespaceAndIs);
+  ReenumerateNamespacesAndISs(TRUE);
 
 Finish:
   FREE_POOL_SAFE(pConfigHeader);

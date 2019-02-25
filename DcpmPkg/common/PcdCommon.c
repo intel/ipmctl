@@ -212,7 +212,7 @@ PrintPcdCurrentConfig(
 
   Print(L"Platform Config Data Current Config table\n");
   PrintPcdTableHeader(&pCurrentConfig->Header);
-  Print(L"ConfigError                  : 0x%x\n", pCurrentConfig->ConfigStatus);
+  Print(L"ConfigStatus                 : 0x%x\n", pCurrentConfig->ConfigStatus);
   Print(L"VolatileMemSizeIntoSpa       : 0x%llx\n", pCurrentConfig->VolatileMemSizeIntoSpa);
   Print(L"PersistentMemSizeIntoSpa     : 0x%llx\n", pCurrentConfig->PersistentMemSizeIntoSpa);
   Print(L"\n");

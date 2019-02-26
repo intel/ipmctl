@@ -131,6 +131,9 @@ InitializeCpuCommands(
 
 #endif /** !OS_BUILD **/
 
+
+STATIC EFI_STATUS PollOnArsDeviceBusy(IN DIMM *pDimm, IN UINT32 TimeoutSecs);
+
 /**
   Get dimm by Dimm ID
   Scan the dimm list for a dimm identified by Dimm ID
@@ -1519,6 +1522,64 @@ FwCmdGetSecurityInfo(
   }
 
   CopyMem_S(pSecurityPayload, sizeof(*pSecurityPayload), pFwCmd->OutPayload, sizeof(*pSecurityPayload));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Firmware command to disable ARS
+
+  @param[in] pDimm Pointer to the DIMM to disable ARS on
+
+  @retval EFI_SUCCESS           Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+  @retval EFI_OUT_OF_RESOURCES  Memory allocation failure
+  @retval Various errors from FW
+**/
+EFI_STATUS
+FwCmdDisableARS(
+  IN     DIMM *pDimm
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB *pARSInpugPayload = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtSetFeatures;
+  pFwCmd->SubOpcode = SubopAddressRangeScrub;
+
+  pARSInpugPayload = (PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB*)pFwCmd->InputPayload;
+  pARSInpugPayload->Enable = 0;
+
+  pFwCmd->InputPayloadSize = sizeof(PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB);
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending Firmware Set AddressRangeScrub command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  NVDIMM_DBG("Polling ARS long op status to verify ARS disabled completed.");
+  ReturnCode = PollOnArsDeviceBusy(pDimm, DISABLE_ARS_TOTAL_TIMEOUT_SEC);
+  NVDIMM_DBG("Finished polling long op, return val = %x", ReturnCode);
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -6235,6 +6296,69 @@ GetOverwriteDimmStatus(
 
   ReturnCode = EFI_SUCCESS;
 
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Poll while ARS long operation status reports DEVICE BUSY
+
+  @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
+  @parma[in] TimeoutSecs - Poll timeout in seconds
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_TIMEOUT Timeout expired and did not receive something other than FW_DEVICE_BUSY
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+  @retval EFI_DEVICE_ERROR Retrieved an unexpeced opcode/subopcode when requesting long op status
+**/
+EFI_STATUS
+PollOnArsDeviceBusy(
+  IN     DIMM *pDimm,
+  IN     UINT32 TimeoutSecs
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT8 FwStatus = FW_SUCCESS;
+  PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS LongOpStatus;
+  UINT32 RetryMax = 0;
+  UINT32 RetryCount = 0;
+
+  NVDIMM_ENTRY();
+
+  ZeroMem(&LongOpStatus, sizeof(LongOpStatus));
+
+  if (pDimm == NULL) {
+    goto Finish;
+  }
+
+  RetryMax = (TimeoutSecs * 1000000) / POLL_ARS_LONG_OP_DELAY_US;
+
+  for(RetryCount = 0; RetryCount < RetryMax; ++RetryCount) {
+    ReturnCode = FwCmdGetLongOperationStatus(pDimm, &FwStatus, &LongOpStatus);
+    if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_ERR("Error occured while polling for ARS enable/disable state.\n");
+        break;
+    }
+
+    if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
+      if (FW_DEVICE_BUSY != LongOpStatus.Status) {
+        ReturnCode = EFI_SUCCESS;
+        goto Finish;
+      }
+    }
+    else {
+      NVDIMM_ERR("Unexpected opcode/subopcodes retrieved with Get Long Op Status\n");
+      ReturnCode = EFI_DEVICE_ERROR;
+      break;
+    }
+    gBS->Stall(POLL_ARS_LONG_OP_DELAY_US);
+    ZeroMem(&LongOpStatus, sizeof(LongOpStatus));
+  }
+
+  if (EFI_SUCCESS == ReturnCode && RetryCount == RetryMax) {
+    ReturnCode = EFI_TIMEOUT;
+  }
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

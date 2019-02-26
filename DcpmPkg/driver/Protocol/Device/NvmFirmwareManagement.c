@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ /**
+ * @file NvmFirmwareManagement.c
+ * @brief The file describes the UEFI Firmware Management Protocol support Intel(R) Optane(TM) DC persistent memory.
+ **/
+
 #include <Uefi.h>
 #include "NvmFirmwareManagement.h"
 #include <Debug.h>
@@ -40,14 +45,49 @@ typedef struct _SET_IMAGE_ATTRIBUTES{
   BOOLEAN Force;
 } SET_IMAGE_ATTRIBUTES;
 
-/**
+/*
   In addition to the function information from the library header.
 
-  As for the Intel NVM Dimm implementation, one DIMM stores only one Firmware,
+  As for the Intel DCPMM implementation, one DCPMM stores only one Firmware,
   so the *DescriptorCount will be always 1.
 
   Even if there are more images on the FV we have access only to
-  the main one.
+  the one.
+*/
+
+/**
+Returns information about the current firmware image(s) of the device.
+
+@param[in] This A pointer to the EFI_FIRMWARE_MANAGEMENT_PROTOCOL instance.
+@param[in,out] ImageInfoSize A pointer to the size, in bytes, of the ImageInfo buffer. On input, this is the
+size of the buffer allocated by the caller. On output, it is the size of the buffer
+returned by the firmware if the buffer was large enough, or the size of the
+buffer needed to contain the image(s) information if the buffer was too small.
+@param[in,out] ImageInfo A pointer to the buffer in which firmware places the current image(s)
+information. The information is an array of
+EFI_FIRMWARE_IMAGE_DESCRIPTORs. See "Related Definitions".
+@param[out] DescriptorVersion A pointer to the location in which firmware returns the version number
+associated with the EFI_FIRMWARE_IMAGE_DESCRIPTOR. See "Related
+Definitions".
+@param[out] DescriptorCount A pointer to the location in which firmware returns the number of
+descriptors or firmware images within this device.
+@param[out] DescriptorSize A pointer to the location in which firmware returns the size, in bytes, of an
+individual EFI_FIRMWARE_IMAGE_DESCRIPTOR.
+@param[out] PackageVersion A version number that represents all the firmware images in the device. The
+format is vendor specific and new version must have a greater value than the
+old version. If PackageVersion is not supported, the value is 0xFFFFFFFF. A
+value of 0xFFFFFFFE indicates that package version comparison is to be
+performed using PackageVersionName. A value of 0xFFFFFFFD indicates
+that package version update is in progress.
+@param[out] PackageVersionName A pointer to a pointer to a null-terminated string representing the package
+version name. The buffer is allocated by this function with AllocatePool(),
+and it is the caller's responsibility to free it with a call to FreePool().
+
+@retval EFI_SUCCESS The image information was successfully returned.
+@retval EFI_BUFFER_TOO_SMAL The ImageInfo buffer was too small. The current buffer size
+needed to hold the image(s) information is returned in ImageInfoSize.
+@retval EFI_INVALID_PARAMETER The ImageInfoSize is NULL.
+@retval EFI_DEVICE_ERROR Valid information could not be returned. Possible corrupted image.
 **/
 EFI_STATUS
 EFIAPI
@@ -87,11 +127,11 @@ GetImageInfo (
     goto Finish;
   }
 
-  /**
+  /*
     Here we are packing the 8-bit values into 6-bit containers to fit in the UINT32.
     If the versions will ever go above the 6-bit integer, we will lose that information,
     but there is nothing else that we can do and we have to agree with that.
-  **/
+  */
   Uint32Version.PackedVersion.FwProduct = pDimm->FwVer.FwProduct;
   Uint32Version.PackedVersion.FwRevision = pDimm->FwVer.FwRevision;
   Uint32Version.PackedVersion.FwSecurityVersion = pDimm->FwVer.FwSecurityVersion;
@@ -149,6 +189,36 @@ Finish:
   return ReturnCode;
 }
 
+/**
+Updates the firmware image of the DCPMM.
+
+@remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+an attempt will be made to abort ARS and the proceed with the firmware update.
+
+@remarks A reboot is required to activate the updated firmware image and is
+recommended to ensure ARS runs to completion.
+
+@param[in] pThis is a pointer to the EFI_FIRMWARE_MANAGEMENT_PROTOCOL instance.
+@param[in] ImageIndex A unique number identifying the firmware image(s) within the device. The
+number is between 1 and DescriptorCount.
+@param[in] Image Points to the new image.
+@param[in] ImageSize Size of the new image in bytes
+@param[in] VendorCode This enables vendor to implement vendor-specific firmware image update
+policy. Null indicates the caller did not specify the policy or use the default
+policy.
+@param[in] Progress A function used by the driver to report the progress of the firmware update.
+@param[out] AbortReason A pointer to a pointer to a null-terminated string providing more details for
+the aborted operation. The buffer is allocated by this function with
+AllocatePool(), and it is the caller's responsibility to free it with a call to
+FreePool().
+
+@retval EFI_SUCCESS The device was successfully updated with the new image.
+@retval EFI_ABORTED The operation is aborted.
+@retval EFI_INVALID_PARAMETER The Image was NULL.
+@retval EFI_UNSUPPORTED The operation is not supported.
+@retval EFI_SECURITY_VIOLATION The operation could not be performed due to an authentication
+failure.
+**/
 EFI_STATUS
 EFIAPI
 SetImage (
@@ -190,9 +260,9 @@ SetImage (
     goto Finish;
   }
 
-  /**
-    Inform the caller that we do not support progress reporting.
-  **/
+  /*
+     Inform the caller that we do not support progress reporting.
+  */
   if (Progress != NULL) {
     Progress(0);
   }
@@ -217,6 +287,35 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+/**
+Returns information about the firmware package on the specified DCPMM.
+
+@param[in] This A pointer to the EFI_FIRMWARE_MANAGEMENT_PROTOCOL instance.
+@param[out] PackageVersion A version number that represents all the firmware images in the device. The
+format is vendor specific and new version must have a greater value than the
+old version. If PackageVersion is not supported, the value is 0xFFFFFFFF. A
+value of 0xFFFFFFFE indicates that package version comparison is to be
+performed using PackageVersionName. A value of 0xFFFFFFFD indicates
+that package version update is in progress.
+@param[out] PackageVersionName A pointer to a pointer to a null-terminated string representing the package
+version name. The buffer is allocated by this function with AllocatePool(),
+and it is the caller's responsibility to free it with a call to FreePool().
+@param[out] PackageVersionNameMaxLen The maximum length of package version name if device supports update of
+package version name. A value of 0 indicates the device does not support
+update of package version name. Length is the number of Unicode
+characters, including the terminating null character.
+@param[out] AttributesSupported Package attributes that are supported by this device. See "Package Attribute
+Definitions" for possible returned values of this parameter. A value of 1
+indicates the attribute is supported and the current setting value is indicated
+in AttributesSetting. A value of 0 indicates the attribute is not supported and
+the current setting value in AttributesSetting is meaningless.
+@param[out] AttributesSetting Package attributes. See "Package Attribute Definitions" for possible returned
+values of this parameter.
+
+@retval EFI_SUCCESS The image information was successfully returned.
+@retval EFI_UNSUPPORTED The operation is not supported.
+**/
 
 EFI_STATUS
 EFIAPI
@@ -253,9 +352,9 @@ GetPackageInfo (
     *PackageVersionName = AllocateCopyPool(sizeof(FwVersion), FwVersion);
   }
 
-  /**
+  /*
     Zero means that we don't support updating the Package Version Name.
-  **/
+  */
   if (NULL != PackageVersionNameMaxLen) {
     *PackageVersionNameMaxLen = 0;
   }
@@ -264,21 +363,28 @@ GetPackageInfo (
     *AttributesSupported = NvmFwMgmtAttributesSupported;
   }
 
-  /**
+  /*
     We can't change the settings so what is supported is also set.
-  **/
+  */
   if (NULL != AttributesSetting) {
     *AttributesSetting = NvmFwMgmtAttributesSupported;
   }
-  /**
+  /*
     This function returns UNSUPPORTED or SUCCESS,
     since we support it, we can't return any error codes.
 
     If there is an error, it will be passed by the OUT parameters.
-  **/
+  */
   return EFI_SUCCESS;
 }
 
+/**
+Retrieves a copy of the current firmware image of the device.
+
+@remarks This is not supported.
+
+@retval EFI_UNSUPPORTED The operation is not supported.
+**/
 EFI_STATUS
 EFIAPI
 GetImage (
@@ -288,12 +394,19 @@ GetImage (
   IN OUT UINTN *ImageSize
   )
 {
-  /**
+  /*
     We do not support this callback.
-  **/
+  */
   return EFI_UNSUPPORTED;
 }
 
+/**
+Checks if the firmware image is valid for the device.
+
+@remarks This is not supported.
+
+@retval EFI_UNSUPPORTED The operation is not supported.
+**/
 EFI_STATUS
 EFIAPI
 CheckImage (
@@ -304,12 +417,19 @@ CheckImage (
      OUT UINT32 *ImageUpdatable
   )
 {
-  /**
+  /*
     We do not support this callback.
-  **/
+  */
   return EFI_UNSUPPORTED;
 }
 
+/**
+Updates information about the firmware package.
+
+@remarks This is not supported.
+
+@retval EFI_UNSUPPORTED The operation is not supported.
+**/
 EFI_STATUS
 EFIAPI
 SetPackageInfo (
@@ -321,9 +441,9 @@ SetPackageInfo (
   IN     CONST CHAR16 *PackageVersionName
   )
 {
-  /**
+  /*
     We do not support this callback.
-  **/
+  */
   return EFI_UNSUPPORTED;
 }
 

@@ -712,12 +712,25 @@ typedef struct {
 **/
 typedef struct {
   UINT8 Enable;              //!< Indicates whether an Address Range Scrub is in progress.
-  UINT8 Reserved1[2];
+  UINT8 Reserved1[3];
   UINT64 DPAStartAddress;    //!< Address from which to start the range scrub.
   UINT64 DPAEndAddress;      //!< Address to end the range scrub.
   UINT64 DPACurrentAddress;  //!< Address that is being currently scrubbed.
-  UINT8 Reserved2[101];
+  UINT8 Reserved2[100];
 } PT_PAYLOAD_ADDRESS_RANGE_SCRUB;
+
+/**
+  Passthrough Payload:
+    Opcode:    0x04h (Get Features)
+    Sub-Opcode:  0x04h (Address Range Scrub)
+**/
+typedef struct {
+  UINT8 Enable;              //!< Indicates whether an Address Range Scrub is in progress.
+  UINT8 Reserved1[3];
+  UINT64 DPAStartAddress;    //!< Address from which to start the range scrub.
+  UINT64 DPAEndAddress;      //!< Address to end the range scrub.
+  UINT8 Reserved2[108];
+} PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB;
 
 typedef union _SMART_VALIDATION_FLAGS {
   UINT32 AllFlags;

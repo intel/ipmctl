@@ -1643,6 +1643,13 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID device_uid, struct device
 
 /**
  * @brief Push a new FW image to the device specified.
+ *
+ * @remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+ * an attempt will be made to abort ARS and the proceed with the firmware update.
+ *
+ * @remarks A reboot is required to activate the updated firmware image and is
+ * recommended to ensure ARS runs to completion.
+ *
  * @param[in] device_uid
  *              The device identifier.
  * @param[in] path
@@ -1655,6 +1662,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID device_uid, struct device
  * @pre The device is manageable.
  * @remarks A FW update may require similar changes to related devices to
  * represent a consistent correct configuration.
+ *
  * @return
  *            ::NVM_SUCCESS @n
  *            ::NVM_ERR_OPERATION_NOT_SUPPORTED @n

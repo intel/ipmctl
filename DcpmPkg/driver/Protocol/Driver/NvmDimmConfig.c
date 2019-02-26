@@ -4898,6 +4898,8 @@ UpdateDimmFw(
   DIMM *pCurrentDimm = NULL;
   FW_IMAGE_HEADER *pFileHeader = NULL;
   CHAR16 *pErrorMessage = NULL;
+  UINT8 ArsStatus = 0;
+
 #ifdef OS_BUILD
   UINT8 RetryCountLimit = 2;
   UINT8 CurrentRetryCount = 0;
@@ -4938,6 +4940,22 @@ UpdateDimmFw(
     *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;
+  }
+
+  //determine if ARS is running
+  ReturnCode = FwCmdGetARS(pCurrentDimm, &ArsStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+    goto Finish;
+  }
+
+  //cancel ARS if running
+  if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
+    ReturnCode = FwCmdDisableARS(pCurrentDimm);
+    if (EFI_ERROR(ReturnCode)) {
+      *pNvmStatus = NVM_ERR_ARS_IN_PROGRESS;
+      goto Finish;
+    }
   }
 
   /**

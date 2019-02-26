@@ -288,6 +288,9 @@ typedef struct _MEMMAP_RANGE {
 #define MEMMAP_RANGE_SIGNATURE     SIGNATURE_64('M', 'M', 'A', 'P', 'R', 'N', 'G', 'E')
 #define MEMMAP_RANGE_FROM_NODE(a)  CR(a, MEMMAP_RANGE, MemmapNode, MEMMAP_RANGE_SIGNATURE)
 
+#define DISABLE_ARS_TOTAL_TIMEOUT_SEC     2
+#define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retreive long op
+
 #ifdef OS_BUILD
 #define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
 /*
@@ -690,6 +693,21 @@ FwCmdGetARS(
   IN     DIMM *pDimm,
      OUT UINT8 *pDimmARSStatus
   );
+
+/**
+  Firmware command to disable ARS
+
+  @param[in] pDimm Pointer to the DIMM to retrieve ARSStatus on
+
+  @retval EFI_SUCCESS           Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+  @retval EFI_OUT_OF_RESOURCES  Memory allocation failure
+  @retval Various errors from FW
+**/
+EFI_STATUS
+FwCmdDisableARS(
+  IN     DIMM *pDimm
+);
 
 /**
   This helper function is used to determine the ARS status for the

@@ -479,6 +479,12 @@ ModifyPcdConfig(
 
   @param[out] pNvmStatus NVM status code
 
+  @remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+  an attempt will be made to abort ARS and the proceed with the firmware update.
+
+  @remarks A reboot is required to activate the updated firmware image and is
+  recommended to ensure ARS runs to completion.
+
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
@@ -532,6 +538,12 @@ RecoverDimmFw(
   @param[out] pFwImageInfo is a pointer to a structure containing FW image information
     need to be provided if examine flag is set
   @param[out] pCommandStatus Structure containing detailed NVM error codes
+
+  @remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+  an attempt will be made to abort ARS and the proceed with the firmware update.
+
+  @remarks A reboot is required to activate the updated firmware image and is
+  recommended to ensure ARS runs to completion.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)

@@ -432,6 +432,10 @@ RetrieveISsFromPlatformConfigData(
       NVDIMM_DBG("There is no Current Config table");
       FreePool(pPcdConfHeader);
       pPcdConfHeader = NULL;
+      /* set these values like they were never set */
+      pDimm->ConfigStatus = DIMM_CONFIG_UNDEFINED;
+      pDimm->IsNew = 0;
+      pDimm->Configured = FALSE;
       continue;
     }
 

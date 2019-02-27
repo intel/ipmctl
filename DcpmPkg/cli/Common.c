@@ -60,6 +60,45 @@ CONST CHAR16 *mpDefaultDimmIds[DISPLAY_DIMM_ID_MAX_SIZE] = {
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
 
 /**
+  Compare DimmID field in DIMM_INFO Struct
+
+  @param[in] pFirst First item to compare
+  @param[in] pSecond Second item to compare
+
+  @retval -1 if first is less than second
+  @retval  0 if first is equal to second
+  @retval  1 if first is greater than second
+**/
+STATIC
+INT32
+CompareDimmIdInDimmInfo(
+  IN     VOID *pFirst,
+  IN     VOID *pSecond
+)
+{
+  DIMM_INFO *pDimmInfo = NULL;
+  DIMM_INFO *pDimmInfo2 = NULL;
+
+  if (pFirst == NULL || pSecond == NULL) {
+    NVDIMM_DBG("NULL pointer found.");
+    return 0;
+  }
+
+  pDimmInfo = (DIMM_INFO*)pFirst;
+  pDimmInfo2 = (DIMM_INFO*)pSecond;
+
+  if (pDimmInfo->DimmID < pDimmInfo2->DimmID) {
+    return -1;
+  }
+  else if (pDimmInfo->DimmID > pDimmInfo2->DimmID) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+/**
   Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
 
@@ -218,6 +257,12 @@ GetAllDimmList(
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
+    goto FinishError;
+  }
+
+  ReturnCode = BubbleSort((VOID*)*ppDimms, *pDimmCount, sizeof(**ppDimms), CompareDimmIdInDimmInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Dimms list may not be sorted");
     goto FinishError;
   }
 

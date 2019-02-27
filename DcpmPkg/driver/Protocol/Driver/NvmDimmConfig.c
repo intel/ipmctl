@@ -46,7 +46,7 @@
 #endif // OS_BUILD
 
 #define INVALID_SOCKET_ID 0xFFFF
-
+#define ARS_LIST_NOT_INITIALIZED -1
 #define PMTT_INFO_SIGNATURE     SIGNATURE_64('P', 'M', 'T', 'T', 'I', 'N', 'F', 'O')
 #define PMTT_INFO_FROM_NODE(a)  CR(a, PMTT_INFO, PmttNode, PMTT_INFO_SIGNATURE)
 
@@ -68,7 +68,12 @@ EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 extern CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT];
+#ifndef OS_BUILD
 
+EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
+DCPMM_ARS_ERROR_RECORD * gArsBadRecords = NULL;
+INT32 gArsBadRecordsCount = ARS_LIST_NOT_INITIALIZED;
+#endif
 /**
   Instance of NvmDimmConfigProtocol
 **/
@@ -10149,35 +10154,28 @@ Finish:
 /**
   This function makes calls to the dimms required to initialize the driver.
 
-  @param[out] ppArsRecords a list of ARS records
-  @param[out] pRecordCount the length of the ARS record list
-
   @retval EFI_SUCCESS if no errors.
   @retval EFI_xxxx depending on error encountered.
 **/
 EFI_STATUS
-LoadArsList(
-  OUT DCPMM_ARS_ERROR_RECORD ** ppArsRecords,
-  OUT UINT32 * pRecordCount)
+LoadArsList()
 {
   UINT32 x = 0;
+  UINT32 records = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS DcpmmProtocolOpenReturnCode = EFI_SUCCESS;
   EFI_DCPMM_PROTOCOL * pDcpmmProtocol = NULL;
-  static BOOLEAN sListAlreadyLoaded = FALSE;
-  static EFI_GUID sDcpmmProtocolGuid = EFI_DCPMM_GUID;
-  static DCPMM_ARS_ERROR_RECORD * sArsBadRecords = NULL;
-  static UINT32 sArsBadRecordsCount = 0;
 
   NVDIMM_ENTRY();
 
-  if (sListAlreadyLoaded == TRUE) {
+  if (gArsBadRecordsCount >= 0) {
     NVDIMM_DBG("ARS list already loaded.\n");
     goto Finish;
   }
+  gArsBadRecordsCount = 0;
 
   /*If the FIS protocol isn't in place, allow the call to exit without distruption*/
-  DcpmmProtocolOpenReturnCode = gBS->LocateProtocol(&sDcpmmProtocolGuid, NULL, (VOID **)&pDcpmmProtocol);
+  DcpmmProtocolOpenReturnCode = gBS->LocateProtocol(&gDcpmmProtocolGuid, NULL, (VOID **)&pDcpmmProtocol);
   if (EFI_ERROR(DcpmmProtocolOpenReturnCode)) {
     if (DcpmmProtocolOpenReturnCode == EFI_NOT_FOUND) {
       NVDIMM_WARN("Dcpmm protocol not found");
@@ -10187,48 +10185,51 @@ LoadArsList(
     }
     goto Finish;
   }
-  else {
-    /*Since the open succeeded, react to actual failures with the FIS protocol*/
 
-    //First check how many records exist by passing NULL
-    sArsBadRecordsCount = 0;
-    ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, NULL);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Could not obtain the ARS bad address list count");
-      sArsBadRecordsCount = 0;
+  //First check how many records exist by passing NULL
+  ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&records, NULL);
+  if (ReturnCode == EFI_NOT_READY)
+  {
+    NVDIMM_WARN("BIOS reports not ready for full ARS list. The returned list may be partial.");
+    ReturnCode = EFI_SUCCESS;
+  }
+
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Could not obtain the ARS bad address list count");
+    goto Finish;
+  }
+
+  //if there are records, allocate the space for them and obtain them
+  if (gArsBadRecordsCount > 0) {
+    gArsBadRecords = (DCPMM_ARS_ERROR_RECORD *)AllocateZeroPool(sizeof(DCPMM_ARS_ERROR_RECORD) * records);
+    if (gArsBadRecords == NULL) {
+      NVDIMM_WARN("Failed to allocate memory for the bad ARS records");
+      ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
 
-    //if there are records, allocate the space for them and obtain them
-    if (sArsBadRecordsCount > 0) {
-      sArsBadRecords = (DCPMM_ARS_ERROR_RECORD *)AllocateZeroPool(sizeof(DCPMM_ARS_ERROR_RECORD) * sArsBadRecordsCount);
-      if (sArsBadRecords == NULL) {
-        NVDIMM_WARN("Failed to allocate memory for the bad ARS records");
-        sArsBadRecordsCount = 0;
-        ReturnCode = EFI_OUT_OF_RESOURCES;
-        goto Finish;
-      }
+    ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&records, gArsBadRecords);
+    if (ReturnCode == EFI_NOT_READY)
+    {
+      NVDIMM_WARN("BIOS reports not ready for full ARS list. The returned list may be partial.");
+      ReturnCode = EFI_SUCCESS;
+    }
 
-      ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&sArsBadRecordsCount, sArsBadRecords);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Could not obtain the ARS bad address list");
-        FreePool(sArsBadRecords);
-        sArsBadRecordsCount = 0;
-        goto Finish;
-      }
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Could not obtain the ARS bad address list");
+      FreePool(gArsBadRecords);
+      goto Finish;
+    }
 
-      for (; x < sArsBadRecordsCount; x++)
-      {
-        NVDIMM_DBG("ArsBadRecords[%d] = 0x%llx, len = 0x%llx, nfit handle = 0x%llx",
-          x, sArsBadRecords[x].SpaOfErrLoc, sArsBadRecords[x].Length, sArsBadRecords[x].NfitHandle);
-      }
+    gArsBadRecordsCount = records;
+    for (; x < records; x++)
+    {
+      NVDIMM_DBG("ArsBadRecords[%d] = 0x%llx, len = 0x%llx, nfit handle = 0x%llx",
+        x, gArsBadRecords[x].SpaOfErrLoc, gArsBadRecords[x].Length, gArsBadRecords[x].NfitHandle);
     }
   }
 
-  sListAlreadyLoaded = TRUE;
 Finish:
-  *ppArsRecords = sArsBadRecords;
-  *pRecordCount = sArsBadRecordsCount;
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

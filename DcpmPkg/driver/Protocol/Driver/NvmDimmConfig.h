@@ -1535,16 +1535,11 @@ GetCommandAccessPolicy(
 /**
   This function makes calls to the dimms required to initialize the driver.
 
-  @param[out] ppArsRecords a list of ARS records
-  @param[out] pRecordCount the length of the ARS record list
-
   @retval EFI_SUCCESS if no errors.
   @retval EFI_xxxx depending on error encountered.
 **/
 EFI_STATUS
-LoadArsList(
-  OUT DCPMM_ARS_ERROR_RECORD ** ppArsRecords,
-  OUT UINT32 * pRecordCount);
+LoadArsList();
 #endif
 
 #endif /* _NVMDIMM_CONFIG_H_ */

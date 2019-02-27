@@ -27,6 +27,11 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 extern EFI_BLOCK_IO_MEDIA gNvmDimmDriverBlockIoMedia;
 extern CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT];
 
+#ifndef OS_BUILD
+extern DCPMM_ARS_ERROR_RECORD * gArsBadRecords;
+extern INT32 gArsBadRecordsCount;
+#endif
+
 extern VOID
 (*gClFlush)(
   VOID *pLinearAddress
@@ -2981,9 +2986,11 @@ AppDirectIo(
   pSpaStart = (UINT8 *) pNamespace->SpaNamespaceBase;
   pAddress = pSpaStart + Offset;
 
-  ReturnCode = IsAddressRangeInArsList((UINT64)pAddress, Nbytes);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
+  if (gArsBadRecordsCount != 0) {
+    ReturnCode = IsAddressRangeInArsList((UINT64)pAddress, Nbytes);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
   }
 
   if (ReadOperation) {
@@ -5814,23 +5821,26 @@ IsAddressRangeInArsList(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT32 Index = 0;
+  INT32 Index = 0;
   UINT64 BadBlockStart = 0;
   UINT64 BadBlockEnd = 0;
   UINT64 CheckBlockStart = Address;
   UINT64 CheckBlockEnd = Address + Length - 1;
-  DCPMM_ARS_ERROR_RECORD * ArsBadRecords = NULL;
-  UINT32 ArsBadRecordsCount = 0;
 
+  if (gArsBadRecordsCount == 0) {
+      return ReturnCode;
+  }
 
   NVDIMM_ENTRY();
 
-  ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
-  if (EFI_PROTOCOL_ERROR == ReturnCode)
-  {
-    ReturnCode = EFI_SUCCESS;
-    NVDIMM_DBG("Failed to load the ARS list (protocol missing?) Cannot check for collisions.\n");
-    goto Finish;
+  if (gArsBadRecordsCount < 0) {
+    ReturnCode = LoadArsList();
+    if (EFI_PROTOCOL_ERROR == ReturnCode)
+    {
+      ReturnCode = EFI_SUCCESS;
+      NVDIMM_DBG("Failed to load the ARS list (protocol missing?) Cannot check for collisions.\n");
+      goto Finish;
+    }
   }
 
   if (EFI_ERROR(ReturnCode)) {
@@ -5838,18 +5848,18 @@ IsAddressRangeInArsList(
     goto Finish;
   }
 
-  if (ArsBadRecordsCount == 0) {
+  if (gArsBadRecordsCount == 0) {
     NVDIMM_DBG("There are no bad addresses in the ARS list.\n");
     goto Finish;
   }
 
-  if (NULL != ArsBadRecords && ArsBadRecordsCount > 0) {
+  if (NULL != gArsBadRecords && gArsBadRecordsCount > 0) {
     //Check that address range does not contain one of the bad addresses identified by BIOS
-    for (Index = 0; Index < ArsBadRecordsCount; Index++) {
-      BadBlockStart = ArsBadRecords[Index].SpaOfErrLoc;
-      BadBlockEnd = ArsBadRecords[Index].SpaOfErrLoc + ArsBadRecords[Index].Length - 1;
+    for (Index = 0; Index < gArsBadRecordsCount; Index++) {
+      BadBlockStart = gArsBadRecords[Index].SpaOfErrLoc;
+      BadBlockEnd = gArsBadRecords[Index].SpaOfErrLoc + gArsBadRecords[Index].Length - 1;
 
-      NVDIMM_DBG("Checking address 0x%llx, len 0x%llx against bad ARS address 0x%llx, len 0x%llx", Address, Length, ArsBadRecords[Index].SpaOfErrLoc, ArsBadRecords[Index].Length);
+      NVDIMM_DBG("Checking address 0x%llx, len 0x%llx against bad ARS address 0x%llx, len 0x%llx", Address, Length, gArsBadRecords[Index].SpaOfErrLoc, gArsBadRecords[Index].Length);
 
       if ((CheckBlockStart >= BadBlockStart   && CheckBlockStart <= BadBlockEnd)   || //the request starts at an address in the bad range
           (CheckBlockStart >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd)   || //the request fits entirly in a bad range

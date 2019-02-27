@@ -1421,8 +1421,6 @@ NvmDimmDriverDriverBindingStart(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   VOID *pDummy = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
-  DCPMM_ARS_ERROR_RECORD * ArsBadRecords = NULL;
-  UINT32 ArsBadRecordsCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -1523,14 +1521,14 @@ NvmDimmDriverDriverBindingStart(
    /**
      load the ARS list
    **/
-   ReturnCode = LoadArsList(&ArsBadRecords, &ArsBadRecordsCount);
+   ReturnCode = LoadArsList();
    if (EFI_ERROR(ReturnCode)) {
      NVDIMM_WARN("Failed to load the ARS list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
    }
 
    // Ignore return code as we don't want to block the ability to work
    // with functional dimms
-   InitializeSmbusAccess();
+   ReturnCode = InitializeSmbusAccess();
    if (EFI_ERROR(ReturnCode)) {
      NVDIMM_WARN("Failed to start SMBUS access, error = 0x%llx.\nContinuing...", ReturnCode);
    }

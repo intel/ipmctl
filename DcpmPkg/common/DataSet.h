@@ -27,6 +27,7 @@
 #define ACPI_MODE_STR         L"Acpi"
 #define ACPITYPE_MODE_STR     L"Type"
 #define REGISTER_MODE_STR     L"Register"
+#define SMBIOS_MODE_STR       L"Smbios"
 
 /*
 * Types of values supported in DataSets.

@@ -110,7 +110,7 @@ In order to successfully execute this command:
 RETURN DATA
 -----------
 If successful, the CLI will display the memory allocation goal stored on each
-DCPMM as documented in the command Section 2.2.6, "Show Memory Allocation Goal."
+DCPMM as documented in the command Section <<Show Memory Allocation Goal>>.
 If a failure occurs, an error code and message will be displayed. If a failure
 occurs when configuring multiple DCPMMs, the process will exit and remove the
 memory allocation goal from any DCPMMs that succeeded prior to the failure.

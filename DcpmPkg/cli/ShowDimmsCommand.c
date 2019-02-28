@@ -627,7 +627,7 @@ ShowDimms(
         goto Finish;
       }
 
-      ReturnCode = GetPreferredDimmIdAsString(pUninitializedDimms[DimmIndex].DimmHandle, NULL, DimmStr,
+      ReturnCode = GetPreferredDimmIdAsString(pUninitializedDimms[DimmIndex].DimmHandle, pUninitializedDimms[DimmIndex].DimmUid, DimmStr,
           MAX_DIMM_UID_LENGTH);
       pDimmErrStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
 

@@ -129,8 +129,8 @@ HealthStateReason::
 ifdef::os_build[]
 ActionRequired::
   (Default) If there are events for this device that require
-  corrective action or acknowledgment. Refer to the command Section 2.5.8,
-  "Show Events" for more information about events. One of:
+  corrective action or acknowledgment. Refer to the command Section
+  <<Show Events>> for more information about events. One of:
   - 0: No action required events
   - 1: One or more action required events
 endif::os_build[]

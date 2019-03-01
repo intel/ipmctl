@@ -68,7 +68,6 @@ byte swap
 #define NVM_BANK_LABEL_LEN  128 ///< Length of the bank label string
 #define NVM_NAMESPACE_NAME_LEN  64 ///< Length of namespace friendly name string
 #define NVM_NAMESPACE_PURPOSE_LEN 64 ///< Length of namespace purpose string
-#define NVM_MAX_SOCKETS 4 ///< Maximum number of sockets per system
 #define NVM_MAX_SOCKET_DIGIT_COUNT  4 ///< Maximum number of digits in a socket count
 #define NVM_MEMORY_CONTROLLER_CHANNEL_COUNT 3 ///< expected number of channels per iMC
 #define NVM_MAX_INTERLEAVE_SETS_PER_DIMM  2 ///< Max number of App Direct interleave sets per DIMM

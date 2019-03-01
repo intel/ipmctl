@@ -7,31 +7,31 @@
 #define _NVM_LIMITS_H_
 
 
-#define MAX_SOCKETS           8
-#define MAX_IMCS_PER_SOCKET   2
-#define MAX_CHANNELS_PER_IMC  3
+#define MAX_SOCKETS           16
+#define MAX_IMCS_PER_SOCKET   4
+#define MAX_CHANNELS_PER_IMC  3 // 3 is for backwards compatabilty
 #define MAX_DIMMS_PER_CHANNEL 2
-#define MAX_DIMMS_PER_IMC     (MAX_CHANNELS_PER_IMC * MAX_DIMMS_PER_CHANNEL)
-#define MAX_DIMMS_PER_SOCKET  (MAX_DIMMS_PER_IMC * MAX_IMCS_PER_SOCKET)
+#define MAX_DIMMS_PER_IMC     (MAX_CHANNELS_PER_IMC * MAX_DIMMS_PER_CHANNEL) // 2 * 3 = 6
+#define MAX_DIMMS_PER_SOCKET  (MAX_DIMMS_PER_IMC * MAX_IMCS_PER_SOCKET) // 4 * 4 = 16
 
-/**
-  MAX_DIMMS = MAX_SOCKETS * MAX_DIMMS_PER_SOCKET, but we have to use a pure number in this case, because there is
-  a compilation issue while HII is generating (HII uses MAX_DIMMS)
-**/
-#define MAX_DIMMS             96
+ /**
+   MAX_DIMMS = MAX_SOCKETS * MAX_DIMMS_PER_SOCKET, but we have to use a pure number in this case, because there is
+   a compilation issue while HII is generating (HII uses MAX_DIMMS)
+ **/
+#define MAX_DIMMS             128
 #define MAX_IS_PER_DIMM       2
-#define MAX_IS_PER_SOCKET     (MAX_DIMMS_PER_SOCKET * MAX_IS_PER_DIMM)
-/**
-  MAX_IS_CONFIGS = MAX_DIMMS * MAX_IS_PER_DIMM, but we have to use a pure number in this case,
-  because there is a compilation issue while HII is generating
-**/
-#define MAX_IS_CONFIGS        192
+#define MAX_IS_PER_SOCKET     (MAX_DIMMS_PER_SOCKET * MAX_IS_PER_DIMM) // 16 * 2 = 32
+ /**
+   MAX_IS_CONFIGS = MAX_DIMMS * MAX_IS_PER_DIMM, but we have to use a pure number in this case,
+   because there is a compilation issue while HII is generating
+ **/
+#define MAX_IS_CONFIGS        256 // 128 * 2
 
-/**
-  MAX_REGIONS = MAX_SOCKETS * MAX_REGIONS_PER_SOCKET, but we have to use a pure number in this case,
-  because there is a compilation issue while HII is generating
-**/
-
+ /**
+   MAX_REGIONS = MAX_SOCKETS * MAX_REGIONS_PER_SOCKET, but we have to use a pure number in this case,
+   because there is a compilation issue while HII is generating
+ **/
+#define MAX_REGIONS_PER_SOCKET  16
 #define MAX_REGIONS             44
 
 /**

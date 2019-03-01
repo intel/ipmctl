@@ -148,6 +148,7 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define APPDIRECT_GRANULARITY_DEFAULT       APPDIRECT_GRANULARITY_32GIB
 
 #define APPDIRECT_GRANULARITY_VARIABLE_NAME L"APPDIRECT_GRANULARITY"
+#define PBR_CONTEXT_VAR L"PBR_CONTEXT"
 
 /** IMC interleave size **/
 #define IMC_INTERLEAVE_SIZE_INVALID MAX_UINT8_VALUE
@@ -1023,6 +1024,12 @@ typedef struct {
  **/
 #define INTEL_DIMM_CONFIG_VARIABLE_GUID \
   { 0x76fcbfb6, 0x38fe, 0x41fd, {0x90, 0x1d, 0x16, 0x45, 0x31, 0x22, 0xf0, 0x35}}
+
+ /**
+   GUID for PBR variables for playback and record
+  **/
+#define INTEL_DIMM_PBR_VARIABLE_GUID \
+  { 0x98209ce9, 0x1de5, 0x4dec, {0x93, 0xaf, 0x15, 0x29, 0x98, 0x83, 0x36, 0x2f}}
 
 typedef struct _INTEL_DIMM_CONFIG {
   UINT8 Revision;

@@ -65,7 +65,8 @@ Loads a table as specified in the args
 EFI_STATUS
 get_table(
   IN CHAR8* currentTableName,
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 );
 
 EFI_STATUS
@@ -93,32 +94,36 @@ passthru_os(
 
 EFI_STATUS
 get_nfit_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table("NFIT", table);
+  return get_table("NFIT", table, tablesize);
 }
 
 EFI_STATUS
 get_pcat_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table("PCAT", table);
+  return get_table("PCAT", table, tablesize);
 }
 
 EFI_STATUS
 get_pmtt_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table("PMTT", table);
+  return get_table("PMTT", table, tablesize);
 }
 
 EFI_STATUS
 get_table(
   IN CHAR8* currentTableName,
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
   *table = NULL;
@@ -133,7 +138,7 @@ get_table(
   {
     return EFI_END_OF_FILE;
   }
-
+  *tablesize = buf_size;
   get_acpi_table(currentTableName, (struct acpi_table*)*table, buf_size);
   return EFI_SUCCESS;
 }

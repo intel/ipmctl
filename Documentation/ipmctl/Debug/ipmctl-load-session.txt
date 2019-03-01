@@ -1,0 +1,59 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-load-session(1)
+========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-load-session - Loads content captured during
+a recording session into internal memory buffers.
+Captured content includes ACPI, SMBIOS tables, 
+and FIS requests and responses.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl load [OPTIONS] -source (path) -session
+
+DESCRIPTION
+-----------
+Loads content captured during a recording session into
+internal memory buffers. Captured content includes ACPI,
+SMBIOS tables, and FIS requests and responses.  A loaded
+session can be executed using the 'start -session' command.
+
+
+OPTIONS
+-------
+-h::
+-help::
+    Displays help for the command.
+
+TARGET
+------
+-source (path)::
+  An absolute or relative path including the filename.
+
+-session::
+  Specifies that the source file contains recording data.
+
+EXAMPLES
+--------
+Load the contents of a previously recorded session from /tmp/session.pbr.
+[verse]
+ipmctl load -source /tmp/session.pbr -session
+
+LIMITATIONS
+-----------
+
+RETURN DATA
+-----------
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Successfully loaded 1060619 bytes to session buffer.
+

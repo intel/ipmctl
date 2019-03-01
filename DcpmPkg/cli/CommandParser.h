@@ -36,6 +36,7 @@
 #define CREATE_VERB   L"create"
 #define DUMP_VERB     L"dump"
 #define START_VERB    L"start"
+#define STOP_VERB     L"stop"
 
 /** command options **/
 #define ALL_OPTION                      L"-all"                                //!< 'all' option name
@@ -83,6 +84,7 @@
 #define OUTPUT_OPTION_HELP              L"text|nvmxml"                         //!< 'output' option help text
 #define VERBOSE_OPTION_SHORT            L"-v"                                  //!< 'verbose' option short form
 #define VERBOSE_OPTION                  L"-verbose"                            //!< 'verbose' option name
+#define PBR_MODE_OPTION                 L"-mode"                               //!< 'mode' option name
 
 /** command targets **/
 #define DIMM_TARGET                          L"-dimm"                    //!< 'dimm' target name
@@ -131,6 +133,12 @@
 #define FORMAT_TARGET                        L"-format"                  //!< 'format' target value
 #define PREFERENCES_TARGET                   L"-preferences"             //!< 'preferences' target value
 #define PERFORMANCE_TARGET                   L"-performance"             //!< 'performance' target value
+#define SESSION_TARGET                       L"-session"                 //!< 'session' target value
+#define PBR_MODE_TARGET                      L"-mode"                    //!< 'mode' target value
+#define PBR_RECORD_MODE_VAL                  L"record"                   //!< 'mode' target value
+#define PBR_PLAYBACK_MODE_VAL                L"playback"                 //!< 'mode' target value
+#define PBR_PLAYBACK_MANUAL_MODE_VAL         L"playback_manual"          //!< 'mode' target value
+#define PBR_MODE_TAG                         L"-tag"                     //!< 'tag' target value
 /** Persistent memory type **/
 #define PERSISTENT_MEM_TYPE_AD_STR        L"AppDirect"
 #define PERSISTENT_MEM_TYPE_AD_NI_STR     L"AppDirectNotInterleaved"
@@ -350,6 +358,7 @@ struct Command
   CONST CHAR16 *pHelp;
   EFI_STATUS (*run)(struct Command *pCmd); //!< Execute the command
   BOOLEAN PrinterCtrlSupported;
+  BOOLEAN ExcludeDriverBinding;
   BOOLEAN Hidden; //!< Never print
   BOOLEAN ShowHelp;
   UINT8 CommandId;

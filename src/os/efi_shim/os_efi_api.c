@@ -49,6 +49,8 @@
 #include <os_efi_api.h>
 #include <os_types.h>
 #include "event.h"
+#include "Pbr.h"
+#include "PbrDcpmm.h"
 
 EFI_SYSTEM_TABLE *gST;
 EFI_SHELL_INTERFACE *mEfiShellInterface;
@@ -61,10 +63,7 @@ EFI_HANDLE gImageHandle;
 
 extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 extern int get_vendor_driver_revision(char * version_str, const int str_len);
-extern int g_record_mode;
-extern int g_playback_mode;
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
-extern char g_recording_fullpath[PATH_MAX];
 extern BOOLEAN is_verbose_debug_print_enabled();
 
 
@@ -73,45 +72,7 @@ size_t gSmbiosTableSize = 0;
 UINT8 gSmbiosMinorVersion = 0;
 UINT8 gSmbiosMajorVersion = 0;
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct _record
-{
-  RecordType  type;
-  UINT32 offset;
-  UINT32 size;
-  UINT32 reserved;
-}record;
-
-typedef struct _record_table
-{
-  record smbios;
-  record acpi_nfit;
-  record acpi_pcat;
-  record acpi_pmtt;
-  record pass_thru;
-  record reserved1;
-  record reserved2;
-  record reserved3;
-  record reserved4;
-  record reserved5;
-}record_table;
-
-typedef struct _recording_file
-{
-  record_table record_table_locations;
-  CHAR8 sw_version[CLI_VERSION_MAX];
-  CHAR8 os_version[OS_VERSION_MAX];
-  CHAR8 os_name[OS_NAME_MAX];
-  CHAR8 description[FILE_DESCRIPTION_MAX];
-  UINT32 reserved1;
-  UINT32 reserved2;
-  UINT32 reserved3;
-  UINT32 reserved4;
-  UINT32 reserved5;
-}recording_file;
-#pragma pack(pop)
-
+#define SMBIOS_SIZE     0x2800 
 typedef struct _smbios_table_recording
 {
   size_t size;
@@ -119,26 +80,6 @@ typedef struct _smbios_table_recording
   UINT8 major;
   UINT8 table[];
 }smbios_table_recording;
-
-#define SMBIOS_SIZE     0x2800  //10k
-#define ACPI_NFIT_SIZE  0x2800  //10k
-#define ACPI_PCAT_SIZE  0x2800  //10k
-#define ACPI_PMTT_SIZE  0x2800  //10k
-
-#define SMBIOS_OFFSET    (sizeof(recording_file))
-#define ACPI_NFIT_OFFSET (SMBIOS_OFFSET + SMBIOS_SIZE) //10k
-#define ACPI_PCAT_OFFSET (ACPI_NFIT_OFFSET + ACPI_NFIT_SIZE) //20k
-#define ACPI_PMTT_OFFSET (ACPI_PCAT_OFFSET + ACPI_PCAT_SIZE) //30k
-#define PASS_THRU_OFFSET (ACPI_PMTT_OFFSET + ACPI_PMTT_SIZE) //40k
-
-int g_pass_thru_cnt = 0;
-long g_pass_thru_playback_offset = 0;
-
-#define REC_FILE_PATH g_recording_fullpath
-#define PLAYBACK_ENABLED() g_playback_mode
-#define RECORD_ENABLED() g_record_mode
-#define INC_PASS_THRU_CNT() ++g_pass_thru_cnt
-#define APPEND_RECORDING() g_pass_thru_cnt
 
 struct debug_logger_config
 {
@@ -165,469 +106,6 @@ enum
 */
 static struct debug_logger_config g_log_config = { 0 };
 
-EFI_STATUS init_record_file(char * recording_file_path)
-{
-  FILE* f_ptr = NULL;
-  recording_file rec_file_header;
-  ZeroMem(&rec_file_header, sizeof(recording_file));
-  rec_file_header.record_table_locations.smbios.type = RtSmbios;
-  rec_file_header.record_table_locations.smbios.offset = SMBIOS_OFFSET;
-  rec_file_header.record_table_locations.acpi_nfit.type = RtAcpiNfit;
-  rec_file_header.record_table_locations.acpi_nfit.offset = ACPI_NFIT_OFFSET;
-  rec_file_header.record_table_locations.acpi_pcat.type = RtAcpiPcat;
-  rec_file_header.record_table_locations.acpi_pcat.offset = ACPI_PCAT_OFFSET;
-  rec_file_header.record_table_locations.acpi_pmtt.type = RtAcpiPmtt;
-  rec_file_header.record_table_locations.acpi_pmtt.offset = ACPI_PMTT_OFFSET;
-  rec_file_header.record_table_locations.pass_thru.type = RtPassThru;
-  rec_file_header.record_table_locations.pass_thru.offset = PASS_THRU_OFFSET;
-
-  os_get_os_name(rec_file_header.os_name, OS_NAME_MAX);
-  os_get_os_version(rec_file_header.os_version, OS_VERSION_MAX);
-  strcpy_s(rec_file_header.sw_version, CLI_VERSION_MAX, NVMDIMM_VERSION_STRING_A);
-  sprintf_s(rec_file_header.description, FILE_DESCRIPTION_MAX, FILE_DESCRIPTION);
-
-  if (0 != fopen_s(&f_ptr, recording_file_path, "wb"))
-  {
-    NVDIMM_ERR("Failed to open the following recording file: %s\n", recording_file_path);
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  size_t bytes_written = 0;
-  bytes_written = fwrite(&rec_file_header, sizeof(recording_file), 1, f_ptr);
-  if (1 != bytes_written)
-  {
-    NVDIMM_ERR("Failed to write the recording file headaer\n");
-    fclose(f_ptr);
-    return EFI_END_OF_FILE;
-  }
-
-  fclose(f_ptr);
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS update_record_size(RecordType type, FILE * file_stream, UINT32 size, BOOLEAN increment)
-{
-  recording_file rc;
-
-  //seek to the begining of the file
-  if (0 != fseek(file_stream, 0, SEEK_SET))
-  {
-    NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return EFI_END_OF_FILE;
-  }
-
-  if (1 != fread(&rc, sizeof(recording_file), 1, file_stream))
-  {
-    NVDIMM_ERR("Failed to read the recording file header\n");
-    return EFI_END_OF_FILE;
-  }
-
-  switch (type)
-  {
-  case RtSmbios:
-    if (increment)
-    {
-      rc.record_table_locations.smbios.size += size;
-    }
-    else
-    {
-      rc.record_table_locations.smbios.size = size;
-    }
-    break;
-  case RtAcpiNfit:
-    if (increment)
-    {
-      rc.record_table_locations.acpi_nfit.size += size;
-    }
-    else
-    {
-      rc.record_table_locations.acpi_nfit.size = size;
-    }
-    break;
-  case RtAcpiPcat:
-    if (increment)
-    {
-      rc.record_table_locations.acpi_pcat.size += size;
-    }
-    else
-    {
-      rc.record_table_locations.acpi_pcat.size = size;
-    }
-    break;
-  case RtAcpiPmtt:
-    if (increment)
-    {
-      rc.record_table_locations.acpi_pmtt.size += size;
-    }
-    else
-    {
-      rc.record_table_locations.acpi_pmtt.size = size;
-    }
-    break;
-  case RtPassThru:
-    if (increment)
-    {
-      rc.record_table_locations.pass_thru.size += size;
-    }
-    else
-    {
-      rc.record_table_locations.pass_thru.size = size;
-    }
-    break;
-  default:
-    NVDIMM_ERR("Unknown record type\n");
-    return EFI_END_OF_FILE;
-  }
-
-  //seek to the begining of the file
-  if (0 != fseek(file_stream, 0, SEEK_SET))
-  {
-    NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return EFI_END_OF_FILE;
-  }
-
-  size_t bytes_written = 0;
-  bytes_written = fwrite(&rc, sizeof(recording_file), 1, file_stream);
-  if (1 != bytes_written)
-  {
-    NVDIMM_ERR("Failed to write the recording file header\n");
-    return EFI_END_OF_FILE;
-  }
-
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS seek_to_record_offset(RecordType type, FILE * file_stream, UINT32 *record_size)
-{
-  recording_file rc;
-  UINT32 offset;
-
-  //seek to the begining of the file
-  if (0 != fseek(file_stream, 0, SEEK_SET))
-  {
-    NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return EFI_DEVICE_ERROR;
-  }
-
-  if (1 != fread(&rc, sizeof(recording_file), 1, file_stream))
-  {
-    NVDIMM_ERR("Failed to read the recording file header\n");
-    return EFI_DEVICE_ERROR;
-  }
-
-  switch (type)
-  {
-  case RtSmbios:
-    offset = rc.record_table_locations.smbios.offset;
-    *record_size = rc.record_table_locations.smbios.size;
-    break;
-  case RtAcpiNfit:
-    offset = rc.record_table_locations.acpi_nfit.offset;
-    *record_size = rc.record_table_locations.acpi_nfit.size;
-    break;
-  case RtAcpiPcat:
-    offset = rc.record_table_locations.acpi_pcat.offset;
-    *record_size = rc.record_table_locations.acpi_pcat.size;
-    break;
-  case RtAcpiPmtt:
-    offset = rc.record_table_locations.acpi_pmtt.offset;
-    *record_size = rc.record_table_locations.acpi_pmtt.size;
-    break;
-  case RtPassThru:
-    offset = rc.record_table_locations.pass_thru.offset;
-    *record_size = rc.record_table_locations.pass_thru.size;
-    break;
-  default:
-    NVDIMM_ERR("Unknown record type\n");
-    return EFI_INVALID_PARAMETER;
-  }
-
-  //seek to the begining of the record type partition
-  if (0 != fseek(file_stream, offset, SEEK_SET))
-  {
-    NVDIMM_ERR("Failed seeking to the begining of the file\n");
-    return EFI_DEVICE_ERROR;
-  }
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS
-passthru_playback(
-  IN OUT FW_CMD *pCmd
-)
-{
-  if (!PLAYBACK_ENABLED())
-  {
-    return EFI_UNSUPPORTED;
-  }
-
-  if (NULL == pCmd)
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FILE *f_passthru_ptr = NULL;
-
-  pass_thru_record_req pt_rec_req;
-  pass_thru_record_resp pt_rec_resp;
-  UINT32 record_size = 0;
-
-  errno_t open_result = fopen_s(&f_passthru_ptr, REC_FILE_PATH, "rb+");
-  if (0 != open_result)
-  {
-    NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PATH);
-    return EFI_END_OF_FILE;
-  }
-
-  //seek it to pass thru partition
-  if (EFI_SUCCESS != seek_to_record_offset(RtPassThru, f_passthru_ptr, &record_size))
-  {
-    NVDIMM_ERR("Failed seeking to the passthru partition\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-
-  if (0 != fseek(f_passthru_ptr, g_pass_thru_playback_offset, SEEK_CUR))
-  {
-    NVDIMM_ERR("Failed seeking into playback file\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-
-  if (1 != fread(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr))
-  {
-    NVDIMM_ERR("Failed to read the request packet from the recording file\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-  g_pass_thru_playback_offset += sizeof(pass_thru_record_req);
-
-  //todo: support large input payload size
-  if (0 != fseek(f_passthru_ptr, pt_rec_req.InputPayloadSize, SEEK_CUR))
-  {
-    NVDIMM_ERR("Failed seeking into playback file\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-  g_pass_thru_playback_offset += pt_rec_req.InputPayloadSize;
-
-  if (0 != fseek(f_passthru_ptr, pt_rec_req.InputLargePayloadSize, SEEK_CUR))
-  {
-    NVDIMM_ERR("Failed seeking into playback file\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-  g_pass_thru_playback_offset += pt_rec_req.InputLargePayloadSize;
-
-
-  if (1 != fread(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
-  {
-    NVDIMM_ERR("Failed to read the response packet from the recording file\n");
-    pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-    goto Finish;
-  }
-  g_pass_thru_playback_offset += sizeof(pass_thru_record_resp);
-
-  if (pt_rec_resp.OutputLargePayloadSize)
-  {
-    if (pt_rec_resp.OutputLargePayloadSize > OUT_MB_SIZE) {
-      NVDIMM_ERR("OutputLargePayloadSize exceeded maximum large output payload size (%d bytes)\n", OUT_MB_SIZE);
-      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-      goto Finish;
-    }
-
-    pCmd->LargeOutputPayloadSize = pt_rec_resp.OutputLargePayloadSize;
-    if (1 != fread(pCmd->LargeOutputPayload, pt_rec_resp.OutputLargePayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to read the LargeOutputPayload from the recording file\n");
-      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-      goto Finish;
-    }
-    g_pass_thru_playback_offset += pt_rec_resp.OutputLargePayloadSize;
-  }
-  else if(pt_rec_resp.OutputPayloadSize)
-  {
-    pCmd->OutputPayloadSize = pt_rec_resp.OutputPayloadSize;
-    if (1 != fread(pCmd->OutPayload, pt_rec_resp.OutputPayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to read the OutputPayload from the recording file\n");
-      pt_rec_resp.PassthruReturnCode = EFI_END_OF_FILE;
-      goto Finish;
-    }
-    g_pass_thru_playback_offset += pt_rec_resp.OutputPayloadSize;
-  }
-  pCmd->Status = pt_rec_resp.Status;
-  INC_PASS_THRU_CNT(); 
-
-Finish:
-  fclose(f_passthru_ptr);
-
-  return pt_rec_resp.PassthruReturnCode;
-}
-
-EFI_STATUS
-passthru_record_setup(
-  FILE **f_passthru_ptr,
-  IN OUT FW_CMD *pCmd
-)
-{
-  UINT32 record_size = 0;
-
-  if (!RECORD_ENABLED())
-  {
-    NVDIMM_ERR("Recording mode not enabled. \n");
-    return EFI_UNSUPPORTED;
-  }
-
-  if (NULL == f_passthru_ptr || NULL == pCmd)
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  errno_t open_result = fopen_s(f_passthru_ptr, REC_FILE_PATH, "rb+");
-  if (0 != open_result)
-  {
-    NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PATH);
-    return EFI_LOAD_ERROR;
-  }
-
-  //seek it to pass thru partition
-  if (EFI_SUCCESS != seek_to_record_offset(RtPassThru, *f_passthru_ptr, &record_size))
-  {
-    NVDIMM_ERR("Failed seeking to the passthru partition\n");
-    return EFI_END_OF_FILE;
-  }
-
-  if (0 != fseek(*f_passthru_ptr, record_size, SEEK_CUR))
-  {
-    NVDIMM_ERR("Failed seeking into playback file\n");
-    return EFI_END_OF_FILE;
-  }
-
-  /* if (APPEND_RECORDING())
-   {
-     errno_t open_result = fopen_s(f_passthru_ptr, REC_FILE_PASSTHRU, "ab");
-     if (0 != open_result)
-     {
-       NVDIMM_ERR("Failed to open the following recording file in append mode: %s\n", REC_FILE_PASSTHRU);
-       return EFI_END_OF_FILE;
-     }
-   }
-   else
-   {
-     errno_t open_result = fopen_s(f_passthru_ptr, REC_FILE_PASSTHRU, "wb");
-     if (0 != open_result)
-     {
-       NVDIMM_ERR("Failed to open the following recording file: %s\n", REC_FILE_PASSTHRU);
-       return EFI_END_OF_FILE;
-     }
-   }
-
-   if (0 != fseek(*f_passthru_ptr, 0, SEEK_END))
-   {
-     NVDIMM_ERR("Failed seeking into playback file\n");
-     return EFI_END_OF_FILE;
-   }
- */
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS
-passthru_record_finalize(
-  FILE *f_passthru_ptr,
-  IN OUT FW_CMD *pCmd,
-  UINT32 DimmID,
-  EFI_STATUS PassthruReturnCode
-)
-{
-  UINT32 total_write_sz = 0;
-  if (!RECORD_ENABLED())
-  {
-    NVDIMM_ERR("Recording mode not enabled. \n");
-    return EFI_UNSUPPORTED;
-  }
-
-  if (NULL == f_passthru_ptr || NULL == pCmd)
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  pass_thru_record_req pt_rec_req;
-  pt_rec_req.DimmId = DimmID;
-  pt_rec_req.Opcode = pCmd->Opcode;
-  pt_rec_req.SubOpcode = pCmd->SubOpcode;
-  pt_rec_req.TotalMilliseconds = GetCurrentMilliseconds();
-  pt_rec_req.InputPayloadSize = pCmd->InputPayloadSize;
-  pt_rec_req.InputLargePayloadSize = pCmd->LargeInputPayloadSize;
-
-  size_t bytes_written = 0;
-  bytes_written = fwrite(&pt_rec_req, sizeof(pass_thru_record_req), 1, f_passthru_ptr);
-  if (1 != bytes_written)
-  {
-    NVDIMM_ERR("Failed to write the request packet to the recording file\n");
-    return EFI_END_OF_FILE;
-  }
-  total_write_sz += sizeof(pass_thru_record_req);
-
-  if (pCmd->InputPayloadSize)
-  {
-    if (1 != fwrite(pCmd->InputPayload, pCmd->InputPayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to write the input payload to the recording file \n");
-      return EFI_END_OF_FILE;
-    }
-    total_write_sz += pCmd->InputPayloadSize;
-  }
-
-  if (pCmd->LargeInputPayloadSize)
-  {
-    if (1 != fwrite(pCmd->LargeInputPayload, pCmd->LargeInputPayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to write the large input payload to the recording file \n");
-      return EFI_END_OF_FILE;
-    }
-    total_write_sz += pCmd->LargeInputPayloadSize;
-  }
-
-  pass_thru_record_resp pt_rec_resp;
-  pt_rec_resp.DimmId = DimmID;
-  pt_rec_resp.PassthruReturnCode = PassthruReturnCode;
-  pt_rec_resp.Status = pCmd->Status;
-  pt_rec_resp.TotalMilliseconds = GetCurrentMilliseconds();
-  pt_rec_resp.OutputPayloadSize = pCmd->OutputPayloadSize;
-  pt_rec_resp.OutputLargePayloadSize = pCmd->LargeOutputPayloadSize;
-
-  if (1 != fwrite(&pt_rec_resp, sizeof(pass_thru_record_resp), 1, f_passthru_ptr))
-  {
-    NVDIMM_ERR("Failed to write the response payload to the recording file \n");
-    return EFI_END_OF_FILE;
-  }
-  total_write_sz += sizeof(pass_thru_record_resp);
-  if (pCmd->OutputPayloadSize)
-  {
-    if (1 != fwrite(pCmd->OutPayload, pCmd->OutputPayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to write the outpayload to the recording file \n");
-      return EFI_END_OF_FILE;
-    }
-    total_write_sz += pCmd->OutputPayloadSize;
-  }
-  else if (pCmd->LargeOutputPayloadSize)
-  {
-    if (1 != fwrite(pCmd->LargeOutputPayload, pCmd->LargeOutputPayloadSize, 1, f_passthru_ptr))
-    {
-      NVDIMM_ERR("Failed to write the large outpayload to the recording file \n");
-      return EFI_END_OF_FILE;
-    }
-    total_write_sz += pCmd->LargeOutputPayloadSize;
-  }
-
-  update_record_size(RtPassThru, f_passthru_ptr, total_write_sz, TRUE);
-  fflush(f_passthru_ptr);
-  fclose(f_passthru_ptr);
-  return EFI_SUCCESS;
-}
-
 EFI_STATUS
 EFIAPI
 PassThru(
@@ -637,139 +115,35 @@ PassThru(
 )
 {
   EFI_STATUS Rc = EFI_SUCCESS;
-  EFI_STATUS RecordRc = EFI_SUCCESS;
+  EFI_STATUS PbrRc = EFI_SUCCESS;
   UINT32 DimmID;
-  FILE *f_passthru_ptr = NULL;
+  PbrContext *pContext = PBR_CTX();
 
   if (!pDimm || !pCmd)
     return EFI_INVALID_PARAMETER;
 
-  if (PLAYBACK_ENABLED())
+  if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext))
   {
-    return passthru_playback(pCmd);
-  }
-
-  if (RECORD_ENABLED())
-  {
-    RecordRc = passthru_record_setup(&f_passthru_ptr, pCmd);
-    if (EFI_SUCCESS != RecordRc)
-    {
-      if (EFI_LOAD_ERROR != RecordRc) {
-        fclose(f_passthru_ptr);
-      }
-      return RecordRc;
+    Rc = PbrGetPassThruRecord(pContext, pCmd, &PbrRc);
+    if (EFI_SUCCESS == Rc) {
+      Rc = PbrRc;
     }
+    return Rc;
   }
 
   DimmID = pCmd->DimmID;
   pCmd->DimmID = pDimm->DeviceHandle.AsUint32;
   Rc = passthru_os(pDimm, pCmd, (long)Timeout);
-  INC_PASS_THRU_CNT();
+
+  if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
+  {
+      Rc = PbrSetPassThruRecord(pContext, pCmd, Rc);
+  }
   pCmd->DimmID = DimmID;
 
-  if (RECORD_ENABLED())
-  {
-    RecordRc = passthru_record_finalize(f_passthru_ptr, pCmd, DimmID, Rc);
-    if (EFI_SUCCESS != RecordRc)
-    {
-      fclose(f_passthru_ptr);
-      return RecordRc;
-    }
-  }
-
   return Rc;
 }
 
-EFI_STATUS
-save_table_to_file(
-  RecordType type,
-  char* destFile,
-  EFI_ACPI_DESCRIPTION_HEADER *table
-)
-{
-  EFI_STATUS Rc = EFI_SUCCESS;
-  FILE* f_ptr;
-  UINT32 record_size = 0;
-
-  errno_t open_result = fopen_s(&f_ptr, destFile, "rb+");
-  if (0 != open_result)
-  {
-    return EFI_END_OF_FILE;
-  }
-
-  //seek it to pass thru partition
-  if (EFI_SUCCESS != (Rc = seek_to_record_offset(type, f_ptr, &record_size)))
-  {
-    NVDIMM_ERR("Failed seeking to the ACPI partition\n");
-    goto Finish;
-  }
-
-  if (table && 1 != fwrite(table, table->Length, 1, f_ptr))
-  {
-    Rc = EFI_END_OF_FILE;
-    goto Finish;
-  }
-
-  if (table)
-  {
-    Rc = update_record_size(type, f_ptr, table->Length, FALSE);
-  }
-
-Finish:
-  fclose(f_ptr);
-  return Rc;
-}
-
-
-EFI_STATUS
-load_table_from_file(
-  RecordType type,
-  char* sourceFile,
-  EFI_ACPI_DESCRIPTION_HEADER ** table
-)
-{
-  EFI_STATUS Rc = EFI_SUCCESS;
-  UINT32 size;
-  FILE* f_ptr;
-
-  *table = NULL;
-  errno_t open_result = fopen_s(&f_ptr, sourceFile, "rb+");
-  if (0 != open_result)
-  {
-    Rc = EFI_END_OF_FILE;
-    return Rc;
-  }
-
-  //seek it to pass thru partition
-  if (EFI_SUCCESS != (Rc = seek_to_record_offset(type, f_ptr, &size)))
-  {
-    NVDIMM_ERR("Failed seeking to the ACPI partition\n");
-    goto Finish;
-  }
-
-  if (!size)
-  {
-    Rc = EFI_END_OF_FILE;
-  }
-  else
-  {
-    *table = AllocatePool(size);
-    if (!*table)
-    {
-      Rc = EFI_OUT_OF_RESOURCES;
-    }
-    else {
-      if (1 != fread(*table, size, 1, f_ptr))
-      {
-        Rc = EFI_END_OF_FILE;
-      }
-    }
-  }
-
-Finish:
-  fclose(f_ptr);
-  return Rc;
-}
 
 EFI_STATUS
 initAcpiTables()
@@ -779,61 +153,73 @@ initAcpiTables()
   EFI_ACPI_DESCRIPTION_HEADER * PtrPcatTable = NULL;
   EFI_ACPI_DESCRIPTION_HEADER * PtrPMTTTable = NULL;
   UINT32 failures = 0;
+  PbrContext *pContext = PBR_CTX();
+  UINT32 Size = 0;
 
-  if (PLAYBACK_ENABLED())
+  if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext))
   {
-    if (EFI_ERROR(load_table_from_file(RtAcpiNfit, REC_FILE_PATH, &PtrNfitTable)))
-    {
-      NVDIMM_WARN("Failed to load the NFIT table from the record file.\n");
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_NFIT, (VOID**)&PtrNfitTable, (UINT32*)&Size);
+    if (EFI_ERROR(ReturnCode)) {
+      Print(L"Failed to record NFIT");
       failures++;
     }
 
-    if (EFI_ERROR(load_table_from_file(RtAcpiPcat, REC_FILE_PATH, &PtrPcatTable)))
-    {
-      NVDIMM_WARN("Failed to load the PCAT table from the record file.\n");
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PCAT, (VOID**)&PtrPcatTable, (UINT32*)&Size);
+    if (EFI_ERROR(ReturnCode)) {
+      Print(L"Failed to record PCAT");
       failures++;
     }
 
-    if (EFI_ERROR(load_table_from_file(RtAcpiPmtt, REC_FILE_PATH, &PtrPMTTTable)))
-    {
-      NVDIMM_WARN("Failed to load the PMTT table from the record file.\n");
-      //failures++; //table allowed to be empty. Not a failure
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, (VOID**)&PtrPMTTTable, (UINT32*)&Size);
+    if (EFI_ERROR(ReturnCode)) {
+      Print(L"Failed to record PMTT");
+      //failures++; allowed to not be there
     }
   }
   else
   {
-    if (EFI_ERROR(get_nfit_table(&PtrNfitTable)))
+    if (EFI_ERROR(get_nfit_table(&PtrNfitTable, &Size)))
     {
       NVDIMM_WARN("Failed to get the NFIT table.\n");
       failures++;
     }
-    if (EFI_ERROR(get_pcat_table(&PtrPcatTable)))
+
+    if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
+    {
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_NFIT, PtrNfitTable, Size);
+      if (EFI_ERROR(ReturnCode)) {
+        Print(L"Failed to record NFIT");
+        failures++;
+      }
+    }
+
+    if (EFI_ERROR(get_pcat_table(&PtrPcatTable, &Size)))
     {
       NVDIMM_WARN("Failed to get the PCAT table.\n");
       failures++;
     }
-    if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable)))
+
+    if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
+    {
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_PCAT, PtrPcatTable, Size);
+      if (EFI_ERROR(ReturnCode)) {
+        Print(L"Failed to record PCAT");
+        failures++;
+      }
+    }
+
+    if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable, &Size)))
     {
       NVDIMM_WARN("Failed to get the PMTT table.\n");
       //failures++; //table allowed to be empty. Not a failure
     }
 
-    if (RECORD_ENABLED())
+    if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
     {
-      if (EFI_ERROR(save_table_to_file(RtAcpiNfit, REC_FILE_PATH, PtrNfitTable)))
-      {
-        NVDIMM_WARN("Failed to save the NFIT table to the record file.\n");
-        failures++;
-      }
-      if (EFI_ERROR(save_table_to_file(RtAcpiPcat, REC_FILE_PATH, PtrPcatTable)))
-      {
-        NVDIMM_WARN("Failed to save the PCAT table to the record file.\n");
-        failures++;
-      }
-      if (EFI_ERROR(save_table_to_file(RtAcpiPmtt, REC_FILE_PATH, PtrPMTTTable)))
-      {
-        NVDIMM_WARN("Failed to save the PMTT table to the record file.\n");
-        //failures++; //table allowed to be empty. Not a failure
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, PtrPMTTTable, Size);
+      if (EFI_ERROR(ReturnCode)) {
+        Print(L"Failed to record PMTT");
+        //failures++;
       }
     }
   }
@@ -863,10 +249,11 @@ initAcpiTables()
     }
   }
 Finish:
+  if (PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext)) {
     FREE_POOL_SAFE(PtrNfitTable);
     FREE_POOL_SAFE(PtrPcatTable);
     FREE_POOL_SAFE(PtrPMTTTable);
-
+  }
   return ReturnCode;
 }
 
@@ -888,103 +275,82 @@ GetFirstAndBoundSmBiosStructPointer(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FILE *f_ptr;
-  smbios_table_recording recording;
+  smbios_table_recording *recording = NULL;
   UINT32 record_size = 0;
+  PbrContext *pContext = PBR_CTX();
 
   if (pSmBiosStruct == NULL || pLastSmBiosStruct == NULL || pSmbiosVersion == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   // One time initialization
-  if (NULL == gSmbiosTable && !PLAYBACK_ENABLED())
+  if (NULL == gSmbiosTable && PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext))
   {
     get_smbios_table();
   }
 
-  if (RECORD_ENABLED())
+  if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
   {
-    recording.major = gSmbiosMajorVersion;
-    recording.minor = gSmbiosMinorVersion;
-    recording.size = gSmbiosTableSize;
-
-    errno_t open_result = fopen_s(&f_ptr, REC_FILE_PATH, "rb+");
-    if (0 == open_result)
-    {
-      if (NULL != gSmbiosTable) {
-        //seek it to smbios partition
-        if (EFI_SUCCESS != (ReturnCode = seek_to_record_offset(RtSmbios, f_ptr, &record_size)))
-        {
-          NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
-          ReturnCode = EFI_END_OF_FILE;
-        }
-
-        if (1 != fwrite(&recording, sizeof(smbios_table_recording), 1, f_ptr))
-        {
-          NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
-          ReturnCode = EFI_END_OF_FILE;
-        }
-        if (1 != fwrite(gSmbiosTable, gSmbiosTableSize, 1, f_ptr))
-        {
-          NVDIMM_ERR("Failed to write to recording file: %s\n", REC_FILE_PATH);
-          ReturnCode = EFI_END_OF_FILE;
-        }
-        update_record_size(RtSmbios, f_ptr, (UINT32)(sizeof(smbios_table_recording) + gSmbiosTableSize), FALSE);
-      }
-      fclose(f_ptr);
+    recording = malloc(sizeof(smbios_table_recording) + gSmbiosTableSize);
+    if (NULL == recording) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
     }
+
+    recording->major = gSmbiosMajorVersion;
+    recording->minor = gSmbiosMinorVersion;
+    recording->size = gSmbiosTableSize;
+    if (gSmbiosTable) {
+      CopyMem(recording->table, gSmbiosTable, gSmbiosTableSize);
+    }
+    else {
+      NVDIMM_ERR("Problems initializing smbios table\n");
+    }
+
+    ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, recording, (UINT32)(sizeof(smbios_table_recording) + gSmbiosTableSize));
+    if (EFI_ERROR(ReturnCode)) {
+      FREE_POOL_SAFE(recording);
+      Print(L"Failed to record SMBIOS2");
+      goto Finish;
+    }
+    FREE_POOL_SAFE(recording);
   }
-  else if (PLAYBACK_ENABLED() && NULL == gSmbiosTable)
+  else if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext) && NULL == gSmbiosTable)
   {
-    errno_t open_result = fopen_s(&f_ptr, REC_FILE_PATH, "rb+");
-    if (0 == open_result)
-    {
-      if (NULL == gSmbiosTable) {
-        //seek it to pass thru partition
-        if (EFI_SUCCESS != seek_to_record_offset(RtSmbios, f_ptr, &record_size))
-        {
-          NVDIMM_ERR("Failed seeking to the SMBIOS partition\n");
-          ReturnCode = EFI_END_OF_FILE;
-        }
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, (VOID**)&recording, &record_size);
+    if (EFI_ERROR(ReturnCode) || record_size == 0) {
+      goto Finish;
+    }
 
-        if (1 != fread(&recording, sizeof(smbios_table_recording), 1, f_ptr))
-        {
-          NVDIMM_ERR("Failed to read from recording file: %s\n", REC_FILE_PATH);
-          ReturnCode = EFI_END_OF_FILE;
-        }
+    if (NULL == gSmbiosTable) {
 
-        if (SMBIOS_SIZE < recording.size || 0 == recording.size)
+      if (SMBIOS_SIZE < recording->size || 0 == recording->size)
+      {
+        //todo: fix error message
+        NVDIMM_ERR("Invalid PBR SMBIOS table size - %d.\n", recording->size);
+        ReturnCode = EFI_END_OF_FILE;
+      }
+      else
+      {
+        gSmbiosTable = calloc(1, recording->size);
+        if (NULL == gSmbiosTable)
         {
-          NVDIMM_ERR("SMBIOS table in file %s reports size of %d.\n", REC_FILE_PATH, recording.size);
+          NVDIMM_ERR("Unable to alloc for SMBIOS table\n");
           ReturnCode = EFI_END_OF_FILE;
+          goto Finish;
         }
         else
         {
-          gSmbiosTable = calloc(1, recording.size);
-          if (NULL == gSmbiosTable)
-          {
-            NVDIMM_ERR("Unable to alloc for SMBIOS table\n");
-            ReturnCode = EFI_END_OF_FILE;
-          }
-          else
-          {
-            size_t bytesRead = fread(gSmbiosTable, recording.size, 1, f_ptr);
-            if (bytesRead != 1)
-            {
-              NVDIMM_ERR("SMBIOS table in file %s - read %lu bytes, expected %lu.\n", REC_FILE_PATH, bytesRead, recording.size);
-              ReturnCode = EFI_END_OF_FILE;
-            }
-          }
-
-          gSmbiosMajorVersion = recording.major;
-          gSmbiosMinorVersion = recording.minor;
-          gSmbiosTableSize = recording.size;
+          CopyMem(gSmbiosTable, recording->table, recording->size);
         }
+
+        gSmbiosMajorVersion = recording->major;
+        gSmbiosMinorVersion = recording->minor;
+        gSmbiosTableSize = recording->size;
       }
-      fclose(f_ptr);
     }
   }
-
+Finish:
   if (NULL != gSmbiosTable)
   {
     pSmBiosStruct->Raw = (UINT8 *)gSmbiosTable;
@@ -997,7 +363,6 @@ GetFirstAndBoundSmBiosStructPointer(
     NVDIMM_ERR("Failed to retrieve smbios table\n");
     ReturnCode = EFI_END_OF_FILE;
   }
-
   return ReturnCode;
 }
 

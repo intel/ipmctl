@@ -98,7 +98,8 @@ Obtains a copy of the NFIT table
 **/
 EFI_STATUS
 get_nfit_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER** pTable
+  OUT EFI_ACPI_DESCRIPTION_HEADER** pTable,
+  OUT UINT32 *tablesize
 );
 
 /**
@@ -112,7 +113,8 @@ Obtains a copy of the PCAT table
 **/
 EFI_STATUS
 get_pcat_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 );
 
 /**
@@ -126,7 +128,8 @@ Obtains a copy of the PMTT table
 **/
 EFI_STATUS
 get_pmtt_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 );
 
 /**

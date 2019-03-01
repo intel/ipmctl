@@ -17,6 +17,7 @@
 
 #define SHOW_LIST_IDENT               L"   "
 
+#define DEFAULT_MAX_STR_WIDTH               30
 #define ID_MAX_STR_WIDTH                    10
 #define DIMM_MAX_STR_WIDTH                  22
 #define CAPACITY_MAX_STR_WIDTH              25

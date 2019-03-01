@@ -157,6 +157,21 @@ Debug and troubleshoot DCPMMs.
 *ipmctl-show-pcd*(1)::
   Shows the platform configuration data for one or more DCPMMs
 
+*ipmctl-dump-session*(1)::
+  Dumps the active session to a file
+
+*ipmctl-load-session*(1)::
+  Loads a session from a file into memory
+
+*ipmctl-show-session*(1)::
+  Displays information about an active session
+
+*ipmctl-start-session*(1)::
+ Starts a recording or playback session
+
+*ipmctl-stop-session*(1)::
+  Stops a recording or playback session
+
 SEE ALSO
 --------
 *ipmctl-show-device*(1),
@@ -195,6 +210,11 @@ SEE ALSO
 *ipmctl-show-acpi*(1),
 *ipmctl-show-error-log*(1),
 *ipmctl-show-pcd*(1)
+*ipmctl-dump-session*(1)
+*ipmctl-load-session*(1)
+*ipmctl-show-session*(1)
+*ipmctl-start-session*(1)
+*ipmctl-stop-session*(1)
 
 NOTES
 -----

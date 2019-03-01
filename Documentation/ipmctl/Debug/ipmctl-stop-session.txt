@@ -1,0 +1,62 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-stop-session(1)
+========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-stop-session - Stops the active playback or recording session.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl stop [OPTIONS] -session
+
+DESCRIPTION
+-----------
+Stops the active playback or recording session.
+
+
+OPTIONS
+-------
+-f::
+-force::
+  Do not warn the user that stopping a new session terminates an active recording
+  session resulting in deleting recorded content.
+
+-h::
+-help::
+    Displays help for the command.
+
+TARGET
+------
+-session::
+  Specifies to stop a session.
+
+EXAMPLES
+--------
+Stop the current session.
+
+[verse]
+ipmctl stop -session
+
+LIMITATIONS
+-----------
+
+RETURN DATA
+-----------
+
+SAMPLE OUTPUT
+-------------
+[verse]
+Successfully dumped 1060619 bytes to file.
+
+
+Warning - Executing in playback mode!
+
+Stopping a session will free all recording content.
+Do you want to continue? [y/n] y
+Stopped PBR session.

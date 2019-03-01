@@ -1,0 +1,58 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-session(1)
+========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-session - Displays the command
+history of a session.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -session
+
+DESCRIPTION
+-----------
+Displays the command history of a session.  Also displays which
+command to execute next during 'playback_manual' mode (see 'start -session').
+
+
+OPTIONS
+-------
+-h::
+-help::
+    Displays help for the command.
+
+TARGET
+------
+-session::
+  Specifies to show the command history of loaded/active session.
+
+EXAMPLES
+--------
+Show the contents of the loaded/active session.
+
+[verse]
+ipmctl show -session
+
+LIMITATIONS
+-----------
+A session must be loaded or active prior to executing this command.  A session
+may be loaded via the 'load -session' command or made active via the
+'start -session' command.
+
+RETURN DATA
+-----------
+
+SAMPLE OUTPUT
+-------------
+[verse]
+TagID | RC | Args
+============================
+ 0x0*  | 0  | show -sensor
+ 0x1   | 0  | show -dimm

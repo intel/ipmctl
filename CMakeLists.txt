@@ -301,6 +301,11 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/cli/ShowPerformanceCommand.c
 	DcpmPkg/cli/ShowHostServerCommand.c
 	DcpmPkg/cli/ShowCmdAccessPolicyCommand.c
+	DcpmPkg/cli/StartSessionCommand.c
+	DcpmPkg/cli/StopSessionCommand.c
+	DcpmPkg/cli/LoadSessionCommand.c
+	DcpmPkg/cli/ShowSessionCommand.c
+	DcpmPkg/cli/DumpSessionCommand.c
 	DcpmPkg/common/FwUtility.c
 	DcpmPkg/common/Utility.c
 	DcpmPkg/common/NvmTables.c
@@ -336,6 +341,9 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/driver/Utils/Interleave.c
 	DcpmPkg/driver/Utils/SmbiosUtility.c
 	DcpmPkg/driver/Utils/DumpLoadRegions.c
+	DcpmPkg/common/Pbr.c
+	DcpmPkg/common/PbrDcpmm.c
+	DcpmPkg/common/PbrOs.c
 	MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathUtilities.c
 	MdePkg/Library/UefiDevicePathLib/DevicePathToText.c

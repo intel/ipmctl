@@ -314,6 +314,7 @@ Parse(
     if (!EFI_ERROR(ReturnCode)) {
       pCommand->run = gCommandList[Index].run;
       pCommand->PrinterCtrlSupported = gCommandList[Index].PrinterCtrlSupported;
+      pCommand->ExcludeDriverBinding = gCommandList[Index].ExcludeDriverBinding;
       break;
     }
   }

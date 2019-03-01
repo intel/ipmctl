@@ -61,6 +61,8 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle);
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device);
 int g_nvm_initialized = 0;
 int get_fw_err_log_stats(const unsigned int dimm_id, const unsigned char log_level, const unsigned char log_type, LOG_INFO_DATA_RETURN *log_info);
+static int nvm_internal_init(BOOLEAN binding_start);
+static void nvm_internal_uninit(BOOLEAN binding_stop);
 
 extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
@@ -73,6 +75,7 @@ extern EFI_STATUS EFIAPI NvmDimmDriverDriverBindingStart(IN EFI_DRIVER_BINDING_P
 extern EFI_DRIVER_BINDING_PROTOCOL gNvmDimmDriverDriverBinding;
 extern EFI_STATUS EFIAPI NvmDimmDriverDriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *pSystemTable);
 extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_STATUS EFIAPI NvmDimmDriverUnload(IN EFI_HANDLE ImageHandle);
 extern EFI_STATUS
 EFIAPI
 GetCapacities(IN UINT16 DimmPid, OUT UINT64 *pVolatileCapacity, OUT UINT64 *pAppDirectCapacity, OUT UINT64 *pUnconfiguredCapacity, OUT UINT64 *pReservedCapacity, OUT UINT64 *pInaccessibleCapacity);
@@ -90,6 +93,12 @@ extern int acpi_event_free_ctx(void * context);
 
 //todo: add error checking
 NVM_API int nvm_init()
+{
+  return nvm_internal_init(TRUE);
+}
+
+//todo: add error checking
+static int nvm_internal_init(BOOLEAN binding_start)
 {
   int rc = NVM_SUCCESS;
 
@@ -149,10 +158,11 @@ NVM_API int nvm_init()
 #endif
   }
 
-  if(!g_fast_path && !g_basic_commands)
+  if (binding_start && (!g_fast_path && !g_basic_commands))
   {
     NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
   }
+
   g_nvm_initialized = 1;
   return rc;
 cleanup_mutex:
@@ -163,8 +173,17 @@ cleanup_mutex:
 
 NVM_API void nvm_uninit()
 {
+  nvm_internal_uninit(TRUE);
+}
+
+static void nvm_internal_uninit(BOOLEAN binding_stop)
+{
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
-  NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
+
+  if (binding_stop) {
+    NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
+  }
+  NvmDimmDriverUnload(FakeBindHandle);
   uninit_protocol_shell_parameters_protocol();
   preferences_uninit();
 
@@ -230,9 +249,6 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     wprintf(L"Syntax Error: Exceeded input parameters limit.\n");
     return (int)UefiToOsReturnCode(rc);
   }
-  else if (rc == EFI_LOAD_ERROR) {
-    return (int)UefiToOsReturnCode(rc);
-  }
 
   if (gOsShellParametersProtocol.StdOut == stdout)
   {
@@ -240,7 +256,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     wprintf(L"\n");
   }
 
-  nvm_status = nvm_init();
+  nvm_status = nvm_internal_init(FALSE);
   if (NVM_ERR_INVALID_PERMISSIONS != nvm_status && NVM_SUCCESS != nvm_status) {
     CHAR16* ErrStr = GetSingleNvmStatusCodeMessage(NULL, nvm_status);
     wprintf(L"Failed to intialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
@@ -260,7 +276,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
     dt = (enum DisplayType)d;
     process_output(dt, disp_name, disp_delims, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
   }
-  nvm_uninit();
+  nvm_internal_uninit(FALSE);
   return (int)rc;
 }
 

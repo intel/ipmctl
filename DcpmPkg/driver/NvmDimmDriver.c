@@ -20,6 +20,7 @@
 #include <Convert.h>
 #include <Protocol/NvdimmLabel.h>
 #include <ProcessorAndTopologyInfo.h>
+#include <PbrDcpmm.h>
 #ifndef OS_BUILD
 #include <Smbus.h>
 #endif
@@ -40,6 +41,8 @@ EFI_GUID gNfitBindingProtocolGuid =
 EFI_GUID gNvmDimmNgnvmGuid = NVMDIMM_DRIVER_NGNVM_GUID;
 
 EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
+
+EFI_GUID gIntelDimmPbrVariableGuid = INTEL_DIMM_PBR_VARIABLE_GUID;
 
 /**
   Array of dimms UEFI-related data structures.
@@ -288,6 +291,10 @@ NvmDimmDriverUnload(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  /** Uninitialize data associated with Playback and Record**/
+  PbrUninit();
+
 #ifndef OS_BUILD
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   EFI_HANDLE *pHandleBuffer = NULL;
@@ -713,7 +720,14 @@ NvmDimmDriverDriverEntryPoint(
 #endif
 
   NVDIMM_ENTRY();
-
+  /**
+    Set up playback/record data
+  **/
+  ReturnCode = PbrInit();
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to initialize PBR module, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    goto Finish;
+  }
   /**
     This is the sample usage of the OutputCheckpoint function.
     The minor and major codes are custom. The BIOS scratchpad must be set to this value before the code gets there.
@@ -849,6 +863,7 @@ Finish:
 #endif
   NVDIMM_DBG("Exiting DriverEntryPoint, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
+
   return ReturnCode;
 }
 
@@ -1291,8 +1306,8 @@ NvmDimmDriverDriverBindingStart(
    CHAR16 Dimm1Uid[MAX_DIMM_UID_LENGTH];
    CHAR16 Dimm2Uid[MAX_DIMM_UID_LENGTH];
 
-   NVDIMM_ENTRY();
 
+   NVDIMM_ENTRY();
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
    /**
    Enable recording AllocatePool and FreePool occurences
@@ -1400,8 +1415,7 @@ NvmDimmDriverDriverBindingStart(
       }
    }
 
-Finish:
-  //ReturnCode = 0;
+ Finish:
    NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
    NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
@@ -1421,9 +1435,10 @@ NvmDimmDriverDriverBindingStart(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   VOID *pDummy = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
+  UINT32 TagId = 0;
 
   NVDIMM_ENTRY();
-
+  PbrSetTag(PBR_DCPMM_CLI_SIG, L"driver: initialization", L"0", &TagId);
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
    /**
    Enable recording AllocatePool and FreePool occurences
@@ -1564,6 +1579,7 @@ NvmDimmDriverDriverBindingStart(
   }
 
 Finish:
+
   FREE_POOL_SAFE(pIntelDIMMConfig);
   if (EFI_ERROR(ReturnCode)) {
     gBS->CloseProtocol(
@@ -1604,7 +1620,6 @@ NvmDimmDriverDriverBindingStop(
   UINT32 Index = 0;
 
   NVDIMM_ENTRY();
-
   if (gNvmDimmData == NULL) {
     NVDIMM_WARN("Driver data structure not initialized!\n");
     ReturnCode = EFI_DEVICE_ERROR;
@@ -1775,7 +1790,19 @@ NvmDimmDriverDriverBindingStop(
 
 Finish:
 #else //not OS_BUILD
-  uninitAcpiTables();
+  
+
+  /**
+   Remove the DIMM from memory
+ **/
+  ReturnCode = FreeDimmList();
+
+  /** Free PCAT tables memory **/
+  FreeParsedPcat(gNvmDimmData->PMEMDev.pPcatHead);
+
+  /** Free NFIT tables memory **/
+  FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+
 #endif //not OS_BUILD
 #if _BullseyeCoverage
 #ifndef OS_BUILD
@@ -1784,6 +1811,7 @@ Finish:
 #endif // _BullseyeCoverage
   NVDIMM_DBG("Exiting DriverBindingStop, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
+
   return ReturnCode;
 }
 

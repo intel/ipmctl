@@ -8,6 +8,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Debug.h>
+#include <PbrDcpmm.h>
 
 /**
   Retrieve Capacity for the given SMBIOS version.
@@ -154,41 +155,83 @@ GetFirstAndBoundSmBiosStructPointer(
   SMBIOS_TABLE_ENTRY_POINT_3 *pTableEntry3 = NULL;
   UINT32 Index = 0;
   UINT8 MinorVersion = 0;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  PbrContext *pContext = PBR_CTX();
+  PbrSmbiosTableRecord *pSmbiosRecord = NULL;
+  UINT32 TableSize = 0;
 
   if (pSmBiosStruct == NULL || pLastSmBiosStruct == NULL || pSmbiosVersion == NULL) {
     return;
   }
 
-  /**
-    get the smbios tables from the system configuration table
-  **/
-  for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
-    if (CompareGuid(&gEfiSmbios3TableGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
-      // Priority given to SMBIOS 3 - break out
-      pTableEntry3 = (SMBIOS_TABLE_ENTRY_POINT_3 *) gST->ConfigurationTable[Index].VendorTable;
-      break;
-    }
-    if (CompareGuid(&gEfiSmbiosTableGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
-      // Even if we find this GUID, let's keep searching in case we find SMBIOS 3
-      pTempTableEntry = (SMBIOS_TABLE_ENTRY_POINT *) gST->ConfigurationTable[Index].VendorTable;
-      if (MinorVersion < pTempTableEntry->MinorVersion) {
-        // Preference given to a higher 2.x version
-        pTableEntry = pTempTableEntry;
-        MinorVersion = pTableEntry->MinorVersion;
+  if (PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext)) {
+    /**
+      get the smbios tables from the system configuration table
+    **/
+    for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
+      if (CompareGuid(&gEfiSmbios3TableGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
+        // Priority given to SMBIOS 3 - break out
+        pTableEntry3 = (SMBIOS_TABLE_ENTRY_POINT_3 *)gST->ConfigurationTable[Index].VendorTable;
+        break;
+      }
+      if (CompareGuid(&gEfiSmbiosTableGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
+        // Even if we find this GUID, let's keep searching in case we find SMBIOS 3
+        pTempTableEntry = (SMBIOS_TABLE_ENTRY_POINT *)gST->ConfigurationTable[Index].VendorTable;
+        if (MinorVersion < pTempTableEntry->MinorVersion) {
+          // Preference given to a higher 2.x version
+          pTableEntry = pTempTableEntry;
+          MinorVersion = pTableEntry->MinorVersion;
+        }
       }
     }
-  }
 
-  if (pTableEntry3 != NULL) {
-    pSmBiosStruct->Raw  = (UINT8 *) (UINTN) (pTableEntry3->TableAddress);
-    pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pTableEntry3->TableMaxSize;
-    pSmbiosVersion->Major = pTableEntry3->MajorVersion;
-    pSmbiosVersion->Minor = pTableEntry3->MinorVersion;
-  } else if (pTableEntry != NULL) {
-    pSmBiosStruct->Raw  = (UINT8 *) (UINTN) (pTableEntry->TableAddress);
-    pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pTableEntry->TableLength;
-    pSmbiosVersion->Major = pTableEntry->MajorVersion;
-    pSmbiosVersion->Minor = pTableEntry->MinorVersion;
+    if (pTableEntry3 != NULL) {
+      pSmBiosStruct->Raw = (UINT8 *)(UINTN)(pTableEntry3->TableAddress);
+      pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pTableEntry3->TableMaxSize;
+      pSmbiosVersion->Major = pTableEntry3->MajorVersion;
+      pSmbiosVersion->Minor = pTableEntry3->MinorVersion;
+      TableSize = pTableEntry3->TableMaxSize;
+    }
+    else if (pTableEntry != NULL) {
+      pSmBiosStruct->Raw = (UINT8 *)(UINTN)(pTableEntry->TableAddress);
+      pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pTableEntry->TableLength;
+      pSmbiosVersion->Major = pTableEntry->MajorVersion;
+      pSmbiosVersion->Minor = pTableEntry->MinorVersion;
+      TableSize = pTableEntry->TableLength;
+    }
+
+    pSmbiosRecord = (PbrSmbiosTableRecord *)AllocateZeroPool(sizeof(PbrSmbiosTableRecord) + TableSize);
+    if (NULL == PbrSetTableRecord) {
+      NVDIMM_DBG("Failed to allocate memory\n");
+    }
+    else {
+      pSmbiosRecord->Size = TableSize;
+      pSmbiosRecord->Minor = pSmbiosVersion->Minor;
+      pSmbiosRecord->Major = pSmbiosVersion->Major;
+      pSmbiosRecord->Minor = pSmbiosVersion->Minor;
+      CopyMem_S(pSmbiosRecord->Table, TableSize, pSmBiosStruct->Raw, TableSize);
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, pSmbiosRecord, sizeof(PbrSmbiosTableRecord) + TableSize);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record SMBIOS2");
+      }
+      else {
+        NVDIMM_DBG("Max smbios size %x\n", pTableEntry->TableLength);
+      }
+      //need to free?
+    }
+  }
+  else {
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, (VOID**)&pSmbiosRecord, &TableSize);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to retrieve SMBIOS record");
+    }
+    else {
+      NVDIMM_DBG("Successfully retrieved SMBIOS record, Max smbios size %x\n", TableSize);
+      pSmBiosStruct->Raw = pSmbiosRecord->Table;
+      pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pSmbiosRecord->Size;
+      pSmbiosVersion->Major = pSmbiosRecord->Major;
+      pSmbiosVersion->Minor = pSmbiosRecord->Minor;
+    }
   }
 }
 #endif

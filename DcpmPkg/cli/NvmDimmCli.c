@@ -57,6 +57,17 @@
 #include "ShowPerformanceCommand.h"
 #include "ShowCmdAccessPolicyCommand.h"
 #include "DeletePcdCommand.h"
+#include <PbrDcpmm.h>
+#include "StartSessionCommand.h"
+#include "StopSessionCommand.h"
+#include "DumpSessionCommand.h"
+#include "ShowSessionCommand.h"
+#include "LoadSessionCommand.h"
+#ifdef OS_BUILD
+#include <Protocol/Driver/DriverBinding.h>
+#else
+#include <Protocol/DriverBinding.h>
+#endif
 
 #if _BullseyeCoverage
 #ifndef OS_BUILD
@@ -85,6 +96,7 @@ extern EFI_SHELL_INTERFACE *mEfiShellInterface;
 #ifdef OS_BUILD
 EFI_HANDLE gNvmDimmCliHiiHandle = (EFI_HANDLE)0x1;
 extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
+extern EFI_DRIVER_BINDING_PROTOCOL gNvmDimmDriverDriverBinding;
 #else
 EFI_HANDLE gNvmDimmCliHiiHandle = NULL;
 #ifndef MDEPKG_NDEBUG
@@ -99,6 +111,8 @@ EFI_GUID gNvmDimmCliHiiGuid = NVMDIMM_CLI_HII_GUID;
 
 /* Local fns */
 static EFI_STATUS showVersion(struct Command *pCmd);
+static EFI_STATUS GetPbrMode(UINT32 *Mode);
+static EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription);
 
 /**
   Supported commands
@@ -172,7 +186,17 @@ UefiMain(
   EFI_HANDLE *pHandleBuffer = NULL;
   CHAR16 *pCurrentDriverName;
   EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
+#else
+  EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
 #endif
+  UINT32 Mode;
+  CHAR16 *pTagDescription = NULL;
+  
+  //get the current pbr mode (playback/record/normal)
+  Rc = GetPbrMode(&Mode);
+  if (EFI_ERROR(Rc)) {
+    goto Finish;
+  }
 
 #ifndef OS_BUILD
 #ifndef MDEPKG_NDEBUG
@@ -189,12 +213,20 @@ UefiMain(
 #endif
 
   NVDIMM_ENTRY();
-
+  Index = 0;
   ZeroMem(&Input, sizeof(Input));
   ZeroMem(&Command, sizeof(Command));
 
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
+
+  if (Mode == PBR_RECORD_MODE) {
+    Print(L"Warning - Executing in recording mode!\n\n");
+  }
+  else if (Mode == PBR_PLAYBACK_MODE) {
+    Print(L"Warning - Executing in playback mode!\n\n");
+  }
+  
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**
@@ -312,7 +344,7 @@ UefiMain(
           }
         }
         FillCommandInput(pLine, &Input);
-        FREE_POOL_SAFE(pLine);
+
 
         if (Input.ppTokens == NULL) {
           Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -343,7 +375,6 @@ UefiMain(
 
       /* parse the line into individual tokens */
       FillCommandInput(pLine, &Input);
-      FreePool(pLine);
 
       if (Input.ppTokens == NULL) {
         Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -357,6 +388,7 @@ UefiMain(
       }
     }
 #endif
+
     /* run the command */
     Rc = Parse(&Input, &Command);
 
@@ -370,7 +402,24 @@ UefiMain(
           gOsShellParametersProtocol.StdOut = stdout;
         }
 #endif
+        if (PBR_NORMAL_MODE != Mode && !Command.ExcludeDriverBinding) {
+          pTagDescription = CatSPrint(NULL, L"%d", Rc);
+          SetPbrTag(pLine, pTagDescription);
+          FREE_POOL_SAFE(pTagDescription);
+        }
+#ifdef OS_BUILD
+        if (!Command.ExcludeDriverBinding) {
+          NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
+        }
+#endif
+
         Rc = ExecuteCmd(&Command);
+
+#ifdef OS_BUILD
+        if (!Command.ExcludeDriverBinding) {
+          NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
+        }
+#endif
       }
       if (EFI_ERROR(Rc)) {
         MoreInput = FALSE; /* stop on failures */
@@ -393,7 +442,7 @@ FinishAfterRegCmds:
   FreeCommands();
 
 Finish:
-
+  FREE_POOL_SAFE(pLine);
   if (gNvmDimmCliHiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmCliHiiHandle);
   }
@@ -530,6 +579,33 @@ RegisterCommands(
     goto done;
   }
 #endif
+  Rc = RegisterStartSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterStopSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+
+  Rc = RegisterDumpSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterLoadSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+
   Rc = RegisterDeletePcdCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
@@ -723,6 +799,53 @@ PRINTER_DATA_SET_ATTRIBS ShowVersionDataSetAttribs =
   &ShowVersionListAttributes,
   NULL
 };
+
+/*
+ * Set a PBR session tag
+ */
+EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription) {
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_NOT_FOUND;
+    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->PbrSetTag(PBR_DCPMM_CLI_SIG, pName, pDescription, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    Print(CLI_ERR_FAILED_TO_SET_SESSION_TAG);
+    goto Finish;
+  }
+Finish:
+  return ReturnCode;
+}
+
+/*
+ * Get the current PBR session mode (playback/record)
+ */
+EFI_STATUS GetPbrMode(UINT32 *Mode) {
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_NOT_FOUND;
+    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->PbrGetMode(Mode);
+  if (EFI_ERROR(ReturnCode)) {
+    Print(CLI_ERR_FAILED_TO_GET_PBR_MODE);
+    goto Finish;
+  }
+Finish:
+  return ReturnCode;
+}
 
 /*
  * Print the CLI app version

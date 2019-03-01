@@ -23,6 +23,10 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 /** common display options **/
 #define SOCKET_ID_STR               L"SocketID"
 #define DIMM_ID_STR                 L"DimmID"
+#define TAG_ID_STR                  L"TagID"
+#define EXIT_CODE_STR               L"RC"
+#define CLI_ARGS_STR                L"Args"
+#define TAG_STR                     L"Tag"
 
 #define MAX_FILE_PATH_LEN           512
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
@@ -216,6 +220,23 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2
+
+#define CLI_ERR_FAILED_TO_GET_PBR_MODE                        L"Failed to get the current PBR mode."
+#define CLI_ERR_FAILED_TO_SET_PBR_MODE                        L"Failed to configure the playback and record mode to: " FORMAT_STR
+#define CLI_ERR_FAILED_NO_PBR_SESSION_LOADED                  L"Failed to configure the playback mode.  No PBR session loaded."
+#define CLI_ERR_FAILED_TO_SET_SESSION_TAG                     L"Failed to set the current tag location."
+#define CLI_ERR_FAILED_TO_GET_SESSION_TAG                     L"Failed to get the current tag location."
+#define CLI_ERR_FAILED_TO_GET_SESSION_TAG_COUNT               L"Failed to get the session tag count."
+#define CLI_ERR_FAILED_DURING_DRIVER_INIT                     L"Driver binding start failed."
+#define CLI_ERR_FAILED_DURING_DRIVER_UNINIT                   L"Driver binding stop failed."
+#define CLI_ERR_FAILED_DURING_CMD_EXECUTION                   L"Executing CMD during playback failed."
+#define CLI_ERR_UNKNOWN_MODE                                  L"Unknown PBR mode."
+#define CLI_ERR_FAILED_TO_GET_SESSION_BUFFER                  L"Failed to get the current session buffer."
+#define CLI_ERR_FAILED_TO_DUMP_SESSION_TO_FILE                L"Failed to dump contents of session buffer to a file."
+#define CLI_ERR_FAILED_TO_GET_FILE_PATH                       L"Failed to get file path (" FORMAT_EFI_STATUS ")"
+#define CLI_ERR_FAILED_TO_READ_FILE                           L"Failed to read pbr file."
+#define CLI_ERR_FAILED_TO_SET_SESSION_BUFFER                  L"Failed to set session buffer."
+#define CLI_ERR_FAILED_TO_RESET_SESSION                       L"Failed to reset the session."
 
 /**
   sizeof returns the number of bytes that the array uses.

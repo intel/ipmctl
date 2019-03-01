@@ -32,7 +32,7 @@
 #include <CoreDiagnostics.h>
 #include <NvmHealth.h>
 #include <Utility.h>
-
+#include <PbrDcpmm.h>
 #ifndef OS_BUILD
 #include <SpiRecovery.h>
 #include <FConfig.h>
@@ -141,8 +141,21 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   PassThruCommand,
 #endif /* MDEPKG_NDEBUG */
 
-  ModifyPcdConfig
+  ModifyPcdConfig,
+  PbrSetMode,
+  PbrGetMode,
+  PbrSetSession,
+  PbrGetSession,
+  PbrFreeSession,
+  PbrResetSession,
+  PbrSetTag,
+  PbrGetTagCount,
+  PbrGetTag,
+  PbrGetDataPlaybackInfo,
+  PbrGetData,
+  PbrSetData
 };
+
 
 #ifdef OS_BUILD
 #include "event.h"
@@ -666,6 +679,7 @@ FillSmbiosInfo(IN OUT DIMM_INFO *pDimmInfo)
   ReturnCode = GetDmiMemdevInfo(pDimmInfo->DimmID, &DmiPhysicalDev, &DmiDeviceMappedAddr, &SmbiosVersion);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failure to retrieve SMBIOS tables");
+    return ReturnCode;
   }
 
   /* SMBIOS type 17 table info */
@@ -3133,13 +3147,15 @@ GetAcpiPMTT(
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
+#ifdef OS_BUILD
+  UINT32 Size = 0;
+#endif
   if (ppPMTTtbl == NULL) {
     goto Finish;
   }
 
 #ifdef OS_BUILD
-  ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl);
+  ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl, &Size);
   if (EFI_ERROR(ReturnCode) || NULL == *ppPMTTtbl) {
     NVDIMM_DBG("Failed to retrieve PMTT table.");
     ReturnCode = EFI_NOT_FOUND;
@@ -4391,20 +4407,63 @@ initAcpiTables(
   EFI_ACPI_DESCRIPTION_HEADER *pPMTT = NULL;
   UINT64 PciBaseAddress;
   RETURN_STATUS PcdStatus = RETURN_NOT_STARTED;
-
+  PbrContext *pContext = PBR_CTX();
   NVDIMM_ENTRY();
 
-  /**
-    Find the Differentiated System Description Table (DSDT) from EFI_SYSTEM_TABLE
-  **/
-  ReturnCode = GetAcpiTables(gST, &pNfit, &pPcat, &pPMTT);
-  // The PMTT is optional, in that case the pointer stays NULL, it is not an ERROR condition
-  if (((EFI_LOAD_ERROR != ReturnCode) && (EFI_SUCCESS != ReturnCode)) ||
-    ((EFI_LOAD_ERROR == ReturnCode) && (NULL != pPMTT))) {
-    NVDIMM_WARN("Failed to get NFIT or PCAT table.");
-    goto Finish;
+  NVDIMM_DBG("InitAcpiTables\n");
+  if (PBR_NORMAL_MODE == PBR_GET_MODE(pContext) || PBR_RECORD_MODE == PBR_GET_MODE(pContext)) {
+    /**
+      Find the Differentiated System Description Table (DSDT) from EFI_SYSTEM_TABLE
+    **/
+    ReturnCode = GetAcpiTables(gST, &pNfit, &pPcat, &pPMTT);
+    // The PMTT is optional, in that case the pointer stays NULL, it is not an ERROR condition
+    if (((EFI_LOAD_ERROR != ReturnCode) && (EFI_SUCCESS != ReturnCode)) ||
+      ((EFI_LOAD_ERROR == ReturnCode) && (NULL != pPMTT))) {
+      NVDIMM_WARN("Failed to get NFIT or PCAT table.");
+    }
   }
+  
+  if (PBR_RECORD_MODE == PBR_GET_MODE(pContext)) {
+    if (pNfit) {
+      NVDIMM_DBG("Found NFIT, recording it.");
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_NFIT, pNfit, pNfit->Length);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record NFIT");
+      }
+    }
 
+    if (pPcat) {
+      NVDIMM_DBG("Found PCAT, recording it.");
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_PCAT, pPcat, pPcat->Length);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record PCAT");
+      }
+    }
+
+    if (pPMTT) {
+      NVDIMM_DBG("Found PMTT, recording it.");
+      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, pPMTT, pPMTT->Length);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record PMTT");
+      }
+    }
+  }
+  else if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext)) {
+      ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_NFIT, (VOID**)&pNfit, (UINT32*)&(pNfit->Length));
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record NFIT");
+      }
+
+      ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PCAT, (VOID**)&pPcat, (UINT32*)&(pPcat->Length));
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record PCAT");
+      }
+
+      ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, (VOID**)&pPMTT, (UINT32*)&(pPMTT->Length));
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Failed to record PMTT");
+      }
+  }
   /**
     Find the MCFG table from the EFI_SYSTEM_TABLE
     Get the PCI Base Address from the MCFG table

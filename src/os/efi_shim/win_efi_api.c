@@ -71,7 +71,8 @@ EFI_STATUS
 get_table(
   IN UINT32 tableProviderSig,
   IN UINT32 tableId,
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 );
 
 EFI_STATUS
@@ -103,33 +104,37 @@ passthru_os(
 
 EFI_STATUS
 get_nfit_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table('ACPI', 'TIFN', table);
+  return get_table('ACPI', 'TIFN', table, tablesize);
 }
 
 EFI_STATUS
 get_pcat_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table('ACPI', 'TACP', table);
+  return get_table('ACPI', 'TACP', table, tablesize);
 }
 
 EFI_STATUS
 get_pmtt_table(
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
-  return get_table('ACPI', 'TTMP', table);
+  return get_table('ACPI', 'TTMP', table, tablesize);
 }
 
 EFI_STATUS
 get_table(
   IN UINT32 tableProviderSig,
   IN UINT32 tableId,
-  OUT EFI_ACPI_DESCRIPTION_HEADER ** table
+  OUT EFI_ACPI_DESCRIPTION_HEADER ** table,
+  OUT UINT32 *tablesize
 )
 {
   *table = NULL;
@@ -146,7 +151,7 @@ get_table(
   {
     return EFI_END_OF_FILE;
   }
-
+  *tablesize = buf_size;
   win_scm2_ioctl_get_system_table(tableProviderSig, tableId, *table, buf_size);
  
   return EFI_SUCCESS;

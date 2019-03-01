@@ -1431,6 +1431,217 @@ EFI_STATUS
 );
 
 /**
+  Sets the playback/recording mode
+
+  @param[in] PbrMode: 0x0 - Normal, 0x1 - Recording, 0x2 - Playback
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+  @retval EFI_NOT_READY if PbrMode is set to Playback and session isn't loaded
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_SET_MODE) (
+  IN     UINT32 PbrMode
+);
+
+/**
+  Gets the current playback/recording mode
+
+  @param[out] pPbrMode: 0x0 - Normal, 0x1 - Recording, 0x2 - Playback
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+  @retval EFI_NOT_READY if the pbr context is not available
+  @retval EFI_INVALID_PARAMETER if one or more parameters equal NULL.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_MODE) (
+  OUT     UINT32 *pPbrMode
+);
+
+/**
+  Set the PBR Buffer to use
+
+  @param[in] pBufferAddress: address of a buffer to use for playback or record mode
+  @param[in] BufferSize: size in bytes of the buffer
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+  @retval EFI_NOT_READY if the pbr context is not available
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_SET_SESSION) (
+  IN     VOID *pBufferAddress,
+  IN     UINT32 BufferSize
+);
+
+/**
+  Get the PBR Buffer that is current being used
+
+  @param[out] ppBufferAddress: address to the pbr buffer
+  @param[out] pBufferSize: size in bytes of the buffer
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_SESSION) (
+  IN     VOID **ppBufferAddress,
+  IN     UINT32 *pBufferSize
+);
+
+/**
+  Clear the PBR Buffer that is current being used
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_FREE_SESSION) (
+);
+
+/**
+  Reset all playback buffers to align with the specified TagId
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_RESET_SESSION) (
+  IN     UINT32 TagId
+);
+
+/**
+  Set a tag associated with the current recording buffer offset
+
+  @param[in] Signature: signature associated with the tag
+  @param[in] pName: name associated with the tag
+  @param[in] pDescription: description of the tab
+  @param[out] pId: logical ID given to the tag (will be appended to the name)
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_SET_TAG) (
+  IN     UINT32 Signature,
+  IN     CHAR16 *pName,
+  IN     CHAR16 *pDescription,
+  OUT    UINT32 *pId
+);
+
+/**
+  Get the number of tags associated with the recording buffer
+
+  @param[out] pCount: get the number of tags
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_TAG_COUNT) (
+  OUT    UINT32 *pCount
+);
+
+/**
+   Gets information pertaining to playback data associated with a specific
+   data type (Signature).
+
+   @param[in] Signature: Specifies data type interested in
+   @param[out] pTotalDataItems: Number of logical data items of this Signature type that
+      are available in the currently active playback session.
+   @param[out] pTotalDataSize: Total size in bytes of all data associated with Signature type
+   @param[out] pCurrentPlaybackDataOffset: Points to the next data item of Signature type
+      that will be returned when PbrGetData is called with GET_NEXT_DATA_INDEX.
+   @retval EFI_SUCCESS on success
+ **/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_PB_INFO) (
+  IN UINT32 Signature,
+  OUT UINT32 *pTotalDataItems,
+  OUT UINT32 *pTotalDataSize,
+  OUT UINT32 *pCurrentPlaybackDataOffset
+);
+
+/**
+   Adds data to the recording session
+
+   @param[in] Signature: unique dword identifier that categorizes
+      the data to be recorded
+   @param[in] pData: Data to be recorded.  If NULL, a zeroed data buffer
+      is allocated.  Usefull, when used with ppData.
+   @param[in] Size: Byte size of pData
+   @param[in] Singleton: Only one data object associated with Signature.
+      Data previously set will be overriden with this data object.
+   @param[out] - ppData - May be NULL, otherwise will contain a pointer
+      to the memory allocated in the recording buffer for this data object.
+      Warning, this pointer is only guaranteed to be valid until the next
+      call to this function.
+   @retval EFI_SUCCESS on success
+ **/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_SET_DATA) (
+  IN UINT32 Signature,
+  IN VOID *pData,
+  IN UINT32 Size,
+  IN BOOLEAN Singleton,
+  OUT VOID **ppData,
+  OUT UINT32 *pLogicalIndex
+);
+
+/**
+   Gets data from the playback session
+
+   @param[in] Signature: Specifies which data type to get
+   @param[in] Index: GET_NEXT_DATA_INDEX gets the next data object within
+      the playback session.  Otherwise, any positive value will result in
+      getting the data object at position 'Index' (base 0).  If data associated
+      with Signature is a Singleton, use Index '0'.
+   @param[out] ppData: Newly allocated buffer that contains the data object.
+      Caller is responsible for freeing it.
+   @param[out] pSize: Size in bytes of ppData.
+   @param[out] pLogicalIndex: May be NULL, otherwise will contain the
+      logical index of the data object.
+   @retval EFI_SUCCESS on success
+ **/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_DATA) (
+  IN UINT32 Signature,
+  IN INT32 Index,
+  OUT VOID **ppData,
+  OUT UINT32 *pSize,
+  OUT UINT32 *pLogicalIndex
+);
+
+/**
+  Get tag info
+
+  @param[in] pId: tag identification
+  @param[out] pSignature: signature associated with the tag
+  @param[out] pName: name associated with the tag
+  @param[out] ppDescription: description of the tab
+  @param[out] ppTagPartitionInfo: array of TagPartitionInfo structs
+  @param[out] pTagPartitionCnt: number of items in pTagPartitionInfo
+
+  All out pointers need to be freed by caller.
+
+  @retval EFI_SUCCESS if the table was found and is properly returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_PBR_GET_TAG) (
+  IN     UINT32 Id,
+  OUT    UINT32 *pSignature,
+  OUT    CHAR16 **ppName,
+  OUT    CHAR16 **ppDescription,
+  OUT    VOID **ppTagPartitionInfo,
+  OUT    UINT32 *pTagPartitionCnt
+);
+
+/**
   Configuration and management of DCPMMs Protocol Interface
 **/
 struct _EFI_DCPMM_CONFIG_PROTOCOL {
@@ -1495,6 +1706,18 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/
   EFI_DCPMM_CONFIG_DELETE_PCD_CONFIG ModifyPcdConfig;
+  EFI_DCPMM_CONFIG_PBR_SET_MODE PbrSetMode;
+  EFI_DCPMM_CONFIG_PBR_GET_MODE PbrGetMode;
+  EFI_DCPMM_CONFIG_PBR_SET_SESSION PbrSetSession;
+  EFI_DCPMM_CONFIG_PBR_GET_SESSION PbrGetSession;
+  EFI_DCPMM_CONFIG_PBR_FREE_SESSION PbrFreeSession;
+  EFI_DCPMM_CONFIG_PBR_RESET_SESSION PbrResetSession;
+  EFI_DCPMM_CONFIG_PBR_SET_TAG PbrSetTag;
+  EFI_DCPMM_CONFIG_PBR_GET_TAG_COUNT PbrGetTagCount;
+  EFI_DCPMM_CONFIG_PBR_GET_TAG PbrGetTag;
+  EFI_DCPMM_CONFIG_PBR_GET_PB_INFO PbrGetDataPlaybackInfo;
+  EFI_DCPMM_CONFIG_PBR_GET_DATA PbrGetData;
+  EFI_DCPMM_CONFIG_PBR_SET_DATA PbrSetData;
 };
 
 #endif /** _NVM_INTERFACE_H_ **/

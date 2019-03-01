@@ -406,13 +406,39 @@ typedef union {
 #define SET_VARIABLE_NV(VarName,VendorGuid,BufferSize,Buffer)  \
   (gRT->SetVariable((CHAR16*)VarName,                          \
   &VendorGuid,                                            \
-  EFI_VARIABLE_NON_VOLATILE|EFI_VARIABLE_BOOTSERVICE_ACCESS,      \
+  EFI_VARIABLE_NON_VOLATILE|EFI_VARIABLE_BOOTSERVICE_ACCESS|EFI_VARIABLE_RUNTIME_ACCESS,      \
   BufferSize,                                                     \
   (VOID*)Buffer))
 #else
 #define SET_VARIABLE_NV(VarName,VendorGuid,BufferSize,Buffer) preferences_set_var(VarName,VendorGuid,(void*)Buffer,BufferSize); preferences_flush_the_file()
 #define SET_STR_VARIABLE_NV(VarName,VendorGuid,VarVal) preferences_set_var_string_wide(VarName,VendorGuid, VarVal); preferences_flush_the_file()
 #endif
+
+/**
+  Set a Volatile UEFI RunTime variable.
+
+  This will use the Runtime Services call SetVariable to set a non-volatile variable.
+
+  @param VarName                The name of the variable in question
+  @param VendorGuid             A unique identifier for the vendor
+  @param BufferSize             UINTN size of Buffer
+  @param Buffer                 Pointer to value to set variable to
+
+  @retval EFI_SUCCESS           The variable was changed successfully
+  @retval other                 An error occurred
+**/
+#ifndef OS_BUILD
+#define SET_VARIABLE(VarName,VendorGuid,BufferSize,Buffer)  \
+  (gRT->SetVariable((CHAR16*)VarName,                          \
+  &VendorGuid,                                            \
+  EFI_VARIABLE_BOOTSERVICE_ACCESS|EFI_VARIABLE_RUNTIME_ACCESS,      \
+  BufferSize,                                                     \
+  (VOID*)Buffer))
+#else
+#define SET_VARIABLE(VarName,VendorGuid,BufferSize,Buffer) preferences_set_var(VarName,VendorGuid,(void*)Buffer,BufferSize)
+#define SET_STR_VARIABLE(VarName,VendorGuid,VarVal) preferences_set_var_string_wide(VarName,VendorGuid, VarVal)
+#endif
+
 
 /**
   Returns the value of the environment variable with the given name.

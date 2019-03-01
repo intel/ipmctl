@@ -294,6 +294,9 @@ typedef struct _MEMMAP_RANGE {
 
 #define DISABLE_ARS_TOTAL_TIMEOUT_SEC     2
 #define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retreive long op
+#define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   3
+#define DSM_RETRY_SUGGESTED               0x5
+
 
 #ifdef OS_BUILD
 #define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"

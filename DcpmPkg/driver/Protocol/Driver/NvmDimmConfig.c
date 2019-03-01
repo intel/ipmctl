@@ -4972,11 +4972,8 @@ UpdateDimmFw(
   FW_IMAGE_HEADER *pFileHeader = NULL;
   CHAR16 *pErrorMessage = NULL;
   UINT8 ArsStatus = 0;
-
-#ifdef OS_BUILD
-  UINT8 RetryCountLimit = 2;
   UINT8 CurrentRetryCount = 0;
-#endif
+
 #ifdef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   UINT64 PacketsCounter = 0;
   UINT16 CurrentPacket = 0;
@@ -4990,10 +4987,10 @@ UpdateDimmFw(
 #endif
 
   if (pImageBuffer == NULL || pNvmStatus == NULL) {
-    NVDIMM_DBG("an input buffer is null");
+    NVDIMM_DBG("an input buffer is null\n");
     goto Finish;
-  }
-  pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
+}
+  pFileHeader = (FW_IMAGE_HEADER *)pImageBuffer;
 
   // upload FW image to specified DIMMs
   pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
@@ -5015,69 +5012,71 @@ UpdateDimmFw(
     goto Finish;
   }
 
-  //determine if ARS is running
-  ReturnCode = FwCmdGetARS(pCurrentDimm, &ArsStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-    goto Finish;
-  }
-
-  //cancel ARS if running
-  if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
-    ReturnCode = FwCmdDisableARS(pCurrentDimm);
-    if (EFI_ERROR(ReturnCode)) {
-      *pNvmStatus = NVM_ERR_ARS_IN_PROGRESS;
-      goto Finish;
-    }
-  }
-
   /**
     Prepare the FV PassThru command
   **/
   pPassThruCommand = AllocateZeroPool(sizeof(*pPassThruCommand));
   if (pPassThruCommand == NULL) {
-    NVDIMM_DBG("Failed on allocating the command, NULL returned.");
+    NVDIMM_DBG("Failed on allocating the command, NULL returned.\n");
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
 #ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
-  pPassThruCommand->LargeInputPayloadSize = (UINT32) ImageBufferSize;
+  pPassThruCommand->LargeInputPayloadSize = (UINT32)ImageBufferSize;
   CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
 
-#ifdef OS_BUILD
   do {
     pPassThruCommand->OutputPayloadSize = 0;
+    pPassThruCommand->Status = 0;
+#ifdef OS_BUILD
+    pPassThruCommand->DsmStatus = 0;
+#endif
     ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+#ifdef OS_BUILD
+    NVDIMM_DBG("SendUpdatePassThru: Device %x, RetVal %x, MB Status %x, DSM Status %x\n", pCurrentDimm->DeviceHandle, ReturnCode, pPassThruCommand->Status, pPassThruCommand->DsmStatus);
+#else
+    NVDIMM_DBG("SendUpdatePassThru: Device %x, RetVal %x, MB Status %x\n", pCurrentDimm->DeviceHandle, ReturnCode, pPassThruCommand->Status);
+#endif
+#ifdef OS_BUILD
+    if (pPassThruCommand->DsmStatus == DSM_RETRY_SUGGESTED) {
+      pPassThruCommand->Status = FW_DEVICE_BUSY;
+    }
+#endif
     if (EFI_ERROR(ReturnCode)) {
       if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-        if (++CurrentRetryCount < RetryCountLimit) {
+        if (++CurrentRetryCount < MAX_FW_UPDATE_RETRY_ON_DEV_BUSY) {
+          ReturnCode = FwCmdGetARS(pCurrentDimm, &ArsStatus);
+          if (EFI_ERROR(ReturnCode)) {
+            NVDIMM_DBG("Failed to retrieve ARS status.\n");
+            *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+            goto Finish;
+          }
+          if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
+            NVDIMM_DBG("ARS in progress.\n");
+            FwCmdDisableARS(pCurrentDimm);
+          }
           continue;
-        } else {
+        }
+        else {
           *pNvmStatus = NVM_ERR_BUSY_DEVICE;
         }
-      } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+      }
+      else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+        NVDIMM_DBG("FW Update failed, FW already occured\n");
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      } else {
+      }
+      else {
+#ifdef OS_BUILD
+        NVDIMM_DBG("FW Update failed, operation failed (status - %x), (dsmstatus - %x)\n", pPassThruCommand->Status, pPassThruCommand->DsmStatus);
+#else
+        NVDIMM_DBG("FW Update failed, operation failed (status - %x)\n", pPassThruCommand->Status);
+#endif
         *pNvmStatus = NVM_ERR_OPERATION_FAILED;
       }
       goto Finish;
     }
-  } while (pPassThruCommand->Status == FW_DEVICE_BUSY && CurrentRetryCount < RetryCountLimit);
-#else
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
-  if (EFI_ERROR(ReturnCode)) {
-     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-       *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-     } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-     } else {
-       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-     }
-     goto Finish;
-  }
-#endif
+  } while (pPassThruCommand->Status == FW_DEVICE_BUSY && CurrentRetryCount < MAX_FW_UPDATE_RETRY_ON_DEV_BUSY);
 #else
   if (ImageBufferSize % UPDATE_FIRMWARE_DATA_PACKET_SIZE != 0) {
     NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_DATA_PACKET_SIZE);
@@ -5096,7 +5095,7 @@ UpdateDimmFw(
 
   FwUpdatePacket.TransactionType = FW_UPDATE_SP_INIT_TRANSFER;
   FwUpdatePacket.PacketNumber = CurrentPacket;
-  CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
+  CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
   CurrentPacket++;
   ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
@@ -5104,9 +5103,11 @@ UpdateDimmFw(
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
       *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-    } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+    }
+    else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-    } else {
+    }
+    else {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
     goto Finish;
@@ -5115,7 +5116,7 @@ UpdateDimmFw(
   while (CurrentPacket < (PacketsCounter - 1)) {
     FwUpdatePacket.TransactionType = FW_UPDATE_SP_CONTINUE_TRANSFER;
     FwUpdatePacket.PacketNumber = CurrentPacket;
-    CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
+    CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
     CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
     CurrentPacket++;
 
@@ -5124,9 +5125,11 @@ UpdateDimmFw(
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
       if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
         *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-      } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+      }
+      else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      } else {
+      }
+      else {
         *pNvmStatus = NVM_ERR_OPERATION_FAILED;
       }
       goto Finish;
@@ -5142,9 +5145,11 @@ UpdateDimmFw(
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
       *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-    } else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
+    }
+    else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-    } else {
+    }
+    else {
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
     }
     goto Finish;

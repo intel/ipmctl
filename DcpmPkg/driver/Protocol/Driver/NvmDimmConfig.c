@@ -6974,8 +6974,8 @@ Finish:
   UINT64 ISAvailableCapacity = 0;
   BOOLEAN CapacitySpecified = FALSE;
   UINT64 RequestedCapacity = 0;
-  UINT32 RegionCount = 0;
-  UINT64 AlignedNamespaceCapacity = 0;
+  UINT32 DimmCount = 0;
+  UINT64 AlignedNamespaceCapacitySize = 0;
   UINT64 RegionSize = 0;
   UINT64 MinSize = 0;
   UINT64 MaxSize = 0;
@@ -7030,8 +7030,8 @@ Finish:
   } else {
     // if size is not specified for Namespace, then find the maximum available size
     NamespaceCapacity = 0;
-    ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
-    if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
+    ReturnCode = GetListSize(&pIS->DimmRegionList, &DimmCount);
+    if (EFI_ERROR(ReturnCode) || DimmCount == 0) {
       goto Finish;
     }
     /** Find the free capacity**/
@@ -7040,7 +7040,7 @@ Finish:
       goto Finish;
     }
     ReturnCode = EFI_SUCCESS;
-    ISAvailableCapacity = AppDirectRange.RangeLength * RegionCount;
+    ISAvailableCapacity = AppDirectRange.RangeLength * DimmCount;
     if (ISAvailableCapacity > NamespaceCapacity) {
       NamespaceCapacity = ISAvailableCapacity;
     }
@@ -7053,12 +7053,19 @@ Finish:
   }
   /** Namespace capacity that doesn't include block size with 64B cache lane size **/
   NamespaceCapacity = ActualBlockCount * BlockSize;
-  ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
-  if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
+  ReturnCode = GetListSize(&pIS->DimmRegionList, &DimmCount);
+  if (EFI_ERROR(ReturnCode) || DimmCount == 0) {
     goto Finish;
   }
-  AlignedNamespaceCapacity = ROUNDUP(NamespaceCapacity, NAMESPACE_4KB_ALIGNMENT_SIZE * RegionCount);
-  RegionSize = AlignedNamespaceCapacity / RegionCount;
+
+  ReturnCode = AlignNamespaceCapacity(NamespaceCapacity, DimmCount, &AlignedNamespaceCapacitySize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Namespace Capacity is an invalid parameter");
+    ReturnCode = EFI_INVALID_PARAMETER;
+  }
+
+  RegionSize = AlignedNamespaceCapacitySize / DimmCount;
+
   ReturnCode = FindADMemmapRangeInIS(pIS, RegionSize, &AppDirectRange);
   if (EFI_NOT_FOUND == ReturnCode) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);

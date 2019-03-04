@@ -3633,7 +3633,55 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+/**
+ Namespace Capacity Alignment
 
+ Aligning the Namespace Capacity  Helper Function
+ @param [in] NamespaceCapacity Namespace Capacity provided
+ @param [in] DimmCount
+ @param [out] *pAlignedNamespaceCapacity Total Namespace Capacity after alignment
+
+ @retval EFI_INVALID_PARAMETER Invalid set of parameters provided
+ @retval EFI_SUCCESS Namespace capacity aligned
+**/
+EFI_STATUS
+AlignNamespaceCapacity(
+  IN  UINT64 NamespaceCapacity,
+  IN  UINT64 DimmCount,
+  OUT UINT64* pAlignedNamespaceCapacity
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT64 NamespaceCapacityPerDimm = 0;
+
+  if (pAlignedNamespaceCapacity == NULL) {
+    goto Finish;
+  }
+  if (NamespaceCapacity < GIB_TO_BYTES(32)) {
+    NVDIMM_DBG("Capacity  length is < 32 bit then it is at 4K Alignment ");
+    NamespaceCapacityPerDimm = ROUNDUP((NamespaceCapacity/DimmCount), NAMESPACE_4KB_ALIGNMENT_SIZE);
+  }
+  else if (NamespaceCapacity < TIB_TO_BYTES(1)) {
+    NVDIMM_DBG("Capacity  length is < 40 bit then it is at 4K Alignment ");
+    NamespaceCapacityPerDimm = ROUNDUP((NamespaceCapacity / DimmCount), NAMESPACE_4KB_ALIGNMENT_SIZE);
+  }
+  else if (NamespaceCapacity < TIB_TO_BYTES(256)) {
+    NVDIMM_DBG("Capacity  length is < 48 bit then it is at 64K Alignment ");
+    NamespaceCapacityPerDimm = ROUNDUP((NamespaceCapacity / DimmCount), NAMESPACE_64KB_ALIGNMENT_SIZE);
+  }
+  else {
+    NVDIMM_DBG("Capacity length is < 60 bit then it is at 32G Alignment ");
+    NamespaceCapacityPerDimm = ROUNDUP((NamespaceCapacity / DimmCount), NAMESPACE_32GB_ALIGNMENT_SIZE);
+  }
+
+  *pAlignedNamespaceCapacity = NamespaceCapacityPerDimm * DimmCount;
+
+  NVDIMM_DBG("AlignmentCapacity: %u \n", *pAlignedNamespaceCapacity);
+  ReturnCode = EFI_SUCCESS;
+
+  Finish:
+  return ReturnCode;
+}
 /**
   Provision Namespace capacity on a DIMM or Interleave Set.
 
@@ -3667,8 +3715,8 @@ AllocateNamespaceCapacity(
   DIMM_REGION *pRegion = NULL;
   MEMMAP_RANGE *pRange = NULL;
   MEMMAP_RANGE AppDirectRange;
-  UINT32 RegionCount = 0;
-  UINT64 AlignedNamespaceCapacity = 0;
+  UINT32 DimmCount = 0;
+  UINT64 AlignedNamespaceCapacitySize = 0;
   UINT64 RegionSize = 0;
   UINT16 Index = 0;
   UINT64 FreeSpace = 0;
@@ -3760,20 +3808,21 @@ AllocateNamespaceCapacity(
     }
 
     // Provision capacity equally on all DIMMs of the Interleave Set
-    ReturnCode = GetListSize(&pIS->DimmRegionList, &RegionCount);
-    if (EFI_ERROR(ReturnCode) || RegionCount == 0) {
+    ReturnCode = GetListSize(&pIS->DimmRegionList, &DimmCount);
+    if (EFI_ERROR(ReturnCode) || DimmCount == 0) {
       goto Finish;
     }
-
-    // The namespace capacity must be a aligned to 4K * no of regions
-    AlignedNamespaceCapacity = ROUNDUP(*pNamespaceCapacity, NAMESPACE_4KB_ALIGNMENT_SIZE * RegionCount);
-
-    if (*pNamespaceCapacity % RegionCount != 0) {
+    ReturnCode = AlignNamespaceCapacity(*pNamespaceCapacity, DimmCount, &AlignedNamespaceCapacitySize);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Namespace Capacity is an invalid parameter");
+      ReturnCode = EFI_INVALID_PARAMETER;
+    }
+    if (*pNamespaceCapacity % DimmCount != 0) {
       NVDIMM_WARN("Unable to equally distribute required capacity among %d regions. "
-          "Allocated Capacity will be increased to %lld", RegionCount, AlignedNamespaceCapacity);
+          "Allocated Capacity will be increased to %lld", DimmCount, AlignedNamespaceCapacitySize);
     }
 
-    RegionSize = AlignedNamespaceCapacity / RegionCount;
+    RegionSize = AlignedNamespaceCapacitySize / DimmCount;
 
     ReturnCode = FindADMemmapRangeInIS(pIS, RegionSize, &AppDirectRange);
     if (EFI_ERROR(ReturnCode)) {
@@ -3782,7 +3831,7 @@ AllocateNamespaceCapacity(
       goto Finish;
     }
 
-    *pNamespaceCapacity = AlignedNamespaceCapacity;
+    *pNamespaceCapacity = AlignedNamespaceCapacitySize;
 
     Index = 0;
     LIST_FOR_EACH(pNode, &pIS->DimmRegionList) {

@@ -681,7 +681,23 @@ FindADMemmapRangeInIS(
   IN      UINT64 Size,
       OUT MEMMAP_RANGE *pFoundRange
   );
+/**
+ Namespace Capacity Alignment
 
+ Aligning the Namespace Capacity Helper Function
+ @param [in] NamespaceCapacity Namespace Capacity provided
+ @param [in] DimmCount
+ @param [out] *pAlignedNamespaceCapacity  Total Namespace Capacity after alignment
+
+ @retval EFI_INVALID_PARAMETER Invalid set of parameters provided
+ @retval EFI_SUCCESS Namespace capacity aligned
+**/
+EFI_STATUS
+AlignNamespaceCapacity(
+  IN  UINT64 NamespaceCapacity,
+  IN  UINT64 DimmCount,
+  OUT UINT64* pAlignedNamespaceCapacity
+);
 /**
   Provision Namespace capacity on a DIMM or Interleave Set.
 

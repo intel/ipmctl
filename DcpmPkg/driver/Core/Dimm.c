@@ -6266,6 +6266,7 @@ SetObjStatusForDimmWithErase(
     EraseObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH);
   }
 
+  pCommandStatus->ObjectType = ObjectTypeDimm;
   SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH, Status);
 }
 

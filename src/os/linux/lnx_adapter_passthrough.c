@@ -487,6 +487,8 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 				{
 					int lnx_err_status = 0;
 					unsigned int dsm_vendor_err_status = 0;
+          p_fw_cmd->DsmStatus = 0;
+          p_fw_cmd->Status = 0;
 
 					if (p_fw_cmd->InputPayloadSize > 0)
 					{

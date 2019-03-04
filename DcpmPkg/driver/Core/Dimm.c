@@ -1572,14 +1572,14 @@ FwCmdDisableARS(
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Firmware Set AddressRangeScrub command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
+    NVDIMM_DBG("Error detected when sending Firmware Set AddressRangeScrub command (RC = %x, Status = %d)\n", ReturnCode, pFwCmd->Status);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
     goto Finish;
   }
 
-  NVDIMM_DBG("Polling ARS long op status to verify ARS disabled completed.");
+  NVDIMM_DBG("Polling ARS long op status to verify ARS disabled completed.\n");
   ReturnCode = PollOnArsDeviceBusy(pDimm, DISABLE_ARS_TOTAL_TIMEOUT_SEC);
-  NVDIMM_DBG("Finished polling long op, return val = %x", ReturnCode);
+  NVDIMM_DBG("Finished polling long op, return val = %x\n", ReturnCode);
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);

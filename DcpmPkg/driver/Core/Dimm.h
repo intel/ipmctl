@@ -1765,6 +1765,21 @@ Clears the PCD Cache on each DIMM in the global DIMM list
 EFI_STATUS ClearPcdCacheOnDimmList(VOID);
 
 /**
+  Set Obj Status when DIMM is not found using Id expected by end user
+
+  @param[in] DimmId the Pid for the DIMM that was not found
+  @param[in] pDimms Pointer to head of list where DimmId should be found
+  @param[out] pCommandStatus Pointer to command status structure
+
+**/
+VOID
+SetObjStatusForDimmNotFound(
+  IN     UINT16 DimmId,
+  IN     LIST_ENTRY *pDimms,
+  OUT COMMAND_STATUS *pCommandStatus
+);
+
+/**
 Set object status for DIMM
 
 @param[out] pCommandStatus Pointer to command status structure

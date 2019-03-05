@@ -1368,7 +1368,12 @@ VerifyTargetDimms (
         pCurrentDimm = GetDimmByPid(DimmIds[Index], pDimmList);
         if (pCurrentDimm == NULL) {
           NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", DimmIds[Index]);
-          SetObjStatus(pCommandStatus, DimmIds[Index], NULL, 0, NVM_ERR_DIMM_NOT_FOUND);
+          // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
+          if (UninitializedDimms) {
+            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+          } else {
+            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
+          }
           goto Finish;
         }
 
@@ -1403,7 +1408,12 @@ VerifyTargetDimms (
         pCurrentDimm = GetDimmByPid(DimmIds[Index], pDimmList);
         if (pCurrentDimm == NULL) {
           NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", DimmIds[Index]);
-          SetObjStatus(pCommandStatus, DimmIds[Index], NULL, 0, NVM_ERR_DIMM_NOT_FOUND);
+          // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
+          if (UninitializedDimms) {
+            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+          } else {
+            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
+          }
           goto Finish;
         } else {
           Found = FALSE;
@@ -1414,6 +1424,12 @@ VerifyTargetDimms (
             }
           }
           if (SocketIdsCount > 0 && !Found) {
+            // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
+            if (UninitializedDimms) {
+              SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+            } else {
+              SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
+            }
             SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_NOT_FOUND);
             goto Finish;
           }

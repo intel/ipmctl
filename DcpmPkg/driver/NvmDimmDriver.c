@@ -1708,6 +1708,16 @@ NvmDimmDriverDriverBindingStop(
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_WARN("Failed to uninstall the child device security command protocol, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
         }
+
+        ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
+          gDimmsUefiData[Index].DeviceHandle,
+          &gEfiNvdimmLabelProtocolGuid, &gDimmsUefiData[Index].NvdimmLabelProtocolInstance,
+          NULL
+        );
+
+        if (EFI_ERROR(ReturnCode)) {
+          NVDIMM_WARN("Failed to uninstall the child device NVDIMM label protocol, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
+        }
       }
       gDimmsUefiData[Index].DeviceHandle = NULL;
 

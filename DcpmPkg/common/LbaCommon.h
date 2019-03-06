@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <NvmTypes.h>
-
 #ifndef _LBA_COMMON_H_
 #define _LBA_COMMON_H_
 
@@ -158,35 +156,6 @@ CheckSlotStatus(
      OUT UINT16 *pSlotStatus
   );
 
-/**
-   Print Namespace Index
-
-   @param[in] pNamespaceIndex Namespace Index
-**/
-VOID
-PrintNamespaceIndex(
-  IN     NAMESPACE_INDEX *pNamespaceIndex
-  );
-
-/**
-   Print Namespace Label
-
-   @param[in] pNamespaceLabel Namespace Label
-**/
-VOID
-PrintNamespaceLabel(
-  IN     NAMESPACE_LABEL *pNamespaceLabel
-  );
-
-/**
-   Print Label Storage Area and all subtables
-
-   @param[in] pLba Label Storage Area
-**/
-VOID
-PrintLabelStorageArea(
-  IN     LABEL_STORAGE_AREA *pLba
-  );
 
 VOID FreeLsaSafe(
   IN    LABEL_STORAGE_AREA **ppLabelStorageArea

@@ -2295,6 +2295,10 @@ RetrieveNamespacesFromLsa(
       LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
         pDimm = DIMM_FROM_NODE(pNode);
 
+        // reset these values to default for processing of each dimm
+        BttFound = FALSE;
+        PfnFound = FALSE;
+
         if (!IsDimmManageable(pDimm)) {
           continue;
         }

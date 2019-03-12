@@ -3796,7 +3796,12 @@ GetRegions(
       Rc = EFI_INVALID_PARAMETER;
       break;
     }
-    GetRegionMinimalInfo(pCurRegion, &pRegions[Index]);
+
+    Rc = GetRegionMinimalInfo(pCurRegion, &pRegions[Index]);
+    if (EFI_ERROR(Rc)) {
+      NVDIMM_WARN("Failed to get region minimal info, error = " FORMAT_EFI_STATUS ".", Rc);
+      goto Finish;
+    }
     Index++;
   }
 

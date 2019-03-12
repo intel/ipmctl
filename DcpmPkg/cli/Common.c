@@ -2365,6 +2365,7 @@ ReadCmdLinePrintOptions(
     for (Index = 0; Index < NumToks; ++Index) {
       if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_TEXT)) {
         *pFormatType = TEXT;
+        PRINTER_ENABLE_LIST_TABLE_FORMAT(pCmd->pPrintCtx); // default for TEXT
       }
       else if (0 == StrICmp(Toks[Index], OUTPUT_OPTION_NVMXML)) {
         *pFormatType = XML;

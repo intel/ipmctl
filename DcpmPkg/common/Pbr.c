@@ -28,6 +28,7 @@ STATIC EFI_STATUS PbrCopyChunks(VOID *pDest, UINT32 pDestSz, VOID *pSource, UINT
 PbrContext gPbrContext;
 //used for setting volatile/non-volatile uefi variables
 extern EFI_GUID gIntelDimmPbrVariableGuid;
+extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
 
 /**
    Adds data to the recording session

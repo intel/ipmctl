@@ -1623,5 +1623,27 @@ SetObjStatusForDimmInfoWithErase(
   IN     NVM_STATUS Status,
   IN     BOOLEAN EraseFirst
 );
+
+/**
+Serialize a Tag ID
+
+@param[in] id the session tag id to be save/serialized
+**/
+EFI_STATUS PbrDcpmmSerializeTagId(
+  UINT32 id
+);
+
+/**
+Deserialize a Tag ID
+
+@param[in] id - will contain the previously serialized tag id if exists, otherwise will contain the value
+            of 'defaultId'
+@param[in] defaultId - the value to assign input param 'id' in the case the TagId wasn't previously serialized.
+**/
+EFI_STATUS PbrDcpmmDeserializeTagId(
+  UINT32 *id,
+  UINT32 defaultId
+);
+
 #endif /** _UTILITY_H_ **/
 

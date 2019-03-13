@@ -31,7 +31,6 @@ MapTagtoCurrentSessionState(
  /*
   *  PRINT LIST ATTRIBUTES
   *  ---TagId=0x0001---
-  *     ExitCode=0
   *     CliArgs=
   */
 PRINTER_LIST_ATTRIB ShowSessionListAttributes =
@@ -60,11 +59,6 @@ PRINTER_TABLE_ATTRIB ShowSessionTableAttributes =
       TAG_ID_STR,                                 //COLUMN HEADER
       DEFAULT_MAX_STR_WIDTH,                      //COLUMN MAX STR WIDTH
       DS_TAG_PATH PATH_KEY_DELIM TAG_ID_STR       //COLUMN DATA PATH
-    },
-    {
-      EXIT_CODE_STR,                              //COLUMN HEADER
-      DEFAULT_MAX_STR_WIDTH,                      //COLUMN MAX STR WIDTH
-      DS_TAG_PATH PATH_KEY_DELIM EXIT_CODE_STR    //COLUMN DATA PATH
     },
     {
       CLI_ARGS_STR,                               //COLUMN HEADER
@@ -156,14 +150,9 @@ ShowSession(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
-  /*
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetCurrentTag(&TagId, NULL, NULL, NULL);
-  if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_TAG);
-    goto Finish;
-  }*/
 
-  MapTagtoCurrentSessionState(pNvmDimmConfigProtocol, &TagId);
+  //Retreive the current TagID (CLI's job to track/increment/reset the tag id).
+  PbrDcpmmDeserializeTagId(&TagId, 0);
 
   ReturnCode = pNvmDimmConfigProtocol->PbrGetTagCount(&TagCount);
   if (EFI_ERROR(ReturnCode)) {
@@ -185,7 +174,6 @@ ShowSession(
     if (ReturnCode == EFI_SUCCESS) {
 
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TAG_ID_STR, pTagId);
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, EXIT_CODE_STR, pDescription);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CLI_ARGS_STR, pName);
     }
     FREE_POOL_SAFE(pTagId);
@@ -225,73 +213,5 @@ RegisterShowSessionCommand(
   ReturnCode = RegisterCommand(&ShowSessionCommand);
 
   NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-EFI_STATUS
-MapTagtoCurrentSessionState(
-  IN  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
-  OUT UINT32 *pTag
-)
-{
-  EFI_STATUS ReturnCode = EFI_NOT_FOUND;
-  UINT32 TagCount = 0;
-  UINT32 Index = 0;
-  CHAR16 *pName = NULL;
-  CHAR16 *pDescription = NULL;
-  TagPartitionInfo *pTagPartitionInfo = NULL;
-  UINT32 TagPartitionCount = 0;
-  UINT32 Signature;
-  UINT32 TotalDataItems = 0;
-  UINT32 TotalDataSize = 0;
-  UINT32 CurrentPbOffset = 0;
-  UINT32 TagPartIndex = 0;
-
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetDataPlaybackInfo(
-    PBR_PASS_THRU_SIG,
-    &TotalDataItems,
-    &TotalDataSize,
-    &CurrentPbOffset);
-
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  if (0 == CurrentPbOffset) {
-    *pTag = 0;
-    return EFI_SUCCESS;
-  }
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetTagCount(&TagCount);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < TagCount; ++Index) {
-    ReturnCode = pNvmDimmConfigProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, (VOID**)&pTagPartitionInfo, &TagPartitionCount);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
-    if (PBR_DCPMM_CLI_SIG == Signature) {
-      for (TagPartIndex = 0; TagPartIndex < TagPartitionCount; ++TagPartIndex) {
-        if (PBR_PASS_THRU_SIG == pTagPartitionInfo[TagPartIndex].PartitionSignature)
-        {
-          if (CurrentPbOffset == pTagPartitionInfo[TagPartIndex].PartitionCurrentOffset) {
-            *pTag = Index;
-            ReturnCode = EFI_SUCCESS;
-            goto Finish;
-          }
-        }
-      }
-    }
-
-    FREE_POOL_SAFE(pName);
-    FREE_POOL_SAFE(pDescription);
-    FREE_POOL_SAFE(pTagPartitionInfo);
-  }
-Finish:
-  FREE_POOL_SAFE(pName);
-  FREE_POOL_SAFE(pDescription);
-  FREE_POOL_SAFE(pTagPartitionInfo);
   return ReturnCode;
 }

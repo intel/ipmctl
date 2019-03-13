@@ -11,4 +11,5 @@
 
 EFI_STATUS PbrSerializeCtx(PbrContext *ctx, BOOLEAN Force);
 EFI_STATUS PbrDeserializeCtx(PbrContext * ctx);
+
 #endif //_PBR_OS_H_

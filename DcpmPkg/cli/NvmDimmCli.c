@@ -88,6 +88,7 @@ extern void nvm_current_cmd(struct Command Command);
 #include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
 EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
+EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
 #endif
 EFI_GUID gNvmDimmDriverHealthGuid = EFI_DRIVER_HEALTH_PROTOCOL_GUID;
 
@@ -113,6 +114,7 @@ EFI_GUID gNvmDimmCliHiiGuid = NVMDIMM_CLI_HII_GUID;
 static EFI_STATUS showVersion(struct Command *pCmd);
 static EFI_STATUS GetPbrMode(UINT32 *Mode);
 static EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription);
+static EFI_STATUS ResetPbrSession(UINT32 TagId);
 
 /**
   Supported commands
@@ -179,6 +181,8 @@ UefiMain(
   BOOLEAN MoreInput = TRUE;
   UINTN Argc = 0;
   CHAR16 **ppArgv = NULL;
+  UINT32 NextId = 0;
+
 #ifndef OS_BUILD
   BOOLEAN Ascii = FALSE;
   SHELL_FILE_HANDLE StdIn = NULL;
@@ -388,9 +392,26 @@ UefiMain(
       }
     }
 #endif
-
     /* run the command */
     Rc = Parse(&Input, &Command);
+
+    if (PBR_NORMAL_MODE != Mode && !Command.ExcludeDriverBinding) {
+      if (PBR_RECORD_MODE == Mode) {
+        pTagDescription = CatSPrint(NULL, L"%d", Rc);
+        SetPbrTag(pLine, pTagDescription);
+        FREE_POOL_SAFE(pTagDescription);
+      }
+      else {
+        //CLI is responsible for tracking the tagid.
+        //The id is saved to a non-persistent volatile store, and is incremented
+        //after each CLI cmd invocation.  Given we have the tagid that should
+        //be executed next, explicitely reset the pbr session to that id before
+        //running the cmd.
+        PbrDcpmmDeserializeTagId(&NextId, 0);
+        ResetPbrSession(NextId);
+        PbrDcpmmSerializeTagId(NextId + 1);
+      }
+    }
 
     if (!EFI_ERROR(Rc)) {
       /* parse success, now run the command */
@@ -402,11 +423,7 @@ UefiMain(
           gOsShellParametersProtocol.StdOut = stdout;
         }
 #endif
-        if (PBR_NORMAL_MODE != Mode && !Command.ExcludeDriverBinding) {
-          pTagDescription = CatSPrint(NULL, L"%d", Rc);
-          SetPbrTag(pLine, pTagDescription);
-          FREE_POOL_SAFE(pTagDescription);
-        }
+
 #ifdef OS_BUILD
         if (!Command.ExcludeDriverBinding) {
           NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
@@ -841,6 +858,29 @@ EFI_STATUS GetPbrMode(UINT32 *Mode) {
   ReturnCode = pNvmDimmConfigProtocol->PbrGetMode(Mode);
   if (EFI_ERROR(ReturnCode)) {
     Print(CLI_ERR_FAILED_TO_GET_PBR_MODE);
+    goto Finish;
+  }
+Finish:
+  return ReturnCode;
+}
+
+/*
+ * Reset the session to a specified tag
+ */
+EFI_STATUS ResetPbrSession(UINT32 TagId) {
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_NOT_FOUND;
+    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->PbrResetSession(TagId);
+  if (EFI_ERROR(ReturnCode)) {
+    Print(CLI_ERR_FAILED_TO_SET_SESSION_TAG);
     goto Finish;
   }
 Finish:

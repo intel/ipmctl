@@ -140,6 +140,9 @@ StartSession(
       goto Finish;
     }
 
+    //reset the tagid to 0 (first tag)
+    PbrDcpmmSerializeTagId(0);
+
     //print which mode we just configured
     PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, ACTION_SETTING_MODE, pModeValue);
   }
@@ -178,6 +181,8 @@ StartSession(
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_RESET_SESSION);
           goto Finish;
         }
+        //user is specifying a tag to execute
+        PbrDcpmmSerializeTagId((UINT32)TagId64);
       }
       else {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
@@ -190,6 +195,8 @@ StartSession(
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_RESET_SESSION);
         goto Finish;
       }
+      //reset the tagid to 0 (first tag)
+      PbrDcpmmSerializeTagId(0);
     }
 
     //if playback mode, automatically execute pbr buffer
@@ -294,10 +301,16 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_P
       goto Finish;
     }
 
+#ifdef OS_BUILD
+    PbrDcpmmSerializeTagId(Index+1);
+#endif
+
     if (0 == StrICmp(PBR_DRIVER_INIT_TAG_DESCRIPTION, pName)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, MANUAL_ACTION_REQUIRED);
       goto Finish;
     }
+
+    ResetPbrSession(pNvmDimmConfigProtocol, Index);
 
     //if running under the OS, the driver binding start routine needs to run before each command
     //handler.  This will simulate how individual cmds are executed from the CLI.
@@ -308,11 +321,7 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_P
       goto Finish;
     }*/
 #endif
-    ReturnCode = ExecuteCommand(pName);
-    if (EFI_ERROR(ReturnCode)) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_DURING_CMD_EXECUTION);
-      goto Finish;
-    }
+    ExecuteCommand(pName);
 #ifdef OS_BUILD
     ReturnCode = NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
     /*if (EFI_ERROR(ReturnCode)) {

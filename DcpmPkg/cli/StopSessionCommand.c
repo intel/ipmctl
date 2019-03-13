@@ -104,6 +104,8 @@ StopSession(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_SET_PBR_MODE, NORMAL_MODE);
     goto Finish;
   }
+  //reset the tagid to 0 (first tag)
+  PbrDcpmmSerializeTagId(0);
 
   PRINTER_SET_MSG(pPrinterCtx, ReturnCode, STOP_SESSION_MSG);
 Finish:

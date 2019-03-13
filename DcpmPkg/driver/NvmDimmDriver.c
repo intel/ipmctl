@@ -44,6 +44,8 @@ EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
 
 EFI_GUID gIntelDimmPbrVariableGuid = INTEL_DIMM_PBR_VARIABLE_GUID;
 
+EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
+
 /**
   Array of dimms UEFI-related data structures.
 **/
@@ -1436,9 +1438,26 @@ NvmDimmDriverDriverBindingStart(
   VOID *pDummy = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
   UINT32 TagId = 0;
+  PbrContext *ctx = PBR_CTX();
+  UINT32 NextId = 0;
 
   NVDIMM_ENTRY();
-  PbrSetTag(PBR_DCPMM_CLI_SIG, L"driver: initialization", L"0", &TagId);
+
+  if (PBR_RECORD_MODE == PBR_GET_MODE(ctx)) {
+    //set a tag id to mark the start of driver initialization
+    PbrSetTag(PBR_DCPMM_CLI_SIG, L"driver: initialization", L"0", &TagId);
+  }
+  else if (PBR_PLAYBACK_MODE == PBR_GET_MODE(ctx)) {
+    //The id is saved to a non-persistent volatile store, and is incremented
+    //after each CLI cmd and drive load invocation.  Given we have the tagid that should
+    //be executed next, explicitely reset the pbr session to that id before
+    //running the cmd.
+    PbrDcpmmDeserializeTagId(&NextId, 0);
+    PbrResetSession(NextId);
+    PbrDcpmmSerializeTagId(NextId + 1);
+  }
+
+
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
    /**
    Enable recording AllocatePool and FreePool occurences

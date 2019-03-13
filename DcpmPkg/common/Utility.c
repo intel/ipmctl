@@ -3797,3 +3797,139 @@ SetObjStatusForDimmInfoWithErase(
 
   SetObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH, Status);
 }
+
+
+//Its ok to keep these routines here, but they should be calling abstracted serialize/deserialize data APIs in the future.
+extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
+
+#ifndef OS_BUILD
+EFI_STATUS PbrDcpmmSerializeTagId(
+  UINT32 Id
+)
+{
+  UINTN VariableSize;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  VariableSize = sizeof(UINT32);
+  ReturnCode = SET_VARIABLE(
+    PBR_TAG_ID_VAR,
+    gIntelDimmPbrTagIdVariableguid,
+    VariableSize,
+    (VOID*)&Id);
+  return ReturnCode;
+}
+
+EFI_STATUS PbrDcpmmDeserializeTagId(
+  UINT32 *pId,
+  UINT32 DefaultId
+)
+{
+  UINTN VariableSize;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT32 Id = 0;
+
+  VariableSize = sizeof(UINT32);
+  ReturnCode = GET_VARIABLE(
+    PBR_TAG_ID_VAR,
+    gIntelDimmPbrTagIdVariableguid,
+    &VariableSize,
+    &Id);
+
+  if (ReturnCode == EFI_NOT_FOUND) {
+    *pId = DefaultId;
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Failed to retrieve PBR TAG ID value");
+    goto Finish;
+  }
+  *pId = Id;
+Finish:
+  return ReturnCode;
+}
+#else
+#include <PbrDcpmm.h>
+#ifdef _MSC_VER
+extern int registry_volatile_write(const char *key, unsigned int dword_val);
+extern int registry_read(const char *key, unsigned int *dword_val, unsigned int default_val);
+#else
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif
+/**
+  Helper that serializes pbr id to a volatile store.  We should not be maintaining
+  sessions across system reboots
+**/
+EFI_STATUS PbrDcpmmSerializeTagId(
+  UINT32 id
+)
+{
+  EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
+#if _MSC_VER
+  registry_volatile_write("pbr_id", id);
+#else
+  UINT32 ShmId;
+  key_t Key;
+  UINT32 *pPbrId = NULL;
+  Key = ftok(PBR_TMP_DIR, 'i');
+  ShmId = shmget(Key, sizeof(*pPbrId), IPC_CREAT | 0666);
+  if (-1 == ShmId) {
+    NVDIMM_DBG("Failed to shmget\n");
+    return ReturnCode;
+  }
+  pPbrId = (UINT32*)shmat(ShmId, NULL, 0);
+  if ((VOID*)pPbrId == (VOID*)-1) {
+    NVDIMM_DBG("Failed to shmat\n");
+    return ReturnCode;
+  }
+  else
+  {
+    *pPbrId = id;
+    NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrId);
+    shmdt(pPbrId);
+    ReturnCode = EFI_SUCCESS;
+  }
+#endif
+  return ReturnCode;
+}
+
+/**
+  Helper that deserializes pbr tag id from a volatile store.  We should not be maintaining
+  sessions across system reboots
+**/
+EFI_STATUS PbrDcpmmDeserializeTagId(
+  UINT32 *id,
+  UINT32 defaultId
+)
+{
+  EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
+#if _MSC_VER
+  registry_read("pbr_id", id, defaultId);
+#else
+  UINT32 ShmId;
+  key_t Key;
+  UINT32 *pPbrId = NULL;
+  Key = ftok(PBR_TMP_DIR, 'i');
+  ShmId = shmget(Key, sizeof(*pPbrId), IPC_CREAT | 0666);
+  if (-1 == ShmId) {
+    NVDIMM_DBG("Failed to shmget\n");
+    return ReturnCode;
+  }
+  ReturnCode = EFI_SUCCESS;
+  pPbrId = (UINT32*)shmat(ShmId, NULL, 0);
+  if ((VOID*)pPbrId == (VOID*)-1) {
+    NVDIMM_DBG("Failed to shmat\n");
+    *id = defaultId;
+  }
+  else
+  {
+    *id = *pPbrId;
+    shmdt(pPbrId);
+  }
+#endif
+  return ReturnCode;
+}
+
+#endif

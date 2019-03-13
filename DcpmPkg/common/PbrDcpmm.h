@@ -8,6 +8,7 @@
 #include <Pbr.h>
 #include <PbrTypes.h>
 
+#define PBR_TMP_DIR               "/tmp/pbr/"
 //DCPMM specific PBR defines
 #define PBR_RECORD_TYPE_SMBIOS            0x1
 #define PBR_RECORD_TYPE_NFIT              0x2
@@ -190,4 +191,5 @@ PbrSetTableRecord(
   IN    VOID *pTable,
   IN    UINT32 TableSize
 );
+
 #endif //_PBR_DCPMM_H_

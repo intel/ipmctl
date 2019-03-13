@@ -55,4 +55,6 @@ extern EFI_GUID gNvmDimmNgnvmVariableGuid;
 extern EFI_GUID gIntelDimmConfigVariableGuid;
 
 extern EFI_GUID gIntelDimmPbrVariableGuid;
+
+extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
 #endif /** _NVMDIMM_DRIVER_DATA_H_ **/

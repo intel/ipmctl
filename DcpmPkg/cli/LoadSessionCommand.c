@@ -113,6 +113,9 @@ LoadSession(
     goto Finish;
   }
 
+  //reset the tagid to 0 (first tag)
+  PbrDcpmmSerializeTagId(0);
+
   PRINTER_SET_MSG(pPrinterCtx, ReturnCode, SUCCESSFULLY_LOADED_BUFFER_MSG, (UINT32)FileBufferSize);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);

@@ -36,7 +36,6 @@ extern int registry_read(const char *key, unsigned int *dword_val, unsigned int 
 #define _getch getchar
 #endif
 
-#define PBR_TMP_DIR               "/tmp/pbr/"
 #define PBR_CTX_FILE_NAME         "pbr_ctx.tmp"
 #define PBR_MAIN_FILE_NAME        "pbr_main.tmp"
 #define FILE_READ_OPTS            "rb"
@@ -304,3 +303,5 @@ VOID DeserializePbrMode(
 	}
 #endif
 }
+
+

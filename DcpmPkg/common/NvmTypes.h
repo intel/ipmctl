@@ -149,6 +149,7 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 
 #define APPDIRECT_GRANULARITY_VARIABLE_NAME L"APPDIRECT_GRANULARITY"
 #define PBR_CONTEXT_VAR L"PBR_CONTEXT"
+#define PBR_TAG_ID_VAR  L"PBR_TAG"
 
 /** IMC interleave size **/
 #define IMC_INTERLEAVE_SIZE_INVALID MAX_UINT8_VALUE
@@ -1032,6 +1033,13 @@ typedef struct {
   **/
 #define INTEL_DIMM_PBR_VARIABLE_GUID \
   { 0x98209ce9, 0x1de5, 0x4dec, {0x93, 0xaf, 0x15, 0x29, 0x98, 0x83, 0x36, 0x2f}}
+
+
+  /**
+     GUID for PBR tagids
+    **/
+#define INTEL_DIMM_PBR_TAGID_VARIABLE_GUID \
+  { 0x543f9bc3, 0x9b50, 0x425b, {0xa4, 0xce, 0x1e, 0x73, 0x30, 0xc4, 0xcf, 0x74}}
 
 typedef struct _INTEL_DIMM_CONFIG {
   UINT8 Revision;

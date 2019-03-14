@@ -4,6 +4,7 @@
  */
 
 #include <Uefi.h>
+#include <Library/PrintLib.h>
 #include "Debug.h"
 #include "Types.h"
 #include "Utility.h"
@@ -12,7 +13,9 @@
 #include "DumpSessionCommand.h"
 #include "Common.h"
 #include <PbrDcpmm.h>
-
+#ifdef OS_BUILD
+#include <os.h>
+#endif
 #define SUCCESSFULLY_DUMPED_BUFFER_MSG    L"Successfully dumped %d bytes to file."
 
 /**
@@ -52,6 +55,7 @@ DumpSession(
   UINT32 BufferSz = 0;
   VOID *pBuffer = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  PbrHeader *pHeader = NULL;
 
   NVDIMM_ENTRY();
 
@@ -92,6 +96,19 @@ DumpSession(
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_BUFFER);
     goto Finish;
+  }
+
+  //fill in run-time versioning info
+  if (NULL != pBuffer) {
+    pHeader = (PbrHeader*)pBuffer;
+#ifdef OS_BUILD
+    os_get_os_name(pHeader->OsName, PBR_OS_NAME_MAX);
+    os_get_os_version(pHeader->OsVersion, PBR_OS_VERSION_MAX);
+    AsciiSPrint(pHeader->SwVersion, PBR_SW_VERSION_MAX, NVMDIMM_VERSION_STRING_A);
+#else
+    AsciiSPrint(pHeader->OsName, PBR_OS_NAME_MAX, "UEFI");
+    UnicodeStrToAsciiStrS(NVMDIMM_VERSION_STRING, pHeader->SwVersion, PBR_SW_VERSION_MAX);
+#endif
   }
 
   //dump the buffer to a file

@@ -1085,7 +1085,6 @@ PbrCreateSessionContext(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrHeader *header = NULL;
 
-
   //allocate memory for the main pbr header
   if (ctx->PbrMainHeader) {
     FreePool(ctx->PbrMainHeader);
@@ -1096,7 +1095,6 @@ PbrCreateSessionContext(
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
-  AsciiSPrint(header->OsName, PBR_OS_NAME_MAX, "UEFI");
   header->Signature = PBR_HEADER_SIG;
 
 Finish:

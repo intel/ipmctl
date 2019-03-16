@@ -315,7 +315,7 @@ int registry_volatile_write(const char *key, unsigned int dword_val)
 
   //Check if the registry exists
   ReturnCode = RegOpenKeyExA(
-    HKEY_CURRENT_USER,
+    HKEY_LOCAL_MACHINE,
 	  REGISTRY_PATH,
     0,
     KEY_WRITE,
@@ -327,7 +327,7 @@ int registry_volatile_write(const char *key, unsigned int dword_val)
 	  DWORD dwDisposition;
 	  // Create a key if it did not exist
 	  ReturnCode = RegCreateKeyExA(
-		  HKEY_CURRENT_USER,
+		  HKEY_LOCAL_MACHINE,
 		  REGISTRY_PATH,
 		  0,
 		  NULL,
@@ -366,7 +366,7 @@ int registry_read(const char *key, unsigned int *dword_val, unsigned int default
 
   //Check if the registry exists
   ReturnCode = RegOpenKeyExA(
-    HKEY_CURRENT_USER,
+    HKEY_LOCAL_MACHINE,
 	  REGISTRY_PATH,
     0,
     KEY_READ,

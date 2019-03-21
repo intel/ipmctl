@@ -6305,22 +6305,26 @@ GetOverwriteDimmStatus(
       *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
       ReturnCode = EFI_SUCCESS;
     }
+    else {
+      *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_UNKNOWN;
+      goto Finish;
+    }
   }
 
   if (LongOpStatus.CmdOpcode == PtSetSecInfo && LongOpStatus.CmdSubcode == SubopOverwriteDimm) {
     switch (LongOpStatus.Status) {
-      case FW_SUCCESS:
-        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_COMPLETED;
-        break;
       case FW_DEVICE_BUSY:
         *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_IN_PROGRESS;
         break;
+      case FW_DATA_NOT_SET:
+        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
+        break;
       default:
-        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_UNKNOWN;
+        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_COMPLETED;
         break;
     }
   } else {
-    *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
+    *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_UNKNOWN;
   }
 
   ReturnCode = EFI_SUCCESS;

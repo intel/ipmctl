@@ -3038,44 +3038,6 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
   return rc;
 }
 
-#pragma pack(push)
-#pragma pack(1)
-struct pt_payload_sanitize_dimm_status {
-  unsigned char state;
-  unsigned char progress;
-  unsigned char reserved[126];
-};
-
-/*
- * Passthrough Payload:
- *    Opcode:     0x02h (Get Security Info)
- *    Sub-Opcode: 0x01h (Get Sanitize State)
- * Small Output Payload
- */
-
-struct pt_payload_get_sanitize_state {
-   /*
-    * 0x00 = idle
-    * 0x01 = in progress
-    * 0x02 = completed
-    * 0x03-0xff - Reserved
-    */
-   unsigned char  sanitize_status;
-   /*
-    * Percent complete the DIMM has been sanitized so far, 0-100
-    */
-   unsigned char  sanitize_progress;
-};
-
-#pragma pack(pop)
-
-/* Sanitize Status */
-enum sanitize_status {
-  SAN_IDLE  = 0,
-  SAN_INPROGRESS  = 1,
-  SAN_COMPLETED = 2
-};
-
 NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -3083,7 +3045,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   FW_CMD *cmd;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
-  struct pt_payload_sanitize_dimm_status *p_sanitize_status;
+  PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *pLongOpStatus;
   int job_index = 0;
   unsigned int i;
   int nvm_status = 0;
@@ -3115,7 +3077,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   }
 
   ZeroMem(cmd, sizeof(FW_CMD));
-  p_sanitize_status = (struct pt_payload_sanitize_dimm_status *)cmd->OutPayload;
+  pLongOpStatus = (PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *)cmd->OutPayload;
   // Populate the list of DIMM_INFO structures with relevant information
   CmdStub.pPrintCtx = NULL;
   ReturnCode = GetDimmList(&gNvmDimmDriverNvmDimmConfig, &CmdStub, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
@@ -3130,27 +3092,42 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
       break;
 
     cmd->DimmID = pDimms[i].DimmID; //PassThruCommand needs the dimm_id (not handle)
-    cmd->Opcode = PtGetSecInfo;
-    cmd->SubOpcode = 0x1;
-    cmd->OutputPayloadSize = sizeof(struct pt_payload_sanitize_dimm_status);
+    cmd->Opcode = PtGetLog;
+    cmd->SubOpcode = SubopLongOperationStat;
+    cmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS);
 
     if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
-      if (p_sanitize_status->state != SAN_IDLE) {
-        if (p_sanitize_status->state == SAN_INPROGRESS)
-          p_jobs[i].status = NVM_JOB_STATUS_RUNNING;
-        else if (p_sanitize_status->state == SAN_COMPLETED)
-          p_jobs[i].status = NVM_JOB_STATUS_COMPLETE;
-        else
-          p_jobs[i].status = NVM_JOB_STATUS_UNKNOWN;
-
-        p_jobs[i].type = NVM_JOB_TYPE_SANITIZE;
-        p_jobs[i].percent_complete = p_sanitize_status->progress;
-        memmove(p_jobs[i].uid, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
-        memmove(p_jobs[i].affected_element, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
-        p_jobs[i].result = NULL;
-        job_index++;
+      if (pLongOpStatus->Status == MailboxDeviceBusy) {
+        p_jobs[i].status = NVM_JOB_STATUS_RUNNING;
       }
+      else if (pLongOpStatus->Status == MailboxDataNotSet) {
+        p_jobs[i].status = NVM_JOB_STATUS_NOT_STARTED;
+      }
+      else {
+        p_jobs[i].status = NVM_JOB_STATUS_COMPLETE;
+      }
+
+      if ((pLongOpStatus->CmdOpcode == PtSetSecInfo) && (pLongOpStatus->CmdSubcode == SubopOverwriteDimm)) {
+        p_jobs[i].type = NVM_JOB_TYPE_SANITIZE;
+      }
+      else if ((pLongOpStatus->CmdOpcode == PtSetFeatures) && (pLongOpStatus->CmdSubcode == SubopAddressRangeScrub)) {
+        p_jobs[i].type = NVM_JOB_TYPE_ARS;
+      }
+      else if ((pLongOpStatus->CmdOpcode == PtUpdateFw) && (pLongOpStatus->CmdSubcode == SubopUpdateFw)) {
+        p_jobs[i].type = NVM_JOB_TYPE_FW_UPDATE;
+      }
+      else {
+        p_jobs[i].type = NVM_JOB_TYPE_UNKNOWN;
+      }
+      p_jobs[i].percent_complete = BCD_TO_BYTE(pLongOpStatus->Percent);
     }
+    else {
+      p_jobs[i].status = NVM_JOB_STATUS_UNKNOWN;
+    }
+    memmove(p_jobs[i].uid, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
+    memmove(p_jobs[i].affected_element, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
+    p_jobs[i].result = NULL;
+    job_index++;
   }
   FreePool(cmd);
   return NVM_SUCCESS;

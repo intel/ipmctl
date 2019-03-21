@@ -1062,6 +1062,15 @@ enum GetErrorThermalReportedType {
 };
 
 /**
+  Mailbox status return codes.
+**/
+enum MailboxStatusReturnCode {
+  MailboxSuccess        = FW_SUCCESS,
+  MailboxDeviceBusy     = FW_DEVICE_BUSY,
+  MailboxDataNotSet     = FW_DATA_NOT_SET
+};
+
+/**
   Passthrough Input Payload:
      Opcode:      0x08h (Get Log Page)
      Sub-Opcode:  0x05h (Error Log)

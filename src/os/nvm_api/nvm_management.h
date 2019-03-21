@@ -150,6 +150,11 @@ extern "C"
   arr[0] = (unsigned char)(val & 0xFF);
 
 /**
+ * Convert a BCD value to the one byte hex value
+ */
+#define BCD_TO_BYTE(bcd) (bcd > 0x255 ? MAX_UINT8_VALUE : (((bcd & 0xF00) >> 8) * 100) + (((bcd & 0xF0) >> 4) * 10) + (bcd & 0xF))
+
+/**
  * Encode the temperature as a NVM_UINT32.
  */
 static inline NVM_UINT32 nvm_encode_temperature(NVM_REAL32 value)
@@ -514,7 +519,9 @@ enum nvm_job_status {
  */
 enum nvm_job_type {
   NVM_JOB_TYPE_SANITIZE   = 0,  ///< Sanitize
-  NVM_JOB_TYPE_ARS        = 1   ///< ARS
+  NVM_JOB_TYPE_ARS        = 1,  ///< ARS
+  NVM_JOB_TYPE_FW_UPDATE  = 3,  ///< FW Update
+  NVM_JOB_TYPE_UNKNOWN          ///< Unknown
 };
 
 /**

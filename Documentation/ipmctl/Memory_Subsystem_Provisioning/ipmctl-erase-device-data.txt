@@ -34,6 +34,14 @@ OPTIONS
 -help::
   Displays help for the command.
 
+-master::
+  Erases DCPMMs using master passphrase. Valid only if master passphrase is enabled on specified
+  DCPMMs (see MasterPassphraseEnabled attribute in section <<Show Device>>).
+
+-default::
+  Use this option when the current master passphrase is set to the default value. Valid only
+  if used along with the '-master' option. May not be combined with the Passphrase property.
+
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
@@ -46,7 +54,7 @@ endif::os_build[]
 TARGETS
 -------
 -dimm (DimmIDs)::
-Erases specific specifics by supplying one or more comma-separated specific
+Erases specific DCPMMs by supplying one or more comma-separated DCPMM
 identifiers. However, this is not recommended as it may put the system in an
 undesirable state. The default is to erase all manageable DCPMMs.
 
@@ -71,6 +79,16 @@ Security enabled specifics: Erases all the persistent data on all DCPMMs in the
 system.
 [verse]
 ipmctl delete -dimm Passphrase=123
+
+Security enabled specifics: Erases all the persistent data on all DCPMMs in the
+system using the default master passphrase.
+[verse]
+ipmctl delete -master -default -dimm
+
+Security enabled specifics: Erases all the persistent data on all DCPMMs in the
+system using the master passphrase.
+[verse]
+ipmctl delete -master -dimm Passphrase=masterpassphrase
 
 Erases all the persistent data on all DCPMMs by having the CLI prompt for
 the current passphrase.

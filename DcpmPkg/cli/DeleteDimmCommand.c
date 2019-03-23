@@ -28,6 +28,8 @@ struct Command DeleteDimmCommand =
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired},
+    {L"", MASTER_OPTION, L"", L"", FALSE, ValueEmpty},
+    {L"", DEFAULT_OPTION, L"", L"", FALSE, ValueEmpty},
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif
@@ -71,6 +73,9 @@ DeleteDimm(
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  BOOLEAN MasterOptionSpecified = FALSE;
+  BOOLEAN DefaultOptionSpecified = FALSE;
+  UINT16 SecurityOperation = SECURITY_OPERATION_UNDEFINED;
 
   NVDIMM_ENTRY();
 
@@ -137,9 +142,33 @@ DeleteDimm(
     }
   }
 
+  /** Check master option **/
+  MasterOptionSpecified = containsOption(pCmd, MASTER_OPTION);
+
+  /** Check default option **/
+  DefaultOptionSpecified = containsOption(pCmd, DEFAULT_OPTION);
+
   /** Check force option **/
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
     Force = TRUE;
+  }
+
+  if (MasterOptionSpecified) {
+    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_SECURITY, pDimms);
+    if (EFI_ERROR(ReturnCode)) {
+      ReturnCode = EFI_ABORTED;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+      NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+      goto Finish;
+    }
+
+    for (Index = 0; Index < DimmCount; Index++) {
+      if (pDimms[Index].MasterPassphraseEnabled != TRUE) {
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
+        goto Finish;
+      }
+    }
   }
 
   ReturnCode = GetPropertyValue(pCmd, PASSPHRASE_PROPERTY, &pPassphraseStatic);
@@ -170,6 +199,18 @@ DeleteDimm(
       goto Finish;
     }
 
+    ReturnCode = CheckMasterAndDefaultOptions(pCmd, TRUE, MasterOptionSpecified, DefaultOptionSpecified);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (MasterOptionSpecified) {
+      SecurityOperation = SECURITY_OPERATION_MASTER_ERASE_DEVICE;
+    }
+    else {
+      SecurityOperation = SECURITY_OPERATION_ERASE_DEVICE;
+    }
+
     pLoadFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pLoadFilePath));
     if (pLoadFilePath == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -189,17 +230,54 @@ DeleteDimm(
 
   // Check if prompt
   } else if ((pPassphraseStatic != NULL) && (StrCmp(pPassphraseStatic, L"") == 0)) {
+    ReturnCode = CheckMasterAndDefaultOptions(pCmd, TRUE, MasterOptionSpecified, DefaultOptionSpecified);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (MasterOptionSpecified) {
+      SecurityOperation = SECURITY_OPERATION_MASTER_ERASE_DEVICE;
+    }
+    else {
+      SecurityOperation = SECURITY_OPERATION_ERASE_DEVICE;
+    }
+
     ReturnCode = PromptedInput(L"Enter passphrase:\n", FALSE, FALSE, &pPassphrase);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
       NVDIMM_DBG("Failed on PromptedInput");
       goto Finish;
     }
-  } else if (pPassphraseStatic != NULL) {
+  } else if (pPassphraseStatic != NULL) { // Passphrase provided
+    ReturnCode = CheckMasterAndDefaultOptions(pCmd, TRUE, MasterOptionSpecified, DefaultOptionSpecified);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (MasterOptionSpecified) {
+      SecurityOperation = SECURITY_OPERATION_MASTER_ERASE_DEVICE;
+    }
+    else {
+      SecurityOperation = SECURITY_OPERATION_ERASE_DEVICE;
+    }
+
     pPassphrase = CatSPrint(NULL, FORMAT_STR, pPassphraseStatic);
-  } else {
+  } else { // Passphrase not provided
+    ReturnCode = CheckMasterAndDefaultOptions(pCmd, FALSE, MasterOptionSpecified, DefaultOptionSpecified);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    if (MasterOptionSpecified) {
+      SecurityOperation = SECURITY_OPERATION_MASTER_ERASE_DEVICE;
+     }
+    else {
+      SecurityOperation = SECURITY_OPERATION_ERASE_DEVICE;
+    }
+
     // At this point an empty string has already been handled and we are now assuming passphrase
-    // was not given because security is disabled. Passphrase doesn't matter
+    // was not given because security is disabled and passphrase doesn't matter OR the secure erase
+    // request is for the default master passphrase and an empty string is passed in for the default
+    // master passphrase
     pPassphrase = CatSPrint(NULL, L"");
   }
 
@@ -219,7 +297,7 @@ DeleteDimm(
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
-              SECURITY_OPERATION_ERASE_DEVICE, pPassphrase, NULL, pCommandStatus);
+              SecurityOperation, pPassphrase, NULL, pCommandStatus);
         if (EFI_ERROR(ReturnCode)) {
           goto FinishCommandStatusSet;
         }
@@ -230,7 +308,7 @@ DeleteDimm(
     }
   } else {
     ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount,
-          SECURITY_OPERATION_ERASE_DEVICE, pPassphrase, NULL, pCommandStatus);
+          SecurityOperation, pPassphrase, NULL, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto FinishCommandStatusSet;
     }

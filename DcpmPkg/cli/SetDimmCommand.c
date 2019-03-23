@@ -30,7 +30,9 @@ struct Command SetDimmCommand =
   {                                                                 //!< options
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired}
+    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired},
+    {L"", MASTER_OPTION, L"", L"", FALSE, ValueEmpty},
+    {L"", DEFAULT_OPTION, L"", L"", FALSE, ValueEmpty}
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif
@@ -129,6 +131,8 @@ SetDimm(
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  BOOLEAN MasterOptionSpecified = FALSE;
+  BOOLEAN DefaultOptionSpecified = FALSE;
 
 #ifdef OS_BUILD
   /*Inject error*/
@@ -219,6 +223,13 @@ SetDimm(
           goto Finish;
       }
   }
+
+  /** Check master option **/
+  MasterOptionSpecified = containsOption(pCmd, MASTER_OPTION);
+
+  /** Check default option **/
+  DefaultOptionSpecified = containsOption(pCmd, DEFAULT_OPTION);
+
 
   /** Check force option **/
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
@@ -353,6 +364,24 @@ SetDimm(
   GetPropertyValue(pCmd, NEWPASSPHRASE_PROPERTY, &pNewPassphraseStatic);
   GetPropertyValue(pCmd, CONFIRMPASSPHRASE_PROPERTY, &pConfirmPassphraseStatic);
 
+  if (MasterOptionSpecified) {
+    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_SECURITY, pDimms);
+    if (EFI_ERROR(ReturnCode)) {
+      ReturnCode = EFI_ABORTED;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+      NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+      goto Finish;
+    }
+
+    for (Index = 0; Index < DimmCount; Index++) {
+      if (pDimms[Index].MasterPassphraseEnabled != TRUE) {
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
+        goto Finish;
+      }
+    }
+  }
+
   pLoadFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pLoadFilePath));
   if (pLoadFilePath == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -375,17 +404,36 @@ SetDimm(
         (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0));
 
     if (pLockStatePropertyValue == NULL && pPassphraseStatic == NULL && pNewPassphraseStatic != NULL &&
-        pConfirmPassphraseStatic != NULL) {
-      SecurityOperation = SECURITY_OPERATION_SET_PASSPHRASE;
-      pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Set passphrase");
+        pConfirmPassphraseStatic != NULL) { // Passphrase not provided
+      ReturnCode = CheckMasterAndDefaultOptions(pCmd, FALSE, MasterOptionSpecified, DefaultOptionSpecified);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
+      if (MasterOptionSpecified) {
+        pPassphrase = CatSPrint(NULL, L"");
+        SecurityOperation = SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE;
+        pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Change master passphrase");
+      }
+      else {
+        SecurityOperation = SECURITY_OPERATION_SET_PASSPHRASE;
+        pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Set passphrase");
+      }
       pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L" on");
-
     } else if (pLockStatePropertyValue == NULL && pPassphraseStatic != NULL && pNewPassphraseStatic != NULL &&
-        pConfirmPassphraseStatic != NULL) {
-      SecurityOperation = SECURITY_OPERATION_CHANGE_PASSPHRASE;
-      pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Change passphrase");
+        pConfirmPassphraseStatic != NULL) { // Passphrase provided
+      ReturnCode = CheckMasterAndDefaultOptions(pCmd, TRUE, MasterOptionSpecified, DefaultOptionSpecified);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
+      if (MasterOptionSpecified) {
+        SecurityOperation = SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE;
+        pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Change master passphrase");
+      }
+      else {
+        SecurityOperation = SECURITY_OPERATION_CHANGE_PASSPHRASE;
+        pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Change passphrase");
+      }
       pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L" on");
-
     } else if (pLockStatePropertyValue != NULL && pNewPassphraseStatic != NULL &&
           ((StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_DISABLED) == 0) ||
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_UNLOCKED) == 0) ||

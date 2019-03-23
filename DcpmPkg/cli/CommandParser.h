@@ -84,6 +84,8 @@
 #define OUTPUT_OPTION_HELP              L"text|nvmxml"                         //!< 'output' option help text
 #define VERBOSE_OPTION_SHORT            L"-v"                                  //!< 'verbose' option short form
 #define VERBOSE_OPTION                  L"-verbose"                            //!< 'verbose' option name
+#define MASTER_OPTION                   L"-master"                             //!< 'master' option name
+#define DEFAULT_OPTION                  L"-default"                            //!< 'default' option name
 #define PBR_MODE_OPTION                 L"-mode"                               //!< 'mode' option name
 
 /** command targets **/

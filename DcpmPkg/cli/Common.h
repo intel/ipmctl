@@ -87,56 +87,56 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCOMPLETE_SYNTAX                             L"Syntax Error: Incomplete syntax."
 #define CLI_ERR_UNSUPPORTED_COMMAND_SYNTAX                    L"Syntax Error: Invalid or unsupported command."
 #define CLI_ERR_INCORRECT_VALUE_POISON_TYPE                   L"Syntax Error: Incorrect value for property PoisonType."
-#define CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY                L"Syntax Error: Incorrect value for option -d|-display"
-#define CLI_ERR_INCORRECT_VALUE_OPTION_UNITS                  L"Syntax Error: Incorrect value for option -units"
-#define CLI_ERR_INCORRECT_VALUE_OPTION_RECOVER                L"Syntax Error: Incorrect value for option -recover"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_REGISTER               L"Syntax Error: Incorrect value for target -register"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_DIMM                   L"Syntax Error: Incorrect value for target -dimm"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET                 L"Syntax Error: Incorrect value for target -socket"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_NAMESPACE              L"Syntax Error: Incorrect value for target -namespace"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_REGION                 L"Syntax Error: Incorrect value for target -region"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_ERROR                  L"Syntax Error: Incorrect value for target -error"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_SMBIOS                 L"Syntax Error: Incorrect value for target -smbios"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_SENSOR                 L"Syntax Error: Incorrect value for target -sensor"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_PCD                    L"Syntax Error: Incorrect value for target -pcd"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_PERFORMANCE            L"Syntax Error: Incorrect value for target -performance"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_EVENT                  L"Syntax Error: Incorrect value for target -event"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_MEMORY_MODE          L"Syntax Error: Incorrect value for property MemoryMode"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_PERSISTENT_MEM_TYPE  L"Syntax Error: Incorrect value for property PersistentMemoryType"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_RESERVED             L"Syntax Error: Incorrect value for property Reserved"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_BLOCK_SIZE           L"Syntax Error: Incorrect value for property BlockSize"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_BLOCK_COUNT          L"Syntax Error: Incorrect value for property BlockCount"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CAPACITY             L"Syntax Error: Incorrect value for property Capacity"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NAME                 L"Syntax Error: Incorrect value for property Name"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_CAPABLE        L"Syntax Error: Incorrect value for property EraseCapable"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENCRYPTION           L"Syntax Error: Incorrect value for property Encryption"
-#define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_FIRST_FAST_REFRESH   L"Syntax Error: Incorrect value for property FirstFastRefresh"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ACTION_REQUIRED      L"Syntax Error: Incorrect value for property ActionRequired"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CATEGORY             L"Syntax Error: Incorrect value for property Category"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM              L"Syntax Error: Incorrect value for property SequenceNumber"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NONCRIT_THRESHOLD    L"Syntax Error: Incorrect value for property NonCriticalThreshold"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property EnabledState"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config"
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CCONFIG              L"Syntax Error: Incorrect value for property Config"
-#define CLI_ERR_INCORRECT_VALUE_TARGET_TOKEN_ID               L"Syntax Error: Incorrect value for target -tokens"
-#define CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS                 L"Syntax Error: Poison type property should be followed by poison address"
-#define CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED                 L"Syntax Error: Clear property should be given in combination with other error injection properties"
-#define CLI_ERR_MISSING_VALUE_PROPERTY_TYPE                   L"Syntax Error: Type property not provided"
-#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY                  L" is not a valid setting for the property"
+#define CLI_ERR_INCORRECT_VALUE_OPTION_DISPLAY                L"Syntax Error: Incorrect value for option -d|-display."
+#define CLI_ERR_INCORRECT_VALUE_OPTION_UNITS                  L"Syntax Error: Incorrect value for option -units."
+#define CLI_ERR_INCORRECT_VALUE_OPTION_RECOVER                L"Syntax Error: Incorrect value for option -recover."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_REGISTER               L"Syntax Error: Incorrect value for target -register."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_DIMM                   L"Syntax Error: Incorrect value for target -dimm."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_SOCKET                 L"Syntax Error: Incorrect value for target -socket."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_NAMESPACE              L"Syntax Error: Incorrect value for target -namespace."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_REGION                 L"Syntax Error: Incorrect value for target -region."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_ERROR                  L"Syntax Error: Incorrect value for target -error."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_SMBIOS                 L"Syntax Error: Incorrect value for target -smbios."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_SENSOR                 L"Syntax Error: Incorrect value for target -sensor."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_PCD                    L"Syntax Error: Incorrect value for target -pcd."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_PERFORMANCE            L"Syntax Error: Incorrect value for target -performance."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_EVENT                  L"Syntax Error: Incorrect value for target -event."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_MEMORY_MODE          L"Syntax Error: Incorrect value for property MemoryMode."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_PERSISTENT_MEM_TYPE  L"Syntax Error: Incorrect value for property PersistentMemoryType."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_RESERVED             L"Syntax Error: Incorrect value for property Reserved."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_BLOCK_SIZE           L"Syntax Error: Incorrect value for property BlockSize."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_BLOCK_COUNT          L"Syntax Error: Incorrect value for property BlockCount."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CAPACITY             L"Syntax Error: Incorrect value for property Capacity."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NAME                 L"Syntax Error: Incorrect value for property Name."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_CAPABLE        L"Syntax Error: Incorrect value for property EraseCapable."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENCRYPTION           L"Syntax Error: Incorrect value for property Encryption."
+#define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_FIRST_FAST_REFRESH   L"Syntax Error: Incorrect value for property FirstFastRefresh."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ACTION_REQUIRED      L"Syntax Error: Incorrect value for property ActionRequired."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CATEGORY             L"Syntax Error: Incorrect value for property Category."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM              L"Syntax Error: Incorrect value for property SequenceNumber."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NONCRIT_THRESHOLD    L"Syntax Error: Incorrect value for property NonCriticalThreshold."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property EnabledState."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CCONFIG              L"Syntax Error: Incorrect value for property Config."
+#define CLI_ERR_INCORRECT_VALUE_TARGET_TOKEN_ID               L"Syntax Error: Incorrect value for target -tokens."
+#define CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS                 L"Syntax Error: Poison type property should be followed by poison address."
+#define CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED                 L"Syntax Error: Clear property should be given in combination with other error injection properties."
+#define CLI_ERR_MISSING_VALUE_PROPERTY_TYPE                   L"Syntax Error: Type property not provided."
+#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY                  L" is not a valid setting for the property."
 #define CLI_SYNTAX_ERROR                                      L" Syntax Error: "
 
-#define CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER             L"Syntax Error: Options -a|-all and -d|-display can not be used together"
-#define CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER                 L"Syntax Error: Options -x and -examine can not be used together"
-#define CLI_ERR_OPTIONS_FORCE_USED_TOGETHER                   L"Syntax Error: Options -f and -force can not be used together"
-#define CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER           L"Syntax Error: Option values AppDirectSize and AppDirect1Size can not be used together"
-#define CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together"
-#define CLI_ERR_PROPERTIES_CAPACITY_BLOCKCOUNT_USED_TOGETHER  L"Syntax Error: Properties Capacity and BlockCount can not be used together"
+#define CLI_ERR_OPTIONS_ALL_DISPLAY_USED_TOGETHER             L"Syntax Error: Options -a|-all and -d|-display can not be used together."
+#define CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER                 L"Syntax Error: Options -x and -examine can not be used together."
+#define CLI_ERR_OPTIONS_FORCE_USED_TOGETHER                   L"Syntax Error: Options -f and -force can not be used together."
+#define CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER           L"Syntax Error: Option values AppDirectSize and AppDirect1Size can not be used together."
+#define CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together."
+#define CLI_ERR_PROPERTIES_CAPACITY_BLOCKCOUNT_USED_TOGETHER  L"Syntax Error: Properties Capacity and BlockCount can not be used together."
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
 
@@ -155,9 +155,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the DIMMs on the next reboot."
 #define CLI_INFO_SHOW_REGISTER                                L"Show Register"
 
-#define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option"
-#define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size"
-#define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity"
+#define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified dimms."
+#define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."
+#define CLI_ERR_DEFAULT_OPTION_NOT_COMBINED                       L"Syntax Error: Default option should be given in combination with master option."
+#define CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER  L"Syntax Error: Passphrase property and default option cannot be used together."
+
+#define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
+#define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
+#define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
 #define CLI_ERR_MODIFICATION_OF_NAMESPACE_CAPACITY_NOT_SUPPORTED  L"Error: Modification of namespace capacity is not supported."
 #define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
@@ -969,4 +974,24 @@ CreateCmdLineOutputStr(
   @retval - Converted OS ReturnCode
 **/
 EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode);
+
+/**
+  Checks if user has incorrectly used master and default options. Also checks for
+  invalid combinations of these options with the Passphrase property.
+
+  @param[in] pCmd command from CLI
+  @param[in] isPassphraseProvided TRUE if user provided passphrase
+  @param[in] isMasterOptionSpecified TRUE if master option is specified
+  @param[in] isDefaultOptionSpecified TRUE if default option is specified
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+**/
+EFI_STATUS
+CheckMasterAndDefaultOptions(
+  IN struct Command *pCmd,
+  IN BOOLEAN isPassphraseProvided,
+  IN BOOLEAN isMasterOptionSpecified,
+  IN BOOLEAN isDefaultOptionSpecified
+);
 #endif /** _COMMON_H_ **/

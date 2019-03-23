@@ -2714,3 +2714,66 @@ EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode)
   }
   return ReturnCode;
 }
+
+/**
+  Checks if user has incorrectly used master and default options. Also checks for
+  invalid combinations of these options with the Passphrase property.
+
+  @param[in] pCmd command from CLI
+  @param[in] isPassphraseProvided TRUE if user provided passphrase
+  @param[in] isMasterOptionSpecified TRUE if master option is specified
+  @param[in] isDefaultOptionSpecified TRUE if default option is specified
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+**/
+EFI_STATUS
+CheckMasterAndDefaultOptions(
+  IN struct Command *pCmd,
+  IN BOOLEAN isPassphraseProvided,
+  IN BOOLEAN isMasterOptionSpecified,
+  IN BOOLEAN isDefaultOptionSpecified
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+
+  if (pCmd == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("pCmd parameter is NULL.\n");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    goto Finish;
+  }
+
+  pPrinterCtx = pCmd->pPrintCtx;
+
+  if (isPassphraseProvided) {
+    if (isMasterOptionSpecified && isDefaultOptionSpecified) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER);
+      goto Finish;
+    }
+    else if (!isMasterOptionSpecified && isDefaultOptionSpecified) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DEFAULT_OPTION_NOT_COMBINED);
+      goto Finish;
+    }
+  }
+  else { // Passphrase not provided
+    if (isMasterOptionSpecified && !isDefaultOptionSpecified) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MISSING_PASSPHRASE_PROPERTY);
+      goto Finish;
+    }
+    else if (!isMasterOptionSpecified && isDefaultOptionSpecified) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DEFAULT_OPTION_NOT_COMBINED);
+      goto Finish;
+    }
+  }
+
+Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}

@@ -134,13 +134,9 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetLongOpStatus,
   InjectError,
   GetBSRAndBootStatusBitMask,
-
-  // Debug Only
 #ifndef MDEPKG_NDEBUG
-  GetCommandAccessPolicy,
   PassThruCommand,
-#endif /* MDEPKG_NDEBUG */
-
+#endif
   ModifyPcdConfig,
   PbrSetMode,
   PbrGetMode,
@@ -153,7 +149,8 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   PbrGetTag,
   PbrGetDataPlaybackInfo,
   PbrGetData,
-  PbrSetData
+  PbrSetData,
+  GetCommandAccessPolicy
 };
 
 
@@ -10162,8 +10159,6 @@ Finish:
   return ReturnCode;
 }
 
-// Debug Only
-#ifndef MDEPKG_NDEBUG
 /**
   Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
@@ -10222,7 +10217,7 @@ GetCommandAccessPolicy(
 
   for(Index = 0; Index < *pCount; Index++) {
     ReturnCode = FwCmdGetCommandAccessPolicy(pDimm, CapEntries[Index].Opcode,
-      CapEntries[Index].SubOpcode, &CapEntries[Index].Restricted);
+      CapEntries[Index].SubOpcode, &CapEntries[Index].Restriction);
 
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to retrieve Command Access Policy.");
@@ -10240,7 +10235,6 @@ Finish:
   return ReturnCode;
 }
 
-#endif // !MDEPKG_NDEBUG
 
 #ifndef OS_BUILD
 /**

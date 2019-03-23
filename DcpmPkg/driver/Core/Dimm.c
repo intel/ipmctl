@@ -6518,7 +6518,7 @@ Finish:
   @param[IN] pDimm Target DIMM structure pointer
   @param[IN] Opcode for the command
   @param[IN] SubOpcode for the command
-  @param[OUT] pRestricted TRUE if restricted, else FALSE
+  @param[OUT] pRestricted code for applied restriction (0-3)
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
@@ -6530,7 +6530,7 @@ FwCmdGetCommandAccessPolicy(
   IN  DIMM *pDimm,
   IN  UINT8 Opcode,
   IN  UINT8 Subopcode,
-  OUT BOOLEAN *pRestricted
+  OUT UINT8 *pRestriction
 )
 {
   FW_CMD *pFwCmd = NULL;
@@ -6540,7 +6540,7 @@ FwCmdGetCommandAccessPolicy(
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pRestricted == NULL) {
+  if (pDimm == NULL || pRestriction == NULL) {
     goto Finish;
   }
 
@@ -6569,13 +6569,7 @@ FwCmdGetCommandAccessPolicy(
   }
 
   pOutputCAP = (PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->OutPayload;
-
-  if (0 != pOutputCAP->Restricted) {
-    *pRestricted = TRUE;
-  }
-  else {
-    *pRestricted = FALSE;
-  }
+  *pRestriction = pOutputCAP->Restriction;
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);

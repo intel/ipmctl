@@ -1167,7 +1167,7 @@ typedef struct {
 } PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY;
 
 typedef struct {
-  UINT8 Restricted;
+  UINT8 Restriction;
   UINT8  Reserved[127];
 } PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY;
 

@@ -1505,9 +1505,6 @@ CheckForLongOpStatusInProgress(
   OUT    NVM_STATUS *pNvmStatus
 );
 
-// Debug Only
-#ifndef MDEPKG_NDEBUG
-
 /**
   Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
   NOTE: Available only in debug driver.
@@ -1528,8 +1525,6 @@ GetCommandAccessPolicy(
   IN OUT UINT32 *pCount,
   IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
 );
-
-#endif // !MDEPKG_NDEBUG
 
 #ifndef OS_BUILD
 /**

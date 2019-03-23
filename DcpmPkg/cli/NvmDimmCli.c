@@ -699,13 +699,10 @@ RegisterCommands(
     goto done;
   }
 
-  /* Debug Utility commands */
-#ifndef MDEPKG_NDEBUG
   Rc = RegisterShowCmdAccessPolicyCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-#endif
 
 #ifdef OS_BUILD
   Rc = RegisterShowHostServerCommand();

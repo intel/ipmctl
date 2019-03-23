@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-// Debug build only
-#ifndef MDEPKG_NDEBUG
-
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/HiiLib.h>
 #include "Debug.h"
 #include "Types.h"
 #include "Utility.h"
@@ -57,7 +55,7 @@ struct Command ShowCmdAccessPolicyCommand =
 // Table heading names
 #define OPCODE_STR        L"Opcode"
 #define SUBOPCODE_STR     L"SubOpcode"
-#define RESTRICTED_STR    L"Restricted"
+#define RESTRICTION_STR    L"Restriction"
 
 /*
 *  SHOW CAP ATTRIBUTES (4 columns)
@@ -71,7 +69,7 @@ PRINTER_TABLE_ATTRIB ShowCapTableAttributes =
   {
     {
       DIMM_ID_STR,                                                          //COLUMN HEADER
-      DIMM_MAX_STR_WIDTH,	                                            //COLUMN MAX STR WIDTH
+      DIMM_MAX_STR_WIDTH,                                                   //COLUMN MAX STR WIDTH
       DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR                               //COLUMN DATA PATH
     },
     {
@@ -85,9 +83,9 @@ PRINTER_TABLE_ATTRIB ShowCapTableAttributes =
       DS_OPCODE_PATH PATH_KEY_DELIM SUBOPCODE_STR                           //COLUMN DATA PATH
     },
     {
-      RESTRICTED_STR,                                                       //COLUMN HEADER
-      TABLE_MIN_HEADER_LENGTH(RESTRICTED_STR),                              //COLUMN MAX STR WIDTH
-      DS_OPCODE_PATH PATH_KEY_DELIM RESTRICTED_STR                          //COLUMN DATA PATH
+      RESTRICTION_STR,                                                       //COLUMN HEADER
+      TABLE_MIN_HEADER_LENGTH(RESTRICTION_STR),                              //COLUMN MAX STR WIDTH
+      DS_OPCODE_PATH PATH_KEY_DELIM RESTRICTION_STR                          //COLUMN DATA PATH
     }
   }
 };
@@ -152,6 +150,12 @@ ShowCmdAccessPolicy(
   UINT32 DimmHandle = 0;
   UINT32 DimmIdIndex = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
+  CHAR16 *RestrictionStr = NULL;
+  CHAR16 *pNone = NULL;
+  CHAR16 *pBiosOnly = NULL;
+  CHAR16 *pSMBusOnly = NULL;
+  CHAR16 *pBiosSMBusOnly = NULL;
+  CHAR16 *pInvalid = NULL;
 
   NVDIMM_ENTRY();
 
@@ -255,11 +259,35 @@ ShowCmdAccessPolicy(
     }
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+    pNone = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_NONE), NULL);
+    pBiosOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_ONLY), NULL);
+    pSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_SMBUS_ONLY), NULL);
+    pBiosSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY), NULL);
+    pInvalid = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_INVALID), NULL);
+    // set max column width based on longest output string.  Should always be less than 80 (required param)
+    ShowCapTableAttributes.ColumnAttribs[3].ColumnMaxStrLen = (UINT32)StrnSizeS(pBiosSMBusOnly,80);
     for (OpCodeIndex = 0; OpCodeIndex < CapCount; OpCodeIndex++) {
       PRINTER_BUILD_KEY_PATH(pPath, DS_OPCODE_INDEX_PATH, DimmIndex, OpCodeIndex);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, OPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Opcode, HEX);
       PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, SUBOPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].SubOpcode, HEX);
-      PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, RESTRICTED_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Restricted, DECIMAL);
+      switch ((pCapEntries + DimmIndex)[OpCodeIndex].Restriction) {
+      case COMMAND_ACCESS_POLICY_RESTRICTION_NONE:
+        RestrictionStr = pNone;
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY:
+        RestrictionStr = pBiosOnly;
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY:
+        RestrictionStr = pSMBusOnly;
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY:
+        RestrictionStr = pBiosSMBusOnly;
+        break;
+      default:
+        RestrictionStr = pInvalid;
+        break;
+      }
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
     }
   }
 
@@ -269,6 +297,11 @@ ShowCmdAccessPolicy(
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowCmdAccessPolicyDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pNone);
+  FREE_POOL_SAFE(pBiosOnly);
+  FREE_POOL_SAFE(pSMBusOnly);
+  FREE_POOL_SAFE(pBiosSMBusOnly);
+  FREE_POOL_SAFE(pInvalid);
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pCmdAccessPolicy);
@@ -276,5 +309,3 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-#endif // !MDEPKG_NDEBUG

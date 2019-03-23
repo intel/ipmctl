@@ -1097,7 +1097,7 @@ typedef struct _COMMAND_ACCESS_POLICY_ENTRY
 {
   UINT8   Opcode;         //!< Opcode of the FW command
   UINT8   SubOpcode;      //!< SubOpcode of the FW command
-  BOOLEAN Restricted;     //!< True if the command is restricted.
+  UINT8   Restriction;    //!< Code for mailbox restrictions
 } COMMAND_ACCESS_POLICY_ENTRY;
 
 /** Total number of diagnostic test types */
@@ -1128,4 +1128,11 @@ Start Diagnostic Command tests codes
 #define DELETE_PCD_CONFIG_COUT_MASK   (BIT2) //!< Zero Configuration Output Data Size and Start Offset in the Configuration Header
 #define DELETE_PCD_CONFIG_CCUR_MASK   (BIT3) //!< Zero Current Configuration Data Size and Start Offset in the Configuration Header
 #define DELETE_PCD_CONFIG_ALL_MASK    (DELETE_PCD_CONFIG_LSA_MASK | DELETE_PCD_CONFIG_CIN_MASK | DELETE_PCD_CONFIG_COUT_MASK | DELETE_PCD_CONFIG_CCUR_MASK) ///< @ref DELETE_PCD_CONFIG_ALL_MASK
+
+
+/** Defines for Restriction values returned from get command access policy **/
+#define COMMAND_ACCESS_POLICY_RESTRICTION_NONE           0
+#define COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY       1
+#define COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY      2
+#define COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY  3
 #endif /** _NVM_TYPES_H_ **/

@@ -259,7 +259,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   (1 << 3)    ///< ARS status field will be populated: ARSStatus.
 #define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LatchedLastShutdownStatus, LastShutdownTime, AitDramEnabled.
 #define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerBudget.
-#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: FirstFastRefresh.
+#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated:
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite DIMM status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
@@ -339,7 +339,7 @@ typedef struct _DIMM_INFO {
   UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
-  BOOLEAN FirstFastRefresh;                 //!< true if acceleration of the first refresh cycle is enabled
+  BOOLEAN FirstFastRefresh;                 //!< DEPRECATED
 
   //DIMM_INFO_CATEGORY_VIRAL_POLICY
   BOOLEAN ViralPolicyEnable;                //!< true if viral policy is enabled
@@ -829,12 +829,6 @@ typedef struct _DEBUG_LOG_INFO {
 #define FW_LOG_LEVEL_DEBUG    4
 
 #define OPTIONAL_DATA_UNDEFINED 0xFFUL
-/**
-  First Fast Refresh states
-**/
-#define FIRST_FAST_REFRESH_DISABLED  0
-#define FIRST_FAST_REFRESH_ENABLED   1
-#define FIRST_FAST_REFRESH_MIXED     2
 
 /**
   Namespace security capabilities.

@@ -720,7 +720,6 @@ if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-change-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-dump-support-data.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-events.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-host.txt

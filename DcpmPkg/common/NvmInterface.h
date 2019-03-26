@@ -1114,6 +1114,8 @@ EFI_STATUS
 /**
   Get Optional Configuration Data Policy using FW command
 
+  Note: This function is deprecated.
+
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
@@ -1137,6 +1139,8 @@ EFI_STATUS
 
 /**
   Set Optional Configuration Data Policy using FW command
+
+  Note: This function is deprecated.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set

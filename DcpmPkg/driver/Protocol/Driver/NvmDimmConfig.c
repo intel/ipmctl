@@ -1018,23 +1018,9 @@ GetDimmInfo (
     pDimmInfo->MaxAveragePowerBudget = pDevCharacteristics->MaxAveragePowerBudget;
   }
 
-  if (dimmInfoCategories & DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY)
-  {
-    /* Get current FirstFastRefresh state */
-    ReturnCode = FwCmdGetOptionalConfigurationDataPolicy(pDimm, &OptionalDataPolicyPayload);
-    if (EFI_ERROR(ReturnCode)) {
-      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA;
-    }
-    if (OptionalDataPolicyPayload.FirstFastRefresh == FIRST_FAST_REFRESH_ENABLED) {
-      pDimmInfo->FirstFastRefresh = FIRST_FAST_REFRESH_ENABLED;
-    } else {
-      pDimmInfo->FirstFastRefresh = FIRST_FAST_REFRESH_DISABLED;
-    }
-  }
-
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_VIRAL_POLICY)
   {
-    /* Get current FirstFastRefresh state */
+    /* Get current ViralPolicy state */
     ReturnCode = FwCmdGetViralPolicy(pDimm, &ViralPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_VIRAL_POLICY;
@@ -7895,16 +7881,15 @@ DumpFwDebugLog(
 /**
   Set Optional Configuration Data Policy using FW command
 
+  Note: This function is deprecated.
+
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] FirstFastRefresh - FirstFastRefresh value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_UNSUPPORTED Function is deprecated
 **/
 EFI_STATUS
 EFIAPI
@@ -7916,63 +7901,8 @@ SetOptionalConfigurationDataPolicy(
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  PT_OPTIONAL_DATA_POLICY_PAYLOAD InputPayload, OptionalDataPolicyPayload;
-  DIMM *pDimms[MAX_DIMMS];
-  UINT32 DimmsNum = 0;
-  UINT32 Index = 0;
+  EFI_STATUS ReturnCode = EFI_UNSUPPORTED;
 
-  SetMem(pDimms, sizeof(pDimms), 0x0);
-  SetMem(&InputPayload, sizeof(InputPayload), 0x0);
-
-  NVDIMM_ENTRY();
-
-  if (pThis == NULL || pCommandStatus == NULL || (pDimmIds == NULL && DimmIdsCount > 0)) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-    ReturnCode = EFI_UNSUPPORTED;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
-    goto Finish;
-  }
-
-  pCommandStatus->ObjectType = ObjectTypeDimm;
-
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmsNum; Index++) {
-    ReturnCode = FwCmdGetOptionalConfigurationDataPolicy(pDimms[Index], &OptionalDataPolicyPayload);
-    if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto Finish;
-    }
-    // Get the original values and overwrite only the ones requested
-    InputPayload.FirstFastRefresh = OptionalDataPolicyPayload.FirstFastRefresh;
-    if (FirstFastRefresh != OPTIONAL_DATA_UNDEFINED) {
-      InputPayload.FirstFastRefresh = FirstFastRefresh;
-    }
-
-    ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimms[Index], &InputPayload);
-    if (EFI_ERROR(ReturnCode)) {
-      if (ReturnCode == EFI_SECURITY_VIOLATION) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
-      } else if (ReturnCode == EFI_NO_RESPONSE) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_BUSY_DEVICE);
-      } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FW_SET_OPTIONAL_DATA_POLICY_FAILED);
-      }
-      goto Finish;
-    }
-    SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
-  }
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
 

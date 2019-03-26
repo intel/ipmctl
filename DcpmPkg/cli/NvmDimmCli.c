@@ -985,10 +985,10 @@ EFI_STATUS showVersion(struct Command *pCmd)
   }
 
   if (DimmFromTheFutureCount > 0) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"%d DCPMM(s) are above FIS %d.%d. Please update to the latest SW.\r\n",
-      DimmFromTheFutureCount,
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"This ipmctl software version predates the firmware interface specification version (FIS | FWAPIVersion: %d.%d.) for %d DCPMM(s). It is recommended to update ipmctl.\r\n",
       MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
-      MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR);
+      MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR,
+      DimmFromTheFutureCount);
   }
 
   //Specify table attributes

@@ -374,9 +374,13 @@ EFI_STATUS findVerb(UINTN *pStart, struct CommandInput *pInput, struct Command *
 #ifdef OS_BUILD
     if (g_basic_commands) {
       // This should be updated when there are other comamnds a non-root user can run
-      Print(L"A non-root user is restricted to run only version command\n");
+#ifdef _MSC_VER
+      Print(L"Sorry, the ipmctl command you have attempted to execute requires admin privileges.\n");
+#else //_MSC_VER
+      Print(L"Sorry, the ipmctl command you have attempted to execute requires root privileges.\n");
+#endif //_MSC_VER
     } else {
-#endif
+#endif //OS_BUILD
       SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_VERB_EXPECTED, pInput->ppTokens[*pStart]));
 #ifdef OS_BUILD
     }

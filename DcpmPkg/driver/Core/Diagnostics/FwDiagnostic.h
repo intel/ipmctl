@@ -81,30 +81,6 @@ CheckViralPolicyConsistency(
 );
 
 /**
-Check First Fast Refresh consistency for the specified DIMMs, and accordingly append to
-the fw diagnostics result.
-Also, accordingly modifies the test-state.
-
-@param[in] ppDimms The DIMM pointers list
-@param[in] DimmCount DIMMs count
-@param[in out] ppResultStr Pointer to the result string of fw diagnostics message
-@param[out] pDiagState Pointer to the fw diagnostics test state. Possible states:
-            DIAG_STATE_MASK_OK, DIAG_STATE_MASK_WARNING, DIAG_STATE_MASK_FAILED,
-            DIAG_STATE_MASK_ABORTED
-
-@retval EFI_SUCCESS Test executed correctly
-@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
-@retval EFI_OUT_OF_RESOURCES when memory allocation fails.
-**/
-EFI_STATUS
-CheckFirstFastRefreshConsistency(
-  IN     DIMM **ppDimms,
-  IN     CONST UINT16 DimmCount,
-  IN OUT CHAR16 **ppResultStr,
-  OUT UINT8 *pDiagState
-);
-
-/**
   Populate the list of unique subsytem device IDs across all
   the specified DIMMs
 

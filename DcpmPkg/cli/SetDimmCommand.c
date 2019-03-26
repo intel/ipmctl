@@ -53,7 +53,6 @@ struct Command SetDimmCommand =
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {FIRST_FAST_REFRESH_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE, ValueRequired},
     },                                                                //!< properties
   L"Set properties of one or more DIMMs.",                          //!< help
   SetDimm,
@@ -104,16 +103,12 @@ SetDimm(
   CHAR16 *pPassphraseStatic = NULL;
   CHAR16 *pNewPassphraseStatic = NULL;
   CHAR16 *pConfirmPassphraseStatic = NULL;
-  CHAR16 *pFirstFastRefreshValue = NULL;
   CHAR16 *pTargetValue = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
   CHAR16 *pErrorMessage = NULL;
   UINT16 SecurityOperation = SECURITY_OPERATION_UNDEFINED;
-  UINT8 FirstFastRefreshState = OPTIONAL_DATA_UNDEFINED;
   UINT16 *pDimmIds = NULL;
-  UINT32 DimmHandle = 0;
-  UINT32 DimmIndex = 0;
   UINT32 DimmIdsCount = 0;
   UINT32 Index = 0;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
@@ -125,8 +120,6 @@ SetDimm(
   BOOLEAN OneOfPassphrasesIsEmpty = FALSE;
   BOOLEAN OneOfPassphrasesIsNotEmpty = FALSE;
   BOOLEAN LockStateFrozen = FALSE;
-  BOOLEAN Force = FALSE;
-  BOOLEAN Confirmation = FALSE;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -149,7 +142,6 @@ SetDimm(
   UINT64 PoisonAddressValue = 0;
   UINT64 PercentageRemainingValue = 0;
   UINT64 PoisonTypeValue = POISON_MEMORY_TYPE_PATROLSCRUB;
-
 
   UINT64 ErrorInjectionTypeSet = 0;
   UINT64 PoisonTypeValid = 0;
@@ -230,21 +222,11 @@ SetDimm(
   /** Check default option **/
   DefaultOptionSpecified = containsOption(pCmd, DEFAULT_OPTION);
 
-
-  /** Check force option **/
-  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
-      Force = TRUE;
-  }
-
   /**
       This command allows for different property sets depending on what action is to be taken.
       Here we check if input contains properties from different actions because they are not
       allowed together.
   **/
-  if (!EFI_ERROR(ContainsProperty(pCmd, FIRST_FAST_REFRESH_PROPERTY))) {
-      /** Found specified action **/
-      ActionSpecified = TRUE;
-  }
     if (containsOption(pCmd, SOURCE_OPTION) ||
         !EFI_ERROR(ContainsProperty(pCmd, PASSPHRASE_PROPERTY)) ||
         !EFI_ERROR(ContainsProperty(pCmd, NEWPASSPHRASE_PROPERTY)) ||
@@ -580,62 +562,6 @@ SetDimm(
     goto FinishCommandStatusSet;
   }
 
-  /**
-    Set FirstFastRefresh
-  **/
-  GetPropertyValue(pCmd, FIRST_FAST_REFRESH_PROPERTY, &pFirstFastRefreshValue);
-
-  // Call the driver protocol function if either of the property is requested to be set
-  if (pFirstFastRefreshValue != NULL)
-  {
-    pCommandStatusMessage = CatSPrint(NULL, L"Modify DIMM");
-    if (pFirstFastRefreshValue != NULL) {
-      if (StrCmp(pFirstFastRefreshValue, PROPERTY_VALUE_0) == 0) {
-        FirstFastRefreshState = FIRST_FAST_REFRESH_DISABLED;
-      } else if (StrCmp(pFirstFastRefreshValue, PROPERTY_VALUE_1) == 0) {
-        FirstFastRefreshState = FIRST_FAST_REFRESH_ENABLED;
-      } else {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR L": Error (%d) - " FORMAT_STR_NL, pCommandStatusMessage, EFI_INVALID_PARAMETER,
-               CLI_ERR_INCORRECT_VALUE_PROPERTY_FIRST_FAST_REFRESH);
-        goto Finish;
-      }
-    }
-
-    pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Modify");
-    pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L"");
-
-    if (!Force) {
-      for (Index = 0; Index < DimmIdsCount; Index++) {
-        ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
-        if (EFI_ERROR(ReturnCode)) {
-          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-          goto Finish;
-        }
-        ReturnCode = GetPreferredDimmIdAsString(DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
-        if (EFI_ERROR(ReturnCode)) {
-          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-          goto Finish;
-        }
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
-        ReturnCode = PromptYesNo(&Confirmation);
-        if (!EFI_ERROR(ReturnCode) && Confirmation) {
-          ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-              &pDimmIds[Index], 1, FirstFastRefreshState, pCommandStatus);
-          if (EFI_ERROR(ReturnCode)) {
-            goto FinishCommandStatusSet;
-          }
-        } else {
-          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
-          continue;
-        }
-      }
-    } else {
-      ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-          pDimmIds, DimmIdsCount, FirstFastRefreshState, pCommandStatus);
-      goto FinishCommandStatusSet;
-    }
-  }
 #ifdef OS_BUILD
   GetPropertyValue(pCmd, TEMPERATURE_INJ_PROPERTY, &pTemperature);
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);

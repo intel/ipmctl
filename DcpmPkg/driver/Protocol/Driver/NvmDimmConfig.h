@@ -1170,14 +1170,15 @@ DumpFwDebugLog(
 /**
   Set Optional Configuration Data Policy using FW command
 
+  Note: This function is deprecated.
+
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
   @param[in] pDimmIds pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount number of elements in pDimmIds
   @param[in] FirstFastRefresh FirstFastRefresh value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
+  @retval EFI_UNSUPPORTED Function is deprecated
 
 **/
 EFI_STATUS

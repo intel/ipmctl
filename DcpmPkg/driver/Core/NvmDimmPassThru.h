@@ -512,7 +512,7 @@ typedef struct {
     Sub-Opcode:  0x06h (Optional Configuration Data Policy)
 **/
 typedef struct {
-  UINT8 FirstFastRefresh;     //!< Enable / disable of acceleration of first refresh cycle
+  UINT8 FirstFastRefresh;     //!< DEPRECATED
 } PT_OPTIONAL_DATA_POLICY_PAYLOAD;
 
 /**

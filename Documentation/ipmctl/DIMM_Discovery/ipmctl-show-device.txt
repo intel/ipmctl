@@ -404,13 +404,6 @@ UnlatchedLastShutdownStatus::
 LastShutdownTime::
   The time the system was last shutdown.
 
-FirstFastRefresh::
-  Whether or not acceleration of the first refresh cycle is enabled for the
-  DCPMM. One of:
-  - 0: Disabled - This is the default.
-  - 1: Enabled - Customers will have to wait a pre-determined time (5-6 minutes)
-    before starting benchmark tests.
-
 ModesSupported::
   A list of the modes supported by the DCPMM. Refer to the command
   Show System Capabilities to determine the modes supported by the

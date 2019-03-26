@@ -203,7 +203,6 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   IS_NEW_STR,
   BANK_LABEL_STR,
   MEMORY_TYPE_STR,
-  FIRST_FAST_REFRESH_PROPERTY,
   MANUFACTURER_STR,
   CHANNEL_ID_STR,
   SLOT_ID_STR,
@@ -265,7 +264,6 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   PACKAGE_SPARING_ENABLED_STR,
   PACKAGE_SPARES_AVAILABLE_STR,
   IS_NEW_STR,
-  FIRST_FAST_REFRESH_PROPERTY,
   VIRAL_POLICY_STR,
   VIRAL_STATE_STR,
   PEAK_POWER_BUDGET_STR,
@@ -1034,18 +1032,6 @@ ShowDimms(
         /** IsNew **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, IS_NEW_STR))) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, IS_NEW_STR, FORMAT_INT32, pDimms[DimmIndex].IsNew);
-        }
-
-        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) {
-          /** First fast refresh **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FIRST_FAST_REFRESH_PROPERTY, UNKNOWN_ATTRIB_VAL);
-          }
-        } else {
-          /** First fast refresh **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIRST_FAST_REFRESH_PROPERTY))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, FIRST_FAST_REFRESH_PROPERTY, FORMAT_INT32, pDimms[DimmIndex].FirstFastRefresh);
-          }
         }
 
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_VIRAL_POLICY) {

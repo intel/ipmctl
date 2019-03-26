@@ -832,7 +832,6 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   DIMM *pDimm = NULL;
   UINT16 dimm_id;
   int rc;
-  PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
   int nvm_status;
 
@@ -856,16 +855,6 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
     return NVM_ERR_UNKNOWN;
   }
 
-  ReturnCode = FwCmdGetOptionalConfigurationDataPolicy(pDimm, &OptionalDataPolicyPayload);
-  if (ReturnCode == EFI_UNSUPPORTED) {
-    p_settings->first_fast_refresh = 0;
-  } else {
-    if (EFI_ERROR(ReturnCode)) {
-      return NVM_ERR_UNKNOWN;
-    }
-    p_settings->first_fast_refresh = OptionalDataPolicyPayload.FirstFastRefresh;
-  }
-
   ReturnCode = FwCmdGetViralPolicy(pDimm, &ViralPolicyPayload);
   if (ReturnCode == EFI_UNSUPPORTED) {
     p_settings->viral_policy = 0;
@@ -884,42 +873,7 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
 NVM_API int nvm_modify_device_settings(const NVM_UID      device_uid,
                const struct device_settings * p_settings)
 {
-  EFI_STATUS ReturnCode;
-  DIMM *pDimm = NULL;
-  UINT16 dimm_id;
-  int rc;
-  PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
-  int nvm_status;
-
-  if (NULL == p_settings) {
-    NVDIMM_ERR("NULL input parameter\n");
-    return NVM_ERR_INVALID_PARAMETER;
-  }
-
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return nvm_status;
-  }
-
-  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
-    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
-    return rc;
-  }
-
-  if (NULL == (pDimm = GetDimmByPid(dimm_id, &gNvmDimmData->PMEMDev.Dimms))) {
-    NVDIMM_ERR("Failed to get dimm by Pid (%d)\n", dimm_id);
-    return NVM_ERR_UNKNOWN;
-  }
-
-  OptionalDataPolicyPayload.FirstFastRefresh = p_settings->first_fast_refresh;
-
-  ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimm, &OptionalDataPolicyPayload);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("FwCmdSetOptionalConfigurationDataPolicy failed (%d)\n", ReturnCode);
-    return NVM_ERR_UNKNOWN;
-  }
-
-  return NVM_SUCCESS;
+  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 NVM_API int nvm_get_device_details(const NVM_UID    device_uid,

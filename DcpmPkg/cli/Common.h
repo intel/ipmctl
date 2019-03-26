@@ -113,7 +113,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_FIRST_FAST_REFRESH   L"Syntax Error: Incorrect value for property FirstFastRefresh."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ACTION_REQUIRED      L"Syntax Error: Incorrect value for property ActionRequired."

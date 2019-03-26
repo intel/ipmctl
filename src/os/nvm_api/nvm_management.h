@@ -810,7 +810,7 @@ struct device_capacities {
  * Modifiable settings of a device.
  */
 struct device_settings {
-  NVM_BOOL  first_fast_refresh;     ///< Enable/disable acceleration of first refresh cycle.
+  NVM_BOOL  first_fast_refresh;     ///< DEPRECATED; Enable/disable acceleration of first refresh cycle.
   NVM_BOOL  viral_policy;           ///< Viral Policy Enabled/Disabled
   NVM_BOOL  viral_status;           ///< Viral Policy Status
   NVM_UINT8 reserved[5];            ///< reserved

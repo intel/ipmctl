@@ -34,17 +34,26 @@ int win_scm2_ioctl_passthrough_cmd(unsigned short nfit_handle,
   size_t invdimmInputSize = FIELD_OFFSET(SCM_PD_PASSTHROUGH_INVDIMM_INPUT, OpcodeParameters) + input_payload_size;
   size_t passthroughInputSize = 0;  // calculate after invdimmInputSize is checked
   size_t invdimmOutputSize = FIELD_OFFSET(SCM_PD_PASSTHROUGH_INVDIMM_OUTPUT, OutputData) + output_payload_size;
-  size_t passthroughOutputSize = FIELD_OFFSET(SCM_PD_PASSTHROUGH_INPUT, Data) + invdimmOutputSize;
+  size_t passthroughOutputSize = 0; // calculate after invdimmOutputSize is checked
 
   // if size of struct is larger then use that size
   if (sizeof(SCM_PD_PASSTHROUGH_INVDIMM_INPUT) > invdimmInputSize) {
     invdimmInputSize = sizeof(SCM_PD_PASSTHROUGH_INVDIMM_INPUT);
   }
+  if (sizeof(SCM_PD_PASSTHROUGH_INVDIMM_OUTPUT) > invdimmOutputSize) {
+      invdimmOutputSize = sizeof(SCM_PD_PASSTHROUGH_INVDIMM_OUTPUT);
+  }
 
   passthroughInputSize = FIELD_OFFSET(SCM_PD_PASSTHROUGH_INPUT, Data) + invdimmInputSize;
 
+  passthroughOutputSize = FIELD_OFFSET(SCM_PD_PASSTHROUGH_OUTPUT, Data) + invdimmOutputSize;
+
   if (sizeof(SCM_PD_PASSTHROUGH_INPUT) > passthroughInputSize) {
     passthroughInputSize = sizeof(SCM_PD_PASSTHROUGH_INPUT);
+  }
+
+  if (sizeof(SCM_PD_PASSTHROUGH_OUTPUT) > passthroughOutputSize) {
+      passthroughOutputSize = sizeof(SCM_PD_PASSTHROUGH_OUTPUT);
   }
 
   ioctl_data.InputDataSize = passthroughInputSize;

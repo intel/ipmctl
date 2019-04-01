@@ -45,7 +45,6 @@ typedef union {
 
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000
-#define SPD_DEVICE_ID_05 0x0979
 #define SPD_DEVICE_ID_10 0x097A
 #define SPD_DEVICE_ID_15 0x097B
 

@@ -3649,7 +3649,7 @@ IsSubsystemDeviceIdSupportedByValues(
 {
   BOOLEAN Supported = FALSE;
 
-  if ((SubsystemDeviceId >= SPD_DEVICE_ID_05) &&
+  if ((SubsystemDeviceId >= SPD_DEVICE_ID_10) &&
     (SubsystemDeviceId <= SPD_DEVICE_ID_15)) {
     Supported = TRUE;
   }

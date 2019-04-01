@@ -134,14 +134,14 @@ typedef struct {
   FW_VERSION ImageVersion;   //!< Image version
   UINT32 PerPartIdHigh;      //!< Part id high
   UINT32 PerPartIdLow;       //!< Part id low
-  UINT32 ImageSize;          //!< Size of (header , signature , data) in DWORDs (ie size - 65 DWORDs) 
-  API_VERSION FwApiVersion;  //!< BCD format: aa.bb 
+  UINT32 ImageSize;          //!< Size of (header , signature , data) in DWORDs (ie size - 65 DWORDs)
+  API_VERSION FwApiVersion;  //!< BCD format: aa.bb
   UINT8 StageNumber;         //!< Stage number: 0 - stage1 , 1 - stage 2
-  UINT32 fwImageStartAddr;   //!< Firmware SRAM start address. This value must agree with actual image start produced by fnv_fv.ld. The fwImageStartAddr address MUST be 64 byte aligned. 
-  UINT16 VendorId;           //!< Specifies vendor. Intel (0x8086) 
-  UINT16 DeviceId;           //!< Specifies root arch type (fnv, ekv, bwv, cwv, etc .). 
-  UINT16 RevisionId;         //!< Specifies base and metal steppings of arch (A0, A1 , S0, S1, B0, B2, etc.). 
-  UINT8 NumberofStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load 
+  UINT32 fwImageStartAddr;   //!< Firmware SRAM start address. This value must agree with actual image start produced by the .ld file. The fwImageStartAddr address MUST be 64 byte aligned.
+  UINT16 VendorId;           //!< Specifies vendor. Intel (0x8086)
+  UINT16 DeviceId;           //!< Specifies root arch type (ekv, bwv, cwv, etc .).
+  UINT16 RevisionId;         //!< Specifies base and metal steppings of arch (A0, A1 , S0, S1, B0, B2, etc.).
+  UINT8 NumberofStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
   UINT8 Reserved[56];
 } FW_IMAGE_HEADER;
 

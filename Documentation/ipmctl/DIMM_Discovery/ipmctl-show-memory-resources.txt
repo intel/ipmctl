@@ -103,7 +103,7 @@ Persistent Partition Capacity (PPC)::
   Persistent Capacity reported by DCPMM DIMM Partition Info
 
 Volatile Memory Size (VMS)::
-  Usable voliatile memory capacity as reported by platform FW
+  Usable volatile memory capacity as reported by platform FW
   via _Intel NVDIMM Current Config->Volatile Memory Size Mapped into SPA_ field
 
 Persistent Memory Size (PMS) ::

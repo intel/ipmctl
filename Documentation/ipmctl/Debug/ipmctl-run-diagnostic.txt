@@ -93,5 +93,7 @@ State::
   - "Failed"
   - "Aborted"
 
+  NOTE: State is promoted to the highest severity result from the test group.
+
 Message::
   A free form textual description of the error.

@@ -602,36 +602,49 @@ BlockForFwStage(
 {
   EFI_STATUS      ReturnCode = EFI_SUCCESS;
   UINT32          CurrentStageCheck = 0;
-  UINT16          FwStagedConfirmedCount = 0;
-  BOOLEAN         FwStagedConfirmed[MAX_DIMMS];
-  BOOLEAN         FwStagedPendingConfirm[MAX_DIMMS];
-  UINT16          FwStagedPendingConfirmCount = 0;
+  EFI_STATUS      FwStagedLongOpCodes[MAX_DIMMS];
+  BOOLEAN         FwStageDone[MAX_DIMMS];
+  UINT16          FwStagedPendingCount = 0;
+  UINT16          FwStagedCompleteCount = 0;
+  UINT8 CmdOpcode = 0;
+  UINT8 CmdSubOpcode = 0;
+  UINT8 PtUpdateFw = 0x09;
+  UINT8 SubopUpdateFw = 0x0;
+  EFI_STATUS LongOpEfiStatus = EFI_SUCCESS;
+  UINT8 TransmitFwNeverHappened = 0xFF;
+  UINT8 UnknownStatus = 0xFD;
   volatile UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
   //initialize
   for (Index = 0; Index < MAX_DIMMS; Index++) {
-    FwStagedConfirmed[Index] = FALSE;
-    FwStagedPendingConfirm[Index] = FALSE;
+    FwStagedLongOpCodes[Index] = UnknownStatus;
+    FwStageDone[Index] = FALSE;
   }
 
+  //more initialize
   for (Index = 0; Index < pDimmTargetsNum; Index++) {
-    //the update apparently worked, mark this DIMM for checking
-    if (pReturnCodes[Index] == EFI_SUCCESS) {
-      FwStagedPendingConfirm[Index] = TRUE;
-      FwStagedPendingConfirmCount++;
-      if (pReturnCodes[Index] == NVM_SUCCESS) {
-        FwStagedPendingConfirm[Index] = TRUE;
-      } else {
-        //this should not happen. Report it.
-        NVDIMM_DBG("Error with FW stage on dimm %d: an existing error exists - NvmCode=[%d], ReturnCode=[%d]",
-          pDimmTargets[Index].DimmID, pNvmCodes[Index], pReturnCodes[Index]);
-      }
+    if (pReturnCodes[Index] != EFI_SUCCESS) {
+      //this DIMM didn't transmit an image. Don't expect a long op code
+      FwStagedLongOpCodes[Index] = TransmitFwNeverHappened;
+      FwStagedCompleteCount++;
+      FwStageDone[Index] = TRUE;
+      NVDIMM_DBG("Error with FW stage on dimm %d: an existing error exists - NvmCode=[%d], ReturnCode=[%d]",
+        pDimmTargets[Index].DimmID, pNvmCodes[Index], pReturnCodes[Index]);
+      continue;
+    }
+
+    FwStagedPendingCount++;
+    ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+      &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
+    if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw)
+    {
+      FwStagedLongOpCodes[Index] = LongOpEfiStatus;
     }
   }
 
-  if (FwStagedPendingConfirmCount == 0) {
+  if (FwStagedPendingCount == 0) {
     NVDIMM_DBG("No DIMMs have images expected to stage. Exiting.");
     goto Finish;
   }
@@ -643,22 +656,53 @@ BlockForFwStage(
     for (Index = 0; Index < pDimmTargetsNum; Index++)
     {
       //dont perform unnecessary checks or repeat checks that already took place
-      if (FALSE == FwStagedPendingConfirm[Index] || TRUE  == FwStagedConfirmed[Index]) {
+      if (FwStagedLongOpCodes[Index] == TransmitFwNeverHappened || FwStageDone[Index] == TRUE) {
         continue;
       }
 
-      if(TRUE == FwHasBeenStaged(pCmd, pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID)){
+      if (FwHasBeenStaged(pCmd, pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID) == TRUE) {
         pNvmCodes[Index] = NVM_SUCCESS_FW_RESET_REQUIRED;
         pReturnCodes[Index] = EFI_SUCCESS;
         SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], pNvmCodes[Index], TRUE);
-        FwStagedConfirmed[Index] = TRUE;
-        FwStagedConfirmedCount++;
+        FwStagedCompleteCount++;
+        FwStageDone[Index] = TRUE;
+        FwStagedLongOpCodes[Index] = FW_SUCCESS;
+        NVDIMM_DBG("FW stage detected for dimm %d", pDimmTargets[Index].DimmID);
+        continue;
+      }
+
+      ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+        &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
+
+      if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw) {
+        if (LongOpEfiStatus != EFI_NO_RESPONSE && LongOpEfiStatus != EFI_SUCCESS) {
+
+          NVDIMM_DBG("Error with FW stage on dimm %d: Long operation failed - LongOpEfiStatus=[%d]",
+            pDimmTargets[Index].DimmID, LongOpEfiStatus);
+
+          if (LongOpEfiStatus == EFI_DEVICE_ERROR) {
+            pNvmCodes[Index] = NVM_ERR_DEVICE_ERROR;
+          } else if (LongOpEfiStatus == EFI_UNSUPPORTED) {
+            pNvmCodes[Index] = NVM_ERR_UNSUPPORTED_COMMAND;
+          } else if (LongOpEfiStatus == EFI_SECURITY_VIOLATION) {
+            pNvmCodes[Index] = NVM_ERR_FW_UPDATE_AUTH_FAILURE;
+          } else if (LongOpEfiStatus == EFI_ABORTED) {
+            pNvmCodes[Index] = NVM_ERR_LONG_OP_ABORTED_OR_REVISION_FAILURE;
+          } else {
+            pNvmCodes[Index] = NVM_ERR_LONG_OP_UNKNOWN;
+          }
+
+          pReturnCodes[Index] = LongOpEfiStatus;
+          SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], pNvmCodes[Index], TRUE);
+          FwStagedCompleteCount++;
+          FwStageDone[Index] = TRUE;
+          FwStagedLongOpCodes[Index] = LongOpEfiStatus;
+        }
       }
     }
 
-    //all dimms needed to be confirmed were confirmed
-    if (FwStagedConfirmedCount == FwStagedPendingConfirmCount) {
-      break;
+    if (FwStagedCompleteCount == pDimmTargetsNum) {
+      break; //while loop
     }
 
     gBS->Stall(MICROSECONDS_PERIOD_BETWEEN_STAGING_CHECKS);
@@ -666,8 +710,9 @@ BlockForFwStage(
 
   //mark any DIMM which was pending an update but never confirmed it as a failure
   for (Index = 0; Index < pDimmTargetsNum; Index++) {
-    if (TRUE == FwStagedPendingConfirm[Index] && FALSE == FwStagedConfirmed[Index]) {
-      pNvmCodes[Index] = NVM_ERR_FIRMWARE_FAILED_TO_STAGE;
+    if (FwStageDone[Index] == FALSE) {
+      NVDIMM_DBG("Error with FW stage on dimm %d: Long operation status unknown, image never staged", pDimmTargets[Index].DimmID);
+      pNvmCodes[Index] = NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP;
       pReturnCodes[Index] = EFI_ABORTED;
       SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], pNvmCodes[Index], TRUE);
       ReturnCode = EFI_ABORTED;

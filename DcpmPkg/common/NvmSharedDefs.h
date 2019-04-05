@@ -183,6 +183,13 @@ typedef enum _NvmStatusCode {
   NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS                = 304,  ///< Error: No events found in the event log
   NVM_ERR_FWUPDATE_IN_PROGRESS                      = 305,  ///< Error: No events found in the event log
   NVM_ERR_UNKNOWN_LONG_OP_IN_PROGRESS               = 306,  ///< Error: No events found in the event log
+  NVM_ERR_LONG_OP_ABORTED_OR_REVISION_FAILURE       = 307,  ///< Error: long op was aborted
+  NVM_ERR_FW_UPDATE_AUTH_FAILURE                    = 308,  ///< Error: fw image authentication failed
+  NVM_ERR_UNSUPPORTED_COMMAND                       = 309,  ///< Error: unsupported command
+  NVM_ERR_DEVICE_ERROR                              = 310,  ///< Error: device error
+  NVM_ERR_TRANSFER_ERROR                            = 311,  ///< Error: transfer error
+  NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: the FW was unable to stage and no long op code was recoverable
+  NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

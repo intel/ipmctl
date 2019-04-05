@@ -9067,6 +9067,7 @@ GetLongOpStatus(
   }
 
   *pLongOpEfiStatus = MatchFwReturnCode(LongOpStatus.Status);
+  NVDIMM_DBG("Long operation status converted from FW code %d to EFI code %d", LongOpStatus.Status, *pLongOpEfiStatus);
 
   if (pOpcode != NULL) {
     *pOpcode = LongOpStatus.CmdOpcode;

@@ -627,7 +627,7 @@ SetDimm(
         Check if poison MemoryType is valid
       **/
       for (Index = 0; Index < POISON_MEMORY_TYPE_COUNT; ++Index) {
-          if (0 == StrCmp(pPoisonType, pPoisonMemoryTypeStr[Index])) {
+          if (0 == StrICmp(pPoisonType, pPoisonMemoryTypeStr[Index])) {
               PoisonTypeValid = 1;
               PoisonTypeValue = (UINT8)Index + 1;
           }

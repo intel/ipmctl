@@ -14,6 +14,214 @@ CHAR16 *pTypePath = NULL;
 UINT32 TypeIndex = 0;
 
 /**
+  DecodePcatMemoryModeCapabilities - decodes the MemoryModeCapabilities field of PCAT structure type: PlatformCapabilityInfoTable
+
+  @param[in] pPcatMemoryModeCapabilities pointer to MemoryModeCapabilities
+
+  @retval NULL if no memory mode capabilities supported
+  @retval comma separated string of supported capabilities
+**/
+CHAR16*
+DecodePcatMemoryModeCapabilities(
+  IN     SUPPORTED_MEMORY_MODE *pPcatMemoryModeCapabilities
+  )
+{
+  CHAR16 *MemoryModeCapabilities = NULL;
+
+  if (pPcatMemoryModeCapabilities == NULL) {
+    return MemoryModeCapabilities;
+  }
+
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.OneLm) {
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"1LM");
+  }
+
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.Memory) {
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"2LM");
+  }
+
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.AppDirect) {
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"AppDirect");
+  }
+
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.Storage) {
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"Storage");
+  }
+
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"SubNUMA Cluster");
+  }
+
+  if (MemoryModeCapabilities == NULL) {
+    NVDIMM_DBG("DecodePcatMemoryModeCapabilities failed. Not enough resources!");
+  }
+  return MemoryModeCapabilities;
+}
+
+/**
+  DecodePcatCurrentMemoryMode - decodes the CurrentMemoryMode field of PCAT structure type: PlatformCapabilityInfoTable
+
+  @param[in] pPcatCurrentMemoryMode pointer to CurrentMemoryMode
+  @param[in] pPcatMemoryModeCapabilities pointer to MemoryModeCapabilities
+
+  @retval NULL if no current memory mode set
+  @retval string showing the current memory mode
+**/
+CHAR16*
+DecodePcatCurrentMemoryMode(
+  IN     CURRENT_MEMORY_MODE *pPcatCurrentMemoryMode,
+  IN     SUPPORTED_MEMORY_MODE *pPcatMemoryModeCapabilities
+)
+{
+  UINT8 mask = BIT0 | BIT1;
+  CHAR16 *CurrentMemoryMode = NULL;
+
+  if (pPcatCurrentMemoryMode == NULL) {
+    return CurrentMemoryMode;
+  }
+
+  if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Current Volatile Memory Mode", L"1LM");
+  }
+  else if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == BIT0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Current Volatile Memory Mode", L"2LM");
+  }
+
+  if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == 0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Persistent Memory Mode", L"None");
+  }
+  else if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == BIT0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Persistent Memory Mode", L"AppDirect");
+  }
+
+  if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == 0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Volatile Memory Mode", L"1LM");
+  }
+  else if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == BIT0) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Volatile Memory Mode", L"2LM");
+  }
+
+  //Check if SubNUMA Cluster Mode is enabled
+  if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_STR,
+      L"-SubNUMA Cluster Mode ", ((pPcatCurrentMemoryMode->MemoryModeSplit.SubNumaCluster) ? L"Enabled" : L"Disabled"));
+  }
+
+  if (CurrentMemoryMode == NULL) {
+    NVDIMM_DBG("DecodePcatCurrentMemoryMode failed. Not enough resources!");
+  }
+  return CurrentMemoryMode;
+}
+
+/**
+  DecodePcatInterleaveFormatSupported - decodes the InterleaveFormatSupported field of PCAT structure type: MemoryInterleaveCapabilityTable
+
+  @param[in] pPcatInterleaveFormatSupported pointer to InterleaveFormatSupported
+
+  @retval NULL if no interleave information is present
+  @retval string showing the interleave information
+**/
+CHAR16*
+DecodePcatInterleaveFormatSupported(
+  IN     INTERLEAVE_FORMAT *pPcatInterleaveFormatSupported
+)
+{
+  UINT16 mask2 = BIT0;
+  UINT8 skip = BIT3 | BIT4 | BIT5;
+  UINT8 index = 0;
+  CHAR16 *InterleaveFormatSupported = NULL;
+  CHAR16 *InterleaveSize[] = {L"64B", L"128B", L"256B", L"Reserved", L"Reserved", L"Reserved", L"4KB", L"Reserved"};
+  CHAR16 *NoOfChannelWays[] = {L"1-way", L"2-way", L"3-way", L"4-way", L"6-way", L"8-way", L"12-way", L"16-way", L"24-way"};
+  CHAR16 *ChannelWaysSupported = NULL;
+
+  if (pPcatInterleaveFormatSupported == NULL) {
+    return InterleaveFormatSupported;
+  }
+
+  //Check if the BIOS supported interleave format is recommended
+  InterleaveFormatSupported = CatSPrintClean(InterleaveFormatSupported,
+    L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR,
+    ((pPcatInterleaveFormatSupported->InterleaveFormatSplit.Recommended) ? L"-Recommended" : L"-Not recommended"));
+
+  while (mask2 <= BIT6) {
+    if (pPcatInterleaveFormatSupported->InterleaveFormatSplit.ChannelInterleaveSize & mask2) {
+      InterleaveFormatSupported = CatSPrintClean(InterleaveFormatSupported,
+        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+        L"-Channel interleave size", InterleaveSize[index]);
+      break;
+    }
+    //Skip the reserved bits
+    do {
+      index++;
+      mask2 <<= 1;
+    } while ((mask2 & skip));
+  }
+
+  mask2 = BIT0;
+  index = 0;
+  while (mask2 <= BIT6) {
+    if (pPcatInterleaveFormatSupported->InterleaveFormatSplit.iMCInterleaveSize &  mask2) {
+      InterleaveFormatSupported = CatSPrintClean(InterleaveFormatSupported,
+        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+        L"-iMC interleave size", InterleaveSize[index]);
+      break;
+    }
+    //Skip the reserved bits
+    do {
+      index++;
+      mask2 <<= 1;
+    } while ((mask2 & skip));
+  }
+
+  mask2 = BIT0;
+  index = 0;
+  while (mask2 <= BIT8) {
+    if (pPcatInterleaveFormatSupported->InterleaveFormatSplit.NumberOfChannelWays & mask2) {
+      ChannelWaysSupported = CatSPrintClean(ChannelWaysSupported,
+        ((ChannelWaysSupported == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        NoOfChannelWays[index]);
+    }
+    index++;
+    mask2 <<= 1;
+  }
+  if (ChannelWaysSupported != NULL) {
+    InterleaveFormatSupported = CatSPrintClean(InterleaveFormatSupported,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Channel ways", ChannelWaysSupported);
+  }
+
+  if (InterleaveFormatSupported == NULL) {
+    NVDIMM_DBG("DecodePcatInterleaveFormatSupported failed. Not enough resources!");
+  }
+
+  FREE_POOL_SAFE(ChannelWaysSupported);
+  return InterleaveFormatSupported;
+}
+
+/**
   PrintPcatHeader - prints the header of the parsed NFit table.
 
   @param[in] pPcat pointer to the parsed PCAT header.
@@ -88,7 +296,13 @@ PrintPcatTable(
   )
 {
   UINT16 Index = 0;
+  CHAR16 *InterleaveFormatSupportedIndex = NULL;
   CHAR16 *InterleaveFormatSupported = NULL;
+  CHAR16 *IntelNVDIMMManagementSWConfigInputSupport = NULL;
+  CHAR16 *MemoryModeCapabilities = NULL;
+  CHAR16 *CurrentMemoryMode = NULL;
+  CHAR16 *PersistentMemoryRasCapability = NULL;
+  CHAR16 *MemoryMode[] = {L"1LM", L"2LM", L"Reserved", L"AppDirect", L"Reserved"};
 
   if (pTable == NULL) {
     NVDIMM_DBG("NULL Pointer provided");
@@ -111,19 +325,48 @@ PrintPcatTable(
   case PCAT_TYPE_PLATFORM_CAPABILITY_INFO_TABLE:
     pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO *) pTable;
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"PlatformCapabilityInfoTable");
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"IntelNVDIMMManagementSWConfigInputSupport", FORMAT_HEX_NOWIDTH, pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH, pPlatformCapabilityInfoTable->MemoryModeCapabilities);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH, pPlatformCapabilityInfoTable->CurrentMemoryMode);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH L"\n", pPlatformCapabilityInfoTable->PersistentMemoryRasCapability);
+    if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
+      IntelNVDIMMManagementSWConfigInputSupport = CatSPrintClean(IntelNVDIMMManagementSWConfigInputSupport, FORMAT_STR, L"Yes");
+    }
+    if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_RUNTIME_INTERFACE) {
+      IntelNVDIMMManagementSWConfigInputSupport = CatSPrintClean(IntelNVDIMMManagementSWConfigInputSupport, FORMAT_STR, L" & Runtime Interface for config validation");
+    }
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"IntelNVDIMMMgmtSWConfigInputSupport", ((IntelNVDIMMManagementSWConfigInputSupport != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH),
+      pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, IntelNVDIMMManagementSWConfigInputSupport);
+    FREE_POOL_SAFE(IntelNVDIMMManagementSWConfigInputSupport);
+    MemoryModeCapabilities = DecodePcatMemoryModeCapabilities(&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", ((MemoryModeCapabilities != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH),
+      pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+    FREE_POOL_SAFE(MemoryModeCapabilities);
+    CurrentMemoryMode = DecodePcatCurrentMemoryMode(&pPlatformCapabilityInfoTable->CurrentMemoryMode, &pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", ((CurrentMemoryMode != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH), pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+    FREE_POOL_SAFE(CurrentMemoryMode);
+    if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_MIRRORING) {
+      PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Mirroring");
+    }
+    if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_SPARE) {
+      PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Spare");
+    }
+    if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_MIGRATION) {
+      PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Migration");
+    }
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability",
+      ((PersistentMemoryRasCapability != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS L"\n" : FORMAT_HEX_NOWIDTH L"\n"),
+      pPlatformCapabilityInfoTable->PersistentMemoryRasCapability, PersistentMemoryRasCapability);
+    FREE_POOL_SAFE(PersistentMemoryRasCapability);
     break;
   case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
     pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO *) pTable;
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"MemoryInterleaveCapabilityTable");
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->MemoryMode);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode",
+      (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH,
+      pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumberOfInterleaveFormatsSupported", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported);
     for (Index = 0; Index < pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported; Index++) {
-      InterleaveFormatSupported = CatSPrint(NULL, L"InterleaveFormatSupported(%d)", Index);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupported, FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
+      InterleaveFormatSupportedIndex = CatSPrint(NULL, L"InterleaveFormatSupported(%d)", Index);
+      InterleaveFormatSupported = DecodePcatInterleaveFormatSupported(&pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, ((InterleaveFormatSupported != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH),
+        pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], InterleaveFormatSupported);
       FREE_POOL_SAFE(InterleaveFormatSupported);
     }
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
@@ -229,6 +472,83 @@ PrintPcat(
 }
 
 /**
+  DecodeNfitNvDimmStateFlags - decodes the NvDimmStateFlags field of NFIT structure type: NvDimmRegion
+
+  @param[in] NvDimmStateFlags field from NFIT table to be decoded
+
+  @retval string showing information about events & operation status based on flags set
+**/
+CHAR16*
+DecodeNfitNvDimmStateFlags(
+  IN     UINT16 nfitNvDimmStateFlags
+)
+{
+  UINT8 mask = BIT0;
+  CHAR16 *NvDimmStateFlags = NULL;
+
+  while (mask <= BIT6) {
+    switch (mask) {
+    case NVDIMM_STATE_FLAGS_SAVE:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-Save failed", NVDIMM_STATE_FLAGS_SAVE);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_RESTORE:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-Restore failed", NVDIMM_STATE_FLAGS_RESTORE);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_FLUSH:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-Flush failed", NVDIMM_STATE_FLAGS_FLUSH);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_REGION_ARMED:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-PM writes disabled or Not armed or Previous ERASE failed", NVDIMM_STATE_FLAGS_REGION_ARMED);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_EVENTS_OBSERVED:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-Smart & Health events prior to OSPM handoff", NVDIMM_STATE_FLAGS_EVENTS_OBSERVED);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_EVENTS_NOTIFY:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-Notify OSPM of Smart & Health events", NVDIMM_STATE_FLAGS_EVENTS_NOTIFY);
+      }
+      break;
+    case NVDIMM_STATE_FLAGS_NOT_MAPPED:
+      if (nfitNvDimmStateFlags & mask) {
+        NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"-NVDIMM region not mapped into SPA range", NVDIMM_STATE_FLAGS_NOT_MAPPED);
+      }
+      break;
+    }
+    mask <<= 1;
+  }
+
+  if (NvDimmStateFlags == NULL) {
+    NVDIMM_DBG("DecodePcatMemoryModeCapabilities failed. Not enough resources!");
+  }
+
+  return NvDimmStateFlags;
+}
+
+/**
   PrintFitTable - prints the subtable of the parsed NFit table.
 
   @param[in] pTable pointer to the NFit subtable.
@@ -251,6 +571,7 @@ PrintFitTable(
   CHAR16 *pGuidStr = NULL;
   CHAR16 *LineOffset = NULL;
   CHAR16 *FlushHintAddress = NULL;
+  CHAR16 *NvDimmStateFlags = NULL;
 
   if (pTable == NULL) {
     return;
@@ -293,7 +614,10 @@ PrintFitTable(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmPhysicalAddressRegionBase", FORMAT_UINT64_HEX_NOWIDTH, pTableNvDimmRegion->NvDimmPhysicalAddressRegionBase);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveStructureIndex", FORMAT_HEX_NOWIDTH, pTableNvDimmRegion->InterleaveStructureIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveWays", FORMAT_HEX_NOWIDTH, pTableNvDimmRegion->InterleaveWays);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmStateFlags", FORMAT_HEX_NOWIDTH L"\n", pTableNvDimmRegion->NvDimmStateFlags);
+    NvDimmStateFlags = DecodeNfitNvDimmStateFlags(pTableNvDimmRegion->NvDimmStateFlags);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmStateFlags", ((NvDimmStateFlags != NULL) ? FORMAT_HEX FORMAT_STR_NL : FORMAT_HEX L"\n"),
+      pTableNvDimmRegion->NvDimmStateFlags, NvDimmStateFlags);
+    FREE_POOL_SAFE(NvDimmStateFlags);
     break;
   case NVDIMM_INTERLEAVE_TYPE:
     pTableInterleave = (InterleaveStruct *)pTable;

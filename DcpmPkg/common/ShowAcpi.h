@@ -16,6 +16,21 @@
 #define DS_ACPITYPE_PATH           L"/AcpiList/Acpi/Type"
 #define DS_ACPITYPE_INDEX_PATH     L"/AcpiList/Acpi[%d]/Type[%d]"
 
+#define NVDIMM_STATE_FLAGS_SAVE               BIT0
+#define NVDIMM_STATE_FLAGS_RESTORE            BIT1
+#define NVDIMM_STATE_FLAGS_FLUSH              BIT2
+#define NVDIMM_STATE_FLAGS_REGION_ARMED       BIT3
+#define NVDIMM_STATE_FLAGS_EVENTS_OBSERVED    BIT4
+#define NVDIMM_STATE_FLAGS_EVENTS_NOTIFY      BIT5
+#define NVDIMM_STATE_FLAGS_NOT_MAPPED         BIT6
+
+#define BIOS_SUPPORTS_CHANGING_CONFIG         BIT0
+#define BIOS_SUPPORTS_RUNTIME_INTERFACE       BIT1
+
+#define PERSISTENT_MEMORY_REGION_MIRRORING    BIT0
+#define PERSISTENT_MEMORY_REGION_SPARE        BIT1
+#define PERSISTENT_MEMORY_REGION_MIGRATION    BIT2
+
 /**
   PrintPcatHeader - prints the header of the parsed NFit table.
 

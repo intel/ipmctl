@@ -119,7 +119,7 @@ file_open(
   swprintf_s(pFc->filename, MAX_W_FILE_NAME_SIZE, FORMAT_STR, FileName);
 
   if ((OpenMode & EFI_FILE_MODE_READ) &&
-    (OpenMode & EFI_FILE_MODE_WRITE))
+      (OpenMode & EFI_FILE_MODE_WRITE))
   {
     flags |= O_RDWR;
   }
@@ -136,6 +136,16 @@ file_open(
   {
     flags |= O_CREAT;
   }
+
+#ifdef OS_BUILD
+#ifdef _MSC_VER
+  if (OpenMode & EFI_FILE_MODE_BINARY)
+  {
+    flags |= _O_BINARY;
+  }
+#endif
+#endif
+
 
 #ifndef _MSC_VER
   pFc->fd = _open(pFc->filename_ascii, flags, FILE_MODE);

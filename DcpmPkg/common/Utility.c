@@ -999,6 +999,63 @@ OpenFile(
   IN     BOOLEAN CreateFileFlag
   )
 {
+  return OpenFileWithFlag(pArgFilePath, pFileHandle, pCurrentDirectory, CreateFileFlag, FALSE);
+}
+
+/**
+  Open file or create new file in binary mode.
+
+  @param[in] pArgFilePath path to a file that will be opened
+  @param[out] pFileHandle output handler
+  @param[in, optional] pCurrentDirectory is the current directory path to where
+    we should start to search for the file.
+  @param[in] CreateFileFlag TRUE to create new file or FALSE to open
+    existing file
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER pFilePath is NULL or empty or pFileHandle is NULL
+  @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
+**/
+EFI_STATUS
+OpenFileBinary(
+  IN     CHAR16 *pArgFilePath,
+  OUT EFI_FILE_HANDLE *pFileHandle,
+  IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
+  IN     BOOLEAN CreateFileFlag
+)
+{
+#ifdef OS_BUILD
+#ifdef _MSC_VER
+  return OpenFileWithFlag(pArgFilePath, pFileHandle, pCurrentDirectory, CreateFileFlag, TRUE);
+#endif
+#endif
+  return OpenFileWithFlag(pArgFilePath, pFileHandle, pCurrentDirectory, CreateFileFlag, FALSE);
+}
+
+/**
+  Open file or create new file with the proper flags.
+
+  @param[in] pArgFilePath path to a file that will be opened
+  @param[out] pFileHandle output handler
+  @param[in, optional] pCurrentDirectory is the current directory path to where
+    we should start to search for the file.
+  @param[in] CreateFileFlag - TRUE to create new file or FALSE to open
+    existing file
+  @param[in] binary - use binary open
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER pFilePath is NULL or empty or pFileHandle is NULL
+  @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
+**/
+EFI_STATUS
+OpenFileWithFlag(
+  IN     CHAR16 *pArgFilePath,
+  OUT EFI_FILE_HANDLE *pFileHandle,
+  IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
+  IN     BOOLEAN CreateFileFlag,
+  BOOLEAN binary
+)
+{
   EFI_STATUS Rc = EFI_SUCCESS;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *pVolume = NULL;
   CHAR16 *pFullFilePath = NULL;
@@ -1058,13 +1115,13 @@ OpenFile(
       Get the file system protocol
     **/
     Rc = gBS->OpenProtocol(
-        pHandles[Index],
-        &gEfiSimpleFileSystemProtocolGuid,
-        (VOID *) &pVolume,
-        NULL,
-        NULL,
-        EFI_OPEN_PROTOCOL_GET_PROTOCOL
-        );
+      pHandles[Index],
+      &gEfiSimpleFileSystemProtocolGuid,
+      (VOID *) &pVolume,
+      NULL,
+      NULL,
+      EFI_OPEN_PROTOCOL_GET_PROTOCOL
+    );
     if (EFI_ERROR(Rc)) {
       goto AfterHandles;
     }
@@ -1079,11 +1136,19 @@ OpenFile(
 
     if (CreateFileFlag) {
       // if EFI_FILE_MODE_CREATE then also EFI_FILE_MODE_READ and EFI_FILE_MODE_WRITE are needed.
-      Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath,
-        EFI_FILE_MODE_CREATE|EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE,
-        0);
+      if (binary) {
+        Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath,
+          EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_BINARY, 0);
+      } else {
+        Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath,
+          EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+      }
     } else {
-       Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath, EFI_FILE_MODE_READ, 0);
+      if (binary) {
+        Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath, EFI_FILE_MODE_READ | EFI_FILE_MODE_BINARY, 0);
+      } else {
+        Rc = RootDirHandle->Open(RootDirHandle, pFileHandle, pFilePath, EFI_FILE_MODE_READ, 0);
+      }
     }
 
     RootDirHandle->Close(RootDirHandle);

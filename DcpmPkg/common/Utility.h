@@ -22,6 +22,7 @@
 int _fltused();
 #endif
 
+#define EFI_FILE_MODE_BINARY  0x8000000000000064ULL
 
 /**
   The Config Protocol version bytes definition
@@ -659,6 +660,52 @@ OpenFile(
   IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
   IN     BOOLEAN CreateFileFlag
   );
+
+/**
+  Open file or create new file in binary mode.
+
+  @param[in] pArgFilePath path to a file that will be opened
+  @param[out] pFileHandle output handler
+  @param[in, optional] pCurrentDirectory is the current directory path to where
+    we should start to search for the file.
+  @param[in] CreateFileFlag TRUE to create new file or FALSE to open
+    existing file
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER pFilePath is NULL or empty or pFileHandle is NULL
+  @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
+**/
+EFI_STATUS
+OpenFileBinary(
+  IN     CHAR16 *pArgFilePath,
+  OUT EFI_FILE_HANDLE *pFileHandle,
+  IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
+  IN     BOOLEAN CreateFileFlag
+);
+
+/**
+  Open file or create new file with the proper flags.
+
+  @param[in] pArgFilePath path to a file that will be opened
+  @param[out] pFileHandle output handler
+  @param[in, optional] pCurrentDirectory is the current directory path to where
+    we should start to search for the file.
+  @param[in] CreateFileFlag - TRUE to create new file or FALSE to open
+    existing file
+  @param[in] binary - use binary open
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER pFilePath is NULL or empty or pFileHandle is NULL
+  @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
+**/
+EFI_STATUS
+OpenFileWithFlag(
+  IN     CHAR16 *pArgFilePath,
+  OUT EFI_FILE_HANDLE *pFileHandle,
+  IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
+  IN     BOOLEAN CreateFileFlag,
+  BOOLEAN binary
+);
 
 /**
   Open file or create new file based on device path protocol.

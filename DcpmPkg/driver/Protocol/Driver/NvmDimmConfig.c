@@ -5369,7 +5369,7 @@ UpdateFw(
     goto Finish;
   }
 
-  ReturnCode = OpenFile(pFileName, &FileHandle, pWorkingDirectory, FALSE);
+  ReturnCode = OpenFileBinary(pFileName, &FileHandle, pWorkingDirectory, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
     pCommandStatus->GeneralStatus = NVM_ERR_FILE_NOT_FOUND;
@@ -5396,7 +5396,7 @@ UpdateFw(
     pFwImageInfo->Size = pFileHeader->Size;
   }
 
-  ReturnCode = OpenFile(pFileName, &FileHandle, pWorkingDirectory, FALSE);
+  ReturnCode = OpenFileBinary(pFileName, &FileHandle, pWorkingDirectory, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to open the file");
     pCommandStatus->GeneralStatus = NVM_ERR_UNKNOWN;

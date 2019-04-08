@@ -10113,16 +10113,31 @@ GetCommandAccessPolicy(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
   UINT32 Index = 0;
-  COMMAND_ACCESS_POLICY_ENTRY CapEntries[] = {
-    { PtSetSecInfo, SubopOverwriteDimm, FALSE},
-    { PtSetSecInfo, SubopSetPass, FALSE },
-    { PtSetSecInfo, SubopSecFreezeLock, FALSE },
-    { PtSetFeatures, SubopAlarmThresholds, FALSE },
-    { PtSetFeatures, SubopConfigDataPolicy, FALSE },
-    { PtSetFeatures, SubopAddressRangeScrub, FALSE },
-    { PtSetAdminFeatures, SubopPlatformDataInfo, FALSE },
-    { PtSetAdminFeatures, SubopLatchSystemShutdownState, FALSE },
-    { PtUpdateFw, SubopUpdateFw, FALSE },
+  UINTN StructSize = 0;
+  COMMAND_ACCESS_POLICY_ENTRY *CapEntries;
+  COMMAND_ACCESS_POLICY_ENTRY CapEntriesOrig[] = {
+  { PtSetSecInfo, SubopOverwriteDimm, 0xFF},
+  { PtSetSecInfo, SubopSetPass, 0xFF },
+  { PtSetSecInfo, SubopSecFreezeLock, 0xFF },
+  { PtSetFeatures, SubopAlarmThresholds, 0xFF },
+  { PtSetFeatures, SubopConfigDataPolicy, 0xFF },
+  { PtSetFeatures, SubopAddressRangeScrub, 0xFF },
+  { PtSetAdminFeatures, SubopPlatformDataInfo, 0xFF },
+  { PtSetAdminFeatures, SubopLatchSystemShutdownState, 0xFF },
+  { PtUpdateFw, SubopUpdateFw, 0xFF }
+  };
+  COMMAND_ACCESS_POLICY_ENTRY CapEntries_2_1[] = {
+    { PtSetSecInfo, SubopOverwriteDimm, 0xFF},
+    { PtSetSecInfo, SubopSetMasterPass, 0xFF },
+    { PtSetSecInfo, SubopSetPass, 0xFF },
+    { PtSetSecInfo, SubopSecEraseUnit, 0xFF },
+    { PtSetSecInfo, SubopSecFreezeLock, 0xFF },
+    { PtSetFeatures, SubopAlarmThresholds, 0xFF },
+    { PtSetFeatures, SubopConfigDataPolicy, 0xFF },
+    { PtSetFeatures, SubopAddressRangeScrub, 0xFF },
+    { PtSetAdminFeatures, SubopPlatformDataInfo, 0xFF },
+    { PtSetAdminFeatures, SubopLatchSystemShutdownState, 0xFF },
+    { PtUpdateFw, SubopUpdateFw, 0xFF }
   };
 
   NVDIMM_ENTRY();
@@ -10132,31 +10147,67 @@ GetCommandAccessPolicy(
     goto Finish;
   }
 
-  *pCount = COUNT_OF(CapEntries);
-
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL || !IsDimmManageable(pDimm)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  if (NULL == pCapInfo) {
-    NVDIMM_DBG("pCapInfo is NULL, pCount is %d.", *pCount);
-    ReturnCode = EFI_SUCCESS;
+  if (NULL == pCapInfo) {  // pCapInfo is NULL so just getting size
+    if (  ( (pDimm->FwVer.FwApiMajor == 0x2) && 
+      (pDimm->FwVer.FwApiMinor >= 0x1) ) ||
+      (pDimm->FwVer.FwApiMajor >= 0x3)  )
+    {
+      *pCount = COUNT_OF(CapEntries_2_1);
+      ReturnCode = EFI_SUCCESS;
+    } else {
+      *pCount = COUNT_OF(CapEntriesOrig);
+      ReturnCode = EFI_SUCCESS;
+    }
+    NVDIMM_DBG("Setting pCount to %d.", *pCount);
     goto Finish;
   }
 
-  for(Index = 0; Index < *pCount; Index++) {
+  if (  ( (pDimm->FwVer.FwApiMajor == 0x2) &&
+    (pDimm->FwVer.FwApiMinor >= 0x1) ) ||
+    (pDimm->FwVer.FwApiMajor >= 0x3)  )
+  {
+    if (*pCount == COUNT_OF(CapEntries_2_1)) {
+      CapEntries = CapEntries_2_1;
+      StructSize = sizeof(CapEntries_2_1);
+    }
+    else
+    {
+      NVDIMM_DBG("Parameter pCount should be %d for FIS2.1+ DIMM.  Recieved pCount = %d.", COUNT_OF(CapEntries_2_1), *pCount);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
+  }
+  else 
+  {
+    if (*pCount == COUNT_OF(CapEntriesOrig)) {
+      CapEntries = CapEntriesOrig;
+      StructSize = sizeof(CapEntriesOrig);
+    }
+    else
+    {
+      NVDIMM_DBG("Parameter pCount should be %d for pre-FIS2.1 DIMM.  Recieved pCount = %d.", COUNT_OF(CapEntriesOrig), *pCount);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
+  }
+
+  for (Index = 0; Index < *pCount; Index++) {
     ReturnCode = FwCmdGetCommandAccessPolicy(pDimm, CapEntries[Index].Opcode,
       CapEntries[Index].SubOpcode, &CapEntries[Index].Restriction);
 
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to retrieve Command Access Policy.");
+      NVDIMM_DBG("Failed to retrieve Command Access Policy for %d:%d.  ReturnCode=%d.", CapEntries[Index].Opcode, CapEntries[Index].SubOpcode, ReturnCode);
       return ReturnCode;
     }
   }
 
-  CopyMem_S(pCapInfo, (sizeof(*pCapInfo) * (*pCount)), CapEntries, sizeof(CapEntries));
+  CopyMem_S(pCapInfo, (sizeof(*pCapInfo) * (*pCount)), CapEntries, StructSize);
 
   ReturnCode = EFI_SUCCESS;
   goto Finish;

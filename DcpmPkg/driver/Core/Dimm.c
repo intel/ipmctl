@@ -20,6 +20,7 @@
 #include <NvmDimmDriver.h>
 #ifdef OS_BUILD
 #include <os_types.h>
+#include <Common.h>
 #endif
 
 #ifndef OS_BUILD
@@ -51,7 +52,7 @@ CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
 *
 * It returns TRUE in case of large payload access is disabled and FALSE otherwise
 */
-BOOLEAN config_is_large_payload_disabled()
+BOOLEAN ConfigIsLargePayloadDisabled()
 {
   static BOOLEAN config_large_payload_initialized = FALSE;
   static UINT8 large_payload_disabled = 0;
@@ -70,6 +71,32 @@ BOOLEAN config_is_large_payload_disabled()
   config_large_payload_initialized = TRUE;
 
   return (BOOLEAN)large_payload_disabled;
+}
+
+/*
+* Function get the ini configuration only on the first call
+*
+* It returns TRUE in case of DDRT protocol access is disabled and FALSE otherwise
+*/
+BOOLEAN ConfigIsDdrtProtocolDisabled()
+{
+  static BOOLEAN config_ddrt_protocol_initialized = FALSE;
+  static UINT8 ddrt_protocol_disabled = 0;
+  EFI_STATUS efi_status;
+  EFI_GUID guid = { 0 };
+  UINTN size;
+
+  if (config_ddrt_protocol_initialized)
+    return ddrt_protocol_disabled;
+
+  size = sizeof(ddrt_protocol_disabled);
+  efi_status = GET_VARIABLE(INI_PREFERENCES_DDRT_PROTOCOL_DISABLED, guid, &size, &ddrt_protocol_disabled);
+  if ((EFI_SUCCESS != efi_status) || (ddrt_protocol_disabled > 1))
+    return FALSE;
+
+  config_ddrt_protocol_initialized = TRUE;
+
+  return (BOOLEAN)ddrt_protocol_disabled;
 }
 #endif // OS_BUILD
 
@@ -1698,7 +1725,6 @@ Finish:
   Execute a FW command to get information about DIMM.
 
   @param[in] pDimm The Intel NVM Dimm to retrieve identify info on
-  @param[in] Execute on Smbus mailbox instead of DDRT
   @param[out] pPayload Area to place the identity info returned from FW
 
   @retval EFI_SUCCESS: Success
@@ -1707,7 +1733,6 @@ Finish:
 EFI_STATUS
 FwCmdIdDimm (
   IN     DIMM *pDimm,
-  IN     BOOLEAN Smbus,
      OUT PT_ID_DIMM_PAYLOAD *pPayload
   )
 {
@@ -1732,15 +1757,9 @@ FwCmdIdDimm (
 	pFwCmd->Opcode = PtIdentifyDimm;
 	pFwCmd->SubOpcode = SubopIdentify;
 	pFwCmd->OutputPayloadSize = 128;
-#ifndef OS_BUILD
-	if (Smbus) {
-		ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
-  } else {
-#endif
-		ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-#ifndef OS_BUILD
-	}
-#endif
+
+	ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
 	if (EFI_ERROR(ReturnCode)) {
 		NVDIMM_DBG("Error detected when sending PtIdentifyDimm command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -2014,11 +2033,8 @@ FwCmdGetPlatformConfigData(
   UINT8 *pBuffer = NULL;
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
-#ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
-#else
-  BOOLEAN UseSmallPayload = FALSE;
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
 
@@ -2098,7 +2114,17 @@ FwCmdGetPlatformConfigData(
   InputPayload.CmdOptions.RetrieveOption = PCD_CMD_OPT_PARTITION_DATA;
   pFwCmd->InputPayloadSize = sizeof(InputPayload);
 
-  if (UseSmallPayload) {
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
     pBuffer = AllocateZeroPool(PcdSize);
     if (pBuffer == NULL) {
       NVDIMM_ERR("Can't allocate memory for PCD partition buffer (%d bytes)", PcdSize);
@@ -2165,7 +2191,7 @@ FwCmdGetPlatformConfigData(
       pTempCacheSz = pDimm->PcdOemPartitionSize;
     }
 
-    if (UseSmallPayload) {
+    if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
       CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
       if (NULL != pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pBuffer, PcdSize);
@@ -2178,7 +2204,7 @@ FwCmdGetPlatformConfigData(
     }
     goto Finish;
   }
-  if (UseSmallPayload) {
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
     CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
   } else {
     CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
@@ -2710,13 +2736,10 @@ FwCmdSetPlatformConfigData (
   UINT8 *pPartition = NULL;
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
-#ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
-#else
-  BOOLEAN UseSmallPayload = FALSE;
-#endif
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
 
@@ -2730,10 +2753,6 @@ FwCmdSetPlatformConfigData (
   }
 
 	if (PartitionId == PCD_OEM_PARTITION_ID) {
-    // Force OEM writes to use small payload.
-    // DON'T CHANGE THIS unless you understand related repercussions!
-    UseSmallPayload = TRUE;
-
     // Using small payload transactions.
     // Only allow up to 64kb to protect upper 64kb for OEM data.
     if (RawDataSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
@@ -2803,7 +2822,17 @@ FwCmdSetPlatformConfigData (
     NVDIMM_DBG("Size of command parameters is greater than the size of the small payload.");
   }
 
-  if (UseSmallPayload) {
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
     /** Set PCD by small payload in loop in 64 byte chunks **/
     InPayloadSetData.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
     pFwCmd->LargeInputPayloadSize = 0;
@@ -2975,7 +3004,6 @@ Finish:
   Firmware command to get debug logs size in MB
 
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] UseSmbus - get the debug log over smbus
   @param[out] pLogSizeInMb - number of MB of Logs to be fetched
 
   @retval EFI_SUCCESS Success
@@ -2985,7 +3013,6 @@ Finish:
 EFI_STATUS
 FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
-  IN     BOOLEAN UseSmbus,
      OUT UINT64 *pLogSizeInMb
   )
 {
@@ -3014,16 +3041,8 @@ FwCmdGetFwDebugLogSize(
   pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
   pInputPayload->LogAction = ActionRetrieveDbgLogSize;
 
-  if (UseSmbus) {
-#ifndef OS_BUILD
-    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
-#else
-    ReturnCode = EFI_UNSUPPORTED;
-    goto Finish;
-#endif // !OS_BUILD
-  } else {
-    ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  }
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to get FW debug log size");
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -3043,7 +3062,6 @@ Finish:
 
   @param[in]  pDimm Target DIMM structure pointer
   @param[in]  LogSource Debug log source buffer to retrieve
-  @param[in]  UseSmbus - get the debug log over smbus
   @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
   @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
   @param[out] pCommandStatus structure containing detailed NVM error codes
@@ -3058,7 +3076,6 @@ EFI_STATUS
 FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
   IN     UINT8 LogSource,
-  IN     BOOLEAN UseSmbus,
      OUT VOID **ppDebugLogBuffer,
      OUT UINTN *pDebugLogBufferSize,
      OUT COMMAND_STATUS *pCommandStatus
@@ -3075,11 +3092,8 @@ FwCmdGetFwDebugLog (
   UINT64 BytesReadTotal = 0;
   UINT8 LogAction = 0;
   UINT8 *OutputPayload = NULL;
-#ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
-#else
-  BOOLEAN UseSmallPayload = FALSE;
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
 
@@ -3094,12 +3108,22 @@ FwCmdGetFwDebugLog (
     goto Finish;
   }
 
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   // Populate log size bytes to fetch
   switch (LogSource)
   {
     case FW_DEBUG_LOG_SOURCE_MEDIA:
       LogAction = ActionGetDbgLogPage;
-      ReturnCode = FwCmdGetFwDebugLogSize(pDimm, UseSmbus, &CurrentDebugLogSizeInMbs);
+      ReturnCode = FwCmdGetFwDebugLogSize(pDimm, &CurrentDebugLogSizeInMbs);
       if (EFI_ERROR(ReturnCode)) {
         if (ReturnCode == EFI_SECURITY_VIOLATION) {
           SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_INVALID_SECURITY_STATE);
@@ -3143,7 +3167,7 @@ FwCmdGetFwDebugLog (
   pInputPayload->LogAction = LogAction;
 
   // Default for DDRT large payload transactions. 128 bytes for smbus
-  if (UseSmbus || UseSmallPayload) {
+  if (IS_SMBUS_ENABLED(pAttribs) || IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
     ChunkSize = SMALL_PAYLOAD_SIZE;
     OutputPayload = pFwCmd->OutPayload;
     pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_SMALL;
@@ -3163,16 +3187,8 @@ FwCmdGetFwDebugLog (
   while (BytesReadTotal < LogSizeBytesToFetch) {
 
     pInputPayload->LogPageOffset = LogPageOffset;
-    if (UseSmbus) {
-#ifndef OS_BUILD
-      ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
-#else
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
-#endif // !OS_BUILD
-    } else {
-      ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
-    }
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to get firmware debug log, LogPageOffset = %d\n", LogPageOffset);
       FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -4057,7 +4073,7 @@ RefreshDimm(
     goto Finish;
   }
 
-  ReturnCode = FwCmdIdDimm(pDimm, FALSE, pPayload);
+  ReturnCode = FwCmdIdDimm(pDimm, pPayload);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
@@ -4458,11 +4474,8 @@ GetAndParseFwErrorLogForDimm(
   LOG_INFO_DATA_RETURN OutPayloadGetErrorLogInfoData;
   UINT16 ReturnCount = 0;
   TEMPERATURE Temperature;
-#ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
-#else
-  BOOLEAN UseSmallPayload = FALSE;
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
   ZeroMem(&OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog));
@@ -4484,7 +4497,17 @@ GetAndParseFwErrorLogForDimm(
   InputPayload.SequenceNumber = SequenceNumber;
   InputPayload.RequestCount = (MaxErrorsToSave >= MAX_UINT16) ? MAX_UINT16 : (UINT16) MaxErrorsToSave;
 
-  if (UseSmallPayload) {
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
     InputPayload.LogParameters.Separated.LogInfo = ErrorLogInfoData;
 
     ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLogInfoData, sizeof(OutPayloadGetErrorLogInfoData),
@@ -5063,7 +5086,7 @@ InitializeDimm (
       goto after_mailbox;
     }
 
-    ReturnCode = FwCmdIdDimm(pNewDimm, FALSE, pPayload);
+    ReturnCode = FwCmdIdDimm(pNewDimm, pPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
       goto after_mailbox;
@@ -6402,15 +6425,13 @@ Finish:
   Send a customer format command through the smbus
 
   @param[in] pDimm The dimm to attempt to format
-  @param[in] Smbus Execute on SMBUS mailbox or DDRT
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter
 **/
 EFI_STATUS
 FwCmdFormatDimm(
-  IN    DIMM *pDimm,
-  IN    BOOLEAN Smbus
+  IN    DIMM *pDimm
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -6431,15 +6452,8 @@ FwCmdFormatDimm(
   }
 
 	pFwCmd->Opcode = PtCustomerFormat;
-#ifndef OS_BUILD
-	if (Smbus) {
-		ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
-  } else {
-#endif
-		ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-#ifndef OS_BUILD
-	}
-#endif
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
 	if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_TIMEOUT) {
 		NVDIMM_DBG("Error detected when sending PtCustomerFormat command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -6456,7 +6470,6 @@ FwCmdFormatDimm(
   Firmware command to get DDRT IO init info
 
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] Execute on Smbus mailbox instead of DDRT
   @param[out] pDdrtIoInitInfo pointer to filled payload with DDRT IO init info
 
   @retval EFI_SUCCESS Success
@@ -6467,7 +6480,6 @@ FwCmdFormatDimm(
 EFI_STATUS
 FwCmdGetDdrtIoInitInfo(
   IN     DIMM *pDimm,
-  IN     BOOLEAN Smbus,
      OUT PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO *pDdrtIoInitInfo
   )
 {
@@ -6490,15 +6502,8 @@ FwCmdGetDdrtIoInitInfo(
 	pFwCmd->Opcode = PtGetAdminFeatures;
 	pFwCmd->SubOpcode = SubopDdrtIoInitInfo;
 	pFwCmd->OutputPayloadSize = sizeof(*pDdrtIoInitInfo);
-#ifndef OS_BUILD
-	if (Smbus) {
-		ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
-  } else {
-#endif
-		ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-#ifndef OS_BUILD
-	}
-#endif
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
 	if (EFI_ERROR(ReturnCode)) {
 		NVDIMM_WARN("Failed to get DDRT IO init info");
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -6801,4 +6806,40 @@ EFI_STATUS ClearPcdCacheOnDimmList(VOID)
   }
 #endif // PCD_CACHE_ENABLED
   return EFI_SUCCESS;
+}
+
+EFI_STATUS
+PassThru(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     UINT64 Timeout
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IS_SMBUS_ENABLED(pAttribs)) {
+#ifndef OS_BUILD
+    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
+#else
+    ReturnCode = EFI_UNSUPPORTED;
+#endif // !OS_BUILD
+  }
+  else {
+    ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
+  }
+
+Finish:
+  return ReturnCode;
 }

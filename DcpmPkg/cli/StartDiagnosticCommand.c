@@ -61,6 +61,10 @@ COMMAND StartDiagnosticCommand =
   START_VERB,                                                     //!< verb
   {                                                               //!< options
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
+    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
+    {LARGE_PAYLOAD_OPTION, L"", L"", L"", FALSE, ValueEmpty},
+    {SMALL_PAYLOAD_OPTION, L"", L"", L"", FALSE, ValueEmpty},
 #ifdef OS_BUILD
     { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #else

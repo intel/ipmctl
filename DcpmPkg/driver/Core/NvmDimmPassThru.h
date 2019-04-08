@@ -203,7 +203,7 @@ PollCmdCompletion(
 **/
 EFI_STATUS
 EFIAPI
-PassThru (
+DefaultPassThru (
   IN     struct _DIMM *pDimm,
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout

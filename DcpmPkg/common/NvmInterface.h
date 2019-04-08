@@ -22,6 +22,40 @@
 #include <FwUtility.h>
 #include <PcdCommon.h>
 
+typedef enum _TRANSPORT_PROTOCOL {
+  FisTransportSmbus = 0,
+  FisTransportDdrt = 1
+} TRANSPORT_PROTOCOL;
+
+typedef enum _TRANSPORT_PAYLOAD_SIZE {
+  FisTransportSmallMb = 0,
+  FisTransportLargeMb = 1
+} TRANSPORT_PAYLOAD_SIZE;
+
+typedef struct _EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS {
+  TRANSPORT_PROTOCOL Protocol;
+  TRANSPORT_PAYLOAD_SIZE PayloadSize;
+} EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS;
+
+/**
+  Resolves to TRUE if SMBUS transport protocol is enabled. FALSE otherwise.
+**/
+#define IS_SMBUS_ENABLED(TransportAttribs) (FisTransportSmbus == TransportAttribs.Protocol)
+
+/**
+  Resolves to TRUE if DDRT transport protocol is enabled. FALSE otherwise.
+**/
+#define IS_DDRT_ENABLED(TransportAttribs) (FisTransportDdrt == TransportAttribs.Protocol)
+
+/**
+  Resolves to TRUE if transport small payload size is enabled. FALSE otherwise.
+**/
+#define IS_SMALL_PAYLOAD_ENABLED(TransportAttribs) (FisTransportSmallMb == TransportAttribs.PayloadSize)
+
+/**
+  Resolves to TRUE if transport large payload size is enabled. FALSE otherwise.
+**/
+#define IS_LARGE_PAYLOAD_ENABLED(TransportAttribs) (FisTransportLargeMb == TransportAttribs.PayloadSize)
 
 /* {CF2F5F1F-94B6-4C15-9CAE-AFB3BD9F2BA5} */
 #define EFI_DCPMM_CONFIG_PROTOCOL_GUID \
@@ -1435,6 +1469,38 @@ EFI_STATUS
 );
 
 /**
+  Gets value of transport protocol and payload size settings from platform
+
+  @param[in]     pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in,out] pAttribs A pointer to a variable used to store protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_GET_FIS_TRANSPORT_ATTRIBS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  OUT    EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS *pAttribs
+  );
+
+/**
+  Sets value of transport protocol and payload size settings for platform
+
+  @param[in] pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in] Attribs The new value to assign to protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_SET_FIS_TRANSPORT_ATTRIBS) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs
+  );
+
+/**
   Sets the playback/recording mode
 
   @param[in] PbrMode: 0x0 - Normal, 0x1 - Recording, 0x2 - Playback
@@ -1709,6 +1775,10 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_PASS_THRU PassThru;
 #endif /** MDEPKG_NDEBUG **/
   EFI_DCPMM_CONFIG_DELETE_PCD_CONFIG ModifyPcdConfig;
+
+  EFI_DCPMM_CONFIG_GET_FIS_TRANSPORT_ATTRIBS GetFisTransportAttributes;
+  EFI_DCPMM_CONFIG_SET_FIS_TRANSPORT_ATTRIBS SetFisTransportAttributes;
+
   EFI_DCPMM_CONFIG_PBR_SET_MODE PbrSetMode;
   EFI_DCPMM_CONFIG_PBR_GET_MODE PbrGetMode;
   EFI_DCPMM_CONFIG_PBR_SET_SESSION PbrSetSession;

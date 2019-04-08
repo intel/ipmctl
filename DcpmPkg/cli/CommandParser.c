@@ -22,6 +22,7 @@ EFI_STATUS MatchCommand(struct Command *pInput, struct Command *pMatch);
 EFI_STATUS MatchOptions(struct Command *pInput, struct Command *pMatch);
 EFI_STATUS MatchTargets(struct Command *pInputCmd, struct Command *pCmdToMatch);
 EFI_STATUS MatchProperties(struct Command *pInput, struct Command *pMatch);
+static EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd);
 
 /*
  * Global variables
@@ -289,6 +290,12 @@ Parse(
     }
 
     ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  /* If protocol or payload size options present, ensure no mutually exclusive protocol/payload options */
+  ReturnCode = ValidateProtocolAndPayloadSizeOptions(pCommand);
+  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -728,7 +735,7 @@ MatchOptions(
     }
   }
 
-  if (MatchInputOptions >= MAX_OPTIONS || MatchCommandOptions >= MAX_OPTIONS) {
+  if (MatchInputOptions > MAX_OPTIONS || MatchCommandOptions > MAX_OPTIONS) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Too many options have been provided.");
     goto Finish;
@@ -1563,4 +1570,71 @@ Finish:
     PrinterDestroyCtx(pCommand->pPrintCtx);
   }
   return Rc;
+}
+
+EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+
+  if (NULL == pCmd) {
+    NVDIMM_CRIT("NULL input parameter.\n");
+    goto Finish;
+  }
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (containsOption(pCmd, PROTOCOL_OPTION_DDRT) && containsOption(pCmd, PROTOCOL_OPTION_SMBUS))
+  {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_MUTUALLY_EXCLUSIVE_OPTIONS, PROTOCOL_OPTION_DDRT, PROTOCOL_OPTION_SMBUS));
+    goto Finish;
+  }
+  else if (containsOption(pCmd, LARGE_PAYLOAD_OPTION) && containsOption(pCmd, SMALL_PAYLOAD_OPTION))
+  {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_MUTUALLY_EXCLUSIVE_OPTIONS, LARGE_PAYLOAD_OPTION, SMALL_PAYLOAD_OPTION));
+    goto Finish;
+  }
+  else if (containsOption(pCmd, PROTOCOL_OPTION_SMBUS) && containsOption(pCmd, LARGE_PAYLOAD_OPTION))
+  {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_MUTUALLY_EXCLUSIVE_OPTIONS, PROTOCOL_OPTION_SMBUS, LARGE_PAYLOAD_OPTION));
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (containsOption(pCmd, PROTOCOL_OPTION_DDRT)) {
+    pAttribs.Protocol = FisTransportDdrt;
+  }
+  else if (containsOption(pCmd, PROTOCOL_OPTION_SMBUS)) {
+    pAttribs.Protocol = FisTransportSmbus;
+    pAttribs.PayloadSize = FisTransportSmallMb;
+  }
+
+  if (containsOption(pCmd, LARGE_PAYLOAD_OPTION)) {
+    pAttribs.PayloadSize = FisTransportLargeMb;
+  }
+  else if (containsOption(pCmd, SMALL_PAYLOAD_OPTION)) {
+    pAttribs.PayloadSize = FisTransportSmallMb;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+Finish:
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("ValidateProtocolAndPayloadSizeOptions has returned error. Code " FORMAT_EFI_STATUS "\n", ReturnCode);
+  }
+  return ReturnCode;
 }

@@ -22,7 +22,7 @@
 #define PROPERTY_KEY_LEN          128   //!< Property name string length
 #define PROPERTY_VALUE_LEN        128   //!< Property value string length
 #define MAX_TARGETS               8     //!< Maximum number of targets in a single command
-#define MAX_OPTIONS               8     //!< Maximum number of options in a single command
+#define MAX_OPTIONS               12     //!< Maximum number of options in a single command
 #define MAX_PROPERTIES            20    //!< Maximum number of properties in a single command
 #define MAX_TOKENS                50    //!< Maximum number of tokens per line
 
@@ -87,6 +87,10 @@
 #define MASTER_OPTION                   L"-master"                             //!< 'master' option name
 #define DEFAULT_OPTION                  L"-default"                            //!< 'default' option name
 #define PBR_MODE_OPTION                 L"-mode"                               //!< 'mode' option name
+#define PROTOCOL_OPTION_DDRT            L"-ddrt"                               //!< 'ddrt' option name
+#define PROTOCOL_OPTION_SMBUS           L"-smbus"                              //!< 'smbus' option name
+#define LARGE_PAYLOAD_OPTION            L"-lpmb"                               //!< 'large payload mailbox' option name
+#define SMALL_PAYLOAD_OPTION            L"-spmb"                               //!< 'small payload mailbox' option name
 
 /** command targets **/
 #define DIMM_TARGET                          L"-dimm"                    //!< 'dimm' target name
@@ -442,6 +446,13 @@ EFI_STATUS Parse(struct CommandInput *pInput, struct Command *pCommand);
   If parsing fails, retrieve a more useful syntax error
 **/
 CHAR16 *getSyntaxError();
+
+/**
+ If parsing fails, set syntax error, but first free old one
+**/
+VOID SetSyntaxError(
+  IN      CHAR16 *pSyntaxError
+);
 
 /**
   Get the help for a command read from the user.

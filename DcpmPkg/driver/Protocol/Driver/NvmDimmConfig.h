@@ -79,7 +79,6 @@ extern EFI_GUID gNvmDimmConfigProtocolGuid;
 #define NFIT_PLATFORM_CAPABILITIES_BIT0     0x1
 #define NFIT_MEMORY_CONTROLLER_FLUSH_BIT1   (NFIT_PLATFORM_CAPABILITIES_BIT0 << 0x1)
 
-
 /**
   The update goes in 3 steps: initialization, data, end, where the data step can be done many times.
   Each of those steps must be done at least one, so the minimum number of packets will be 3.
@@ -1537,5 +1536,37 @@ GetCommandAccessPolicy(
 EFI_STATUS
 LoadArsList();
 #endif
+
+/**
+  Gets value of transport protocol and payload size settings from platform
+
+  @param[in]     pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in,out] pAttribs A pointer to a variable used to store protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+EFI_STATUS
+EFIAPI
+GetFisTransportAttributes(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN OUT EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS *pAttribs
+);
+
+/**
+  Sets value of transport protocol and payload size settings for platform
+
+  @param[in] pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in] Attribs The new value to assign to protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+EFI_STATUS
+EFIAPI
+SetFisTransportAttributes(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs
+);
 
 #endif /* _NVMDIMM_CONFIG_H_ */

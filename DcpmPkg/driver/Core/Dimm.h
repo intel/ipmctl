@@ -305,7 +305,15 @@ typedef struct _MEMMAP_RANGE {
 *
 * It returns TRUE in case of large payload access is disabled and FALSE otherwise
 */
-BOOLEAN config_is_large_payload_disabled();
+BOOLEAN ConfigIsLargePayloadDisabled();
+
+#define INI_PREFERENCES_DDRT_PROTOCOL_DISABLED L"DDRT_PROTOCOL_DISABLED"
+/*
+* Function get the ini configuration only on the first call
+*
+* It returns TRUE in case of DDRT protocol access is disabled and FALSE otherwise
+*/
+BOOLEAN ConfigIsDdrtProtocolDisabled();
 #endif // OS_BUILD
 
 EFI_STATUS
@@ -763,7 +771,6 @@ FwCmdGetErrorLog (
 
   @param[in]  pDimm Target DIMM structure pointer
   @param[in]  LogSource Debug log source buffer to retrieve
-  @param[in]  UseSmbus - get the debug log over smbus
   @param[out] ppDebugLogBuffer - an allocated buffer containing the raw debug logs
   @param[out] pDebugLogBufferSize - the size of the raw debug log buffer
   @param[out] pCommandStatus structure containing detailed NVM error codes
@@ -778,7 +785,6 @@ EFI_STATUS
 FwCmdGetFwDebugLog (
   IN     DIMM *pDimm,
   IN     UINT8 LogSource,
-  IN     BOOLEAN UseSmbus,
      OUT VOID **ppDebugLogBuffer,
      OUT UINTN *pDebugLogBufferSize,
      OUT COMMAND_STATUS *pCommandStatus
@@ -788,7 +794,6 @@ FwCmdGetFwDebugLog (
   Firmware command to get debug logs size in MB
 
   @param[in] pDimm Target DIMM structure pointer
-  @param[in]  UseSmbus - get the debug log size over smbus
   @param[out] pLogSizeInMb - number of MB of Logs to be fetched
 
   @retval EFI_SUCCESS Success
@@ -798,7 +803,6 @@ FwCmdGetFwDebugLog (
 EFI_STATUS
 FwCmdGetFwDebugLogSize(
   IN     DIMM *pDimm,
-  IN     BOOLEAN UseSmbus,
      OUT UINT64 *pLogSizeInMb
   );
 /**
@@ -806,7 +810,6 @@ FwCmdGetFwDebugLogSize(
   Execute a FW command to get information about DIMM.
 
   @param[in] pDimm The Intel NVM Dimm to retrieve identify info on
-  @param[in] Execute on Smbus mailbox instead of DDRT
   @param[out] pPayload Area to place the identity info returned from FW
 
   @retval EFI_SUCCESS: Success
@@ -815,7 +818,6 @@ FwCmdGetFwDebugLogSize(
 EFI_STATUS
 FwCmdIdDimm(
   IN     DIMM *pDimm,
-  IN     BOOLEAN Smbus,
      OUT PT_ID_DIMM_PAYLOAD *pPayload
   );
 
@@ -1628,22 +1630,19 @@ GetOverwriteDimmStatus(
   Send a customer format command through the smbus
 
   @param[in] pDimm The dimm to attempt to format
-  @param[in] Smbus Execute on SMBUS mailbox or DDRT
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter
 **/
 EFI_STATUS
 FwCmdFormatDimm(
-  IN    DIMM *pDimm,
-  IN    BOOLEAN Smbus
+  IN    DIMM *pDimm
   );
 
 /**
   Firmware command to get DDRT IO init info
 
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] Execute on Smbus mailbox instead of DDRT
   @param[out] pDdrtIoInitInfo pointer to filled payload with DDRT IO init info
 
   @retval EFI_SUCCESS Success
@@ -1654,7 +1653,6 @@ FwCmdFormatDimm(
 EFI_STATUS
 FwCmdGetDdrtIoInitInfo(
   IN     DIMM *pDimm,
-  IN     BOOLEAN Smbus,
      OUT PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO *pDdrtIoInitInfo
   );
 
@@ -1813,5 +1811,12 @@ offset any of the 3 data sets.
 EFI_STATUS GetPcdOemDataSize(
   NVDIMM_CONFIGURATION_HEADER *pOemHeader,
   UINT32 *pOemDataSize
+);
+
+EFI_STATUS
+PassThru(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     UINT64 Timeout
 );
 #endif

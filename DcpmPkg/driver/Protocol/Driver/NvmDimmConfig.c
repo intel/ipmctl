@@ -68,6 +68,8 @@ EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 extern CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT];
+EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportDdrt, FisTransportSmallMb };
+
 #ifndef OS_BUILD
 
 EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
@@ -138,6 +140,10 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   PassThruCommand,
 #endif
   ModifyPcdConfig,
+
+  GetFisTransportAttributes,
+  SetFisTransportAttributes,
+
   PbrSetMode,
   PbrGetMode,
   PbrSetSession,
@@ -4632,7 +4638,6 @@ Finish:
   The caller must ensure, that the LargeInputPayloadSize is set and the buffer is already copied to the command.
 
   @param[in] pDimm Pointer to DIMM
-  @param[in] Smbus Execute on the SMBUS mailbox instead of DDRT
   @param[in,out] pPassThruCommand the pointer to the allocated command. After completion the FV response is
     in the structure, so the caller needs to read it after calling this function.
 
@@ -4644,7 +4649,6 @@ EFI_STATUS
 EFIAPI
 SendUpdatePassThru(
   IN     DIMM *pDimm,
-  IN     BOOLEAN Smbus,
   IN OUT FW_CMD *pPassThruCommand
   )
 {
@@ -4657,15 +4661,8 @@ SendUpdatePassThru(
 
   pPassThruCommand->Opcode = PtUpdateFw;       //!< Firmware update category
   pPassThruCommand->SubOpcode = SubopUpdateFw; //!< Execute the firmware image
-#ifndef OS_BUILD
-  if (Smbus) {
-    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pPassThruCommand, PT_UPDATEFW_TIMEOUT_INTERVAL);
-  } else {
-#endif
-    ReturnCode = PassThru(pDimm, pPassThruCommand, PT_UPDATEFW_TIMEOUT_INTERVAL);
-#ifndef OS_BUILD
-  }
-#endif
+  ReturnCode = PassThru(pDimm, pPassThruCommand, PT_UPDATEFW_TIMEOUT_INTERVAL);
+
   if (EFI_ERROR(ReturnCode)) {
     if (FW_ERROR(pPassThruCommand->Status)) {
       FW_CMD_ERROR_TO_EFI_STATUS(pPassThruCommand, ReturnCode);
@@ -4871,7 +4868,7 @@ UpdateSmbusDimmFw(
 
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
   CurrentPacket++;
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
+  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     *pNvmStatus = NVM_ERR_OPERATION_FAILED;
@@ -4889,7 +4886,7 @@ UpdateSmbusDimmFw(
     CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
     CurrentPacket++;
 
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
+    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
       *pNvmStatus = NVM_ERR_OPERATION_FAILED;
@@ -4903,7 +4900,7 @@ UpdateSmbusDimmFw(
   CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
 
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
+  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     *pNvmStatus = NVM_ERR_OPERATION_FAILED;
@@ -5020,7 +5017,7 @@ UpdateDimmFw(
 #ifdef OS_BUILD
     pPassThruCommand->DsmStatus = 0;
 #endif
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
 #ifdef OS_BUILD
     NVDIMM_DBG("SendUpdatePassThru: Device %x, RetVal %x, MB Status %x, DSM Status %x\n", pCurrentDimm->DeviceHandle, ReturnCode, pPassThruCommand->Status, pPassThruCommand->DsmStatus);
 #else
@@ -5086,7 +5083,7 @@ UpdateDimmFw(
   CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
   CurrentPacket++;
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
@@ -5108,7 +5105,7 @@ UpdateDimmFw(
     CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
     CurrentPacket++;
 
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
     if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
       NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
       if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
@@ -5128,7 +5125,7 @@ UpdateDimmFw(
   FwUpdatePacket.PacketNumber = CurrentPacket;
   CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, FALSE, pPassThruCommand);
+  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
     NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
     if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
@@ -7905,7 +7902,9 @@ GetFwDebugLog(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
-  BOOLEAN UseSmbus = FALSE;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+
   NVDIMM_ENTRY();
 
   if (pThis == NULL || ppDebugLogBuffer == NULL || pDebugLogBufferSize == NULL ||
@@ -7921,26 +7920,32 @@ GetFwDebugLog(
   }
 
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-#ifndef OS_BUILD
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-    if (pDimm != NULL) {
-      UseSmbus = TRUE;
-    }
   }
-#endif // OS_BUILD
+
   // If we still can't find the dimm, fail out
   if (pDimm == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
     goto Finish;
   }
 
-  if (!UseSmbus && !IsDimmManageable(pDimm)) {
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (!IS_SMBUS_ENABLED(pAttribs) && !IsDimmManageable(pDimm)) {
     SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, NULL, 0, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetFwDebugLog(pDimm, LogSource, UseSmbus, ppDebugLogBuffer, pDebugLogBufferSize, pCommandStatus);
+  ReturnCode = FwCmdGetFwDebugLog(pDimm, LogSource, ppDebugLogBuffer, pDebugLogBufferSize, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_SECURITY_VIOLATION) {
@@ -8979,7 +8984,6 @@ GetDdrtIoInitInfo(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
   PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO DdrtIoInitInfo;
-  BOOLEAN Smbus = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -8988,7 +8992,6 @@ GetDdrtIoInitInfo(
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-    Smbus = TRUE;
     if (pDimm == NULL) {
       goto Finish;
     }
@@ -8998,7 +9001,7 @@ GetDdrtIoInitInfo(
     goto Finish;
   }
 
-  ReturnCode = FwCmdGetDdrtIoInitInfo(pDimm, Smbus, &DdrtIoInitInfo);
+  ReturnCode = FwCmdGetDdrtIoInitInfo(pDimm, &DdrtIoInitInfo);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10302,3 +10305,85 @@ Finish:
   return ReturnCode;
 }
 #endif
+
+/**
+  Gets value of Smbus protocol configuration global variable from platform
+
+  @param[in]     pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in,out] pAttribs A pointer to a variable used to store protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+EFI_STATUS
+EFIAPI
+GetFisTransportAttributes(
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  OUT EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS *pAttribs
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pThis || NULL == pAttribs) {
+    NVDIMM_DBG("Input parameter is NULL");
+    goto Finish;
+  }
+
+  pAttribs->Protocol = gTransportAttribs.Protocol;
+  pAttribs->PayloadSize = gTransportAttribs.PayloadSize;
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Sets value of Smbus protocol configuration global variable for platform
+
+  @param[in] pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in] Attribs A pointer to a variable used to store protocol and payload settings
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid FW Command Parameter.
+**/
+EFI_STATUS
+EFIAPI
+SetFisTransportAttributes(
+  IN  EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pThis) {
+    NVDIMM_DBG("Input parameter is NULL");
+    goto Finish;
+  }
+
+  if (((Attribs.Protocol == FisTransportSmbus) && (Attribs.Protocol == FisTransportDdrt))
+    || ((Attribs.PayloadSize == FisTransportSmallMb) && (Attribs.PayloadSize == FisTransportLargeMb))) {
+    NVDIMM_DBG("Mutually exclusive transport attributes detected");
+    goto Finish;
+  }
+
+  if ((!(Attribs.Protocol == FisTransportSmbus) && !(Attribs.Protocol == FisTransportDdrt))
+    || (!(Attribs.PayloadSize == FisTransportSmallMb) && !(Attribs.PayloadSize == FisTransportLargeMb))) {
+    NVDIMM_DBG("Insufficient transport attributes detected");
+    goto Finish;
+  }
+
+  gTransportAttribs.Protocol = Attribs.Protocol;
+  gTransportAttribs.PayloadSize = Attribs.PayloadSize;
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}

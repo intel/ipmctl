@@ -108,7 +108,7 @@ static struct debug_logger_config g_log_config = { 0 };
 
 EFI_STATUS
 EFIAPI
-PassThru(
+DefaultPassThru(
   IN     struct _DIMM *pDimm,
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout

@@ -34,6 +34,14 @@ OPTIONS
 -help::
   Displays help for the command.
 
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
 -master::
   Erases DCPMMs using master passphrase. Valid only if master passphrase is enabled on specified
   DCPMMs (see MasterPassphraseEnabled attribute in section <<Show Device>>).

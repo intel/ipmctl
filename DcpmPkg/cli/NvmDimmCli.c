@@ -84,6 +84,8 @@ extern int cov_dumpData(void);
 #include "DumpSupportCommand.h"
 #include <stdio.h>
 extern void nvm_current_cmd(struct Command Command);
+extern BOOLEAN ConfigIsDdrtProtocolDisabled();
+extern BOOLEAN ConfigIsLargePayloadDisabled();
 #else
 #include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
@@ -115,6 +117,9 @@ static EFI_STATUS showVersion(struct Command *pCmd);
 static EFI_STATUS GetPbrMode(UINT32 *Mode);
 static EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription);
 static EFI_STATUS ResetPbrSession(UINT32 TagId);
+#ifdef OS_BUILD
+static EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions();
+#endif
 
 /**
   Supported commands
@@ -192,6 +197,8 @@ UefiMain(
   EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
 #else
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 #endif
   UINT32 Mode;
   CHAR16 *pTagDescription = NULL;
@@ -214,6 +221,13 @@ UefiMain(
     }
   }
 #endif
+#endif
+
+#ifdef OS_BUILD
+  Rc = SetDefaultProtocolAndPayloadSizeOptions();
+  if (EFI_ERROR(Rc)) {
+    goto Finish;
+  }
 #endif
 
   NVDIMM_ENTRY();
@@ -426,7 +440,22 @@ UefiMain(
 
 #ifdef OS_BUILD
         if (!Command.ExcludeDriverBinding) {
-          NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
+          Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
+          if (EFI_UNSUPPORTED == Rc) {
+            Rc = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+            if (EFI_ERROR(Rc)) {
+              goto Finish;
+            }
+
+            Rc = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+            if (EFI_ERROR(Rc)) {
+              goto Finish;
+            }
+
+            if (IS_SMBUS_ENABLED(pAttribs)) {
+              Print(CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS, PROTOCOL_OPTION_SMBUS, PROTOCOL_OPTION_DDRT);
+            }
+          }
         }
 #endif
 
@@ -1001,3 +1030,33 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+#ifdef OS_BUILD
+EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+
+  if (ConfigIsDdrtProtocolDisabled()) {
+    pAttribs.Protocol = FisTransportSmbus;
+    pAttribs.PayloadSize = FisTransportSmallMb;
+  }
+  else {
+    pAttribs.Protocol = FisTransportDdrt;
+  }
+
+  if (ConfigIsLargePayloadDisabled()) {
+    pAttribs.PayloadSize = FisTransportSmallMb;
+  }
+  else {
+    pAttribs.PayloadSize = FisTransportLargeMb;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
+
+  return ReturnCode;
+}
+#endif

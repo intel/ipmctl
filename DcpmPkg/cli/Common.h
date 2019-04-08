@@ -49,6 +49,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_PARSER_ERR_UNEXPECTED_TOKEN      L"Syntax Error: Invalid or unexpected token " FORMAT_STR L"."
 #define CLI_PARSER_ERR_INVALID_COMMAND       L"Syntax Error: Invalid or unsupported command."
 #define CLI_PARSER_ERR_INVALID_OPTION_VALUES L"Syntax Error: Invalid option values input."
+#define CLI_PARSER_ERR_MUTUALLY_EXCLUSIVE_OPTIONS L"Syntax Error: Mutually exclusive options " FORMAT_STR L" and " FORMAT_STR L"."
 #define CLI_PARSER_ERR_INVALID_TARGET_VALUES L"Syntax Error: Invalid target values input."
 #define CLI_PARSER_ERR_VERB_EXPECTED         L"Syntax Error: First token must be a verb, '" FORMAT_STR L"' is not a supported verb."
 #define CLI_PARSER_DETAILED_ERR_OPTION_VALUE_REQUIRED     L"The option " FORMAT_STR L" requires a value."
@@ -221,6 +222,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL
 
 #define CLI_ERR_INJECT_FATAL_ERROR_UNSUPPORTED_ON_OS          L"Injecting a Fatal Media error is unsupported on this OS.\nPlease contact your OSV for assistance in performing this action."
+#define CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS          L"The following protocol (" FORMAT_STR L") is unsupported on this OS. Please use " FORMAT_STR L" instead.\n"
 
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2

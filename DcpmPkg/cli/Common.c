@@ -2286,7 +2286,7 @@ ReadRunTimeCliDisplayPreferences(
   VariableSize = sizeof(pDisplayPreferences->DimmIdentifier);
   ReturnCode = GET_VARIABLE(
     DISPLAY_DIMM_ID_VARIABLE_NAME,
-    gNvmDimmCliVariableGuid,
+    gNvmDimmVariableGuid,
     &VariableSize,
     &pDisplayPreferences->DimmIdentifier);
 
@@ -2302,7 +2302,7 @@ ReadRunTimeCliDisplayPreferences(
   VariableSize = sizeof(pDisplayPreferences->SizeUnit);
   ReturnCode = GET_VARIABLE(
     DISPLAY_SIZE_VARIABLE_NAME,
-    gNvmDimmCliVariableGuid,
+    gNvmDimmVariableGuid,
     &VariableSize,
     &pDisplayPreferences->SizeUnit);
 

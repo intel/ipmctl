@@ -208,7 +208,7 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
       goto Finish;
     } else {
       if (ReturnCode == EFI_SUCCESS) {
-        ReturnCode = SET_STR_VARIABLE_NV(pName, gNvmDimmCliVariableGuid, pTypeValue);
+        ReturnCode = SET_STR_VARIABLE_NV(pName, gNvmDimmVariableGuid, pTypeValue);
         if (!EFI_ERROR(ReturnCode)) {
           PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, pName, pTypeValue);
           SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS);
@@ -328,7 +328,7 @@ SetPreferences(
       VariableSize = sizeof(DisplayPreferences.DimmIdentifier);
       TempReturnCode = SET_VARIABLE_NV(
         CLI_DEFAULT_DIMM_ID_PROPERTY,
-        gNvmDimmCliVariableGuid,
+        gNvmDimmVariableGuid,
         VariableSize,
         &DisplayPreferences.DimmIdentifier);
       if (!EFI_ERROR(TempReturnCode)) {
@@ -360,7 +360,7 @@ SetPreferences(
       VariableSize = sizeof(DisplayPreferences.SizeUnit);
       TempReturnCode = SET_VARIABLE_NV(
         CLI_DEFAULT_SIZE_PROPERTY,
-        gNvmDimmCliVariableGuid,
+        gNvmDimmVariableGuid,
         VariableSize,
         &DisplayPreferences.SizeUnit);
       if (TempReturnCode == EFI_SUCCESS) {

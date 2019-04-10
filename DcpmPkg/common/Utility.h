@@ -406,7 +406,7 @@ typedef union {
 #define SET_VARIABLE_NV(VarName,VendorGuid,BufferSize,Buffer)  \
   (gRT->SetVariable((CHAR16*)VarName,                          \
   &VendorGuid,                                            \
-  EFI_VARIABLE_NON_VOLATILE|EFI_VARIABLE_BOOTSERVICE_ACCESS|EFI_VARIABLE_RUNTIME_ACCESS,      \
+  EFI_VARIABLE_NON_VOLATILE|EFI_VARIABLE_BOOTSERVICE_ACCESS,      \
   BufferSize,                                                     \
   (VOID*)Buffer))
 #else

@@ -915,7 +915,7 @@ ShowDimms(
 
       /** Speed **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SPEED_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SPEED_STR, FORMAT_INT32 L" " MEGA_HERTZ_STR, pDimms[DimmIndex].Speed);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SPEED_STR, FORMAT_INT32 L" " MEGA_TRANSFERS_PER_SEC_STR, pDimms[DimmIndex].Speed);
       }
 
       /** FormFactor **/

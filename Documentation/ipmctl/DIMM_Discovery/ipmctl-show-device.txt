@@ -253,8 +253,8 @@ TotalWidth::
   the SMBIOS Type 17 Memory Device table.
 
 Speed::
-  The maximum capable speed of the device in megahertz (MHz) from the SMBIOS
-  Type 17 Memory Device table.
+  The maximum capable speed of the device in megatransfers per second (MT/s)
+  from the SMBIOS Type 17 Memory Device table.
 
 FormFactor::
   The DCPMM form factor (i.e., SMBIOS Type 17 Memory Device Form Factor). One

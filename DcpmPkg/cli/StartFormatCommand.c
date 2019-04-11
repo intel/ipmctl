@@ -35,7 +35,8 @@ struct Command StartFormatCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
   L"",                                                                   //!< help
-  StartFormat
+  StartFormat,								 //!< run function
+  TRUE
 };
 
 EFI_STATUS
@@ -58,27 +59,33 @@ StartFormat(
   BOOLEAN Recovery = FALSE;
   UINT32 DimmHandle = 0;
   UINT32 DimmIndex = 0;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
 
   NVDIMM_ENTRY();
   ZeroMem(DimmStr, sizeof(DimmStr));
 
   if (pCmd == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
     goto Finish;
   }
 
+  /**
+    Printing will still work via compability mode if NULL so no need to check for NULL.
+  **/
+  pPrinterCtx = pCmd->pPrintCtx;
+
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
@@ -92,15 +99,15 @@ StartFormat(
     }
 
     if (DimmCount == 0) {
-      Print(FORMAT_STR_NL, CLI_INFO_NO_NON_FUNCTIONAL_DIMMS);
       ReturnCode = EFI_NOT_FOUND;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_NON_FUNCTIONAL_DIMMS);
       goto Finish;
     }
 
     pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
     if (pDimms == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
 
@@ -129,8 +136,8 @@ StartFormat(
 
     if (!Recovery) {
       if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
-        Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
         ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
         goto Finish;
       }
     }
@@ -144,7 +151,7 @@ StartFormat(
 
     if (pDimmIds == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
 
@@ -172,7 +179,7 @@ StartFormat(
         goto Finish;
       }
 
-      Print(FORMAT_STR L"(" FORMAT_STR L")\n", CLI_FORMAT_DIMM_PROMPT_STR, DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, FORMAT_STR L"(" FORMAT_STR L")\n", CLI_FORMAT_DIMM_PROMPT_STR, DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (EFI_ERROR(ReturnCode) || !Confirmation) {
         ReturnCode = EFI_NOT_STARTED;
@@ -181,17 +188,18 @@ StartFormat(
     }
   }
 
-  Print(FORMAT_STR_NL, CLI_FORMAT_DIMM_STARTING_FORMAT, DimmStr);
+  PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_STARTING_FORMAT, DimmStr);
 
   ReturnCode = pNvmDimmConfigProtocol->DimmFormat(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, Recovery, pCommandStatus);
   if (!EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL,CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR);
   } else {
     DisplayCommandStatus(CLI_INFO_START_FORMAT, L"", pCommandStatus);
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   }
 
 Finish:
+  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);

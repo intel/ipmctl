@@ -30,6 +30,27 @@ RunQuickDiagnostics(
      OUT CHAR16 **ppResult,
      OUT UINT8 *pDiagState
   );
+/**
+  Run quick diagnostics for the list of DIMMs, and appropriately
+  populate the result messages, and test-state.
+
+  @param[in] ppDimms The DIMM pointers list
+  @param[in] DimmCount DIMMs count
+  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
+  @param[out] ppResult Pointer to the result string of quick diagnostics message
+  @param[out] pDiagState Pointer to the quick diagnostics test state
+
+  @retval EFI_SUCCESS Test executed correctly
+  @retval EFI_DEVICE_ERROR Test wasn't executed correctly
+  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+RunQuickDiagnosticsDetail(
+  IN     DIMM **ppDimms,
+  IN     CONST UINT16 DimmCount,
+  IN     UINT8 DimmIdPreference,
+  OUT DIAG_INFO *pResult
+);
 
 /**
   Check manageability for a DIMM, and accordingly append to

@@ -149,6 +149,36 @@ CoreStartDiagnostics(
 );
 
 /**
+  The fundamental core diagnostics function that is used by both
+  the NvmDimmConfig protocol and the DriverDiagnostic protocols.
+
+  It runs the specified diagnostics tests on the list of specified dimms,
+  and returns a single combined test result message
+
+  @param[in] ppDimms The platform DIMM pointers list
+  @param[in] DimmsNum Platform DIMMs count
+  @param[in] pDimmIds Pointer to an array of user-specified DIMM IDs
+  @param[in] DimmIdsCount Number of items in the array of user-specified DIMM IDs
+  @param[in] DiagnosticsTest The selected tests bitmask
+  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
+  @param[out] ppResult Pointer to the combined result string
+
+  @retval EFI_SUCCESS Test executed correctly
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+CoreStartDiagnosticsDetail(
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT8 DiagnosticsTest,
+  IN     UINT8 DimmIdPreference,
+  OUT DIAG_INFO **ppResult
+);
+
+/**
   Function to create a string, using the EFI_STRING_ID and the variable number
   of arguments for the format string
 

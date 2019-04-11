@@ -17,30 +17,28 @@
 #define DS_DIAGNOSTIC_PATH                 L"/DiagnosticList/Diagnostic"
 #define DS_DIAGNOSTIC_INDEX_PATH           L"/DiagnosticList/Diagnostic[%d]"
 
-#define TEST_NAME_STR                      L"TestName"
-#define STATE_STR                          L"State"
-#define MESSAGE_STR                        L"Message"
+#define TEST_NAME_STR                      L"TEST"
+#define SUBTEST_NAME_STR                   L"SubTest"
 
-#define DIAG_MSG_DELIM                     L":"
+#define SUBTEST_MAX_STR_WIDTH  25
+
 #define DIAG_ENTRY_EOL                     L'\n'
 #define DIAG_CR                            L'\r'
-#define DIAG_MSG_EXTRA_SPACE               L"  "
-#define DIAG_NEW_LINE_STR                  L"\n"
 
  /*
     *  PRINT LIST ATTRIBUTES
-    *  ---Diagnostic=Quick---
-    *     State=Ok
-    *     Message=X
+    *  ---Test = Quick---
+    *        Dimm specs = ok
+    *           Dimm specs.Message.1 = X
     */
 PRINTER_LIST_ATTRIB StartDiagListAttributes =
 {
  {
     {
-      DIAGNOSTIC_NODE_STR,                                          //GROUP LEVEL TYPE
-      L"---" DIAGNOSTIC_NODE_STR L"=$(" TEST_NAME_STR L")---",      //NULL or GROUP LEVEL HEADER
-      SHOW_LIST_IDENT L"%ls=%ls",                                   //NULL or KEY VAL FORMAT STR
-      TEST_NAME_STR                                                 //NULL or IGNORE KEY LIST (K1;K2)
+      DIAGNOSTIC_NODE_STR,                                         //GROUP LEVEL TYPE
+      L"---" TEST_NAME_STR L" = $(" TEST_NAME_STR L")",            //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT L"%ls = %ls",                //NULL or KEY VAL FORMAT STR
+      TEST_NAME_STR                                                //NULL or IGNORE KEY LIST (K1;K2)
     }
   }
 };
@@ -50,8 +48,6 @@ PRINTER_DATA_SET_ATTRIBS StartDiagDataSetAttribs =
   &StartDiagListAttributes,
   NULL
 };
-
-
 
 /**
   Command syntax definition
@@ -80,9 +76,6 @@ COMMAND StartDiagnosticCommand =
   StartDiagnosticCmd,
   TRUE
 };
-
-EFI_STATUS
-ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results);
 
 /**
   Get Diagnostic types to be executed from COMMAND
@@ -139,7 +132,6 @@ Finish:
   return ChosenDiagnosticTests;
 }
 
-
 /**
   Execute the Start Diagnostic command
 
@@ -166,8 +158,16 @@ StartDiagnosticCmd(
   UINT32 DimmCount = 0;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT8 DimmIdPreference = DISPLAY_DIMM_ID_HANDLE;
-  CHAR16 *pFinalDiagnosticsResult = NULL;
+  DIAG_INFO *pFinalDiagnosticsResult = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
+  UINTN length = 0;
+  UINT8 Id = 0;
+  CHAR16 *MsgStr = NULL;
+  CHAR16 *SubTestNameStr = NULL;
+  CHAR16 **ppSplitDiagResultLines = NULL;
+  UINT32 NumTokens = 0;
+  UINT32 i = 0;
 
   NVDIMM_ENTRY();
 
@@ -194,9 +194,9 @@ StartDiagnosticCmd(
 
   ChosenDiagTests = GetDiagnosticTestType(pCmd);
   if (ChosenDiagTests == DIAGNOSTIC_TEST_UNKNOWN || ((ChosenDiagTests & DIAGNOSTIC_TEST_ALL) != ChosenDiagTests)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_DIAGNOSTIC_TARGETS, ALL_DIAGNOSTICS_TARGETS);
-      goto Finish;
+    ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_WRONG_DIAGNOSTIC_TARGETS, ALL_DIAGNOSTICS_TARGETS);
+    goto Finish;
   }
 
   // NvmDimmConfigProtocol required
@@ -246,26 +246,61 @@ StartDiagnosticCmd(
       continue;
     }
 
-    ReturnCode = pNvmDimmConfigProtocol->StartDiagnostic(
-        pNvmDimmConfigProtocol,
-        pDimmIds,
-        DimmIdsCount,
-        CurrentDiagTest,
-        DimmIdPreference,
-        &pFinalDiagnosticsResult);
+    ReturnCode = pNvmDimmConfigProtocol->StartDiagnosticDetail(
+      pNvmDimmConfigProtocol,
+      pDimmIds,
+      DimmIdsCount,
+      CurrentDiagTest,
+      DimmIdPreference,
+      &pFinalDiagnosticsResult);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Diagnostics failed");
     }
+
+    DIAG_INFO *pLoc = pFinalDiagnosticsResult;
+
+    PRINTER_BUILD_KEY_PATH(pPath, DS_DIAGNOSTIC_INDEX_PATH, Index);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pLoc->TestName);
+    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
+      if (pLoc->SubTestName[Id] != NULL) {
+
+        length = StrLen(pLoc->SubTestName[Id]);
+
+        SubTestNameStr = CatSPrint(NULL, pLoc->SubTestName[Id]);
+        for (i = 0; i < (SUBTEST_MAX_STR_WIDTH - length); i++) {
+          SubTestNameStr = CatSPrintClean(SubTestNameStr, L" ");
+        }
+
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SubTestNameStr, pLoc->state[Id]);
+        // Split message string and set printer in unique key-> value form.
+        if (pLoc->Message[Id] != NULL) {
+          ppSplitDiagResultLines = StrSplit(pLoc->Message[Id], DIAG_ENTRY_EOL, &NumTokens);
+          if (ppSplitDiagResultLines == NULL) {
+            NVDIMM_WARN("Message string split failed");
+            return EFI_OUT_OF_RESOURCES;
+          }
+          for (i = 0; i < NumTokens; i++) {
+            MsgStr = CatSPrint(pLoc->SubTestName[Id], L".Message.%d", i + 1);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MsgStr, ppSplitDiagResultLines[i]);
+            FREE_POOL_SAFE(MsgStr);
+          }
+          FreeStringArray(ppSplitDiagResultLines, NumTokens);
+        }
+        FREE_POOL_SAFE(SubTestNameStr);
+        FREE_POOL_SAFE(pLoc->SubTestName[Id]);
+        FREE_POOL_SAFE(pLoc->Message[Id]);
+        FREE_POOL_SAFE(pLoc->state[Id]);
+      }
+    }
+    FREE_POOL_SAFE(pLoc->TestName);
+    FREE_POOL_SAFE(pFinalDiagnosticsResult);
   }
 
-  ProcessDiagResults(pPrinterCtx, pFinalDiagnosticsResult);
-
-  //Specify table attributes
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &StartDiagDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   // free all memory structures
-  FREE_POOL_SAFE(pFinalDiagnosticsResult);
+  FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -289,67 +324,5 @@ RegisterStartDiagnosticCommand(
   ReturnCode = RegisterCommand(&StartDiagnosticCommand);
 
   NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-EFI_STATUS
-ProcessDiagResults(PRINT_CONTEXT *pPrinterCtx, CHAR16 *Results) {
-  CHAR16 **ppSplitDiagResultLines = NULL;
-  UINT32 NumTokens = 0;
-  UINT32 Index = 0;
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  BOOLEAN ParsingMessage = FALSE;
-  UINT32 DiagResultCnt = 0;
-  CHAR16 *pPath = NULL;
-  CHAR16 *pTempStr = NULL;
-  BOOLEAN FirstLineOfMessage = FALSE;
-
-  if (NULL == pPrinterCtx || NULL == Results) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  ppSplitDiagResultLines = StrSplit(Results, DIAG_ENTRY_EOL, &NumTokens);
-  if (ppSplitDiagResultLines == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  for (Index = 0; Index < NumTokens; ++Index) {
-    if (!StrLen(ppSplitDiagResultLines[Index]) || ppSplitDiagResultLines[Index][0] == DIAG_CR) {
-      ParsingMessage = FALSE;
-      FREE_POOL_SAFE(pPath);
-      continue;
-    }
-
-    if (StrStr(ppSplitDiagResultLines[Index], TEST_NAME_STR DIAG_MSG_DELIM)) {
-      PRINTER_BUILD_KEY_PATH(pPath, DS_DIAGNOSTIC_INDEX_PATH, DiagResultCnt);
-      if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
-        pTempStr += 2;
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pTempStr);
-      }
-      ParsingMessage = FALSE;
-      DiagResultCnt++;
-    }
-    else if (pPath && StrStr(ppSplitDiagResultLines[Index], STATE_STR DIAG_MSG_DELIM)) {
-      if (NULL != (pTempStr = StrStr(ppSplitDiagResultLines[Index], DIAG_MSG_DELIM))) {
-        pTempStr += 2;
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, STATE_STR, pTempStr);
-      }
-      ParsingMessage = FALSE;
-    }
-    else if (pPath && StrStr(ppSplitDiagResultLines[Index], MESSAGE_STR DIAG_MSG_DELIM)) {
-      ParsingMessage = TRUE;
-      FirstLineOfMessage = TRUE;
-    }
-    else if (pPath && ParsingMessage) {
-      if (!FirstLineOfMessage) {
-        PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, DIAG_NEW_LINE_STR);
-      }
-      PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MESSAGE_STR, ppSplitDiagResultLines[Index]);
-      FirstLineOfMessage = FALSE;
-    }
-  }
-
-  FREE_POOL_SAFE(pPath);
-  FreeStringArray(ppSplitDiagResultLines, NumTokens);
   return ReturnCode;
 }

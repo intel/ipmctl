@@ -8,6 +8,12 @@
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
+#define DIMMSPECS_TEST_INDEX 0
+#define DUPLICATE_DIMM_TEST_INDEX 1
+#define SYSTEMCAP_TEST_INDEX 2
+#define NAMESPACE_LSA_TEST_INDEX 3
+#define PCD_TEST_INDEX 4
+
 /**
   Check if the Namespace Label area can be read and if it is in a format we understand
 
@@ -863,6 +869,7 @@ Finish:
   return ReturnCode;
 }
 
+//  [ATTENTION] : Do not use this function for implementing diagnostic tests. This is kept maintain the backward compatibility.
 /**
   Run platform configuration diagnostics for the list of DIMMs, and
   appropriately populate the result messages, and test-state.
@@ -968,6 +975,122 @@ RunConfigDiagnostics(
 
 FinishError:
   APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
+Finish:
+  FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Run platform configuration diagnostics for the list of DIMMs, and
+  appropriately populate the result structure.
+
+  @param[in] ppDimms The DIMM pointers list
+  @param[in] DimmCount DIMMs count
+  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
+  @param[out] pResult Pointer to the result structure of platform config diagnostics message
+
+  @retval EFI_SUCCESS Test executed correctly
+  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+RunConfigDiagnosticsDetail(
+  IN     DIMM **ppDimms,
+  IN     CONST UINT16 DimmCount,
+  IN     UINT8 DimmIdPreference,
+  OUT DIAG_INFO *pResult
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  SYSTEM_CAPABILITIES_INFO SysCapInfo;
+
+  NVDIMM_ENTRY();
+  // Clear the pointer before using the struct
+  SysCapInfo.PtrInterleaveFormatsSupported = 0;
+
+  if (pResult == NULL || DimmCount > MAX_DIMMS) {
+
+    NVDIMM_DBG("The platform configuration diagnostics test aborted due to an internal error.");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"Dimm specs");
+  ReturnCode = CheckUninitializedDimms(&pResult->Message[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for uninitialized dimms failed.");
+    if ((pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+        &pResult->Message[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
+      goto Finish;
+    }
+  }
+
+  if (DimmCount == 0 || ppDimms == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("The dimm count and dimm information is missing");
+    goto Finish;
+  }
+
+  pResult->SubTestName[DUPLICATE_DIMM_TEST_INDEX] = CatSPrint(NULL, L"Duplicate Dimm");
+  ReturnCode = CheckDimmUIDDuplication(ppDimms, DimmCount, &pResult->Message[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[1]);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for duplicate UID numbers failed.");
+    if ((pResult->SubTestStateVal[DUPLICATE_DIMM_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+        &pResult->Message[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[DUPLICATE_DIMM_TEST_INDEX]);
+      goto Finish;
+    }
+  }
+
+  pResult->SubTestName[SYSTEMCAP_TEST_INDEX] = CatSPrint(NULL, L"System Capability");
+  ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
+  if ((pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+      &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+    goto Finish;
+  }
+
+  if (!SysCapInfo.AdrSupported) {
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_ADR_SUPPORT), EVENT_CODE_629, DIAG_STATE_MASK_FAILED,
+      &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+  }
+
+  ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for System supported capabilities failed.");
+    if ((pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+        &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+      goto Finish;
+    }
+  }
+
+  pResult->SubTestName[NAMESPACE_LSA_TEST_INDEX] = CatSPrint(NULL, L"Namespace LSA");
+  ReturnCode = CheckNamespaceLabelAreaIndex(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for Namespace label retrieve failed.");
+    if ((pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+        &pResult->Message[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
+      goto Finish;
+    }
+  }
+
+  pResult->SubTestName[PCD_TEST_INDEX] = CatSPrint(NULL, L"PCD");
+  ReturnCode = CheckPlatformConfigurationData(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("The check for platform configuration data failed.");
+    if ((pResult->SubTestStateVal[PCD_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
+        &pResult->Message[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
+      goto Finish;
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+  goto Finish;
+
 Finish:
   FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
   NVDIMM_EXIT_I64(ReturnCode);

@@ -57,6 +57,8 @@ typedef struct _EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS {
 **/
 #define IS_LARGE_PAYLOAD_ENABLED(TransportAttribs) (FisTransportLargeMb == TransportAttribs.PayloadSize)
 
+#define MAX_NO_OF_DIAGNOSTIC_SUBTESTS 5
+
 /* {CF2F5F1F-94B6-4C15-9CAE-AFB3BD9F2BA5} */
 #define EFI_DCPMM_CONFIG_PROTOCOL_GUID \
   {0xcf2f5f1f, 0x94b6, 0x4c15, {0x9c, 0xae, 0xaf, 0xb3, 0xbd, 0x9f, 0x2b, 0xa5}}
@@ -919,6 +921,40 @@ EFI_STATUS
      OUT CHAR16 **ppResultStr
 );
 
+typedef struct DIAGNOSTIC_INFO
+{
+  CHAR16 *TestName;
+  CHAR16 *SubTestName[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];
+  UINT8  SubTestStateVal[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];
+  CHAR16 *state[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];
+  CHAR16 *Message[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];
+} DIAG_INFO;
+
+/**
+  Start Diagnostic Detail
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pDimmIds Pointer to an array of DIMM IDs
+  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] DiagnosticTestId ID of a diagnostic test to be started
+  @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
+  @param[out] ppResult Pointer to structure that holds results of the tests
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NOT_STARTED Test was not executed
+  @retval EFI_SUCCESS All Ok
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_START_DIAGNOSTIC_DETAIL) (
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     CONST UINT8 DiagnosticTestId,
+  IN     UINT8 DimmIdPreference,
+  OUT DIAG_INFO **ppResultStr
+  );
+
 /**
   Create namespace
   Creates a Storage or AppDirect namespace on the provided pool/dimm.
@@ -1752,6 +1788,7 @@ struct _EFI_DCPMM_CONFIG_PROTOCOL {
   EFI_DCPMM_CONFIG_DUMP_GOAL DumpGoalConfig;
   EFI_DCPMM_CONFIG_LOAD_GOAL LoadGoalConfig;
   EFI_DCPMM_CONFIG_START_DIAGNOSTIC StartDiagnostic;
+  EFI_DCPMM_CONFIG_START_DIAGNOSTIC_DETAIL StartDiagnosticDetail;
   EFI_DCPMM_CONFIG_CREATE_NAMESPACE CreateNamespace;
   EFI_DCPMM_CONFIG_GET_NAMESPACES GetNamespaces;
   EFI_DCPMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;

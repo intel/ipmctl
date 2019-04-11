@@ -118,6 +118,7 @@ EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   DumpGoalConfig,
   LoadGoalConfig,
   StartDiagnostic,
+  StartDiagnosticDetail,
   CreateNamespace,
   GetNamespaces,
   ModifyNamespace,
@@ -6933,6 +6934,78 @@ StartDiagnostic(
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
+}
+
+/**
+  Start Diagnostic
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pDimmIds Pointer to an array of DIMM IDs
+  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] DiagnosticTests bitfield with selected diagnostic tests to be started
+  @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
+  @param[out] ppResult Pointer to the combined result string
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NOT_STARTED Test was not executed
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS
+EFIAPI
+StartDiagnosticDetail(
+  IN     EFI_DCPMM_CONFIG_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     CONST UINT8 DiagnosticTests,
+  IN     UINT8 DimmIdPreference,
+  OUT  DIAG_INFO **ppResultStr
+)
+{
+  DIMM *pDimms[MAX_DIMMS];
+  UINT32 DimmsNum = 0;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+  LIST_ENTRY *pDimmList = NULL;
+  UINT32 PlatformDimmsCount = 0;
+  DIMM *pCurrentDimm = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+
+  ZeroMem(pDimms, sizeof(pDimms));
+
+  NVDIMM_ENTRY();
+
+  if (pThis == NULL || ppResultStr == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  //Validating user-passed Dimm IDs, include all dimms if no IDs are passed
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
+  ReturnCode = GetListSize(pDimmList, &PlatformDimmsCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Failed on DimmListSize");
+    goto Finish;
+  }
+
+  LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (pCurrentDimm == NULL) {
+      NVDIMM_DBG("Failed on Get Dimm from node %d", DimmsNum);
+      goto Finish;
+    }
+
+    pDimms[DimmsNum] = pCurrentDimm;
+    DimmsNum++;
+  }
+
+  ReturnCode = CoreStartDiagnosticsDetail(pDimms, DimmsNum, pDimmIds, DimmIdsCount,
+    DiagnosticTests, DimmIdPreference, ppResultStr);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**

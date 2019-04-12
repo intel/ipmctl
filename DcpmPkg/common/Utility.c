@@ -460,6 +460,7 @@ StrSplit(
   CHAR16 *pInputTmp = NULL;
   UINT32 Index = 0;
   UINT32 DelimiterCounter = 0;
+  CHAR16 *pBuff = NULL;
 
   if (pInput == NULL || pArraySize == NULL) {
     NVDIMM_DBG("At least one of parameters is NULL.");
@@ -500,13 +501,15 @@ StrSplit(
     goto Finish;
   }
 
+  pInputTmp = AllocateZeroPool((StrLen(pInput) + 1) * sizeof(CHAR16));
   /** Copy the input to a tmp var to avoid changing it **/
-  pInputTmp = CatSPrint(NULL, FORMAT_STR, pInput);
+  CopyMem(pInputTmp, pInput, (StrLen(pInput) * sizeof(CHAR16)));
   if (pInputTmp == NULL) {
     NVDIMM_ERR("Memory allocation failed.");
     goto FinishCleanMemory;
   }
-
+  /*Need to hold the address of pInputTmp to safe free. */
+  pBuff = pInputTmp;
   for (Index = 0; Index < *pArraySize; Index++) {
     ppArray[Index] = StrTok(&pInputTmp, Delimiter);
     if (ppArray[Index] == NULL) {
@@ -523,7 +526,7 @@ FinishCleanMemory:
   *pArraySize = 0;
 
 Finish:
-  FREE_POOL_SAFE(pInputTmp);
+  FREE_POOL_SAFE(pBuff);
   return ppArray;
 }
 

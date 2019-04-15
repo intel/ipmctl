@@ -256,19 +256,15 @@ ReenumerateNamespacesAndISs(
   ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
     &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
   if (EFI_ERROR(ReturnCode)) {
-    if (EFI_NO_RESPONSE == ReturnCode) {
-      goto Finish;
-    }
     NVDIMM_WARN("Failed to retrieve the Interleave Set and Region list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    goto Finish;
   }
 
   /** Initialize Namespaces (read LSA, enumerate every namespace) **/
   ReturnCode = InitializeNamespaces();
   if (EFI_ERROR(ReturnCode)) {
-    if (EFI_NO_RESPONSE == ReturnCode) {
-      goto Finish;
-    }
     NVDIMM_WARN("Failed to re-initialize namespaces, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    goto Finish;
   }
 
   /** Install block and device path protocols on Namespaces **/

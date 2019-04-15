@@ -5806,7 +5806,7 @@ GetPlatformConfigDataOemPartition (
 
   /** Get current Platform Config Data oem partition from dimm **/
   ReturnCode = GetPcdOemConfigDataUsingSmallPayload(pDimm, (UINT8 **)ppPlatformConfigData, &PcdDataSize);
-  if(EFI_NOT_FOUND == ReturnCode || (RestoreCorrupt && EFI_VOLUME_CORRUPTED == ReturnCode)) {
+  if(RestoreCorrupt && (EFI_NOT_FOUND == ReturnCode || EFI_VOLUME_CORRUPTED == ReturnCode)) {
     NVDIMM_WARN("Generating new OemPcdHeader due to missing or corrupt PCD config header.");
     *ppPlatformConfigData = AllocateZeroPool(sizeof(NVDIMM_CONFIGURATION_HEADER));
   if (*ppPlatformConfigData == NULL) {

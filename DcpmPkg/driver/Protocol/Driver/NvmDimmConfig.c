@@ -3898,6 +3898,12 @@ GetMemoryResourcesInfo(
   /** Make sure we start with zero values **/
   ZeroMem(pMemoryResourcesInfo, sizeof(*pMemoryResourcesInfo));
 
+  ReturnCode = ReenumerateNamespacesAndISs(FALSE);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to refresh Namespaces and Interleave Sets information");
+    goto Finish;
+  }
+
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 

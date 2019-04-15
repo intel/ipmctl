@@ -16,6 +16,7 @@
 #include <NvmInterface.h>
 #include <NvmTypes.h>
 #include <Printer.h>
+#include <ReadRunTimePreferences.h>
 #ifdef OS_BUILD
 #include <stdio.h>
 #include <errno.h>
@@ -2259,75 +2260,6 @@ AllDimmsInListAreManageable(
 }
 
 /**
-  Retrieve the User Cli Display Preferences from RunTime Services.
-
-  @param[out] pDisplayPreferences pointer to the current driver preferences.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-ReadRunTimeCliDisplayPreferences(
-  IN  OUT DISPLAY_PREFERENCES *pDisplayPreferences
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINTN VariableSize = 0;
-  NVDIMM_ENTRY();
-
-  if (pDisplayPreferences == NULL) {
-    NVDIMM_DBG("One or more parameters are NULL");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  ZeroMem(pDisplayPreferences, sizeof(*pDisplayPreferences));
-
-  VariableSize = sizeof(pDisplayPreferences->DimmIdentifier);
-  ReturnCode = GET_VARIABLE(
-    DISPLAY_DIMM_ID_VARIABLE_NAME,
-    gNvmDimmVariableGuid,
-    &VariableSize,
-    &pDisplayPreferences->DimmIdentifier);
-
-  if (ReturnCode == EFI_NOT_FOUND) {
-    pDisplayPreferences->DimmIdentifier = DISPLAY_DIMM_ID_DEFAULT;
-    ReturnCode = EFI_SUCCESS;
-  }
-  else if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed to retrieve DimmID Display Variable");
-    goto Finish;
-  }
-
-  VariableSize = sizeof(pDisplayPreferences->SizeUnit);
-  ReturnCode = GET_VARIABLE(
-    DISPLAY_SIZE_VARIABLE_NAME,
-    gNvmDimmVariableGuid,
-    &VariableSize,
-    &pDisplayPreferences->SizeUnit);
-
-  if (ReturnCode == EFI_NOT_FOUND) {
-    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
-    ReturnCode = EFI_SUCCESS;
-  }
-  else if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed to retrieve Size Display Variable");
-    goto Finish;
-  }
-
-  if (pDisplayPreferences->SizeUnit >= DISPLAY_SIZE_MAX_SIZE ||
-    pDisplayPreferences->DimmIdentifier >= DISPLAY_DIMM_ID_MAX_SIZE) {
-    NVDIMM_DBG("Parameters retrieved from RT services are invalid, setting defaults");
-    pDisplayPreferences->SizeUnit = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
-    pDisplayPreferences->DimmIdentifier = DISPLAY_DIMM_ID_DEFAULT;
-    goto Finish;
-  }
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
 Retrieve the User Cli Display Preferences CMD line arguements.
 
 @param[out] pDisplayPreferences pointer to the current driver preferences.
@@ -2464,7 +2396,7 @@ GetDimmIdentifierPreference(
     goto Finish;
   }
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     Print(FORMAT_STR_NL, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);
     goto Finish;

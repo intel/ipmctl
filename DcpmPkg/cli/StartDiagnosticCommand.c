@@ -12,6 +12,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <ReadRunTimePreferences.h>
 
 #define DS_ROOT_PATH                       L"/DiagnosticList"
 #define DS_DIAGNOSTIC_PATH                 L"/DiagnosticList/Diagnostic"
@@ -184,7 +185,7 @@ StartDiagnosticCmd(
 
   pPrinterCtx = pCmd->pPrintCtx;
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

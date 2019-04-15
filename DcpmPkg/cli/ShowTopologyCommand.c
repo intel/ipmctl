@@ -11,6 +11,7 @@
 #include "Common.h"
 #include <Convert.h>
 #include <NvmHealth.h>
+#include <ReadRunTimePreferences.h>
 
 #define DS_ROOT_PATH                        L"/DimmTopologyList"
 #define DS_DIMM_TOPOLOGY_PATH               L"/DimmTopologyList/DimmTopology"
@@ -219,7 +220,7 @@ ShowTopology(
   DisplayOptionSet = pDispOptions->DisplayOptionSet;
   pDisplayValues = pDispOptions->pDisplayValues;
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

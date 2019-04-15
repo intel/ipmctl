@@ -13,6 +13,7 @@
 #include <Convert.h>
 #include "Common.h"
 #include <Utility.h>
+#include <ReadRunTimePreferences.h>
 
 #define DS_ROOT_PATH                        L"/HostServer"
 
@@ -123,7 +124,7 @@ ShowHostServer(
 
   ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

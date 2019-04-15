@@ -15,6 +15,7 @@
 #include "NvmDimmCli.h"
 #include "ShowGoalCommand.h"
 #include <Convert.h>
+#include <ReadRunTimePreferences.h>
 
 
 #define CREATE_GOAL_COMMAND_STATUS_HEADER       L"Create region configuration goal"
@@ -362,7 +363,7 @@ CreateGoal(
     Force = TRUE;
   }
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

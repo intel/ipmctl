@@ -7,6 +7,7 @@
 #include <Library/BaseMemoryLib.h>
 #include "Debug.h"
 #include "Types.h"
+#include <ReadRunTimePreferences.h>
 #include "Utility.h"
 #include "NvmDimmCli.h"
 #include "NvmInterface.h"
@@ -449,7 +450,7 @@ ShowGoal(
     }
   }
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

@@ -320,6 +320,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/common/Printer.c
 	DcpmPkg/common/Strings.c
 	DcpmPkg/common/Nlog.c
+	DcpmPkg/common/ReadRunTimePreferences.c
 	DcpmPkg/driver/Protocol/Driver/NvmDimmConfig.c
 	DcpmPkg/driver/NvmDimmDriver.c
 	DcpmPkg/driver/Core/Dimm.c

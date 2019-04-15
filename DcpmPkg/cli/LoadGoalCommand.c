@@ -13,6 +13,7 @@
 #include "LoadGoalCommand.h"
 #include "Common.h"
 #include "NvmDimmCli.h"
+#include <ReadRunTimePreferences.h>
 
 /**
   Command syntax definition
@@ -118,7 +119,7 @@ LoadGoal(
     goto Finish;
   }
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

@@ -256,8 +256,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define NVMDIMM_CLI_NGNVM_VARIABLE_GUID \
   { 0x11c64219, 0xbfa2, 0x42ce, {0x99, 0xb1, 0x17, 0x0b, 0x4a, 0x2b, 0xe0, 0x8e}}
 
-extern EFI_GUID gNvmDimmVariableGuid;
-
 /**
   Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
@@ -811,19 +809,6 @@ AllDimmsInListAreManageable(
   IN     UINT16 *pDimmsListToCheck,
   IN     UINT32 DimmsToCheckCount
  );
-
-/**
-  Retrieve the User Cli Display Preferences from RunTime Services.
-
-  @param[in, out] pDisplayPreferences pointer to the current driver preferences.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-ReadRunTimeCliDisplayPreferences(
-  IN  OUT DISPLAY_PREFERENCES *pDisplayPreferences
-  );
 
 /**
    Get Dimm identifier preference

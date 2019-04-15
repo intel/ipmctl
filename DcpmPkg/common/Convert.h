@@ -10,6 +10,7 @@
 #include <NvmTypes.h>
 #include <Uefi.h>
 #include <Debug.h>
+#include <ReadRunTimePreferences.h>
 
 //!< Macro that rounds up x value to the Next value with y multiplier
 #define ROUNDUP(N, S) ((((N) + (S) - 1) / (S)) * (S))

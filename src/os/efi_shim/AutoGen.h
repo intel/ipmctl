@@ -27,6 +27,11 @@ extern CHAR8 *gEfiCallerBaseName;
 #define _PCD_GET_MODE_SIZE_PcdDcpmmCliDefaultCapacityUnit  _PCD_SIZE_PcdDcpmmCliDefaultCapacityUnit
 #define _PCD_VALUE_PcdDcpmmCliDefaultCapacityUnit  0U
 
+#define _PCD_TOKEN_PcdDcpmmHiiDefaultCapacityUnit  1U
+#define _PCD_SIZE_PcdDcpmmHiiDefaultCapacityUnit 4
+#define _PCD_GET_MODE_SIZE_PcdDcpmmHiiDefaultCapacityUnit  _PCD_SIZE_PcdDcpmmHiiDefaultCapacityUnit
+#define _PCD_VALUE_PcdDcpmmHiiDefaultCapacityUnit  0U
+
 // Defined in Autogen.c
 // These are the values exposed by PcdLib.h
 extern const  BOOLEAN  _gPcd_FixedAtBuild_PcdVerifyNodeInList;

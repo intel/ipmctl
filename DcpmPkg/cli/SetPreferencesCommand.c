@@ -13,6 +13,7 @@
 #include "Common.h"
 #include "Convert.h"
 #include "Utility.h"
+#include <ReadRunTimePreferences.h>
 
  /**
  Local definitions
@@ -301,7 +302,7 @@ SetPreferences(
     goto Finish;
   }
 
-  ReturnCode = ReadRunTimeCliDisplayPreferences(&DisplayPreferences);
+  ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE);

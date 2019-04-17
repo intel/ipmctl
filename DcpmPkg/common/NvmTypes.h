@@ -861,13 +861,6 @@ typedef struct _DEBUG_LOG_INFO {
 
 /** @} */
 
-/** Sensor states **/
-#define SENSOR_STATE_NORMAL        0    ///< Sensor state normal
-#define SENSOR_STATE_NON_CRITICAL  1    ///< Sensor state non-critical
-#define SENSOR_STATE_CRITICAL      2    ///< Sensor state critical
-#define SENSOR_STATE_FATAL         3    ///< Sensor state fatal
-#define SENSOR_STATE_UNKNOWN       4    ///< Sensor state unknown
-
 /** Sensor enabled/disabled **/
 #define SENSOR_DISABLED     0           ///< Sensor type disabled
 #define SENSOR_ENABLED      1           ///< Sensor type enabled
@@ -955,11 +948,11 @@ typedef struct {
   UINT8  SupportedThresholds;
   CHAR16 ValueString[HII_SENSOR_VALUE_STRING_SIZE];
   UINT64 Value;
-  UINT64 NonCriticalThreshold;
-  UINT64 NewNonCriticalThreshold;
-  UINT64 CriticalLowerThreshold;
-  UINT64 CriticalUpperThreshold;
-  UINT64 FatalThreshold;
+  UINT64 AlarmThreshold;
+  UINT64 NewAlarmThreshold;
+  UINT64 ThrottlingStopThreshold;
+  UINT64 ThrottlingStartThreshold;
+  UINT64 ShutdownThreshold;
 } DIMM_SENSOR_HII;
 
 #define DIMM_SENSOR_ALARM_DISABLED 0

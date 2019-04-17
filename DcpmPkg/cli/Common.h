@@ -119,7 +119,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ACTION_REQUIRED      L"Syntax Error: Incorrect value for property ActionRequired."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CATEGORY             L"Syntax Error: Incorrect value for property Category."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM              L"Syntax Error: Incorrect value for property SequenceNumber."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_NONCRIT_THRESHOLD    L"Syntax Error: Incorrect value for property NonCriticalThreshold."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ALARM_THRESHOLD      L"Syntax Error: Incorrect value for property AlarmThreshold."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property EnabledState."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config."

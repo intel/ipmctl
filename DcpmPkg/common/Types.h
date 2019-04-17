@@ -156,15 +156,15 @@ typedef struct _SENSOR_INFO {
 **/
 typedef struct {
   UINT8 Type;
-  UINT8 State;
+  UINT8 State;      //!< DEPRECATED; current state of a given dimm sensor
   UINT8 Enabled;
   INT64 Value;
   UINT8 SettableThresholds;
   UINT8 SupportedThresholds;
-  INT64 NonCriticalThreshold;
-  INT64 CriticalLowerThreshold;
-  INT64 CriticalUpperThreshold;
-  INT64 FatalThreshold;
+  INT64 AlarmThreshold;
+  INT64 ThrottlingStopThreshold;
+  INT64 ThrottlingStartThreshold;
+  INT64 ShutdownThreshold;
 } DIMM_SENSOR;
 
 /**

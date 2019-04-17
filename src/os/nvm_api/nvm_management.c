@@ -1727,24 +1727,24 @@ int fill_sensor_info(DIMM_SENSOR    DimmSensorsSet[SENSOR_TYPE_COUNT],
   } else {
     p_sensor->type = (enum sensor_type)DimmSensorsSet[type].Type;
     p_sensor->current_state = (enum sensor_status)DimmSensorsSet[type].State;
-    p_sensor->settings.lower_critical_threshold = DimmSensorsSet[type].CriticalLowerThreshold;
-    p_sensor->settings.upper_critical_threshold = DimmSensorsSet[type].CriticalUpperThreshold;
-    p_sensor->settings.upper_fatal_threshold = DimmSensorsSet[type].FatalThreshold;
-    p_sensor->settings.upper_noncritical_threshold = DimmSensorsSet[type].NonCriticalThreshold;
+    p_sensor->settings.lower_critical_threshold = DimmSensorsSet[type].ThrottlingStopThreshold;
+    p_sensor->settings.upper_critical_threshold = DimmSensorsSet[type].ThrottlingStartThreshold;
+    p_sensor->settings.upper_fatal_threshold = DimmSensorsSet[type].ShutdownThreshold;
+    p_sensor->settings.upper_noncritical_threshold = DimmSensorsSet[type].AlarmThreshold;
     p_sensor->settings.enabled = DimmSensorsSet[type].Enabled;
     p_sensor->reading = DimmSensorsSet[type].Value;
-    p_sensor->lower_critical_settable = (DimmSensorsSet[type].SettableThresholds & ThresholdLowerCritical) ? TRUE : FALSE;
-    p_sensor->upper_critical_settable = (DimmSensorsSet[type].SettableThresholds & ThresholdUpperCritical) ? TRUE : FALSE;
+    p_sensor->lower_critical_settable = (DimmSensorsSet[type].SettableThresholds & ThrottlingStopThreshold) ? TRUE : FALSE;
+    p_sensor->upper_critical_settable = (DimmSensorsSet[type].SettableThresholds & ThrottlingStartThreshold) ? TRUE : FALSE;
     p_sensor->lower_fatal_settable = FALSE;
-    p_sensor->upper_fatal_settable = (DimmSensorsSet[type].SettableThresholds & ThresholdUpperFatal) ? TRUE : FALSE;
-    p_sensor->lower_noncritical_settable = (DimmSensorsSet[type].SettableThresholds & ThresholdLowerNonCritical) ? TRUE : FALSE;
-    p_sensor->upper_noncritical_settable = (DimmSensorsSet[type].SettableThresholds & ThresholdUpperNonCritical) ? TRUE : FALSE;
-    p_sensor->lower_critical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdLowerCritical) ? TRUE : FALSE;
+    p_sensor->upper_fatal_settable = (DimmSensorsSet[type].SettableThresholds & ShutdownThreshold) ? TRUE : FALSE;
+    p_sensor->lower_noncritical_settable = (DimmSensorsSet[type].SettableThresholds & AlarmThreshold) ? TRUE : FALSE;
+    p_sensor->upper_noncritical_settable = (DimmSensorsSet[type].SettableThresholds & AlarmThreshold) ? TRUE : FALSE;
+    p_sensor->lower_critical_support = (DimmSensorsSet[type].SupportedThresholds & ThrottlingStopThreshold) ? TRUE : FALSE;
     p_sensor->lower_fatal_support = FALSE;
-    p_sensor->lower_noncritical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdLowerNonCritical) ? TRUE : FALSE;
-    p_sensor->upper_noncritical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperNonCritical) ? TRUE : FALSE;
-    p_sensor->upper_fatal_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperFatal) ? TRUE : FALSE;
-    p_sensor->upper_critical_support = (DimmSensorsSet[type].SupportedThresholds & ThresholdUpperCritical) ? TRUE : FALSE;
+    p_sensor->lower_noncritical_support = (DimmSensorsSet[type].SupportedThresholds & AlarmThreshold) ? TRUE : FALSE;
+    p_sensor->upper_noncritical_support = (DimmSensorsSet[type].SupportedThresholds & AlarmThreshold) ? TRUE : FALSE;
+    p_sensor->upper_fatal_support = (DimmSensorsSet[type].SupportedThresholds & ShutdownThreshold) ? TRUE : FALSE;
+    p_sensor->upper_critical_support = (DimmSensorsSet[type].SupportedThresholds & ThrottlingStartThreshold) ? TRUE : FALSE;
     get_sensor_units((enum sensor_type) DimmSensorsSet[type].Type, p_sensor);
     return NVM_SUCCESS;
   }

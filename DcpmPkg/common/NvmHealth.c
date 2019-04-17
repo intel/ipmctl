@@ -31,22 +31,21 @@ InitSensorsSet(
 
   for (Index = 0; Index < SENSOR_TYPE_COUNT; ++Index) {
     DimmSensorsSet[Index].Type = Index;
-    DimmSensorsSet[Index].State = SENSOR_STATE_NORMAL;
     DimmSensorsSet[Index].Enabled = SENSOR_NA_ENABLED;
     DimmSensorsSet[Index].SettableThresholds = ThresholdNone;
     DimmSensorsSet[Index].SupportedThresholds = ThresholdNone;
   }
 
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].SettableThresholds = ThresholdUpperNonCritical;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].SettableThresholds = AlarmThreshold;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].SupportedThresholds =
-      ThresholdUpperNonCritical | ThresholdUpperFatal;
+    AlarmThreshold | ShutdownThreshold;
 
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].SettableThresholds = ThresholdUpperNonCritical;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].SettableThresholds = AlarmThreshold;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].SupportedThresholds =
-      ThresholdUpperNonCritical | ThresholdLowerCritical | ThresholdUpperCritical | ThresholdUpperFatal;
+    AlarmThreshold | ThrottlingStopThreshold | ThrottlingStartThreshold | ShutdownThreshold;
 
-  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SettableThresholds = ThresholdLowerNonCritical;
-  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SupportedThresholds = ThresholdLowerNonCritical;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SettableThresholds = AlarmThreshold;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].SupportedThresholds = AlarmThreshold;
 }
 
 EFI_STATUS
@@ -77,13 +76,13 @@ GetSensorsInfo(
 
   /** Copy SMART & Health values **/
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = SensorInfo.MediaTemperature;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalLowerThreshold = SensorInfo.MediaThrottlingStopThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].CriticalUpperThreshold = SensorInfo.MediaThrottlingStartThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].FatalThreshold = SensorInfo.MediaTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStopThreshold = SensorInfo.MediaThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStartThreshold = SensorInfo.MediaThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ShutdownThreshold = SensorInfo.MediaTempShutdownThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = SensorInfo.ControllerTemperature;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].FatalThreshold = SensorInfo.ContrTempShutdownThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].CriticalLowerThreshold = SensorInfo.ControllerThrottlingStopThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].CriticalUpperThreshold = SensorInfo.ControllerThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ShutdownThreshold = SensorInfo.ContrTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStopThreshold = SensorInfo.ControllerThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStartThreshold = SensorInfo.ControllerThrottlingStartThresh;
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
@@ -95,38 +94,6 @@ GetSensorsInfo(
   /** Determine Health State based on Health Status Bit Mask **/
   ConvertHealthBitmask(SensorInfo.HealthStatus, &DimmHealthState);
   DimmSensorsSet[SENSOR_TYPE_DIMM_HEALTH].Value = DimmHealthState;
-
-  /** Determine sensor state **/
-
-  if (!SensorInfo.MediaTemperatureValid) {
-    DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].State = SENSOR_STATE_UNKNOWN;
-  } else if (SensorInfo.MediaTemperature >= SensorInfo.MediaTempShutdownThresh) {
-    DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].State = SENSOR_STATE_FATAL;
-  } else if (SensorInfo.MediaTemperature >= SensorInfo.MediaThrottlingStartThresh) {
-    DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].State = SENSOR_STATE_CRITICAL;
-  } else if (SensorInfo.MediaTemperatureTrip) {
-    DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].State = SENSOR_STATE_NON_CRITICAL;
-  } else {
-    DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].State = SENSOR_STATE_NORMAL;
-  }
-
-  if (!SensorInfo.ControllerTemperatureValid) {
-    DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].State = SENSOR_STATE_UNKNOWN;
-  } else if (SensorInfo.ControllerTemperature >= SensorInfo.ContrTempShutdownThresh) {
-    DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].State = SENSOR_STATE_FATAL;
-  } else if (SensorInfo.ControllerTemperatureTrip) {
-    DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].State = SENSOR_STATE_NON_CRITICAL;
-  } else {
-    DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].State = SENSOR_STATE_NORMAL;
-  }
-
-  if (!SensorInfo.PercentageRemainingValid) {
-    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_UNKNOWN;
-  } else if (SensorInfo.PercentageRemainingTrip) {
-    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_NON_CRITICAL;
-  } else {
-    DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].State = SENSOR_STATE_NORMAL;
-  }
 
   for (Index = SENSOR_TYPE_MEDIA_TEMPERATURE; Index <= SENSOR_TYPE_PERCENTAGE_REMAINING; ++Index) {
     ReturnCode = pNvmDimmConfigProtocol->GetAlarmThresholds(
@@ -140,7 +107,7 @@ GetSensorsInfo(
       goto Finish;
     }
 
-    DimmSensorsSet[Index].NonCriticalThreshold = Threshold;
+    DimmSensorsSet[Index].AlarmThreshold = Threshold;
   }
 Finish:
   return ReturnCode;
@@ -188,34 +155,6 @@ SensorTypeToString(
 }
 
 /**
-  Translate the SensorState into its Unicode string representation.
-  The string buffer is static and the returned string is const so the
-  caller should not make changes to the returned buffer.
-
-  @param[in] SensorState the enum sensor state.
-**/
-CONST
-CHAR16 *
-SensorStateToString(
-  IN     UINT8 SensorState
-  )
-{
-  switch (SensorState) {
-    case SENSOR_STATE_NORMAL:
-      return STATE_NORMAL_STR;
-    case SENSOR_STATE_NON_CRITICAL:
-      return STATE_NON_CRITICAL_STR;
-    case SENSOR_STATE_CRITICAL:
-      return STATE_CRITICAL_STR;
-    case SENSOR_STATE_FATAL:
-      return STATE_FATAL_STR;
-    case SENSOR_STATE_UNKNOWN:
-    default:
-      return STATE_UNKNOWN_STR;
-  }
-}
-
-/**
   Assign unit of measure for each SensorType.
 
   @param[in] SensorType the enum sensor type.
@@ -248,37 +187,33 @@ SensorValueMeasure(
 CHAR16 *
 SensorThresholdsToString(
   IN     SensorThresholds SensorThresholdsType
-  )
+)
 {
   CHAR16 *pStr = NULL;
   CHAR16 *pFormat = NULL;
 
   if (SensorThresholdsType == ThresholdNone) {
     pStr = CatSPrintClean(pStr, FORMAT_STR, THRESHOLD_NONE_STR);
-  } else {
-    if ((SensorThresholdsType & ThresholdLowerNonCritical) != 0) {
+  }
+  else {
+    if ((SensorThresholdsType & AlarmThreshold) != 0) {
       pFormat = (pStr == NULL) ? FORMAT_STR : L"," FORMAT_STR;
-      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_LOWER_NON_CRITICAL_STR);
+      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_ALARM_STR);
     }
 
-    if ((SensorThresholdsType & ThresholdUpperNonCritical) != 0) {
+    if ((SensorThresholdsType & ThrottlingStopThreshold) != 0) {
       pFormat = (pStr == NULL) ? FORMAT_STR : L"," FORMAT_STR;
-      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_UPPER_NON_CRITICAL_STR);
+      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_THROTTLING_STOP_STR);
     }
 
-    if ((SensorThresholdsType & ThresholdLowerCritical) != 0) {
+    if ((SensorThresholdsType & ThrottlingStartThreshold) != 0) {
       pFormat = (pStr == NULL) ? FORMAT_STR : L"," FORMAT_STR;
-      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_LOWER_CRITICAL_STR);
+      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_THROTTLING_START_STR);
     }
 
-    if ((SensorThresholdsType & ThresholdUpperCritical) != 0) {
+    if ((SensorThresholdsType & ShutdownThreshold) != 0) {
       pFormat = (pStr == NULL) ? FORMAT_STR : L"," FORMAT_STR;
-      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_UPPER_CRITICAL_STR);
-    }
-
-    if ((SensorThresholdsType & ThresholdUpperFatal) != 0) {
-      pFormat = (pStr == NULL) ? FORMAT_STR : L"," FORMAT_STR;
-      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_UPPER_FATAL_STR);
+      pStr = CatSPrintClean(pStr, pFormat, THRESHOLD_SHUTDOWN_STR);
     }
   }
 

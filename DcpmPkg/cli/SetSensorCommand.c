@@ -30,7 +30,7 @@ struct Command SetSensorCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {                                                                 //!< properties
-    {NON_CRIT_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},
+    {ALARM_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},
     {ENABLED_STATE_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE}
   },
   L"Modify the alarm threshold(s) for one or more DIMMs.",          //!< help
@@ -132,13 +132,13 @@ SetSensor(
 
   // check properties
 
-  if (!EFI_ERROR(ContainsProperty(pCmd, NON_CRIT_THRESHOLD_PROPERTY))) {
-    if (PropertyToUint64(pCmd, NON_CRIT_THRESHOLD_PROPERTY, &TempValue)) {
+  if (!EFI_ERROR(ContainsProperty(pCmd, ALARM_THRESHOLD_PROPERTY))) {
+    if (PropertyToUint64(pCmd, ALARM_THRESHOLD_PROPERTY, &TempValue)) {
       NonCriticalThreshold = (INT16) TempValue;
       ValidPropertyAndValue = TRUE;
     } else {
       ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_PROPERTY_NONCRIT_THRESHOLD);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_PROPERTY_ALARM_THRESHOLD);
       goto Finish;
     }
   }

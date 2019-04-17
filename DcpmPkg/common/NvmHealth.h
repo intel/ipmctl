@@ -32,26 +32,18 @@
 #define SPARE_CAPACITY_MSR  L"%"
 #define TIME_MSR            L"s"
 
-#define STATE_NORMAL_STR        L"Normal"
-#define STATE_NON_CRITICAL_STR  L"NonCritical"
-#define STATE_CRITICAL_STR      L"Critical"
-#define STATE_FATAL_STR         L"Fatal"
-#define STATE_UNKNOWN_STR       L"Unknown"
-
 #define THRESHOLD_NONE_STR                L"None"
-#define THRESHOLD_LOWER_NON_CRITICAL_STR  L"LowerThresholdNonCritical"
-#define THRESHOLD_UPPER_NON_CRITICAL_STR  L"UpperThresholdNonCritical"
-#define THRESHOLD_LOWER_CRITICAL_STR      L"LowerThresholdCritical"
-#define THRESHOLD_UPPER_CRITICAL_STR      L"UpperThresholdCritical"
-#define THRESHOLD_UPPER_FATAL_STR         L"UpperThresholdFatal"
+#define THRESHOLD_ALARM_STR               L"AlarmThreshold"
+#define THRESHOLD_THROTTLING_STOP_STR     L"ThrottlingStopThreshold"
+#define THRESHOLD_THROTTLING_START_STR    L"ThrottlingStartThreshold"
+#define THRESHOLD_SHUTDOWN_STR            L"ShutdownThreshold"
 
 typedef enum {
   ThresholdNone = 0,
-  ThresholdLowerNonCritical = BIT0,
-  ThresholdUpperNonCritical = BIT1,
-  ThresholdLowerCritical = BIT2,
-  ThresholdUpperCritical = BIT3,
-  ThresholdUpperFatal  = BIT4
+  AlarmThreshold = BIT0,
+  ThrottlingStopThreshold = BIT1,
+  ThrottlingStartThreshold = BIT2,
+  ShutdownThreshold = BIT3
 } SensorThresholds;
 
 #define SENSOR_ENABLED_STATE_ENABLED_STR    L"1"
@@ -169,19 +161,6 @@ CONST
 CHAR16 *
 SensorTypeToString(
   IN     UINT8 SensorType
-  );
-
-/**
-  Translate the SensorState into its Unicode string representation.
-  The string buffer is static and the returned string is const so the
-  caller should not make changes to the returned buffer.
-
-  @param[in] SensorState the enum sensor state.
-**/
-CONST
-CHAR16 *
-SensorStateToString(
-  IN     UINT8 SensorState
   );
 
 /**

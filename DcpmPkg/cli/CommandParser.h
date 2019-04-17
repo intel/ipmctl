@@ -181,7 +181,7 @@
 #define PASSPHRASE_PROPERTY               L"Passphrase"               //!< 'Passphrase' property name
 #define NEWPASSPHRASE_PROPERTY            L"NewPassphrase"            //!< 'NewPassphrase' property name
 #define CONFIRMPASSPHRASE_PROPERTY        L"ConfirmPassphrase"        //!< 'ConfirmPassphrase' property name
-#define NON_CRIT_THRESHOLD_PROPERTY       L"NonCriticalThreshold"     //!< 'NonCriticalThreshold' property
+#define ALARM_THRESHOLD_PROPERTY          L"AlarmThreshold"           //!< 'AlarmThreshold' property
 #define ENABLED_STATE_PROPERTY            L"EnabledState"             //!< 'EnabledState' property
 #define MEMORY_MODE_PROPERTY              L"MemoryMode"               //!< 'MemoryMode' property name
 #define PERSISTENT_MEM_TYPE_PROPERTY      L"PersistentMemoryType"     //!< 'PersistentMemoryType' property name

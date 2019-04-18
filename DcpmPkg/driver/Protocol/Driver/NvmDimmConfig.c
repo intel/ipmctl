@@ -57,6 +57,11 @@ typedef struct _PMTT_INFO {
   UINT16 SocketID;  //!< zero based socket identifier
 } PMTT_INFO;
 
+typedef struct _REGION_GOAL_APPDIRECT_INDEX_TABLE {
+  REGION_GOAL *pRegionGoal;
+  UINT32 AppDirectIndex;
+} REGION_GOAL_APPDIRECT_INDEX_TABLE;
+
 /** Memory Device SMBIOS Table **/
 #define SMBIOS_TYPE_MEM_DEV             17
 /** Memory Device Mapped Address SMBIOS Table **/
@@ -1914,6 +1919,57 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 };
+/**
+  PopulateAppDirectIndex
+
+  Function tries to populate AppDirectIndex for a Regional goal for all regional goals.
+
+  @param[out] pNumberedGoals This a pointer to array of regional goal appdirect index structures
+  @param[out] pNumberedGoalsNum Number of items in the pNumberedGoals
+  @param[out] pAppDirectIndex The next appdirect index
+**/
+static void PopulateAppDirectIndex(
+  OUT REGION_GOAL_APPDIRECT_INDEX_TABLE *pNumberedGoals,
+  OUT UINT32 *pNumberedGoalsNum,
+  OUT UINT32 *pAppDirectIndex
+)
+{
+  DIMM *pCurrentDimm = NULL;
+  LIST_ENTRY *pDimmList = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+  BOOLEAN AppDirectIndexFound = FALSE;
+  UINT32 Index1 = 0;
+  UINT32 Index2 = 0;
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
+  if (pNumberedGoals == NULL || pNumberedGoalsNum == NULL || pAppDirectIndex == NULL){
+    return;
+  }
+  LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (pCurrentDimm == NULL) {
+      return;
+    }
+    if (IsDimmManageable(pCurrentDimm)) {
+      //Iterate over RegionsGoal for current dimm
+      for (Index1 = 0; Index1 < pCurrentDimm->RegionsGoalNum; ++Index1) {
+        AppDirectIndexFound = FALSE;
+        //Iterate over numbered goals to see if it already exists
+        for (Index2 = 0; Index2 < *pNumberedGoalsNum; Index2++) {
+          if (pNumberedGoals[Index2].pRegionGoal == pCurrentDimm->pRegionsGoal[Index1]) {
+            AppDirectIndexFound = TRUE;
+            break;
+          }
+        }
+        if (!AppDirectIndexFound) {
+          pNumberedGoals[*pNumberedGoalsNum].pRegionGoal = pCurrentDimm->pRegionsGoal[Index2];
+          pNumberedGoals[*pNumberedGoalsNum].AppDirectIndex = *pAppDirectIndex;
+          (*pNumberedGoalsNum)++;
+          (*pAppDirectIndex)++;
+        }
+      }
+    }
+  }
+}
 
 /**
   Get region goal configuration
@@ -1959,10 +2015,7 @@ GetGoalConfigs(
   UINT32 AppDirectIndex = 1;
   BOOLEAN AppDirectIndexFound = FALSE;
   UINT32 SequenceIndex = 0;
-  struct {
-    REGION_GOAL *pRegionGoal;
-    UINT32 AppDirectIndex;
-  } NumberedGoals[MAX_IS_PER_DIMM * MAX_DIMMS];
+  REGION_GOAL_APPDIRECT_INDEX_TABLE NumberedGoals[MAX_IS_PER_DIMM * MAX_DIMMS];
   MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
 
   SetMem(pDimms, sizeof(pDimms), 0x0);
@@ -1980,7 +2033,8 @@ GetGoalConfigs(
     NVDIMM_ERR("ERROR: DimmSkuConsistency");
     goto Finish;
   }
-
+  //Try to calculate appdirect index for all regional goals for all dimms in advance
+  PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {

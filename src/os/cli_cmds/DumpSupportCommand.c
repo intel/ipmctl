@@ -20,14 +20,15 @@ extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 struct Command DumpSupportCommandSyntax = {
   DUMP_VERB,                                                      //!< verb
   {                                                                 //!< options
-    { VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty },
-    { PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    { PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
-    { L"", DESTINATION_PREFIX_OPTION, L"", DESTINATION_PREFIX_OPTION_HELP, TRUE, ValueRequired },
+    { L"", DESTINATION_PREFIX_OPTION, L"", L"",L"Destination to Dump the Support", FALSE, ValueRequired },
+    { VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"",HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty },
+    { L"",PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    { L"",PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
+
 #ifdef OS_BUILD
-    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired },
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired },
 #endif
-    { L"", DICTIONARY_OPTION, L"", DICTIONARY_OPTION_HELP, FALSE, ValueOptional }
+    { L"", DICTIONARY_OPTION, L"", L"", L"Dictionary File", FALSE, ValueOptional }
   },
   {                                                                 //!< targets
     {SUPPORT_TARGET, L"", L"", TRUE, ValueEmpty}

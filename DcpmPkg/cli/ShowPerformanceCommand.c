@@ -46,25 +46,6 @@ PRINTER_DATA_SET_ATTRIBS ShowPerformanceDataSetAttribs =
 EFI_STATUS
 ShowPerformance(IN struct Command *pCmd);
 
-
-#define DCPMM_PERFORMANCE_MEDIA_READS             L"MediaReads"
-#define DCPMM_PERFORMANCE_MEDIA_WRITES            L"MediaWrites"
-#define DCPMM_PERFORMANCE_READ_REQUESTS           L"ReadRequests"
-#define DCPMM_PERFORMANCE_WRITE_REQUESTS          L"WriteRequests"
-#define DCPMM_PERFORMANCE_TOTAL_MEDIA_READS       L"TotalMediaReads"
-#define DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES      L"TotalMediaWrites"
-#define DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS     L"TotalReadRequests"
-#define DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS    L"TotalWriteRequests"
-
-#define HELP_TEXT_PERFORMANCE_CATEGORIES  L""DCPMM_PERFORMANCE_MEDIA_READS \
-                                          L"|"DCPMM_PERFORMANCE_MEDIA_WRITES \
-                                          L"|"DCPMM_PERFORMANCE_READ_REQUESTS \
-                                          L"|"DCPMM_PERFORMANCE_WRITE_REQUESTS \
-                                          L"|"DCPMM_PERFORMANCE_TOTAL_MEDIA_READS \
-                                          L"|"DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES \
-                                          L"|"DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS \
-                                          L"|"DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
-
 /**
 Command syntax definition
 **/
@@ -72,18 +53,18 @@ struct Command ShowPerformanceCommand =
 {
     SHOW_VERB,                                                          //!< verb
     {                                                                   //!< options
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
 #ifdef OS_BUILD
-    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #else
-    {L"", L"", L"", L"", FALSE, ValueOptional}
+    {L"", L"", L"", L"", L"",FALSE, ValueOptional}
 #endif
     },
     {                                                                   //!< targets
         { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional },
-        { PERFORMANCE_TARGET, L"", HELP_TEXT_PERFORMANCE_CATEGORIES, TRUE, ValueOptional }
+        { PERFORMANCE_TARGET, L"", HELP_TEXT_PERFORMANCE_CAT, TRUE, ValueOptional }
     },
     {                                                                   //!< properties
         { L"", L"", L"", FALSE, ValueOptional },

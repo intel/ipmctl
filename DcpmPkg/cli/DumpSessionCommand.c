@@ -24,11 +24,12 @@
 struct Command DumpSessionCommand =
 {
   DUMP_VERB,                                                                      //!< verb
-  {{L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, TRUE, ValueRequired},  //!< options
-  {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-  {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty}
+  { 
+    {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, L"Destination to dump the recorded session", FALSE, ValueRequired},   //!< options
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty}
 #ifdef OS_BUILD
-  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+  ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
   },
   {                                                                               //!< targets
@@ -37,7 +38,6 @@ struct Command DumpSessionCommand =
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
   L"Dump the PBR session buffer to a file",                                       //!< help
   DumpSession,
-  TRUE,
   TRUE
 };
 

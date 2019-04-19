@@ -23,13 +23,13 @@
 struct Command ShowHostServerCommand = {
   SHOW_VERB,                                                                                    //!< verb
   {                                                                                             //!< options
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
-    {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", FALSE, ValueEmpty },
-    {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, FALSE, ValueRequired }
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"",HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
+    {ALL_OPTION_SHORT, ALL_OPTION, L"", L"",HELP_ALL_DETAILS_TEXT, FALSE, ValueEmpty },
+    {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, HELP_DISPLAY_DETAILS_TEXT, FALSE, ValueRequired }
 #ifdef OS_BUILD
-    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
   },   //!< options
   {{SYSTEM_TARGET, L"", L"", TRUE, ValueEmpty},

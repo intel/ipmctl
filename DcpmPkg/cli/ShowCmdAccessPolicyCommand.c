@@ -32,13 +32,13 @@ struct Command ShowCmdAccessPolicyCommand =
    options
   **/
   {                                                 //!< options
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", HELP_VERBOSE_DETAILS_TEXT,FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
 #ifdef OS_BUILD
-    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #else
-    {L"", L"", L"", L"", FALSE, ValueOptional}
+    {L"", L"", L"", L"", L"",FALSE, ValueOptional}
 #endif
   },
   /**

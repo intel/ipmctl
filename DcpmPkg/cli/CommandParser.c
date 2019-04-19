@@ -7,8 +7,10 @@
 #include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PrintLib.h>
+#include <Library/UefiShellLib/UefiShellLib.h>
 #include <Utility.h>
 #include "Common.h"
+#include <NvmHealth.h>
 
 DispInfo gDisplayInfo;
 extern int g_basic_commands;
@@ -1016,102 +1018,268 @@ CHAR16
   CHAR16 *pHelp = NULL;
 
   NVDIMM_ENTRY();
-  for(Index=0; Index < gCommandCount; Index++) {
+  for (Index = 0; Index < gCommandCount; Index++) {
     /**
-      if the user wants help for all commands or for a specific command
+      if the user wants help for a specific command
       and it matches the verb, then continue to add the pHelp
     **/
     CommandMatchingStatus = MatchCommand(pCommand, &gCommandList[Index]);
-    if ( !gCommandList[Index].Hidden &&
-      ((SingleCommand && !EFI_ERROR(CommandMatchingStatus))
-      || (!SingleCommand && (pCommand == NULL || (pCommand != NULL && StrICmp(pCommand->verb, gCommandList[Index].verb) == 0))))) {
+    if (!gCommandList[Index].Hidden &&
+      ((!SingleCommand && (pCommand == NULL || (pCommand != NULL && StrICmp(pCommand->verb, gCommandList[Index].verb) == 0)))))
+{
       /** full verb syntax with help string **/
-      if (pCommand == NULL || SingleCommand || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
-        pHelp = CatSPrintClean(pHelp, FORMAT_STR_NL, gCommandList[Index].pHelp);
+      if (pCommand == NULL || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
+        pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_SPACE, gCommandList[Index].verb);
       } else { /** syntax error help so just print syntax **/
-        pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE, gCommandList[Index].verb);
+        pHelp = CatSPrintClean(pHelp, L"     " FORMAT_STR_SPACE, gCommandList[Index].verb);
       }
 
-      pHelp = CatSPrintClean(pHelp, L"[-help|-h] ");
-      /* add the options pHelp */
+      /* Only show the required fields*/
       for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
         if (gCommandList[Index].options[Index2].OptionName &&
           StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
-          if (!gCommandList[Index].options[Index2].Required) {
-            pHelp = CatSPrintClean(pHelp, L"[");
+          if (gCommandList[Index].options[Index2].Required) {
+            pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
+              gCommandList[Index].options[Index2].OptionName);
+            if (StrLen(gCommandList[Index].options[Index2].pHelp) != 0) {
+              pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR_SPACE L")", gCommandList[Index].options[Index2].pHelp);
+            }
           }
-          if (gCommandList[Index].options[Index2].OptionNameShort &&
-            StrLen(gCommandList[Index].options[Index2].OptionNameShort) > 0) {
-            pHelp = CatSPrintClean(pHelp, FORMAT_STR L"|" FORMAT_STR,
-                gCommandList[Index].options[Index2].OptionName,
-                gCommandList[Index].options[Index2].OptionNameShort);
-          } else {
-            pHelp = CatSPrintClean(pHelp, FORMAT_STR,
-                gCommandList[Index].options[Index2].OptionName);
-          }
-          if (StrLen(gCommandList[Index].options[Index2].pHelp) != 0) {
-            pHelp = CatSPrintClean(pHelp, L" (" FORMAT_STR L")", gCommandList[Index].options[Index2].pHelp);
-          }
-          if (!gCommandList[Index].options[Index2].Required) {
-            pHelp = CatSPrintClean(pHelp, L"]");
-          }
-          pHelp = CatSPrintClean(pHelp, L" ");
         }
       }
-
+      if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+      }
+      else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+      }
       /* add the targets pHelp */
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
       {
         if (gCommandList[Index].targets[Index2].TargetName &&
-          StrLen(gCommandList[Index].targets[Index2].TargetName) > 0)
-        {
-          if (!gCommandList[Index].targets[Index2].Required)
-          {
+          StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
+          if (!gCommandList[Index].targets[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, L"[");
           }
-          pHelp = CatSPrintClean(pHelp, FORMAT_STR,
+          pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
               gCommandList[Index].targets[Index2].TargetName);
-          if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0)
-          {
+          if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
-              pHelp = CatSPrintClean(pHelp, L" [(" FORMAT_STR L")]",
+              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
                   gCommandList[Index].targets[Index2].pHelp);
             } else {
-              pHelp = CatSPrintClean(pHelp, L" (" FORMAT_STR L")",
+              pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR L")",
                   gCommandList[Index].targets[Index2].pHelp);
             }
           }
-          if (!gCommandList[Index].targets[Index2].Required)
-          {
+          if (!gCommandList[Index].targets[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, L"]");
           }
           pHelp = CatSPrintClean(pHelp, L" ");
         }
       }
+    
+      /* only show the properties that are required */
+      for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
+        if(gCommandList[Index].properties[Index2].Required){
+        if (gCommandList[Index].properties[Index2].PropertyName &&
+          StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
+          pHelp = CatSPrintClean(pHelp, L" ");
+          pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
+            gCommandList[Index].properties[Index2].PropertyName,
+            gCommandList[Index].properties[Index2].pHelp);
+        }
+        }
+      }
+      pHelp = CatSPrintClean(pHelp, L"\n\n");
+   }
+    else if (SingleCommand && !EFI_ERROR(CommandMatchingStatus)) {
+      /** full verb syntax with help string **/
+      if (pCommand == NULL || SingleCommand || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
+        pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
+        pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_SPACE, gCommandList[Index].verb);
+      }
+      else { /** syntax error help so just print syntax **/
+        pHelp = CatSPrintClean(pHelp, L"     " FORMAT_STR_SPACE, gCommandList[Index].verb);
+      }
 
+      /* add the targets pHelp */
+      pHelp = CatSPrintClean(pHelp, L" [OPTIONS]");
+
+      /* Source and Destination are required for load and dump commands*/
+      if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+      }
+      else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+      }
+      for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
+      {
+        if (gCommandList[Index].targets[Index2].TargetName &&
+          StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
+          if (!gCommandList[Index].targets[Index2].Required) {
+            pHelp = CatSPrintClean(pHelp, L"[");
+          }
+          pHelp = CatSPrintClean(pHelp, L" "FORMAT_STR,
+            gCommandList[Index].targets[Index2].TargetName);
+          if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
+            if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
+              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
+                gCommandList[Index].targets[Index2].pHelp);
+            }
+            else {
+              pHelp = CatSPrintClean(pHelp, L" (" FORMAT_STR L")",
+                gCommandList[Index].targets[Index2].pHelp);
+            }
+          }
+          if (!gCommandList[Index].targets[Index2].Required) {
+            pHelp = CatSPrintClean(pHelp, L"]");
+          }
+          pHelp = CatSPrintClean(pHelp, L" ");
+        }
+      }
+      if (StrLen(gCommandList[Index].properties[0].PropertyName) > 0) {
+        pHelp = CatSPrintClean(pHelp, L"[PROPERTIES ...]");
+      }
+
+      /* add the options pHelp */
+      pHelp = CatSPrintClean(pHelp, L"\n\n[OPTIONS]");
+      pHelp = CatSPrintClean(pHelp, L"\n   [-help|-h] : Display Help for the command");
+      for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
+        if (gCommandList[Index].options[Index2].OptionName &&
+          StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
+          if (!gCommandList[Index].options[Index2].Required) {
+            pHelp = CatSPrintClean(pHelp, L"\n   [");
+          }
+          if (gCommandList[Index].options[Index2].OptionNameShort &&
+            StrLen(gCommandList[Index].options[Index2].OptionNameShort) > 0) {
+            pHelp = CatSPrintClean(pHelp, FORMAT_STR L"|" FORMAT_STR,
+              gCommandList[Index].options[Index2].OptionName,
+              gCommandList[Index].options[Index2].OptionNameShort);
+          }
+          else {
+            pHelp = CatSPrintClean(pHelp, FORMAT_STR,
+              gCommandList[Index].options[Index2].OptionName);
+          }
+          if (StrLen(gCommandList[Index].options[Index2].pHelp) != 0) {
+            pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR L")", gCommandList[Index].options[Index2].pHelp);
+          }
+          if (!gCommandList[Index].options[Index2].Required) {
+            pHelp = CatSPrintClean(pHelp, L"] : ");
+            pHelp = CatSPrintClean(pHelp, FORMAT_STR, gCommandList[Index].options[Index2].pHelpDetails);
+          }
+        }
+      }
+     pHelp = CatSPrintClean(pHelp, L"\n");
       /** add the properties pHelp **/
+     if (StrLen(gCommandList[Index].properties[0].PropertyName) > 0 ) {
+        pHelp = CatSPrintClean(pHelp, L"\n[PROPERTIES]");
+      }
       for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
         if (gCommandList[Index].properties[Index2].PropertyName &&
           StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
-          if (!gCommandList[Index].properties[Index2].Required) {
-            pHelp = CatSPrintClean(pHelp, L"[");
-          }
+            pHelp = CatSPrintClean(pHelp, L"\n   ");
           pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
-              gCommandList[Index].properties[Index2].PropertyName,
-              gCommandList[Index].properties[Index2].pHelp);
-          if (!gCommandList[Index].properties[Index2].Required) {
-            pHelp = CatSPrintClean(pHelp, L"]");
+            gCommandList[Index].properties[Index2].PropertyName,
+            gCommandList[Index].properties[Index2].pHelp);
+        }
+        pHelp = CatSPrintClean(pHelp, L" ");
+      }
+      pHelp = CatSPrintClean(pHelp, L"\n\n");
+    }
+  }
+
+  NVDIMM_EXIT();
+  return pHelp;
+}
+/**
+  Get the overall Help for User.
+  @retval NULL if the command verb could not be matched to any
+    of the registered commands. Or the pointer to the help message.
+
+  NOTE: If the return pointer is not NULL, the caller is responsible
+  to free the memory using FreePool.
+**/
+CHAR16
+*getOverallCommandHelp()
+{
+  UINTN Index = 0;
+  UINTN Index2 = 0;
+  CHAR16 *pHelp = NULL;
+
+  NVDIMM_ENTRY();
+
+  //check if the page break option exists
+  for (Index = 0; Index < gCommandCount; Index++) {
+    /**
+      Showing user Help for all the commands
+      This will be simplified not showing any command description
+    **/
+    /** full verb syntax **/
+    pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
+    pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_SPACE, gCommandList[Index].verb);
+
+    /* Only show the required fields for OPTIONS*/
+    for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
+      if (gCommandList[Index].options[Index2].OptionName &&
+        StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
+        if (gCommandList[Index].options[Index2].Required) {
+          pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
+            gCommandList[Index].options[Index2].OptionName);
+          if (StrLen(gCommandList[Index].options[Index2].pHelp) != 0) {
+            pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR_SPACE L")", gCommandList[Index].options[Index2].pHelp);
+          }
+        }
+      }
+    }
+    /* add the Targets to pHelp */
+    if (gCommandList[Index].targets > 0) {
+      if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+      }
+      else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
+        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+      }
+      for (Index2 = 0; Index2 < MAX_TARGETS; Index2++) {
+        if (gCommandList[Index].targets[Index2].TargetName
+          && StrLen(gCommandList[Index].targets[Index2].TargetName)> 0) {
+          pHelp = CatSPrintClean(pHelp, FORMAT_STR,
+            gCommandList[Index].targets[Index2].TargetName);
+          if (gCommandList[Index].targets[Index2].pHelp
+            && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
+            if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
+              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
+                gCommandList[Index].targets[Index2].pHelp);
+            } else {
+              pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR L")",
+                gCommandList[Index].targets[Index2].pHelp);
+            }
           }
           pHelp = CatSPrintClean(pHelp, L" ");
         }
       }
-      pHelp = CatSPrintClean(pHelp, L"\n");
     }
+
+    /* only show PROPERTIES that are required */
+    for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
+      if (gCommandList[Index].properties[Index2].Required) {
+        if (gCommandList[Index].properties[Index2].PropertyName &&
+          StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
+          pHelp = CatSPrintClean(pHelp, L" ");
+          pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
+            gCommandList[Index].properties[Index2].PropertyName,
+            gCommandList[Index].properties[Index2].pHelp);
+        }
+      }
+    }
+    pHelp = CatSPrintClean(pHelp, L"\n\n");
   }
+  pHelp = CatSPrintClean(pHelp, L" Please see ipmctl <verb> -help <command> i.e 'ipmctl show -help -dimm' for more information on specific command \n");
   NVDIMM_EXIT();
   return pHelp;
 }
+
 
 /**
   Check if a specific property is found

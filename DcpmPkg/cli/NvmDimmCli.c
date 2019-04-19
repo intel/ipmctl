@@ -5,6 +5,7 @@
 
 #include "NvmDimmCli.h"
 #include <Uefi.h>
+#include <Library/UefiShellLib/UefiShellLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -129,11 +130,11 @@ struct Command HelpCommand =
 {
   HELP_VERB,                                  //!< verb
   {
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"",HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
 #ifdef OS_BUILD
-    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }, //!< options
+    {OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }, //!< options
 #endif // OS_BUILD
-    {L"", L"", L"", L"", FALSE, ValueOptional}
+    {L"", L"", L"", L"",L"", FALSE, ValueOptional}
   }, //!< options
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< properties
@@ -148,9 +149,9 @@ struct Command VersionCommand =
 {
   VERSION_VERB,                               //!< verb
   {
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"",HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
 #ifdef OS_BUILD
-    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    { OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #else
     {L"", L"", L"", L"", FALSE, ValueOptional}                         //!< options
 #endif
@@ -162,7 +163,7 @@ struct Command VersionCommand =
   TRUE
 };
 
-/*
+/*                                          ./
  * The entry point for the application.
  *
  * @param[in] ImageHandle    The firmware allocated handle for the EFI image.
@@ -805,8 +806,12 @@ EFI_STATUS showHelp(struct Command *pCmd)
   NVDIMM_ENTRY();
 
   if ((pCmd == NULL) || (StrCmp(pCmd->verb, HELP_VERB) == 0 && pCmd->ShowHelp == FALSE)) {
+#ifndef OS_BUILD
+      //Page break option only for UEFI
+          ShellSetPageBreakMode(TRUE);
+#endif
     Print(FORMAT_STR_SPACE FORMAT_STR_NL_NL L"    Usage: " FORMAT_STR L" <verb>[<options>][<targets>][<properties>]\n\nCommands:\n", PRODUCT_NAME, APP_DESCRIPTION, EXE_NAME);
-    pHelp = getCommandHelp(NULL, FALSE);
+    pHelp = getOverallCommandHelp();
   } else {
     pHelp = getCommandHelp(pCmd, TRUE);
   }

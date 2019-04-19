@@ -22,17 +22,18 @@ struct Command LoadCommand =
 {
   LOAD_VERB,                                                          //!< verb
   {                                                                   //!< options
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
-    {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", EXAMINE_OPTION_HELP, FALSE, ValueEmpty},
-    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, FALSE, ValueEmpty},
-    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, TRUE, ValueRequired}
+    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, L"Firmware Image required to use Firmware Update.", FALSE, ValueRequired},
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
+    {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", EXAMINE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty}
+
 #ifdef OS_BUILD
-    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
 #ifndef OS_BUILD
-    ,{ L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI, FALSE, ValueOptional }
+    ,{ L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI,HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueOptional }
 #endif
 },
   {                                                                   //!< targets

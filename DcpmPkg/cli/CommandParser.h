@@ -257,12 +257,49 @@
 #define PROPERTY_ERROR_INVALID_OUT_OF_RANGE         L"Setting is invalid or out of range"
 #define PROPERTY_ERROR_SET_FAILED_UNKNOWN           L"Set operation failed"
 
+/** Performance Metric Messages **/
+#define DCPMM_PERFORMANCE_MEDIA_READS             L"MediaReads"
+#define DCPMM_PERFORMANCE_MEDIA_WRITES            L"MediaWrites"
+#define DCPMM_PERFORMANCE_READ_REQUESTS           L"ReadRequests"
+#define DCPMM_PERFORMANCE_WRITE_REQUESTS          L"WriteRequests"
+#define DCPMM_PERFORMANCE_TOTAL_MEDIA_READS       L"TotalMediaReads"
+#define DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES      L"TotalMediaWrites"
+#define DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS     L"TotalReadRequests"
+#define DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS    L"TotalWriteRequests"
+
+/** Sensor Detail Messages **/
+#define DIMM_HEALTH_STR_DETAIL                       L"Health -  The current DCPMM health as reported in the SMART log"
+#define MEDIA_TEMPERATURE_STR_DETAIL                 L"MediaTemperature-The current DCPMM media temperature in Celsius"
+#define CONTROLLER_TEMPERATURE_STR_DETAIL            L"ControllerTemperature - The current DCPMM controller temperature in Celsius"
+#define SPARE_CAPACITY_STR_DETAIL                    L"PercentageRemaining - Remaining DCPMMs life as a percentage value of factory expected\
+ life spa"
+#define LATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL      L"LatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
+ the DCPMM"
+#define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL    L"UnlatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
+ the DCPMM."
+#define POWER_ON_TIME_STR_DETAIL                     L"PowerOnTime - The total power-on time over the lifetime of the DCPMM"
+#define UPTIME_STR_DETAIL                            L"UpTime - The total power-on time since the last power cycle of the DCPMM"
+#define POWER_CYCLES_STR_DETAIL                      L"PowerCycles - The number of power cycles over the lifetime of the DCPMM"
+#define FW_ERROR_COUNT_STR_DETAIL                    L"FwErrorCount - The total number of firmware error log entries"
+
+
 /** common help messages **/
+#define HELP_OPTIONS_DETAILS_TEXT       L"Changes the output format."
+#define HELP_VERBOSE_DETAILS_TEXT       L"Change the Debug Level Message Display"
+#define HELP_ALL_DETAILS_TEXT           L"Shows all attributes."
+#define HELP_DISPLAY_DETAILS_TEXT       L"Shows attributes specified in a comma-separatedlist"
+#define HELP_FORCE_DETAILS_TEXT         L"Suppresses the confirmation from the User to use this operation"
+#define HELP_UNIT_DETAILS_TEXT          L"Desired Unit for display"
+#define HELP_DDRT_DETAILS_TEXT          L"Used to specify DDRT as the desired transport protocol"
+#define HELP_SMBUS_DETAILS_TEXT         L"Used to specify SMBUS as the desired transport protocol"
+#define HELP_LPAYLOAD_DETAILS_TEXT      L"Used to specify large transport payload size"
+#define HELP_SPAYLOAD_DETAILS_TEXT      L"Used to specify small transport payload size"
 #define HELP_TEXT_DIMM_IDS              L"DimmIDs"
 #define HELP_TEXT_DIMM_ID               L"DimmID"
 #define HELP_TEXT_ATTRIBUTES            L"Attributes"
 #define HELP_TEXT_REGION_ID             L"RegionID"
 #define HELP_TEXT_SOCKET_IDS            L"SocketIDs"
+#define HELP_TEXT_SENSORS               L"List of Sensors"
 #define HELP_TEXT_VALUE                 L"value"
 #define HELP_TEXT_COUNT                 L"count"
 #define HELP_TEXT_GiB                   L"GiB"
@@ -293,7 +330,31 @@
 #define HELP_EVENT_LOG_MAX                        L"num events"
 #define HELP_DBG_LOG_MAX                          L"num log entries"
 #define HELP_DBG_LOG_LEVEL                        L"log level"
+#define HELP_TEXT_PERFORMANCE_CAT         L"Performance Metrics"
 
+#define HELP_TEXT_PERFORMANCE_CAT_DETAILS  L"\n    "DCPMM_PERFORMANCE_MEDIA_READS \
+                                          L"\n    "DCPMM_PERFORMANCE_MEDIA_WRITES \
+                                          L"\n    "DCPMM_PERFORMANCE_READ_REQUESTS \
+                                          L"\n    "DCPMM_PERFORMANCE_WRITE_REQUESTS\
+                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_READS \
+                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES\
+                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS\
+                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
+
+#define HELP_TEXT_SENSORS_SHORT  L"\n    "MEDIA_TEMPERATURE_STR_DETAIL \
+                                 L"\n    "CONTROLLER_TEMPERATURE_STR_DETAIL \
+                                 L"\n    "SPARE_CAPACITY_STR_DETAIL
+
+#define HELP_TEXT_SENSORS_ALL    L"\n    "DIMM_HEALTH_STR_DETAIL \
+                                 L"\n    "MEDIA_TEMPERATURE_STR_DETAIL \
+                                 L"\n    "CONTROLLER_TEMPERATURE_STR_DETAIL \
+                                 L"\n    "SPARE_CAPACITY_STR_DETAIL \
+                                 L"\n    "LATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL \
+                                 L"\n    "UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL \
+                                 L"\n    "POWER_ON_TIME_STR_DETAIL \
+                                 L"\n    "UPTIME_STR_DETAIL \
+                                 L"\n    "POWER_CYCLES_STR_DETAIL \
+                                 L"\n    "FW_ERROR_COUNT_STR_DETAIL
 enum ValueRequirementType
 {
   ValueEmpty = 1,
@@ -310,6 +371,7 @@ struct option
   CHAR16 OptionName[OPTION_LEN];
   CHAR16 *pOptionValueStr;
   CONST CHAR16 *pHelp;
+  CONST CHAR16 *pHelpDetails;
   BOOLEAN Required;
   UINT8 ValueRequirement;
 };
@@ -473,6 +535,9 @@ CHAR16
   IN     struct Command *pCommand,
   BOOLEAN SingleCommand
   );
+
+CHAR16
+*getOverallCommandHelp();
 
 /**
   Checks if the Unicode string contains the given character.

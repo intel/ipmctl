@@ -28,15 +28,15 @@ struct Command SetDimmCommand =
 {
   SET_VERB,                                                         //!< verb
   {                                                                 //!< options
-    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_DDRT, L"", L"", L"", FALSE, ValueEmpty},
-    {PROTOCOL_OPTION_SMBUS, L"", L"", L"", FALSE, ValueEmpty},
-    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
-    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired},
-    {L"", MASTER_OPTION, L"", L"", FALSE, ValueEmpty},
-    {L"", DEFAULT_OPTION, L"", L"", FALSE, ValueEmpty}
+    {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"",HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
+    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"",HELP_FORCE_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, L"Source of the Passphrase file",FALSE, ValueRequired},
+    {L"", MASTER_OPTION, L"", L"",L"Set Master Passphrase", FALSE, ValueEmpty},
+    {L"", DEFAULT_OPTION, L"", L"",L"Set Default Settings", FALSE, ValueEmpty}
 #ifdef OS_BUILD
-    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
+    ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
@@ -55,8 +55,8 @@ struct Command SetDimmCommand =
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    },                                                                //!< properties
-  L"Set properties of one or more DIMMs.",                          //!< help
+    }, //!< properties
+    L"Set properties of one/more DIMMs such as device security and modify device.",                          //!< help
   SetDimm,
   TRUE
 };

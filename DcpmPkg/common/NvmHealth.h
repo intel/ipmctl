@@ -28,6 +28,7 @@
   L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|LatchedDirtyShutdownCount|PowerOnTime|" \
   L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdownCount" \
 
+
 #define TEMPERATURE_MSR     L"C"
 #define SPARE_CAPACITY_MSR  L"%"
 #define TIME_MSR            L"s"

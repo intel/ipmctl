@@ -437,10 +437,10 @@ decode_nlog_binary(
   status = DumpToFile(decoded_file_name, total_formatted_string_size, total_formatted_string, TRUE);
   if (EFI_ERROR(status))
   {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to write record to file (%lu)\n", status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to write record to file %lu\n", status);
     goto Finish;
   }
-  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Decoded %lu records to file (" FORMAT_STR ")\n", node_count, decoded_file_name);
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Decoded %lu records to file " FORMAT_STR "\n", node_count, decoded_file_name);
 
 Finish:
 
@@ -594,14 +594,14 @@ load_nlog_dict(
   status = GetDeviceAndFilePath(pLoadUserPath, pDictPath, &pDevicePathProtocol);
   if (EFI_ERROR(status))
   {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to locate the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to locate the file: " FORMAT_STR L" %lu\n", pLoadUserPath, status);
     goto Finish;
   }
 
   status = FileRead(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
   if (EFI_ERROR(status) || NULL == file_buffer)
   {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to open or read the file: " FORMAT_STR L" (%lu)\n", pLoadUserPath, status);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to open or read the file: " FORMAT_STR L" %lu\n", pLoadUserPath, status);
     goto Finish;
   }
 

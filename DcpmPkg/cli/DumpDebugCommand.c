@@ -258,13 +258,13 @@ DumpDebugCommand(
         }
         else {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode,
-              L"Failed to dump " FORMAT_STR L" FW debug logs to file (" FORMAT_STR L")\n",
+              L"Failed to dump " FORMAT_STR L" FW debug logs to file " FORMAT_STR L"\n",
               SourceNames[IndexSource], raw_file_name);
         }
         goto FreeAndContinue;
       }
 
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dumped " FORMAT_STR L" FW debug logs to file (" FORMAT_STR L")\n",
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Dumped " FORMAT_STR L" FW debug logs to file " FORMAT_STR L"\n",
             SourceNames[IndexSource], raw_file_name);
 
       /** Decode FW debug log **/

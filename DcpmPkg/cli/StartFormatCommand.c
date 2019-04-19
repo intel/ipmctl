@@ -179,7 +179,7 @@ StartFormat(
         goto Finish;
       }
 
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, FORMAT_STR L"(" FORMAT_STR L")\n", CLI_FORMAT_DIMM_PROMPT_STR, DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, FORMAT_STR L" " FORMAT_STR L"\n", CLI_FORMAT_DIMM_PROMPT_STR, DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (EFI_ERROR(ReturnCode) || !Confirmation) {
         ReturnCode = EFI_NOT_STARTED;

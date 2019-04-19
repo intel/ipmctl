@@ -207,7 +207,7 @@ SetSensor(
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
         goto Finish;
       }
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying settings on DIMM (" FORMAT_STR L").", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying settings on DIMM " FORMAT_STR L".", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetAlarmThresholds(pNvmDimmConfigProtocol, &pDimmIds[Index], 1,
@@ -216,7 +216,7 @@ SetSensor(
           goto FinishCommandStatusSet;
         }
       } else {
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped modifying settings for DIMM (" FORMAT_STR L")\n", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped modifying settings for DIMM " FORMAT_STR L"\n", DimmStr);
         continue;
       }
     }

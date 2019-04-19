@@ -386,7 +386,7 @@ Load(
 
       if (!EFI_ERROR(ReturnCodes[Index])) {
         GetPreferredDimmIdAsString(pDimmTargets[Index].DimmHandle, pDimmTargets[Index].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
-        Print(L"\rLoad firmware on DIMM (" FORMAT_STR L") Progress: 100%%", DimmStr);
+        Print(L"\rLoad firmware on DIMM " FORMAT_STR L" Progress: 100%%", DimmStr);
         ReturnCodes[Index] = EFI_SUCCESS;
         NvmCodes[Index] = NVM_SUCCESS_FW_RESET_REQUIRED;
         SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NVM_SUCCESS_FW_RESET_REQUIRED, TRUE);
@@ -473,7 +473,7 @@ Load(
           pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
           pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version != 0 ||
           pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
-          Print(L"(" FORMAT_STR L"): %02d.%02d.%02d.%04d\n",
+          Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
             pFileName,
             pFwImageInfo->ImageVersion.ProductNumber.Version,
             pFwImageInfo->ImageVersion.RevisionNumber.Version,
@@ -482,7 +482,7 @@ Load(
         }
       }
       else {
-        Print(L"(" FORMAT_STR L")" FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+        Print(FORMAT_STR L" " FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
       }
     } else if(StagedFwUpdates > 0) {
       /*

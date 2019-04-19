@@ -124,7 +124,7 @@ CreateCommandStatusString(
       else {
         pFailedString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_FAILED), NULL);
         pErrorString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERROR), NULL);
-        pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR L": " FORMAT_STR L" (%d) - " FORMAT_STR_NL,
+        pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR L": " FORMAT_STR L" %d - " FORMAT_STR_NL,
           pStatusMessage,
           pFailedString,
           pErrorString,
@@ -696,7 +696,7 @@ GetAllNvmStatusCodeMessages(
       }
       else {
         pErrorLevelStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERROR), NULL);
-        pStatusStr = CatSPrintClean(pStatusStr, L"" FORMAT_STR L"" FORMAT_STR L" (%d) - " FORMAT_STR_NL,
+        pStatusStr = CatSPrintClean(pStatusStr, L"" FORMAT_STR L"" FORMAT_STR L" %d - " FORMAT_STR_NL,
           pPrefixString,
           pErrorLevelStr,
           Index,

@@ -177,7 +177,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
 #define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
 #define CLI_INFO_ON                                           L" on"
-#define CLI_PROGRESS_STR                                      L"\rOperation on DIMM (0x%04x) Progress: %d%%"
+#define CLI_PROGRESS_STR                                      L"\rOperation on DIMM 0x%04x Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"
 #define CLI_INJECT_MFG                                        L"MFG Inject command"
@@ -185,13 +185,13 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_INFO_SET_FW_LOG_LEVEL                             L"Set firmware log level"
 #define CLI_INFO_PACKAGE_SPARING_INJECT_ERROR                 L"Trigger package sparing"
-#define CLI_INFO_POISON_INJECT_ERROR                          L"Poison address (" FORMAT_STR L")"
+#define CLI_INFO_POISON_INJECT_ERROR                          L"Poison address " FORMAT_STR
 #define CLI_INFO_PERCENTAGE_REMAINING_INJECT_ERROR            L"Trigger a percentage remaining"
 #define CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR               L"Create a media fatal error"
 #define CLI_INFO_DIRTY_SHUT_DOWN_INJECT_ERROR                 L"Trigger a dirty shut down"
 #define CLI_INFO_TEMPERATURE_INJECT_ERROR                     L"Set temperature"
 #define CLI_INFO_CLEAR_PACKAGE_SPARING_INJECT_ERROR           L"Trigger package sparing"
-#define CLI_INFO_CLEAR_POISON_INJECT_ERROR                    L"Clear injected poison of address (" FORMAT_STR L")"
+#define CLI_INFO_CLEAR_POISON_INJECT_ERROR                    L"Clear injected poison of address " FORMAT_STR
 #define CLI_INFO_CLEAR_PERCENTAGE_REMAINING_INJECT_ERROR      L"Clear injected percentage remaining"
 #define CLI_INFO_CLEAR_FATAL_MEDIA_ERROR_INJECT_ERROR         L"Clear injected media fatal error"
 #define CLI_INFO_CLEAR_DIRTY_SHUT_DOWN_INJECT_ERROR           L"Clear dirty shut down"
@@ -209,7 +209,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE                  L"Unable to retrieve user display preferences."
 
-#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM [" FORMAT_STR L"]?"
+#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM " FORMAT_STR L"?"
 
 #define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm: "
 
@@ -222,7 +222,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL
 
 #define CLI_ERR_INJECT_FATAL_ERROR_UNSUPPORTED_ON_OS          L"Injecting a Fatal Media error is unsupported on this OS.\nPlease contact your OSV for assistance in performing this action."
-#define CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS          L"The following protocol (" FORMAT_STR L") is unsupported on this OS. Please use " FORMAT_STR L" instead.\n"
+#define CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS          L"The following protocol " FORMAT_STR L" is unsupported on this OS. Please use " FORMAT_STR L" instead.\n"
 
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD  1
 #define PRINT_SETTINGS_FORMAT_FOR_SHOW_REGION_CMD     2
@@ -239,7 +239,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_UNKNOWN_MODE                                  L"Unknown PBR mode."
 #define CLI_ERR_FAILED_TO_GET_SESSION_BUFFER                  L"Failed to get the current session buffer."
 #define CLI_ERR_FAILED_TO_DUMP_SESSION_TO_FILE                L"Failed to dump contents of session buffer to a file."
-#define CLI_ERR_FAILED_TO_GET_FILE_PATH                       L"Failed to get file path (" FORMAT_EFI_STATUS ")"
+#define CLI_ERR_FAILED_TO_GET_FILE_PATH                       L"Failed to get file path " FORMAT_EFI_STATUS
 #define CLI_ERR_FAILED_TO_READ_FILE                           L"Failed to read pbr file."
 #define CLI_ERR_FAILED_TO_SET_SESSION_BUFFER                  L"Failed to set session buffer."
 #define CLI_ERR_FAILED_TO_RESET_SESSION                       L"Failed to reset the session."

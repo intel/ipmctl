@@ -491,49 +491,49 @@ DecodeNfitNvDimmStateFlags(
     case NVDIMM_STATE_FLAGS_SAVE:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-Save failed", NVDIMM_STATE_FLAGS_SAVE);
       }
       break;
     case NVDIMM_STATE_FLAGS_RESTORE:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-Restore failed", NVDIMM_STATE_FLAGS_RESTORE);
       }
       break;
     case NVDIMM_STATE_FLAGS_FLUSH:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-Flush failed", NVDIMM_STATE_FLAGS_FLUSH);
       }
       break;
     case NVDIMM_STATE_FLAGS_REGION_ARMED:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-PM writes disabled or Not armed or Previous ERASE failed", NVDIMM_STATE_FLAGS_REGION_ARMED);
       }
       break;
     case NVDIMM_STATE_FLAGS_EVENTS_OBSERVED:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-Smart & Health events prior to OSPM handoff", NVDIMM_STATE_FLAGS_EVENTS_OBSERVED);
       }
       break;
     case NVDIMM_STATE_FLAGS_EVENTS_NOTIFY:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-Notify OSPM of Smart & Health events", NVDIMM_STATE_FLAGS_EVENTS_NOTIFY);
       }
       break;
     case NVDIMM_STATE_FLAGS_NOT_MAPPED:
       if (nfitNvDimmStateFlags & mask) {
         NvDimmStateFlags = CatSPrintClean(NvDimmStateFlags,
-          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_HEX_WITH_PARANTHESIS,
+          L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR SPACE_FORMAT_HEX,
           L"-NVDIMM region not mapped into SPA range", NVDIMM_STATE_FLAGS_NOT_MAPPED);
       }
       break;

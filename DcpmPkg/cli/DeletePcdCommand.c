@@ -244,7 +244,7 @@ DeletePcdCmd(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Clear " FORMAT_STR L"partition(s) on DIMM (" FORMAT_STR L"). ", pDisplayTargets, DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Clear " FORMAT_STR L"partition(s) on DIMM " FORMAT_STR L".", pDisplayTargets, DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (EFI_ERROR(ReturnCode) || !Confirmation) {
         ReturnCode = EFI_NOT_STARTED;
@@ -259,11 +259,11 @@ DeletePcdCmd(
 
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Clear partition(s)", L" on DIMM ", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Clear partition(s)", L" on", pCommandStatus);
     goto Finish;
   }
 
-  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, L" on DIMM ", pCommandStatus);
+  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, L" on", pCommandStatus);
 
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);

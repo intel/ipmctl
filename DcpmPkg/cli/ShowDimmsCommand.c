@@ -578,7 +578,7 @@ ShowDimms(
       if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
         pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
       } else {
-        pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityState);
+        pSecurityStr = SecurityStateBitmaskToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityStateBitmask);
       }
 
       ConvertFwVersion(TmpFwVerString, pDimms[DimmIndex].FwVer.FwProduct,
@@ -706,7 +706,7 @@ ShowDimms(
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
           pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         } else {
-          pSecurityStr = SecurityToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityState);
+          pSecurityStr = SecurityStateBitmaskToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecurityStateBitmask);
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, pSecurityStr);
         FREE_POOL_SAFE(pSecurityStr);

@@ -42,9 +42,10 @@ typedef enum _NvmStatusCode {
   NVM_ERR_UNABLE_TO_GET_SECURITY_STATE              = 39,   ///< Error: Unable to get security state
   NVM_ERR_INCONSISTENT_SECURITY_STATE               = 40,   ///< Error: Inconsistent security state
   NVM_ERR_INVALID_PASSPHRASE                        = 41,   ///< Error: Invalid passphrase
-  NVM_ERR_SECURITY_COUNT_EXPIRED                    = 42,   ///< Error: Security count expired
+  NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED            = 42,   ///< Error: Security count for user passphrase expired
   NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED               = 43,   ///< Error: Recovery access not enabled
   NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS             = 44,   ///< Error: Namespace exists - cannot execute request
+  NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED          = 45,   ///< Error: Security count for master passphrase expired
 
   NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING     = 59,   ///< Error: Image not compatible with this DCPMM
   NVM_ERR_FILENAME_NOT_PROVIDED                     = 60,   ///< Error: Filename not provided

@@ -974,6 +974,7 @@ GetDimmInfo (
       NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURITY_INFO;
     }
+    pDimmInfo->SecurityStateBitmask = pSecurityPayload->SecurityStatus.AsUint32;
     ConvertSecurityBitmask(pSecurityPayload->SecurityStatus.AsUint32, &pDimmInfo->SecurityState);
 
     pDimmInfo->MasterPassphraseEnabled = (BOOLEAN) pSecurityPayload->SecurityStatus.Separated.MasterPassphraseEnabled;
@@ -2719,10 +2720,19 @@ SetSecurityState(
       goto Finish;
     }
 
-    if (DimmSecurityState & SECURITY_MASK_COUNTEXPIRED) {
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
+    if ((SecurityOperation == SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE) || (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE)) {
+      if (DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED);
+        ReturnCode = EFI_ABORTED;
+        goto Finish;
+      }
+    }
+    else {
+      if (DimmSecurityState & SECURITY_MASK_COUNTEXPIRED) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED);
+        ReturnCode = EFI_ABORTED;
+        goto Finish;
+      }
     }
 
     /**
@@ -2879,7 +2889,7 @@ SetSecurityState(
       }
 
       if ((DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED)) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED);
         ReturnCode = EFI_SECURITY_VIOLATION;
         goto Finish;
       }
@@ -2915,7 +2925,7 @@ SetSecurityState(
       }
 
       if ((DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED)) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED);
         ReturnCode = EFI_SECURITY_VIOLATION;
         goto Finish;
       }
@@ -2980,10 +2990,20 @@ SetSecurityState(
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
       ReturnCode = EFI_ABORTED;
       goto Finish;
-    } else if (DimmSecurityState & SECURITY_MASK_COUNTEXPIRED) {
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_COUNT_EXPIRED);
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
+    }
+    else if ((SecurityOperation == SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE) || (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE)) {
+      if (DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED);
+        ReturnCode = EFI_ABORTED;
+        goto Finish;
+      }
+    }
+    else {
+      if (DimmSecurityState & SECURITY_MASK_COUNTEXPIRED) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED);
+        ReturnCode = EFI_ABORTED;
+        goto Finish;
+      }
     }
 
     SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);

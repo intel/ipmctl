@@ -1262,6 +1262,20 @@ SecurityToString(
   );
 
 /**
+  Convert dimm's security state bitmask to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityStateBitmask, bits define dimm's security state
+
+  @retval String representation of Dimm's security state
+**/
+CHAR16*
+SecurityStateBitmaskToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 SecurityStateBitmask
+);
+
+/**
   Convert ARS status value to its respective string
 
   @param[in] ARS status value

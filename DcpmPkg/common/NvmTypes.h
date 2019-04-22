@@ -102,6 +102,7 @@ typedef struct {
 #define DATE_STR_LEN                   29
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
 #define CONTROLLER_RID_LEN             12
+#define SECURITY_STATE_STR_LEN         32
 
 /** DIMM UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< DIMM UID hexadecimal-format representation length, including manufacturing fields
@@ -406,6 +407,9 @@ typedef struct _DIMM_INFO {
 
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
+  UINT32 SecurityStateBitmask;
+
+  CHAR16 SecurityStateStr[SECURITY_STATE_STR_LEN];
 } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {
@@ -676,12 +680,12 @@ typedef struct _DEBUG_LOG_INFO {
 #define SECURITY_DISABLED             1
 #define SECURITY_LOCKED               2
 #define SECURITY_UNLOCKED             3
-#define SECURITY_DISABLED_FROZEN      4
-#define SECURITY_UNLOCKED_FROZEN      5
-#define SECURITY_PW_MAX               6
+#define SECURITY_FROZEN               4
+#define SECURITY_PW_MAX               5
+#define SECURITY_MASTER_PW_MAX        6
 #define SECURITY_NOT_SUPPORTED        7
 #define SECURITY_STATES_COUNT         8
-#define SECURITY_MIXED_STATE          9 // Mixed security state in all dims view
+#define SECURITY_MIXED_STATE          9 // Mixed security state in all dimms view
 
 /**
   Passphrase Type
@@ -729,6 +733,17 @@ typedef struct _DEBUG_LOG_INFO {
 #define ARS_STATUS_MASK_IN_PROGRESS    BIT2
 #define ARS_STATUS_MASK_COMPLETED      BIT3
 #define ARS_STATUS_MASK_ABORTED        BIT4
+
+/**
+  Security states bitmask
+**/
+#define SECURITY_MASK_ENABLED             BIT1
+#define SECURITY_MASK_LOCKED              BIT2
+#define SECURITY_MASK_FROZEN              BIT3
+#define SECURITY_MASK_COUNTEXPIRED        BIT4
+#define SECURITY_MASK_NOT_SUPPORTED       BIT5
+#define SECURITY_MASK_MASTER_ENABLED      BIT8
+#define SECURITY_MASK_MASTER_COUNTEXPIRED BIT9
 
 /**
   Form Factor

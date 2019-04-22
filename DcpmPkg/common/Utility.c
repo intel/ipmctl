@@ -2537,11 +2537,6 @@ SecurityToString(
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
-  case SECURITY_DISABLED_FROZEN:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_DISABLED_FROZEN), NULL);
-    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
-    FREE_POOL_SAFE(pTempStr);
-    break;
   case SECURITY_LOCKED:
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_LOCKED), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
@@ -2552,13 +2547,18 @@ SecurityToString(
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
-  case SECURITY_UNLOCKED_FROZEN:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_UNLOCKED_FROZEN), NULL);
+  case SECURITY_PW_MAX:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_PW_MAX), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
-  case SECURITY_PW_MAX:
-    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_PW_MAX), NULL);
+  case SECURITY_MASTER_PW_MAX:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_MASTER_PW_MAX), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case SECURITY_FROZEN:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_FROZEN), NULL);
     pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
@@ -2574,6 +2574,67 @@ SecurityToString(
     break;
   }
 
+  return pSecurityString;
+}
+
+/**
+  Convert dimm's security state bitmask to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityStateBitmask, bits define dimm's security state
+
+  @retval String representation of Dimm's security state
+**/
+CHAR16*
+SecurityStateBitmaskToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 SecurityStateBitmask
+)
+{
+  CHAR16 *pSecurityString = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  if (SecurityStateBitmask & SECURITY_MASK_NOT_SUPPORTED) {
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_NOT_SUPPORTED), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    goto Finish;
+  }
+
+  if (SecurityStateBitmask & SECURITY_MASK_ENABLED) {
+    if (SecurityStateBitmask & SECURITY_MASK_LOCKED) { // Security State = Locked
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_LOCKED), NULL);
+      pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+    }
+    else { // Security State = Unlocked
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_UNLOCKED), NULL);
+      pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+    }
+  } else { // Security State = Disabled
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_DISABLED), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+  }
+
+  if (SecurityStateBitmask & SECURITY_MASK_COUNTEXPIRED) {
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_PW_MAX), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR FORMAT_STR, L", ", pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+  }
+  if (SecurityStateBitmask & SECURITY_MASK_MASTER_COUNTEXPIRED) {
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_MASTER_PW_MAX), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR FORMAT_STR, L", ", pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+  }
+  if (SecurityStateBitmask & SECURITY_MASK_FROZEN) {
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SECSTATE_FROZEN), NULL);
+    pSecurityString = CatSPrintClean(pSecurityString, FORMAT_STR FORMAT_STR, L", ", pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+  }
+
+Finish:
   return pSecurityString;
 }
 

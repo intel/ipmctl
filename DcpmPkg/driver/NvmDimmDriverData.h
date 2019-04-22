@@ -18,17 +18,6 @@
 #define SKU_CONTROLLED_COUNTRY          2
 
 /**
-  Security states bitmask
-**/
-#define SECURITY_MASK_ENABLED             BIT1
-#define SECURITY_MASK_LOCKED              BIT2
-#define SECURITY_MASK_FROZEN              BIT3
-#define SECURITY_MASK_COUNTEXPIRED        BIT4
-#define SECURITY_MASK_NOT_SUPPORTED       BIT5
-#define SECURITY_MASK_MASTER_ENABLED      BIT8
-#define SECURITY_MASK_MASTER_COUNTEXPIRED BIT9
-
-/**
   Persistent Partition Settings masks
 **/
 #define PARTITION_ENABLE_MASK BIT0

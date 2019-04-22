@@ -118,8 +118,7 @@ ConfirmPassphrase=newmasterpassphrase
 LIMITATIONS
 -----------
 The specified DCPMM must be manageable by the host software, have
-security enabled and not be in the "Unlocked, Frozen", "Disabled, Frozen",
-or "Exceeded" lock states.
+security enabled and not be in the "Frozen" or "Exceeded" lock states.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,

@@ -24,7 +24,7 @@
 #define HEALTH_MAX_STR_WIDTH                19 //worst-case - "Noncritical failure"
 #define HEALTH_SHORT_MAX_STR_WIDTH          17
 #define AR_MAX_STR_WIDTH                    15
-#define SECURITY_MAX_STR_WIDTH              16 //worst-case - "Unlocked, Frozen"
+#define SECURITY_MAX_STR_WIDTH              31 //worst-case - "Unlocked, Exceeded, MP Exceeded"
 #define FW_VERSION_MAX_STR_WIDTH            13
 #define ACTIVE_FW_VERSION_MAX_STR_WIDTH     16
 #define STAGED_FW_VERSION_MAX_STR_WIDTH     16

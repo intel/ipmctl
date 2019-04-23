@@ -130,7 +130,7 @@ DumpSupportCommand(
   IN    struct Command *pCmd
 )
 {
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
   CHAR16 *pDumpUserPath = NULL;

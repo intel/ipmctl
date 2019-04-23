@@ -1743,7 +1743,7 @@ Finish:
 EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   if (NULL == pCmd) {

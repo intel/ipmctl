@@ -507,7 +507,7 @@ BootStatusDiagnosticsCheck(
   DIMM_BSR Bsr;
   BOOLEAN FIS_1_14 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
 

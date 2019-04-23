@@ -872,7 +872,7 @@ Finish:
 **/
 EFI_STATUS
 CheckConfigProtocolVersion(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pConfigProtocol
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pConfigProtocol
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -967,7 +967,7 @@ OpenNvmDimmProtocol(
   }
 
   if (CompareGuid(&Guid, &gNvmDimmConfigProtocolGuid)) {
-    ReturnCode = CheckConfigProtocolVersion((EFI_DCPMM_CONFIG_PROTOCOL *) *ppProtocol);
+    ReturnCode = CheckConfigProtocolVersion((EFI_DCPMM_CONFIG2_PROTOCOL *) *ppProtocol);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to get the proper config protocol.");
       ppProtocol = NULL;
@@ -1579,7 +1579,7 @@ MatchCurrentARSStatus(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT8 CurrentARSStatus = ARS_STATUS_UNKNOWN;
 
   NVDIMM_ENTRY();
@@ -3432,7 +3432,7 @@ GoalStatusToString(
 
   Polls the status of the background operation on the dimm.
 
-  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance
+  @param [in] pNvmDimmConfigProtocol Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param [in] DimmId Dimm ID of the dimm to poll status
   @param [in] OpcodeToPoll Specify an opcode to poll, 0 to poll regardless of opcode
   @param [in] SubOpcodeToPoll Specify an opcode to poll
@@ -3440,7 +3440,7 @@ GoalStatusToString(
 **/
 EFI_STATUS
 PollLongOpStatus(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 DimmId,
   IN     UINT8 OpcodeToPoll OPTIONAL,
   IN     UINT8 SubOpcodeToPoll OPTIONAL,

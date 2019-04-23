@@ -51,7 +51,7 @@ SetSensor(
   IN     struct Command *pCmd
   )
 {
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmHandle = 0;
   UINT32 DimmIndex = 0;

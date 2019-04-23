@@ -29,11 +29,11 @@
 
    @retval EFI_SUCCESS on success
  **/
-STATIC EFI_STATUS CreatePbrBuffer(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol);
-STATIC EFI_STATUS SetPbrMode(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 Mode);
+STATIC EFI_STATUS CreatePbrBuffer(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol);
+STATIC EFI_STATUS SetPbrMode(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 Mode);
 STATIC EFI_STATUS ExecuteCommand(CHAR16 *pCmdInput);
-STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 TagId);
-STATIC EFI_STATUS ResetPbrSession(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 Id);
+STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 TagId);
+STATIC EFI_STATUS ResetPbrSession(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 Id);
 
 extern EFI_DRIVER_BINDING_PROTOCOL gNvmDimmDriverDriverBinding;
 /**
@@ -72,7 +72,7 @@ StartSession(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
   CHAR16 *pModeValue = NULL;
   CHAR16 *pTagValue = NULL;
   UINT64 TagId64 = 0;
@@ -84,7 +84,7 @@ StartSession(
   pPrinterCtx = pCmd->pPrintCtx;
 
   // NvmDimmConfigProtocol required
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
@@ -107,7 +107,7 @@ StartSession(
   //start recording session
   if (0 == StrICmp(pModeValue, PBR_RECORD_MODE_VAL)) {
 
-    ReturnCode = pNvmDimmConfigProtocol->PbrGetMode(&PbrMode);
+    ReturnCode = pNvmDimmPbrProtocol->PbrGetMode(&PbrMode);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_FAILED_TO_GET_PBR_MODE);
       goto Finish;
@@ -129,14 +129,14 @@ StartSession(
     }
 
     //create a blank pbr buffer
-    ReturnCode = CreatePbrBuffer(pNvmDimmConfigProtocol);
+    ReturnCode = CreatePbrBuffer(pNvmDimmPbrProtocol);
     if (EFI_ERROR(ReturnCode)) {
       Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
       goto Finish;
     }
 
     //set to record mode
-    ReturnCode = SetPbrMode(pNvmDimmConfigProtocol, PBR_RECORD_MODE);
+    ReturnCode = SetPbrMode(pNvmDimmPbrProtocol, PBR_RECORD_MODE);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_SET_PBR_MODE, pModeValue);
       goto Finish;
@@ -156,7 +156,7 @@ StartSession(
     if (0 == StrICmp(pModeValue, PBR_PLAYBACK_MANUAL_MODE_VAL)) {
       PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, ACTION_SETTING_MODE, pModeValue);
       //default starting session tag is 0x0, unless specified by -tag option.
-      ReturnCode = ResetPbrSession(pNvmDimmConfigProtocol, 0);
+      ReturnCode = ResetPbrSession(pNvmDimmPbrProtocol, 0);
       if (EFI_ERROR(ReturnCode)) {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_SET_SESSION_TAG);
         goto Finish;
@@ -164,7 +164,7 @@ StartSession(
     }
 
     //set to playback mode
-    ReturnCode = SetPbrMode(pNvmDimmConfigProtocol, PBR_PLAYBACK_MODE);
+    ReturnCode = SetPbrMode(pNvmDimmPbrProtocol, PBR_PLAYBACK_MODE);
     //no session loaded
     if (EFI_NOT_READY == ReturnCode) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_NO_PBR_SESSION_LOADED);
@@ -178,7 +178,7 @@ StartSession(
     //user specified to playback starting from a specific session tag/id
     if (pTagValue) {
       if (GetU64FromString(pTagValue, &TagId64)) {
-        ReturnCode = ResetPbrSession(pNvmDimmConfigProtocol, (UINT32)TagId64);
+        ReturnCode = ResetPbrSession(pNvmDimmPbrProtocol, (UINT32)TagId64);
         if (EFI_ERROR(ReturnCode)) {
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_RESET_SESSION);
           goto Finish;
@@ -192,7 +192,7 @@ StartSession(
       }
     }
     else {
-      ReturnCode = ResetPbrSession(pNvmDimmConfigProtocol, 0);
+      ReturnCode = ResetPbrSession(pNvmDimmPbrProtocol, 0);
       if (EFI_ERROR(ReturnCode)) {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_RESET_SESSION);
         goto Finish;
@@ -203,7 +203,7 @@ StartSession(
 
     //if playback mode, automatically execute pbr buffer
     if (StrICmp(pModeValue, PBR_PLAYBACK_MODE_VAL) == 0) {
-      ReturnCode = ExecuteCommands(pPrinterCtx, pNvmDimmConfigProtocol, (UINT32)TagId64);
+      ReturnCode = ExecuteCommands(pPrinterCtx, pNvmDimmPbrProtocol, (UINT32)TagId64);
     }
   }
   else {
@@ -238,40 +238,40 @@ RegisterStartSessionCommand()
 /**
   Helper that creates a new pbr recording buffer
 **/
-STATIC EFI_STATUS CreatePbrBuffer(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol) {
+STATIC EFI_STATUS CreatePbrBuffer(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol) {
 
-  if (NULL == pNvmDimmConfigProtocol) {
+  if (NULL == pNvmDimmPbrProtocol) {
     return EFI_INVALID_PARAMETER;
   }
-  return pNvmDimmConfigProtocol->PbrSetSession(NULL, 0);
+  return pNvmDimmPbrProtocol->PbrSetSession(NULL, 0);
 }
 
 /**
   Helper for setting the playback/record mode
 **/
-STATIC EFI_STATUS SetPbrMode(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 Mode) {
+STATIC EFI_STATUS SetPbrMode(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 Mode) {
 
-  if (NULL == pNvmDimmConfigProtocol) {
+  if (NULL == pNvmDimmPbrProtocol) {
     return EFI_INVALID_PARAMETER;
   }
-  return pNvmDimmConfigProtocol->PbrSetMode(Mode);
+  return pNvmDimmPbrProtocol->PbrSetMode(Mode);
 }
 
 /**
   Helper for setting the current session tag id
 **/
-STATIC EFI_STATUS ResetPbrSession(EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 Id) {
+STATIC EFI_STATUS ResetPbrSession(EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 Id) {
 
-  if (NULL == pNvmDimmConfigProtocol) {
+  if (NULL == pNvmDimmPbrProtocol) {
     return EFI_INVALID_PARAMETER;
   }
-  return pNvmDimmConfigProtocol->PbrResetSession(Id);
+  return pNvmDimmPbrProtocol->PbrResetSession(Id);
 }
 
 /**
   Helper for executing all cmds within a pbr buffer
 **/
-STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol, UINT32 TagId) {
+STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol, UINT32 TagId) {
   EFI_STATUS ReturnCode;
   UINT32 TagCount = 0;
   CHAR16 *pName = NULL;
@@ -283,7 +283,7 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_P
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
 #endif
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetTagCount(&TagCount);
+  ReturnCode = pNvmDimmPbrProtocol->PbrGetTagCount(&TagCount);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_TAG_COUNT);
     goto Finish;
@@ -297,7 +297,7 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_P
       Print(L"\n\n");
     }
 
-    ReturnCode = pNvmDimmConfigProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
+    ReturnCode = pNvmDimmPbrProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_TAG);
       goto Finish;
@@ -312,7 +312,7 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_CONFIG_P
       goto Finish;
     }
 
-    ResetPbrSession(pNvmDimmConfigProtocol, Index);
+    ResetPbrSession(pNvmDimmPbrProtocol, Index);
 
     //if running under the OS, the driver binding start routine needs to run before each command
     //handler.  This will simulate how individual cmds are executed from the CLI.

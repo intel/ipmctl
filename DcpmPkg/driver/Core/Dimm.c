@@ -2033,7 +2033,7 @@ FwCmdGetPlatformConfigData(
   UINT8 *pBuffer = NULL;
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
@@ -2738,7 +2738,7 @@ FwCmdSetPlatformConfigData (
   UINT32 PcdSize = 0;
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
@@ -3092,7 +3092,7 @@ FwCmdGetFwDebugLog (
   UINT64 BytesReadTotal = 0;
   UINT8 LogAction = 0;
   UINT8 *OutputPayload = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
@@ -4474,7 +4474,7 @@ GetAndParseFwErrorLogForDimm(
   LOG_INFO_DATA_RETURN OutPayloadGetErrorLogInfoData;
   UINT16 ReturnCount = 0;
   TEMPERATURE Temperature;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
@@ -6816,7 +6816,7 @@ PassThru(
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);

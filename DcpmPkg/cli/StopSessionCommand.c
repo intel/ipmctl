@@ -55,7 +55,7 @@ StopSession(
 {
   BOOLEAN Force = FALSE;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   UINT32 CurPbrMode = PBR_NORMAL_MODE;
   BOOLEAN Confirmation = FALSE;
@@ -65,18 +65,18 @@ StopSession(
   pPrinterCtx = pCmd->pPrintCtx;
 
   // NvmDimmConfigProtocol required
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
-  
+
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
     Force = TRUE;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetMode(&CurPbrMode);
+  ReturnCode = pNvmDimmPbrProtocol->PbrGetMode(&CurPbrMode);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_PBR_MODE);
     goto Finish;
@@ -101,7 +101,7 @@ StopSession(
     }
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrSetMode(PBR_NORMAL_MODE);
+  ReturnCode = pNvmDimmPbrProtocol->PbrSetMode(PBR_NORMAL_MODE);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_SET_PBR_MODE, NORMAL_MODE);
     goto Finish;

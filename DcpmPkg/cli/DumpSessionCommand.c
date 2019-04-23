@@ -51,7 +51,7 @@ DumpSession(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
   CHAR16 *pDumpUserPath = NULL;
   CHAR16 *pDumpFilePath = NULL;
   UINT32 BufferSz = 0;
@@ -71,7 +71,7 @@ DumpSession(
   pPrinterCtx = pCmd->pPrintCtx;
 
   // NvmDimmConfigProtocol required
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
@@ -94,7 +94,7 @@ DumpSession(
   }
 
   //get the contents of the pbr session buffer
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetSession(&pBuffer, &BufferSz);
+  ReturnCode = pNvmDimmPbrProtocol->PbrGetSession(&pBuffer, &BufferSz);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_BUFFER);
     goto Finish;

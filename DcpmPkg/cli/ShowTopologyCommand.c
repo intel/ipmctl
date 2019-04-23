@@ -143,7 +143,7 @@ ShowTopology(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_STATUS TempReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pSockets = NULL;
   UINT32 SocketsNum = 0;
   UINT16 *pDimmIds = NULL;

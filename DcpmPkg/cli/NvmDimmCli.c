@@ -89,9 +89,10 @@ extern BOOLEAN ConfigIsDdrtProtocolDisabled();
 extern BOOLEAN ConfigIsLargePayloadDisabled();
 #else
 #include "DeletePcdCommand.h"
-EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG_PROTOCOL_GUID;
+EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG2_PROTOCOL_GUID;
 EFI_GUID gIntelDimmConfigVariableGuid = INTEL_DIMM_CONFIG_VARIABLE_GUID;
 EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
+EFI_GUID gNvmDimmPbrProtocolGuid = EFI_DCPMM_PBR_PROTOCOL_GUID;
 #endif
 EFI_GUID gNvmDimmDriverHealthGuid = EFI_DRIVER_HEALTH_PROTOCOL_GUID;
 
@@ -198,16 +199,23 @@ UefiMain(
   EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
 #else
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 #endif
   UINT32 Mode;
   CHAR16 *pTagDescription = NULL;
-  
+
   //get the current pbr mode (playback/record/normal)
   Rc = GetPbrMode(&Mode);
-  if (EFI_ERROR(Rc)) {
+  if (EFI_ERROR(Rc) && (EFI_NOT_FOUND != Rc)) {
     goto Finish;
+  }
+
+  if (Mode == PBR_RECORD_MODE) {
+    Print(L"Warning - Executing in recording mode!\n\n");
+  }
+  else if (Mode == PBR_PLAYBACK_MODE) {
+    Print(L"Warning - Executing in playback mode!\n\n");
   }
 
 #ifndef OS_BUILD
@@ -238,14 +246,6 @@ UefiMain(
 
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
-
-  if (Mode == PBR_RECORD_MODE) {
-    Print(L"Warning - Executing in recording mode!\n\n");
-  }
-  else if (Mode == PBR_PLAYBACK_MODE) {
-    Print(L"Warning - Executing in playback mode!\n\n");
-  }
-  
 
 #if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
   /**
@@ -853,17 +853,17 @@ PRINTER_DATA_SET_ATTRIBS ShowVersionDataSetAttribs =
  */
 EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
 
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
-    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    Print(CLI_ERR_OPENING_PBR_PROTOCOL);
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrSetTag(PBR_DCPMM_CLI_SIG, pName, pDescription, NULL);
+  ReturnCode = pNvmDimmPbrProtocol->PbrSetTag(PBR_DCPMM_CLI_SIG, pName, pDescription, NULL);
   if (EFI_ERROR(ReturnCode)) {
     Print(CLI_ERR_FAILED_TO_SET_SESSION_TAG);
     goto Finish;
@@ -877,16 +877,18 @@ Finish:
  */
 EFI_STATUS GetPbrMode(UINT32 *Mode) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  *Mode = PBR_NORMAL_MODE;
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
-    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    NVDIMM_DBG("Failed to open the PBR protocol, error = " FORMAT_EFI_STATUS, ReturnCode);
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetMode(Mode);
+  ReturnCode = pNvmDimmPbrProtocol->PbrGetMode(Mode);
   if (EFI_ERROR(ReturnCode)) {
     Print(CLI_ERR_FAILED_TO_GET_PBR_MODE);
     goto Finish;
@@ -900,16 +902,16 @@ Finish:
  */
 EFI_STATUS ResetPbrSession(UINT32 TagId) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
-    Print(CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    Print(CLI_ERR_OPENING_PBR_PROTOCOL);
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrResetSession(TagId);
+  ReturnCode = pNvmDimmPbrProtocol->PbrResetSession(TagId);
   if (EFI_ERROR(ReturnCode)) {
     Print(CLI_ERR_FAILED_TO_SET_SESSION_TAG);
     goto Finish;
@@ -924,7 +926,7 @@ Finish:
 EFI_STATUS showVersion(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pPath = NULL;
   UINT32 DimmIndex = 0;
   UINT32 DimmCount = 0;
@@ -1040,7 +1042,7 @@ Finish:
 EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);

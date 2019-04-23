@@ -140,7 +140,7 @@ ShowFirmware(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pTargetValue = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;

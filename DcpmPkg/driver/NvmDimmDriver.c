@@ -393,6 +393,15 @@ NvmDimmDriverUnload(
     NVDIMM_DBG("Failed to uninstall the DriverHealth protocol, error = 0x%llx.", TempReturnCode);
   }
 
+  /** Uninstall Driver PBR Protocol **/
+  TempReturnCode = gBS->UninstallMultipleProtocolInterfaces(ImageHandle,
+    &gNvmDimmPbrProtocolGuid, &gNvmDimmDriverNvmDimmPbr, NULL);
+  if (EFI_ERROR(TempReturnCode)) {
+    FIRST_ERR(ReturnCode, TempReturnCode);
+    NVDIMM_DBG("Failed to uninstall the DriverPbr protocol, error = 0x%llx.", TempReturnCode);
+  }
+
+
   /**
     clean up data struct
   **/
@@ -838,6 +847,17 @@ NvmDimmDriverDriverEntryPoint(
     goto Finish;
   }
 
+  /**
+   Install Pbr Protocol onto ImageHandle
+ **/
+  ReturnCode = gBS->InstallMultipleProtocolInterfaces(
+    &ImageHandle,
+    &gNvmDimmPbrProtocolGuid, &gNvmDimmDriverNvmDimmPbr,
+    NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to install the EfiDriverPbrProtocol, error = 0x%llx.", ReturnCode);
+    goto Finish;
+  }
 
   InstallProtoEfiDevicePathProtocolToNfitBinding();
 
@@ -1467,7 +1487,7 @@ NvmDimmDriverDriverBindingStart(
    gNvmDimmData->ControllerHandle = ControllerHandle;
 
    /**
-   Install EFI_DCPMM_CONFIG_PROTOCOL on the driver handle
+   Install EFI_DCPMM_CONFIG2_PROTOCOL on the driver handle
    **/
    ReturnCode = gBS->InstallMultipleProtocolInterfaces(&gNvmDimmData->DriverHandle,
       &gNvmDimmConfigProtocolGuid, &gNvmDimmDriverNvmDimmConfig,

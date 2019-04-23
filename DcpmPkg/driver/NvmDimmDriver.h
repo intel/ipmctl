@@ -88,11 +88,12 @@ extern EFI_COMPONENT_NAME_PROTOCOL gNvmDimmDriverComponentName;
 extern EFI_DRIVER_DIAGNOSTICS2_PROTOCOL gNvmDimmDriverDriverDiagnostics2;
 extern EFI_DRIVER_DIAGNOSTICS_PROTOCOL gNvmDimmDriverDriverDiagnostics;
 extern EFI_DRIVER_HEALTH_PROTOCOL gNvmDimmDriverHealth;
-extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_FIRMWARE_MANAGEMENT_PROTOCOL gNvmDimmFirmwareManagementProtocol;
 extern EFI_STORAGE_SECURITY_COMMAND_PROTOCOL gNvmDimmDriverStorageSecurityCommand;
 extern EFI_BLOCK_IO_PROTOCOL gNvmDimmDriverBlockIo;
 extern EFI_NVDIMM_LABEL_PROTOCOL gNvdimmLabelProtocol;
+extern EFI_DCPMM_PBR_PROTOCOL gNvmDimmDriverNvmDimmPbr;
 
 typedef struct _PMEM_DEV {
   LIST_ENTRY Dimms;
@@ -134,7 +135,7 @@ typedef struct {
   /**
     NvmDimm data
   **/
-  EFI_DCPMM_CONFIG_PROTOCOL NvmDimmConfig;
+  EFI_DCPMM_CONFIG2_PROTOCOL NvmDimmConfig;
 
   /**
     This flag informs us if we installed the Device Path

@@ -170,7 +170,7 @@ ShowSensor(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   CHAR16 *pDimmsValue = NULL;

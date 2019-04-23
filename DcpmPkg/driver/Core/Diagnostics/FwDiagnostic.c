@@ -499,7 +499,7 @@ CheckViralPolicyConsistency(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_INFO *pDimms = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINTN Index = 0;
   UINT8 ViralPolicyState = 0;
 

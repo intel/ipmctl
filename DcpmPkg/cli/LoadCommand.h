@@ -70,7 +70,7 @@ EFI_STATUS
 BlockForFwStage(
   IN   struct Command *pCmd,
   IN   COMMAND_STATUS *pCommandStatus,
-  IN   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN   EFI_STATUS *pReturnCodes,
   IN   NVM_STATUS *pNvmCodes,
   IN   DIMM_INFO *pDimmTargets,
@@ -87,7 +87,7 @@ Check to see if a FW has already been staged on a DIMM
 BOOLEAN
 FwHasBeenStaged(
   IN   struct Command *pCmd,
-  IN   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN   UINT16 DimmID
 );
 #endif /** _LOADCOMMAND_H_ **/

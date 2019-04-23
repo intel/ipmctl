@@ -52,7 +52,7 @@ LoadSession(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePathProtocol = NULL;
   CHAR16 *pLoadFilePath = NULL;
   CHAR16 *pLoadUserPath = NULL;
@@ -82,7 +82,7 @@ LoadSession(
   }
 
   // NvmDimmConfigProtocol required
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
@@ -109,7 +109,7 @@ LoadSession(
   }
 
   //session module responsible for freeing buffer.
-  ReturnCode = pNvmDimmConfigProtocol->PbrSetSession(pFileBuffer, (UINT32)FileBufferSize);
+  ReturnCode = pNvmDimmPbrProtocol->PbrSetSession(pFileBuffer, (UINT32)FileBufferSize);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_SET_SESSION_BUFFER);
     goto Finish;

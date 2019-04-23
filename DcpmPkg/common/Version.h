@@ -59,7 +59,7 @@
   R = Release type (Alpha, Beta, Test, etc)
   r = Release version
 **/
-#define NVMDIMM_CONFIG_MAJOR_VERSION  1
+#define NVMDIMM_CONFIG_MAJOR_VERSION  2
 #define NVMDIMM_CONFIG_MINOR_VERSION  0
 
 /**

@@ -74,7 +74,7 @@ extern EFI_STATUS ForceStartTheDriver();
 extern EFI_STATUS EFIAPI NvmDimmDriverDriverBindingStart(IN EFI_DRIVER_BINDING_PROTOCOL *pThis, IN EFI_HANDLE ControllerHandle, IN EFI_DEVICE_PATH_PROTOCOL *pRemainingDevicePath OPTIONAL);
 extern EFI_DRIVER_BINDING_PROTOCOL gNvmDimmDriverDriverBinding;
 extern EFI_STATUS EFIAPI NvmDimmDriverDriverEntryPoint(IN EFI_HANDLE ImageHandle, IN EFI_SYSTEM_TABLE *pSystemTable);
-extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_STATUS EFIAPI NvmDimmDriverUnload(IN EFI_HANDLE ImageHandle);
 extern EFI_STATUS
 EFIAPI

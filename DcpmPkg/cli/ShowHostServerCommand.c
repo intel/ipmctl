@@ -64,7 +64,7 @@ ShowHostServer(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   HOST_SERVER_INFO HostServerinfo;
   BOOLEAN IsMixedSku;
@@ -200,7 +200,7 @@ RegisterShowHostServerCommand(
 }
 
 EFI_STATUS IsDimmsMixedSkuCfg(PRINT_CONTEXT *pPrinterCtx,
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   BOOLEAN *pIsMixedSku,
   BOOLEAN *pIsSkuViolation)
 {

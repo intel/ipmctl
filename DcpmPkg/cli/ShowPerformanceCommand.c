@@ -210,7 +210,7 @@ ShowPerformance(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 DimmCount;
   DIMM_PERFORMANCE_DATA *pDimmsPerformanceData = NULL;
   UINT32 DimmIdsNum = 0;

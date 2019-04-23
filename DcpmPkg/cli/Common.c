@@ -103,7 +103,7 @@ CompareDimmIdInDimmInfo(
   Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
@@ -118,7 +118,7 @@ CompareDimmIdInDimmInfo(
 **/
 EFI_STATUS
 GetDimmList(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
@@ -175,7 +175,7 @@ Finish:
   Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
   in the system. The caller is responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
@@ -196,7 +196,7 @@ Finish:
 **/
 EFI_STATUS
 GetAllDimmList(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
@@ -659,7 +659,7 @@ Finish:
 /**
   Gets number of Manageable Dimms and their IDs
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -670,7 +670,7 @@ Finish:
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
-  IN  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 )
@@ -2071,7 +2071,7 @@ IsSkuMixed(
   UINT32 DimmCount = 0;
   UINT32 Index = 0;
   DIMM_INFO *pDimmsInformation = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   DIMM_INFO *pFirstManageableDimmInfo = NULL;
 
   NVDIMM_ENTRY();

@@ -59,7 +59,7 @@ DeleteGoal(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
   CHAR16 *pTargetValue = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   UINT16 *pSocketIds = NULL;

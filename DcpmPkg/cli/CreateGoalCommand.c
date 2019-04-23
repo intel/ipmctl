@@ -134,7 +134,7 @@ Finish:
   confirm using prompt mechanism.
 
   @param[in] pCmd command from CLI
-  @param[in] pNvmDimmConfigProtocol is a pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
@@ -153,7 +153,7 @@ STATIC
 EFI_STATUS
 CheckAndConfirmAlignments(
   IN     struct Command *pCmd,
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 *pSocketIds OPTIONAL,
@@ -295,7 +295,7 @@ CreateGoal(
   IN     struct Command *pCmd
   )
 {
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 

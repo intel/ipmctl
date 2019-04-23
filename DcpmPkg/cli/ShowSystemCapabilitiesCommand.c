@@ -210,7 +210,7 @@ ShowSystemCapabilities(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
   BOOLEAN FilterOutput = FALSE;
   BOOLEAN ShowAll = FALSE;

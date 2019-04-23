@@ -324,7 +324,7 @@ ShowDimms(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 DimmCount = 0;
   UINT32 UninitializedDimmCount = 0;
   DIMM_INFO *pDimms = NULL;

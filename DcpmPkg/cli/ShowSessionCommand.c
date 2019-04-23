@@ -24,7 +24,7 @@
 
 EFI_STATUS
 MapTagtoCurrentSessionState(
-  IN  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol,
   OUT UINT32 *pTag
 );
 
@@ -112,7 +112,7 @@ ShowSession(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
@@ -146,7 +146,7 @@ ShowSession(
   /**
     Make sure we can access the config protocol
   **/
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmPbrProtocolGuid, (VOID **)&pNvmDimmPbrProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
@@ -156,7 +156,7 @@ ShowSession(
   //Retreive the current TagID (CLI's job to track/increment/reset the tag id).
   PbrDcpmmDeserializeTagId(&TagId, 0);
 
-  ReturnCode = pNvmDimmConfigProtocol->PbrGetTagCount(&TagCount);
+  ReturnCode = pNvmDimmPbrProtocol->PbrGetTagCount(&TagCount);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_TAG_COUNT);
     goto Finish;
@@ -169,10 +169,10 @@ ShowSession(
     else {
       pTagId = CatSPrintClean(NULL, TAG_ID_FORMAT, Index);
     }
-    
+
     PRINTER_BUILD_KEY_PATH(pPath, DS_TAG_INDEX_PATH, Index);
 
-    ReturnCode = pNvmDimmConfigProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
+    ReturnCode = pNvmDimmPbrProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
     if (ReturnCode == EFI_SUCCESS) {
 
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TAG_ID_STR, pTagId);
@@ -206,7 +206,7 @@ Finish:
 **/
 EFI_STATUS
 RegisterShowSessionCommand(
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol
+  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;

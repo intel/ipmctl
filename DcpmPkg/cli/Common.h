@@ -13,6 +13,7 @@
 extern OBJECT_STATUS gAllErrorNvmStatuses;
 extern OBJECT_STATUS gAllWarningNvmStatuses;
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
+extern EFI_GUID gNvmDimmPbrProtocolGuid;
 
 typedef struct _CMD_DISPLAY_OPTIONS {
   BOOLEAN DisplayOptionSet;
@@ -63,7 +64,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 // Common CLI error messages defined in specification
 #define CLI_ERR_OPENING_CONFIG_PROTOCOL            L"Error: Communication with the device driver failed."
-#define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMM_CONFIG_PROTOCOL not found."
+#define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMM_CONFIG2_PROTOCOL not found."
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
 #define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."
@@ -80,6 +81,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
+#define CLI_ERR_OPENING_PBR_PROTOCOL            L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
 
@@ -260,7 +262,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
   Retrieve a populated array and count of DIMMs in the system. The caller is
   responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
@@ -275,7 +277,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 **/
 EFI_STATUS
 GetDimmList(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
      OUT DIMM_INFO **ppDimms,
@@ -286,7 +288,7 @@ GetDimmList(
   Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
   in the system. The caller is responsible for freeing the returned array
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pCmd A pointer to a COMMAND struct.  Used to obtain the Printer context.
              printed to stdout, otherwise will be directed to the printer module.
   @param[in] dimmInfoCategories Categories that will be populated in
@@ -307,7 +309,7 @@ GetDimmList(
 **/
 EFI_STATUS
 GetAllDimmList(
-  IN     EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
@@ -457,7 +459,7 @@ CheckDisplayList(
 /**
   Gets number of Manageable Dimms and their IDs and Handles
 
-  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG_PROTOCOL instance.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -468,7 +470,7 @@ CheckDisplayList(
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
-  IN  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 );

@@ -151,7 +151,7 @@ ShowSockets(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 SocketCount = 0;
   SOCKET_INFO *pSockets = NULL;
   UINT16 *pSocketIds = NULL;

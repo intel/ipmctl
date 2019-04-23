@@ -60,7 +60,7 @@ DumpGoal(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   CHAR16 *pDumpUserPath = NULL;
   CHAR16 *pDumpFilePath = NULL;
   EFI_DEVICE_PATH_PROTOCOL *pDevicePath = NULL;

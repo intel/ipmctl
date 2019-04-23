@@ -1294,7 +1294,7 @@ ReadLabelStorageArea(
   UINT32 AlignPageIndex = 0;
   UINT32 PageSize = 0;
   UINT8 PageIndexMask = 0;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
@@ -1481,7 +1481,7 @@ WriteLabelStorageArea(
   UINT32 AlignPageIndex = 0;
   UINT32 PageSize = 0;
   UINT8 PageIndexMask = 0;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();

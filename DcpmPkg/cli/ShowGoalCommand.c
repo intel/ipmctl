@@ -359,7 +359,7 @@ ShowGoal(
   CHAR16 *pSettingsString = NULL;
   CHAR16 *pDisplayValues = NULL;
   CHAR16 *pTargetValue = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   COMMAND_STATUS *pCommandStatus = NULL;
   REGION_GOAL_PER_DIMM_INFO RegionConfigsInfo[MAX_DIMMS];
   EFI_STATUS ReturnCode = EFI_SUCCESS;

@@ -147,7 +147,7 @@ StartDiagnosticCmd(
   IN     COMMAND *pCmd
   )
 {
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;

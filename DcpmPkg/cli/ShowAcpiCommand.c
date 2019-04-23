@@ -84,7 +84,7 @@ EFI_STATUS registerShowAcpiCommand() {
  */
 EFI_STATUS showAcpi(struct Command *pCmd) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ParsedFitHeader *pNFit = NULL;
   ParsedPcatHeader *pPcat = NULL;
   PMTT_TABLE *pPMTT = NULL;

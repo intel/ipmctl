@@ -137,7 +137,7 @@ ShowCmdAccessPolicy(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   SOCKET_INFO *pCmdAccessPolicy = NULL;
   UINT32 DimmIndex = 0;
   UINT32 OpCodeIndex = 0;

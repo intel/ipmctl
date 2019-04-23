@@ -164,7 +164,7 @@ ShowPcd(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   DIMM_PCD_INFO *pDimmPcdInfo = NULL;
   UINT32 DimmPcdInfoCount = 0;
   UINT16 *pDimmIds = NULL;

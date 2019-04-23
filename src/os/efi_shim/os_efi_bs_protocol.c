@@ -27,10 +27,11 @@ EFI_BOOT_SERVICES gOsBootServices;
 EFI_BOOT_SERVICES *gBS = &gOsBootServices;
 
 //below externs used by BsLocateHandleBuffer & BsOpenProtocol
-extern EFI_DCPMM_CONFIG_PROTOCOL gNvmDimmDriverNvmDimmConfig;
+extern EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 extern EFI_GUID  gEfiSimpleFileSystemProtocolGuid;
-
+extern EFI_GUID gNvmDimmPbrProtocolGuid;
+extern EFI_DCPMM_PBR_PROTOCOL gNvmDimmDriverNvmDimmPbr;
 
 typedef struct _TIMER_EVENT_CONTEXT {
 	void * notify_context;
@@ -43,6 +44,7 @@ typedef struct _TIMER_EVENT_CONTEXT {
 
 #define PROTOCOL_HANDLE_NVDIMM_CONFIG 0x1
 #define PROTOCOL_HANDLE_FILE_IO 0x1
+#define PROTOCOL_HANDLE_NVDIMM_PBR 0x1
 
 EFI_STATUS BsLocateHandleBuffer(
 	IN     EFI_LOCATE_SEARCH_TYPE       SearchType,
@@ -72,6 +74,16 @@ EFI_STATUS BsLocateHandleBuffer(
         **Buffer = (EFI_HANDLE)PROTOCOL_HANDLE_FILE_IO;
 		return EFI_SUCCESS;
 	}
+  else if (CompareGuid(Protocol, &gNvmDimmPbrProtocolGuid))
+  {
+    *NoHandles = 1;
+    *Buffer = AllocatePool(sizeof(UINTN));
+    if (NULL == *Buffer) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    **Buffer = (EFI_HANDLE)PROTOCOL_HANDLE_NVDIMM_PBR;
+    return EFI_SUCCESS;
+  }
 	return EFI_PROTOCOL_ERROR;
 }
 
@@ -92,6 +104,10 @@ EFI_STATUS BsOpenProtocol(
 	{
 		*Interface = &gSimpleFileProtocol;
 	}
+  else if (CompareGuid(Protocol, &gNvmDimmPbrProtocolGuid))
+  {
+    *Interface = &gNvmDimmDriverNvmDimmPbr;
+  }
 	else
 	{
 		return EFI_PROTOCOL_ERROR;

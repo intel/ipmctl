@@ -1746,13 +1746,14 @@ ParseSourcePassFile(
   UINT64 FileBufferSize = 0;
   UINT64 StringLength = 0;
   CHAR16 **ppLinesBuffer = NULL;
+  CHAR16 *pCurrentLine = NULL;
   VOID *pFileBuffer = NULL;
   CHAR16 *pPassFromFile = NULL;
   CHAR16 *pFileString = NULL;
   UINT32 NumberOfChars = 0;
   BOOLEAN PassphraseProvided = FALSE;
   BOOLEAN NewPassphraseProvided = FALSE;
-
+  BOOLEAN TextFallThrough = TRUE;
   NVDIMM_ENTRY();
 #ifndef OS_BUILD
   if (pDevicePath == NULL || pCmd == NULL) {
@@ -1810,10 +1811,19 @@ ParseSourcePassFile(
   }
 
   for (Index = 0; Index < NumberOfLines; ++Index) {
-    // Ignore comment line that starts with '#'
-    if (StrStr(ppLinesBuffer[Index], L"#") != NULL) {
+    pCurrentLine = ppLinesBuffer[Index];
+    StringLength = StrLen(pCurrentLine);
+    // Ignore comment line that starts with '#' or
+    // If the only content in line is new line chars
+    if ((NULL != StrStr(ppLinesBuffer[Index], L"#"))
+        || (1 == StringLength && (L'\n' == pCurrentLine[0] || L'\r' == pCurrentLine[0]))
+        || (2 == StringLength && L'\r' == pCurrentLine[0] && L'\n' == pCurrentLine[1])) {
       continue;
     }
+    else {
+      TextFallThrough = FALSE;
+    }
+
     pPassFromFile = (CHAR16*)StrStr(ppLinesBuffer[Index], L"=");
     if (pPassFromFile == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -1830,15 +1840,11 @@ ParseSourcePassFile(
       goto Finish;
     }
 
-    // Cut off carriage return
-    if (pPassFromFile[StringLength - 1] == L'\r') {
+    // Cut off new line chars present at the end
+    while ((1 <= StringLength)
+        && (L'\r' == pPassFromFile[StringLength - 1] || L'\n' == pPassFromFile[StringLength - 1])) {
+      pPassFromFile[StringLength - 1] = L'\0';
       StringLength--;
-      if (StringLength == 0) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INVALID_PASSPHRASE_FROM_FILE);
-        goto Finish;
-      }
-      pPassFromFile[StringLength] = L'\0';
     }
 
     NewPassphraseProvided =
@@ -1858,7 +1864,11 @@ ParseSourcePassFile(
       goto Finish;
     }
   }
-
+  //In case the file has only comments and new line
+  if (TRUE == TextFallThrough) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_WRONG_FILE_DATA);
+  }
 Finish:
   for (Index = 0; ppLinesBuffer != NULL && Index < NumberOfLines; ++Index) {
     FREE_POOL_SAFE(ppLinesBuffer[Index]);

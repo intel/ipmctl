@@ -7248,6 +7248,11 @@ Finish:
     goto Finish;
   }
 
+  ReturnCode = ADNamespaceMinAndMaxAvailableSizeOnIS(pIS, &MinSize, &MaxSize);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   ReturnCode = GetRegion(pThis, RegionId, &Region, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -7289,6 +7294,10 @@ Finish:
   if (CapacitySpecified) {
     /** Calculate namespace capacity to provide **/
     RequestedCapacity = BlockCount * BlockSize;
+    if (RequestedCapacity > MaxSize) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
+      goto Finish;
+    }
     ReturnCode = ConvertUsableSizeToActualSize(BlockSize, RequestedCapacity, Mode,
     &ActualBlockCount, pActualNamespaceCapacity, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
@@ -7318,6 +7327,13 @@ Finish:
     *pActualNamespaceCapacity = NamespaceCapacity;
     ActualBlockCount = *pActualNamespaceCapacity / BlockSize;
   }
+
+  if (*pActualNamespaceCapacity < MinSize || MinSize == 0) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_NAMESPACE_CAPACITY);
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   /** Namespace capacity that doesn't include block size with 64B cache lane size **/
   NamespaceCapacity = ActualBlockCount * BlockSize;
   ReturnCode = GetListSize(&pIS->DimmRegionList, &DimmCount);
@@ -7414,17 +7430,6 @@ Build NAMESPACE structure
   }
   if (pNamespace->RangesCount > MAX_NAMESPACE_RANGES) {
     FailFlag = TRUE;
-    goto Finish;
-  }
-
-  // Check if capacity meets minimum requirements. This is the aligned capacity.
-  ReturnCode = ADNamespaceMinAndMaxAvailableSizeOnIS(pIS, &MinSize, &MaxSize);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-  if (*pActualNamespaceCapacity < MinSize || MinSize == 0) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_NAMESPACE_CAPACITY);
-    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 

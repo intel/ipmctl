@@ -102,7 +102,7 @@ Finish:
   @param[in] pRegionList Head of the list for Regions
   @param[in] RegionId Region identifier
 
-  @retval NVM_REGION struct pointer if matching Region has been found
+  @retval NVM_IS struct pointer if matching Region has been found
   @retval NULL pointer if not found
 **/
 NVM_IS *

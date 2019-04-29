@@ -186,29 +186,6 @@ CleanISLists(
   IN OUT LIST_ENTRY *pISList
   );
 
-
-/**
-  Free a Interleave Set and all memory resources in use by the Interleave Set.
-
-  @param[in, out] pIS the Interleave Set and its regions that will be released
-**/
-VOID
-FreeISResources(
-  IN OUT NVM_IS *pIS
-  );
-
-/**
-  Clean the Interleave Set
-
-  @param[in, out] pDimmList: the list of DCPMMs
-  @param[in, out] pISList: the list of Interleave Sets to clean
-**/
-VOID
-CleanISList(
-  IN OUT LIST_ENTRY *pDimmList,
-  IN OUT LIST_ENTRY *pISList
-  );
-
 /**
   Free a Interleave Set and all memory resources in use by the Interleave Set.
 
@@ -550,21 +527,6 @@ VerifySKUSupportForCreateGoal(
   IN     DIMM **ppDimms,
   IN     UINT32 DimmsNum,
   IN OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
-  Check for new goal configs for the DIMM
-
-  @param[in] pDimm The current DIMM
-  @param[out] pHasNewGoal TRUE if any of the dimms on the IS have a new goal, else FALSE
-
-  @retval EFI_SUCCESS
-  #retval EFI_INVALID_PARAMETER If IS is null
-**/
-EFI_STATUS
-FindIfNewGoalOnDimm(
-  IN     DIMM *pDimm,
-     OUT BOOLEAN *pHasNewGoal
   );
 
 /**

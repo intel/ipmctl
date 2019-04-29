@@ -999,41 +999,6 @@ FindAndAssignISForNamespace(
   );
 
 /**
-  Validate data for Create Namespace
-
-  @param[in] RegionId the ID of the pool that the Namespace is supposed to be created.
-  @param[in] NamespaceType Type of the namespace to be created (Storage or AppDirect).
-  @param[in] PersistentMemType Persistent memory type of pool, that region will be used to create Namespace
-  @param[in] DimmId the PID of the Dimm that the Block Namespace is supposed to be created.
-  @param[in] BlockSize the size of each of the block in the device.
-  @param[in] BlockCount the amount of block that this namespace should consist
-  @param[in] EraseCapable Target DIMM SKU must allow for Secure Erase
-  @param[in] Encryption Target DIMM must have Security enabled
-  @param[out] ppSpecifiedRegion Output variable for Region
-  @param[out] pDimms Output variable for Dimms
-  @param[out] pDimmsNum Output variable for number of Dimms
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS           Success
-  @retval EFI_INVALID_PARAMETER Input parameter is NULL
-  @retval EFI_UNSUPPORTED       Requested mode is not supported by platform
-  @retval EFI_LOAD_ERROR        Couldn't retrieve platform PCAT (ACPI) tables
-  @retval EFI_ACCESS_DENIED     Invalid security state
-  @retval EFI_ABORTED           Namespace name is used already
-  @retval EFI_NOT_FOUND         Target with specified criteria has not been found
-**/
-EFI_STATUS
-CreateNamespaceValidateData(
-  IN     UINT16 RegionId,
-  IN     UINT16 DimmPid,
-  IN     UINT32 BlockSize,
-  IN     UINT64 BlockCount,
-     OUT NVM_REGION **ppSpecifiedRegion,
-     OUT DIMM *pDimms[MAX_DIMMS_PER_SOCKET],
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Calculate actual Namespace size on Dimm
 
   @param[in] BlockSize the size of each of the block in the device.

@@ -385,11 +385,6 @@ GetDimmByHandle(
   @retval NULL pointer if not found
 **/
 DIMM *
-GetDimmByHandle(
-  IN     UINT32 DeviceHandle,
-  IN     LIST_ENTRY *pDimms
-  );
-DIMM *
 GetDimmBySerialNumber(
   IN     LIST_ENTRY *pDimms,
   IN     UINT32 SerialNumber

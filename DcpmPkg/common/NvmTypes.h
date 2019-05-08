@@ -658,6 +658,8 @@ typedef struct _DEBUG_LOG_INFO {
 #define HEALTH_REASON_AIT_DRAM_DISABLED                   BIT5  ///< AIT DRAM state is disabled
 #define HEALTH_REASON_CAP_SELF_TEST_FAILURE               BIT6  ///< CAP Self-Test failed
 #define HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE     BIT7  ///< Critical internal state failure
+#define HEALTH_REASON_PERFORMANCE_DEGRADED                BIT8  ///< Performance degraded
+
 
 /**
   @}

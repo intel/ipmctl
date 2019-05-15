@@ -4067,3 +4067,45 @@ EFI_STATUS PbrDcpmmDeserializeTagId(
 }
 
 #endif
+
+/**
+Converts a DIMM_INFO_ATTRIB_X attribute to a string
+
+@param[in] pAttrib - a DIMM_INFO_ATTRIB_X attribute to convert
+@param[in] pFormatStr - optional format string to use for conversion
+**/
+CHAR16 *
+ConvertDimmInfoAttribToString(
+    IN VOID *pAttrib,
+    IN CHAR16* pFormatStr OPTIONAL)
+{
+  DIMM_INFO_ATTRIB_HEADER *pHeader = (DIMM_INFO_ATTRIB_HEADER *)pAttrib;
+
+  if (NULL == pAttrib) {
+    return NULL;
+  }
+
+  if (pHeader->Status.Code) {
+    return CatSPrintClean(NULL, L"Unknown");
+  }
+
+  switch (pHeader->Type) {
+    case DIMM_INFO_TYPE_CHAR16:
+      return (NULL == pFormatStr) ?
+        CatSPrintClean(NULL, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data) :
+        CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data);
+    case DIMM_INFO_TYPE_UINT8:
+      return (NULL == pFormatStr) ?
+        CatSPrintClean(NULL, L"%d", ((DIMM_INFO_ATTRIB_UINT8 *)pAttrib)->Data) :
+        CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_UINT8 *)pAttrib)->Data);
+    case DIMM_INFO_TYPE_UINT16:
+      return (NULL == pFormatStr) ?
+        CatSPrintClean(NULL, L"%d", ((DIMM_INFO_ATTRIB_UINT16 *)pAttrib)->Data) :
+        CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_UINT16 *)pAttrib)->Data);
+    case DIMM_INFO_TYPE_UINT32:
+      return (NULL == pFormatStr) ?
+        CatSPrintClean(NULL, L"%d", ((DIMM_INFO_ATTRIB_UINT32 *)pAttrib)->Data) :
+        CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_UINT32 *)pAttrib)->Data);
+  }
+  return NULL;
+}

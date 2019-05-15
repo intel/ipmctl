@@ -243,8 +243,11 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   BOOT_STATUS_REGISTER_STR,
 #ifdef OS_BUILD
   ACTION_REQUIRED_STR,
-  ACTION_REQUIRED_EVENTS_STR
+  ACTION_REQUIRED_EVENTS_STR,
 #endif
+  DCPMM_AVERAGE_POWER_STR,
+  AVERAGE_12V_POWER_STR,
+  AVERAGE_1_2V_POWER_STR
 };
 
 CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
@@ -292,7 +295,10 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   POISON_ERR_CLR_CTR_STR,
   MEDIA_TEMP_INJ_CTR_STR,
   SW_TRIGGER_CTR_STR,
-  BOOT_STATUS_REGISTER_STR
+  BOOT_STATUS_REGISTER_STR,
+  DCPMM_AVERAGE_POWER_STR,
+  AVERAGE_12V_POWER_STR,
+  AVERAGE_1_2V_POWER_STR
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
@@ -1093,6 +1099,21 @@ ShowDimms(
           if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_AVG_POWER_BUDGET_STR))) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVG_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].MaxAveragePowerBudget);
           }
+        }
+
+        /** DcpmmAveragePower **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DCPMM_AVERAGE_POWER_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DCPMM_AVERAGE_POWER_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].DcpmmAveragePower, FORMAT_INT32 L" " MILI_WATT_STR));
+        }
+
+        /** AveragePower12V **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVERAGE_12V_POWER_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVERAGE_12V_POWER_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AveragePower12V, FORMAT_INT32 L" " MILI_WATT_STR));
+        }
+
+        /** AveragePower1_2V **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVERAGE_1_2V_POWER_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVERAGE_1_2V_POWER_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AveragePower1_2V, FORMAT_INT32 L" " MILI_WATT_STR));
         }
 
         /** LatchedLastShutdownStatusDetails **/

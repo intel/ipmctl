@@ -781,6 +781,7 @@ GetDimmInfo (
   PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayload;
   PT_DEVICE_CHARACTERISTICS_PAYLOAD *pDevCharacteristics = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
+  PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
@@ -1111,11 +1112,29 @@ GetDimmInfo (
       }
   }
 
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4)
+  {
+    ReturnCode = FwCmdGetMemoryInfoPage(pDimm, MEMORY_INFO_PAGE_4, sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4), (VOID **)&pPayloadMemInfoPage4);
+    pDimmInfo->DcpmmAveragePower.Header.Status.Code = ReturnCode;
+    pDimmInfo->AveragePower12V.Header.Status.Code = ReturnCode;
+    pDimmInfo->AveragePower1_2V.Header.Status.Code = ReturnCode;
+
+    if (EFI_SUCCESS == ReturnCode) {
+      pDimmInfo->DcpmmAveragePower.Data = pPayloadMemInfoPage4->DcpmmAveragePower;
+      pDimmInfo->DcpmmAveragePower.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AveragePower12V.Data = pPayloadMemInfoPage4->AveragePower12V;
+      pDimmInfo->AveragePower12V.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AveragePower1_2V.Data = pPayloadMemInfoPage4->AveragePower1_2V;
+      pDimmInfo->AveragePower1_2V.Header.Type = DIMM_INFO_TYPE_UINT16;
+    }
+  }
+
   ReturnCode = EFI_SUCCESS;
 
 Finish:
   FREE_POOL_SAFE(pDevCharacteristics);
   FREE_POOL_SAFE(pPayloadMemInfoPage3);
+  FREE_POOL_SAFE(pPayloadMemInfoPage4);
   FREE_POOL_SAFE(pPayloadFwImage);
   FREE_POOL_SAFE(pGetPackageSparingPayload);
   FREE_POOL_SAFE(pSecurityPayload);

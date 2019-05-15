@@ -10,7 +10,6 @@
 
 #ifndef _NVM_TYPES_H_
 #define _NVM_TYPES_H_
-
 #include "NvmLimits.h"
 #include "NvmWorkarounds.h"
 #ifdef OS_BUILD
@@ -268,6 +267,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
 #define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)
+#define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4              (1 << 12)   ///< Memory info page 4 fields will be populated
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
 
 /**
@@ -287,7 +287,42 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_VIRAL_POLICY                    (1 << 10)
 #define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 11)
 #define DIMM_INFO_ERROR_MAX                             (1 << 12)
-#define DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS                (1 << 13)
+#define DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS          (1 << 13)
+
+
+#define DIMM_INFO_TYPE_CHAR16   1
+#define DIMM_INFO_TYPE_UINT8    2
+#define DIMM_INFO_TYPE_UINT16   3
+#define DIMM_INFO_TYPE_UINT32   4
+
+typedef struct {
+  UINT64 Code;
+}DIMM_INFO_ATTRIBUTE_STATUS;
+
+typedef struct _DIMM_INFO_ATTRIB_HEADER {
+  DIMM_INFO_ATTRIBUTE_STATUS Status;
+  UINT8 Type;
+}DIMM_INFO_ATTRIB_HEADER;
+
+typedef struct _DIMM_INFO_ATTRIB_CHAR16{
+  DIMM_INFO_ATTRIB_HEADER Header;
+  CHAR16 Data[32];
+}DIMM_INFO_ATTRIB_CHAR16;
+
+typedef struct _DIMM_INFO_ATTRIB_UINT8 {
+  DIMM_INFO_ATTRIB_HEADER Header;
+  UINT8 Data;
+}DIMM_INFO_ATTRIB_UINT8;
+
+typedef struct _DIMM_INFO_ATTRIB_UINT16 {
+  DIMM_INFO_ATTRIB_HEADER Header;
+  UINT16 Data;
+}DIMM_INFO_ATTRIB_UINT16;
+
+typedef struct _DIMM_INFO_ATTRIB_UINT32 {
+  DIMM_INFO_ATTRIB_HEADER Header;
+  UINT32 Data;
+}DIMM_INFO_ATTRIB_UINT32;
 
 // The "global dimm struct" is at &gNvmDimmData->PMEMDev.Dimms and is populated
 // at HII driver loading, so they are included by default on any call to GetDimmInfo()
@@ -410,7 +445,13 @@ typedef struct _DIMM_INFO {
   UINT32 SecurityStateBitmask;
 
   CHAR16 SecurityStateStr[SECURITY_STATE_STR_LEN];
-} DIMM_INFO;
+
+  //DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4
+  DIMM_INFO_ATTRIB_UINT16 DcpmmAveragePower;//!< DCPMM Average Power
+  DIMM_INFO_ATTRIB_UINT16 AveragePower12V;  //!< Average 12V Power
+  DIMM_INFO_ATTRIB_UINT16 AveragePower1_2V; //!< Average 1.2V Power
+
+  } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {
   UINT16 DimmID;                            //!< SMBIOS Type 17 handle corresponding to this memory device

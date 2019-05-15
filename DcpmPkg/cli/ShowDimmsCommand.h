@@ -100,7 +100,9 @@
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"
 #endif
-
+#define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
+#define AVERAGE_12V_POWER_STR       L"Average12vPower"
+#define AVERAGE_1_2V_POWER_STR      L"Average1_2vPower"
 #define NOT_APPLICABLE_SHORT_STR    L"N/A"
 #define MILI_WATT_STR               L"mW"
 #define MEGA_TRANSFERS_PER_SEC_STR  L"MT/s"

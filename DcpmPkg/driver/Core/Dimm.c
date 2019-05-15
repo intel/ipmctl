@@ -3372,6 +3372,11 @@ FwCmdGetMemoryInfoPage (
     goto Finish;
   }
 
+  if (MEMORY_INFO_PAGE_4 == PageNum && pDimm->FwVer.FwApiMajor < 2) {
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+  }
+
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;

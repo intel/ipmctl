@@ -385,6 +385,7 @@ enum InjectErrorSubop
 #define MEMORY_INFO_PAGE_0 0X0
 #define MEMORY_INFO_PAGE_1 0X1
 #define MEMORY_INFO_PAGE_3 0X3
+#define MEMORY_INFO_PAGE_4 0X4
 
 
 /**
@@ -984,6 +985,19 @@ typedef struct {
   UINT64 SoftwareTriggersEnabledDetails;    //!< For each bit set, the corresponding trigger is currently enabled.
   UINT8 Reserved[100];                      //!< Reserved
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3;
+
+/**
+   Passthrough Output Payload:
+     Opcode:      0x08h (Get Log Page)
+     Sub-Opcode:  0x03h (Memory Info)
+     Page: 4 (Average Power Consumption Statistics)
+  **/
+typedef struct {
+  UINT16 DcpmmAveragePower;                 //!< Average power consumption by the module
+  UINT16 AveragePower12V;                   //!< 12V average power consumption by the module
+  UINT16 AveragePower1_2V;                  //!< 1.2V average power consumption by the module
+  UINT8 Reserved[122];                      //!< Reserved
+} PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4;
 
 /**
   Passthrough Payload:

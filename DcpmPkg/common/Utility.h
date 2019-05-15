@@ -1705,5 +1705,16 @@ EFI_STATUS PbrDcpmmDeserializeTagId(
   UINT32 defaultId
 );
 
+/**
+Converts a DIMM_INFO_ATTRIB_X attribute to a string
+
+@param[in] pAttrib - a DIMM_INFO_ATTRIB_X attribute to convert
+@param[in] pFormatStr - optional format string to use for conversion
+**/
+CHAR16 * ConvertDimmInfoAttribToString(
+  VOID *pAttrib,
+  CHAR16* pFormatStr OPTIONAL
+);
+
 #endif /** _UTILITY_H_ **/
 

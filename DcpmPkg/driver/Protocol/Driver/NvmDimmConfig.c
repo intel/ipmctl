@@ -4910,7 +4910,7 @@ UpdateSmbusDimmFw(
   CHAR16 *pErrorMessage = NULL;
   UINT64 PacketsCounter = 0;
   UINT16 CurrentPacket = 0;
-  FW_SP_UPDATE_PACKET FwUpdatePacket;
+  FW_SMALL_PAYLOAD_UPDATE_PACKET FwUpdatePacket;
   UINT8 Percent = 0;
 
   NVDIMM_ENTRY();
@@ -4960,9 +4960,9 @@ UpdateSmbusDimmFw(
   }
 
   pPassThruCommand->InputPayloadSize = sizeof(FwUpdatePacket);
-  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SP_SELECTOR;
+  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SMALL_PAYLOAD_SELECTOR;
 
-  FwUpdatePacket.TransactionType = FW_UPDATE_SP_INIT_TRANSFER;
+  FwUpdatePacket.TransactionType = FW_UPDATE_INIT_TRANSFER;
   FwUpdatePacket.PacketNumber = CurrentPacket;
 
   CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
@@ -4980,7 +4980,7 @@ UpdateSmbusDimmFw(
     Percent = (UINT8)((CurrentPacket*100)/PacketsCounter);
     SetObjProgress(pCommandStatus, pCurrentDimm->DeviceHandle.AsUint32, Percent);
 
-    FwUpdatePacket.TransactionType = FW_UPDATE_SP_CONTINUE_TRANSFER;
+    FwUpdatePacket.TransactionType = FW_UPDATE_CONTINUE_TRANSFER;
     FwUpdatePacket.PacketNumber = CurrentPacket;
 
     CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
@@ -4995,7 +4995,7 @@ UpdateSmbusDimmFw(
     }
   }
 
-  FwUpdatePacket.TransactionType = FW_UPDATE_SP_END_TRANSFER;
+  FwUpdatePacket.TransactionType = FW_UPDATE_END_TRANSFER;
   FwUpdatePacket.PacketNumber = CurrentPacket;
 
   CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
@@ -5057,20 +5057,24 @@ UpdateDimmFw(
   DIMM *pCurrentDimm = NULL;
   FW_IMAGE_HEADER *pFileHeader = NULL;
   CHAR16 *pErrorMessage = NULL;
-  UINT8 ArsStatus = 0;
-  UINT8 CurrentRetryCount = 0;
+  FW_SMALL_PAYLOAD_UPDATE_PACKET FwUpdatePacket;
+
+
 
 #ifdef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   UINT64 PacketsCounter = 0;
   UINT16 CurrentPacket = 0;
-  FW_SP_UPDATE_PACKET FwUpdatePacket;
+#else
+  // TODO: These are needed in small payload too
+  // The flows (including UpdateSmbusDimmFw()) should all be merged and
+  // moved to Dimm.c in the style of FwCmdGetFwDebugLog().
+  UINT8 ArsStatus = 0;
+  UINT8 CurrentRetryCount = 0;
 #endif
 
   NVDIMM_ENTRY();
 
-#ifdef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   SetMem(&FwUpdatePacket, sizeof(FwUpdatePacket), 0x0);
-#endif
 
   if (pImageBuffer == NULL || pNvmStatus == NULL) {
     NVDIMM_DBG("an input buffer is null\n");
@@ -5108,12 +5112,23 @@ UpdateDimmFw(
     goto Finish;
   }
 
+  // Clear out and initialize fw update packet
+  // Still need to send full small payload even in large payload fw update
+  ZeroMem(&FwUpdatePacket, sizeof(FwUpdatePacket));
+  pPassThruCommand->InputPayloadSize = sizeof(FwUpdatePacket);
+  FwUpdatePacket.TransactionType = FW_UPDATE_INIT_TRANSFER;
+#ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
+  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_LARGE_PAYLOAD_SELECTOR;
+#else
+  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SMALL_PAYLOAD_SELECTOR;
+#endif
+  pPassThruCommand->OutputPayloadSize = 0;
+
 #ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
   pPassThruCommand->LargeInputPayloadSize = (UINT32)ImageBufferSize;
   CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
-
+  CopyMem_S(pPassThruCommand->InputPayload, sizeof(pPassThruCommand->InputPayload), &FwUpdatePacket, sizeof(FwUpdatePacket));
   do {
-    pPassThruCommand->OutputPayloadSize = 0;
     pPassThruCommand->Status = 0;
 #ifdef OS_BUILD
     pPassThruCommand->DsmStatus = 0;
@@ -5176,10 +5191,7 @@ UpdateDimmFw(
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
-  pPassThruCommand->InputPayloadSize = sizeof(FwUpdatePacket);
-  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SP_SELECTOR;
 
-  FwUpdatePacket.TransactionType = FW_UPDATE_SP_INIT_TRANSFER;
   FwUpdatePacket.PacketNumber = CurrentPacket;
   CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
@@ -5200,7 +5212,7 @@ UpdateDimmFw(
   }
 
   while (CurrentPacket < (PacketsCounter - 1)) {
-    FwUpdatePacket.TransactionType = FW_UPDATE_SP_CONTINUE_TRANSFER;
+    FwUpdatePacket.TransactionType = FW_UPDATE_CONTINUE_TRANSFER;
     FwUpdatePacket.PacketNumber = CurrentPacket;
     CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
     CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
@@ -5222,7 +5234,7 @@ UpdateDimmFw(
     }
   }
 
-  FwUpdatePacket.TransactionType = FW_UPDATE_SP_END_TRANSFER;
+  FwUpdatePacket.TransactionType = FW_UPDATE_END_TRANSFER;
   FwUpdatePacket.PacketNumber = CurrentPacket;
   CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
   CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));

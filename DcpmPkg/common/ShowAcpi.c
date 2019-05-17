@@ -561,7 +561,7 @@ PrintFitTable(
   )
 {
   SpaRangeTbl *pTableSpaRange = NULL;
-  NvDimmRegionTbl *pTableNvDimmRegion = NULL;
+  NvDimmRegionMappingStructure *pTableNvDimmRegion = NULL;
   InterleaveStruct *pTableInterleave = NULL;
   ControlRegionTbl *pTableControlRegion = NULL;
   BWRegionTbl *pTableBWRegion = NULL;
@@ -597,7 +597,7 @@ PrintFitTable(
     FREE_POOL_SAFE(pGuidStr);
     break;
   case NVDIMM_NVDIMM_REGION_TYPE:
-    pTableNvDimmRegion = (NvDimmRegionTbl *)pTable;
+    pTableNvDimmRegion = (NvDimmRegionMappingStructure *)pTable;
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"NvDimmRegion");
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NfitDeviceHandle", FORMAT_HEX, pTableNvDimmRegion->DeviceHandle.AsUint32);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NfitDeviceHandle.DimmNumber", FORMAT_HEX_NOWIDTH, pTableNvDimmRegion->DeviceHandle.NfitDeviceHandle.DimmNumber);
@@ -725,7 +725,7 @@ PrintNFit(
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"ControlRegionTablesNum", FORMAT_UINT32, pHeader->ControlRegionTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"FlushHintTablesNum", FORMAT_UINT32, pHeader->FlushHintTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveTablesNum", FORMAT_UINT32, pHeader->InterleaveTblesNum);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NVDIMMRegionTablesNum", FORMAT_UINT32, pHeader->NvDimmRegionTblesNum);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NVDIMMRegionTablesNum", FORMAT_UINT32, pHeader->NvDimmRegionMappingStructuresNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"SmbiosTablesNum", FORMAT_UINT32, pHeader->SmbiosTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"SpaRangeTblesNum", FORMAT_UINT32, pHeader->SpaRangeTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PlatformCapabilitiesTablesNum", FORMAT_UINT32 L"\n", pHeader->PlatformCapabilitiesTblesNum);
@@ -746,8 +746,8 @@ PrintNFit(
     PrintFitTable((SubTableHeader *)pHeader->ppInterleaveTbles[Index], pPrinterCtx);
   }
 
-  for(Index = 0; Index < pHeader->NvDimmRegionTblesNum; Index++) {
-    PrintFitTable((SubTableHeader *)pHeader->ppNvDimmRegionTbles[Index], pPrinterCtx);
+  for(Index = 0; Index < pHeader->NvDimmRegionMappingStructuresNum; Index++) {
+    PrintFitTable((SubTableHeader *)pHeader->ppNvDimmRegionMappingStructures[Index], pPrinterCtx);
   }
 
   for(Index = 0; Index < pHeader->SmbiosTblesNum; Index++) {

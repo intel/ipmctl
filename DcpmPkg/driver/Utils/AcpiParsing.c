@@ -122,10 +122,10 @@ ParseNfitTable(
       }
       break;
     case NVDIMM_NVDIMM_REGION_TYPE:
-      pParsedHeader->ppNvDimmRegionTbles = (NvDimmRegionTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppNvDimmRegionTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->NvDimmRegionTblesNum);
-      if (pParsedHeader->ppNvDimmRegionTbles == NULL) {
+      pParsedHeader->ppNvDimmRegionMappingStructures = (NvDimmRegionMappingStructure **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedHeader->ppNvDimmRegionMappingStructures, pTabPointer,
+          pTableHeader->Length, &pParsedHeader->NvDimmRegionMappingStructuresNum);
+      if (pParsedHeader->ppNvDimmRegionMappingStructures == NULL) {
         goto FinishError;
       }
       break;
@@ -405,7 +405,7 @@ Finish:
   Returns the FlushHint table associated with the provided NVDIMM region table.
 
   @param[in] pFitHead pointer to the parsed NFit Header structure.
-  @param[in] pNvDimmRegionTbl the NVDIMM region table that contains the index.
+  @param[in] pNvDimmRegionMappingStructure the NVDIMM region table that contains the index.
   @param[out] ppFlushHintTable pointer to a pointer where the table will be stored.
 
   @retval EFI_SUCCESS if the table was found and is properly returned.
@@ -415,20 +415,20 @@ Finish:
 EFI_STATUS
 GetFlushHintTableForNvDimmRegionTable(
   IN     ParsedFitHeader *pFitHead,
-  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
      OUT FlushHintTbl **ppFlushHintTable
   )
 {
   EFI_STATUS ReturnCode = EFI_NOT_FOUND;
   UINT32 Index = 0;
 
-  if (pFitHead == NULL || pNvDimmRegionTbl == NULL || ppFlushHintTable == NULL) {
+  if (pFitHead == NULL || pNvDimmRegionMappingStructure == NULL || ppFlushHintTable == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   for (Index = 0; Index < pFitHead->FlushHintTblesNum; Index++) {
-    if (pNvDimmRegionTbl->DeviceHandle.AsUint32 == pFitHead->ppFlushHintTbles[Index]->DeviceHandle.AsUint32) {
+    if (pNvDimmRegionMappingStructure->DeviceHandle.AsUint32 == pFitHead->ppFlushHintTbles[Index]->DeviceHandle.AsUint32) {
       *ppFlushHintTable = pFitHead->ppFlushHintTbles[Index];
       ReturnCode = EFI_SUCCESS;
     }
@@ -483,7 +483,7 @@ Finish:
   Returns the ControlRegion table associated with the provided NVDIMM region table.
 
   @param[in] pFitHead pointer to the parsed NFit Header structure.
-  @param[in] pNvDimmRegionTbl the NVDIMM region table that contains the index.
+  @param[in] pNvDimmRegionMappingStructure the NVDIMM region table that contains the index.
   @param[out] ppControlRegionTable pointer to a pointer where the table will be stored.
 
   @retval EFI_SUCCESS if the table was found and is properly returned.
@@ -493,7 +493,7 @@ Finish:
 EFI_STATUS
 GetControlRegionTableForNvDimmRegionTable(
   IN     ParsedFitHeader *pFitHead,
-  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
      OUT ControlRegionTbl **ppControlRegionTable
   )
 {
@@ -501,13 +501,13 @@ GetControlRegionTableForNvDimmRegionTable(
   UINT16 Index = 0;
   UINT16 ControlTableIndex = 0;
 
-  if (pFitHead == NULL || pNvDimmRegionTbl == NULL || ppControlRegionTable == NULL) {
+  if (pFitHead == NULL || pNvDimmRegionMappingStructure == NULL || ppControlRegionTable == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   *ppControlRegionTable = NULL;
-  ControlTableIndex = pNvDimmRegionTbl->NvdimmControlRegionDescriptorTableIndex;
+  ControlTableIndex = pNvDimmRegionMappingStructure->NvdimmControlRegionDescriptorTableIndex;
 
   for (Index = 0; Index < pFitHead->ControlRegionTblesNum; Index++) {
     if (pFitHead->ppControlRegionTbles[Index]->ControlRegionDescriptorTableIndex == ControlTableIndex) {
@@ -554,10 +554,10 @@ GetControlRegionTablesForPID(
     goto Finish;
   }
 
-  for (Index = 0; Index < pFitHead->NvDimmRegionTblesNum; Index++) {
-    if (Pid == pFitHead->ppNvDimmRegionTbles[Index]->NvDimmPhysicalId) {
+  for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
+    if (Pid == pFitHead->ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId) {
       ReturnCode = GetControlRegionTableForNvDimmRegionTable(
-          pFitHead, pFitHead->ppNvDimmRegionTbles[Index], &pCtrlTable);
+          pFitHead, pFitHead->ppNvDimmRegionMappingStructures[Index], &pCtrlTable);
 
       /** Make sure the found Control Region table is not in the array already. **/
       ContainedAlready = FALSE;
@@ -677,20 +677,20 @@ Finish:
   @param[in] pAddrRangeTypeGuid pointer to GUID type of the range that we are looking for. OPTIONAL
   @param[in] SpaRangeIndexProvided Determine if SpaRangeIndex is provided
   @param[in] SpaRangeIndex Looking for NVDIMM region table that is related with provided SPA table. OPTIONAL
-  @param[out] ppNvDimmRegionTbl pointer to a pointer for the return NVDIMM region.
+  @param[out] ppNvDimmRegionMappingStructure pointer to a pointer for the return NVDIMM region.
 
   @retval EFI_SUCCESS if the table was found and was returned.
   @retval EFI_INVALID_PARAMETER if one or more input parameters equal NULL.
   @retval EFI_NOT_FOUND if there is no NVDIMM region for the provided Dimm PID and AddrRangeType.
 **/
 EFI_STATUS
-GetNvDimmRegionTableForPid(
+GetNvDimmRegionMappingStructureForPid(
   IN     ParsedFitHeader *pFitHead,
   IN     UINT16 Pid,
   IN     GUID *pAddrRangeTypeGuid OPTIONAL,
   IN     BOOLEAN SpaRangeIndexProvided,
   IN     UINT16 SpaRangeIndex OPTIONAL,
-     OUT NvDimmRegionTbl **ppNvDimmRegionTbl
+     OUT NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructure
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -699,18 +699,18 @@ GetNvDimmRegionTableForPid(
   UINT16 SpaIndexInNvDimmRegion = 0;
   BOOLEAN Found = FALSE;
 
-  if (pFitHead == NULL || Pid == DIMM_PID_ALL || Pid == DIMM_PID_INVALID || ppNvDimmRegionTbl == NULL) {
+  if (pFitHead == NULL || Pid == DIMM_PID_ALL || Pid == DIMM_PID_INVALID || ppNvDimmRegionMappingStructure == NULL) {
     goto Finish;
   }
 
-  *ppNvDimmRegionTbl = NULL;
+  *ppNvDimmRegionMappingStructure = NULL;
 
-  for (Index = 0; Index < pFitHead->NvDimmRegionTblesNum; Index++) {
-    if (pFitHead->ppNvDimmRegionTbles[Index]->NvDimmPhysicalId != Pid) {
+  for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
+    if (pFitHead->ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId != Pid) {
       continue;
     }
 
-    SpaIndexInNvDimmRegion = pFitHead->ppNvDimmRegionTbles[Index]->SpaRangeDescriptionTableIndex;
+    SpaIndexInNvDimmRegion = pFitHead->ppNvDimmRegionMappingStructures[Index]->SpaRangeDescriptionTableIndex;
     Found = TRUE;
 
     if (SpaRangeIndexProvided && SpaIndexInNvDimmRegion != SpaRangeIndex) {
@@ -729,7 +729,7 @@ GetNvDimmRegionTableForPid(
     }
 
     if (Found) {
-      *ppNvDimmRegionTbl = pFitHead->ppNvDimmRegionTbles[Index];
+      *ppNvDimmRegionMappingStructure = pFitHead->ppNvDimmRegionMappingStructures[Index];
       ReturnCode = EFI_SUCCESS;
       break;
     } else {
@@ -760,7 +760,7 @@ Finish:
 EFI_STATUS
 RdpaToSpa(
   IN     UINT64 Rdpa,
-  IN     NvDimmRegionTbl *pNvDimmRegionTable,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTable,
   IN     SpaRangeTbl *pSpaRangeTable,
   IN     InterleaveStruct *pInterleaveTable OPTIONAL,
      OUT UINT64 *pSpaAddr

@@ -1196,7 +1196,7 @@ RemoveDimmInventory(
 
 VOID
 InitializeDimmFieldsFromNfit(
-  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
   IN     ControlRegionTbl *pControlRegionTbl,
      OUT DIMM *pDimm
   )
@@ -1204,16 +1204,16 @@ InitializeDimmFieldsFromNfit(
   pDimm->Signature = DIMM_SIGNATURE;
   pDimm->Configured = FALSE;
   pDimm->ISsNum = 0;
-  if (pNvDimmRegionTbl != NULL) {
-    pDimm->SocketId = (UINT16)NFIT_NODE_SOCKET_TO_SOCKET_INDEX(pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId,
-      pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId);
-    pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
-    pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
-    pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;
-    pDimm->NodeControllerID = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
-    pDimm->ChannelId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemChannel;
-    pDimm->ChannelPos = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.DimmNumber;
-    pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
+  if (pNvDimmRegionMappingStructure != NULL) {
+    pDimm->SocketId = (UINT16)NFIT_NODE_SOCKET_TO_SOCKET_INDEX(pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+      pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.SocketId);
+    pDimm->DimmID = pNvDimmRegionMappingStructure->NvDimmPhysicalId;
+    pDimm->DeviceHandle.AsUint32 = pNvDimmRegionMappingStructure->DeviceHandle.AsUint32;
+    pDimm->ImcId = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.MemControllerId;
+    pDimm->NodeControllerID = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.NodeControllerId;
+    pDimm->ChannelId = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.MemChannel;
+    pDimm->ChannelPos = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.DimmNumber;
+    pDimm->NvDimmStateFlags = pNvDimmRegionMappingStructure->NvDimmStateFlags;
   }
 
   if (pControlRegionTbl != NULL) {
@@ -1251,14 +1251,14 @@ InitializeDimmInventory(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TmpReturnCode = EFI_SUCCESS;
   ParsedFitHeader *pFitHead = NULL;
-  NvDimmRegionTbl **ppNvDimmRegionTbls = NULL;
+  NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructures = NULL;
   ControlRegionTbl *pDimmControlRegionTable = NULL;
   DIMM *pTmpDimm = NULL;
   UINT32 Index = 0;
   BOOLEAN isUninitializedDimm = FALSE;
 
   NVDIMM_ENTRY();
-  if (pDev == NULL || pDev->pFitHead == NULL || pDev->pFitHead->ppNvDimmRegionTbles == NULL) {
+  if (pDev == NULL || pDev->pFitHead == NULL || pDev->pFitHead->ppNvDimmRegionMappingStructures == NULL) {
     NVDIMM_DBG("Improperly initialized data");
     return EFI_INVALID_PARAMETER;
   }
@@ -1266,12 +1266,13 @@ InitializeDimmInventory(
   InitializeCpuCommands();
 #endif
   pFitHead = pDev->pFitHead;
-  ppNvDimmRegionTbls = pFitHead->ppNvDimmRegionTbles;
+  ppNvDimmRegionMappingStructures = pFitHead->ppNvDimmRegionMappingStructures;
 
-  for (Index = 0; Index < pFitHead->NvDimmRegionTblesNum; Index++) {
+  for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
     isUninitializedDimm = TRUE;
-    TmpReturnCode = GetControlRegionTableForNvDimmRegionTable(pDev->pFitHead, ppNvDimmRegionTbls[Index], &pDimmControlRegionTable);
-    // TODO: Clarify in what scenarios the NvDimmRegionTbls will be valid
+    TmpReturnCode = GetControlRegionTableForNvDimmRegionTable(pDev->pFitHead,
+        ppNvDimmRegionMappingStructures[Index], &pDimmControlRegionTable);
+    // TODO: Clarify in what scenarios the NvDimmRegionMappingStructures will be valid
     // but the pDimmControlRegionTable won't be to simplify the logic.
     // Also the below logic is really confusing and probably should
     // be doing "continue" somewhere. Klocwork is complaining that we're
@@ -1279,21 +1280,23 @@ InitializeDimmInventory(
     if (EFI_ERROR(TmpReturnCode) || pDimmControlRegionTable == NULL) {
       ReturnCode = TmpReturnCode;
       NVDIMM_DBG("Could not find the Control Region Table for the NvDimm Region Table.");
-    } else if (!GetDimmByPid(ppNvDimmRegionTbls[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
-      TmpReturnCode = InitializeDimm(&pTmpDimm, pFitHead, ppNvDimmRegionTbls[Index]->NvDimmPhysicalId);
+    } else if (!GetDimmByPid(ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
+      TmpReturnCode = InitializeDimm(&pTmpDimm, pFitHead, ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
       if (!EFI_ERROR(TmpReturnCode) && (pTmpDimm != NULL)) {
         TmpReturnCode = InsertDimm(pTmpDimm, pDev);
         if (EFI_ERROR(TmpReturnCode)) {
           ReturnCode = TmpReturnCode;
-          NVDIMM_DBG("Unable to insert NVDIMM Pid 0x%x to initialized list", ppNvDimmRegionTbls[Index]->NvDimmPhysicalId);
+          NVDIMM_DBG("Unable to insert NVDIMM Pid 0x%x to initialized list",
+              ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
           RemoveDimm(pTmpDimm, 0);
         } else {
-          NVDIMM_DBG("Insert NVDIMM Pid 0x%x to the initialized list", ppNvDimmRegionTbls[Index]->NvDimmPhysicalId);
+          NVDIMM_DBG("Insert NVDIMM Pid 0x%x to the initialized list",
+              ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
           isUninitializedDimm = FALSE;
         }
       } else {
         ReturnCode = TmpReturnCode;
-        NVDIMM_WARN("Unable to initialize NVDIMM 0x%x", ppNvDimmRegionTbls[Index]->NvDimmPhysicalId);
+        NVDIMM_WARN("Unable to initialize NVDIMM 0x%x", ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
       }
     } else {
       NVDIMM_DBG("DIMM already in the Initialized list");
@@ -1301,7 +1304,7 @@ InitializeDimmInventory(
     }
 
     if (isUninitializedDimm == TRUE) {
-      if (GetDimmByHandle(ppNvDimmRegionTbls[Index]->DeviceHandle.AsUint32, &pDev->UninitializedDimms)) {
+      if (GetDimmByHandle(ppNvDimmRegionMappingStructures[Index]->DeviceHandle.AsUint32, &pDev->UninitializedDimms)) {
         NVDIMM_DBG("NVDIMM device handle already in UninitializedDimms list");
         continue; // go to next Region Table
       }
@@ -1314,7 +1317,7 @@ InitializeDimmInventory(
         continue;
       }
 
-      InitializeDimmFieldsFromNfit(ppNvDimmRegionTbls[Index], pDimmControlRegionTable, pNewUnInitDimm);
+      InitializeDimmFieldsFromNfit(ppNvDimmRegionMappingStructures[Index], pDimmControlRegionTable, pNewUnInitDimm);
 
       InsertTailList(&gNvmDimmData->PMEMDev.UninitializedDimms, &pNewUnInitDimm->DimmNode);
     }
@@ -3811,7 +3814,7 @@ FreeBlockWindow(
 EFI_STATUS
 AssignSpaAddress(
   IN     UINT64 Rdpa,
-  IN     NvDimmRegionTbl *pNvDimmRegionTable,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTable,
   IN     SpaRangeTbl *pSpaRangeTable,
   IN     InterleaveStruct *pIntTbl OPTIONAL,
      OUT VOID **ppField
@@ -3867,19 +3870,22 @@ CreateMailbox(
 
   pMb->SequenceBit = 0;
 
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_COMMAND_OFFSET, pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl,
+  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_COMMAND_OFFSET,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
     (VOID *) &(pMb->pCommand));
   if (EFI_ERROR(ReturnCode)) {
     goto after_mb;
   }
 
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE0_OFFSET, pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl,
+  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE0_OFFSET,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
     (VOID *)&(pMb->pNonce0));
   if (EFI_ERROR(ReturnCode)) {
     goto after_mb;
   }
 
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE1_OFFSET, pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl,
+  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE1_OFFSET,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
     (VOID *)&(pMb->pNonce1));
   if (EFI_ERROR(ReturnCode)) {
     goto after_mb;
@@ -3887,13 +3893,14 @@ CreateMailbox(
 
   for (Index = 0; Index < IN_PAYLOAD_NUM; Index++) {
     ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_IN_PAYLOAD0_OFFSET + (Index * PAYLOAD_BETWEEN_SIZE),
-      pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pInPayload[Index]));
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pInPayload[Index]));
     if (EFI_ERROR(ReturnCode)) {
       goto after_mb;
     }
   }
 
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_STATUS_OFFSET, pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl,
+  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_STATUS_OFFSET,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
     (VOID *)&(pMb->pStatus));
   if (EFI_ERROR(ReturnCode)) {
     goto after_mb;
@@ -3901,13 +3908,14 @@ CreateMailbox(
 
   for (Index = 0; Index < OUT_PAYLOAD_NUM; Index++) {
     ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_OUT_PAYLOAD0_OFFSET + (Index * PAYLOAD_BETWEEN_SIZE),
-      pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pOutPayload[Index]));
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pOutPayload[Index]));
     if (EFI_ERROR(ReturnCode)) {
       goto after_mb;
     }
   }
 
-  ReturnCode = AssignSpaAddress(BOOT_STATUS_REGISTER_OFFSET, pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl,
+  ReturnCode = AssignSpaAddress(BOOT_STATUS_REGISTER_OFFSET,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
     (VOID *)&(pMb->pBsr));
   if (EFI_ERROR(ReturnCode)) {
     goto after_mb;
@@ -3935,7 +3943,7 @@ CreateMailbox(
   for (Index = 0; Index < pMb->NumMbInSegments; Index++) {
     ReturnCode = RdpaToSpa(
       OS_MB_IN_OFFSET + (Index * pMb->MbInLineSize),
-      pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
     pMb->ppMbIn[Index] = (VOID *) SpaAddr;
     if (ReturnCode != EFI_SUCCESS || !pMb->ppMbIn[Index])
       goto after_os_in;
@@ -3952,7 +3960,7 @@ CreateMailbox(
   for (Index = 0; Index < pMb->NumMbOutSegments; Index++) {
     ReturnCode = RdpaToSpa(
       OS_MB_OUT_OFFSET + (Index * pMb->MbOutLineSize),
-      pDimm->pCtrlTbl, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
     pMb->ppMbOut[Index] = (VOID *) SpaAddr;
     if (ReturnCode != EFI_SUCCESS || !pMb->ppMbOut[Index])
       goto after_os_out;
@@ -4135,7 +4143,7 @@ CreateBw(
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pDimm->pDataTbl == NULL) {
+  if (pDimm == NULL || pDimm->pBlockDataRegionMappingStructure == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -4149,7 +4157,8 @@ CreateBw(
   }
 
   // Getting Control Region Table with all needed BW values
-  ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pDimm->pDataTbl, &pControlRegTbl);
+  ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead,
+      pDimm->pBlockDataRegionMappingStructure, &pControlRegTbl);
   if (pControlRegTbl == NULL || EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Unable to get Control region table. Returned: " FORMAT_EFI_STATUS "", ReturnCode);
     ReturnCode = EFI_ABORTED;
@@ -4165,16 +4174,16 @@ CreateBw(
   }
 
   /** Control Register **/
-  ReturnCode = AssignSpaAddress(pControlRegTbl->CommandRegisterOffsetInBlockControlWindow, pDimm->pCtrlTbl,
-    pDimm->pCtrlSpaTbl, pMbITbl, (VOID *) &(pBw->pBwCmd));
+  ReturnCode = AssignSpaAddress(pControlRegTbl->CommandRegisterOffsetInBlockControlWindow,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pMbITbl, (VOID *) &(pBw->pBwCmd));
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
   NVDIMM_DBG("BW Command address = %p", pBw->pBwCmd);
 
   /** BW Status **/
-  ReturnCode = AssignSpaAddress(pControlRegTbl->StatusRegisterOffsetInBlockControlWindow, pDimm->pCtrlTbl,
-    pDimm->pCtrlSpaTbl, pMbITbl, (VOID *) &(pBw->pBwStatus));
+  ReturnCode = AssignSpaAddress(pControlRegTbl->StatusRegisterOffsetInBlockControlWindow,
+      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pMbITbl, (VOID *) &(pBw->pBwStatus));
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -4198,7 +4207,7 @@ CreateBw(
 
   for (Index = 0; Index < pBw->NumSegmentsOfApt; Index++) {
     ReturnCode = RdpaToSpa(pBlockDataWindowTable->BlockDataWindowStartLogicalOffset + (Index * pBw->LineSizeOfApt),
-      pDimm->pDataTbl, pDimm->pDataSpaTbl, pBwITbl, &SpaAddr);
+      pDimm->pBlockDataRegionMappingStructure, pDimm->pBlockDataSpaTbl, pBwITbl, &SpaAddr);
     pBw->ppBwApt[Index] = (VOID *) SpaAddr;
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -4958,7 +4967,6 @@ InitializeDimm (
   EFI_STATUS ReturnCode = EFI_OUT_OF_RESOURCES;
   UINT32 Index = 0;
   DIMM *pNewDimm = NULL;
-  NvDimmRegionTbl *pNvDimmRegionTblCtrl = NULL;
   InterleaveStruct *pMbITbl = NULL;
   InterleaveStruct *pBwITbl = NULL;
   ControlRegionTbl *pControlRegTbl = NULL;
@@ -4980,21 +4988,27 @@ InitializeDimm (
     goto out;
   }
 
-  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, Pid, &gSpaRangeMailboxCustomGuid, FALSE, 0,
-    &pNvDimmRegionTblCtrl);
+#ifdef OS_BUILD
+  // In OS, we don't need a mailbox to talk to the dimm
+  CHECK_RESULT(GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, NULL, FALSE,
+      0, &pNewDimm->pRegionMappingStructure), after_dimm);
+#else
+  ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, &gSpaRangeMailboxCustomGuid, FALSE, 0,
+    &pNewDimm->pRegionMappingStructure);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to initialize Intel NVM Dimm with custom GUID. Trying NVDIMM control region GUID");
     /* backwards compatibility for NVDIMM control region GUID previously used to map mailbox spa */
-    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, Pid, &gSpaRangeControlRegionGuid, FALSE, 0,
-      &pNvDimmRegionTblCtrl);
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, &gSpaRangeControlRegionGuid, FALSE, 0,
+      &pNewDimm->pRegionMappingStructure);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Unable to initialize Intel NVM Dimm. NvDimmRegion for Control Region is missing in NFIT.");
       ReturnCode = EFI_DEVICE_ERROR;
       goto after_dimm;
     }
   }
+#endif
 
-  ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTblCtrl, &pControlRegTbl);
+  ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNewDimm->pRegionMappingStructure, &pControlRegTbl);
   if ((EFI_ERROR(ReturnCode) || (pControlRegTbl == NULL))) {
     NVDIMM_WARN("Unable to initialize Intel NVM Dimm. Control Region is missing in NFIT.");
     ReturnCode = EFI_DEVICE_ERROR;
@@ -5004,7 +5018,7 @@ InitializeDimm (
   /**
     If we fail to get the Flush Hint Table, we ignore it and assume WPQ flush is not required
   **/
-  ReturnCode = GetFlushHintTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTblCtrl, &pFlushHintTable);
+  ReturnCode = GetFlushHintTableForNvDimmRegionTable(pFitHead, pNewDimm->pRegionMappingStructure, &pFlushHintTable);
   if (!EFI_ERROR(ReturnCode) && pFlushHintTable != NULL) {
     // Found the Flush Hint Table
     for (Index = 0; Index < pFlushHintTable->NumberOfFlushHintAddresses; Index++) {
@@ -5020,7 +5034,7 @@ InitializeDimm (
   }
 
   InitializeListHead(&pNewDimm->StorageNamespaceList);
-  InitializeDimmFieldsFromNfit(pNvDimmRegionTblCtrl, pControlRegTbl, pNewDimm);
+  InitializeDimmFieldsFromNfit(pNewDimm->pRegionMappingStructure, pControlRegTbl, pNewDimm);
 
   ReturnCode = GetControlRegionTablesForPID(pFitHead, Pid, pControlRegTbls, &ControlRegTblsNum);
   if (EFI_ERROR(ReturnCode)) {
@@ -5038,40 +5052,24 @@ InitializeDimm (
   }
   pNewDimm->FmtInterfaceCodeNum = ControlRegTblsNum;
 
-  ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID, &gSpaRangeMailboxCustomGuid,
-    FALSE, 0, &pNewDimm->pCtrlTbl);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("No region found using custom GUID. Trying NVDIMM control region GUID");
-    /* backwards compatibility for NVDIMM control region GUID previously used to map mailbox spa */
-    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID, &gSpaRangeControlRegionGuid,
-      FALSE, 0, &pNewDimm->pCtrlTbl);
+  pNewDimm->NvDimmStateFlags = pNewDimm->pRegionMappingStructure->NvDimmStateFlags;
+
+  if (pNewDimm->pRegionMappingStructure->InterleaveStructureIndex != 0) {
+    ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pRegionMappingStructure->InterleaveStructureIndex, &pMbITbl);
+
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("No CTRL Region found unable to create Mailbox");
+      NVDIMM_WARN("No Interleave Table found for mailbox but the index exists.");
       ReturnCode = EFI_DEVICE_ERROR;
       goto after_dimm;
     }
   }
+  if (pNewDimm->pRegionMappingStructure->SpaRangeDescriptionTableIndex != 0) {
+    ReturnCode = GetSpaRangeTable(pFitHead, pNewDimm->pRegionMappingStructure->SpaRangeDescriptionTableIndex, &pNewDimm->pCtrlSpaTbl);
 
-  if (pNewDimm->pCtrlTbl != NULL) {
-    pNewDimm->NvDimmStateFlags = pNewDimm->pCtrlTbl->NvDimmStateFlags;
-
-    if (pNewDimm->pCtrlTbl->InterleaveStructureIndex != 0) {
-      ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pCtrlTbl->InterleaveStructureIndex, &pMbITbl);
-
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("No Interleave Table found for mailbox but the index exists.");
-        ReturnCode = EFI_DEVICE_ERROR;
-        goto after_dimm;
-      }
-    }
-    if (pNewDimm->pCtrlTbl->SpaRangeDescriptionTableIndex != 0) {
-      ReturnCode = GetSpaRangeTable(pFitHead, pNewDimm->pCtrlTbl->SpaRangeDescriptionTableIndex, &pNewDimm->pCtrlSpaTbl);
-
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("No spa range table found for mailbox but the index exists.");
-        ReturnCode = EFI_DEVICE_ERROR;
-        goto after_dimm;
-      }
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("No spa range table found for mailbox but the index exists.");
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto after_dimm;
     }
   }
 
@@ -5142,14 +5140,15 @@ InitializeDimm (
       pNewDimm->PmStart = pPartitionInfoPayload->PersistentStart;
     }
 
-    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pNewDimm->DimmID,
-      &gSpaRangeBlockDataWindowRegionGuid, FALSE, 0, &pNewDimm->pDataTbl);
-    if (EFI_ERROR(ReturnCode) || pNewDimm->pDataTbl == NULL) {
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pNewDimm->DimmID,
+      &gSpaRangeBlockDataWindowRegionGuid, FALSE, 0, &pNewDimm->pBlockDataRegionMappingStructure);
+    if (EFI_ERROR(ReturnCode) || pNewDimm->pBlockDataRegionMappingStructure == NULL) {
       NVDIMM_WARN("No NVDIMM region table found for block window on dimm: 0x%x.", pNewDimm->DeviceHandle.AsUint32);
       ReturnCode = EFI_SUCCESS;
     } else {
-      if (pNewDimm->pDataTbl->SpaRangeDescriptionTableIndex != 0) {
-        ReturnCode = GetSpaRangeTable(pFitHead, pNewDimm->pDataTbl->SpaRangeDescriptionTableIndex, &pNewDimm->pDataSpaTbl);
+      if (pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex != 0) {
+        ReturnCode = GetSpaRangeTable(pFitHead,
+            pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex, &pNewDimm->pBlockDataSpaTbl);
 
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_WARN("No spa range table found for block aperture but the index exists.");
@@ -5208,8 +5207,8 @@ InitializeDimm (
 
     pNewDimm->EncryptionEnabled = (BOOLEAN) pDimmSecurityPayload->SecurityStatus.Separated.SecurityEnabled;
 
-    if (pNewDimm->pDataTbl != NULL && pNewDimm->pDataTbl->InterleaveStructureIndex != 0) {
-      ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pDataTbl->InterleaveStructureIndex, &pBwITbl);
+    if (pNewDimm->pBlockDataRegionMappingStructure != NULL && pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex != 0) {
+      ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex, &pBwITbl);
 
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("No Interleave Table found for block window but the index exists.");

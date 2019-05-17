@@ -215,10 +215,10 @@ typedef struct _DIMM {
 #else // OS_BUILD
   VOID *Reserved;
 #endif // OS_BUILD
-  NvDimmRegionTbl *pCtrlTbl;      //!< ptr to the table used to configure the mailbox
+  NvDimmRegionMappingStructure *pRegionMappingStructure;      //!< ptr to the table used to configure the mailbox
   SpaRangeTbl *pCtrlSpaTbl;       //!> ptr to the spa range table associated with the mailbox table
-  NvDimmRegionTbl *pDataTbl;      //!< ptr to the table used to configure the block windows
-  SpaRangeTbl *pDataSpaTbl;       //!< ptr to the spa range table associated with the block windows table
+  NvDimmRegionMappingStructure *pBlockDataRegionMappingStructure;      //!< ptr to the table used to configure the block windows
+  SpaRangeTbl *pBlockDataSpaTbl;       //!< ptr to the spa range table associated with the block windows table
   UINT64 *pFlushAddress;          //!< address to which data needs to be written to perform a WPQ flush
   BOOLEAN FlushRequired;          //!< The boolean value indicating when the Aperature needs to be flushed before IO
   BOOLEAN ControlWindowLatch;

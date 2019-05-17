@@ -133,7 +133,7 @@ typedef struct {
   UINT16 InterleaveWays;                              ///< Interleave Ways
   UINT16 NvDimmStateFlags;                            ///< State Flags
   UINT8 Reserved[2];                                  ///< Reserved
-} NvDimmRegionTbl;
+} NvDimmRegionMappingStructure;
 
 /** Interleave table */
 typedef struct {
@@ -213,23 +213,23 @@ typedef struct {
 
 /** NFIT ACPI data */
 typedef struct {
-  NFitHeader *pFit;                                         ///< NFIT Header
-  UINT32 SpaRangeTblesNum;                                  ///< Count of SPA Range tables
-  SpaRangeTbl **ppSpaRangeTbles;                            ///< SPA Range tables
-  UINT32 NvDimmRegionTblesNum;                              ///< Count of Region tables
-  NvDimmRegionTbl **ppNvDimmRegionTbles;                    ///< Region tables
-  UINT32 InterleaveTblesNum;                                ///< Count of interleave tables
-  InterleaveStruct **ppInterleaveTbles;                     ///< Interleave tables
-  UINT32 SmbiosTblesNum;                                    ///< Count of SMBIOS tables
-  SmbiosTbl **ppSmbiosTbles;                                ///< SMBIOS tables
-  UINT32 ControlRegionTblesNum;                             ///< Count of Control Region tables
-  ControlRegionTbl **ppControlRegionTbles;                  ///< Control region tables
-  UINT32 BWRegionTblesNum;                                  ///< Count of BW Region tables
-  BWRegionTbl **ppBWRegionTbles;                            ///< BW Region tables
-  UINT32 FlushHintTblesNum;                                 ///< Count of Flush Hint Tables
-  FlushHintTbl **ppFlushHintTbles;                          ///< Flush Hint tables
-  UINT32 PlatformCapabilitiesTblesNum;                      ///< Count of PCAT tables
-  PlatformCapabilitiesTbl **ppPlatformCapabilitiesTbles;    ///< PCAT tables
+  NFitHeader *pFit;                                               ///< NFIT Header
+  UINT32 SpaRangeTblesNum;                                        ///< Count of SPA Range tables
+  SpaRangeTbl **ppSpaRangeTbles;                                  ///< SPA Range tables
+  UINT32 NvDimmRegionMappingStructuresNum;                        ///< Count of Region tables
+  NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructures; ///< Region tables
+  UINT32 InterleaveTblesNum;                                      ///< Count of interleave tables
+  InterleaveStruct **ppInterleaveTbles;                           ///< Interleave tables
+  UINT32 SmbiosTblesNum;                                          ///< Count of SMBIOS tables
+  SmbiosTbl **ppSmbiosTbles;                                      ///< SMBIOS tables
+  UINT32 ControlRegionTblesNum;                                   ///< Count of Control Region tables
+  ControlRegionTbl **ppControlRegionTbles;                        ///< Control region tables
+  UINT32 BWRegionTblesNum;                                        ///< Count of BW Region tables
+  BWRegionTbl **ppBWRegionTbles;                                  ///< BW Region tables
+  UINT32 FlushHintTblesNum;                                       ///< Count of Flush Hint Tables
+  FlushHintTbl **ppFlushHintTbles;                                ///< Flush Hint tables
+  UINT32 PlatformCapabilitiesTblesNum;                            ///< Count of PCAT tables
+  PlatformCapabilitiesTbl **ppPlatformCapabilitiesTbles;          ///< PCAT tables
 } ParsedFitHeader;
 
 typedef struct {

@@ -106,11 +106,11 @@ FreeNfitSubTables(
   FREE_POOL_SAFE(ParsedNfit->ppInterleaveTbles);
   ParsedNfit->InterleaveTblesNum = 0;
 
-  for(Index = 0; Index < ParsedNfit->NvDimmRegionTblesNum; Index++) {
-    FREE_POOL_SAFE(ParsedNfit->ppNvDimmRegionTbles[Index]);
+  for(Index = 0; Index < ParsedNfit->NvDimmRegionMappingStructuresNum; Index++) {
+    FREE_POOL_SAFE(ParsedNfit->ppNvDimmRegionMappingStructures[Index]);
   }
-  FREE_POOL_SAFE(ParsedNfit->ppNvDimmRegionTbles);
-  ParsedNfit->NvDimmRegionTblesNum = 0;
+  FREE_POOL_SAFE(ParsedNfit->ppNvDimmRegionMappingStructures);
+  ParsedNfit->NvDimmRegionMappingStructuresNum = 0;
 
   for(Index = 0; Index < ParsedNfit->SmbiosTblesNum; Index++) {
     FREE_POOL_SAFE(ParsedNfit->ppSmbiosTbles[Index]);

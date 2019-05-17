@@ -110,7 +110,7 @@ ParsePcatTable (
   Returns the FlushHint table associated with the provided NVDIMM region table.
 
   @param[in] pFitHead pointer to the parsed NFit Header structure.
-  @param[in] pNvDimmRegionTbl the NVDIMM region table that contains the index.
+  @param[in] pNvDimmRegionMappingStructure the NVDIMM region table that contains the index.
   @param[out] ppFlushHintTable pointer to a pointer where the table will be stored.
 
   @retval EFI_SUCCESS if the table was found and is properly returned.
@@ -120,7 +120,7 @@ ParsePcatTable (
 EFI_STATUS
 GetFlushHintTableForNvDimmRegionTable(
   IN     ParsedFitHeader *pFitHead,
-  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
      OUT FlushHintTbl **ppFlushHintTable
   );
 
@@ -146,7 +146,7 @@ GetBlockDataWindowRegDescTabl(
   Returns the ControlRegion table associated with the provided NVDIMM region table.
 
   @param[in] pFitHead pointer to the parsed NFit Header structure.
-  @param[in] pNvDimmRegionTbl the NVDIMM region table that contains the index.
+  @param[in] pNvDimmRegionMappingStructure the NVDIMM region table that contains the index.
   @param[out] ppControlRegionTable pointer to a pointer where the table will be stored.
 
   @retval EFI_SUCCESS if the table was found and is properly returned.
@@ -156,7 +156,7 @@ GetBlockDataWindowRegDescTabl(
 EFI_STATUS
 GetControlRegionTableForNvDimmRegionTable(
   IN     ParsedFitHeader *pFitHead,
-  IN     NvDimmRegionTbl *pNvDimmRegionTbl,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
      OUT ControlRegionTbl **ppControlRegionTable
   );
 
@@ -208,20 +208,20 @@ GetSpaRangeTable(
   @param[in] pAddrRangeTypeGuid pointer to GUID type of the range that we are looking for. OPTIONAL
   @param[in] SpaRangeIndexProvided Determine if SpaRangeIndex is provided
   @param[in] SpaRangeIndex Looking for NVDIMM region table that is related with provided SPA table. OPTIONAL
-  @param[out] ppNvDimmRegionTbl pointer to a pointer for the return NVDIMM region.
+  @param[out] ppNvDimmRegionMappingStructure pointer to a pointer for the return NVDIMM region.
 
   @retval EFI_SUCCESS if the table was found and was returned.
   @retval EFI_INVALID_PARAMETER if one or more input parameters equal NULL.
   @retval EFI_NOT_FOUND if there is no NVDIMM region for the provided Dimm PID and AddrRangeType.
 **/
 EFI_STATUS
-GetNvDimmRegionTableForPid(
+GetNvDimmRegionMappingStructureForPid(
   IN     ParsedFitHeader *pFitHead,
   IN     UINT16 Pid,
   IN     GUID *pAddrRangeTypeGuid OPTIONAL,
   IN     BOOLEAN SpaRangeIndexProvided,
   IN     UINT16 SpaRangeIndex OPTIONAL,
-     OUT NvDimmRegionTbl **ppNvDimmRegionTbl
+     OUT NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructure
   );
 
 /**
@@ -261,7 +261,7 @@ GetInterleaveTable(
 EFI_STATUS
 RdpaToSpa(
   IN     UINT64 Rdpa,
-  IN     NvDimmRegionTbl *pNvDimmRegionTable,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTable,
   IN     SpaRangeTbl *pSpaRangeTable,
   IN     InterleaveStruct *pInterleaveTable OPTIONAL,
      OUT UINT64 *pSpaAddr

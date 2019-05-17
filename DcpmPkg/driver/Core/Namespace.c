@@ -3574,7 +3574,7 @@ CalculateAppDirectNamespaceBaseSpa(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 Index = 0;
-  NvDimmRegionTbl *pDimmRegionTable = NULL;
+  NvDimmRegionMappingStructure *pDimmRegionTable = NULL;
   InterleaveStruct *pInterleaveTable = NULL;
   UINT64 NamespaceRdpa = 0;
 
@@ -3585,7 +3585,7 @@ CalculateAppDirectNamespaceBaseSpa(
   }
 
   for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-    ReturnCode = GetNvDimmRegionTableForPid(
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(
       gNvmDimmData->PMEMDev.pFitHead,
       pNamespace->Range[Index].pDimm->DimmID,
       NULL,
@@ -5194,7 +5194,7 @@ CalculateISetCookie(
   NVM_COOKIE_DATA ISetCookieData[MAX_NAMESPACE_RANGES];
   NVM_COOKIE_DATA TmpCookieData;
   BOOLEAN ChecksumInserted = FALSE;
-  NvDimmRegionTbl *pNvDimmRegionTbl = NULL;
+  NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure = NULL;
   ControlRegionTbl *pControlRegionTable = NULL;
   DIMM_REGION *pDimmRegion = NULL;
   LIST_ENTRY *pDimmNode = NULL;
@@ -5221,18 +5221,18 @@ CalculateISetCookie(
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pDimmRegion->pDimm->DimmID,
-            NULL, TRUE, pIS->pSpaTbl->SpaRangeDescriptionTableIndex, &pNvDimmRegionTbl);
-    if (EFI_ERROR(ReturnCode) || pNvDimmRegionTbl == NULL) {
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pDimmRegion->pDimm->DimmID,
+            NULL, TRUE, pIS->pSpaTbl->SpaRangeDescriptionTableIndex, &pNvDimmRegionMappingStructure);
+    if (EFI_ERROR(ReturnCode) || pNvDimmRegionMappingStructure == NULL) {
       goto Finish;
     }
 
-    ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTbl, &pControlRegionTable);
-    if (EFI_ERROR(ReturnCode) || pNvDimmRegionTbl == NULL) {
+    ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionMappingStructure, &pControlRegionTable);
+    if (EFI_ERROR(ReturnCode) || pNvDimmRegionMappingStructure == NULL) {
       goto Finish;
     }
 
-    ISetCookieData[Index].RegionSpaOffset = pNvDimmRegionTbl->RegionOffset;
+    ISetCookieData[Index].RegionSpaOffset = pNvDimmRegionMappingStructure->RegionOffset;
     ISetCookieData[Index].SerialNum = pControlRegionTable->SerialNumber;
     ISetCookieData[Index].VendorId = pControlRegionTable->VendorId;
     ISetCookieData[Index].ManufacturingDate = pControlRegionTable->ManufacturingDate;
@@ -5284,7 +5284,7 @@ CalculateISetCookieVer1_1(
   NVM_COOKIE_DATA_1_1 ISetCookieData[MAX_NAMESPACE_RANGES];
   NVM_COOKIE_DATA_1_1 TmpCookieData;
   BOOLEAN ChecksumInserted = FALSE;
-  NvDimmRegionTbl *pNvDimmRegionTbl = NULL;
+  NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure = NULL;
   ControlRegionTbl *pControlRegionTable = NULL;
   DIMM_REGION *pDimmRegion = NULL;
   LIST_ENTRY *pDimmNode = NULL;
@@ -5312,18 +5312,18 @@ CalculateISetCookieVer1_1(
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    ReturnCode = GetNvDimmRegionTableForPid(pFitHead, pDimmRegion->pDimm->DimmID,
-            NULL, TRUE, pIS->pSpaTbl->SpaRangeDescriptionTableIndex, &pNvDimmRegionTbl);
-    if (EFI_ERROR(ReturnCode) || pNvDimmRegionTbl == NULL) {
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pDimmRegion->pDimm->DimmID,
+            NULL, TRUE, pIS->pSpaTbl->SpaRangeDescriptionTableIndex, &pNvDimmRegionMappingStructure);
+    if (EFI_ERROR(ReturnCode) || pNvDimmRegionMappingStructure == NULL) {
       goto Finish;
     }
 
-    ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionTbl, &pControlRegionTable);
-    if (EFI_ERROR(ReturnCode) || pNvDimmRegionTbl == NULL) {
+    ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNvDimmRegionMappingStructure, &pControlRegionTable);
+    if (EFI_ERROR(ReturnCode) || pNvDimmRegionMappingStructure == NULL) {
       goto Finish;
     }
 
-    ISetCookieData[Index].RegionSpaOffset = pNvDimmRegionTbl->RegionOffset;
+    ISetCookieData[Index].RegionSpaOffset = pNvDimmRegionMappingStructure->RegionOffset;
     ISetCookieData[Index].SerialNum = pControlRegionTable->SerialNumber;
     Index++;
   }
@@ -5621,7 +5621,7 @@ RetrieveAppDirectMappingFromNfit(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   SpaRangeTbl *pSpa = NULL;
-  NvDimmRegionTbl *pNvDimmRegion = NULL;
+  NvDimmRegionMappingStructure *pNvDimmRegion = NULL;
   LIST_ENTRY *pNode = NULL;
   DIMM_REGION *pRegion = NULL;
   BOOLEAN SameRegionOffset = FALSE;
@@ -5654,8 +5654,8 @@ RetrieveAppDirectMappingFromNfit(
     MatchedSpaFound = TRUE;
     MatchedDimmsNum = 0;
 
-    for (Index2 = 0; Index2 < pFitHead->NvDimmRegionTblesNum; Index2++) {
-      pNvDimmRegion = pFitHead->ppNvDimmRegionTbles[Index2];
+    for (Index2 = 0; Index2 < pFitHead->NvDimmRegionMappingStructuresNum; Index2++) {
+      pNvDimmRegion = pFitHead->ppNvDimmRegionMappingStructures[Index2];
 
       if (pSpa->SpaRangeDescriptionTableIndex == pNvDimmRegion->SpaRangeDescriptionTableIndex) {
         MatchedDimmFound = FALSE;

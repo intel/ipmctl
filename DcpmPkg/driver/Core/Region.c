@@ -499,7 +499,7 @@ RetrieveISsFromPlatformConfigData(
 
     if (pDimm->ConfigStatus != DIMM_CONFIG_SUCCESS && pDimm->ConfigStatus != DIMM_CONFIG_OLD_CONFIG_USED) {
       for (Index = 0; Index < pDimm->ISsNum; Index++) {
-        pDimm->pISs[Index]->State |= IS_STATE_CONFIG_INACTIVE;
+        pDimm->pISs[Index]->State = SetISStateWithPriority(pDimm->pISs[Index]->State, IS_STATE_CONFIG_INACTIVE);
       }
     }
 
@@ -603,11 +603,11 @@ RetrieveISFromInterleaveInformationTable(
         goto Finish;
       }
       if ((EFI_ERROR(Rc) && Rc != EFI_NOT_FOUND) || pDimmRegion == NULL) {
-        pIS->State |= IS_STATE_INIT_FAILURE;
+        pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_INIT_FAILURE);
         NVDIMM_DBG("One of parameters was NULL or out of memory");
       } else {
         if (Rc == EFI_NOT_FOUND) {
-          pIS->State |= IS_STATE_DIMM_MISSING;
+          pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_DIMM_MISSING);
           NVDIMM_DBG("The Dimm related with the DimmRegion has not been found on the Dimm list");
         } else {
           InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
@@ -625,7 +625,7 @@ RetrieveISFromInterleaveInformationTable(
     Rc = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
     if (pIS != NULL) {
       if (EFI_ERROR(Rc)) {
-        pIS->State |= IS_STATE_SPA_MISSING;
+        pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_SPA_MISSING);
         NVDIMM_DBG("Couldn't retrieve AppDirect I/O structures from NFIT.");
       }
 
@@ -4250,5 +4250,22 @@ Finish:
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+}
+
+/**
+  Set Interleave Set state taking states' priority into account
+
+  @param[in] CurrentState Current IS state
+  @param[in] NewState IS state to be set
+
+  @retval UINT8 New IS state
+**/
+UINT8
+SetISStateWithPriority(
+  IN    UINT8 CurrentState,
+  IN    UINT8 NewState
+)
+{
+  return CurrentState > NewState ? CurrentState : NewState;
 }
 

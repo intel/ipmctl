@@ -14,13 +14,12 @@
 #include <Dimm.h>
 #include <NvmTypes.h>
 
+/** IS_STATE value indicates its priority (0 is lowest) **/
 #define IS_STATE_HEALTHY          0
-#define IS_STATE_INIT_FAILURE     BIT0
-#define IS_STATE_DIMM_MISSING     BIT1
-#define IS_STATE_CONFIG_INACTIVE  BIT2
-#define IS_STATE_SPA_MISSING      BIT3
-#define IS_STATE_NEW_GOAL         BIT4
-#define IS_STATE_DIMM_LOCKED      BIT5
+#define IS_STATE_SPA_MISSING      1
+#define IS_STATE_CONFIG_INACTIVE  2
+#define IS_STATE_DIMM_MISSING     3
+#define IS_STATE_INIT_FAILURE     4
 struct _NAMESPACE;
 typedef struct _DIMM_REGION {
   LIST_ENTRY DimmRegionNode;
@@ -906,5 +905,19 @@ EFI_STATUS
 IsDimmLocked(
   IN     DIMM *pDimm,
      OUT BOOLEAN *pIsLocked
+  );
+
+/**
+  Set Interleave Set state taking states' priority into account
+
+  @param[in] CurrentState Current IS state
+  @param[in] NewState IS state to be set
+
+  @retval UINT8 New IS state
+**/
+UINT8
+SetISStateWithPriority(
+  IN    UINT8 CurrentState,
+  IN    UINT8 NewState
   );
 #endif

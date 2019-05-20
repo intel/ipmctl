@@ -90,9 +90,11 @@ ParseAcpiTables(
 
 /**
   Fetch the NFIT and PCAT tables from EFI_SYSTEM_TABLE
+
   @param[in] pSystemTable is a pointer to the EFI_SYSTEM_TABLE instance
-  @param[out] ppDsdt is a pointer to EFI_ACPI_DESCRIPTION_HEADER (NFIT)
+  @param[out] ppNfit is a pointer to EFI_ACPI_DESCRIPTION_HEADER (NFIT)
   @param[out] ppPcat is a pointer to EFI_ACPI_DESCRIPTION_HEADER (PCAT)
+  @param[out] ppPMTT is a pointer to EFI_ACPI_DESCRIPTION_HEADER (PMTT)
 
   @retval EFI_SUCCESS   on success
   @retval EFI_INVALID_PARAMETER NULL argument

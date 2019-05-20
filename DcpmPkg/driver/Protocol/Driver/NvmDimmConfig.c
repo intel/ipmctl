@@ -4149,22 +4149,22 @@ ParseAcpiTables(
 
   NVDIMM_ENTRY();
 
-  if (pNfit == NULL || pPcat == NULL || ppFitHead == NULL || ppPcatHead == NULL) {
+  if (ppFitHead == NULL || ppPcatHead == NULL) {
     goto Finish;
   }
 
-  *ppFitHead = ParseNfitTable((VOID *)pNfit);
+  ReturnCode = EFI_SUCCESS;
+
+  *ppFitHead = pNfit == NULL ? NULL : ParseNfitTable((VOID *)pNfit);
   if (*ppFitHead == NULL) {
     NVDIMM_DBG("NFIT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
   }
 
-  *ppPcatHead = ParsePcatTable((VOID *)pPcat);
+  *ppPcatHead = pPcat == NULL ? NULL : ParsePcatTable((VOID *)pPcat);
   if (*ppPcatHead == NULL) {
     NVDIMM_DBG("PCAT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
   }
   if (pPMTT != NULL) {
     *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((PMTT_TABLE *) pPMTT);
@@ -4172,8 +4172,6 @@ ParseAcpiTables(
     // if PMTT table is Not available skip  MM allowed check and let bios handle it
     *pIsMemoryModeAllowed = TRUE;
   }
-
-  ReturnCode = EFI_SUCCESS;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -4185,7 +4183,7 @@ Finish:
   Fetch the NFIT and PCAT tables from EFI_SYSTEM_TABLE
 
   @param[in] pSystemTable is a pointer to the EFI_SYSTEM_TABLE instance
-  @param[out] ppDsdt is a pointer to EFI_ACPI_DESCRIPTION_HEADER (NFIT)
+  @param[out] ppNfit is a pointer to EFI_ACPI_DESCRIPTION_HEADER (NFIT)
   @param[out] ppPcat is a pointer to EFI_ACPI_DESCRIPTION_HEADER (PCAT)
   @param[out] ppPMTT is a pointer to EFI_ACPI_DESCRIPTION_HEADER (PMTT)
 

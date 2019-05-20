@@ -102,6 +102,7 @@ typedef struct {
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
 #define CONTROLLER_RID_LEN             12
 #define SECURITY_STATE_STR_LEN         32
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_STR_LEN    6
 
 /** DIMM UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< DIMM UID hexadecimal-format representation length, including manufacturing fields
@@ -261,7 +262,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   (1 << 3)    ///< ARS status field will be populated: ARSStatus.
 #define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LatchedLastShutdownStatus, LastShutdownTime, AitDramEnabled.
 #define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerBudget.
-#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated:
+#define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: AvgPowerReportingTimeConstantMultiplier
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite DIMM status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
@@ -377,7 +378,7 @@ typedef struct _DIMM_INFO {
   UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
-  BOOLEAN FirstFastRefresh;                 //!< DEPRECATED
+  UINT8 AvgPowerReportingTimeConstantMultiplier;       //!< The value that is used to multiply the base time value used for average power consumption measurements
 
   //DIMM_INFO_CATEGORY_VIRAL_POLICY
   BOOLEAN ViralPolicyEnable;                //!< true if viral policy is enabled
@@ -891,6 +892,12 @@ typedef struct _DEBUG_LOG_INFO {
 #define FW_LOG_LEVEL_DEBUG    4
 
 #define OPTIONAL_DATA_UNDEFINED 0xFFUL
+
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_UNKNOWN               0
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MIXED                 1
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX                   32
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_DEFAULT               0
+#define HII_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX_STR_LEN       2
 
 /**
   Namespace security capabilities.

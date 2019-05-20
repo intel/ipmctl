@@ -513,7 +513,9 @@ typedef struct {
     Sub-Opcode:  0x06h (Optional Configuration Data Policy)
 **/
 typedef struct {
-  UINT8 FirstFastRefresh;     //!< DEPRECATED
+  UINT8 Reserved1[3];                                  //!< 2:0 Reserved
+  UINT8 AveragePowerReportingTimeConstantMultiplier;   //!< 3 Average Power Reporting Time Constant Multiplier
+  UINT8 Reserved2[124];                                //!< 127:4 Reserved
 } PT_OPTIONAL_DATA_POLICY_PAYLOAD;
 
 /**

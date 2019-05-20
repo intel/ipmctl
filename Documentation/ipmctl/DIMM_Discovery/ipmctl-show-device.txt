@@ -470,6 +470,11 @@ OverwriteStatus::
   - Completed - An overwrite DIMM operation completed and a reboot is
     required to use the DCPMM.
 
+AveragePowerReportingTimeConstantMultiplier::
+  The value that is used to multiply the base time value used for average power
+  consumption measurements. Can be set to a value between 0 and 32. The default
+  value is 0.
+
 ViralPolicy::
   Whether viral policies are enabled on the DCPMM. One of:
   - 0: Disabled - This is the default.

@@ -1196,16 +1196,16 @@ DumpFwDebugLog(
 /**
   Set Optional Configuration Data Policy using FW command
 
-  Note: This function is deprecated.
-
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds pointer to array of UINT16 Dimm ids to set
-  @param[in] DimmIdsCount number of elements in pDimmIds
-  @param[in] FirstFastRefresh FirstFastRefresh value to set
+  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
+  @param[in] DimmIdsCount - number of elements in pDimmIds
+  @param[in] AveragePowerReportingTimeConstantMultiplier - AveragePowerReportingTimeConstantMultiplier value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Function is deprecated
-
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
 EFIAPI
@@ -1213,7 +1213,7 @@ SetOptionalConfigurationDataPolicy(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 FirstFastRefresh,
+  IN     UINT8 AveragePowerReportingTimeConstantMultiplier,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

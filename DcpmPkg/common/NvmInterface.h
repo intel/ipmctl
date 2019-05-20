@@ -1188,13 +1188,12 @@ EFI_STATUS
 /**
   Get Optional Configuration Data Policy using FW command
 
-  Note: This function is deprecated.
-
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
 
-  @param[out] pFirstFastRefresh - output buffer of First Fast Refresh Values
+  @param[out] pAvgPwrReportingTimeConstantMultiplier - output buffer of
+              Average Power Reporting Time Constant Multiplier values.
               Caller must provide buffer of correct size
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
@@ -1207,19 +1206,17 @@ EFI_STATUS
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
-     OUT UINT8 *pFirstFastRefresh,
+     OUT UINT8 *pAvgPwrReportingTimeConstantMultiplier,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**
   Set Optional Configuration Data Policy using FW command
 
-  Note: This function is deprecated.
-
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
-  @param[in] FirstFastRefresh - FirstFastRefresh value to set
+  @param[in] AveragePowerReportingTimeConstantMultiplier - AveragePowerReportingTimeConstantMultiplier value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -1233,7 +1230,7 @@ EFI_STATUS
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 FirstFastRefresh,
+  IN     UINT8 AveragePowerReportingTimeConstantMultiplier,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

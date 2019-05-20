@@ -483,14 +483,16 @@ NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count)
   }
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemTopology(&gNvmDimmDriverNvmDimmConfig, &pDimmTopology, (UINT16 *)&DdrDimmCnt);
+
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    FREE_POOL_SAFE(pDimmTopology);
     return NVM_ERR_UNKNOWN;
   } else if (pDimmTopology == NULL) {
     NVDIMM_ERR("Could not read the system topology.\n");
     return NVM_ERR_UNKNOWN;
   }
-
+  FREE_POOL_SAFE(pDimmTopology);
   if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_devices(&DpcCnt)))
   {
     NVDIMM_ERR("Failed to obtain the number of devices (%d)\n", nvm_status);

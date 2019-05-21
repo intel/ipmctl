@@ -3851,3 +3851,100 @@ SetObjStatusForDimmInfoWithErase(
 
   SetObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH, Status);
 }
+#ifndef OS_BUILD
+
+#define EFI_ACPI_16550_UART_HID EISA_PNP_ID(0x0501)
+
+extern EFI_GUID gEfiSerialIoProtocolGuid;
+/**
+  Check whether the device path node is ISA Serial Node.
+  @param[in] Acpi           Device path node to be checked
+  @retval TRUE          It's ISA Serial Node.
+  @retval FALSE         It's NOT ISA Serial Node.
+**/
+BOOLEAN
+IsISASerialNode(
+  IN ACPI_HID_DEVICE_PATH *Acpi
+)
+{
+  return (BOOLEAN)(
+    (DevicePathType(Acpi) == ACPI_DEVICE_PATH) &&
+    (DevicePathSubType(Acpi) == ACPI_DP) &&
+    (ReadUnaligned32(&Acpi->HID) == EFI_ACPI_16550_UART_HID)
+    );
+}
+
+/**
+  The initialization routine in DebugLib initializes the
+  serial port to a static value defined in module dec file.
+  This function find's out the serial port attributes
+  from SerialIO protocol and set it on serial port
+
+  @retval EFI_SUCCESS The function complete successfully.
+  @retval EFI_UNSUPPORTED No serial ports present.
+
+**/
+
+EFI_STATUS
+SetSerialAttributes(
+  VOID
+)
+{
+  UINTN                     Index;
+
+  UINTN                     NoHandles;
+  EFI_HANDLE                *Handles;
+  EFI_STATUS                ReturnCode;
+  ACPI_HID_DEVICE_PATH      *Acpi;
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
+  EFI_SERIAL_IO_PROTOCOL    *SerialIo;
+  EFI_DEVICE_PATH_PROTOCOL  *Node;
+
+  ReturnCode = gBS->LocateHandleBuffer(
+    ByProtocol,
+    &gEfiSerialIoProtocolGuid,
+    NULL,
+    &NoHandles,
+    &Handles
+  );
+  CHECK_RETURN_CODE(ReturnCode,Finish);
+  for (Index = 0; Index < NoHandles; Index++) {
+    // Check to see whether the handle has DevicePath Protocol installed
+    ReturnCode = gBS->HandleProtocol(
+      Handles[Index],
+      &gEfiDevicePathProtocolGuid,
+      (VOID **)&DevicePath
+    );
+    CHECK_RETURN_CODE(ReturnCode,Finish);
+    Acpi = NULL;
+    for (Node = DevicePath; !IsDevicePathEnd(Node); Node = NextDevicePathNode(Node)) {
+      if ((DevicePathType(Node) == MESSAGING_DEVICE_PATH) && (DevicePathSubType(Node) == MSG_UART_DP)) {
+        break;
+      }
+      // Acpi points to the node before Uart node
+      Acpi = (ACPI_HID_DEVICE_PATH *)Node;
+    }
+    if ((Acpi != NULL) && IsISASerialNode(Acpi)) {
+      ReturnCode = gBS->HandleProtocol(
+        Handles[Index],
+        &gEfiSerialIoProtocolGuid,
+        (VOID **)&SerialIo
+      );
+      CHECK_RETURN_CODE(ReturnCode,Finish);
+      EFI_PARITY_TYPE    Parity = (EFI_PARITY_TYPE)SerialIo->Mode->Parity;
+      UINT8              DataBits = (UINT8)SerialIo->Mode->DataBits;
+      EFI_STOP_BITS_TYPE StopBits = (EFI_STOP_BITS_TYPE)(SerialIo->Mode->StopBits);
+      ReturnCode = SerialPortSetAttributes(
+        &(SerialIo->Mode->BaudRate),
+        &(SerialIo->Mode->ReceiveFifoDepth),
+        &(SerialIo->Mode->Timeout),
+        &Parity, &DataBits, &StopBits);
+      CHECK_RETURN_CODE(ReturnCode,Finish);
+      break;
+    }
+  }
+Finish:
+  FREE_POOL_SAFE(Handles);
+  return ReturnCode;
+}
+#endif

@@ -165,6 +165,7 @@ UefiMain(
   SHELL_FILE_HANDLE StdIn = NULL;
   UINTN HandleCount = 0;
   EFI_HANDLE *pHandleBuffer = NULL;
+  SetSerialAttributes();
 #endif
 
   NVDIMM_ENTRY();

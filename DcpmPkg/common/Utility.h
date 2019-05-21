@@ -13,7 +13,7 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include "NvmHealth.h"
-
+#include <Library/SerialPortLib.h>
 #ifdef OS_BUILD
 #include <os_efi_preferences.h>
 #endif
@@ -338,6 +338,14 @@ typedef union {
 
 // Helper macros to streamline the reading of code
 // NVDIMM_ERR will print out the line number, so no need to be specific
+#define CHECK_RETURN_CODE(ReturnCode, Label)                  \
+  do {                                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      goto Label;                                             \
+    }                                                         \
+  } while (0)
+
 #define CHECK_RESULT(Call, Label)                             \
   do {                                                        \
     ReturnCode = Call;                                        \
@@ -1717,5 +1725,17 @@ CHAR16 * ConvertDimmInfoAttribToString(
   CHAR16* pFormatStr OPTIONAL
 );
 
+#ifndef OS_BUILD
+/**
+  Find serial attributes from SerialProtocol and set on
+  serial driver
+
+  @retval - Status of operation
+**/
+EFI_STATUS
+SetSerialAttributes(
+  VOID
+);
+#endif
 #endif /** _UTILITY_H_ **/
 

@@ -723,6 +723,7 @@ NvmDimmDriverDriverEntryPoint(
   EFI_HANDLE ExistingDriver = NULL;
   DRIVER_PREFERENCES DriverPreferences;
 #ifndef OS_BUILD
+  SetSerialAttributes();
   EFI_LOADED_IMAGE_PROTOCOL *pLoadedImage = NULL;
 #endif
 

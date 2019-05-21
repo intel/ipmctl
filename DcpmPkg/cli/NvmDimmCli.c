@@ -197,6 +197,7 @@ UefiMain(
   EFI_HANDLE *pHandleBuffer = NULL;
   CHAR16 *pCurrentDriverName;
   EFI_COMPONENT_NAME_PROTOCOL *pComponentName = NULL;
+  SetSerialAttributes();
 #else
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;

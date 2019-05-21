@@ -2283,6 +2283,10 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR);
   }
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.EnhancedAdrFlushStatus) {
+    pStatusStr = CatSPrintClean(pStatusStr,
+      FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR);
+  }
   if (pStatusStr == NULL) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR, LAST_SHUTDOWN_STATUS_UNKNOWN_STR);
@@ -4090,6 +4094,16 @@ ConvertDimmInfoAttribToString(
   }
 
   switch (pHeader->Type) {
+    case DIMM_INFO_TYPE_BOOLEAN:
+      if (pFormatStr) {
+        return CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_BOOLEAN *)pAttrib)->Data);
+      }
+      else if(((DIMM_INFO_ATTRIB_BOOLEAN *)pAttrib)->Data){
+        return  CatSPrintClean(NULL, L"TRUE");
+      }
+      else {
+        return  CatSPrintClean(NULL, L"FALSE");
+      }
     case DIMM_INFO_TYPE_CHAR16:
       return (NULL == pFormatStr) ?
         CatSPrintClean(NULL, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data) :

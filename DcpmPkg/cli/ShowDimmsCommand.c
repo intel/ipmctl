@@ -300,7 +300,9 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   BOOT_STATUS_REGISTER_STR,
   DCPMM_AVERAGE_POWER_STR,
   AVERAGE_12V_POWER_STR,
-  AVERAGE_1_2V_POWER_STR
+  AVERAGE_1_2V_POWER_STR,
+  EXTENDED_ADR_ENABLED_STR,
+  PPC_EXTENDED_ADR_ENABLED_STR
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
@@ -1254,6 +1256,15 @@ ShowDimms(
           }
         }
 
+        /** ExtendedAdrEnabled **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, EXTENDED_ADR_ENABLED_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, EXTENDED_ADR_ENABLED_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].ExtendedAdrEnabled, FORMAT_INT32));
+        }
+
+        /** PpcExtendedAdrEnabled **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PPC_EXTENDED_ADR_ENABLED_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PPC_EXTENDED_ADR_ENABLED_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].PrevPwrCycleExtendedAdrEnabled, FORMAT_INT32));
+        }
 
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_MEM_INFO_PAGE) {
           /** ErrorInjectionEnabled **/

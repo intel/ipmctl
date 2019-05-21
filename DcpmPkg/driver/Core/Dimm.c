@@ -6699,6 +6699,65 @@ Finish:
 }
 
 /**
+  Firmware command to get extended ADR status info
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] pExtendedAdrInfo pointer to filled payload with extended ADR info
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_UNSUPPORTED if FIS doesn't support Get Admin Features/Extended ADR
+**/
+EFI_STATUS
+FwCmdGetExtendedAdrInfo(
+  IN     DIMM *pDimm,
+  OUT PT_OUTPUT_PAYLOAD_GET_EADR *pExtendedAdrInfo
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  FW_CMD *pFwCmd = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pExtendedAdrInfo == NULL) {
+    goto Finish;
+  }
+
+  //Get Extended ADR status info is new to FIS2.0
+  if (pDimm->FwVer.FwApiMajor < 2) {
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopExtendedAdr;
+  pFwCmd->OutputPayloadSize = sizeof(*pExtendedAdrInfo);
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to get extended ADR info");
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  CopyMem_S(pExtendedAdrInfo, sizeof(*pExtendedAdrInfo), pFwCmd->OutPayload, sizeof(*pExtendedAdrInfo));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
 Get manageability state for Dimm
 
 @param[in] pDimm the DIMM struct

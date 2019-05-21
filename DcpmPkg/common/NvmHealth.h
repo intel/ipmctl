@@ -95,15 +95,13 @@ typedef union {
 typedef union {
   UINT8 Raw[3];
   struct {
-    UINT8 ViralInterrupt              : 1; //!< Viral interrupt received
-    UINT8 SurpriseClockStopInterrupt  : 1; //!< Surprise clock stop interrupt received
-    UINT8 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
-    UINT8 S4PowerState                : 1; //!< S4 Power State received
-    UINT8 PMIdle                      : 1; //!< PM Idle received
-    UINT8 DdrtSurpriseReset           : 1; //!< Surprise Reset received
-    UINT8                             : 2; //!< Reserved
-    UINT8                             : 8; //!< Reserved
-    UINT8                             : 8; //!< Reserved
+    UINT16 ViralInterrupt              : 1; //!< Viral interrupt received
+    UINT16 SurpriseClockStopInterrupt  : 1; //!< Surprise clock stop interrupt received
+    UINT16 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
+    UINT16 S4PowerState                : 1; //!< S4 Power State received
+    UINT16 PMIdle                      : 1; //!< PM Idle received
+    UINT16 DdrtSurpriseReset           : 1; //!< Surprise Reset received
+    UINT16 EnhancedAdrFlushStatus      : 4; //!< eADR Flush Status
   } Separated;
 } LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED;
 

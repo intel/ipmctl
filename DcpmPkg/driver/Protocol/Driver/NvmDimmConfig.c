@@ -783,6 +783,7 @@ GetDimmInfo (
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
+  PT_OUTPUT_PAYLOAD_GET_EADR PayloadExtendedAdr;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
@@ -1136,6 +1137,19 @@ GetDimmInfo (
       pDimmInfo->AveragePower12V.Header.Type = DIMM_INFO_TYPE_UINT16;
       pDimmInfo->AveragePower1_2V.Data = pPayloadMemInfoPage4->AveragePower1_2V;
       pDimmInfo->AveragePower1_2V.Header.Type = DIMM_INFO_TYPE_UINT16;
+    }
+  }
+
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_EXTENDED_ADR)
+  {
+    ReturnCode = FwCmdGetExtendedAdrInfo(pDimm, &PayloadExtendedAdr);
+    pDimmInfo->ExtendedAdrEnabled.Header.Status.Code = ReturnCode;
+    pDimmInfo->PrevPwrCycleExtendedAdrEnabled.Header.Status.Code = ReturnCode;
+    if (EFI_SUCCESS == ReturnCode) {
+      pDimmInfo->ExtendedAdrEnabled.Data = PayloadExtendedAdr.ExtendedAdrStatus;
+      pDimmInfo->ExtendedAdrEnabled.Header.Type = DIMM_INFO_TYPE_BOOLEAN;
+      pDimmInfo->PrevPwrCycleExtendedAdrEnabled.Data = PayloadExtendedAdr.PreviousExtendedAdrStatus;
+      pDimmInfo->PrevPwrCycleExtendedAdrEnabled.Header.Type = DIMM_INFO_TYPE_BOOLEAN;
     }
   }
 

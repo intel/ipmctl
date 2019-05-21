@@ -1707,6 +1707,24 @@ FwCmdGetSystemTime(
 );
 
 /**
+  Firmware command to get extended ADR status info
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] pExtendedAdrInfo pointer to filled payload with extended ADR info
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_UNSUPPORTED if FIS doesn't support Get Admin Features/Extended ADR
+**/
+EFI_STATUS
+FwCmdGetExtendedAdrInfo(
+  IN     DIMM *pDimm,
+  OUT PT_OUTPUT_PAYLOAD_GET_EADR *pExtendedAdrInfo
+);
+
+/**
 Get manageability state for Dimm
 
 @param[in] pDimm the DIMM struct

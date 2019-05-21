@@ -111,6 +111,7 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4 Received"
 #define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
 #define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR     L"Extended Flush Complete"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"

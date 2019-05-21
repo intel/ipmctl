@@ -314,6 +314,7 @@ enum GetSetAdminFeatSubop {
   SubopLatchSystemShutdownState = 0x09, //!< Get/Set the last system shutdown state data
   SubopViralPolicy = 0x0A,              //!< Get/Set the Viral Policy.
   SubopCommandAccessPolicy = 0xCA,      //!< Get/Set the command access policy
+  SubopExtendedAdr = 0xEA,              //!< Get the current extended ADR status of the FW
 };
 
 /**
@@ -1379,6 +1380,17 @@ typedef struct {
   UINT64 UnixTime;     //!< The number of seconds since 1 January 1970
   UINT8 Reserved[120];
 } PT_SYTEM_TIME_PAYLOAD;
+
+/**
+  Passthrough Output Payload:
+     Opcode:      0x06h (Get Admin Features)
+     Sub-Opcode:  0xEAh (Extended ADR)
+**/
+typedef struct {
+  UINT8 ExtendedAdrStatus;            //!< Specifies whether extended ADR flow is enabled
+  UINT8 PreviousExtendedAdrStatus;    //!< Was extended ADR flow enabled during last power cycle
+  UINT8 Reserved[126];                //!< Padding to meet 128byte payload size
+} PT_OUTPUT_PAYLOAD_GET_EADR;
 
 #pragma pack(pop)
 

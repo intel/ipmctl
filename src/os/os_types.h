@@ -139,7 +139,17 @@ struct fw_cmd {
    unsigned int LargeInputPayloadSize;
    unsigned int OutputPayloadSize;
    unsigned int LargeOutputPayloadSize;
-   unsigned char InputPayload[IN_PAYLOAD_SIZE];
+   union {
+     unsigned char Data[IN_PAYLOAD_SIZE];
+     struct {
+       unsigned char Opcode;
+       unsigned char SubOpcode;
+       unsigned char TransportInterface;
+       unsigned char Reserved[5];
+       unsigned int Timeout;
+       unsigned char Data[IN_PAYLOAD_SIZE];
+     } Extended;
+   } InputPayload;
    unsigned char LargeInputPayload[IN_MB_SIZE];
    unsigned char OutPayload[OUT_PAYLOAD_SIZE];
    unsigned char LargeOutputPayload[OUT_MB_SIZE];

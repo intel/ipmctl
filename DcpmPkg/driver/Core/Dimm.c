@@ -1463,7 +1463,7 @@ FwCmdSetOptionalConfigurationDataPolicy(
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopConfigDataPolicy;
   pFwCmd->InputPayloadSize = sizeof(*pOptionalDataPolicyPayload);
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pOptionalDataPolicyPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pOptionalDataPolicyPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
@@ -1565,7 +1565,7 @@ FwCmdDisableARS(
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopAddressRangeScrub;
 
-  pARSInpugPayload = (PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB*)pFwCmd->InputPayload;
+  pARSInpugPayload = (PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB*)pFwCmd->InputPayload.Data;
   pARSInpugPayload->Enable = 0;
 
   pFwCmd->InputPayloadSize = sizeof(PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB);
@@ -1972,7 +1972,7 @@ FwGetPCDFromOffsetSmallPayload(
   InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
   for (ReadOffset = StartingPageOffset; ReadOffset < (ReqOffset+ReqDataSize); ReadOffset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
     InputPayload.Offset = ReadOffset;
-    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InputPayload, pFwCmd->InputPayloadSize);
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (Offset = %d, RC = " FORMAT_EFI_STATUS ")", ReadOffset, ReturnCode);
@@ -2111,7 +2111,7 @@ FwCmdGetPlatformConfigData(
     InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
     for (Offset = 0; Offset < PcdSize; Offset += PCD_GET_SMALL_PAYLOAD_DATA_SIZE) {
       InputPayload.Offset = Offset;
-      CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+      CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InputPayload, pFwCmd->InputPayloadSize);
 #ifdef OS_BUILD
       ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
@@ -2135,7 +2135,7 @@ FwCmdGetPlatformConfigData(
     if (pFwCmd->InputPayloadSize > IN_PAYLOAD_SIZE) {
       NVDIMM_DBG("The size of command parameters is greater than the size of the small payload.");
     }
-    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InputPayload, pFwCmd->InputPayloadSize);
 #ifdef OS_BUILD
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
@@ -2242,7 +2242,7 @@ FwCmdGetPlatformConfigDataSize (
   pFwCmd->LargeOutputPayloadSize = 0;
   pFwCmd->OutputPayloadSize = PCD_GET_SMALL_PAYLOAD_DATA_SIZE;
   InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InputPayload, pFwCmd->InputPayloadSize);
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
@@ -2421,7 +2421,7 @@ FwCmdGetPcdSmallPayload(
     goto Finish;
   }
 
-  pInputPayload = (PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA*) pFwCmd->InputPayload;
+  pInputPayload = (PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA*) pFwCmd->InputPayload.Data;
 
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetAdminFeatures;
@@ -2669,7 +2669,7 @@ FwSetPCDFromOffsetSmallPayload(
   for (WriteOffset = StartingPageOffset; WriteOffset < (ReqOffset+ReqDataSize); WriteOffset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
     InPayloadSetData.Offset = WriteOffset;
     CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pRawData + (WriteOffset - StartingPageOffset), PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
-    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InPayloadSetData, pFwCmd->InputPayloadSize);
     pFwCmd->OutputPayloadSize = 0;
     ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
     if (EFI_ERROR(ReturnCode)) {
@@ -2811,7 +2811,7 @@ FwCmdSetPlatformConfigData (
     for (Offset = 0; Offset < PcdSize; Offset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
       InPayloadSetData.Offset = Offset;
       CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pPartition + Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
-      CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
+      CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InPayloadSetData, pFwCmd->InputPayloadSize);
       pFwCmd->OutputPayloadSize = 0;
       ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
       if (EFI_ERROR(ReturnCode)) {
@@ -2829,7 +2829,7 @@ FwCmdSetPlatformConfigData (
     InPayloadSetData.Offset = 0;
     InPayloadSetData.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
     pFwCmd->LargeInputPayloadSize = PcdSize;
-    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
+    CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InPayloadSetData, pFwCmd->InputPayloadSize);
 
     /** Save 128KB partition to Large Payload **/
     CopyMem_S(pFwCmd->LargeInputPayload, sizeof(pFwCmd->LargeInputPayload), pPartition, PcdSize);
@@ -2955,7 +2955,7 @@ FwCmdSetAlarmThresholds (
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopAlarmThresholds;
   pFwCmd->InputPayloadSize = sizeof(PT_PAYLOAD_ALARM_THRESHOLDS);
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pPayloadAlarmThresholds, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pPayloadAlarmThresholds, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -3007,23 +3007,40 @@ FwCmdGetFwDebugLogSize(
   }
 
   pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtGetLog;
-  pFwCmd->SubOpcode = SubopFwDbg;
-  pFwCmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_FW_DEBUG_LOG);
-  pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG);
-  pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
+#ifdef OS_BUILD
+  if (UseSmbus)
+  {
+    pFwCmd->Opcode = PtEmulatedBiosCommands;
+    pFwCmd->SubOpcode = SubopExtVendorSpecific;
+    pFwCmd->InputPayloadSize = sizeof(pFwCmd->InputPayload.Extended);
+    pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG);
+
+    pFwCmd->InputPayload.Extended.Opcode = PtGetLog;
+    pFwCmd->InputPayload.Extended.SubOpcode = SubopFwDbg;
+    pFwCmd->InputPayload.Extended.Timeout = PT_TIMEOUT_INTERVAL_EXT;
+    pFwCmd->InputPayload.Extended.TransportInterface = SmbusTransportInterface;
+    pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *)&pFwCmd->InputPayload.Extended.Data;
+  } else {
+#endif // OS_BUILD
+    pFwCmd->Opcode = PtGetLog;
+    pFwCmd->SubOpcode = SubopFwDbg;
+    pFwCmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_FW_DEBUG_LOG);
+    pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG);
+    pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *)&pFwCmd->InputPayload.Data;
+#ifdef OS_BUILD
+  }
+#endif // OS_BUILD
   pInputPayload->LogAction = ActionRetrieveDbgLogSize;
 
-  if (UseSmbus) {
 #ifndef OS_BUILD
+  if (UseSmbus) {
     ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
-#else
-    ReturnCode = EFI_UNSUPPORTED;
-    goto Finish;
-#endif // !OS_BUILD
   } else {
+#endif // !OS_BUILD
     ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+#ifndef OS_BUILD
   }
+#endif // !OS_BUILD
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to get FW debug log size");
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -3075,8 +3092,9 @@ FwCmdGetFwDebugLog (
   UINT64 BytesReadTotal = 0;
   UINT8 LogAction = 0;
   UINT8 *OutputPayload = NULL;
+
 #ifdef OS_BUILD
-  BOOLEAN UseSmallPayload = config_is_large_payload_disabled();
+  BOOLEAN UseSmallPayload = config_is_large_payload_disabled() || UseSmbus;
 #else
   BOOLEAN UseSmallPayload = FALSE;
 #endif
@@ -3136,14 +3154,31 @@ FwCmdGetFwDebugLog (
     goto Finish;
   }
 
-  pFwCmd->Opcode = PtGetLog;
-  pFwCmd->SubOpcode = SubopFwDbg;
-  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
-  pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *) &pFwCmd->InputPayload;
+#ifdef OS_BUILD
+  if (UseSmbus)
+  {
+    pFwCmd->Opcode = PtEmulatedBiosCommands;
+    pFwCmd->SubOpcode = SubopExtVendorSpecific;
+    pFwCmd->InputPayloadSize = sizeof(pFwCmd->InputPayload.Extended);
+
+    pFwCmd->InputPayload.Extended.Opcode = PtGetLog;
+    pFwCmd->InputPayload.Extended.SubOpcode = SubopFwDbg;
+    pFwCmd->InputPayload.Extended.Timeout = PT_TIMEOUT_INTERVAL_EXT;
+    pFwCmd->InputPayload.Extended.TransportInterface = SmbusTransportInterface;
+    pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *)&pFwCmd->InputPayload.Extended.Data;
+  } else {
+#endif // OS_BUILD
+    pFwCmd->Opcode = PtGetLog;
+    pFwCmd->SubOpcode = SubopFwDbg;
+    pFwCmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_FW_DEBUG_LOG);
+    pInputPayload = (PT_INPUT_PAYLOAD_FW_DEBUG_LOG *)&pFwCmd->InputPayload.Data;
+#ifdef OS_BUILD
+  }
+#endif // OS_BUILD
   pInputPayload->LogAction = LogAction;
 
-  // Default for DDRT large payload transactions. 128 bytes for smbus
-  if (UseSmbus || UseSmallPayload) {
+
+  if (UseSmallPayload) {
     ChunkSize = SMALL_PAYLOAD_SIZE;
     OutputPayload = pFwCmd->OutPayload;
     pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_SMALL;
@@ -3163,16 +3198,16 @@ FwCmdGetFwDebugLog (
   while (BytesReadTotal < LogSizeBytesToFetch) {
 
     pInputPayload->LogPageOffset = LogPageOffset;
-    if (UseSmbus) {
+
 #ifndef OS_BUILD
-      ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
-#else
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
-#endif // !OS_BUILD
+    if (UseSmbus) {
+      ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
     } else {
-      ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#endif // !OS_BUILD
+      ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+#ifndef OS_BUILD
     }
+#endif // !OS_BUILD
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to get firmware debug log, LogPageOffset = %d\n", LogPageOffset);
       FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
@@ -3241,7 +3276,7 @@ FwCmdGetErrorLog (
   pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
   pFwCmd->OutputPayloadSize = OutputPayloadSize;
   pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, sizeof(pFwCmd->InputPayload));
+  CopyMem_S(&pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pInputPayload, sizeof(pFwCmd->InputPayload.Data));
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -3370,7 +3405,7 @@ FwCmdGetMemoryInfoPage (
   pFwCmd->InputPayloadSize  = sizeof(InputPayload);
   pFwCmd->OutputPayloadSize = PageSize;
 
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), &InputPayload, pFwCmd->InputPayloadSize);
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Error detected when sending MemoryInfoPage command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
@@ -3543,7 +3578,7 @@ FwCmdGetPMONRegisters(
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetFeatures;
   pFwCmd->SubOpcode = SubopPMONRegisters;
-  pFwCmd->InputPayload[0] = SmartDataMask;
+  pFwCmd->InputPayload.Data[0] = SmartDataMask;
   pFwCmd->InputPayloadSize = sizeof(SmartDataMask);
   pFwCmd->OutputPayloadSize = sizeof(*pPayloadPMONRegisters);
 
@@ -3601,7 +3636,7 @@ FwCmdSetPMONRegisters(
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopPMONRegisters;
-  pFwCmd->InputPayload[0] = PMONGroupEnable;
+  pFwCmd->InputPayload.Data[0] = PMONGroupEnable;
   pFwCmd->InputPayloadSize = sizeof(PMONGroupEnable);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
@@ -4530,7 +4565,7 @@ GetAndParseFwErrorLogForDimm(
       SmallPayloadRawSize = (LogEntrySize * OutPayloadGetErrorLog.Params.FIS_1_3.ReturnCount);
       CopyMem_S((VOID *)LargeOutputOffset,
         SmallPayloadRawSize,
-        OutPayloadGetErrorLog.Params.FIS_1_3.LogEntries, 
+        OutPayloadGetErrorLog.Params.FIS_1_3.LogEntries,
         SmallPayloadRawSize);
 
       if (OUT_MB_SIZE >= LargeOutputOffset + SmallPayloadRawSize - (UINT64)pLargeOutputPayload) {
@@ -6560,7 +6595,7 @@ FwCmdGetCommandAccessPolicy(
   pFwCmd->SubOpcode = SubopCommandAccessPolicy;
   pFwCmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY);
 
-  pInputCAP = (PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->InputPayload;
+  pInputCAP = (PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY*) pFwCmd->InputPayload.Data;
   pInputCAP->Opcode = Opcode;
   pInputCAP->Subopcode = Subopcode;
   pFwCmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY);
@@ -6628,7 +6663,7 @@ FwCmdInjectError(
 	pFwCmd->SubOpcode = SubOpCode;
 	pFwCmd->InputPayloadSize = SMALL_PAYLOAD_SIZE;
 	pFwCmd->OutputPayloadSize = 0;
-	CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pinjectInputPayload, pFwCmd->InputPayloadSize);
+	CopyMem_S(pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pinjectInputPayload, pFwCmd->InputPayloadSize);
 
 	ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
 	if (EFI_ERROR(ReturnCode)) {

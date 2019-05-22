@@ -976,7 +976,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   cmd->Opcode = PtGetLog;
   cmd->SubOpcode = SubopMemInfo;
   cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_MEMORY_INFO);
-  CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), &mem_info_input, cmd->InputPayloadSize);
+  CopyMem_S(cmd->InputPayload.Data, sizeof(cmd->InputPayload.Data), &mem_info_input, cmd->InputPayloadSize);
   cmd->OutputPayloadSize = sizeof(PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1);
   if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
     pmem_info_output = (PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1 *)cmd->OutPayload;
@@ -2627,7 +2627,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
   if (NULL == (gOsShellParametersProtocol.StdOut = fopen(support_file, "w+")))
     return NVM_ERR_UNKNOWN;
 
-  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index) 
+  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index)
   {
     execute_cli_cmd(exec_commands[Index]);
   }
@@ -3359,7 +3359,7 @@ int get_fw_err_log_stats(
   cmd->Opcode = PtGetLog;
   cmd->SubOpcode = SubopErrorLog;
   cmd->InputPayloadSize = sizeof(PT_INPUT_PAYLOAD_GET_ERROR_LOG);
-  CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), &get_error_log_input, cmd->InputPayloadSize);
+  CopyMem_S(cmd->InputPayload.Data, sizeof(cmd->InputPayload.Data), &get_error_log_input, cmd->InputPayloadSize);
   cmd->OutputPayloadSize = sizeof(LOG_INFO_DATA_RETURN);
   if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
     memcpy_s(log_info, sizeof(LOG_INFO_DATA_RETURN), cmd->OutPayload, cmd->OutputPayloadSize);
@@ -3418,7 +3418,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
   cmd->Opcode = p_cmd->opcode;
   cmd->SubOpcode = p_cmd->sub_opcode;
   cmd->InputPayloadSize = p_cmd->input_payload_size;
-  CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), p_cmd->input_payload, cmd->InputPayloadSize);
+  CopyMem_S(cmd->InputPayload.Data, sizeof(cmd->InputPayload.Data), p_cmd->input_payload, cmd->InputPayloadSize);
   cmd->OutputPayloadSize = p_cmd->output_payload_size;
   cmd->LargeInputPayloadSize = p_cmd->large_input_payload_size;
   cmd->LargeOutputPayloadSize = p_cmd->large_output_payload_size;

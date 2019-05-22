@@ -34,7 +34,7 @@ int win_scm2_passthrough(struct fw_cmd *p_cmd, unsigned int *p_dsm_status)
 
   scm_err = do_passthrough_fix_output(scm_err, p_dsm_status, p_cmd->DimmID,
       p_cmd->Opcode, p_cmd->SubOpcode,
-      p_cmd->InputPayload, p_cmd->InputPayloadSize,
+      p_cmd->InputPayload.Data, p_cmd->InputPayloadSize,
       p_cmd->OutPayload, p_cmd->OutputPayloadSize);
 
   scm_err = read_large_ouptut_payload(scm_err, p_dsm_status, p_cmd->DimmID,

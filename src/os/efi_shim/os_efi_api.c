@@ -456,7 +456,7 @@ passthru_playback(
     g_pass_thru_playback_offset += pt_rec_resp.OutputPayloadSize;
   }
   pCmd->Status = pt_rec_resp.Status;
-  INC_PASS_THRU_CNT(); 
+  INC_PASS_THRU_CNT();
 
 Finish:
   fclose(f_passthru_ptr);
@@ -570,7 +570,7 @@ passthru_record_finalize(
 
   if (pCmd->InputPayloadSize)
   {
-    if (1 != fwrite(pCmd->InputPayload, pCmd->InputPayloadSize, 1, f_passthru_ptr))
+    if (1 != fwrite(pCmd->InputPayload.Data, pCmd->InputPayloadSize, 1, f_passthru_ptr))
     {
       NVDIMM_ERR("Failed to write the input payload to the recording file \n");
       return EFI_END_OF_FILE;

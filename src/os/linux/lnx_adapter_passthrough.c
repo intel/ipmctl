@@ -444,7 +444,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 		COMMON_LOG_ERROR("Invalid parameter, cmd struct is null");
 		rc = NVM_ERR_UNKNOWN;
 	}
-	else if ((p_fw_cmd->InputPayloadSize > 0 && p_fw_cmd->InputPayload == NULL) ||
+	else if ((p_fw_cmd->InputPayloadSize > 0 && p_fw_cmd->InputPayload.Data == NULL) ||
 			(p_fw_cmd->OutputPayloadSize > 0 && p_fw_cmd->OutPayload == NULL) ||
 			(p_fw_cmd->LargeInputPayloadSize > 0 && p_fw_cmd->LargeInputPayload == NULL) ||
 			(p_fw_cmd->LargeOutputPayloadSize > 0 && p_fw_cmd->LargeOutputPayload == NULL))
@@ -475,7 +475,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 			unsigned int Opcode = BUILD_DSM_OPCODE(p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
 			struct ndctl_cmd *p_vendor_cmd = NULL;
 			if ((p_vendor_cmd = ndctl_dimm_cmd_new_vendor_specific(
-					p_dimm, Opcode, DEV_SMALL_PAYLOAD_SIZE,
+					p_dimm, Opcode, p_fw_cmd->InputPayloadSize,
 					DEV_SMALL_PAYLOAD_SIZE)) == NULL)
 			{
 				rc = NVM_ERR_GENERAL_OS_DRIVER_FAILURE;
@@ -493,7 +493,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 					if (p_fw_cmd->InputPayloadSize > 0)
 					{
 						size_t bytes_written = ndctl_cmd_vendor_set_input(p_vendor_cmd,
-							p_fw_cmd->InputPayload, p_fw_cmd->InputPayloadSize);
+							p_fw_cmd->InputPayload.Data, p_fw_cmd->InputPayloadSize);
 
 						if (bytes_written != p_fw_cmd->InputPayloadSize)
 						{
@@ -521,7 +521,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 						{
 							// Make sure entire DWORD gets printed
 							COMMON_LOG_HANDOFF_F("Input[%d]: 0x%.8x",
-								i, ((UINT32 *) (p_fw_cmd->InputPayload))[i]);
+								i, ((UINT32 *) (p_fw_cmd->InputPayload.Data))[i]);
 						}
 					}
 

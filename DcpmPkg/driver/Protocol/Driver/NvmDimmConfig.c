@@ -4810,7 +4810,7 @@ UpdateSmbusDimmFw(
 
   CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
 
-  CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
+  CopyMem(pPassThruCommand->InputPayload.Data, &FwUpdatePacket, sizeof(FwUpdatePacket));
   CurrentPacket++;
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
@@ -4827,7 +4827,7 @@ UpdateSmbusDimmFw(
     FwUpdatePacket.PacketNumber = CurrentPacket;
 
     CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-    CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
+    CopyMem(pPassThruCommand->InputPayload.Data, &FwUpdatePacket, sizeof(FwUpdatePacket));
     CurrentPacket++;
 
     ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
@@ -4842,7 +4842,7 @@ UpdateSmbusDimmFw(
   FwUpdatePacket.PacketNumber = CurrentPacket;
 
   CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-  CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
+  CopyMem(pPassThruCommand->InputPayload.Data, &FwUpdatePacket, sizeof(FwUpdatePacket));
 
   ReturnCode = SendUpdatePassThru(pCurrentDimm, TRUE, pPassThruCommand);
   if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
@@ -7808,14 +7808,12 @@ GetFwDebugLog(
   }
 
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-#ifndef OS_BUILD
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
     if (pDimm != NULL) {
       UseSmbus = TRUE;
     }
   }
-#endif // OS_BUILD
   // If we still can't find the dimm, fail out
   if (pDimm == NULL) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);

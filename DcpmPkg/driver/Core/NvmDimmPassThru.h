@@ -67,9 +67,13 @@ struct _DIMM;
 #define FW_IMG_MAX_CHUNK_SIZE   126     //!< The maximum size of a firmware image chunk
 
 #define SECONDS_TO_MICROSECONDS(Seconds) MultU64x32((UINT64)(Seconds), 1000000)
+#define SECONDS_TO_MILISECONDS(Seconds) (Seconds * 1000)
 
 // PassThru timeout in microseconds
 #define PT_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS(1)
+
+// PassThru timeout in miliseconds
+#define PT_TIMEOUT_INTERVAL_EXT SECONDS_TO_MILISECONDS(1)
 
 // Smbus delay period in microseconds
 #define SMBUS_PT_DELAY_PERIOD_IN_US  100
@@ -244,18 +248,19 @@ extern "C"
   Defines the Firmware Command Table opcodes accessed via the EFI_DCPMM_PASS_THRU_PROTOCOL
 **/
 enum PassthroughOpcode {
-  PtIdentifyDimm = 0x01,       //!< Retrieve physical inventory data for DIMM
-  PtGetSecInfo = 0x02,         //!< Retrieve security information from DIMM
-  PtSetSecInfo = 0x03,         //!< Send a security related command to DIMM
-  PtGetFeatures = 0x04,        //!< Retrieve modifiable settings for DIMM
-  PtSetFeatures = 0x05,        //!< Modify settings for DIMM
-  PtGetAdminFeatures = 0x06,   //!< Gets the advanced DIMM settings
-  PtSetAdminFeatures = 0x07,   //!< Sets the advanced DIMM settings
-  PtGetLog = 0x08,             //!< Retrieve administrative data, error info, other FW data
-  PtUpdateFw = 0x09,           //!< Move an image to the DIMM
-  PtInjectError = 0x0A,        //!< Validation only CMD to trigger error conditions
-  PtCustomerFormat = 0xF1,     //!< DFX command for factory reset
-  PtMax = 0xF2
+  PtIdentifyDimm = 0x01,         //!< Retrieve physical inventory data for DIMM
+  PtGetSecInfo = 0x02,           //!< Retrieve security information from DIMM
+  PtSetSecInfo = 0x03,           //!< Send a security related command to DIMM
+  PtGetFeatures = 0x04,          //!< Retrieve modifiable settings for DIMM
+  PtSetFeatures = 0x05,          //!< Modify settings for DIMM
+  PtGetAdminFeatures = 0x06,     //!< Gets the advanced DIMM settings
+  PtSetAdminFeatures = 0x07,     //!< Sets the advanced DIMM settings
+  PtGetLog = 0x08,               //!< Retrieve administrative data, error info, other FW data
+  PtUpdateFw = 0x09,             //!< Move an image to the DIMM
+  PtInjectError = 0x0A,          //!< Validation only CMD to trigger error conditions
+  PtCustomerFormat = 0xF1,       //!< DFX command for factory reset
+  PtEmulatedBiosCommands = 0xFD, //!< Perform BIOS emulated command
+  PtMax = 0xFE
 };
 
 /**
@@ -350,6 +355,29 @@ enum InjectErrorSubop
   SubopMediaErrorTemperature = 0x02,  //!< Injects a particular temperature to cause a temperature error
   SubopSoftwareErrorTriggers = 0x03   //!< SW override triggers to trip various SW alarms
 };
+
+/**
+  Defines the Sub-Opcodes for PtEmulatedBiosCommands
+**/
+enum PtEmulatedBiosCommandsSubop {
+  SubopGetLPInfo = 0x00,
+  SubopWriteLPInput = 0x01,           //!< Returns large payload mailbox information
+  SubopReadLPOutput = 0x02,           //!< Copies a buffer to the large payload input mailbox
+  SubopGetBSR = 0x03,                 //!< Copies the large payload output mailbox to a buffer
+  SubopReserved2 = 0x04,              //!< Reserved
+  SubopExtVendorSpecific = 0x05,      //!< Performs specified command with user-defined timeout and transport interface
+};
+
+/**
+  Defines the Transport Interface type for PtExtVendorSpecific
+**/
+enum GetTransportInterface {
+  DdrtTransportInterface = 0x00,
+  SmbusTransportInterface = 0x01,
+  Reserved1 = 0x02,
+  Reserved2 = 0x03
+};
+
 /**
   Payload -> command options -> payload type.
 **/
@@ -396,6 +424,7 @@ enum InjectErrorSubop
 #define ERR_INJECTION_MEDIA_TEMP_ENABLED_BIT_MASK 0x1
 #define ERR_INJECTION_SW_TRIGGER_ENABLED_BIT 0x2
 #define ERR_INJECTION_SW_TRIGGER_ENABLED_BIT_MASK 0x1
+
 /**
   Passthrough Payload:
     Opcode: 0x01h (Identify DIMM)
@@ -812,7 +841,7 @@ typedef struct {
   LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED UnlatchedLastShutdownExtendedDetails;
 
   TEMPERATURE MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius. 
+  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
 
   UINT8 Reserved1[42];
 } SMART_INTEL_SPECIFIC_DATA;

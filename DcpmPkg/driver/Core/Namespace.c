@@ -2084,7 +2084,6 @@ RetrieveNamespacesFromLsa(
   BOOLEAN BttFound = FALSE;
   BOOLEAN PfnFound = FALSE;
   UINT64 RawCapacity = 0;
-  BOOLEAN NamespaceIsPoisoned = FALSE;
   BOOLEAN Use_Namespace1_1 = FALSE;
   EFI_GUID ZeroGuid;
 
@@ -2408,41 +2407,31 @@ RetrieveNamespacesFromLsa(
         pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
       }
 
-#ifndef OS_BUILD
-      NamespaceIsPoisoned = FALSE;
-      NVDIMM_DBG("Namespace found: pNamespace->SpaNamespaceBase = 0x%llx, pNamespace->UsableSize = 0x%llx", pNamespace->SpaNamespaceBase, pNamespace->UsableSize);
-      if (EFI_DEVICE_ERROR == IsAddressRangeInArsList(pNamespace->SpaNamespaceBase, pNamespace->UsableSize)) {
-        NVDIMM_DBG("This namespace collides with an address in the ARS list");
-        pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-        NamespaceIsPoisoned = TRUE;
-      }
-#endif
-
-      if (FALSE == NamespaceIsPoisoned) {
-        if (pNamespace->pParentIS != NULL && pNamespace->HealthState != NAMESPACE_HEALTH_OK) {
-          if (pNamespace->pParentIS->State != IS_STATE_HEALTHY) {
-            switch (pNamespace->pParentIS->State) {
-            case IS_STATE_INIT_FAILURE:
-            case IS_STATE_DIMM_MISSING:
-              if (pNamespace->pParentIS->MirrorEnable) {
-                pNamespace->HealthState = NAMESPACE_HEALTH_WARNING;
-              } else {
-                pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-              }
-              break;
-            case IS_STATE_CONFIG_INACTIVE:
-            case IS_STATE_SPA_MISSING:
-            default:
-              pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-              break;
+      if (pNamespace->pParentIS != NULL && pNamespace->HealthState != NAMESPACE_HEALTH_OK) {
+        if (pNamespace->pParentIS->State != IS_STATE_HEALTHY) {
+          switch (pNamespace->pParentIS->State) {
+          case IS_STATE_INIT_FAILURE:
+          case IS_STATE_DIMM_MISSING:
+            if (pNamespace->pParentIS->MirrorEnable) {
+              pNamespace->HealthState = NAMESPACE_HEALTH_WARNING;
             }
+            else {
+              pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
+            }
+            break;
+          case IS_STATE_CONFIG_INACTIVE:
+          case IS_STATE_SPA_MISSING:
+          default:
+            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
+            break;
           }
-        } else if (pNamespace->pParentIS == NULL) {
-          // We will hit this case if there are no IS in the system or if we couldn't find any IS
-          // with a valid cookie to match the labels.
-          FREE_POOL_SAFE(pNamespace);
-          continue;
         }
+      }
+      else if (pNamespace->pParentIS == NULL) {
+        // We will hit this case if there are no IS in the system or if we couldn't find any IS
+        // with a valid cookie to match the labels.
+        FREE_POOL_SAFE(pNamespace);
+        continue;
       }
 
       // Sanity check

@@ -139,8 +139,8 @@ ShowPreferences(
   case APPDIRECT_GRANULARITY_1GIB:
     pAppDirectGranularity = L"1";
     break;
-  case APPDIRECT_GRANULARITY_DEFAULT:
-    pAppDirectGranularity = PROPERTY_VALUE_RECOMMENDED;
+  case APPDIRECT_GRANULARITY_32GIB:
+    pAppDirectGranularity = L"32";
     break;
   default:
     pAppDirectGranularity = NULL;

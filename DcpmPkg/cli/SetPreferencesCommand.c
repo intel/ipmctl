@@ -422,9 +422,13 @@ SetPreferences(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED);
     } else {
       if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
-        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_DEFAULT;
+        //Recommended value is silently ommited from documentation
+        //But it is retained for backwards compatibility
+        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_32GIB;
       } else if (StrICmp(pTypeValue, L"1") == 0) {
         DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_1GIB;
+      } else if (StrICmp(pTypeValue, L"32") == 0) {
+        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_32GIB;
       } else {
         TempReturnCode = EFI_INVALID_PARAMETER;
         KEEP_ERROR(ReturnCode, TempReturnCode);

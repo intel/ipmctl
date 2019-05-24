@@ -77,9 +77,8 @@ preference cannot be changed.
 APPDIRECT_GRANULARITY::
   The minimum App Direct granularity per DCPMM supported by the command
   *_Create Memory Allocation Goal_*. One of:
-  - "RECOMMENDED": Use the recommended App Direct granularity of 32 GiB.
-  - "1": Allows 1 GiB App Direct granularity which may result in App Direct region
-       sizes that are not recommended.
+  - "1": Allows 1 GiB App Direct granularity.
+  - "32": Allows 32 GiB App Direct granularity.
 
 ifdef::os_build[]
 PERFORMANCE_MONITOR_ENABLED::

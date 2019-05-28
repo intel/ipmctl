@@ -1727,11 +1727,27 @@ FwCmdIdDimm (
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
+#ifdef OS_BUILD
+  if (Smbus) {
+    pFwCmd->DimmID = pDimm->DimmID;
+    pFwCmd->Opcode = PtEmulatedBiosCommands;
+    pFwCmd->SubOpcode = SubopExtVendorSpecific;
+    pFwCmd->OutputPayloadSize = sizeof(*pPayload);
+    pFwCmd->InputPayloadSize = sizeof(pFwCmd->InputPayload.Extended);
+    pFwCmd->InputPayload.Extended.Opcode = PtIdentifyDimm;
+    pFwCmd->InputPayload.Extended.SubOpcode = SubopIdentify;
+    pFwCmd->InputPayload.Extended.Timeout = PT_TIMEOUT_INTERVAL_EXT;
+    pFwCmd->InputPayload.Extended.TransportInterface = SmbusTransportInterface;
+  } else {
+#endif
+    pFwCmd->DimmID = pDimm->DimmID;
+    pFwCmd->Opcode = PtIdentifyDimm;
+    pFwCmd->SubOpcode = SubopIdentify;
+    pFwCmd->OutputPayloadSize = sizeof(*pPayload);
+#ifdef OS_BUILD
+  }
+#endif
 
-	pFwCmd->DimmID = pDimm->DimmID;
-	pFwCmd->Opcode = PtIdentifyDimm;
-	pFwCmd->SubOpcode = SubopIdentify;
-	pFwCmd->OutputPayloadSize = 128;
 #ifndef OS_BUILD
 	if (Smbus) {
 		ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pFwCmd, PT_TIMEOUT_INTERVAL);
@@ -6821,6 +6837,63 @@ IsFwApiVersionSupported(
 
   return IsFwApiVersionSupportedByValues(pDimm->FwVer.FwApiMajor,
     pDimm->FwVer.FwApiMinor);
+}
+
+/**
+  Populate DCPMMs on the uninitialized dimms list
+
+  @retval EFI_SUCCESS Success
+  @retval Other errors from called function
+**/
+EFI_STATUS
+PopulateUninitializedDimmList(
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pNode = NULL;
+  DIMM *pDimm = NULL;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
+  PT_ID_DIMM_PAYLOAD *pPayload = NULL;
+
+
+  // Only populate dimms found from the NFIT table (they are already placed in
+  // the UninitializedDimms list)
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.UninitializedDimms) {
+    pDimm = DIMM_FROM_NODE(pNode);
+
+#ifndef OS_BUILD
+    pDimm->SmbusAddress.Cpu = (UINT8)(NFIT_NODE_SOCKET_TO_SOCKET_INDEX(
+      pDimm->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+      pDimm->DeviceHandle.NfitDeviceHandle.SocketId));
+    pDimm->SmbusAddress.Imc = (UINT8)(pDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
+    pDimm->SmbusAddress.Slot =
+      (UINT8)(pDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
+        pDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
+#endif //< !OS_BUILD
+
+    //fill in fields provided by SMbus.
+    pDimm->Signature = DIMM_SIGNATURE;
+
+    // Attempt to call FW to obtain more info, if dimm is unresponsive still continue
+    pPayload = AllocateZeroPool(sizeof(*pPayload));
+    if (pPayload != NULL) {
+      TempReturnCode = FwCmdIdDimm(pDimm, TRUE, pPayload);
+
+      if (!EFI_ERROR(TempReturnCode)) {
+        pDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
+        pDimm->Manufacturer = pPayload->Mf;
+        pDimm->SkuInformation = *((SKU_INFORMATION *)&pPayload->DimmSku);
+        CopyMem_S(pDimm->PartNumber, sizeof(pDimm->PartNumber), pPayload->Pn, sizeof(pPayload->Pn));
+        pDimm->PartNumber[PART_NUMBER_LEN - 1] = '\0';
+
+        pDimm->FwVer = ParseFwVersion(pPayload->Fwr);
+        ParseFwApiVersion(pDimm, pPayload);
+
+        pDimm->ControllerRid = pPayload->Rid;
+      }
+    }
+  }
+  return ReturnCode;
 }
 
 /**

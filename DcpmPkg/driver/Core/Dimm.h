@@ -70,6 +70,7 @@
 
 #define PT_LONG_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_MILLISECONDS(150)
 #define PT_UPDATEFW_TIMEOUT_INTERVAL EFI_TIMER_PERIOD_SECONDS(4)
+#define PT_UPDATEFW_TIMEOUT_INTERVAL_EXT SECONDS_TO_MILISECONDS(4)
 
 #define DEBUG_LOG_PAYLOAD_TYPE_LARGE 0
 #define DEBUG_LOG_PAYLOAD_TYPE_SMALL 1
@@ -1793,6 +1794,16 @@ SetObjStatusForDimmWithErase(
   IN     DIMM *pDimm,
   IN     NVM_STATUS Status,
   IN     BOOLEAN EraseFirst
+);
+
+/**
+  Populate DCPMMs on the uninitialized dimms list
+
+  @retval EFI_SUCCESS Success
+  @retval Other errors from called function
+**/
+EFI_STATUS
+PopulateUninitializedDimmList(
 );
 
 /**

@@ -1337,6 +1337,11 @@ NvmDimmDriverDriverBindingStart(
       NVDIMM_WARN("Failed to initialize Dimms, error = " FORMAT_EFI_STATUS ".", ReturnCode);
    }
 
+   ReturnCode = PopulateUninitializedDimmList();
+   if (EFI_ERROR(ReturnCode)) {
+     NVDIMM_WARN("Failed on Smbus dimm list init, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+   }
+
    /**
    Verify that all manageable NVM-DIMMs have unique identifier. Otherwise, print a critical error and
    break further initialization.

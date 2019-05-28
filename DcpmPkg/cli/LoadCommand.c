@@ -28,9 +28,7 @@ struct Command LoadCommand =
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
 #endif
-#ifndef OS_BUILD
     ,{ L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI, FALSE, ValueOptional }
-#endif
 },
   {                                                                   //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}

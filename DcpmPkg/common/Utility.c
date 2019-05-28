@@ -2321,7 +2321,7 @@ ConvertHealthStateReasonToHiiStr(
     goto Finish;
   }
   *ppHealthStatusReasonStr = NULL;
-  while (mask <= BIT8) {
+  while (mask <= BIT9) {
     switch (HealthStatusReason & mask) {
     case HEALTH_REASON_PERCENTAGE_REMAINING_LOW:
       *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
@@ -2367,6 +2367,11 @@ ConvertHealthStateReasonToHiiStr(
       *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
         ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERFORMANCE_DEGRADED), NULL));
+      break;
+    case HEALTH_REASON_CAP_SELF_TEST_COMM_FAILURE:
+      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_COMM_FAILURE), NULL));
     }
     mask = mask << 1;
   }

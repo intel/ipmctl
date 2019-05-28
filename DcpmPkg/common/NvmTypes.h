@@ -712,7 +712,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define HEALTH_REASON_CAP_SELF_TEST_FAILURE               BIT6  ///< CAP Self-Test failed
 #define HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE     BIT7  ///< Critical internal state failure
 #define HEALTH_REASON_PERFORMANCE_DEGRADED                BIT8  ///< Performance degraded
-
+#define HEALTH_REASON_CAP_SELF_TEST_COMM_FAILURE          BIT9  ///< CAP Self Test Communication failure
 
 /**
   @}

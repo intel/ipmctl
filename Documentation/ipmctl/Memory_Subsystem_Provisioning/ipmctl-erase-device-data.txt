@@ -8,10 +8,11 @@ endif::manpage[]
 
 NAME
 ----
+ifndef::os_build[]
 ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs
-
+endif::os_build[]
 ifdef::os_build[]
-NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -22,6 +23,10 @@ ipmctl delete [OPTIONS] -dimm [TARGETS] Passphrase=(string)
 DESCRIPTION
 -----------
 Erases the persistent data on one or more DCPMMs.
+
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
 
 OPTIONS
 -------

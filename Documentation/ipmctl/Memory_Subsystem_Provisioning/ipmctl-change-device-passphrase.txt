@@ -8,10 +8,11 @@ endif::manpage[]
 
 NAME
 ----
+ifndef::os_build[]
 ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM
-
+endif::os_build[]
 ifdef::os_build[]
-NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -23,6 +24,10 @@ ConfirmPassphrase=(string)
 DESCRIPTION
 -----------
 Changes the security passphrase on one or more DCPMMs.
+
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
 
 OPTIONS
 -------

@@ -8,10 +8,11 @@ endif::manpage[]
 
 NAME
 ----
+ifndef::os_build[]
 ipmctl-enable-device-security - Enable data-at-rest security on DCPMM
-
+endif::os_build[]
 ifdef::os_build[]
-NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+ipmctl-enable-device-security - Enable data-at-rest security on DCPMM on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -24,6 +25,10 @@ DESCRIPTION
 -----------
 Enable data-at-rest security for the persistent memory on one or more DCPMMs
 by setting a passphrase.
+
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
 
 OPTIONS
 -------

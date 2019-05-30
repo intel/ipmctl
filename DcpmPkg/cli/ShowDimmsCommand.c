@@ -26,7 +26,7 @@
 #define DS_DIMM_INDEX_PATH                L"/DimmList/Dimm[%d]"
 
 
- /*
+/*
  *  PRINT LIST ATTRIBUTES
  *  ---DimmId=0x0001---
  *     Capacity=125.7 GiB

@@ -28,7 +28,7 @@ struct Command DeletePcdCommand =
 #endif
   },
   {                                                                                //!< targets
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE
 #ifndef OS_BUILD
      L"|"
@@ -129,7 +129,7 @@ DeletePcdCmd(
   ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
     }
     goto Finish;
   }
@@ -144,16 +144,18 @@ DeletePcdCmd(
     goto Finish;
   }
 
-  pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-  ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  if (ContainTarget(pCmd, DIMM_TARGET)) {
+    pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
 
-  if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
+    if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
   }
 
   pTargetValue = GetTargetValue(pCmd, PCD_TARGET);

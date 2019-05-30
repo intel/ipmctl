@@ -51,7 +51,7 @@ NOTE: The file does not need to contain the ConfirmPassphrase property
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Set the passphrase on specific DCPMMs by supplying one or more comma
   separated DCPMM identifiers. However, this is not recommended as it
   may put the system in an undesirable state. The default is to set the

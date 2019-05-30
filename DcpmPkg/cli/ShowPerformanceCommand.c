@@ -63,7 +63,7 @@ struct Command ShowPerformanceCommand =
 #endif
     },
     {                                                                   //!< targets
-        { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional },
+        { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional },
         { PERFORMANCE_TARGET, L"", HELP_TEXT_PERFORMANCE_CAT, TRUE, ValueOptional }
     },
     {                                                                   //!< properties

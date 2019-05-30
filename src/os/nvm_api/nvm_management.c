@@ -2628,7 +2628,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
     { L"show -a -system -capabilities" },
     { L"show -a -topology"       },
     { L"show -a -sensor"       },
-    { L"show -dimm -performance"     },
+    { L"show -performance"     },
     { L"show -system -host"      },
     { L"start -diagnostic"       },
     { L"show -event"       }

@@ -1066,7 +1066,7 @@ CHAR16
               gCommandList[Index].targets[Index2].TargetName);
           if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
-              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
+              pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
                   gCommandList[Index].targets[Index2].pHelp);
             } else {
               pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR L")",
@@ -1125,7 +1125,7 @@ CHAR16
             gCommandList[Index].targets[Index2].TargetName);
           if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
-              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
+              pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
                 gCommandList[Index].targets[Index2].pHelp);
             }
             else {
@@ -1249,7 +1249,7 @@ CHAR16
           if (gCommandList[Index].targets[Index2].pHelp
             && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
-              pHelp = CatSPrintClean(pHelp, L"[(" FORMAT_STR L")]",
+              pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
                 gCommandList[Index].targets[Index2].pHelp);
             } else {
               pHelp = CatSPrintClean(pHelp, L"(" FORMAT_STR L")",

@@ -44,7 +44,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm [(DimmID)]::
+-dimm [DimmID]::
   Filter output to events on a specific DCPMM by optionally supplying the dimm target and
   one DCPMM identifier.
 

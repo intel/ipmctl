@@ -57,7 +57,7 @@ The default is to display all performance metrics.
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Restricts output to the performance metrics for specific DCPMM by supplying
   one or more comma separated DCPMM identifiers. The default is to display
   performance metrics for all manageable DCPMM.

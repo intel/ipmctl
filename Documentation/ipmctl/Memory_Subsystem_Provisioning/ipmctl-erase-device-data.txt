@@ -66,7 +66,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
 Erases specific DCPMMs by supplying one or more comma-separated DCPMM
 identifiers. However, this is not recommended as it may put the system in an
 undesirable state. The default is to erase all manageable DCPMMs.

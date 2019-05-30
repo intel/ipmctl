@@ -13,7 +13,7 @@ ipmctl-inject-error - Injects an error or clears a previously injected error
 SYNOPSIS
 --------
 [verse]
-ipmctl set [OPTIONS] -dimm (DimmIDs) [PROPERTIES]
+ipmctl set [OPTIONS] -dimm [TARGETS] [PROPERTIES]
 
 DESCRIPTION
 -----------
@@ -42,7 +42,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDS)::
+-dimm [DimmIDs]::
   Injects or clears an error on specific DCPMMs by supplying one or more comma
   separated DCPMM identifiers. The default is to inject the error on all
   manageable DCPMMs.

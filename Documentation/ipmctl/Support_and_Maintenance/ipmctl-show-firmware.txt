@@ -54,7 +54,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Restricts output to the firmware information for specific DCPMMs by supplying
   one or more comma-separated DCPMM identifiers. The default is to display the
   firmware information for all manageable DCPMMs.

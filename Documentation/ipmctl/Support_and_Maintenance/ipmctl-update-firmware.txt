@@ -13,7 +13,7 @@ ipmctl-update-firmware - Updates the firmware on one or more DCPMMs
 SYNOPSIS
 --------
 [verse]
-ipmctl load [OPTIONS] -source (path) -dimm (DimmIds) [TARGETS]
+ipmctl load [OPTIONS] -source (path) -dimm [TARGETS]
 
 DESCRIPTION
 -----------
@@ -73,7 +73,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Updates the firmware on specific DCPMMs by supplying one or more
   comma-separated DCPMM identifiers. However, this is not recommended as it may
   put the system in an undesirable state. The default is to update all

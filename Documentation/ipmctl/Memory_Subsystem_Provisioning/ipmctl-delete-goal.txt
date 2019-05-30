@@ -50,12 +50,12 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm [(DimmIDs)]::
+-dimm [DimmIDs]::
   Deletes the memory allocation goal from specific DCPMMs by optionally supplying one or
   more comma-separated DCPMM identifiers. The default is to delete the memory
   allocation goals from all manageable DCPMMs.
 
--socket (SocketIds)::
+-socket [SocketIds]::
   Deletes the memory allocation goal from the DCPMMs on specific sockets by
   supplying the socket target and one or more comma-separated socket
   identifiers. The default is to delete the memory allocation goals from

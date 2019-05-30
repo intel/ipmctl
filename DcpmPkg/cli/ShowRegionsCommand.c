@@ -198,7 +198,7 @@ struct Command ShowRegionsCommand =
   },
   {                                                    //!< targets
     {REGION_TARGET, L"", L"RegionIDs", TRUE, ValueOptional},
-    { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueRequired },
+    { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional },
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
   L"Show information about one or more Regions.",         //!< help

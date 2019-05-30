@@ -63,13 +63,13 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm [(DimmIDs)]::
+-dimm [DimmIDs]::
     Creates a memory allocation goal on specific DCPMMs by optionally supplying one or
     more comma-separated DCPMM identifiers. This list must include all
     unconfigured DCPMMs on the affected socket(s). The default is to configure
     all manageable DCPMMs on all sockets.
 
--socket (SocketIds)::
+-socket [SocketIds]::
     Creates a memory allocation goal on specific DCPMMs by supplying one or
     more comma-separated DCPMM identifiers. This list must include all
     unconfigured DCPMMs on the affected socket(s). The default is to configure

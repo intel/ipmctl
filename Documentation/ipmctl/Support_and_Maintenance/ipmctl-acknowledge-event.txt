@@ -42,7 +42,7 @@ endif::os_build[]
 
 TARGETS
 -------
--event::
+-event (EventID)::
   The identifier of the event to be acknowledged
 
 PROPERTIES

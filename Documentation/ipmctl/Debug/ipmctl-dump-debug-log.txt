@@ -14,7 +14,7 @@ DCPMMs and optionally decodes to human readable text.
 SYNOPSIS
 --------
 [verse]
-ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug -dimm (DimmIDs) [PROPERTIES]
+ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug [TARGETS] [PROPERTIES]
 
 DESCRIPTION
 -----------
@@ -61,7 +61,7 @@ file_prefix_Uid_Handle_logsource.[bin,txt]
   create both the binary debug log and a text file with decoded log data with
   the file prefix specified by -destination.
 
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Dumps the debug logs from the specified DCPMMs.
 
 EXAMPLES

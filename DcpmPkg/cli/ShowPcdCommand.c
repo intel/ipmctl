@@ -31,7 +31,7 @@ struct Command ShowPcdCommand =
 #endif
   },
   {                                                                   //!< targets
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional},
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
@@ -217,15 +217,17 @@ ShowPcd(
     goto Finish;
   }
 
-  pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-  ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-  if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
-    goto Finish;
+  if (ContainTarget(pCmd, DIMM_TARGET)) {
+    pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsCount);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
+      goto Finish;
+    }
   }
 
   pTargetValue = GetTargetValue(pCmd, PCD_TARGET);

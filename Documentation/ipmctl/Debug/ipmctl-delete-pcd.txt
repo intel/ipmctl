@@ -14,10 +14,10 @@ SYNOPSIS
 --------
 [verse]
 ifndef::os_build[]
-ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd (Config|LSA)
+ipmctl delete [OPTIONS] -pcd [TARGETS]
 endif::os_build[]
 ifdef::os_build[]
-ipmctl delete [OPTIONS] -dimm (DimmIds) -pcd (Config)
+ipmctl delete [OPTIONS] -pcd [TARGETS]
 endif::os_build[]
 
 DESCRIPTION
@@ -78,12 +78,12 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Deletes the PCD data on specific DCPMMs by supplying one
   or more comma-separated DCPMM identifiers. The default is to delete the
   PCD data for all manageable DCPMMs.
 ifndef::os_build[]
--pcd (Config|LSA)::
+-pcd [Config|LSA]::
   Restricts clearing select partition data in the platform
   configuration data area.
   The default is to clear both. One of:
@@ -91,7 +91,7 @@ ifndef::os_build[]
   - LSA - Namespace label storage area
 endif::os_build[]
 ifdef::os_build[]
--pcd Config::
+-pcd [Config]::
   Clears the configuration management information
 endif::os_build[]
 

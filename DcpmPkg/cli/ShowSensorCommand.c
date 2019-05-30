@@ -109,7 +109,7 @@ struct Command ShowSensorCommand =
 #endif
   },
   {
-  {SENSOR_TARGET, L"", HELP_TEXT_SENSORS , TRUE, ValueOptional},
+  {SENSOR_TARGET, L"", HELP_TEXT_SENSORS, TRUE, ValueOptional},
   {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}        //!< targets
   },
   {

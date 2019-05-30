@@ -13,7 +13,7 @@ ipmctl-show-acpi - Shows the system ACPI tables related to the DCPMMs
 SYNOPSIS
 --------
 [verse]
-ipmctl show [OPTIONS] -system (NFIT|PCAT|PMTT)
+ipmctl show [OPTIONS] -system
 
 DESCRIPTION
 -----------
@@ -35,7 +35,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 
 TARGETS
 -------
--system (NFIT|PCAT|PMTT)::
+-system [NFIT|PCAT|PMTT]::
   The system ACPI table(s) to display. By default both the NFIT and PCAT tables
   are displayed. One of:
   - "NFIT" - The NVDIMM Firmware Interface Table

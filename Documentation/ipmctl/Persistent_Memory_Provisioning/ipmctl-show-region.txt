@@ -68,12 +68,12 @@ endif::os_build[]
 
 TARGETS
 -------
--region (RegionIDs)::
+-region [RegionIDs]::
   Restricts output to specific persistent memory regions by providing one or
   more comma separated region identifiers. The default is to display the
   persistent memory regions across all manageable DCPMMs.
 
--socket (SocketIDs)::
+-socket [SocketIDs]::
   Restricts output to the persistent memory regions on specific sockets by
   supplying the socket target and one or more comma-separated socket
   identifiers. The default is to display all sockets.

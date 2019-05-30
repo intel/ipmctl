@@ -33,7 +33,7 @@ struct Command ShowErrorCommandSyntax =
   },
   {
     {ERROR_TARGET, L"", HELP_TEXT_ERROR_LOG, TRUE, ValueRequired},
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {
     {SEQUENCE_NUM_PROPERTY, L"", HELP_TEXT_ERROR_LOG_SEQ_NUM_PROPERTY, FALSE, ValueRequired},

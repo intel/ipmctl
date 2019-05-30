@@ -52,7 +52,7 @@ endif::os_build[]
 
 TARGETS
 -------
--dimm (DimmIDs)::
+-dimm [DimmIDs]::
   Changes the lock state of a specific DCPMMs by supplying one or more comma
   separated DCPMM identifiers. However, this is not recommended as it may put
   the system in an undesirable state. The default is to modify all manageable

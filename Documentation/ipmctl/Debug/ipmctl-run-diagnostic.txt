@@ -13,7 +13,7 @@ ipmctl-run-diagnostic - Runs a diagnostic test
 SYNOPSIS
 --------
 [verse]
-ipmctl start [OPTIONS] -diagnostic (Quick|Config|Security|FW) -dimm(DIMMIDs)
+ipmctl start [OPTIONS] -diagnostic [TARGETS]
 
 DESCRIPTION
 -----------
@@ -49,7 +49,7 @@ endif::os_build[]
 
 TARGETS
 -------
--diagnostic (Quick|Config|Security|FW)::
+-diagnostic [Quick|Config|Security|FW]::
   Run a specific test by supplying its name. By default all tests are run.
   One of:
   - "Quick" - This test verifies that the DCPMM host mailbox is accessible and
@@ -68,7 +68,7 @@ TARGETS
     the installed FW is the optimal version for a given DCPMM model just that
     it's been consistently applied across the system.
 
--dimm [(DimmIDS)]::
+-dimm [DimmIDS]::
   Runs a diagnostic test on specific DCPMMs by optionally supplying one or more
   comma-separated DCPMM identifiers. The default is to run the specified tests
   on all manageable DCPMMs. Only valid for the Quick diagnostic test.

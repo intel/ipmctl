@@ -32,7 +32,7 @@ struct Command DumpDebugCommandSyntax =
   },
   {
     {DEBUG_TARGET, L"", L"", TRUE, ValueEmpty},
-    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
+    {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
   L"Dump firmware debug log",                                       //!< help
@@ -129,12 +129,14 @@ DumpDebugCommand(
     goto Finish;
   }
 
-  /** get specific DIMM pid passed in, set it **/
-  pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
-  ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Target value is not a valid Dimm ID");
-    goto Finish;
+  if (ContainTarget(pCmd, DIMM_TARGET)) {
+    /** get specific DIMM pid passed in, set it **/
+    pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+    ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pDimms, DimmCount, &pDimmIds, &DimmIdsNum);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Target value is not a valid Dimm ID");
+      goto Finish;
+    }
   }
 
   // Check -destination option

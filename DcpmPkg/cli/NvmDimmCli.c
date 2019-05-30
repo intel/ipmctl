@@ -119,9 +119,7 @@ static EFI_STATUS showVersion(struct Command *pCmd);
 static EFI_STATUS GetPbrMode(UINT32 *Mode);
 static EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription);
 static EFI_STATUS ResetPbrSession(UINT32 TagId);
-#ifdef OS_BUILD
 static EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions();
-#endif
 
 /**
   Supported commands
@@ -233,12 +231,10 @@ UefiMain(
 #endif
 #endif
 
-#ifdef OS_BUILD
   Rc = SetDefaultProtocolAndPayloadSizeOptions();
   if (EFI_ERROR(Rc)) {
     goto Finish;
   }
-#endif
 
   NVDIMM_ENTRY();
   Index = 0;
@@ -1039,16 +1035,23 @@ Finish:
   return ReturnCode;
 }
 
-#ifdef OS_BUILD
 EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+#ifdef OS_BUILD
+  BOOLEAN IsSmBusProtocolEnabled = ConfigIsDdrtProtocolDisabled();
+  BOOLEAN IsSmallPayloadEnabled = ConfigIsLargePayloadDisabled();
+#else
+  BOOLEAN IsSmBusProtocolEnabled = FALSE;
+  BOOLEAN IsSmallPayloadEnabled = TRUE;
+#endif // OS_BUILD
+
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
 
-  if (ConfigIsDdrtProtocolDisabled()) {
+  if (IsSmBusProtocolEnabled) {
     pAttribs.Protocol = FisTransportSmbus;
     pAttribs.PayloadSize = FisTransportSmallMb;
   }
@@ -1056,7 +1059,7 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
     pAttribs.Protocol = FisTransportDdrt;
   }
 
-  if (ConfigIsLargePayloadDisabled()) {
+  if (IsSmallPayloadEnabled) {
     pAttribs.PayloadSize = FisTransportSmallMb;
   }
   else {
@@ -1067,4 +1070,3 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
 
   return ReturnCode;
 }
-#endif

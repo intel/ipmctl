@@ -95,7 +95,8 @@
 #define MEDIA_TEMP_INJ_CTR_STR      L"MediaTemperatureInjectionsCounter"
 #define SW_TRIGGER_CTR_STR          L"SoftwareTriggersCounter"
 #define SW_TRIGGER_ENABLED_DETAILS_STR L"SoftwareTriggersEnabledDetails"
-#define MAX_AVG_POWER_BUDGET_STR    L"MaxAveragePowerBudget"
+#define MAX_AVG_POWER_LIMIT_STR     L"MaxAveragePowerLimit"
+#define MAX_TURBO_MODE_POWER_CONSUMPTION_STR L"MaxTurboModePowerConsumption"
 #ifdef OS_BUILD
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"

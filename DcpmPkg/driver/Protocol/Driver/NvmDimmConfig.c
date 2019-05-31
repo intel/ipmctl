@@ -779,7 +779,7 @@ GetDimmInfo (
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
   PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayload;
-  PT_DEVICE_CHARACTERISTICS_PAYLOAD *pDevCharacteristics = NULL;
+  PT_DEVICE_CHARACTERISTICS_OUT *pDevCharacteristics = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
@@ -1047,7 +1047,23 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS;
     }
 
-    pDimmInfo->MaxAveragePowerBudget = pDevCharacteristics->MaxAveragePowerBudget;
+    if ((1 <= pDevCharacteristics->FisMajor && 13 <= pDevCharacteristics->FisMinor) || 2 <= pDevCharacteristics->FisMajor) {
+      pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = ReturnCode;
+      pDimmInfo->MaxAveragePowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->MaxAveragePowerLimit.Data = pDevCharacteristics->Payload.Fis_2_00.MaxAveragePowerLimit;
+    }
+    else {
+      pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+    }
+
+    if (2 <= pDevCharacteristics->FisMajor) {
+      pDimmInfo->MaxTurboModePowerConsumption.Header.Status.Code = ReturnCode;
+      pDimmInfo->MaxTurboModePowerConsumption.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->MaxTurboModePowerConsumption.Data = pDevCharacteristics->Payload.Fis_2_00.MaxTurboModePowerConsumption;
+    }
+    else {
+      pDimmInfo->MaxTurboModePowerConsumption.Header.Status.Code = EFI_UNSUPPORTED;
+    }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY) {
@@ -2496,7 +2512,7 @@ GetSmartAndHealth (
 
   DIMM *pDimm = NULL;
   PT_PAYLOAD_SMART_AND_HEALTH *pPayloadSmartAndHealth = NULL;
-  PT_DEVICE_CHARACTERISTICS_PAYLOAD *pDevCharacteristics = NULL;
+  PT_DEVICE_CHARACTERISTICS_OUT *pDevCharacteristics = NULL;
 
   NVDIMM_ENTRY();
 
@@ -2535,17 +2551,17 @@ GetSmartAndHealth (
   pSensorInfo->UnlatchedDirtyShutdownCount = pPayloadSmartAndHealth->VendorSpecificData.UnlatchedDirtyShutdownCount;
   /** Get Device Characteristics data **/
   pSensorInfo->ContrTempShutdownThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->ControllerShutdownThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerShutdownThreshold);
   pSensorInfo->ControllerThrottlingStartThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->ControllerThrottlingStartThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerThrottlingStartThreshold);
   pSensorInfo->ControllerThrottlingStopThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->ControllerThrottlingStopThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerThrottlingStopThreshold);
   pSensorInfo->MediaTempShutdownThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->MediaShutdownThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaShutdownThreshold);
   pSensorInfo->MediaThrottlingStartThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->MediaThrottlingStartThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaThrottlingStartThreshold);
   pSensorInfo->MediaThrottlingStopThresh =
-      TransformFwTempToRealValue(pDevCharacteristics->MediaThrottlingStopThreshold);
+      TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaThrottlingStopThreshold);
   /** Check triggered alarms **/
   pSensorInfo->MediaTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.MediaTemperature != 0);
   pSensorInfo->ControllerTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.ControllerTemperature != 0);

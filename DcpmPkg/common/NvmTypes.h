@@ -446,7 +446,10 @@ typedef struct _DIMM_INFO {
 #endif // OS_BUILD
 
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
-  UINT16 MaxAveragePowerBudget;             //!< Maximum average power budget supported by the Module in mW
+
+  //DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS
+  DIMM_INFO_ATTRIB_UINT16 MaxAveragePowerLimit;         //!< Maximum average power budget supported by the Module in mW
+  DIMM_INFO_ATTRIB_UINT16 MaxTurboModePowerConsumption; //!< Maximum turbo power value supported by the module in mW
 
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled

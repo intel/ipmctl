@@ -424,15 +424,37 @@ typedef struct {
 } PT_ID_DIMM_PAYLOAD;
 
 typedef struct {
+    TEMPERATURE ControllerShutdownThreshold;
+    TEMPERATURE MediaShutdownThreshold;
+    TEMPERATURE MediaThrottlingStartThreshold;
+    TEMPERATURE MediaThrottlingStopThreshold;
+    TEMPERATURE ControllerThrottlingStartThreshold;
+    TEMPERATURE ControllerThrottlingStopThreshold;
+    UINT16 MaxAveragePowerLimit;
+    UINT8 Reserved[114];
+} PT_DEVICE_CHARACTERISTICS_PAYLOAD;
+
+typedef struct {
   TEMPERATURE ControllerShutdownThreshold;
   TEMPERATURE MediaShutdownThreshold;
   TEMPERATURE MediaThrottlingStartThreshold;
   TEMPERATURE MediaThrottlingStopThreshold;
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
-  UINT16 MaxAveragePowerBudget;
-  UINT8 Reserved[114];
-} PT_DEVICE_CHARACTERISTICS_PAYLOAD;
+  UINT16 MaxAveragePowerLimit;
+  UINT16 MaxTurboModePowerConsumption;
+  UINT8 Reserved[112];
+} PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0;
+
+typedef struct {
+  UINT8 FisMajor;
+  UINT8 FisMinor;
+  union {
+    PT_DEVICE_CHARACTERISTICS_PAYLOAD       Fis_1_15;
+    PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0   Fis_2_00;
+    UINT8 Data[0];
+  }Payload;
+}PT_DEVICE_CHARACTERISTICS_OUT;
 
 /**
   Passthrough Payload:

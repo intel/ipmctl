@@ -351,8 +351,11 @@ AvgPowerBudget::
   If the DCPMM firmware power management policy is enabled, the power budget in
   mW used for average power. Refer to FIS for allowable range and default value.
 
-MaxAveragePowerBudget::
-   Maximum average power budget supported by the DCPMM.
+MaxAveragePowerLimit::
+   Maximum average power limit [mW] supported by the DCPMM.
+
+MaxTurboModePowerConsumption::
+   Maximum Turbo Power value [mW] that can be set for the DCPMM. Will return 0 if unsupported by current FIS.
 
 PackageSparingCapable::
   Whether or not the DCPMM supports package sparing. One of:

@@ -1790,7 +1790,7 @@ Finish:
 EFI_STATUS
 FwCmdDeviceCharacteristics (
   IN     DIMM *pDimm,
-     OUT PT_DEVICE_CHARACTERISTICS_PAYLOAD **ppPayload
+     OUT PT_DEVICE_CHARACTERISTICS_OUT **ppPayload
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -1817,7 +1817,7 @@ FwCmdDeviceCharacteristics (
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtIdentifyDimm;
   pFwCmd->SubOpcode = SubopDeviceCharacteristics;
-  pFwCmd->OutputPayloadSize = sizeof(**ppPayload);
+  pFwCmd->OutputPayloadSize = sizeof((*ppPayload)->Payload);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -1825,7 +1825,9 @@ FwCmdDeviceCharacteristics (
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
     goto FinishError;
   }
-  CopyMem_S(*ppPayload, sizeof(**ppPayload), pFwCmd->OutPayload, sizeof(**ppPayload));
+  CopyMem_S((*ppPayload)->Payload.Data, sizeof((*ppPayload)->Payload), pFwCmd->OutPayload, sizeof((*ppPayload)->Payload));
+  (*ppPayload)->FisMajor = pDimm->FwVer.FwApiMajor;
+  (*ppPayload)->FisMinor = pDimm->FwVer.FwApiMinor;
 
   ReturnCode = EFI_SUCCESS;
   goto Finish;

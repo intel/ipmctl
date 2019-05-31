@@ -830,7 +830,7 @@ FwCmdIdDimm(
 EFI_STATUS
 FwCmdDeviceCharacteristics (
   IN     DIMM *pDimm,
-     OUT PT_DEVICE_CHARACTERISTICS_PAYLOAD **ppPayload
+     OUT PT_DEVICE_CHARACTERISTICS_OUT **ppPayload
   );
 
 /**

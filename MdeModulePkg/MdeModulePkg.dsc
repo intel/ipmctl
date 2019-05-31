@@ -110,6 +110,8 @@
 
 !ifdef BULLSEYE
     libcov-printf|bullseye/uefi/libcov-printf.inf
+!else
+    libcov-printf|DcpmPkg/test/codecoverage-null.inf
 !endif
  
 [LibraryClasses.EBC.PEIM]

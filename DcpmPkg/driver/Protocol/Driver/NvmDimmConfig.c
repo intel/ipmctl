@@ -778,7 +778,7 @@ GetDimmInfo (
   SENSOR_INFO SensorInfo;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
-  PT_PAYLOAD_POWER_MANAGEMENT_POLICY PowerManagementPolicyPayload;
+  PT_POWER_MANAGEMENT_POLICY_OUT *pPowerManagementPolicyPayload = NULL;
   PT_DEVICE_CHARACTERISTICS_OUT *pDevCharacteristics = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE3 *pPayloadMemInfoPage3 = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
@@ -798,7 +798,6 @@ GetDimmInfo (
   ZeroMem(&SensorInfo, sizeof(SensorInfo));
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
   ZeroMem(&ViralPolicyPayload, sizeof(ViralPolicyPayload));
-  ZeroMem(&PowerManagementPolicyPayload, sizeof(PowerManagementPolicyPayload));
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
   ZeroMem(&DmiDeviceMappedAddr, sizeof(DmiDeviceMappedAddr));
   ZeroMem(&SmbiosVersion, sizeof(SmbiosVersion));
@@ -1028,13 +1027,42 @@ GetDimmInfo (
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_POWER_MGMT_POLICY)
   {
     /* Get current Power Management Policy info */
-    ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &PowerManagementPolicyPayload);
+    ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &pPowerManagementPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_POWER_MGMT;
     }
 
-    pDimmInfo->PeakPowerBudget = PowerManagementPolicyPayload.PeakPowerBudget;
-    pDimmInfo->AvgPowerBudget = PowerManagementPolicyPayload.AveragePowerBudget;
+    if (2 > pPowerManagementPolicyPayload->FisMajor) {
+      pDimmInfo->PeakPowerBudget.Header.Status.Code = ReturnCode;
+      pDimmInfo->PeakPowerBudget.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->PeakPowerBudget.Data = pPowerManagementPolicyPayload->Payload.Fis_1_15.PeakPowerBudget;
+    }
+    else {
+      pDimmInfo->PeakPowerBudget.Header.Status.Code = EFI_UNSUPPORTED;
+    }
+
+    pDimmInfo->AvgPowerLimit.Header.Status.Code = ReturnCode;
+    pDimmInfo->AvgPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+    pDimmInfo->AvgPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerLimit;
+
+    if (2 <= pPowerManagementPolicyPayload->FisMajor) {
+      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
+
+      pDimmInfo->TurboModeState.Header.Status.Code = ReturnCode;
+      pDimmInfo->TurboModeState.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->TurboModeState.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboModeState;
+
+      pDimmInfo->TurboPowerLimit.Header.Status.Code = ReturnCode;
+      pDimmInfo->TurboPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->TurboPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboPowerLimit;
+    }
+    else {
+      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->TurboModeState.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->TurboPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+    }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS)
@@ -1172,6 +1200,7 @@ GetDimmInfo (
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FREE_POOL_SAFE(pPowerManagementPolicyPayload);
   FREE_POOL_SAFE(pDevCharacteristics);
   FREE_POOL_SAFE(pPayloadMemInfoPage3);
   FREE_POOL_SAFE(pPayloadMemInfoPage4);

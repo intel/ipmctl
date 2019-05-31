@@ -347,9 +347,34 @@ PeakPowerBudget::
   mW used for instantaneous power. Refer to FIS for allowable range and default
   value.
 
-AvgPowerBudget::
-  If the DCPMM firmware power management policy is enabled, the power budget in
+AvgPowerLimit::
+  If the DCPMM firmware power management policy is enabled, the power limit in
   mW used for average power. Refer to FIS for allowable range and default value.
+
+AvgPowerTimeConstant::
+  The value used as a base time window for power usage measurements. One of:
+  - 0x06: 96 ms (Default)
+  - 0x07: 128 ms
+  - 0x08: 192 ms
+  - 0x09: 256 ms
+  - 0x0A: 384 ms
+  - 0x0B: 512 ms
+  - 0x0C: 768 ms
+  - 0x0D: 1024 ms
+  - 0x0E: 1536 ms
+  - 0x0F: 2048 ms
+  - 0x10: 3072 ms
+  - 0x11: 4096 ms
+  - 0x12: 6144 ms
+  - 0x13: 8192 ms
+
+TurboModeState::
+  Returns if the Turbo Mode is currently enabled or not. One of:
+  - 0x0: Disabled
+  - 0x1: Enabled
+
+TurboPowerLimit::
+  The power limit used for limiting the Turbo Mode power consumption [mW].
 
 MaxAveragePowerLimit::
    Maximum average power limit [mW] supported by the DCPMM.

@@ -261,7 +261,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_PACKAGE_SPARING              (1 << 2)    ///< Package sparing fields will be populated: PackageSparingEnabled, PackageSparesAvailable.
 #define DIMM_INFO_CATEGORY_ARS_STATUS                   (1 << 3)    ///< ARS status field will be populated: ARSStatus.
 #define DIMM_INFO_CATEGORY_SMART_AND_HEALTH             (1 << 4)    ///< Health related fields will be populated: HealthStatusReason, LatchedLastShutdownStatus, LastShutdownTime, AitDramEnabled.
-#define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerBudget.
+#define DIMM_INFO_CATEGORY_POWER_MGMT_POLICY            (1 << 5)    ///< Power management fields will be populated: PeakPowerBudget, AvgPowerLimit, AveragePowerTimeConstant, TurboModeState, TurboPowerLimit
 #define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: AvgPowerReportingTimeConstantMultiplier
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite DIMM status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
@@ -381,8 +381,11 @@ typedef struct _DIMM_INFO {
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
-  UINT16 PeakPowerBudget;                   //!< The power budget in mW used for instantaneous power (100-20000 mW). The default is 100 mW.
-  UINT16 AvgPowerBudget;                    //!< The power budget in mW used for average power (100-18000 mW). The default is 100 mW.
+  DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;          //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
+  DIMM_INFO_ATTRIB_UINT16 AvgPowerLimit;            //!< The power budget in mW used for average power (10000-18000 mW). The default is 12000 mW.
+  DIMM_INFO_ATTRIB_UINT8  AveragePowerTimeConstant; //!< The value used as a base time window for power usage measurements [ms].
+  DIMM_INFO_ATTRIB_UINT8  TurboModeState;           //!< Returns if the Turbo Mode is currently enabled or not.
+  DIMM_INFO_ATTRIB_UINT16 TurboPowerLimit;          //!< Power limit [mW] used for limiting the Turbo Mode power consumption.
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
   UINT8 AvgPowerReportingTimeConstantMultiplier;       //!< The value that is used to multiply the base time value used for average power consumption measurements

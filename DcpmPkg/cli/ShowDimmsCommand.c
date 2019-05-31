@@ -212,7 +212,10 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   SLOT_ID_STR,
   CHANNEL_POS_STR,
   PEAK_POWER_BUDGET_STR,
-  AVG_POWER_BUDGET_STR,
+  AVG_POWER_LIMIT_STR,
+  AVG_POWER_TIME_CONSTANT_STR,
+  TURBO_MODE_STATE_STR,
+  TURBO_POWER_LIMIT_STR,
   MAX_AVG_POWER_LIMIT_STR,
   MAX_TURBO_MODE_POWER_CONSUMPTION_STR,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
@@ -276,7 +279,10 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   VIRAL_POLICY_STR,
   VIRAL_STATE_STR,
   PEAK_POWER_BUDGET_STR,
-  AVG_POWER_BUDGET_STR,
+  AVG_POWER_LIMIT_STR,
+  AVG_POWER_TIME_CONSTANT_STR,
+  TURBO_MODE_STATE_STR,
+  TURBO_POWER_LIMIT_STR,
   MAX_AVG_POWER_LIMIT_STR,
   MAX_TURBO_MODE_POWER_CONSUMPTION_STR,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
@@ -1099,27 +1105,29 @@ ShowDimms(
           }
         }
 
-        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_POWER_MGMT) {
-          /** PeakPowerBudget **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PEAK_POWER_BUDGET_STR))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PEAK_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
-          }
-
-          /** AvgPowerBudget **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_BUDGET_STR))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, AVG_POWER_BUDGET_STR, UNKNOWN_ATTRIB_VAL);
-          }
+        /** PeakPowerBudget **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PEAK_POWER_BUDGET_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PEAK_POWER_BUDGET_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].PeakPowerBudget, FORMAT_INT32 L" " MILI_WATT_STR));
         }
-        else {
-          /** PeakPowerBudget **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PEAK_POWER_BUDGET_STR))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PEAK_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].PeakPowerBudget);
-          }
 
-          /** AvgPowerBudget **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_BUDGET_STR))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_BUDGET_STR, FORMAT_INT32 L" " MILI_WATT_STR, pDimms[DimmIndex].AvgPowerBudget);
-          }
+        /** AvgPowerLimit **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_LIMIT_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
+        }
+
+        /** AvgPowerTimeConstant **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_TIME_CONSTANT_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_TIME_CONSTANT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AveragePowerTimeConstant, FORMAT_HEX_NOWIDTH));
+        }
+
+        /** TurboModeState **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TURBO_MODE_STATE_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, TURBO_MODE_STATE_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].TurboModeState, FORMAT_HEX_NOWIDTH));
+        }
+
+        /** TurboPowerLimit **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TURBO_POWER_LIMIT_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, TURBO_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].TurboPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
         }
 
         /** MaxAveragePowerLimit **/

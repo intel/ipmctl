@@ -911,8 +911,8 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   p_details->speed = dimm_info.Speed;                                                     // The speed in nanoseconds.
   memcpy_s(p_details->device_locator, NVM_DEVICE_LOCATOR_LEN, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
   memcpy_s(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, sizeof(dimm_info.BankLabel));                 // The bank label
-  p_details->peak_power_budget = dimm_info.PeakPowerBudget;                               // instantaneous power budget in mW (100-20000 mW).
-  p_details->avg_power_budget = dimm_info.AvgPowerBudget;                                 // average power budget in mW (100-18000 mW).
+  p_details->peak_power_budget = dimm_info.PeakPowerBudget.Data;                               // instantaneous power budget in mW (100-20000 mW).
+  p_details->avg_power_budget = dimm_info.AvgPowerLimit.Data;                                 // average power budget in mW (100-18000 mW).
         p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,

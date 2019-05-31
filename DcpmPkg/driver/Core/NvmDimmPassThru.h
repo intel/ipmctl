@@ -594,14 +594,49 @@ typedef struct {
     Valid range for power budget 10000 - 20000 mW.
   **/
   UINT16 PeakPowerBudget;
-    /**
+  /**
     Power budget in mW used for averaged power.
     Valid range for power budget 10000 - 18000 mW.
-    **/
-  UINT16 AveragePowerBudget;
+  **/
+  UINT16 AveragePowerLimit;
 
-  UINT8 Reserved[123];
+  UINT8 Reserved2[123];
 } PT_PAYLOAD_POWER_MANAGEMENT_POLICY;
+
+typedef struct {
+  UINT8 Reserved1[3];
+  /**
+    Power limit in mW used for averaged power.
+    Valid range for power limit 10000 - 18000 mW.
+  **/
+  UINT16 AveragePowerLimit;
+  /**
+    The value used as a base time window for power usage measurements [ms].
+  **/
+  UINT8 AveragePowerTimeConstant;
+  /**
+    Returns if the Turbo Mode is currently enabled or not.
+  **/
+  UINT8 TurboModeState;
+  /**
+    Power limit [mW] used for limiting the Turbo Mode power consumption.
+    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
+    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
+  **/
+  UINT16 TurboPowerLimit;
+
+  UINT8 Reserved2[119];
+} PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0;
+
+typedef struct {
+  UINT8 FisMajor;
+  UINT8 FisMinor;
+  union {
+    PT_PAYLOAD_POWER_MANAGEMENT_POLICY       Fis_1_15;
+    PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0   Fis_2_00;
+    UINT8 Data[0];
+  }Payload;
+} PT_POWER_MANAGEMENT_POLICY_OUT;
 
 typedef struct {
   UINT8 PayloadType : 1;

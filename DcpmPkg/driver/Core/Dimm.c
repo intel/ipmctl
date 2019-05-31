@@ -3491,7 +3491,7 @@ Finish:
 EFI_STATUS
 FwCmdGetPowerManagementPolicy(
   IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY *pPayloadPowerManagementPolicy
+     OUT PT_POWER_MANAGEMENT_POLICY_OUT **ppPayloadPowerManagementPolicy
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -3499,7 +3499,7 @@ FwCmdGetPowerManagementPolicy(
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pPayloadPowerManagementPolicy == NULL) {
+  if (pDimm == NULL || ppPayloadPowerManagementPolicy == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -3507,23 +3507,37 @@ FwCmdGetPowerManagementPolicy(
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+    goto FinishError;
+  }
+
+  *ppPayloadPowerManagementPolicy = AllocateZeroPool(sizeof(**ppPayloadPowerManagementPolicy));
+  if (NULL == *ppPayloadPowerManagementPolicy) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto FinishError;
   }
 
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetFeatures;
   pFwCmd->SubOpcode = SubopPolicyPowMgmt;
-  pFwCmd->OutputPayloadSize = sizeof(*pPayloadPowerManagementPolicy);
+  pFwCmd->OutputPayloadSize = sizeof((*ppPayloadPowerManagementPolicy)->Payload);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Error detected when sending PowerManagementPolicy command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto Finish;
+    goto FinishError;
   }
 
-  CopyMem_S(pPayloadPowerManagementPolicy, sizeof(*pPayloadPowerManagementPolicy), pFwCmd->OutPayload, sizeof(*pPayloadPowerManagementPolicy));
+  CopyMem_S((*ppPayloadPowerManagementPolicy)->Payload.Data, sizeof((*ppPayloadPowerManagementPolicy)->Payload), pFwCmd->OutPayload, sizeof((*ppPayloadPowerManagementPolicy)->Payload));
+  (*ppPayloadPowerManagementPolicy)->FisMajor = pDimm->FwVer.FwApiMajor;
+  (*ppPayloadPowerManagementPolicy)->FisMinor = pDimm->FwVer.FwApiMinor;
 
+  goto Finish;
+
+FinishError:
+  if (NULL != ppPayloadPowerManagementPolicy) {
+    FREE_POOL_SAFE(*ppPayloadPowerManagementPolicy);
+  }
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);

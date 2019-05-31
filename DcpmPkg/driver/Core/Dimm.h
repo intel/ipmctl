@@ -1041,7 +1041,7 @@ FwCmdGetFirmwareImageInfo (
 EFI_STATUS
 FwCmdGetPowerManagementPolicy(
   IN     DIMM *pDimm,
-     OUT PT_PAYLOAD_POWER_MANAGEMENT_POLICY *pPayloadPowerManagementPolicy
+     OUT PT_POWER_MANAGEMENT_POLICY_OUT **ppPayloadPowerManagementPolicy
   );
 
 #ifdef OS_BUILD

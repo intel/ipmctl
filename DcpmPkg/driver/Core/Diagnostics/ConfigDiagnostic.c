@@ -1016,12 +1016,12 @@ RunConfigDiagnosticsDetail(
   }
 
   pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"Dimm specs");
-  ReturnCode = CheckUninitializedDimms(&pResult->Message[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
+  ReturnCode = CheckUninitializedDimms(&pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for uninitialized dimms failed.");
     if ((pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+        &pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
       goto Finish;
     }
   }
@@ -1033,12 +1033,12 @@ RunConfigDiagnosticsDetail(
   }
 
   pResult->SubTestName[DUPLICATE_DIMM_TEST_INDEX] = CatSPrint(NULL, L"Duplicate Dimm");
-  ReturnCode = CheckDimmUIDDuplication(ppDimms, DimmCount, &pResult->Message[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[1]);
+  ReturnCode = CheckDimmUIDDuplication(ppDimms, DimmCount, &pResult->SubTestMessage[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[1]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for duplicate UID numbers failed.");
     if ((pResult->SubTestStateVal[DUPLICATE_DIMM_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[DUPLICATE_DIMM_TEST_INDEX]);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+        &pResult->SubTestMessage[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[DUPLICATE_DIMM_TEST_INDEX]);
       goto Finish;
     }
   }
@@ -1046,44 +1046,44 @@ RunConfigDiagnosticsDetail(
   pResult->SubTestName[SYSTEMCAP_TEST_INDEX] = CatSPrint(NULL, L"System Capability");
   ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
   if ((pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-      &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+      &pResult->SubTestMessage[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
     goto Finish;
   }
 
   if (!SysCapInfo.AdrSupported) {
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_ADR_SUPPORT), EVENT_CODE_629, DIAG_STATE_MASK_FAILED,
-      &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+      &pResult->SubTestMessage[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
   }
 
-  ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+  ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, &pResult->SubTestMessage[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for System supported capabilities failed.");
     if ((pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+        &pResult->SubTestMessage[SYSTEMCAP_TEST_INDEX], &pResult->SubTestStateVal[SYSTEMCAP_TEST_INDEX]);
       goto Finish;
     }
   }
 
   pResult->SubTestName[NAMESPACE_LSA_TEST_INDEX] = CatSPrint(NULL, L"Namespace LSA");
-  ReturnCode = CheckNamespaceLabelAreaIndex(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
+  ReturnCode = CheckNamespaceLabelAreaIndex(ppDimms, DimmCount, DimmIdPreference, &pResult->SubTestMessage[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for Namespace label retrieve failed.");
     if ((pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+        &pResult->SubTestMessage[NAMESPACE_LSA_TEST_INDEX], &pResult->SubTestStateVal[NAMESPACE_LSA_TEST_INDEX]);
       goto Finish;
     }
   }
 
   pResult->SubTestName[PCD_TEST_INDEX] = CatSPrint(NULL, L"PCD");
-  ReturnCode = CheckPlatformConfigurationData(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
+  ReturnCode = CheckPlatformConfigurationData(ppDimms, DimmCount, DimmIdPreference, &pResult->SubTestMessage[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for platform configuration data failed.");
     if ((pResult->SubTestStateVal[PCD_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
+      APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED,
+        &pResult->SubTestMessage[PCD_TEST_INDEX], &pResult->SubTestStateVal[PCD_TEST_INDEX]);
       goto Finish;
     }
   }

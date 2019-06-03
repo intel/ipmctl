@@ -160,18 +160,18 @@ RunSecurityDiagnosticsDetail(
   }
 
   pResult->SubTestName[ENCRYPTION_TEST_INDEX] = CatSPrint(NULL, L"Encryption status");
-  pResult->SubTestName[INCONSISTANCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistancy");
+  pResult->SubTestName[INCONSISTANCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistency");
   for (Index = 0; Index < DimmCount; ++Index) {
     if (ppDimms[Index] == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_ABORTED_INTERNAL_ERROR), EVENT_CODE_805, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[ENCRYPTION_TEST_INDEX], &pResult->SubTestStateVal[ENCRYPTION_TEST_INDEX]);
+        &pResult->SubTestMessage[ENCRYPTION_TEST_INDEX], &pResult->SubTestStateVal[ENCRYPTION_TEST_INDEX]);
       goto Finish;
     }
 
     if (ppDimms[Index]->SkuInformation.EncryptionEnabled == MODE_DISABLED) {
       APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_SECURITY_NOT_SUPPORTED), EVENT_CODE_804, DIAG_STATE_MASK_OK,
-        &pResult->Message[ENCRYPTION_TEST_INDEX], &pResult->SubTestStateVal[ENCRYPTION_TEST_INDEX]);
+        &pResult->SubTestMessage[ENCRYPTION_TEST_INDEX], &pResult->SubTestStateVal[ENCRYPTION_TEST_INDEX]);
     }
 
     ReturnCode = GetDimmSecurityState(
@@ -181,7 +181,7 @@ RunSecurityDiagnosticsDetail(
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmSecurityState of DIMM ID 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_ABORTED_INTERNAL_ERROR), EVENT_CODE_805, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX]);
+        &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX]);
       goto Finish;
     }
     ConvertSecurityBitmask(SecurityFlag, &DimmSecurityState);
@@ -202,11 +202,7 @@ RunSecurityDiagnosticsDetail(
 
   if (InconsistencyFlag) {
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING,
-      &pResult->Message[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX], pInconsistentSecurityStatesStr);
-  }
-
-  if (pResult->Message[ENCRYPTION_TEST_INDEX] == NULL) {
-    pResult->Message[ENCRYPTION_TEST_INDEX] = CatSPrint(NULL, L"Security check detected that security is supported in all DIMMs\n");
+      &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX], pInconsistentSecurityStatesStr);
   }
 
   ReturnCode = EFI_SUCCESS;

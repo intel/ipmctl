@@ -277,4 +277,20 @@ CombineDiagnosticsTestResults(
   IN     UINT8 DiagState[],
      OUT CHAR16 **ppResult
   );
+
+/**
+  This function should be used to update status of the test based on information stored
+  inside diagnostic information structure.
+
+  @param[in] pBuffer Pointer to Diagnostic information structure
+  @param[in] DiagnosticTestIndex Test Index
+
+  @retval EFI_SUCCESS Test executed correctly
+  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+UpdateTestState(
+  IN   DIAG_INFO *pBuffer,
+  IN   UINT8 DiagnosticTestIndex
+);
 #endif

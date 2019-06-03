@@ -159,23 +159,23 @@ RunFwDiagnosticsDetail(
   }
 
   pResult->SubTestName[FW_CONSIST_TEST_INDEX] = CatSPrint(NULL, L"FW Consistency");
-  ReturnCode = CheckFwConsistency(ppDimms, DimmCount, DimmIdPreference, &pResult->Message[FW_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[FW_CONSIST_TEST_INDEX]);
+  ReturnCode = CheckFwConsistency(ppDimms, DimmCount, DimmIdPreference, &pResult->SubTestMessage[FW_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[FW_CONSIST_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for firmware consistency failed.");
     if ((pResult->SubTestStateVal[FW_CONSIST_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[FW_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[FW_CONSIST_TEST_INDEX]);
+        &pResult->SubTestMessage[FW_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[FW_CONSIST_TEST_INDEX]);
       goto Finish;
     }
   }
 
   pResult->SubTestName[VIRAL_POLICY_CONSIST_TEST_INDEX] = CatSPrint(NULL, L"Viral Policy");
-  ReturnCode = CheckViralPolicyConsistency(ppDimms, DimmCount, &pResult->Message[VIRAL_POLICY_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[VIRAL_POLICY_CONSIST_TEST_INDEX]);
+  ReturnCode = CheckViralPolicyConsistency(ppDimms, DimmCount, &pResult->SubTestMessage[VIRAL_POLICY_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[VIRAL_POLICY_CONSIST_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for viral policy settings consistency failed");
     if ((pResult->SubTestStateVal[VIRAL_POLICY_CONSIST_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-        &pResult->Message[VIRAL_POLICY_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[VIRAL_POLICY_CONSIST_TEST_INDEX]);
+        &pResult->SubTestMessage[VIRAL_POLICY_CONSIST_TEST_INDEX], &pResult->SubTestStateVal[VIRAL_POLICY_CONSIST_TEST_INDEX]);
       goto Finish;
     }
   }
@@ -189,23 +189,23 @@ RunFwDiagnosticsDetail(
       goto Finish;
     }
 
-    ReturnCode = ThresholdsCheck(ppDimms[Index], &pResult->Message[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
+    ReturnCode = ThresholdsCheck(ppDimms[Index], &pResult->SubTestMessage[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The check for firmware threshold settings failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-          &pResult->Message[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
+          &pResult->SubTestMessage[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
         goto Finish;
       }
     }
 
 #ifdef OS_BUILD
-    ReturnCode = SystemTimeCheck(ppDimms[Index], &pResult->Message[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
+    ReturnCode = SystemTimeCheck(ppDimms[Index], &pResult->SubTestMessage[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The check for Dimm's system time failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((pResult->SubTestStateVal[SYS_TIME_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-          &pResult->Message[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
+          &pResult->SubTestMessage[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
         goto Finish;
       }
     }

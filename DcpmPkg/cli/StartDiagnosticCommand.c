@@ -17,29 +17,40 @@
 #define DS_ROOT_PATH                       L"/DiagnosticList"
 #define DS_DIAGNOSTIC_PATH                 L"/DiagnosticList/Diagnostic"
 #define DS_DIAGNOSTIC_INDEX_PATH           L"/DiagnosticList/Diagnostic[%d]"
+#define DS_SUBTEST_PATH                    L"/DiagnosticList/Diagnostic/SubTest"
+#define DS_SUBTEST_INDEX_PATH              L"/DiagnosticList/Diagnostic[%d]/SubTest[%d]"
 
-#define TEST_NAME_STR                      L"TEST"
+#define TEST_NAME_STR                      L"Test"
 #define SUBTEST_NAME_STR                   L"SubTest"
-
-#define SUBTEST_MAX_STR_WIDTH  25
+#define RESULT_STR L"RESULT"
 
 #define DIAG_ENTRY_EOL                     L'\n'
-#define DIAG_CR                            L'\r'
 
- /*
+   /*
     *  PRINT LIST ATTRIBUTES
-    *  ---Test = Quick---
-    *        Dimm specs = ok
-    *           Dimm specs.Message.1 = X
+    *  --Test = Quick
+    *     Message = The quick health check succeeded
+    *     State = Ok
+    *     Result Code = 0
+    *     --SubTest = PCD
+    *       State = ok
+    *       Message.1 = X
+    *       Event Code.1 = X
     */
 PRINTER_LIST_ATTRIB StartDiagListAttributes =
 {
  {
     {
       DIAGNOSTIC_NODE_STR,                                         //GROUP LEVEL TYPE
-      L"---" TEST_NAME_STR L" = $(" TEST_NAME_STR L")",            //NULL or GROUP LEVEL HEADER
-      SHOW_LIST_IDENT SHOW_LIST_IDENT L"%ls = %ls",                //NULL or KEY VAL FORMAT STR
+      L"\n--" TEST_NAME_STR L" = $(" TEST_NAME_STR L")",           //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls = %ls",                                //NULL or KEY VAL FORMAT STR
       TEST_NAME_STR                                                //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      SUBTEST_NAME_STR,                                                                 //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT L"--" SUBTEST_NAME_STR L" = $(" SUBTEST_NAME_STR L")",            //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT L"%ls = %ls",                                     //NULL or KEY VAL FORMAT STR
+      SUBTEST_NAME_STR                                                                  //NULL or IGNORE KEY LIST (K1;K2)
     }
   }
 };
@@ -162,13 +173,15 @@ StartDiagnosticCmd(
   DIAG_INFO *pFinalDiagnosticsResult = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
-  UINTN length = 0;
   UINT8 Id = 0;
   CHAR16 *MsgStr = NULL;
-  CHAR16 *SubTestNameStr = NULL;
+  CHAR16 *EventCodeStr = NULL;
   CHAR16 **ppSplitDiagResultLines = NULL;
+  CHAR16 **ppSplitDiagEventCode = NULL;
   UINT32 NumTokens = 0;
+  UINT32 CodeTokens = 0;
   UINT32 i = 0;
+  CHAR16** EventMesg = NULL;
 
   NVDIMM_ENTRY();
 
@@ -262,38 +275,53 @@ StartDiagnosticCmd(
 
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIAGNOSTIC_INDEX_PATH, Index);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pLoc->TestName);
+
+    EventMesg = StrSplit(pLoc->Message, DIAG_ENTRY_EOL, &i);
+    if(EventMesg != NULL){
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath,L"Message" ,EventMesg[0]);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"State", pLoc->State);
+      PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, L"Result Code", pLoc->ResultCode, DECIMAL);
+      FREE_POOL_SAFE(EventMesg);
+    }
     for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
       if (pLoc->SubTestName[Id] != NULL) {
-
-        length = StrLen(pLoc->SubTestName[Id]);
-
-        SubTestNameStr = CatSPrint(NULL, pLoc->SubTestName[Id]);
-        for (i = 0; i < (SUBTEST_MAX_STR_WIDTH - length); i++) {
-          SubTestNameStr = CatSPrintClean(SubTestNameStr, L" ");
-        }
-
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SubTestNameStr, pLoc->state[Id]);
+        PRINTER_BUILD_KEY_PATH(pPath, DS_SUBTEST_INDEX_PATH, Index, Id);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SUBTEST_NAME_STR, pLoc->SubTestName[Id]);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"State", pLoc->SubTestState[Id]);
         // Split message string and set printer in unique key-> value form.
-        if (pLoc->Message[Id] != NULL) {
-          ppSplitDiagResultLines = StrSplit(pLoc->Message[Id], DIAG_ENTRY_EOL, &NumTokens);
+        if (pLoc->SubTestMessage[Id] != NULL) {
+          ppSplitDiagResultLines = StrSplit(pLoc->SubTestMessage[Id], DIAG_ENTRY_EOL, &NumTokens);
           if (ppSplitDiagResultLines == NULL) {
             NVDIMM_WARN("Message string split failed");
             return EFI_OUT_OF_RESOURCES;
           }
+          if (pLoc->SubTestEventCode[Id] != NULL) {
+            ppSplitDiagEventCode = StrSplit(pLoc->SubTestEventCode[Id], DIAG_ENTRY_EOL, &CodeTokens);
+          }
           for (i = 0; i < NumTokens; i++) {
-            MsgStr = CatSPrint(pLoc->SubTestName[Id], L".Message.%d", i + 1);
+            MsgStr = CatSPrint(NULL, L"Message.%d", i + 1);
             PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MsgStr, ppSplitDiagResultLines[i]);
+            if (ppSplitDiagEventCode != NULL) {
+              EventCodeStr = CatSPrint(NULL, L"EventCode.%d", i + 1);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, EventCodeStr, ppSplitDiagEventCode[i]);
+            }
             FREE_POOL_SAFE(MsgStr);
+            FREE_POOL_SAFE(EventCodeStr);
           }
           FreeStringArray(ppSplitDiagResultLines, NumTokens);
+          if (ppSplitDiagEventCode != NULL) {
+            FreeStringArray(ppSplitDiagEventCode, CodeTokens);
+          }
         }
-        FREE_POOL_SAFE(SubTestNameStr);
         FREE_POOL_SAFE(pLoc->SubTestName[Id]);
-        FREE_POOL_SAFE(pLoc->Message[Id]);
-        FREE_POOL_SAFE(pLoc->state[Id]);
+        FREE_POOL_SAFE(pLoc->SubTestMessage[Id]);
+        FREE_POOL_SAFE(pLoc->SubTestState[Id]);
+        FREE_POOL_SAFE(pLoc->SubTestEventCode[Id]);
       }
     }
     FREE_POOL_SAFE(pLoc->TestName);
+    FREE_POOL_SAFE(pLoc->Message);
+    FREE_POOL_SAFE(pLoc->State);
     FREE_POOL_SAFE(pFinalDiagnosticsResult);
   }
 

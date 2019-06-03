@@ -569,8 +569,6 @@ CoreStartDiagnosticsDetail(
   UINT32 PlatformDimmsCount = 0;
   DIMM *pCurrentDimm = NULL;
   UINTN Index = 0;
-  UINTN Id = 0;
-
   DIAG_INFO *pBuffer = NULL;
   pBuffer = AllocateZeroPool(sizeof(*pBuffer));
 
@@ -670,11 +668,10 @@ CoreStartDiagnosticsDetail(
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Quick diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
-    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
-      if (pBuffer->SubTestName[Id] != NULL)
-      {
-        pBuffer->state[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
-      }
+    TempReturnCode = UpdateTestState(pBuffer, QuickDiagnosticIndex);
+    if (EFI_ERROR(TempReturnCode)) {
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      NVDIMM_DBG("Quick diagnostics failed while updating state.");
     }
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_CONFIG) {
@@ -684,11 +681,10 @@ CoreStartDiagnosticsDetail(
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Platform configuration diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
-    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
-      if (pBuffer->SubTestName[Id] != NULL)
-      {
-        pBuffer->state[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
-      }
+    TempReturnCode = UpdateTestState(pBuffer, ConfigDiagnosticIndex);
+    if (EFI_ERROR(TempReturnCode)) {
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      NVDIMM_DBG("Platform configuration diagnostics failed while updating state.");
     }
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_SECURITY) {
@@ -698,11 +694,10 @@ CoreStartDiagnosticsDetail(
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Security diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
-    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
-      if (pBuffer->SubTestName[Id] != NULL)
-      {
-        pBuffer->state[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
-      }
+    TempReturnCode = UpdateTestState(pBuffer, SecurityDiagnosticIndex);
+    if (EFI_ERROR(TempReturnCode)) {
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      NVDIMM_DBG("Securit diagnostics failed while updating state.");
     }
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_FW) {
@@ -712,11 +707,10 @@ CoreStartDiagnosticsDetail(
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Firmware and consistency settings diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
     }
-    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
-      if (pBuffer->SubTestName[Id] != NULL)
-      {
-        pBuffer->state[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
-      }
+    TempReturnCode = UpdateTestState(pBuffer, FwDiagnosticIndex);
+    if (EFI_ERROR(TempReturnCode)) {
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      NVDIMM_DBG("Firmware and consistency settings diagnostics failed while updating state.");
     }
   }
   else {
@@ -730,5 +724,73 @@ Finish:
   FREE_POOL_SAFE(ppSpecifiedDimms);
 
   NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  This function should be used to update status of the test based on information stored 
+  inside diagnostic information structure.
+
+  @param[in] pBuffer Pointer to Diagnostic information structure
+  @param[in] DiagnosticTestIndex Test Index
+  
+  @retval EFI_SUCCESS Test executed correctly
+  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
+**/
+EFI_STATUS
+UpdateTestState( 
+  IN   DIAG_INFO *pBuffer,
+  IN   UINT8 DiagnosticTestIndex
+)
+{
+
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINTN Id = 0;
+  BOOLEAN IsTestPassed = TRUE;
+  UINT8 TempState = 0;
+
+  if (pBuffer != NULL) {
+    for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
+      if (pBuffer->SubTestName[Id] != NULL)
+      {
+        pBuffer->SubTestState[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
+        if ((pBuffer->SubTestStateVal[Id] & DIAG_STATE_MASK_ALL) > DIAG_STATE_MASK_OK) {
+          IsTestPassed = FALSE;
+        }
+      }
+    }
+    if (IsTestPassed == TRUE) {
+      switch (DiagnosticTestIndex) {
+      case  QuickDiagnosticIndex:
+        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_QUICK_SUCCESS), EVENT_CODE_500, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
+        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
+        break;
+      case ConfigDiagnosticIndex:
+        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
+        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
+        break;
+      case SecurityDiagnosticIndex:
+        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_SUCCESS), EVENT_CODE_800, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
+        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
+        break;
+      case FwDiagnosticIndex:
+        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_SUCCESS), EVENT_CODE_900, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
+        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
+        break;
+      default:
+        NVDIMM_DBG("invalid diagnostic test");
+        break;
+      }
+    }
+    else {
+      pBuffer->Message = CatSPrintClean(pBuffer->Message, L"One or more subtests didn't pass.\n");
+      pBuffer->State = CatSPrintClean(pBuffer->State, L"Failed");
+    }
+  }
+  else {
+    NVDIMM_DBG("invalid parameter to set state");
+    ReturnCode = EFI_INVALID_PARAMETER;
+  }
+
   return ReturnCode;
 }

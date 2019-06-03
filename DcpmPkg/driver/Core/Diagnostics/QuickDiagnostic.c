@@ -168,10 +168,6 @@ RunQuickDiagnosticsDetail(
     goto Finish;
   }
 
-  pResult->SubTestName[MANAGEABILITY_TEST_INDEX] = CatSPrint(NULL, L"Manageability");
-  pResult->SubTestName[BOOTSTATUS_TEST_INDEX] = CatSPrint(NULL, L"Boot status");
-  pResult->SubTestName[SMARTHEALTH_TEST_INDEX] = CatSPrint(NULL, L"Health");
-
   for (Index = 0; Index < DimmCount; ++Index) {
     TmpDiagState = 0;
 
@@ -193,32 +189,35 @@ RunQuickDiagnosticsDetail(
       continue;
     }
 
-    ReturnCode = DiagnosticsManageabilityCheck(ppDimms[Index], DimmStr, &pResult->Message[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX]);
+    pResult->SubTestName[MANAGEABILITY_TEST_INDEX] = CatSPrint(NULL, L"Manageability");
+    ReturnCode = DiagnosticsManageabilityCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode) || (!IsDimmManageable(ppDimms[Index]))) {
       NVDIMM_DBG("The check for manageability for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->Message[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX], DimmStr);
+          &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX], DimmStr);
       }
       continue;
     }
 
-    ReturnCode = BootStatusDiagnosticsCheck(ppDimms[Index], DimmStr, &pResult->Message[BOOTSTATUS_TEST_INDEX], &pResult->SubTestStateVal[BOOTSTATUS_TEST_INDEX]);
+    pResult->SubTestName[BOOTSTATUS_TEST_INDEX] = CatSPrint(NULL, L"Boot status");
+    ReturnCode = BootStatusDiagnosticsCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[BOOTSTATUS_TEST_INDEX], &pResult->SubTestStateVal[BOOTSTATUS_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The BSR check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((pResult->SubTestStateVal[BOOTSTATUS_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->Message[BOOTSTATUS_TEST_INDEX], &pResult->SubTestStateVal[BOOTSTATUS_TEST_INDEX], DimmStr);
+          &pResult->SubTestMessage[BOOTSTATUS_TEST_INDEX], &pResult->SubTestStateVal[BOOTSTATUS_TEST_INDEX], DimmStr);
       }
       continue;
     }
 
-    ReturnCode = SmartAndHealthCheck(ppDimms[Index], DimmStr, &pResult->Message[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX]);
+    pResult->SubTestName[SMARTHEALTH_TEST_INDEX] = CatSPrint(NULL, L"Health");
+    ReturnCode = SmartAndHealthCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The smart and health check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((TmpDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->Message[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX], DimmStr);
+          &pResult->SubTestMessage[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX], DimmStr);
       }
       continue;
     }

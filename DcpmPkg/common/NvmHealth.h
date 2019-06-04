@@ -32,6 +32,7 @@
 #define TEMPERATURE_MSR     L"C"
 #define SPARE_CAPACITY_MSR  L"%"
 #define TIME_MSR            L"s"
+#define TIME_MSR_MS         L"ms"
 
 #define THRESHOLD_NONE_STR                L"None"
 #define THRESHOLD_ALARM_STR               L"AlarmThreshold"

@@ -100,6 +100,8 @@
 #define SW_TRIGGER_ENABLED_DETAILS_STR L"SoftwareTriggersEnabledDetails"
 #define MAX_AVG_POWER_LIMIT_STR     L"MaxAveragePowerLimit"
 #define MAX_TURBO_MODE_POWER_CONSUMPTION_STR L"MaxTurboModePowerConsumption"
+#define MAX_AVERAGE_POWER_TIME_CONSTANT L"MaxAveragePowerTimeConstant"
+#define AVERAGE_POWER_TIME_CONSTANT_STEP L"AveragePowerTimeConstantStep"
 #ifdef OS_BUILD
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"

@@ -267,7 +267,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
-#define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)
+#define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)   ///< Device Characteristics fields will be populated: CTST, MTST, MTSTT, MTSPT, CTSTT, CTSPT, MaxAveragePowerLimit, MaxTurboModePowerConsumption, MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4              (1 << 12)   ///< Memory info page 4 fields will be populated
 #define DIMM_INFO_CATEGORY_EXTENDED_ADR                 (1 << 13)   ///< Extended ADR status info
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
@@ -381,11 +381,12 @@ typedef struct _DIMM_INFO {
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
-  DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;          //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
-  DIMM_INFO_ATTRIB_UINT16 AvgPowerLimit;            //!< The power budget in mW used for average power (10000-18000 mW). The default is 12000 mW.
-  DIMM_INFO_ATTRIB_UINT8  AveragePowerTimeConstant; //!< The value used as a base time window for power usage measurements [ms].
-  DIMM_INFO_ATTRIB_UINT8  TurboModeState;           //!< Returns if the Turbo Mode is currently enabled or not.
-  DIMM_INFO_ATTRIB_UINT16 TurboPowerLimit;          //!< Power limit [mW] used for limiting the Turbo Mode power consumption.
+  DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;              //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
+  DIMM_INFO_ATTRIB_UINT16 AvgPowerLimit;                //!< The power budget in mW used for average power (10000-18000 mW). The default is 12000 mW.
+  DIMM_INFO_ATTRIB_UINT8  AveragePowerTimeConstant_2_0; //!< The value used as a base time window for power usage measurements [ms].
+  DIMM_INFO_ATTRIB_UINT8  TurboModeState;               //!< Returns if the Turbo Mode is currently enabled or not.
+  DIMM_INFO_ATTRIB_UINT16 TurboPowerLimit;              //!< Power limit [mW] used for limiting the Turbo Mode power consumption.
+  DIMM_INFO_ATTRIB_UINT32 AveragePowerTimeConstant_2_1; //!< The value used as a base time window for power usage measurements [ms].
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
   UINT8 AvgPowerReportingTimeConstantMultiplier;       //!< The value that is used to multiply the base time value used for average power consumption measurements
@@ -453,6 +454,8 @@ typedef struct _DIMM_INFO {
   //DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS
   DIMM_INFO_ATTRIB_UINT16 MaxAveragePowerLimit;         //!< Maximum average power budget supported by the Module in mW
   DIMM_INFO_ATTRIB_UINT16 MaxTurboModePowerConsumption; //!< Maximum turbo power value supported by the module in mW
+  DIMM_INFO_ATTRIB_UINT32 MaxAveragePowerTimeConstant;  //!< Maximum supported value of the Average Power Time Constant and Average Power Reporting Time Constant [ms]
+  DIMM_INFO_ATTRIB_UINT32 AveragePowerTimeConstantStep; //!< Returns increments [ms] allowed by FW when setting Average Power Time Constant and Average Power Reporting Time Constant
 
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled

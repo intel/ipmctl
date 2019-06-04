@@ -447,11 +447,26 @@ typedef struct {
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0;
 
 typedef struct {
+  TEMPERATURE ControllerShutdownThreshold;
+  TEMPERATURE MediaShutdownThreshold;
+  TEMPERATURE MediaThrottlingStartThreshold;
+  TEMPERATURE MediaThrottlingStopThreshold;
+  TEMPERATURE ControllerThrottlingStartThreshold;
+  TEMPERATURE ControllerThrottlingStopThreshold;
+  UINT16 MaxAveragePowerLimit;
+  UINT16 MaxTurboModePowerConsumption;
+  UINT32 MaxAveragePowerTimeConstant;
+  UINT32 AveragePowerTimeConstantStep;
+  UINT8 Reserved[104];
+} PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1;
+
+typedef struct {
   UINT8 FisMajor;
   UINT8 FisMinor;
   union {
     PT_DEVICE_CHARACTERISTICS_PAYLOAD       Fis_1_15;
     PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0   Fis_2_00;
+    PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
 }PT_DEVICE_CHARACTERISTICS_OUT;
@@ -629,11 +644,39 @@ typedef struct {
 } PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0;
 
 typedef struct {
+  UINT8 Reserved1[3];
+  /**
+    Power limit in mW used for averaged power.
+    Valid range for power limit 10000 - 18000 mW.
+  **/
+  UINT16 AveragePowerLimit;
+
+  UINT8 Reserved2;
+  /**
+    Returns if the Turbo Mode is currently enabled or not.
+  **/
+  UINT8 TurboModeState;
+  /**
+    Power limit [mW] used for limiting the Turbo Mode power consumption.
+    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
+    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
+  **/
+  UINT16 TurboPowerLimit;
+  /**
+    The value used as a base time window for power usage measurements [ms].
+  **/
+  UINT32 AveragePowerTimeConstant;
+
+  UINT8 Reserved3[115];
+} PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1;
+
+typedef struct {
   UINT8 FisMajor;
   UINT8 FisMinor;
   union {
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY       Fis_1_15;
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0   Fis_2_00;
+    PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
 } PT_POWER_MANAGEMENT_POLICY_OUT;

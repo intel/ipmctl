@@ -1045,11 +1045,16 @@ GetDimmInfo (
     pDimmInfo->AvgPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
     pDimmInfo->AvgPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerLimit;
 
-    if (2 <= pPowerManagementPolicyPayload->FisMajor) {
-      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = ReturnCode;
-      pDimmInfo->AveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->AveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
+    if (2 == pPowerManagementPolicyPayload->FisMajor && 0 == pPowerManagementPolicyPayload->FisMinor) {
+      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AveragePowerTimeConstant_2_0.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
+    }
+    else {
+      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Status.Code = EFI_UNSUPPORTED;
+    }
 
+    if (2 <= pPowerManagementPolicyPayload->FisMajor) {
       pDimmInfo->TurboModeState.Header.Status.Code = ReturnCode;
       pDimmInfo->TurboModeState.Header.Type = DIMM_INFO_TYPE_UINT16;
       pDimmInfo->TurboModeState.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboModeState;
@@ -1059,9 +1064,17 @@ GetDimmInfo (
       pDimmInfo->TurboPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboPowerLimit;
     }
     else {
-      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
       pDimmInfo->TurboModeState.Header.Status.Code = EFI_UNSUPPORTED;
       pDimmInfo->TurboPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+    }
+
+    if (2 <= pPowerManagementPolicyPayload->FisMajor && 1 <= pPowerManagementPolicyPayload->FisMinor) {
+      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->AveragePowerTimeConstant_2_1.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.AveragePowerTimeConstant;
+    }
+    else {
+      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Status.Code = EFI_UNSUPPORTED;
     }
   }
 
@@ -1075,6 +1088,7 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS;
     }
 
+    /* MaxAveragePowerLimit */
     if ((1 <= pDevCharacteristics->FisMajor && 13 <= pDevCharacteristics->FisMinor) || 2 <= pDevCharacteristics->FisMajor) {
       pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = ReturnCode;
       pDimmInfo->MaxAveragePowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
@@ -1084,6 +1098,7 @@ GetDimmInfo (
       pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
     }
 
+    /* MaxTurboModePowerConsumption */
     if (2 <= pDevCharacteristics->FisMajor) {
       pDimmInfo->MaxTurboModePowerConsumption.Header.Status.Code = ReturnCode;
       pDimmInfo->MaxTurboModePowerConsumption.Header.Type = DIMM_INFO_TYPE_UINT16;
@@ -1091,6 +1106,21 @@ GetDimmInfo (
     }
     else {
       pDimmInfo->MaxTurboModePowerConsumption.Header.Status.Code = EFI_UNSUPPORTED;
+    }
+
+    /* MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep */
+    if (2 <= pDevCharacteristics->FisMajor && 1 <= pDevCharacteristics->FisMinor) {
+      pDimmInfo->MaxAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+      pDimmInfo->MaxAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->MaxAveragePowerTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxAveragePowerTimeConstant;
+
+      pDimmInfo->AveragePowerTimeConstantStep.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->AveragePowerTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.AveragePowerTimeConstantStep;
+    }
+    else {
+      pDimmInfo->MaxAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->AveragePowerTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
     }
   }
 

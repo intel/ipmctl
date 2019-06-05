@@ -102,8 +102,9 @@ The RPMs will be in output/rpmbuild/RPMS/
 
 ### Windows
 
-Install the Windows RS5 (Build >17650) Driver Development Kit. See https://www.microsoft.com/en-us/software-download/windowsinsiderpreviewSDK for access if it's not externally available at https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk. Make sure that winioctl.h is available after installation.
+Install Visual Studio 2017 (or newer). Be sure to install optional component: 
+* Workloads -> Desktop Development with C++
+* Individual Components -> Compilers, build tools, and runtimes -> Visual C++ tools for CMake
 
-Install VS2017
+Open as a CMake project. See: https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio
 
-Open as a CMake project

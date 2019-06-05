@@ -145,7 +145,7 @@ Debug and troubleshoot DCPMMs.
 *ipmctl-inject-error*(1)::
   Injects an error or clears a previously injected error
 
-*ipmctl-run-diagnostic*(1)::
+*ipmctl-start-diagnostic*(1)::
   Runs a diagnostic test
 
 *ipmctl-show-acpi*(1)::
@@ -206,7 +206,7 @@ SEE ALSO
 *ipmctl-version*(1),
 *ipmctl-dump-debug-log*(1),
 *ipmctl-inject-error*(1),
-*ipmctl-run-diagnostic*(1),
+*ipmctl-start-diagnostic*(1),
 *ipmctl-show-acpi*(1),
 *ipmctl-show-error-log*(1),
 *ipmctl-show-pcd*(1)

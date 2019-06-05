@@ -5,7 +5,7 @@
 
  /**
  * @file NvmFirmwareManagement.c
- * @brief The file describes the UEFI Firmware Management Protocol support Intel(R) Optane(TM) DC persistent memory.
+ * @brief The file describes the UEFI Firmware Management Protocol support Barlow Pass.
  **/
 
 #include <Uefi.h>

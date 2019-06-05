@@ -118,5 +118,6 @@ SAMPLE OUTPUT
 ------------
 [verse]
 Set passphrase on DIMM (DimmID): Success
-...
+
+[verse]
 Set passphrase on DIMM (DimmID): Error (Code) - (Description)

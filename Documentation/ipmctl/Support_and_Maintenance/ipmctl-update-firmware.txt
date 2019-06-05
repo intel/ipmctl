@@ -131,7 +131,6 @@ the CLI will indicate the status of the operation.
 [verse]
 Downgrade firmware on DIMM (DimmID)? (y or [n]) Downgrade firmware
 on DIMM (DimmID)? (y or [n])
-...
 
 If a failure occurs when updating multiple DCPMMs, the process will continue
 attempting to update the remaining DCPMMs requested. The firmware will not
@@ -142,7 +141,6 @@ and staged firmware.
 [verse]
 Load FW on DIMM (DimmID): Success, a power cycle is required to
 activate the FW.
-Load FW on DIMM (DimmID): Success, a power cycle is required to
-activate the FW.
-...
+
+[verse]
 Load FW on DIMM (DimmID): Error (Code) - (Description)

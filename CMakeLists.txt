@@ -21,7 +21,7 @@ set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
 set(IPMCTL_SPEC_VERSION_MAJOR 2)
-set(IPMCTL_SPEC_VERSION_MINOR 0)
+set(IPMCTL_SPEC_VERSION_MINOR 01)
 set(IPMCTL_DRAFT "-draft")
 set(IPMCTL_SPEC_VERSION_STRING ${IPMCTL_SPEC_VERSION_MAJOR}.${IPMCTL_SPEC_VERSION_MINOR}${IPMCTL_DRAFT})
 
@@ -91,6 +91,8 @@ elseif(MSVC)
 	set(OS_TYPE win)
 	set(FILE_PREFIX win)
 	find_package(PythonInterp REQUIRED)
+	find_package(asciidoctor)
+	find_package(asciidoc)
 endif()
 
 message(BUILD_TYPE: ${CMAKE_BUILD_TYPE})
@@ -480,7 +482,7 @@ set_target_properties(ipmctl-bin
 	PROPERTIES OUTPUT_NAME ipmctl
 	)
 
-if (ASCIIDOCTOR_FOUND OR A2X_FOUND)
+if ((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 	add_dependencies(ipmctl-bin
 		manpage
 		)
@@ -701,7 +703,7 @@ endif()
 #----------------------------------------------------------------------------------------------------
 # Generate man pages with asciidoctor
 #----------------------------------------------------------------------------------------------------
-if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
+if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 	file(MAKE_DIRECTORY ${OUTPUT_DIR}/manpage)
 	file(MAKE_DIRECTORY ${OUTPUT_DIR}/docs)
 
@@ -738,7 +740,8 @@ if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
-		${ROOT}/Documentation/ipmctl/Debug/ipmctl-run-diagnostic.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-diagnostic.txt
+#		${ROOT}/Documentation/ipmctl/Debug/ipmctl-diagnostic-events.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-error-log.txt
 		)
@@ -776,7 +779,8 @@ if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-run-diagnostic.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-start-diagnostic.1.gz
+#		${OUTPUT_DIR}/manpage/ipmctl-diagnostic-events.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-error-log.1.gz
 		)

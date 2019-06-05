@@ -106,6 +106,7 @@ SAMPLE OUTPUT
 -------------
 [verse]
 Modify (Sensor) settings on DIMM (DimmID): Success
-...
+
+[verse]
 Modify (Sensor) settings on DIMM (DimmID): Error (Code) -
 (Description)

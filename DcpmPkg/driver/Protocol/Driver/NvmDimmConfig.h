@@ -8,11 +8,11 @@
 * @brief Implementation of the EFI_DCPMM_CONFIG2_PROTOCOL, a custom protocol
 * to configure and manage DCPMMs
 *
-* @mainpage Intel(R) Optane(TM) DC Persistent Memory Software UEFI FW Protocols
+* @mainpage Barlow Pass Software UEFI FW Protocols
 *
 * @section Introduction
-* This document provides descriptions of protocols implemented by the Intel(R)
-* Optane(TM) DC Persistent Memory Driver for UEFI FW. Protocols implemented include:
+* This document provides descriptions of protocols implemented by the
+* Barlow Pass Driver for UEFI FW. Protocols implemented include:
 * - EFI_DRIVER_BINDING_PROTOCOL
 * - EFI_COMPONENT_NAME_PROTOCOL & EFI_COMPONENT_NAME2_PROTOCOL
 * - EFI_DRIVER_DIAGNOSTICS_PROTOCOL & EFI_DRIVER_DIAGNOSTICS2_PROTOCOL

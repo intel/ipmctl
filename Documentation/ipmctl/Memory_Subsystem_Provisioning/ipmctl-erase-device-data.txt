@@ -22,7 +22,10 @@ ipmctl delete [OPTIONS] -dimm [TARGETS] Passphrase=(string)
 
 DESCRIPTION
 -----------
-Erases the persistent data on one or more DCPMMs.
+Erases the persistent data on one or more DCPMMs. This commands invokes the DCPMM 'Secure Erase'
+command.
+
+NOTE: This command does not zero out the persistent data, but instead randomizes the data.
 
 ifdef::os_build[]
 NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."

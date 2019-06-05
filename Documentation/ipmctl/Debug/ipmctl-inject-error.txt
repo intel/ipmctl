@@ -181,22 +181,26 @@ Set temperature on DCPMM (DimmID): Success|Error (Code) -
 (Description)
 Clear injected temperature on DCPMM (DimmID): Success|Error
 (Code) - (Description)
-...
+
+[verse]
 Poison address (Address) on DCPMM (DimmID): Success|Error
 (Code) - (Description)
 Clear injected poison of address (Address) on DCPMM
 (DimmID): Success|Error (Code) - (Description)
-...
+
+[verse]
 Trigger package sparing on DCPMM (DimmID): Success|Error
 (Code) - (Description)
 Clear injected package sparing on DCPMM (DimmID):
 Success|Error (Code) - (Description)
-...
+
+[verse]
 Trigger a spare capacity alarm on DCPMM (DimmID):
 Success|Error (Code) - (Description)
 Clear injected spare capacity alarm on DCPMM (DimmID):
 Success|Error (Code) - (Description)
-...
+
+[verse]
 Create a media fatal error on DCPMM (DimmID): Success|Error
 (Code) - (Description)
 Clear injected media fatal error on DCPMM (DimmID):

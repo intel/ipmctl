@@ -9,7 +9,7 @@
  * It is intended to be used by clients of the Native Management API
  * in order to perform management actions.
  *
- * @mainpage Intel(R) Optane(TM) DC Persistent Memory Software Management API
+ * @mainpage Intel(R) Barlow Pass Software Management API
  *
  * @license This project is licensed under the BSD-3-Clause License.
  *

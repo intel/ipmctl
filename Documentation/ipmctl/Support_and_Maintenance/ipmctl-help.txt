@@ -56,4 +56,3 @@ Commands:
 (synopsis)
 (name)
 (synopsis)
-...

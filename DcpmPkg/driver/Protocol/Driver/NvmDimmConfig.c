@@ -10592,7 +10592,7 @@ LoadArsList()
   }
 
   //if there are records, allocate the space for them and obtain them
-  if (gArsBadRecordsCount > 0) {
+  if (records > 0) {
     gArsBadRecords = (DCPMM_ARS_ERROR_RECORD *)AllocateZeroPool(sizeof(DCPMM_ARS_ERROR_RECORD) * records);
     if (gArsBadRecords == NULL) {
       NVDIMM_WARN("Failed to allocate memory for the bad ARS records");

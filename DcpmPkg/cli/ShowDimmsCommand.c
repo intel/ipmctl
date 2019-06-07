@@ -222,6 +222,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   AVERAGE_POWER_TIME_CONSTANT_STEP,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
   UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
+  THERMAL_THROTTLE_LOSS_STR,
   DIMM_HANDLE_STR,
   DIMM_UID_STR,
   MODES_SUPPORTED_STR,
@@ -291,6 +292,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   AVERAGE_POWER_TIME_CONSTANT_STEP,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
   UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
+  THERMAL_THROTTLE_LOSS_STR,
   LAST_SHUTDOWN_TIME_STR,
   MODES_SUPPORTED_STR,
   SECURITY_CAPABILITIES_STR,
@@ -1198,6 +1200,17 @@ ShowDimms(
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UNLATCHED_LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
+        }
+
+        /** ThermalThrottlePerformanceLossPrct **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, THERMAL_THROTTLE_LOSS_STR))) {
+          if ((pDimms[DimmIndex].FwVer.FwApiMajor == 0x2 && pDimms[DimmIndex].FwVer.FwApiMinor >= 0x1) ||
+              (pDimms[DimmIndex].FwVer.FwApiMajor >= 0x3)) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, THERMAL_THROTTLE_LOSS_STR, FORMAT_UINT32, pDimms[DimmIndex].ThermalThrottlePerformanceLossPrct);
+          }
+          else {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, THERMAL_THROTTLE_LOSS_STR, NOT_APPLICABLE_SHORT_STR);
+          }
         }
 
         /** LastShutdownTime **/

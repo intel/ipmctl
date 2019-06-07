@@ -775,7 +775,7 @@ GetDimmInfo (
   PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pGetPackageSparingPayload = NULL;
   LIST_ENTRY *pNodeNamespace = NULL;
   NAMESPACE *pCurNamespace = NULL;
-  SENSOR_INFO SensorInfo;
+  SMART_AND_HEALTH_INFO HealthInfo;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   PT_VIRAL_POLICY_PAYLOAD ViralPolicyPayload;
   PT_POWER_MANAGEMENT_POLICY_OUT *pPowerManagementPolicyPayload = NULL;
@@ -787,15 +787,11 @@ GetDimmInfo (
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
-  UINT32 LatchedLastShutdownStatusDetails = 0;
-  UINT32 UnlatchedLastShutdownStatusDetails = 0;
-  UINT64 LastShutdownTime = 0;
-  UINT8 AitDramEnabled = 0;
   UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&SensorInfo, sizeof(SensorInfo));
+  ZeroMem(&HealthInfo, sizeof(HealthInfo));
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
   ZeroMem(&ViralPolicyPayload, sizeof(ViralPolicyPayload));
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
@@ -1009,19 +1005,19 @@ GetDimmInfo (
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_SMART_AND_HEALTH)
   {
     /* Get current health state */
-    ReturnCode = GetSmartAndHealth(&gNvmDimmDriverNvmDimmConfig,pDimm->DimmID,
-      &SensorInfo, &LatchedLastShutdownStatusDetails, &UnlatchedLastShutdownStatusDetails, &LastShutdownTime, &AitDramEnabled);
+    ReturnCode = GetSmartAndHealth(&gNvmDimmDriverNvmDimmConfig,pDimm->DimmID, &HealthInfo);
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
     if (HEALTH_UNMANAGEABLE != pDimmInfo->HealthState) {
-       ConvertHealthBitmask(SensorInfo.HealthStatus, &pDimmInfo->HealthState);
+       ConvertHealthBitmask(HealthInfo.HealthStatus, &pDimmInfo->HealthState);
     }
-    pDimmInfo->HealthStatusReason = SensorInfo.HealthStatusReason;
-    pDimmInfo->LatchedLastShutdownStatusDetails = LatchedLastShutdownStatusDetails;
-    pDimmInfo->UnlatchedLastShutdownStatusDetails = UnlatchedLastShutdownStatusDetails;
-    pDimmInfo->LastShutdownTime = LastShutdownTime;
-    pDimmInfo->AitDramEnabled = AitDramEnabled;
+    pDimmInfo->HealthStatusReason = HealthInfo.HealthStatusReason;
+    pDimmInfo->LatchedLastShutdownStatusDetails = HealthInfo.LatchedLastShutdownStatusDetails;
+    pDimmInfo->UnlatchedLastShutdownStatusDetails = HealthInfo.UnlatchedLastShutdownStatusDetails;
+    pDimmInfo->ThermalThrottlePerformanceLossPrct = HealthInfo.ThermalThrottlePerformanceLossPrct;
+    pDimmInfo->LastShutdownTime = HealthInfo.LastShutdownTime;
+    pDimmInfo->AitDramEnabled = HealthInfo.AitDramEnabled;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_POWER_MGMT_POLICY)
@@ -2544,11 +2540,7 @@ Finish:
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLatchedLastShutdownStatusDetails pointer to store latched last shutdown status details
-  @param[out] pUnlatchedLastShutdownStatusDetails pointer to store unlatched last shutdown status details
-  @param[out] pLastShutdownTime pointer to store the time the system was last shutdown
-  @param[out] pAitDramEnabled pointer to store the state of AIT DRAM (whether it is Enabled/ Disabled/ Unknown)
+  @param[out] pHealthInfo - pointer to structure containing all Health and Smarth variables
 
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
@@ -2560,11 +2552,7 @@ EFIAPI
 GetSmartAndHealth (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
-     OUT SENSOR_INFO *pSensorInfo,
-     OUT UINT32 *pLatchedLastShutdownStatusDetails OPTIONAL,
-     OUT UINT32 *pUnlatchedLastShutdownStatusDetails OPTIONAL,
-     OUT UINT64 *pLastShutdownTime OPTIONAL,
-     OUT UINT8 *pAitDramEnabled OPTIONAL
+     OUT SMART_AND_HEALTH_INFO *pHealthInfo
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -2576,7 +2564,7 @@ GetSmartAndHealth (
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL || !IsDimmManageable(pDimm) || pSensorInfo == NULL) {
+  if (pDimm == NULL || !IsDimmManageable(pDimm) || pHealthInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -2592,69 +2580,65 @@ GetSmartAndHealth (
   }
 
   /** Get common data **/
-  pSensorInfo->PercentageRemainingValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
-  pSensorInfo->MediaTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.MediaTemperature;
-  pSensorInfo->ControllerTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.ControllerTemperature;
-  pSensorInfo->MediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->MediaTemperature);
-  pSensorInfo->HealthStatus = pPayloadSmartAndHealth->HealthStatus;
-  pSensorInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStatusReason) ?
+  pHealthInfo->PercentageRemainingValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.PercentageRemaining;
+  pHealthInfo->MediaTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.MediaTemperature;
+  pHealthInfo->ControllerTemperatureValid = (BOOLEAN) pPayloadSmartAndHealth->ValidationFlags.Separated.ControllerTemperature;
+  pHealthInfo->MediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->MediaTemperature);
+  pHealthInfo->HealthStatus = pPayloadSmartAndHealth->HealthStatus;
+  pHealthInfo->HealthStatusReason = (pPayloadSmartAndHealth->ValidationFlags.Separated.HealthStatusReason) ?
          pPayloadSmartAndHealth->HealthStatusReason : (UINT16)HEALTH_STATUS_REASON_NONE;
-  pSensorInfo->PercentageRemaining = pPayloadSmartAndHealth->PercentageRemaining;
-  pSensorInfo->LatchedLastShutdownStatus = pPayloadSmartAndHealth->LatchedLastShutdownStatus;
+  pHealthInfo->PercentageRemaining = pPayloadSmartAndHealth->PercentageRemaining;
+  pHealthInfo->LatchedLastShutdownStatus = pPayloadSmartAndHealth->LatchedLastShutdownStatus;
   /** Get Vendor specific data **/
-  pSensorInfo->ControllerTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->ControllerTemperature);
-  pSensorInfo->UpTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.UpTime;
-  pSensorInfo->PowerCycles = pPayloadSmartAndHealth->VendorSpecificData.PowerCycles;
-  pSensorInfo->PowerOnTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.PowerOnTime;
-  pSensorInfo->LatchedDirtyShutdownCount = pPayloadSmartAndHealth->LatchedDirtyShutdownCount;
-  pSensorInfo->UnlatchedDirtyShutdownCount = pPayloadSmartAndHealth->VendorSpecificData.UnlatchedDirtyShutdownCount;
+  pHealthInfo->ControllerTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->ControllerTemperature);
+  pHealthInfo->UpTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.UpTime;
+  pHealthInfo->PowerCycles = pPayloadSmartAndHealth->VendorSpecificData.PowerCycles;
+  pHealthInfo->PowerOnTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.PowerOnTime;
+  pHealthInfo->LatchedDirtyShutdownCount = pPayloadSmartAndHealth->LatchedDirtyShutdownCount;
+  pHealthInfo->UnlatchedDirtyShutdownCount = pPayloadSmartAndHealth->VendorSpecificData.UnlatchedDirtyShutdownCount;
   /** Get Device Characteristics data **/
-  pSensorInfo->ContrTempShutdownThresh =
+  pHealthInfo->ContrTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerShutdownThreshold);
-  pSensorInfo->ControllerThrottlingStartThresh =
+  pHealthInfo->ControllerThrottlingStartThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerThrottlingStartThreshold);
-  pSensorInfo->ControllerThrottlingStopThresh =
+  pHealthInfo->ControllerThrottlingStopThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerThrottlingStopThreshold);
-  pSensorInfo->MediaTempShutdownThresh =
+  pHealthInfo->MediaTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaShutdownThreshold);
-  pSensorInfo->MediaThrottlingStartThresh =
+  pHealthInfo->MediaThrottlingStartThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaThrottlingStartThreshold);
-  pSensorInfo->MediaThrottlingStopThresh =
+  pHealthInfo->MediaThrottlingStopThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.MediaThrottlingStopThreshold);
+
   /** Check triggered alarms **/
-  pSensorInfo->MediaTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.MediaTemperature != 0);
-  pSensorInfo->ControllerTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.ControllerTemperature != 0);
-  pSensorInfo->PercentageRemainingTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.PercentageRemaining != 0);
+  pHealthInfo->MediaTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.MediaTemperature != 0);
+  pHealthInfo->ControllerTemperatureTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.ControllerTemperature != 0);
+  pHealthInfo->PercentageRemainingTrip = (pPayloadSmartAndHealth->AlarmTrips.Separated.PercentageRemaining != 0);
 
-  if (pLatchedLastShutdownStatusDetails != NULL) {
-    /** Copy extended detail bits **/
-    CopyMem_S(pLatchedLastShutdownStatusDetails, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.LatchedLastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED));
-    /** Shift extended over, add the original 8 bits **/
-    *pLatchedLastShutdownStatusDetails = (*pLatchedLastShutdownStatusDetails << sizeof(LAST_SHUTDOWN_STATUS_DETAILS) * 8)
-                         + pPayloadSmartAndHealth->VendorSpecificData.LatchedLastShutdownDetails.AllFlags;
-  }
-  if (pUnlatchedLastShutdownStatusDetails != NULL) {
-    /** Copy extended detail bits **/
-    CopyMem_S(pUnlatchedLastShutdownStatusDetails, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.UnlatchedLastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED));
-    /** Shift extended over, add the original 8 bits **/
-    *pUnlatchedLastShutdownStatusDetails = (*pUnlatchedLastShutdownStatusDetails << sizeof(LAST_SHUTDOWN_STATUS_DETAILS) * 8)
-                         + pPayloadSmartAndHealth->VendorSpecificData.UnlatchedLastShutdownDetails.AllFlags;
-  }
+  /** Copy extended detail bits **/
+  CopyMem_S(&pHealthInfo->LatchedLastShutdownStatusDetails, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.LatchedLastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED));
+  /** Shift extended over, add the original 8 bits **/
+  pHealthInfo->LatchedLastShutdownStatusDetails = (pHealthInfo->LatchedLastShutdownStatusDetails << sizeof(LAST_SHUTDOWN_STATUS_DETAILS) * 8)
+    + pPayloadSmartAndHealth->VendorSpecificData.LatchedLastShutdownDetails.AllFlags;
 
-  if (pLastShutdownTime != NULL) {
-    *pLastShutdownTime = pPayloadSmartAndHealth->VendorSpecificData.LastShutdownTime;
-  }
+  /** Copy extended detail bits **/
+  CopyMem_S(&pHealthInfo->UnlatchedLastShutdownStatusDetails, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED), pPayloadSmartAndHealth->VendorSpecificData.UnlatchedLastShutdownExtendedDetails.Raw, sizeof(LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED));
+  /** Shift extended over, add the original 8 bits **/
+  pHealthInfo->UnlatchedLastShutdownStatusDetails = (pHealthInfo->UnlatchedLastShutdownStatusDetails << sizeof(LAST_SHUTDOWN_STATUS_DETAILS) * 8)
+    + pPayloadSmartAndHealth->VendorSpecificData.UnlatchedLastShutdownDetails.AllFlags;
 
-  if (pAitDramEnabled != NULL) {
-    *pAitDramEnabled = pPayloadSmartAndHealth->AITDRAMStatus;
+  pHealthInfo->LastShutdownTime = pPayloadSmartAndHealth->VendorSpecificData.LastShutdownTime;
 
-    if ((pPayloadSmartAndHealth->ValidationFlags.Separated.AITDRAMStatus == 0) &&
-      (pPayloadSmartAndHealth->HealthStatus < HealthStatusCritical)) {
-      *pAitDramEnabled = AIT_DRAM_ENABLED;
-    }
+  pHealthInfo->AitDramEnabled = pPayloadSmartAndHealth->AITDRAMStatus;
+
+  if ((pPayloadSmartAndHealth->ValidationFlags.Separated.AITDRAMStatus == 0) &&
+    (pPayloadSmartAndHealth->HealthStatus < HealthStatusCritical)) {
+    pHealthInfo->AitDramEnabled = AIT_DRAM_ENABLED;
   }
 
-  ReturnCode = FwCmdGetErrorCount(pDimm, &pSensorInfo->MediaErrorCount, &pSensorInfo->ThermalErrorCount);
+  pHealthInfo->ThermalThrottlePerformanceLossPrct = pPayloadSmartAndHealth->VendorSpecificData.ThermalThrottlePerformanceLossPercent;
+
+  ReturnCode = FwCmdGetErrorCount(pDimm, &pHealthInfo->MediaErrorCount, &pHealthInfo->ThermalErrorCount);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

@@ -918,8 +918,8 @@ typedef struct {
   TEMPERATURE MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
   TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius. 
 
-  UINT16 ThermalThrottlePerformanceLossPercent; //!< The average loss % due to thermal throttling since last read in current boot
-  UINT8 Reserved1[40];
+  UINT8 ThermalThrottlePerformanceLossPercent; //!< The average loss % due to thermal throttling since last read in current boot
+  UINT8 Reserved1[41];
 } SMART_INTEL_SPECIFIC_DATA;
 
 /**

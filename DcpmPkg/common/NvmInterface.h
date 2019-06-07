@@ -669,11 +669,7 @@ EFI_STATUS
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pSensorInfo - pointer to structure containing all Health and Smarth variables.
-  @param[out] pLatchedLastShutdownStatusDetails pointer to store latched last shutdown status details
-  @param[out] pUnlatchedLastShutdownStatusDetails pointer to store unlatched last shutdown status details
-  @param[out] pLastShutdownTime pointer to store the time the system was last shutdown
-  @param[out] pAitDramEnabled pointer to store the state of AIT DRAM (whether it is Enabled/ Disabled/ Unknown)
+  @param[out] pHealthInfo - pointer to structure containing all Health and Smarth variables
 
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
@@ -685,11 +681,7 @@ EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_SMART_AND_HEALTH) (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmPid,
-     OUT SENSOR_INFO *pSensorInfo,
-     OUT UINT32 *pLatchedLastShutdownStatusDetails OPTIONAL,
-     OUT UINT32 *pUnlatchedLastShutdownStatusDetails OPTIONAL,
-     OUT UINT64 *pLastShutdownTime OPTIONAL,
-     OUT UINT8 *pAitDramEnabled OPTIONAL
+     OUT SMART_AND_HEALTH_INFO *pHealthInfo
   );
 
 /**

@@ -57,11 +57,11 @@ GetSensorsInfo(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT8 Index = 0;
-  SENSOR_INFO SensorInfo;
+  SMART_AND_HEALTH_INFO HealthInfo;
   INT16 Threshold = 0;
   UINT8 DimmHealthState = 0;
 
-  ZeroMem(&SensorInfo, sizeof(SensorInfo));
+  ZeroMem(&HealthInfo, sizeof(HealthInfo));
 
   /**
     Driver fills the data partially, so the initializer stays with the proper
@@ -69,30 +69,30 @@ GetSensorsInfo(
   **/
   InitSensorsSet(DimmSensorsSet);
 
-  ReturnCode = pNvmDimmConfigProtocol->GetSmartAndHealth(pNvmDimmConfigProtocol, DimmID, &SensorInfo, NULL, NULL, NULL, NULL);
+  ReturnCode = pNvmDimmConfigProtocol->GetSmartAndHealth(pNvmDimmConfigProtocol, DimmID, &HealthInfo);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   /** Copy SMART & Health values **/
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = SensorInfo.MediaTemperature;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStopThreshold = SensorInfo.MediaThrottlingStopThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStartThreshold = SensorInfo.MediaThrottlingStartThresh;
-  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ShutdownThreshold = SensorInfo.MediaTempShutdownThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = SensorInfo.ControllerTemperature;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ShutdownThreshold = SensorInfo.ContrTempShutdownThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStopThreshold = SensorInfo.ControllerThrottlingStopThresh;
-  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStartThreshold = SensorInfo.ControllerThrottlingStartThresh;
-  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = SensorInfo.PercentageRemaining;
-  DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = SensorInfo.PowerCycles;
-  DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = SensorInfo.PowerOnTime;
-  DimmSensorsSet[SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWN_COUNT].Value = SensorInfo.LatchedDirtyShutdownCount;
-  DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT].Value = SensorInfo.UnlatchedDirtyShutdownCount;
-  DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = SensorInfo.MediaErrorCount + SensorInfo.ThermalErrorCount;
-  DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = SensorInfo.UpTime;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].Value = HealthInfo.MediaTemperature;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.MediaThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.MediaThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ShutdownThreshold = HealthInfo.MediaTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = HealthInfo.ControllerTemperature;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ShutdownThreshold = HealthInfo.ContrTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.ControllerThrottlingStopThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.ControllerThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = HealthInfo.PercentageRemaining;
+  DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = HealthInfo.PowerCycles;
+  DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = HealthInfo.PowerOnTime;
+  DimmSensorsSet[SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWN_COUNT].Value = HealthInfo.LatchedDirtyShutdownCount;
+  DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT].Value = HealthInfo.UnlatchedDirtyShutdownCount;
+  DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = HealthInfo.MediaErrorCount + HealthInfo.ThermalErrorCount;
+  DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = HealthInfo.UpTime;
 
   /** Determine Health State based on Health Status Bit Mask **/
-  ConvertHealthBitmask(SensorInfo.HealthStatus, &DimmHealthState);
+  ConvertHealthBitmask(HealthInfo.HealthStatus, &DimmHealthState);
   DimmSensorsSet[SENSOR_TYPE_DIMM_HEALTH].Value = DimmHealthState;
 
   for (Index = SENSOR_TYPE_MEDIA_TEMPERATURE; Index <= SENSOR_TYPE_PERCENTAGE_REMAINING; ++Index) {

@@ -309,18 +309,17 @@ SmartAndHealthCheck(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  SENSOR_INFO SensorInfo;
+  SMART_AND_HEALTH_INFO HealthInfo;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
-  UINT8 AitDramEnabled = 0;
   DIMM_INFO DimmInfo;
   CHAR16 *pActualHealthStr = NULL;
   CHAR16 *pActualHealthReasonStr = NULL;
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&SensorInfo, sizeof(SensorInfo));
+  ZeroMem(&HealthInfo, sizeof(HealthInfo));
   ZeroMem(&DimmInfo, sizeof(DimmInfo));
 
   if (pDimm == NULL || pDimmStr == NULL || ppResultStr == NULL || pDiagState == NULL) {
@@ -331,7 +330,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, NULL, &AitDramEnabled);
+  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &HealthInfo);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_FW_BUSY), EVENT_CODE_541, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
@@ -342,29 +341,29 @@ SmartAndHealthCheck(
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
     goto Finish;
   }
-  if (SensorInfo.LatchedLastShutdownStatus) {
+  if (HealthInfo.LatchedLastShutdownStatus) {
     // LatchedLastShutdownStatus != 0 - Dirty Shutdown
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_DIRTY_SHUTDOWN), EVENT_CODE_530, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32);
   }
 
-  if (SensorInfo.HealthStatus != CONTROLLER_HEALTH_NORMAL) {
-    if ((SensorInfo.HealthStatus & HealthStatusFatal) != 0) {
+  if (HealthInfo.HealthStatus != CONTROLLER_HEALTH_NORMAL) {
+    if ((HealthInfo.HealthStatus & HealthStatusFatal) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_FATAL_FAILURE), NULL);
     }
-    else if ((SensorInfo.HealthStatus & HealthStatusCritical) != 0) {
+    else if ((HealthInfo.HealthStatus & HealthStatusCritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CRITICAL_FAILURE), NULL);
     }
-    else if ((SensorInfo.HealthStatus & HealthStatusNoncritical) != 0) {
+    else if ((HealthInfo.HealthStatus & HealthStatusNoncritical) != 0) {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_NON_CRITICAL_FAILURE), NULL);
     }
     else {
       pActualHealthStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
     }
 
-    if (SensorInfo.HealthStatusReason != HEALTH_STATUS_REASON_NONE) {
+    if (HealthInfo.HealthStatusReason != HEALTH_STATUS_REASON_NONE) {
       ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmData->HiiHandle,
-        SensorInfo.HealthStatusReason, &pActualHealthReasonStr);
+        HealthInfo.HealthStatusReason, &pActualHealthReasonStr);
       if (pActualHealthReasonStr == NULL || EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("Error in converting health state reason to string");
         goto Finish;
@@ -415,9 +414,9 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (SensorInfo.MediaTemperature > MediaTemperatureThreshold) {
+  if (HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_505, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, SensorInfo.MediaTemperature, MediaTemperatureThreshold);
+      pDimmStr, HealthInfo.MediaTemperature, MediaTemperatureThreshold);
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
@@ -432,9 +431,9 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (SensorInfo.ControllerTemperature > ControllerTemperatureThreshold) {
+  if (HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_CONTROLLER_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_511, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, SensorInfo.ControllerTemperature, ControllerTemperatureThreshold);
+      pDimmStr, HealthInfo.ControllerTemperature, ControllerTemperatureThreshold);
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
@@ -449,14 +448,14 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, SensorInfo.PercentageRemaining, PercentageRemainingThreshold);
+      pDimmStr, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }
 
-  if ((SensorInfo.PercentageRemainingValid) && (SensorInfo.PercentageRemaining < EMULATOR_DIMM_PERCENTAGE_REMAINING_THR)) {
+  if ((HealthInfo.PercentageRemainingValid) && (HealthInfo.PercentageRemaining < EMULATOR_DIMM_PERCENTAGE_REMAINING_THR)) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_PERCENTAGE_REMAINGING_BELOW_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, SensorInfo.PercentageRemaining, EMULATOR_DIMM_PERCENTAGE_REMAINING_THR);
+      pDimmStr, HealthInfo.PercentageRemaining, EMULATOR_DIMM_PERCENTAGE_REMAINING_THR);
   }
 
   //Package spare availability check
@@ -471,7 +470,7 @@ SmartAndHealthCheck(
   }
 
   //AIT DRAM disbaled check
-  if (AitDramEnabled == AIT_DRAM_DISABLED) {
+  if (HealthInfo.AitDramEnabled == AIT_DRAM_DISABLED) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DISABLED), EVENT_CODE_535, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
   }
 

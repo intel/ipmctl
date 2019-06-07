@@ -732,7 +732,8 @@ struct device_status {
   NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DCPMM
   struct device_error_log_status	error_log_status;               ///> DEPRECATED;
   NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per FIS 1.13+ (Unlatched LSS Details/Extended Details)
-  NVM_UINT8                             reserved[52];                   ///< reserved
+  NVM_UINT8     thermal_throttle_performance_loss_pcnt;   ///< the average percentage loss (0..100) due to thermal throttling since last read in current boot (FIS 2.1+)
+  NVM_UINT8                             reserved[51];                   ///< reserved
 };
 
 /**

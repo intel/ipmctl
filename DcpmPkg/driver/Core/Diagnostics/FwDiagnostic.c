@@ -575,14 +575,14 @@ ThresholdsCheck(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  SENSOR_INFO SensorInfo;
+  SMART_AND_HEALTH_INFO HealthInfo;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&SensorInfo, sizeof(SensorInfo));
+  ZeroMem(&HealthInfo, sizeof(HealthInfo));
 
   if ((NULL == pDimm) || (NULL == pDiagState) || (NULL == ppResultStr)) {
     if (pDiagState != NULL) {
@@ -592,7 +592,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &SensorInfo, NULL, NULL, NULL, NULL);
+  ReturnCode = GetSmartAndHealth(NULL, pDimm->DimmID, &HealthInfo);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to Get SMART Info from Dimm handle 0x%x", pDimm->DeviceHandle.AsUint32);
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -612,9 +612,9 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (SensorInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
+  if (HealthInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, MediaTemperatureThreshold, SensorInfo.MediaTempShutdownThresh);
+      pDimm->DeviceHandle.AsUint32, MediaTemperatureThreshold, HealthInfo.MediaTempShutdownThresh);
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
@@ -629,9 +629,9 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (SensorInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
+  if (HealthInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, SensorInfo.ContrTempShutdownThresh);
+      pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, HealthInfo.ContrTempShutdownThresh);
   }
 
   ReturnCode = GetAlarmThresholds(NULL,
@@ -646,9 +646,9 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (SensorInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, SensorInfo.PercentageRemaining, PercentageRemainingThreshold);
+      pDimm->DeviceHandle.AsUint32, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }
 
 Finish:

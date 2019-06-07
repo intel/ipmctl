@@ -122,7 +122,7 @@ typedef union {
 /**
   Contains SMART and Health attributes of a DIMM
 **/
-typedef struct _SENSOR_INFO {
+typedef struct _SMART_AND_HEALTH_INFO {
   BOOLEAN PercentageRemainingValid;     ///< Indicates if PercentageRemaining is valid
   BOOLEAN MediaTemperatureValid;        ///< Indicates if MediaTemperature is valid
   BOOLEAN ControllerTemperatureValid;   ///< Indicates if ControllerTemperature is valid
@@ -149,7 +149,12 @@ typedef struct _SENSOR_INFO {
   INT16 ControllerThrottlingStartThresh;///< Controller throttling stop temperature threshold in C
   INT16 ControllerThrottlingStopThresh; ///< Controller throttling stop temperature threshold in C
   UINT32 UnlatchedDirtyShutdownCount;   ///< Unlatched Dirty Shutdowns count
-} SENSOR_INFO;
+  UINT32 LatchedLastShutdownStatusDetails;
+  UINT32 UnlatchedLastShutdownStatusDetails;
+  UINT64 LastShutdownTime;
+  UINT8 AitDramEnabled;
+  UINT8 ThermalThrottlePerformanceLossPrct;
+} SMART_AND_HEALTH_INFO;
 
 /**
   Individual sensor attributes struct

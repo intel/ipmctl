@@ -73,6 +73,7 @@
 #define TURBO_POWER_LIMIT_STR       L"TurboModeLimit"
 #define LATCHED_LAST_SHUTDOWN_STATUS_STR L"LatchedLastShutdownStatus"
 #define UNLATCHED_LAST_SHUTDOWN_STATUS_STR L"UnlatchedLastShutdownStatus"
+#define THERMAL_THROTTLE_LOSS_STR   L"ThermalThrottleLossPercent"
 #define LAST_SHUTDOWN_TIME_STR      L"LastShutdownTime"
 #define PHYSICAL_ID_STR             L"PhysicalID"
 #define DIMM_HANDLE_STR             L"DimmHandle"

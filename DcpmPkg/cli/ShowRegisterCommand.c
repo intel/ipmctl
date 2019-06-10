@@ -128,18 +128,15 @@ ShowRegister(
   CHAR16 *pRegisterValues = NULL;
   CHAR16 *pDimmValues = NULL;
   UINT32 Index = 0;
-  UINT32 Index2 = 0;
   COMMAND_STATUS *pCommandStatus = NULL;
   BOOLEAN ShowAllRegisters = FALSE;
   DIMM_BSR Bsr;
-  UINT64 FwMailboxStatus = 0;
-  UINT64 FwMailboxOutput = 0;
+  UINT8 FwMailboxStatus = 0;
   UINT32 DimmCount = 0;
   DIMM_INFO *pDimms = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
-  CHAR16 *FwMailboxSmallOutput = NULL;
   UINT32 DimmIndex = 0;
   UINT32 RegIndex = 0;
 
@@ -226,8 +223,7 @@ ShowRegister(
     }
 
     ReturnCode = pNvmDimmConfigProtocol->RetrieveDimmRegisters(pNvmDimmConfigProtocol,
-        pDimms[Index].DimmID, &Bsr.AsUint64, &FwMailboxStatus,
-        FW_MB_SMALL_OUTPUT_REG_USED, &FwMailboxOutput, pCommandStatus);
+        pDimms[Index].DimmID, &Bsr.AsUint64, &FwMailboxStatus, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Failed to retrieve Dimm Registers");
         goto Finish;
@@ -266,12 +262,7 @@ ShowRegister(
       PRINTER_BUILD_KEY_PATH(pPath, DS_REGISTER_INDEX_PATH, DimmIndex, RegIndex);
       RegIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, REGISTER_TARGET_STR, REGISTER_OS_STR);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  FW Mailbox Status -----------------------------", FORMAT_UINT64_HEX, FwMailboxStatus);
-      for (Index2 = 0; Index2 < FW_MB_SMALL_OUTPUT_REG_USED; Index2++) {
-        FwMailboxSmallOutput = CatSPrint(NULL, L"  FW Mailbox Small Output[%d] --------------------", Index2);
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, FwMailboxSmallOutput, FORMAT_UINT64_HEX, FwMailboxStatus);
-        FREE_POOL_SAFE(FwMailboxSmallOutput);
-      }
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  FW Mailbox Status -----------------------------", FORMAT_UINT8_HEX, FwMailboxStatus);
     }
     DimmIndex++;
   }

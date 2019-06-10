@@ -45,6 +45,9 @@ CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
   4160, //  (512+8)*8
   4224  //  (512+16)*8
 };
+#ifndef OS_BUILD
+extern EFI_GUID gDcpmmProtocolGuid;
+#endif
 
 #ifdef OS_BUILD
 /*
@@ -1769,10 +1772,10 @@ FwCmdIdDimm (
 		goto Finish;
 	}
 	CopyMem_S(pPayload, sizeof(*pPayload), pFwCmd->OutPayload, sizeof(*pPayload));
-
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
+
   return ReturnCode;
 }
 
@@ -3778,26 +3781,6 @@ Finish:
 }
 
 /**
-  Free a mailbox structure.
-  Frees the resources held by a mailbox
-
-  @param[out] pMb: Mailbox structure to free
-**/
-VOID
-FreeMailbox(
-     OUT MAILBOX *pMb
-  )
-{
-  NVDIMM_ENTRY();
-  if (pMb != NULL) {
-    FREE_POOL_SAFE(pMb->ppMbIn);
-    FREE_POOL_SAFE(pMb->ppMbOut);
-  }
-  FREE_POOL_SAFE(pMb);
-  NVDIMM_EXIT();
-}
-
-/**
   Free memory for a single block window
   Frees the resources held by a block window
 
@@ -3850,149 +3833,6 @@ AssignSpaAddress(
 
 Finish:
   return ReturnCode;
-}
-
-/**
-  Create and Configure the OS Mailbox
-  Using the NVDIMM region table, determine the location of the OS mailbox
-  in the system physical address space. For each piece of the mailbox in SPA
-  map them into the virtual address space and record the location.
-
-  @param[in] pDimm: The DIMM to create the OS mailbox for
-  @parma[in] pITbl: the interleave table referenced by the mdsarmt_tbl
-
-  @retval Success - The pointer to the completed mailbox structure
-  @retval Error - NULL on error
-**/
-MAILBOX *
-CreateMailbox(
-  IN     DIMM *pDimm,
-  IN     InterleaveStruct *pITbl
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  MAILBOX *pMb = NULL;
-  UINT32 Index = 0;
-  UINT64 SpaAddr = 0;
-
-  NVDIMM_ENTRY();
-  pMb = (MAILBOX *)AllocateZeroPool(sizeof(*pMb));
-
-  if (!pMb) {
-    NVDIMM_WARN("Unable to allocate mailbox");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto out;
-  }
-
-  pMb->SequenceBit = 0;
-
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_COMMAND_OFFSET,
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
-    (VOID *) &(pMb->pCommand));
-  if (EFI_ERROR(ReturnCode)) {
-    goto after_mb;
-  }
-
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE0_OFFSET,
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
-    (VOID *)&(pMb->pNonce0));
-  if (EFI_ERROR(ReturnCode)) {
-    goto after_mb;
-  }
-
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_NONCE1_OFFSET,
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
-    (VOID *)&(pMb->pNonce1));
-  if (EFI_ERROR(ReturnCode)) {
-    goto after_mb;
-  }
-
-  for (Index = 0; Index < IN_PAYLOAD_NUM; Index++) {
-    ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_IN_PAYLOAD0_OFFSET + (Index * PAYLOAD_BETWEEN_SIZE),
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pInPayload[Index]));
-    if (EFI_ERROR(ReturnCode)) {
-      goto after_mb;
-    }
-  }
-
-  ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_STATUS_OFFSET,
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
-    (VOID *)&(pMb->pStatus));
-  if (EFI_ERROR(ReturnCode)) {
-    goto after_mb;
-  }
-
-  for (Index = 0; Index < OUT_PAYLOAD_NUM; Index++) {
-    ReturnCode = AssignSpaAddress(OS_MB_OFFSET + MB_OUT_PAYLOAD0_OFFSET + (Index * PAYLOAD_BETWEEN_SIZE),
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, (VOID *)&(pMb->pOutPayload[Index]));
-    if (EFI_ERROR(ReturnCode)) {
-      goto after_mb;
-    }
-  }
-
-  ReturnCode = AssignSpaAddress(BOOT_STATUS_REGISTER_OFFSET,
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl,
-    (VOID *)&(pMb->pBsr));
-  if (EFI_ERROR(ReturnCode)) {
-    goto after_mb;
-  }
-
-  if (pITbl != NULL) {
-    pMb->MbInLineSize = pITbl->LineSize;
-    pMb->MbOutLineSize = pITbl->LineSize;
-    pMb->NumMbInSegments = IN_MB_SIZE / pITbl->LineSize;
-    pMb->NumMbOutSegments = OUT_MB_SIZE / pITbl->LineSize;
-  } else {
-    pMb->MbInLineSize = IN_MB_SIZE;
-    pMb->MbOutLineSize = OUT_MB_SIZE;
-    pMb->NumMbInSegments = 1;
-    pMb->NumMbOutSegments = 1;
-  }
-  pMb->ppMbIn = (volatile VOID **) AllocatePool(pMb->NumMbInSegments * sizeof(*pMb->ppMbIn));
-
-  if (!pMb->ppMbIn) {
-    NVDIMM_WARN("Unable to allocate OS In Mailbox");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto after_mb;
-  }
-
-  for (Index = 0; Index < pMb->NumMbInSegments; Index++) {
-    ReturnCode = RdpaToSpa(
-      OS_MB_IN_OFFSET + (Index * pMb->MbInLineSize),
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
-    pMb->ppMbIn[Index] = (VOID *) SpaAddr;
-    if (ReturnCode != EFI_SUCCESS || !pMb->ppMbIn[Index])
-      goto after_os_in;
-  }
-
-  pMb->ppMbOut = (volatile VOID **) AllocatePool(pMb->NumMbOutSegments * sizeof(*pMb->ppMbOut));
-
-  if (!pMb->ppMbOut) {
-    NVDIMM_WARN("Unable to allocate OS Out Mailbox");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto after_os_in;
-  }
-
-  for (Index = 0; Index < pMb->NumMbOutSegments; Index++) {
-    ReturnCode = RdpaToSpa(
-      OS_MB_OUT_OFFSET + (Index * pMb->MbOutLineSize),
-      pDimm->pRegionMappingStructure, pDimm->pCtrlSpaTbl, pITbl, &SpaAddr);
-    pMb->ppMbOut[Index] = (VOID *) SpaAddr;
-    if (ReturnCode != EFI_SUCCESS || !pMb->ppMbOut[Index])
-      goto after_os_out;
-  }
-  NVDIMM_EXIT();
-  return pMb;
-
-after_os_out:
-  FreePool((VOID *)pMb->ppMbOut);
-after_os_in:
-  FreePool((VOID *)pMb->ppMbIn);
-after_mb:
-  FreePool(pMb);
-out:
-  NVDIMM_EXIT();
-  return NULL;
 }
 
 static
@@ -4574,7 +4414,7 @@ GetAndParseFwErrorLogForDimm(
       SmallPayloadRawSize = (LogEntrySize * OutPayloadGetErrorLog.ReturnCount);
       CopyMem_S((VOID *)LargeOutputOffset,
         SmallPayloadRawSize,
-        OutPayloadGetErrorLog.LogEntries, 
+        OutPayloadGetErrorLog.LogEntries,
         SmallPayloadRawSize);
 
       if (OUT_MB_SIZE >= LargeOutputOffset + SmallPayloadRawSize - (UINT64)pLargeOutputPayload) {
@@ -4993,9 +4833,7 @@ InitializeDimm (
   ControlRegionTbl *pControlRegTbls[MAX_IFC_NUM];
   UINT32 ControlRegTblsNum = MAX_IFC_NUM;
   UINT32 PcdSize = 0;
-
   ZeroMem(pControlRegTbls, sizeof(pControlRegTbls));
-
   NVDIMM_ENTRY();
   pNewDimm = (DIMM *) AllocateZeroPool(sizeof(*pNewDimm));
   *ppDimm = pNewDimm;
@@ -5004,25 +4842,9 @@ InitializeDimm (
     goto out;
   }
 
-#ifdef OS_BUILD
-  // In OS, we don't need a mailbox to talk to the dimm
+  // We don't need a mailbox to talk to the dimm
   CHECK_RESULT(GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, NULL, FALSE,
       0, &pNewDimm->pRegionMappingStructure), after_dimm);
-#else
-  ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, &gSpaRangeMailboxCustomGuid, FALSE, 0,
-    &pNewDimm->pRegionMappingStructure);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to initialize Intel NVM Dimm with custom GUID. Trying NVDIMM control region GUID");
-    /* backwards compatibility for NVDIMM control region GUID previously used to map mailbox spa */
-    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, &gSpaRangeControlRegionGuid, FALSE, 0,
-      &pNewDimm->pRegionMappingStructure);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Unable to initialize Intel NVM Dimm. NvDimmRegion for Control Region is missing in NFIT.");
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto after_dimm;
-    }
-  }
-#endif
 
   ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNewDimm->pRegionMappingStructure, &pControlRegTbl);
   if ((EFI_ERROR(ReturnCode) || (pControlRegTbl == NULL))) {
@@ -5091,24 +4913,16 @@ InitializeDimm (
 
   if ((SPD_INTEL_VENDOR_ID == pNewDimm->SubsystemVendorId) &&
     IsSubsystemDeviceIdSupported(pNewDimm)) {
-#ifndef OS_BUILD
-    pNewDimm->pHostMailbox = CreateMailbox(pNewDimm, pMbITbl);
-
-    if (!pNewDimm->pHostMailbox) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto after_dimm;
-    }
-#endif // OS_BUILD
     pPayload = AllocateZeroPool(sizeof(*pPayload));
     if (!pPayload) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_mailbox;
+      goto after_dimm;
     }
 
     ReturnCode = FwCmdIdDimm(pNewDimm, pPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      goto after_mailbox;
+      goto after_dimm;
     }
 
     NVDIMM_DBG("IdentifyDimm data:\n");
@@ -5134,7 +4948,7 @@ InitializeDimm (
     pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
     if (pPartitionInfoPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_mailbox;
+      goto after_dimm;
     }
 
     ReturnCode = FwCmdGetDimmPartitionInfo(pNewDimm, pPartitionInfoPayload);
@@ -5144,7 +4958,7 @@ InitializeDimm (
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
-        goto after_mailbox;
+        goto after_dimm;
       }
     }
 
@@ -5207,7 +5021,7 @@ InitializeDimm (
     pDimmSecurityPayload = AllocateZeroPool(sizeof(*pDimmSecurityPayload));
     if (pDimmSecurityPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_mailbox;
+      goto after_dimm;
     }
     ReturnCode = FwCmdGetSecurityInfo(pNewDimm, pDimmSecurityPayload);
     if (EFI_ERROR(ReturnCode)) {
@@ -5229,7 +5043,7 @@ InitializeDimm (
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("No Interleave Table found for block window but the index exists.");
         ReturnCode = EFI_DEVICE_ERROR;
-        goto after_mailbox;
+        goto after_dimm;
       }
     }
 
@@ -5246,10 +5060,6 @@ InitializeDimm (
   }
   goto out;
 
-after_mailbox:
-#ifndef OS_BUILD
-  FreeMailbox(pNewDimm->pHostMailbox);
-#endif // OS_BUILD
 after_dimm:
   FREE_POOL_SAFE(pNewDimm);
   *ppDimm = NULL;
@@ -5307,9 +5117,6 @@ FreeDimm(
   if (pDimm == NULL) {
     return;
   }
-#ifndef OS_BUILD
-  FreeMailbox(pDimm->pHostMailbox);
-#endif // OS_BUILD
   FreeBlockWindow(pDimm->pBw);
   FREE_POOL_SAFE(pDimm);
   NVDIMM_EXIT();
@@ -5905,65 +5712,6 @@ Finish:
   return ReturnCode;
 }
 
-/**
-  Get requested number of specific DIMM registers for given DIMM id
-
-  @param[in] pDimm - pointer to DIMM to get registers for.
-  @param[out] pBsr - Pointer to buffer for Boot Status register, contains
-              high and low 4B register.
-  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status Register
-  @param[in] SmallOutputRegisterCount - Number of small output registers to get, max 32.
-  @param[out] pFwMailboxOutput - Pointer to buffer for Host Fw Mailbox small output Register.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-GetKeyDimmRegisters(
-  IN     DIMM *pDimm,
-     OUT UINT64 *pBsr,
-     OUT UINT64 *pFwMailboxStatus,
-  IN     UINT32 SmallOutputRegisterCount,
-     OUT UINT64 *pFwMailboxOutput
-  )
-{
-#ifndef OS_BUILD
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT32 Index = 0;
-  MAILBOX *pMailbox = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pDimm == NULL || pBsr == NULL || pFwMailboxStatus == NULL || pFwMailboxOutput == NULL ||
-      SmallOutputRegisterCount > OUT_PAYLOAD_NUM) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  /** Get Boot Status Register **/
-  if (pDimm->pHostMailbox == NULL || pDimm->pHostMailbox->pBsr == NULL) {
-    NVDIMM_WARN("Unable to get the DIMMs BSR.");
-    goto Finish;
-  }
-  CopyMem(pBsr, (VOID *)pDimm->pHostMailbox->pBsr, sizeof(*pBsr));
-
-  /** Get Host FW Mailbox Register **/
-  *pFwMailboxStatus = *pDimm->pHostMailbox->pStatus;
-
-  /** Get specified number of Host FW Mailbox Small Output Registers **/
-  for (Index = 0; Index < SmallOutputRegisterCount; Index++) {
-    CopyMem(&pFwMailboxOutput[Index],
-        (UINT8 *)  pDimm->pHostMailbox->pOutPayload + (Index * sizeof(*pMailbox->pOutPayload)),
-        sizeof(*pFwMailboxOutput));
-  }
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-#else
-  return EFI_UNSUPPORTED;
-#endif //OS_BUILD
-}
 
 /**
   Matches FW return code to one of available EFI_STATUS EFI base types
@@ -6909,16 +6657,445 @@ PassThru(
   }
 
   if (IS_SMBUS_ENABLED(pAttribs)) {
-#ifndef OS_BUILD
-    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
-#else
+#ifdef OS_BUILD
     ReturnCode = EFI_UNSUPPORTED;
-#endif // !OS_BUILD
-  }
-  else {
+  } else {
     ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
   }
+#else
+    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
+  } else {
+    ReturnCode = DcpmmCmd(pDimm, pCmd, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt);
+  }
+#endif // OS_BUILD
 
 Finish:
   return ReturnCode;
 }
+
+#ifndef OS_BUILD
+/**
+  Get boot status register by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pMailboxStatus Optional pointer to store FW Mailbox Status Code
+  @param[out] pBsrValue Boot status register value
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmGetBsr(
+  IN     struct _DIMM *pDimm,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+     OUT UINT8 *pMailboxStatus OPTIONAL,
+     OUT UINT64 *pBsrValue
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DCPMM_FIS_INPUT *pInputPayload = NULL;
+  DCPMM_FIS_OUTPUT *pOutputPayload = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pBsrValue == NULL) {
+    goto Finish;
+  }
+
+  pInputPayload = (DCPMM_FIS_INPUT *)AllocateZeroPool(sizeof(*pInputPayload));
+  if (pInputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pOutputPayload = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(sizeof(*pOutputPayload));
+  if (pOutputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /** Prepare input payload structure **/
+  pInputPayload->Head.FisCmd = (UINT16)FIS_CMD_GET_BOOT_STATUS;
+  pInputPayload->Head.DataSize = 0;
+
+  /** Prepare output payload structure **/
+  pOutputPayload->Head.DataSize = sizeof(pOutputPayload->Data.Bsr);
+
+  ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmFisRequest(
+    DcpmmInterface,
+    pDimm->DeviceHandle.AsUint32,
+    pInputPayload,
+    pOutputPayload,
+    Timeout,
+    pMailboxStatus
+  );
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Error detected when sending DcpmmFisRequest command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    goto Finish;
+  }
+  CopyMem_S(pBsrValue, sizeof(pOutputPayload->Data.Bsr), &pOutputPayload->Data.Bsr, sizeof(pOutputPayload->Data.Bsr));
+
+Finish:
+  FREE_POOL_SAFE(pInputPayload);
+  FREE_POOL_SAFE(pOutputPayload);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
+}
+
+/**
+  Passthrough FIS command by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in, out] pCmd Firmware command structure pointer
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmCmd(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DCPMM_FIS_INPUT *pInputPayload = NULL;
+  DCPMM_FIS_OUTPUT *pOutputPayload = NULL;
+  DCPMM_FIS_OUTPUT *pLargePayloadInfo = NULL;
+  UINT16 Command = 0;
+
+  NVDIMM_ENTRY();
+
+  if(pDimm == NULL || pCmd == NULL) {
+    goto Finish;
+  }
+
+  pInputPayload = (DCPMM_FIS_INPUT *)AllocateZeroPool(sizeof(*pInputPayload) + pCmd->InputPayloadSize);
+  if (pInputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pOutputPayload = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(sizeof(*pOutputPayload) + pCmd->OutputPayloadSize);
+  if (pOutputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /** Get large payload info **/
+  if (pCmd->LargeInputPayloadSize > 0 || pCmd->LargeOutputPayloadSize > 0) {
+    pLargePayloadInfo = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(sizeof(*pLargePayloadInfo));
+    if (pLargePayloadInfo == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
+    ReturnCode = DcpmmLargePayloadInfo(pDimm, Timeout, DcpmmInterface, pLargePayloadInfo, &pCmd->Status);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Error detected when sending DcpmmLargePayloadInfo");
+      FW_CMD_ERROR_TO_EFI_STATUS(pCmd, ReturnCode);
+      goto Finish;
+    }
+  }
+
+  /** Prepare input payload structure **/
+  Command = (UINT16)pCmd->SubOpcode << EXT_SUB_OP_SHIFT | (UINT16)pCmd->Opcode;
+  pInputPayload->Head.FisCmd = Command;
+  pInputPayload->Head.DataSize = pCmd->InputPayloadSize;
+  CopyMem_S(pInputPayload->Data.Fis.Payload, pCmd->InputPayloadSize, pCmd->InputPayload, pCmd->InputPayloadSize);
+
+  /** Prepare output payload structure **/
+  pOutputPayload->Head.DataSize = pCmd->OutputPayloadSize;
+
+  /** Write data to large input payload **/
+  if (pCmd->LargeInputPayloadSize > 0) {
+    if (pCmd->LargeInputPayloadSize > pLargePayloadInfo->Data.LpInfo.InpPayloadSize) {
+      NVDIMM_ERR("Available large input payload size is not enough");
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    } else {
+      ReturnCode = DcpmmLargePayloadWrite(pDimm, pCmd->LargeInputPayload, pCmd->LargeInputPayloadSize,
+        pLargePayloadInfo->Data.LpInfo.DataChunkSize, Timeout, DcpmmInterface, &pCmd->Status);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_ERR("Error detected when sending DcpmmLargePayloadWrite");
+        FW_CMD_ERROR_TO_EFI_STATUS(pCmd, ReturnCode);
+        goto Finish;
+      }
+    }
+  }
+
+  ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmFisRequest(
+    DcpmmInterface,
+    pDimm->DeviceHandle.AsUint32,
+    pInputPayload,
+    pOutputPayload,
+    Timeout,
+    &pCmd->Status
+  );
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Error detected when sending DcpmmFisRequest command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    FW_CMD_ERROR_TO_EFI_STATUS(pCmd, ReturnCode);
+    goto Finish;
+  }
+  CopyMem_S(pCmd->OutPayload, pCmd->OutputPayloadSize, pOutputPayload->Data.Fis.Payload, pCmd->OutputPayloadSize);
+
+  /** Read data from large output payload **/
+  if (pCmd->LargeOutputPayloadSize > 0) {
+    if (pCmd->LargeOutputPayloadSize > pLargePayloadInfo->Data.LpInfo.OutPayloadSize) {
+      NVDIMM_ERR("Data in large output payload cannot be fully filled");
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    } else {
+      ReturnCode = DcpmmLargePayloadRead(pDimm, pCmd->LargeOutputPayloadSize, pLargePayloadInfo->Data.LpInfo.DataChunkSize,
+        Timeout, DcpmmInterface, pCmd->LargeOutputPayload, &pCmd->Status);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_ERR("Error detected when sending DcpmmLargePayloadRead");
+        FW_CMD_ERROR_TO_EFI_STATUS(pCmd, ReturnCode);
+        goto Finish;
+      }
+    }
+  }
+
+Finish:
+  FREE_POOL_SAFE(pInputPayload);
+  FREE_POOL_SAFE(pOutputPayload);
+  FREE_POOL_SAFE(pLargePayloadInfo);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
+}
+
+/**
+  Get large payload info by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pOutput Large payload info output data buffer
+  @param[out] pStatus FIS request status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadInfo(
+  IN     struct _DIMM *pDimm,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+     OUT DCPMM_FIS_OUTPUT *pOutput,
+     OUT UINT8 *pStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DCPMM_FIS_INPUT *pLargeInputPayload = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pOutput == NULL || pStatus == NULL) {
+    goto Finish;
+  }
+
+  pLargeInputPayload = (DCPMM_FIS_INPUT *)AllocateZeroPool(sizeof(*pLargeInputPayload));
+  if (pLargeInputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pLargeInputPayload->Head.FisCmd = (UINT16)FIS_CMD_GET_LP_MB_INFO;
+  pLargeInputPayload->Head.DataSize = 0;
+
+  pOutput->Head.DataSize = sizeof(pOutput->Data.LpInfo);
+
+  ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmFisRequest(
+    DcpmmInterface,
+    pDimm->DeviceHandle.AsUint32,
+    pLargeInputPayload,
+    pOutput,
+    Timeout,
+    pStatus
+  );
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Error detected when sending DcpmmFisRequest command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    goto Finish;
+  }
+
+Finish:
+  FREE_POOL_SAFE(pLargeInputPayload);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
+}
+
+/**
+  Write large payload by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] pInput Input data buffer
+  @param[in] InputSize Total input data size
+  @param[in] MaxChunkSize Maximum chunk of data to write
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pStatus FIS request status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadWrite(
+  IN     struct _DIMM *pDimm,
+  IN     UINT8 *pInput,
+  IN     UINT32 InputSize,
+  IN     UINT32 MaxChunkSize,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+     OUT UINT8 *pStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DCPMM_FIS_INPUT *pLargeInputPayload = NULL;
+  UINT32 Offset = 0;
+  UINT32 CurrentChunkSize = MaxChunkSize < InputSize ? MaxChunkSize : InputSize;
+
+  NVDIMM_ENTRY();
+
+  if (InputSize <= 0 || pDimm == NULL || pInput == NULL || pStatus == NULL) {
+    goto Finish;
+  }
+
+  pLargeInputPayload = (DCPMM_FIS_INPUT *)AllocateZeroPool(sizeof(*pLargeInputPayload) + CurrentChunkSize);
+  if (pLargeInputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pLargeInputPayload->Head.FisCmd = (UINT16)FIS_CMD_WRITE_LP_INPUT_MB;
+  pLargeInputPayload->Head.DataSize = sizeof(pLargeInputPayload->Data.LpWrite) + MaxChunkSize;
+  for (Offset = 0; Offset < InputSize; Offset += MaxChunkSize) {
+    pLargeInputPayload->Data.LpWrite.Offset = Offset;
+    if (InputSize - Offset < MaxChunkSize) {
+      CurrentChunkSize = InputSize - Offset;
+      pLargeInputPayload->Head.DataSize = sizeof(pLargeInputPayload->Data.LpWrite) + CurrentChunkSize;
+      pLargeInputPayload->Data.LpWrite.Size = CurrentChunkSize;
+    }
+    CopyMem_S(pLargeInputPayload->Data.LpWrite.Payload, CurrentChunkSize, pInput + Offset, CurrentChunkSize);
+
+    ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmFisRequest(
+      DcpmmInterface,
+      pDimm->DeviceHandle.AsUint32,
+      pLargeInputPayload,
+      NULL,
+      Timeout,
+      pStatus
+    );
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Error detected when sending DcpmmFisRequest command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+      goto Finish;
+    }
+  }
+
+
+Finish:
+  FREE_POOL_SAFE(pLargeInputPayload);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
+}
+
+/**
+  Read large payload by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] OutputSize Total output data size
+  @param[in] MaxChunkSize Maximum chunk of data to read
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pOutput Output data buffer
+  @param[out] pStatus FIS request status pointer
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadRead(
+  IN     struct _DIMM *pDimm,
+  IN     UINT32 OutputSize,
+  IN     UINT32 MaxChunkSize,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+  IN OUT UINT8 *pOutput,
+     OUT UINT8 *pStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DCPMM_FIS_INPUT *pLargeInputPayload = NULL;
+  DCPMM_FIS_OUTPUT *pLargeOutputPayload = NULL;
+  UINT32 Offset = 0;
+  UINT32 CurrentChunkSize = MaxChunkSize < OutputSize ? MaxChunkSize : OutputSize;
+
+  NVDIMM_ENTRY();
+
+  if (OutputSize <= 0 || pDimm == NULL || pOutput == NULL || pStatus == NULL) {
+    goto Finish;
+  }
+
+  pLargeInputPayload = (DCPMM_FIS_INPUT *)AllocateZeroPool(sizeof(*pLargeInputPayload));
+  if (pLargeInputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pLargeOutputPayload = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(
+    sizeof(*pLargeOutputPayload) + CurrentChunkSize
+  );
+  if (pLargeOutputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pLargeInputPayload->Head.FisCmd = (UINT16)FIS_CMD_READ_LP_OUTPUT_MB;
+  pLargeInputPayload->Head.DataSize = sizeof(pLargeInputPayload->Data.LpRead);
+  pLargeInputPayload->Data.LpRead.Size = MaxChunkSize;
+  for (Offset = 0; Offset < OutputSize; Offset += MaxChunkSize) {
+    pLargeInputPayload->Data.LpRead.Offset = Offset;
+    if (OutputSize - Offset < MaxChunkSize) {
+      CurrentChunkSize = OutputSize - Offset;
+      pLargeInputPayload->Data.LpRead.Size = CurrentChunkSize;
+    }
+
+    pLargeOutputPayload->Head.DataSize = CurrentChunkSize;
+
+    ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmFisRequest(
+      DcpmmInterface,
+      pDimm->DeviceHandle.AsUint32,
+      pLargeInputPayload,
+      pLargeOutputPayload,
+      Timeout,
+      pStatus
+    );
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Error detected when sending DcpmmFisRequest command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+      goto Finish;
+    }
+    CopyMem_S(pOutput + Offset, CurrentChunkSize, &pLargeOutputPayload->Data.LpData, CurrentChunkSize);
+  }
+
+Finish:
+  FREE_POOL_SAFE(pLargeInputPayload);
+  FREE_POOL_SAFE(pLargeOutputPayload);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
+}
+#endif // !OS_BUILD

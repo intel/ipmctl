@@ -35,7 +35,7 @@
   @retval EFI_DEVICE_ERROR       Ipmi Device hardware error.
   @retval EFI_TIMEOUT            The command time out.
   @retval EFI_UNSUPPORTED        The command was not successfully sent to the device.
-  @retval EFI_OUT_OF_RESOURCES   The resource allocation is out of resource or data size error.
+  @retval EFI_OUT_OF_RESOURCES   The resource allocation is out of resources or data size error.
 **/
 EFI_STATUS
 EFIAPI

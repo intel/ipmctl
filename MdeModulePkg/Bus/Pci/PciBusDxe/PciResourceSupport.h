@@ -82,7 +82,7 @@ InsertResourceNode (
 
 /**
   This routine is used to merge two different resource trees in need of
-  resoure degradation.
+  resource degradation.
 
   For example, if an upstream PPB doesn't support,
   prefetchable memory decoding, the PCI bus driver will choose to call this function
@@ -303,7 +303,7 @@ ProgramResource (
   Program Bar register for PCI device.
 
   @param Base  Base address for PCI device resource to be progammed.
-  @param Node  Point to resoure node structure.
+  @param Node  Point to resource node structure.
 
 **/
 VOID
@@ -316,7 +316,7 @@ ProgramBar (
   Program IOV VF Bar register for PCI device.
 
   @param Base  Base address for PCI device resource to be progammed.
-  @param Node  Point to resoure node structure.
+  @param Node  Point to resource node structure.
 
 **/
 EFI_STATUS
@@ -329,7 +329,7 @@ ProgramVfBar (
   Program PCI-PCI bridge apperture.
 
   @param Base  Base address for resource.
-  @param Node  Point to resoure node structure.
+  @param Node  Point to resource node structure.
 
 **/
 VOID

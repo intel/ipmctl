@@ -734,7 +734,7 @@ UpdateComAttributeFromVariable (
   @retval EFI_UNSUPPORTED The type passed in is not in the 3 types defined.
   @retval EFI_NOT_FOUND   If the EFI Variable defined in UEFI spec with name "ConOutDev", 
                           "ConInDev" or "ConErrDev" doesn't exists.
-  @retval EFI_OUT_OF_RESOURCES Not enough resource to complete the operations.
+  @retval EFI_OUT_OF_RESOURCES Not enough resources to complete the operations.
   @retval EFI_SUCCESS          Function completes successfully.
 
 **/

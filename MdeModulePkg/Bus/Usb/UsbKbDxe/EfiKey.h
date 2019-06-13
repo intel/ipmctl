@@ -383,7 +383,7 @@ UsbKeyboardComponentNameGetControllerName (
 // Functions of Simple Text Input Protocol
 //
 /**
-  Reset the input device and optionaly run diagnostics
+  Reset the input device and optionally run diagnostics
 
   There are 2 types of reset for USB keyboard.
   For non-exhaustive reset, only keyboard buffer is cleared.

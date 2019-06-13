@@ -383,7 +383,7 @@ KeyboardWaitForKeyEx (
 }
 
 /**
-  Reset the input device and optionaly run diagnostics
+  Reset the input device and optionally run diagnostics
 
   @param This                     Protocol instance pointer.
   @param ExtendedVerification     Driver may perform diagnostics on reset.

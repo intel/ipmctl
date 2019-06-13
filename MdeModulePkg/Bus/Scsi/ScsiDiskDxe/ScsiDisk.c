@@ -3609,10 +3609,10 @@ ScsiDiskRead10 (
   UINTN       Action;
 
   //
-  // Implement a backoff algorithem to resolve some compatibility issues that
+  // Implement a backoff algorithm to resolve some compatibility issues that
   // some SCSI targets or ATAPI devices couldn't correctly response reading/writing
   // big data in a single operation.
-  // This algorithem will at first try to execute original request. If the request fails
+  // This algorithm will at first try to execute original request. If the request fails
   // with media error sense data or else, it will reduce the transfer length to half and
   // try again till the operation succeeds or fails with one sector transfer length.
   //
@@ -3734,10 +3734,10 @@ ScsiDiskWrite10 (
   UINTN       Action;
 
   //
-  // Implement a backoff algorithem to resolve some compatibility issues that
+  // Implement a backoff algorithm to resolve some compatibility issues that
   // some SCSI targets or ATAPI devices couldn't correctly response reading/writing
   // big data in a single operation.
-  // This algorithem will at first try to execute original request. If the request fails
+  // This algorithm will at first try to execute original request. If the request fails
   // with media error sense data or else, it will reduce the transfer length to half and
   // try again till the operation succeeds or fails with one sector transfer length.
   //
@@ -3857,10 +3857,10 @@ ScsiDiskRead16 (
   UINTN       Action;
 
   //
-  // Implement a backoff algorithem to resolve some compatibility issues that
+  // Implement a backoff algorithm to resolve some compatibility issues that
   // some SCSI targets or ATAPI devices couldn't correctly response reading/writing
   // big data in a single operation.
-  // This algorithem will at first try to execute original request. If the request fails
+  // This algorithm will at first try to execute original request. If the request fails
   // with media error sense data or else, it will reduce the transfer length to half and
   // try again till the operation succeeds or fails with one sector transfer length.
   //
@@ -3981,10 +3981,10 @@ ScsiDiskWrite16 (
   UINTN       Action;
 
   //
-  // Implement a backoff algorithem to resolve some compatibility issues that
+  // Implement a backoff algorithm to resolve some compatibility issues that
   // some SCSI targets or ATAPI devices couldn't correctly response reading/writing
   // big data in a single operation.
-  // This algorithem will at first try to execute original request. If the request fails
+  // This algorithm will at first try to execute original request. If the request fails
   // with media error sense data or else, it will reduce the transfer length to half and
   // try again till the operation succeeds or fails with one sector transfer length.
   //

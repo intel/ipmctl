@@ -1,5 +1,5 @@
 /** @file
-  Ip4 internal functions and type defintions.
+  Ip4 internal functions and type definitions.
   
 Copyright (c) 2005 - 2017, Intel Corporation. All rights reserved.<BR>
 (C) Copyright 2015 Hewlett-Packard Development Company, L.P.<BR>

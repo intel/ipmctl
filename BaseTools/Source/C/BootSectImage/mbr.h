@@ -1,6 +1,6 @@
 /** @file
 
-  MBR Partition Entry and Table structure defintions.
+  MBR Partition Entry and Table structure definitions.
 
 Copyright (c) 2006 - 2008, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          

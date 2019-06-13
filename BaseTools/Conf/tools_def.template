@@ -7645,7 +7645,7 @@ RELEASE_RVCTCYGWIN_ARM_CC_FLAGS  = "$(CCPATH_FLAG)" $(ARCHCC_FLAGS) $(PLATFORM_F
 *_RVCTCYGWIN_ARM_FROMELF_PATH    = ENV(WORKSPACE)/BaseTools/Bin/CYGWIN_NT-5.1-i686/armcc_wrapper.py
 
 #################
-# ASM 16 linker defintions
+# ASM 16 linker definitions
 #################
 *_*_*_ASMLINK_PATH                 = DEF(WINDDK_BIN16)\link16.exe
 *_*_*_ASMLINK_FLAGS                = /nologo /tiny

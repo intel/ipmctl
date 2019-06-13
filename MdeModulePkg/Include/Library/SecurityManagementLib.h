@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define __SECURITY_MANAGEMENT_LIB_H__
 
 //
-// Authentication Operation defintions for User Identity (UID), Measured and Secure boot.
+// Authentication Operation definitions for User Identity (UID), Measured and Secure boot.
 //
 #define EFI_AUTH_OPERATION_NONE                0x00
 #define EFI_AUTH_OPERATION_VERIFY_IMAGE        0x01

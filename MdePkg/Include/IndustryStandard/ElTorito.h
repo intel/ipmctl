@@ -1,6 +1,6 @@
 /** @file
   ElTorito Partitions Format Definition. 
-  This file includes some defintions from 
+  This file includes some definitions from 
   1. "El Torito" Bootable CD-ROM Format Specification, Version 1.0.
   2. Volume and File Structure of CDROM for Information Interchange, 
      Standard ECMA-119. (IS0 9660)

@@ -1294,7 +1294,7 @@ XhcPeiInitSched (
   );
 
 /**
-  Free the resouce allocated at initializing schedule.
+  Free the resource allocated at initializing schedule.
 
   @param  Xhc       The XHCI device.
 

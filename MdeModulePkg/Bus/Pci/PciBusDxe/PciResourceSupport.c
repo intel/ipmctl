@@ -1,5 +1,5 @@
 /** @file
-  PCI resouces support functions implemntation for PCI Bus module.
+  PCI resources support functions implemntation for PCI Bus module.
 
 Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
@@ -335,7 +335,7 @@ CalculateApertureIo16 (
   This function is used to calculate the resource aperture
   for a given bridge device.
 
-  @param Bridge      PCI resouce node for given bridge device.
+  @param Bridge      PCI resource node for given bridge device.
 
 **/
 VOID
@@ -856,7 +856,7 @@ CreateResourceMap (
                        );
 
       //
-      // Recursively create resouce map on this bridge
+      // Recursively create resource map on this bridge
       //
       CreateResourceMap (
         Temp,
@@ -1222,7 +1222,7 @@ BridgeSupportResourceDecode (
   @param Base     Base address of resource to be progammed.
   @param Bridge   PCI resource node for the bridge device.
 
-  @retval EFI_SUCCESS            Successfully to program all resouces
+  @retval EFI_SUCCESS            Successfully to program all resources
                                  on given PCI bridge device.
   @retval EFI_OUT_OF_RESOURCES   Base is all one.
 

@@ -105,7 +105,7 @@ InternalShellProtocolIsSimpleFileSystemPresent(
   @param[in] DevicePath     pointer to device path that has been mapped.
 
   @retval EFI_SUCCESS   the operation was successful.
-  @return other         an error ocurred
+  @return other         an error occurred
 
   @sa LocateHandle
   @sa OpenProtocol
@@ -945,7 +945,7 @@ EfiShellBatchIsActive (
 
   @retval EFI_SUCCESS             the file is open and FileHandle is valid
   @retval EFI_UNSUPPORTED         the device path cotained non-path elements
-  @retval other                   an error ocurred.
+  @retval other                   an error occurred.
 **/
 EFI_STATUS
 InternalOpenFileDevicePath(
@@ -1938,7 +1938,7 @@ typedef struct {
   @param[in] Node     The node to copy from.
   @param[in] Save     TRUE to set Node->Handle to NULL, FALSE otherwise.
 
-  @retval NULL        a memory allocation error ocurred
+  @retval NULL        a memory allocation error occurred
   @return != NULL     a pointer to the new node
 **/
 EFI_SHELL_FILE_INFO*
@@ -1990,7 +1990,7 @@ InternalDuplicateShellFileInfo(
   @param[in] Handle           Handle member initial value.
   @param[in] Info             Info struct to copy.
 
-  @retval NULL                An error ocurred.
+  @retval NULL                An error occurred.
   @return                     a pointer to the newly allocated structure.
 **/
 EFI_SHELL_FILE_INFO *
@@ -3280,7 +3280,7 @@ EfiShellIsRootShell(
   up to caller to free the memory.
 
   @retval NULL    No alias' were found
-  @retval NULL    An error ocurred getting alias'
+  @retval NULL    An error occurred getting alias'
   @return !NULL   a list of all alias'
 **/
 CHAR16 *
@@ -3382,7 +3382,7 @@ ToLower (
                                 If Alias is NULL, ReturnedData points to a ';'
                                 delimited list of alias (e.g.
                                 ReturnedData = "dir;del;copy;mfp") that is NULL-terminated.
-  @retval NULL                  an error ocurred
+  @retval NULL                  an error occurred
   @retval NULL                  Alias was not a valid Alias
 **/
 CONST CHAR16 *

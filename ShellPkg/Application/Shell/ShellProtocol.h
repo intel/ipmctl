@@ -290,7 +290,7 @@ EfiShellBatchIsActive (
 
   @retval EFI_SUCCESS             the file is open and FileHandle is valid
   @retval EFI_UNSUPPORTED         the device path cotained non-path elements
-  @retval other                   an error ocurred.
+  @retval other                   an error occurred.
 **/
 EFI_STATUS
 InternalOpenFileDevicePath(
@@ -824,7 +824,7 @@ EfiShellIsRootShell(
                                 If Alias is NULL, ReturnedData points to a ';'
                                 delimited list of alias (e.g.
                                 ReturnedData = "dir;del;copy;mfp") that is NULL-terminated.
-  @retval NULL                  an error ocurred
+  @retval NULL                  an error occurred
   @retval NULL                  Alias was not a valid Alias
 **/
 CONST CHAR16 *

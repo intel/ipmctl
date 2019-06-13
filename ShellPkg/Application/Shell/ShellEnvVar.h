@@ -56,7 +56,7 @@ IsVolatileEnv (
   @param EnvVarName             The name of the environment variable in question
 
   @retval EFI_SUCCESS           The variable was deleted successfully
-  @retval other                 An error ocurred
+  @retval other                 An error occurred
   @sa SetVariable
 **/
 #define SHELL_DELETE_ENVIRONMENT_VARIABLE(EnvVarName) \
@@ -76,7 +76,7 @@ IsVolatileEnv (
   @param Buffer                 Pointer to value to set variable to
 
   @retval EFI_SUCCESS           The variable was changed successfully
-  @retval other                 An error ocurred
+  @retval other                 An error occurred
   @sa SetVariable
 **/
 #define SHELL_SET_ENVIRONMENT_VARIABLE_NV(EnvVarName,BufferSize,Buffer)  \
@@ -96,7 +96,7 @@ IsVolatileEnv (
   @param Buffer                 Pointer buffer to get variable value into
 
   @retval EFI_SUCCESS           The variable's value was retrieved successfully
-  @retval other                 An error ocurred
+  @retval other                 An error occurred
   @sa SetVariable
 **/
 #define SHELL_GET_ENVIRONMENT_VARIABLE(EnvVarName,BufferSize,Buffer)    \
@@ -117,7 +117,7 @@ IsVolatileEnv (
   @param Buffer                 Pointer buffer to get variable value into
 
   @retval EFI_SUCCESS           The variable's value was retrieved successfully
-  @retval other                 An error ocurred
+  @retval other                 An error occurred
   @sa SetVariable
 **/
 #define SHELL_GET_ENVIRONMENT_VARIABLE_AND_ATTRIBUTES(EnvVarName,Atts,BufferSize,Buffer)    \
@@ -137,7 +137,7 @@ IsVolatileEnv (
   @param Buffer                 Pointer to value to set variable to
 
   @retval EFI_SUCCESS           The variable was changed successfully
-  @retval other                 An error ocurred
+  @retval other                 An error occurred
   @sa SetVariable
 **/
 #define SHELL_SET_ENVIRONMENT_VARIABLE_V(EnvVarName,BufferSize,Buffer) \

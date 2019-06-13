@@ -54,7 +54,7 @@ extern        SHELL_MAP_LIST                      *gShellCurDir;
   Returns the help MAN fileName for a given shell command.
 
   @retval !NULL   The unicode string of the MAN filename.
-  @retval NULL    An error ocurred.
+  @retval NULL    An error occurred.
 
 **/
 typedef

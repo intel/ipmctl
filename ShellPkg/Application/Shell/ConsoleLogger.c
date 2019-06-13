@@ -1195,7 +1195,7 @@ ConsoleLoggerEnableCursor (
 
   @param[in] ConsoleInfo  The pointer to the instance of the console logger information.
 
-  This will be used when a mode has changed or a reset ocurred to verify all
+  This will be used when a mode has changed or a reset occurred to verify all
   history buffers.
 **/
 EFI_STATUS

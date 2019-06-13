@@ -139,7 +139,7 @@ ReturnDriverDiag(
   @param[in] TheHandle      The driver handle to get the version of.
 
   @return             The version of the driver.
-  @retval 0xFFFFFFFF  An error ocurred.
+  @retval 0xFFFFFFFF  An error occurred.
 **/
 UINT32
 ReturnDriverVersion(

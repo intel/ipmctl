@@ -257,7 +257,7 @@ InternalRemoveAliasFromList(
   @param[in] String   String representation of a number
 
   @return             the number
-  @retval (UINTN)(-1) An error ocurred.
+  @retval (UINTN)(-1) An error occurred.
 **/
 UINTN
 ReturnUintn(

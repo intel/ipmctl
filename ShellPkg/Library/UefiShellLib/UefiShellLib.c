@@ -280,7 +280,7 @@ ShellLibConstructorWorker (
   @param SystemTable    the EFI System Table pointer
 
   @retval EFI_SUCCESS   the initialization was completed successfully
-  @return others        an error ocurred during initialization
+  @return others        an error occurred during initialization
 **/
 EFI_STATUS
 EFIAPI
@@ -2525,7 +2525,7 @@ ShellCommandLineGetRawValue (
 
   @param[in] CheckPackage       The package of parsed command line arguments.
 
-  @retval (UINTN)-1     No parsing has ocurred
+  @retval (UINTN)-1     No parsing has occurred
   @return other         The number of value parameters found
 **/
 UINTN
@@ -3166,7 +3166,7 @@ ShellHexStrToUintn(
   @param[in] String   String representation of a number
 
   @return             the number
-  @retval (UINTN)(-1) An error ocurred.
+  @retval (UINTN)(-1) An error occurred.
 **/
 UINTN
 EFIAPI

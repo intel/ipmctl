@@ -512,7 +512,7 @@ MoveWithinFileSystems(
 
   @retval SHELL_SUCCESS             the files were all moved.
   @retval SHELL_INVALID_PARAMETER   a parameter was invalid
-  @retval SHELL_SECURITY_VIOLATION  a security violation ocurred
+  @retval SHELL_SECURITY_VIOLATION  a security violation occurred
   @retval SHELL_WRITE_PROTECTED     the destination was write protected
   @retval SHELL_OUT_OF_RESOURCES    a memory allocation failed
 **/

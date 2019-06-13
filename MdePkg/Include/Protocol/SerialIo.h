@@ -120,7 +120,7 @@ EFI_STATUS
   @param  Parity           The type of parity to use on this serial device. A Parity value of
                            DefaultParity will use the device's default parity value.
   @param  DataBits         The number of data bits to use on the serial device. A DataBits
-                           vaule of 0 will use the device's default data bit setting.
+                           value of 0 will use the device's default data bit setting.
   @param  StopBits         The number of stop bits to use on this serial device. A StopBits
                            value of DefaultStopBits will use the device's default number of
                            stop bits.

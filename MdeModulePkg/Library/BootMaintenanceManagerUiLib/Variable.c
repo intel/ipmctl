@@ -524,7 +524,7 @@ Var_UpdateBootOption (
   This function update the "BootNext" EFI Variable. If there is 
   no "BootNext" specified in BMM, this EFI Variable is deleted.
   It also update the BMM context data specified the "BootNext"
-  vaule.
+  value.
 
   @param CallbackData    The BMM context data.
 

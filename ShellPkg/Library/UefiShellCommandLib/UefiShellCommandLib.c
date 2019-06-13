@@ -638,7 +638,7 @@ ShellCommandGetProfileList (
 
   @param[in]  CommandString          Pointer to the command name.  This is the name
                                      found on the command line in the shell.
-  @param[in, out] RetVal             Pointer to the return vaule from the command handler.
+  @param[in, out] RetVal             Pointer to the return value from the command handler.
 
   @param[in, out]  CanAffectLE       indicates whether this command's return value
                                      needs to be placed into LASTERROR environment variable.

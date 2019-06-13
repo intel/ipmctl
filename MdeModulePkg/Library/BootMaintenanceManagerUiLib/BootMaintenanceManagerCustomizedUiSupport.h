@@ -29,7 +29,7 @@ BmmCreateTimeOutMenu (
   );
 
 /**
-  Create the dynamic item to allow user to set the "BootNext" vaule.
+  Create the dynamic item to allow user to set the "BootNext" value.
 
   @param[in]    HiiHandle           The hii handle for the Uiapp driver.
   @param[in]    StartOpCodeHandle   The opcode handle to save the new opcode.

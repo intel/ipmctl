@@ -148,7 +148,7 @@ typedef union {
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 
-//Units string vaules
+//Units string values
 #define UNITS_B_STR  L"B"
 #define UNITS_GB_STR  L"GB"
 #define UNITS_GIB_STR L"GiB"

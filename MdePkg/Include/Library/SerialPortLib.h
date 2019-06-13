@@ -153,7 +153,7 @@ SerialPortGetControl (
                             DefaultParity will use the device's default parity value.
                             On output, the value actually set.
   @param DataBits           The number of data bits to use on the serial device. A DataBits
-                            vaule of 0 will use the device's default data bit setting.
+                            value of 0 will use the device's default data bit setting.
                             On output, the value actually set.
   @param StopBits           The number of stop bits to use on this serial device. A StopBits
                             value of DefaultStopBits will use the device's default number of

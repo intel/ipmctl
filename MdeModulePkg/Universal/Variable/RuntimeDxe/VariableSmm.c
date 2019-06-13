@@ -828,7 +828,7 @@ SmmEndOfDxeCallback (
   SMM Fault Tolerant Write protocol notification event handler.
 
   Non-Volatile variable write may needs FTW protocol to reclaim when
-  writting variable.
+  writing variable.
 
   @param  Protocol   Points to the protocol's unique identifier
   @param  Interface  Points to the interface instance

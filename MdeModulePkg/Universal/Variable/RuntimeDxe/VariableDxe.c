@@ -347,7 +347,7 @@ OnEndOfDxe (
   Fault Tolerant Write protocol notification event handler.
 
   Non-Volatile variable write may needs FTW protocol to reclaim when
-  writting variable.
+  writing variable.
 
   @param[in] Event    Event whose notification function is being invoked.
   @param[in] Context  Pointer to the notification function's context.

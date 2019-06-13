@@ -49,7 +49,7 @@
 // the dynamic PCD used by this module need be accessed as:
 // PcdGetxxEx(gEfiMyTokenspaceGuid, PcdSampleDynamicPcd)
 // Developer need explicity gives {Token Space Guid:Token Number} as parameter
-// in writting source code.
+// in writing source code.
 // 
 // 2.3 According to PCD value's storage method, dynamic PCD could be classfied as:
 // a) Default Storage:
@@ -79,7 +79,7 @@
 // DSC file. [PcdsDynamicExVpd] is for dynamicex type PCD.
 // 
 // 2.4 When and how to use dynamic PCD
-// Module developer do not care the used PCD is dynamic or static when writting
+// Module developer do not care the used PCD is dynamic or static when writing
 // source code/INF. Dynamic PCD and dynamic type is pointed by platform integrator
 // in platform DSC file. Please ref section 2.3 to get matching between dynamic
 // PCD type and section name in DSC file.

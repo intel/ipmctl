@@ -1851,7 +1851,7 @@ ConSplitterGraphicsOutputSetMode (
 
   @retval EFI_SUCCESS             The Blt operation completed.
   @retval EFI_INVALID_PARAMETER   BltOperation is not valid.
-  @retval EFI_DEVICE_ERROR        A hardware error occured writting to the video
+  @retval EFI_DEVICE_ERROR        A hardware error occured writing to the video
                                   buffer.
 
 **/
@@ -1965,7 +1965,7 @@ ConSplitterUgaDrawSetMode (
 
   @retval EFI_SUCCESS            The Blt operation completed.
   @retval EFI_INVALID_PARAMETER  BltOperation is not valid.
-  @retval EFI_DEVICE_ERROR       A hardware error occured writting to the video buffer.
+  @retval EFI_DEVICE_ERROR       A hardware error occured writing to the video buffer.
 
 **/
 EFI_STATUS

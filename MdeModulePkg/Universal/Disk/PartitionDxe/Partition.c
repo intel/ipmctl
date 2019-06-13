@@ -735,7 +735,7 @@ PartitionWriteBlocks (
   @param  This              Protocol instance pointer.
 
   @retval EFI_SUCCESS       All outstanding data was written to the device
-  @retval EFI_DEVICE_ERROR  The device reported an error while writting back the data
+  @retval EFI_DEVICE_ERROR  The device reported an error while writing back the data
   @retval EFI_NO_MEDIA      There is no media in the device.
 
 **/
@@ -1040,7 +1040,7 @@ PartitionWriteBlocksEx (
   @retval EFI_SUCCESS          The flush request was queued if Event is not NULL.
                                All outstanding data was written correctly to the
                                device if the Event is NULL.
-  @retval EFI_DEVICE_ERROR     The device reported an error while writting back
+  @retval EFI_DEVICE_ERROR     The device reported an error while writing back
                                the data.
   @retval EFI_WRITE_PROTECTED  The device cannot be written to.
   @retval EFI_NO_MEDIA         There is no media in the device.

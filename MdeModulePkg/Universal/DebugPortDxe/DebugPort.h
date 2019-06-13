@@ -362,7 +362,7 @@ DebugPortRead (
   @param  Buffer              Pointer to buffer to read.
 
   @retval EFI_SUCCESS         The data was written.
-  @retval others              Fails when writting datas to debug port device.
+  @retval others              Fails when writing datas to debug port device.
 
 **/
 EFI_STATUS

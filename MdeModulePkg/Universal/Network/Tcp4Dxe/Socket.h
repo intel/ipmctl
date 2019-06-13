@@ -710,7 +710,7 @@ typedef struct _TCP_RSV_DATA {
 
 /**
   Create a socket and its associated protocol control block
-  with the intial data SockInitData and protocol specific
+  with the initial data SockInitData and protocol specific
   data ProtoData.
 
   @param  SockInitData         Inital data to setting the socket.

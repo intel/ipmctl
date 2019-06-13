@@ -586,7 +586,7 @@ PeriodicSmiYield (
   SetJumpFlag = SetJump (&PeriodicSmiLibraryHandler->YieldJumpBuffer);
   if (SetJumpFlag == 0) {
     //
-    // The intial call to SetJump() always returns 0.
+    // The initial call to SetJump() always returns 0.
     // If this is the initial call, then exit the current periodic SMI handler
     //
     PeriodicSmiExit ();
@@ -666,7 +666,7 @@ PeriodicSmiDispatchFunctionOnCpu (
   )
 {
   //
-  // Save context in DispatchJumpBuffer.  The intial call to SetJump() always 
+  // Save context in DispatchJumpBuffer.  The initial call to SetJump() always 
   // returns 0.  If this is the initial call, then either resume from a prior 
   // call to PeriodicSmiYield() or call the DispatchFunction registerd in 
   // PeriodicSmiEnable() using an allocated stack if one was specified.

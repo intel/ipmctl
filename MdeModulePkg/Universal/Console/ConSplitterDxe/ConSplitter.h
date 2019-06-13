@@ -1272,7 +1272,7 @@ ConSplitterTextInReset (
 
 /**
   Reads the next keystroke from the input device. The WaitForKey Event can
-  be used to test for existance of a keystroke via WaitForEvent () call.
+  be used to test for existence of a keystroke via WaitForEvent () call.
 
   @param  This                     Protocol instance pointer.
   @param  Key                      Driver may perform diagnostics on reset.
@@ -1347,7 +1347,7 @@ ConSplitterTextInResetEx (
 
 /**
   Reads the next keystroke from the input device. The WaitForKey Event can
-  be used to test for existance of a keystroke via WaitForEvent () call.
+  be used to test for existence of a keystroke via WaitForEvent () call.
 
   @param  This                     Protocol instance pointer.
   @param  KeyData                  A pointer to a buffer that is filled in with the
@@ -1462,7 +1462,7 @@ ConSplitterTextInWaitForKey (
 
 /**
   Reads the next keystroke from the input device. The WaitForKey Event can
-  be used to test for existance of a keystroke via WaitForEvent () call.
+  be used to test for existence of a keystroke via WaitForEvent () call.
 
   @param  Private                  Protocol instance pointer.
   @param  Key                      Driver may perform diagnostics on reset.
@@ -1500,7 +1500,7 @@ ConSplitterSimplePointerReset (
 
 /**
   Reads the next keystroke from the input device. The WaitForKey Event can
-  be used to test for existance of a keystroke via WaitForEvent () call.
+  be used to test for existence of a keystroke via WaitForEvent () call.
 
   @param  This                     A pointer to protocol instance.
   @param  State                    A pointer to state information on the pointer device

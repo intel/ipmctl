@@ -126,7 +126,7 @@ IsKeyRegistered (
 
 /**
     Reads the next keystroke from the input device. The WaitForKey Event can
-    be used to test for existance of a keystroke via WaitForEvent () call.
+    be used to test for existence of a keystroke via WaitForEvent () call.
 
     @param ConsoleInDev          Ps2 Keyboard private structure
     @param KeyData               A pointer to a buffer that is filled in with the keystroke
@@ -413,7 +413,7 @@ KeyboardEfiResetEx (
 
 /**
     Reads the next keystroke from the input device. The WaitForKey Event can
-    be used to test for existance of a keystroke via WaitForEvent () call.
+    be used to test for existence of a keystroke via WaitForEvent () call.
 
 
     @param This         Protocol instance pointer.

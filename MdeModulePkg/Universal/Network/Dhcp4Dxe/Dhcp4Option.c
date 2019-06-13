@@ -800,7 +800,7 @@ DhcpBuild (
   UINT8                     *Buf;
 
   //
-  // Use an array of DHCP_OPTION to mark the existance
+  // Use an array of DHCP_OPTION to mark the existence
   // and position of each valid options.
   //
   Mark = AllocatePool (sizeof (DHCP_OPTION) * DHCP_MAX_OPTIONS);

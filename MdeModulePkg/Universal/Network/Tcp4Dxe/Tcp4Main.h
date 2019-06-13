@@ -66,7 +66,7 @@ typedef struct _TCP4_MODE_DATA {
 } TCP4_MODE_DATA;
 
 ///
-/// TCP route infomation data
+/// TCP route information data
 ///
 typedef struct _TCP4_ROUTE_INFO {
   BOOLEAN           DeleteRoute;

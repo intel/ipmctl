@@ -326,7 +326,7 @@ GraphicsOutputDriverBindingStart (
   HobStart = GetFirstGuidHob (&gEfiGraphicsDeviceInfoHobGuid);
   if ((HobStart == NULL) || (GET_GUID_HOB_DATA_SIZE (HobStart) < sizeof (*DeviceInfo))) {
     //
-    // Use default device infomation when the device info HOB doesn't exist
+    // Use default device information when the device info HOB doesn't exist
     //
     DeviceInfo = &mDefaultGraphicsDeviceInfo;
     DEBUG ((EFI_D_INFO, "[%a]: GraphicsDeviceInfo HOB doesn't exist!\n", gEfiCallerBaseName));
@@ -385,7 +385,7 @@ GraphicsOutputDriverBindingStart (
         )
         ) {
       //
-      // It's not a video device, or device infomation doesn't match.
+      // It's not a video device, or device information doesn't match.
       //
       Status = EFI_UNSUPPORTED;
     } else {

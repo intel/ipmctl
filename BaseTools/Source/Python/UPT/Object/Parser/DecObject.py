@@ -171,7 +171,7 @@ class _DecItemBaseObject(_DecComments):
 
 ## DecDefineObject
 #
-# Class to hold define section infomation
+# Class to hold define section information
 #
 class DecDefineObject(_DecBaseObject):
     def __init__(self, PkgFullName):

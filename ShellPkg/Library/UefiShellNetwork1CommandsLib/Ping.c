@@ -528,7 +528,7 @@ Ping6OnEchoRequestSent (
 }
 
 /**
-  receive reply, match and print reply infomation.
+  receive reply, match and print reply information.
 
   @param[in]    Event      A EFI_EVENT type event.
   @param[in]    Context    The pointer to context.

@@ -206,7 +206,7 @@ EFI_STATUS
   @param[in] Protocol           The pointer to the protocol's GUID.
   @param[in] DumpToken          The function pointer to dump token function or
                                 NULL.
-  @param[in] DumpInfo           The function pointer to dump infomation function
+  @param[in] DumpInfo           The function pointer to dump information function
                                 or NULL.
   @param[in] IdString           The English name of the protocol.
 **/

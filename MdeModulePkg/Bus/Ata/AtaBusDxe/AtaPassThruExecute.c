@@ -640,7 +640,7 @@ AtaTerminateNonBlockingTask (
 }
 
 /**
-  Call back funtion when the event is signaled.
+  Call back function when the event is signaled.
 
   @param[in]  Event     The Event this notify function registered to.
   @param[in]  Context   Pointer to the context data registered to the

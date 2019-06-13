@@ -1344,7 +1344,7 @@ class Build():
                 LaunchCommand(["GenFw", "--address", str(BaseAddress), "-r", ModuleOutputImage], ModuleInfo.OutputDir)
                 LaunchCommand(["GenFw", "--address", str(BaseAddress), "-r", ModuleDebugImage], ModuleInfo.DebugDir)
             #
-            # Collect funtion address from Map file
+            # Collect function address from Map file
             #
             ImageMapTable = ModuleOutputImage.replace('.efi', '.map')
             FunctionList = []
@@ -1401,7 +1401,7 @@ class Build():
             #
             MapBuffer.write('(IMAGE=%s)\n\n' % (ModuleDebugImage))
             #
-            # Add funtion address
+            # Add function address
             #
             for Function in FunctionList:
                 if AddrIsOffset:

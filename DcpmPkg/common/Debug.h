@@ -322,7 +322,7 @@ OutputCheckpoint(
   IN    UINT8 MinorCode
   )
 {
-  /** In release this funtion will be cut by compilator **/
+  /** In release this function will be cut by compilator **/
 }
 #endif /** MDEPKG_NDEBUG **/
 

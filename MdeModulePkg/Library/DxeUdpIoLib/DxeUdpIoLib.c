@@ -590,7 +590,7 @@ UdpIoCreateTxToken (
   @param[in]  ImageHandle           The image handle for the driver.
   @param[in]  Configure             The function to configure the created UDP child.
   @param[in]  UdpVersion            The UDP protocol version, UDP4 or UDP6.
-  @param[in]  Context               The opaque parameter for the Configure funtion.
+  @param[in]  Context               The opaque parameter for the Configure function.
 
   @return Newly-created UDP_IO or NULL if failed.
 
@@ -753,7 +753,7 @@ FREE_MEM:
 
   @param[in]  UdpIo                 The UDP_IO to cancel packet.
   @param[in]  IoStatus              The IoStatus to return to the packet owners.
-  @param[in]  ToCancel              The select funtion to test whether to cancel this
+  @param[in]  ToCancel              The select function to test whether to cancel this
                                     packet or not.
   @param[in]  Context               The opaque parameter to the ToCancel.
 

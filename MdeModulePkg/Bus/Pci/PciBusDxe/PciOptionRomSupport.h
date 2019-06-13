@@ -1,5 +1,5 @@
 /** @file
-  PCI Rom supporting funtions declaration for PCI Bus module.
+  PCI Rom supporting functions declaration for PCI Bus module.
 
 Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials

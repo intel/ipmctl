@@ -102,7 +102,7 @@ CreateStatement (
   If the Statement is NULL, the ASSERT.
   If the opcode is not Numeric, then ASSERT.
 
-  @retval EFI_SUCCESS The funtion always succeeds.
+  @retval EFI_SUCCESS The function always succeeds.
 **/
 EFI_STATUS
 UpdateCheckBoxStringToken (

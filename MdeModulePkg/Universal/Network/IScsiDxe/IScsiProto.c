@@ -1252,7 +1252,7 @@ IScsiCheckOpParams (
     Conn->MaxRecvDataSegmentLength = (UINT32) AsciiStrDecimalToUintn (Value);
   }
   //
-  // MaxBurstLength, result funtion is Mininum.
+  // MaxBurstLength, result function is Mininum.
   //
   Value = IScsiGetValueByKeyFromList (KeyValueList, ISCSI_KEY_MAX_BURST_LENGTH);
   if (Value == NULL) {

@@ -21,7 +21,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 EFI_MAC_ADDRESS  mZeroMacAddress;
 
 /**
-  Callback funtion when frame transmission is finished. It will
+  Callback function when frame transmission is finished. It will
   call the frame owner's callback function to tell it the result.
 
   @param[in]  Context            Context which is point to the token.
@@ -890,7 +890,7 @@ Ip4OnArpResolved (
 
 
 /**
-  Callback funtion when frame transmission is finished. It will
+  Callback function when frame transmission is finished. It will
   call the frame owner's callback function to tell it the result.
 
   @param[in]  Context            Context which is point to the token.

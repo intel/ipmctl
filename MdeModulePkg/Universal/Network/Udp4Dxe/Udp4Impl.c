@@ -445,7 +445,7 @@ Udp4CheckTimeout (
 
 
 /**
-  This function intializes the new created udp instance.
+  This function initializes the new created udp instance.
 
   @param[in]      Udp4Service       Pointer to the UDP4_SERVICE_DATA.
   @param[in, out] Instance          Pointer to the un-initialized UDP4_INSTANCE_DATA.

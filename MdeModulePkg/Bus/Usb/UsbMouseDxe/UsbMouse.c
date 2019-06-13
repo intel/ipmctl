@@ -115,7 +115,7 @@ USBMouseDriverBindingSupported (
 /**
   Starts the mouse device with this driver.
 
-  This function consumes USB I/O Portocol, intializes USB mouse device,
+  This function consumes USB I/O Portocol, initializes USB mouse device,
   installs Simple Pointer Protocol, and submits Asynchronous Interrupt
   Transfer to manage the USB mouse device.
 

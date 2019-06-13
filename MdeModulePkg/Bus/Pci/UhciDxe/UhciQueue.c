@@ -283,7 +283,7 @@ UhciCreateQh (
 
 
 /**
-  Create and intialize a TD.
+  Create and initialize a TD.
 
   @param  Uhc         The UHCI device.
 

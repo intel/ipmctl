@@ -2176,14 +2176,14 @@ CoreInitializeMemoryServices (
     Length      = PageAlignLength  (ResourceHob->PhysicalStart + ResourceHob->ResourceLength - BaseAddress);
     if (Length < MinimalMemorySizeNeeded) {
       //
-      // If that range is not large enough to intialize the DXE Core, then 
+      // If that range is not large enough to initialize the DXE Core, then 
       // Compute range between PHIT EfiFreeMemoryBottom and PHIT EfiFreeMemoryTop
       //
       BaseAddress = PageAlignAddress (PhitHob->EfiFreeMemoryBottom);
       Length      = PageAlignLength  (PhitHob->EfiFreeMemoryTop - BaseAddress);
       if (Length < MinimalMemorySizeNeeded) {
         //
-        // If that range is not large enough to intialize the DXE Core, then 
+        // If that range is not large enough to initialize the DXE Core, then 
         // Compute range between the start of the Resource Descriptor HOB and the start of the HOB List
         //
         BaseAddress = PageAlignAddress (ResourceHob->PhysicalStart);

@@ -768,7 +768,7 @@ ON_EXIT:
 /**
   Starts the USB mass storage device with this driver.
 
-  This function consumes USB I/O Portocol, intializes USB mass storage device,
+  This function consumes USB I/O Portocol, initializes USB mass storage device,
   installs Block I/O Protocol, and submits Asynchronous Interrupt
   Transfer to manage the USB mass storage device.
 

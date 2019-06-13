@@ -407,7 +407,7 @@ InitializeInFileInfo (
 
 Routine Description:
 
-  This function intializes the relevant global variable which is being
+  This function initializes the relevant global variable which is being
   used to store the information retrieved from INF file.
 
 Arguments:
@@ -484,7 +484,7 @@ GetVtfRelatedInfoFromInfFile (
 Routine Description:
 
   This function reads the input file, parse it and create a list of tokens
-  which is parsed and used, to intialize the data related to VTF
+  which is parsed and used, to initialize the data related to VTF
 
 Arguments:
 
@@ -1452,7 +1452,7 @@ CreateFitTableAndInitialize (
 
 Routine Description:
 
-  This function creates and intializes FIT table which would be used to
+  This function creates and initializes FIT table which would be used to
   add component info inside this
 
 Arguments:

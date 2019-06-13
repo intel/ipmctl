@@ -333,7 +333,7 @@ InitializeDimmRegion(
   }
   if (!(*pISAlreadyExists)) {
     /* As this method is called inside the for loop for each dimm Interleave Information table,
-      it could be that ppNewIS is initialized the first time. Ignore it if it is already intialized and added to the list. Avoiding duplicates.*/
+      it could be that ppNewIS is initialized the first time. Ignore it if it is already initialized and added to the list. Avoiding duplicates.*/
     if (*ppNewIS == NULL) {
       Rc = InitializeIS(pInterleaveInfo, *pRegionId, ppNewIS);
       if (EFI_ERROR(Rc) || *ppNewIS == NULL) {

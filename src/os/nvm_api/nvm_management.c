@@ -125,7 +125,7 @@ static int nvm_internal_init(BOOLEAN binding_start)
 
   if (NULL == (g_api_mutex = os_mutex_init(NVM_API_MUTEX)))
   {
-    NVDIMM_ERR("Failed to intialize NVM API mutex\n");
+    NVDIMM_ERR("Failed to initialize NVM API mutex\n");
     return NVM_ERR_UNKNOWN;
   }
 
@@ -136,7 +136,7 @@ static int nvm_internal_init(BOOLEAN binding_start)
   // Initialize Preferences
   if (EFI_SUCCESS != preferences_init(NULL))
   {
-    NVDIMM_ERR("Failed to intialize preferences\n");
+    NVDIMM_ERR("Failed to initialize preferences\n");
     rc = NVM_ERR_UNKNOWN;
     goto cleanup_mutex;
   }
@@ -259,7 +259,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   nvm_status = nvm_internal_init(FALSE);
   if (NVM_ERR_INVALID_PERMISSIONS != nvm_status && NVM_SUCCESS != nvm_status) {
     CHAR16* ErrStr = GetSingleNvmStatusCodeMessage(NULL, nvm_status);
-    wprintf(L"Failed to intialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
+    wprintf(L"Failed to initialize nvm library (%d): %ls.\n", nvm_status, ErrStr);
     FREE_POOL_SAFE(ErrStr);
     return nvm_status;
   }
@@ -287,7 +287,7 @@ NVM_API int nvm_get_host_name(char *host_name, const NVM_SIZE host_name_len)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -306,7 +306,7 @@ NVM_API int nvm_get_host(struct host *p_host)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -334,7 +334,7 @@ NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -370,7 +370,7 @@ NVM_API int nvm_get_number_of_sockets(int *count)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -404,7 +404,7 @@ NVM_API int nvm_get_sockets(struct socket *p_sockets, const NVM_UINT16 count)
     return NVM_ERR_INVALID_PARAMETER;
   }
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSockets(&gNvmDimmDriverNvmDimmConfig, (UINT32 *)&socket_count, &p_sockets_info);
@@ -442,7 +442,7 @@ NVM_API int nvm_get_socket(const NVM_UINT16 socket_id, struct socket *p_socket)
     return NVM_ERR_INVALID_PARAMETER;
   }
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSockets(&gNvmDimmDriverNvmDimmConfig, (UINT32 *)&socket_count, &p_sockets_info);
@@ -473,7 +473,7 @@ NVM_API int nvm_get_number_of_memory_topology_devices(unsigned int *count)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -519,7 +519,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     goto Finish;
   }
 
@@ -591,7 +591,7 @@ NVM_API int nvm_get_number_of_devices(unsigned int *count)
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -621,7 +621,7 @@ NVM_API int nvm_get_devices(struct device_discovery *p_devices, const NVM_UINT8 
   unsigned int i;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -683,7 +683,7 @@ NVM_API int nvm_get_device_discovery(const NVM_UID    device_uid,
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -750,7 +750,7 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
     return NVM_ERR_INVALID_PARAMETER;
   }
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   if (NVM_SUCCESS != (nvm_status = get_dimm_id(device_uid, &dimm_id, NULL))) {
@@ -789,7 +789,7 @@ NVM_API int nvm_get_pmon_registers(const NVM_UID   device_uid,
     return NVM_ERR_INVALID_PARAMETER;
   }
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
@@ -812,7 +812,7 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID   device_uid,
   int rc;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
@@ -838,7 +838,7 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   int nvm_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -891,7 +891,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   if (NULL == p_details)
     return NVM_ERR_INVALID_PARAMETER;
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
@@ -971,7 +971,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -1145,7 +1145,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID    device_uid,
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -1193,7 +1193,7 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid,
     return NVM_ERR_UNKNOWN;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   ReturnCode = InitializeCommandStatus(&p_command_status);
@@ -1230,7 +1230,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
     return NVM_ERR_UNKNOWN;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   ReturnCode = InitializeCommandStatus(&p_command_status);
@@ -1363,7 +1363,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties)
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   // all capabilities are disabled by default
@@ -1406,7 +1406,7 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   if (NVM_SUCCESS != nvm_get_number_of_devices(&dimm_cnt)) {
@@ -1453,7 +1453,7 @@ NVM_API int nvm_set_passphrase(const NVM_UID device_uid,
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
@@ -1491,7 +1491,7 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     rc = nvm_status;
     goto Finish;
   }
@@ -1544,7 +1544,7 @@ NVM_API int nvm_unlock_device(const NVM_UID device_uid,
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
@@ -1573,7 +1573,7 @@ NVM_API int nvm_freezelock_device(const NVM_UID device_uid)
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
@@ -1603,7 +1603,7 @@ NVM_API int nvm_erase_device(const NVM_UID device_uid,
   SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
@@ -1642,7 +1642,7 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
   SetMem(UnicodeNewMasterPassphrase, sizeof(UnicodeNewMasterPassphrase), 0x0);
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
@@ -1768,7 +1768,7 @@ NVM_API int nvm_get_sensors(const NVM_UID device_uid, struct sensor *p_sensors,
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -1810,7 +1810,7 @@ NVM_API int nvm_get_sensor(const NVM_UID device_uid, const enum sensor_type type
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -1850,7 +1850,7 @@ NVM_API int nvm_set_sensor_settings(const NVM_UID device_uid,
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -2025,7 +2025,7 @@ NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *c
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
@@ -2062,7 +2062,7 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter,
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -2111,7 +2111,7 @@ NVM_API int nvm_purge_events(const struct event_filter *p_filter)
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
@@ -2123,7 +2123,7 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   return nvm_clear_action_required(event_id);
@@ -2140,7 +2140,7 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count)
     return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -2177,7 +2177,7 @@ NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count)
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -2251,7 +2251,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -2313,7 +2313,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -2395,7 +2395,7 @@ NVM_API int nvm_delete_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -2439,7 +2439,7 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file,
   if (file_len > NVM_PATH_LEN)
     return NVM_ERR_UNKNOWN;
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   ReturnCode = InitializeCommandStatus(&p_command_status);
@@ -2474,7 +2474,7 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file,
   if (file_len > NVM_PATH_LEN)
     return NVM_ERR_UNKNOWN;
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   ReturnCode = InitializeCommandStatus(&p_command_status);
@@ -2638,7 +2638,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
     return NVM_ERR_UNKNOWN;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -2675,7 +2675,7 @@ NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
     return NVM_ERR_UNKNOWN;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
@@ -2714,7 +2714,7 @@ NVM_API int nvm_clear_injected_device_error(const NVM_UID device_uid,
     return NVM_ERR_UNKNOWN;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
   if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &DimmId, NULL))) {
@@ -2750,7 +2750,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
     return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -2812,7 +2812,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
   }
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
 
@@ -2837,7 +2837,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
   COMMAND_STATUS *p_command_status;
 
   if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", nvm_status);
     return nvm_status;
   }
   ReturnCode = InitializeCommandStatus(&p_command_status);
@@ -2872,7 +2872,7 @@ NVM_API int nvm_debug_logging_enabled()
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   return IsDebugLoggerEnabled();
@@ -2883,7 +2883,7 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled)
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   return DebugLoggerEnable(enabled);
@@ -2895,7 +2895,7 @@ NVM_API int nvm_purge_debug_log()
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
@@ -2912,7 +2912,7 @@ NVM_API int nvm_get_number_of_debug_logs(int *count)
   if (NULL == count)
     return NVM_ERR_UNKNOWN;
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
@@ -2955,7 +2955,7 @@ NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
     return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -3011,7 +3011,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     return NVM_ERR_INVALID_PARAMETER;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -3136,7 +3136,7 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     goto Finish;
   }
 
@@ -3181,7 +3181,7 @@ NVM_API int nvm_get_config_int(const char *param_name, int default_val)
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   preferences_get_var_ascii(param_name, g, (void *)&val, &size);
@@ -3196,7 +3196,7 @@ NVM_API int nvm_get_fw_err_log_stats(const NVM_UID      device_uid,
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 
@@ -3245,7 +3245,7 @@ NVM_API int nvm_get_dimm_id(const NVM_UID device_uid,
   int rc = NVM_SUCCESS;
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
   rc = get_dimm_id((char *)device_uid, (UINT16 *)dimm_id, dimm_handle);
@@ -3393,7 +3393,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
   }
 
   if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    NVDIMM_ERR("Failed to initialize nvm library %d\n", rc);
     return rc;
   }
 

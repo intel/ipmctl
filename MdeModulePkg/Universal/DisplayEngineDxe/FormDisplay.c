@@ -1378,7 +1378,7 @@ ValueIsScroll (
 
   @param  Event                  The event to wait for
 
-  @retval UI_EVENT_TYPE          The type of the event which is trigged.
+  @retval UI_EVENT_TYPE          The type of the event which is triggered.
 
 **/
 UI_EVENT_TYPE

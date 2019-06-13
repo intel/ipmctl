@@ -83,7 +83,7 @@ EFI_STATUS
   @param[in] KeyData     A pointer to a buffer that describes the keystroke
                          information for the hot key. Its type is EFI_INPUT_KEY to 
                          be supported by all ConsoleIn devices.
-  @param[in] Action      Action value that describes what action will be trigged when the hot key is pressed. 
+  @param[in] Action      Action value that describes what action will be triggered when the hot key is pressed. 
   @param[in] DefaultId   Specifies the type of defaults to retrieve, which is only for DEFAULT action.
   @param[in] HelpString  Help string that describes the hot key information.
                          Its value may be NULL for the unregistered hot key.
@@ -104,7 +104,7 @@ EFI_STATUS
   This handler is responsbile for the left things on normal boot after all UI forms are closed.
   For example, it can continue to boot the first boot option. 
 
-  It will be used only when EXIT action is trigged as system level.
+  It will be used only when EXIT action is triggered as system level.
 **/
 typedef
 VOID

@@ -981,7 +981,7 @@ ProcessAction (
   }
 
   //
-  // Below is normal hotkey trigged action, these action maybe combine with each other.
+  // Below is normal hotkey triggered action, these action maybe combine with each other.
   //
   if ((Action & BROWSER_ACTION_DISCARD) == BROWSER_ACTION_DISCARD) {
     DiscardForm (gCurrentSelection->FormSet, gCurrentSelection->Form, gBrowserSettingScope);

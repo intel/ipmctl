@@ -202,7 +202,7 @@ ConPlatformDriverBindingSupported (
   Start this driver on ControllerHandle by opening Simple Text Input Protocol,
   reading Device Path, and installing Console In Devcice GUID on ControllerHandle.
 
-  If this device is not one hot-plug devce, append its device path into the 
+  If this device is not one hot-plug device, append its device path into the 
   console environment variables ConInDev.
   
   @param  This                 Protocol instance pointer.
@@ -334,7 +334,7 @@ ConPlatformTextInDriverBindingStart (
   reading Device Path, and installing Console Out Devcic GUID, Standard Error
   Device GUID on ControllerHandle.
 
-  If this device is not one hot-plug devce, append its device path into the 
+  If this device is not one hot-plug device, append its device path into the 
   console environment variables ConOutDev, ErrOutDev.
   
   @param  This                 Protocol instance pointer.

@@ -48,7 +48,7 @@
 #define HII_DIMM_ID_STRNG_SIZE   48
 #define HII_APPDIRECT_PREFERENCE_OPTION_SIZE 30
 
-/** UINT128_DIGITS + 1; it has to be a number because of Vfr compilator requirements **/
+/** UINT128_DIGITS + 1; it has to be a number because of Vfr compiler requirements **/
 #define UINT128_STRING_SIZE        40
 #define UINT64_BITS                64
 

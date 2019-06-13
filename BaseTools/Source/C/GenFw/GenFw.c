@@ -259,13 +259,13 @@ Returns:
                         Guid is used to specify hii package list guid.\n\
                         Its format is xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\n\
                         If not specified, the first Form FormSet guid is used.\n");
-  fprintf (stdout, "  --hiipackage          Combine all input binary hii pacakges into \n\
+  fprintf (stdout, "  --hiipackage          Combine all input binary hii packages into \n\
                         a single package list as the text resource data(RC).\n\
                         It can't be combined with other action options\n\
                         except for -o option. It is a action option.\n\
                         If it is combined with other action options, the later\n\
                         input action option will override the previous one.\n");
-  fprintf (stdout, "  --hiibinpackage       Combine all input binary hii pacakges into \n\
+  fprintf (stdout, "  --hiibinpackage       Combine all input binary hii packages into \n\
                         a single package list as the binary resource section.\n\
                         It can't be combined with other action options\n\
                         except for -o option. It is a action option.\n\
@@ -1538,10 +1538,10 @@ Returns:
     VerboseMsg ("Combine the input multi microcode bin files to one bin file.");
     break;
   case FW_HII_PACKAGE_LIST_RCIMAGE:
-    VerboseMsg ("Combine the input multi hii bin packages to one text pacakge list RC file.");
+    VerboseMsg ("Combine the input multi hii bin packages to one text package list RC file.");
     break;
   case FW_HII_PACKAGE_LIST_BINIMAGE:
-    VerboseMsg ("Combine the input multi hii bin packages to one binary pacakge list file.");
+    VerboseMsg ("Combine the input multi hii bin packages to one binary package list file.");
     break;
   case FW_REBASE_IMAGE:
     VerboseMsg ("Rebase the input image to new base address.");
@@ -1664,7 +1664,7 @@ Returns:
       goto Finish;
     }
     if (memcmp (&HiiPackageListGuid, &mZeroGuid, sizeof (EFI_GUID)) == 0) {
-      Error (NULL, 0, 3000, "Invalid", "HII pacakge list guid is not specified!");
+      Error (NULL, 0, 3000, "Invalid", "HII package list guid is not specified!");
       goto Finish;
     }
     memcpy (&HiiPackageListHeader.PackageListGuid, &HiiPackageListGuid, sizeof (EFI_GUID));

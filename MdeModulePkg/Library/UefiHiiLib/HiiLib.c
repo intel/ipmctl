@@ -1119,7 +1119,7 @@ GetValueFromRequest (
   else the VarBuffer and CurrentBlockArray is valid.
 
   @param HiiPackageList     Point to Hii package list.
-  @param PackageListLength  The length of the pacakge.
+  @param PackageListLength  The length of the package.
   @param VarGuid            Guid of the buffer storage.
   @param VarName            Name of the buffer storage.
   @param VarBuffer          The data buffer for the storage.
@@ -1990,7 +1990,7 @@ Done:
 
   @param ConfigResp         ConfigResp string contains the current setting.
   @param HiiPackageList     Point to Hii package list.
-  @param PackageListLength  The length of the pacakge.
+  @param PackageListLength  The length of the package.
   @param VarGuid            Guid of the buffer storage.
   @param VarName            Name of the buffer storage.
   @param HiiHandle          The HiiHandle for this package.
@@ -2371,7 +2371,7 @@ InternalHiiIfrValueAction (
 
 NextConfigAltResp:
     //
-    // Free the allocated pacakge buffer and the got ConfigResp string.
+    // Free the allocated package buffer and the got ConfigResp string.
     //
     if (HiiPackageList != NULL) {
       FreePool (HiiPackageList);
@@ -4332,7 +4332,7 @@ HiiUpdateForm (
     }
 
     //
-    // Add pacakge buffer
+    // Add package buffer
     //
     CopyMem (&PackageHeader, Package, sizeof (EFI_HII_PACKAGE_HEADER));
     CopyMem (UpdateBufferPos, Package, PackageHeader.Length);

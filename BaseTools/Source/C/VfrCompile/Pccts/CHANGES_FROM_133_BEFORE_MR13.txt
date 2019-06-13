@@ -3062,7 +3062,7 @@
             zzconsumeUntil()
             zzconsumeUntilToken()
 
-#58.  (Changed in 1.33MR7) Added defintion of zzbufsize to dlgauto.h
+#58.  (Changed in 1.33MR7) Added definition of zzbufsize to dlgauto.h
 
 #57.  (Changed in 1.33MR7) Format of #line directive
 

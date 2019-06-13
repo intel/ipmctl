@@ -1253,7 +1253,7 @@ List of Implemented Fixes and Changes for Maintenance Releases of PCCTS
 
 #228. (Changed in MR20) dlg crashes on "()"
 
-    The following token defintion will cause DLG to crash.
+    The following token definition will cause DLG to crash.
 
         #token "()"
 

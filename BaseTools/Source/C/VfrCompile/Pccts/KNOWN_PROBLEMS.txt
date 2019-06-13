@@ -184,7 +184,7 @@
 
     THM:  In MR20 have fixed the most common cases.
 
-    The following token defintion will cause DLG to crash.
+    The following token definition will cause DLG to crash.
 
         #token "()"
 

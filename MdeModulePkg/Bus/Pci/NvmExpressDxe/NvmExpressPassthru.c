@@ -204,7 +204,7 @@ NvmeDumpStatus (
 
   @param[in]     PciIo               A pointer to the EFI_PCI_IO_PROTOCOL instance.
   @param[in]     PhysicalAddr        The physical base address of data buffer.
-  @param[in]     Pages               The number of pages to be transfered.
+  @param[in]     Pages               The number of pages to be transferred.
   @param[out]    PrpListHost         The host base address of PRP lists.
   @param[in,out] PrpListNo           The number of PRP List.
   @param[out]    Mapping             The mapping value returned from PciIo.Map().

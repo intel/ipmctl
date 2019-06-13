@@ -86,7 +86,7 @@ EFI_STATUS
   @param[in] PeiServices       The pointer to the PEI Services Table.
   @param[in] This              The pointer to this instance of the PEI_USB_IO_PPI.
   @param[in] DeviceEndpoint    The endpoint address.
-  @param[in] Data              The data buffer to be transfered.
+  @param[in] Data              The data buffer to be transferred.
   @param[in] DataLength        The length of data buffer.
   @param[in] Timeout           The timeout for the transfer, in milliseconds.
                                If Timeout is 0, then the caller must wait for the

@@ -904,7 +904,7 @@ Ip4AccpetFrame (
   if (0 == CompareMem (Head, &ZeroHead, sizeof (IP4_HEAD))) {
   // Packet may have been changed. Head, HeadLen, TotalLen, and
   // info must be reloaded bofore use. The ownership of the packet
-  // is transfered to the packet process logic.
+  // is transferred to the packet process logic.
   //
     Head = (IP4_HEAD *) NetbufGetByte (Packet, 0, NULL);
     ASSERT (Head != NULL);

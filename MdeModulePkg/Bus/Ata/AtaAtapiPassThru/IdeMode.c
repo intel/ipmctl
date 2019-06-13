@@ -1246,7 +1246,7 @@ AtaPioDataInOut (
   Increment = 256;
 
   //
-  // used to record bytes of currently transfered data
+  // used to record bytes of currently transferred data
   //
   WordCount = 0;
 

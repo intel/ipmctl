@@ -491,7 +491,7 @@ IfConfig6ParseManualAddressList (
 
     //
     // If prefix length is not set, set it as Zero here. In the IfConfigSetInterfaceInfo()
-    // Zero prefix, length will be transfered to default prefix length.
+    // Zero prefix, length will be transferred to default prefix length.
     //
     if (Prefix == 0xFF) {
       Prefix = 0;

@@ -1325,7 +1325,7 @@ ATAPIIdentify (
   //
   WordCount = 0;
   //
-  // WordCount is used to record bytes of currently transfered data
+  // WordCount is used to record bytes of currently transferred data
   //
   while (WordCount < ByteCount / 2) {
     //
@@ -1494,7 +1494,7 @@ AtapiPacketCommandIn (
 
   //
   // set the transfersize to MAX_ATAPI_BYTE_COUNT to let the device
-  // determine how many data should be transfered.
+  // determine how many data should be transferred.
   //
   IoWrite8 (CylinderLsbReg, (UINT8) (ATAPI_MAX_BYTE_COUNT & 0x00ff));
   IoWrite8 (CylinderMsbReg, (UINT8) (ATAPI_MAX_BYTE_COUNT >> 8));
@@ -1544,7 +1544,7 @@ AtapiPacketCommandIn (
   PtrBuffer         = Buffer;
   RequiredWordCount = ByteCount / 2;
   //
-  // ActuralWordCount means the word count of data really transfered.
+  // ActuralWordCount means the word count of data really transferred.
   //
   ActualWordCount = 0;
 
@@ -2229,7 +2229,7 @@ ReadSectors (
   PtrBuffer     = Buffer;
 
   //
-  // limit the data bytes that can be transfered by one Read(10) Command
+  // limit the data bytes that can be transferred by one Read(10) Command
   //
   MaxBlock = (UINT16) (0x10000 / BlockSize);
   //

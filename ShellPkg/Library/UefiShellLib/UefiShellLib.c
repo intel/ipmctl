@@ -1995,7 +1995,7 @@ InternalIsFlag (
   @param[in] CheckList          pointer to list of parameters to check
   @param[out] CheckPackage      pointer to pointer to list checked values
   @param[out] ProblemParam      optional pointer to pointer to unicode string for
-                                the paramater that caused failure.  If used then the
+                                the parameter that caused failure.  If used then the
                                 caller is responsible for freeing the memory.
   @param[in] AutoPageBreak      will automatically set PageBreakEnabled for "b" parameter
   @param[in] Argv               pointer to array of parameters
@@ -2222,7 +2222,7 @@ InternalCommandLineParse (
   @param[in] CheckList          The pointer to list of parameters to check.
   @param[out] CheckPackage      The package of checked values.
   @param[out] ProblemParam      Optional pointer to pointer to unicode string for
-                                the paramater that caused failure.
+                                the parameter that caused failure.
   @param[in] AutoPageBreak      Will automatically set PageBreakEnabled.
   @param[in] AlwaysAllowNumbers Will never fail for number based flags.
 

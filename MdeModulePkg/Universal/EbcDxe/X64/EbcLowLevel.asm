@@ -178,7 +178,7 @@ EbcLLEbcInterpret PROC PUBLIC
     mov  rcx, 16
     rep  movsq
     
-    ; build new paramater calling convention
+    ; build new parameter calling convention
     mov  r9,  [rsp + 18h]
     mov  r8,  [rsp + 10h]
     mov  rdx, [rsp + 08h]
@@ -230,7 +230,7 @@ EbcLLExecuteEbcImageEntryPoint PROC PUBLIC
     ; +-----------+
     ; 
 
-    ; build new paramater calling convention
+    ; build new parameter calling convention
     mov  r8, rdx
     mov  rdx, rcx
     mov  rcx, r10

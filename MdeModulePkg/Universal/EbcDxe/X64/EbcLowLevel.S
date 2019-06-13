@@ -118,7 +118,7 @@ ASM_PFX(EbcLLEbcInterpret):
     mov  $0x10, %rcx
     rep  movsq
     
-    # build new paramater calling convention
+    # build new parameter calling convention
     mov  0x18(%rsp), %r9
     mov  0x10(%rsp), %r8
     mov  0x8(%rsp), %rdx
@@ -135,7 +135,7 @@ ASM_PFX(EbcLLEbcInterpret):
 
 ASM_GLOBAL ASM_PFX(EbcLLExecuteEbcImageEntryPoint);
 ASM_PFX(EbcLLExecuteEbcImageEntryPoint):
-    # build new paramater calling convention
+    # build new parameter calling convention
     mov  %rdx, %r8
     mov  %rcx, %rdx
     mov  %r10, %rcx

@@ -589,7 +589,7 @@ USBKeyboardDriverBindingStop (
                                   data for the key that was pressed.
 
   @retval EFI_SUCCESS             The keystroke information was returned.
-  @retval EFI_NOT_READY           There was no keystroke data availiable.
+  @retval EFI_NOT_READY           There was no keystroke data available.
   @retval EFI_DEVICE_ERROR        The keystroke information was not returned due to
                                   hardware errors.
   @retval EFI_INVALID_PARAMETER   KeyData is NULL.
@@ -688,7 +688,7 @@ USBKeyboardReset (
                                information for the key that was pressed.
 
   @retval EFI_SUCCESS          The keystroke information was returned.
-  @retval EFI_NOT_READY        There was no keystroke data availiable.
+  @retval EFI_NOT_READY        There was no keystroke data available.
   @retval EFI_DEVICE_ERROR     The keystroke information was not returned due to
                                hardware errors.
 

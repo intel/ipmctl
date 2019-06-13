@@ -1278,7 +1278,7 @@ ConSplitterTextInReset (
   @param  Key                      Driver may perform diagnostics on reset.
 
   @retval EFI_SUCCESS              The keystroke information was returned.
-  @retval EFI_NOT_READY            There was no keystroke data availiable.
+  @retval EFI_NOT_READY            There was no keystroke data available.
   @retval EFI_DEVICE_ERROR         The keydtroke information was not returned due
                                    to hardware errors.
 
@@ -1355,7 +1355,7 @@ ConSplitterTextInResetEx (
                                    pressed.
 
   @retval EFI_SUCCESS              The keystroke information was returned.
-  @retval EFI_NOT_READY            There was no keystroke data availiable.
+  @retval EFI_NOT_READY            There was no keystroke data available.
   @retval EFI_DEVICE_ERROR         The keystroke information was not returned due
                                    to hardware errors.
   @retval EFI_INVALID_PARAMETER    KeyData is NULL.
@@ -1468,7 +1468,7 @@ ConSplitterTextInWaitForKey (
   @param  Key                      Driver may perform diagnostics on reset.
 
   @retval EFI_SUCCESS              The keystroke information was returned.
-  @retval EFI_NOT_READY            There was no keystroke data availiable.
+  @retval EFI_NOT_READY            There was no keystroke data available.
   @retval EFI_DEVICE_ERROR         The keydtroke information was not returned due
                                    to hardware errors.
 
@@ -1506,7 +1506,7 @@ ConSplitterSimplePointerReset (
   @param  State                    A pointer to state information on the pointer device
 
   @retval EFI_SUCCESS              The keystroke information was returned in State.
-  @retval EFI_NOT_READY            There was no keystroke data availiable.
+  @retval EFI_NOT_READY            There was no keystroke data available.
   @retval EFI_DEVICE_ERROR         The keydtroke information was not returned due
                                    to hardware errors.
 

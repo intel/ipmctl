@@ -1198,7 +1198,7 @@ class WorkspaceBuild(object):
     #
     # @param InfFileName:       InfFileName specificed in platform
     # @param LibraryClass:      LibraryClass specificed in platform
-    # @param Arch:              Supportted Arch
+    # @param Arch:              Supported Arch
     # @param InstanceFilePath:  InstanceFilePath specificed in platform
     #
     def UpdateLibraryClassOfModule(self, InfFileName, LibraryClass, Arch, InstanceFilePath):
@@ -1277,8 +1277,8 @@ class WorkspaceBuild(object):
     # Return the instance if found
     #
     # @param Lib:         Input value for Library Class Name
-    # @param Arch:        Supportted Arch
-    # @param ModuleType:  Supportted ModuleType
+    # @param Arch:        Supported Arch
+    # @param ModuleType:  Supported ModuleType
     # @param ModuleName:  Input value for Module Name
     #
     # @retval string Found LibraryClass Instance file path
@@ -1306,8 +1306,8 @@ class WorkspaceBuild(object):
     # Return the instance if found
     #
     # @param Lib:   Input value for Library Class Name
-    # @param Arch:  Supportted Arch
-    # @param Type:  Supportted Library Usage Type
+    # @param Arch:  Supported Arch
+    # @param Type:  Supported Library Usage Type
     #
     # @retval string Found LibraryClass Instance file path
     # @retval None   Not Found
@@ -1326,7 +1326,7 @@ class WorkspaceBuild(object):
     # Search DscDatabase to find component definition of ModuleName
     # Override BuildOption if it is defined in component
     #
-    # @param Arch:          Supportted Arch
+    # @param Arch:          Supported Arch
     # @param ModuleName:    The module which has buildoption definition in component of platform
     # @param BuildOptions:  The set of all buildopitons
     #
@@ -1351,7 +1351,7 @@ class WorkspaceBuild(object):
     # Search platform database, package database, module database and PcdsSet from Fdf
     # Return found Pcd
     #
-    # @param Arch:        Supportted Arch
+    # @param Arch:        Supported Arch
     # @param ModuleName:  The module which has pcd definition in component of platform
     # @param Name:        Name of Pcd
     # @param Guid:        Guid of Pcd
@@ -1490,13 +1490,13 @@ class WorkspaceBuild(object):
 
         return PcdClassObject(Name, Guid, NewType, DatumType, Value, Token, MaxDatumSize, SkuInfoList, IsOverrided)
 
-    ## Find Supportted Module List Of LibraryClass
+    ## Find Supported Module List Of LibraryClass
     #
     # Search in InfDatabase, find the supmodulelist of the libraryclass
     #
     # @param LibraryClass:               LibraryClass name for search
     # @param OverridedLibraryClassList:  A list of all LibraryClass
-    # @param Arch:                       Supportted Arch
+    # @param Arch:                       Supported Arch
     #
     # @retval list SupModuleList
     #
@@ -1540,7 +1540,7 @@ class WorkspaceBuild(object):
     # Check if the module is defined in <Compentent> of <Platform>
     #
     # @param Inf:      Inf file (Module) need to be searched
-    # @param Arch:     Supportted Arch
+    # @param Arch:     Supported Arch
     # @param InfList:  A list for all Inf file
     #
     # @retval True     Mudule Found

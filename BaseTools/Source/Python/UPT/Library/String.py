@@ -68,7 +68,7 @@ def MergeArches(Dict, Key, Arch):
 # Return False if invalid format
 #
 # @param String:   String with DEFINE statement
-# @param Arch:     Supportted Arch
+# @param Arch:     Supported Arch
 # @param Defines:  DEFINE statement to be parsed
 #
 def GenDefines(String, Arch, Defines):

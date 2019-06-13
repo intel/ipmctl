@@ -111,7 +111,7 @@ def MergeArches(Dict, Key, Arch):
 # Return False if invalid format
 #
 # @param String:   String with DEFINE statement
-# @param Arch:     Supportted Arch
+# @param Arch:     Supported Arch
 # @param Defines:  DEFINE statement to be parsed
 #
 # @retval 0   DEFINE statement found, and valid
@@ -137,7 +137,7 @@ def GenDefines(String, Arch, Defines):
 #
 # @param String:        String with INCLUDE statement
 # @param IncludeFiles:  INCLUDE statement to be parsed
-# @param Arch:          Supportted Arch
+# @param Arch:          Supported Arch
 #
 # @retval True
 # @retval False

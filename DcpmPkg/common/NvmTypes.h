@@ -423,7 +423,7 @@ typedef struct _DIMM_INFO {
   UINT32 SkuInformation;                    //!< Information about SKU modes
   UINT16 VendorId;                          //!< vendor id
   UINT16 DeviceId;                          //!< device id
-  UINT16 SubsystemVendorId;                 //!< Vendor id of the subsytem memory controller
+  UINT16 SubsystemVendorId;                 //!< Vendor id of the subsystem memory controller
   UINT16 SubsystemDeviceId;                 //!< Device id of the subsystem memory controler
   UINT16 Rid;                               //!< revision id
   UINT16 SubsystemRid;                      //!< Revision id of the subsystem memory controller from NFIT

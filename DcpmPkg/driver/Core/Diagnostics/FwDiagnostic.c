@@ -221,13 +221,13 @@ Finish:
 }
 
 /**
-  Populate the list of unique subsytem device IDs across all
+  Populate the list of unique subsystem device IDs across all
   the specified DIMMs
 
   @param[in] ppDimms The DIMM pointers list
   @param[in] DimmCount DIMMs count
-  @param[out] SubsystemDeviceIdList Array of the unique subsytem device IDs
-  @param[out] pSubsystemDeviceIdListCount Pointer to the count of unique subsytem device IDs
+  @param[out] SubsystemDeviceIdList Array of the unique subsystem device IDs
+  @param[out] pSubsystemDeviceIdListCount Pointer to the count of unique subsystem device IDs
   @param[out] pDiagState Pointer to the fw diagnostics test state
 
   @retval EFI_SUCCESS Test executed correctly

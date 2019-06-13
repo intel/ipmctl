@@ -35,19 +35,19 @@ Xtoi (
 
   MaxVal = (UINTN) -1 >> 4;
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while (*Str != '\0' && *Str == ' ') {
     Str += 1;
   }
   //
-  // skip preceeding zeros
+  // skip preceding zeros
   //
   while (*Str != '\0' && *Str == '0') {
     Str += 1;
   }
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   if (*Str != '\0' && (*Str == 'x' || *Str == 'X')) {
     Str += 1;
@@ -99,19 +99,19 @@ LXtoi (
 
   MaxVal = RShiftU64 ((UINT64) -1, 4);
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while (*Str != '\0' && *Str == ' ') {
     Str += 1;
   }
   //
-  // skip preceeding zeros
+  // skip preceding zeros
   //
   while (*Str != '\0' && *Str == '0') {
     Str += 1;
   }
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   if (*Str != '\0' && (*Str == 'x' || *Str == 'X')) {
     Str += 1;
@@ -166,7 +166,7 @@ Atoi (
   MaxVal = (UINTN) -1 / 10;
   ResteVal = (UINTN) -1 % 10;
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while (*Str != '\0' && *Str == ' ') {
     Str += 1;
@@ -214,19 +214,19 @@ AsciiXtoi (
 
   MaxVal = (UINTN) -1 >> 4;
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while (*Str != '\0' && *Str == ' ') {
     Str += 1;
   }
   //
-  // skip preceeding zeros
+  // skip preceding zeros
   //
   while (*Str != '\0' && *Str == '0') {
     Str += 1;
   }
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   if (*Str != '\0' && (*Str == 'x' || *Str == 'X')) {
     Str += 1;
@@ -280,7 +280,7 @@ AsciiAtoi (
   MaxVal = (UINTN) -1 / 10;
   ResteVal = (UINTN) -1 % 10;
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while (*Str != '\0' && *Str == ' ') {
     Str += 1;

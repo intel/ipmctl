@@ -321,7 +321,7 @@ nlog_format(
       continue;
     }
 
-    //found a format specifier now copy everything preceeding it into a return buffer
+    //found a format specifier now copy everything preceding it into a return buffer
     if (str_len)
     {
       MyMemCopy(retval_head, str_len, format_start);

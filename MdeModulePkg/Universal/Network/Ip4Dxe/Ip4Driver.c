@@ -996,7 +996,7 @@ Ip4ServiceBindingDestroyChild (
   // stop it top down.
   // 2. the upper layer will recycle the received packet. The recycle
   // event's TPL is higher than this function. The recycle events
-  // will be called back before preceeding. If any packets not recycled,
+  // will be called back before preceding. If any packets not recycled,
   // that means there is a resource leak.
   //
   gBS->RestoreTPL (OldTpl);

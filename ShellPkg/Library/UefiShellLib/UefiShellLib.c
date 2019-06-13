@@ -3642,7 +3642,7 @@ InternalShellIsHexOrDecimalNumber (
   if (String != NULL && (*String == L'x' || *String == L'X')) {
     if (*(String-1) != L'0') {
       //
-      // we got an x without a preceeding 0
+      // we got an x without a preceding 0
       //
       return (FALSE);
     }

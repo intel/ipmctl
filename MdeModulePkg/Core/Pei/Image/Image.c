@@ -814,7 +814,7 @@ RelocationIsStrip (
 
 /**
   Routine to load image file for subsequent execution by LoadFile Ppi.
-  If any LoadFile Ppi is not found, the build-in support function for the PE32+/TE
+  If any LoadFile Ppi is not found, the built-in support function for the PE32+/TE
   XIP image format is used.
 
   @param PeiServices     - An indirect pointer to the EFI_PEI_SERVICES table published by the PEI Foundation

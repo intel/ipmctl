@@ -306,7 +306,7 @@ IsSHPC (
             );
 
   //
-  // If the PCI-PCI bridge has the hot plug controller build-in,
+  // If the PCI-PCI bridge has the hot plug controller built-in,
   // then return TRUE;
   //
   if (!EFI_ERROR (Status)) {
@@ -464,7 +464,7 @@ IsPciHotPlugBus (
 {
   if (IsSHPC (PciIoDevice)) {
     //
-    // If the PPB has the hot plug controller build-in,
+    // If the PPB has the hot plug controller built-in,
     // then return TRUE;
     //
     return TRUE;

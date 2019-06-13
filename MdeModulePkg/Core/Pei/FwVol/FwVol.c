@@ -1072,7 +1072,7 @@ PeiFfsFindNextFile (
   
   //
   // To make backward compatiblity, if can not find corresponding the handle of FV
-  // then treat FV as build-in FFS2/FFS3 format and memory mapped FV that FV handle is pointed
+  // then treat FV as built-in FFS2/FFS3 format and memory mapped FV that FV handle is pointed
   // to the address of first byte of FV.
   //
   if ((CoreFvHandle == NULL) && FeaturePcdGet (PcdFrameworkCompatibilitySupport)) {
@@ -1484,7 +1484,7 @@ PeiFfsFvPpiProcessVolume (
   }
   
   //
-  // The build-in EFI_PEI_FIRMWARE_VOLUME_PPI for FFS2/FFS3 support memory-mapped
+  // The built-in EFI_PEI_FIRMWARE_VOLUME_PPI for FFS2/FFS3 support memory-mapped
   // FV image and the handle is pointed to Fv image's buffer.
   //
   *FvHandle = (EFI_PEI_FV_HANDLE) Buffer;
@@ -2033,7 +2033,7 @@ FindNextCoreFvHandle (
 }  
 
 /**
-  After PeiCore image is shadowed into permanent memory, all build-in FvPpi should
+  After PeiCore image is shadowed into permanent memory, all built-in FvPpi should
   be re-installed with the instance in permanent memory and all cached FvPpi pointers in 
   PrivateData->Fv[] array should be fixed up to be pointed to the one in permanent
   memory.
@@ -2051,7 +2051,7 @@ PeiReinitializeFv (
   EFI_STATUS              Status;
 
   //
-  // Locate old build-in Ffs2 EFI_PEI_FIRMWARE_VOLUME_PPI which
+  // Locate old built-in Ffs2 EFI_PEI_FIRMWARE_VOLUME_PPI which
   // in flash.
   //
   Status = PeiServicesLocatePpi (
@@ -2063,7 +2063,7 @@ PeiReinitializeFv (
   ASSERT_EFI_ERROR (Status);
 
   //
-  // Re-install the EFI_PEI_FIRMWARE_VOLUME_PPI for build-in Ffs2
+  // Re-install the EFI_PEI_FIRMWARE_VOLUME_PPI for built-in Ffs2
   // which is shadowed from flash to permanent memory within PeiCore image.
   //
   Status = PeiServicesReInstallPpi (OldDescriptor, &mPeiFfs2FvPpiList);
@@ -2079,7 +2079,7 @@ PeiReinitializeFv (
   }
 
   //
-  // Locate old build-in Ffs3 EFI_PEI_FIRMWARE_VOLUME_PPI which
+  // Locate old built-in Ffs3 EFI_PEI_FIRMWARE_VOLUME_PPI which
   // in flash.
   //
   Status = PeiServicesLocatePpi (
@@ -2091,7 +2091,7 @@ PeiReinitializeFv (
   ASSERT_EFI_ERROR (Status);
 
   //
-  // Re-install the EFI_PEI_FIRMWARE_VOLUME_PPI for build-in Ffs3
+  // Re-install the EFI_PEI_FIRMWARE_VOLUME_PPI for built-in Ffs3
   // which is shadowed from flash to permanent memory within PeiCore image.
   //
   Status = PeiServicesReInstallPpi (OldDescriptor, &mPeiFfs3FvPpiList);

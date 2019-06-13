@@ -1730,7 +1730,7 @@ PeiDefaultPciCfg2Modify (
 extern EFI_PEI_PCI_CFG2_PPI gPeiDefaultPciCfg2Ppi;
 
 /**
-  After PeiCore image is shadowed into permanent memory, all build-in FvPpi should
+  After PeiCore image is shadowed into permanent memory, all built-in FvPpi should
   be re-installed with the instance in permanent memory and all cached FvPpi pointers in 
   PrivateData->Fv[] array should be fixed up to be pointed to the one in permanent
   memory.

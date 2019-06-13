@@ -2466,7 +2466,7 @@ XhcPeiCheckNewEvent (
 
   EvtRing->EventRingDequeue++;
   //
-  // If the dequeue pointer is beyond the ring, then roll-back it to the begining of the ring.
+  // If the dequeue pointer is beyond the ring, then roll-back it to the beginning of the ring.
   //
   if ((UINTN) EvtRing->EventRingDequeue >= ((UINTN) EvtRing->EventRingSeg0 + sizeof (TRB_TEMPLATE) * EvtRing->TrbNumber)) {
     EvtRing->EventRingDequeue = EvtRing->EventRingSeg0;

@@ -980,7 +980,7 @@ InternalOpenFileDevicePath(
     Handle1 = ConvertShellHandleToEfiFileProtocol(ShellHandle);
     if (Handle1 != NULL) {
       //
-      // chop off the begining part before the file system part...
+      // chop off the beginning part before the file system part...
       //
       ///@todo BlockIo?
       Status = gBS->LocateDevicePath(&gEfiSimpleFileSystemProtocolGuid,

@@ -946,7 +946,7 @@ ShellDeleteFile (
   has the effect of starting the read process of the directory entries over.
 
   @param FileHandle             The file handle on which the position is being set
-  @param Position               Byte position from begining of file
+  @param Position               Byte position from beginning of file
 
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_UNSUPPORTED       the seek request for non-zero is not valid on
@@ -972,7 +972,7 @@ ShellSetFilePosition (
   if FileHandle is a directory.
 
   @param FileHandle             The open file handle on which to get the position.
-  @param Position               Byte position from begining of file.
+  @param Position               Byte position from beginning of file.
 
   @retval EFI_SUCCESS           the operation completed successfully.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -2385,7 +2385,7 @@ ShellCommandLineGetFlag (
     //
     if (((SHELL_PARAM_PACKAGE*)Node)->Name != NULL) {
       //
-      // If Type is TypeStart then only compare the begining of the strings
+      // If Type is TypeStart then only compare the beginning of the strings
       //
       if (((SHELL_PARAM_PACKAGE*)Node)->Type == TypeStart) {
         if (StrnCmp(KeyString, ((SHELL_PARAM_PACKAGE*)Node)->Name, StrLen(KeyString)) == 0) {
@@ -2449,7 +2449,7 @@ ShellCommandLineGetValue (
     //
     if (((SHELL_PARAM_PACKAGE*)Node)->Name != NULL) {
       //
-      // If Type is TypeStart then only compare the begining of the strings
+      // If Type is TypeStart then only compare the beginning of the strings
       //
       if (((SHELL_PARAM_PACKAGE*)Node)->Type == TypeStart) {
         if (StrnCmp(KeyString, ((SHELL_PARAM_PACKAGE*)Node)->Name, StrLen(KeyString)) == 0) {

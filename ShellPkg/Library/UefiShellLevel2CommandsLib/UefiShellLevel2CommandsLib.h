@@ -247,7 +247,7 @@ ShellCommandRunMv (
   );
 
 /**
-  returns a fully qualified directory (contains a map drive at the begining)
+  returns a fully qualified directory (contains a map drive at the beginning)
   path from a unknown directory path.
 
   If Path is already fully qualified this will return a duplicat otherwise this

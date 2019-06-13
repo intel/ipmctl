@@ -1190,7 +1190,7 @@ PeiDispatcher (
       //
       // We set to NULL here to optimize the 2nd entry to this routine after
       //  memory is found. This reprevents rescanning of the FV. We set to
-      //  NULL here so we start at the begining of the next FV
+      //  NULL here so we start at the beginning of the next FV
       //
       Private->CurrentFileHandle = NULL;
       Private->CurrentPeimCount = 0;

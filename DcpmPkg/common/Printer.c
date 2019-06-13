@@ -114,7 +114,7 @@ static CHAR16 *TextListExpandStr(IN DATA_SET_CONTEXT *DataSetCtx, IN const CHAR1
 
   while (*OriginalStrTmpBegin != CHAR_NULL_TERM) {
     AppendSize = 0;
-    //Found begining of $(key) identifier
+    //Found beginning of $(key) identifier
     if (OriginalStrTmpBegin[0] == L'$' && OriginalStrTmpBegin[1] == L'(') {
       //Find end of $(key) identifier
       do {
@@ -122,7 +122,7 @@ static CHAR16 *TextListExpandStr(IN DATA_SET_CONTEXT *DataSetCtx, IN const CHAR1
       }
       //Find end of $(key) identifier or end of str, which ever comes first
       while(*OriginalStrTmpEnd != CHAR_NULL_TERM && *OriginalStrTmpEnd != L')');
-      //OriginalStrTmpBegin points to begining of $(key) identifier, OriginalStrTmpEnd points to the end
+      //OriginalStrTmpBegin points to beginning of $(key) identifier, OriginalStrTmpEnd points to the end
       //allocate enough memory to copy the string that sits between pointers
       //plus 1 char worth of mem for NULL term to make it a string
       MacroKeyName = AllocateZeroPool(((UINTN)OriginalStrTmpEnd - (UINTN)OriginalStrTmpBegin) + sizeof(CHAR16));
@@ -727,7 +727,7 @@ VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_AT
 /*
 * Callback routine for printing out NVM XML.
 * -Start by printing indentation whitespace based on depth of node in tree.
-* -Print begining tag: <DataSetName>
+* -Print beginning tag: <DataSetName>
 * -ForEach KeyValue Pair:
 * -  Print indentation whitespace
 * -  Print <KeyName>KeyVal</KeyName>
@@ -782,7 +782,7 @@ static VOID PrintNvmXml(DATA_SET_CONTEXT *DataSetCtx) {
 /*
 * Callback routine for printing out ESX XML.
 * -Start by printing indentation whitespace based on depth of node in tree.
-* -Print begining tag: <structure typeName="DataSetName">
+* -Print beginning tag: <structure typeName="DataSetName">
 * -ForEach KeyValue Pair:
 * -   <field name = "Key"><string>"Value"</string></field>
 * -Print closing tag: </structure>
@@ -931,7 +931,7 @@ static VOID PrintTextWithNewLine(CHAR16 *Msg) {
 }
 
 /*
-* Display begining of XML error
+* Display beginning of XML error
 */
 static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
@@ -955,7 +955,7 @@ static VOID PrintXmlEndErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode)
 }
 
 /*
-* Display begining of XML success msg
+* Display beginning of XML success msg
 */
 static VOID PrintXmlStartSuccessTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {

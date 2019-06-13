@@ -318,7 +318,7 @@ ShellDeleteFile (
 
   @param[in] FileHandle         The file handle on which the position is being set.
 
-  @param[in] Position           The byte position from the begining of the file.
+  @param[in] Position           The byte position from the beginning of the file.
 
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_UNSUPPORTED       The seek request for non-zero is not valid on
@@ -341,7 +341,7 @@ ShellSetFilePosition (
   if FileHandle is a directory.
 
   @param[in] FileHandle         The open file handle on which to get the position.
-  @param[out] Position          The byte position from the begining of the file.
+  @param[out] Position          The byte position from the beginning of the file.
 
   @retval EFI_SUCCESS           The operation completed successfully.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.

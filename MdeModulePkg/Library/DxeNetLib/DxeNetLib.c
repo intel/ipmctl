@@ -1297,7 +1297,7 @@ NetMapGetCount (
   Return one allocated item.
 
   If the Recycled doubly linked list of the netmap is empty, it will try to allocate
-  a batch of items if there are enough resources and add corresponding nodes to the begining
+  a batch of items if there are enough resources and add corresponding nodes to the beginning
   of the Recycled doubly linked list of the netmap. Otherwise, it will directly remove
   the fist node entry of the Recycled doubly linked list and return the corresponding item.
 

@@ -731,7 +731,7 @@ def SplitPredicateByOp(Str, Op, IsFuncCalling=False):
 
             while not LBFound and (Str[Index].isalnum() or Str[Index] == '_'):
                 Index += 1
-            # maybe type-cast at the begining, skip it.
+            # maybe type-cast at the beginning, skip it.
             RemainingStr = Str[Index:].lstrip()
             if RemainingStr.startswith(')') and not LBFound:
                 Index += 1

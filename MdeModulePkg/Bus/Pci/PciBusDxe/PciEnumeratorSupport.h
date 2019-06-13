@@ -44,7 +44,7 @@ PciDevicePresent (
   root bridge will then be created.
 
   @param Bridge         Parent bridge instance.
-  @param StartBusNumber Bus number of begining.
+  @param StartBusNumber Bus number of beginning.
 
   @retval EFI_SUCCESS   PCI device is found.
   @retval other         Some error occurred when reading PCI bridge information.

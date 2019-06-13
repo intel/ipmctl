@@ -690,7 +690,7 @@ EFI_STATUS
   called after INIT_PROTOCOL_INFO_ENUMERATOR.
 
   This function resets the list of protocols such that the next one in the
-  list is the begining of the list.
+  list is the beginning of the list.
 **/
 typedef
 VOID

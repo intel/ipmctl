@@ -3388,7 +3388,7 @@ UiDisplayMenu (
       Difference = MoveToNextStatement (TRUE, &NewPos, MenuOption->Row - TopRow, FALSE);
       if (Difference < 0) {
         //
-        // We hit the begining MenuOption that can be focused
+        // We hit the beginning MenuOption that can be focused
         // so we simply scroll to the top.
         //
         Repaint     = TRUE;

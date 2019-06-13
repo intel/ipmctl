@@ -141,7 +141,7 @@ CoreRegisterProtocolNotify (
       ProtNotify->Protocol = ProtEntry;
       ProtNotify->Event = Event;
       //
-      // start at the begining
+      // start at the beginning
       //
       ProtNotify->Position = &ProtEntry->Protocols;
 

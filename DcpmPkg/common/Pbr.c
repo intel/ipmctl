@@ -595,7 +595,7 @@ PbrResetSession(
   for (CtxIndex = 0; CtxIndex < MAX_PARTITIONS; ++CtxIndex) {
     //found a partition
     if (PBR_INVALID_SIG != pContext->PartitionContexts[CtxIndex].PartitionSig) {
-      //default is to reset the current offset to the begining
+      //default is to reset the current offset to the beginning
       pContext->PartitionContexts[CtxIndex].PartitionCurrentOffset = 0;
       //find the corresponding TagPartitionInfo associated with the partition signature
       for (TagPartIndex = 0; TagPartIndex < pTag->PartitionInfoCnt; ++TagPartIndex) {

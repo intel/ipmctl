@@ -297,7 +297,7 @@ FileHandleDelete (
   has the effect of starting the read process of the directory entries over.
 
   @param FileHandle             The file handle on which the position is being set
-  @param Position               Byte position from begining of file
+  @param Position               Byte position from beginning of file
 
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_UNSUPPORTED       the seek request for non-zero is not valid on
@@ -330,7 +330,7 @@ FileHandleSetPosition (
   if FileHandle is a directory.
 
   @param FileHandle             The open file handle on which to get the position.
-  @param Position               Byte position from begining of file.
+  @param Position               Byte position from beginning of file.
 
   @retval EFI_SUCCESS           the operation completed successfully.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -490,7 +490,7 @@ FileHandleFindFirstFile (
   }
 
   //
-  // reset to the begining of the directory
+  // reset to the beginning of the directory
   //
   Status = FileHandleSetPosition(DirHandle, 0);
   if (EFI_ERROR(Status)) {
@@ -921,7 +921,7 @@ FileHandleReturnLine(
   @param[in, out]  Buffer        pointer to buffer to read into
   @param[in, out]  Size          pointer to number of bytes in buffer
   @param[in]       Truncate      if TRUE then allows for truncation of the line to fit.
-                                 if FALSE will reset the position to the begining of the
+                                 if FALSE will reset the position to the beginning of the
                                  line if the buffer is not large enough.
   @param[in, out]  Ascii         Boolean value for indicating whether the file is Ascii (TRUE) or UCS2 (FALSE);
 

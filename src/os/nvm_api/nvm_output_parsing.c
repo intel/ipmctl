@@ -60,16 +60,16 @@ int starts_with(
    wchar_t *str,
    wchar_t *prefix)
 {
-   wchar_t *begining_str = str;
+   wchar_t *beginning_str = str;
    int start_str_len = (int)wcsnlen(prefix, READ_FD_LINE_SZ);
    int total_str_len = (int)wcsnlen(str, READ_FD_LINE_SZ);
    for(int i = 0; i < total_str_len; ++i)
    {
       if(str[i] == L' ' || str[i] == L'\t')
-         ++begining_str;
+         ++beginning_str;
       else break;
    }
-   return wcsncmp(begining_str, prefix, start_str_len);
+   return wcsncmp(beginning_str, prefix, start_str_len);
 }
 
 int ends_with(

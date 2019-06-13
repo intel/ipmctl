@@ -2655,7 +2655,7 @@ Arguments:
 
 Returns:
 
-  RETURN_SUCCESS           - Decompression is successfull
+  RETURN_SUCCESS           - Decompression is successful
   RETURN_INVALID_PARAMETER - The source data is corrupted
 
 --*/

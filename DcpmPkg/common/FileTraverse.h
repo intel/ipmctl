@@ -20,7 +20,7 @@
   The memory for the result is allocated in this function and it is the callers responsibility
   to free the memory with FreePool.
 
-  @retval EFI_SUCCESS on successfull name retrieve.
+  @retval EFI_SUCCESS on successful name retrieve.
   @retval EFI_NOT_FOUND when the file information could not be read.
   @retval EFI_OUT_OF_RESOURCES when the memory allocation failed.
 **/

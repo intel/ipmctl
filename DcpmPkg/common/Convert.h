@@ -147,7 +147,7 @@ IsHexaDecimalDigitCharacter (
 /**
   Function to determin if an entire string is a valid number.
 
-  If Hex it must be preceeded with a 0x or has ForceHex, set TRUE.
+  If Hex it must be preceded with a 0x or has ForceHex, set TRUE.
 
   @param[in] pString      The string to evaluate.
   @param[in] ForceHex     TRUE - always assume hex.

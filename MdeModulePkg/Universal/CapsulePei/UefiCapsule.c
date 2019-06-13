@@ -1043,7 +1043,7 @@ CheckCapsuleUpdate (
   If it is, then it will verify it and emit an error message if corruption is detected.
   
   @param PeiServices   Standard pei services pointer
-  @param CapsuleBase   Base address of coalesced capsule, which is preceeded
+  @param CapsuleBase   Base address of coalesced capsule, which is preceded
                        by private data. Very implementation specific.
 
   @retval TRUE    Capsule image is the test image

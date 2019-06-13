@@ -64,7 +64,7 @@ VfrParserStart (
 //
 // Define a lexical class for parsing quoted strings. Basically
 // starts with a double quote, and ends with a double quote that
-// is not preceeded with a backslash.
+// is not preceded with a backslash.
 //
 #lexclass QUOTED_STRING
 #token TheString            "~[\"]*\"" << mode (START); >>

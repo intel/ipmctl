@@ -2255,7 +2255,7 @@ EfiShellGetGuidName(
 }
 
 /**
-  Updates a file name to be preceeded by the mapped drive name
+  Updates a file name to be preceded by the mapped drive name
 
   @param[in] BasePath      the Mapped drive name to prepend
   @param[in, out] Path     pointer to pointer to the file name to update.

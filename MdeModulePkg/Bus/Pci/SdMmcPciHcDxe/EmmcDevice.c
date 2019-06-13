@@ -750,7 +750,7 @@ EmmcSwitchToHighSpeed (
     return Status;
   }
   //
-  // Set to Hight Speed timing
+  // Set to Height Speed timing
   //
   HostCtrl1 = BIT2;
   Status = SdMmcHcOrMmio (PciIo, Slot, SD_MMC_HC_HOST_CTRL1, sizeof (HostCtrl1), &HostCtrl1);
@@ -919,7 +919,7 @@ EmmcSwitchToHS400 (
     return Status;
   }
   //
-  // Set to Hight Speed timing and set the clock frequency to a value less than 52MHz.
+  // Set to Height Speed timing and set the clock frequency to a value less than 52MHz.
   //
   HsTiming = 1;
   Status = EmmcSwitchClockFreq (PciIo, PassThru, Slot, Rca, HsTiming, 52);

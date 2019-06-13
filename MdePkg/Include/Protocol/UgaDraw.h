@@ -128,7 +128,7 @@ typedef enum {
     @param[in] DestinationX  - X coordinate of destination for the BltBuffer.
     @param[in] DestinationY  - Y coordinate of destination for the BltBuffer.
     @param[in] Width         - Width of rectangle in BltBuffer in pixels.
-    @param[in] Height        - Hight of rectangle in BltBuffer in pixels.
+    @param[in] Height        - Height of rectangle in BltBuffer in pixels.
     @param[in] Delta         - OPTIONAL
 
     @retval EFI_SUCCESS           - The Blt operation completed.

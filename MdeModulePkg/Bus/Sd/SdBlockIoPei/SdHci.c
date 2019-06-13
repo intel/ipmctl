@@ -2686,7 +2686,7 @@ SdPeimSetBusMode (
     return EFI_DEVICE_ERROR;
   }
   //
-  // Set to Hight Speed timing
+  // Set to Height Speed timing
   //
   if (AccessMode == 1) {
     HostCtrl1 = BIT2;

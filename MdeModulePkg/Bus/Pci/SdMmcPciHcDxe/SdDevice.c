@@ -951,7 +951,7 @@ SdCardSetBusMode (
   DEBUG ((DEBUG_INFO, "SdCardSetBusMode: Switch to AccessMode %d ClockFreq %d BusWidth %d\n", AccessMode, ClockFreq, BusWidth));
 
   //
-  // Set to Hight Speed timing
+  // Set to Height Speed timing
   //
   if (AccessMode == 1) {
     HostCtrl1 = BIT2;

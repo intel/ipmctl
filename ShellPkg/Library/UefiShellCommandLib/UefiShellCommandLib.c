@@ -1165,7 +1165,7 @@ ShellCommandCreateNewMappingName(
   @param[in] Flags              The Flags attribute for this map item.
   @param[in] Path               TRUE to update path, FALSE to skip this step (should only be TRUE during initialization).
 
-  @retval EFI_SUCCESS           The addition was sucessful.
+  @retval EFI_SUCCESS           The addition was successful.
   @retval EFI_OUT_OF_RESOURCES  A memory allocation failed.
   @retval EFI_INVALID_PARAMETER A parameter was invalid.
 **/

@@ -1483,7 +1483,7 @@ InternalShellConvertFileListType (
     NewInfo->Info         = AllocateCopyPool((UINTN)OldInfo->Info->Size, OldInfo->Info);
 
     //
-    // make sure all the memory allocations were sucessful
+    // make sure all the memory allocations were successful
     //
     if (NULL == NewInfo->FullName || NewInfo->FileName == NULL || NewInfo->Info == NULL) {
       //
@@ -1526,7 +1526,7 @@ InternalShellConvertFileListType (
   @param OpenMode               mode to open files with
   @param ListHead               head of linked list of results
 
-  @retval EFI_SUCCESS           the operation was sucessful and the list head
+  @retval EFI_SUCCESS           the operation was successful and the list head
                                 contains the list of opened files
   @return != EFI_SUCCESS        the operation failed
 
@@ -1644,7 +1644,7 @@ ShellOpenFileMetaArg (
 
   @param ListHead               the pointer to free.
 
-  @retval EFI_SUCCESS           the operation was sucessful.
+  @retval EFI_SUCCESS           the operation was successful.
 **/
 EFI_STATUS
 EFIAPI
@@ -2697,7 +2697,7 @@ ShellCopySearchAndReplace(
 
   @param[in] String       The string to print out.
 
-  @retval EFI_SUCCESS     The operation was sucessful.
+  @retval EFI_SUCCESS     The operation was successful.
   @retval !EFI_SUCCESS    The operation failed.
 **/
 EFI_STATUS
@@ -3318,7 +3318,7 @@ StrnCatGrow (
   @param Prompt                   Pointer to string prompt to use to request input.
   @param Response                 Pointer to Response which will be populated upon return.
 
-  @retval EFI_SUCCESS             The operation was sucessful.
+  @retval EFI_SUCCESS             The operation was successful.
   @retval EFI_UNSUPPORTED         The operation is not supported as requested.
   @retval EFI_INVALID_PARAMETER   A parameter was invalid.
   @return other                   The operation failed.
@@ -3573,7 +3573,7 @@ ShellPromptForResponse (
   @param[in] HiiFormatHandle    The format string Handle for getting from Hii.
   @param Response               Pointer to Response which will be populated upon return.
 
-  @retval EFI_SUCCESS the operation was sucessful.
+  @retval EFI_SUCCESS the operation was successful.
   @return other       the operation failed.
 
   @sa ShellPromptForResponse

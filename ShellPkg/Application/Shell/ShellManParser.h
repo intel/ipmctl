@@ -59,7 +59,7 @@ ProcessManFile(
   sections provided.  If the end of the file or a .TH section is found then
   return.
 
-  Upon a sucessful return the caller is responsible to free the memory in *HelpText
+  Upon a successful return the caller is responsible to free the memory in *HelpText
 
   @param[in] Handle             FileHandle to read from
   @param[in] Sections           name of command's sub sections to find

@@ -211,7 +211,7 @@ SearchPathForFile(
   sections provided.  If the end of the file or a .TH section is found then
   return.
 
-  Upon a sucessful return the caller is responsible to free the memory in *HelpText
+  Upon a successful return the caller is responsible to free the memory in *HelpText
 
   @param[in] Buffer             Buffer to read from
   @param[in] Sections           name of command's sub sections to find
@@ -343,7 +343,7 @@ ManBufferFindSections(
   sections provided.  If the end of the file or a .TH section is found then
   return.
 
-  Upon a sucessful return the caller is responsible to free the memory in *HelpText
+  Upon a successful return the caller is responsible to free the memory in *HelpText
 
   @param[in] Handle             FileHandle to read from
   @param[in] Sections           name of command's sub sections to find
@@ -457,7 +457,7 @@ ManFileFindSections(
   "Brief Description" for the .TH section as specified by Command.  If the
   command section is not found return EFI_NOT_FOUND.
 
-  Upon a sucessful return the caller is responsible to free the memory in *BriefDesc
+  Upon a successful return the caller is responsible to free the memory in *BriefDesc
 
   @param[in] Buffer             Buffer to read from
   @param[in] Command            name of command's section to find
@@ -560,7 +560,7 @@ ManBufferFindTitleSection(
 /**
   Parses a line from a MAN file to see if it is the Title Header. If it is, then
   if the "Brief Description" is desired, allocate a buffer for it and return a
-  copy. Upon a sucessful return the caller is responsible to free the memory in
+  copy. Upon a successful return the caller is responsible to free the memory in
   *BriefDesc
 
   Uses a simple state machine that allows "unlimited" whitespace before and after the
@@ -689,7 +689,7 @@ IsTitleHeader(
   "Brief Description" for the .TH section as specified by Command.  If the
   command section is not found return EFI_NOT_FOUND.
 
-  Upon a sucessful return the caller is responsible to free the memory in *BriefDesc
+  Upon a successful return the caller is responsible to free the memory in *BriefDesc
 
   @param[in] Handle              FileHandle to read from
   @param[in] Command             name of command's section to find as entered on the

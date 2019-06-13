@@ -1226,7 +1226,7 @@ ShellCommandRunMap (
                   SName,
                   TRUE
                  );
-              } // we were sucessful so do an output
+              } // we were successful so do an output
             }
           } // got a valid map target
         } // got 2 variables

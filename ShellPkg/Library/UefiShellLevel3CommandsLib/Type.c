@@ -249,7 +249,7 @@ ShellCommandRunType (
         }
         //
         // make sure we completed the param parsing successfully...
-        // Also make sure that any previous action was sucessful
+        // Also make sure that any previous action was successful
         //
         if (ShellStatus == SHELL_SUCCESS) {
           //

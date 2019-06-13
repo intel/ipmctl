@@ -513,7 +513,7 @@ VOID
   This must be called after INIT_HANDLE_ENUMERATOR and before CLOSE_HANDLE_ENUMERATOR.
 
   @param[in, out] Handle         The pointer to pointer to Handle.  It is set
-                                 on a sucessful return.
+                                 on a successful return.
 
   @retval EFI_SUCCESS           The next handle in the handle database is *Handle.
   @retval EFI_NOT_FOUND         There is not another handle.
@@ -816,7 +816,7 @@ EFI_DEVICE_PATH_PROTOCOL*
 
   This function looks through the shell environment map for a map whose device
   path matches the DevPath parameter.  If one is found the Name is returned via
-  Name parameter.  If sucessful the caller must free the memory allocated for
+  Name parameter.  If successful the caller must free the memory allocated for
   Name.
 
   This function will use the internal lock to prevent changes to the map during
@@ -824,7 +824,7 @@ EFI_DEVICE_PATH_PROTOCOL*
 
   @param[in] DevPath                The device path to search for a name for.
   @param[in] ConsistMapping         What state to verify map flag VAR_ID_CONSIST.
-  @param[out] Name                  On sucessful return the name of that device path.
+  @param[out] Name                  On successful return the name of that device path.
 
   @retval EFI_SUCCESS           The DevPath was found and the name returned
                                 in Name.

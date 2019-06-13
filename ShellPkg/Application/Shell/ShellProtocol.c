@@ -3023,7 +3023,7 @@ EfiShellGetCurDir(
                                 directory is changed.
   @param Dir                    Points to the NULL-terminated directory on the device specified by FileSystem.
 
-  @retval EFI_SUCCESS           The operation was sucessful
+  @retval EFI_SUCCESS           The operation was successful
   @retval EFI_NOT_FOUND         The file system could not be found
 **/
 EFI_STATUS

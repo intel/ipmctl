@@ -20,7 +20,7 @@
 /**
   Print out each alias registered with the Shell.
 
-  @retval STATUS_SUCCESS  the printout was sucessful
+  @retval STATUS_SUCCESS  the printout was successful
   @return any return code from GetNextVariableName except EFI_NOT_FOUND
 **/
 SHELL_STATUS

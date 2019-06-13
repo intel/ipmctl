@@ -602,7 +602,7 @@ ShellSetPageBreakMode (
   @param[in] OpenMode            Mode to open files with.
   @param[in, out] ListHead       Head of linked list of results.
 
-  @retval EFI_SUCCESS           The operation was sucessful and the list head
+  @retval EFI_SUCCESS           The operation was successful and the list head
                                 contains the list of opened files.
   @retval != EFI_SUCCESS        The operation failed.
 
@@ -621,7 +621,7 @@ ShellOpenFileMetaArg (
 
   @param[in, out] ListHead       The pointer to free.
 
-  @retval EFI_SUCCESS           The operation was sucessful.
+  @retval EFI_SUCCESS           The operation was successful.
   @retval EFI_INVALID_PARAMETER A parameter was invalid.
 **/
 EFI_STATUS
@@ -1226,7 +1226,7 @@ ShellPromptForResponse (
   @param[in] HiiFormatHandle     The format string Handle for getting from Hii.
   @param[in, out] Response       The pointer to Response, which will be populated upon return.
 
-  @retval EFI_SUCCESS The operation was sucessful.
+  @retval EFI_SUCCESS The operation was successful.
   @return other       The operation failed.
 
   @sa ShellPromptForResponse

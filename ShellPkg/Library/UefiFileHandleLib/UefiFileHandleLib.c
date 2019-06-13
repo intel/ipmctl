@@ -780,7 +780,7 @@ StrnCatGrowLeft (
   @param[out] FullFileName      pointer to pointer to generated full file name.  It
                                 is the responsibility of the caller to free this memory
                                 with a call to FreePool().
-  @retval EFI_SUCCESS           the operation was sucessful and the FullFileName is valid.
+  @retval EFI_SUCCESS           the operation was successful and the FullFileName is valid.
   @retval EFI_INVALID_PARAMETER Handle was NULL.
   @retval EFI_INVALID_PARAMETER FullFileName was NULL.
   @retval EFI_OUT_OF_RESOURCES  a memory allocation failed.
@@ -925,7 +925,7 @@ FileHandleReturnLine(
                                  line if the buffer is not large enough.
   @param[in, out]  Ascii         Boolean value for indicating whether the file is Ascii (TRUE) or UCS2 (FALSE);
 
-  @retval EFI_SUCCESS           the operation was sucessful.  the line is stored in
+  @retval EFI_SUCCESS           the operation was successful.  the line is stored in
                                 Buffer.
   @retval EFI_INVALID_PARAMETER Handle was NULL.
   @retval EFI_INVALID_PARAMETER Size was NULL.
@@ -1064,7 +1064,7 @@ FileHandleWriteLine(
   @param[in] Format   the format argument (see printlib for format specifier)
   @param[in] ...      the variable arguments for the format
 
-  @retval EFI_SUCCESS the operation was sucessful
+  @retval EFI_SUCCESS the operation was successful
   @return other       a return value from FileHandleWriteLine
 
   @sa FileHandleWriteLine

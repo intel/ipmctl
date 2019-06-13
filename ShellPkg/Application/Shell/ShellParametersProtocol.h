@@ -76,7 +76,7 @@ CleanUpShellParametersProtocol (
   @param[out] OldArgv                   pointer to old list of parameters
   @param[out] OldArgc                   pointer to old number of items in Argv list
 
-  @retval   EFI_SUCCESS                 operation was sucessful, Argv and Argc are valid
+  @retval   EFI_SUCCESS                 operation was successful, Argv and Argc are valid
   @retval   EFI_OUT_OF_RESOURCES        a memory allocation failed.
 **/
 EFI_STATUS
@@ -127,7 +127,7 @@ typedef struct {
   @param[out] OldStdErr                  Pointer to old StdErr.
   @param[out] SystemTableInfo            Pointer to old system table information.
 
-  @retval   EFI_SUCCESS                 Operation was sucessful, Argv and Argc are valid.
+  @retval   EFI_SUCCESS                 Operation was successful, Argv and Argc are valid.
   @retval   EFI_OUT_OF_RESOURCES        A memory allocation failed.
 **/
 EFI_STATUS
@@ -172,7 +172,7 @@ RestoreStdInStdOutStdErr (
   @param[in, out] Argv            pointer to array of strings; one for each parameter
   @param[in, out] Argc            pointer to number of strings in Argv array
 
-  @return EFI_SUCCESS           the operation was sucessful
+  @return EFI_SUCCESS           the operation was successful
   @return EFI_OUT_OF_RESOURCES  a memory allocation failed.
 **/
 EFI_STATUS

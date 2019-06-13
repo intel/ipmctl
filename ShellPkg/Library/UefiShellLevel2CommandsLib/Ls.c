@@ -332,7 +332,7 @@ PrintNonSfoFooter(
   @param[in] Count          The count of bits enabled in Attribs.
   @param[in] TimeZone       The current time zone offset.
 
-  @retval SHELL_SUCCESS     the printing was sucessful.
+  @retval SHELL_SUCCESS     the printing was successful.
 **/
 SHELL_STATUS
 PrintLsOutput(

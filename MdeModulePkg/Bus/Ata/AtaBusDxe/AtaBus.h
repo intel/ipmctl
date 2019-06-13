@@ -685,7 +685,7 @@ AtaBlockIoFlushBlocks (
   );
 
 /**
-  Reset the Block Device throught Block I/O2 protocol.
+  Reset the Block Device through Block I/O2 protocol.
 
   @param[in]  This                 Indicates a pointer to the calling context.
   @param[in]  ExtendedVerification Driver may perform diagnostics on reset.

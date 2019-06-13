@@ -172,7 +172,7 @@ ShellCommandLibDestructor (
   SCRIPT_FILE_LIST                  *Node3;
   SHELL_MAP_LIST                    *MapNode;
   //
-  // enumerate throught the list and free all the memory
+  // enumerate through the list and free all the memory
   //
   while (!IsListEmpty (&mCommandList.Link)) {
     Node = (SHELL_COMMAND_INTERNAL_LIST_ENTRY *)GetFirstNode(&mCommandList.Link);
@@ -195,7 +195,7 @@ ShellCommandLibDestructor (
   }
 
   //
-  // enumerate throught the list and free all the memory
+  // enumerate through the list and free all the memory
   //
   while (!IsListEmpty (&mScriptList.Link)) {
     Node3 = (SCRIPT_FILE_LIST *)GetFirstNode(&mScriptList.Link);
@@ -205,7 +205,7 @@ ShellCommandLibDestructor (
   }
 
   //
-  // enumerate throught the mappings list and free all the memory
+  // enumerate through the mappings list and free all the memory
   //
   if (!IsListEmpty(&gShellMapList.Link)) {
     for (MapNode = (SHELL_MAP_LIST *)GetFirstNode(&gShellMapList.Link)

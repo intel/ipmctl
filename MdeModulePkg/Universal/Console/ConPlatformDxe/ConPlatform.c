@@ -1051,7 +1051,7 @@ IsHotPlugDevice (
   CheckDevicePath = DevicePath;
   while (!IsDevicePathEnd (CheckDevicePath)) {
     //
-    // Check device whether is hot plug device or not throught Device Path
+    // Check device whether is hot plug device or not through Device Path
     // 
     if ((DevicePathType (CheckDevicePath) == MESSAGING_DEVICE_PATH) &&
         (DevicePathSubType (CheckDevicePath) == MSG_USB_DP ||

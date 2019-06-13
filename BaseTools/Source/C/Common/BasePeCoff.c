@@ -1329,7 +1329,7 @@ PeCoffLoaderGetPdbPointer (
       break;
     default:
       //
-      // For unknow Machine field, use Magic in optional Header
+      // For unknown Machine field, use Magic in optional Header
       //
       Magic = Hdr.Pe32->OptionalHeader.Magic;
     }

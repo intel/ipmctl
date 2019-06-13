@@ -563,7 +563,7 @@ S3BootScriptMoveLastOpcode (
   @retval EFI_SUCCESS           The operation succeeded. A record was added into 
                                 the specified script table.
   @retval EFI_INVALID_PARAMETER The parameter is illegal or the given boot script 
-                                is not supported. If the opcode is unknow or not 
+                                is not supported. If the opcode is unknown or not 
                                 supported because of the PCD Feature Flags.
   @retval EFI_OUT_OF_RESOURCES  There is insufficient memory to store the boot script.
   @note   The FRAMEWORK version implementation does not support this API 
@@ -586,7 +586,7 @@ S3BootScriptLabel (
   @retval EFI_SUCCESS           The operation succeeded. A record was added into the
                                 specified script table.
   @retval EFI_INVALID_PARAMETER The parameter is illegal or the given boot script 
-                                is not supported. If the opcode is unknow or not s
+                                is not supported. If the opcode is unknown or not s
                                 upported because of the PCD Feature Flags.
   @retval EFI_OUT_OF_RESOURCES  There is insufficient memory to store the boot script.
   @note   The FRAMEWORK version implementation does not support this API 

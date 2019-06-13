@@ -38,7 +38,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   @retval RETURN_OUT_OF_RESOURCES   no enough resource to save the information.
   @retval RETURN_ACCESS_DENIED      it is too late to invoke this interface
   @retval RETURN_NOT_STARTED        it is too early to invoke this interface
-  @retval RETURN_UNSUPPORTED        the service is not supported by implementaion.
+  @retval RETURN_UNSUPPORTED        the service is not supported by implementation.
 **/
 RETURN_STATUS
 EFIAPI
@@ -123,7 +123,7 @@ SaveLockBox (
   @retval RETURN_NOT_FOUND          the requested GUID not found.
   @retval RETURN_ACCESS_DENIED      it is too late to invoke this interface
   @retval RETURN_NOT_STARTED        it is too early to invoke this interface
-  @retval RETURN_UNSUPPORTED        the service is not supported by implementaion.
+  @retval RETURN_UNSUPPORTED        the service is not supported by implementation.
 **/
 RETURN_STATUS
 EFIAPI
@@ -210,7 +210,7 @@ SetLockBoxAttributes (
   @retval RETURN_BUFFER_TOO_SMALL   the original buffer to too small to hold new information.
   @retval RETURN_ACCESS_DENIED      it is too late to invoke this interface
   @retval RETURN_NOT_STARTED        it is too early to invoke this interface
-  @retval RETURN_UNSUPPORTED        the service is not supported by implementaion.
+  @retval RETURN_UNSUPPORTED        the service is not supported by implementation.
 **/
 RETURN_STATUS
 EFIAPI
@@ -302,7 +302,7 @@ UpdateLockBox (
   @retval RETURN_NOT_FOUND          the requested GUID not found.
   @retval RETURN_NOT_STARTED        it is too early to invoke this interface
   @retval RETURN_ACCESS_DENIED      not allow to restore to the address
-  @retval RETURN_UNSUPPORTED        the service is not supported by implementaion.
+  @retval RETURN_UNSUPPORTED        the service is not supported by implementation.
 **/
 RETURN_STATUS
 EFIAPI
@@ -391,7 +391,7 @@ RestoreLockBox (
 
   @retval RETURN_SUCCESS            the information is restored successfully.
   @retval RETURN_NOT_STARTED        it is too early to invoke this interface
-  @retval RETURN_UNSUPPORTED        the service is not supported by implementaion.
+  @retval RETURN_UNSUPPORTED        the service is not supported by implementation.
 **/
 RETURN_STATUS
 EFIAPI

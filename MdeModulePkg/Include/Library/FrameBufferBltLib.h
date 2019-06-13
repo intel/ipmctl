@@ -38,7 +38,7 @@ typedef struct FRAME_BUFFER_CONFIGURE FRAME_BUFFER_CONFIGURE;
   @retval RETURN_BUFFER_TOO_SMALL   The Configure is to too small. The required
                                     size is returned in ConfigureSize.
   @retval RETURN_UNSUPPORTED        The requested mode is not supported by
-                                    this implementaion.
+                                    this implementation.
 **/
 RETURN_STATUS
 EFIAPI

@@ -30,7 +30,7 @@ UINT16  mIp4Id;
   @param  Option           The orginal IP4 option to copy from
   @param  OptLen           The length of the IP4 option
 
-  @retval EFI_BAD_BUFFER_SIZE  There is no enought room in the head space of
+  @retval EFI_BAD_BUFFER_SIZE  There is no enough room in the head space of
                                Packet.
   @retval EFI_SUCCESS          The IP4 header is successfully added to the packet.
 

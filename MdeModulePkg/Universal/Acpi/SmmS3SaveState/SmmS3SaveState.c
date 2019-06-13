@@ -403,7 +403,7 @@ BootScriptWriteDispatch2 (
   @param  Marker                The variable argument list to get the opcode
                                 and associated attributes.
 
-  @retval EFI_OUT_OF_RESOURCES  Not enought resource to complete the operations.
+  @retval EFI_OUT_OF_RESOURCES  Not enough resource to complete the operations.
   @retval EFI_SUCCESS           The opcode entry is added to the  table
                                 successfully.
 **/
@@ -424,7 +424,7 @@ BootScriptWriteInformation (
   @param  Marker                The variable argument list to get the opcode
                                 and associated attributes.
 
-  @retval EFI_OUT_OF_RESOURCES  Not enought resource to complete the operations.
+  @retval EFI_OUT_OF_RESOURCES  Not enough resource to complete the operations.
   @retval EFI_SUCCESS           The opcode entry is added to the  table
                                 successfully.
 **/
@@ -453,7 +453,7 @@ BootScriptWriteIoPoll (
   @param  Marker                The variable argument list to get the opcode
                                 and associated attributes.
 
-  @retval EFI_OUT_OF_RESOURCES  Not enought resource to complete the operations.
+  @retval EFI_OUT_OF_RESOURCES  Not enough resource to complete the operations.
   @retval EFI_SUCCESS           The opcode entry is added to the  table
                                 successfully.
 **/
@@ -483,7 +483,7 @@ BootScriptWritePciConfigPoll (
   @param  Marker                The variable argument list to get the opcode
                                 and associated attributes.
 
-  @retval EFI_OUT_OF_RESOURCES  Not enought resource to complete the operations.
+  @retval EFI_OUT_OF_RESOURCES  Not enough resource to complete the operations.
   @retval EFI_SUCCESS           The opcode entry is added to the  table
                                 successfully.
 **/

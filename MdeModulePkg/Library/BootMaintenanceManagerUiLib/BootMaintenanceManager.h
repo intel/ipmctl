@@ -622,7 +622,7 @@ ChangeTerminalDevicePath (
 
   @param CallbackData           The BMM context data.
 
-  @retval EFI_OUT_OF_RESOURCES  If not enought memory to complete the operation.
+  @retval EFI_OUT_OF_RESOURCES  If not enough memory to complete the operation.
   @retval EFI_SUCCESS           If function completes successfully.
 
 **/
@@ -656,7 +656,7 @@ Var_DelBootOption (
   @param OptionalData    The optional load option.
   @param ForceReconnect  If to force reconnect.
 
-  @retval EFI_OUT_OF_RESOURCES If not enought memory to complete the operation.
+  @retval EFI_OUT_OF_RESOURCES If not enough memory to complete the operation.
   @retval EFI_SUCCESS          If function completes successfully.
 
 **/

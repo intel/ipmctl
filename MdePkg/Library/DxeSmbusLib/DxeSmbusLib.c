@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 
 //
-// Globle variable to cache pointer to Smbus protocol.
+// Global variable to cache pointer to Smbus protocol.
 //
 EFI_SMBUS_HC_PROTOCOL      *mSmbus = NULL;
 

@@ -95,7 +95,7 @@ HookEntry (
   //
   ReadIdtGateDescriptor (ExceptionType, &(IdtEntryTable[ExceptionType].OrigDesc));
   //
-  // stores orignal interrupt handle 
+  // stores original interrupt handle 
   //
   IdtEntryTable[ExceptionType].OrigVector = (DEBUG_PROC) GetInterruptHandleFromIdt (&(IdtEntryTable[ExceptionType].OrigDesc));
 

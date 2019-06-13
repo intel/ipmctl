@@ -413,7 +413,7 @@ ReallocateAcpiTableBuffer (
   CopyMem (AcpiTableInstance->Xsdt, TempPrivateData.Xsdt, (sizeof (EFI_ACPI_DESCRIPTION_HEADER) + mEfiAcpiMaxNumTables * sizeof (UINT64)));
   
   //
-  // Calculate orignal ACPI table buffer size
+  // Calculate original ACPI table buffer size
   //
   TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) +         // for ACPI 2.0/3.0 XSDT
               mEfiAcpiMaxNumTables * sizeof (UINT64);

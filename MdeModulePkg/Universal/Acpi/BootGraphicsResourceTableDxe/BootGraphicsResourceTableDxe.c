@@ -292,7 +292,7 @@ InstallBootGraphicsResourceTable (
     //
     OrigBmpSize = mBmpImageHeaderTemplate.ImageSize + sizeof (BMP_IMAGE_HEADER);
     //
-    // Free orignal BMP memory 
+    // Free original BMP memory 
     // 
     if (mBootGraphicsResourceTableTemplate.ImageAddress) {
       gBS->FreePages(mBootGraphicsResourceTableTemplate.ImageAddress, EFI_SIZE_TO_PAGES(OrigBmpSize));

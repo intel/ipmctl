@@ -285,7 +285,7 @@ ASM_PFX(InternalAsmThunk16):
     xchg   %r11, %rdi                   # save rdi to r11 and initialize rdi to the base address of shadowed GDT table
     rep
     movsb                               # perform memory copy to shadow GDT table
-    movq   %r10, %rcx                   # restore the orignal rcx before memory copy
+    movq   %r10, %rcx                   # restore the original rcx before memory copy
     movq   %r11, %rdi                   # restore the original rdi before memory copy
        
     sidt    0x50(%rsp)

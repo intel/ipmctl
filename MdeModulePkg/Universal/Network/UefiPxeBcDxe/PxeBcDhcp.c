@@ -600,7 +600,7 @@ PxeBcCacheDhcpOffer (
   Offer       = &CachedOffer->Packet.Offer;
 
   //
-  // Cache the orignal dhcp packet
+  // Cache the original dhcp packet
   //
   Status = PxeBcCopyEfiDhcp4Packet (Offer, RcvdOffer);
   if (EFI_ERROR(Status)) {

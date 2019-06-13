@@ -232,7 +232,7 @@ TcpComputeRtt (
 
   //
   // Step 2.4: Limit the RTO to at least 1 second
-  // Step 2.5: Limit the RTO to a maxium value that
+  // Step 2.5: Limit the RTO to a maximum value that
   // is at least 60 second
   //
   if (Tcb->Rto < TCP_RTO_MIN) {

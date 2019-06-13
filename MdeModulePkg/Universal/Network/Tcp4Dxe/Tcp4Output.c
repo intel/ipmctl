@@ -665,7 +665,7 @@ TcpRetransmit (
   UINT32  Len;
 
   //
-  // Compute the maxium length of retransmission. It is
+  // Compute the maximum length of retransmission. It is
   // limited by three factors:
   // 1. Less than SndMss
   // 2. must in the current send window

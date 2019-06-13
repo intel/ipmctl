@@ -110,7 +110,7 @@ UhciDestoryFrameList (
 
 
 /**
-  Convert the poll rate to the maxium 2^n that is smaller
+  Convert the poll rate to the maximum 2^n that is smaller
   than Interval.
 
   @param  Interval               The poll rate to convert.

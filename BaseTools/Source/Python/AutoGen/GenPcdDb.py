@@ -729,7 +729,7 @@ def BuildExDataBase(Dict):
     Dict['STRING_TABLE_DB_VALUE'] = [StringArrayToList(x) for x in Dict['STRING_TABLE_VALUE']]
     
     StringTableValue = Dict['STRING_TABLE_DB_VALUE']
-    # when calcute the offset, should use StringTableLen instead of StringTableValue, as string maxium len may be different with actual len
+    # when calcute the offset, should use StringTableLen instead of StringTableValue, as string maximum len may be different with actual len
     StringTableLen = Dict['STRING_TABLE_LENGTH']
     DbStringTableLen = DbStringItemList(0, RawDataList = StringTableValue, LenList = StringTableLen)
 

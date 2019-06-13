@@ -513,7 +513,7 @@ NetDebugOutput (
   }
 
   //
-  // Allocate a maxium of 1024 bytes, the caller should ensure
+  // Allocate a maximum of 1024 bytes, the caller should ensure
   // that the message plus the ethernet/ip/udp header is shorter
   // than this
   //

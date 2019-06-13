@@ -100,7 +100,7 @@ typedef struct _TCP_CB  TCP_CB;
 #define TCP_TICK_HZ              5                  ///< The frequence of TCP tick
 #define TCP_RTT_SHIFT            3                  ///< SRTT & RTTVAR scaled by 8
 #define TCP_RTO_MIN              TCP_TICK_HZ        ///< The minium value of RTO
-#define TCP_RTO_MAX              (TCP_TICK_HZ * 60) ///< The maxium value of RTO
+#define TCP_RTO_MAX              (TCP_TICK_HZ * 60) ///< The maximum value of RTO
 #define TCP_FOLD_RTT             4                  ///< Timeout threshod to fold RTT
 
 //
@@ -245,7 +245,7 @@ struct _TCP_CB {
   UINT32            KeepAlivePeriod; ///< Interval for subsequent keep alive probe
   UINT8             MaxKeepAlive;    ///< Maxium keep alive probe times.
   UINT8             KeepAliveProbes; ///< The number of keep alive probe.
-  UINT16            MaxRexmit;       ///< The maxium number of retxmit before abort
+  UINT16            MaxRexmit;       ///< The maximum number of retxmit before abort
   UINT32            FinWait2Timeout; ///< The FIN_WAIT_2 time out
   UINT32            TimeWaitTimeout; ///< The TIME_WAIT time out
   UINT32            ConnectTimeout;  ///< The connect establishment time out

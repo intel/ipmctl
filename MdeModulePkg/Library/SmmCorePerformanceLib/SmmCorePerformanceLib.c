@@ -506,7 +506,7 @@ SmmPerformanceHandlerEx (
   }
 
   if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
-    DEBUG ((EFI_D_ERROR, "SmmPerformanceHandlerEx: SMM communcation data buffer in SMRAM or overflow!\n"));
+    DEBUG ((EFI_D_ERROR, "SmmPerformanceHandlerEx: SMM communication data buffer in SMRAM or overflow!\n"));
     return EFI_SUCCESS;
   }
   
@@ -618,7 +618,7 @@ SmmPerformanceHandler (
   }
 
   if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
-    DEBUG ((EFI_D_ERROR, "SmmPerformanceHandler: SMM communcation data buffer in SMRAM or overflow!\n"));
+    DEBUG ((EFI_D_ERROR, "SmmPerformanceHandler: SMM communication data buffer in SMRAM or overflow!\n"));
     return EFI_SUCCESS;
   }
 

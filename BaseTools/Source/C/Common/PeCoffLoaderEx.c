@@ -261,7 +261,7 @@ Returns:
 }
 
 /**
-  Pass in a pointer to an ARM MOVT or MOVW immediate instruciton and 
+  Pass in a pointer to an ARM MOVT or MOVW immediate instruction and 
   return the immediate data encoded in the instruction
 
   @param  Instruction   Pointer to ARM MOVT or MOVW immediate instruction
@@ -307,7 +307,7 @@ ThumbMovtImmediatePatch (
 {
   UINT16  Patch;
 
-  // First 16-bit chunk of instruciton
+  // First 16-bit chunk of instruction
   Patch  = ((Address >> 12) & 0x000f);             // imm4 
   Patch |= (((Address & BIT11) != 0) ? BIT10 : 0); // i
   *Instruction = (*Instruction & ~0x040f) | Patch;
@@ -320,7 +320,7 @@ ThumbMovtImmediatePatch (
 }
 
 /**
-  Pass in a pointer to an ARM MOVW/MOVT instruciton pair and 
+  Pass in a pointer to an ARM MOVW/MOVT instruction pair and 
   return the immediate data encoded in the two` instruction
 
   @param  Instructions  Pointer to ARM MOVW/MOVT insturction pair

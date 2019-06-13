@@ -291,7 +291,7 @@ InitializeDisplayStatement (
   }
 
   //
-  // Initilize the option list in statement.
+  // Initialize the option list in statement.
   //
   Link = GetFirstNode (&Statement->OptionListHead);
   while (!IsNull (&Statement->OptionListHead, Link)) {
@@ -2337,7 +2337,7 @@ SetupBrowser (
   InitializeCurrentSetting (Selection->FormSet);
 
   //
-  // Initilize Action field.
+  // Initialize Action field.
   //
   Selection->Action = UI_ACTION_REFRESH_FORM;
 

@@ -946,7 +946,7 @@ ExecuteSmmCoreFromSmram (
   }
   
   //
-  // Initilize ImageContext
+  // Initialize ImageContext
   //
   ImageContext.Handle    = SourceBuffer;
   ImageContext.ImageRead = PeCoffLoaderImageReadFromMemory;

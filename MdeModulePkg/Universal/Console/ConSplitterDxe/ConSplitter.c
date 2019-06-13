@@ -749,7 +749,7 @@ ConSplitterTextOutConstructor (
   }
 
   //
-  // Initilize console output splitter's private data.
+  // Initialize console output splitter's private data.
   //
   ConOutPrivate->TextOut.Mode = &ConOutPrivate->TextOutMode;
 

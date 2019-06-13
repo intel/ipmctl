@@ -357,7 +357,7 @@ LoadAllHiiFormset (
     }
 
     //
-    // Initilize FormSet Setting
+    // Initialize FormSet Setting
     //
     LocalFormSet = AllocateZeroPool (sizeof (FORM_BROWSER_FORMSET));
     ASSERT (LocalFormSet != NULL);
@@ -372,7 +372,7 @@ LoadAllHiiFormset (
     InitializeCurrentSetting (LocalFormSet);
 
     //
-    // Initilize Questions' Value
+    // Initialize Questions' Value
     //
     Status = LoadFormSetConfig (NULL, LocalFormSet);
     if (EFI_ERROR (Status)) {

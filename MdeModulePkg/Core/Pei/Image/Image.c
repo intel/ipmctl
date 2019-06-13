@@ -379,7 +379,7 @@ LoadAndRelocatePeCoffImage (
   }
   
   //
-  // Initilize local IsS3Boot and IsRegisterForShadow variable
+  // Initialize local IsS3Boot and IsRegisterForShadow variable
   //
   IsS3Boot = FALSE;
   if (Private->HobList.HandoffInformationTable->BootMode == BOOT_ON_S3_RESUME) {

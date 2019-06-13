@@ -365,7 +365,7 @@ UsbMassInitMedia (
 }
 
 /**
-  Initilize the USB Mass Storage transport.
+  Initialize the USB Mass Storage transport.
 
   This function tries to find the matching USB Mass Storage transport
   protocol for USB device. If found, initializes the matching transport.

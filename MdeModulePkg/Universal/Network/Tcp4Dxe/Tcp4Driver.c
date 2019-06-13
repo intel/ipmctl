@@ -561,7 +561,7 @@ Tcp4DriverBindingStop (
   @param  Context             Context of the socket
   
   @retval EFI_SUCCESS         This protocol is installed successfully.
-  @retval other               Some error occured.
+  @retval other               Some error occurred.
   
 **/
 EFI_STATUS

@@ -33,7 +33,7 @@ HEFI_EDITOR_CLIPBOARD HClipBoardConst = {
   Initialization function for HDiskImage.
 
   @param[in] EFI_SUCCESS      The operation was successful.
-  @param[in] EFI_LOAD_ERROR   A load error occured.
+  @param[in] EFI_LOAD_ERROR   A load error occurred.
 **/
 EFI_STATUS
 HClipBoardInit (
@@ -52,7 +52,7 @@ HClipBoardInit (
   Initialization function for HDiskImage.
 
   @param[in] EFI_SUCCESS      The operation was successful.
-  @param[in] EFI_LOAD_ERROR   A load error occured.
+  @param[in] EFI_LOAD_ERROR   A load error occurred.
 **/
 EFI_STATUS
 HClipBoardCleanup (

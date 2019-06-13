@@ -229,7 +229,7 @@ Mtftp4OverrideValid (
   @param  UdpCfgData             The UDP configure data to reconfigure the UDP_IO
 
   @retval TRUE                   The default address is retrieved and UDP is reconfigured.
-  @retval FALSE                  Some error occured.
+  @retval FALSE                  Some error occurred.
 
 **/
 BOOLEAN

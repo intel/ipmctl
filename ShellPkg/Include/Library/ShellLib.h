@@ -1010,7 +1010,7 @@ ShellIsFileInPath(
   @param[in] String   String representation of a number.
 
   @return             The unsigned integer result of the conversion.
-  @retval (UINTN)(-1) An error occured.
+  @retval (UINTN)(-1) An error occurred.
 **/
 UINTN
 EFIAPI
@@ -1027,7 +1027,7 @@ ShellStrToUintn(
   @param[in] String   String representation of a number.
 
   @return             The unsigned integer result of the conversion.
-  @retval (UINTN)(-1) An error occured.
+  @retval (UINTN)(-1) An error occurred.
 **/
 UINTN
 EFIAPI

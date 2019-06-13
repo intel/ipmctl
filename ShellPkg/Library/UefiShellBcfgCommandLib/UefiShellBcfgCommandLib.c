@@ -90,7 +90,7 @@ typedef struct {
   @param[in]      Target    The target of the operation.
 
   @retval EFI_SUCCESS       The data was successfully updated.
-  @retval other             A error occured.
+  @retval other             A error occurred.
 **/
 EFI_STATUS
 UpdateOptionalData(
@@ -175,7 +175,7 @@ UpdateOptionalData(
   @param[in]      BootIndex   The boot option index to CRC.
 
   @retval EFI_SUCCESS           The CRC was successfully returned.
-  @retval other                 A error occured.
+  @retval other                 A error occurred.
 **/
 EFI_STATUS
 GetBootOptionCrc(

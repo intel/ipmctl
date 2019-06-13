@@ -4670,7 +4670,7 @@ Finish:
   @param[in] BwCommandCode: Read or write operation.
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
   @retval EFI_OUT_OF_RESOURCES in case of failed region allocation
@@ -6413,7 +6413,7 @@ PollOnArsDeviceBusy(
   for(RetryCount = 0; RetryCount < RetryMax; ++RetryCount) {
     ReturnCode = FwCmdGetLongOperationStatus(pDimm, &FwStatus, &LongOpStatus);
     if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_ERR("Error occured while polling for ARS enable/disable state.\n");
+        NVDIMM_ERR("Error occurred while polling for ARS enable/disable state.\n");
         break;
     }
 

@@ -215,8 +215,8 @@ HMainCommandGoToOffset (
   save to another file name.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandSaveBuffer (
@@ -512,8 +512,8 @@ HMainCommandSaveBuffer (
   Load a disk buffer editor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandSelectStart (
@@ -550,8 +550,8 @@ HMainCommandSelectStart (
   Load a disk buffer editor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandSelectEnd (
@@ -588,8 +588,8 @@ HMainCommandSelectEnd (
   Cut current line to clipboard.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandCut (
@@ -660,8 +660,8 @@ HMainCommandCut (
   Paste line to file buffer.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandPaste (
@@ -720,8 +720,8 @@ HMainCommandPaste (
   Exit editor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandExit (
@@ -813,8 +813,8 @@ HMainCommandExit (
   Load a file from disk to editor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainCommandOpenFile (
@@ -1046,8 +1046,8 @@ HMainCommandOpenFile (
   Load a disk buffer editor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
   @retval EFI_NOT_FOUND           The disk was not found.
 **/
 EFI_STATUS
@@ -1291,8 +1291,8 @@ HMainCommandOpenDisk (
   Load memory content to editor
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
   @retval EFI_NOT_FOUND           The disk was not found.
 **/
 EFI_STATUS
@@ -1595,7 +1595,7 @@ CONST EDITOR_MENU_ITEM HexEditorMenuItems[] = {
   Init function for MainEditor
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainEditorInit (
@@ -1739,7 +1739,7 @@ HMainEditorInit (
   Cleanup function for MainEditor.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainEditorCleanup (
@@ -1891,8 +1891,8 @@ HMainEditorRefresh (
   @param[out] BeforeLeftButtonDown  helps with selections.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
   @retval EFI_NOT_FOUND           The disk was not found.
 **/
 EFI_STATUS
@@ -2050,8 +2050,8 @@ HMainEditorHandleMouseInput (
   Handle user key input. will route it to other components handle function.
 
   @retval EFI_SUCCESS             The operation was successful.
-  @retval EFI_OUT_OF_RESOURCES    A memory allocation occured.
-  @retval EFI_LOAD_ERROR          A load error occured.
+  @retval EFI_OUT_OF_RESOURCES    A memory allocation occurred.
+  @retval EFI_LOAD_ERROR          A load error occurred.
 **/
 EFI_STATUS
 HMainEditorKeyInput (

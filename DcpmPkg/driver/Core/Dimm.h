@@ -1232,7 +1232,7 @@ GetBwCommandStatus(
   @param[out] pBuffer: Buffer to place bytes into
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/
@@ -1254,7 +1254,7 @@ ApertureRead(
   @param[in] pBuffer: Buffer containing data to write
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/

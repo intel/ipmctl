@@ -78,7 +78,7 @@ BOOLEAN                           HBufferImageMouseNeedRefresh;
   Initialization function for HBufferImage
 
   @retval EFI_SUCCESS       The operation was successful.
-  @retval EFI_LOAD_ERROR    A load error occured.
+  @retval EFI_LOAD_ERROR    A load error occurred.
 **/
 EFI_STATUS
 HBufferImageInit (
@@ -736,7 +736,7 @@ HBufferImageRestorePosition (
   Refresh function for HBufferImage.
 
   @retval EFI_SUCCESS     The operation was successful.
-  @retval EFI_LOAD_ERROR  A Load error occured.
+  @retval EFI_LOAD_ERROR  A Load error occurred.
 
 **/
 EFI_STATUS
@@ -1320,7 +1320,7 @@ HBufferImageDoBackspace (
   @param[in] Char               The input char.
 
   @retval EFI_SUCCESS           The operation was successful.
-  @retval EFI_LOAD_ERROR        A load error occured.
+  @retval EFI_LOAD_ERROR        A load error occurred.
   @retval EFI_OUT_OF_RESOURCES  A memory allocation failed.
 **/
 EFI_STATUS
@@ -2382,7 +2382,7 @@ HBufferImageAdjustMousePosition (
                         INS
 
   @retval EFI_SUCCESS           The operation was successful.
-  @retval EFI_LOAD_ERROR        A load error occured.
+  @retval EFI_LOAD_ERROR        A load error occurred.
   @retval EFI_OUT_OF_RESOURCES  A Memory allocation failed.
 **/
 EFI_STATUS

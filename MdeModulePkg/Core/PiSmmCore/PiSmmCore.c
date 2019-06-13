@@ -452,7 +452,7 @@ SmmEntryPoint (
   PlatformHookBeforeSmmDispatch ();
 
   //
-  // If a legacy boot has occured, then make sure gSmmCorePrivate is not accessed
+  // If a legacy boot has occurred, then make sure gSmmCorePrivate is not accessed
   //
   InLegacyBoot = mInLegacyBoot;
   if (!InLegacyBoot) {
@@ -516,7 +516,7 @@ SmmEntryPoint (
   PlatformHookAfterSmmDispatch ();
 
   //
-  // If a legacy boot has occured, then make sure gSmmCorePrivate is not accessed
+  // If a legacy boot has occurred, then make sure gSmmCorePrivate is not accessed
   //
   if (!InLegacyBoot) {
     //

@@ -117,7 +117,7 @@ typedef struct {
 extern char	program[];	/* tells what program this is */
 extern char	version[];	/* tells what version this is */
 extern char	*file_str[];	/* file names being used */
-extern int	err_found;	/* flag to indicate error occured */
+extern int	err_found;	/* flag to indicate error occurred */
 extern int	action_no;	/* last action function printed */
 extern int	func_action;	/* should actions be turned into functions?*/
 extern set	used_chars;	/* used to label trans. arcs */

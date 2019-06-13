@@ -251,7 +251,7 @@ SockDestroyChild (
 
   @param  SockInitData         Inital data to setting the socket.
   
-  @return Pointer to the newly created socket. If NULL, error condition occured.
+  @return Pointer to the newly created socket. If NULL, error condition occurred.
 
 **/
 SOCKET *

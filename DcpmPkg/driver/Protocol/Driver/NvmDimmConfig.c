@@ -5261,7 +5261,7 @@ UpdateDimmFw(
         }
       }
       else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        NVDIMM_DBG("FW Update failed, FW already occured\n");
+        NVDIMM_DBG("FW Update failed, FW already occurred\n");
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
       }
       else {

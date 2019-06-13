@@ -1659,7 +1659,7 @@ HttpFreeHeaderFields (
                                   the HTTP request message.
   @param[in]   Url                The URL of a remote host.
   @param[out]  RequestMsg         Pointer to the created HTTP request message.
-                                  NULL if any error occured.
+                                  NULL if any error occurred.
   @param[out]  RequestMsgSize     Size of the RequestMsg (in bytes).
 
   @return EFI_SUCCESS             If HTTP request string was created successfully

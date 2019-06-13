@@ -39,7 +39,7 @@ HLineFree (
 
   @param[in] Count      The line number to advance.
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return A pointer to the line after advance.
 **/
 HEFI_EDITOR_LINE *
@@ -74,7 +74,7 @@ HLineAdvance (
 
   @param[in] Count    The line number to retreat.
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return A pointer to the line after retreat.
 **/
 HEFI_EDITOR_LINE *
@@ -111,7 +111,7 @@ HLineRetreat (
                             >0 : advance
                             <0: retreat  
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return A pointer to the line after move.
 **/
 HEFI_EDITOR_LINE *
@@ -144,7 +144,7 @@ HMoveLine (
                           >0 : advance
                           <0: retreat
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return A pointer to the line after move.
 **/
 HEFI_EDITOR_LINE *

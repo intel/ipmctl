@@ -3142,7 +3142,7 @@ ShellIsFileInPath(
   @param[in] String   String representation of a number.
 
   @return             The unsigned integer result of the conversion.
-  @retval (UINTN)(-1) An error occured.
+  @retval (UINTN)(-1) An error occurred.
 **/
 UINTN
 EFIAPI
@@ -3786,7 +3786,7 @@ InternalShellHexCharToUintn (
 
   @retval EFI_SUCCESS             The conversion was successful.
   @retval EFI_INVALID_PARAMETER   A parameter was NULL or invalid.
-  @retval EFI_DEVICE_ERROR        An overflow occured.
+  @retval EFI_DEVICE_ERROR        An overflow occurred.
 **/
 EFI_STATUS
 InternalShellStrHexToUint64 (
@@ -3887,7 +3887,7 @@ InternalShellStrHexToUint64 (
 
   @retval EFI_SUCCESS             The conversion was successful.
   @retval EFI_INVALID_PARAMETER   A parameter was NULL or invalid.
-  @retval EFI_DEVICE_ERROR        An overflow occured.
+  @retval EFI_DEVICE_ERROR        An overflow occurred.
 **/
 EFI_STATUS
 InternalShellStrDecimalToUint64 (

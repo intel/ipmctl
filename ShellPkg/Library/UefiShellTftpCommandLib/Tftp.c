@@ -47,7 +47,7 @@ STATIC CONST CHAR16 mTftpProgressDelete[] = L"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b
   @param[out] Value     UINT16 value
 
   @return     TRUE      The value was returned.
-  @return     FALSE     A parsing error occured.
+  @return     FALSE     A parsing error occurred.
 **/
 STATIC 
 BOOLEAN 
@@ -589,7 +589,7 @@ ShellCommandRunTftp (
   @param[out] Value     UINT16 value
 
   @return     TRUE      The value was returned.
-  @return     FALSE     A parsing error occured.
+  @return     FALSE     A parsing error occurred.
 **/
 STATIC
 BOOLEAN

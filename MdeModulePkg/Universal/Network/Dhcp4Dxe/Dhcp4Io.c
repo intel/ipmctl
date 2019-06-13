@@ -610,7 +610,7 @@ DhcpEndSession (
                                     is, all the option value that we care.
 
   @retval EFI_SUCCESS           The packet is successfully processed.
-  @retval Others                Some error occured.
+  @retval Others                Some error occurred.
 
 **/
 EFI_STATUS
@@ -685,7 +685,7 @@ ON_EXIT:
                                     is, all the option value that we care.
 
   @retval EFI_SUCCESS           The packet is successfully processed.
-  @retval Others                Some error occured.
+  @retval Others                Some error occurred.
 
 **/
 EFI_STATUS
@@ -778,7 +778,7 @@ ON_EXIT:
                                     is, all the option value that we care.
 
   @retval EFI_SUCCESS           The packet is successfully processed.
-  @retval Others                Some error occured.
+  @retval Others                Some error occurred.
 
 **/
 EFI_STATUS
@@ -862,7 +862,7 @@ ON_EXIT:
                                     is, all the option value that we care.
 
   @retval EFI_SUCCESS           The packet is successfully processed.
-  @retval Others                Some error occured.
+  @retval Others                Some error occurred.
 
 **/
 EFI_STATUS

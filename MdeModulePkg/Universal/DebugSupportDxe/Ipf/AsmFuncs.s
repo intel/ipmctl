@@ -1331,7 +1331,7 @@ PatchCode:
 
 PatchCodeRet:
         // fake-up an rfi to get RSE back to being coherent and insure psr has
-        // original contents when interrupt occured, then exit to SAL
+        // original contents when interrupt occurred, then exit to SAL
         // at this point:
         //      cr.ifs has been modified by previous "cover"
         //      SCRATCH_REG6 has original cr.ifs

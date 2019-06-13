@@ -519,7 +519,7 @@ UhciCheckTdStatus (
       // terminate the transfer
       //
       if (!IsLow && (TdHw->ShortPacket == 1) && (Len < Td->DataLen)) {
-        DEBUG ((EFI_D_VERBOSE, "UhciCheckTdStatus: short packet read occured\n"));
+        DEBUG ((EFI_D_VERBOSE, "UhciCheckTdStatus: short packet read occurred\n"));
 
         Finished = TRUE;
         goto ON_EXIT;
@@ -596,7 +596,7 @@ UhciExecuteTransfer (
     Finished = UhciCheckTdStatus (Uhc, Td, IsLow, QhResult);
 
     //
-    // Transfer is OK or some error occured (TD inactive)
+    // Transfer is OK or some error occurred (TD inactive)
     //
     if (Finished) {
       break;

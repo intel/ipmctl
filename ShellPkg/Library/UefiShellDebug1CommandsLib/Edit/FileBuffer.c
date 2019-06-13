@@ -227,7 +227,7 @@ InternalEditorMiscLineRetreat (
                        >0 : advance
                        <0 : retreat
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return The line after advance/retreat.
 **/
 EFI_EDITOR_LINE *
@@ -2615,7 +2615,7 @@ RightCurrentScreen (
                      >0 : advance
                      <0: retreat
 
-  @retval NULL An error occured.
+  @retval NULL An error occurred.
   @return The line after advance/retreat.
 **/
 EFI_EDITOR_LINE *

@@ -368,7 +368,7 @@ RemoveLastItemFromPath (
 
   @param  Path          The pointer to the string containing the path.
 
-  @retval NULL          An error occured.
+  @retval NULL          An error occurred.
   @return Path in all other instances.
 
 **/

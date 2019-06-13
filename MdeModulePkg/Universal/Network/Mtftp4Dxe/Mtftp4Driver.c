@@ -36,7 +36,7 @@ EFI_SERVICE_BINDING_PROTOCOL  gMtftp4ServiceBindingTemplete = {
   @param SystemTable    The system table.
 
   @retval EFI_SUCCESS  The handles are successfully installed on the image.
-  @retval others       some EFI_ERROR occured.
+  @retval others       some EFI_ERROR occurred.
 
 **/
 EFI_STATUS

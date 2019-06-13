@@ -25,7 +25,7 @@
 #define ACPI_MONITOR_GEN_NVM_EVENTS_EXCEPTION_PRE_MSG "Error generating Nvm events, error: "
 #define ACPI_MONITOR_EXCEPTION_PRE_MSG "Couldn't get devices - error: "
 #define ACPI_WAIT_FOR_API_TIMED_OUT_MSG	"Timed out waiting for an ACPI event\n"
-#define ACPI_WAIT_FOR_API_UNKNOWN_MSG "Unknown error occured while waiting for an ACPI event\n"
+#define ACPI_WAIT_FOR_API_UNKNOWN_MSG "Unknown error occurred while waiting for an ACPI event\n"
 #define ACPI_CREATE_CTX_GENERAL_ERROR_MSG "Error creating acpi context\n"
 #define ACPI_SMART_HEALTH_EVENT_THERM_LOW_HEADER "ThermLow"
 #define ACPI_SMART_HEALTH_EVENT_THERM_HIGH_HEADER "ThermHigh"

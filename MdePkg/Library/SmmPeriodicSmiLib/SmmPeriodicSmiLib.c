@@ -602,7 +602,7 @@ PeriodicSmiYield (
   PeriodicSmiLibraryHandler->YieldFlag = FALSE;
 
   //
-  // Return the amount elapsed time that occured while yielded
+  // Return the amount elapsed time that occurred while yielded
   //  
   return PeriodicSmiLibraryHandler->ElapsedTime;
 }

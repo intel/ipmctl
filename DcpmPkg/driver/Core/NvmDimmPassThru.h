@@ -877,7 +877,7 @@ typedef struct {
   UINT64 LastShutdownTime;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
@@ -904,7 +904,7 @@ typedef struct {
   LAST_SHUTDOWN_STATUS_DETAILS UnlatchedLastShutdownDetails;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)

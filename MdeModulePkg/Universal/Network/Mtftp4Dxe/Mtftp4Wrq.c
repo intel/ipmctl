@@ -251,7 +251,7 @@ Mtftp4WrqOackValid (
                                 this function.
 
   @retval EFI_SUCCESS           The OACK process is OK
-  @retval EFI_TFTP_ERROR        Some error occured, and the session reset.
+  @retval EFI_TFTP_ERROR        Some error occurred, and the session reset.
 
 **/
 EFI_STATUS

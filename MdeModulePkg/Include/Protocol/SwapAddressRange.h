@@ -25,7 +25,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_SWAP_ADDRESS_RANGE_PROTOCOL  EFI_SWAP_ADDRESS_RANGE_PROTOCOL;
 

@@ -24,7 +24,7 @@
   }
 
 ///
-/// Forward reference for pure ANSI compatability
+/// Forward reference for pure ANSI compatibility
 ///
 typedef struct _EFI_SCSI_IO_PROTOCOL EFI_SCSI_IO_PROTOCOL;
 

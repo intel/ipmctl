@@ -27,7 +27,7 @@
   }
 
 ///
-/// Forward reference for pure ANSI compatability
+/// Forward reference for pure ANSI compatibility
 ///
 typedef struct _EFI_USB_HC_PROTOCOL EFI_USB_HC_PROTOCOL;
 

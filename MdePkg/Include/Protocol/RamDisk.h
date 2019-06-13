@@ -25,7 +25,7 @@
   { 0xab38a0df, 0x6873, 0x44a9, { 0x87, 0xe6, 0xd4, 0xeb, 0x56, 0x14, 0x84, 0x49 }};
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_RAM_DISK_PROTOCOL  EFI_RAM_DISK_PROTOCOL;
 

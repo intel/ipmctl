@@ -26,7 +26,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
     }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_DPC_PROTOCOL  EFI_DPC_PROTOCOL;
 

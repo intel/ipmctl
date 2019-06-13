@@ -37,7 +37,7 @@ typedef struct _EFI_TCP4_PROTOCOL EFI_TCP4_PROTOCOL;
 
 ///
 /// EFI_TCP4_SERVICE_POINT is deprecated in the UEFI 2.4B and should not be used any more.
-/// The definition in here is only present to provide backwards compatability.
+/// The definition in here is only present to provide backwards compatibility.
 ///
 typedef struct {
   EFI_HANDLE              InstanceHandle;
@@ -49,7 +49,7 @@ typedef struct {
 
 ///
 /// EFI_TCP4_VARIABLE_DATA is deprecated in the UEFI 2.4B and should not be used any more.
-/// The definition in here is only present to provide backwards compatability.
+/// The definition in here is only present to provide backwards compatibility.
 ///
 typedef struct {
   EFI_HANDLE              DriverHandle;

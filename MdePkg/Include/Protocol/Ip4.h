@@ -43,7 +43,7 @@ typedef struct _EFI_IP4_PROTOCOL EFI_IP4_PROTOCOL;
 
 ///
 /// EFI_IP4_ADDRESS_PAIR is deprecated in the UEFI 2.4B and should not be used any more.
-/// The definition in here is only present to provide backwards compatability.
+/// The definition in here is only present to provide backwards compatibility.
 ///
 typedef struct {
   EFI_HANDLE              InstanceHandle;
@@ -53,7 +53,7 @@ typedef struct {
 
 ///
 /// EFI_IP4_VARIABLE_DATA is deprecated in the UEFI 2.4B and should not be used any more.
-/// The definition in here is only present to provide backwards compatability.
+/// The definition in here is only present to provide backwards compatibility.
 ///
 typedef struct {
   EFI_HANDLE              DriverHandle;

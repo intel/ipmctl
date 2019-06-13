@@ -22,7 +22,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   { 0xf05976ef, 0x83f1, 0x4f3d, { 0x86, 0x19, 0xf7, 0x59, 0x5d, 0x41, 0xe5, 0x38 } }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_PRINT2_PROTOCOL  EFI_PRINT2_PROTOCOL;
 
@@ -521,7 +521,7 @@ extern EFI_GUID gEfiPrint2ProtocolGuid;
   { 0xcc252d2, 0xc106, 0x4661, { 0xb5, 0xbd, 0x31, 0x47, 0xa4, 0xf8, 0x1f, 0x92 } }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_PRINT2S_PROTOCOL  EFI_PRINT2S_PROTOCOL;
 

@@ -24,7 +24,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_FAULT_TOLERANT_WRITE_PROTOCOL  EFI_FAULT_TOLERANT_WRITE_PROTOCOL;
 

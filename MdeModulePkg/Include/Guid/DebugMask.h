@@ -23,7 +23,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   { 0x4c8a2451, 0xc207, 0x405b, {0x96, 0x94, 0x99, 0xea, 0x13, 0x25, 0x13, 0x41} }
 
 ///
-/// Forward reference for pure ANSI compatability
+/// Forward reference for pure ANSI compatibility
 ///
 typedef struct _EFI_DEBUG_MASK_PROTOCOL  EFI_DEBUG_MASK_PROTOCOL;
 

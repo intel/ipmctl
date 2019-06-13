@@ -21,7 +21,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   { 0x2C03C536, 0x4594, 0x4515, { 0x9E, 0x7A, 0xD3, 0xD2, 0x04, 0xFE, 0x13, 0x63 } }
 
 //
-// Forward reference for pure ANSI compatability
+// Forward reference for pure ANSI compatibility
 //
 typedef struct _EFI_FILE_EXPLORER_PROTOCOL  EFI_FILE_EXPLORER_PROTOCOL;
 

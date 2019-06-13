@@ -279,7 +279,7 @@ ShellLibConstructorWorker (
   @param ImageHandle    the image handle of the process
   @param SystemTable    the EFI System Table pointer
 
-  @retval EFI_SUCCESS   the initialization was complete sucessfully
+  @retval EFI_SUCCESS   the initialization was complete successfully
   @return others        an error ocurred during initialization
 **/
 EFI_STATUS
@@ -365,7 +365,7 @@ ShellLibDestructor (
 
   This function is intended for internal access for shell commands only.
 
-  @retval EFI_SUCCESS   the initialization was complete sucessfully
+  @retval EFI_SUCCESS   the initialization was complete successfully
 
 **/
 EFI_STATUS
@@ -900,7 +900,7 @@ ShellWriteFile(
 
 @param FileHandle               the file handle to close.
 
-@retval EFI_SUCCESS             the file handle was closed sucessfully.
+@retval EFI_SUCCESS             the file handle was closed successfully.
 **/
 EFI_STATUS
 EFIAPI
@@ -920,7 +920,7 @@ ShellCloseFile (
 
   @param FileHandle             the file handle to delete
 
-  @retval EFI_SUCCESS           the file was closed sucessfully
+  @retval EFI_SUCCESS           the file was closed successfully
   @retval EFI_WARN_DELETE_FAILURE the handle was closed, but the file was not
                                 deleted
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -948,7 +948,7 @@ ShellDeleteFile (
   @param FileHandle             The file handle on which the position is being set
   @param Position               Byte position from begining of file
 
-  @retval EFI_SUCCESS           Operation completed sucessfully.
+  @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_UNSUPPORTED       the seek request for non-zero is not valid on
                                 directories.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -974,7 +974,7 @@ ShellSetFilePosition (
   @param FileHandle             The open file handle on which to get the position.
   @param Position               Byte position from begining of file.
 
-  @retval EFI_SUCCESS           the operation completed sucessfully.
+  @retval EFI_SUCCESS           the operation completed successfully.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
   @retval EFI_UNSUPPORTED       the request is not valid on directories.
 **/
@@ -1087,7 +1087,7 @@ ShellFindNextFile(
   @param FileHandle             file handle from which size is retrieved
   @param Size                   pointer to size
 
-  @retval EFI_SUCCESS           operation was completed sucessfully
+  @retval EFI_SUCCESS           operation was completed successfully
   @retval EFI_DEVICE_ERROR      cannot access the file
 **/
 EFI_STATUS
@@ -1186,7 +1186,7 @@ environment variable is created and assigned the specified value.
   @param EnvVal                 The Value of the environment variable
   @param Volatile               Indicates whether the variable is non-volatile (FALSE) or volatile (TRUE).
 
-  @retval EFI_SUCCESS           the operation was completed sucessfully
+  @retval EFI_SUCCESS           the operation was completed successfully
   @retval EFI_UNSUPPORTED       This operation is not allowed in pre UEFI 2.0 Shell environments
 **/
 EFI_STATUS
@@ -1234,7 +1234,7 @@ ShellSetEnvironmentVariable (
                                   in the form "x=y".  If NULL, the current set is used.
   @param[out] Status              The status of the run command line.
 
-  @retval EFI_SUCCESS             The operation completed sucessfully.  Status
+  @retval EFI_SUCCESS             The operation completed successfully.  Status
                                   contains the status code returned.
   @retval EFI_INVALID_PARAMETER   A parameter contains an invalid value.
   @retval EFI_OUT_OF_RESOURCES    Out of resources.
@@ -2002,7 +2002,7 @@ InternalIsFlag (
   @param[in] Argc               Count of parameters in Argv
   @param[in] AlwaysAllowNumbers TRUE to allow numbers always, FALSE otherwise.
 
-  @retval EFI_SUCCESS           The operation completed sucessfully.
+  @retval EFI_SUCCESS           The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  A memory allocation failed
   @retval EFI_INVALID_PARAMETER A parameter was invalid
   @retval EFI_VOLUME_CORRUPTED  the command line was corrupt.  an argument was
@@ -2226,7 +2226,7 @@ InternalCommandLineParse (
   @param[in] AutoPageBreak      Will automatically set PageBreakEnabled.
   @param[in] AlwaysAllowNumbers Will never fail for number based flags.
 
-  @retval EFI_SUCCESS           The operation completed sucessfully.
+  @retval EFI_SUCCESS           The operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  A memory allocation failed.
   @retval EFI_INVALID_PARAMETER A parameter was invalid.
   @retval EFI_VOLUME_CORRUPTED  The command line was corrupt.
@@ -4290,7 +4290,7 @@ ShellPrintHelp (
   
   @param[in]       FileName       Pointer to file name to delete.
   
-  @retval EFI_SUCCESS             the file was deleted sucessfully
+  @retval EFI_SUCCESS             the file was deleted successfully
   @retval EFI_WARN_DELETE_FAILURE the handle was closed, but the file was not
                                   deleted
   @retval EFI_INVALID_PARAMETER   One of the parameters has an invalid value.

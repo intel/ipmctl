@@ -231,7 +231,7 @@ FileHandleWrite(
 
 @param FileHandle               the file handle to close.
 
-@retval EFI_SUCCESS             the file handle was closed sucessfully.
+@retval EFI_SUCCESS             the file handle was closed successfully.
 **/
 EFI_STATUS
 EFIAPI
@@ -261,7 +261,7 @@ FileHandleClose (
 
   @param FileHandle             the file handle to delete
 
-  @retval EFI_SUCCESS           the file was closed sucessfully
+  @retval EFI_SUCCESS           the file was closed successfully
   @retval EFI_WARN_DELETE_FAILURE the handle was closed, but the file was not
                                 deleted
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -299,7 +299,7 @@ FileHandleDelete (
   @param FileHandle             The file handle on which the position is being set
   @param Position               Byte position from begining of file
 
-  @retval EFI_SUCCESS           Operation completed sucessfully.
+  @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_UNSUPPORTED       the seek request for non-zero is not valid on
                                 directories.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
@@ -332,7 +332,7 @@ FileHandleSetPosition (
   @param FileHandle             The open file handle on which to get the position.
   @param Position               Byte position from begining of file.
 
-  @retval EFI_SUCCESS           the operation completed sucessfully.
+  @retval EFI_SUCCESS           the operation completed successfully.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.
   @retval EFI_UNSUPPORTED       the request is not valid on directories.
 **/
@@ -585,7 +585,7 @@ FileHandleFindNextFile(
   @param FileHandle             file handle from which size is retrieved
   @param Size                   pointer to size
 
-  @retval EFI_SUCCESS           operation was completed sucessfully
+  @retval EFI_SUCCESS           operation was completed successfully
   @retval EFI_DEVICE_ERROR      cannot access the file
 **/
 EFI_STATUS
@@ -633,7 +633,7 @@ FileHandleGetSize (
   @param FileHandle             File handle whose size is to be changed.
   @param Size                   New size.
 
-  @retval EFI_SUCCESS           operation was completed sucessfully.
+  @retval EFI_SUCCESS           operation was completed successfully.
   @retval EFI_DEVICE_ERROR      cannot access the file.
 **/
 EFI_STATUS

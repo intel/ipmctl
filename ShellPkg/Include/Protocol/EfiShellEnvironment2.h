@@ -658,7 +658,7 @@ VOID
 
   @param[in, out] ProtocolInfo   The pointer to pointer to protocol information structure.
 
-  @retval EFI_SUCCESS           The next protocol's information was sucessfully returned.
+  @retval EFI_SUCCESS           The next protocol's information was successfully returned.
   @retval NULL                  There are no more protocols.
 **/
 typedef

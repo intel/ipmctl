@@ -89,7 +89,7 @@ typedef struct {
   @param[in]      Data      The buffer for the optioanl data.
   @param[in]      Target    The target of the operation.
 
-  @retval EFI_SUCCESS       The data was sucessfully updated.
+  @retval EFI_SUCCESS       The data was successfully updated.
   @retval other             A error occured.
 **/
 EFI_STATUS
@@ -174,7 +174,7 @@ UpdateOptionalData(
   @param[in, out] Crc         The CRC value to return.
   @param[in]      BootIndex   The boot option index to CRC.
 
-  @retval EFI_SUCCESS           The CRC was sucessfully returned.
+  @retval EFI_SUCCESS           The CRC was successfully returned.
   @retval other                 A error occured.
 **/
 EFI_STATUS
@@ -228,7 +228,7 @@ GetBootOptionCrc(
   @param[in]      TheHandle     Driver handle.
   @param[in, out] FilePath      On a sucessful return the device path to the handle.
 
-  @retval EFI_SUCCESS           The device path was sucessfully returned.
+  @retval EFI_SUCCESS           The device path was successfully returned.
   @retval other                 A error from gBS->HandleProtocol.
 
   @sa HandleProtocol
@@ -1853,7 +1853,7 @@ ShellCommandGetManFileNameBcfg (
   @param[in] SystemTable    the EFI System Table pointer
   @param[in] Name           the profile name to use
 
-  @retval EFI_SUCCESS        the shell command handlers were installed sucessfully
+  @retval EFI_SUCCESS        the shell command handlers were installed successfully
   @retval EFI_UNSUPPORTED    the shell level required was not found.
 **/
 EFI_STATUS

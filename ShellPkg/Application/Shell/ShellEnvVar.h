@@ -55,7 +55,7 @@ IsVolatileEnv (
 
   @param EnvVarName             The name of the environment variable in question
 
-  @retval EFI_SUCCESS           The variable was deleted sucessfully
+  @retval EFI_SUCCESS           The variable was deleted successfully
   @retval other                 An error ocurred
   @sa SetVariable
 **/
@@ -75,7 +75,7 @@ IsVolatileEnv (
   @param BufferSize             UINTN size of Buffer
   @param Buffer                 Pointer to value to set variable to
 
-  @retval EFI_SUCCESS           The variable was changed sucessfully
+  @retval EFI_SUCCESS           The variable was changed successfully
   @retval other                 An error ocurred
   @sa SetVariable
 **/
@@ -95,7 +95,7 @@ IsVolatileEnv (
   @param BufferSize             Pointer to the UINTN size of Buffer
   @param Buffer                 Pointer buffer to get variable value into
 
-  @retval EFI_SUCCESS           The variable's value was retrieved sucessfully
+  @retval EFI_SUCCESS           The variable's value was retrieved successfully
   @retval other                 An error ocurred
   @sa SetVariable
 **/
@@ -116,7 +116,7 @@ IsVolatileEnv (
   @param BufferSize             Pointer to the UINTN size of Buffer
   @param Buffer                 Pointer buffer to get variable value into
 
-  @retval EFI_SUCCESS           The variable's value was retrieved sucessfully
+  @retval EFI_SUCCESS           The variable's value was retrieved successfully
   @retval other                 An error ocurred
   @sa SetVariable
 **/
@@ -136,7 +136,7 @@ IsVolatileEnv (
   @param BufferSize             UINTN size of Buffer
   @param Buffer                 Pointer to value to set variable to
 
-  @retval EFI_SUCCESS           The variable was changed sucessfully
+  @retval EFI_SUCCESS           The variable was changed successfully
   @retval other                 An error ocurred
   @sa SetVariable
 **/
@@ -153,7 +153,7 @@ IsVolatileEnv (
   @param[in, out] List           The pointer to pointer to LIST_ENTRY object for
                                  storing this list.
 
-  @retval EFI_SUCCESS           the list was created sucessfully.
+  @retval EFI_SUCCESS           the list was created successfully.
 **/
 EFI_STATUS
 GetEnvironmentVariableList(
@@ -170,7 +170,7 @@ GetEnvironmentVariableList(
   @param[in] List               The pointer to LIST_ENTRY from
                                 GetShellEnvVarList().
 
-  @retval EFI_SUCCESS           The list was Set sucessfully.
+  @retval EFI_SUCCESS           The list was Set successfully.
 **/
 EFI_STATUS
 SetEnvironmentVariableList(

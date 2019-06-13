@@ -186,7 +186,7 @@ FileHandleDelete (
   @param[in] FileHandle         The file handle on which the position is being set.
   @param[in] Position           The byte position from the begining of the file.
 
-  @retval EFI_SUCCESS           The operation completed sucessfully.
+  @retval EFI_SUCCESS           The operation completed successfully.
   @retval EFI_UNSUPPORTED       The request for non-zero is not valid on
                                 directories.
   @retval INVALID_PARAMETER     One of the parameters has an invalid value.

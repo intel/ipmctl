@@ -572,7 +572,7 @@ ShellCommandAddMapItemAndUpdatePath(
 
   Also sets up the default path environment variable if Type is FileSystem.
 
-  @retval EFI_SUCCESS           All map names were created sucessfully.
+  @retval EFI_SUCCESS           All map names were created successfully.
   @retval EFI_NOT_FOUND         No protocols were found in the system.
   @return                       Error returned from gBS->LocateHandle().
 

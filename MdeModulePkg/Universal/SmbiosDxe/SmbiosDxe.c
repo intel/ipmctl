@@ -1028,7 +1028,7 @@ GetNextSmbiosRecord (
   
   @param  TableEntryPointStructure   On exit, points to the SMBIOS entrypoint structure.
                                 
-  @retval EFI_SUCCESS                Structure created sucessfully.
+  @retval EFI_SUCCESS                Structure created successfully.
   @retval EFI_OUT_OF_RESOURCES       No enough memory.
   
 **/
@@ -1220,7 +1220,7 @@ SmbiosCreateTable (
 
   @param  TableEntryPointStructure   On exit, points to the SMBIOS entrypoint structure.
 
-  @retval EFI_SUCCESS                Structure created sucessfully.
+  @retval EFI_SUCCESS                Structure created successfully.
   @retval EFI_OUT_OF_RESOURCES       No enough memory.
 
 **/

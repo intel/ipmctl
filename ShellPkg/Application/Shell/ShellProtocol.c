@@ -3707,7 +3707,7 @@ CreatePopulateInstallShellProtocol (
                             (VOID*)(&mShellProtocol));
         if (!EFI_ERROR(Status)) {
           //
-          // we reinstalled sucessfully.  log this so we can reverse it later.
+          // we reinstalled successfully.  log this so we can reverse it later.
           //
 
           //

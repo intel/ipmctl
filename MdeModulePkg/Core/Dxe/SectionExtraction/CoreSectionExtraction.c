@@ -1365,7 +1365,7 @@ FreeChildNode (
   @param  FreeStreamBuffer       TRUE - Need to free stream buffer;
                                  FALSE - No need to free stream buffer.
 
-  @retval EFI_SUCCESS            The section stream is closed sucessfully.
+  @retval EFI_SUCCESS            The section stream is closed successfully.
   @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
   @retval EFI_INVALID_PARAMETER  Section stream does not end concident with end
                                  of last section.

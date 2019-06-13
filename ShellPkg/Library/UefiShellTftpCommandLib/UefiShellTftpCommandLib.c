@@ -40,7 +40,7 @@ ShellCommandGetManFileNameTftp (
   @param ImageHandle            The image handle of the process.
   @param SystemTable            The EFI System Table pointer.
 
-  @retval EFI_SUCCESS           The Shell command handlers were installed sucessfully.
+  @retval EFI_SUCCESS           The Shell command handlers were installed successfully.
   @retval EFI_UNSUPPORTED       The Shell level required was not found.
 **/
 EFI_STATUS

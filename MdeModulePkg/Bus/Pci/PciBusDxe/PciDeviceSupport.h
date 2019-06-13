@@ -80,7 +80,7 @@ DestroyPciDeviceTree (
 
   @param  Controller    Root bridge handle.
 
-  @retval EFI_SUCCESS   Destory all devcie nodes successfully.
+  @retval EFI_SUCCESS   Destory all device nodes successfully.
   @retval EFI_NOT_FOUND Cannot find any PCI device under specified
                         root bridge.
 

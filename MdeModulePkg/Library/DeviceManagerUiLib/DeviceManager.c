@@ -263,7 +263,7 @@ AddIdToMacDeviceList (
 }
 
 /**
-  Check the devcie path, try to find whether it has mac address path.
+  Check the device path, try to find whether it has mac address path.
 
   In this function, first need to check whether this path has mac address path.
   second, when the mac address device path has find, also need to deicide whether
@@ -393,7 +393,7 @@ IsNeedAddNetworkMenu (
   // Check whether this device path include mac address device path.
   // If this path has mac address path, get the value whether need 
   // add this info to the menu and return.
-  // Else check more about the child handle devcie path.
+  // Else check more about the child handle device path.
   //
   if (IsMacAddressDevicePath(TmpDevicePath, NextShowFormId,&IsNeedAdd)) {
     if ((NETWORK_DEVICE_LIST_FORM_ID == NextShowFormId) && IsNeedAdd) {
@@ -404,7 +404,7 @@ IsNeedAddNetworkMenu (
 
   //
   // Search whether this path is the controller path, not he child handle path.
-  // And the child handle has the network devcie connected.
+  // And the child handle has the network device connected.
   //
   TmpDevicePath = DevicePath;
   Status = gBS->LocateDevicePath(&gEfiDevicePathProtocolGuid, &TmpDevicePath, &ControllerHandle);

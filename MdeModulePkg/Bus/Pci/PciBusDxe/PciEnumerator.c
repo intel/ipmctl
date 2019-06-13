@@ -655,7 +655,7 @@ PciHostBridgeDeviceAttribute (
     }
 
     //
-    // Set the attributes for devcies behind the Root Bridge
+    // Set the attributes for devices behind the Root Bridge
     //
     Status = DetermineDeviceAttribute (RootBridgeDev);
     if (EFI_ERROR (Status)) {

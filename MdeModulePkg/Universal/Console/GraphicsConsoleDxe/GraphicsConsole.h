@@ -516,7 +516,7 @@ EfiLocateHiiProtocol (
 
 
 /**
-  Gets Graphics Console devcie's foreground color and background color.
+  Gets Graphics Console device's foreground color and background color.
 
   @param  This                  Protocol instance pointer.
   @param  Foreground            Returned text foreground color.

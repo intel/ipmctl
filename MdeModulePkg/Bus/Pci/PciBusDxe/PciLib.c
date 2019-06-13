@@ -1060,7 +1060,7 @@ PciScanBus (
 
       if (FeaturePcdGet (PcdPciBusHotplugDeviceSupport)) {
         //
-        // For Pci Hotplug controller devcie only
+        // For Pci Hotplug controller device only
         //
         if (gPciHotPlugInit != NULL) {
           //

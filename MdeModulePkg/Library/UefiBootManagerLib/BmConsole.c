@@ -395,7 +395,7 @@ BmUpdateSystemTableConsole (
   } while (Instance != NULL);
 
   //
-  // No any available console devcie found.
+  // No any available console device found.
   //
   FreePool (FullDevicePath);
   return FALSE;

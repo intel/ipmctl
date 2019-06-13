@@ -1036,7 +1036,7 @@ ConSplitterStdErrDriverBindingSupported (
 
 
 /**
-  Start ConSplitter on devcie handle by opening Console Device Guid on device handle
+  Start ConSplitter on device handle by opening Console Device Guid on device handle
   and the console virtual handle. And Get the console interface on controller handle.
 
   @param  This                      Driver Binding protocol instance pointer.
@@ -1244,7 +1244,7 @@ ConSplitterSimplePointerDriverBindingStart (
   }
 
   //
-  // Add this devcie into Simple Pointer devices list.
+  // Add this device into Simple Pointer devices list.
   //
   return ConSplitterSimplePointerAddDevice (&mConIn, SimplePointer);
 }
@@ -1291,7 +1291,7 @@ ConSplitterAbsolutePointerDriverBindingStart (
   }
 
   //
-  // Add this devcie into Absolute Pointer devices list.
+  // Add this device into Absolute Pointer devices list.
   //
   return ConSplitterAbsolutePointerAddDevice (&mConIn, AbsolutePointer);
 }

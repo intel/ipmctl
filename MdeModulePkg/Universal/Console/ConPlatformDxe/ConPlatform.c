@@ -202,7 +202,7 @@ ConPlatformDriverBindingSupported (
   Start this driver on ControllerHandle by opening Simple Text Input Protocol,
   reading Device Path, and installing Console In Devcice GUID on ControllerHandle.
 
-  If this devcie is not one hot-plug devce, append its device path into the 
+  If this device is not one hot-plug devce, append its device path into the 
   console environment variables ConInDev.
   
   @param  This                 Protocol instance pointer.
@@ -334,7 +334,7 @@ ConPlatformTextInDriverBindingStart (
   reading Device Path, and installing Console Out Devcic GUID, Standard Error
   Device GUID on ControllerHandle.
 
-  If this devcie is not one hot-plug devce, append its device path into the 
+  If this device is not one hot-plug devce, append its device path into the 
   console environment variables ConOutDev, ErrOutDev.
   
   @param  This                 Protocol instance pointer.
@@ -926,7 +926,7 @@ ConPlatformMatchDevicePaths (
 
   @param  VariableName    Console environment variables, ConOutDev, ConInDev
                           ErrOutDev, ConIn ,ConOut or ErrOut.
-  @param  DevicePath      Console devcie's device path.
+  @param  DevicePath      Console device's device path.
   @param  Operation       Variable operations, including APPEND, CHECK and DELETE.
 
   @retval EFI_SUCCESS           Variable operates successfully.
@@ -1037,8 +1037,8 @@ ConPlatformUpdateDeviceVariable (
 
   @param  DevicePath            Pointer to device's device path.
 
-  @retval TRUE                  The devcie is a hot-plug device
-  @retval FALSE                 The devcie is not a hot-plug device.
+  @retval TRUE                  The device is a hot-plug device
+  @retval FALSE                 The device is not a hot-plug device.
 
 **/
 BOOLEAN
@@ -1082,8 +1082,8 @@ IsHotPlugDevice (
 
   @param  DevicePath            Pointer to device's device path.
 
-  @retval TRUE                  The devcie is a GOP device.
-  @retval FALSE                 The devcie is not a GOP device.
+  @retval TRUE                  The device is a GOP device.
+  @retval FALSE                 The device is not a GOP device.
 
 **/
 BOOLEAN

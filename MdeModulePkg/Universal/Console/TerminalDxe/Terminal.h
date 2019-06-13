@@ -1405,8 +1405,8 @@ TerminalIsValidEfiCntlChar (
 
   @param  DevicePath            Pointer to device's device path.
 
-  @retval TRUE                  The devcie is a hot-plug device
-  @retval FALSE                 The devcie is not a hot-plug device.
+  @retval TRUE                  The device is a hot-plug device
+  @retval FALSE                 The device is not a hot-plug device.
 
 **/
 BOOLEAN

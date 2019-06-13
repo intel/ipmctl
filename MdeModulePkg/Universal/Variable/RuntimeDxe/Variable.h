@@ -356,7 +356,7 @@ InitializeLock (
 /**
   Acquires lock only at boot time. Simply returns at runtime.
 
-  This is a temperary function that will be removed when
+  This is a temporary function that will be removed when
   EfiAcquireLock() in UefiLib can handle the call in UEFI
   Runtimer driver in RT phase.
   It calls EfiAcquireLock() at boot time, and simply returns
@@ -374,7 +374,7 @@ AcquireLockOnlyAtBootTime (
 /**
   Releases lock only at boot time. Simply returns at runtime.
 
-  This is a temperary function which will be removed when
+  This is a temporary function which will be removed when
   EfiReleaseLock() in UefiLib can handle the call in UEFI
   Runtimer driver in RT phase.
   It calls EfiReleaseLock() at boot time and simply returns

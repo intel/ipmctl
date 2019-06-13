@@ -1196,10 +1196,10 @@ class WorkspaceBuild(object):
     # If a module of a platform has its own override libraryclass but the libraryclass not defined in the module
     # Add this libraryclass to the module
     #
-    # @param InfFileName:       InfFileName specificed in platform
-    # @param LibraryClass:      LibraryClass specificed in platform
+    # @param InfFileName:       InfFileName specified in platform
+    # @param LibraryClass:      LibraryClass specified in platform
     # @param Arch:              Supported Arch
-    # @param InstanceFilePath:  InstanceFilePath specificed in platform
+    # @param InstanceFilePath:  InstanceFilePath specified in platform
     #
     def UpdateLibraryClassOfModule(self, InfFileName, LibraryClass, Arch, InstanceFilePath):
         #

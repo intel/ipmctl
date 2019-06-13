@@ -1075,7 +1075,7 @@ GetSizeTableIndex (
 /**
   Get PCD value's size for POINTER type PCD.
   
-  The POINTER type PCD's value will be stored into a buffer in specificed size.
+  The POINTER type PCD's value will be stored into a buffer in specified size.
   The max size of this PCD's value is described in PCD's definition in DEC file.
 
   @param LocalTokenNumberTableIdx Index of PCD token number in PCD token table
@@ -1095,7 +1095,7 @@ GetPtrTypeSize (
 /**
   Set PCD value's size for POINTER type PCD.
   
-  The POINTER type PCD's value will be stored into a buffer in specificed size.
+  The POINTER type PCD's value will be stored into a buffer in specified size.
   The max size of this PCD's value is described in PCD's definition in DEC file.
 
   @param LocalTokenNumberTableIdx Index of PCD token number in PCD token table

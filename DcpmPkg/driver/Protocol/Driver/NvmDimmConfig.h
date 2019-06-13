@@ -31,7 +31,7 @@
 * - EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
 *  - Provides standardizd DCPMM security functionality
 * - EFI_BLOCK_IO_PROTOCOL
-*  - Provides BLOCK IO access to the specificed DPCMM Namespaces
+*  - Provides BLOCK IO access to the specified DPCMM Namespaces
 * - EFI_NVDIMM_LABEL_PROTOCOL
 *  - Provides standardized access to the specified DCPMM Labels
 */

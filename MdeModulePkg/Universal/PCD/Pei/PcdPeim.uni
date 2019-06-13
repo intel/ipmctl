@@ -70,7 +70,7 @@
 // - [PcdsDynamicHii] is used as section name for this type PCD in platform
 // DSC file. [PcdsDynamicExHii] is for dynamicEx type PCD.
 // 
-// c) OEM specificed storage area:
+// c) OEM specified storage area:
 // - The PCD value is stored in OEM specified area which base address is
 // specified by a FixedAtBuild PCD setting - PcdVpdBaseAddress.
 // - The area is read only for PEI and DXE phase.
@@ -147,7 +147,7 @@
 // "internal token number" need build tool establish, so "platform token number"
 // mechanism is not suitable for binary module which use DynamicEx type PCD.
 // To access a dynamicEx type PCD, pair of "token space guid/token number" all need
-// to be specificed for PcdSet/PcdGet accessing macro.
+// to be specified for PcdSet/PcdGet accessing macro.
 // 
 // Platform Token Number is started from 1, and inceased continuous. From whole
 // platform scope, there are two zones: PEI Zone and DXE Zone

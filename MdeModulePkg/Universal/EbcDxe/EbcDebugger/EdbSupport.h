@@ -204,7 +204,7 @@ StrGetNextTokenLine (
 
 /**
 
-  Find the next token after one specificed characters.
+  Find the next token after one specified characters.
 
   @param  String    Point to the string where to find the substring.
   @param  CharSet   Point to the string to be found.
@@ -219,7 +219,7 @@ StrGetNewTokenField (
 
 /**
 
-  Find the next token after one specificed characters.
+  Find the next token after one specified characters.
 
   @param  CharSet   Point to the string to be found.
 
@@ -289,7 +289,7 @@ AsciiStrGetNextTokenLine (
 
 /**
 
-  Find the next token after one specificed characters.
+  Find the next token after one specified characters.
 
   @param  String    Point to the string where to find the substring.
   @param  CharSet   Point to the string to be found.
@@ -304,7 +304,7 @@ AsciiStrGetNewTokenField (
 
 /**
 
-  Find the next token after one specificed characters.
+  Find the next token after one specified characters.
 
   @param  CharSet   Point to the string to be found.
 

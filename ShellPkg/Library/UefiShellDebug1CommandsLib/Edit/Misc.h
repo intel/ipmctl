@@ -35,7 +35,7 @@ LineFree (
   @param Src                    The line structure to copy from.
 
   @retval NULL                  A memory allocation failed.
-  @return                       a pointer to the newly allcoated line.
+  @return                       a pointer to the newly allocated line.
 **/
 EFI_EDITOR_LINE *
 LineDup (

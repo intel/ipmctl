@@ -310,7 +310,7 @@ Returns:
   //
   Buffer = (UINT8 *) malloc ((size_t) TotalLength);
   if (Buffer == NULL) {
-    Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated"); 
+    Error (NULL, 0, 4001, "Resource", "memory cannot be allocated"); 
     goto Done;
   }
   CommonSect = (EFI_COMMON_SECTION_HEADER *) Buffer;
@@ -645,7 +645,7 @@ Returns:
   if (Status == EFI_BUFFER_TOO_SMALL) {
     FileBuffer = (UINT8 *) malloc (InputLength);
     if (FileBuffer == NULL) {
-      Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+      Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
       return EFI_OUT_OF_RESOURCES;
     }
     //
@@ -874,7 +874,7 @@ Returns:
 
     FileBuffer = (UINT8 *) malloc (InputLength + Offset);
     if (FileBuffer == NULL) {
-      Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+      Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
       return EFI_OUT_OF_RESOURCES;
     }
     //
@@ -909,7 +909,7 @@ Returns:
   // InputLength != 0, but FileBuffer == NULL means out of resources.
   //
   if (FileBuffer == NULL) {
-    Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+    Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -1255,7 +1255,7 @@ Returns:
     if ((InputFileNum == 0) && (InputFileName == NULL)) {
       InputFileName = (CHAR8 **) malloc (MAXIMUM_INPUT_FILE_NUM * sizeof (CHAR8 *));
       if (InputFileName == NULL) {
-        Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+        Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
         goto Finish;
       }
       memset (InputFileName, 0, (MAXIMUM_INPUT_FILE_NUM * sizeof (CHAR8 *)));
@@ -1269,7 +1269,7 @@ Returns:
                                   );
 
       if (InputFileName == NULL) {
-        Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+        Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
         goto Finish;
       }
       memset (&(InputFileName[InputFileNum]), 0, (MAXIMUM_INPUT_FILE_NUM * sizeof (CHAR8 *)));
@@ -1470,7 +1470,7 @@ Returns:
     Index += (strlen (StringBuffer) * 2) + 2;
     OutFileBuffer = (UINT8 *) malloc (Index);
     if (OutFileBuffer == NULL) {
-      Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+      Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
       goto Finish;
     }
     VersionSect = (EFI_VERSION_SECTION *) OutFileBuffer;
@@ -1491,7 +1491,7 @@ Returns:
     Index += (strlen (StringBuffer) * 2) + 2;
     OutFileBuffer = (UINT8 *) malloc (Index);
     if (OutFileBuffer == NULL) {
-      Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+      Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
       goto Finish;
     }
     UiSect = (EFI_USER_INTERFACE_SECTION *) OutFileBuffer;
@@ -1519,7 +1519,7 @@ Returns:
     if (Status == EFI_BUFFER_TOO_SMALL) {
       OutFileBuffer = (UINT8 *) malloc (InputLength);
       if (OutFileBuffer == NULL) {
-        Error (NULL, 0, 4001, "Resource", "memory cannot be allcoated");
+        Error (NULL, 0, 4001, "Resource", "memory cannot be allocated");
         goto Finish;
       }
       //

@@ -239,7 +239,7 @@ BmSetMemoryTypeInformationVariable (
 
     //
     // Inconsistent Memory Reserved across bootings may lead to S4 fail
-    // Write next varible to 125% * current when the pre-allocated memory is:
+    // Write next variable to 125% * current when the pre-allocated memory is:
     //  1. More than 150% of needed memory and boot mode is BOOT_WITH_DEFAULT_SETTING
     //  2. Less than the needed memory
     //

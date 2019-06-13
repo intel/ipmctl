@@ -44,7 +44,7 @@
   ((((A) << 4) & 0xff000000) | (((A) >> 4) & 0x00000700) | (((A) << 1) & 0x001f0000) | (LShiftU64((A) & 0xfff, 32)))
 
 //
-// Global varible to cache pointer to PCI Root Bridge I/O protocol.
+// Global variable to cache pointer to PCI Root Bridge I/O protocol.
 //
 EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL      *mPciRootBridgeIo = NULL; 
 

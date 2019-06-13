@@ -800,7 +800,7 @@ FindVariableEx (
 
   if (IndexTable != NULL) {
     //
-    // traverse the variable index table to look for varible.
+    // traverse the variable index table to look for variable.
     // The IndexTable->Index[Index] records the distance of two neighbouring VAR_ADDED type variables.
     //
     for (Offset = 0, Index = 0; Index < IndexTable->Length; Index++) {

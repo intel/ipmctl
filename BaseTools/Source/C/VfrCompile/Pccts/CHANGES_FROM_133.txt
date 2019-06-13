@@ -2319,7 +2319,7 @@ List of Implemented Fixes and Changes for Maintenance Releases of PCCTS
 #164. (Changed in MR13) Unused variable _astp
 
       For many compilations, we have lived with warnings about
-      the unused variable _astp.  It turns out that this varible
+      the unused variable _astp.  It turns out that this variable
       can *never* be used because the code which references it was
       commented out.
 

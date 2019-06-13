@@ -98,7 +98,7 @@ NetStringToU32 (
   Convert a string of the format "192.168.0.1" to an IP address.
 
   @param  Str                    The string representation of IP
-  @param  Ip                     The varible to get IP.
+  @param  Ip                     The variable to get IP.
 
   @retval EFI_INVALID_PARAMETER  The IP string is invalid.
   @retval EFI_SUCCESS            The IP is parsed into the Ip

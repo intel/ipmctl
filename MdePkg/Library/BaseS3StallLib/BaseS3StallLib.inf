@@ -1,7 +1,7 @@
 ## @file
 # Instance of S3 Stall Library based on Timer and S3 BootScript Library.
 #
-# Stall Services that do stall and also enable the Stall operatation
+# Stall Services that do stall and also enable the Stall operation
 # to be replayed during an S3 resume. 
 #
 # Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>

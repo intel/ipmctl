@@ -1,5 +1,5 @@
 /** @file
-  I/O and MMIO Library Services that do I/O and also enable the I/O operatation
+  I/O and MMIO Library Services that do I/O and also enable the I/O operation
   to be replayed during an S3 resume.
   
   Copyright (c) 2006 -2012, Intel Corporation. All rights reserved.<BR>

@@ -1,5 +1,5 @@
 /** @file
-  Smbus Library Services that conduct SMBus transactions and enable the operatation
+  Smbus Library Services that conduct SMBus transactions and enable the operation
   to be replayed during an S3 resume. This library class maps directly on top
   of the SmbusLib class.
 

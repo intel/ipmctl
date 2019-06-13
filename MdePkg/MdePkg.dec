@@ -207,7 +207,7 @@
   S3BootScriptLib|Include/Library/S3BootScriptLib.h
 
   ##  @libraryclass  I/O and MMIO Library Services that do I/O and also enable
-  #                  the I/O operatation to be replayed during an S3 resume.
+  #                  the I/O operation to be replayed during an S3 resume.
   #                  This library class maps directly on top of the IoLib class.
   S3IoLib|Include/Library/S3IoLib.h
 
@@ -218,12 +218,12 @@
   S3PciLib|Include/Library/S3PciLib.h
 
   ##  @libraryclass  Smbus Library Services that do SMBus transactions and also
-  #                  enable the operatation to be replayed during an S3 resume.
+  #                  enable the operation to be replayed during an S3 resume.
   #                  This library class maps directly on top of the SmbusLib class.
   S3SmbusLib|Include/Library/S3SmbusLib.h
 
   ##  @libraryclass  Stall Services that do stall and also enable the Stall
-  #                  operatation to be replayed during an S3 resume. This
+  #                  operation to be replayed during an S3 resume. This
   #                  library class maps directly on top of the Timer class.
   S3StallLib|Include/Library/S3StallLib.h
 

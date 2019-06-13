@@ -1,5 +1,5 @@
 /** @file
-  Stall Services that do stall and also enable the Stall operatation
+  Stall Services that do stall and also enable the Stall operation
   to be replayed during an S3 resume. This library class maps directly on top
   of the Timer class. 
 

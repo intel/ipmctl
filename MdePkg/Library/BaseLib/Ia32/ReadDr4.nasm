@@ -37,7 +37,7 @@ ASM_PFX(AsmReadDr4):
     ; this register will cause a #UD exception.
     ;
     ; MS assembler doesn't support this instruction since no one would use it
-    ; under normal circustances. Here opcode is used.
+    ; under normal circumstances. Here opcode is used.
     ;
     DB      0xf, 0x21, 0xe0
     ret

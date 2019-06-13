@@ -38,7 +38,7 @@ AsmReadDr5  PROC
     ; this register will cause a #UD exception.
     ;
     ; MS assembler doesn't support this instruction since no one would use it
-    ; under normal circustances. Here opcode is used.
+    ; under normal circumstances. Here opcode is used.
     ;
     DB      0fh, 21h, 0e8h
     ret

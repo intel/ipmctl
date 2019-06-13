@@ -1,5 +1,5 @@
 /** @file
-  PCI resources support functions implemntation for PCI Bus module.
+  PCI resources support functions implementation for PCI Bus module.
 
 Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials

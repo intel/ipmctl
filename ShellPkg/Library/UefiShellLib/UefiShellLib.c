@@ -279,7 +279,7 @@ ShellLibConstructorWorker (
   @param ImageHandle    the image handle of the process
   @param SystemTable    the EFI System Table pointer
 
-  @retval EFI_SUCCESS   the initialization was complete successfully
+  @retval EFI_SUCCESS   the initialization was completed successfully
   @return others        an error ocurred during initialization
 **/
 EFI_STATUS
@@ -365,7 +365,7 @@ ShellLibDestructor (
 
   This function is intended for internal access for shell commands only.
 
-  @retval EFI_SUCCESS   the initialization was complete successfully
+  @retval EFI_SUCCESS   the initialization was completed successfully
 
 **/
 EFI_STATUS

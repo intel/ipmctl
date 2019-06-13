@@ -90,7 +90,7 @@ CommandInit(
   @param ImageHandle    the image handle of the process
   @param SystemTable    the EFI System Table pointer
 
-  @retval EFI_SUCCESS   the initialization was complete successfully
+  @retval EFI_SUCCESS   the initialization was completed successfully
 **/
 RETURN_STATUS
 EFIAPI

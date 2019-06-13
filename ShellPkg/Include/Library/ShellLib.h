@@ -855,7 +855,7 @@ ShellCommandLineCheckDuplicate (
 
   This function is intended for internal access for shell commands only.
 
-  @retval EFI_SUCCESS   The initialization was complete successfully.
+  @retval EFI_SUCCESS   The initialization was completed successfully.
 
 **/
 EFI_STATUS

@@ -1465,7 +1465,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete successfully
+@retval EFI_SUCCESS   the initialization was completed successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -1485,7 +1485,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete successfully
+@retval EFI_SUCCESS   the initialization was completed successfully
 **/
 EFI_STATUS
 EFIAPI

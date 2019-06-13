@@ -115,7 +115,7 @@ TestDataType (
 
   @retval   EFI_INVALID_PARAMETER     The Buffer or BufferSize is NULL.
   @retval   EFI_BUFFER_TOO_SMALL      The Buffer is too small to hold the data.
-  @retval   EFI_OUT_OF_RESOURCES      A memory allcation failed.
+  @retval   EFI_OUT_OF_RESOURCES      A memory allocation failed.
   @retval   EFI_SUCCESS               The Data parsed successful and save in the Buffer.
 **/
 EFI_STATUS
@@ -252,7 +252,7 @@ ParseParameterData (
   @param[out]   BufferSize            Indicates the size of data in bytes return in Buffer.
 
   @retval   EFI_INVALID_PARAMETER     Buffer or BufferSize is NULL.
-  @retval   EFI_OUT_OF_RESOURCES      A memory allcation failed.
+  @retval   EFI_OUT_OF_RESOURCES      A memory allocation failed.
   @retval   EFI_SUCCESS               Get each parameter data was successful.
 **/
 EFI_STATUS

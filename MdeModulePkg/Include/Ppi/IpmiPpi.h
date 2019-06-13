@@ -39,7 +39,7 @@ typedef struct _PEI_IPMI_PPI PEI_IPMI_PPI;
   @retval EFI_DEVICE_ERROR       Ipmi Device hardware error.
   @retval EFI_TIMEOUT            The command time out.
   @retval EFI_UNSUPPORTED        The command was not successfully sent to the device.
-  @retval EFI_OUT_OF_RESOURCES   The resource allcation is out of resource or data size error.
+  @retval EFI_OUT_OF_RESOURCES   The resource allocation is out of resource or data size error.
 **/
 typedef
 EFI_STATUS

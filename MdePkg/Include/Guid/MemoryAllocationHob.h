@@ -1,5 +1,5 @@
 /** @file
-  GUIDs for HOBs used in memory allcation
+  GUIDs for HOBs used in memory allocation
 
   Copyright (c) 2006 - 2008, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials                          

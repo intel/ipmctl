@@ -103,7 +103,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #pragma pack(1)
 //
-// Hub descriptor, the last two fields are of variable lenght.
+// Hub descriptor, the last two fields are of variable length.
 //
 typedef struct {
   UINT8           Length;

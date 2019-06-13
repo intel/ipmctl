@@ -306,7 +306,7 @@ ON_EXIT:
   @param[in]  File      The file that contains the current log
   @param[in]  Line      The line of code in the File that contains the current log
   @param[in]  Message   The log message
-  @param[in]  BufLen    The lenght of the Buf
+  @param[in]  BufLen    The length of the Buf
   @param[out] Buf       The buffer to put the packet data
 
   @return The length of the syslog packet built.

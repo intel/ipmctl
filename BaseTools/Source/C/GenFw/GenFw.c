@@ -1629,7 +1629,7 @@ Returns:
       goto Finish;
     }
     //
-    // Get hii package list lenght
+    // Get hii package list length
     //
     HiiPackageListHeader.PackageLength = sizeof (EFI_HII_PACKAGE_LIST_HEADER);
     for (Index = 0; Index < InputFileNum; Index ++) {

@@ -720,7 +720,7 @@ S3BootScriptGetBootTimeEntryAddAddress (
    NewEntryPtr = mS3BootScriptTablePtr->TableBase + TableLength;
 
    //
-   // update the table lenghth
+   // update the table lengthh
    //
    mS3BootScriptTablePtr->TableLength =  TableLength + EntryLength;
 

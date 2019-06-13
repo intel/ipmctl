@@ -68,7 +68,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 #define ONE_SECOND  10000000
 
-// Incremental string lenght of ConfigRequest
+// Incremental string length of ConfigRequest
 //
 #define CONFIG_REQUEST_STRING_INCREMENTAL  1024
 

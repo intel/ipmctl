@@ -534,7 +534,7 @@ EhcInitHC (
                                 sending or receiving.
   @param  Data                  Array of pointers to the buffers of data to transmit 
                                 from or receive into.
-  @param  DataLength            The lenght of the data buffer.
+  @param  DataLength            The length of the data buffer.
   @param  DataToggle            On input, the initial data toggle for the transfer;
                                 On output, it is updated to to next data toggle to use of 
                                 the subsequent bulk transfer.

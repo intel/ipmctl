@@ -22,6 +22,7 @@
 #define ROUND_CLOSEST(N, D) ((((N) < 0) ^ ((D) < 0)) ? (((N) - (D)/2)/(D)) : (((N) + (D)/2)/(D)))
 
 #define DIGITS_AFTER_DECIMAL_ONE 1
+#define DIGITS_AFTER_DECIMAL_THREE 3
 
 /**
   Convert GUID structure to string

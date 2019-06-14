@@ -909,7 +909,7 @@ MakeCapacityString (
     UnitsSelector = GetBestDisplayForCapacity(Capacity, CurrentUnits);
   }
 
-  CHECK_RESULT(GetFormattedSizeString(Capacity, UnitsSelector, DIGITS_AFTER_DECIMAL_ONE, &pFormattedSizeString), Finish);
+  CHECK_RESULT(GetFormattedSizeString(Capacity, UnitsSelector, DIGITS_AFTER_DECIMAL_THREE, &pFormattedSizeString), Finish);
 
   if (!AppendUnits) {
     pUnitsStr = CatSPrintClean(NULL, L"");

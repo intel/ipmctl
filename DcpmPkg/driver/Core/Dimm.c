@@ -6785,10 +6785,12 @@ DcpmmCmd(
     goto Finish;
   }
 
-  pOutputPayload = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(sizeof(*pOutputPayload) + pCmd->OutputPayloadSize);
-  if (pOutputPayload == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+  if (pCmd->OutputPayloadSize > 0) {
+    pOutputPayload = (DCPMM_FIS_OUTPUT *)AllocateZeroPool(sizeof(*pOutputPayload) + pCmd->OutputPayloadSize);
+    if (pOutputPayload == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
   }
 
   /** Get large payload info **/
@@ -6814,7 +6816,9 @@ DcpmmCmd(
   CopyMem_S(pInputPayload->Data.Fis.Payload, pCmd->InputPayloadSize, pCmd->InputPayload, pCmd->InputPayloadSize);
 
   /** Prepare output payload structure **/
-  pOutputPayload->Head.DataSize = pCmd->OutputPayloadSize;
+  if (pCmd->OutputPayloadSize > 0) {
+    pOutputPayload->Head.DataSize = pCmd->OutputPayloadSize;
+  }
 
   /** Write data to large input payload **/
   if (pCmd->LargeInputPayloadSize > 0) {
@@ -6846,7 +6850,10 @@ DcpmmCmd(
     FW_CMD_ERROR_TO_EFI_STATUS(pCmd, ReturnCode);
     goto Finish;
   }
-  CopyMem_S(pCmd->OutPayload, pCmd->OutputPayloadSize, pOutputPayload->Data.Fis.Payload, pCmd->OutputPayloadSize);
+
+  if (pCmd->OutputPayloadSize > 0) {
+    CopyMem_S(pCmd->OutPayload, pCmd->OutputPayloadSize, pOutputPayload->Data.Fis.Payload, pCmd->OutputPayloadSize);
+  }
 
   /** Read data from large output payload **/
   if (pCmd->LargeOutputPayloadSize > 0) {

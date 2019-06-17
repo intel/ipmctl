@@ -210,7 +210,7 @@ GetAllDimmList(
   NVDIMM_ENTRY();
 
   if (pNvmDimmConfigProtocol == NULL || ppDimms == NULL || pDimmCount == NULL || pCmd == NULL ||
-      pInitializedDimmCount == NULL || pUninitializedDimmCount == NULL) {
+    pInitializedDimmCount == NULL || pUninitializedDimmCount == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -690,7 +690,7 @@ GetManageableDimmsNumberAndId(
 
   ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, pDimmIdsCount);
   if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_ERR("Error: Communication with the device driver failed.");
+    NVDIMM_ERR("Error: Communication with the device driver failed.");
     goto Finish;
   }
 
@@ -1816,8 +1816,8 @@ ParseSourcePassFile(
     // Ignore comment line that starts with '#' or
     // If the only content in line is new line chars
     if ((NULL != StrStr(ppLinesBuffer[Index], L"#"))
-        || (1 == StringLength && (L'\n' == pCurrentLine[0] || L'\r' == pCurrentLine[0]))
-        || (2 == StringLength && L'\r' == pCurrentLine[0] && L'\n' == pCurrentLine[1])) {
+      || (1 == StringLength && (L'\n' == pCurrentLine[0] || L'\r' == pCurrentLine[0]))
+      || (2 == StringLength && L'\r' == pCurrentLine[0] && L'\n' == pCurrentLine[1])) {
       continue;
     }
     else {
@@ -1842,7 +1842,7 @@ ParseSourcePassFile(
 
     // Cut off new line chars present at the end
     while ((1 <= StringLength)
-        && (L'\r' == pPassFromFile[StringLength - 1] || L'\n' == pPassFromFile[StringLength - 1])) {
+      && (L'\r' == pPassFromFile[StringLength - 1] || L'\n' == pPassFromFile[StringLength - 1])) {
       pPassFromFile[StringLength - 1] = L'\0';
       StringLength--;
     }
@@ -2046,8 +2046,8 @@ ConsoleInput(
       if (!OnlyAlphanumeric || IsUnicodeAlnumCharacter(Key.UnicodeChar)) {
         StrnCatGrow(&pBuffer, &SizeInBytes, &Key.UnicodeChar, 1);
         if (NULL == pBuffer) {
-           Print(L"Failure inputing characters.\n");
-           break;
+          Print(L"Failure inputing characters.\n");
+          break;
         }
         if (ShowInput) {
           Print(L"%c", Key.UnicodeChar);
@@ -2681,6 +2681,8 @@ CheckMasterAndDefaultOptions(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PRINT_CONTEXT *pPrinterCtx = NULL;
 
+  NVDIMM_ENTRY();
+
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_DBG("pCmd parameter is NULL.\n");
@@ -2719,4 +2721,159 @@ Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
+}
+
+/**
+  Retrieves a list of Dimms that have at least one NS.
+
+  @param[in,out] pDimmIds the dimm IDs which have NS
+  @param[in,out] pDimmIdCount count of dimm IDs
+  @param[in]     maxElements the maximum size of the dimm ID list
+
+  @retval EFI_ABORTED Operation Aborted
+  @retval EFI_OUT_OF_RESOURCES unable to allocate memory
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS
+GetDimmIdsWithNamespaces(
+  IN OUT UINT16 *pDimmIds,
+  IN OUT UINT32 *pDimmIdCount,
+  IN UINT32 maxElements)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  COMMAND_STATUS *pCommandStatus = NULL;
+  UINT32 NamespacesCount = 0;
+  LIST_ENTRY NamespaceListHead;
+  NAMESPACE_INFO *pNamespaceInfo = NULL;
+  LIST_ENTRY *pCurNamespace = NULL;
+  UINT32 RegionIndex = 0;
+  UINT32 Index = 0;
+  UINT32 RegionCount = 0;
+  REGION_INFO *pRegions = NULL;
+  LIST_ENTRY *pTmpListNode = NULL;
+  LIST_ENTRY *pTmpListNextNode = NULL;
+  NVDIMM_ENTRY();
+
+  ZeroMem(&NamespaceListHead, sizeof(NamespaceListHead));
+  InitializeListHead(&NamespaceListHead);
+
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
+  }
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID**)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  /* Load Regions */
+  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, &RegionCount);
+  if (EFI_ERROR(ReturnCode)) {
+    if (EFI_NO_RESPONSE == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
+    ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    goto Finish;
+  }
+
+  pRegions = AllocateZeroPool(sizeof(REGION_INFO) * RegionCount);
+  if (pRegions == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetRegions(pNvmDimmConfigProtocol, RegionCount, pRegions, pCommandStatus);
+
+  if (EFI_ERROR(ReturnCode)) {
+    if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
+      ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    }
+    else {
+      ReturnCode = EFI_ABORTED;
+    }
+    NVDIMM_WARN("Failed to retrieve the REGION list");
+    goto Finish;
+  }
+
+  /*Load Namespaces*/
+  ReturnCode = pNvmDimmConfigProtocol->GetNamespaces(pNvmDimmConfigProtocol, &NamespaceListHead, &NamespacesCount, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
+      ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    }
+    NVDIMM_WARN("Failed to retrieve Namespaces list");
+    goto Finish;
+  }
+
+  for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
+    LIST_FOR_EACH(pCurNamespace, &NamespaceListHead) {
+      pNamespaceInfo = NAMESPACE_INFO_FROM_NODE(pCurNamespace);
+      if (pNamespaceInfo->RegionId == pRegions[RegionIndex].RegionId) {
+        //add the DIMM id to the main return list
+        for (Index = 0; Index < pRegions[RegionIndex].DimmIdCount; Index++) {
+          ReturnCode = AddElement(pDimmIds, pDimmIdCount, pRegions[RegionIndex].DimmId[Index], maxElements);
+          if (EFI_ERROR(ReturnCode)) {
+            NVDIMM_WARN("Failed to add the DIMM ID to the list");
+            goto Finish;
+          }
+        }
+      }
+    }
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  FREE_POOL_SAFE(pRegions);
+  LIST_FOR_EACH_SAFE(pTmpListNode, pTmpListNextNode, &NamespaceListHead) {
+    FreePool(NAMESPACE_INFO_FROM_NODE(pTmpListNode));
+  }
+  FREE_POOL_SAFE(pCommandStatus);
+  return ReturnCode;
+}
+
+/**
+  Adds an element to a element list without allowing duplication
+
+  @param[in,out] pElementList the list
+  @param[in,out] pElementCount size of the list
+  @param[in]     newElement the new element to add
+  @param[in]     maxElements the maximum size of the list
+
+  @retval EFI_OUT_OF_RESOURCES unable to add any more elements
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS AddElement(
+  IN OUT UINT16 *pElementList,
+  IN OUT UINT32 *pElementCount,
+  IN UINT16 newElement,
+  IN UINT32 maxElements)
+{
+  UINT32 x = 0;
+
+  //check for initial condition
+  if (pElementList == NULL || pElementCount == NULL)
+  {
+    return EFI_SUCCESS;
+  }
+
+  //see if the list already has this item
+  for (; x < *pElementCount && x < maxElements; x++)
+  {
+    if (pElementList[x] == newElement) {
+      return EFI_SUCCESS;
+    }
+  }
+
+  if (x == maxElements) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  *pElementCount = (*pElementCount) + 1;
+  pElementList[x] = newElement;
+
+  return EFI_SUCCESS;
 }

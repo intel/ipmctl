@@ -983,4 +983,39 @@ CheckMasterAndDefaultOptions(
   IN BOOLEAN isMasterOptionSpecified,
   IN BOOLEAN isDefaultOptionSpecified
 );
+
+/**
+  Retrieves a list of Dimms that have at least one NS.
+
+  @param[in,out] pDimmIds the dimm IDs which have NS
+  @param[in,out] pDimmIdCount count of dimm IDs
+  @param[in]     maxElements the maximum size of the dimm ID list
+
+  @retval EFI_ABORTED Operation Aborted
+  @retval EFI_OUT_OF_RESOURCES unable to allocate memory
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS
+GetDimmIdsWithNamespaces(
+  IN OUT UINT16 *pDimmIds,
+  IN OUT UINT32 *pDimmIdCount,
+  IN UINT32 maxElements);
+
+/**
+  Adds an element to a element list without allowing duplication
+
+  @param[in,out] pElementList the list
+  @param[in,out] pElementCount size of the list
+  @param[in]     newElement the new element to add
+  @param[in]     maxElements the maximum size of the list
+
+  @retval EFI_OUT_OF_RESOURCES unable to add any more elements
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS AddElement(
+  IN OUT UINT16 *pElementList,
+  IN OUT UINT32 *pElementCount,
+  IN UINT16 newElement,
+  IN UINT32 maxElements);
+
 #endif /** _COMMON_H_ **/

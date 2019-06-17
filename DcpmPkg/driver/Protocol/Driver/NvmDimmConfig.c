@@ -9937,61 +9937,60 @@ GetBSRAndBootStatusBitMask(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
   DIMM_BSR Bsr;
+  BOOLEAN UseSmbus = FALSE;
+
   NVDIMM_ENTRY();
+
+  // pBsrValue is *not* optional
+  if (pThis == NULL || pBsrValue == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   ZeroMem(&Bsr, sizeof(DIMM_BSR));
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-#ifndef OS_BUILD
-  if (pDimm != NULL) {
-    if (pDimm->pHostMailbox == NULL) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto Finish;
-    }
-    Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
-  }
-#endif // !OS_BUILD
-
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-    if (pDimm == NULL) {
-      ReturnCode = EFI_NOT_FOUND;
-      goto Finish;
-    }
-#ifndef OS_BUILD
-      LIST_ENTRY *pCurDimmInfoNode = NULL;
-      for (pCurDimmInfoNode = GetFirstNode(&gNvmDimmData->PMEMDev.UninitializedDimms);
-        !IsNull(&gNvmDimmData->PMEMDev.UninitializedDimms, pCurDimmInfoNode);
-        pCurDimmInfoNode = GetNextNode(&gNvmDimmData->PMEMDev.UninitializedDimms, pCurDimmInfoNode)) {
+    UseSmbus = TRUE;
+  }
 
-        if (DimmID == ((DIMM_INFO *)pCurDimmInfoNode)->DimmID) {
-          break;
-        }
-      }
-      if (NULL != pCurDimmInfoNode) {
-        ReturnCode = SmbusGetBSR(((DIMM_INFO *)pCurDimmInfoNode)->SmbusAddress, &Bsr);
-        if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
-      }
-#endif // !OS_BUILD
+  if (pDimm == NULL) {
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
 #ifdef OS_BUILD
-  ReturnCode = FwCmdGetBsr(pDimm, &Bsr.AsUint64);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
+  // Don't need to distinguish between smbus or not in OS case,
+  // as BIOS handles it all.
+  //
+  // Ideally, we'd remove the unneeded if statement below, but then gcc would
+  // complain about UseSmbus being unused in OS_BUILD. Rather than littering
+  // the code with #ifdef's, we're choosing to "use" it here in this way.
+  if (UseSmbus == TRUE || UseSmbus == FALSE) {
+    CHECK_RESULT(FwCmdGetBsr(pDimm, &Bsr.AsUint64), Finish);
+  }
+#else
+  if (UseSmbus == FALSE) {
+     if (pDimm->pHostMailbox == NULL) {
+       ReturnCode = EFI_DEVICE_ERROR;
+       goto Finish;
+     }
+     Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
+  } else {
+    CHECK_RESULT(SmbusGetBSR(pDimm->SmbusAddress, &Bsr), Finish);
   }
 #endif
+
   if (pBootStatusBitmask != NULL) {
     ReturnCode = PopulateDimmBootStatusBitmask(&Bsr, pDimm, pBootStatusBitmask);
   }
-  if (pBsrValue != NULL) {
-    // If Bsr value is MAX_UINT64_VALUE, then it is access violation
-    if (Bsr.AsUint64 == MAX_UINT64_VALUE) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto Finish;
-    }
-    *pBsrValue = Bsr.AsUint64;
+  // If Bsr value is MAX_UINT64_VALUE, then it is access violation
+  if (Bsr.AsUint64 == MAX_UINT64_VALUE) {
+    ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
   }
+  *pBsrValue = Bsr.AsUint64;
+
   ReturnCode = EFI_SUCCESS;
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

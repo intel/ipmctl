@@ -2031,14 +2031,9 @@ FwCmdGetPlatformConfigData(
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
   DIMM_BSR Bsr;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ZeroMem(&Bsr, sizeof(Bsr));
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  BOOLEAN UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
-#ifdef OS_BUILD
-  UseSmallPayload |= config_is_large_payload_disabled();
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  BOOLEAN UseSmallPayload = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -2065,12 +2060,19 @@ FwCmdGetPlatformConfigData(
     goto Finish;
   }
 
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
+  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+#ifdef OS_BUILD
+  UseSmallPayload |= config_is_large_payload_disabled();
+#endif
+
   /*
   * PcdSize is 0 if Media is disabled.
   * PcdSize was retrieved at driver load time so it is possible that since load time there
   * was a fatal media error that this would not catch. We would then be returning cached data
   * from a media disabled DIMM instead of erroring out.
-  * It could also be possbile that FW was busy during driver load time, so disable the cache.
+  * It could also be possible that FW was busy during driver load time, so disable the cache.
   */
   if (PcdSize == 0) {
     gPCDCacheEnabled = 0;
@@ -2731,14 +2733,10 @@ FwCmdSetPlatformConfigData (
   UINT32 Offset = 0;
   UINT32 PcdSize = 0;
   DIMM_BSR Bsr;
+  BOOLEAN UseSmallPayload = FALSE;
   EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ZeroMem(&Bsr, sizeof(Bsr));
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  BOOLEAN UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
-#ifdef OS_BUILD
-  UseSmallPayload |= config_is_large_payload_disabled();
-#endif
+
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
 
@@ -2752,6 +2750,13 @@ FwCmdSetPlatformConfigData (
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
+  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+  #ifdef OS_BUILD
+    UseSmallPayload |= config_is_large_payload_disabled();
+  #endif
 
 	if (PartitionId == PCD_OEM_PARTITION_ID) {
     // Force OEM writes to use small payload.
@@ -3117,14 +3122,10 @@ FwCmdGetFwDebugLog (
   UINT8 LogAction = 0;
   UINT8 *OutputPayload = NULL;
   DIMM_BSR Bsr;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ZeroMem(&Bsr, sizeof(Bsr));
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  BOOLEAN UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD) || UseSmbus;
-#ifdef OS_BUILD
-  UseSmallPayload |= config_is_large_payload_disabled();
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  BOOLEAN UseSmallPayload = FALSE;
+
 
   NVDIMM_ENTRY();
 
@@ -3138,6 +3139,13 @@ FwCmdGetFwDebugLog (
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
+
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
+  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD) || UseSmbus;
+#ifdef OS_BUILD
+  UseSmallPayload |= config_is_large_payload_disabled();
+#endif
 
   // Populate log size bytes to fetch
   switch (LogSource)
@@ -4522,14 +4530,9 @@ GetAndParseFwErrorLogForDimm(
   UINT16 ReturnCount = 0;
   TEMPERATURE Temperature;
   DIMM_BSR Bsr;
-  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ZeroMem(&Bsr, sizeof(Bsr));
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  BOOLEAN UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
-#ifdef OS_BUILD
-  UseSmallPayload |= config_is_large_payload_disabled();
-#endif
+  EFI_DCPMM_CONFIG_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  BOOLEAN UseSmallPayload = FALSE;
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
   ZeroMem(&OutPayloadGetErrorLog, sizeof(OutPayloadGetErrorLog));
@@ -4547,6 +4550,13 @@ GetAndParseFwErrorLogForDimm(
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
+
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
+  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+#ifdef OS_BUILD
+  UseSmallPayload |= config_is_large_payload_disabled();
+#endif
 
   InputPayload.LogParameters.Separated.LogLevel = HighLevel ? ErrorLogHighPriority : ErrorLogLowPriority;
   InputPayload.LogParameters.Separated.LogType = ThermalError ? ErrorLogTypeThermal : ErrorLogTypeMedia;

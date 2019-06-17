@@ -23,7 +23,7 @@ firmware will become active.
 NOTE: If Address Range Scrub (ARS) is in progress on any target DIMM,
 an attempt will be made to abort ARS and the proceed with the firmware update.
 
-NOTE: A reboot is required to activate the updated firmware image and is
+NOTE: A power cycle reboot is required to activate the updated firmware image and is
 recommended to ensure ARS runs to completion.
 
 OPTIONS

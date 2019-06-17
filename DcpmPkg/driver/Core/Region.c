@@ -1346,7 +1346,7 @@ VerifyCreatingSupportedRegionConfigs(
         }
       }
     }
-
+    NVDIMM_DBG("Configured dimms count: %d, Unconfigured dimms count: %d", SpecifiedConfiguredDimmsNum, SpecifiedUnconfiguredDimmsNum);
     /**
       If any DIMM is specified for a given socket then:
       - all unconfigured DIMMs have to be specified
@@ -2835,7 +2835,7 @@ ReduceCapacityForSocketSKU(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   BOOLEAN WholeSocket = FALSE;
-   UINT64 TotalRequestedMemoryOnSocket = 0;
+  UINT64 TotalRequestedMemoryOnSocket = 0;
   SOCKET_SKU_INFO_TABLE *pSocketSkuInfoTable;
   BOOLEAN CurrentConfigurationMemoryMode = FALSE;
   BOOLEAN NewConfigurationMemoryMode = FALSE;
@@ -2879,13 +2879,19 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-  // Determine if socket has any MemoryMode mapped currently from CCUR tables
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
+    // Determine if socket has any MemoryMode mapped currently from CCUR tables
     if (Socket == pDimm->SocketId && IsDimmManageable(pDimm) && pDimm->MappedVolatileCapacity > 0) {
       CurrentConfigurationMemoryMode = TRUE;
       break;
+    }
+
+    // If any DIMM config is undefined, SKU limiting calculations cannot be executed. Skip SKU limitation
+    if (DIMM_CONFIG_UNDEFINED == pDimm->ConfigStatus) {
+      ReturnCode = EFI_SUCCESS;
+      goto Finish;
     }
   }
 
@@ -2930,16 +2936,14 @@ ReduceCapacityForSocketSKU(
 
     // Add in what is currently mapped and take out old AD to get the amount of 1LM VM
     TotalRequestedMemoryOnSocket += pSocketSkuInfoTable->TotalMemorySizeMappedToSpa;
-
     for (Index = 0; Index < NumDimmsOnSocket; Index++) {
       if (TRUE == pDimmsOnSocket[Index]->Configured) {
         if (TotalRequestedMemoryOnSocket < pDimmsOnSocket[Index]->MappedPersistentCapacity) {
-          NVDIMM_DBG("Mapping negative capacity");
-          ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-          ReturnCode = EFI_UNSUPPORTED;
-          goto Finish;
+            NVDIMM_DBG("Mapping negative capacity");
+            ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+            ReturnCode = EFI_UNSUPPORTED;
+            goto Finish;
         }
-
         TotalRequestedMemoryOnSocket -= pDimmsOnSocket[Index]->MappedPersistentCapacity;
       }
     }
@@ -2973,15 +2977,17 @@ ReduceCapacityForSocketSKU(
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId && pDimm->Configured && IsDimmManageable(pDimm)) {
+        NVDIMM_DBG("TotalRequestedMemoryOnSocket: %X", TotalRequestedMemoryOnSocket);
         TotalRequestedMemoryOnSocket += pDimm->MappedPersistentCapacity;
         TotalRequestedMemoryOnSocket += pDimm->MappedVolatileCapacity;
       }
     }
   }
-
+  NVDIMM_DBG("TotalRequestedMemoryOnSocket: %llX", TotalRequestedMemoryOnSocket);
+  NVDIMM_DBG("Memory Size Limit: %llX", pSocketSkuInfoTable->MappedMemorySizeLimit);
   // Reduce capacity on socket if larger than the amount we can map.
   if (TotalRequestedMemoryOnSocket > pSocketSkuInfoTable->MappedMemorySizeLimit) {
-
+    NVDIMM_DBG("TotalRequestedMemoryOnSocket: %llX", TotalRequestedMemoryOnSocket);
     SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
 
     ReduceCapacity = TotalRequestedMemoryOnSocket - pSocketSkuInfoTable->MappedMemorySizeLimit;

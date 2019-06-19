@@ -44,6 +44,15 @@ Ubuntu packages can be found at: https://launchpad.net/~jhli/+archive/ubuntu/lib
 
 Alternately, -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=ON to download sources and statically link to safeclib
 
+
+### ndctl
+
+
+ipmctl requires ndctl as a dependency on Linux-based systems.
+
+It can be found here https://github.com/pmem/ndctl if not available as a package.
+
+
 ## Build
 
 ### Linux

@@ -351,184 +351,6 @@ Finish:
   return ReturnCode;
 }
 
-//  [ATTENTION] : Do not use this function for implementing diagnostic tests. This is kept maintain the backward compatibility.
-/**
-  The fundamental core diagnostics function that is used by both
-  the NvmDimmConfig protocol and the DriverDiagnostic protoocls.
-
-  It runs the specified diagnotsics tests on the list of specified dimms,
-  and returns a single combined test result message
-
-  @param[in] ppDimms The platform DIMM pointers list
-  @param[in] DimmsNum Platform DIMMs count
-  @param[in] pDimmIds Pointer to an array of user-specified DIMM IDs
-  @param[in] DimmIdsCount Number of items in the array of user-specified DIMM IDs
-  @param[in] DiagnosticsTest The selected tests bitmask
-  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] ppResult Pointer to the combined result string
-
-  @retval EFI_SUCCESS Test executed correctly
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
-**/
-EFI_STATUS
-CoreStartDiagnostics(
-  IN     DIMM **ppDimms,
-  IN     UINT32 DimmsNum,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     UINT8 DiagnosticsTest,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResult
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_STATUS TempReturnCode = EFI_SUCCESS;
-  DIMM **ppManageableDimms = NULL;
-  UINT16 ManageableDimmsNum = 0;
-  DIMM **ppSpecifiedDimms = NULL;
-  UINT16 SpecifiedDimmsNum = 0;
-  LIST_ENTRY *pDimmList = NULL;
-  UINT32 PlatformDimmsCount = 0;
-  DIMM *pCurrentDimm = NULL;
-  UINTN Index = 0;
-
-  CHAR16 *pBuffer[DIAGNOSTIC_TEST_COUNT];
-  UINT8 DiagState[DIAGNOSTIC_TEST_COUNT];
-
-  NVDIMM_ENTRY();
-
-  ZeroMem(pBuffer, sizeof(pBuffer));
-  ZeroMem(DiagState, sizeof(DiagState));
-
-  if (ppDimms == NULL || ppResult == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  ppManageableDimms = AllocateZeroPool(DimmsNum * sizeof(DIMM *));
-  if (ppManageableDimms == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  // Populate the manageable dimms
-  for (Index = 0; Index < DimmsNum; Index++) {
-    if (ppDimms[Index] == NULL) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    if (IsDimmManageable(ppDimms[Index])) {
-      ppManageableDimms[ManageableDimmsNum] = ppDimms[Index];
-      ManageableDimmsNum++;
-    }
-  }
-
-  if ((DimmIdPreference != DISPLAY_DIMM_ID_HANDLE) &&
-      (DimmIdPreference != DISPLAY_DIMM_ID_UID)) {
-    NVDIMM_DBG("Invalid value for Dimm Id preference");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if ((DiagnosticsTest & DIAGNOSTIC_TEST_ALL) == 0) {
-    NVDIMM_DBG("Invalid diagnostics test");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  // Populate the specified dimms for quick diagnostics
-  if ((DiagnosticsTest & DIAGNOSTIC_TEST_QUICK) && (DimmIdsCount > 0)) {
-    if (pDimmIds == NULL) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    pDimmList = &gNvmDimmData->PMEMDev.Dimms;
-    ReturnCode = GetListSize(pDimmList, &PlatformDimmsCount);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed on DimmListSize");
-      goto Finish;
-    }
-
-    if (DimmIdsCount > PlatformDimmsCount) {
-      NVDIMM_DBG("User specified Dimm count exceeds the platform Dimm count.");
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    ppSpecifiedDimms = AllocateZeroPool(DimmIdsCount * sizeof(DIMM *));
-    if (ppSpecifiedDimms == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-
-    for (Index = 0; Index < DimmIdsCount; Index++) {
-      pCurrentDimm = GetDimmByPid(pDimmIds[Index], pDimmList);
-      if (pCurrentDimm == NULL) {
-        NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", pDimmIds[Index]);
-        ReturnCode = EFI_INVALID_PARAMETER;
-        goto Finish;
-      }
-
-      ppSpecifiedDimms[SpecifiedDimmsNum] = pCurrentDimm;
-      SpecifiedDimmsNum++;
-    }
-  }
-
-  if (DiagnosticsTest & DIAGNOSTIC_TEST_QUICK) {
-    if (SpecifiedDimmsNum > 0) {
-      TempReturnCode = RunQuickDiagnostics(ppSpecifiedDimms, (UINT16)SpecifiedDimmsNum, DimmIdPreference,
-        &(pBuffer[QuickDiagnosticIndex]), &(DiagState[QuickDiagnosticIndex]));
-    } else {
-      TempReturnCode = RunQuickDiagnostics(ppDimms, (UINT16)DimmsNum, DimmIdPreference, &(pBuffer[QuickDiagnosticIndex]), &(DiagState[QuickDiagnosticIndex]));
-    }
-    if (EFI_ERROR(TempReturnCode)) {
-      KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Quick diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
-    }
-  }
-  if (DiagnosticsTest & DIAGNOSTIC_TEST_CONFIG) {
-    TempReturnCode = RunConfigDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference,
-        &(pBuffer[ConfigDiagnosticIndex]), &(DiagState[ConfigDiagnosticIndex]));
-    if (EFI_ERROR(TempReturnCode)) {
-      KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Platform configuration diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
-    }
-  }
-  if (DiagnosticsTest & DIAGNOSTIC_TEST_SECURITY) {
-    TempReturnCode = RunSecurityDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[SecurityDiagnosticIndex]), &(DiagState[SecurityDiagnosticIndex]));
-    if (EFI_ERROR(TempReturnCode)) {
-      KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Security diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
-    }
-  }
-  if (DiagnosticsTest & DIAGNOSTIC_TEST_FW) {
-    TempReturnCode = RunFwDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, &(pBuffer[FwDiagnosticIndex]), &(DiagState[FwDiagnosticIndex]));
-    if (EFI_ERROR(TempReturnCode)) {
-      KEEP_ERROR(ReturnCode, TempReturnCode);
-      NVDIMM_DBG("Firmware and consistency settings diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
-    }
-  }
-
-  TempReturnCode = CombineDiagnosticsTestResults(pBuffer, DiagState, ppResult);
-  if (EFI_ERROR(TempReturnCode)) {
-    KEEP_ERROR(ReturnCode, TempReturnCode);
-    goto Finish;
-  }
-
-Finish:
-  for (Index = 0; Index < DIAGNOSTIC_TEST_COUNT; Index++) {
-    FREE_POOL_SAFE(pBuffer[Index]);
-  }
-  FREE_POOL_SAFE(ppManageableDimms);
-  FREE_POOL_SAFE(ppSpecifiedDimms);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-
 /**
   The fundamental core diagnostics function that is used by both
   the NvmDimmConfig protocol and the DriverDiagnostic protoocls.
@@ -549,7 +371,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
 EFI_STATUS
-CoreStartDiagnosticsDetail(
+CoreStartDiagnostics(
   IN     DIMM **ppDimms,
   IN     UINT32 DimmsNum,
   IN     UINT16 *pDimmIds OPTIONAL,
@@ -659,10 +481,10 @@ CoreStartDiagnosticsDetail(
   if (DiagnosticsTest & DIAGNOSTIC_TEST_QUICK) {
     pBuffer->TestName = GetDiagnosticTestName(QuickDiagnosticIndex);
     if (SpecifiedDimmsNum > 0) {
-      TempReturnCode = RunQuickDiagnosticsDetail(ppSpecifiedDimms, (UINT16)SpecifiedDimmsNum, DimmIdPreference, pBuffer);
+      TempReturnCode = RunQuickDiagnostics(ppSpecifiedDimms, (UINT16)SpecifiedDimmsNum, DimmIdPreference, pBuffer);
     }
     else {
-      TempReturnCode = RunQuickDiagnosticsDetail(ppDimms, (UINT16)DimmsNum, DimmIdPreference, pBuffer);
+      TempReturnCode = RunQuickDiagnostics(ppDimms, (UINT16)DimmsNum, DimmIdPreference, pBuffer);
     }
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
@@ -676,7 +498,7 @@ CoreStartDiagnosticsDetail(
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_CONFIG) {
     pBuffer->TestName = GetDiagnosticTestName(ConfigDiagnosticIndex);
-    TempReturnCode = RunConfigDiagnosticsDetail(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
+    TempReturnCode = RunConfigDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Platform configuration diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
@@ -689,7 +511,7 @@ CoreStartDiagnosticsDetail(
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_SECURITY) {
     pBuffer->TestName = GetDiagnosticTestName(SecurityDiagnosticIndex);
-    TempReturnCode = RunSecurityDiagnosticsDetail(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
+    TempReturnCode = RunSecurityDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Security diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);
@@ -702,7 +524,7 @@ CoreStartDiagnosticsDetail(
   }
   else if (DiagnosticsTest & DIAGNOSTIC_TEST_FW) {
     pBuffer->TestName = GetDiagnosticTestName(FwDiagnosticIndex);
-    TempReturnCode = RunFwDiagnosticsDetail(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
+    TempReturnCode = RunFwDiagnostics(ppManageableDimms, (UINT16)ManageableDimmsNum, DimmIdPreference, pBuffer);
     if (EFI_ERROR(TempReturnCode)) {
       KEEP_ERROR(ReturnCode, TempReturnCode);
       NVDIMM_DBG("Firmware and consistency settings diagnostics failed. (" FORMAT_EFI_STATUS ")", TempReturnCode);

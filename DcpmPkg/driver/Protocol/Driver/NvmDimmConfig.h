@@ -966,30 +966,6 @@ LoadGoalConfig(
   );
 
 /**
-  Start Diagnostic
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[in] DiagnosticTests bitfield with selected diagnostic tests to be started
-  @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
-  @param[out] ppResultStr Pointer to the combined result string
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-**/
-EFI_STATUS
-EFIAPI
-StartDiagnostic(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CONST UINT8 DiagnosticTests,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResultStr
-  );
-
-/**
   Start Diagnostic Tests with Detail parameter
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -997,14 +973,14 @@ StartDiagnostic(
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] DiagnosticTests bitfield with selected diagnostic tests to be started
   @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
-  @param[out] ppResultStr Pointer to the structure that holds results
+  @param[out] ppResult Pointer to the structure with information about test
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
-StartDiagnosticDetail(
+StartDiagnostic(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,

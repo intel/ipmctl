@@ -869,118 +869,6 @@ Finish:
   return ReturnCode;
 }
 
-//  [ATTENTION] : Do not use this function for implementing diagnostic tests. This is kept maintain the backward compatibility.
-/**
-  Run platform configuration diagnostics for the list of DIMMs, and
-  appropriately populate the result messages, and test-state.
-
-  @param[in] ppDimms The DIMM pointers list
-  @param[in] DimmCount DIMMs count
-  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] ppResult Pointer to the result string of platform config diagnostics message
-  @param[out] pDiagState Pointer to the platform config diagnostics test state
-
-  @retval EFI_SUCCESS Test executed correctly
-  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
-**/
-EFI_STATUS
-RunConfigDiagnostics(
-  IN     DIMM **ppDimms,
-  IN     CONST UINT16 DimmCount,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResult,
-     OUT UINT8 *pDiagState
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  SYSTEM_CAPABILITIES_INFO SysCapInfo;
-
-  NVDIMM_ENTRY();
-  // Clear the pointer before using the struct
-  SysCapInfo.PtrInterleaveFormatsSupported = 0;
-
-  if (ppResult == NULL || pDiagState == NULL || DimmCount > MAX_DIMMS) {
-    NVDIMM_DBG("The platform configuration diagnostics test aborted due to an internal error.");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if (*ppResult != NULL) {
-    NVDIMM_DBG("The passed result string for platform configuration diagnostics tests is not empty");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto FinishError;
-  }
-
-  ReturnCode = CheckUninitializedDimms(ppResult, pDiagState);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("The check for uninitialized dimms failed.");
-    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-      goto FinishError;
-    }
-  }
-
-  if (DimmCount == 0 || ppDimms == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_MANAGEABLE_DIMMS), EVENT_CODE_601, DIAG_STATE_MASK_OK, ppResult, pDiagState);
-    goto Finish;
-  }
-
-  ReturnCode = CheckDimmUIDDuplication(ppDimms, DimmCount, ppResult, pDiagState);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("The check for duplicate UID numbers failed.");
-    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-      goto FinishError;
-    }
-  }
-
-  ReturnCode = GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig, &SysCapInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed on GetSystemCapabilitiesInfo");
-    goto Finish;
-  }
-
-  if (!SysCapInfo.AdrSupported) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_ADR_SUPPORT), EVENT_CODE_629, DIAG_STATE_MASK_FAILED, ppResult, pDiagState);
-  }
-
-  ReturnCode = CheckSystemSupportedCapabilities(ppDimms, DimmCount, DimmIdPreference, ppResult, pDiagState);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("The check for System supported capabilities failed.");
-    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-      goto FinishError;
-    }
-  }
-
-  ReturnCode = CheckNamespaceLabelAreaIndex(ppDimms, DimmCount, DimmIdPreference, ppResult, pDiagState);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("The check for Namespace label retrieve failed.");
-    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-      goto FinishError;
-    }
-  }
-
-  ReturnCode = CheckPlatformConfigurationData(ppDimms, DimmCount, DimmIdPreference, ppResult, pDiagState);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("The check for platform configuration data failed.");
-    if ((*pDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-      goto FinishError;
-    }
-  }
-
-  if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, ppResult, pDiagState);
-  }
-  ReturnCode = EFI_SUCCESS;
-  goto Finish;
-
-FinishError:
-  APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_ABORTED_INTERNAL_ERROR), EVENT_CODE_630, DIAG_STATE_MASK_ABORTED, ppResult, pDiagState);
-Finish:
-  FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
 /**
   Run platform configuration diagnostics for the list of DIMMs, and
   appropriately populate the result structure.
@@ -988,13 +876,13 @@ Finish:
   @param[in] ppDimms The DIMM pointers list
   @param[in] DimmCount DIMMs count
   @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] pResult Pointer to the result structure of platform config diagnostics message
+  @param[out] pResult Pointer of structure with diagnostics test result
 
   @retval EFI_SUCCESS Test executed correctly
   @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
 EFI_STATUS
-RunConfigDiagnosticsDetail(
+RunConfigDiagnostics(
   IN     DIMM **ppDimms,
   IN     CONST UINT16 DimmCount,
   IN     UINT8 DimmIdPreference,

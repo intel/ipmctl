@@ -2752,9 +2752,10 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
   UINT8 diag_tests = 0;
   UINT16 dimm_id;
   UINT16 *p_dimm_id;
-  CHAR16 *pFinalDiagnosticsResult = NULL;
+  CHAR16 *pFinalDiagnosticsResultStr = NULL;
   UINT32 dimm_count;
   int rc = NVM_SUCCESS;
+  DIAG_INFO *pFinalDiagnosticsResult = NULL;
 
   if (NULL == p_diagnostic)
     return NVM_ERR_INVALID_PARAMETER;
@@ -2798,7 +2799,8 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
     DISPLAY_DIMM_ID_UID,
     &pFinalDiagnosticsResult);
 
-  Print(pFinalDiagnosticsResult);
+  pFinalDiagnosticsResultStr = DiagnosticResultToStr(pFinalDiagnosticsResult);
+  Print(pFinalDiagnosticsResultStr);
   FreePool(pFinalDiagnosticsResult);
   if (EFI_ERROR(ReturnCode))
     rc = NVM_ERR_UNKNOWN;

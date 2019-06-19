@@ -489,6 +489,17 @@ NamespaceTypeToString(
   );
 
 /**
+  Generates string from diagnostic output to print and frees the diagnostic structure
+
+  @param[in] Type, pointer to type structure
+
+  @retval Pointer to type string
+**/
+CHAR16 *
+DiagnosticResultToStr(
+  IN    DIAG_INFO *pResult
+);
+/**
   Generates pointer to string with value corresponding to health state
   Caller is responsible for FreePool on this pointer
 **/

@@ -892,31 +892,6 @@ EFI_STATUS
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-/**
-  Start Diagnostic
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[in] DiagnosticTestId ID of a diagnostic test to be started
-  @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
-  @param[out] ppResult Pointer to the combined result string
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_NOT_STARTED Test was not executed
-  @retval EFI_SUCCESS All Ok
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_START_DIAGNOSTIC) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-  IN     CONST UINT8 DiagnosticTestId,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResultStr
-);
-
 typedef struct DIAGNOSTIC_INFO
 {
   CHAR16 *TestName;
@@ -946,7 +921,7 @@ typedef struct DIAGNOSTIC_INFO
 **/
 typedef
 EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_START_DIAGNOSTIC_DETAIL) (
+(EFIAPI *EFI_DCPMM_CONFIG_START_DIAGNOSTIC) (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
@@ -1781,7 +1756,6 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_DUMP_GOAL DumpGoalConfig;
   EFI_DCPMM_CONFIG_LOAD_GOAL LoadGoalConfig;
   EFI_DCPMM_CONFIG_START_DIAGNOSTIC StartDiagnostic;
-  EFI_DCPMM_CONFIG_START_DIAGNOSTIC_DETAIL StartDiagnosticDetail;
   EFI_DCPMM_CONFIG_CREATE_NAMESPACE CreateNamespace;
   EFI_DCPMM_CONFIG_GET_NAMESPACES GetNamespaces;
   EFI_DCPMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;

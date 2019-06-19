@@ -15,8 +15,7 @@
   @param[in] ppDimms The DIMM pointers list
   @param[in] DimmCount DIMMs count
   @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] ppResult Pointer to the result string of fw diagnostics message
-  @param[out] pDiagState Pointer to the fw diagnostics test state
+  @param[out] pResult Pointer of structure with diagnostics test result
 
   @retval EFI_SUCCESS Test executed correctly
   @retval EFI_DEVICE_ERROR Test wasn't executed correctly
@@ -25,29 +24,6 @@
 **/
 EFI_STATUS
 RunFwDiagnostics(
-  IN     DIMM **ppDimms,
-  IN     CONST UINT16 DimmCount,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResult,
-     OUT UINT8 *pDiagState
-  );
-
-/**
-  Run Fw diagnostics for the list of DIMMs, and appropriately
-  populate the result messages, and test-state.
-
-  @param[in] ppDimms The DIMM pointers list
-  @param[in] DimmCount DIMMs count
-  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] pResult Pointer to the result string of fw diagnostics message
-
-  @retval EFI_SUCCESS Test executed correctly
-  @retval EFI_DEVICE_ERROR Test wasn't executed correctly
-  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
-  @retval EFI_OUT_OF_RESOURCES when memory allocation fails.
-**/
-EFI_STATUS
-RunFwDiagnosticsDetail(
   IN     DIMM **ppDimms,
   IN     CONST UINT16 DimmCount,
   IN     UINT8 DimmIdPreference,

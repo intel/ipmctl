@@ -115,6 +115,59 @@ NamespaceTypeToString(
 }
 
 /**
+  Generates string from diagnostic output to print and frees the diagnostic structure
+
+  @param[in] Type, pointer to type structure
+
+  @retval Pointer to type string
+**/
+CHAR16 *DiagnosticResultToStr(
+  IN    DIAG_INFO *pResult
+)
+{
+  CHAR16 *pOutputLines = NULL;
+  UINT32 NumTokens = 0;
+  CHAR16 *MsgStr = NULL;
+  UINT8 index = 0;
+  UINT8 Id = 0;
+  if (pResult->TestName != NULL) {
+    pOutputLines = CatSPrintClean(pOutputLines,
+      L"\n***** %ls = %ls *****\n", pResult->TestName, pResult->State);
+    CHAR16 **TestEventMesg = StrSplit(pResult->Message, L'\n', &NumTokens);
+    if (TestEventMesg != NULL) {
+      pOutputLines = CatSPrintClean(pOutputLines,
+        L"Message : [ %d ] %ls\n", pResult->ResultCode, TestEventMesg[0]);
+      FreeStringArray(TestEventMesg, NumTokens);
+    }
+  }
+
+  for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
+    if (pResult->SubTestName[Id] != NULL) {
+      pOutputLines = CatSPrintClean(pOutputLines,
+        L"  %-20ls = %ls\n", pResult->SubTestName[Id], pResult->SubTestState[Id]);
+      if (pResult->SubTestMessage[Id] != NULL) {
+        CHAR16 **ppSplitSubTestMessage = StrSplit(pResult->SubTestMessage[Id], L'\n', &NumTokens);
+        if (ppSplitSubTestMessage != NULL) {
+          for (index = 0; index < NumTokens; index++) {
+            MsgStr = CatSPrintClean(MsgStr, L"Message.%d", index + 1);
+            pOutputLines = CatSPrintClean(pOutputLines, L"  %ls = %ls\n", MsgStr, ppSplitSubTestMessage[index]);
+            FREE_POOL_SAFE(MsgStr);
+          }
+        }
+        FreeStringArray(ppSplitSubTestMessage, NumTokens);
+      }
+      FREE_POOL_SAFE(pResult->SubTestName[Id]);
+      FREE_POOL_SAFE(pResult->SubTestMessage[Id]);
+      FREE_POOL_SAFE(pResult->SubTestState[Id]);
+    }
+  }
+  FREE_POOL_SAFE(pResult->TestName);
+  FREE_POOL_SAFE(pResult->Message);
+  FREE_POOL_SAFE(pResult->State);
+
+  return pOutputLines;
+}
+/**
   Generates pointer to string with value corresponding to health state
   Caller is responsible for FreePool on this pointer
 **/

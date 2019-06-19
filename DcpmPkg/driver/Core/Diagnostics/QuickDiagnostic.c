@@ -11,7 +11,6 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 #define BOOTSTATUS_TEST_INDEX 1
 #define SMARTHEALTH_TEST_INDEX 2
 
-//  [ATTENTION] : Do not use this function for implementing diagnostic tests. This is kept maintain the backward compatibility.
 /**
   Run quick diagnostics for list of DIMMs, and appropriately
   populate the result messages, and test-state.
@@ -19,8 +18,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
   @param[in] ppDimms The DIMM pointers list
   @param[in] DimmCount DIMMs count
   @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] ppResult Pointer to the result string of quick diagnostics message
-  @param[out] pDiagState Pointer to the quick diagnostics test state
+  @param[out] pResult Pointer of structure with diagnostics test result
 
   @retval EFI_SUCCESS Test executed correctly
   @retval EFI_DEVICE_ERROR Test wasn't executed correctly
@@ -28,118 +26,6 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 **/
 EFI_STATUS
 RunQuickDiagnostics(
-  IN     DIMM **ppDimms,
-  IN     CONST UINT16 DimmCount,
-  IN     UINT8 DimmIdPreference,
-     OUT CHAR16 **ppResult,
-     OUT UINT8 *pDiagState
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];
-  UINT8 TmpDiagState = 0;
-  UINT16 Index = 0;
-
-  NVDIMM_ENTRY();
-
-  ZeroMem(DimmStr, sizeof(DimmStr));
-  ZeroMem(DimmUid, sizeof(DimmUid));
-
- if (ppResult == NULL || pDiagState == NULL || DimmCount > MAX_DIMMS) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_ERR("The quick diagnostics test aborted due to an internal error.");
-    goto Finish;
-  }
-
-  if (ppDimms == NULL || DimmCount == 0) {
-    goto Finish;
-  }
-
-  if (*ppResult != NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_ERR("The passed result string for quick diagnostics tests is not empty");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmCount; ++Index) {
-    *pDiagState |= TmpDiagState;
-    TmpDiagState = 0;
-
-    if (ppDimms[Index] == NULL) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      continue;
-    }
-
-    ReturnCode = GetDimmUid(ppDimms[Index], DimmUid, MAX_DIMM_UID_LENGTH);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("GetDimmUid function for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      continue;
-    }
-
-    ReturnCode = GetPreferredValueAsString(ppDimms[Index]->DeviceHandle.AsUint32, DimmUid, DimmIdPreference == DISPLAY_DIMM_ID_HANDLE,
-       DimmStr, MAX_DIMM_UID_LENGTH);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("GetPreferredValueAsString function for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      continue;
-    }
-
-    ReturnCode = DiagnosticsManageabilityCheck(ppDimms[Index], DimmStr, ppResult, &TmpDiagState);
-    if (EFI_ERROR(ReturnCode) || (!IsDimmManageable(ppDimms[Index]))) {
-      NVDIMM_DBG("The check for manageability for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      continue;
-    }
-
-    ReturnCode = BootStatusDiagnosticsCheck(ppDimms[Index], DimmStr, ppResult, &TmpDiagState);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("The BSR check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((TmpDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-          APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED, ppResult, &TmpDiagState,
-            DimmStr);
-      }
-      continue;
-    }
-
-    ReturnCode = SmartAndHealthCheck(ppDimms[Index], DimmStr, ppResult, &TmpDiagState);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("The smart and health check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((TmpDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED, ppResult, &TmpDiagState,
-          DimmStr);
-      }
-      continue;
-    }
-  }
-
-  //Updating the overall test-state with the last dimm test-state
-  *pDiagState |= TmpDiagState;
-
-  if ((*pDiagState & DIAG_STATE_MASK_ALL) <= DIAG_STATE_MASK_OK) {
-    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_QUICK_SUCCESS), EVENT_CODE_500, DIAG_STATE_MASK_OK, ppResult, pDiagState);
-  }
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Run quick diagnostics for list of DIMMs, and appropriately
-  populate the result messages, and test-state.
-
-  @param[in] ppDimms The DIMM pointers list
-  @param[in] DimmCount DIMMs count
-  @param[in] DimmIdPreference Preference for Dimm ID display (UID/Handle)
-  @param[out] pResult Pointer to the result structure of quick diagnostics message
-
-  @retval EFI_SUCCESS Test executed correctly
-  @retval EFI_DEVICE_ERROR Test wasn't executed correctly
-  @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
-**/
-EFI_STATUS
-RunQuickDiagnosticsDetail(
   IN     DIMM **ppDimms,
   IN     CONST UINT16 DimmCount,
   IN     UINT8 DimmIdPreference,

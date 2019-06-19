@@ -260,7 +260,7 @@ StartDiagnosticCmd(
       continue;
     }
 
-    ReturnCode = pNvmDimmConfigProtocol->StartDiagnosticDetail(
+    ReturnCode = pNvmDimmConfigProtocol->StartDiagnostic(
       pNvmDimmConfigProtocol,
       pDimmIds,
       DimmIdsCount,

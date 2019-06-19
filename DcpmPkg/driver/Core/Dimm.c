@@ -3311,7 +3311,7 @@ FwCmdGetErrorLog (
   pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
   pFwCmd->OutputPayloadSize = OutputPayloadSize;
   pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem_S(&pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pInputPayload, sizeof(pFwCmd->InputPayload.Data));
+  CopyMem_S(&pFwCmd->InputPayload.Data, sizeof(pFwCmd->InputPayload.Data), pInputPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -6880,7 +6880,6 @@ PopulateUninitializedDimmList(
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   PT_ID_DIMM_PAYLOAD *pPayload = NULL;
 
-
   // Only populate dimms found from the NFIT table (they are already placed in
   // the UninitializedDimms list)
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.UninitializedDimms) {
@@ -6917,7 +6916,10 @@ PopulateUninitializedDimmList(
         pDimm->ControllerRid = pPayload->Rid;
       }
     }
+
+    FREE_POOL_SAFE(pPayload);
   }
+
   return ReturnCode;
 }
 

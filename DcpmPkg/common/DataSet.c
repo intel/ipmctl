@@ -226,6 +226,7 @@ GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...) {
 
   //split path, result toks are data set names
   if (NULL == (DataSetToks = StrSplit(FormattedNamePath, L'/', &NumDataSetToks))) {
+    FreePool(FormattedNamePath);
     return NULL;
   }
   FreePool(FormattedNamePath);

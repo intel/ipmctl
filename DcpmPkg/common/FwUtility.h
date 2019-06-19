@@ -41,6 +41,7 @@
 #define OUT_MB_SIZE         (1 << 20)   //!< Size of the OS mailbox large output payload
 #define IN_PAYLOAD_SIZE     (128)       //!< Total size of the input payload registers
 #define OUT_PAYLOAD_SIZE    (128)       //!< Total size of the output payload registers
+#define IN_PAYLOAD_SIZE_EXT_PAD (12)   //!< Additional bytes to deal with DSM calls
 
 #define MB_COMPLETE 0x1
 #define STATUS_MASK 0xFF
@@ -53,8 +54,8 @@ typedef struct {
   UINT32 OutputPayloadSize;
   UINT32 LargeOutputPayloadSize;
   union{
-      UINT8 Data[IN_PAYLOAD_SIZE];
-      struct {
+    UINT8 Data[IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD];
+    struct {
         UINT8 Opcode;
         UINT8 SubOpcode;
         UINT8 TransportInterface;

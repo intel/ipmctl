@@ -127,6 +127,7 @@ enum dsm_vendor_error {
 #define IN_MB_SIZE          (1 << 20)   //!< Size of the OS mailbox large input payload
 #define OUT_MB_SIZE         (1 << 20)   //!< Size of the OS mailbox large output payload
 #define IN_PAYLOAD_SIZE     (128)       //!< Total size of the input payload registers
+#define IN_PAYLOAD_SIZE_EXT_PAD (12)   //!< Additional bytes to deal with DSM calls
 #define OUT_PAYLOAD_SIZE    (128)       //!< Total size of the output payload registers
 
 #define MB_COMPLETE 0x1
@@ -140,7 +141,7 @@ struct fw_cmd {
    unsigned int OutputPayloadSize;
    unsigned int LargeOutputPayloadSize;
    union {
-     unsigned char Data[IN_PAYLOAD_SIZE];
+     unsigned char Data[IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD];
      struct {
        unsigned char Opcode;
        unsigned char SubOpcode;

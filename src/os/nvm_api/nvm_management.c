@@ -2802,6 +2802,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
   pFinalDiagnosticsResultStr = DiagnosticResultToStr(pFinalDiagnosticsResult);
   Print(pFinalDiagnosticsResultStr);
   FreePool(pFinalDiagnosticsResult);
+  FreePool(pFinalDiagnosticsResultStr);
   if (EFI_ERROR(ReturnCode))
     rc = NVM_ERR_UNKNOWN;
 

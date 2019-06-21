@@ -175,6 +175,14 @@ CheckAndConfirmAlignments(
   UINT32 Index = 0;
   BOOLEAN CapacityReducedForSKU = FALSE;
   CHAR16 *pSingleStatusCodeMessage = NULL;
+  UINT64 TwoLM_NmFmRatioLower = 4;
+  UINT64 TwoLM_NmFmRatioUpper = 16;
+  UINT64 TwoLM_FmLowerLimit = 0;
+  UINT64 TwoLM_FmUpperLimit = 0;
+  UINT64 TwoLM_NMTotal = 0;
+  UINT64 TwoLM_FMTotal = 0;
+  TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
+  UINT16 TopologyDimmsNumber = 0;
 
   NVDIMM_ENTRY();
 
@@ -218,6 +226,37 @@ CheckAndConfirmAlignments(
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CREATE_GOAL_COMMAND_STATUS_HEADER, CLI_INFO_ON, pCommandStatus);
     goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetSystemTopology(pNvmDimmConfigProtocol, &pTopologyDimms, &TopologyDimmsNumber);
+  if (EFI_ERROR(ReturnCode)) {
+    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    goto Finish;
+  }
+
+  //sum up the near memory
+  for (Index = 0; Index < TopologyDimmsNumber; Index++)
+  {
+    if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DDR4) {
+      TwoLM_NMTotal += pTopologyDimms[Index].VolatileCapacity;
+    }
+  }
+
+  //sum up the near memory
+  for (Index = 0; Index < RegionConfigsCount; Index++)
+  {
+    TwoLM_FMTotal += RegionConfigsInfo[Index].VolatileSize;
+  }
+
+  if (TwoLM_FMTotal > 0) {
+    TwoLM_FmLowerLimit = TwoLM_NMTotal * TwoLM_NmFmRatioLower;
+    TwoLM_FmUpperLimit = TwoLM_NMTotal * TwoLM_NmFmRatioUpper;
+    if (TwoLM_FMTotal > TwoLM_FmUpperLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is above the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioUpper);
+    }
+    else if (TwoLM_FMTotal < TwoLM_FmLowerLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is below the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioLower);
+    }
   }
 
   if (VolatilePercent >= VolatilePercentAligned) {
@@ -277,6 +316,7 @@ CheckAndConfirmAlignments(
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
+  FREE_POOL_SAFE(pTopologyDimms);
   return ReturnCode;
 }
 

@@ -13,7 +13,6 @@
 #include <IndustryStandard/SmBios.h>
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
-#include <Dcpmm.h>
 
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
@@ -38,7 +37,6 @@
 #define SUB_OP_SHIFT 40
 #define OP_SHIFT 32
 #define SQ_SHIFT 63
-#define EXT_SUB_OP_SHIFT 8
 
 #define EMULATOR_DIMM_HEALTH_STATUS       0    //!< Normal
 #define EMULATOR_DIMM_TEMPERATURE         300  //!< 300K is about 26C
@@ -212,6 +210,11 @@ typedef struct _DIMM {
   UINT8 LsaStatus;                         //!< The status of the LSA partition parsing for this DIMM
 
   BLOCK_WINDOW *pBw;
+#ifndef OS_BUILD
+  MAILBOX *pHostMailbox;
+#else // OS_BUILD
+  VOID *Reserved;
+#endif // OS_BUILD
   NvDimmRegionMappingStructure *pRegionMappingStructure;      //!< ptr to the table used to configure the mailbox
   SpaRangeTbl *pCtrlSpaTbl;       //!> ptr to the spa range table associated with the mailbox table
   NvDimmRegionMappingStructure *pBlockDataRegionMappingStructure;      //!< ptr to the table used to configure the block windows
@@ -610,6 +613,29 @@ ReadLabels(
 VOID
 DimmWPQFlush(
   IN     DIMM *pDimm
+  );
+
+/**
+  Create and Configure the OS Mailbox
+  Using the NVDIMM region table, determine the location of the OS mailbox
+  in the system physical address space. For each piece of the mailbox in SPA
+  map them into the virtual address space and record the location.
+
+  @param[in] pDimm: The DIMM to create the OS mailbox for
+  @parma[in] pITbl: the interleave table referenced by the mdsarmt_tbl
+
+  @retval Success - The pointer to the completed mailbox structure
+  @retval Error - NULL on error
+**/
+MAILBOX *
+CreateMailbox(
+  IN     DIMM *pDimm,
+  IN     InterleaveStruct *pITbl
+  );
+
+VOID
+FreeMailbox(
+     OUT MAILBOX *pMb
   );
 
 VOID
@@ -1427,6 +1453,27 @@ GetAndParseFwErrorLogForDimm(
      OUT ERROR_LOG_INFO *pErrorLogs
   );
 
+/**
+  Get requested number of specific DIMM registers for given DIMM id
+
+  @param[in] pDimm - pointer to DIMM to get registers for.
+  @param[out] pBsr - Pointer to buffer for Boot Status register, contains
+              high and low 4B register.
+  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status Register
+  @param[in] SmallOutputRegisterCount - Number of small output registers to get, max 32.
+  @param[out] pFwMailboxOutput - Pointer to buffer for Host Fw Mailbox small output Register.
+
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All ok
+**/
+EFI_STATUS
+GetKeyDimmRegisters(
+  IN     DIMM *pDimm,
+     OUT UINT64 *pBsr,
+     OUT UINT64 *pFwMailboxStatus,
+  IN     UINT32 SmallOutputRegisterCount,
+     OUT UINT64 *pFwMailboxOutput
+  );
 
 /**
   Get count of media and/or thermal errors on given DIMM
@@ -1784,121 +1831,5 @@ PassThru(
   IN     struct _DIMM *pDimm,
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout
-);
-
-/**
-  Get boot status register by Dcpmm BIOS protocol.
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-  @param[out] pMailboxStatus Optional pointer to store FW Mailbox Status Code
-  @param[out] pBsrValue Boot status register value
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-DcpmmGetBsr(
-  IN     struct _DIMM *pDimm,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
-  OUT UINT8 *pMailboxStatus OPTIONAL,
-  OUT UINT64 *pBsrValue
-);
-
-/**
-  Passthrough FIS command by Dcpmm BIOS protocol.
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in, out] pCmd Firmware command structure pointer
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-DcpmmCmd(
-  IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface
-);
-
-/**
-  Get large payload info by Dcpmm BIOS protocol.
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-  @param[out] pOutput Large payload info output data buffer
-  @param[out] pStatus FIS request status
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-DcpmmLargePayloadInfo(
-  IN     struct _DIMM *pDimm,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
-     OUT DCPMM_FIS_OUTPUT *pOutput,
-     OUT UINT8 *pStatus
-);
-
-/**
-  Write large payload by Dcpmm BIOS protocol.
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] pInput Input data buffer
-  @param[in] InputSize Total input data size
-  @param[in] MaxChunkSize Maximum chunk of data to write
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-  @param[out] pStatus FIS request status
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-DcpmmLargePayloadWrite(
-  IN     struct _DIMM *pDimm,
-  IN     UINT8 *pInput,
-  IN     UINT32 InputSize,
-  IN     UINT32 MaxChunkSize,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
-     OUT UINT8 *pStatus
-);
-
-/**
-  Read large payload by Dcpmm BIOS protocol.
-
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] OutputSize Total output data size
-  @param[in] MaxChunkSize Maximum chunk of data to read
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-  @param[out] pOutput Output data buffer
-  @param[out] pStatus FIS request status pointer
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
-**/
-EFI_STATUS
-DcpmmLargePayloadRead(
-  IN     struct _DIMM *pDimm,
-  IN     UINT32 OutputSize,
-  IN     UINT32 MaxChunkSize,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
-  IN OUT UINT8 *pOutput,
-     OUT UINT8 *pStatus
 );
 #endif

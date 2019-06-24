@@ -78,6 +78,7 @@ EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportDdrt, FisTr
 
 #ifndef OS_BUILD
 
+EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
 DCPMM_ARS_ERROR_RECORD * gArsBadRecords = NULL;
 INT32 gArsBadRecordsCount = ARS_LIST_NOT_INITIALIZED;
 #endif
@@ -8280,7 +8281,9 @@ Finish:
   @param[in] DimmId - ID of a DIMM.
   @param[out] pBsr - Pointer to buffer for Boot Status register, contains
               high and low 4B register.
-  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status
+  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status Register
+  @param[in] SmallOutputRegisterCount - Number of small output registers to get, max 32.
+  @param[out] pFwMailboxOutput - Pointer to buffer for Host Fw Mailbox small output Register.
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
@@ -8292,7 +8295,9 @@ RetrieveDimmRegisters(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmId,
      OUT UINT64 *pBsr,
-     OUT UINT8 *pFwMailboxStatus,
+     OUT UINT64 *pFwMailboxStatus,
+  IN     UINT32 SmallOutputRegisterCount,
+     OUT UINT64 *pFwMailboxOutput,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -8306,7 +8311,8 @@ RetrieveDimmRegisters(
 #ifdef MDEPKG_NDEBUG
   ReturnCode = EFI_UNSUPPORTED;
 #else
-  if (pThis == NULL || pBsr == NULL || pFwMailboxStatus == NULL) {
+  if (pThis == NULL || pBsr == NULL || pFwMailboxStatus == NULL || pFwMailboxOutput == NULL ||
+      SmallOutputRegisterCount > OUT_PAYLOAD_NUM) {
     ReturnCode = EFI_INVALID_PARAMETER;
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;
@@ -8325,7 +8331,7 @@ RetrieveDimmRegisters(
     goto Finish;
   }
 
-  ReturnCode = DcpmmGetBsr(pDimm, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt, pFwMailboxStatus, pBsr);
+  ReturnCode = GetKeyDimmRegisters(pDimm, pBsr, pFwMailboxStatus, SmallOutputRegisterCount, pFwMailboxOutput);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS);
@@ -8452,6 +8458,9 @@ DimmFormat(
       if (Recovery) {
         pReturnCodes[Index] = PollSmbusCmdCompletion(pDimms[Index]->SmbusAddress,
         PT_FORMAT_DIMM_MAX_TIMEOUT, &FwMailboxStatus, &Bsr);
+      } else {
+        pReturnCodes[Index] = PollCmdCompletion(pDimms[Index]->pHostMailbox,
+        PT_FORMAT_DIMM_MAX_TIMEOUT, &FwMailboxStatus, &Bsr.AsUint64);
       }
 
       if (EFI_ERROR(pReturnCodes[Index])) {
@@ -10274,6 +10283,15 @@ GetBSRAndBootStatusBitMask(
   NVDIMM_ENTRY();
   ZeroMem(&Bsr, sizeof(DIMM_BSR));
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
+#ifndef OS_BUILD
+  if (pDimm != NULL) {
+    if (pDimm->pHostMailbox == NULL) {
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+    Bsr.AsUint64 = *pDimm->pHostMailbox->pBsr;
+  }
+#endif // !OS_BUILD
 
   if (pDimm == NULL) {
     pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
@@ -10464,6 +10482,8 @@ LoadArsList()
   UINT32 x = 0;
   UINT32 records = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS DcpmmProtocolOpenReturnCode = EFI_SUCCESS;
+  EFI_DCPMM_PROTOCOL * pDcpmmProtocol = NULL;
 
   NVDIMM_ENTRY();
 
@@ -10473,8 +10493,20 @@ LoadArsList()
   }
   gArsBadRecordsCount = 0;
 
+  /*If the FIS protocol isn't in place, allow the call to exit without distruption*/
+  DcpmmProtocolOpenReturnCode = gBS->LocateProtocol(&gDcpmmProtocolGuid, NULL, (VOID **)&pDcpmmProtocol);
+  if (EFI_ERROR(DcpmmProtocolOpenReturnCode)) {
+    if (DcpmmProtocolOpenReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_WARN("Dcpmm protocol not found");
+    }
+    else {
+      NVDIMM_WARN("Communication with the device driver failed (dcpmm protocol)");
+    }
+    goto Finish;
+  }
+
   //First check how many records exist by passing NULL
-  ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmArsStatus(&records, NULL);
+  ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&records, NULL);
   if (ReturnCode == EFI_NOT_READY)
   {
     NVDIMM_WARN("BIOS reports not ready for full ARS list. The returned list may be partial.");
@@ -10495,7 +10527,7 @@ LoadArsList()
       goto Finish;
     }
 
-    ReturnCode = gNvmDimmData->pDcpmmProtocol->DcpmmArsStatus(&records, gArsBadRecords);
+    ReturnCode = pDcpmmProtocol->DcpmmArsStatus(&records, gArsBadRecords);
     if (ReturnCode == EFI_NOT_READY)
     {
       NVDIMM_WARN("BIOS reports not ready for full ARS list. The returned list may be partial.");

@@ -46,10 +46,6 @@ EFI_GUID gIntelDimmPbrVariableGuid = INTEL_DIMM_PBR_VARIABLE_GUID;
 
 EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
 
-#ifndef OS_BUILD
-EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
-#endif // !OS_BUILD
-
 /**
   Array of dimms UEFI-related data structures.
 **/
@@ -1514,19 +1510,6 @@ NvmDimmDriverDriverBindingStart(
       ControllerHandle,
       EFI_OPEN_PROTOCOL_BY_DRIVER
    );
-
-#ifndef OS_BUILD
-   ReturnCode = gBS->LocateProtocol(&gDcpmmProtocolGuid, NULL, (VOID **)&gNvmDimmData->pDcpmmProtocol);
-   if (EFI_ERROR(ReturnCode)) {
-     if (ReturnCode == EFI_NOT_FOUND) {
-       NVDIMM_WARN("Dcpmm protocol not found");
-     }
-     else {
-       NVDIMM_WARN("Communication with the device driver failed (dcpmm protocol)");
-     }
-     goto Finish;
-   }
-#endif // !OS_BUILD
 
    /**
    If failed to open then try to install and retry open.

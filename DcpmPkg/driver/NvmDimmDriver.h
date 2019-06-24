@@ -9,7 +9,6 @@
 #include <Uefi.h>
 #include <NvmDimmDriverData.h>
 #include <Dimm.h>
-#include <Dcpmm.h>
 
 #if defined(DYNAMIC_WA_ENABLE)
 
@@ -131,13 +130,6 @@ typedef struct {
   EFI_HANDLE ControllerHandle;
   EFI_HANDLE HiiHandle;
   EFI_DEVICE_PATH_PROTOCOL *pControllerDevicePathInstance;
-
-#ifndef OS_BUILD
-  /**
-  BIOS Dcpmm protocol
-  **/
-  EFI_DCPMM_PROTOCOL *pDcpmmProtocol;
-#endif // !OS_BUILD
 
   PMEM_DEV PMEMDev;
   /**

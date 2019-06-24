@@ -1813,19 +1813,16 @@ NvmDimmDriverDriverBindingStop(
   TempReturnCode = gBS->UninstallMultipleProtocolInterfaces(gNvmDimmData->DriverHandle,
       &gNvmDimmConfigProtocolGuid, &gNvmDimmDriverNvmDimmConfig, NULL);
   if (EFI_ERROR(TempReturnCode)) {
-    FIRST_ERR(ReturnCode, TempReturnCode);
     NVDIMM_WARN("Failed to uninstall the NvmDimmConfig protocol, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
   }
 
   TempReturnCode = UninitializeSmbusAccess();
   if (EFI_ERROR(TempReturnCode)) {
-    FIRST_ERR(ReturnCode, TempReturnCode);
     NVDIMM_DBG("Failed to uninstall smbus access, error = 0x%llx.", TempReturnCode);
   }
 
   TempReturnCode = SmbusDeinit();
   if (EFI_ERROR(TempReturnCode)) {
-    FIRST_ERR(ReturnCode, TempReturnCode);
     NVDIMM_DBG("Failed to Smbus deinit, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
   }
   /**
@@ -1833,7 +1830,6 @@ NvmDimmDriverDriverBindingStop(
   **/
   TempReturnCode = FreeDimmList();
   if (EFI_ERROR(TempReturnCode)) {
-    FIRST_ERR(ReturnCode, TempReturnCode);
     NVDIMM_DBG("Failed to free dimm list, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
   }
 

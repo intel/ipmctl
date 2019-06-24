@@ -278,6 +278,7 @@ DeletePcdCmd(
           PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"DIMM " FORMAT_STR L" is a member of a Namespace. Will not delete data from this DIMM.", DimmStr);
           SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
         } else {
+          pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;
           TempReturnCode = pNvmDimmConfigProtocol->ModifyPcdConfig(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, ConfigIdMask, pCommandStatus);
           if (EFI_ERROR(TempReturnCode)) {
             SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_OPERATION_FAILED, TRUE);

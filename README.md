@@ -54,6 +54,26 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 
 ## Build
 
+### Specific Instructions Reported as Working on RHEL7.6, CentOS7.6 and Fedora 30.
+ 
+Ipmctl has dependency on libsafec-devel, libndctl-devel and rubygem-asciidoctor
+*	copr/jhli repo has libipmctl and its dependency, libsafec-devel.
+    * cd /etc/yum.repos.d/
+>       wget https://copr.fedorainfracloud.org/coprs/jhli/ipmctl/repo/epel-7/jhli-ipmctl-epel-7.repo
+>       wget https://copr.fedorainfracloud.org/coprs/jhli/safeclib/repo/epel-7/jhli-safeclib-epel-7.repo
+> 
+>       * This should bring down both libipmctl and its dependency, libsafec-devel and 
+    
+*	epel repos has rubygem-asciidoctor
+    *	get the epel repos
+>      yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+*	Enable extra packages in RHEL for ndctl-devel or any other dependencies
+    *	EPEL packages may depend on packages from these repositories:
+>     # subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
+*	Install the prerequisite packages
+>	sudo yum install ndctl ndctl-libs ndctl-devel libsafec rubygem-asciidoctor
+*	Either Follow ipmctl make, rpmbuild instructions, or install the ipmctl package
+
 ### Linux
 
 The latest stable Linux kernel version available is recommended.

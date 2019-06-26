@@ -130,8 +130,8 @@ PbrGetPassThruRecord(
       ptResp->OutputLargePayloadSize);
   }
 
-  FreePool(pData);
 Finish:
+  FREE_POOL_SAFE(pData);
   return ReturnCode;
 }
 

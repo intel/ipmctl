@@ -81,12 +81,13 @@ PbrSetData(
             FreePool(pContext->PartitionContexts[CtxIndex].PartitionData);
           }
           //allocate just enough to add our new singleton data object
-          pContext->PartitionContexts[CtxIndex].PartitionData = pDataItem = AllocateZeroPool(Size+sizeof(PbrPartitionLogicalDataItem));
-          if (NULL == pContext->PartitionContexts[CtxIndex].PartitionData) {
+          pDataItem = AllocateZeroPool(Size+sizeof(PbrPartitionLogicalDataItem));
+          if (NULL == pDataItem) {
             ReturnCode = EFI_OUT_OF_RESOURCES;
             NVDIMM_DBG("Failed to allocate memory for partition buffer\n");
             goto Finish;
           }
+          pContext->PartitionContexts[CtxIndex].PartitionData = pDataItem;
           //update our internal context with the new partition size
           pContext->PartitionContexts[CtxIndex].PartitionSize = Size + sizeof(PbrPartitionLogicalDataItem);
           //now that we have memory allocated, let's copy caller data into it

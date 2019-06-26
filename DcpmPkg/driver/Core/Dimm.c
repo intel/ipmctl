@@ -1161,7 +1161,7 @@ RemoveDimmInventory(
 
   NVDIMM_ENTRY();
   for (pCurDimmNode = GetFirstNode(&pDev->Dimms);
-      !IsNull(&pDev->Dimms, pCurDimmNode);
+      !IsNull(&pDev->Dimms, pCurDimmNode) && pCurDimmNode != NULL;
       pCurDimmNode = pTempDimmNode) {
     pTempDimmNode = GetNextNode(&pDev->Dimms, pCurDimmNode);
     pCurDimm = DIMM_FROM_NODE(pCurDimmNode);
@@ -1176,7 +1176,7 @@ RemoveDimmInventory(
   }
 
   for (pCurDimmNode = GetFirstNode(&pDev->UninitializedDimms);
-       !IsNull(&pDev->UninitializedDimms, pCurDimmNode);
+       !IsNull(&pDev->UninitializedDimms, pCurDimmNode) && pCurDimmNode != NULL;
        pCurDimmNode = pTempDimmNode) {
     pTempDimmNode = GetNextNode(&pDev->UninitializedDimms, pCurDimmNode);
     pCurDimm = DIMM_FROM_NODE(pCurDimmNode);
@@ -3271,11 +3271,11 @@ FwCmdGetErrorLog (
     goto Finish;
   }
 
-  if (pOutputPayload != NULL) {
+  if (pOutputPayload != NULL && OutputPayloadSize > 0) {
     CopyMem_S(pOutputPayload, OutputPayloadSize, &pFwCmd->OutPayload, OutputPayloadSize);
   }
 
-  if (pLargeOutputPayload != NULL) {
+  if (pLargeOutputPayload != NULL && LargeOutputPayloadSize > 0) {
     CopyMem_S(pLargeOutputPayload, LargeOutputPayloadSize, &pFwCmd->LargeOutputPayload, LargeOutputPayloadSize);
   }
 

@@ -620,6 +620,11 @@ BlockForFwStage(
 
   NVDIMM_ENTRY();
 
+  if (pDimmTargetsNum > MAX_DIMMS) {
+    NVDIMM_DBG("Number of target DIMMs is greater than max DIMMs number.");
+    goto Finish;
+  }
+
   //initialize
   for (Index = 0; Index < MAX_DIMMS; Index++) {
     FwStagedLongOpCodes[Index] = UnknownStatus;

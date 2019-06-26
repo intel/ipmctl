@@ -793,7 +793,7 @@ MatchOptions(
         goto Finish;
       }
       // missing required option
-      if (pMatch->options[Index2].Required) {
+      if (Index2 < MatchCommandOptions && pMatch->options[Index2].Required) {
         SetDetailedSyntaxError(
           CatSPrint(NULL, CLI_PARSER_DETAILED_ERR_OPTION_REQUIRED, pMatch->options[Index2].OptionName));
         ReturnCode = EFI_INVALID_PARAMETER;

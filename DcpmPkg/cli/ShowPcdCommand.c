@@ -953,40 +953,29 @@ PrintLsaHex(
     NextColumn = (Index + 1) % COLUMN_IN_HEX_DUMP;
     Byte = *(pData + Index);
     if (Column == 0) {
-      messageId = CatSPrint(messageId, L"%.3d", Index);
+      messageId = CatSPrintClean(messageId, L"%.3d", Index);
     }
 
     if (Index % 8 == 0) {
-      message = CatSPrint(message, L" ");
+      message = CatSPrintClean(message, L" ");
     }
 
-    message = CatSPrint(message, L"%.2x", *(pData + Index));
+    message = CatSPrintClean(message, L"%.2x", *(pData + Index));
     AsciiBuffer[Column] = IsAsciiAlnumCharacter(Byte) ? Byte : '.';
     if (NextColumn == 0 && Index != 0) {
-      message = CatSPrint(message, L" ");
+      message = CatSPrintClean(message, L" ");
       for (Index2 = 0; Index2 < COLUMN_IN_HEX_DUMP; Index2++) {
-        message = CatSPrint(message, L"%c", AsciiBuffer[Index2]);
+        message = CatSPrintClean(message, L"%c", AsciiBuffer[Index2]);
         if (Index2 == COLUMN_IN_HEX_DUMP / 2 - 1) {
-          message = CatSPrint(message, L" ");
+          message = CatSPrintClean(message, L" ");
         }
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(gpPrinterCtxLbaCommon, gpPathLba, messageId, message);
       FREE_POOL_SAFE(message);
-      message = NULL;
       FREE_POOL_SAFE(messageId);
-      messageId = NULL;
     }
   }
 
-  if (message != NULL)
-  {
-    FREE_POOL_SAFE(message);
-    message = NULL;
-  }
-  if (messageId != NULL)
-  {
-    FREE_POOL_SAFE(messageId);
-    messageId = NULL;
-  }
-
+  FREE_POOL_SAFE(message);
+  FREE_POOL_SAFE(messageId);
 }

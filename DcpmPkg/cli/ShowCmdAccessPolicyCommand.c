@@ -138,7 +138,6 @@ ShowCmdAccessPolicy(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  SOCKET_INFO *pCmdAccessPolicy = NULL;
   UINT32 DimmIndex = 0;
   UINT32 OpCodeIndex = 0;
   CHAR16 *pTargetValue = NULL;
@@ -291,6 +290,11 @@ ShowCmdAccessPolicy(
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
     }
+    FREE_POOL_SAFE(pNone);
+    FREE_POOL_SAFE(pBiosOnly);
+    FREE_POOL_SAFE(pSMBusOnly);
+    FREE_POOL_SAFE(pBiosSMBusOnly);
+    FREE_POOL_SAFE(pInvalid);
   }
 
   //Switch text output type to display as a table
@@ -306,7 +310,6 @@ Finish:
   FREE_POOL_SAFE(pInvalid);
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);
-  FREE_POOL_SAFE(pCmdAccessPolicy);
   FREE_POOL_SAFE(pCapEntries);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

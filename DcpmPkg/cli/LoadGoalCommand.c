@@ -292,6 +292,7 @@ FinishSkipPrinterProcess:
   FreeCommandInput(&ShowGoalCmdInput);
   FreeCommandStructure(&ShowGoalCmd);
   FreeCommandStatus(&pCommandStatus);
+  FREE_POOL_SAFE(pCommandStr);
   FREE_POOL_SAFE(pLoadFilePath);
   FREE_POOL_SAFE(pFileString);
   FREE_POOL_SAFE(pSocketIds);

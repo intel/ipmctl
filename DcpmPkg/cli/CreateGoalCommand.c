@@ -616,6 +616,7 @@ FinishSkipPrinterProcess:
   FreeCommandInput(&ShowGoalCmdInput);
   FreeCommandStructure(&ShowGoalCmd);
   FreeCommandStatus(&pCommandStatus);
+  FREE_POOL_SAFE(pCommandStr);
   FREE_POOL_SAFE(pSocketIds);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);

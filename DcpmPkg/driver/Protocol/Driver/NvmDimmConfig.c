@@ -1023,6 +1023,10 @@ GetDimmInfo (
   {
     /* Get current Power Management Policy info */
     ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &pPowerManagementPolicyPayload);
+    if (pPowerManagementPolicyPayload == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_POWER_MGMT;
     }
@@ -1077,6 +1081,7 @@ GetDimmInfo (
   {
     ReturnCode = FwCmdDeviceCharacteristics(pDimm, &pDevCharacteristics);
     if (pDevCharacteristics == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
     if (EFI_ERROR(ReturnCode)) {

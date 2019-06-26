@@ -487,6 +487,7 @@ FinishAfterRegCmds:
 
 Finish:
   FREE_POOL_SAFE(pLine);
+  FreeCommandInput(&Input);
   if (gNvmDimmCliHiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmCliHiiHandle);
   }

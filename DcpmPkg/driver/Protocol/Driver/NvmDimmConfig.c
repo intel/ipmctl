@@ -7335,6 +7335,7 @@ Finish:
     RequestedCapacity = BlockCount * BlockSize;
     if (RequestedCapacity > MaxSize) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_NOT_ENOUGH_FREE_SPACE);
+      ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
     ReturnCode = ConvertUsableSizeToActualSize(BlockSize, RequestedCapacity, Mode,

@@ -727,7 +727,7 @@ PrintNFit(
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveTablesNum", FORMAT_UINT32, pHeader->InterleaveTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NVDIMMRegionTablesNum", FORMAT_UINT32, pHeader->NvDimmRegionMappingStructuresNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"SmbiosTablesNum", FORMAT_UINT32, pHeader->SmbiosTblesNum);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"SpaRangeTblesNum", FORMAT_UINT32, pHeader->SpaRangeTblesNum);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"SpaRangeTablesNum", FORMAT_UINT32, pHeader->SpaRangeTblesNum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PlatformCapabilitiesTablesNum", FORMAT_UINT32 L"\n", pHeader->PlatformCapabilitiesTblesNum);
 
   for(Index = 0; Index < pHeader->BWRegionTblesNum; Index++) {

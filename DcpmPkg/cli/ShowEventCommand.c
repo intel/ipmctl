@@ -384,7 +384,7 @@ ShowEvent(
     //WA, to ensure ESX prints a message when no entries are found.
     if (PRINTER_ESX_FORMAT_ENABLED(pPrinterCtx)) {
       ResetCmdStatus(pCommandStatus, NVM_SUCCESS_NO_EVENT_FOUND);
-      ReturnCode = EFI_NOT_FOUND;
+      ReturnCode = EFI_SUCCESS;
     }
   }
 

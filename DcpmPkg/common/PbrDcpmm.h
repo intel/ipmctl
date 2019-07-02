@@ -32,7 +32,7 @@ typedef struct _PbrPassThruReq {
   UINT64  TotalMilliseconds;                                  //!< Duration of the PT request
   UINT32  DimmId;                                             //!< Target DIMM ID
   UINT8   Opcode;                                             //!< FIS Opcode
-  UINT8   SubOpcode;                                          //!< FIS SubOpcode 
+  UINT8   SubOpcode;                                          //!< FIS SubOpcode
   UINT32  InputPayloadSize;                                   //!< FIS Input payload size (small payload)
   UINT32  InputLargePayloadSize;                              //!< FIS Input large payload size
   UINT8   Input[];                                            //!< Payload
@@ -130,7 +130,7 @@ PbrSetTableRecord(
 
   @param[in] pContext: Pbr context
   @param[in] pCmd: current FW_CMD from the playback buffer
-  
+
   @retval EFI_SUCCESS if the table was found and is properly returned.
   @retval EFI_INVALID_PARAMETER if one or more parameters equal NULL.
 **/

@@ -255,7 +255,7 @@ PbrGetData(
         ReturnCode = EFI_SUCCESS;
       }
       else {
-        //caller wants a specific indexed data item 
+        //caller wants a specific indexed data item
         pDataItem = (PbrPartitionLogicalDataItem *)(pContext->PartitionContexts[CtxIndex].PartitionData);
         //iterate through all items
         while (PBR_LOGICAL_DATA_SIG == pDataItem->Signature) {
@@ -1133,7 +1133,7 @@ Finish:
   Helper that provdies the number of active data partitions
 **/
 STATIC
-UINT32 
+UINT32
 PbrPartitionCount(
 )
 {

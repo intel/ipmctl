@@ -34,8 +34,8 @@ struct Command StartFormatCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_ID, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Start Format Dimms",                                                                   //!< help
-  StartFormat,								 //!< run function
+  L"Start Format Dimms",                                                 //!< help
+  StartFormat,                                                           //!< run function
   TRUE
 };
 

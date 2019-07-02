@@ -157,7 +157,7 @@ EFI_STATUS PbrSerializeCtx(
   SerializeBuffer(PBR_TMP_DIR PBR_CTX_FILE_NAME, ctx, sizeof(PbrContext));
   /**Serialize the PBR main header**/
   SerializeBuffer(PBR_TMP_DIR PBR_MAIN_FILE_NAME, ctx->PbrMainHeader, sizeof(PbrHeader));
- 
+
 Finish:
   if (pFile) {
     fclose(pFile);
@@ -218,7 +218,7 @@ EFI_STATUS PbrDeserializeCtx(
   /**Deserialize the PBR main header**/
 
   DeserializeBuffer(PBR_TMP_DIR PBR_MAIN_FILE_NAME, ctx->PbrMainHeader, sizeof(PbrHeader));
- 
+
   for (CtxIndex = 0; CtxIndex < MAX_PARTITIONS; ++CtxIndex) {
     if (PBR_INVALID_SIG != ctx->PartitionContexts[CtxIndex].PartitionSig) {
       AsciiSPrint(pbr_filename, sizeof(pbr_filename), "%x.pbr", ctx->PartitionContexts[CtxIndex].PartitionSig);
@@ -246,27 +246,27 @@ VOID SerializePbrMode(
 )
 {
 #if _MSC_VER
-	registry_volatile_write("pbr_mode", mode);
+  registry_volatile_write("pbr_mode", mode);
 #else
-	UINT32 ShmId;
-	key_t Key;
+  UINT32 ShmId;
+  key_t Key;
   UINT32 *pPbrMode = NULL;
-	Key = ftok(PBR_TMP_DIR, 'h');
-	ShmId = shmget(Key, sizeof(*pPbrMode), IPC_CREAT | 0666);
+  Key = ftok(PBR_TMP_DIR, 'h');
+  ShmId = shmget(Key, sizeof(*pPbrMode), IPC_CREAT | 0666);
   if (-1 == ShmId) {
     NVDIMM_DBG("Failed to shmget\n");
     return;
   }
-	pPbrMode = (UINT32*)shmat(ShmId, NULL, 0);
-	if ((VOID*)pPbrMode == (VOID*)-1) {
-		NVDIMM_DBG("Failed to shmat\n");
-	}
-	else
-	{
-		*pPbrMode = mode;
-		NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrMode);
-		shmdt(pPbrMode);
-	}
+  pPbrMode = (UINT32*)shmat(ShmId, NULL, 0);
+  if ((VOID*)pPbrMode == (VOID*)-1) {
+    NVDIMM_DBG("Failed to shmat\n");
+  }
+  else
+  {
+    *pPbrMode = mode;
+    NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrMode);
+    shmdt(pPbrMode);
+  }
 #endif
 }
 
@@ -280,27 +280,27 @@ VOID DeserializePbrMode(
 )
 {
 #if _MSC_VER
-	registry_read("pbr_mode", pMode, defaultMode);
+  registry_read("pbr_mode", pMode, defaultMode);
 #else
-	UINT32 ShmId;
-	key_t Key;
+  UINT32 ShmId;
+  key_t Key;
   UINT32 *pPbrMode = NULL;
-	Key = ftok(PBR_TMP_DIR, 'h');
-	ShmId = shmget(Key, sizeof(*pPbrMode), IPC_CREAT | 0666);
+  Key = ftok(PBR_TMP_DIR, 'h');
+  ShmId = shmget(Key, sizeof(*pPbrMode), IPC_CREAT | 0666);
   if (-1 == ShmId) {
     NVDIMM_DBG("Failed to shmget\n");
     return;
   }
-	pPbrMode = (UINT32*)shmat(ShmId, NULL, 0);
-	if ((VOID*)pPbrMode == (VOID*)-1) {
-		NVDIMM_DBG("Failed to shmat\n");
-		*pMode = defaultMode;
-	}
-	else
-	{
-		*pMode = *pPbrMode;
-		shmdt(pPbrMode);
-	}
+  pPbrMode = (UINT32*)shmat(ShmId, NULL, 0);
+  if ((VOID*)pPbrMode == (VOID*)-1) {
+    NVDIMM_DBG("Failed to shmat\n");
+    *pMode = defaultMode;
+  }
+  else
+  {
+    *pMode = *pPbrMode;
+    shmdt(pPbrMode);
+  }
 #endif
 }
 

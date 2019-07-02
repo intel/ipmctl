@@ -19,7 +19,7 @@ Execute the Show Performance command
 **/
 EFI_STATUS
 ShowPerformance(
-	IN     struct Command *pCmd
+  IN     struct Command *pCmd
 );
 
 /*

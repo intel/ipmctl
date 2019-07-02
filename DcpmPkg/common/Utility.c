@@ -894,7 +894,7 @@ GetControllerHandle(
   **/
   for (Index = 0; Index < HandleCount; Index++) {
     ReturnCode =
-		EfiTestManagedDevice(pHandleBuffer[Index],
+    EfiTestManagedDevice(pHandleBuffer[Index],
         DriverHandle, // Our driver handle equals the driver binding handle so this call is valid
         &gEfiDevicePathProtocolGuid);
 
@@ -3046,12 +3046,12 @@ BubbleSortLinkedList(
 
       if (Compare(pNodeCurrentEntry, pNodeNextEntry) > 0) {
 
-		  LIST_ENTRY *
-			  EFIAPI
-			  SwapListEntries(
-				  IN OUT  LIST_ENTRY                *FirstEntry,
-				  IN OUT  LIST_ENTRY                *SecondEntry
-			  ); SwapListEntries(pNodeCurrentEntry, pNodeNextEntry);
+      LIST_ENTRY *
+        EFIAPI
+        SwapListEntries(
+          IN OUT  LIST_ENTRY                *FirstEntry,
+          IN OUT  LIST_ENTRY                *SecondEntry
+        ); SwapListEntries(pNodeCurrentEntry, pNodeNextEntry);
         pNodeCurrentEntry = pNodeNextEntry;
         pNodeNextEntry = pNodeNextEntry->ForwardLink;
         Swapped = TRUE;
@@ -3298,9 +3298,9 @@ EndianSwapUint32(
 {
   UINT32 NewVal;
   NewVal = ((OrigVal & 0x000000FF) << 24) |
-		  ((OrigVal & 0x0000FF00) << 8) |
-		  ((OrigVal & 0x00FF0000) >> 8) |
-		  ((OrigVal & 0xFF000000) >> 24);
+      ((OrigVal & 0x0000FF00) << 8) |
+      ((OrigVal & 0x00FF0000) >> 8) |
+      ((OrigVal & 0xFF000000) >> 24);
   return NewVal;
 }
 
@@ -3317,7 +3317,7 @@ EndianSwapUint16(
 {
   UINT16 NewVal;
   NewVal = ((OrigVal & 0x00FF) << 8) |
-		  ((OrigVal & 0xFF00) >> 8);
+      ((OrigVal & 0xFF00) >> 8);
   return NewVal;
 }
 
@@ -3985,7 +3985,7 @@ SetObjStatusForDimmInfoWithErase(
   if (TmpDimmUid != NULL) {
     StrnCpyS(DimmUid, MAX_DIMM_UID_LENGTH, TmpDimmUid, MAX_DIMM_UID_LENGTH - 1);
     FREE_POOL_SAFE(TmpDimmUid);
-  } 
+  }
 
   if (EraseFirst) {
     EraseObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH);

@@ -481,7 +481,7 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
         MaxCellChars = Attribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen;
         RowSizeInBytes = StrSize(CurRowText) + ((MaxCellChars + CELL_EXTRA_CHARS) * sizeof(CHAR16));
       }
-      
+
       if (NULL == (CurRowText = ReallocatePool(StrSize(CurRowText), RowSizeInBytes, CurRowText))) {
         goto Finish;
       }
@@ -1364,7 +1364,7 @@ EFI_STATUS PrinterProcessSetBuffer(
       PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
     }
   }
-  
+
   CleanDataSetLookupItems(pPrintCtx);
   pPrintCtx->BufferedObjectLastError = EFI_SUCCESS;
   return ReturnCode;
@@ -1377,7 +1377,7 @@ EFI_STATUS SetDataSetPrinterAttribs(
   IN     PRINT_CONTEXT *pPrintCtx,
   IN     CHAR16 *pKeyPath,
   IN     PRINTER_DATA_SET_ATTRIBS *pAttribs
-) 
+)
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 **DataSetToks = NULL;

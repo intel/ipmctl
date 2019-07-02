@@ -1631,9 +1631,9 @@ Finish:
   }
 
 FinishSkipClose:
-	NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
-	NVDIMM_EXIT_I64(ReturnCode);
-	return ReturnCode;
+  NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 #endif // !OS_BUILD
 /**
@@ -1832,7 +1832,7 @@ NvmDimmDriverDriverBindingStop(
 
 Finish:
 #else //not OS_BUILD
-  
+
 
   /**
    Remove the DIMM from memory

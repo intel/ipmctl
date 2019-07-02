@@ -269,7 +269,7 @@ ShowPcd(
     }
     gDimmIndex++;
   }
-  
+
   ReturnCode = EFI_SUCCESS;
 
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPcdDataSetAttribs);

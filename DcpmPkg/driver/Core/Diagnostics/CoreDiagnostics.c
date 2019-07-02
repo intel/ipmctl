@@ -146,7 +146,7 @@ SendTheEventAndAppendToDiagnosticsResult(
     EFI_STATUS ReturnCode = EFI_SUCCESS;
     CHAR16 DimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
     CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH] = { 0 };
-	  enum system_event_type EventSeverity = SYSTEM_EVENT_TYPE_INFO;
+    enum system_event_type EventSeverity = SYSTEM_EVENT_TYPE_INFO;
     CHAR8 * pAsciiStrToAppend = NULL;
     BOOLEAN StoreInSystemLog = FALSE;
     BOOLEAN ActionReqState = EventCodeToActionRequiredState(Code);
@@ -550,17 +550,17 @@ Finish:
 }
 
 /**
-  This function should be used to update status of the test based on information stored 
+  This function should be used to update status of the test based on information stored
   inside diagnostic information structure.
 
   @param[in] pBuffer Pointer to Diagnostic information structure
   @param[in] DiagnosticTestIndex Test Index
-  
+
   @retval EFI_SUCCESS Test executed correctly
   @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
 EFI_STATUS
-UpdateTestState( 
+UpdateTestState(
   IN   DIAG_INFO *pBuffer,
   IN   UINT8 DiagnosticTestIndex
 )

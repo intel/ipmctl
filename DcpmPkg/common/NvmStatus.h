@@ -51,7 +51,7 @@ typedef struct _NVM_STATUS_BIT_FIELD {
 /** Object status list structure **/
 typedef struct {
   LIST_ENTRY ObjectStatusNode;                ///< Object status node list pointer
-  UINT64 Signature;                           ///< Signature must match #OBJECT_STATUS_SIGNATURE 
+  UINT64 Signature;                           ///< Signature must match #OBJECT_STATUS_SIGNATURE
   UINT32 ObjectId;                            ///< Object ID
   BOOLEAN IsObjectIdStr;                      ///< Is #ObjectIdStr valid?
   CHAR16 ObjectIdStr[MAX_OBJECT_ID_STR_LEN];  ///< String representation of Object ID
@@ -404,6 +404,6 @@ EraseObjStatus(
   IN     UINT32 ObjectId,
   IN     CHAR16 *pObjectIdStr OPTIONAL,
   IN     UINT32 ObjectIdStrLength OPTIONAL
-); 
+);
 
 #endif /** _NVM_STATUS_H_ **/

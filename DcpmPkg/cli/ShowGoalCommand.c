@@ -278,7 +278,7 @@ ShowGoalPrintDetailedView(
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SIZE_PROPERTY))) {
       TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[0], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY, 
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY,
                                          pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }

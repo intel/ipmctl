@@ -1684,9 +1684,9 @@ FwCmdGetCommandAccessPolicy(
 **/
 EFI_STATUS
 FwCmdInjectError(
-	IN     DIMM *pDimm,
-	IN	   UINT8 SubOpcode,
-	OUT void *pinjectInputPayload
+  IN     DIMM *pDimm,
+  IN     UINT8 SubOpcode,
+  OUT void *pinjectInputPayload
 );
 
 /**

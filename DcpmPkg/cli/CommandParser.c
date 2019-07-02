@@ -1079,7 +1079,7 @@ CHAR16
           pHelp = CatSPrintClean(pHelp, L" ");
         }
       }
-    
+
       /* only show the properties that are required */
       for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
         if(gCommandList[Index].properties[Index2].Required){

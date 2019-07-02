@@ -81,7 +81,7 @@ get_nlog_entry command
 */
 nlog_dict_entry*
 get_nlog_entry(
-  IN UINT32 hashVal, 
+  IN UINT32 hashVal,
   IN nlog_dict_entry* head
 );
 

@@ -55,7 +55,7 @@
 #define PCAT_HEADER_REVISION_2 2
 
 /** PMTT table types**/
-#define	PMTT_MAX_LEN	4096
+#define  PMTT_MAX_LEN  4096
 #define PMTT_TYPE_SOCKET 0
 #define PMTT_TYPE_iMC 1
 #define PMTT_TYPE_MODULE 2

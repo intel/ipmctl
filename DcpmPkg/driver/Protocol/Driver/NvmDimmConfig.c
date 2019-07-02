@@ -1257,7 +1257,7 @@ IsSocketIdValid(
 {
 //todo: verify we can remove this hard-coded return code (story in backlog to investigate)
 #if OS_BUILD
-	return TRUE;
+  return TRUE;
 #else
   NVDIMM_ENTRY();
   BOOLEAN SocketIdValid = FALSE;
@@ -2176,10 +2176,10 @@ GetGoalConfigs(
   /** Fetch region goals **/
   for (Index1 = 0; Index1 < DimmsCount; ++Index1) {
     pCurrentDimm = pDimms[Index1];
-	NVDIMM_DBG("Fetch region dimm idx = %d", Index1);
-	NVDIMM_DBG("Fetch region cfg status = 0x%x", pCurrentDimm->GoalConfigStatus);
+  NVDIMM_DBG("Fetch region dimm idx = %d", Index1);
+  NVDIMM_DBG("Fetch region cfg status = 0x%x", pCurrentDimm->GoalConfigStatus);
     if (!pCurrentDimm->RegionsGoalConfig || pCurrentDimm->GoalConfigStatus == GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS) {
-		NVDIMM_DBG("Fetch region continue...");
+    NVDIMM_DBG("Fetch region continue...");
       continue; // No goal config or success status, so omit it.
     }
 
@@ -2202,14 +2202,14 @@ GetGoalConfigs(
 
     pCurrentGoal->PersistentRegions = pCurrentDimm->RegionsGoalNum;
 
-	  NVDIMM_DBG("dimm idx %d", Index1);
-	  NVDIMM_DBG("dimm sockid %x", pCurrentDimm->SocketId);
-	  NVDIMM_DBG("dimm vsize %x", pCurrentDimm->VolatileSizeGoal);
-	  NVDIMM_DBG("dimm goal %x", pCurrentDimm->RegionsGoalNum);
+    NVDIMM_DBG("dimm idx %d", Index1);
+    NVDIMM_DBG("dimm sockid %x", pCurrentDimm->SocketId);
+    NVDIMM_DBG("dimm vsize %x", pCurrentDimm->VolatileSizeGoal);
+    NVDIMM_DBG("dimm goal %x", pCurrentDimm->RegionsGoalNum);
 
     for (Index2 = 0; Index2 < pCurrentDimm->RegionsGoalNum; ++Index2) {
       SequenceIndex = pCurrentDimm->pRegionsGoal[Index2]->SequenceIndex;
-	    NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
+      NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
       pCurrentGoal->NumberOfInterleavedDimms[SequenceIndex] = (UINT8)pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
       pCurrentGoal->AppDirectSize[SequenceIndex] =
           pCurrentDimm->pRegionsGoal[Index2]->Size / pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
@@ -2222,9 +2222,9 @@ GetGoalConfigs(
       **/
       AppDirectIndexFound = FALSE;
       for (Index3 = 0; Index3 < NumberedGoalsNum; Index3++) {
-		    NVDIMM_DBG("appdir loop %d", Index3);
+        NVDIMM_DBG("appdir loop %d", Index3);
         if (NumberedGoals[Index3].pRegionGoal == pCurrentDimm->pRegionsGoal[Index2]) {
-			    NVDIMM_DBG("appdir found!");
+          NVDIMM_DBG("appdir found!");
           pCurrentGoal->AppDirectIndex[SequenceIndex] = (UINT8)NumberedGoals[Index3].AppDirectIndex;
           AppDirectIndexFound = TRUE;
           break;
@@ -2959,10 +2959,10 @@ SetSecurityState(
 
       if (!(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         SubOpcode = SubopSecEraseUnit;
-	pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
+  pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
 #ifndef OS_BUILD
         /** Need to call WBINVD before secure erase **/
-	AsmWbinvd();
+  AsmWbinvd();
 #endif
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
@@ -3045,7 +3045,7 @@ SetSecurityState(
         }
 
         SubOpcode = SubopSecEraseUnit;
-	pSecurityPayload->PassphraseType = SECURITY_MASTER_PASSPHRASE;
+  pSecurityPayload->PassphraseType = SECURITY_MASTER_PASSPHRASE;
 #ifndef OS_BUILD
         /** Need to call WBINVD before secure erase **/
         AsmWbinvd();
@@ -3083,7 +3083,7 @@ SetSecurityState(
     /** Need to call WBINVD after unlock or secure erase **/
     if (SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE ||
         SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
-	AsmWbinvd();
+  AsmWbinvd();
     }
 #endif
     /** @todo(check on real HW)
@@ -3123,7 +3123,7 @@ SetSecurityState(
   }
 
 Finish:
-  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE || 
+  if (SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE ||
     SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
     TempReturnCode = ReenumerateNamespacesAndISs(TRUE);
     if (EFI_ERROR(TempReturnCode)) {
@@ -3424,67 +3424,67 @@ GetPcd(
     if (EFI_ERROR(ReturnCode)) {
       goto FinishError;
     }
-	if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
-		ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
-		if (ReturnCode == EFI_NO_MEDIA) {
-		  continue;
-		}
+  if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
+    ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
+    if (ReturnCode == EFI_NO_MEDIA) {
+      continue;
+    }
 #ifdef MEMORY_CORRUPTION_WA
-		if (ReturnCode == EFI_DEVICE_ERROR)
-		{
-			ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
-		}
+    if (ReturnCode == EFI_DEVICE_ERROR)
+    {
+      ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
+    }
 #endif // MEMORY_CORRUPTIO_WA
-		if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(ReturnCode)) {
       if (ReturnCode == EFI_NO_RESPONSE) {
         ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
         goto FinishError;
       }
-			NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
-			SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
-			goto FinishError;
-		}
-		(*ppDimmPcdInfo)[Index].pConfHeader = pPcdConfHeader;
-	}
+      NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
+      goto FinishError;
+    }
+    (*ppDimmPcdInfo)[Index].pConfHeader = pPcdConfHeader;
+  }
 
-	if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_NAMESPACES)
-	{
+  if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_NAMESPACES)
+  {
 #ifndef OS_BUILD
-		if (pDimms[Index]->LsaStatus == LSA_NOT_INIT || pDimms[Index]->LsaStatus == LSA_COULD_NOT_READ_NAMESPACES) {
-			continue;
-		}
+    if (pDimms[Index]->LsaStatus == LSA_NOT_INIT || pDimms[Index]->LsaStatus == LSA_COULD_NOT_READ_NAMESPACES) {
+      continue;
+    }
 #endif // OS_BUILD
-		ReturnCode = ReadLabelStorageArea(pDimms[Index]->DimmID, &pLabelStorageArea);
+    ReturnCode = ReadLabelStorageArea(pDimms[Index]->DimmID, &pLabelStorageArea);
 #ifdef OS_BUILD
-		if (ReturnCode == EFI_NOT_FOUND) {
-			NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-			pDimms[Index]->LsaStatus = LSA_NOT_INIT;
-			continue;
-		}
-		else if (ReturnCode == EFI_ACCESS_DENIED) {
-			NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-			pDimms[Index]->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
-			continue;
-		}
-		else if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
-			pDimms[Index]->LsaStatus = LSA_CORRUPTED;
-			/**
-			If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
-			so we don't want to "kill" a valid configuration
-			**/
-			NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-			NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
-			goto Finish;
-		}
-		pDimms[Index]->LsaStatus = LSA_OK;
+    if (ReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+      pDimms[Index]->LsaStatus = LSA_NOT_INIT;
+      continue;
+    }
+    else if (ReturnCode == EFI_ACCESS_DENIED) {
+      NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+      pDimms[Index]->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
+      continue;
+    }
+    else if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
+      pDimms[Index]->LsaStatus = LSA_CORRUPTED;
+      /**
+      If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
+      so we don't want to "kill" a valid configuration
+      **/
+      NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+      NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
+      goto Finish;
+    }
+    pDimms[Index]->LsaStatus = LSA_OK;
 #else // OS_BUILD
-		if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
-			NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
-			goto Finish;
-		}
+    if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
+      NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
+      goto Finish;
+    }
 #endif // OS_BUILD
-		(*ppDimmPcdInfo)[Index].pLabelStorageArea = pLabelStorageArea;
-	}
+    (*ppDimmPcdInfo)[Index].pLabelStorageArea = pLabelStorageArea;
+  }
   }
 
   *pDimmPcdInfoCount = DimmsCount;
@@ -4095,7 +4095,7 @@ GetMemoryResourcesInfo(
     pMemoryResourcesInfo->RawCapacity += pDimm->RawCapacity;
 
 #ifdef OS_BUILD
-	ReturnCode = GetDimmMappedMemSize(pDimm);
+  ReturnCode = GetDimmMappedMemSize(pDimm);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -4135,9 +4135,9 @@ Gather info about performance on all dimms
 EFI_STATUS
 EFIAPI
 GetDimmsPerformanceData(
-	IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
     OUT UINT32 *pDimmCount,
-	OUT DIMM_PERFORMANCE_DATA **pDimmsPerformanceData
+  OUT DIMM_PERFORMANCE_DATA **pDimmsPerformanceData
 )
 {
     EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -4602,7 +4602,7 @@ initAcpiTables(
       NVDIMM_WARN("Failed to get NFIT or PCAT table.");
     }
   }
-  
+
   if (PBR_RECORD_MODE == PBR_GET_MODE(pContext)) {
     if (pNfit) {
       NVDIMM_DBG("Found NFIT, recording it.");
@@ -7218,7 +7218,7 @@ Finish:
      OUT COMMAND_STATUS *pCommandStatus
   )
   {
-	EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimms[MAX_DIMMS_PER_SOCKET];
   NVM_IS *pIS = NULL;
   LIST_ENTRY *pRegionList = NULL;
@@ -9812,8 +9812,8 @@ CheckPCDAutoConfVars(
 
 #ifdef MEMORY_CORRUPTION_WA
   if (ReturnCode == EFI_DEVICE_ERROR) {
-		ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pConfHeader);
-	}
+    ReturnCode = GetPlatformConfigDataOemPartition(ppDimms[Index], FALSE, &pConfHeader);
+  }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Error in retrieving Input Config table");
@@ -10411,7 +10411,7 @@ GetCommandAccessPolicy(
   }
 
   if (NULL == pCapInfo) {  // pCapInfo is NULL so just getting size
-    if (  ( (pDimm->FwVer.FwApiMajor == 0x2) && 
+    if (  ( (pDimm->FwVer.FwApiMajor == 0x2) &&
       (pDimm->FwVer.FwApiMinor >= 0x1) ) ||
       (pDimm->FwVer.FwApiMajor >= 0x3)  )
     {
@@ -10440,7 +10440,7 @@ GetCommandAccessPolicy(
       goto Finish;
     }
   }
-  else 
+  else
   {
     if (*pCount == COUNT_OF(CapEntriesOrig)) {
       CapEntries = CapEntriesOrig;

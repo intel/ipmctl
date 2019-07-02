@@ -91,7 +91,7 @@ typedef struct {
 #define SECURITYCAPABILITES_LEN        18 // @todo confirm label length
 #define IFC_STRING_LEN                255
 #define MEMORY_MODES_LEN               40 // @todo confirm label length
-#define MEMORY_TYPE                    30 
+#define MEMORY_TYPE                    30
 #define BOOT_STATUS_LEN               100
 #define FW_UPDATE_STATUS_LEN           64
 #define FW_BUILD_LEN                   16
@@ -110,8 +110,8 @@ typedef struct {
 #define NVM_EVENT_MSG_LEN        1024 // Length of event message string
 
 #ifdef OS_BUILD
-#define	NVM_SYSLOG_SOURCE	"NVM_MGMT"
-#define	NVM_SYSLOG_SRC_W	L"NVM_MGMT"
+#define  NVM_SYSLOG_SOURCE  "NVM_MGMT"
+#define  NVM_SYSLOG_SRC_W  L"NVM_MGMT"
 #define NVM_DEBUG_LOGGER_SOURCE "NVM_DBG_LOGGER"
 #define NVM_DIMM_NAME       "Intel Persistent Memory Module"
 #define MAX_SOURCE_STR_LENGTH    32

@@ -694,7 +694,7 @@ ValidateAndPrepareLoadConfig(
   for (Index = 1; Index < DimmsConfigNum; Index++) {
     if ((DimmsConfig[Index].LabelVersionMajor != TempMajor) &&
         (DimmsConfig[Index].LabelVersionMinor != TempMinor)) {
-	UseDefaultLabel = TRUE;
+  UseDefaultLabel = TRUE;
     }
   }
 

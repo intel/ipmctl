@@ -50,7 +50,7 @@ Execute the Set Event command
 **/
 EFI_STATUS
 SetEventCmd(
-	IN     struct Command *pCmd
+  IN     struct Command *pCmd
 )
 {
   COMMAND_STATUS *pCommandStatus = NULL;
@@ -63,9 +63,9 @@ SetEventCmd(
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
-	  Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-	  NVDIMM_DBG("Failed on InitializeCommandStatus");
-	  goto Finish;
+    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
   }
 
   if (ContainTarget(pCmd, EVENT_TARGET)) {

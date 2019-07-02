@@ -82,9 +82,9 @@ typedef struct _PbrPartitionTable {
 
 /**main pbr header that includes the partition table**/
 typedef struct _PbrHeader {
-  UINT32              Signature;                              //!< PBR_HEADER_SIG 
+  UINT32              Signature;                              //!< PBR_HEADER_SIG
   PbrPartitionTable   PartitionTable;                         //!< Partition table, describes partition locations within a stitched img
-  CHAR8               SwVersion[PBR_SW_VERSION_MAX];          //!< SW/Driver version used to record data 
+  CHAR8               SwVersion[PBR_SW_VERSION_MAX];          //!< SW/Driver version used to record data
   CHAR8               OsVersion[PBR_OS_VERSION_MAX];          //!< Execution OS, i.e. UEFI/Linux/Windows
   CHAR8               OsName[PBR_OS_NAME_MAX];                //!< Execution OS name
   CHAR8               Description[PBR_FILE_DESCRIPTION_MAX];  //!< Highlevel description of pbr file

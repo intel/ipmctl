@@ -623,7 +623,7 @@ InitializeLabelStorageArea(
 EFI_STATUS
 InitializeAllLabelStorageAreas(
   IN     DIMM **ppDimms,
-  IN	 UINT32 DimmsNum,
+  IN     UINT32 DimmsNum,
   IN     UINT16 LabelVersionMajor,
   IN     UINT16 LabelVersionMinor,
      OUT COMMAND_STATUS *pCommandStatus

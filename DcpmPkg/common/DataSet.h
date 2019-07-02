@@ -66,7 +66,7 @@ typedef struct _KEY_VAL_INFO {
 #define DATA_SET_CONTEXT  VOID
 
 /*
-* Utilized with DataSet recursing APIs.  Executed for each DataSet found while traversing 
+* Utilized with DataSet recursing APIs.  Executed for each DataSet found while traversing
 * a DataSet tree.
 */
 typedef VOID * (*DataSetCallBack)(DATA_SET_CONTEXT *, CHAR16*, VOID*, VOID*);

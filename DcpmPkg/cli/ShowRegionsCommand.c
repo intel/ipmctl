@@ -23,7 +23,7 @@
 #define DS_REGION_PATH                    L"/RegionList/Region"
 #define DS_DIMM_INDEX_PATH                L"/RegionList/Region[%d]"
 
- 
+
 #ifdef OS_BUILD
 /*
   *  PRINT LIST ATTRIBUTES

@@ -175,7 +175,7 @@ VOID GetDataSetNameInfo(CHAR16 *Name, DS_NAME_INFO *NameInfo) {
   CHAR16 **ToksSecondHalf;
   UINT32 NumToks = 0;
   UINT32 NumToksSecondHalf = 0;
-  
+
   if (NULL == (Toks = StrSplit(Name, L'[', &NumToks))) {
     return;
   }

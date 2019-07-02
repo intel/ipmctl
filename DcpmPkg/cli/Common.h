@@ -902,7 +902,7 @@ The caller function is obligated to free memory of the returned string.
 **/
 CHAR16 *
 RegionTypeToString(
-	IN     UINT8 RegionType
+  IN     UINT8 RegionType
 );
 
 /**

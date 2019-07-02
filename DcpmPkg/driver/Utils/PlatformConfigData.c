@@ -98,7 +98,7 @@ GeneratePcdConfInput(
 #ifdef MEMORY_CORRUPTION_WA
   if (Rc == EFI_DEVICE_ERROR)
   {
-	  Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
+    Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
   }
 #endif // MEMORY_CORRUPTIO_WA
   if (EFI_ERROR(Rc)) {
@@ -219,10 +219,10 @@ GeneratePcdConfInput(
     for (Index2 = 0; Index2 < pDimm->pRegionsGoal[Index]->DimmsNum; Index2++) {
       pIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *) pCurrentOffset;
       if ((*ppConfigInput)->Header.Revision == NVDIMM_CONFIGURATION_TABLES_REVISION_1) {
-	pIdentInfo->DimmIdentification.Version1.DimmManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->Manufacturer;
-	pIdentInfo->DimmIdentification.Version1.DimmSerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
-	CopyMem_S(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber), pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
-	    sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber));
+  pIdentInfo->DimmIdentification.Version1.DimmManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->Manufacturer;
+  pIdentInfo->DimmIdentification.Version1.DimmSerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
+  CopyMem_S(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber), pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
+      sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber));
       } else {
         pIdentInfo->DimmIdentification.Version2.Uid.ManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->VendorId;
         if (pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingInfoValid) {
@@ -376,7 +376,7 @@ GetNewSequenceNumber(
 #ifdef MEMORY_CORRUPTION_WA
   if (ReturnCode == EFI_DEVICE_ERROR)
   {
-	  ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
+    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   }
 #endif // MEMORY_CORRUPTIO_WA
   if (EFI_ERROR(ReturnCode)) {

@@ -24,7 +24,7 @@
 struct Command DumpSessionCommand =
 {
   DUMP_VERB,                                                                      //!< verb
-  { 
+  {
     {L"", DESTINATION_OPTION, L"", DESTINATION_OPTION_HELP, L"Destination to dump the recorded session", FALSE, ValueRequired},   //!< options
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty}

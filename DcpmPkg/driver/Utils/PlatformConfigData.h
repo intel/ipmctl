@@ -138,9 +138,9 @@ CompareDimmOrderInInterleaveSet6Way(
   @retval TRUE if valid
   @retval FALSE if invalid.
 **/
-BOOLEAN 
+BOOLEAN
 IsPcdConfInputHeaderValid(
-  IN  NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput, 
+  IN  NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput,
   IN  UINT32 PcdOemPartitionSize
 );
 
@@ -153,9 +153,9 @@ IsPcdConfInputHeaderValid(
   @retval TRUE if valid
   @retval FALSE if invalid.
 **/
-BOOLEAN 
+BOOLEAN
 IsPcdConfOutputHeaderValid(
-  IN  NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput, 
+  IN  NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput,
   IN  UINT32 PcdOemPartitionSize
 );
 

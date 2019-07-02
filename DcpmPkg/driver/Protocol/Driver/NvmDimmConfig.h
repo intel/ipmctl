@@ -415,13 +415,13 @@ GetAcpiPMTT(
 EFI_STATUS
 EFIAPI
 GetPcd(
-	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-	IN     UINT8 PcdTarget,
-	IN     UINT16 *pDimmIds OPTIONAL,
-	IN     UINT32 DimmIdsCount,
-	OUT DIMM_PCD_INFO **ppDimmPcdInfo,
-	OUT UINT32 *pDimmPcdInfoCount,
-	OUT COMMAND_STATUS *pCommandStatus
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT8 PcdTarget,
+  IN     UINT16 *pDimmIds OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  OUT DIMM_PCD_INFO **ppDimmPcdInfo,
+  OUT UINT32 *pDimmPcdInfoCount,
+  OUT COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -1417,16 +1417,16 @@ GetLongOpStatus(
 EFI_STATUS
 EFIAPI
 InjectError(
-	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-	IN     UINT16 *pDimmIds,
-	IN     UINT32 DimmIdsCount,
-	IN     UINT8  ErrorInjType,
-	IN     UINT8  ClearStatus,
-	IN     UINT64 *pInjectTemperatureValue OPTIONAL,
-	IN     UINT64 *pInjectPoisonAddress,
-	IN     UINT8 *pPoisonType,
-	IN     UINT8  *pPercentageRemaining,
-	OUT COMMAND_STATUS *pCommandStatus
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT16 *pDimmIds,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT8  ErrorInjType,
+  IN     UINT8  ClearStatus,
+  IN     UINT64 *pInjectTemperatureValue OPTIONAL,
+  IN     UINT64 *pInjectPoisonAddress,
+  IN     UINT8 *pPoisonType,
+  IN     UINT8  *pPercentageRemaining,
+  OUT COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -1475,14 +1475,14 @@ GetBSRAndBootStatusBitMask(
 EFI_STATUS
 EFIAPI
 VerifyTargetDimms(
-	IN     UINT16 DimmIds[]      OPTIONAL,
-	IN     UINT32 DimmIdsCount,
-	IN     UINT16 SocketIds[]    OPTIONAL,
-	IN     UINT32 SocketIdsCount,
-	IN     BOOLEAN UninitializedDimms,
-	OUT DIMM *pDimms[MAX_DIMMS],
-	OUT UINT32 *pDimmsNum,
-	OUT COMMAND_STATUS *pCommandStatus
+  IN     UINT16 DimmIds[]      OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  IN     UINT16 SocketIds[]    OPTIONAL,
+  IN     UINT32 SocketIdsCount,
+  IN     BOOLEAN UninitializedDimms,
+  OUT DIMM *pDimms[MAX_DIMMS],
+  OUT UINT32 *pDimmsNum,
+  OUT COMMAND_STATUS *pCommandStatus
 );
 
 /**

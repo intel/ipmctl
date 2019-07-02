@@ -49,7 +49,7 @@ PRINTER_LIST_ATTRIB ShowSessionListAttributes =
  *  PRINTER TABLE ATTRIBUTES (3 columns)
  *   TagID  | ExitCode | CliArgs
  *   ========================================================================
- *   0x0001 | X        | X      
+ *   0x0001 | X        | X
  *   ...
  */
 PRINTER_TABLE_ATTRIB ShowSessionTableAttributes =

@@ -8,9 +8,9 @@
 
 #include <Uefi.h>
 
-#define PROPERTY_SEVERITY_VALUE_INFO		L"Info"
-#define PROPERTY_SEVERITY_VALUE_WARN		L"Warning"
-#define PROPERTY_SEVERITY_VALUE_ERROR		L"Error"
+#define PROPERTY_SEVERITY_VALUE_INFO        L"Info"
+#define PROPERTY_SEVERITY_VALUE_WARN        L"Warning"
+#define PROPERTY_SEVERITY_VALUE_ERROR       L"Error"
 
 #define PROPERTY_CATEGORY_VALUE_DIAG        L"Diag"
 #define PROPERTY_CATEGORY_VALUE_FW          L"FW"
@@ -26,7 +26,7 @@
                                             PROPERTY_CATEGORY_VALUE_PM"|"PROPERTY_CATEGORY_VALUE_QUICK"|"PROPERTY_CATEGORY_VALUE_SECURITY"|"\
                                             PROPERTY_CATEGORY_VALUE_HEALTH"|"PROPERTY_CATEGORY_VALUE_MGMT
 #define HELP_TEXT_EVENT_ACTION_REQ_PROPERTY L"1|0"
-#define HELP_TEXT_EVENT_COUNT_PROPERTY		L"<1..2147483647>"
+#define HELP_TEXT_EVENT_COUNT_PROPERTY      L"<1..2147483647>"
 
 #define EVENT_LOG_MAX_COUNT         0x7fffffff
 #define EVENT_LOG_MIN_COUNT         1
@@ -43,7 +43,7 @@ Execute the Show Goal command
 **/
 EFI_STATUS
 ShowEvent(
-	IN     struct Command *pCmd
+  IN     struct Command *pCmd
 );
 
 /*

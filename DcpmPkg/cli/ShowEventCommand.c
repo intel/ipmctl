@@ -106,7 +106,7 @@ struct Command ShowEventCommand =
         { EVENT_TARGET, L"", L"", TRUE, ValueEmpty },
         { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional }
     },
-    {																	//!< properties
+    {                                  //!< properties
         { SEVERITY_PROPERTY, L"", HELP_TEXT_EVENT_SEVERITY_PROPERTY, FALSE, ValueRequired },
         { CATEGORY_PROPERTY, L"", HELP_TEXT_EVENT_CATEGORY_PROPERTY, FALSE, ValueRequired },
         { ACTION_REQ_PROPERTY, L"", HELP_TEXT_EVENT_ACTION_REQ_PROPERTY, FALSE, ValueRequired },
@@ -133,7 +133,7 @@ Execute the Show Goal command
 **/
 EFI_STATUS
 ShowEvent(
-	IN     struct Command *pCmd
+  IN     struct Command *pCmd
 )
 {
   COMMAND_STATUS *pCommandStatus = NULL;
@@ -168,12 +168,12 @@ ShowEvent(
 
   pPrinterCtx = pCmd->pPrintCtx;
 
-	ReturnCode = InitializeCommandStatus(&pCommandStatus);
-	if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-		NVDIMM_DBG("Failed on InitializeCommandStatus");
-		goto Finish;
-	}
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
+  }
 
   // NvmDimmConfigProtocol required
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
@@ -363,7 +363,7 @@ ShowEvent(
   ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
   if (NULL != StringBuffer) {
-		size_t StringLen = (size_t)(AsciiStrSize(StringBuffer) + 1);
+    size_t StringLen = (size_t)(AsciiStrSize(StringBuffer) + 1);
     WStringBuffer = (CHAR16 *)AllocateZeroPool(StringLen * sizeof(CHAR16));
     if (NULL != WStringBuffer) {
       if (RETURN_SUCCESS != AsciiStrToUnicodeStrS(StringBuffer, WStringBuffer, StringLen)) {
@@ -409,12 +409,12 @@ EFI_STATUS
 RegisterShowEventCommand(
 )
 {
-	EFI_STATUS Rc = EFI_SUCCESS;
-	NVDIMM_ENTRY();
-	Rc = RegisterCommand(&ShowEventCommand);
+  EFI_STATUS Rc = EFI_SUCCESS;
+  NVDIMM_ENTRY();
+  Rc = RegisterCommand(&ShowEventCommand);
 
-	NVDIMM_EXIT_I64(Rc);
-	return Rc;
+  NVDIMM_EXIT_I64(Rc);
+  return Rc;
 }
 
 static EFI_STATUS

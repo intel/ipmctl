@@ -240,12 +240,12 @@ GetOptimumFwVersion(
           InitialFwVer = ppDimms[Index]->FwVer;
           DimmIndex = Index;
         } else if (InitialFwVer.FwRevision == ppDimms[Index]->FwVer.FwRevision) {
-	  if (InitialFwVer.FwSecurityVersion < ppDimms[Index]->FwVer.FwSecurityVersion) {
-	    InitialFwVer = ppDimms[Index]->FwVer;
+    if (InitialFwVer.FwSecurityVersion < ppDimms[Index]->FwVer.FwSecurityVersion) {
+      InitialFwVer = ppDimms[Index]->FwVer;
             DimmIndex = Index;
-	  } else if (InitialFwVer.FwSecurityVersion == ppDimms[Index]->FwVer.FwSecurityVersion) {
-	    if (InitialFwVer.FwBuild < ppDimms[Index]->FwVer.FwBuild) {
-	      InitialFwVer = ppDimms[Index]->FwVer;
+    } else if (InitialFwVer.FwSecurityVersion == ppDimms[Index]->FwVer.FwSecurityVersion) {
+      if (InitialFwVer.FwBuild < ppDimms[Index]->FwVer.FwBuild) {
+        InitialFwVer = ppDimms[Index]->FwVer;
               DimmIndex = Index;
             }
           }

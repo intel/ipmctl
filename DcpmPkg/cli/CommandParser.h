@@ -155,7 +155,7 @@
 #define TYPE_VALUE_TRAINGING              L"Training"                 //!< 'Type' property Training value
 #define UPDATE_PROPERTY                   L"Update"                   //!< 'Update' property name
 #define EXEC_PROPERTY                     L"Execute"                  //!< 'Exec' property name
-#define TEMPERATURE_INJ_PROPERTY          L"Temperature"	            //!<  Inject error 'Temperature' property name
+#define TEMPERATURE_INJ_PROPERTY          L"Temperature"              //!<  Inject error 'Temperature' property name
 #define POISON_INJ_PROPERTY               L"Poison"                   //!< Inject error 'Poison' property
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property
 #define CLEAR_ERROR_INJ_PROPERTY          L"Clear"                    //!< Clear error injection property
@@ -203,7 +203,7 @@
 #define PROPERTY_VALUE_NO                 L"No"                       //!< Property 'No' value
 #define PROPERTY_VALUE_YES                L"Yes"                      //!< Property 'Yes' value
 #define PROPERTY_VALUE_ENABLED            L"Enabled"                  //!< Property enabled value
-#define PROPERTY_VALUE_DISABLED	          L"Disabled"		      //!< Property disabled value
+#define PROPERTY_VALUE_DISABLED           L"Disabled"                 //!< Property disabled value
 #define SEQUENCE_NUM_PROPERTY             L"SequenceNumber"           //!< 'error' property name
 #define COUNT_PROPERTY                    L"Count"                    //!< 'error' property name
 #define LEVEL_PROPERTY                    L"Level"                    //!< 'error' property name
@@ -230,7 +230,7 @@
 #define APP_DIRECT_GRANULARITY_PROPERTY   L"APPDIRECT_GRANULARITY"
 #define LABEL_VERSION_PROPERTY            L"LabelVersion"
 #define NS_LABEL_VERSION_PROPERTY         L"NamespaceLabelVersion"
-#define PERFORMANCE_MONITOR_ENABLED	      L"PERFORMANCE_MONITOR_ENABLED"
+#define PERFORMANCE_MONITOR_ENABLED        L"PERFORMANCE_MONITOR_ENABLED"
 #define PERFORMANCE_MONITOR_INTERVAL_MINUTES L"PERFORMANCE_MONITOR_INTERVAL_MINUTES"
 #define EVENT_MONITOR_ENABLED             L"EVENT_MONITOR_ENABLED"
 #define EVENT_MONITOR_INTERVAL_MINUTES    L"EVENT_MONITOR_INTERVAL_MINUTES"
@@ -321,28 +321,28 @@
                                         UNITS_OPTION_GIB      L"|" \
                                         UNITS_OPTION_TB       L"|" \
                                         UNITS_OPTION_TIB
-#define HELP_TEXT_PERSISTENT_MEM_TYPE   L"AppDirect|AppDirectNotInterleaved"
-#define HELP_TEXT_FLASH_SPI             L"FlashSPI"
-#define HELP_TEXT_EVENT_ID              L"EventID"
-#define HELP_PERFORMANCE_MONITOR_ENABLED	      L"0|1"
+#define HELP_TEXT_PERSISTENT_MEM_TYPE             L"AppDirect|AppDirectNotInterleaved"
+#define HELP_TEXT_FLASH_SPI                       L"FlashSPI"
+#define HELP_TEXT_EVENT_ID                        L"EventID"
+#define HELP_PERFORMANCE_MONITOR_ENABLED          L"0|1"
 #define HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES L"minutes"
 #define HELP_EVENT_MONITOR_ENABLED                L"0|1"
 #define HELP_EVENT_MONITOR_INTERVAL_MINUTES       L"minutes"
 #define HELP_EVENT_LOG_MAX                        L"num events"
 #define HELP_DBG_LOG_MAX                          L"num log entries"
 #define HELP_DBG_LOG_LEVEL                        L"log level"
-#define HELP_TEXT_PERFORMANCE_CAT         L"Performance Metrics"
+#define HELP_TEXT_PERFORMANCE_CAT                 L"Performance Metrics"
 
 #define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY     L"<0, 32>"
 
 #define HELP_TEXT_PERFORMANCE_CAT_DETAILS  L"\n    "DCPMM_PERFORMANCE_MEDIA_READS \
-                                          L"\n    "DCPMM_PERFORMANCE_MEDIA_WRITES \
-                                          L"\n    "DCPMM_PERFORMANCE_READ_REQUESTS \
-                                          L"\n    "DCPMM_PERFORMANCE_WRITE_REQUESTS\
-                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_READS \
-                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES\
-                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS\
-                                          L"\n    "DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
+                                           L"\n    "DCPMM_PERFORMANCE_MEDIA_WRITES \
+                                           L"\n    "DCPMM_PERFORMANCE_READ_REQUESTS \
+                                           L"\n    "DCPMM_PERFORMANCE_WRITE_REQUESTS\
+                                           L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_READS \
+                                           L"\n    "DCPMM_PERFORMANCE_TOTAL_MEDIA_WRITES\
+                                           L"\n    "DCPMM_PERFORMANCE_TOTAL_READ_REQUESTS\
+                                           L"\n    "DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS
 
 #define HELP_TEXT_SENSORS_SHORT  L"\n    "MEDIA_TEMPERATURE_STR_DETAIL \
                                  L"\n    "CONTROLLER_TEMPERATURE_STR_DETAIL \

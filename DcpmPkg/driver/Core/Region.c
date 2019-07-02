@@ -71,27 +71,27 @@ error state on Interleave Set is set.
 **/
 EFI_STATUS
 InitializeISs(
-	IN     ParsedFitHeader *pFitHead,
-	IN     LIST_ENTRY *pDimmList,
-	OUT LIST_ENTRY *pISList
+  IN     ParsedFitHeader *pFitHead,
+  IN     LIST_ENTRY *pDimmList,
+  OUT LIST_ENTRY *pISList
 )
 {
-	EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
 
-	if (pFitHead == NULL || pDimmList == NULL || pISList == NULL) {
-		ReturnCode = EFI_INVALID_PARAMETER;
-		goto Finish;
-	}
+  if (pFitHead == NULL || pDimmList == NULL || pISList == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
 
-	ReturnCode = RetrieveISsFromPlatformConfigData(pFitHead, pDimmList, pISList);
-	if (EFI_ERROR(ReturnCode)) {
-		NVDIMM_DBG("Retrieving Interleave Sets from the Platform Config Data failed.");
-		goto Finish;
-	}
+  ReturnCode = RetrieveISsFromPlatformConfigData(pFitHead, pDimmList, pISList);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Retrieving Interleave Sets from the Platform Config Data failed.");
+    goto Finish;
+  }
 
 
 Finish:
-	return ReturnCode;
+  return ReturnCode;
 }
 
 
@@ -3230,7 +3230,7 @@ SendConfigInputToDimm(
   Rc = GetPlatformConfigDataOemPartition(pDimm, TRUE, &pConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
   if (Rc == EFI_DEVICE_ERROR) {
-	  Rc = GetPlatformConfigDataOemPartition(pDimm, TRUE, &pConfHeader);
+    Rc = GetPlatformConfigDataOemPartition(pDimm, TRUE, &pConfHeader);
   }
 #endif // MEMORY_CORRUPTIO_WA
   if (EFI_ERROR(Rc)) {

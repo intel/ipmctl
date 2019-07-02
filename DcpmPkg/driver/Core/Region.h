@@ -143,8 +143,8 @@ Determine Region Type based on the Interleave sets
 **/
 EFI_STATUS
 DetermineRegionType(
-	IN NVM_IS *pRegion,
-	OUT UINT8 *pRegionType
+  IN NVM_IS *pRegion,
+  OUT UINT8 *pRegionType
 );
 
 /**
@@ -540,8 +540,8 @@ Calculate free Region capacity
 **/
 EFI_STATUS
 GetFreeRegionCapacity(
-	IN  NVM_IS *pRegion,
-	OUT UINT64 *pFreeCapacity
+  IN  NVM_IS *pRegion,
+  OUT UINT64 *pFreeCapacity
 );
 
 /**

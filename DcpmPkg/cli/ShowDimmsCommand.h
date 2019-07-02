@@ -106,7 +106,7 @@
 #define AVERAGE_POWER_TIME_CONSTANT_STEP L"AveragePowerTimeConstantStep"
 #ifdef OS_BUILD
 #define ACTION_REQUIRED_STR         L"ActionRequired"
-#define ACTION_REQUIRED_EVENTS_STR	L"ActionRequiredEvents"
+#define ACTION_REQUIRED_EVENTS_STR  L"ActionRequiredEvents"
 #endif
 #define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
 #define AVERAGE_12V_POWER_STR       L"Average12vPower"

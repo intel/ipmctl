@@ -916,7 +916,7 @@ typedef struct {
   LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED UnlatchedLastShutdownExtendedDetails;
 
   TEMPERATURE MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius. 
+  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
 
   UINT8 ThermalThrottlePerformanceLossPercent; //!< The average loss % due to thermal throttling since last read in current boot
   UINT8 Reserved1[41];
@@ -1333,16 +1333,16 @@ typedef struct {
 
 /**
 Passthrough Payload:
-	Opcode: 0x0Ah (Inject Error)
-	Sub-Opcode: 0x02h (Media Temperature Error)
+  Opcode: 0x0Ah (Inject Error)
+  Sub-Opcode: 0x02h (Media Temperature Error)
 **/
 typedef struct {
-	/*
-	* Allows the enabling or disabling of the temperature error
-	* 0x00h - Off (default)
-	* 0x01h - On
-	*/
-	UINT8 Enable;
+  /*
+  * Allows the enabling or disabling of the temperature error
+  * 0x00h - Off (default)
+  * 0x01h - On
+  */
+  UINT8 Enable;
         union {
           /*
           * A number representing the temperature (Celsius) to inject
@@ -1366,7 +1366,7 @@ typedef struct {
           } SignSeparated;
           UINT16 AsUint16;
         } Temperature;
-	UINT8 Reserved[125];
+  UINT8 Reserved[125];
 } PT_INPUT_PAYLOAD_INJECT_TEMPERATURE;
 
 /**
@@ -1375,26 +1375,26 @@ Opcode: 0x0Ah (Inject Error)
 Sub-Opcode: 0x01h (Poison Error)
 **/
 typedef struct {
-	/*
-	* Allows the enabling or disabling of poison for this address
-	* 0x00h - Clear
-	* 0x01h - Set
-	*/
-	UINT8 Enable;
-	UINT8 Reserved1;
+  /*
+  * Allows the enabling or disabling of poison for this address
+  * 0x00h - Clear
+  * 0x01h - Set
+  */
+  UINT8 Enable;
+  UINT8 Reserved1;
 
-	/*
-	* 0x00 - Intel_Reserved
-	* 0x01 - 2LM
-	* 0x02 - App Direct
-	* 0x03 - Storage
-	* 0x04 - Patrol scrub (Memory Transaction type)
-	* 0xFF - 0x05 - Intel Reserved
-	*/
-	UINT8 Memory;
-	UINT8 Reserved2;
-	UINT64 DpaAddress; /* Address to set the poison bit for */
-	UINT8 Reserved3[116];
+  /*
+  * 0x00 - Intel_Reserved
+  * 0x01 - 2LM
+  * 0x02 - App Direct
+  * 0x03 - Storage
+  * 0x04 - Patrol scrub (Memory Transaction type)
+  * 0xFF - 0x05 - Intel Reserved
+  */
+  UINT8 Memory;
+  UINT8 Reserved2;
+  UINT64 DpaAddress; /* Address to set the poison bit for */
+  UINT8 Reserved3[116];
 } PT_INPUT_PAYLOAD_INJECT_POISON;
 
 typedef union {
@@ -1406,70 +1406,70 @@ typedef union {
 } PERCENTAGE_REMAINING;
 /*
 * Passthrough Payload:
-*		Opcode:		0x0Ah (Inject Error)
-*		Sub-Opcode:	0x03h (Software Triggers)
+*    Opcode:    0x0Ah (Inject Error)
+*    Sub-Opcode:  0x03h (Software Triggers)
 */
 typedef struct {
-	/*
-	* Contains a bit field of the triggers
-	* Bit 0: Package Spare Trigger
-	* Bit 1: Reserved
-	* Bit 2: Fatal Error Trigger
-	* Bit 3: Spare Block Percentage Trigger
-	* Bit 4: Dirty Shutdown Trigger
-	* Bit 63-5: Reserved
-	*/
-	UINT64 TriggersToModify;
+  /*
+  * Contains a bit field of the triggers
+  * Bit 0: Package Spare Trigger
+  * Bit 1: Reserved
+  * Bit 2: Fatal Error Trigger
+  * Bit 3: Spare Block Percentage Trigger
+  * Bit 4: Dirty Shutdown Trigger
+  * Bit 63-5: Reserved
+  */
+  UINT64 TriggersToModify;
 
-	/*
-	* Spoofs FW to initiate a Package Sparing.
-	* 0x0h - Do Not/Disable Trigger
-	* 0x1h - Enable Trigger
-	*/
-	UINT8 PackageSparingTrigger;
+  /*
+  * Spoofs FW to initiate a Package Sparing.
+  * 0x0h - Do Not/Disable Trigger
+  * 0x1h - Enable Trigger
+  */
+  UINT8 PackageSparingTrigger;
 
-	UINT16 Reserved1;
+  UINT16 Reserved1;
 
-	/*
-	* Spoofs FW to trigger a fatal media error.
-	* 0x0h - Do Not/Disable Trigger
-	* 0x1h - Enable Trigger
-	*/
-	UINT8 FatalErrorTrigger;
+  /*
+  * Spoofs FW to trigger a fatal media error.
+  * 0x0h - Do Not/Disable Trigger
+  * 0x1h - Enable Trigger
+  */
+  UINT8 FatalErrorTrigger;
 
-	/*
-	* Spoofs spare block percentage within the DIMM.
-	* Bit 0 - Enable/Disable Trigger
-	* 0x0h - Do Not/Disable Trigger
-	* 0x1h - Enable Trigger
-	* Bits 7:1 - Spare Block Percentage (valid values are between 0 and 100)
-	*/
-	PERCENTAGE_REMAINING SpareBlockPercentageTrigger;
+  /*
+  * Spoofs spare block percentage within the DIMM.
+  * Bit 0 - Enable/Disable Trigger
+  * 0x0h - Do Not/Disable Trigger
+  * 0x1h - Enable Trigger
+  * Bits 7:1 - Spare Block Percentage (valid values are between 0 and 100)
+  */
+  PERCENTAGE_REMAINING SpareBlockPercentageTrigger;
 
-	/*
-	* Spoofs a dirty shutdown on the next power cycle.
-	* 0x0h - Do Not/Disable Trigger
-	* 0x1h - Enable Trigger
-	*/
-	UINT8 DirtyShutdownTrigger;
+  /*
+  * Spoofs a dirty shutdown on the next power cycle.
+  * 0x0h - Do Not/Disable Trigger
+  * 0x1h - Enable Trigger
+  */
+  UINT8 DirtyShutdownTrigger;
 
-	UINT8 Reserved2[115];
+  UINT8 Reserved2[115];
 } PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS;
 
 /*
 * Passthrough Payload:
-*		Opcode:		0x0Ah (Inject Error)
-*		Sub-Opcode:	0x00h (Enable Injection)
-*	Small Input Payload
+*    Opcode:    0x0Ah (Inject Error)
+*    Sub-Opcode:  0x00h (Enable Injection)
+*  Small Input Payload
 */
 typedef struct {
-	/*
-	* Used to turn off/on injection functionality
-	* 0x00h - Off ( default)
-	* 0x01h - On
-	*/
-	UINT8 Enable;
-	UINT8 Reserved[127];
+  /*
+  * Used to turn off/on injection functionality
+  * 0x00h - Off ( default)
+  * 0x01h - On
+  */
+  UINT8 Enable;
+  UINT8 Reserved[127];
 } PT_INPUT_PAYLOAD_ENABLE_INJECTION;
 
 /**

@@ -197,7 +197,7 @@ PbrSetPassThruRecord(
 
   if (pCmd->LargeInputPayloadSize)
   {
-    CopyMem_S((VOID*)((UINTN)pData + (UINTN)sizeof(PbrPassThruReq) + (UINTN)pCmd->InputPayloadSize), 
+    CopyMem_S((VOID*)((UINTN)pData + (UINTN)sizeof(PbrPassThruReq) + (UINTN)pCmd->InputPayloadSize),
       DataSize - sizeof(PbrPassThruReq) - pCmd->InputPayloadSize,
       pCmd->LargeInputPayload,
       pCmd->LargeInputPayloadSize);
@@ -336,7 +336,7 @@ PbrSetTableRecord(
   case PBR_RECORD_TYPE_PMTT:
     NVDIMM_DBG("Set Table Record: PMTT: Table size: %d\n", TableSize);
     Signature = PBR_PMTT_SIG;
-    break; 
+    break;
   default:
     NVDIMM_DBG("Unknown table type: %d", TableType);
     ReturnCode = EFI_INVALID_PARAMETER;

@@ -455,9 +455,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGION_COUNT) (
-	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
      OUT UINT32 *pCount
-	);
+  );
 
 /**
 Retrieve the region list
@@ -474,11 +474,11 @@ Retrieve the region list
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGIONS) (
-	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT32 Count,
-	OUT struct _REGION_INFO *pRegions,
+  OUT struct _REGION_INFO *pRegions,
      OUT COMMAND_STATUS *pCommandStatus
-	);
+  );
 
 /**
   Retrieve the details about the region specified with region id
@@ -496,11 +496,11 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGION) (
-	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-	IN     UINT16 RegionId,
-	OUT struct _REGION_INFO *pRegion,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT16 RegionId,
+  OUT struct _REGION_INFO *pRegion,
      OUT COMMAND_STATUS *pCommandStatus
-	);
+  );
 
 /**
   Gather info about total capacities on all dimms

@@ -200,6 +200,15 @@ DumpDebugCommand(
     // For easier reading
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"\n");
 
+    // If the dimm is an uninitialized dimm, warn the user of the operation time
+    if (Index < UninitializedDimmCount) {
+#ifdef OS_BUILD
+      Print(L"Downloading debug logs for this DCPMM will take ~23 minutes.\n");
+#else
+      Print(L"Downloading debug logs for this DCPMM will take ~6 minutes.\n");
+#endif
+    }
+
     // Collect logs from every debug log source on each dimm
     for (IndexSource = 0; IndexSource < NUM_FW_DEBUG_LOG_SOURCES; IndexSource++) {
 
@@ -221,7 +230,6 @@ DumpDebugCommand(
       if (raw_file_name == NULL || decoded_file_name == NULL) {
         goto FreeAndContinue;
       }
-
 
       ReturnCode = pNvmDimmConfigProtocol->GetFwDebugLog(pNvmDimmConfigProtocol,
           pDimms[Index].DimmID, IndexSource, Reserved, &RawLogBuffer, &RawLogBufferSizeBytes, pCommandStatus);

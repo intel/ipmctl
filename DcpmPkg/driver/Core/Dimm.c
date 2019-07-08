@@ -2060,9 +2060,11 @@ FwCmdGetPlatformConfigData(
     goto Finish;
   }
 
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+  // Optional check to see if DDRT large payload is disabled in hardware
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  UseSmallPayload |= (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+SkipDDRTLargePayloadHardwareDisabledCheck:
 #ifdef OS_BUILD
   UseSmallPayload |= config_is_large_payload_disabled();
 #endif
@@ -2751,9 +2753,11 @@ FwCmdSetPlatformConfigData (
     goto Finish;
   }
 
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+  // Optional check to see if DDRT large payload is disabled in hardware
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  UseSmallPayload |= (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+SkipDDRTLargePayloadHardwareDisabledCheck:
   #ifdef OS_BUILD
     UseSmallPayload |= config_is_large_payload_disabled();
   #endif
@@ -3140,9 +3144,11 @@ FwCmdGetFwDebugLog (
     goto Finish;
   }
 
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD) || UseSmbus;
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  UseSmallPayload |= (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+SkipDDRTLargePayloadHardwareDisabledCheck:
+  UseSmallPayload |= UseSmbus;
 #ifdef OS_BUILD
   UseSmallPayload |= config_is_large_payload_disabled();
 #endif
@@ -4551,9 +4557,10 @@ GetAndParseFwErrorLogForDimm(
     goto Finish;
   }
 
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), Finish);
-  UseSmallPayload = (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL), SkipDDRTLargePayloadHardwareDisabledCheck);
+  UseSmallPayload |= (BOOLEAN)(Bsr.Separated_Current_FIS.MD);
+SkipDDRTLargePayloadHardwareDisabledCheck:
 #ifdef OS_BUILD
   UseSmallPayload |= config_is_large_payload_disabled();
 #endif

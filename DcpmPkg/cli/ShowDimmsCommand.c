@@ -393,6 +393,7 @@ ShowDimms(
   CHAR16 *pPath = NULL;
   BOOLEAN FIS_2_0 = FALSE;
   BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
+  BOOLEAN SkuMixedMode = FALSE;
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
@@ -523,6 +524,20 @@ ShowDimms(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
     goto Finish;
+  }
+
+  ReturnCode = IsSkuMixed(&SkuMixedMode);
+
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_WARN("Could not check if SKU is mixed.");
+    goto Finish;
+  }
+
+  if (SkuMixedMode) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, WARNING_DIMMS_SKU_MIXED);
+    NVDIMM_WARN("Mixed SKU detected. Driver functionalities limited.");
   }
 
   /** if a specific DIMM pid was passed in, set it **/

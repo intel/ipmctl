@@ -37,7 +37,7 @@ struct Command DumpGoalCommand =
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
   L"Store the region configuration goal from one or more DIMMs to a file",        //!< help
   DumpGoal,
-  FALSE,
+  TRUE,
   FALSE,
   FALSE,
   TRUE

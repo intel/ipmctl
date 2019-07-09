@@ -57,9 +57,6 @@ CONST CHAR16 *mpDefaultDimmIds[DISPLAY_DIMM_ID_MAX_SIZE] = {
   PROPERTY_VALUE_UID,
 };
 
-#define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
-#define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
-
 /**
   Compare DimmID field in DIMM_INFO Struct
 

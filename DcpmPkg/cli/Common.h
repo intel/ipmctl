@@ -247,6 +247,9 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FAILED_TO_SET_SESSION_BUFFER                  L"Failed to set session buffer."
 #define CLI_ERR_FAILED_TO_RESET_SESSION                       L"Failed to reset the session."
 
+#define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
+#define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
+
 /**
   sizeof returns the number of bytes that the array uses.
   We need to divide it by the length of a single pointer to get the number of elements.

@@ -2574,7 +2574,7 @@ SecurityCapabilitiesToStr(
       pCapabilitiesStr = CatSPrintClean(pCapabilitiesStr, FORMAT_STR, L", ");
     }
     pCapabilitiesStr = CatSPrintClean(pCapabilitiesStr, FORMAT_STR, SECURITY_CAPABILITIES_ERASE);
-  } else if (SecurityCapabilities & BIT0) {
+  } else if (SecurityCapabilities == 0) {
     pCapabilitiesStr = CatSPrintClean(pCapabilitiesStr, FORMAT_STR, SECURITY_CAPABILITIES_NONE);
   }
   NVDIMM_EXIT();

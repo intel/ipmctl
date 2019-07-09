@@ -53,19 +53,57 @@
 
 #define PCAT_HEADER_REVISION_1 1
 #define PCAT_HEADER_REVISION_2 2
+#define PCAT_HEADER_REVISION_3 3
+#define PCAT_HEADER_MINOR_REVISION_1 1
+
+#define PMTT_HEADER_REVISION_1 1
+#define PMTT_HEADER_REVISION_2 2
+#define PMTT_HEADER_MINOR_REVISION_1 1
 
 /** PMTT table types**/
 #define  PMTT_MAX_LEN  4096
 #define PMTT_TYPE_SOCKET 0
 #define PMTT_TYPE_iMC 1
 #define PMTT_TYPE_MODULE 2
+#define PMTT_TYPE_VENDOR_SPECIFIC 0XFF
+#define PMTT_TYPE_RESERVED (BIT2 | BIT3)
 #define PMTT_COMMON_HDR_LEN 8
 #define PMTT_DDR_DCPM_FLAG BIT2
 #define PMTT_INVALID_SMBIOS_HANDLE 0xFFFFFFFF
 
+/** Macros for Intel ACPI Revisions **/
+#define ACPI_REVISION_1        1
+#define ACPI_REVISION_2        2
+#define ACPI_MAJOR_REVISION_1  1
+#define ACPI_MINOR_REVISION_1  1
+
+#define IS_ACPI_REV_MAJ_1_MIN_1(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && (revision.Split.Minor == ACPI_MINOR_REVISION_1))
+#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1))
+
+#define IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
+#define IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
+
+#define IS_ACPI_REV_MAJ_0_MIN_1(revision)     (revision.AsUint8 == ACPI_REVISION_1)
+#define IS_ACPI_HEADER_REV_MAJ_0_MIN_1(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_1)
+#define IS_ACPI_REV_MAJ_0_MIN_2(revision)     (revision.AsUint8 == ACPI_REVISION_2)
+
+#define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+#define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+
 /** NFIT Tables structures **/
 #pragma pack(push)
 #pragma pack(1)
+
+/** Intel ACPI Tables Revision **/
+typedef union {
+  UINT8 AsUint8;
+  struct {
+    UINT8 Major:4;
+    UINT8 Minor:4;
+  }Split;
+} ACPI_REVISION;
 
 /** NFIT sub-table header */
 typedef struct {
@@ -77,7 +115,7 @@ typedef struct {
 typedef struct {
   UINT32 Signature;       //!< ACPI table signature
   UINT32 Length;          //!< Length in bytes for entire table. It implies the number of Entry fields at the end of the table
-  UINT8 Revision;         //!< table revision
+  ACPI_REVISION Revision; //!< table revision
   UINT8 Checksum;         //!< Entire table must sum to zero
   UINT8 OemId[6];         //!< OEM ID
   UINT64 OemTableId;      //!< the table ID is the manufacturer model ID
@@ -254,6 +292,27 @@ typedef struct {
 
 typedef
 union {
+  UINT16 AsUint16;
+  struct {
+    UINT16 PerDie   : 4;
+    UINT16 PerDcpmm : 4;
+    UINT16 Reserved : 8;
+  } MaxInterleaveSetsSplit;
+} MAX_PMINTERLEAVE_SETS;
+
+typedef
+union {
+  UINT8 MemoryModes;
+  struct {
+    UINT8 OneLm     : 1;
+    UINT8 Memory    : 1;
+    UINT8 AppDirect : 1;
+    UINT8 Reserved  : 5;
+  } MemoryModesFlags;
+} SUPPORTED_MEMORY_MODE3;
+
+typedef
+union {
   UINT8 MemoryModes;
   struct {
     UINT8 OneLm           :1;
@@ -265,6 +324,19 @@ union {
     UINT8 Reserved        :2;
   } MemoryModesFlags;
 } SUPPORTED_MEMORY_MODE;
+
+typedef struct {
+  UINT8 CurrentVolatileMode : 2;
+  UINT8 PersistentMode      : 2;
+  UINT8 AllowedVolatileMode : 2;
+  UINT8 Reserved            : 2;
+} _MEMORY_MODE_SPLIT3;
+
+typedef
+union {
+  UINT8 MemoryMode;
+  _MEMORY_MODE_SPLIT3 MemoryModeSplit;
+} CURRENT_MEMORY_MODE3;
 
 typedef struct {
     UINT8 CurrentVolatileMode : 2;
@@ -279,6 +351,68 @@ union {
   UINT8 MemoryMode;
   _MEMORY_MODE_SPLIT MemoryModeSplit;
 } CURRENT_MEMORY_MODE;
+
+typedef struct {
+  /**
+    HEADER
+  **/
+  PCAT_TABLE_HEADER Header; //!< Type: 0
+  /**
+    BODY
+  **/
+  /**
+    Bit0
+      If set BIOS supports changing configuration through management software.
+      If clear BIOS does not allow configure change through management software
+    Bits[7:1]: Reserved
+  **/
+  UINT8 MgmtSwConfigInputSupport;
+  /**
+    Bit0: Set if 1LM Mode supported
+    Bit1: Set if 2LM Mode supported
+    Bit2: Set if AppDirect Mode supported
+    Bits[7:3]: Reserved
+  **/
+  SUPPORTED_MEMORY_MODE3 MemoryModeCapabilities;
+  /**
+    Memory Mode selected in the BIOS setup
+    Bits[1:0] - Current Volatile Memory Mode
+    00b - 1LM Mode
+    01b - 2LM Mode
+    10b - 1LM + 2LM Mode
+    11b - Reserved
+
+    Bits[3:2] - Allowed Persistent Memory Mode
+    00b - None
+    01b - App Direct Mode
+    10b - Reserved
+    11b - Reserved
+
+    Bits[5:4] - Allowed Volatile Memory Mode
+    00b - 1LM Mode Only
+    01b - 1LM or 2LM Mode
+    10b - 1LM + 2LM Mode
+    11b - Reserved
+
+    Bits[7:6] - Reserved
+    Note: no direct control is given to the management software to switch the mode
+  **/
+  CURRENT_MEMORY_MODE3 CurrentMemoryMode;
+  /**
+    Bits[3-0]: per CPU Die
+    Bits[7-4]: per Controller
+    Bits[15-8]: Reserved
+    0 means there is no limit defined.
+  **/
+  MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
+  /**
+    Capacity in GiB per DDR DIMM for use as near
+    memory cache if 2LM is enabled. The remaining
+    DDR capacity will be used as 1LM.
+  **/
+  UINT32 DDRCacheSize;
+  UINT8 Reserved[3];
+} PLATFORM_CAPABILITY_INFO3;
 
 typedef struct {
   /**
@@ -325,6 +459,35 @@ typedef struct {
 
 typedef
 union {
+  UINT16 AsUint16;
+  struct {
+    UINT16 PerDie   : 4;
+    UINT16 PerDcpmm : 4;
+    UINT16 Reserved : 8;
+  } MaxInterleaveSetsSplit;
+} MAX_INTERLEAVE_SETS_PER_MEMTYPE;
+
+typedef
+union {
+  UINT16 AsUint16;
+  struct {
+    UINT16 ChannelInterleaveSize : 8;
+    UINT16 iMCInterleaveSize     : 8;
+  } InterleaveSizeSplit;
+} INTERLEAVE_SIZE;
+
+typedef
+union {
+  UINT32 AsUint32;
+  struct {
+    UINT32 InterleaveMap : 16;
+    UINT32 Recommended   : 1;
+    UINT32 Reserved      : 15;
+  } InterleaveFormatSplit;
+} INTERLEAVE_FORMAT3;
+
+typedef
+union {
   UINT32 AsUint32;
   struct {
     UINT32 ChannelInterleaveSize:8;
@@ -334,6 +497,81 @@ union {
     UINT32 Recommended          :1;
   } InterleaveFormatSplit;
 } INTERLEAVE_FORMAT;
+
+typedef struct {
+  /**
+    HEADER
+  **/
+  PCAT_TABLE_HEADER Header; //!< Type: 1
+  /**
+    BODY
+  **/
+  /**
+    Value defines memory mode
+    0 - 1LM
+    1 - 2LM
+    3 - App Direct PM
+    4 - App Direct Cached PM
+  **/
+  UINT8 MemoryMode;
+  UINT8 Reserved[3];
+  /**
+    Interleave alignment size in 2^n bytes.
+    n=26 for 64MB
+    n=27 for 128MB
+  **/
+  UINT16 InterleaveAlignmentSize;
+  /**
+    Byte0 - Supported Channel interleave size
+    Bit0 - 4KB
+    Bit1 - 256B
+    Bits[7-2] - Reserved
+
+    Byte1 - Supported iMC interleave size
+    Bit0 - 4KB
+    Bit1 - 256B
+    Bits[7-2] - Reserved
+  **/
+  INTERLEAVE_SIZE InterleaveSize;
+  /**
+    Bit0[3-0] - 4KB
+    Bit1[7-4] - 256B
+    Bits[15-8] - Reserved
+  **/
+  MAX_INTERLEAVE_SETS_PER_MEMTYPE MaxInterleaveSetsPerMemType;
+  /**
+    Number of interleave formats supported by BIOS for the above memory mode. The variable body of this structure
+    contains m number of interleave formats.
+  **/
+  UINT16 NumOfFormatsSupported;
+  /**
+    This field will have a list of 4byte values that provide information about BIOS supported interleave formats and
+    the recommended interleave informations.
+    BIOS populates the list based on CPU platform & BIOS settings.
+   (x1 way) IMC0       IMC1
+   CH0 | 0b000001 | 0b000010 |
+   CH1 | 0b000100 | 0b001000 |
+   CH2 | 0b010000 | 0b100000 |
+    Byte[0-1] - Interleave Bitmap based on physical DCPMM population
+    For ex: Purley Platform
+    0b001111 x4
+    0b111100 x4
+    0b110011 x4
+    0b010101 x3
+    0b101010 x3
+    ...
+    ...
+
+    Byte2 - Flags
+    Bit0 - Recommended
+           If clear, the interleave format is supported but not recommended.
+           If set, the interleave format is recommended.
+    Bits[1-7] - Reserved
+
+    Byte3 - Reserved
+  **/
+  INTERLEAVE_FORMAT3 InterleaveFormatList[0];
+} MEMORY_INTERLEAVE_CAPABILITY_INFO3;
 
 typedef struct {
   /**
@@ -496,12 +734,134 @@ typedef struct {
   /**
     BODY
    **/
+  UINT16 SocketId;
+  UINT16 DieId;
+  UINT64 MappedMemorySizeLimit;      //!< Total amount of physical memory in bytes allowed to be mapped into SPA based on the SKU of the CPU specified by Socket ID
+  UINT64 TotalMemorySizeMappedToSpa; //!< Total amount of physical memory in bytes currently mapped into the SPA for the CPU specified by Socket ID
+  UINT64 CachingMemorySize;          //!< Total amount of physical memory in bytes used for caching when the system is in 2LM mode
+} DIE_SKU_INFO_TABLE;
+
+typedef struct {
+  /**
+    HEADER
+   **/
+  PCAT_TABLE_HEADER Header; //!< Type: 6
+  /**
+    BODY
+   **/
   UINT16 SocketId;           //!< Zero indexed NUMA node identifier
   UINT8 Reserved[2];
   UINT64 MappedMemorySizeLimit;      //!< Total amount of physical memory in bytes allowed to be mapped into SPA based on the SKU of the CPU specified by Socket ID
   UINT64 TotalMemorySizeMappedToSpa; //!< Total amount of physical memory in bytes currently mapped into the SPA for the CPU specified by Socket ID
   UINT64 CachingMemorySize;          //!< Total amount of physical memory in bytes used for caching when the system is in 2LM mode
 } SOCKET_SKU_INFO_TABLE;
+
+/** PMTT Rev 2 table**/
+typedef struct {
+  TABLE_HEADER Header;
+  UINT32 NoOfMemoryDevices;
+  VOID  *pPmttDevices[0];
+} PMTT_TABLE2;
+
+/* Header common to socket, iMC and Module*/
+typedef struct {
+  /*
+  * Type of aggregated device
+  * 0 - Socket
+  * 1 - Memory controller
+  * 2 - Module
+  * 3 - 0xFF
+  */
+  UINT8 Type;
+
+  UINT8 Reserved1;
+  /*
+  * Length in bytes for entire table.
+  */
+  UINT16 Length;
+  UINT16 Flags;
+  UINT16 Reserved2;
+  UINT32 NoOfMemoryDevices;
+} PMTT_COMMON_HEADER2;
+
+/*
+* Memory device structure
+* Type 0 - socket
+*/
+typedef  struct {
+  PMTT_COMMON_HEADER2 Header;
+  UINT16 SocketId;
+  UINT16 Reserved3;
+
+  // Die structure follows this
+} PMTT_SOCKET2;
+
+/*
+* Memory device structure
+* Type 1 - iMC
+* HMAT/SLIT tables should be used for latency and bandwidth information, removed from PMTT Rev. 2
+*/
+typedef struct {
+  PMTT_COMMON_HEADER2 Header;
+  UINT16 MemControllerID;
+  UINT16 Reserved3;
+
+  // Module structure follows this
+} PMTT_iMC2;
+
+/*
+* Vendor device structure
+* Type 0XFF - Die/Channel/Slot
+*/
+typedef struct {
+  PMTT_COMMON_HEADER2 Header;
+  GUID TypeUUID;
+  UINT16 DeviceID;
+  UINT16 Reserved3;
+
+  // Vendor specific data follows this
+} PMTT_VENDOR_SPECIFIC2;
+
+/*
+* Memory device structure
+* Type 2 - Module
+*/
+typedef struct {
+  PMTT_COMMON_HEADER2 Header;
+  UINT32 SmbiosHandle;
+} PMTT_MODULE2;
+
+typedef struct {
+  PMTT_COMMON_HEADER2 Header;
+  UINT8  MemoryType;
+  UINT16 SmbiosHandle;
+  UINT16 SocketId;
+  UINT16 DieId;
+  UINT16 CpuId;
+  UINT16 MemControllerId;
+  UINT16 ChannelId;
+  UINT16 SlotId;
+} PMTT_MODULE_INFO;
+
+/** PMTT Rev 0x11 ACPI data */
+typedef struct {
+  PMTT_TABLE2 *pPmtt;                     ///< PMTT Header
+  UINT32 SocketsNum;                      ///< Count of Socket Devices
+  PMTT_SOCKET2 **ppSockets;               ///< Socket Type Data Tables
+  UINT32 DiesNum;                         ///< Count of Die Devices
+  PMTT_VENDOR_SPECIFIC2 **ppDies;         ///< Die Type Data Tables
+  UINT32 iMCsNum;                         ///< Count of Memroy Controller Devices
+  PMTT_iMC2 **ppiMCs;                     ///< iMC Type Data Tables
+  UINT32 ChannelsNum;                     ///< Count of Channel Devices
+  PMTT_VENDOR_SPECIFIC2 **ppChannels;     ///< Channel Type Data Tables
+  UINT32 SlotsNum;                        ///< Count of Slot Devices
+  PMTT_VENDOR_SPECIFIC2 **ppSlots;        ///< Slot Type Data Tables
+  UINT32 DDRModulesNum;                   ///< Count of DDR4 Devices
+  PMTT_MODULE_INFO **ppDDRModules;        ///< DDR4 Module Type Data Tables
+  UINT32 DCPMModulesNum;                  ///< Count of DCPM Devices
+  PMTT_MODULE_INFO **ppDCPMModules;       ///< DCPM Module Type Data Tables
+} ParsedPmttHeader;
+
 
 /** PMTT table **/
 typedef struct {
@@ -571,17 +931,29 @@ typedef struct {
 
 #pragma pack(pop)
 
+/** PCAT version specific tables **/
+typedef union {
+  struct {
+    PLATFORM_CAPABILITY_INFO **ppPlatformCapabilityInfo;
+    MEMORY_INTERLEAVE_CAPABILITY_INFO **ppMemoryInterleaveCapabilityInfo;
+    SOCKET_SKU_INFO_TABLE **ppSocketSkuInfoTable;
+  } Pcat2Tables;
+  struct {
+    PLATFORM_CAPABILITY_INFO3 **ppPlatformCapabilityInfo;
+    MEMORY_INTERLEAVE_CAPABILITY_INFO3 **ppMemoryInterleaveCapabilityInfo;
+    DIE_SKU_INFO_TABLE **ppDieSkuInfoTable;
+  } Pcat3Tables;
+} PCAT_VERSION;
+
 typedef struct {
   PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPlatformConfigAttr;
-  PLATFORM_CAPABILITY_INFO **ppPlatformCapabilityInfo;
+  PCAT_VERSION pPcatVersion;
   UINT32 PlatformCapabilityInfoNum;
-  MEMORY_INTERLEAVE_CAPABILITY_INFO **ppMemoryInterleaveCapabilityInfo;
   UINT32 MemoryInterleaveCapabilityInfoNum;
   RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE **ppRuntimeInterfaceValConfInput;
   UINT32 RuntimeInterfaceValConfInputNum;
   CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE **ppConfigManagementAttributesInfo;
   UINT32 ConfigManagementAttributesInfoNum;
-  SOCKET_SKU_INFO_TABLE **ppSocketSkuInfoTable;
   UINT32 SocketSkuInfoNum;
 } ParsedPcatHeader;
 
@@ -593,6 +965,16 @@ typedef struct {
 VOID
 FreeParsedPcat(
   IN OUT ParsedPcatHeader *pParsedPcat
+  );
+
+/**
+  Frees the memory associated in the parsed PMTT 2.0 table.
+
+  @param[in, out] pParsedPmtt pointer to the PMTT 2.0 header.
+**/
+VOID
+FreeParsedPmtt(
+  IN OUT ParsedPmttHeader *pParsedPmtt
   );
 
 /**

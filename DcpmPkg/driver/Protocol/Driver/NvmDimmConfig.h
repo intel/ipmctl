@@ -393,7 +393,7 @@ EFI_STATUS
 EFIAPI
 GetAcpiPMTT(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  OUT PMTT_TABLE **ppPMTTtbl
+  OUT VOID **ppPMTTtbl
 );
 
 /**
@@ -805,10 +805,12 @@ EFIAPI GetNamespaces (
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
 EFIAPI
@@ -824,6 +826,7 @@ GetActualRegionsGoalCapacities(
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -842,10 +845,13 @@ GetActualRegionsGoalCapacities(
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
+  @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
 EFIAPI
@@ -862,7 +868,8 @@ CreateGoalConfig (
   IN     UINT8 ReserveDimm,
   IN     UINT16 LabelVersionMajor,
   IN     UINT16 LabelVersionMinor,
-     OUT COMMAND_STATUS *pCommandStatus
+  OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
+  OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**

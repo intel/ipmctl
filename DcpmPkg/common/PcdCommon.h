@@ -34,6 +34,8 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define NVDIMM_CONFIGURATION_HEADER_CREATOR_REVISION 0
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_1       1
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_2       2
+#define NVDIMM_CONFIGURATION_TABLES_REVISION_3       3
+#define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1 1
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_DEFAULT NVDIMM_CONFIGURATION_TABLES_REVISION_2
 
 #define LSA_NAMESPACE_INDEX_SIG_L        SIGNATURE_64('N', 'A', 'M', 'E', 'S', 'P', 'A', 'C')
@@ -97,6 +99,7 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define INTERLEAVE_INFO_STATUS_CIN_MISSING            9
 #define INTERLEAVE_INFO_STATUS_CHANNEL_NOT_MATCH      10
 #define INTERLEAVE_INFO_STATUS_UNSUPPORTED_ALIGNMENT  11
+#define INTERLEAVE_INFO_STATUS_REQUEST_UNSUPPORTED    12
 
 #define MAX_PCD_TABLE_STATUS_LENGTH 12
 
@@ -220,9 +223,60 @@ typedef struct {
   **/
   UINT8 NumOfDimmsInInterleaveSet;
   /**
+    1 - Reserved
+    2 - App Direct PM (Persistent)
+    3 - Reserved
+  **/
+  UINT8 InterleaveMemoryType;
+  /**
+    Byte0 - Channel Interleave Size
+    Byte1 - iMC Interleave Size
+    One of the supported values from PCAT Mmeory Interleave Capability Info Table
+  **/
+  UINT8 InterleaveFormatChannel;
+  UINT8 InterleaveFormatImc;
+  UINT8 Reserved1[3];
+  /**
+    Config Input:
+    Reserved zero
+
+    Config Output:
+    0 - Information not processed
+    1 - Successfully interleaved the request
+    2 - Unable to find matching DIMMs in the interleave set
+    3 - Matching DIMMs found, but interleave information does not match
+    4 - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
+        This interleave set may not be mapped to system address space
+    5 - Memory mapping failed due to unavailable system address space
+    6 - Mirror mapping failed due to unavailable resources
+    12 - Request unsuppported
+  **/
+  UINT8 InterleaveChangeStatus;
+  UINT8 Reserved2[10];
+  VOID *pIdentificationInfoList[0];  //!< DIMM interleave set information
+} NVDIMM_INTERLEAVE_INFORMATION3;
+
+/**
+  Interleave change or current interleave information
+**/
+typedef struct {
+  /**
+    HEADER
+  **/
+  PCAT_TABLE_HEADER Header; //!< Type: 5
+  /**
+    BODY
+  **/
+  UINT16 InterleaveSetIndex; //!< Logical index number, it should same for all the DIMMs in the interleave set
+  /**
+    Total number of DIMMs participating in this interleave set. DIMM Info structure at the end of this structure
+    is repeated for each DIMM in the interleave set
+  **/
+  UINT8 NumOfDimmsInInterleaveSet;
+  /**
     1 - 2LM (Volatile)
     2 - App Direct PM (Persistent)
-    3 - App Direct Cached PM (Persistent)
+    3 - Reserved
   **/
   UINT8 InterleaveMemoryType;
   /**
@@ -267,6 +321,38 @@ typedef struct _DIMM_UNIQUE_IDENTIFIER {
   UINT16 ManufacturingDate;                //!< Indicates manufacturing year and week
   UINT32 SerialNumber;                     //!< Unique serial number for the module
 } DIMM_UNIQUE_IDENTIFIER;
+
+typedef union {
+  UINT64 AsUint64;
+  struct {
+    UINT32 SocketId        :8;
+    UINT32 DieId           :8;
+    UINT32 MemControllerId :8;
+    UINT32 ChannelId       :8;
+    UINT32 SlotId          :8;
+    UINT32 Reserved        :24;
+  }Split;
+} DIMM_LOCATION;
+
+typedef struct {
+  DIMM_UNIQUE_IDENTIFIER DimmIdentification;
+  /**
+   Byte0 - Socket ID
+   Byte1 - Die ID
+   Byte2 - iMC ID
+   Byte3 - Channel ID
+   Byte4 - Slot ID
+   Byte[5-7] - Reserved
+ **/
+  DIMM_LOCATION DimmLocation;
+  UINT8 Reserved[15];
+  /**
+    Logical offset from the base of the partition type in bytes.
+    DPA = FW returned DPA for partition + offset
+  **/
+  UINT64 PartitionOffset;
+  UINT64 PmPartitionSize;         //!< Size in bytes contributed by this DIMM for this interleave set
+} NVDIMM_IDENTIFICATION_INFORMATION3;
 
 typedef struct {
   union {

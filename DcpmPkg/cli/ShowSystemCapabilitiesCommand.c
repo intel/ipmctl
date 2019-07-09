@@ -89,8 +89,11 @@ PrintAllowedVolatileMode(
   case VOLATILE_MODE_1LM:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_STR);
     break;
-  case VOLATILE_MODE_MEMORY:
+  case VOLATILE_MODE_2LM:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, MEMORY_STR);
+    break;
+  case VOLATILE_MODE_1LM_2LM:
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, UNKNOWN_STR);
@@ -115,8 +118,11 @@ PrintCurrentVolatileMode(
   case VOLATILE_MODE_1LM:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, ONE_LM_STR);
     break;
-  case VOLATILE_MODE_MEMORY:
+  case VOLATILE_MODE_2LM:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, MEMORY_STR);
+    break;
+  case VOLATILE_MODE_1LM_2LM:
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, UNKNOWN_STR);
@@ -142,9 +148,6 @@ PrintAllowedAppDirectMode(
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, DISABLED_STR);
     break;
   case PERSISTENT_MODE_APP_DIRECT:
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, APPDIRECT_STR);
-    break;
-  case PERSISTENT_MODE_APP_DIRECT_CACHE:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_MODE_ALLOWED_STR, APPDIRECT_STR);
     break;
   default:
@@ -410,8 +413,9 @@ ShowSystemCapabilities(
 
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_SUPPORTED_STR)) {
     TempAppDirSettings = PrintAppDirectSettings(
-      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
+      (VOID *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
       SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
+      (INTERLEAVE_SIZE *)SystemCapabilitiesInfo.PtrInterleaveSize,
       FALSE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_SUPPORTED_STR, TempAppDirSettings);
     FREE_POOL_SAFE(TempAppDirSettings);
@@ -419,8 +423,9 @@ ShowSystemCapabilities(
 
   if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECCOMENDED_STR)) {
     TempAppDirSettings = PrintAppDirectSettings(
-      (INTERLEAVE_FORMAT *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
+      (VOID *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
       SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
+      (INTERLEAVE_SIZE *)SystemCapabilitiesInfo.PtrInterleaveSize,
       TRUE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_RECCOMENDED_STR, TempAppDirSettings);
     FREE_POOL_SAFE(TempAppDirSettings);
@@ -429,6 +434,7 @@ ShowSystemCapabilities(
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveSize);
   FREE_POOL_SAFE(pDisplayValues);
   FREE_POOL_SAFE(pPath);
   NVDIMM_EXIT_I64(ReturnCode);

@@ -7,6 +7,7 @@
 #define _PROCESSORANDTOPOLOGYINFO_H_
 
 #include <Library/BaseLib.h>
+#include <AcpiParsing.h>
 
 #define END_OF_INTERLEAVE_SETS  0
 
@@ -34,9 +35,10 @@
 
   @retval EFI_SUCCESS Ok
   @retval EFI_INVALID_PARAMETER invalid parameter
+  @retval EFI_OUT_OF_RESOURCES memory allocation failed
 */
 EFI_STATUS GetTopologyAndInterleaveSetMapInfoBasedOnProcessorType(UINT8 *piMCNum OPTIONAL, UINT8 *pChannelNum OPTIONAL,
-  UINT8 *pDimmsperIMC OPTIONAL, const UINT32 **ppInterleaveMap OPTIONAL);
+  UINT8 *pDimmsperIMC OPTIONAL, UINT32 **ppInterleaveMap OPTIONAL);
 
 #endif /* _PROCESSORANDTOPOLOGYINFO_H_ */
 

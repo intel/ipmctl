@@ -34,9 +34,8 @@ GeneratePcdConfInput(
 {
   EFI_STATUS Rc = EFI_SUCCESS;
   VOID *pCurrentOffset = NULL;
+  ACPI_REVISION Revision;
   NVDIMM_PARTITION_SIZE_CHANGE *pPartSizeChange = NULL;
-  NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = NULL;
-  NVDIMM_IDENTIFICATION_INFORMATION *pIdentInfo = NULL;
   CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *pAutoProvExtension = NULL;
   UINT32 ConfInputSize = 0;
   UINT64 LastPersistentMemoryOffset = 0;
@@ -54,44 +53,6 @@ GeneratePcdConfInput(
     Rc = EFI_INVALID_PARAMETER;
     goto Finish;
   }
-
-  /**
-    Allocate the block of memory for PCD Config Input
-  **/
-  ConfInputSize =
-    sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
-    + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
-    + pDimm->RegionsGoalNum * (sizeof(NVDIMM_INTERLEAVE_INFORMATION));
-
-  for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
-    ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
-  }
-
-  // Retrieve automatic provisioning EFI vars
-  Rc = RetrieveIntelDIMMConfig(&pIntelDIMMConfigEfiVar);
-  if (EFI_ERROR(Rc)) {
-    // Not found or some error
-    // Either case should not stop sending CIN
-    Rc = EFI_SUCCESS;
-  } else {
-    if (pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
-      // Add extension table to size
-      ConfInputSize += sizeof(CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE) + sizeof(INTEL_DIMM_CONFIG);
-    }
-  }
-
-
-  *ppConfigInput = AllocateZeroPool(ConfInputSize);
-  if (*ppConfigInput == NULL) {
-    Rc = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  /**
-    PCD Configuration Input table
-  **/
-  (*ppConfigInput)->Header.Signature = NVDIMM_CONFIGURATION_INPUT_SIG;
-  (*ppConfigInput)->Header.Length = ConfInputSize;
 
   /** Populate ther revision of the CIN table **/
   Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
@@ -113,25 +74,75 @@ GeneratePcdConfInput(
       NVDIMM_DBG("PCAT table not found");
       Rc = EFI_DEVICE_ERROR;
       goto Finish;
-    } else if ((gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision != PCAT_HEADER_REVISION_1) &&
-               (gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision != PCAT_HEADER_REVISION_2)) {
+    } else if (IS_ACPI_HEADER_REV_INVALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
       NVDIMM_DBG("Incorrect PCAT table");
       Rc = EFI_DEVICE_ERROR;
       goto Finish;
      } else {
-       (*ppConfigInput)->Header.Revision = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision;
+       Revision = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision;
      }
   } else {
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pConfHeader);
 
     if (IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
-      (*ppConfigInput)->Header.Revision = pPcdCurrentConf->Header.Revision;
+      Revision = pPcdCurrentConf->Header.Revision;
     } else {
       NVDIMM_DBG("The data in Current Config table is invalid");
       Rc = EFI_DEVICE_ERROR;
       goto Finish;
     }
   }
+
+  /**
+   Allocate the block of memory for PCD Config Input
+ **/
+  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+    ConfInputSize =
+      sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
+      + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
+      + pDimm->RegionsGoalNum * (sizeof(NVDIMM_INTERLEAVE_INFORMATION));
+
+    for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
+      ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
+    }
+  }
+  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    ConfInputSize =
+      sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
+      + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
+      + pDimm->RegionsGoalNum * (sizeof(NVDIMM_INTERLEAVE_INFORMATION3));
+
+    for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
+      ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
+    }
+  }
+
+  // Retrieve automatic provisioning EFI vars
+  Rc = RetrieveIntelDIMMConfig(&pIntelDIMMConfigEfiVar);
+  if (EFI_ERROR(Rc)) {
+    // Not found or some error
+    // Either case should not stop sending CIN
+    Rc = EFI_SUCCESS;
+  }
+  else {
+    if (pIntelDIMMConfigEfiVar->ProvisionCapacityMode == PROVISION_CAPACITY_MODE_AUTO) {
+      // Add extension table to size
+      ConfInputSize += sizeof(CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE) + sizeof(INTEL_DIMM_CONFIG);
+    }
+  }
+
+  *ppConfigInput = AllocateZeroPool(ConfInputSize);
+  if (*ppConfigInput == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /**
+    PCD Configuration Input table
+  **/
+  (*ppConfigInput)->Header.Signature = NVDIMM_CONFIGURATION_INPUT_SIG;
+  (*ppConfigInput)->Header.Length = ConfInputSize;
+  (*ppConfigInput)->Header.Revision = Revision;
 
   CopyMem_S((*ppConfigInput)->Header.OemId, sizeof((*ppConfigInput)->Header.OemId), pConfHeader->Header.OemId, sizeof((*ppConfigInput)->Header.OemId));
   (*ppConfigInput)->Header.OemTableId = pConfHeader->Header.OemTableId;
@@ -175,69 +186,130 @@ GeneratePcdConfInput(
     Interleave Information tables
   **/
 
-  pCurrentOffset = (UINT8 *) pPartSizeChange + sizeof(NVDIMM_PARTITION_SIZE_CHANGE);
+  pCurrentOffset = (UINT8 *)pPartSizeChange + sizeof(NVDIMM_PARTITION_SIZE_CHANGE);
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2((*ppConfigInput))) {
+    for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
+      NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pCurrentOffset;
 
-  for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
-    pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *) pCurrentOffset;
+      pInterleaveInfo->Header.Type = PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE;
+      pInterleaveInfo->Header.Length =
+        (UINT16)sizeof(NVDIMM_INTERLEAVE_INFORMATION)
+        + (UINT16)pDimm->pRegionsGoal[Index]->DimmsNum * (UINT16)sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
 
-    pInterleaveInfo->Header.Type = PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE;
-    pInterleaveInfo->Header.Length =
-      (UINT16)sizeof(NVDIMM_INTERLEAVE_INFORMATION)
-      + (UINT16)pDimm->pRegionsGoal[Index]->DimmsNum * (UINT16)sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
+      pInterleaveInfo->InterleaveSetIndex = pDimm->pRegionsGoal[Index]->InterleaveSetIndex;
+      pInterleaveInfo->NumOfDimmsInInterleaveSet = (UINT8)pDimm->pRegionsGoal[Index]->DimmsNum;
 
-    pInterleaveInfo->InterleaveSetIndex = pDimm->pRegionsGoal[Index]->InterleaveSetIndex;
-    pInterleaveInfo->NumOfDimmsInInterleaveSet = (UINT8)pDimm->pRegionsGoal[Index]->DimmsNum;
+      pInterleaveInfo->InterleaveMemoryType = NVDIMM_MEMORY_PERSISTENT_TYPE;
 
-    pInterleaveInfo->InterleaveMemoryType = NVDIMM_MEMORY_PERSISTENT_TYPE;
+      pInterleaveInfo->InterleaveFormatChannel = pDimm->pRegionsGoal[Index]->ChannelInterleaving;
+      pInterleaveInfo->InterleaveFormatImc = pDimm->pRegionsGoal[Index]->ImcInterleaving;
 
-    pInterleaveInfo->InterleaveFormatChannel = pDimm->pRegionsGoal[Index]->ChannelInterleaving;
-    pInterleaveInfo->InterleaveFormatImc = pDimm->pRegionsGoal[Index]->ImcInterleaving;
+      pInterleaveInfo->InterleaveFormatWays = pDimm->pRegionsGoal[Index]->NumOfChannelWays;
+      pInterleaveInfo->MirrorEnable = pDimm->pRegionsGoal[Index]->InterleaveSetType == MIRRORED ? 1 : 0;
+      pInterleaveInfo->InterleaveChangeStatus = 0; // Used by Config Output, 0 for Config Input
 
-    pInterleaveInfo->InterleaveFormatWays = pDimm->pRegionsGoal[Index]->NumOfChannelWays;
-    pInterleaveInfo->MirrorEnable = pDimm->pRegionsGoal[Index]->InterleaveSetType == MIRRORED ? 1 : 0;
-    pInterleaveInfo->InterleaveChangeStatus = 0; // Used by Config Output, 0 for Config Input
+      pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_INTERLEAVE_INFORMATION);
 
-    pCurrentOffset = (UINT8 *) pCurrentOffset + sizeof(NVDIMM_INTERLEAVE_INFORMATION);
+      /**
+        Identification Information tables
+      **/
+      PmPartitionSize = pDimm->pRegionsGoal[Index]->Size / pDimm->pRegionsGoal[Index]->DimmsNum;
 
-    /**
-      Identification Information tables
-    **/
-    PmPartitionSize = pDimm->pRegionsGoal[Index]->Size / pDimm->pRegionsGoal[Index]->DimmsNum;
-
-    /** Sort Dimms list according to BIOS requirement for Dimms order in interleave set **/
-    if (pDimm->pRegionsGoal[Index]->DimmsNum == NUM_OF_DIMMS_IN_SIX_WAY_INTERLEAVE_SET) {
-      Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
+      /** Sort Dimms list according to BIOS requirement for Dimms order in interleave set **/
+      if (pDimm->pRegionsGoal[Index]->DimmsNum == NUM_OF_DIMMS_IN_SIX_WAY_INTERLEAVE_SET) {
+        Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
           sizeof(DIMM *), CompareDimmOrderInInterleaveSet6Way);
-    } else {
-      Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
-          sizeof(DIMM *), CompareDimmOrderInInterleaveSet);
-    }
-    if (EFI_ERROR(Rc)) {
-      goto Finish;
-    }
-
-    for (Index2 = 0; Index2 < pDimm->pRegionsGoal[Index]->DimmsNum; Index2++) {
-      pIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *) pCurrentOffset;
-      if ((*ppConfigInput)->Header.Revision == NVDIMM_CONFIGURATION_TABLES_REVISION_1) {
-  pIdentInfo->DimmIdentification.Version1.DimmManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->Manufacturer;
-  pIdentInfo->DimmIdentification.Version1.DimmSerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
-  CopyMem_S(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber), pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
-      sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber));
-      } else {
-        pIdentInfo->DimmIdentification.Version2.Uid.ManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->VendorId;
-        if (pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingInfoValid) {
-          pIdentInfo->DimmIdentification.Version2.Uid.ManufacturingLocation = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingLocation;
-          pIdentInfo->DimmIdentification.Version2.Uid.ManufacturingDate = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingDate;
-        }
-        pIdentInfo->DimmIdentification.Version2.Uid.SerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
       }
-      pIdentInfo->PmPartitionSize = PmPartitionSize;
-      pIdentInfo->PartitionOffset = LastPersistentMemoryOffset;
+      else {
+        Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
+          sizeof(DIMM *), CompareDimmOrderInInterleaveSet);
+      }
+      if (EFI_ERROR(Rc)) {
+        goto Finish;
+      }
 
-      pCurrentOffset = (UINT8 *) pCurrentOffset + sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
+      for (Index2 = 0; Index2 < pDimm->pRegionsGoal[Index]->DimmsNum; Index2++) {
+        NVDIMM_IDENTIFICATION_INFORMATION *pIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)pCurrentOffset;
+        if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1((*ppConfigInput))) {
+          pIdentInfo->DimmIdentification.Version1.DimmManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->Manufacturer;
+          pIdentInfo->DimmIdentification.Version1.DimmSerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
+          CopyMem_S(pIdentInfo->DimmIdentification.Version1.DimmPartNumber, sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber), pDimm->pRegionsGoal[Index]->pDimms[Index2]->PartNumber,
+            sizeof(pIdentInfo->DimmIdentification.Version1.DimmPartNumber));
+        }
+        else {
+          pIdentInfo->DimmIdentification.Version2.Uid.ManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->VendorId;
+          if (pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingInfoValid) {
+            pIdentInfo->DimmIdentification.Version2.Uid.ManufacturingLocation = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingLocation;
+            pIdentInfo->DimmIdentification.Version2.Uid.ManufacturingDate = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingDate;
+          }
+          pIdentInfo->DimmIdentification.Version2.Uid.SerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
+        }
+        pIdentInfo->PmPartitionSize = PmPartitionSize;
+        pIdentInfo->PartitionOffset = LastPersistentMemoryOffset;
+
+        pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
+      }
+
+      LastPersistentMemoryOffset += PmPartitionSize;
     }
+  }
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1((*ppConfigInput)))  {
+    for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
+      NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurrentOffset;
 
-    LastPersistentMemoryOffset += PmPartitionSize;
+      pInterleaveInfo->Header.Type = PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE;
+      pInterleaveInfo->Header.Length =
+        (UINT16)sizeof(NVDIMM_INTERLEAVE_INFORMATION3)
+        + (UINT16)pDimm->pRegionsGoal[Index]->DimmsNum * (UINT16)sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
+
+      pInterleaveInfo->InterleaveSetIndex = pDimm->pRegionsGoal[Index]->InterleaveSetIndex;
+      pInterleaveInfo->NumOfDimmsInInterleaveSet = (UINT8)pDimm->pRegionsGoal[Index]->DimmsNum;
+
+      pInterleaveInfo->InterleaveMemoryType = NVDIMM_MEMORY_PERSISTENT_TYPE;
+
+      pInterleaveInfo->InterleaveFormatChannel = pDimm->pRegionsGoal[Index]->ChannelInterleaving;
+      pInterleaveInfo->InterleaveFormatImc = pDimm->pRegionsGoal[Index]->ImcInterleaving;
+
+      pInterleaveInfo->InterleaveChangeStatus = 0; // Used by Config Output, 0 for Config Input
+
+      pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_INTERLEAVE_INFORMATION3);
+
+      /**
+        Identification Information tables
+      **/
+      PmPartitionSize = pDimm->pRegionsGoal[Index]->Size / pDimm->pRegionsGoal[Index]->DimmsNum;
+
+      /** Sort Dimms list according to BIOS requirement for Dimms order in interleave set **/
+      if (pDimm->pRegionsGoal[Index]->DimmsNum == NUM_OF_DIMMS_IN_SIX_WAY_INTERLEAVE_SET) {
+        Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
+          sizeof(DIMM *), CompareDimmOrderInInterleaveSet6Way);
+      }
+      else {
+        Rc = BubbleSort(pDimm->pRegionsGoal[Index]->pDimms, pDimm->pRegionsGoal[Index]->DimmsNum,
+          sizeof(DIMM *), CompareDimmOrderInInterleaveSet);
+      }
+      if (EFI_ERROR(Rc)) {
+        goto Finish;
+      }
+
+      for (Index2 = 0; Index2 < pDimm->pRegionsGoal[Index]->DimmsNum; Index2++) {
+        NVDIMM_IDENTIFICATION_INFORMATION3 *pIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pCurrentOffset;
+        pIdentInfo->DimmIdentification.ManufacturerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->VendorId;
+        if (pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingInfoValid) {
+          pIdentInfo->DimmIdentification.ManufacturingLocation = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingLocation;
+          pIdentInfo->DimmIdentification.ManufacturingDate = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ManufacturingDate;
+        }
+        pIdentInfo->DimmIdentification.SerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
+        pIdentInfo->PmPartitionSize = PmPartitionSize;
+        pIdentInfo->PartitionOffset = LastPersistentMemoryOffset;
+        //Valid for CCUR. Populated by BIOS on successful request
+        pIdentInfo->DimmLocation.AsUint64 = 0;
+
+        pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
+      }
+
+      LastPersistentMemoryOffset += PmPartitionSize;
+    }
   }
 
   /**
@@ -566,8 +638,7 @@ BOOLEAN IsPcdConfInputHeaderValid(NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput, U
   else if (!IsChecksumValid(pPcdConfInput, pPcdConfInput->Header.Length)) {
     NVDIMM_DBG("The checksum of Config Input table is invalid.");
   }
-  else if ((pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-    (pPcdConfInput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+  else if (IS_ACPI_HEADER_REV_INVALID(pPcdConfInput)) {
     NVDIMM_DBG("Revision of PCD Config Input table is invalid");
   }
   else {
@@ -601,8 +672,7 @@ BOOLEAN IsPcdConfOutputHeaderValid(NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput
   else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
     NVDIMM_DBG("The checksum of Config Output table is invalid.");
   }
-  else if ((pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-    (pPcdConfOutput->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+  else if (IS_ACPI_HEADER_REV_INVALID(pPcdConfOutput)) {
     NVDIMM_DBG("Revision of PCD Config Output table is invalid");
   }
   else {
@@ -625,7 +695,7 @@ BOOLEAN IsPcdConfOutputHeaderValid(NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput
 BOOLEAN IsPcdCurrentConfHeaderValid(NVDIMM_CURRENT_CONFIG *pPcdCurrentConf, UINT32 PcdOemPartitionSize)
 {
   if (NULL == pPcdCurrentConf) {
-    NVDIMM_DBG("DIMM Config Output table is NULL");
+    NVDIMM_DBG("DIMM Current Config table is NULL");
   }
   else if (pPcdCurrentConf->Header.Signature != NVDIMM_CURRENT_CONFIG_SIG) {
     NVDIMM_DBG("Incorrect signature of the DIMM Current Config table");
@@ -633,8 +703,7 @@ BOOLEAN IsPcdCurrentConfHeaderValid(NVDIMM_CURRENT_CONFIG *pPcdCurrentConf, UINT
   else if (pPcdCurrentConf->Header.Length > PcdOemPartitionSize) {
     NVDIMM_DBG("Length of PCD Current Config header is greater than max PCD OEM partition size");
   }
-  else if ((pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_1) &&
-    (pPcdCurrentConf->Header.Revision != NVDIMM_CONFIGURATION_TABLES_REVISION_2)) {
+  else if (IS_ACPI_HEADER_REV_INVALID(pPcdCurrentConf)) {
     NVDIMM_DBG("Revision of PCD Current Config table is invalid");
   }
   else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {

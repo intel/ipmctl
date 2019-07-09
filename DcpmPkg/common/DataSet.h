@@ -28,6 +28,10 @@
 #define ACPITYPE_MODE_STR     L"Type"
 #define REGISTER_MODE_STR     L"Register"
 #define SMBIOS_MODE_STR       L"Smbios"
+#define DIE_NODE_STR          L"Die"
+#define IMC_NODE_STR          L"Imc"
+#define CHANNEL_NODE_STR      L"Channel"
+#define SLOT_NODE_STR         L"Slot"
 
 /*
 * Types of values supported in DataSets.

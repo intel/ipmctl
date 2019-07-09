@@ -1553,7 +1553,7 @@ NvmDimmDriverDriverBindingStart(
    }
 
    /**
-   load the ACPI Tables (NFIT and PCAT)
+   load the ACPI Tables (NFIT, PCAT and PMTT)
    **/
    ReturnCode = initAcpiTables();
    if (EFI_ERROR(ReturnCode)) {
@@ -1631,9 +1631,9 @@ Finish:
   }
 
 FinishSkipClose:
-  NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
+	NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
+	NVDIMM_EXIT_I64(ReturnCode);
+	return ReturnCode;
 }
 #endif // !OS_BUILD
 /**
@@ -1822,6 +1822,9 @@ NvmDimmDriverDriverBindingStop(
   /** Free NFIT tables memory **/
   FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
 
+  /** Free PMTT tables memory **/
+  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
+
   if (gNvmDimmData->HiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmData->HiiHandle);
     gNvmDimmData->HiiHandle = NULL;
@@ -1844,6 +1847,9 @@ Finish:
 
   /** Free NFIT tables memory **/
   FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+
+  /** Free PMTT tables memory **/
+  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
 
 #endif //not OS_BUILD
 #if _BullseyeCoverage

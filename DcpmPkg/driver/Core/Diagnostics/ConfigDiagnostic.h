@@ -12,6 +12,8 @@ typedef struct _BROKEN_IS
 {
   UINT16 InterleaveSetIndex;
   DIMM_UNIQUE_IDENTIFIER MissingDimmIdentifier[MAX_DIMMS];
+  DIMM_LOCATION CurrentDimmLocations[MAX_DIMMS];
+  DIMM_LOCATION MisplacedDimmLocations[MAX_DIMMS];
   UINT16 MissingDimmCount;
 } BROKEN_IS;
 

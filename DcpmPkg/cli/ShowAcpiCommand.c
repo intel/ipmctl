@@ -87,7 +87,7 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   ParsedFitHeader *pNFit = NULL;
   ParsedPcatHeader *pPcat = NULL;
-  PMTT_TABLE *pPMTT = NULL;
+  TABLE_HEADER *pPMTT = NULL;
   CHAR16 *pSystemTargetValue = NULL;
   CHAR16 **ppStringElements = NULL;
   UINT32 ElementsCount = 0;
@@ -158,7 +158,7 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   }
 
   if (ChosenAcpiSystem == AcpiAll || ChosenAcpiSystem == AcpiPMTT) {
-    ReturnCode = pNvmDimmConfigProtocol->GetAcpiPMTT(pNvmDimmConfigProtocol, &pPMTT);
+    ReturnCode = pNvmDimmConfigProtocol->GetAcpiPMTT(pNvmDimmConfigProtocol, (VOID *)&pPMTT);
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"PMTT table not found.\n");
       ReturnCode = EFI_SUCCESS;

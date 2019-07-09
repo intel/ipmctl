@@ -30,22 +30,40 @@ FreeParsedPcat(
   )
 {
   UINT32 Index = 0;
+  ACPI_REVISION Revision;
 
   if (pParsedPcat == NULL) {
     return;
   }
 
+  Revision = pParsedPcat->pPlatformConfigAttr->Header.Revision;
   FREE_POOL_SAFE(pParsedPcat->pPlatformConfigAttr);
 
-  for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
-    FREE_POOL_SAFE(pParsedPcat->ppPlatformCapabilityInfo[Index]);
+  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo);
   }
-  FREE_POOL_SAFE(pParsedPcat->ppPlatformCapabilityInfo);
+  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo);
+  }
 
-  for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
-    FREE_POOL_SAFE(pParsedPcat->ppMemoryInterleaveCapabilityInfo[Index]);
+  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+    for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo);
   }
-  FREE_POOL_SAFE(pParsedPcat->ppMemoryInterleaveCapabilityInfo);
+  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo);
+  }
 
   for (Index = 0; Index < pParsedPcat->RuntimeInterfaceValConfInputNum; Index++) {
     FREE_POOL_SAFE(pParsedPcat->ppRuntimeInterfaceValConfInput[Index]);
@@ -57,12 +75,76 @@ FreeParsedPcat(
   }
   FREE_POOL_SAFE(pParsedPcat->ppConfigManagementAttributesInfo);
 
-  for (Index = 0; Index < pParsedPcat->SocketSkuInfoNum; Index++) {
-    FREE_POOL_SAFE(pParsedPcat->ppSocketSkuInfoTable[Index]);
+  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+    for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable);
   }
-  FREE_POOL_SAFE(pParsedPcat->ppSocketSkuInfoTable);
+  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+      FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]);
+    }
+    FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable);
+  }
 
   FREE_POOL_SAFE(pParsedPcat);
+}
+
+/**
+  Frees the memory associated in the parsed PMTT table.
+
+  @param[in, out] pParsedPmtt pointer to the PMTT header.
+**/
+VOID
+FreeParsedPmtt(
+  IN OUT ParsedPmttHeader *pParsedPmtt
+  )
+{
+  UINT32 Index = 0;
+
+  if (pParsedPmtt == NULL) {
+    return;
+  }
+
+  FREE_POOL_SAFE(pParsedPmtt->pPmtt);
+
+  for (Index = 0; Index < pParsedPmtt->SocketsNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppSockets[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppSockets);
+
+  for (Index = 0; Index < pParsedPmtt->DiesNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppDies[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppDies);
+
+  for (Index = 0; Index < pParsedPmtt->iMCsNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppiMCs[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppiMCs);
+
+  for (Index = 0; Index < pParsedPmtt->ChannelsNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppChannels[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppChannels);
+
+  for (Index = 0; Index < pParsedPmtt->SlotsNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppSlots[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppSlots);
+
+  for (Index = 0; Index < pParsedPmtt->DDRModulesNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppDDRModules[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppDDRModules);
+
+  for (Index = 0; Index < pParsedPmtt->DCPMModulesNum; Index++) {
+    FREE_POOL_SAFE(pParsedPmtt->ppDCPMModules[Index]);
+  }
+  FREE_POOL_SAFE(pParsedPmtt->ppDCPMModules);
+
+  FREE_POOL_SAFE(pParsedPmtt);
 }
 
 /**

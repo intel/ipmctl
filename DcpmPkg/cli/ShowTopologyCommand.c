@@ -16,6 +16,12 @@
 #define DS_ROOT_PATH                        L"/DimmTopologyList"
 #define DS_DIMM_TOPOLOGY_PATH               L"/DimmTopologyList/DimmTopology"
 #define DS_DIMM_TOPOLOGY_INDEX_PATH         L"/DimmTopologyList/DimmTopology[%d]"
+#define DS_DIMM_SOCKET_INDEX_PATH           L"/DimmTopologyList/Socket[%d]"
+#define DS_DIMM_DIE_INDEX_PATH              L"/DimmTopologyList/Socket[%d]/Die[%d]"
+#define DS_DIMM_IMC_INDEX_PATH              L"/DimmTopologyList/Socket[%d]/Die[%d]/Imc[%d]"
+#define DS_DIMM_CHANNEL_INDEX_PATH          L"/DimmTopologyList/Socket[%d]/Die[%d]/Imc[%d]/Channel[%d]"
+#define DS_DIMM_SLOT_INDEX_PATH             L"/DimmTopologyList/Socket[%d]/Die[%d]/Imc[%d]/Channel[%d]/Slot[%d]"
+#define DS_DIMM_DIMM_INDEX_PATH             L"/DimmTopologyList/Socket[%d]/Die[%d]/Imc[%d]/Channel[%d]/Slot[%d]/Dimm[%d]"
 
  /*
    *  PRINT LIST ATTRIBUTES
@@ -25,7 +31,7 @@
    *     PhysicalID=0x0051
    *     ...
    */
-PRINTER_LIST_ATTRIB ShowTopoListAttributes =
+PRINTER_LIST_ATTRIB ShowTopoListAttributesPmtt1 =
 {
  {
     {
@@ -33,6 +39,48 @@ PRINTER_LIST_ATTRIB ShowTopoListAttributes =
       L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---",      //NULL or GROUP LEVEL HEADER
       SHOW_LIST_IDENT L"%ls=%ls",                         //NULL or KEY VAL FORMAT STR
       DIMM_ID_STR                                         //NULL or IGNORE KEY LIST (K1;K2)
+    }
+  }
+};
+
+PRINTER_LIST_ATTRIB ShowTopoListAttributesPmtt2 =
+{
+ {
+    {
+      SOCKET_NODE_STR,                                                                                                               //GROUP LEVEL TYPE
+      L"---" SOCKET_ID_STR L"=$(" SOCKET_ID_STR L")---",                                                                             //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                                                                                    //NULL or KEY VAL FORMAT STR
+      SOCKET_ID_STR                                                                                                                  //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      DIE_NODE_STR,                                                                                                                  //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT L"---" DIE_ID_STR L"=$(" DIE_ID_STR L")---",                                                                   //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                                                                                    //NULL or KEY VAL FORMAT STR
+      DIE_ID_STR                                                                                                                     //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      IMC_NODE_STR,                                                                                                                  //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT SHOW_LIST_IDENT L"---" MEMORY_CONTROLLER_STR L"=$(" MEMORY_CONTROLLER_STR L")---",                             //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                                                                                    //NULL or KEY VAL FORMAT STR
+      MEMORY_CONTROLLER_STR                                                                                                          //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      CHANNEL_NODE_STR,                                                                                                              //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT L"---" CHANNEL_ID_STR L"=$(" CHANNEL_ID_STR L")---",                           //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                                                                                    //NULL or KEY VAL FORMAT STR
+      CHANNEL_ID_STR                                                                                                                 //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      SLOT_NODE_STR,                                                                                                                 //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT L"---" CHANNEL_POS_STR L"=$(" CHANNEL_POS_STR L")---",         //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT L"%ls=%ls",                                                                                                    //NULL or KEY VAL FORMAT STR
+      CHANNEL_POS_STR                                                                                                                //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      DIMM_NODE_STR,                                                                                                                 //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT L"---" DIMM_ID_STR L"=$(" DIMM_ID_STR L")---", //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L": " FORMAT_STR,   //NULL or KEY VAL FORMAT STR,
+      DIMM_ID_STR                                                                                                                    //NULL or IGNORE KEY LIST (K1;K2)
     }
   }
 };
@@ -76,9 +124,15 @@ PRINTER_TABLE_ATTRIB ShowTopoTableAttributes =
 };
 
 
-PRINTER_DATA_SET_ATTRIBS ShowTopoDataSetAttribs =
+PRINTER_DATA_SET_ATTRIBS ShowTopoDataSetAttribsPmtt1 =
 {
-  &ShowTopoListAttributes,
+  &ShowTopoListAttributesPmtt1,
+  &ShowTopoTableAttributes
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowTopoDataSetAttribsPmtt2 =
+{
+  &ShowTopoListAttributesPmtt2,
   &ShowTopoTableAttributes
 };
 
@@ -91,7 +145,6 @@ struct Command ShowTopologyCommand =
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"", HELP_ALL_DETAILS_TEXT, FALSE, ValueEmpty},
-    {DISPLAY_OPTION_SHORT, DISPLAY_OPTION, L"", HELP_TEXT_ATTRIBUTES, HELP_DISPLAY_DETAILS_TEXT, FALSE, ValueRequired},
     {UNITS_OPTION_SHORT, UNITS_OPTION, L"", UNITS_OPTION_HELP, HELP_UNIT_DETAILS_TEXT, FALSE, ValueRequired}
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
@@ -108,19 +161,7 @@ struct Command ShowTopologyCommand =
   TRUE
 };
 
-CHAR16 *mppAllowedShowTopologyDisplayValues[] = {
-  MEMORY_TYPE_STR,
-  CAPACITY_STR,
-  PHYSICAL_ID_STR,
-  DIMM_ID_STR,
-  DEVICE_LOCATOR_STR,
-  SOCKET_ID_STR,
-  MEMORY_CONTROLLER_STR,
-  CHANNEL_ID_STR,
-  CHANNEL_POS_STR,
-  NODE_CONTROLLER_ID_STR,
-  BANK_LABEL_STR
-};
+CHAR16 *mppAllowedShowTopologyDisplayValues[] = {0};
 
 /** Register the command **/
 EFI_STATUS
@@ -157,10 +198,7 @@ ShowTopology(
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN AllOptionSet = FALSE;
-  BOOLEAN DisplayOptionSet = FALSE;
   BOOLEAN Found = FALSE;
-  BOOLEAN ShowAll = FALSE;
-  CHAR16 *pDisplayValues = NULL;
   CHAR16 *pSocketsValue = NULL;
   CHAR16 *pDimmsValue = NULL;
   CHAR16 *pMemoryType = NULL;
@@ -175,6 +213,12 @@ ShowTopology(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   UINT32 TopoCnt = 0;
   BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
+  UINT16 SocketID = MAX_UINT16;
+  UINT16 DieID = MAX_UINT16;
+  UINT16 MemControllerID = MAX_UINT16;
+  UINT16 ChannelID = MAX_UINT16;
+  UINT16 SlotID = MAX_UINT16;
+  ACPI_REVISION Revision;
 
   NVDIMM_ENTRY();
 
@@ -217,8 +261,6 @@ ShowTopology(
   }
 
   AllOptionSet = pDispOptions->AllOptionSet;
-  DisplayOptionSet = pDispOptions->DisplayOptionSet;
-  pDisplayValues = pDispOptions->pDisplayValues;
 
   ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {
@@ -307,219 +349,214 @@ ShowTopology(
     }
   }
 
+  Revision.AsUint8 = pTopologyDimms[Index].PmttVersion;
   /** display a summary table of all dimms **/
-  if (!AllOptionSet && !DisplayOptionSet) {
-
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pDimms[Index].SocketId)) {
+  if (!AllOptionSet) {
+    //Print topology for DDR4 entries if no dimm target specified
+    for (Index = 0; Index < TopologyDimmsNumber; Index++) {
+      if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
         continue;
       }
       if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
         continue;
       }
-      ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
-          DimmStr, MAX_DIMM_UID_LENGTH);
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
-      }
 
-      pMemoryType = MemoryTypeToStr(pDimms[Index].MemoryType);
-      ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
+      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
+        break;
+      }
+      pMemoryType = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pTopologyDimms[Index].VolatileCapacity,
+        UnitsToDisplay, TRUE, &pCapacityStr);
+      KEEP_ERROR(ReturnCode, TempReturnCode);
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+          DimmStr, MAX_DIMM_UID_LENGTH);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      }
+      else {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
+      }
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pMemoryType);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pDimms[Index].DimmID);
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pDimms[Index].DeviceLocator);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DimmID);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pTopologyDimms[Index].DeviceLocator);
       ++TopoCnt;
 
       FREE_POOL_SAFE(pMemoryType);
       FREE_POOL_SAFE(pCapacityStr);
     }
-
-    //Print topology for DDR4 entries if no dimm target specified
-    if (!ContainTarget(pCmd, DIMM_TARGET)) {
-      for (Index = 0; Index < TopologyDimmsNumber; Index++){
-        if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
-          continue;
-        }
-        pMemoryType = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
-        TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pTopologyDimms[Index].VolatileCapacity,
-            UnitsToDisplay, TRUE, &pCapacityStr);
-        KEEP_ERROR(ReturnCode, TempReturnCode);
-
-        PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pMemoryType);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DimmID);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pTopologyDimms[Index].DeviceLocator);
-        ++TopoCnt;
-
-        FREE_POOL_SAFE(pMemoryType);
-        FREE_POOL_SAFE(pCapacityStr);
-      }
-    }
   }
-
-  /** display detailed view **/
-  else {
-
+  /** display detailed view for PMTT 1.O **/
+  else if (IS_ACPI_REV_MAJ_0_MIN_1(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
-    ShowAll = (!AllOptionSet && !DisplayOptionSet) || AllOptionSet;
-
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pDimms[Index].SocketId)) {
+    //Print detailed topology for DDR4 entries if no dimm target specified
+    for (Index = 0; Index < TopologyDimmsNumber; Index++) {
+      if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
         continue;
       }
-
       if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
         continue;
       }
 
-      ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
-          DimmStr, MAX_DIMM_UID_LENGTH);
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
+      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
+        break;
       }
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
 
-      /** always print the DimmlID **/
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      /** Always Print DimmIDs **/
+      if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+          DimmStr, MAX_DIMM_UID_LENGTH);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      }
+      else {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
+      }
 
       /** MemoryType **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_TYPE_STR))) {
-        pTempString = MemoryTypeToStr(pDimms[Index].MemoryType);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pTempString);
-        FREE_POOL_SAFE(pTempString);
-      }
+      pTempString = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pTempString);
+      FREE_POOL_SAFE(pTempString);
 
       /** Capacity **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
-        TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[Index].CapacityFromSmbios, UnitsToDisplay, TRUE, &pCapacityStr);
-        KEEP_ERROR(ReturnCode, TempReturnCode);
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
-        FREE_POOL_SAFE(pCapacityStr);
-      }
+      //Convert Megabytes to Gigabytes and get digits after point from number
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle,
+        pTopologyDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
+      FREE_POOL_SAFE(pCapacityStr);
 
       /** PhysicalID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PHYSICAL_ID_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pDimms[Index].DimmID);
-      }
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DimmID);
 
       /** DeviceLocator **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DEVICE_LOCATOR_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pDimms[Index].DeviceLocator);
-      }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pTopologyDimms[Index].DeviceLocator);
 
-      /** SocketID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pDimms[Index].SocketId);
+      /** SocketID, MemControllerID, ChannelID, ChannelPos, NodeControllerID **/
+      if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pTopologyDimms[Index].SocketID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, FORMAT_HEX, pTopologyDimms[Index].MemControllerID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].ChannelID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_POS_STR, FORMAT_INT32, pTopologyDimms[Index].SlotID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, NODE_CONTROLLER_ID_STR, FORMAT_HEX, pTopologyDimms[Index].NodeControllerID);
       }
-
-      /** MemControllerID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_CONTROLLER_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, FORMAT_HEX, pDimms[Index].ImcId);
-      }
-
-      /** ChannelID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_ID_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_ID_STR, FORMAT_HEX, pDimms[Index].ChannelId);
-      }
-
-      /** ChannelPos **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_POS_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_POS_STR, FORMAT_INT32, pDimms[Index].ChannelPos);
-      }
-
-      /** NodeControllerID **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, NODE_CONTROLLER_ID_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, NODE_CONTROLLER_ID_STR, FORMAT_HEX, pDimms[Index].NodeControllerID);
+      else {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SOCKET_ID_STR, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CHANNEL_ID_STR, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CHANNEL_POS_STR, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, NODE_CONTROLLER_ID_STR, NOT_APPLICABLE_SHORT_STR);
       }
 
       /** BankLabel **/
-      if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BANK_LABEL_STR))) {
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BANK_LABEL_STR, pDimms[Index].BankLabel);
-      }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BANK_LABEL_STR, pTopologyDimms[Index].BankLabel);
 
       ++TopoCnt;
     }
+  }
+  /** display detailed view for PMTT 1.1 **/
+  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    SetDisplayInfo(L"DimmTopology", ListView, NULL);
+
     //Print detailed topology for DDR4 entries if no dimm target specified
-    if (!ContainTarget(pCmd, DIMM_TARGET)) {
-      for (Index = 0; Index < TopologyDimmsNumber; Index++) {
-
-        PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
-
-        /** Always Print DimmIDs **/
-        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
-
-        /** MemoryType **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_TYPE_STR))) {
-          pTempString = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pTempString);
-          FREE_POOL_SAFE(pTempString);
-        }
-
-        /** Capacity **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CAPACITY_STR))) {
-          //Convert Megabytes to Gigabytes and get digits after point from number
-          TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle,
-              pTopologyDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
-          KEEP_ERROR(ReturnCode, TempReturnCode);
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
-          FREE_POOL_SAFE(pCapacityStr);
-        }
-
-        /** PhysicalID **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, PHYSICAL_ID_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DimmID);
-        }
-
-        /** DeviceLocator **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, DEVICE_LOCATOR_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pTopologyDimms[Index].DeviceLocator);
-        }
-
-        /** SocketID **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, SOCKET_ID_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SOCKET_ID_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-
-        /** MemControllerID **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, MEMORY_CONTROLLER_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-
-        /** ChannelID **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_ID_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CHANNEL_ID_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-
-        /** ChannelPos **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, CHANNEL_POS_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CHANNEL_POS_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-
-        /** NodeControllerID **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, NODE_CONTROLLER_ID_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, NODE_CONTROLLER_ID_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-
-        /** BankLabel **/
-        if (ShowAll || (DisplayOptionSet && ContainsValue(pDisplayValues, BANK_LABEL_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BANK_LABEL_STR, pTopologyDimms[Index].BankLabel);
-        }
-
-        ++TopoCnt;
+    for (Index = 0; Index < TopologyDimmsNumber; Index++) {
+      if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
+        continue;
       }
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+        continue;
+      }
+
+      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
+        break;
+      }
+
+      /** SocketID **/
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_SOCKET_INDEX_PATH, pTopologyDimms[Index].SocketID);
+      SocketID = pTopologyDimms[Index].SocketID;
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SOCKET_ID_STR, FORMAT_HEX, pTopologyDimms[Index].SocketID);
+
+      /** DieID **/
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_DIE_INDEX_PATH, SocketID, pTopologyDimms[Index].DieID);
+      DieID = pTopologyDimms[Index].DieID;
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIE_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DieID);
+
+      /** MemControllerID **/
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_IMC_INDEX_PATH, SocketID, DieID, pTopologyDimms[Index].MemControllerID);
+      MemControllerID = pTopologyDimms[Index].MemControllerID;
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_CONTROLLER_STR, FORMAT_HEX, pTopologyDimms[Index].MemControllerID);
+
+      /** ChannelID **/
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_CHANNEL_INDEX_PATH, SocketID, DieID, MemControllerID, pTopologyDimms[Index].ChannelID);
+      ChannelID = pTopologyDimms[Index].ChannelID;
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].ChannelID);
+
+      /** ChannelPos **/
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_SLOT_INDEX_PATH, SocketID, DieID, MemControllerID, ChannelID, pTopologyDimms[Index].SlotID);
+      SlotID = pTopologyDimms[Index].SlotID;
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, CHANNEL_POS_STR, FORMAT_HEX, pTopologyDimms[Index].SlotID);
+
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_DIMM_INDEX_PATH, SocketID, DieID, MemControllerID, ChannelID, SlotID, TopoCnt);
+      /** Always Print DimmIDs **/
+      if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+          DimmStr, MAX_DIMM_UID_LENGTH);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+      }
+      else {
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
+      }
+
+      /** MemoryType **/
+      pTempString = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, pTempString);
+      FREE_POOL_SAFE(pTempString);
+
+      /** Capacity **/
+      //Convert Megabytes to Gigabytes and get digits after point from number
+      TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle,
+        pTopologyDimms[Index].VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+      KEEP_ERROR(ReturnCode, TempReturnCode);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
+      FREE_POOL_SAFE(pCapacityStr);
+
+      /** PhysicalID **/
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pTopologyDimms[Index].DimmID);
+
+      /** DeviceLocator **/
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DEVICE_LOCATOR_STR, pTopologyDimms[Index].DeviceLocator);
+
+      /** NodeControllerID **/
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, NODE_CONTROLLER_ID_STR, FORMAT_HEX, pTopologyDimms[Index].NodeControllerID);
+
+      /** BankLabel **/
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, BANK_LABEL_STR, pTopologyDimms[Index].BankLabel);
+
+      ++TopoCnt;
     }
   }
 
   //Specify table attributes
-  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowTopoDataSetAttribs);
+  if (IS_ACPI_REV_MAJ_0_MIN_1(Revision)) {
+    PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowTopoDataSetAttribsPmtt1);
+  }
+  else {
+    PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowTopoDataSetAttribsPmtt2);
+  }
+
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);

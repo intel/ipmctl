@@ -1282,6 +1282,29 @@ SecurityToString(
   );
 
 /**
+  Retrieve the number of bits set in a number
+  Based on Brian Kernighan's Algorithm
+
+  @param[in] Number Number in which number of bits set is to be counted
+  @param[out] pNumOfBitsSet Number of bits set
+**/
+EFI_STATUS CountNumOfBitsSet(
+  IN  UINT64 Number,
+  OUT UINT8  *pNumOfBitsSet
+);
+
+/**
+  Retrieve the bitmap for NumOfChannelWays
+
+  @param[in] NumOfChannelWays Number of ChannelWays or Number of Dimms used in an Interleave Set
+  @param[out] pBitField Bitmap based on PCAT 2.0 Type 1 Table for ChannelWays
+**/
+EFI_STATUS GetBitFieldForNumOfChannelWays(
+  IN  UINT64 NumOfChannelWays,
+  OUT UINT16  *pBitField
+);
+
+/**
   Convert dimm's security state bitmask to its respective string
 
   @param[in] HiiHandle handle to the HII database that contains i18n strings

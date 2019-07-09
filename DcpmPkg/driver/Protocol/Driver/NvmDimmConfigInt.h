@@ -67,16 +67,17 @@ ValidateImageVersion(
 );
 
 /**
-Parse EFI_ACPI_DESCRIPTION_HEADER (DSDT) and fetch NFIT & PCAT pointers to table
-Also, parse PMTT table to check if MM can be configured
-@param[in] pDsdt a pointer to EFI_ACPI_DESCRIPTION_HEADER instance for each of NFIT, PMTT and PCAT
-@param[out] ppFitHead pointer to pointer to store NFIT table
-@param[out] ppPcatHead pointer to pointer to store PCAT table
-@param[out] pIsMemoryModeAllowed pointer to check if MM can be configured
+  Parse EFI_ACPI_DESCRIPTION_HEADER (DSDT) and fetch NFIT & PCAT pointers to table
+  Also, parse PMTT table to check if MM can be configured
+  @param[in] pDsdt a pointer to EFI_ACPI_DESCRIPTION_HEADER instance for each of NFIT, PMTT and PCAT
+  @param[out] ppFitHead pointer to pointer to store NFIT table
+  @param[out] ppPcatHead pointer to pointer to store PCAT table
+  @param[out] ppPmttHead pointer to pointer to store PMTT table
+  @param[out] pIsMemoryModeAllowed pointer to check if MM can be configured
 
-@retval EFI_INVALID_PARAMETER passed NULL argument
-@retval EFI_DEVICE_ERROR could not parse at least one of the tables
-@retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_DEVICE_ERROR could not parse at least one of the tables
+  @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
 ParseAcpiTables(
@@ -85,6 +86,7 @@ ParseAcpiTables(
   IN     CONST EFI_ACPI_DESCRIPTION_HEADER *pPMTT,
   OUT ParsedFitHeader **ppFitHead,
   OUT ParsedPcatHeader **ppPcatHead,
+  OUT ParsedPmttHeader **ppPmttHead,
   OUT BOOLEAN *pIsMemoryModeAllowed
 );
 

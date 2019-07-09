@@ -23,6 +23,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 /** common display options **/
 #define SOCKET_ID_STR               L"SocketID"
+#define DIE_ID_STR                  L"DieID"
 #define DIMM_ID_STR                 L"DimmID"
 #define TAG_ID_STR                  L"TagID"
 #define EXIT_CODE_STR               L"RC"
@@ -664,8 +665,9 @@ DumpToFile (
 /**
   Prints supported or recommended appdirect settings
 
-  @param[in] pFormatList pointer to variable length interleave formats array
+  @param[in] pInterleaveFormatList pointer to variable length interleave formats array
   @param[in] FormatNum number of the appdirect settings formats
+  @param[in] pInterleaveSize pointer to Channel & iMc interleave size
   @param[in] PrintRecommended if TRUE Recommended settings will be printed
              if FALSE Supported settings will be printed
   @param[in] Mode Set mode to print different format
@@ -673,11 +675,12 @@ DumpToFile (
 **/
 CHAR16*
 PrintAppDirectSettings(
-  IN    INTERLEAVE_FORMAT *pFormatList,
+  IN    VOID *pInterleaveFormatList,
   IN    UINT16 FormatNum,
+  IN    INTERLEAVE_SIZE *pInterleaveSize,
   IN    BOOLEAN PrintRecommended,
   IN    UINT8 Mode
-);
+  );
 
 /**
   Read source file and return current passphrase to unlock device.

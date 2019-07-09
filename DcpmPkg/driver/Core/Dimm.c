@@ -1195,25 +1195,55 @@ RemoveDimmInventory(
 }
 
 VOID
-InitializeDimmFieldsFromNfit(
-  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
+InitializeDimmFieldsFromAcpiTables(
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTbl,
   IN     ControlRegionTbl *pControlRegionTbl,
+  IN     ParsedPmttHeader *pPmttHead,
      OUT DIMM *pDimm
   )
 {
+  PMTT_MODULE_INFO *pPmttModuleInfo = NULL;
   pDimm->Signature = DIMM_SIGNATURE;
   pDimm->Configured = FALSE;
   pDimm->ISsNum = 0;
-  if (pNvDimmRegionMappingStructure != NULL) {
-    pDimm->SocketId = (UINT16)NFIT_NODE_SOCKET_TO_SOCKET_INDEX(pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.NodeControllerId,
-      pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.SocketId);
-    pDimm->DimmID = pNvDimmRegionMappingStructure->NvDimmPhysicalId;
-    pDimm->DeviceHandle.AsUint32 = pNvDimmRegionMappingStructure->DeviceHandle.AsUint32;
-    pDimm->ImcId = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.MemControllerId;
-    pDimm->NodeControllerID = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.NodeControllerId;
-    pDimm->ChannelId = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.MemChannel;
-    pDimm->ChannelPos = (UINT16)pNvDimmRegionMappingStructure->DeviceHandle.NfitDeviceHandle.DimmNumber;
-    pDimm->NvDimmStateFlags = pNvDimmRegionMappingStructure->NvDimmStateFlags;
+
+  if (pNvDimmRegionTbl != NULL) {
+    /**
+      ACPI 6.3, if BIT 31 of NfitDeviceHandle is set initialize DIMM fields from PMTT
+      Previous versions of ACPI use NFIT only considering BIT 31 is zero
+    **/
+    if (!(pNvDimmRegionTbl->DeviceHandle.AsUint32 & BIT31) || pPmttHead == NULL) {
+      pDimm->SocketId = (UINT16)NFIT_NODE_SOCKET_TO_SOCKET_INDEX(pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId,
+        pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId);
+      pDimm->DimmID = pNvDimmRegionTbl->NvDimmPhysicalId;
+      pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
+      pDimm->ImcId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemControllerId;
+      pDimm->NodeControllerID = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.NodeControllerId;
+      pDimm->ChannelId = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.MemChannel;
+      pDimm->ChannelPos = (UINT16)pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.DimmNumber;
+      pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
+    } else {
+      if (pPmttHead != NULL) {
+        if (!IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPmttHead->pPmtt)) {
+          NVDIMM_DBG("Unexpected PMTT version!");
+          return;
+        }
+        pPmttModuleInfo = GetDimmModuleByPidFromPmtt(pNvDimmRegionTbl->NvDimmPhysicalId, pPmttHead);
+        if (pPmttModuleInfo == NULL) {
+          NVDIMM_DBG("DIMM Module not found in PMTT");
+          return;
+        }
+
+        pDimm->SocketId = pPmttModuleInfo->CpuId;
+        pDimm->DimmID = pPmttModuleInfo->SmbiosHandle;
+        pDimm->DeviceHandle.AsUint32 = pNvDimmRegionTbl->DeviceHandle.AsUint32;
+        pDimm->ImcId = pPmttModuleInfo->MemControllerId;
+        pDimm->NodeControllerID = SOCKET_INDEX_TO_NFIT_NODE_ID(pPmttModuleInfo->SocketId);
+        pDimm->ChannelId = pPmttModuleInfo->ChannelId;
+        pDimm->ChannelPos = pPmttModuleInfo->SlotId;
+        pDimm->NvDimmStateFlags = pPmttModuleInfo->Header.Flags;
+      }
+    }
   }
 
   if (pControlRegionTbl != NULL) {
@@ -1251,6 +1281,7 @@ InitializeDimmInventory(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TmpReturnCode = EFI_SUCCESS;
   ParsedFitHeader *pFitHead = NULL;
+  ParsedPmttHeader *pPmttHead = NULL;
   NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructures = NULL;
   ControlRegionTbl *pDimmControlRegionTable = NULL;
   DIMM *pTmpDimm = NULL;
@@ -1266,6 +1297,7 @@ InitializeDimmInventory(
   InitializeCpuCommands();
 #endif
   pFitHead = pDev->pFitHead;
+  pPmttHead = pDev->pPmttHead;
   ppNvDimmRegionMappingStructures = pFitHead->ppNvDimmRegionMappingStructures;
 
   for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
@@ -1280,8 +1312,9 @@ InitializeDimmInventory(
     if (EFI_ERROR(TmpReturnCode) || pDimmControlRegionTable == NULL) {
       ReturnCode = TmpReturnCode;
       NVDIMM_DBG("Could not find the Control Region Table for the NvDimm Region Table.");
-    } else if (!GetDimmByPid(ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
-      TmpReturnCode = InitializeDimm(&pTmpDimm, pFitHead, ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
+    }
+    else if (!GetDimmByPid(ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
+      TmpReturnCode = InitializeDimm(&pTmpDimm, pFitHead, pPmttHead, ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
       if (!EFI_ERROR(TmpReturnCode) && (pTmpDimm != NULL)) {
         TmpReturnCode = InsertDimm(pTmpDimm, pDev);
         if (EFI_ERROR(TmpReturnCode)) {
@@ -1317,7 +1350,7 @@ InitializeDimmInventory(
         continue;
       }
 
-      InitializeDimmFieldsFromNfit(ppNvDimmRegionMappingStructures[Index], pDimmControlRegionTable, pNewUnInitDimm);
+      InitializeDimmFieldsFromAcpiTables(ppNvDimmRegionMappingStructures[Index], pDimmControlRegionTable, pPmttHead, pNewUnInitDimm);
 
       InsertTailList(&gNvmDimmData->PMEMDev.UninitializedDimms, &pNewUnInitDimm->DimmNode);
     }
@@ -2312,8 +2345,10 @@ EFI_STATUS ValidatePcdOemHeader(
     return EFI_VOLUME_CORRUPTED;
   }
 
-  if ((pOemHeader->Header.Revision > NVDIMM_CONFIGURATION_HEADER_REVISION) ||
-  (pOemHeader->Header.Revision < NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION)){
+  if (((pOemHeader->Header.Revision.AsUint8 > NVDIMM_CONFIGURATION_HEADER_REVISION) ||
+  (pOemHeader->Header.Revision.AsUint8 < NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION)) &&
+    ((pOemHeader->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_REVISION_1) ||
+    (pOemHeader->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1))) {
     NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
     return EFI_VOLUME_CORRUPTED;
   }
@@ -4977,6 +5012,7 @@ EFI_STATUS
 InitializeDimm (
      OUT DIMM **ppDimm,
   IN     ParsedFitHeader *pFitHead,
+  IN     ParsedPmttHeader *pPmttHead,
   IN     UINT16 Pid
   )
 {
@@ -5050,7 +5086,7 @@ InitializeDimm (
   }
 
   InitializeListHead(&pNewDimm->StorageNamespaceList);
-  InitializeDimmFieldsFromNfit(pNewDimm->pRegionMappingStructure, pControlRegTbl, pNewDimm);
+  InitializeDimmFieldsFromAcpiTables(pNewDimm->pRegionMappingStructure, pControlRegTbl, pPmttHead, pNewDimm);
 
   ReturnCode = GetControlRegionTablesForPID(pFitHead, Pid, pControlRegTbls, &ControlRegTblsNum);
   if (EFI_ERROR(ReturnCode)) {
@@ -5782,7 +5818,7 @@ GenerateOemPcdHeader (
 {
   pPlatformConfigData->Header.Signature = NVDIMM_CONFIGURATION_HEADER_SIG;
   pPlatformConfigData->Header.Length = sizeof (*pPlatformConfigData);
-  pPlatformConfigData->Header.Revision = NVDIMM_CONFIGURATION_HEADER_REVISION;
+  pPlatformConfigData->Header.Revision.AsUint8 = NVDIMM_CONFIGURATION_HEADER_REVISION;
   CopyMem_S(&pPlatformConfigData->Header.OemId, sizeof(pPlatformConfigData->Header.OemId), NVDIMM_CONFIGURATION_HEADER_OEM_ID, NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN);
   pPlatformConfigData->Header.OemTableId = NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID;
   pPlatformConfigData->Header.OemRevision = NVDIMM_CONFIGURATION_HEADER_OEM_REVISION;

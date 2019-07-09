@@ -107,9 +107,10 @@ typedef struct _REGION_GOAL {
 **/
 EFI_STATUS
 InitializeIS(
-  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
+  IN     VOID *pInterleaveInfoTable,
   IN     UINT16 RegionId,
-     OUT NVM_IS **ppIS
+  IN     ACPI_REVISION PcdConfRevision,
+  OUT NVM_IS **ppIS
   );
 
 /**
@@ -200,8 +201,8 @@ FreeISResources(
 
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
   @param[in] pISList List of interleaveset formed so far
-  @param[in] pIdentificationInfo Identification Information table
-  @param[in] pInterleaveInfo Interleave information for the particular dimm
+  @param[in] pIdentificationInfoTable Identification Information table
+  @param[in] pInterleaveInfoTable Interleave information for the particular dimm
   @param[in] PcdConfRevision Revision of the PCD Config tables
   @param[out] pRegionId The next consecutive region id
   @param[out] ppNewIS Interleave Set parent for new dimm region
@@ -216,14 +217,14 @@ EFI_STATUS
 InitializeDimmRegion(
   IN     LIST_ENTRY *pDimmList,
   IN     LIST_ENTRY *pISList,
-  IN     NVDIMM_IDENTIFICATION_INFORMATION *pIdentificationInfo,
-  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
-  IN     UINT8 PcdConfRevision,
+  IN     VOID *pIdentificationInfoTable,
+  IN     VOID *pInterleaveInfoTable,
+  IN     ACPI_REVISION PcdConfRevision,
   OUT    UINT16 *pRegionId,
   OUT    NVM_IS **ppNewIS,
-  OUT DIMM_REGION **ppDimmRegion,
+  OUT    DIMM_REGION **ppDimmRegion,
   OUT    BOOLEAN *pISAlreadyExists
-);
+  );
 
 /**
   Retrieve Interleave Sets by using Platform Config Data from Intel NVM Dimms
@@ -252,7 +253,7 @@ RetrieveISsFromPlatformConfigData(
   @param[in] pInterleaveInfo Interleave Information table retrieve from DIMM
   @param[in] PcdCurrentConfRevision PCD Current Config table revision
   @param[in] pDimm the DIMM from which Interleave Information table was retrieved
-  @param[in, out] pRegionId Unique id for region
+  @param[in out] pRegionId Unique id for region
   @param[out] pISList Head of the list for Interleave Sets
 
   @retval EFI_SUCCESS
@@ -262,8 +263,8 @@ EFI_STATUS
 RetrieveISFromInterleaveInformationTable(
   IN     ParsedFitHeader *pFitHead,
   IN     LIST_ENTRY *pDimmList,
-  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
-  IN     UINT8 PcdCurrentConfRevision,
+  IN     VOID *pInterleaveInfoTable,
+  IN     ACPI_REVISION PcdCurrentConfRevision,
   IN     DIMM *pDimm,
   IN OUT UINT16 *pRegionId,
      OUT LIST_ENTRY *pISList
@@ -555,6 +556,8 @@ GetFreeRegionCapacity(
   @param[out] pDimmsAsymmetricalNum Returned number of items in DimmsAsymmetrical
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatileSize Volatile region size
+  @param[in] ReservedSize Reserved size requested by user
+  @param[in] pMaxPMInterleaveSets Pointer to MaxPmInterleaveSets per Die & per Dcpmm
   @param[out] pVolatileSizeActual Actual Volatile region size
   @param[out] RegionGoalTemplates Array of pool goal templates
   @param[out] pRegionGoalTemplatesNum Number of items in RegionGoalTemplates
@@ -575,6 +578,7 @@ MapRequestToActualRegionGoalTemplates(
   IN     UINT8 PersistentMemType,
   IN     UINT64 VolatileSize,
   IN     UINT64 ReservedSize,
+  IN     MAX_PMINTERLEAVE_SETS *pMaxPMInterleaveSets,
      OUT UINT64 *pVolatileSizeActual OPTIONAL,
      OUT REGION_GOAL_TEMPLATE RegionGoalTemplates[MAX_IS_PER_DIMM],
      OUT UINT32 *pRegionGoalTemplatesNum,
@@ -599,8 +603,8 @@ EFI_STATUS
 RetrieveRegionGoalFromInterleaveInformationTable(
   IN     REGION_GOAL *pRegionGoals[],
   IN     UINT32 RegionGoalsNum,
-  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
-  IN     UINT8 PcdCinRev,
+  IN     VOID *pInterleaveInfo,
+  IN     ACPI_REVISION PcdCinRev,
      OUT REGION_GOAL **ppRegionGoal,
      OUT BOOLEAN *pNew
   );
@@ -919,5 +923,20 @@ UINT8
 SetISStateWithPriority(
   IN    UINT8 CurrentState,
   IN    UINT8 NewState
+  );
+
+/**
+  Check for existing goal configs on a socket for which a new goal config has been requested
+
+  @param[in] pDimms Array of pointers to DIMMs based on the goal config requested
+  @param[in] pDimmsNum Number of pointers in pDimms
+
+  @retval EFI_ABORTED one or more DIMMs on a socket already have goal configs
+  @retval EFI_INVALID_PARAMETER pDimms or pDimmsNum is NULL
+**/
+EFI_STATUS
+CheckForExistingGoalConfigPerSocket(
+  IN    DIMM *pDimms[MAX_DIMMS],
+  IN    UINT32 *pDimmsNum
   );
 #endif

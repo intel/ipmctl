@@ -537,10 +537,29 @@ FindFreeRanges(
      OUT LIST_ENTRY *pFreeRangesList
   );
 
+/**
+  Create DIMM
+  Perform all functions needed for DIMM initialization this includes:
+  setting up mailbox structure
+  retrieving and recording security status
+  retrieving and recording the FW version
+  retrieving and recording partition information
+  setting up block windows
+
+  @param[out] ppDimm output parameter for a new DIMM structure
+  @param[in] pFitHead fully populated NVM Firmware Interface Table
+  @param[in] pPmttHead fully populated Platform Memory Topology Table
+  @param[in] Pid SMBIOS Dimm ID of the DIMM to create
+
+  @retval EFI_SUCCESS          - Success
+  @retval EFI_OUT_OF_RESOURCES - AllocateZeroPool failure
+  @retval EFI_DEVICE_ERROR     - Other errors
+**/
 EFI_STATUS
 InitializeDimm(
      OUT DIMM **ppDimm,
   IN     ParsedFitHeader *pFitHead,
+  IN     ParsedPmttHeader *pPmttHead,
   IN     UINT16 Pid
   );
 

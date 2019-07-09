@@ -3994,6 +3994,95 @@ SetObjStatusForDimmInfoWithErase(
   SetObjStatus(pCommandStatus, pDimm->DimmHandle, DimmUid, MAX_DIMM_UID_LENGTH, Status);
 }
 
+/**
+  Retrieve the number of bits set in a number
+  Based on Brian Kernighan's Algorithm
+
+  @param[in] Number Number in which number of bits set is to be counted
+  @param[out] pNumOfBitsSet Number of bits set
+**/
+EFI_STATUS CountNumOfBitsSet(
+  IN  UINT64 Number,
+  OUT UINT8  *pNumOfBitsSet
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pNumOfBitsSet == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *pNumOfBitsSet = 0;
+  while (Number) {
+    Number &= (Number - 1);
+    (*pNumOfBitsSet)++;
+  }
+
+Finish:
+  NVDIMM_EXIT();
+  return ReturnCode;
+}
+
+/**
+  Retrieve the bitmap for NumOfChannelWays
+
+  @param[in] NumOfChannelWays Number of ChannelWays or Number of Dimms used in an Interleave Set
+  @param[out] pBitField Bitmap based on PCAT 2.0 Type 1 Table for ChannelWays
+**/
+EFI_STATUS GetBitFieldForNumOfChannelWays(
+  IN  UINT64 NumOfChannelWays,
+  OUT UINT16  *pBitField
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pBitField == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  switch (NumOfChannelWays) {
+  case 1:
+    *pBitField = INTERLEAVE_SET_1_WAY;
+    break;
+  case 2:
+    *pBitField = INTERLEAVE_SET_2_WAY;
+    break;
+  case 3:
+    *pBitField = INTERLEAVE_SET_3_WAY;
+    break;
+  case 4:
+    *pBitField = INTERLEAVE_SET_4_WAY;
+    break;
+  case 6:
+    *pBitField = INTERLEAVE_SET_6_WAY;
+    break;
+  case 8:
+    *pBitField = INTERLEAVE_SET_8_WAY;
+    break;
+  case 12:
+    *pBitField = INTERLEAVE_SET_12_WAY;
+    break;
+  case 16:
+    *pBitField = INTERLEAVE_SET_16_WAY;
+    break;
+  case 24:
+    *pBitField = INTERLEAVE_SET_24_WAY;
+    break;
+  default:
+    NVDIMM_WARN("Unsupported number of channel ways: %d", NumOfChannelWays);
+    *pBitField = 0;
+    break;
+  }
+
+Finish:
+  NVDIMM_EXIT();
+  return ReturnCode;
+}
+
 //Its ok to keep these routines here, but they should be calling abstracted serialize/deserialize data APIs in the future.
 extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
 

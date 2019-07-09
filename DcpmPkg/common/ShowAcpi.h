@@ -99,7 +99,19 @@ PrintPMTT - prints the header and all of the tables in the parsed PMTT table.
 **/
 VOID
 PrintPMTT(
-  IN     PMTT_TABLE *pPMTT,
+  IN     TABLE_HEADER *pPMTT,
+  IN     PRINT_CONTEXT *pPrinterCtx
+);
+
+/**
+PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 2.0 table.
+
+@param[in] pPcat pointer to the parsed PMTT 2.0 table.
+@param[in] pointer to command's printer context.
+**/
+VOID
+PrintPMTT2(
+  IN     VOID *pTable,
   IN     PRINT_CONTEXT *pPrinterCtx
 );
 #endif

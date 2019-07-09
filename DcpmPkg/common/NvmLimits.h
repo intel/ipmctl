@@ -14,6 +14,9 @@
 #define MAX_DIMMS_PER_IMC     (MAX_CHANNELS_PER_IMC * MAX_DIMMS_PER_CHANNEL) // 2 * 3 = 6
 #define MAX_DIMMS_PER_SOCKET  (MAX_DIMMS_PER_IMC * MAX_IMCS_PER_SOCKET) // 4 * 4 = 16
 
+// Die ID will always be zero for single die CPU
+#define MAX_DIEID_SINGLE_DIE_SOCKET  0
+
  /**
    MAX_DIMMS = MAX_SOCKETS * MAX_DIMMS_PER_SOCKET, but we have to use a pure number in this case, because there is
    a compilation issue while HII is generating (HII uses MAX_DIMMS)

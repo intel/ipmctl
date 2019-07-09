@@ -26,15 +26,6 @@ OPTIONS
 -all::
   Shows all attributes.
 
-NOTE: The all and display options are exclusive and may not be used together.
-
--d (attributes)::
--display (attributes)::
-  Filters the returned attributes by explicitly specifying a comma-separated
-  list of any of the attributes defined in the Return Data section.
-
-NOTE: The all and display options are exclusive and may not be used together.
-
 -h::
 -help::
   Displays help for the command.

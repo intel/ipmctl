@@ -67,6 +67,11 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
 
+  NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
+  NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode
+  NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED = 100,  ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Non-Interleaved mode
+  NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interlaeved mode request when MaxPMInterleaveSetsPerDie limit exceeeded
+  NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED        = 102,  ///< Error: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation (error if existing regions + new region goals for specific DIMMs greater then MaxPMInterleaveSetsPerDie limit)
   NVM_WARN_2LM_MODE_OFF                             = 103,  ///< Error: MemoryMode off
   NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config

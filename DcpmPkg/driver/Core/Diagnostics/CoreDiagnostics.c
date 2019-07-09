@@ -112,7 +112,9 @@ BOOLEAN EventCodeToActionRequiredState(
     (EVENT_CODE_626 == Code) ||
     (EVENT_CODE_627 == Code) ||
     (EVENT_CODE_628 == Code) ||
-    (EVENT_CODE_629 == Code)) {
+    (EVENT_CODE_629 == Code) ||
+    (EVENT_CODE_631 == Code) ||
+    (EVENT_CODE_632 == Code)) {
     return TRUE;
   }
   return FALSE;

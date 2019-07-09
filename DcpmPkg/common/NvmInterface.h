@@ -313,7 +313,7 @@ typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_ACPI_PMTT) (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  OUT PMTT_TABLE **pPMTT
+  OUT VOID **pPMTT
 );
 
 /**
@@ -455,9 +455,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGION_COUNT) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
      OUT UINT32 *pCount
-  );
+	);
 
 /**
 Retrieve the region list
@@ -474,11 +474,11 @@ Retrieve the region list
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGIONS) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT32 Count,
-  OUT struct _REGION_INFO *pRegions,
+	OUT struct _REGION_INFO *pRegions,
      OUT COMMAND_STATUS *pCommandStatus
-  );
+	);
 
 /**
   Retrieve the details about the region specified with region id
@@ -721,6 +721,7 @@ EFI_STATUS
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -742,6 +743,7 @@ EFI_STATUS
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
 );
 
@@ -781,6 +783,7 @@ EFI_STATUS
   IN     UINT8 ReserveDimm,
   IN     UINT16 LabelVersionMajor,
   IN     UINT16 LabelVersionMinor,
+     OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
 );
 

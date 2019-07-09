@@ -174,6 +174,7 @@ CheckAndConfirmAlignments(
   UINT32 RegionConfigsCount = 0;
   UINT32 Index = 0;
   BOOLEAN CapacityReducedForSKU = FALSE;
+  BOOLEAN MaxPmInterleaveSetsExceeded = FALSE;
   CHAR16 *pSingleStatusCodeMessage = NULL;
   UINT64 TwoLM_NmFmRatioLower = 4;
   UINT64 TwoLM_NmFmRatioUpper = 16;
@@ -183,6 +184,9 @@ CheckAndConfirmAlignments(
   UINT64 TwoLM_FMTotal = 0;
   TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
   UINT16 TopologyDimmsNumber = 0;
+  UINT32 AppDirect1Regions = 0;
+  UINT32 AppDirect2Regions = 0;
+  UINT32 MaxPMInterleaveSetsPerDie = 0;
 
   NVDIMM_ENTRY();
 
@@ -217,6 +221,7 @@ CheckAndConfirmAlignments(
     ReserveDimm,
     RegionConfigsInfo,
     &RegionConfigsCount,
+    &MaxPMInterleaveSetsPerDie,
     pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
@@ -266,7 +271,7 @@ CheckAndConfirmAlignments(
   }
 
   PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_CREATE_GOAL_PROMPT_HEADER  L"\n");
-
+  
   PRINTER_ENABLE_TEXT_TABLE_FORMAT(pCmd->pPrintCtx);
   ReturnCode = ShowGoalPrintTableView(pCmd, RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, FALSE);
 
@@ -284,6 +289,8 @@ CheckAndConfirmAlignments(
       break;
     }
   }
+
+  MaxPmInterleaveSetsExceeded = IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
 
   if (pCommandStatus->GeneralStatus == NVM_WARN_2LM_MODE_OFF) {
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_2LM_MODE_OFF);
@@ -305,6 +312,32 @@ CheckAndConfirmAlignments(
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
     PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
     FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  }
+
+  if (MaxPmInterleaveSetsExceeded && RegionConfigsCount > 0) {
+    for (Index = 0; Index < RegionConfigsCount; ++Index) {
+      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_1_INDEX] > 0) {
+        AppDirect1Regions++;
+      }
+
+      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_2_INDEX] > 0) {
+        AppDirect2Regions++;
+      }
+    }
+
+    if (PersistentMemType == PM_TYPE_AD) {
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED);
+      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, AppDirect2Regions);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+    }
+
+    if (PersistentMemType == PM_TYPE_AD_NI) {
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED);
+      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, (RegionConfigsCount - AppDirect1Regions));
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+    }
   }
 
   ReturnCode = PromptYesNo(pConfirmation);
@@ -367,6 +400,8 @@ CreateGoal(
   INTEL_DIMM_CONFIG *pIntelDIMMConfig = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pShowGoalOutputArgs = NULL;
+  CHAR16 *pSingleStatusCodeMessage = NULL;
+  UINT32 MaxPMInterleaveSetsPerDie = 0;
   NVDIMM_ENTRY();
 
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
@@ -570,10 +605,10 @@ CreateGoal(
   }
   ReturnCode = pNvmDimmConfigProtocol->CreateGoalConfig(pNvmDimmConfigProtocol, FALSE, pDimmIds, DimmIdsCount,
     pSocketIds, SocketIdsCount, PersistentMemType, VolatileMode, ReservedPercent, ReserveDimm,
-    LabelVersionMajor, LabelVersionMinor, pCommandStatus);
+    LabelVersionMajor, LabelVersionMinor, &MaxPMInterleaveSetsPerDie, pCommandStatus);
 
   if (!EFI_ERROR(ReturnCode)) {
-
+    
     ReturnCode = CreateCmdLineOutputStr(pCmd, &pShowGoalOutputArgs);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
@@ -604,6 +639,14 @@ CreateGoal(
     }
     ExecuteCmd(&ShowGoalCmd);
     FREE_POOL_SAFE(pCommandStr);
+
+    if (IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED)) {
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED);
+      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+    }
+
     goto FinishSkipPrinterProcess;
   } else {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);

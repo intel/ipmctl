@@ -50,11 +50,24 @@
 #define PMTT_INFO_SIGNATURE     SIGNATURE_64('P', 'M', 'T', 'T', 'I', 'N', 'F', 'O')
 #define PMTT_INFO_FROM_NODE(a)  CR(a, PMTT_INFO, PmttNode, PMTT_INFO_SIGNATURE)
 
+ /** PMTT 2.0 vendor specific modules: Die, Channel, Slot added **/
+ typedef struct _PMTT_VERSION {
+   ACPI_REVISION  Revision;          //!< PMTT Version
+   struct {
+     UINT16 DieID;            //!< die identifier
+     UINT16 ChannelID;        //!< Channel identifier
+     UINT16 SlotID;           //!< Slot identifier
+   } VendorData;
+ } PMTT_VERSION;
+
 typedef struct _PMTT_INFO {
   LIST_ENTRY PmttNode;
-  UINT64 Signature; //!< PMTT_INFO_SIGNATURE
-  UINT32 DimmID;    //!< SMBIOS Type 17 handle corresponding to this memory device
-  UINT16 SocketID;  //!< zero based socket identifier
+  UINT64 Signature;            //!< PMTT_INFO_SIGNATURE
+  PMTT_VERSION PmttVersion;    //!< PMTT Version
+  UINT16 DimmID;               //!< SMBIOS Type 17 handle corresponding to this memory device
+  UINT16 NodeControllerID;     //!< die identifier
+  UINT16 SocketID;             //!< zero based socket identifier
+  UINT16 MemControllerID;      //!< Memory Controller identifier
 } PMTT_INFO;
 
 typedef struct _REGION_GOAL_APPDIRECT_INDEX_TABLE {
@@ -744,7 +757,7 @@ FillSmbiosInfo(IN OUT DIMM_INFO *pDimmInfo)
     }
   }
   else {
-    NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmHandle);
+    NVDIMM_ERR("SMBIOS table of type 17 for DIMM 0x%x was not found.", pDimmInfo->DimmID);
   }
   return ReturnCode;
 }
@@ -914,6 +927,7 @@ GetDimmInfo (
       break;
     case DIMM_CONFIG_IS_INCOMPLETE:
     case DIMM_CONFIG_NO_MATCHING_IS:
+    case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_BROKEN_INTERLEAVE;
       break;
     case DIMM_CONFIG_BAD_CONFIG:
@@ -1374,6 +1388,7 @@ IsSecurityOpSupported(
 
 Finish:
   FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
+  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveSize);
   NVDIMM_EXIT();
   return Result;
 }
@@ -1903,6 +1918,7 @@ GetSockets(
   ParsedPcatHeader *pPcat = NULL;
   UINT32 Index = 0;
   UINT32 SocketCount = 0;
+  UINT32 LogicalSocketID = 0;
 
   NVDIMM_ENTRY();
 
@@ -1924,26 +1940,67 @@ GetSockets(
     goto Finish;
   }
 
-  if (SocketCount == 0 || pPcat->ppSocketSkuInfoTable == NULL) {
-    NVDIMM_DBG("Platform does not support socket SKU limits.");
-    ReturnCode = EFI_SUCCESS;
-    goto Finish;
-  }
-
-  *ppSockets = AllocateZeroPool(sizeof(**ppSockets) * SocketCount);
-  if (*ppSockets == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  for (Index = 0; Index < SocketCount; Index++) {
-    if (pPcat->ppSocketSkuInfoTable[Index] == NULL) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto FinishError;
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
+    SOCKET_SKU_INFO_TABLE *pSocketSkuInfo = NULL;
+    if (SocketCount == 0 || pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable == NULL) {
+      NVDIMM_DBG("Platform does not support socket SKU limits.");
+      ReturnCode = EFI_SUCCESS;
+      goto Finish;
     }
-    (*ppSockets)[Index].SocketId = pPcat->ppSocketSkuInfoTable[Index]->SocketId;
-    (*ppSockets)[Index].MappedMemoryLimit = pPcat->ppSocketSkuInfoTable[Index]->MappedMemorySizeLimit;
-    (*ppSockets)[Index].TotalMappedMemory = pPcat->ppSocketSkuInfoTable[Index]->TotalMemorySizeMappedToSpa;
+
+    *ppSockets = AllocateZeroPool(sizeof(**ppSockets) * SocketCount);
+    if (*ppSockets == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
+    for (Index = 0; Index < SocketCount; Index++) {
+      if (pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index] == NULL) {
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto FinishError;
+      }
+      pSocketSkuInfo = pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index];
+      (*ppSockets)[Index].SocketId = pSocketSkuInfo->SocketId;
+      (*ppSockets)[Index].MappedMemoryLimit = pSocketSkuInfo->MappedMemorySizeLimit;
+      (*ppSockets)[Index].TotalMappedMemory = pSocketSkuInfo->TotalMemorySizeMappedToSpa;
+    }
+  }
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPcat->pPlatformConfigAttr)) {
+    DIE_SKU_INFO_TABLE *pDieSkuInfo = NULL;
+    if (SocketCount == 0 || pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable == NULL) {
+      NVDIMM_DBG("Platform does not support socket SKU limits.");
+      ReturnCode = EFI_SUCCESS;
+      goto Finish;
+    }
+
+    *ppSockets = AllocateZeroPool(sizeof(**ppSockets) * SocketCount);
+    if (*ppSockets == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
+    for (Index = 0; Index < SocketCount; Index++) {
+      if (pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index] == NULL) {
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto FinishError;
+      }
+      pDieSkuInfo = pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index];
+
+      ReturnCode = GetLogicalSocketIdFromPmtt(pDieSkuInfo->SocketId, pDieSkuInfo->DieId, &LogicalSocketID);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        goto Finish;
+      }
+
+      (*ppSockets)[Index].SocketId = LogicalSocketID & 0XFFFF;
+      (*ppSockets)[Index].MappedMemoryLimit = pDieSkuInfo->MappedMemorySizeLimit;
+      (*ppSockets)[Index].TotalMappedMemory = pDieSkuInfo->TotalMemorySizeMappedToSpa;
+    }
+  }
+  else {
+    NVDIMM_DBG("Unknown PCAT table revision");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   *pSocketCount = SocketCount;
@@ -3314,7 +3371,7 @@ EFI_STATUS
 EFIAPI
 GetAcpiPMTT(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  OUT PMTT_TABLE **ppPMTTtbl
+  OUT VOID **ppPMTTtbl
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -4221,6 +4278,7 @@ Finish:
   @param[in] pDsdt a pointer to EFI_ACPI_DESCRIPTION_HEADER instance for each of NFIT, PMTT and PCAT
   @param[out] ppFitHead pointer to pointer to store NFIT table
   @param[out] ppPcatHead pointer to pointer to store PCAT table
+  @param[out] ppPmttHead pointer to pointer to store PMTT table
   @param[out] pIsMemoryModeAllowed pointer to check if MM can be configured
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
@@ -4232,38 +4290,57 @@ ParseAcpiTables(
   IN     CONST EFI_ACPI_DESCRIPTION_HEADER *pNfit,
   IN     CONST EFI_ACPI_DESCRIPTION_HEADER *pPcat,
   IN     CONST EFI_ACPI_DESCRIPTION_HEADER *pPMTT,
-     OUT ParsedFitHeader **ppFitHead,
+  OUT ParsedFitHeader **ppFitHead,
   OUT ParsedPcatHeader **ppPcatHead,
+  OUT ParsedPmttHeader **ppPmttHead,
   OUT BOOLEAN *pIsMemoryModeAllowed
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  ACPI_REVISION Revision;
 
   NVDIMM_ENTRY();
 
-  if (ppFitHead == NULL || ppPcatHead == NULL) {
+  if (pNfit == NULL || pPcat == NULL || pPMTT == NULL ||
+    ppFitHead == NULL || ppPcatHead == NULL || ppPmttHead == NULL) {
     goto Finish;
   }
 
-  ReturnCode = EFI_SUCCESS;
-
-  *ppFitHead = pNfit == NULL ? NULL : ParseNfitTable((VOID *)pNfit);
+  *ppFitHead = ParseNfitTable((VOID *)pNfit);
   if (*ppFitHead == NULL) {
     NVDIMM_DBG("NFIT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
   }
 
-  *ppPcatHead = pPcat == NULL ? NULL : ParsePcatTable((VOID *)pPcat);
+  *ppPcatHead = ParsePcatTable((VOID *)pPcat);
   if (*ppPcatHead == NULL) {
     NVDIMM_DBG("PCAT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
   }
-  if (pPMTT != NULL) {
-    *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((PMTT_TABLE *) pPMTT);
-  } else {
-    // if PMTT table is Not available skip  MM allowed check and let bios handle it
-    *pIsMemoryModeAllowed = TRUE;
+
+  /**
+    Parse the PMTT Rev 2 table only
+    ACPI 6.3 requires DIMM fields to be populated using PMTT
+    if NfitDeviceHandle Bit 31 is set
+  **/
+  Revision.AsUint8 = pPMTT->Revision;
+  if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    *ppPmttHead = ParsePmttTable((VOID *)pPMTT);
+    if (*ppPmttHead == NULL) {
+      NVDIMM_DBG("PMTT parsing error.");
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
   }
+  else {
+    *ppPmttHead = NULL;
+  }
+
+  *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *) pPMTT);
+
+  ReturnCode = EFI_SUCCESS;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -4663,7 +4740,7 @@ initAcpiTables(
     Find the NVDIMM FW Interface Table (NFIT) & PCAT
   **/
   ReturnCode = ParseAcpiTables(pNfit, pPcat, pPMTT, &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead,
-    &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
+    &gNvmDimmData->PMEMDev.pPmttHead, &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to parse NFIT or PCAT table.");
     goto Finish;
@@ -4708,8 +4785,6 @@ GetSystemCapabilitiesInfo(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
   UINT32 Capabilities = 0;
-  PLATFORM_CAPABILITY_INFO *pPlatformCapability = NULL;
-  MEMORY_INTERLEAVE_CAPABILITY_INFO *pInterleaveCapability = NULL;
   PlatformCapabilitiesTbl *pNfitPlatformCapability = NULL;
 
   NVDIMM_ENTRY();
@@ -4735,36 +4810,100 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->PartitioningAlignment = gNvmDimmData->Alignments.RegionPartitionAlignment;
   pSysCapInfo->InterleaveSetsAlignment = gNvmDimmData->Alignments.RegionPersistentAlignment;
 
-  if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
-      gNvmDimmData->PMEMDev.pPcatHead->ppPlatformCapabilityInfo != NULL &&
-      gNvmDimmData->PMEMDev.pPcatHead->ppPlatformCapabilityInfo[0] != NULL) {
-    pPlatformCapability = gNvmDimmData->PMEMDev.pPcatHead->ppPlatformCapabilityInfo[0];
-    pSysCapInfo->OperatingModeSupport = pPlatformCapability->MemoryModeCapabilities.MemoryModes;
-    pSysCapInfo->PlatformConfigSupported = pPlatformCapability->MgmtSwConfigInputSupport;
-    pSysCapInfo->CurrentOperatingMode = pPlatformCapability->CurrentMemoryMode.MemoryMode;
-  } else {
-    NVDIMM_DBG("Number of Platform  Capability Information tables: %d",
-      gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum);
-    ReturnCode = EFI_UNSUPPORTED;
-    goto Finish;
-  }
-  if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
-      gNvmDimmData->PMEMDev.pPcatHead->ppMemoryInterleaveCapabilityInfo != NULL &&
-      gNvmDimmData->PMEMDev.pPcatHead->ppMemoryInterleaveCapabilityInfo[0] != NULL) {
-    pInterleaveCapability = gNvmDimmData->PMEMDev.pPcatHead->ppMemoryInterleaveCapabilityInfo[0];
-    pSysCapInfo->InterleaveAlignmentSize = pInterleaveCapability->InterleaveAlignmentSize;
-    pSysCapInfo->InterleaveFormatsSupportedNum = pInterleaveCapability->NumOfFormatsSupported;
-    pSysCapInfo->PtrInterleaveFormatsSupported = (HII_POINTER) AllocateZeroPool(sizeof(INTERLEAVE_FORMAT)
-        * pSysCapInfo->InterleaveFormatsSupportedNum);
-    if ((INTERLEAVE_FORMAT *) pSysCapInfo->PtrInterleaveFormatsSupported == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+    if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {
+      PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0];
+      pSysCapInfo->OperatingModeSupport = pPlatformCapability3->MemoryModeCapabilities.MemoryModes;
+      pSysCapInfo->PlatformConfigSupported = pPlatformCapability3->MgmtSwConfigInputSupport;
+      pSysCapInfo->CurrentOperatingMode = pPlatformCapability3->CurrentMemoryMode.MemoryMode;
+
+      /**
+        Platform capabilities
+      **/
+      pSysCapInfo->AppDirectMirrorSupported = 0;
+      pSysCapInfo->DimmSpareSupported = 0;
+      pSysCapInfo->AppDirectMigrationSupported = 0;
+    }
+    else {
+      NVDIMM_DBG("Number of Platform  Capability Information tables: %d",
+        gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum);
+      ReturnCode = EFI_UNSUPPORTED;
       goto Finish;
     }
-    CopyMem_S((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported,
-      sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum,
+  }
+  else {
+    if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo != NULL &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[0] != NULL) {
+      PLATFORM_CAPABILITY_INFO *pPlatformCapability = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[0];
+      pSysCapInfo->OperatingModeSupport = pPlatformCapability->MemoryModeCapabilities.MemoryModes;
+      pSysCapInfo->PlatformConfigSupported = pPlatformCapability->MgmtSwConfigInputSupport;
+      pSysCapInfo->CurrentOperatingMode = pPlatformCapability->CurrentMemoryMode.MemoryMode;
+
+      /**
+        Platform capabilities
+      **/
+      pSysCapInfo->AppDirectMirrorSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT0);
+      pSysCapInfo->DimmSpareSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT1);
+      pSysCapInfo->AppDirectMigrationSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT2);
+    }
+    else {
+      NVDIMM_DBG("Number of Platform  Capability Information tables: %d",
+        gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum);
+      ReturnCode = EFI_UNSUPPORTED;
+      goto Finish;
+    }
+  }
+
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+    if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
+      MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pInterleaveCapability3 = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0];
+      pSysCapInfo->InterleaveAlignmentSize = pInterleaveCapability3->InterleaveAlignmentSize;
+      pSysCapInfo->InterleaveFormatsSupportedNum = pInterleaveCapability3->NumOfFormatsSupported;
+      pSysCapInfo->PtrInterleaveSize = (HII_POINTER)AllocateZeroPool(sizeof(INTERLEAVE_SIZE));
+      if ((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveSize == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      CopyMem_S((INTERLEAVE_SIZE *)pSysCapInfo->PtrInterleaveSize, sizeof(INTERLEAVE_SIZE),
+        &pInterleaveCapability3->InterleaveSize, sizeof(INTERLEAVE_SIZE));
+      pSysCapInfo->PtrInterleaveFormatsSupported = (HII_POINTER)AllocateZeroPool(sizeof(INTERLEAVE_FORMAT)
+        * pSysCapInfo->InterleaveFormatsSupportedNum);
+      if ((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      CopyMem_S((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported,
+        sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum,
+        pInterleaveCapability3->InterleaveFormatList,
+        sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum);
+    }
+  }
+  else {
+    if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
+      gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
+      MEMORY_INTERLEAVE_CAPABILITY_INFO *pInterleaveCapability = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[0];
+      pSysCapInfo->InterleaveAlignmentSize = pInterleaveCapability->InterleaveAlignmentSize;
+      pSysCapInfo->InterleaveFormatsSupportedNum = pInterleaveCapability->NumOfFormatsSupported;
+      pSysCapInfo->PtrInterleaveSize = 0;
+      pSysCapInfo->PtrInterleaveFormatsSupported = (HII_POINTER)AllocateZeroPool(sizeof(INTERLEAVE_FORMAT)
+        * pSysCapInfo->InterleaveFormatsSupportedNum);
+      if ((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      CopyMem_S((INTERLEAVE_FORMAT *)pSysCapInfo->PtrInterleaveFormatsSupported,
+        sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum,
         pInterleaveCapability->InterleaveFormatList,
         sizeof(INTERLEAVE_FORMAT) * pSysCapInfo->InterleaveFormatsSupportedNum);
+    }
   }
+
   if (gNvmDimmData->PMEMDev.pFitHead->PlatformCapabilitiesTblesNum == 1 &&
       gNvmDimmData->PMEMDev.pFitHead->ppPlatformCapabilitiesTbles != NULL &&
       gNvmDimmData->PMEMDev.pFitHead->ppPlatformCapabilitiesTbles[0] != NULL) {
@@ -4776,13 +4915,6 @@ GetSystemCapabilitiesInfo(
     CopyMem_S(&pSysCapInfo->NsBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]),  &gSupportedBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]));
   }
   pSysCapInfo->MinNsSize = gNvmDimmData->Alignments.BlockNamespaceMinSize;
-
-  /**
-    Platform capabilities
-  **/
-  pSysCapInfo->AppDirectMirrorSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT0);
-  pSysCapInfo->DimmSpareSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT1);
-  pSysCapInfo->AppDirectMigrationSupported = IS_BIT_SET_VAR(pPlatformCapability->PersistentMemoryRasCapability, BIT2);
 
   /**
     Features supported by the driver
@@ -5957,6 +6089,7 @@ Finish:
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -5977,6 +6110,7 @@ GetActualRegionsGoalCapacities(
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -6006,10 +6140,14 @@ GetActualRegionsGoalCapacities(
   UINT32 DimmsSymNum = 0;
   REGION_GOAL_DIMM *pDimmsAsym = NULL;
   UINT32 DimmsAsymNum = 0;
+  MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
+  ACPI_REVISION PcatRevision;
 
   NVDIMM_ENTRY();
 
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
+  ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
+  ZeroMem(&PcatRevision, sizeof(PcatRevision));
 
   if (pThis == NULL || RegionGoalTemplates == NULL || pCommandStatus == NULL
     || pVolatilePercent == NULL || pConfigGoals == NULL
@@ -6019,6 +6157,10 @@ GetActualRegionsGoalCapacities(
   }
 
   *pConfigGoalsCount = 0;
+
+  if (gNvmDimmData->PMEMDev.pPcatHead != NULL) {
+    PcatRevision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
+  }
 
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;
@@ -6063,13 +6205,17 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  for (Index = 0; Index < DimmsNum; Index++) {
-    if (ppDimms[Index]->GoalConfigStatus != GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS) {
-      ReturnCode = EFI_ABORTED;
-      ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_CURR_CONF_EXISTS);
-      goto Finish;
-    }
+  ReturnCode = CheckForExistingGoalConfigPerSocket(ppDimms, &DimmsNum);
+  if (ReturnCode == EFI_ABORTED) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_CURR_CONF_EXISTS);
+    NVDIMM_DBG("Current Goal Configuration exists. Operation Aborted");
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
 
+  for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6118,6 +6264,16 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
+  if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    if (pMaxPMInterleaveSetsPerDie != NULL) {
+      *pMaxPMInterleaveSetsPerDie = MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie;
+    }
+  }
+
   for (Socket = 0; Socket < MAX_SOCKETS; Socket++) {
     DimmsAsymNumPerSocket = 0;
     DimmsSymNumPerSocket = 0;
@@ -6146,9 +6302,9 @@ GetActualRegionsGoalCapacities(
     }
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
-        pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket,
-        &DimmsAsymNumPerSocket, PersistentMemType, ActualVolatileSize,
-        ReservedSize, &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
+        pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
+        PersistentMemType, ActualVolatileSize, ReservedSize, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6276,6 +6432,7 @@ Finish:
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
+  @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -6298,6 +6455,7 @@ CreateGoalConfig(
   IN     UINT8 ReserveDimm,
   IN     UINT16 LabelVersionMajor,
   IN     UINT16 LabelVersionMinor,
+     OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -6325,17 +6483,25 @@ CreateGoalConfig(
   UINT32 DimmsSymNum = 0;
   REGION_GOAL_DIMM *pDimmsAsym = NULL;
   UINT32 DimmsAsymNum = 0;
+  MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
+  ACPI_REVISION PcatRevision;
 
   NVDIMM_ENTRY();
 
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
+  ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
+  ZeroMem(&PcatRevision, sizeof(PcatRevision));
 
   if (pThis == NULL || pCommandStatus == NULL || VolatilePercent > 100 || ReservedPercent > 100 || VolatilePercent + ReservedPercent > 100) {
     ReturnCode = EFI_INVALID_PARAMETER;
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     NVDIMM_DBG("Invalid Parameter");
     goto Finish;
+  }
+
+  if (gNvmDimmData->PMEMDev.pPcatHead != NULL) {
+    PcatRevision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
   }
 
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
@@ -6451,14 +6617,17 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  for (Index = 0; Index < DimmsNum; Index++) {
-    if (ppDimms[Index]->GoalConfigStatus != GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS) {
-      ReturnCode = EFI_ABORTED;
-      ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_CURR_CONF_EXISTS);
-      NVDIMM_DBG("Current Goal Configuration exists. Operation Aborted");
-      goto Finish;
-    }
+  ReturnCode = CheckForExistingGoalConfigPerSocket(ppDimms, &DimmsNum);
+  if (ReturnCode == EFI_ABORTED) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_CURR_CONF_EXISTS);
+    NVDIMM_DBG("Current Goal Configuration exists. Operation Aborted");
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
 
+  for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6470,7 +6639,7 @@ CreateGoalConfig(
       NVDIMM_DBG("Invalid request to create goal while security is enabled.");
       goto Finish;
     }
-   }
+  }
 
   ReturnCode = PersistentMemoryTypeValidation(PersistentMemType);
   if (EFI_ERROR(ReturnCode)) {
@@ -6554,6 +6723,16 @@ CreateGoalConfig(
     goto Finish;
   }
 
+  if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    if (pMaxPMInterleaveSetsPerDie != NULL) {
+      *pMaxPMInterleaveSetsPerDie = MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie;
+    }
+  }
+
   /** Calculate volatile and AD capacities at the socket level **/
   for (Socket = 0; Socket < MAX_SOCKETS; Socket++) {
     DimmsAsymNumPerSocket = 0;
@@ -6580,8 +6759,8 @@ CreateGoalConfig(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, VolatileSize , ReservedSize, NULL,
-        RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
+        PersistentMemType, VolatileSize , ReservedSize, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        NULL, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
@@ -7071,7 +7250,7 @@ LoadGoalConfig(
     }
 
     ReturnCode = CreateGoalConfig(pThis, FALSE, DimmIDs, DimmIDsNum, NULL, 0, PersistentMemType, VolatilePercent, ReservedPercent,
-        RESERVE_DIMM_NONE, LabelVersionMajor, LabelVersionMinor, pCmdStatusInternal);
+        RESERVE_DIMM_NONE, LabelVersionMajor, LabelVersionMinor, NULL, pCmdStatusInternal);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("CreateGoalConfig failed. (" FORMAT_EFI_STATUS ")", ReturnCode);
       SetObjStatus(pCommandStatus, Socket, NULL, 0, pCmdStatusInternal->GeneralStatus);
@@ -7899,6 +8078,7 @@ ModifyNamespace(
 
 Finish:
   FREE_HII_POINTER(SysCapInfo.PtrInterleaveFormatsSupported);
+  FREE_HII_POINTER(SysCapInfo.PtrInterleaveSize);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -8823,20 +9003,25 @@ MapSockets(
 )
 {
   EFI_STATUS ReturnCode;
+  TABLE_HEADER *pTable = NULL;
   PMTT_TABLE *pPMTT = NULL;
   PMTT_INFO  *DdrEntry = NULL;
   PMTT_COMMON_HEADER *pCommonHeader = NULL;
   PMTT_SOCKET *pSocket = NULL;
   PMTT_MODULE *pModule = NULL;
+  ParsedPmttHeader *pPmttHead = NULL;
+  PMTT_MODULE_INFO **ppAllMemModules[2];
+  UINT32 NumOfMemModules[2];
   UINT64 PmttLen = 0;
   UINT64 Offset = 0;
+  UINT32 Index1 = 0, Index2 = 0;
 #ifndef MDEPKG_NDEBUG
   LIST_ENTRY *pNode = NULL;
 #endif
 
   InitializeListHead(pPmttInfo);
 
-  ReturnCode = GetAcpiPMTT(NULL, &pPMTT);
+  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
 
   if (EFI_ERROR(ReturnCode)) {
     //error getting PMTT. Nothing to map
@@ -8844,81 +9029,105 @@ MapSockets(
     return;
   }
 
-  PmttLen = pPMTT->Header.Length;
-  Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
 
-  //step through table and create socket list
-  while (Offset < PmttLen) {
-    pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
-    if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
-      pSocket = (PMTT_SOCKET *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
-      Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
-    } else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
-      Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
-    } else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
-      if (NULL != pSocket) {
-         pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
-         if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
-           DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
-           if (DdrEntry == NULL) {
-             NVDIMM_ERR("Out of memory");
-             goto Finish;
-           }
-           DdrEntry->DimmID = pModule->SmbiosHandle;
-           DdrEntry->SocketID = pSocket->SocketId;
-           DdrEntry->Signature = PMTT_INFO_SIGNATURE;
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
+    pPMTT = (PMTT_TABLE *)pTable;
+    PmttLen = pPMTT->Header.Length;
+    Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
 
-           InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
-         }
+    //step through table and create socket list
+    while (Offset < PmttLen) {
+      pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+      if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
+        pSocket = (PMTT_SOCKET *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+        Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
       }
-      Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
+      else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
+        Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
+      }
+      else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
+        if (NULL != pSocket) {
+          pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+          if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
+            DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
+            if (DdrEntry == NULL) {
+              NVDIMM_ERR("Out of memory");
+              goto Finish;
+            }
+            DdrEntry->PmttVersion.Revision.AsUint8 = PMTT_HEADER_REVISION_1;
+            DdrEntry->DimmID = pModule->SmbiosHandle & 0xFF;
+            DdrEntry->SocketID = pSocket->SocketId;
+            DdrEntry->Signature = PMTT_INFO_SIGNATURE;
+            InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
+          }
+        }
+        Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
+      }
+    }
+  } else if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision) && pPmttHead != NULL) {
+    ppAllMemModules[0] = pPmttHead->ppDDRModules;
+    ppAllMemModules[1] = pPmttHead->ppDCPMModules;
+    NumOfMemModules[0] = pPmttHead->DDRModulesNum;
+    NumOfMemModules[1] = pPmttHead->DCPMModulesNum;
+    for (Index1 = 0; Index1 < 2; Index1++) {
+      PMTT_MODULE_INFO **pMemModules = ppAllMemModules[Index1];
+      for (Index2 = 0; Index2 < NumOfMemModules[Index1]; Index2++) {
+        DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
+        if (DdrEntry == NULL) {
+          NVDIMM_ERR("Out of memory");
+          goto Finish;
+        }
+
+        DdrEntry->PmttVersion.Revision.Split.Major = PMTT_HEADER_REVISION_1;
+        DdrEntry->PmttVersion.Revision.Split.Minor = PMTT_HEADER_MINOR_REVISION_1;
+        DdrEntry->DimmID = pMemModules[Index2]->SmbiosHandle;
+        DdrEntry->NodeControllerID = (UINT16)SOCKET_INDEX_TO_NFIT_NODE_ID(pMemModules[Index2]->SocketId);
+        DdrEntry->SocketID = pMemModules[Index2]->SocketId;
+        DdrEntry->PmttVersion.VendorData.DieID = pMemModules[Index2]->DieId;
+        DdrEntry->MemControllerID = pMemModules[Index2]->MemControllerId;
+        DdrEntry->PmttVersion.VendorData.ChannelID = pMemModules[Index2]->ChannelId;
+        DdrEntry->PmttVersion.VendorData.SlotID = pMemModules[Index2]->SlotId;
+        DdrEntry->Signature = PMTT_INFO_SIGNATURE;
+
+        InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
+      }
     }
   }
 
 #ifndef MDEPKG_NDEBUG
   LIST_FOR_EACH(pNode, pPmttInfo) {
      DdrEntry = PMTT_INFO_FROM_NODE(pNode);
-     NVDIMM_DBG("ddr4: 0x%X  Socket: %d\n", DdrEntry->DimmID, DdrEntry->SocketID);
+     NVDIMM_DBG("Dimm: 0x%X  Socket: %d\n", DdrEntry->DimmID, DdrEntry->SocketID);
   }
 #endif
 
 Finish:
-  FREE_POOL_SAFE(pPMTT);
+  FREE_POOL_SAFE(pTable);
   return;
 }
 
 /**
-  Retrieve Socket ID for a given DIMM
+  Sorts the Dimm topology list by Memory Type
 
-  @param[in]  DimmPid - The ID of the DIMM
-  @param[in]  pPmttInfo - list of DIMM ID/Socket ID pairs
+  @param[in out] pMemType1 A pointer to the pDimmId list.
+  @param[in out] pMemType2 A pointer to the copy of pDimmId list.
 
-  @retval Socket ID - 0xFFFF if DimmID not in list
+  @retval int retruns 0,-1, 0
 **/
-STATIC UINT16
-GetDdr4Socket(
-  IN     UINT16  DimmID,
-  IN     LIST_ENTRY *pPmttInfo
-  )
+INT32 SortDimmTopologyByMemType(VOID *ppTopologyDimm1, VOID *ppTopologyDimm2)
 {
-  UINT16 Socket = INVALID_SOCKET_ID;
-  LIST_ENTRY *pNode = NULL;
-  PMTT_INFO  *DdrEntry = NULL;
-
-  if ((NULL == pPmttInfo) || (NULL == pPmttInfo->ForwardLink)){
-     goto Finish;
+  TOPOLOGY_DIMM_INFO *ppTopologyDimma = (TOPOLOGY_DIMM_INFO *)ppTopologyDimm1;
+  TOPOLOGY_DIMM_INFO *ppTopologyDimmb = (TOPOLOGY_DIMM_INFO *)ppTopologyDimm2;
+  if (ppTopologyDimma->MemoryType == ppTopologyDimmb->MemoryType) {
+    return 0;
   }
-
-  LIST_FOR_EACH(pNode, pPmttInfo) {
-     DdrEntry = PMTT_INFO_FROM_NODE(pNode);
-     if (DdrEntry->DimmID == DimmID) {
-        Socket = DdrEntry->SocketID;
-        break;
-     }
+  else if (ppTopologyDimma->MemoryType < ppTopologyDimmb->MemoryType) {
+    return 1;
   }
-
-Finish:
-  return Socket;
+  else {
+    return -1;
+  }
 }
 
 /**
@@ -8943,16 +9152,17 @@ GetSystemTopology(
 {
   EFI_STATUS ReturnCode = EFI_DEVICE_ERROR;
 
-  SMBIOS_STRUCTURE_POINTER SmBiosStruct;
-  SMBIOS_STRUCTURE_POINTER BoundSmBiosStruct;
-  SMBIOS_VERSION SmbiosVersion;
   UINT16 Index = 0;
-  UINT64 Capacity = 0;
-  BOOLEAN IsTopologyDimm = FALSE;
   LIST_ENTRY PmttInfo;
+  LIST_ENTRY *pNode = NULL;
+  PMTT_INFO  *DdrEntry = NULL;
+  DIMM_INFO *pDimmInfo = NULL;
+  DIMM *pDimm = NULL;
+  ACPI_REVISION Revision;
 
   NVDIMM_ENTRY();
 
+  ZeroMem(&PmttInfo, sizeof(PmttInfo));
   if (pThis == NULL || ppTopologyDimm == NULL || pTopologyDimmsNumber == NULL) {
     goto Finish;
   }
@@ -8963,66 +9173,81 @@ GetSystemTopology(
     goto Finish;
   }
 
-  ZeroMem(&SmBiosStruct, sizeof(SmBiosStruct));
-  ZeroMem(&BoundSmBiosStruct, sizeof(BoundSmBiosStruct));
-  ZeroMem(&SmbiosVersion, sizeof(SmbiosVersion));
+  MapSockets(&PmttInfo);
 
-  GetFirstAndBoundSmBiosStructPointer(&SmBiosStruct, &BoundSmBiosStruct, &SmbiosVersion);
-  if (SmBiosStruct.Raw == NULL || BoundSmBiosStruct.Raw == NULL) {
+  if (NULL == (&PmttInfo)->ForwardLink) {
+    NVDIMM_WARN("Error in getting PMTT Info for topology information");
     goto Finish;
   }
 
-  MapSockets(&PmttInfo);
+  pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
+  if (pDimmInfo == NULL) {
+    NVDIMM_WARN("Memory allocation error");
+    goto Finish;
+  }
+  SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
 
-  while (SmBiosStruct.Raw < BoundSmBiosStruct.Raw) {
-    if (SmBiosStruct.Hdr != NULL) {
-      IsTopologyDimm = ((SmBiosStruct.Hdr->Type == SMBIOS_TYPE_MEM_DEV && SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4 &&
-        !SmBiosStruct.Type17->TypeDetail.Nonvolatile) ? TRUE : FALSE);
-      if (IsTopologyDimm) {
-        (*ppTopologyDimm)[Index].DimmID = SmBiosStruct.Hdr->Handle;
-        (*ppTopologyDimm)[Index].SocketID = GetDdr4Socket(SmBiosStruct.Hdr->Handle, &PmttInfo);
-
-        ReturnCode = GetSmbiosCapacity(SmBiosStruct.Type17->Size, SmBiosStruct.Type17->ExtendedSize, SmbiosVersion,
-                                         &Capacity);
-        (*ppTopologyDimm)[Index].VolatileCapacity  = Capacity;
-        ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &SmBiosStruct.Type17,
-             SmBiosStruct.Type17->DeviceLocator, (*ppTopologyDimm)[Index].DeviceLocator,
-             sizeof((*ppTopologyDimm)[Index].DeviceLocator));
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->DeviceLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
-        }
-        ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &SmBiosStruct.Type17,
-              SmBiosStruct.Type17->BankLocator, (*ppTopologyDimm)[Index].BankLabel,
-              sizeof((*ppTopologyDimm)[Index].BankLabel));
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->BankLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
-        }
-        // override types to keep consistency with dimm_info values
-        if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) {
-          (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DDR4;
-        } else if (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DCPM) {
-          (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DCPM;
-        } else {
-          (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_UNKNOWN;
-        }
-        Index++;
-        (*pTopologyDimmsNumber) = Index;
-      }
-    } else {
-      NVDIMM_DBG("SmBios entry has invalid pointers set");
-    }
-
-    ReturnCode = GetNextSmbiosStruct(&SmBiosStruct);
+  LIST_FOR_EACH(pNode, &PmttInfo) {
+    DdrEntry = PMTT_INFO_FROM_NODE(pNode);
+    pDimmInfo->DimmID = DdrEntry->DimmID;
+    ReturnCode = FillSmbiosInfo(pDimmInfo);
     if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Error in retrieving Information from SMBIOS tables");
       goto Finish;
     }
+
+    (*ppTopologyDimm)[Index].DimmHandle = 0;
+    // Retrieve DIMM Device Handle for Memory Type: DCPM
+    if (pDimmInfo->MemoryType == MEMORYTYPE_DCPM) {
+      pDimm = GetDimmByPid(DdrEntry->DimmID, &gNvmDimmData->PMEMDev.Dimms);
+      if (pDimm == NULL) {
+        pDimm = GetDimmByPid(DdrEntry->DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
+        if (pDimm == NULL) {
+          NVDIMM_WARN("Dimm ID: 0x%04x not found!", DdrEntry->DimmID);
+          goto Finish;
+        }
+      }
+      (*ppTopologyDimm)[Index].DimmHandle = pDimm->DeviceHandle.AsUint32;
+      (*ppTopologyDimm)[Index].ChannelID = pDimm->ChannelId;
+      (*ppTopologyDimm)[Index].SlotID = pDimm->ChannelPos;
+      (*ppTopologyDimm)[Index].MemControllerID = pDimm->ImcId;
+    }
+
+    (*ppTopologyDimm)[Index].VolatileCapacity = pDimmInfo->CapacityFromSmbios;
+    StrnCpyS((*ppTopologyDimm)[Index].DeviceLocator, DEVICE_LOCATOR_LEN, pDimmInfo->DeviceLocator, DEVICE_LOCATOR_LEN - 1);
+    StrnCpyS((*ppTopologyDimm)[Index].BankLabel, BANKLABEL_LEN, pDimmInfo->BankLabel, BANKLABEL_LEN - 1);
+    (*ppTopologyDimm)[Index].MemoryType = pDimmInfo->MemoryType;
+    (*ppTopologyDimm)[Index].DimmID = DdrEntry->DimmID;
+    (*ppTopologyDimm)[Index].NodeControllerID = SOCKET_INDEX_TO_NFIT_NODE_ID(DdrEntry->SocketID);
+    (*ppTopologyDimm)[Index].SocketID = DdrEntry->SocketID;
+    (*ppTopologyDimm)[Index].PmttVersion = DdrEntry->PmttVersion.Revision.AsUint8;
+
+    CopyMem(&Revision, &DdrEntry->PmttVersion.Revision, sizeof(Revision));
+    if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+      (*ppTopologyDimm)[Index].DieID = DdrEntry->PmttVersion.VendorData.DieID;
+
+      if (pDimmInfo->MemoryType == MEMORYTYPE_DDR4) {
+        (*ppTopologyDimm)[Index].ChannelID = DdrEntry->PmttVersion.VendorData.ChannelID;
+        (*ppTopologyDimm)[Index].SlotID = DdrEntry->PmttVersion.VendorData.SlotID;
+        (*ppTopologyDimm)[Index].MemControllerID = DdrEntry->MemControllerID;
+      }
+    }
+
+    Index++;
+    (*pTopologyDimmsNumber) = Index;
+  }
+
+  ReturnCode = BubbleSort(*ppTopologyDimm, *pTopologyDimmsNumber, sizeof(**ppTopologyDimm), SortDimmTopologyByMemType);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Error in sorting the DIMM topology list");
+    goto Finish;
   }
 
   ReturnCode = EFI_SUCCESS;
 
 Finish:
   FreePmttItems(&PmttInfo);
-
+  FREE_POOL_SAFE(pDimmInfo);
   NVDIMM_EXIT_I64(ReturnCode);
 
   return ReturnCode;
@@ -9665,6 +9890,7 @@ AutomaticCreateGoal(
                                 RESERVE_DIMM_NONE,            // No reserve DIMM
                                 Major,                        // Major label version from variable
                                 Minor,                        // Minor label version from variable
+                                NULL,
                                 pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {

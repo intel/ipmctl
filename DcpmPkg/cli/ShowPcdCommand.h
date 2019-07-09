@@ -86,8 +86,8 @@ PrintPcdPartitionSizeChange(
 
 VOID
 PrintPcdIdentificationInformation(
-  IN     NVDIMM_IDENTIFICATION_INFORMATION *pIdentificationInfo,
-  IN     UINT8 PcdConfigTableRevision,
+  IN     VOID *pIdentificationInfo,
+  IN     ACPI_REVISION PcdConfigTableRevision,
   IN     PRINT_CONTEXT *pPrinterCtx,
   IN     CHAR16 *pPath
   );
@@ -103,8 +103,8 @@ PrintPcdIdentificationInformation(
 
 VOID
 PrintPcdInterleaveInformation(
-  IN     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo,
-  IN     UINT8 PcdConfigTableRevision,
+  IN     PCAT_TABLE_HEADER *pInterleaveInfo,
+  IN     ACPI_REVISION PcdConfigTableRevision,
   IN     PRINT_CONTEXT *pPrinterCtx,
   IN     CHAR16 *pPath
   );

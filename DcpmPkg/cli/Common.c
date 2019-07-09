@@ -5,7 +5,6 @@
 
 #include <Library/ShellLib.h>
 #include <Library/BaseMemoryLib.h>
-#include "CommandParser.h"
 #include "Common.h"
 #include "NvmDimmCli.h"
 #include <Library/UefiShellLib/UefiShellLib.h>
@@ -39,6 +38,27 @@ CONST CHAR16 *mpChannelSize[] = {
   L"4KB",
   L"1GB"
 };
+
+typedef enum {
+  Unknown,
+  Interleave_64B,
+  Interleave_128B,
+  Interleave_256B,
+  Interleave_4KB,
+  Interleave_1GB
+} InterleaveSizeIndex;
+
+typedef enum {
+  ChannelWays_X1 = 1,
+  ChannelWays_X2 = 2,
+  ChannelWays_X3 = 3,
+  ChannelWays_X4 = 4,
+  ChannelWays_X6 = 6,
+  ChannelWays_X8 = 8,
+  ChannelWays_X12 = 12,
+  ChannelWays_X16 = 16,
+  ChannelWays_X24 = 24
+} ChannelWaysNumber;
 
 CONST CHAR16 *mpDefaultSizeStrs[DISPLAY_SIZE_MAX_SIZE] = {
   PROPERTY_VALUE_AUTO,
@@ -1151,6 +1171,8 @@ MatchCliReturnCode(
   case NVM_WARN_BLOCK_MODE_DISABLED:
   case NVM_WARN_2LM_MODE_OFF:
   case NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU:
+  case NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED:
+  case NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED:
     ReturnCode = EFI_SUCCESS;
     break;
 
@@ -1556,8 +1578,9 @@ Finish:
 /**
   Prints supported or recommended appdirect settings
 
-  @param[in] pFormatList pointer to variable length interleave formats array
+  @param[in] pInterleaveFormatList pointer to variable length interleave formats array
   @param[in] FormatNum number of the appdirect settings formats
+  @param[in] pInterleaveSize pointer to Channel & iMc interleave size, if NULL refer to older revision pInterleaveFormatList
   @param[in] PrintRecommended if TRUE Recommended settings will be printed
              if FALSE Supported settings will be printed
   @param[in] Mode Set mode to print different format
@@ -1565,65 +1588,99 @@ Finish:
 **/
 CHAR16*
 PrintAppDirectSettings(
-  IN    INTERLEAVE_FORMAT *pFormatList,
+  IN    VOID *pInterleaveFormatList,
   IN    UINT16 FormatNum,
+  IN    INTERLEAVE_SIZE *pInterleaveSize,
   IN    BOOLEAN PrintRecommended,
   IN    UINT8 Mode
-)
+  )
 {
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT32 InterleaveWay = 0;
-  UINT32 WayNumber = 0;
-  UINT32 ImcStringIndex = 0;
-  UINT32 ChannelStringIndex = 0;
+  ChannelWaysNumber WayNumber = Unknown;
+  InterleaveSizeIndex ImcStringIndex = Unknown;
+  InterleaveSizeIndex ChannelStringIndex = Unknown;
+  UINT8 NumOfBitsSet = 0;
+  UINT8 PrevNumOfBitsSet = 0;
   BOOLEAN First = TRUE;
   CHAR16 *pTempBuffer = NULL;
+  UINT32 ChannelInterleaveSize = 0;
+  UINT32 ImcInterleaveSize = 0;
+  UINT16 NumberOfChannelWays = 0;
+  UINT32 Recommended = 0;
 
-  if (pFormatList == NULL) {
+  if (pInterleaveFormatList == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
     return NULL;
   }
 
   for (Index = 0; Index < FormatNum; Index++) {
-    if (PrintRecommended && !pFormatList[Index].InterleaveFormatSplit.Recommended) {
+    if (pInterleaveSize == NULL) {
+      INTERLEAVE_FORMAT *pFormatList = (INTERLEAVE_FORMAT *)pInterleaveFormatList;
+      ChannelInterleaveSize = pFormatList[Index].InterleaveFormatSplit.ChannelInterleaveSize;
+      ImcInterleaveSize = pFormatList[Index].InterleaveFormatSplit.iMCInterleaveSize;
+      NumberOfChannelWays = pFormatList[Index].InterleaveFormatSplit.NumberOfChannelWays & MAX_UINT16;
+      Recommended = pFormatList[Index].InterleaveFormatSplit.Recommended;
+    }
+    else {
+      INTERLEAVE_FORMAT3 *pFormatList = (INTERLEAVE_FORMAT3 *)pInterleaveFormatList;
+      ChannelInterleaveSize = pInterleaveSize->InterleaveSizeSplit.ChannelInterleaveSize;
+      ImcInterleaveSize = pInterleaveSize->InterleaveSizeSplit.iMCInterleaveSize;
+      Recommended = pFormatList[Index].InterleaveFormatSplit.Recommended;
+      CountNumOfBitsSet(pFormatList[Index].InterleaveFormatSplit.InterleaveMap, &NumOfBitsSet);
+      if (NumOfBitsSet == PrevNumOfBitsSet) {
+        continue;
+      }
+
+      GetBitFieldForNumOfChannelWays(NumOfBitsSet, &NumberOfChannelWays);
+      WayNumber = NumOfBitsSet;
+      PrevNumOfBitsSet = NumOfBitsSet;
+
+      if (WayNumber == 0) {
+        continue;
+      }
+    }
+
+    if (PrintRecommended && !Recommended) {
       continue;
     }
 
     for (Index2 = 0; Index2 < NUMBER_OF_CHANNEL_WAYS_BITS_NUM; Index2++) {
+
       /** Check each bit **/
-      InterleaveWay = pFormatList[Index].InterleaveFormatSplit.NumberOfChannelWays & (1 << Index2);
+      InterleaveWay = NumberOfChannelWays & (1 << Index2);
 
       switch (InterleaveWay) {
       case INTERLEAVE_SET_1_WAY:
-        WayNumber = 1;
+        WayNumber = ChannelWays_X1;
         break;
       case INTERLEAVE_SET_2_WAY:
-        WayNumber = 2;
+        WayNumber = ChannelWays_X2;
         break;
       case INTERLEAVE_SET_3_WAY:
-        WayNumber = 3;
+        WayNumber = ChannelWays_X3;
         break;
       case INTERLEAVE_SET_4_WAY:
-        WayNumber = 4;
+        WayNumber = ChannelWays_X4;
         break;
       case INTERLEAVE_SET_6_WAY:
-        WayNumber = 6;
+        WayNumber = ChannelWays_X6;
         break;
       case INTERLEAVE_SET_8_WAY:
-        WayNumber = 8;
+        WayNumber = ChannelWays_X8;
         break;
       case INTERLEAVE_SET_12_WAY:
-        WayNumber = 12;
+        WayNumber = ChannelWays_X12;
         break;
       case INTERLEAVE_SET_16_WAY:
-        WayNumber = 16;
+        WayNumber = ChannelWays_X16;
         break;
       case INTERLEAVE_SET_24_WAY:
-        WayNumber = 24;
+        WayNumber = ChannelWays_X24;
         break;
       default:
-        WayNumber = 0;
+        WayNumber = Unknown;
         break;
       }
 
@@ -1631,45 +1688,45 @@ PrintAppDirectSettings(
         continue;
       }
 
-      switch (pFormatList[Index].InterleaveFormatSplit.iMCInterleaveSize) {
+      switch (ImcInterleaveSize) {
       case IMC_INTERLEAVE_SIZE_64B:
-        ImcStringIndex = 1;
+        ImcStringIndex = Interleave_64B;
         break;
       case IMC_INTERLEAVE_SIZE_128B:
-        ImcStringIndex = 2;
+        ImcStringIndex = Interleave_128B;
         break;
       case IMC_INTERLEAVE_SIZE_256B:
-        ImcStringIndex = 3;
+        ImcStringIndex = Interleave_256B;
         break;
       case IMC_INTERLEAVE_SIZE_4KB:
-        ImcStringIndex = 4;
+        ImcStringIndex = Interleave_4KB;
         break;
       case IMC_INTERLEAVE_SIZE_1GB:
-        ImcStringIndex = 5;
+        ImcStringIndex = Interleave_1GB;
         break;
       default:
-        ImcStringIndex = 0;
+        ImcStringIndex = Unknown;
         break;
       }
 
-      switch (pFormatList[Index].InterleaveFormatSplit.ChannelInterleaveSize) {
+      switch (ChannelInterleaveSize) {
       case CHANNEL_INTERLEAVE_SIZE_64B:
-        ChannelStringIndex = 1;
+        ChannelStringIndex = Interleave_64B;
         break;
       case CHANNEL_INTERLEAVE_SIZE_128B:
-        ChannelStringIndex = 2;
+        ChannelStringIndex = Interleave_128B;
         break;
       case CHANNEL_INTERLEAVE_SIZE_256B:
-        ChannelStringIndex = 3;
+        ChannelStringIndex = Interleave_256B;
         break;
       case CHANNEL_INTERLEAVE_SIZE_4KB:
-        ChannelStringIndex = 4;
+        ChannelStringIndex = Interleave_4KB;
         break;
       case CHANNEL_INTERLEAVE_SIZE_1GB:
-        ChannelStringIndex = 5;
+        ChannelStringIndex = Interleave_1GB;
         break;
       default:
-        ChannelStringIndex = 0;
+        ChannelStringIndex = Unknown;
         break;
       }
 
@@ -1708,6 +1765,7 @@ PrintAppDirectSettings(
       }
     }
   }
+
   return pTempBuffer;
 }
 

@@ -2286,7 +2286,7 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
                     p_goal_input->persistent_mem_type, p_goal_input->volatile_percent,
                     p_goal_input->reserved_percent, p_goal_input->reserve_dimm,
                     p_goal_input->namespace_label_major, p_goal_input->namespace_label_minor,
-                    pCommandStatus);
+                    NULL, pCommandStatus);
 
   if (EFI_ERROR(efi_rc))
     rc = NVM_ERR_UNKNOWN;

@@ -9,7 +9,7 @@
 #include "Region.h"
 #include <Library/PrintLib.h>
 
-#define DIMM_LOCATION(iMC, channel, iMCsPerCPU, channelsPeriMC)     (iMCsPerCPU * (channel % channelsPeriMC) + iMC)
+#define DIMM_LOCATION(iMC, channel, iMCsPerCPU, channelsPeriMC)     (channelsPeriMC * (iMC % iMCsPerCPU) + channel)
 #define DIMM_POPULATED(map, dimmIndex)  ((map >> dimmIndex) & 0x1)
 #define CLEAR_DIMM(map, dimmIndex)      map &= ~(0x1 << dimmIndex)
 
@@ -179,7 +179,7 @@ FindBestInterleavingForDimms(
   UINT32 Index = 0;
   UINT8 NumOfiMCsPerCPU = 0;
   UINT8 NumOfChannelsPeriMC = 0;
-  const UINT32 *pInterleaveSet = NULL;
+  UINT32 *pInterleaveSet = NULL;
 
   NVDIMM_ENTRY();
 
@@ -204,6 +204,7 @@ FindBestInterleavingForDimms(
   }
 
 Finish:
+  FREE_POOL_SAFE(pInterleaveSet);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -108,6 +108,7 @@ typedef struct _PMEM_DEV {
 
   ParsedFitHeader *pFitHead;
   ParsedPcatHeader *pPcatHead;
+  ParsedPmttHeader *pPmttHead;
 } PMEM_DEV;
 
 /**

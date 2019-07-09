@@ -200,6 +200,13 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define GOAL_CONFIG_STATUS_FIRMWARE_ERROR         5   ///< Unable to apply goal because of a FW error
 #define GOAL_CONFIG_STATUS_FAILED_UNKNOWN         6   ///< Unable to apply goal. Internal error
 
+ /**
+   Goal Config data type has 2 elements
+   AppDirect1 & AppDirect2 regions
+ **/
+#define GOAL_CONFIG_APPDIRECT_1_INDEX   0
+#define GOAL_CONFIG_APPDIRECT_2_INDEX   1
+
 /**
  * @}
  * Firmware types
@@ -476,9 +483,16 @@ typedef struct _DIMM_INFO {
   } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {
-  UINT16 DimmID;                            //!< SMBIOS Type 17 handle corresponding to this memory device
-  UINT16 SocketID;                          //!< Socket ID for the memory device
+  UINT8 PmttVersion;                //!< PMTT Version
   UINT8 MemoryType;                         //!< memory type
+  UINT16 DimmID;                            //!< SMBIOS Type 17 handle corresponding to this memory device
+  UINT32 DimmHandle;                        //!< NFIT Device Handle
+  UINT16 NodeControllerID;                  //!< Node Controller ID
+  UINT16 SocketID;                          //!< Socket ID for the memory device
+  UINT16 DieID;                             //!< die identifier
+  UINT16 MemControllerID;                   //!< Memory Controller ID
+  UINT16 ChannelID;                         //!< Channel identifier
+  UINT16 SlotID;                            //!< Slot identifier
   UINT64 VolatileCapacity;                  //!< Capacity in bytes mapped as volatile memory
   CHAR16 DeviceLocator[DEVICE_LOCATOR_LEN]; //!< describing the physically-labeled socket or board position
   CHAR16 BankLabel[BANKLABEL_LEN];          //!< identifies the physically labeled bank
@@ -506,6 +520,7 @@ typedef struct _SYSTEM_CAPABILITIES_INFO {
   UINT8 CurrentOperatingMode;                       //!< Memory modes (volatile and persistent) currently selected by BIOS
   UINT16 InterleaveFormatsSupportedNum;             //!< Number of elements in list
   HII_POINTER PtrInterleaveFormatsSupported;        //!< List of supported interleave set formats
+  HII_POINTER PtrInterleaveSize;                    //!< PCAT 3.0 iMc & Channel intereleave size
   UINT64 MinNsSize;                                 //!< Minimum namespace size in bytes
   UINT64 NsBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT]; //!< Supported namespace block sizes in bytes
   UINT8 AppDirectMirrorSupported;
@@ -1010,6 +1025,8 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_CONFIG_IN_CHECKSUM_NOT_VALID   8
 #define DIMM_CONFIG_REVISION_NOT_SUPPORTED  9
 #define DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID 10
+#define DIMM_CONFIG_PM_NOT_MAPPED           11
+#define DIMM_CONFIG_DCPMM_POPULATION_ISSUE  12
 
 /**
   00 - Valid

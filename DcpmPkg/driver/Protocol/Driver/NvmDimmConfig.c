@@ -4094,6 +4094,11 @@ GetMemoryResourcesInfo(
 
     pMemoryResourcesInfo->RawCapacity += pDimm->RawCapacity;
 
+    if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+      pMemoryResourcesInfo->InaccessibleCapacity += pDimm->RawCapacity;
+      continue;
+    }
+
 #ifdef OS_BUILD
   ReturnCode = GetDimmMappedMemSize(pDimm);
   if (EFI_ERROR(ReturnCode)) {

@@ -139,8 +139,7 @@ ReservedCapacity = PPC (rounded down for PM alignment) - PMS
 
 [verse]
 InaccessibleCapacity = 
-  + (TC - MPC - PPC)
-  + (TC - PMS - ReservedCapacity)
+  + TC - VMS - PMS - ReservedCapacity
  if (CurrentMode == 1LM) then
   + VMS (rounded down for alignment)
 

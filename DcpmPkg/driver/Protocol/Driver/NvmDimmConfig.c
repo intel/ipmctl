@@ -6371,6 +6371,32 @@ CreateGoalConfig(
     goto Finish;
   }
 
+  /** Verify Command Access Policy for Set PCD command **/
+  UINT8 CapRestricted = 0;
+  UINT8 RestrictionCheck = 0;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
+
+  ReturnCode = GetFisTransportAttributes(pThis, &Attribs);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to retrieve FIS transport attributes. ReturnCode=%d.", ReturnCode);
+    goto Finish;
+  }
+  RestrictionCheck = Attribs.Protocol == FisTransportSmbus ? COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY : COMMAND_ACCESS_POLICY_RESTRICTION_NONE;
+
+  for (Index = 0; Index < DimmsNum; Index++) {
+    ReturnCode = FwCmdGetCommandAccessPolicy(ppDimms[Index], PtSetAdminFeatures, SubopPlatformDataInfo, &CapRestricted);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve Command Access Policy for %d:%d. DimmID=0x%04x ReturnCode=%d.",
+        PtSetAdminFeatures, SubopPlatformDataInfo, ppDimms[Index]->DimmID, ReturnCode);
+      goto Finish;
+    }
+    if (CapRestricted != RestrictionCheck) {
+      ReturnCode = EFI_UNSUPPORTED;
+      ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
+      goto Finish;
+    }
+  }
+
 #ifdef OS_BUILD
   if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
     ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,

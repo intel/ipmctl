@@ -30,7 +30,7 @@ if(BUILDNUM)
 else()
 	find_package(Git)
 	if(GIT_FOUND)
-		execute_process(COMMAND ${GIT_EXECUTABLE} describe --dirty
+		execute_process(COMMAND ${GIT_EXECUTABLE} describe --tag --dirty
 			OUTPUT_VARIABLE IPMCTL_VERSION_STRING
 			RESULT_VARIABLE GIT_RETURN_CODE
 			)

@@ -339,6 +339,90 @@ RegisterShowDimmsCommand(
 }
 
 /**
+Get manageability state for Dimm
+
+@param[in] pDimm the DIMM_INFO struct
+
+@retval BOOLEAN whether or not dimm is manageable
+**/
+BOOLEAN
+IsDimmManageableByDimmInfo(
+  IN  DIMM_INFO *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+
+  return IsDimmManageableByValues(pDimm->SubsystemVendorId,
+    pDimm->InterfaceFormatCodeNum,
+    pDimm->InterfaceFormatCode,
+    pDimm->SubsystemDeviceId,
+    pDimm->FwVer.FwApiMajor,
+    pDimm->FwVer.FwApiMinor);
+}
+
+EFI_STATUS IsDimmsMixedSkuCfg(PRINT_CONTEXT *pPrinterCtx,
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  BOOLEAN *pIsMixedSku,
+  BOOLEAN *pIsSkuViolation)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT32 DimmCount = 0;
+  DIMM_INFO *pDimms = NULL;
+  UINT32 i;
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+    return ReturnCode;
+  }
+
+  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
+
+  if (pDimms == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+    return ReturnCode;
+  }
+  /** retrieve the DIMM list **/
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
+    DIMM_INFO_CATEGORY_PACKAGE_SPARING, pDimms);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_ABORTED;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+    goto Finish;
+  }
+
+  *pIsMixedSku = FALSE;
+  *pIsSkuViolation = FALSE;
+  for (i = 0; i < DimmCount; ++i)
+  {
+    if (FALSE == IsDimmManageableByDimmInfo(&pDimms[i]))
+    {
+      continue;
+    }
+
+    if (pDimms[i].SKUViolation)
+    {
+      *pIsSkuViolation = TRUE;
+    }
+
+    if (NVM_SUCCESS != SkuComparison(pDimms[0].SkuInformation,
+      pDimms[i].SkuInformation))
+    {
+      *pIsMixedSku = TRUE;
+    }
+  }
+
+Finish:
+  FreePool(pDimms);
+  return ReturnCode;
+}
+
+/**
   Execute the show dimms command
 **/
 EFI_STATUS
@@ -393,6 +477,8 @@ ShowDimms(
   CHAR16 *pPath = NULL;
   BOOLEAN FIS_2_0 = FALSE;
   BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
+  BOOLEAN IsMixedSku;
+  BOOLEAN IsSkuViolation;
   BOOLEAN SkuMixedMode = FALSE;
 
   NVDIMM_ENTRY();
@@ -709,6 +795,12 @@ ShowDimms(
     ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
       DIMM_INFO_CATEGORY_ALL, pDimms);
     ShowAll = (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) || pDispOptions->AllOptionSet;
+
+    // Get whether the system is has a mixed Sku and/or Sku violation
+    ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
 
     /** show dimms from Initialized list **/
     for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
@@ -1433,6 +1525,9 @@ ShowDimms(
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ACTION_REQUIRED_EVENTS_STR, NOT_APPLICABLE_SHORT_STR);
         }
 #endif
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MIXED_SKU_STR))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MIXED_SKU_STR, (IsMixedSku == TRUE) ? L"1" : L"0");
+        }
       }
       else {
         for (Index3 = 0; Index3 < ALLOWED_DISP_VALUES_COUNT(pOnlyManageableAllowedDisplayValues); Index3++) {

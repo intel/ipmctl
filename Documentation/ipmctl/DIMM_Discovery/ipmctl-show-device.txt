@@ -572,3 +572,9 @@ MediaTemperatureInjectionsCounter::
 
 SoftwareTriggersCounter::
   This counter is incremented each time a software trigger is enabled.
+
+MixedSKU::
+  One or more DCPMMs in the system have different SKUs. One of:
+  - 0: False
+  - 1: True - In this case, the host software operates in a read-only mode and
+  does not allow changes to the DCPMMs and their associated capacity.

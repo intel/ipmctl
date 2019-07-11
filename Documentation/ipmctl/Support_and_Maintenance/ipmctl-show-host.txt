@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-host - Shows basic information about the host server
+ipmctl-show-host - Shows basic information about the host server (Removed)
 
 SYNOPSIS
 --------
@@ -17,74 +17,5 @@ ipmctl show [OPTIONS] -system -host
 
 DESCRIPTION
 -----------
-Shows basic information about the host server.
-
-OPTIONS
--------
--a::
--all::
-  Shows all attributes.
-
-NOTE: The all and display options are exclusive and may not be used together.
-
--d (attributes)::
--display (attributes)::
-  Filters the returned attributes by explicitly specifying a comma-separated
-  list of any of the attributes defined in the Return Data section.
-
-NOTE: The all and display options are exclusive and may not be used together.
-
--h::
--help::
-  Displays help for the command.
-
--ddrt::
-  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
-
--smbus::
-  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
-
-NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
-
-ifdef::os_build[]
--o (text|nvmxml)::
--output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
-endif::os_build[]
-
-EXAMPLES
---------
-Lists a few key fields for the server.
-[verse]
-ipmctl show -system -host
-
-Displays the host server operating system name.
-[verse]
-ipmctl show -d osname -system -host
-
-RETURN DATA
------------
-The default behavior is to return the default attributes listed below; the
-options can be used to expand or restrict the output.
-
-Name::
-  (Default) The server name
-
-OsName::
-  (Default) The operating system
-
-OsVersion::
-  (Default) The operating system version
-
-MixedSKU::
-  (Default) One or more DCPMMs in the system have different SKUs. One of:
-  - 0: False
-  - 1: True - In this case, the host software operates in a read-only mode and
-  does not allow changes to the DCPMMs and their associated capacity.
-
-SKUViolation::
-  (Default) One or more DCPMMs in the system has an unsupported configuration
-  due to a license issue. One of:
-  - 0: False
-  - 1: True - In this case, the host software operates in a read-only mode and
-  does not allow changes to the DCPMMs and their associated capacity.
+This command has been removed. The SKUViolation and MixedSKU fields are
+available in ipmctl-show-dimm.

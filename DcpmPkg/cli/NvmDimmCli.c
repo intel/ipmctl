@@ -54,7 +54,6 @@
 #include "StartFormatCommand.h"
 #include "ShowPreferencesCommand.h"
 #include "SetPreferencesCommand.h"
-#include "ShowHostServerCommand.h"
 #include "ShowPerformanceCommand.h"
 #include "ShowCmdAccessPolicyCommand.h"
 #include "DeletePcdCommand.h"
@@ -733,10 +732,6 @@ RegisterCommands(
   }
 
 #ifdef OS_BUILD
-  Rc = RegisterShowHostServerCommand();
-  if (EFI_ERROR(Rc)) {
-     goto done;
-  }
 
   Rc = RegisterShowEventCommand();
   if (EFI_ERROR(Rc)) {
@@ -769,12 +764,12 @@ RegisterCommands(
 
 #ifndef OS_BUILD
   /* Debug Utility commands */
-#ifndef MDEPKG_NDEBUG
   Rc = registerShowSmbiosCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
+#ifndef MDEPKG_NDEBUG
   Rc = RegisterShowRegisterCommand();
   if (EFI_ERROR(Rc)) {
     goto done;

@@ -108,6 +108,7 @@
 #define ACTION_REQUIRED_STR         L"ActionRequired"
 #define ACTION_REQUIRED_EVENTS_STR  L"ActionRequiredEvents"
 #endif
+#define MIXED_SKU_STR               L"MixedSKU"
 #define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
 #define AVERAGE_12V_POWER_STR       L"Average12vPower"
 #define AVERAGE_1_2V_POWER_STR      L"Average1_2vPower"

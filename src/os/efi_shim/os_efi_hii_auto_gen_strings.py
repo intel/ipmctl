@@ -77,9 +77,9 @@ if __name__ == '__main__':
 	# "Dictionary" / hash table that remembers the order items were inserted in
 	dict = OrderedDict()
 	for fileName in inputFiles:
-		# Need io to handle utf-16 files in python2
+		# Need io to handle utf-8 files in python2
 		# https://stackoverflow.com/a/844443
-		with io.open(fileName, 'r', encoding='utf-16') as f:
+		with io.open(fileName, 'r', encoding='utf-8') as f:
 			for line in f:
 				#print(line)
 				output = ConvertLine(line)

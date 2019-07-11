@@ -44,6 +44,7 @@ Ubuntu packages can be found at: https://launchpad.net/~jhli/+archive/ubuntu/lib
 
 Alternately, -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=ON to download sources and statically link to safeclib
 
+
 ### libndctl
 
 
@@ -73,6 +74,7 @@ Ipmctl has dependency on libsafec-devel, libndctl-devel and rubygem-asciidoctor
 *	Install the prerequisite packages
 >	sudo yum install ndctl ndctl-libs ndctl-devel libsafec rubygem-asciidoctor
 *	Either Follow ipmctl make, rpmbuild instructions, or install the ipmctl package
+>	yum install ipmctl
 
 ### Linux
 

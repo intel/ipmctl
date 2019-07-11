@@ -19,7 +19,20 @@ ipmctl refers to the following interface components:
 
 ## Packages
 
-ipmctl is available on Fedora.
+Some distributions include ipmctl allowing installation via their package manager.
+For example (on Fedora):
+> dnf install ipmctl
+
+This will update the required dependencies.
+
+For systems that cannot reach the Internet use another system to download the following rpms required to install ipmctl and then copy them to the original system (e.g. via thumb drive).
+
+> ipmctl.rpm, libipmctl.rpm, libsafec.rpm, ndctl, ndctl-libs, json-c.rpm
+
+Run 
+
+> rpm –ivh *.rpm
+
 
 EPEL 7 packages can be found at: https://copr.fedorainfracloud.org/coprs/jhli/ipmctl
 

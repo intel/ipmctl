@@ -103,9 +103,6 @@ Monitor health and track performance of DCPMMs.
 === SUPPORT AND MAINTENANCE
 View and update the firmware on DCPMMs. Other support and maintenance commands.
 
-*ipmctl-acknowledge-event*(1)::
-  Turns off the flag that signals a corrective action on an event
-
 *ipmctl-change-preference*(1)::
   Modifies one or more user preferences
 
@@ -117,9 +114,6 @@ View and update the firmware on DCPMMs. Other support and maintenance commands.
 
 *ipmctl-modify-device*(1)::
   Changes the configurable setting(s) on one or more DCPMMs
-
-*ipmctl-show-events*(1)::
-  Shows DCPMM related events
 
 *ipmctl-show-firmware*(1)::
   Shows detailed information about the firmware
@@ -193,12 +187,10 @@ SEE ALSO
 *ipmctl-change-sensor*(1),
 *ipmctl-show-performance*(1),
 *ipmctl-show-sensor*(1),
-*ipmctl-acknowledge-event*(1),
 *ipmctl-change-preference*(1),
 *ipmctl-dump-support*(1),
 *ipmctl-help*(1),
 *ipmctl-modify-device*(1),
-*ipmctl-show-events*(1),
 *ipmctl-show-firmware*(1),
 *ipmctl-show-host*(1),
 *ipmctl-show-preferences*(1),

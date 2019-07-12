@@ -79,8 +79,6 @@ extern int cov_dumpData(void);
 #include <mfg/MfgCommands.h>
 #endif
 #ifdef OS_BUILD
-#include "ShowEventCommand.h"
-#include "SetEventCommand.h"
 #include "DumpSupportCommand.h"
 #include <stdio.h>
 extern void nvm_current_cmd(struct Command Command);
@@ -732,16 +730,6 @@ RegisterCommands(
   }
 
 #ifdef OS_BUILD
-
-  Rc = RegisterShowEventCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterSetEventCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
 
   Rc = RegisterDumpSupportCommand();
   if (EFI_ERROR(Rc)) {

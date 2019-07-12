@@ -23,7 +23,6 @@
 #define MANAGEABILITY_SHORT_STR     L"Manageability"
 #define HEALTH_STR                  L"HealthState"
 #define HEALTH_STATE_REASON_STR     L"HealthStateReason"
-#define ACTION_REQ_STR              L"ActionRequired"
 #define HEALTH_SHORT_STR            L"Health"
 #define SECURITY_STR                L"LockState"
 #define SECURITY_SKU_ID_STR         L"SecuritySKUId"
@@ -104,10 +103,6 @@
 #define MAX_TURBO_MODE_POWER_CONSUMPTION_STR L"MaxTurboModePowerConsumption"
 #define MAX_AVERAGE_POWER_TIME_CONSTANT L"MaxAveragePowerTimeConstant"
 #define AVERAGE_POWER_TIME_CONSTANT_STEP L"AveragePowerTimeConstantStep"
-#ifdef OS_BUILD
-#define ACTION_REQUIRED_STR         L"ActionRequired"
-#define ACTION_REQUIRED_EVENTS_STR  L"ActionRequiredEvents"
-#endif
 #define MIXED_SKU_STR               L"MixedSKU"
 #define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
 #define AVERAGE_12V_POWER_STR       L"Average12vPower"

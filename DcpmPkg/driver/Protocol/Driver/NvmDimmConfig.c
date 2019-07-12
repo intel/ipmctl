@@ -179,88 +179,6 @@ EFI_DCPMM_PBR_PROTOCOL gNvmDimmDriverNvmDimmPbr =
   PbrSetData,
 };
 
-#ifdef OS_BUILD
-#include "event.h"
-#include <stdio.h>
-#include <stdarg.h>
-
-/*
-* Store an event log entry in the system event log for the dimms list
-*/
-EFI_STATUS StoreSystemEntryForDimm(OBJECT_STATUS *pObjectStatus, CONST CHAR16 *source, UINT32 event_type, CONST CHAR16  *message, ...)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  VA_LIST args;
-  NVM_EVENT_MSG_W event_message = { 0 };
-
-  if ((pObjectStatus == NULL) || (NULL == message)) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-  } else {
-    // Prepare the string
-    VA_START(args, message);
-    UnicodeVSPrint(event_message, sizeof(event_message), message, args);
-        VA_END(args);
-    // Store the log
-    nvm_store_system_entry_widechar(source, event_type, pObjectStatus->ObjectIdStr, event_message);
-  }
-
-  return ReturnCode;
-}
-/*
-* Store an event log entry in the system event log for the dimms list
-*/
-EFI_STATUS StoreSystemEntryForDimmList(COMMAND_STATUS *pCommandStatus, CONST CHAR16 *source, UINT32 event_type, CONST CHAR16  *message)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  LIST_ENTRY *pObjectStatusNode = NULL;
-  OBJECT_STATUS *pObjectStatus = NULL;
-  UINT32 Index = 0;
-  BOOLEAN IsDimmStatusSuccess = TRUE;
-
-  if (pCommandStatus == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-  }
-  else
-  {
-    LIST_FOR_EACH(pObjectStatusNode, &pCommandStatus->ObjectStatusList) {
-      pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
-      // Check the DIMM status
-      IsDimmStatusSuccess = TRUE;
-      for (Index = 0; Index < ((NVM_LAST_STATUS_VALUE / 64) + 1); Index++) {
-        if ((0 == Index) && (NVM_SUCCESS_FW_RESET_REQUIRED == pObjectStatus->StatusBitField.BitField[Index])) {
-          continue;
-        }
-        if (pObjectStatus->StatusBitField.BitField[Index] != NVM_SUCCESS) {
-          IsDimmStatusSuccess = FALSE;
-        }
-      }
-      if (IsDimmStatusSuccess) {
-            // Store the log
-        StoreSystemEntryForDimm(pObjectStatus, source, event_type, message, pObjectStatus->ObjectId);
-        }
-    }
-  }
-
-    return ReturnCode;
-}
-
-/*
-* Converts the sensor Id value to the wide character string
-*/
-STATIC CHAR16* ConvertSensorIdToStringW(UINT8 SensorId)
-{
-  if (SensorId == SENSOR_TYPE_CONTROLLER_TEMPERATURE) {
-    return L"ControllerTemperature";
-  } else if (SensorId == SENSOR_TYPE_MEDIA_TEMPERATURE) {
-    return L"MediaTemperature";
-  } else if (SensorId == SENSOR_TYPE_PERCENTAGE_REMAINING) {
-    return L"PercentageRemaining";
-  }
-  return L"";
-}
-
-#endif // OS_BUILD
-
 /**
   Retrieve the User Driver Preferences from RunTime Services.
 
@@ -672,15 +590,6 @@ InitializeNfitDimmInfoFieldsFromDimm(
   pDimmInfo->SmbusAddress = pDimm->SmbusAddress;
 
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-#ifdef OS_BUILD
-  if (ReturnCode == EFI_SUCCESS) {
-    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
-    // Prepare DIMM UID
-    UnicodeStrToAsciiStrS(pDimmInfo->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
-    // Get the action required status
-    pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
-  }
-#endif // OS_BUILD
   if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
@@ -876,15 +785,6 @@ GetDimmInfo (
 
   ReturnCode = FillSmbiosInfo(pDimmInfo);
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-#ifdef OS_BUILD
-  if (ReturnCode == EFI_SUCCESS) {
-    CHAR8 AsciiDimmUid[MAX_DIMM_UID_LENGTH + 1] = { 0 };
-    // Prepare DIMM UID
-    UnicodeStrToAsciiStrS(pDimmInfo->DimmUid, AsciiDimmUid, MAX_DIMM_UID_LENGTH + 1);
-    // Get the action required status
-    pDimmInfo->ActionRequired = nvm_get_action_required(AsciiDimmUid);
-  }
-#endif // OS_BUILD
   if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
@@ -2448,9 +2348,6 @@ SetAlarmThresholds (
   UINT32 DimmsNum = 0;
   PT_PAYLOAD_ALARM_THRESHOLDS *pPayloadAlarmThresholds = NULL;
   UINT32 Index = 0;
-#ifdef OS_BUILD
-   OBJECT_STATUS *pObjectStatus = NULL;
-#endif // OS_BUILD
 
   NVDIMM_ENTRY();
 
@@ -2565,14 +2462,6 @@ SetAlarmThresholds (
       }
     } else {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
-#ifdef OS_BUILD
-      pObjectStatus = GetObjectStatus(pCommandStatus, pDimms[Index]->DeviceHandle.AsUint32);
-      CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_SENSOR_SET_CHANGED), NULL);
-      nvm_store_system_entry_widechar(NVM_SYSLOG_SRC_W,
-        SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_305, FALSE, TRUE, TRUE, FALSE, 0),
-        pObjectStatus->ObjectIdStr, pTmpStr, ConvertSensorIdToStringW(SensorId), pDimms[Index]->DeviceHandle.AsUint32);
-      FREE_POOL_SAFE(pTmpStr);
-#endif // OS_BUILD
     }
   }
 
@@ -6832,17 +6721,6 @@ CreateGoalConfig(
     }
   }
 
-#ifdef OS_BUILD
-  if (!EFI_ERROR(ReturnCode))
-  {
-      CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_CHANGE_NEW_GOAL), NULL);
-      StoreSystemEntryForDimmList(pCommandStatus, NVM_SYSLOG_SRC_W,
-          SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_300, FALSE, TRUE, TRUE, FALSE, 0),
-          pTmpStr);
-      FREE_POOL_SAFE(pTmpStr);
-  }
-#endif // OS_BUILD
-
 Finish:
   ClearInternalGoalConfigsInfo(&gNvmDimmData->PMEMDev.Dimms);
   ClearPcdCacheOnDimmList();
@@ -6950,17 +6828,6 @@ DeleteGoalConfig (
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-
-#ifdef OS_BUILD
-  if (!EFI_ERROR(ReturnCode))
-  {
-    CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_CHANGE_DELETE_GOAL), NULL);
-    StoreSystemEntryForDimmList(pCommandStatus, NVM_SYSLOG_SRC_W,
-      SYSTEM_EVENT_CREATE_EVENT_TYPE(SYSTEM_EVENT_CAT_MGMT, SYSTEM_EVENT_TYPE_INFO, EVENT_CONFIG_CHANGE_301, FALSE, TRUE, TRUE, FALSE, 0),
-      pTmpStr);
-    FREE_POOL_SAFE(pTmpStr);
-  }
-#endif // OS_BUILD
 
 Finish:
   ClearInternalGoalConfigsInfo(&gNvmDimmData->PMEMDev.Dimms);

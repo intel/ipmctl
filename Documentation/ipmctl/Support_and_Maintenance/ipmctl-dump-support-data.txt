@@ -19,8 +19,7 @@ DESCRIPTION
 -----------
 Creates a support snapshot and dump support data to a file for off-line analysis
 by support personnel. Support data may include system log(s), error log(s),
-trace log(s), platform configuration, sensor information, events and diagnostic
-results.
+trace log(s), platform configuration, sensor information and diagnostic results.
 
 Commands executed:
 * version
@@ -28,7 +27,6 @@ Commands executed:
 * show -a -system -capabilities
 * show -a -topology
 * start -diagnostic
-* show -event
 * show -system
 
 Commands executed per DCPMM:

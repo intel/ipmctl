@@ -113,7 +113,6 @@
 #define PCD_TARGET                           L"-pcd"                     //!< 'pcd' target name
 #define SMBIOS_TARGET                        L"-smbios"                  ///< 'smbios' target name
 #define SUPPORT_TARGET                       L"-support"                 //!< 'support' target name
-#define EVENT_TARGET                         L"-event"                   //!< 'event' target name
 #define CONTROLLER_TEMPERATURE_TARGET_VALUE  L"ControllerTemperature"    //!< 'sensor' target value
 #define MEDIA_TEMPERATURE_TARGET_VALUE       L"MediaTemperature"         //!< 'sensor' target value
 #define SPARE_CAPACITY_TARGET_VALUE          L"PercentageRemaining"      //!< 'sensor' target value
@@ -230,12 +229,6 @@
 #define APP_DIRECT_GRANULARITY_PROPERTY   L"APPDIRECT_GRANULARITY"
 #define LABEL_VERSION_PROPERTY            L"LabelVersion"
 #define NS_LABEL_VERSION_PROPERTY         L"NamespaceLabelVersion"
-#define PERFORMANCE_MONITOR_ENABLED        L"PERFORMANCE_MONITOR_ENABLED"
-#define PERFORMANCE_MONITOR_INTERVAL_MINUTES L"PERFORMANCE_MONITOR_INTERVAL_MINUTES"
-#define EVENT_MONITOR_ENABLED             L"EVENT_MONITOR_ENABLED"
-#define EVENT_MONITOR_INTERVAL_MINUTES    L"EVENT_MONITOR_INTERVAL_MINUTES"
-#define EVENT_LOG_MAX                     L"EVENT_LOG_MAX"
-#define DBG_LOG_MAX                       L"DBG_LOG_MAX"
 #define SEVERITY_PROPERTY                 L"Severity"
 #define PROPERTY_VALUE_UID                L"UID"
 #define PROPERTY_VALUE_HANDLE             L"HANDLE"
@@ -243,7 +236,6 @@
 #define PROPERTY_VALUE_AUTO10             L"AUTO_10"
 #define PROPERTY_VALUE_RECOMMENDED        L"RECOMMENDED"
 #define CATEGORY_PROPERTY                 L"Category"
-#define ACTION_REQ_PROPERTY               L"ActionRequired"
 #define DBG_LOG_LEVEL                     L"DBG_LOG_LEVEL"
 #define CREATE_SUPP_NAME                  L"Name"
 #define PROPERTY_ERROR_UNKNOWN                      L"Reason for failure unknown"
@@ -321,17 +313,10 @@
                                         UNITS_OPTION_GIB      L"|" \
                                         UNITS_OPTION_TB       L"|" \
                                         UNITS_OPTION_TIB
-#define HELP_TEXT_PERSISTENT_MEM_TYPE             L"AppDirect|AppDirectNotInterleaved"
-#define HELP_TEXT_FLASH_SPI                       L"FlashSPI"
-#define HELP_TEXT_EVENT_ID                        L"EventID"
-#define HELP_PERFORMANCE_MONITOR_ENABLED          L"0|1"
-#define HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES L"minutes"
-#define HELP_EVENT_MONITOR_ENABLED                L"0|1"
-#define HELP_EVENT_MONITOR_INTERVAL_MINUTES       L"minutes"
-#define HELP_EVENT_LOG_MAX                        L"num events"
-#define HELP_DBG_LOG_MAX                          L"num log entries"
-#define HELP_DBG_LOG_LEVEL                        L"log level"
-#define HELP_TEXT_PERFORMANCE_CAT                 L"Performance Metrics"
+#define HELP_TEXT_PERSISTENT_MEM_TYPE   L"AppDirect|AppDirectNotInterleaved"
+#define HELP_TEXT_FLASH_SPI             L"FlashSPI"
+#define HELP_DBG_LOG_LEVEL              L"log level"
+#define HELP_TEXT_PERFORMANCE_CAT       L"Performance Metrics"
 
 #define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY     L"<0, 32>"
 

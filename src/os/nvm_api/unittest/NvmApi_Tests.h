@@ -144,7 +144,7 @@ TEST_F(NvmApi_Tests, VerifyMemTopology)
 
 TEST_F(NvmApi_Tests, SetPreferences)
 {
-  int retval = nvm_set_user_preference("PERFORMANCE_MONITOR_INTERVAL_MINUTES","2");
+  int retval = nvm_set_user_preference("DBG_LOG_LEVEL","2");
 }
 
 /*

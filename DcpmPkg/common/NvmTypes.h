@@ -453,10 +453,6 @@ typedef struct _DIMM_INFO {
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM id (in hexadecimal format representation)
   UINT16 ErrorMask;                         //!< Bit mask representing which FW functions failed, see DIMM_INFO_ERROR types
 
-#ifdef OS_BUILD
-  CHAR8 ActionRequired;                     //!< Action Required bit, the value stored in the <uid>.ar file (see event.c file)
-#endif // OS_BUILD
-
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
 
   //DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS

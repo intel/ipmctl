@@ -46,12 +46,11 @@ PRINTER_LIST_ATTRIB ShowDimmListAttributes =
   }
 };
 
-#ifdef OS_BUILD
 /*
-*  PRINTER TABLE ATTRIBUTES (6 columns)
-*   DimmID | Capacity | HealthState | ActionRequired | LockState | FWVersion
-*   ========================================================================
-*   0x0001 | X        | X           | X              | X         | X
+*  PRINTER TABLE ATTRIBUTES (5 columns)
+*   DimmID | Capacity | HealthState | LockState | FWVersion
+*   =======================================================
+*   0x0001 | X        | X           | X         | X
 *   ...
 */
 PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
@@ -73,11 +72,6 @@ PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
       DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
     },
     {
-      ACTION_REQUIRED_STR,                                  //COLUMN HEADER
-      AR_MAX_STR_WIDTH,                                     //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM ACTION_REQUIRED_STR       //COLUMN DATA PATH
-    },
-    {
       SECURITY_STR,                               //COLUMN HEADER
       SECURITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
       DS_DIMM_PATH PATH_KEY_DELIM SECURITY_STR    //COLUMN DATA PATH
@@ -89,45 +83,6 @@ PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
     }
   }
 };
-#else
-/*
-*  PRINTER TABLE ATTRIBUTES (6 columns)
-*   DimmID | Capacity | LockState | HealthState | FWVersion
-*   ========================================================
-*   0x0001 | X        | X         | X           | X
-*   ...
-*/
-PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
-{
-  {
-    {
-      DIMM_ID_STR,                                //COLUMN HEADER
-      DIMM_MAX_STR_WIDTH,                         //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM DIMM_ID_STR     //COLUMN DATA PATH
-    },
-    {
-      CAPACITY_STR,                               //COLUMN HEADER
-      CAPACITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM CAPACITY_STR    //COLUMN DATA PATH
-    },
-    {
-      SECURITY_STR,                               //COLUMN HEADER
-      SECURITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM SECURITY_STR    //COLUMN DATA PATH
-    },
-    {
-      HEALTH_STR,                                 //COLUMN HEADER
-      HEALTH_MAX_STR_WIDTH,                       //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
-    },
-    {
-      FW_VER_STR,                                 //COLUMN HEADER
-      FW_VERSION_MAX_STR_WIDTH,                   //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM FW_VER_STR      //COLUMN DATA PATH
-    }
-  }
-};
-#endif
 
 PRINTER_DATA_SET_ATTRIBS ShowDimmDataSetAttribs =
 {
@@ -249,10 +204,6 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   MEDIA_TEMP_INJ_CTR_STR,
   SW_TRIGGER_CTR_STR,
   BOOT_STATUS_REGISTER_STR,
-#ifdef OS_BUILD
-  ACTION_REQUIRED_STR,
-  ACTION_REQUIRED_EVENTS_STR,
-#endif
   DCPMM_AVERAGE_POWER_STR,
   AVERAGE_12V_POWER_STR,
   AVERAGE_1_2V_POWER_STR
@@ -720,9 +671,6 @@ ShowDimms(
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, pSecurityStr);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
 
-#ifdef OS_BUILD
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTION_REQUIRED_STR, FORMAT_DEC, pDimms[DimmIndex].ActionRequired);
-#endif
       if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_UID) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, pDimmErrStr);
       }
@@ -779,9 +727,6 @@ ShowDimms(
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, NOT_APPLICABLE_SHORT_STR);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
 
-#ifdef OS_BUILD
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ACTION_REQUIRED_STR, NOT_APPLICABLE_SHORT_STR);
-#endif
       FREE_POOL_SAFE(pDimmErrStr);
       FREE_POOL_SAFE(pHealthStr);
       FREE_POOL_SAFE(pCapacityStr);
@@ -1511,20 +1456,8 @@ ShowDimms(
           if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_CTR_STR))) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SW_TRIGGER_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].SoftwareTriggersCounter);
           }
-
-
-        }
-#ifdef OS_BUILD
-        /** ActionRequired **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTION_REQUIRED_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTION_REQUIRED_STR, FORMAT_INT32, pDimms[DimmIndex].ActionRequired);
         }
 
-        /** ActionRequiredEvents **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTION_REQUIRED_EVENTS_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ACTION_REQUIRED_EVENTS_STR, NOT_APPLICABLE_SHORT_STR);
-        }
-#endif
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MIXED_SKU_STR))) {
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MIXED_SKU_STR, (IsMixedSku == TRUE) ? L"1" : L"0");
         }

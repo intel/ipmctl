@@ -120,7 +120,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT    L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstantMultiplier."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ACTION_REQUIRED      L"Syntax Error: Incorrect value for property ActionRequired."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CATEGORY             L"Syntax Error: Incorrect value for property Category."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM              L"Syntax Error: Incorrect value for property SequenceNumber."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ALARM_THRESHOLD      L"Syntax Error: Incorrect value for property AlarmThreshold."

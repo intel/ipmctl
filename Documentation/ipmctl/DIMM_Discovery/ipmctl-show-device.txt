@@ -134,15 +134,6 @@ HealthStateReason::
   Interface Specification_, document number 556488, Section 4.8
   SMART and Health.
 
-ifdef::os_build[]
-ActionRequired::
-  (Default) If there are events for this device that require
-  corrective action or acknowledgment. Refer to the command Section
-  <<Show Events>> for more information about events. One of:
-  - 0: No action required events
-  - 1: One or more action required events
-endif::os_build[]
-
 InterfaceFormatCode::
   A comma-delimited list of the JEDEC standard format
   interface code(s) for the DCPMM where each code is formatted as: code
@@ -297,13 +288,6 @@ FWAPIVersion::
   the host software allows management of DCPMMs where this version is less than
   or equal to the version stored in the host software. Value may be N/A if the
   DCPMM is not manageable by the software.
-
-ifdef::os_build[]
-ActionRequiredEvents::
-  A list of the events for this device that require corrective action or
-  acknowledgment in the format: Event [ID] - [Message]. Refer to the
-  command Show Events for more information about events.
-endif::os_build[]
 
 *The following information is only applicable when the DCPMM is manageable by the
 software as indicated by the "ManageabilityState".*

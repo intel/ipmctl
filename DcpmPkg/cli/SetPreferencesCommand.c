@@ -18,14 +18,8 @@
  /**
  Local definitions
  **/
-#define MIN_BOOLEAN_VALUE 0
-#define MAX_BOOLEAN_VALUE 1
-#define MIN_LOG_VALUE 0x0
-#define MAX_LOG_VALUE 0x7FFFFFFF
 #define MIN_LOG_LEVEL_VALUE 0
 #define MAX_LOG_LEVEL_VALUE 4
-#define MIN_PERFORMANCE_MONITOR_INTERVAL_MINUTES 1
-#define MIN_EVENT_MONITOR_INTERVAL_MINUTES 1
 
 /**
   Command syntax definition
@@ -53,12 +47,6 @@ struct Command SetPreferencesCommand =
     {APP_DIRECT_SETTINGS_PROPERTY, L"", HELP_TEXT_APPDIRECT_SETTINGS, FALSE, ValueRequired},
     {APP_DIRECT_GRANULARITY_PROPERTY, L"", HELP_TEXT_APPDIRECT_GRANULARITY, FALSE, ValueRequired},
 #ifdef OS_BUILD
-    {PERFORMANCE_MONITOR_ENABLED, L"", HELP_PERFORMANCE_MONITOR_ENABLED, FALSE, ValueRequired },
-    {PERFORMANCE_MONITOR_INTERVAL_MINUTES, L"", HELP_PERFORMANCE_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
-    {EVENT_MONITOR_ENABLED, L"", HELP_EVENT_MONITOR_ENABLED, FALSE, ValueRequired },
-    {EVENT_MONITOR_INTERVAL_MINUTES, L"", HELP_EVENT_MONITOR_INTERVAL_MINUTES, FALSE, ValueRequired },
-    {EVENT_LOG_MAX, L"", HELP_EVENT_LOG_MAX, FALSE, ValueRequired },
-    {DBG_LOG_MAX, L"", HELP_DBG_LOG_MAX, FALSE, ValueRequired },
     {DBG_LOG_LEVEL, L"", HELP_DBG_LOG_LEVEL, FALSE, ValueRequired},
 #endif
   },
@@ -448,12 +436,6 @@ SetPreferences(
     }
   }
 #ifdef OS_BUILD
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_ENABLED, "Performance monitor enable setting type not provided", MIN_BOOLEAN_VALUE, MAX_BOOLEAN_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, PERFORMANCE_MONITOR_INTERVAL_MINUTES, "Performance monitor interval minutes setting type not provided", MIN_PERFORMANCE_MONITOR_INTERVAL_MINUTES, MAX_UINT64_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_ENABLED, "Event monitor enabled setting type not provided", MIN_BOOLEAN_VALUE, MAX_BOOLEAN_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_MONITOR_INTERVAL_MINUTES, "event monitor interval minutes setting type not provided", MIN_EVENT_MONITOR_INTERVAL_MINUTES, MAX_UINT64_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, EVENT_LOG_MAX, "Event log max setting type not provided", MIN_LOG_VALUE, MAX_LOG_VALUE, pCommandStatus);
-  SetPreferenceStr(pCmd, DBG_LOG_MAX, "Log max setting type not provided", MIN_LOG_VALUE, MAX_LOG_VALUE, pCommandStatus);
   SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MIN_LOG_LEVEL_VALUE, MAX_LOG_LEVEL_VALUE, pCommandStatus);
 
   TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);

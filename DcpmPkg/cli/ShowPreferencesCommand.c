@@ -154,35 +154,6 @@ ShowPreferences(
   }
 
 #ifdef OS_BUILD
-  ReturnCode = GET_VARIABLE_STR(PERFORMANCE_MONITOR_ENABLED, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  PERFORMANCE_MONITOR_ENABLED, tempStr);
-  }
-
-  ReturnCode = GET_VARIABLE_STR(PERFORMANCE_MONITOR_INTERVAL_MINUTES, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  PERFORMANCE_MONITOR_INTERVAL_MINUTES, tempStr);
-  }
-
-  ReturnCode = GET_VARIABLE_STR(EVENT_MONITOR_ENABLED, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  EVENT_MONITOR_ENABLED, tempStr);
-  }
-
-  ReturnCode = GET_VARIABLE_STR(EVENT_MONITOR_INTERVAL_MINUTES, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  EVENT_MONITOR_INTERVAL_MINUTES, tempStr);
-  }
-
-  ReturnCode = GET_VARIABLE_STR(EVENT_LOG_MAX, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  EVENT_LOG_MAX, tempStr);
-  }
-  ReturnCode = GET_VARIABLE_STR(DBG_LOG_MAX, gNvmDimmConfigProtocolGuid, 0, tempStr);
-  if (!EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  DBG_LOG_MAX, tempStr);
-  }
-
   ReturnCode = GET_VARIABLE_STR(DBG_LOG_LEVEL, gNvmDimmConfigProtocolGuid, 0, tempStr);
   if (!EFI_ERROR(ReturnCode)) {
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  DBG_LOG_LEVEL, tempStr);

@@ -1,21 +1,19 @@
 # ipmctl
 
-ipmctl is a utility for configuring and managing Intel Optane DC persistent memory modules (PMM).
+ipmctl is a utility for configuring and managing Intel Optane DC persistent memory modules (DCPMM).
 
 It supports functionality to:
-* Discover PMMs on the platform.
+* Discover DCPMMs on the platform.
 * Provision the platform memory configuration.
-* View and update the firmware on PMMs.
-* Configure data-at-rest security on PMMs.
-* Monitor PMM health.
-* Track performance of PMMs.
-* Debug and troubleshoot PMMs.
+* View and update the firmware on DCPMMs.
+* Configure data-at-rest security on DCPMMs.
+* Track health and performance of DCPMMs.
+* Debug and troubleshoot DCPMMs.
 
 ipmctl refers to the following interface components:
 
-* libipmctl: An Application Programming Interface (API) library for managing PMMs.
-* ipmctl: A Command Line Interface (CLI) application for configuring and managing PMMs from the command line.
-* ipmctl-monitor: A monitor daemon/system service for monitoring the health and status of PMMs.
+* libipmctl: An Application Programming Interface (API) library for managing DCPMMs.
+* ipmctl: A Command Line Interface (CLI) application for configuring and managing DCPMMs from the command line.
 
 ## Packages
 

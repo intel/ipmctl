@@ -32,23 +32,11 @@ Discover DCPMMs on the platform.
 Provision the platform memory configuration.
 View and update the firmware on DCPMMs.
 Configure data-at-rest security on DCPMMs.
-Monitor DCPMM health.
-Track performance of DCPMMs.
+Track health and performance of DCPMMs.
 Debug and troubleshoot DCPMMs.
 
 %prep
 %setup -q -n %{name}-%{version}
-
-%package -n ipmctl-monitor
-Summary:	Daemon for monitoring the status of Intel DCPMM
-Requires:	libipmctl%{?_isa} = %{version}-%{release}
-%{?systemd_requires}
-BuildRequires:	systemd
-Obsoletes:	ixpdimm-monitor < 01.00.00.3000
-
-%description -n ipmctl-monitor
-A monitor daemon for monitoring the health and status of Intel Optane DC
-persistent memory modules
 
 %package -n libipmctl
 Summary:	Library for Intel DCPMM management
@@ -84,7 +72,6 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_MANDIR=%{_mandir} \
     -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
-    -DINSTALL_UNITDIR=%{_unitdir} \
     -DRELEASE=ON \
     -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
     -DRPM_BUILD=ON
@@ -98,7 +85,6 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_MANDIR=%{_mandir} \
     -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
-    -DINSTALL_UNITDIR=%{_unitdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON \
     -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
@@ -110,26 +96,13 @@ API for development of Intel Optane DC persistent memory management utilities.
 %{!?_cmake_version: cd build}
 %make_install -f Makefile
 
-%post -n ipmctl-monitor
-%systemd_post ipmctl-monitor.service
-
 %post -n libipmctl -p /sbin/ldconfig
 
 %postun -n libipmctl -p /sbin/ldconfig
 
-%preun -n ipmctl-monitor
-%systemd_preun stop ipmctl-monitor.service
-
-%postun -n ipmctl-monitor
-%systemd_postun_with_restart ipmctl-monitor.service
-
 %files -n ipmctl
 %{_bindir}/ipmctl
 %{_mandir}/man1/ipmctl*
-
-%files -n ipmctl-monitor
-%{_bindir}/ipmctl-monitor
-%{_unitdir}/ipmctl-monitor.service
 
 %files -n libipmctl
 %{_libdir}/libipmctl.so.3*

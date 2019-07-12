@@ -83,13 +83,6 @@ extern EFI_STATUS
 ParseSourceDumpFile(IN CHAR16 *pFilePath, IN EFI_DEVICE_PATH_PROTOCOL *pDevicePath, OUT CHAR8 **pFileString);
 extern EFI_STATUS RegisterCommands();
 extern int g_fast_path;
-extern int acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx);
-extern int acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int * dev_handle);
-extern int acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state);
-extern int acpi_event_set_monitor_mask(void * ctx, const unsigned int mask);
-extern int acpi_event_get_monitor_mask(void * ctx, unsigned int * mask);
-extern int acpi_wait_for_event(void * acpi_event_contexts[], const unsigned int dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result);
-extern int acpi_event_free_ctx(void * context);
 
 //todo: add error checking
 NVM_API int nvm_init()
@@ -1892,251 +1885,25 @@ Finish:
   return rc;
 }
 
-static unsigned int convert_event_filter_data_and_return_event_type(const struct event_filter *p_filter, NVM_UID dimm_uid, unsigned int *p_event_id)
-{
-  unsigned int event_type_mask = 0;
-
-  if (NULL == p_filter) {
-    event_type_mask = SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_ALL_MASK) |
-      SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_ONLY_MASK);
-
-    return event_type_mask;
-  }
-
-  if (NVM_FILTER_ON_TYPE & p_filter->filter_mask) {
-    switch (p_filter->type) {
-    case EVENT_TYPE_ALL:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_ALL_MASK);
-      break;
-    case EVENT_TYPE_CONFIG:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_CONFIG_MASK);
-      break;
-    case EVENT_TYPE_HEALTH:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_HEALTH_MASK);
-      break;
-    case EVENT_TYPE_MGMT:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_MGMT_MASK);
-      break;
-    case EVENT_TYPE_DIAG:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_DIAG_MASK);
-      break;
-    case EVENT_TYPE_DIAG_QUICK:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_QUICK_MASK);
-      break;
-    case EVENT_TYPE_DIAG_PLATFORM_CONFIG:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_PM_MASK);
-      break;
-    case EVENT_TYPE_DIAG_SECURITY:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_SECURITY_MASK);
-      break;
-    case EVENT_TYPE_DIAG_FW_CONSISTENCY:
-      event_type_mask |= SYSTEM_EVENT_TYPE_CATEGORY_SET(SYSTEM_EVENT_CAT_FW_MASK);
-      break;
-    }
-  }
-  if (NVM_FILTER_ON_SEVERITY & p_filter->filter_mask) {
-    switch (p_filter->severity) {
-    case EVENT_SEVERITY_INFO:
-      event_type_mask |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_INFO_MASK);
-      break;
-    case EVENT_SEVERITY_WARN:
-      event_type_mask |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_WARNING_MASK);
-      break;
-    case EVENT_SEVERITY_CRITICAL:
-    case EVENT_SEVERITY_FATAL:
-      event_type_mask |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_ERROR_MASK);
-      break;
-    }
-  }
-  if (NVM_FILTER_ON_CODE & p_filter->filter_mask) {
-    // Not implemented yet
-  }
-  if (NVM_FILTER_ON_UID & p_filter->filter_mask)
-    AsciiStrnCpy(dimm_uid, p_filter->uid, sizeof(p_filter->uid));
-  if (NVM_FILTER_ON_AFTER & p_filter->filter_mask) {
-    // Not implemented yet
-  }
-  if (NVM_FILTER_ON_BEFORE & p_filter->filter_mask) {
-    // Not implemented yet
-  }
-  if (NVM_FILTER_ON_EVENT & p_filter->filter_mask)
-    *p_event_id = (unsigned int)p_filter->event_id;
-  if (NVM_FILTER_ON_AR & p_filter->filter_mask)
-    event_type_mask |= (SYSTEM_EVENT_TYPE_AR_STATUS_SET(TRUE) | SYSTEM_EVENT_TYPE_AR_EVENT_SET(p_filter->action_required));
-
-  return event_type_mask;
-}
-
-static void convert_log_entry_to_event(log_entry *p_log_entry, char *event_message, struct event *p_event)
-{
-  char *p_src_msg = event_message;
-  char *p_dst_msg = p_event->message;
-
-  if (SYSTEM_EVENT_TYPE_CATEGORY_MASK & p_log_entry->event_type) {
-    switch (SYSTEM_EVENT_TYPE_CATEGORY_GET(p_log_entry->event_type)) {
-    case SYSTEM_EVENT_CAT_CONFIG:
-      p_event->type = EVENT_TYPE_CONFIG;
-      break;
-    case SYSTEM_EVENT_CAT_HEALTH:
-      p_event->type = EVENT_TYPE_HEALTH;
-      break;
-    case SYSTEM_EVENT_CAT_MGMT:
-      p_event->type = EVENT_TYPE_MGMT;
-      break;
-    case SYSTEM_EVENT_CAT_DIAG:
-      p_event->type = EVENT_TYPE_DIAG;
-      break;
-    case SYSTEM_EVENT_CAT_QUICK:
-      p_event->type = EVENT_TYPE_DIAG_QUICK;
-      break;
-    case SYSTEM_EVENT_CAT_PM:
-      p_event->type = EVENT_TYPE_DIAG_PLATFORM_CONFIG;
-      break;
-    case SYSTEM_EVENT_CAT_SECURITY:
-      p_event->type = EVENT_TYPE_DIAG_SECURITY;
-      break;
-    case SYSTEM_EVENT_CAT_FW:
-      p_event->type = EVENT_TYPE_DIAG_FW_CONSISTENCY;
-      break;
-    }
-  }
-  if (SYSTEM_EVENT_TYPE_SEVERITY_MASK & p_log_entry->event_type) {
-    switch (SYSTEM_EVENT_TYPE_SEVERITY_GET(p_log_entry->event_type)) {
-    case SYSTEM_EVENT_TYPE_INFO:
-      p_event->severity = EVENT_SEVERITY_INFO;
-      break;
-    case SYSTEM_EVENT_TYPE_WARNING:
-      p_event->severity = EVENT_SEVERITY_WARN;
-      break;
-    case SYSTEM_EVENT_TYPE_ERROR:
-      p_event->severity = EVENT_SEVERITY_CRITICAL;
-      break;
-    }
-  }
-  if (SYSTEM_EVENT_TYPE_NUMBER_MASK & p_log_entry->event_type)
-    p_event->code = SYSTEM_EVENT_TYPE_NUMBER_GET(p_log_entry->event_type);
-
-  for (; (*p_src_msg != '\n') && (*p_src_msg != 0); p_src_msg++, p_dst_msg++)
-    *p_dst_msg = *p_src_msg;
-  *p_dst_msg = 0; // add the null terminator
-}
-
 NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *count)
 {
-  unsigned int event_type_mask = 0;
-  NVM_UID dimm_uid = { 0 };
-  unsigned int event_id = 0;
-  log_entry *p_log_entry = NULL;
-  log_entry *p_prev_log_entry = NULL;
-  int rc = NVM_SUCCESS;
-
-  if (NULL == count) {
-    return NVM_ERR_INVALID_PARAMETER;
-  }
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
-  // Get events form system log
-  nvm_get_log_entries_from_file(event_type_mask, dimm_uid, event_id, SYSTEM_EVENT_NOT_APPLICABLE, &p_log_entry);
-  *count = 0;
-  while (p_log_entry) {
-    *count += 1;
-    p_prev_log_entry = p_log_entry;
-    p_log_entry = p_log_entry->p_next;
-    FreePool(p_prev_log_entry);
-  }
-  return NVM_SUCCESS;
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_get_events(const struct event_filter *p_filter,
          struct event *p_events, const NVM_UINT16 count)
 {
-  char *event_buffer = NULL;
-  unsigned int events_number = count;
-  log_entry *p_log_entry = NULL;
-  log_entry *p_previous_entry = NULL;
-  char *p_event_message = NULL;
-  struct event *p_current_event = p_events;
-  int bytes_in_event_buffer = 0;
-  unsigned int event_type_mask = 0;
-  NVM_UID dimm_uid = { 0 };
-  unsigned int event_id = 0;
-  int rc = NVM_SUCCESS;
-  int nvm_status = 0;
-
-  if (NULL == p_events) {
-    return NVM_ERR_INVALID_PARAMETER;
-  }
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-
-  int actual_count = 0;
-  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_events(p_filter, &actual_count)))
-  {
-    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
-    return NVM_ERR_OPERATION_FAILED;
-  }
-
-  if (count != actual_count)
-  {
-    return NVM_ERR_BAD_SIZE;
-  }
-
-  event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
-  // Get events form system log
-  bytes_in_event_buffer = (int)nvm_get_events_from_file(event_type_mask, dimm_uid, event_id, events_number, &p_log_entry, &event_buffer);
-  while ((bytes_in_event_buffer > 0) && (events_number > 0)) {
-    p_event_message = event_buffer + p_log_entry->message_offset;
-    convert_log_entry_to_event(p_log_entry, p_event_message, p_current_event);
-    nvm_get_event_id_form_entry(p_current_event->message, &(p_current_event->event_id));
-    nvm_get_uid_form_entry(p_current_event->message, sizeof(p_current_event->uid), p_current_event->uid);
-
-    p_previous_entry = p_log_entry;
-    p_log_entry = p_log_entry->p_next;
-    if (p_log_entry && (p_log_entry->message_offset == p_previous_entry->message_offset)) {
-      // It looks the event log service could not allocate enough memory
-      // to get all entries and the next messages are pointing out to the same location
-      rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
-    }
-    FreePool(p_previous_entry);
-
-    p_current_event++;
-    events_number--;
-  }
-  free(event_buffer);
-  return rc;
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_purge_events(const struct event_filter *p_filter)
 {
-  unsigned int event_type_mask = 0;
-  NVM_UID dimm_uid = { 0 };
-  unsigned int event_id = 0;
-  int rc = NVM_SUCCESS;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  event_type_mask = convert_event_filter_data_and_return_event_type(p_filter, dimm_uid, &event_id);
-  return nvm_remove_events_from_file(event_type_mask, dimm_uid, event_id);
+  return 0; // deprecated
 }
 
 NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
 {
-  int rc = NVM_SUCCESS;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  return nvm_clear_action_required(event_id);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count)
@@ -2904,107 +2671,17 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled)
 
 NVM_API int nvm_purge_debug_log()
 {
-  unsigned int event_type_mask = 0;
-  int rc = NVM_SUCCESS;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
-  return nvm_remove_events_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE);
+  return 0; // deprecated
 }
 
 NVM_API int nvm_get_number_of_debug_logs(int *count)
 {
-  unsigned int event_type_mask = 0;
-  log_entry *p_log_entry = NULL;
-  log_entry *p_prev_log_entry = NULL;
-  int rc = NVM_SUCCESS;
-
-  if (NULL == count)
-    return NVM_ERR_UNKNOWN;
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
-  // Get events form system log
-  nvm_get_log_entries_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE, SYSTEM_EVENT_NOT_APPLICABLE, &p_log_entry);
-  *count = 0;
-  while (p_log_entry) {
-    *count += 1;
-    p_prev_log_entry = p_log_entry;
-    p_log_entry = p_log_entry->p_next;
-    FreePool(p_prev_log_entry);
-  }
-  return NVM_SUCCESS;
-}
-
-static void convert_debug_log_entry_to_event(log_entry *p_log_entry, char *event_message, struct nvm_log *p_event)
-{
-  char *p_src_msg = event_message;
-  char *p_dst_msg = p_event->message;
-
-  for (; (*p_src_msg != '\n') && (*p_src_msg != 0); p_src_msg++, p_dst_msg++)
-    *p_dst_msg = *p_src_msg;
-  *p_dst_msg = 0; // add the null terminator
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
 {
-  char *event_buffer = NULL;
-  unsigned int events_number = count;
-  log_entry *p_log_entry = NULL;
-  log_entry *p_previous_entry = NULL;
-  char *p_event_message = NULL;
-  struct nvm_log *p_current_event = p_logs;
-  int bytes_in_event_buffer = 0;
-  unsigned int event_type_mask = 0;
-  int rc = NVM_SUCCESS;
-  int nvm_status = 0;
-
-  if (NULL == p_logs)
-    return NVM_ERR_INVALID_PARAMETER;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-
-  int actual_count = 0;
-  if (NVM_SUCCESS != (nvm_status = nvm_get_number_of_debug_logs(&actual_count)))
-  {
-    NVDIMM_ERR("Failed to obtain the number of devices (%d)\n",nvm_status);
-    return NVM_ERR_OPERATION_FAILED;
-  }
-
-  if (count != actual_count)
-  {
-    return NVM_ERR_BAD_SIZE;
-  }
-
-  event_type_mask = SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_DEBUG_MASK);
-  // Get events form system log
-  bytes_in_event_buffer = (int)nvm_get_events_from_file(event_type_mask, NULL, SYSTEM_EVENT_NOT_APPLICABLE, events_number, &p_log_entry, &event_buffer);
-  while ((bytes_in_event_buffer > 0) && (events_number > 0)) {
-    p_event_message = event_buffer + p_log_entry->message_offset;
-    convert_debug_log_entry_to_event(p_log_entry, p_event_message, p_current_event);
-
-    p_previous_entry = p_log_entry;
-    p_log_entry = p_log_entry->p_next;
-    if (p_log_entry && (p_log_entry->message_offset == p_previous_entry->message_offset)) {
-      // It looks the event log service could not allocate enough memory
-      // to get all entries and the next messages are pointing out to the same location
-      rc = NVM_ERR_NOT_ENOUGH_FREE_SPACE;
-    }
-    FreePool(p_previous_entry);
-
-    p_current_event++;
-    events_number--;
-  }
-  free(event_buffer);
-  return rc;
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
@@ -3474,35 +3151,35 @@ finish:
 
 NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
 {
-  return acpi_event_create_ctx(dimm_handle, ctx);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_event_free_ctx(void * ctx)
 {
-  return acpi_event_free_ctx(ctx);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int  * dev_handle)
 {
-  return acpi_event_ctx_get_dimm_handle(ctx, dev_handle);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
 {
-  return acpi_event_get_event_state(ctx, event_type, event_state);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
 {
-  return acpi_event_set_monitor_mask(ctx, acpi_monitored_event_mask);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
 {
-  return acpi_event_get_monitor_mask(ctx, mask);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
 NVM_API int nvm_acpi_wait_for_event(void * acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
 {
-  return acpi_wait_for_event(acpi_event_contexts, dimm_cnt, timeout_sec, event_result);
+  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }

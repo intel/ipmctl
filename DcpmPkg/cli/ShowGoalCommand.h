@@ -11,9 +11,6 @@
 #define MEMORY_SIZE_TABLE_HEADER        L"MemorySize"
 #define SOCKET_ID_TABLE_HEADER          L"SocketID"
 #define DIMM_ID_TABLE_HEADER            L"DimmID"
-#ifdef OS_BUILD
-#define ACTION_REQUIRED_HEADER          L"ActionRequired"
-#endif
 
 #define STATUS_STR                      L"Status"
 #define NOT_APPLICABLE_SHORT_STR        L"N/A"

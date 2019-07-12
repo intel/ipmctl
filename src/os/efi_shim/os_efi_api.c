@@ -85,7 +85,6 @@ struct debug_logger_config
 {
   UINT8 initialized : 1;
   CHAR8 stdout_enabled;
-  CHAR8 file_enabled;
   CHAR8 level;
 };
 enum
@@ -99,7 +98,6 @@ enum
 
 #define INI_PREFERENCES_LOG_LEVEL L"DBG_LOG_LEVEL"
 #define INI_PREFERENCES_LOG_STDOUT_ENABLED L"DBG_LOG_STDOUT_ENABLED"
-#define INI_PREFERENCES_LOG_DEBUG_FILE_ENABLED L"DBG_LOG_DEBUG_FILE_ENABLED"
 
 /*
 * Debug logger context structure.
@@ -387,10 +385,6 @@ static void get_logger_config(struct debug_logger_config *p_log_config)
   efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_STDOUT_ENABLED, guid, &size, &p_log_config->stdout_enabled);
   if (EFI_SUCCESS != efi_status)
     return;
-  size = sizeof(p_log_config->file_enabled);
-  efi_status = GET_VARIABLE(INI_PREFERENCES_LOG_DEBUG_FILE_ENABLED, guid, &size, &p_log_config->file_enabled);
-  if (EFI_SUCCESS != efi_status)
-    return;
   if (is_verbose_debug_print_enabled())
   {
     p_log_config->stdout_enabled = TRUE;
@@ -416,15 +410,13 @@ DebugLoggerEnable(
 
   if (EnableDbgLogger)
   {
-    if (FALSE == g_log_config.file_enabled)
-      g_log_config.file_enabled = TRUE;
+    if (FALSE == g_log_config.stdout_enabled)
+      g_log_config.stdout_enabled = TRUE;
     if (LOGGER_OFF == g_log_config.level)
       g_log_config.level = LOG_WARNING;
   }
   else
   {
-    if (TRUE == g_log_config.file_enabled)
-      g_log_config.file_enabled = FALSE;
     if (TRUE == g_log_config.stdout_enabled)
       g_log_config.stdout_enabled = FALSE;
   }
@@ -442,11 +434,8 @@ IsDebugLoggerEnabled()
   if (FALSE == g_log_config.initialized) {
     return FALSE;
   }
-  if (LOGGER_OFF != g_log_config.level) {
-    if ((TRUE == g_log_config.file_enabled) ||
-      (TRUE == g_log_config.stdout_enabled)) {
-      return TRUE;
-    }
+  if ((LOGGER_OFF != g_log_config.level) && (TRUE == g_log_config.stdout_enabled)) {
+    return TRUE;
   }
   return FALSE;
 }
@@ -479,33 +468,29 @@ DebugPrint(
 )
 {
   VA_LIST args;
-  static unsigned int event_type_common = 0;
   NVM_EVENT_MSG event_message;
   UINT32 size = sizeof(event_message);
 
   if (FALSE == g_log_config.initialized)
   {
     get_logger_config(&g_log_config);
-    if (g_log_config.file_enabled)
-      event_type_common |= SYSTEM_EVENT_TYPE_SYSLOG_FILE_SET(TRUE);
-    if (g_log_config.stdout_enabled)
-      event_type_common |= SYSTEM_EVENT_TYPE_SOUT_SET(TRUE);
-    event_type_common |= SYSTEM_EVENT_TYPE_SEVERITY_SET(SYSTEM_EVENT_TYPE_DEBUG);
   }
+
   if (ErrorLevel == OS_DEBUG_CRIT) {
     // Send the debug entry to the logger
     VA_START(args, Format);
     AsciiVSPrint(event_message, size, Format, args);
     VA_END(args);
-    nvm_store_system_entry(NVM_DEBUG_LOGGER_SOURCE, event_type_common | SYSTEM_EVENT_TYPE_SOUT_SET(TRUE) | SYSTEM_EVENT_TYPE_SYSLOG_FILE_SET(TRUE), NULL, event_message);
+    write_system_event_to_stdout(NVM_DEBUG_LOGGER_SOURCE, event_message);
 #ifdef NDEBUG
     rel_assert ();
 #else // NDEBUG
     assert(FALSE);
 #endif // NDEBUG
   }
-  else if (LOGGER_OFF == g_log_config.level)
+  else if (LOGGER_OFF == g_log_config.level || g_log_config.stdout_enabled == FALSE)
     return;
+
   if (((LOG_ERROR == g_log_config.level) & (ErrorLevel == OS_DEBUG_ERROR)) ||
     ((LOG_WARNING == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN))) ||
     ((LOG_INFO == g_log_config.level) & ((ErrorLevel == OS_DEBUG_ERROR) || (ErrorLevel == OS_DEBUG_WARN) || (ErrorLevel == OS_DEBUG_INFO))) ||
@@ -515,7 +500,7 @@ DebugPrint(
     VA_START(args, Format);
     AsciiVSPrint(event_message, size, Format, args);
     VA_END(args);
-    nvm_store_system_entry(NVM_DEBUG_LOGGER_SOURCE, event_type_common, NULL, event_message);
+    write_system_event_to_stdout(NVM_DEBUG_LOGGER_SOURCE, event_message);
   }
 }
 

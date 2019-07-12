@@ -81,34 +81,6 @@ APPDIRECT_GRANULARITY::
   - "32": Allows 32 GiB App Direct granularity.
 
 ifdef::os_build[]
-PERFORMANCE_MONITOR_ENABLED::
-  Whether or not the monitor is periodically storing performance metrics for the
-  DCPMMs in the host server. One of:
-  - "0": Disable performance monitoring.
-  - "1": Enable performance monitoring. This is the default.
-
-PERFORMANCE_MONITOR_INTERVAL_MINUTES::
-  The interval in minutes that the monitor is storing performance metrics (if
-  enabled). The default value is 180 minutes and must be >= 1.
-
-EVENT_MONITOR_ENABLED::
-  Whether or not the monitor is periodically checking for DCPMM events.
-  - "0": Disable event monitoring.
-  - "1": Enable event monitoring. This is the default.
-
-EVENT_MONITOR_INTERVAL_MINUTES::
-  The interval in minutes that the monitor is checking for DCPMM events (if
-  enabled). The default value is 1 minutes and must be >= 1.
-
-EVENT_LOG_MAX::
-  The maximum number of events to keep in the management software. The default
-  value is 0 (no limit). The valid range is [underline]#0 - 2,147,483,647#.
-
-DBG_LOG_MAX::
-  The maximum number of debug log entries to keep in the management software.
-  The default value is 0 (no limit). The valid range is
-  [underline]#0 - 2,147,483,647#.
-
 DBG_LOG_LEVEL::
   Whether debug logging is enabled in the DCPMM host software. These logs
   pertain to the operation of the command-line tool only and do not reflect any

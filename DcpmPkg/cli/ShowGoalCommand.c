@@ -15,9 +15,6 @@
 #include "ShowGoalCommand.h"
 #include "Common.h"
 #include "Convert.h"
-#ifdef OS_BUILD
-#include "event.h"
-#endif // OS_BUILD
 
 #define DS_ROOT_PATH                        L"/ConfigGoalList"
 #define DS_CONFIG_GOAL_PATH                 L"/ConfigGoalList/ConfigGoal"

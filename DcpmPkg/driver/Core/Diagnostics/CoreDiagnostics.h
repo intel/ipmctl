@@ -24,18 +24,12 @@
 #include <Protocol/Smbios.h>
 #include <Library/HiiLib.h>
 
-#ifdef OS_BUILD
-#define APPEND_TO_DIAG_RESULT_FUNC SendTheEventAndAppendToDiagnosticsResult
-#else // OS_BUILD
-#define APPEND_TO_DIAG_RESULT_FUNC AppendToDiagnosticsResult
-#endif // OSBUILD
-
 #define APPEND_RESULT_TO_THE_LOG(pDimm,String,Code,StateMask,ppResult,pState,...) { \
   CHAR16 *pTempHiiString = HiiGetString(gNvmDimmData->HiiHandle, String, NULL); \
   CHAR16 *pTempHiiString1 = CatSPrintClean(NULL, pTempHiiString, ## __VA_ARGS__); \
   FREE_POOL_SAFE(pTempHiiString); \
   if (pTempHiiString1) \
-    APPEND_TO_DIAG_RESULT_FUNC(pDimm, Code, pTempHiiString1, StateMask, ppResult, pState); \
+    AppendToDiagnosticsResult(pDimm, Code, pTempHiiString1, StateMask, ppResult, pState); \
 }
 
  /** Diagnostics State bitmasks **/
@@ -193,44 +187,6 @@ AppendToDiagnosticsResult (
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
   );
-
-#ifdef OS_BUILD
-#include "event.h"
-
-#define EVENT_CODE_BASE_VALUE     100
-#define DEVICE_CONFIG_BASE_CODE   1
-#define DEVICE_HEALTH_BASE_CODE   2
-#define CONFIG_CHANGE_BASE_CODE   3
-#define QUICK_HEALTH_BASE_CODE    5
-#define PLATFORM_CONFIG_BASE_CODE 6
-#define SECURITY_CHECK_BASE_CODE  8
-#define FW_CONSISTENCY_BASE_CODE  9
-
-/**
-Append to the results string for a particular diagnostic test, modify
-the test state as per the message being appended and send the event
-to the event log.
-
-@param[in] pDimm Pointer to the DIMM structure
-@param[in] Code The event's code (for details see the event CSPEC)
-@param[in] pStrToAppend Pointer to the message string to be appended
-@param[in] DiagStateMask State corresponding to the string that is being appended
-@param[in out] ppResult Pointer to the result string of the particular test-suite's messages
-@param[in out] pDiagState Pointer to the particular test state
-
-@retval EFI_SUCCESS Success
-@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
-**/
-EFI_STATUS
-SendTheEventAndAppendToDiagnosticsResult(
-  IN     DIMM *pDimm,
-  IN     UINT32 Code,
-  IN     CHAR16 *pStrToAppend,
-  IN     UINT8 DiagStateMask,
-  IN OUT CHAR16 **ppResultStr,
-  IN OUT UINT8 *pDiagState
-);
-#endif // OS_BUILD
 
 /**
   Add headers to the message results from all the tests that were run,

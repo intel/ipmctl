@@ -122,59 +122,9 @@ extern "C"
 #define NVM_VERSION_BUILDNUM    __VERSION_BUILDNUM__    // Build version number
 
 /**
- * Convert an array of 8 unsigned chars into an unsigned 64 bit value
- * @remarks While it doesn't seem right to be casting 8 bit chars to unsigned long
- * long, this is an issue with gcc - see http:// gcc.gnu.org/bugzilla/show_bug.cgi?id=47821.
- */
-#define NVM_8_BYTE_ARRAY_TO_64_BIT_VALUE(arr, val) \
-  val = ((unsigned long long)(arr[7] & 0xFF) << 56) + \
-        ((unsigned long long)(arr[6] & 0xFF) << 48) + \
-        ((unsigned long long)(arr[5] & 0xFF) << 40) + \
-        ((unsigned long long)(arr[4] & 0xFF) << 32) + \
-        ((unsigned long long)(arr[3] & 0xFF) << 24) + \
-        ((unsigned long long)(arr[2] & 0xFF) << 16) + \
-        ((unsigned long long)(arr[1] & 0xFF) << 8) + \
-        (unsigned long long)(arr[0] & 0xFF);
-
-/**
- * Convert an unsigned 64 bit integer to an array of 8 unsigned chars
- */
-#define NVM_64_BIT_VALUE_TO_8_BYTE_ARRAY(val, arr) \
-  arr[7] = (unsigned char)((val >> 56) & 0xFF); \
-  arr[6] = (unsigned char)((val >> 48) & 0xFF); \
-  arr[5] = (unsigned char)((val >> 40) & 0xFF); \
-  arr[4] = (unsigned char)((val >> 32) & 0xFF); \
-  arr[3] = (unsigned char)((val >> 24) & 0xFF); \
-  arr[2] = (unsigned char)((val >> 16) & 0xFF); \
-  arr[1] = (unsigned char)((val >> 8) & 0xFF); \
-  arr[0] = (unsigned char)(val & 0xFF);
-
-/**
  * Convert a BCD value to the one byte hex value
  */
 #define BCD_TO_BYTE(bcd) (bcd > 0x255 ? MAX_UINT8_VALUE : (((bcd & 0xF00) >> 8) * 100) + (((bcd & 0xF0) >> 4) * 10) + (bcd & 0xF))
-
-/**
- * Encode the temperature as a NVM_UINT32.
- */
-static inline NVM_UINT32 nvm_encode_temperature(NVM_REAL32 value)
-{
-  NVM_UINT32 result;
-
-  result = (NVM_UINT32)(value * 10000);
-  return result;
-}
-
-/**
- * Decode a NVM_UINT32 as a temperature.
- */
-static inline NVM_REAL32 nvm_decode_temperature(NVM_UINT32 value)
-{
-  NVM_REAL32 result;
-
-  result = (NVM_REAL32)(value / 10000.0);
-  return result;
-}
 
 /**
  * ****************************************************************************
@@ -1037,7 +987,6 @@ struct event {
   enum event_type		type;                           ///< The type of the event that occurred.
   enum event_severity	severity;                       ///< The severity of the event.
   NVM_UINT16		code;                           ///< A numerical code for the specific event that occurred.
-  NVM_BOOL		action_required;                ///< A flag indicating that the event needs a corrective action.
   NVM_UID			uid;                            ///< The unique ID of the item that had the event.
   time_t			time;                           ///< The time the event occurred.
   NVM_EVENT_MSG		message;                        ///< A detailed description of the event type that occurred in English.
@@ -1061,7 +1010,6 @@ struct event_filter {
    * NVM_FILTER_ON_AFTER
    * NVM_FILTER_ON_BEFORE
    * NVM_FILTER_ON_EVENT
-   * NVM_FILTER_ON_AR
    */
   NVM_UINT8		filter_mask;
 
@@ -1089,11 +1037,7 @@ struct event_filter {
    */
   int			event_id; ///< filter of specified event
 
-  /**
-   * Only this action_required events are to be retrieved.
-   */
-  NVM_BOOL		action_required;
-  NVM_UINT8		reserved[20];	///< reserved
+  NVM_UINT8		reserved[21];	///< reserved
 };
 
 /**
@@ -1222,6 +1166,8 @@ NVM_API void nvm_conf_file_flush();
  */
 
  /**
+ * @deprecated
+ *
  * @brief Create a context for a particular DCPMM to be used by all other acpi_event_* APIs
  *
  * @param[in] dimm_handle NFIT DCPMM handle
@@ -1235,6 +1181,8 @@ NVM_API void nvm_conf_file_flush();
 NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void **ctx);
 
 /**
+* @deprecated
+*
 * @brief Free a context previously created by acpi_event_create_ctx.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
@@ -1245,6 +1193,8 @@ NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void **ctx);
 NVM_API int nvm_acpi_event_free_ctx(void *ctx);
 
 /**
+* @deprecated
+*
 * @brief Retrieve the NFIT DCPMM handle associated with the context.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
@@ -1257,6 +1207,8 @@ NVM_API int nvm_acpi_event_free_ctx(void *ctx);
 NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void *ctx, unsigned int *dev_handle);
 
 /**
+* @deprecated
+*
 * @brief Retrieve an ACPI notification state of a DCPMM.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
@@ -1273,6 +1225,8 @@ NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void *ctx, unsigned int *dev_hand
 NVM_API int nvm_acpi_event_get_event_state(void *ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state);
 
 /**
+* @deprecated
+*
 * @brief Set which ACPI events should be monitored.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
@@ -1284,6 +1238,8 @@ NVM_API int nvm_acpi_event_get_event_state(void *ctx, enum acpi_event_type event
 NVM_API int nvm_acpi_event_set_monitor_mask(void *ctx, const unsigned int mask);
 
 /**
+* @deprecated
+*
 * @brief Set which ACPI events should be monitored.
 *
 * @param[in] ctx pointer to a context created by acpi_event_create_ctx
@@ -1296,6 +1252,8 @@ NVM_API int nvm_acpi_event_set_monitor_mask(void *ctx, const unsigned int mask);
 NVM_API int nvm_acpi_event_get_monitor_mask(void *ctx, unsigned int *mask);
 
 /**
+* @deprecated
+*
 * @brief Wait for an asynchronous ACPI notification. This function will return when the timeout expires or an acpi notification
 * occurs for any DCPMM, whichever happens first.
 *
@@ -2385,6 +2343,8 @@ NVM_API int nvm_debug_logging_enabled();
 NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled);
 
 /**
+ * @deprecated
+ *
  * @brief Clear any debug logs captured by the native API library.
  * @pre The caller must have administrative privileges.
  * @return
@@ -2394,6 +2354,8 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled);
 NVM_API int nvm_purge_debug_log();
 
 /**
+ * @deprecated
+ *
  * @brief Retrieve the number of debug log entries in the native API library database.
  * @param[in,out] count
  *              pointer an integer that will contain the number of debug log entries
@@ -2405,6 +2367,8 @@ NVM_API int nvm_purge_debug_log();
 NVM_API int nvm_get_number_of_debug_logs(int *count);
 
 /**
+ * @deprecated
+ *
  * @brief Retrieve a list of stored debug log entries from the native API library database
  * @param[in,out] p_logs
  *              An array of #log structures allocated by the caller.

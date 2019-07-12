@@ -61,7 +61,6 @@ DUMP_SUPPORT_CMD DumpPlatformLevelCmds[MAX_PLAFORM_SUPPORT_CMDS] = {
 {L"show -a -system -capabilities"},
 {L"show -a -topology" },
 {L"start -diagnostic"},
-{L"show -event"},
 {L"show -system"},
 };
 

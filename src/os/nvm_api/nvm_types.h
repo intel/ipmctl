@@ -55,14 +55,6 @@ byte swap
 #define NVM_EVENT_MSG_LEN 1024 ///< Length of event message string
 #define NVM_EVENT_ARG_LEN 1024 ///< Length of event argument string
 #define NVM_MAX_EVENT_ARGS  3 ///< Maximum number of event arguments
-#define NVM_FILTER_ON_TYPE  0x01 ///< Filter on event type
-#define NVM_FILTER_ON_SEVERITY  0x02 ///< Filter on event severity
-#define NVM_FILTER_ON_CODE  0x04 ///< Filter on code
-#define NVM_FILTER_ON_UID 0x08 ///< Filter on device uid
-#define NVM_FILTER_ON_AFTER 0x10 ///< Filter on time after
-#define NVM_FILTER_ON_BEFORE  0x20 ///< Filter on time before
-#define NVM_FILTER_ON_EVENT 0x40 ///< Filter on event ID
-#define NVM_FILTER_ON_AR  0x80 ///< Filter on action required
 #define NVM_PATH_LEN  PATH_MAX ///< Max length of file or directory path string (OS specific)
 #define NVM_DEVICE_LOCATOR_LEN  128 ///< Length of the device locator string
 #define NVM_BANK_LABEL_LEN  128 ///< Length of the bank label string

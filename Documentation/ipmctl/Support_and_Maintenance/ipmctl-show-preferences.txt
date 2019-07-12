@@ -67,33 +67,6 @@ CLI_DEFAULT_SIZE::
   - TB: Displays all capacities in terabytes.
   - TiB: Displays all capacities in tebibytes.
 
-PERFORMANCE_MONITOR_ENABLED::
-  Whether or not the monitor is periodically storing performance metrics for the
-  DCPMMs in the host server. One of:
-  - 0: Disabled
-  - 1: Enabled. This is the default.
-
-PERFORMANCE_MONITOR_INTERVAL_MINUTES::
-  The interval in minutes that the monitor is retrieving and storing performance
-  metrics (if enabled). The default value is 180 minutes.
-
-EVENT_MONITOR_ENABLED::
-  Whether or not the monitor is periodically checking for DCPMM events. One of:
-  - 0: Disabled
-  - 1: Enabled. This is the default.
-
-EVENT_MONITOR_INTERVAL_MINUTES::
-  The interval in minutes that the monitor is checking for and storing DCPMM
-  events (if enabled). The default value is 1 minute.
-
-EVENT_LOG_MAX::
-  The maximum number of events to keep in the management software. The default
-  value is 0, which indicates no limit.
-
-DBG_LOG_MAX::
-  The maximum number of debug log entries to keep in the management software. The
-  default value is 0, which indicates no limit.
-
 APPDIRECT_SETTINGS::
   The interleave settings to use when creating App Direct capacity in the
   format: (IMCSize_ChannelSize). The default is "RECOMMENDED" which uses the

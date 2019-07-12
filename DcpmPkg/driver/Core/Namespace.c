@@ -2565,6 +2565,28 @@ IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Name
   else
     return !(pNamespaceLabel->Flags.Values.Local & 0x01);
 }
+/*
+  Checks if Lsa status of Dimms is not initalized
+  for all manageable dimms
+
+  @retval TRUE - if all manageable dimms have
+                 lsaStatus set to LSA_NOT_INIT
+*/
+BOOLEAN IsLSANotInitializedOnDimms()
+{
+  LIST_ENTRY *pNode = NULL;
+  DIMM *pDimm = NULL;
+  BOOLEAN returncode = TRUE;
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pNode);
+
+    if (!IsDimmManageable(pDimm)) {
+      continue;
+    }
+    returncode &= (LSA_NOT_INIT == pDimm->LsaStatus);
+  }
+  return returncode;
+}
 /**
   Initializes Namespaces inventory
 

@@ -531,7 +531,14 @@ determines whether App Direct Type or not
 BOOLEAN
 IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Namespace1_1
 );
+/*
+  Checks if Lsa status of Dimms is not initalized
+  for all manageable dimms
 
+  @retval TRUE - if all manageable dimms have
+                 lsaStatus set to LSA_NOT_INIT
+*/
+BOOLEAN IsLSANotInitializedOnDimms();
 /**
   Initializes Namespaces inventory
 

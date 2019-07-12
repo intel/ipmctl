@@ -4028,7 +4028,18 @@ GetMemoryResourcesInfo(
   ReturnCode = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to refresh Namespaces and Interleave Sets information");
+#ifdef OS_BUILD
     goto Finish;
+#else
+    if ((ReturnCode == EFI_NOT_FOUND && IsLSANotInitializedOnDimms()))
+    {
+      NVDIMM_WARN("Failure to refresh Namespaces is because LSA not initialized");
+    }
+    else
+    {
+      goto Finish;
+    }
+#endif
   }
 
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {

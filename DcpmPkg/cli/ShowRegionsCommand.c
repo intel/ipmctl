@@ -606,6 +606,7 @@ Finish:
   FREE_POOL_SAFE(pRegions);
   FREE_POOL_SAFE(pRegionsIds);
   FREE_POOL_SAFE(pSocketIds);
+  FREE_POOL_SAFE(pNfitOption);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

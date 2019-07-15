@@ -441,6 +441,7 @@ InitializeDimmRegionFromNfit(
     if (!ISAlreadyExists) {
       ReturnCode = InitializeISFromNfit(pFitHead, pNvDimmRegionMappingStructure, *pRegionId, &pNewIS);
       if (EFI_ERROR(ReturnCode) || pNewIS == NULL) {
+        FREE_POOL_SAFE(pNewIS);
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
       }
@@ -690,6 +691,7 @@ RetrieveISsFromNfit(
     ReturnCode = InitializeDimmRegionFromNfit(pFitHead, pDimm, pISList, pNvDimmRegionMappingStructure, &RegionId, &pIS, &pNewDimmRegion, &ISDimmRegionAlreadyExists);
 
     if (pIS == NULL) {
+      FREE_POOL_SAFE(pNewDimmRegion);
       goto Finish;
     }
     if (ISDimmRegionAlreadyExists) {
@@ -714,6 +716,10 @@ RetrieveISsFromNfit(
   LIST_FOR_EACH(pISNode, pISList) {
     pIS = IS_FROM_NODE(pISNode);
 
+    if (pIS == NULL) {
+      continue;
+    }
+
     // Check if any interleave set is broken
     ReturnCode = GetListSize(&pIS->DimmRegionList, &NumOfDimmsInInterleaveSet);
     if (EFI_ERROR(ReturnCode)) {
@@ -731,31 +737,32 @@ RetrieveISsFromNfit(
     }
 
     ReturnCode = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
-    if (pIS != NULL) {
-      if (EFI_ERROR(ReturnCode)) {
-        pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_SPA_MISSING);
-        NVDIMM_DBG("Couldn't retrieve AppDirect I/O structures from NFIT.");
-      }
+    if (EFI_ERROR(ReturnCode)) {
+      pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_SPA_MISSING);
+      NVDIMM_DBG("Couldn't retrieve AppDirect I/O structures from NFIT.");
+    }
 
-      ReturnCode = UseLatestNsLabelVersion(pIS, NULL, &UseLatestVersion);
+    ReturnCode = UseLatestNsLabelVersion(pIS, NULL, &UseLatestVersion);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (UseLatestVersion) {
+      ReturnCode = CalculateISetCookie(pFitHead, pIS);
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-
-      if (UseLatestVersion) {
-        ReturnCode = CalculateISetCookie(pFitHead, pIS);
-        if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
+    }
+    else {
+      ReturnCode = CalculateISetCookieVer1_1(pFitHead, pIS);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
       }
-      else {
-        ReturnCode = CalculateISetCookieVer1_1(pFitHead, pIS);
-        if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
-      }
+    }
 
-      ReturnCode = BubbleSortLinkedList(&pIS->DimmRegionList, CompareRegionOffsetInDimmRegion);
+    ReturnCode = BubbleSortLinkedList(&pIS->DimmRegionList, CompareRegionOffsetInDimmRegion);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to sort DIMM regions in interleave set: 0x%x", pIS->InterleaveSetIndex);
     }
   }
 

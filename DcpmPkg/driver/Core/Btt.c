@@ -1745,7 +1745,7 @@ BttWrite(
   OldMap = MapEntry.MapEntryLba[PosInEntry];
   RetVal = BttFlogUpdate(pBtt, pArena, PreMapLba, OldMap, FreeMap);
   if(EFI_ERROR(RetVal)) {
-    NVDIMM_DBG("Could not update the BTT Flog!\nBttp %p Lane %u pArena %p PreMapLba %u", pBtt, pArena, PreMapLba);
+    NVDIMM_DBG("Could not update the BTT Flog!\nBttp %p pArena %p PreMapLba %u", pBtt, pArena, PreMapLba);
     return RetVal;
   }
 

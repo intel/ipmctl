@@ -26,10 +26,6 @@
 #include <string.h>
 #endif
 
-#if defined(__LINUX__)
-#include <safe_mem_lib.h>
-#endif
-
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 extern EFI_GUID gIntelDimmConfigVariableGuid;
 CHAR16 gFnName[1024];
@@ -351,12 +347,12 @@ LongPrint(
     if (StrOffset == MaxToPrint) {
       TempChar = pString[StrOffset]; // Remember it and put a NULL there
       pString[StrOffset] = L'\0';
-      Print(pString); // Print the string up to the newline
+      Print(FORMAT_STR, pString); // Print the string up to the newline
       pString[StrOffset] = TempChar;// Put back the stored value.
       pString += StrOffset; // Move the pointer over the printed part and the '\n'
       StrOffset = 0;
     } else { // There is a NULL after the newline or there is just a NULL
-      Print(pString);
+      Print(FORMAT_STR, pString);
       break;
     }
   }
@@ -1426,7 +1422,8 @@ InterleaveSettingsToString(
   pChannelInterleaving = ParseChannelInterleavingValue(ChannelInterleaving);
 
   if (pImcInterleaving == NULL || pChannelInterleaving == NULL) {
-    *ppString = CatSPrintClean(NULL, L"Error");
+    FREE_POOL_SAFE(*ppString);
+    *ppString = CatSPrint(NULL, L"Error");
     return;
   }
 
@@ -3700,9 +3697,9 @@ CopyMem_S(
 )
 {
 #ifdef OS_BUILD
-  int status = memcpy_s(DestinationBuffer, DestLength, SourceBuffer, Length);
+  int status = os_memcpy(DestinationBuffer, DestLength, SourceBuffer, Length);
   if(status != 0)
-    NVDIMM_CRIT("Memcpy_s failed with ErrorCode: %x", status);
+    NVDIMM_CRIT("os_memcpy failed with ErrorCode: %x", status);
   return DestinationBuffer;
 #else
   return CopyMem(DestinationBuffer, SourceBuffer, Length);
@@ -4252,7 +4249,7 @@ ConvertDimmInfoAttribToString(
       }
     case DIMM_INFO_TYPE_CHAR16:
       return (NULL == pFormatStr) ?
-        CatSPrintClean(NULL, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data) :
+        CatSPrintClean(NULL, FORMAT_STR, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data) :
         CatSPrintClean(NULL, pFormatStr, ((DIMM_INFO_ATTRIB_CHAR16 *)pAttrib)->Data);
     case DIMM_INFO_TYPE_UINT8:
       return (NULL == pFormatStr) ?

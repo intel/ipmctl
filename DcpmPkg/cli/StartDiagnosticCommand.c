@@ -293,6 +293,7 @@ StartDiagnosticCmd(
           ppSplitDiagResultLines = StrSplit(pLoc->SubTestMessage[Id], DIAG_ENTRY_EOL, &NumTokens);
           if (ppSplitDiagResultLines == NULL) {
             NVDIMM_WARN("Message string split failed");
+            FREE_POOL_SAFE(pPath);
             return EFI_OUT_OF_RESOURCES;
           }
           if (pLoc->SubTestEventCode[Id] != NULL) {

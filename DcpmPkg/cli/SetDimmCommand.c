@@ -438,7 +438,7 @@ SetDimm(
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0))) {
       pErrorMessage = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, L"NewPassphrase=");
       ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pErrorMessage);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR, pErrorMessage);
       goto Finish;
 
     } else if (pLockStatePropertyValue != NULL && pConfirmPassphraseStatic != NULL &&
@@ -447,7 +447,7 @@ SetDimm(
            (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0))) {
       pErrorMessage = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, L"ConfirmPassphrase=");
       ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pErrorMessage);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR, pErrorMessage);
       goto Finish;
 
     } else if (pLockStatePropertyValue != NULL && pPassphraseStatic != NULL &&

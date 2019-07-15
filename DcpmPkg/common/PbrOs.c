@@ -11,12 +11,13 @@
 #include "PbrOs.h"
 #include "PbrDcpmm.h"
 #include <os.h>
+#include <wchar.h>
+#include <os_str.h>
 #ifdef _MSC_VER
 #include <stdio.h>
 #include <io.h>
 #include <conio.h>
 #include <time.h>
-#include <wchar.h>
 #include <string.h>
 extern int registry_volatile_write(const char *key, unsigned int dword_val);
 extern int registry_read(const char *key, unsigned int *dword_val, unsigned int default_val);
@@ -24,11 +25,7 @@ extern int registry_read(const char *key, unsigned int *dword_val, unsigned int 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <wchar.h>
 #include <fcntl.h>
-#include <safe_str_lib.h>
-#include <safe_mem_lib.h>
-#include <safe_lib.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -46,7 +43,7 @@ VOID DeserializePbrMode(UINT32 *pMode, UINT32 defaultMode);
 
 /**Memory buffer serialization**/
 #define SerializeBuffer(file, buffer, size) \
-  if (0 != fopen_s(&pFile, file, FILE_WRITE_OPTS)) \
+  if (0 != os_fopen(&pFile, file, FILE_WRITE_OPTS)) \
   { \
     NVDIMM_ERR("Failed to open the PBR file: %s\n", file); \
     ReturnCode = EFI_NOT_FOUND; \
@@ -66,7 +63,7 @@ VOID DeserializePbrMode(UINT32 *pMode, UINT32 defaultMode);
 
 /**Memory buffer deserialization**/
 #define DeserializeBuffer(file, buffer, size) \
-  if (0 != fopen_s(&pFile, file, FILE_READ_OPTS)) \
+  if (0 != os_fopen(&pFile, file, FILE_READ_OPTS)) \
   { \
     NVDIMM_ERR("Failed to open the PBR file: %s\n", file); \
     ReturnCode = EFI_END_OF_FILE; \
@@ -92,7 +89,7 @@ VOID DeserializePbrMode(UINT32 *pMode, UINT32 defaultMode);
   }
 
 #define DeserializeBufferEx(file, buffer, size) \
-  if (0 != fopen_s(&pFile, file, FILE_READ_OPTS)) \
+  if (0 != os_fopen(&pFile, file, FILE_READ_OPTS)) \
   { \
     NVDIMM_ERR("Failed to open the PBR file: %s\n", file); \
   } \
@@ -199,11 +196,12 @@ EFI_STATUS PbrDeserializeCtx(
   AsciiSPrint(pbr_dir, sizeof(pbr_dir), "%s%s", PBR_TMP_DIR, pbr_filename);
 
   /**Deserialize the PBR context struct**/
-  if (0 != fopen_s(&pFile, PBR_TMP_DIR PBR_CTX_FILE_NAME, FILE_READ_OPTS))
+  if (0 != os_fopen(&pFile, PBR_TMP_DIR PBR_CTX_FILE_NAME, FILE_READ_OPTS) || pFile == NULL)
   {
     NVDIMM_DBG("pbr_ctx.tmp not found, setting to default value\n");
     ctx->PbrMode = PBR_NORMAL_MODE;
-    return EFI_SUCCESS;
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
   }
 
   if (1 != fread(ctx, sizeof(PbrContext), 1, pFile))
@@ -214,6 +212,7 @@ EFI_STATUS PbrDeserializeCtx(
   }
 
   fclose(pFile);
+  pFile = NULL;
 
   /**Deserialize the PBR main header**/
 

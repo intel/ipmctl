@@ -420,22 +420,37 @@ PrintPcatTable(
       PLATFORM_CAPABILITY_INFO *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L"Yes");
-      }
-      else {
+      } else {
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L"No");
       }
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_RUNTIME_INTERFACE) {
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L" & Runtime Interface for config validation");
       }
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", ((DcpmmMgmtSWConfigInputSupport != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH),
-        pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, DcpmmMgmtSWConfigInputSupport);
+      if (DcpmmMgmtSWConfigInputSupport != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, DcpmmMgmtSWConfigInputSupport);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport);
+      }
       FREE_POOL_SAFE(DcpmmMgmtSWConfigInputSupport);
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", ((MemoryModeCapabilities != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH),
-        pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+      if (MemoryModeCapabilities != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+      }
       FREE_POOL_SAFE(MemoryModeCapabilities);
       CurrentMemoryMode = DecodePcatCurrentMemoryMode((VOID *)&pPlatformCapabilityInfoTable->CurrentMemoryMode, &pPlatformCapabilityInfoTable->MemoryModeCapabilities);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", ((CurrentMemoryMode != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH), pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+      if (CurrentMemoryMode != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR,
+          pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->CurrentMemoryMode);
+      }
       FREE_POOL_SAFE(CurrentMemoryMode);
       if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_MIRRORING) {
         PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Mirroring");
@@ -446,26 +461,52 @@ PrintPcatTable(
       if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_MIGRATION) {
         PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Migration");
       }
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability",
-        ((PersistentMemoryRasCapability != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS L"\n" : FORMAT_HEX_NOWIDTH L"\n"),
-        pPlatformCapabilityInfoTable->PersistentMemoryRasCapability, PersistentMemoryRasCapability);
+      if (PersistentMemoryRasCapability != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS L"\n",
+          pPlatformCapabilityInfoTable->PersistentMemoryRasCapability, PersistentMemoryRasCapability);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH L"\n",
+          pPlatformCapabilityInfoTable->PersistentMemoryRasCapability);
+      }
       FREE_POOL_SAFE(PersistentMemoryRasCapability);
-    }
-    else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS, pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport,
-        (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) ? L"Yes" : L"No");
+      if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"Yes");
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"No");
+      }
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", ((MemoryModeCapabilities != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH),
-        pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+      if (MemoryModeCapabilities != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+      }
       FREE_POOL_SAFE(MemoryModeCapabilities);
       CurrentMemoryMode = DecodePcatCurrentMemoryMode((VOID *)&pPlatformCapabilityInfoTable->CurrentMemoryMode, NULL);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", ((CurrentMemoryMode != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH), pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+      if (CurrentMemoryMode != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR,
+          pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->CurrentMemoryMode);
+      }
       FREE_POOL_SAFE(CurrentMemoryMode);
-      MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX, L"-Per Die", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie);
-      MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX, L"-Per DCPMM", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", ((MaxPMInterleaveSets != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH),
-        pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16, MaxPMInterleaveSets);
+      MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
+        L"-Per Die", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie);
+      MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
+        L"-Per DCPMM", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
+      if (MaxPMInterleaveSets != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR,
+          pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16, MaxPMInterleaveSets);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH,
+          pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16);
+      }
       FREE_POOL_SAFE(MaxPMInterleaveSets);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DDRCacheSize", FORMAT_UINT32 L" GiB per DDR DIMM" L"\n", pPlatformCapabilityInfoTable->DDRCacheSize);
     }
@@ -474,30 +515,47 @@ PrintPcatTable(
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"MemoryInterleaveCapabilityTable");
     if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO *)pTable;
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode",
-        (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH,
-        pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
+      if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH,
+          pMemoryInterleaveCapabilityInfoTable->MemoryMode);
+      }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumberOfInterleaveFormatsSupported", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported);
       for (Index = 0; Index < pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported; Index++) {
         InterleaveFormatSupportedIndex = CatSPrint(NULL, L"InterleaveFormatSupported(%d)", Index);
         InterleaveFormatSupported = DecodePcatInterleaveFormatSupported((VOID *)&pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], NULL);
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, ((InterleaveFormatSupported != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH),
-          pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], InterleaveFormatSupported);
+        if (InterleaveFormatSupported != NULL) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH FORMAT_STR,
+            pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], InterleaveFormatSupported);
+        } else {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
+            pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
+        }
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
-    }
-    else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 *)pTable;
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode",
-        (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) ? FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS : FORMAT_HEX_NOWIDTH,
-        pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
+      if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+          pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH,
+          pMemoryInterleaveCapabilityInfoTable->MemoryMode);
+      }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumberOfInterleaveFormatsSupported", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported);
       for (Index = 0; Index < pMemoryInterleaveCapabilityInfoTable->NumOfFormatsSupported; Index++) {
         InterleaveFormatSupportedIndex = CatSPrint(NULL, L"InterleaveFormatSupported(%d)", Index);
         InterleaveFormatSupported = DecodePcatInterleaveFormatSupported((VOID *)&pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], &pMemoryInterleaveCapabilityInfoTable->InterleaveSize);
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, ((InterleaveFormatSupported != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR : FORMAT_HEX_NOWIDTH),
-          pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], InterleaveFormatSupported);
+        if (InterleaveFormatSupported != NULL) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH FORMAT_STR,
+            pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index], InterleaveFormatSupported);
+        } else {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
+            pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
+        }
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
@@ -505,8 +563,13 @@ PrintPcatTable(
         L"-Per Die", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDie);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
         L"-Per DCPMM", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDcpmm);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSetsPerMemType", ((MaxPMInterleaveSets != NULL) ? FORMAT_HEX_NOWIDTH FORMAT_STR L"\n" : FORMAT_HEX_NOWIDTH L"\n"),
-        pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.AsUint16, MaxPMInterleaveSets);
+      if (MaxPMInterleaveSets != NULL) {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSetsPerMemType", FORMAT_HEX_NOWIDTH FORMAT_STR L"\n",
+          pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.AsUint16, MaxPMInterleaveSets);
+      } else {
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSetsPerMemType", FORMAT_HEX_NOWIDTH L"\n",
+          pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.AsUint16);
+      }
       FREE_POOL_SAFE(MaxPMInterleaveSets);
     }
     break;
@@ -542,8 +605,7 @@ PrintPcatTable(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", L"%ld", pSocketSkuInfoTable->MappedMemorySizeLimit);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", L"%ld", pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", L"%ld\n", pSocketSkuInfoTable->CachingMemorySize);
-    }
-    else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
       DIE_SKU_INFO_TABLE *pDieSkuInfoTable = (DIE_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->DieId);
@@ -792,8 +854,13 @@ PrintFitTable(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveStructureIndex", FORMAT_HEX_NOWIDTH, pTableNvDimmRegion->InterleaveStructureIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveWays", FORMAT_HEX_NOWIDTH, pTableNvDimmRegion->InterleaveWays);
     NvDimmStateFlags = DecodeNfitNvDimmStateFlags(pTableNvDimmRegion->NvDimmStateFlags);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmStateFlags", ((NvDimmStateFlags != NULL) ? FORMAT_HEX FORMAT_STR_NL : FORMAT_HEX L"\n"),
-      pTableNvDimmRegion->NvDimmStateFlags, NvDimmStateFlags);
+    if (NvDimmStateFlags != NULL) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmStateFlags", FORMAT_HEX FORMAT_STR_NL,
+        pTableNvDimmRegion->NvDimmStateFlags, NvDimmStateFlags);
+    } else {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NvDimmStateFlags", FORMAT_HEX L"\n",
+        pTableNvDimmRegion->NvDimmStateFlags);
+    }
     FREE_POOL_SAFE(NvDimmStateFlags);
     break;
   case NVDIMM_INTERLEAVE_TYPE:

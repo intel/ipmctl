@@ -994,9 +994,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"DCPMM " FORMAT_STR L" supports FIS %d.%d\r\n",
         DimmStr,
         pDimms[DimmIndex].FwVer.FwApiMajor,
-        pDimms[DimmIndex].FwVer.FwApiMinor,
-        MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
-        MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR);
+        pDimms[DimmIndex].FwVer.FwApiMinor);
     }
 
   }

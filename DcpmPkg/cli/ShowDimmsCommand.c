@@ -847,7 +847,7 @@ ShowDimms(
           }
 
           if (BlockAddressable) {
-            tmpIfc = CatSPrint(tmpIfc, FORMAT_HEX L" ", FORMAT_CODE_STORAGE_STR);
+            tmpIfc = CatSPrint(tmpIfc, FORMAT_HEX L" ", DCPMM_FMT_CODE_STORAGE);
             tmpIfc = CatSPrint(tmpIfc, FORMAT_CODE_STORAGE_STR);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, INTERFACE_FORMAT_CODE_STR, tmpIfc);

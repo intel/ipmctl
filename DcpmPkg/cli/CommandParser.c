@@ -287,7 +287,7 @@ Parse(
   if (EFI_ERROR(ReturnCode)) {
     switch (ReturnCode) {
     case EFI_BUFFER_TOO_SMALL: // Too long option value
-      SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_INVALID_OPTION_VALUES, pHelpStr));
+      SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_INVALID_OPTION_VALUES FORMAT_NL_STR, pHelpStr));
       break;
     }
 
@@ -305,7 +305,7 @@ Parse(
   if (EFI_ERROR(ReturnCode)) {
     switch (ReturnCode) {
     case EFI_BUFFER_TOO_SMALL:
-      SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_INVALID_TARGET_VALUES, pHelpStr));
+      SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_INVALID_TARGET_VALUES FORMAT_NL_STR, pHelpStr));
     break;
     }
     ReturnCode = EFI_INVALID_PARAMETER;

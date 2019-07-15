@@ -256,6 +256,7 @@ GetDataSet(DATA_SET_CONTEXT *Root, CHAR16 *NamePath, ...) {
         //create a new data set and add it to the end
         if (NULL == (TempCreateNewDataSet = CreateDataSet(TempDataSet, NameInfo.Name, NULL))) {
           TempDataSet = NULL;
+          FreeDataSetNameInfo(&NameInfo);
           goto Finish;
         }
       }
@@ -430,7 +431,7 @@ VOID * SquashDataSetCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *User
   }
 
   if (IsLeaf(DataSetCtx)) {
-    NewDataSet = CreateDataSet(RootDataSet, CatSPrint(NULL, GetDataSetName(DataSetCtx)), NULL);
+    NewDataSet = CreateDataSet(RootDataSet, GetDataSetName(DataSetCtx), NULL);
     while (NULL != (KvInfo = GetNextKey(DataSetCtx, KvInfo))) {
       GetKeyValueWideStr(DataSetCtx, KvInfo->Key, &Val, NULL);
       if (Val) {
@@ -478,7 +479,7 @@ DATA_SET_CONTEXT *SquashDataSet(DATA_SET_CONTEXT *DataSetCtx) {
     return DataSetCtx;
   }
 
-  if (NULL == (NewRootDataSet = CreateDataSet(NULL, CatSPrint(NULL, GetDataSetName(DataSetCtx)), NULL))) {
+  if (NULL == (NewRootDataSet = CreateDataSet(NULL, GetDataSetName(DataSetCtx), NULL))) {
     return NewRootDataSet;
   }
 

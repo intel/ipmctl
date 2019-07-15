@@ -577,7 +577,7 @@ ShowRegions(
     if (SocketsNum > 0) {
       ErrMsg = CatSPrintClean(ErrMsg, CLI_ERR_REGION_TO_SOCKET_MAPPING);
     }
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, ErrMsg);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR, ErrMsg);
     FREE_POOL_SAFE(ErrMsg);
     goto Finish;
   }

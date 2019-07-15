@@ -22,19 +22,15 @@
 #include <Dimm.h>
 #include <NvmDimmDriver.h>
 #include <Common.h>
+#include <wchar.h>
 #ifdef _MSC_VER
 #include <io.h>
 #include <conio.h>
 #include <time.h>
-#include <wchar.h>
 #include <string.h>
 #else
 #include <unistd.h>
-#include <wchar.h>
 #include <fcntl.h>
-#include <safe_str_lib.h>
-#include <safe_mem_lib.h>
-#include <safe_lib.h>
 #define _read read
 #define _getch getchar
 #endif
@@ -51,6 +47,7 @@
 #include "event.h"
 #include "Pbr.h"
 #include "PbrDcpmm.h"
+#include <os_str.h>
 
 EFI_SYSTEM_TABLE *gST;
 EFI_SHELL_INTERFACE *mEfiShellInterface;
@@ -548,11 +545,7 @@ AsciiVSPrint(
   if (0 == BufferSize)
     return BufferSize;
 
-  return vsnprintf_s(StartOfBuffer, (const size_t)BufferSize
-#ifdef _MSC_VER
-    , (size_t)(BufferSize - 1)
-#endif
-    , FormatString, Marker);
+  return os_vsnprintf(StartOfBuffer, BufferSize, FormatString, Marker);
 }
 
 /**
@@ -691,7 +684,7 @@ CopyMem(
   IN UINTN       Length
 )
 {
-  memcpy_s(DestinationBuffer, Length, SourceBuffer, Length);
+  os_memcpy(DestinationBuffer, Length, SourceBuffer, Length);
   return DestinationBuffer;
 }
 
@@ -905,7 +898,7 @@ CatVSPrint(
   VA_COPY(ExtraMarker, Marker);
   static const int nBuffSize = 8192;
   static wchar_t evalBuff[8192];
-  CharactersRequired = vswprintf_s(evalBuff, nBuffSize, FormatString, ExtraMarker);
+  CharactersRequired = os_vswprintf(evalBuff, nBuffSize, FormatString, ExtraMarker);
   if (CharactersRequired > nBuffSize)
     return NULL;
 
@@ -925,9 +918,9 @@ CatVSPrint(
   }
 
   if (String != NULL) {
-    wcscpy_s(BufferToReturn, (SizeRequired / sizeof(CHAR16)), String);
+    os_wcscpy(BufferToReturn, (SizeRequired / sizeof(CHAR16)), String);
   }
-  vswprintf_s(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
+  os_vswprintf(BufferToReturn + StrLen(BufferToReturn), (CharactersRequired + 1), FormatString, Marker);
 
   ASSERT(StrSize(BufferToReturn) == SizeRequired);
 
@@ -1043,7 +1036,7 @@ AllocateCopyPool(
 {
   void * ptr = calloc((size_t)AllocationSize, 1);
   if (NULL != ptr) {
-    memcpy_s(ptr, AllocationSize, Buffer, AllocationSize);
+    os_memcpy(ptr, AllocationSize, Buffer, AllocationSize);
   }
   return ptr;
 }
@@ -1750,7 +1743,7 @@ UnicodeSPrint(
 {
   VA_LIST Marker;
   VA_START(Marker, FormatString);
-  return vswprintf_s(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
+  return os_vswprintf(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
 }
 
 /**
@@ -1796,7 +1789,7 @@ UnicodeVSPrint(
   IN  VA_LIST        Marker
 )
 {
-  return vswprintf_s(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
+  return os_vswprintf(StartOfBuffer, (size_t)(BufferSize / sizeof(CHAR16)), FormatString, Marker);
 }
 
 /**
@@ -1843,11 +1836,8 @@ AsciiSPrint(
 {
   VA_LIST Marker;
   VA_START(Marker, FormatString);
-  return vsnprintf_s(StartOfBuffer, (size_t)BufferSize
-#ifdef _MSC_VER
-    , (size_t)(BufferSize - 1)
-#endif
-    , FormatString, Marker);
+
+  return os_vsnprintf(StartOfBuffer, (size_t)BufferSize, FormatString, Marker);
 }
 /**
 Returns the number of characters that would be produced by if the formatted
@@ -1871,7 +1861,7 @@ SPrintLength(
 {
   static const int nBuffSprintLenSize = 1024;
   static wchar_t evalSprintBuff[1024];
-  return vswprintf_s(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
+  return os_vswprintf(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
 }
 /**
 Makes Bios emulated pass thru call and returns the values

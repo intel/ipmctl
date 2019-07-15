@@ -27,13 +27,13 @@
 #include <fcntl.h>
 #define _read read
 #define _getch getchar
-#include <safe_str_lib.h>
 #endif
 
 #include <sys/stat.h> 
 #include <fcntl.h>
 #include "os_efi_shell_parameters_protocol.h"
 #include "os_efi_api.h"
+#include "os_str.h"
 
 #define MAX_INPUT_PARAMS        256
 #define MAX_INPUT_PARAM_LEN     4096
@@ -68,7 +68,6 @@ RecordingDirMode g_rec_file_creation_mode = DefaultMode;
 
 EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 {
-  size_t argv_sz_chars = 0;
   char *p_tok_context = NULL;
   int new_argv_index = 1;
   int stripped_args = 0;
@@ -92,8 +91,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
       Index + 1 != argc)
     {
       char *tok;
-      argv_sz_chars = strnlen_s(argv[Index + 1], MAX_INPUT_PARAM_LEN) + 1;
-      tok = s_strtok(argv[Index + 1], &argv_sz_chars, ",", &p_tok_context);
+      tok = os_strtok(argv[Index + 1], ",", &p_tok_context);
 
       while (tok)
       {
@@ -105,7 +103,7 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
           gOsShellParametersProtocol.StdOut = fopen("output.tmp", "w+");
         }
 
-        tok = s_strtok(NULL, &argv_sz_chars, ",", &p_tok_context);
+        tok = os_strtok(NULL, ",", &p_tok_context);
       }
     }
     else if (0 == s_strncmpi(argv[Index], STR_DASH_FAST_LONG, strlen(STR_DASH_FAST_LONG) + 1))

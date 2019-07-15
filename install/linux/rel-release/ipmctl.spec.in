@@ -12,7 +12,6 @@ ExclusiveArch:	x86_64
 
 Requires:	libipmctl%{?_isa} = %{version}-%{release}
 BuildRequires:	pkgconfig(libndctl)
-BuildRequires:	pkgconfig(safec-3.3)
 BuildRequires:	cmake
 %if 0%{?fedora}
 BuildRequires:	python2
@@ -73,7 +72,6 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DRELEASE=ON \
-    -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
     -DRPM_BUILD=ON
 %else
 %cmake -DBUILDNUM=%{version} -DCMAKE_INSTALL_PREFIX=/ \
@@ -87,7 +85,6 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON \
-    -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=OFF \
 	-DWHITLEY=ON
 %endif
 %make_build

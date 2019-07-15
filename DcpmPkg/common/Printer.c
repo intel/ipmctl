@@ -924,7 +924,7 @@ static VOID PrintTextWithNewLine(CHAR16 *Msg) {
     return;
   }
   MsgLen = StrLen(Msg);
-  Print(Msg);
+  Print(FORMAT_STR, Msg);
   if (MsgLen && Msg[MsgLen - 1] != L'\n') {
     Print(L"\n");
   }

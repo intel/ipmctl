@@ -2332,6 +2332,7 @@ RetrieveNamespacesFromLsa(
             pNamespaceLabel->LbaSize != pNamespaceLabel2->LbaSize ||
             CompareMem(pNamespaceLabel->Name, pNamespaceLabel2->Name, sizeof(pNamespaceLabel->Name)) != 0 ||
             pNamespace->InterleaveSetCookie != pNamespaceLabel2->InterleaveSetCookie) {
+          FREE_POOL_SAFE(pNamespaceLabel2);
           NVDIMM_DBG("AppDirect Namespace labels are not consistent. Skipping the current label.");
           continue;
         }
@@ -2351,6 +2352,7 @@ RetrieveNamespacesFromLsa(
 
         ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);
         if (EFI_ERROR(ReturnCode)) {
+          FREE_POOL_SAFE(pNamespaceLabel2);
           NVDIMM_DBG("Label invalid or check failed. Skipping");
           continue;
         }
@@ -2358,6 +2360,7 @@ RetrieveNamespacesFromLsa(
         ChecksumMatch =
           ChecksumOperations(pNamespaceLabel2, sizeof(*pNamespaceLabel2), &pNamespaceLabel2->Checksum, FALSE);
         if (!Use_Namespace1_1 && !ChecksumMatch) {
+          FREE_POOL_SAFE(pNamespaceLabel2);
           pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
           continue;
         }
@@ -2369,6 +2372,7 @@ RetrieveNamespacesFromLsa(
              CompareGuid(&gSpaRangePmRegionGuid, &pNamespaceLabel2->TypeGuid) ||
              CompareGuid(&gSpaRangeRawPmRegionGuid, &pNamespaceLabel2->TypeGuid) ||
              CompareGuid(&gSpaRangeRawVolatileRegionGuid, &pNamespaceLabel2->TypeGuid))) {
+          FREE_POOL_SAFE(pNamespaceLabel2);
           NVDIMM_DBG("Unexpected TypeGuid for AppDirect NS");
           continue;
         }
@@ -4938,60 +4942,6 @@ RemoveNamespaceLabels(
 
 Finish:
   FreeLsaSafe(&pLsa);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-EFI_STATUS
-CreateLabelsFromRanges(
-  IN     NAMESPACE *pNamespace,
-  IN     NVM_IS *pIS OPTIONAL,
-     OUT NAMESPACE_LABEL **ppLabels
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT32 Index = 0;
-  NAMESPACE_LABEL *pLabel = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pNamespace == NULL || pNamespace->RangesCount > MAX_NAMESPACE_RANGES) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-    pLabel = (NAMESPACE_LABEL *) AllocateZeroPool(sizeof(*pLabel));
-    if (pLabel == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-
-    pLabel->Dpa = pNamespace->Range[Index].Dpa;
-    pLabel->RawSize = pNamespace->Range[Index].Size;
-    pLabel->Flags = pNamespace->Flags;
-    CopyMem_S(&pLabel->Uuid, sizeof(pLabel->Uuid), pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
-    CopyMem_S(&pLabel->Name, sizeof(pLabel->Name), pNamespace->Name, sizeof(pLabel->Name));
-    if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
-      pLabel->LbaSize = pNamespace->BlockSize;
-      pLabel->InterleaveSetCookie = 0;      // Always zero for Block Namespace
-      pLabel->Position = 0;                 // Always zero for Block Namespace
-      pLabel->NumberOfLabels = 0;           // Always zero for Block Namespace
-    } else {
-      if (pIS == NULL) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        goto Finish;
-      }
-      pLabel->InterleaveSetCookie = pNamespace->InterleaveSetCookie;
-      pLabel->LbaSize = 0;                  // Always zero for AppDirect Namespace
-      pLabel->Position = (UINT16)Index;             // Always zero for AppDirect Namespace
-      pLabel->NumberOfLabels = (UINT16)pNamespace->RangesCount;
-    }
-    ppLabels[Index] = pLabel;
-  }
-
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

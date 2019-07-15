@@ -188,7 +188,7 @@ StartFormat(
     }
   }
 
-  PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_STARTING_FORMAT, DimmStr);
+  PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_STARTING_FORMAT);
 
   ReturnCode = pNvmDimmConfigProtocol->DimmFormat(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, Recovery, pCommandStatus);
   if (!EFI_ERROR(ReturnCode)) {

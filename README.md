@@ -36,25 +36,6 @@ EPEL 7 packages can be found at: https://copr.fedorainfracloud.org/coprs/jhli/ip
 
 OpenSUSE and SLES packages can be found at: https://build.opensuse.org/package/show/home:jhli/ipmctl
 
-### libsafec
-
-
-ipmctl requires libsafec as a dependency.
-
-
-libsafec is available on Fedora.
-
-
-EPEL 7 packages can be found at: https://copr.fedorainfracloud.org/coprs/jhli/safeclib/
-
-
-OpenSUSE and SLES packages can be found at: https://build.opensuse.org/package/show/home:jhli/safeclib
-
-
-Ubuntu packages can be found at: https://launchpad.net/~jhli/+archive/ubuntu/libsafec
-
-Alternately, -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=ON to download sources and statically link to safeclib
-
 ### libndctl
 
 
@@ -88,8 +69,6 @@ Ipmctl has dependency on libsafec-devel, libndctl-devel and rubygem-asciidoctor
 ### Linux
 
 The latest stable Linux kernel version available is recommended.
-
-libsafec-devel is required to build, see above for package location.
 
 ndctl package is required.
 

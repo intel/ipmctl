@@ -2399,6 +2399,7 @@ ReadCmdLinePrintOptions(
 
   FREE_POOL_SAFE(OutputOptions);
   FreeStringArray(Toks, NumToks);
+  FREE_POOL_SAFE(OutputOptions);
   return ReturnCode;
 }
 

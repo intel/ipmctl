@@ -16,18 +16,6 @@ extern "C"
 {
 #endif
 
-#if defined(__LINUX__) || defined(__ESX__)
-
-#define s_strtok(dest, dmax, delim, ptr) strtok_s(dest, dmax, delim, ptr)
-#define s_wcstok(dest, dmax, delim, ptr) wcstok_s(dest, dmax, delim, ptr)
-
-#else // defined(__LINUX__) || defined(__ESX__)
-
-#define s_strtok(dest, dmax, delim, ptr) strtok_s(dest, delim, ptr)
-#define s_wcstok(dest, dmax, delim, ptr) wcstok_s(dest, delim, ptr)
-
-#endif // defined(__LINUX__) || defined(__ESX__)
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <export_api.h>

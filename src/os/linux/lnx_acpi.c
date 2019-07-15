@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdio.h>
-#include <safe_mem_lib.h>
+#include <os_str.h>
 
 #define	SYSFS_ACPI_PATH	"/sys/firmware/acpi/tables/"
 int g_count = 0;
@@ -119,7 +119,7 @@ int get_acpi_table(
 			if (p_table)
 			{
 				memset(p_table, 0, size);
-				memcpy_s(&(p_table->header), sizeof(struct acpi_table_header), &header, header_size);
+				os_memcpy(&(p_table->header), sizeof(struct acpi_table_header), &header, header_size);
 				if (size < total_table_size)
 				{
 					rc = ACPI_ERR_BADTABLE;

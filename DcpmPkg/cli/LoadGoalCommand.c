@@ -301,6 +301,7 @@ FinishSkipPrinterProcess:
   FREE_POOL_SAFE(pLoadUserPath);
   FREE_POOL_SAFE(pUnitsStr);
   FREE_POOL_SAFE(pShowGoalOutputArgs);
+  FREE_POOL_SAFE(pCommandStr);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

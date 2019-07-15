@@ -41,11 +41,7 @@
 #include "event.h"
 #include <Protocol/EfiShellParameters.h>
 #include "LoadCommand.h"
-
-#if defined(__LINUX__)
-#include <safe_str_lib.h>
-#include <safe_mem_lib.h>
-#endif
+#include <os_str.h>
 
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
@@ -544,8 +540,8 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   for (unsigned int ddr_index = 0; ddr_index < ddr_cnt; ddr_index++) {
     p_devices[ddr_index].physical_id = p_dimm_topology[ddr_index].DimmID; // Memory device's physical identifier (SMBIOS handle)
     p_devices[ddr_index].memory_type = MEMORY_TYPE_DDR4;  // Type of memory device
-    memcpy_s(p_devices[ddr_index].device_locator, NVM_DEVICE_LOCATOR_LEN, p_dimm_topology[ddr_index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
-    memcpy_s(p_devices[ddr_index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[ddr_index].BankLabel, BANKLABEL_LEN); // Physically-labeled bank of device location
+    os_memcpy(p_devices[ddr_index].device_locator, NVM_DEVICE_LOCATOR_LEN, p_dimm_topology[ddr_index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
+    os_memcpy(p_devices[ddr_index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[ddr_index].BankLabel, BANKLABEL_LEN); // Physically-labeled bank of device location
   }
 
   //allocate memory for pm devices
@@ -567,8 +563,8 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   for (unsigned int pm_index = 0; pm_index < pm_cnt; ++pm_index) {
     p_devices[ddr_cnt + pm_index].physical_id = pdimms[pm_index].DimmID;  // Memory device's physical identifier (SMBIOS handle)
     p_devices[ddr_cnt + pm_index].memory_type = MEMORY_TYPE_NVMDIMM; // Type of memory device
-    memcpy_s(p_devices[ddr_cnt + pm_index].device_locator, NVM_DEVICE_LOCATOR_LEN, pdimms[pm_index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN); // Physically-labeled socket of device location
-    memcpy_s(p_devices[ddr_cnt + pm_index].bank_label, NVM_BANK_LABEL_LEN, pdimms[pm_index].BankLabel, BANKLABEL_LEN);  // Physically-labeled bank of device location
+    os_memcpy(p_devices[ddr_cnt + pm_index].device_locator, NVM_DEVICE_LOCATOR_LEN, pdimms[pm_index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN); // Physically-labeled socket of device location
+    os_memcpy(p_devices[ddr_cnt + pm_index].bank_label, NVM_BANK_LABEL_LEN, pdimms[pm_index].BankLabel, BANKLABEL_LEN);  // Physically-labeled bank of device location
   }
 
 Finish:
@@ -912,11 +908,11 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
   p_details->data_width = dimm_info.DataWidth;                                            // The width in bits used to store user data.
   p_details->total_width = dimm_info.TotalWidth;                                          // The width in bits for data and ECC and/or redundancy.
   p_details->speed = dimm_info.Speed;                                                     // The speed in nanoseconds.
-  memcpy_s(p_details->device_locator, NVM_DEVICE_LOCATOR_LEN, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
-  memcpy_s(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, sizeof(dimm_info.BankLabel));                 // The bank label
+  os_memcpy(p_details->device_locator, NVM_DEVICE_LOCATOR_LEN, dimm_info.DeviceLocator, NVM_DEVICE_LOCATOR_LEN);     // The socket or board position label
+  os_memcpy(p_details->bank_label, NVM_BANK_LABEL_LEN, dimm_info.BankLabel, sizeof(dimm_info.BankLabel));                 // The bank label
   p_details->peak_power_budget = dimm_info.PeakPowerBudget.Data;                               // instantaneous power budget in mW (100-20000 mW).
   p_details->avg_power_budget = dimm_info.AvgPowerLimit.Data;                                 // average power budget in mW (100-18000 mW).
-        p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
+  p_details->package_sparing_enabled = dimm_info.PackageSparingEnabled;                   // Enable or disable package sparing.
 
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
     &SystemCapabilitiesInfo);
@@ -1256,7 +1252,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
       rc = NVM_ERR_DUMP_FILE_OPERATION_FAILED;
     } else {
       if (image_version_len > NVM_VERSION_LEN) {
-        sprintf_s(image_version, NVM_VERSION_LEN, "%d.%d.%d.%d", p_fw_image_info->ImageVersion.ProductNumber.Version,
+        os_snprintf(image_version, NVM_VERSION_LEN, "%d.%d.%d.%d", p_fw_image_info->ImageVersion.ProductNumber.Version,
           p_fw_image_info->ImageVersion.RevisionNumber.Version,
           p_fw_image_info->ImageVersion.SecurityRevisionNumber.Version,
           p_fw_image_info->ImageVersion.BuildNumber.Build);
@@ -2300,13 +2296,13 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file,
     p_socket_ids[index] = p_sockets[index].SocketId;
   ReturnCode = ParseSourceDumpFile(AsciiStrToUnicodeStr(file, file_name), NULL, &p_file_string);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("Failed to dump a file %s. Return code &d\n", file, ReturnCode);
+    NVDIMM_ERR("Failed to dump a file %s. Return code %d\n", file, ReturnCode);
     rc = NVM_ERR_UNKNOWN;
     goto Finish;
   }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.LoadGoalConfig(&gNvmDimmDriverNvmDimmConfig, p_dimm_ids, dimm_count, p_socket_ids, socket_count, p_file_string, p_command_status);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR("Failed to load the goal configuration. Return code &d\n", ReturnCode);
+    NVDIMM_ERR("Failed to load the goal configuration. Return code %d\n", ReturnCode);
     rc = NVM_ERR_CREATE_GOAL_NOT_ALLOWED;
     goto Finish;
   }
@@ -2322,12 +2318,22 @@ Finish:
 
 void get_version_numbers(int *major, int *minor, int *hotfix, int *build)
 {
-  int first;
-  int second;
-  int third;
-  int fourth;
+  int first = 0;
+  int second = 0;
+  int third = 0;
+  int fourth = 0;
+  char version[] = VERSION_STR;
+  char *ptr;
+  char *token = NULL;
 
-  sscanf_s(VERSION_STR, "%d.%d.%d.%d", &first, &second, &third, &fourth);
+  if ((token = os_strtok(version, ".", &ptr)) != NULL)
+    first = strtol(token, NULL, 10);
+  if ((token = os_strtok(NULL, ".", &ptr)) != NULL)
+    second = strtol(token, NULL, 10);
+  if ((token = os_strtok(NULL, ".", &ptr)) != NULL)
+    third = strtol(token, NULL, 10);
+  if ((token = os_strtok(NULL, ".", &ptr)) != NULL)
+    fourth = strtol(token, NULL, 10);
 
   if(major)
     *major = first;
@@ -2567,7 +2573,7 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid,
     &pFinalDiagnosticsResult);
 
   pFinalDiagnosticsResultStr = DiagnosticResultToStr(pFinalDiagnosticsResult);
-  Print(pFinalDiagnosticsResultStr);
+  Print(FORMAT_STR, pFinalDiagnosticsResultStr);
   FreePool(pFinalDiagnosticsResult);
   FreePool(pFinalDiagnosticsResultStr);
   if (EFI_ERROR(ReturnCode))
@@ -3047,7 +3053,7 @@ int get_fw_err_log_stats(
   CopyMem_S(cmd->InputPayload, sizeof(cmd->InputPayload), &get_error_log_input, cmd->InputPayloadSize);
   cmd->OutputPayloadSize = sizeof(LOG_INFO_DATA_RETURN);
   if (EFI_SUCCESS == PassThruCommand(cmd, PT_TIMEOUT_INTERVAL)) {
-    memcpy_s(log_info, sizeof(LOG_INFO_DATA_RETURN), cmd->OutPayload, cmd->OutputPayloadSize);
+    os_memcpy(log_info, sizeof(LOG_INFO_DATA_RETURN), cmd->OutPayload, cmd->OutputPayloadSize);
     rc = NVM_SUCCESS;
   }
 finish:
@@ -3125,7 +3131,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
     if(p_cmd->large_output_payload_size < cmd->LargeOutputPayloadSize)
     {
       p_cmd->large_output_payload_size = 0; //indicate to caller that nothing was copied into their large output payload buffer
-      NVDIMM_ERR("Not enough memory to copy the large output payload\n", rc);
+      NVDIMM_ERR("Not enough memory to copy the large output payload\n");
       rc = NVM_ERR_INVALID_PARAMETER;
       goto finish;
     }
@@ -3137,7 +3143,7 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
     if(p_cmd->output_payload_size < cmd->OutputPayloadSize)
     {
       p_cmd->output_payload_size = 0; //indicate to caller that nothing was copied into their output payload buffer
-      NVDIMM_ERR("Not enough memory to copy the output payload\n", rc);
+      NVDIMM_ERR("Not enough memory to copy the output payload\n");
       rc = NVM_ERR_INVALID_PARAMETER;
       goto finish;
     }

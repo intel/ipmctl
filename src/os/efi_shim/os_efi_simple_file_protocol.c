@@ -15,7 +15,6 @@
 #include <wchar.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include <safe_str_lib.h>
 #define _open open
 #define _close close
 #define _lseek lseek
@@ -28,6 +27,7 @@
 #include <sys/stat.h> 
 #include <fcntl.h>
 #include "os_efi_simple_file_protocol.h"
+#include "os_str.h"
 
 EFI_FILE_PROTOCOL gFileProtocol;
 EFI_SIMPLE_FILE_SYSTEM_PROTOCOL gSimpleFileProtocol;
@@ -116,7 +116,7 @@ file_open(
 
   pFc = cast_to_file_context_ptr(pFp->Revision);
   wcstombs(pFc->filename_ascii, FileName, MAX_FILE_NAME_SIZE);
-  swprintf_s(pFc->filename, MAX_W_FILE_NAME_SIZE, FORMAT_STR, FileName);
+  os_swprintf(pFc->filename, MAX_W_FILE_NAME_SIZE, FORMAT_STR, FileName);
 
   if ((OpenMode & EFI_FILE_MODE_READ) &&
       (OpenMode & EFI_FILE_MODE_WRITE))

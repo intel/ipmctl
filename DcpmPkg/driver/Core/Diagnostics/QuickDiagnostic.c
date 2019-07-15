@@ -251,6 +251,8 @@ SmartAndHealthCheck(
       ReturnCode = ConvertHealthStateReasonToHiiStr(gNvmDimmData->HiiHandle,
         HealthInfo.HealthStatusReason, &pActualHealthReasonStr);
       if (pActualHealthReasonStr == NULL || EFI_ERROR(ReturnCode)) {
+        FREE_POOL_SAFE(pActualHealthStr);
+        FREE_POOL_SAFE(pActualHealthReasonStr);
         NVDIMM_DBG("Error in converting health state reason to string");
         goto Finish;
       }

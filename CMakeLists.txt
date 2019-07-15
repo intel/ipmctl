@@ -83,9 +83,6 @@ elseif(UNIX)
 	find_package(asciidoc)
 	pkg_check_modules(NDCTL REQUIRED libndctl>=58.2)
 	pkg_check_modules(SYSTEMD systemd)
-if(NOT SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK)
-	pkg_check_modules(LIBSAFEC REQUIRED safec-3.3>=03032018.0-g570fa5)
-endif()
 elseif(MSVC)
 	set(WIN_BUILD 1)
 	set(OS_TYPE win)
@@ -194,6 +191,7 @@ endif()
 
 if(MSVC)
 	FILE(GLOB OS_INTERFACE_SOURCE_FILES
+		src/os/os_str.c
 		src/os/os_common.c
 		src/os/win/win_scm2_ioctl.c
 		src/os/win/win_scm2_passthrough.c
@@ -206,6 +204,7 @@ if(MSVC)
 		)
 elseif(UNIX)
 	FILE(GLOB OS_INTERFACE_SOURCE_FILES
+		src/os/os_str.c
 		src/os/os_common.c
 		src/os/${OS_TYPE}/${FILE_PREFIX}_adapter_passthrough.c
 		src/os/${OS_TYPE}/${FILE_PREFIX}_acpi.c
@@ -223,19 +222,12 @@ target_link_libraries(ipmctl_os_interface
 	${CMAKE_THREAD_LIBS_INIT}
 	)
 
-if(LNX_BUILD AND (NOT SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK))
-	target_link_libraries(ipmctl_os_interface
-		${LIBSAFEC_LIBRARIES}
-		)
-endif()
-
 target_include_directories(ipmctl_os_interface PUBLIC
 	src/os
 	src/os/${OS_TYPE}
 	DcpmPkg/common
 	src/os/nvm_api
 	src/os/s_string
-	${LIBSAFEC_INCLUDE_DIRS}
 	)
 # TODO: Remove the backup winioctl.h file when the 17650+ Windows SDK is publicly released
 if (MSVC)
@@ -415,8 +407,7 @@ target_include_directories(ipmctl PUBLIC
 	MdeModulePkg
 	MdeModulePkg/Include
 	MdeModulePkg/Include/Library
-	${LIBSAFEC_INCLUDE_DIRS}
-        )
+	)
 
 if(MSVC)
 	set_target_properties(ipmctl PROPERTIES PREFIX "lib")
@@ -475,7 +466,6 @@ target_include_directories(ipmctl-bin PUBLIC
 	src/os
 	src/os/nvm_api
 	src/os/ini
-	${LIBSAFEC_INCLUDE_DIRS}
 	)
 
 set_target_properties(ipmctl-bin
@@ -823,6 +813,4 @@ endif()
 
 if(ESX_BUILD)
 	include(CMake/esx.cmake)
-elseif(UNIX AND SAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK)
-	include(CMake/safeclib.cmake)
 endif()

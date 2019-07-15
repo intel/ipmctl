@@ -288,7 +288,7 @@ ShowCmdAccessPolicy(
         RestrictionStr = pInvalid;
         break;
       }
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
     }
     FREE_POOL_SAFE(pNone);
     FREE_POOL_SAFE(pBiosOnly);

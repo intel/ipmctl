@@ -16,6 +16,7 @@
 #include <Library/SerialPortLib.h>
 #ifdef OS_BUILD
 #include <os_efi_preferences.h>
+#include <os_str.h>
 #endif
 
 #ifdef _MSC_VER

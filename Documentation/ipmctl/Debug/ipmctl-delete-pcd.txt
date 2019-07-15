@@ -46,7 +46,8 @@ prior to creating a new goal on any targeted DCPMMs, UEFI platform firmware will
 missing tables and, if possible, restore previous config using the PCD partition 0 tables.
 
 WARNING: *This command may result in data loss. Data should be backed up
-to other storage before executing this command*.
+to other storage before executing this command. Because of data dependencies, other commands
+may be affected until the system has been rebooted*.
 
 OPTIONS
 -------

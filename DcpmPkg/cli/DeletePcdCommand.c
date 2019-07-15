@@ -307,6 +307,8 @@ DeletePcdCmd(
 
   PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, L" on", pCommandStatus);
 
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"\nData dependencies may result in other commands being affected. A system reboot is required before all changes will take effect.");
+
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);

@@ -219,6 +219,10 @@ CleanNamespacesAndISs(
   **/
   CleanISLists(&gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
   gNvmDimmData->PMEMDev.RegionsAndNsInitialized = FALSE;
+
+  CleanISLists(&gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISsNfit);
+  gNvmDimmData->PMEMDev.RegionsNfitInitialized = FALSE;
+
 Finish:
 #endif
   return ReturnCode;
@@ -254,7 +258,7 @@ ReenumerateNamespacesAndISs(
   }
   /** Initialize Interleave Sets **/
   ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-    &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
+    &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to retrieve the Interleave Set and Region list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     goto Finish;
@@ -1156,7 +1160,7 @@ InitializeDimms()
       create the Region or add a proper error state to it. So even then we continue the driver initialization.
     **/
     ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
+      &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to retrieve the REGION/IS list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     }

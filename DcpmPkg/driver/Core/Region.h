@@ -98,6 +98,24 @@ typedef struct _REGION_GOAL {
   UINT32 DimmsNum;
 } REGION_GOAL;
 
+/**
+  Allocate and initialize the Interleave Set by using NFIT table
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
+  @param[in] RegionId The next consecutive region id
+  @param[out] ppIS Interleave Set parent for new dimm region
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeISFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTbl,
+  IN     UINT16 RegionId,
+  OUT NVM_IS **ppIS
+);
 
 /**
   Allocate and initialize the Interleave Set by using Interleave Information table from Platform Config Data
@@ -131,6 +149,7 @@ EFI_STATUS
 InitializeISs(
   IN     ParsedFitHeader *pFitHead,
   IN     LIST_ENTRY *pDimmList,
+  IN     BOOLEAN UseNfit,
      OUT LIST_ENTRY *pISList
   );
 
@@ -166,13 +185,19 @@ GetRegionById(
 
 /**
   Get Region List
-  Retruns the pointer to the pool list.
-  It's also initializing the pool list if it's necessary.
+  Retruns the pointer to the region list.
+  It's also initializing the region list if it's necessary.
 
-  @retval pointer to the pool list
+  @param[in] pRegionList Head of the list for Regions
+  @param[in] UseNfit Flag to indicate usage of NFIT
+
+  @retval pointer to the region list
 **/
 EFI_STATUS
-GetRegionList(LIST_ENTRY **ppRegionList);
+GetRegionList(
+  IN     LIST_ENTRY **ppRegionList,
+  IN     BOOLEAN UseNfit
+  );
 
 /**
   Clean the Interleave Set
@@ -194,6 +219,34 @@ CleanISLists(
 VOID
 FreeISResources(
   IN OUT NVM_IS *pIS
+  );
+
+/**
+  Allocate and initialize the DIMM region by using NFIT table
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] pISList List of interleaveset formed so far
+  @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
+  @param[out] pRegionId The next consecutive region id
+  @param[out] ppNewIS Interleave Set parent for new dimm region
+  @param[out] ppDimmRegion new allocated dimm region will be put here
+  @param[out] pISDimmRegionAlreadyExists TRUE if Interleave Set DIMM region already exists
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND the Dimm related with DimmRegion has not been found on the Dimm list
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeDimmRegionFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     DIMM *pDimm,
+  IN     LIST_ENTRY *pISList,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
+  OUT    UINT16 *pRegionId,
+  OUT    NVM_IS **ppCurrentIS,
+  OUT    DIMM_REGION **ppDimmRegion,
+  OUT    BOOLEAN *pISDimmRegionAlreadyExists
   );
 
 /**
@@ -225,6 +278,25 @@ InitializeDimmRegion(
   OUT    DIMM_REGION **ppDimmRegion,
   OUT    BOOLEAN *pISAlreadyExists
   );
+
+/**
+  Retrieve Interleave Sets by using NFIT table
+
+  Using the parsed NFIT table data to get information about Interleave Sets configuration.
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[out] pISList Head of the list for Interleave Sets
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+RetrieveISsFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     LIST_ENTRY *pDimmList,
+     OUT LIST_ENTRY *pISList
+);
 
 /**
   Retrieve Interleave Sets by using Platform Config Data from Intel NVM Dimms

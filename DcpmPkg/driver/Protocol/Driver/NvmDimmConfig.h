@@ -570,6 +570,7 @@ UpdateFw(
   Retrieve the number of regions in the system
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] UseNfit Flag to indicate NFIT usage
   @param[out] pCount The number of regions found.
 
   @retval EFI_SUCCESS Success
@@ -579,6 +580,7 @@ EFI_STATUS
 EFIAPI
 GetRegionCount(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     BOOLEAN UseNfit,
   OUT UINT32 *pCount
 );
 
@@ -587,6 +589,7 @@ GetRegionCount(
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] Count The number of regions.
+  @param[in] UseNfit Flag to indicate NFIT usage
   @param[out] pRegions The region info list
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -598,6 +601,7 @@ EFIAPI
 GetRegions(
   IN    EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN    UINT32 Count,
+  IN    BOOLEAN UseNfit,
   OUT   REGION_INFO *pRegions,
   OUT   COMMAND_STATUS *pCommandStatus
 );

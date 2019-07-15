@@ -99,10 +99,12 @@ typedef struct _PMEM_DEV {
   LIST_ENTRY Dimms;
   LIST_ENTRY UninitializedDimms;
   LIST_ENTRY ISs;
+  LIST_ENTRY ISsNfit;
   LIST_ENTRY Namespaces;
 
   BOOLEAN DimmSkuConsistency;
   BOOLEAN RegionsAndNsInitialized;
+  BOOLEAN RegionsNfitInitialized;
   BOOLEAN NamespacesInitialized;
   BOOLEAN IsMemModeAllowedByBios;
 

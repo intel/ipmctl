@@ -203,6 +203,8 @@ typedef struct _DIMM {
   UINT64 InaccessiblePersistentCapacity;   //!< Capacity in bytes for use as persistent memory that has not been exposed
   struct _DIMM_REGION *pIsRegions[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNum;
+  struct _DIMM_REGION *pIsRegionsNfit[MAX_IS_PER_DIMM];
+  UINT32 IsRegionsNfitNum;
 
   UINT8 IsNew;                             //!< if is incorporated with the rest of the DIMMs in the system
   UINT8 RebootNeeded;                      //!< Whether or not reboot is required to reconfigure dimm
@@ -232,6 +234,8 @@ typedef struct _DIMM {
   struct _NVM_IS *pISs[MAX_IS_PER_DIMM];
   UINT8 ConfigStatus;                           //!< Configuration Status code
   UINT32 ISsNum;
+  struct _NVM_IS *pISsNfit[MAX_IS_PER_DIMM];
+  UINT32 ISsNfitNum;
 
   UINT32 PcdOemPartitionSize;
   UINT32 PcdLsaPartitionSize;

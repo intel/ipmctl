@@ -54,6 +54,9 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 
 NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
 
+-nfit::
+  Used to specify NFIT table as the source instead of PCD(default) for the current invocation of ipmctl.
+
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::

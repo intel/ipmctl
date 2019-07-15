@@ -15,6 +15,102 @@
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
+STATIC
+INT32
+CompareRegionOffsetInDimmRegion(
+  IN     VOID *pFirst,
+  IN     VOID *pSecond
+)
+{
+  DIMM_REGION *pDimmRegion = NULL;
+  DIMM_REGION *pDimmRegion2 = NULL;
+
+  if (pFirst == NULL || pSecond == NULL) {
+    NVDIMM_DBG("NULL pointer found.");
+    return 0;
+  }
+
+  pDimmRegion = DIMM_REGION_FROM_NODE(pFirst);
+  pDimmRegion2 = DIMM_REGION_FROM_NODE(pSecond);
+
+  if (pDimmRegion->SpaRegionOffset < pDimmRegion2->SpaRegionOffset) {
+    return -1;
+  }
+  else if (pDimmRegion->SpaRegionOffset > pDimmRegion2->SpaRegionOffset) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+/**
+  Allocate and initialize the Interleave Set by using NFIT table
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
+  @param[in] RegionId The next consecutive region id
+  @param[out] ppIS Interleave Set parent for new dimm region
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeISFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionTbl,
+  IN     UINT16 RegionId,
+  OUT NVM_IS **ppIS
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  InterleaveStruct *pInterleaveTbl = NULL;
+  PlatformCapabilitiesTbl *pPlatformCapabilitiesTbl = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pFitHead == NULL || pNvDimmRegionTbl == NULL || ppIS == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *ppIS = AllocateZeroPool(sizeof(NVM_IS));
+
+  if (*ppIS == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  if (pNvDimmRegionTbl->InterleaveStructureIndex != 0) {
+    ReturnCode = GetInterleaveTable(pFitHead, pNvDimmRegionTbl->InterleaveStructureIndex, &pInterleaveTbl);
+    if (pInterleaveTbl == NULL) {
+      NVDIMM_DBG("InterleaveStructure table with index: %d not found.", pNvDimmRegionTbl->InterleaveStructureIndex);
+      goto Finish;
+    }
+  }
+
+  pPlatformCapabilitiesTbl = pFitHead->ppPlatformCapabilitiesTbles[0];
+
+  InitializeListHead(&((*ppIS)->DimmRegionList));
+  InitializeListHead(&((*ppIS)->AppDirectNamespaceList));
+
+  (*ppIS)->Signature = IS_SIGNATURE;
+  (*ppIS)->Size = 0;
+  (*ppIS)->State = IS_STATE_HEALTHY;
+  (*ppIS)->InterleaveSetIndex = pNvDimmRegionTbl->SpaRangeDescriptionTableIndex;
+  (*ppIS)->RegionId = RegionId;
+  (*ppIS)->SocketId = pNvDimmRegionTbl->DeviceHandle.NfitDeviceHandle.SocketId & MAX_UINT16;
+  if (pInterleaveTbl != NULL) {
+    (*ppIS)->InterleaveFormatChannel = pInterleaveTbl->LineSize & MAX_UINT16;
+    (*ppIS)->InterleaveFormatImc = pInterleaveTbl->LineSize & MAX_UINT16;
+  }
+  (*ppIS)->InterleaveFormatWays = pNvDimmRegionTbl->InterleaveWays;
+  (*ppIS)->MirrorEnable = (pPlatformCapabilitiesTbl->Capabilities & CAPABILITY_MEMORY_MIRROR) ? TRUE : FALSE;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 /**
   Allocate and initialize the Interleave Set by using Interleave Information table from Platform Config Data
 
@@ -87,9 +183,10 @@ error state on Interleave Set is set.
 **/
 EFI_STATUS
 InitializeISs(
-  IN     ParsedFitHeader *pFitHead,
-  IN     LIST_ENTRY *pDimmList,
-  OUT LIST_ENTRY *pISList
+	IN     ParsedFitHeader *pFitHead,
+	IN     LIST_ENTRY *pDimmList,
+  IN     BOOLEAN UseNfit,
+	OUT LIST_ENTRY *pISList
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -99,12 +196,20 @@ InitializeISs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveISsFromPlatformConfigData(pFitHead, pDimmList, pISList);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Retrieving Interleave Sets from the Platform Config Data failed.");
-    goto Finish;
+  if (!UseNfit) {
+    ReturnCode = RetrieveISsFromPlatformConfigData(pFitHead, pDimmList, pISList);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Retrieving Interleave Sets from the Platform Config Data failed.");
+      goto Finish;
+    }
   }
-
+  else {
+    ReturnCode = RetrieveISsFromNfit(pFitHead, pDimmList, pISList);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Retrieving Interleave Sets from NFIT table failed.");
+      goto Finish;
+    }
+  }
 
 Finish:
   return ReturnCode;
@@ -145,27 +250,47 @@ GetRegionById(
 }
 
 /**
-Get Region List
-Retruns the pointer to the region list.
-It's also initializing the region list if it's necessary.
+  Get Region List
+  Retruns the pointer to the region list.
+  It's also initializing the region list if it's necessary.
 
-@retval pointer to the region list
+  @param[in] pRegionList Head of the list for Regions
+  @param[in] UseNfit Flag to indicate usage of NFIT
+
+  @retval pointer to the region list
 **/
 EFI_STATUS
-GetRegionList(LIST_ENTRY **ppRegionList)
+GetRegionList(
+  IN     LIST_ENTRY **ppRegionList,
+  IN     BOOLEAN UseNfit
+  )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
-    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
+
+  if (UseNfit ? !gNvmDimmData->PMEMDev.RegionsNfitInitialized :
+    !gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
+    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.Dimms,
+      UseNfit, (UseNfit ? &gNvmDimmData->PMEMDev.ISsNfit : &gNvmDimmData->PMEMDev.ISs));
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     }
-    else
-      gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
+    else {
+      if (!UseNfit) {
+        gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
+      }
+      else {
+        gNvmDimmData->PMEMDev.RegionsNfitInitialized = TRUE;
+      }
+    }
   }
+
   if (NULL != ppRegionList) {
-    *ppRegionList = &gNvmDimmData->PMEMDev.ISs; //IS is region
+    if (!UseNfit) {
+      *ppRegionList = &gNvmDimmData->PMEMDev.ISs; //IS is region
+    }
+    else {
+      *ppRegionList = &gNvmDimmData->PMEMDev.ISsNfit;
+    }
   }
   return ReturnCode;
 }
@@ -207,6 +332,8 @@ CleanISLists(
 
     pDimm->ISsNum = 0;
     pDimm->IsRegionsNum = 0;
+    pDimm->ISsNfitNum = 0;
+    pDimm->IsRegionsNfitNum = 0;
   }
 
 Finish:
@@ -245,6 +372,107 @@ FreeISResources(
 
 Finish:
   NVDIMM_EXIT();
+}
+
+/**
+  Allocate and initialize the dimm region by using NFIT table
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] pISList List of interleaveset formed so far
+  @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
+  @param[out] pRegionId The next consecutive region id
+  @param[out] ppNewIS Interleave Set parent for new dimm region
+  @param[out] ppDimmRegion new allocated dimm region will be put here
+  @param[out] pISDimmRegionAlreadyExists TRUE if Interleave Set DIMM region already exists
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND the Dimm related with DimmRegion has not been found on the Dimm list
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeDimmRegionFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     DIMM *pDimm,
+  IN     LIST_ENTRY *pISList,
+  IN     NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure,
+  OUT    UINT16 *pRegionId,
+  OUT    NVM_IS **ppCurrentIS,
+  OUT    DIMM_REGION **ppDimmRegion,
+  OUT    BOOLEAN *pISDimmRegionAlreadyExists
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pISNode = NULL;
+  NVM_IS *pExistingIS = NULL;
+  DIMM_REGION *pDimmRegion = NULL;
+  LIST_ENTRY *pDimmRegionNode = NULL;
+  NVM_IS *pNewIS = NULL;
+  BOOLEAN ISAlreadyExists = FALSE;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pISList == NULL || pNvDimmRegionMappingStructure == NULL || pRegionId == NULL ||
+    ppDimmRegion == NULL || ppCurrentIS == NULL || pISDimmRegionAlreadyExists == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *pISDimmRegionAlreadyExists = FALSE;
+
+  /**
+  Check if Interleave Set already exists for this Interleave Set Index
+  **/
+  LIST_FOR_EACH(pISNode, pISList) {
+    pExistingIS = IS_FROM_NODE(pISNode);
+    if (pExistingIS->InterleaveSetIndex == pNvDimmRegionMappingStructure->SpaRangeDescriptionTableIndex) {
+      ISAlreadyExists = TRUE;
+      *ppCurrentIS = pExistingIS;
+      LIST_FOR_EACH(pDimmRegionNode, &pExistingIS->DimmRegionList) {
+        pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
+        if (pDimm->SerialNumber == pDimmRegion->pDimm->SerialNumber) {
+          *pISDimmRegionAlreadyExists = TRUE;
+          goto Finish;
+        }
+      }
+    }
+  }
+  if (!(*pISDimmRegionAlreadyExists)) {
+    if (!ISAlreadyExists) {
+      ReturnCode = InitializeISFromNfit(pFitHead, pNvDimmRegionMappingStructure, *pRegionId, &pNewIS);
+      if (EFI_ERROR(ReturnCode) || pNewIS == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      (*pRegionId)++;
+      InsertTailList(pISList, &(pNewIS->IsNode));
+      *ppCurrentIS = pNewIS;
+    }
+
+    *ppDimmRegion = AllocateZeroPool(sizeof(DIMM_REGION));
+
+    if (*ppDimmRegion == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
+    (*ppDimmRegion)->pDimm = pDimm;
+
+    ASSERT(pDimm->ISsNfitNum < MAX_IS_PER_DIMM);
+    pDimm->pISsNfit[pDimm->ISsNfitNum] = *ppCurrentIS;
+    pDimm->ISsNfitNum++;
+
+    (*ppDimmRegion)->Signature = DIMM_REGION_SIGNATURE;
+    (*ppDimmRegion)->PartitionOffset = pNvDimmRegionMappingStructure->NvDimmPhysicalAddressRegionBase - pDimm->PmStart;
+    (*ppDimmRegion)->PartitionSize = pNvDimmRegionMappingStructure->NvDimmRegionSize;
+  }
+  else {
+    *ppCurrentIS = NULL;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**
@@ -406,6 +634,137 @@ Finish:
 }
 
 /**
+  Retrieve Interleave Sets by using NFIT table
+
+  Using the parsed NFIT table data to get information about Interleave Sets configuration.
+
+  @param[in] pFitHead Fully populated NVM Firmware Interface Table
+  @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[out] pISList Head of the list for Interleave Sets
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+RetrieveISsFromNfit(
+  IN     ParsedFitHeader *pFitHead,
+  IN     LIST_ENTRY *pDimmList,
+     OUT LIST_ENTRY *pISList
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM *pDimm = NULL;
+  DIMM_REGION *pNewDimmRegion = NULL;
+  DIMM_REGION *pDimmRegion = NULL;
+  NVM_IS *pIS = NULL;
+  NvDimmRegionMappingStructure *pNvDimmRegionMappingStructure = NULL;
+  LIST_ENTRY *pISNode = NULL;
+  BOOLEAN UseLatestVersion = FALSE;
+  BOOLEAN ISDimmRegionAlreadyExists = FALSE;
+  UINT32 Index = 0;
+  UINT16 RegionId = 1; // region id  used internally to distinguish different regions.
+  UINT32 IsRegionIndex = 0;
+  UINT32 NumOfDimmsInInterleaveSet = 0;
+
+  NVDIMM_ENTRY();
+
+  for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
+    // Look for NVDIMM regions which have a SPA mapping for PM region type
+    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pFitHead->ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &gSpaRangePmRegionGuid, TRUE,
+      pFitHead->ppNvDimmRegionMappingStructures[Index]->SpaRangeDescriptionTableIndex, &pNvDimmRegionMappingStructure);
+    if (ReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_WARN("No NVDIMM region table found with SPA Range PM Region GUID");
+      ReturnCode = EFI_SUCCESS;
+      continue;
+    }
+    else if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    pDimm = GetDimmByPid(pFitHead->ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, pDimmList);
+
+    if (!IsDimmManageable(pDimm)) {
+      continue;
+    }
+
+    ReturnCode = InitializeDimmRegionFromNfit(pFitHead, pDimm, pISList, pNvDimmRegionMappingStructure, &RegionId, &pIS, &pNewDimmRegion, &ISDimmRegionAlreadyExists);
+
+    if (pIS == NULL) {
+      goto Finish;
+    }
+    if (ISDimmRegionAlreadyExists) {
+      continue;
+    }
+    if (EFI_ERROR(ReturnCode) || pNewDimmRegion == NULL) {
+      pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_INIT_FAILURE);
+      NVDIMM_DBG("One of parameters was NULL or out of memory");
+    }
+    else {
+      InsertTailList(&pIS->DimmRegionList, &pNewDimmRegion->DimmRegionNode);
+
+      IsRegionIndex = pNewDimmRegion->pDimm->IsRegionsNfitNum;
+      ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
+      pNewDimmRegion->pDimm->pIsRegionsNfit[IsRegionIndex] = pDimmRegion;
+      pNewDimmRegion->pDimm->IsRegionsNfitNum = IsRegionIndex + 1;
+
+      pIS->Size += pNewDimmRegion->PartitionSize;
+    }
+  }
+
+  LIST_FOR_EACH(pISNode, pISList) {
+    pIS = IS_FROM_NODE(pISNode);
+
+    // Check if any interleave set is broken
+    ReturnCode = GetListSize(&pIS->DimmRegionList, &NumOfDimmsInInterleaveSet);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    if (NumOfDimmsInInterleaveSet < pIS->InterleaveFormatWays) {
+      pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_DIMM_MISSING);
+      NVDIMM_DBG("The Dimm related with the DimmRegion has not been found on the Dimm list");
+    }
+
+    // AppDirect Mapping already exists
+    if (pIS->pSpaTbl != NULL) {
+      continue;
+    }
+
+    ReturnCode = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
+    if (pIS != NULL) {
+      if (EFI_ERROR(ReturnCode)) {
+        pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_SPA_MISSING);
+        NVDIMM_DBG("Couldn't retrieve AppDirect I/O structures from NFIT.");
+      }
+
+      ReturnCode = UseLatestNsLabelVersion(pIS, NULL, &UseLatestVersion);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
+
+      if (UseLatestVersion) {
+        ReturnCode = CalculateISetCookie(pFitHead, pIS);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+      }
+      else {
+        ReturnCode = CalculateISetCookieVer1_1(pFitHead, pIS);
+        if (EFI_ERROR(ReturnCode)) {
+          goto Finish;
+        }
+      }
+
+      ReturnCode = BubbleSortLinkedList(&pIS->DimmRegionList, CompareRegionOffsetInDimmRegion);
+    }
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Retrieve Interleave Sets by using Platform Config Data from Intel manageable NVM Dimms
 
   Using the Platform Config Data command to get information about Interleave Sets configuration.
@@ -555,44 +914,6 @@ RetrieveISsFromPlatformConfigData(
   FREE_POOL_SAFE(pPcdConfHeader);
 
   return IReturnCode != EFI_SUCCESS ? IReturnCode : ReturnCode;
-}
-
-
-/**
-  Compare SpaRegionOffest field in DIMM_REGION Struct
-
-  @param[in] pFirst First item to compare
-  @param[in] pSecond Second item to compare
-
-  @retval -1 if first is less than second
-  @retval  0 if first is equal to second, 0 is also returned if we cannot compare values
-  @retval  1 if first is greater than second
-**/
-STATIC
-INT32
-CompareRegionOffsetInDimmRegion(
-  IN     VOID *pFirst,
-  IN     VOID *pSecond
-  )
-{
-  DIMM_REGION *pDimmRegion = NULL;
-  DIMM_REGION *pDimmRegion2 = NULL;
-
-  if (pFirst == NULL || pSecond == NULL) {
-    NVDIMM_DBG("NULL pointer found.");
-    return 0;
-  }
-
-  pDimmRegion = DIMM_REGION_FROM_NODE(pFirst);
-  pDimmRegion2 = DIMM_REGION_FROM_NODE(pSecond);
-
-  if (pDimmRegion->SpaRegionOffset < pDimmRegion2->SpaRegionOffset) {
-    return -1;
-  } else if (pDimmRegion->SpaRegionOffset > pDimmRegion2->SpaRegionOffset) {
-    return 1;
-  } else {
-    return 0;
-  }
 }
 
 /**

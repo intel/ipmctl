@@ -186,6 +186,7 @@ struct Command ShowRegionsCommand =
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", NFIT_OPTION, L"", L"",HELP_NFIT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", LARGE_PAYLOAD_OPTION, L"", L"", HELP_LPAYLOAD_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", SMALL_PAYLOAD_OPTION, L"", L"", HELP_SPAYLOAD_DETAILS_TEXT, FALSE, ValueEmpty},
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"",HELP_ALL_DETAILS_TEXT, FALSE, ValueEmpty},
@@ -309,6 +310,8 @@ ShowRegions(
   UINT32 AppDirectRegionCount = 0;
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   CHAR16 *pDimmIds = NULL;
+  CHAR16 *pNfitOption = NULL;
+  BOOLEAN UseNfit = FALSE;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
 
@@ -407,7 +410,13 @@ ShowRegions(
     UnitsToDisplay = UnitsOption;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, &RegionCount);
+  /** Check if nfit option is set **/
+  pNfitOption = getOptionValue(pCmd, NFIT_OPTION);
+  if (pNfitOption) {
+    UseNfit = TRUE;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, UseNfit, &RegionCount);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -429,7 +438,7 @@ ShowRegions(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetRegions(pNvmDimmConfigProtocol, RegionCount, pRegions, pCommandStatus);
+  ReturnCode = pNvmDimmConfigProtocol->GetRegions(pNvmDimmConfigProtocol, RegionCount, UseNfit, pRegions, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);

@@ -2017,6 +2017,9 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
+ * @param[in] use_nfit
+ *              0: Use PCD data to get region information.
+ *              1: Use NFIT table to get region information.
  * @param[in,out] count
  *              A pointer an integer that will contain the number of region count on return
  * @return
@@ -2024,12 +2027,15 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
-NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
+NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count);
 
 /**
  * @brief Retrieve a list of the configured persistent memory regions in host server.
  * @param[in,out] p_regions
  *              An array of #region structures allocated by the caller.
+ * @param[in] use_nfit
+ *              0: Use PCD data to get region information.
+ *              1: Use NFIR table to get region information.
  * @param[in,out] count
  *              The number of elements in the array allocated by the caller and returns the count of regions that were returned.
  * @pre The caller has administrative privileges.
@@ -2041,7 +2047,7 @@ NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NO_MEM @n
  */
-NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
+NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Modify how the DCPMM capacity is provisioned by the BIOS on the next reboot.

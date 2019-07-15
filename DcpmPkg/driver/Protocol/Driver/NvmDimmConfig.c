@@ -3752,6 +3752,7 @@ Finish:
   Retrieve the number of regions in the system
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] UseNfit flag to indicate NFIT usage
   @param[out] pCount The number of regions found.
 
   @retval EFI_SUCCESS  The count was returned properly
@@ -3762,6 +3763,7 @@ EFI_STATUS
 EFIAPI
 GetRegionCount(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     BOOLEAN UseNfit,
      OUT UINT32 *pCount
   )
 {
@@ -3788,7 +3790,7 @@ GetRegionCount(
     }
   }
 
-  Rc = GetRegionList(&pRegionList);
+  Rc = GetRegionList(&pRegionList, UseNfit);
   if (EFI_NO_RESPONSE == Rc) {
     goto Finish;
   }
@@ -3848,6 +3850,7 @@ INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2)
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] Count The number of regions.
+  @param[in] UseNfit flag to indicate NFIT usage
   @param[out] pRegions The region list
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -3861,6 +3864,7 @@ EFIAPI
 GetRegions(
   IN    EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN    UINT32 Count,
+  IN    BOOLEAN UseNfit,
   OUT   REGION_INFO *pRegions,
   OUT   COMMAND_STATUS *pCommandStatus
 )
@@ -3873,7 +3877,7 @@ GetRegions(
 
   NVDIMM_ENTRY();
 
-  Rc = GetRegionList(&pRegionList);
+  Rc = GetRegionList(&pRegionList, UseNfit);
   if (EFI_ERROR(Rc)) {
     if (EFI_NO_RESPONSE == Rc) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -3958,7 +3962,7 @@ GetRegion(
   if (EFI_ERROR(Rc)) {
     goto Finish;
   }
-  Rc = GetRegionList(&pRegionList);
+  Rc = GetRegionList(&pRegionList, FALSE);
   if (pRegionList == NULL) {
     goto Finish;
   }
@@ -6466,7 +6470,7 @@ CreateGoalConfig(
 #ifdef OS_BUILD
   if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
     ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.Dimms, &gNvmDimmData->PMEMDev.ISs);
+      &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     } else {
@@ -6910,7 +6914,7 @@ DumpGoalConfig(
 #ifdef OS_BUILD
   //triggers PCD read
   GetMemoryResourcesInfo(pThis, &MemoryResourcesInfo);
-  GetRegionList(NULL);
+  GetRegionList(NULL, FALSE);
 #endif
   /** Get an array of dimms' current config **/
   ReturnCode = GetDimmsCurrentConfig(&pDimmConfigs, &DimmConfigsNum);
@@ -7349,7 +7353,7 @@ Finish:
 
   SetMem(&Region, sizeof(Region), 0x0);
 
-  ReturnCode = GetRegionList(&pRegionList);
+  ReturnCode = GetRegionList(&pRegionList, FALSE);
 
   if (pThis == NULL || pCommandStatus == NULL || ((DimmPid == DIMM_PID_NOTSET) == (RegionId == REGION_ID_NOTSET)) ||
     BlockSize == 0 || pActualNamespaceCapacity == NULL || pNamespaceId == NULL || EFI_ERROR(ReturnCode)) {
@@ -9829,14 +9833,14 @@ AutomaticCreateNamespace(
   }
 
   // Find all Regions
-  GetRegionCount(&gNvmDimmDriverNvmDimmConfig, &RegionCount);
+  GetRegionCount(&gNvmDimmDriverNvmDimmConfig, FALSE, &RegionCount);
 
   pRegions = AllocateZeroPool(sizeof(REGION_INFO) * RegionCount);
   if (pRegions == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
-  ReturnCode = GetRegions(&gNvmDimmDriverNvmDimmConfig, RegionCount, pRegions, pCommandStatus);
+  ReturnCode = GetRegions(&gNvmDimmDriverNvmDimmConfig, RegionCount, FALSE, pRegions, pCommandStatus);
 
   for (Index = 0; Index < RegionCount; Index++) {
     // Check if Region is empty

@@ -444,6 +444,7 @@ EFI_STATUS
   Gather info about total capacities on all dimms
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] UseNfit flag to indicate NFIT usage
   @param[out] pMemoryResourcesInfo structure filled with required information
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
@@ -456,14 +457,16 @@ typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGION_COUNT) (
 	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     BOOLEAN UseNfit,
      OUT UINT32 *pCount
-	);
+  );
 
 /**
 Retrieve the region list
 
 @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
 @param[in] Count The number of regions.
+@param[in] UseNfit flag to indicate NFIT usage
 @param[out] pRegions The region list
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -476,6 +479,7 @@ EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_GET_REGIONS) (
 	IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT32 Count,
+  IN     BOOLEAN UseNfit,
 	OUT struct _REGION_INFO *pRegions,
      OUT COMMAND_STATUS *pCommandStatus
 	);

@@ -51,6 +51,7 @@ typedef struct {
       InitializeListHead(DEV.Dimms); \
       InitializeListHead(DEV.UninitializedDimms); \
       InitializeListHead(DEV.ISs); \
+      InitializeListHead(DEV.ISsNfit); \
       InitializeListHead(DEV.Namespaces);
 
 #define DIMM_BSR_MAJOR_NO_POST_CODE 0x0

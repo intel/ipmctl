@@ -387,11 +387,12 @@ BootStatusDiagnosticsCheck(
   IN     CHAR16 *pDimmStr,
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
-  )
+)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM_BSR Bsr;
-  BOOLEAN FIS_1_14 = FALSE;
+  BOOLEAN FIS_GTE_1_14 = FALSE;
+  BOOLEAN FIS_GTE_2_01 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
@@ -417,25 +418,33 @@ BootStatusDiagnosticsCheck(
   }
 
   /* Check to make sure the FW Version is bigger than 1.14*/
-  if (pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor >= 14) {
-    FIS_1_14 = TRUE;
+  if ((pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor >= 14) || pDimm->FwVer.FwApiMajor > 1) {
+    FIS_GTE_1_14 = TRUE;
   }
 
-   ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+  /* Check to make sure the FW Version is bigger than 2.01*/
+  if ((pDimm->FwVer.FwApiMajor == 2 && pDimm->FwVer.FwApiMinor >= 1) || pDimm->FwVer.FwApiMajor > 2) {
+    FIS_GTE_2_01 = TRUE;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
 
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_DEVICE_ERROR;
     NVDIMM_WARN("Unable to get the DIMMs BSR.");
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_NOT_READABLE), EVENT_CODE_513, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
       pDimmStr);
-  } else {
+  }
+  else {
     if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_NO_POST_CODE) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_BIOS_POST_TRAINING_FAILED), EVENT_CODE_519, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
-    } else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_INIT_FAILURE) {
+    }
+    else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_INIT_FAILURE) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_FW_NOT_INITIALIZED), EVENT_CODE_520, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr, Bsr.Separated_Current_FIS.Major, Bsr.Separated_Current_FIS.Minor);
-    } else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_CPU_EXCEPTION) {
+    }
+    else if (Bsr.Separated_Current_FIS.Major == DIMM_BSR_MAJOR_CHECKPOINT_CPU_EXCEPTION) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_CPU_EXCEPTION), EVENT_CODE_537, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr, Bsr.Separated_Current_FIS.Major, Bsr.Separated_Current_FIS.Minor);
     }
@@ -444,7 +453,8 @@ BootStatusDiagnosticsCheck(
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");
     }
-    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE) {
+    if ((!FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE)
+      || (FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE && DdrtTrainingStatus != NORMAL_MODE_COMPLETE)) {
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_DDRT_IO_NOT_COMPLETE), EVENT_CODE_538, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }
@@ -456,7 +466,7 @@ BootStatusDiagnosticsCheck(
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DRAM_NOT_READY), EVENT_CODE_533, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr);
     }
-    if (FIS_1_14) {
+    if (FIS_GTE_1_14) {
       if ((Bsr.Separated_Current_FIS.DTS == DDRT_TRAINING_NOT_COMPLETE) ||
         (Bsr.Separated_Current_FIS.DTS == DDRT_TRAINING_FAILURE)) {
         APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_DDRT_TRAINING_NOT_COMPLETE_FAILED), EVENT_CODE_543, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,

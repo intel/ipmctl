@@ -432,13 +432,14 @@ EFI_STATUS
 PopulateDimmBootStatusBitmask(
   IN     DIMM_BSR *pBsr,
   IN     DIMM *pDimm,
-     OUT UINT16 *pBootStatusBitmask
-  )
+  OUT UINT16 *pBootStatusBitmask
+)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   UINT16 BootStatusBitmask = 0;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
+  BOOLEAN FIS_GTE_2_01 = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -449,7 +450,8 @@ PopulateDimmBootStatusBitmask(
 
   if ((pBsr->AsUint64 == MAX_UINT64_VALUE) || (pBsr->AsUint64 == 0)) {
     BootStatusBitmask = DIMM_BOOT_STATUS_UNKNOWN;
-  } else {
+  }
+  else {
     if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_NOT_TRAINED) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_NOT_READY;
     }
@@ -463,7 +465,8 @@ PopulateDimmBootStatusBitmask(
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");
     }
-    if (DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE) {
+    if ((!FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE)
+      || (FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE && DdrtTrainingStatus != NORMAL_MODE_COMPLETE)) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_DDRT_NOT_READY;
     }
     if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {

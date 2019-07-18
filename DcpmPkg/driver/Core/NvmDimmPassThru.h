@@ -1326,6 +1326,7 @@ typedef struct {
     0x01 - Training Complete
     0x02 - Training Failure
     0x03 - S3 Complete
+    0x04 - Normal Mode Complete
   **/
   UINT8 DdrtTrainingStatus; //!<Designates training has been completed by BIOS.
   UINT8 Reserved[126];

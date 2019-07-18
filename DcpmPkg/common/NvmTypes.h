@@ -789,6 +789,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DDRT_TRAINING_COMPLETE      0x01
 #define DDRT_TRAINING_FAILURE       0x02
 #define DDRT_S3_COMPLETE            0x03
+#define NORMAL_MODE_COMPLETE        0x04
 #define DDRT_TRAINING_UNKNOWN       0xFF
 
 /** Dimm Boot Status Bitmask **/

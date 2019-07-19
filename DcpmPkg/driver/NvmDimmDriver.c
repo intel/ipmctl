@@ -411,13 +411,6 @@ NvmDimmDriverUnload(
   **/
   FREE_POOL_SAFE(gNvmDimmData);
 
-#if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-  /** Disable recording AllocatePool and FreePool occurrences, print list and clear it **/
-  FlushPointerTrace((CHAR16 *)__WFUNCTION__);
-#endif
-
-
-
   if (EFI_ERROR(ReturnCode) && DriverAlreadyUnloaded) {
     NVDIMM_WARN("The driver was not properly initialized or was unloaded before, error = " FORMAT_EFI_STATUS ".", TempReturnCode);
     NVDIMM_DBG("Overriding the return code to SUCCESS");
@@ -1331,12 +1324,6 @@ NvmDimmDriverDriverBindingStart(
 
 
    NVDIMM_ENTRY();
-#if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-   /**
-   Enable recording AllocatePool and FreePool occurences
-   **/
-   EnableTracing();
-#endif
 
    /**
    Init container keeping operation statuses with wanring, error and info level messages.
@@ -1477,15 +1464,6 @@ NvmDimmDriverDriverBindingStart(
     PbrResetSession(NextId);
     PbrDcpmmSerializeTagId(NextId + 1);
   }
-
-
-#if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-   /**
-   Enable recording AllocatePool and FreePool occurences
-   **/
-   EnableTracing();
-#endif
-
    /**
    Remember the Controller handle that we were started with.
    **/

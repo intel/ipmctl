@@ -241,12 +241,6 @@ UefiMain(
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
 
-#if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-  /**
-  Enable recording AllocatePool and FreePool occurences only with GCC, under Debug build
-  **/
-  EnableTracing();
-#endif
 #ifndef OS_BUILD
   InitErrorAndWarningNvmStatusCodes();
 
@@ -493,12 +487,7 @@ Finish:
   cov_dumpData();
 #endif // !OS_BUILD
 #endif // _BullseyeCoverage
-#if !defined(MDEPKG_NDEBUG) && !defined(_MSC_VER)
-  /**
-  Disable recording AllocatePool and FreePool occurrences, print list and clear it
-  **/
-  FlushPointerTrace((CHAR16 *)__WFUNCTION__);
-#endif
+
   NVDIMM_EXIT_I64(Rc);
   return Rc;
 }

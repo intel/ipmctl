@@ -13,14 +13,13 @@
 #include "ini.h"
 #include <s_str.h>
 #include "os.h"
-
-#if defined(__LINUX__)
-#include <safe_str_lib.h>
-#endif
+#include "os_str.h"
 
 #if defined(__LINUX__) || defined(__ESX__)
 #define APP_DATA_FILE_PATH    ""
-#define INI_INSTALL_FILEPATH	"/usr/share/ipmctl/"
+#ifndef INI_INSTALL_FILEPATH
+  #define INI_INSTALL_FILEPATH	"/usr/share/ipmctl/"
+#endif // INI_INSTALL_FILEPATH
 #else
 char * get_win_appdata_ptr(void)
 {
@@ -237,7 +236,6 @@ dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_in
   char *p_tok_context = NULL;
   dictionary *p_current_entry = NULL;
   size_t string_size = 0;
-  size_t ini_entry_sz_chars;
   NVM_INI_FILENAME ini_path_filename = { 0 };
   BOOLEAN no_conf_file = FALSE;
   char *ret_ptr = NULL;
@@ -306,26 +304,24 @@ dictionary *nvm_ini_load_dictionary(dictionary **pp_dictionary, const char *p_in
       p_current_entry = p_current_entry->p_next;
     }
     // Parse the line
-    ini_entry_sz_chars = strnlen_s(ini_entry_string, NVM_INI_ENTRY_LEN) + 1;
-    p_key = s_strtok(ini_entry_string, &ini_entry_sz_chars, NVM_INI_VALUE_TOKEN, &p_tok_context);
+    p_key = os_strtok(ini_entry_string, NVM_INI_VALUE_TOKEN, &p_tok_context);
     if (NULL == p_key) {
       p_key = ini_entry_string;
       p_value = ini_entry_string;
     }
     else {
-      p_value = s_strtok(NULL, &ini_entry_sz_chars, NVM_INI_VALUE_TOKEN, &p_tok_context);
+      p_value = os_strtok(NULL, NVM_INI_VALUE_TOKEN, &p_tok_context);
       if (NULL == p_value) {
         p_value = ini_entry_string;
       }
     }
-    ini_entry_sz_chars = strnlen_s(p_value, NVM_INI_ENTRY_LEN) + 1;
     p_tok_context = NULL;
-    p_comment = s_strtok(p_value, &ini_entry_sz_chars, NVM_INI_COMMENT_TOKEN, &p_tok_context);
+    p_comment = os_strtok(p_value, NVM_INI_COMMENT_TOKEN, &p_tok_context);
     if (NULL == p_comment) {
       p_comment = (char *)(p_value + strlen(p_value));
     }
     else if (p_value == p_comment) {
-      p_comment = s_strtok(NULL, &ini_entry_sz_chars, NVM_INI_COMMENT_TOKEN, &p_tok_context);
+      p_comment = os_strtok(NULL, NVM_INI_COMMENT_TOKEN, &p_tok_context);
       if (NULL == p_comment) {
         p_comment = (char *)(p_value + strlen(p_value));
       }

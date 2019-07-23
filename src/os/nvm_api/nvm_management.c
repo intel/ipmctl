@@ -2700,7 +2700,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   UINT32 DimmCount = 0;
   PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *pLongOpStatus;
   int job_index = 0;
-  unsigned int i;
+  unsigned int i, j;
   int nvm_status = 0;
   struct Command CmdStub;
 
@@ -2777,8 +2777,17 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     else {
       p_jobs[i].status = NVM_JOB_STATUS_UNKNOWN;
     }
-    memmove(p_jobs[i].uid, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
-    memmove(p_jobs[i].affected_element, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
+
+    for (j = 0; j < MAX_DIMM_UID_LENGTH; j++)
+    {
+      p_jobs[i].uid[j] = (char)pDimms[i].DimmUid[j];
+    }
+
+    for (j = 0; j < MAX_DIMM_UID_LENGTH; j++)
+    {
+      p_jobs[i].affected_element[j] = (char)pDimms[i].DimmUid[j];
+    }
+
     p_jobs[i].result = NULL;
     job_index++;
   }

@@ -1460,6 +1460,26 @@ EFI_STATUS
 );
 
 /**
+  Get Command Effect Log is used to retrieve a list DIMM FW commands and their effects on the DIMM subsystem.
+
+  @param[in] pThis - A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] DimmID - Handle of the DIMM
+  @param[in, out] pCelEntry - A pointer to the CEL entry table for a given DIMM
+  @param[in, out] EntryCount - The number of CEL entries for a given table
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_CONFIG_GET_COMMAND_EFFECT_LOG) (
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+  IN OUT UINT32 *pEntryCount
+  );
+
+/**
   Pass Thru command to FW
   Sends a command to FW and waits for response from firmware
 
@@ -1790,6 +1810,7 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_FIS_TRANSPORT_ATTRIBS GetFisTransportAttributes;
   EFI_DCPMM_CONFIG_SET_FIS_TRANSPORT_ATTRIBS SetFisTransportAttributes;
   EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY GetCommandAccessPolicy;
+  EFI_DCPMM_CONFIG_GET_COMMAND_EFFECT_LOG GetCommandEffectLog;
 };
 
 /**

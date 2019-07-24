@@ -159,7 +159,8 @@ EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   ModifyPcdConfig,
   GetFisTransportAttributes,
   SetFisTransportAttributes,
-  GetCommandAccessPolicy
+  GetCommandAccessPolicy,
+  GetCommandEffectLog
 };
 
 
@@ -10607,6 +10608,95 @@ GetCommandAccessPolicy(
   }
 
   CopyMem_S(pCapInfo, (sizeof(*pCapInfo) * (*pCount)), CapEntries, StructSize);
+
+  ReturnCode = EFI_SUCCESS;
+  goto Finish;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Get Command Effect Log is used to retrieve a list DIMM FW commands and their effects on the DIMM subsystem.
+
+  @param[in] pThis - A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] DimmID - Handle of the DIMM
+  @param[in, out] pCelEntry - A pointer to the CEL entry table for a given DIMM
+  @param[in, out] EntryCount - The number of CEL entries for a given table
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+GetCommandEffectLog(
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+  IN OUT UINT32 *pEntryCount
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pDimm = NULL;
+  PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG InputPayload;
+  PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG OutPayload;
+  VOID *pLargeOutputPayload = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  UINT32 CelTableSize = 0;
+
+  ZeroMem(&InputPayload, sizeof(InputPayload));
+  ZeroMem(&OutPayload, sizeof(OutPayload));
+
+  if (pThis == NULL) {
+    NVDIMM_DBG("One or more parameters are NULL");
+    goto Finish;
+  }
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
+    // To be added when fixed in FIS
+    Print(L"The -smbus and -spmb features are not yet supported for this command.\n");
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
+  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
+  if (pDimm == NULL || !IsDimmManageable(pDimm)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // Obtain the CEL table count/size
+  ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), NULL, 0);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+  *pEntryCount = OutPayload.LogEntryCount;
+  CelTableSize = sizeof(COMMAND_EFFECT_LOG_ENTRY) * (*pEntryCount);
+
+  // Allocate memory based on obtained table size
+  pLargeOutputPayload = AllocateZeroPool(CelTableSize);
+  if (pLargeOutputPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
+
+  ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), pLargeOutputPayload, CelTableSize);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
 
   ReturnCode = EFI_SUCCESS;
   goto Finish;

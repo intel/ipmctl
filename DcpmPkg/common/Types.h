@@ -202,6 +202,36 @@ typedef struct _MEDIA_ERROR_LOG_PER_DIMM_INFO {
 } MEDIA_ERROR_LOG_INFO;
 
 /**
+  Passthrough Output Command Effect Log Entry Format
+**/
+typedef struct {
+  union {
+    struct {
+      UINT32 Opcode : 8;
+      UINT32 SubOpcode : 8;
+      UINT32 : 16;
+    } Separated;
+    UINT32 AsUint32;
+  } Opcode;
+
+  union {
+    struct {
+      UINT32 NoEffects : 1;
+      UINT32 SecurityStateChange : 1;
+      UINT32 DimmConfigChangeAfterReboot : 1;
+      UINT32 ImmediateDimmConfigChange : 1;
+      UINT32 QuiesceAllIo : 1;
+      UINT32 ImmediateDimmDataChange : 1;
+      UINT32 TestMode : 1;
+      UINT32 DebugMode : 1;
+      UINT32 ImmediateDimmPolicyChange : 1;
+      UINT32 : 23;
+    } Separated;
+    UINT32 AsUint32;
+  } EffectName;
+} COMMAND_EFFECT_LOG_ENTRY;
+
+/**
 * @defgroup ERROR_LOG_TYPES Error Log Types
   * @{
   */

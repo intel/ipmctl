@@ -711,16 +711,6 @@ typedef struct {
     Sub-Opcode:  0x01h (Platform Config Data)
 **/
 typedef struct {
-  UINT32 Size;      //!< Size in bytes of the selected partition
-  UINT32 TotalSize; //!< Total size in bytes of the Platform Config Area
-} PT_OUTPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA;
-
-/**
-  Passthrough Payload:
-    Opcode:      0x06h (Get Admin Features)
-    Sub-Opcode:  0x01h (Platform Config Data)
-**/
-typedef struct {
   UINT32 Size;
   UINT8 Reserved[124];
 } PT_OUTPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA_SIZE;
@@ -1031,15 +1021,6 @@ typedef struct {
   UINT8 Reserved[127];
 } PT_INPUT_PAYLOAD_MEMORY_INFO;
 
-typedef struct {
-  UINT8  CmdOpcode;
-  UINT8  CmdSubcode;
-  UINT16 Percent;
-  UINT32 EstimatedTimeLeft;
-  UINT8  Status;
-  UINT8  CmdSpecificData[119];
-} PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS;
-
 /**
   Passthrough Output Payload:
     Opcode:      0x08h (Get Log Page)
@@ -1104,28 +1085,18 @@ typedef struct {
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4;
 
 /**
-  Passthrough Payload:
+  Passthrough Output Payload:
     Opcode:      0x08h (Get Log Page)
-    Sub-Opcode:  0x04h (Long Operations Status)
+    Sub-Opcode:  0x04h (Long Operation Status)
 **/
-typedef struct
-{
-  /**
-    This will coincide with the opcode & sub-opcode
-    Bits 7:0 - Opcode
-    Bits 15:8 - Sub-Opcode
-  **/
-  UINT16 Command;
-  UINT16 PercentComplete; //!< The % complete of the current command (BCD encoded)
-
-  /**
-    Estimated Time to Completion.
-    Time in seconds till the Long Operation in Progress is expected to be completed
-  **/
-  UINT32 EstimatedTimeToCompletion;
-  UINT8 StatusCode; //!< The completed mailbox status code of the long operation
-  UINT8 reserved[119]; //!< Reserved
-} PT_PAYLOAD_LONG_OPERATION_STATUS;
+typedef struct {
+  UINT8  CmdOpcode;
+  UINT8  CmdSubcode;
+  UINT16 Percent;
+  UINT32 EstimatedTimeLeft;
+  UINT8  Status;
+  UINT8  CmdSpecificData[119];
+} PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS;
 
 enum GetErrorLogLevel {
   ErrorLogLowPriority = 0x00,
@@ -1272,6 +1243,28 @@ typedef struct {
   UINT16 SequenceNum;
   UINT8  Reserved[2];
 } PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY;
+
+/**
+  Passthrough Input Payload:
+     Opcode:      0x08h (Get Log Page)
+     Sub-Opcode:  0xFFh (Command Effect Log)
+**/
+typedef struct {
+  UINT8 PayloadType;
+  UINT8 LogAction;
+  UINT8 EntryOffset;
+  UINT8 Reserved[125];
+} PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
+
+/**
+  Passthrough Output Payload:
+     Opcode:      0x08h (Get Log Page)
+     Sub-Opcode:  0xFFh (Command Effect Log)
+**/
+typedef struct {
+  UINT32  LogEntryCount;
+  UINT8   Reserved[124];
+} PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
 
 /**
 Passthrough Input Payload:

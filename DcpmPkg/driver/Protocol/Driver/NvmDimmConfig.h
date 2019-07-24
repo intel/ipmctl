@@ -1532,6 +1532,24 @@ GetCommandAccessPolicy(
   IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
 );
 
+/**
+  Get Command Effect Log is used to retrieve a list DIMM FW commands and their effects on the DIMM subsystem.
+
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] DimmID Handle of the DIMM
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+GetCommandEffectLog(
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+  IN OUT UINT32 *pEntryCount
+);
+
 #ifndef OS_BUILD
 /**
   This function makes calls to the dimms required to initialize the driver.

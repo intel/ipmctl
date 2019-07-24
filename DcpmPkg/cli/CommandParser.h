@@ -108,6 +108,7 @@
 #define CONFIG_TARGET                        L"-config"                  //!< 'config' target name
 #define SENSOR_TARGET                        L"-sensor"                  //!< 'sensor' target name
 #define ERROR_TARGET                         L"-error"                   //!< 'error' target name
+#define CEL_TARGET                         L"-cel"                   //!< 'cel' target name
 #define DEBUG_TARGET                         L"-debug"                   //!< 'debug' target name
 #define REGISTER_TARGET                      L"-register"                //!< 'register' target name
 #define FIRMWARE_TARGET                      L"-firmware"                //!< 'firmware' target name

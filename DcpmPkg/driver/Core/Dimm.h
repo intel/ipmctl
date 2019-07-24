@@ -785,6 +785,23 @@ FwCmdGetErrorLog (
   );
 
 /**
+  Firmware command to get Command Effect Log Entries
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetCommandEffectLog(
+  IN      DIMM  *pDimm,
+  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
+  OUT VOID *pOutputPayload OPTIONAL,
+  IN      UINT32 OutputPayloadSize OPTIONAL,
+  OUT VOID *pLargeOutputPayload OPTIONAL,
+  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+);
+
+/**
   Firmware command to get a specified debug log
 
   @param[in]  pDimm Target DIMM structure pointer

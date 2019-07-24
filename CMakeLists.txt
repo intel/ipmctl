@@ -292,6 +292,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/cli/ShowGoalCommand.c
 	DcpmPkg/cli/DeleteGoalCommand.c
 	DcpmPkg/cli/ShowErrorCommand.c
+	DcpmPkg/cli/ShowCelCommand.c
 	DcpmPkg/cli/DumpDebugCommand.c
 	DcpmPkg/cli/StartDiagnosticCommand.c
 	DcpmPkg/cli/ShowPreferencesCommand.c

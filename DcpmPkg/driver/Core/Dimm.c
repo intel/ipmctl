@@ -3321,6 +3321,80 @@ Finish:
 }
 
 /**
+  Firmware command to get Command Effect Log Entries
+
+  Large payload is optional, small payload is required.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] pInputPayload - filled input payload
+  @param[out] pOutputPayload - small payload result data of get command effect log operation
+  @param[in] OutputPayloadSize - size of small payload
+  @param[out] pLargeOutputPayload - large payload result data of command effect log operation
+  @param[in] LargeOutputPayloadSize - size of large payload
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetCommandEffectLog(
+  IN      DIMM  *pDimm,
+  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
+      OUT VOID *pOutputPayload,
+  IN      UINT32 OutputPayloadSize,
+      OUT VOID *pLargeOutputPayload OPTIONAL,
+  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pInputPayload == NULL || pOutputPayload == NULL || (pLargeOutputPayload == NULL && LargeOutputPayloadSize > 0)) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetLog;
+  pFwCmd->SubOpcode = SubopCommandEffectLog;
+  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
+  pFwCmd->OutputPayloadSize = OutputPayloadSize;
+  pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
+  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, sizeof(pFwCmd->InputPayload));
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending Command Effect Log command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  if (pOutputPayload != NULL && OutputPayloadSize > 0) {
+    CopyMem_S(pOutputPayload, OutputPayloadSize, &pFwCmd->OutPayload, OutputPayloadSize);
+  }
+
+  if (pLargeOutputPayload != NULL && LargeOutputPayloadSize > 0) {
+    CopyMem_S(pLargeOutputPayload, LargeOutputPayloadSize, &pFwCmd->LargeOutputPayload, LargeOutputPayloadSize);
+  }
+
+  ReturnCode = EFI_SUCCESS;
+  goto Finish;
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Firmware command to get SMART and Health Info
 
   @param[in] pDimm The Intel NVM Dimm to retrieve SMART and Health Info
@@ -6946,6 +7020,7 @@ PassThru(
 
   if (IS_SMBUS_ENABLED(pAttribs)) {
 #ifndef OS_BUILD
+    Print(L"Attempting SMBUS PassThru!\n\n");
     ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
 #else
     ReturnCode = EFI_UNSUPPORTED;

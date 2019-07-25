@@ -65,10 +65,10 @@ on DCPMMs.
   Changes the DCPMM security lock state
 
 *ipmctl-create-goal(1)*::
-   Creates a memory allocation goal on one or more DCPMM
+  Creates a memory allocation goal on one or more DCPMM
 
 *ipmctl-delete-goal(1)*::
-  Creates a memory allocation goal on one or more DCPMM
+  Deletes a memory allocation goal on one or more DCPMM
 
 *ipmctl-dump-goal(1)*::
    Stores the current system configuration in a file

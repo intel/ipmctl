@@ -19,6 +19,9 @@ DESCRIPTION
 -----------
 Load a memory allocation goal from a file onto one or more DCPMMs.
 
+NOTE: Deleting the PCD can be used as a way to prepare individual DCPMMs for provisioning.
+See the delete -pcd command.
+
 include::../ipmctl-change-goal-config-warning.txt[]
 
 OPTIONS

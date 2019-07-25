@@ -38,12 +38,16 @@ endif::os_build[]
 When Config is specified, the Current, Input, and Output Data Size and Start Offset values in
 the Configuration header are set to zero, making those tables invalid.
 
-NOTE: This action can be useful when moving DCPMMs from one system to another, as goal creation
-rules may restrict provisioning dimms with an existing configuration.
-
 NOTE: When Config is specified, only PCD partition 1 is modified. If the platform is rebooted
 prior to creating a new goal on any targeted DCPMMs, UEFI platform firmware will detect the
 missing tables and, if possible, restore previous config using the PCD partition 0 tables.
+
+NOTE: This action can be useful when moving DCPMMs from one system to another, as goal creation
+rules may restrict provisioning dimms with an existing configuration. Deleting the PCD can be
+used as a way to prepare a DCPMM for provisioning with the create -goal or load -goal commands
+by clearing existing configuration metadata. This allows the DCPMM to be provisioned in
+isolation using the create-goal command with the -dimm option. Once the PCD has been deleted
+the desired goal should be created before rebooting.
 
 WARNING: *This command may result in data loss. Data should be backed up
 to other storage before executing this command. Because of data dependencies, other commands

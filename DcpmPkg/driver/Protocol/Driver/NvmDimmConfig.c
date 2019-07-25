@@ -7776,7 +7776,18 @@ GetNamespaces (
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     }
-    goto Finish;
+#ifdef OS_BUILD
+      goto Finish;
+#else
+      if ((ReturnCode == EFI_NOT_FOUND && IsLSANotInitializedOnDimms()))
+      {
+          NVDIMM_WARN("Failure to refresh Namespaces is because LSA not initialized");
+      }
+      else
+      {
+          goto Finish;
+      }
+#endif
   }
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;

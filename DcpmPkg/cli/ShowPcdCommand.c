@@ -245,6 +245,11 @@ ShowPcd(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_POPULATION_VIOLATION);
+      goto Finish;
+    }
   }
 
   pTargetValue = GetTargetValue(pCmd, PCD_TARGET);

@@ -80,6 +80,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_WRONG_REGISTER                L"Error: Register not found"
 #define CLI_ERR_INVALID_PASSPHRASE_FROM_FILE  L"Error: The file contains empty or bad formatted passphrases."
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
+#define CLI_ERR_POPULATION_VIOLATION          L"Error: The specified device is in population violation."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
 #define CLI_ERR_OPENING_PBR_PROTOCOL            L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
@@ -461,7 +462,7 @@ CheckDisplayList(
   );
 
 /**
-  Gets number of Manageable Dimms and their IDs and Handles
+  Gets number of Manageable and supported Dimms and their IDs and Handles
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
@@ -817,6 +818,27 @@ AllDimmsInListAreManageable(
   IN     UINT16 *pDimmsListToCheck,
   IN     UINT32 DimmsToCheckCount
  );
+
+/**
+  Check if all dimms in the specified pDimmIds list are in supported
+  config. This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pDimmInfo The dimm list found in NFIT.
+  @param[in] DimmCount Size of the pDimmInfo array.
+  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
+  @param[in] pDimmIdsCount Size of the pDimmIds array.
+
+  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval FALSE if at least one DIMM is not manageable
+**/
+BOOLEAN
+AllDimmsInListInSupportedConfig(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+);
 
 /**
    Get Dimm identifier preference

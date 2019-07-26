@@ -5240,7 +5240,7 @@ InitializeDimm (
     pNewDimm->ControllerRid = pPayload->Rid;
   }
 
-  if (IsDimmManageable(pNewDimm)) {
+  if (IsDimmManageable(pNewDimm) && IsDimmInSupportedConfig(pNewDimm)) {
     pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
     if (pPartitionInfoPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -6908,6 +6908,28 @@ IsDimmManageable(
     pDimm->FwVer.FwApiMinor);
 }
 
+/**
+Get supported config state for Dimm
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in supported config
+**/
+BOOLEAN
+IsDimmInSupportedConfig(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+  if (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus && BIT6 == (pDimm->NvDimmStateFlags & BIT6))
+  {
+    return FALSE;
+  }
+  return TRUE;
+}
 /**
 Check if the dimm interface code of this DIMM is supported
 

@@ -444,6 +444,7 @@ typedef struct _DIMM_INFO {
   UINT8 ModesSupported;                     //!< A list of the modes supported by the DIMM
   BOOLEAN SecurityCapabilities;             //!< The security features supported by the DIMM
   BOOLEAN SKUViolation;                     //!< The configuration of the DIMM is unsupported due to a license issue
+  BOOLEAN IsInPopulationViolation;          //!< The DIMM population falls outside of the supported config option
   UINT8 OverwriteDimmStatus;                //!< Overwrite DIMM operation status
   BOOLEAN Configured;                       //!< true if the DIMM is configured
   CHAR16 ManufacturerStr[MANUFACTURER_LEN]; //!< Manufacturer string matched from manufacturer string number.

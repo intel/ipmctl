@@ -20,6 +20,7 @@
 #define INTERFACE_FORMAT_CODE_STR   L"InterfaceFormatCode"
 #define CAPACITY_STR                L"Capacity"
 #define MANAGEABILITY_STR           L"ManageabilityState"
+#define POPULATION_VIOLATION_STR    L"PopulationViolationState"
 #define MANAGEABILITY_SHORT_STR     L"Manageability"
 #define HEALTH_STR                  L"HealthState"
 #define HEALTH_STATE_REASON_STR     L"HealthStateReason"

@@ -1776,6 +1776,17 @@ IsDimmManageable(
   IN  DIMM *pDimm
 );
 
+/**
+Get supported configuration state for Dimm
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in supported config
+**/
+BOOLEAN
+IsDimmInSupportedConfig(
+  IN  DIMM *pDimm
+);
 
 /**
 Check if the dimm interface code of this DIMM is supported

@@ -1833,7 +1833,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm)||!IsDimmInSupportedConfig(pDimm)) {
       continue;
     }
 
@@ -2485,7 +2485,7 @@ MapRegionsGoal(
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm)|| !IsDimmInSupportedConfig(pDimm)) {
       continue;
     }
 
@@ -3729,7 +3729,7 @@ ApplyGoalConfigsToDimms(
   **/
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm)||!IsDimmInSupportedConfig(pDimm)) {
       continue;
     }
     if (pDimm->PcdSynced) {
@@ -4140,7 +4140,7 @@ FindRelatedDimmsByRegionGoalConfigs(
         else if (!IsPointerInArray((VOID **) pRelatedDimms, *pRelatedDimmsNum, pDimmPointer)) {
           ASSERT(*pRelatedDimmsNum < MAX_DIMMS);
 
-          if (IsDimmManageable(pDimmPointer)) {
+          if (IsDimmManageable(pDimmPointer) && IsDimmInSupportedConfig(pDimmPointer)) {
              pRelatedDimms[(*pRelatedDimmsNum)] = pDimmPointer;
              (*pRelatedDimmsNum) += 1;
           }
@@ -4591,7 +4591,7 @@ VerifyDeletingSupportedRegionConfigs(
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
-      if (!IsDimmManageable(pDimm)) {
+      if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)){
         continue;
       }
 

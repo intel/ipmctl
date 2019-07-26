@@ -268,6 +268,11 @@ ShowCelCommand(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsNum)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
+      goto Finish;
+    }
   }
 
   // If no dimm IDs are specified get IDs from all dimms
@@ -291,7 +296,8 @@ ShowCelCommand(
       continue;
     }
 
-    if (pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
+    if ((MANAGEMENT_VALID_CONFIG != pDimms[DimmIndex].ManageabilityState)
+        || (TRUE == pDimms[DimmIndex].IsInPopulationViolation)){
       continue;
     }
 

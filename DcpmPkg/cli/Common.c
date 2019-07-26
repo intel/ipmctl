@@ -674,7 +674,7 @@ Finish:
 }
 
 /**
-  Gets number of Manageable Dimms and their IDs
+  Gets number of Manageable and supported Dimms and their IDs
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
@@ -726,7 +726,8 @@ GetManageableDimmsNumberAndId(
   }
 
   for (Index = 0; Index < *pDimmIdsCount; Index++) {
-    if (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
+    if (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG
+        && !pDimms[Index].IsInPopulationViolation){
       (*ppDimmIds)[NewListIndex] = pDimms[Index].DimmID;
       NewListIndex++;
     }
@@ -2323,6 +2324,46 @@ AllDimmsInListAreManageable(
 
   NVDIMM_EXIT();
   return Manageable;
+}
+/**
+  Check if all dimms in the specified pDimmIds list are in supported
+  config. This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pDimmInfo The dimm list found in NFIT.
+  @param[in] DimmCount Size of the pDimmInfo array.
+  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
+  @param[in] pDimmIdsCount Size of the pDimmIds array.
+
+  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval FALSE if at least one DIMM is not manageable
+**/
+BOOLEAN
+AllDimmsInListInSupportedConfig(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+)
+{
+  BOOLEAN InSupportedConfig = TRUE;
+  UINT32 AllDimmListIndex = 0;
+  UINT32 DimmsToCheckIndex = 0;
+  NVDIMM_ENTRY();
+
+  for (DimmsToCheckIndex = 0; DimmsToCheckIndex < DimmsToCheckCount; DimmsToCheckIndex++) {
+    for (AllDimmListIndex = 0; AllDimmListIndex < AllDimmCount; AllDimmListIndex++) {
+      if (pAllDimms[AllDimmListIndex].DimmID == pDimmsListToCheck[DimmsToCheckIndex]) {
+        if (pAllDimms[AllDimmListIndex].IsInPopulationViolation == TRUE) {
+          InSupportedConfig = FALSE;
+          break;
+        }
+      }
+    }
+  }
+
+  NVDIMM_EXIT();
+  return InSupportedConfig;
 }
 
 /**

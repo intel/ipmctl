@@ -273,7 +273,7 @@ CoreStartDiagnostics(
       goto Finish;
     }
 
-    if (IsDimmManageable(ppDimms[Index])) {
+    if (IsDimmManageable(ppDimms[Index]) && IsDimmInSupportedConfig(ppDimms[Index])) {
       ppManageableDimms[ManageableDimmsNum] = ppDimms[Index];
       ManageableDimmsNum++;
     }

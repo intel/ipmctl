@@ -843,6 +843,12 @@ GetDimmInfo (
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_NOT_CONFIG;
       break;
   }
+  /* Determine if DIMM is in Population Violation */
+  pDimmInfo->IsInPopulationViolation = FALSE;
+  if (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus && BIT6 == (pDimm->NvDimmStateFlags & BIT6))
+  {
+    pDimmInfo->IsInPopulationViolation = TRUE;
+  }
 
   pDimmInfo->SkuInformation = *((UINT32 *) &pDimm->SkuInformation);
 
@@ -1383,7 +1389,9 @@ VerifyTargetDimms (
         goto Finish;
       }
 
-      if (IsDimmManageable(pCurrentDimm) || UninitializedDimms) {
+      if ((IsDimmManageable(pCurrentDimm)
+           && IsDimmInSupportedConfig(pCurrentDimm))
+          || UninitializedDimms) {
         pDimms[(*pDimmsNum)] = pCurrentDimm;
         (*pDimmsNum)++;
       }
@@ -1448,7 +1456,9 @@ VerifyTargetDimms (
         pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
         for (Index2 = 0; Index2 < SocketIdsCount; Index2++) {
           if (pCurrentDimm != NULL && pCurrentDimm->SocketId == SocketIds[Index2]) {
-            if (IsDimmManageable(pCurrentDimm) || UninitializedDimms) {
+            if ((IsDimmManageable(pCurrentDimm)
+                 && IsDimmInSupportedConfig(pCurrentDimm))
+                || UninitializedDimms) {
               pDimms[(*pDimmsNum)] = pCurrentDimm;
               (*pDimmsNum)++;
             }
@@ -1487,7 +1497,9 @@ VerifyTargetDimms (
             goto Finish;
           }
 
-          if (IsDimmManageable(pCurrentDimm) || UninitializedDimms) {
+          if ((IsDimmManageable(pCurrentDimm)
+               && IsDimmInSupportedConfig(pCurrentDimm))
+              || UninitializedDimms) {
             pDimms[(*pDimmsNum)] = pCurrentDimm;
             (*pDimmsNum)++;
           }
@@ -2507,7 +2519,7 @@ GetSmartAndHealth (
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL || !IsDimmManageable(pDimm) || pHealthInfo == NULL) {
+  if (pDimm == NULL || !IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm) || pHealthInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -4042,7 +4054,7 @@ GetMemoryResourcesInfo(
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm) && (!IsDimmInSupportedConfig(pDimm))) {
       continue;
     }
 
@@ -4124,7 +4136,7 @@ GetDimmsPerformanceData(
     LIST_FOR_UNTIL_INDEX(pDimmNode, &gNvmDimmData->PMEMDev.Dimms, *pDimmCount, Index) {
         pDimm = DIMM_FROM_NODE(pDimmNode);
 
-        if (!IsDimmManageable(pDimm)) {
+        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)) {
             NVDIMM_WARN("Dimm 0x%x is not manageable", pDimm->DeviceHandle.AsUint32);
             continue;
         }

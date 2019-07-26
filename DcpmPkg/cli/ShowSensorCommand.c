@@ -271,11 +271,17 @@ ShowSensor(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
+      goto Finish;
+    }
   }
 
   if (DimmIdsNum == 0) {
     for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
-      if (pDimms[DimmIndex].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
+      if ((MANAGEMENT_VALID_CONFIG == pDimms[DimmIndex].ManageabilityState)
+          && (FALSE == pDimms[DimmIndex].IsInPopulationViolation)){
         ShowAllManageableDimmFound = TRUE;
         break;
       }
@@ -315,7 +321,8 @@ ShowSensor(
       continue;
     }
 
-    if (pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
+    if ((pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG)
+        ||(TRUE == pDimms[DimmIndex].IsInPopulationViolation)) {
       continue;
     }
 

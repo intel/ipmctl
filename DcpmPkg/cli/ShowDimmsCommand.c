@@ -130,6 +130,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   INTERFACE_FORMAT_CODE_STR,
   CAPACITY_STR,
   MANAGEABILITY_STR,
+  POPULATION_VIOLATION_STR,
   SECURITY_STR,
   HEALTH_STR,
   HEALTH_STATE_REASON_STR,
@@ -271,6 +272,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
+STATIC CHAR16 *PopulationViolationToString(UINT8 ManageabilityState);
 STATIC CHAR16 *FormFactorToString(UINT8 FormFactor);
 STATIC CHAR16 *OverwriteDimmStatusToStr(UINT8 OverwriteDimmStatus);
 
@@ -398,6 +400,7 @@ ShowDimms(
   CHAR16 *pHealthStr = NULL;
   CHAR16 *pHealthStateReasonStr = NULL;
   CHAR16 *pManageabilityStr = NULL;
+  CHAR16 *pPopulationViolationStr = NULL;
   CHAR16 *pFormFactorStr = NULL;
   CHAR16 *pDimmsValue = NULL;
   CHAR16 TmpFwVerString[MAX(FW_VERSION_LEN, FW_API_VERSION_LEN)];
@@ -862,6 +865,12 @@ ShowDimms(
         FREE_POOL_SAFE(pManageabilityStr);
       }
 
+      /** PopulatonViolation **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POPULATION_VIOLATION_STR))) {
+        pPopulationViolationStr = PopulationViolationToString(pDimms[DimmIndex].IsInPopulationViolation);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, POPULATION_VIOLATION_STR, pPopulationViolationStr);
+        FREE_POOL_SAFE(pPopulationViolationStr);
+      }
       /** PhysicalID **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PHYSICAL_ID_STR))) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PHYSICAL_ID_STR, FORMAT_HEX, pDimms[DimmIndex].DimmID);
@@ -1011,8 +1020,8 @@ ShowDimms(
         FREE_POOL_SAFE(pFormFactorStr);
       }
 
-      /** If Dimm is Manageable, print rest of the attributes **/
-      if (pDimms[DimmIndex].ManageabilityState) {
+      /** If Dimm is Manageable and not in population violation, print rest of the attributes **/
+      if (pDimms[DimmIndex].ManageabilityState && !pDimms[DimmIndex].IsInPopulationViolation) {
         /** ManufacturerId **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURER_ID_STR))) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURER_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].ManufacturerId));
@@ -1626,6 +1635,27 @@ ManageabilityToString(
   return pManageabilityString;
 }
 
+/**
+  Convert population violation state to a string
+**/
+STATIC
+CHAR16*
+PopulationViolationToString(
+  IN     BOOLEAN IsInPopulationViolation
+)
+{
+  CHAR16 *pPopulationViolationString = NULL;
+
+  if (IsInPopulationViolation)
+  {
+    pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, L"Is in population violation.");
+  }
+  else
+  {
+    pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, L"Is in supported configuration.");
+  }
+  return pPopulationViolationString;
+}
 /**
   Convert type to string
 **/

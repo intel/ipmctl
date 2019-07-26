@@ -47,12 +47,14 @@ struct Command ShowPcdCommand =
 #define DS_PCD_INDEX_PATH                 L"/PcdList/Dimm[%d]/Pcd[%d]"
 #define DS_TABLE_PATH                     L"/PcdList/Dimm/Pcd/Table"
 #define DS_TABLE_INDEX_PATH               L"/PcdList/Dimm[%d]/Pcd[%d]/Table[%d]"
-#define DS_IDENTIFICATION_INFO_INDEX_PATH L"/PcdList/Dimm[%d]/Pcd[%d]/Table[%d]/IdentificationInfoTable[%d]"
+#define DS_PCD_PCAT_TABLE_INDEX_PATH      L"/PcdList/Dimm[%d]/Pcd[%d]/Table[%d]/PcatTable[%d]"
+#define DS_IDENTIFICATION_INFO_INDEX_PATH L"/PcdList/Dimm[%d]/Pcd[%d]/Table[%d]/PcatTable[%d]/IdentificationInfoTable[%d]"
 
 #define PCD_TARGET_CONFIG_STR             L"Target cfg "
 #define PCD_TARGET_NAMESPACE_STR          L"Target namespace "
 #define PCD_TABLE_STR                     L"Table"
 #define PCD_STR                           L"Pcd"
+#define PCD_PCAT_TABLE_STR                L"PcatTable"
 #define PCD_IDENTIFICATION_INFO_STR       L"IdentificationInfoTable"
 
 #define COLUMN_IN_HEX_DUMP      16
@@ -83,6 +85,12 @@ PRINTER_LIST_ATTRIB ShowPcdListAttributes =
       SHOW_LIST_IDENT L"---" PCD_TABLE_STR L": $(" PCD_TABLE_STR L")---",                                                      //NULL or GROUP LEVEL HEADER
       SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L": " FORMAT_STR,                                                             //NULL or KEY VAL FORMAT STR
       PCD_TABLE_STR                                                                                                            //NULL or IGNORE KEY LIST (K1;K2)
+    },
+    {
+      PCD_PCAT_TABLE_STR,                                                                                             //GROUP LEVEL TYPE
+      SHOW_LIST_IDENT SHOW_LIST_IDENT PCD_PCAT_TABLE_STR SHOW_LIST_IDENT L": $(" PCD_PCAT_TABLE_STR L")",    //NULL or GROUP LEVEL HEADER
+      SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR L": " FORMAT_STR,                                                             //NULL or KEY VAL FORMAT STR
+      PCD_PCAT_TABLE_STR                                                                                              //NULL or IGNORE KEY LIST (K1;K2)
     },
     {
       PCD_IDENTIFICATION_INFO_STR,                                                                                             //GROUP LEVEL TYPE
@@ -375,7 +383,7 @@ PrintPcdPartitionSizeChange(
   IN     CHAR16 *pPath
 )
 {
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Size Table                ", L"PCD Partition Size Change");
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PCD_PCAT_TABLE_STR, L"PCD Partition Size Change");
   PrintPcdPcatTableHeader(&pPartitionSizeChange->Header, pPrinterCtx, pPath);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PartitionSizeChangeStatus ", FORMAT_HEX_NOWIDTH, pPartitionSizeChange->PartitionSizeChangeStatus);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PartitionSize             ", FORMAT_UINT64_HEX_NOWIDTH, pPartitionSizeChange->PmPartitionSize);
@@ -461,7 +469,7 @@ PrintPcdInterleaveInformation(
   UINT32 IdentificationInfoIndex = 0;
   CHAR16 *pPathPcdIdentificationInfo = NULL;
 
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Interleave Table          ", L"PCD Interleave Info");
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PCD_PCAT_TABLE_STR, L"PCD Interleave Info");
   if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcdConfigTableRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pInterleaveInfoTable;
     PrintPcdPcatTableHeader(&pInterleaveInfo->Header, pPrinterCtx, pPath);
@@ -476,7 +484,7 @@ PrintPcdInterleaveInformation(
 
     NVDIMM_IDENTIFICATION_INFORMATION *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)&pInterleaveInfo->pIdentificationInfoList;
     for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
-      PRINTER_BUILD_KEY_PATH(pPathPcdIdentificationInfo, DS_IDENTIFICATION_INFO_INDEX_PATH, gDimmIndex, 1, ConfigIndex, Index);
+      PRINTER_BUILD_KEY_PATH(pPathPcdIdentificationInfo, DS_IDENTIFICATION_INFO_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 1, Index);
       IdentificationInfoIndex++;
       PrintPcdIdentificationInformation(pCurrentIdentInfo, PcdConfigTableRevision, pPrinterCtx, pPathPcdIdentificationInfo);
       pCurrentIdentInfo++;
@@ -494,7 +502,7 @@ PrintPcdInterleaveInformation(
 
     NVDIMM_IDENTIFICATION_INFORMATION3 *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)&pInterleaveInfo->pIdentificationInfoList;
     for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
-      PRINTER_BUILD_KEY_PATH(pPathPcdIdentificationInfo, DS_IDENTIFICATION_INFO_INDEX_PATH, gDimmIndex, 1, ConfigIndex, Index);
+      PRINTER_BUILD_KEY_PATH(pPathPcdIdentificationInfo, DS_IDENTIFICATION_INFO_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 1, Index);
       IdentificationInfoIndex++;
       PrintPcdIdentificationInformation(pCurrentIdentInfo, PcdConfigTableRevision, pPrinterCtx, pPathPcdIdentificationInfo);
       pCurrentIdentInfo++;
@@ -553,6 +561,7 @@ PrintPcdCurrentConfig(
   PCAT_TABLE_HEADER *pCurPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  CHAR16 *pPathPcdPcatTable = NULL;
 
   if (IS_ACPI_HEADER_REV_INVALID(pCurrentConfig)){
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -589,14 +598,18 @@ PrintPcdCurrentConfig(
   **/
   while ((UINT32)((UINT8 *)pCurPcatTable - (UINT8 *)&pCurrentConfig->pPcatTables) < SizeOfPcatTables) {
     if (pCurPcatTable->Type == PCAT_TYPE_PARTITION_SIZE_CHANGE_TABLE) {
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 0);
+
       pPartSizeChange = (NVDIMM_PARTITION_SIZE_CHANGE *)pCurPcatTable;
 
-      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPath);
+      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pPartSizeChange->Header.Length);
     }
     else if (pCurPcatTable->Type == PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE) {
-      PrintPcdInterleaveInformation(pCurPcatTable, pCurrentConfig->Header.Revision, pPrinterCtx, pPath);
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 1);
+
+      PrintPcdInterleaveInformation(pCurPcatTable, pCurrentConfig->Header.Revision, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pCurPcatTable->Length);
     }
@@ -610,6 +623,7 @@ PrintPcdCurrentConfig(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: wrong PCAT table type");
       break;
     }
+    FREE_POOL_SAFE(pPathPcdPcatTable);
   }
 }
 
@@ -632,6 +646,7 @@ PrintPcdConfInput(
   PCAT_TABLE_HEADER *pCurPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  CHAR16 *pPathPcdPcatTable = NULL;
 
   if (IS_ACPI_HEADER_REV_INVALID(pConfigInput)) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -666,21 +681,27 @@ PrintPcdConfInput(
   **/
   while ((UINT32)((UINT8 *)pCurPcatTable - (UINT8 *)&pConfigInput->pPcatTables) < SizeOfPcatTables) {
     if (pCurPcatTable->Type == PCAT_TYPE_PARTITION_SIZE_CHANGE_TABLE) {
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 0);
+
       pPartSizeChange = (NVDIMM_PARTITION_SIZE_CHANGE *)pCurPcatTable;
 
-      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPath);
+      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pPartSizeChange->Header.Length);
     }
     else if (pCurPcatTable->Type == PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE) {
-      PrintPcdInterleaveInformation(pCurPcatTable, pConfigInput->Header.Revision, pPrinterCtx, pPath);
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 1);
+
+      PrintPcdInterleaveInformation(pCurPcatTable, pConfigInput->Header.Revision, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pCurPcatTable->Length);
     }
     else if (pCurPcatTable->Type == PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE) {
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 2);
+
       pConfigManagementAttributesInfo = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *)pCurPcatTable;
 
-      PrintPcdConfigManagementAttributesInformation(pConfigManagementAttributesInfo, pPrinterCtx, pPath);
+      PrintPcdConfigManagementAttributesInformation(pConfigManagementAttributesInfo, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pConfigManagementAttributesInfo->Header.Length);
     }
@@ -689,6 +710,7 @@ PrintPcdConfInput(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: wrong PCAT table type");
       break;
     }
+    FREE_POOL_SAFE(pPathPcdPcatTable);
   }
 }
 
@@ -711,6 +733,7 @@ PrintPcdConfOutput(
   PCAT_TABLE_HEADER *pCurPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  CHAR16 *pPathPcdPcatTable = NULL;
 
   if (IS_ACPI_HEADER_REV_INVALID(pConfigOutput)) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -744,14 +767,18 @@ PrintPcdConfOutput(
   **/
   while ((UINT32)((UINT8 *)pCurPcatTable - (UINT8 *)&pConfigOutput->pPcatTables) < SizeOfPcatTables) {
     if (pCurPcatTable->Type == PCAT_TYPE_PARTITION_SIZE_CHANGE_TABLE) {
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 0);
+
       pPartSizeChange = (NVDIMM_PARTITION_SIZE_CHANGE *)pCurPcatTable;
 
-      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPath);
+      PrintPcdPartitionSizeChange(pPartSizeChange, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pPartSizeChange->Header.Length);
     }
     else if (pCurPcatTable->Type == PCAT_TYPE_INTERLEAVE_INFORMATION_TABLE) {
-      PrintPcdInterleaveInformation(pCurPcatTable, pConfigOutput->Header.Revision, pPrinterCtx, pPath);
+      PRINTER_BUILD_KEY_PATH(pPathPcdPcatTable, DS_PCD_PCAT_TABLE_INDEX_PATH, gDimmIndex, 1, ConfigIndex, 1);
+
+      PrintPcdInterleaveInformation(pCurPcatTable, pConfigOutput->Header.Revision, pPrinterCtx, pPathPcdPcatTable);
 
       pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pCurPcatTable->Length);
     }
@@ -765,6 +792,7 @@ PrintPcdConfOutput(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: wrong PCAT table type");
       break;
     }
+    FREE_POOL_SAFE(pPathPcdPcatTable);
   }
 }
 

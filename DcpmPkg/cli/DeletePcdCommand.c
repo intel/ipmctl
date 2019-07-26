@@ -98,9 +98,10 @@ DeletePcdCmd(
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   CHAR16 *pTargetValue = NULL;
+  UINT32 DimmIndex = 0;
+  UINT32 DimmHandle = 0;
   UINT32 Index = 0;
   UINT32 Index2 = 0;
-  UINT32 Index3 = 0;
   UINT32 Attempts = 0;
   UINT32 Successes = 0;
   BOOLEAN Force = FALSE;
@@ -116,6 +117,7 @@ DeletePcdCmd(
   SetDisplayInfo(L"DeletePcd", ResultsView, NULL);
 
   ZeroMem(DimmStr, sizeof(DimmStr));
+  ZeroMem(DimmIdsWithNamespaces, sizeof(DimmIdsWithNamespaces));
 
   if (pCmd == NULL) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_NO_COMMAND);
@@ -244,7 +246,7 @@ DeletePcdCmd(
   }
 
 #ifdef _WINDOWS
-  ReturnCode = GetDimmIdsWithNamespaces(&DimmIdsWithNamespaces[0], &DimmIdsWithNamespacesCount, MAX_DIMMS);
+  ReturnCode = GetDimmIdsWithNamespaces(DimmIdsWithNamespaces, &DimmIdsWithNamespacesCount, MAX_DIMMS);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -253,61 +255,56 @@ DeletePcdCmd(
   PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"\n");
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
   pCommandStatus->ObjectType = ObjectTypeDimm;
-  for (Index = 0; Index < DimmIdsCount; Index++)
-  {
-    for (Index2 = 0; Index2 < DimmCount; Index2++)
-    {
-      if (pDimms[Index2].DimmID == pDimmIds[Index]) {
-        Attempts++;
-        pDimm = &pDimms[Index2];
-        ReturnCode = GetPreferredDimmIdAsString(pDimm->DimmHandle, pDimm->DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
-        if (EFI_ERROR(ReturnCode)) {
-          goto Finish;
-        }
+  for (Index = 0; Index < DimmIdsCount; Index++) {
+    Attempts++;
+    ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+    pDimm = &pDimms[DimmIndex];
+    ReturnCode = GetPreferredDimmIdAsString(pDimm->DimmHandle, pDimm->DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
 
-        DimmInNamespace = FALSE;
-        for (Index3 = 0; Index3 < DimmIdsWithNamespacesCount; Index3++)
-        {
-          if (DimmIdsWithNamespaces[Index3] == pDimm->DimmHandle) {
-            DimmInNamespace = TRUE;
-            break;
-          }
-        }
-
-        if (DimmInNamespace) {
-          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"DIMM " FORMAT_STR L" is a member of a Namespace. Will not delete data from this DIMM.", DimmStr);
-          SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
-        } else {
-          pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;
-          TempReturnCode = pNvmDimmConfigProtocol->ModifyPcdConfig(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, ConfigIdMask, pCommandStatus);
-          if (EFI_ERROR(TempReturnCode)) {
-            SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_OPERATION_FAILED, TRUE);
-          }
-          else {
-            SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_SUCCESS, TRUE);
-            Successes++;
-          }
-        }
+    DimmInNamespace = FALSE;
+    for (Index2 = 0; Index2 < DimmIdsWithNamespacesCount; Index2++) {
+      if (DimmIdsWithNamespaces[Index2] == pDimm->DimmHandle) {
+        DimmInNamespace = TRUE;
         break;
+      }
+    }
+
+    if (DimmInNamespace) {
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"DIMM " FORMAT_STR L" is a member of a Namespace. Will not delete data from this DIMM.", DimmStr);
+      SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
+    } else {
+      pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;
+      TempReturnCode = pNvmDimmConfigProtocol->ModifyPcdConfig(pNvmDimmConfigProtocol, &pDimmIds[Index], 1, ConfigIdMask, pCommandStatus);
+      if (EFI_ERROR(TempReturnCode)) {
+        ReturnCode = TempReturnCode;
+      } else {
+        Successes++;
       }
     }
   }
 
   if (Attempts > 0 && Attempts == Successes) {
     pCommandStatus->GeneralStatus = NVM_SUCCESS;
-  } else {
+  } else if (pCommandStatus->GeneralStatus == NVM_SUCCESS) {
     pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_FAILED;
   }
 
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Clear partition(s)", L" on", pCommandStatus);
-    goto Finish;
+  } else {
+    PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, L" on", pCommandStatus);
   }
 
-  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, L" on", pCommandStatus);
-
-  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"\nData dependencies may result in other commands being affected. A system reboot is required before all changes will take effect.");
+  if (Successes > 0) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"\nData dependencies may result in other commands being affected. A system reboot is required before all changes will take effect.");
+  }
 
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);

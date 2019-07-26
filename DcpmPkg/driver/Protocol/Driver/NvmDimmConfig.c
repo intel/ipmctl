@@ -2042,7 +2042,7 @@ static void PopulateAppDirectIndex(
           }
         }
         if (!AppDirectIndexFound) {
-          pNumberedGoals[*pNumberedGoalsNum].pRegionGoal = pCurrentDimm->pRegionsGoal[Index2];
+          pNumberedGoals[*pNumberedGoalsNum].pRegionGoal = pCurrentDimm->pRegionsGoal[Index1];
           pNumberedGoals[*pNumberedGoalsNum].AppDirectIndex = *pAppDirectIndex;
           (*pNumberedGoalsNum)++;
           (*pAppDirectIndex)++;
@@ -2094,7 +2094,6 @@ GetGoalConfigs(
   UINT32 Index3 = 0;
   UINT32 NumberedGoalsNum = 0;
   UINT32 AppDirectIndex = 1;
-  BOOLEAN AppDirectIndexFound = FALSE;
   UINT32 SequenceIndex = 0;
   REGION_GOAL_APPDIRECT_INDEX_TABLE NumberedGoals[MAX_IS_PER_DIMM * MAX_DIMMS];
   MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
@@ -2114,14 +2113,6 @@ GetGoalConfigs(
     NVDIMM_ERR("ERROR: DimmSkuConsistency");
     goto Finish;
   }
-  //Try to calculate appdirect index for all regional goals for all dimms in advance
-  PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsCount,
-      pCommandStatus);
-  if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
-    NVDIMM_ERR("ERROR: VerifyTargetDimms");
-    goto Finish;
-  }
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
@@ -2131,6 +2122,15 @@ GetGoalConfigs(
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     }
     NVDIMM_ERR("ERROR: RetrieveGoalConfigsFromPlatformConfigData");
+    goto Finish;
+  }
+
+  //Try to calculate appdirect index for all regional goals for all dimms in advance
+  PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsCount,
+      pCommandStatus);
+  if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
+    NVDIMM_ERR("ERROR: VerifyTargetDimms");
     goto Finish;
   }
 
@@ -2178,25 +2178,14 @@ GetGoalConfigs(
       pCurrentGoal->ImcInterleaving[SequenceIndex] = pCurrentDimm->pRegionsGoal[Index2]->ImcInterleaving;
       pCurrentGoal->ChannelInterleaving[SequenceIndex] = pCurrentDimm->pRegionsGoal[Index2]->ChannelInterleaving;
 
-      /**
-        Fill array with goal indices or retrieve index from it
-      **/
-      AppDirectIndexFound = FALSE;
+      /** Retrieve previously calculated AppDirectIndex **/
       for (Index3 = 0; Index3 < NumberedGoalsNum; Index3++) {
         NVDIMM_DBG("appdir loop %d", Index3);
         if (NumberedGoals[Index3].pRegionGoal == pCurrentDimm->pRegionsGoal[Index2]) {
           NVDIMM_DBG("appdir found!");
           pCurrentGoal->AppDirectIndex[SequenceIndex] = (UINT8)NumberedGoals[Index3].AppDirectIndex;
-          AppDirectIndexFound = TRUE;
           break;
         }
-      }
-      if (!AppDirectIndexFound) {
-        pCurrentGoal->AppDirectIndex[SequenceIndex] = (UINT8)AppDirectIndex;
-        NumberedGoals[NumberedGoalsNum].pRegionGoal = pCurrentDimm->pRegionsGoal[Index2];
-        NumberedGoals[NumberedGoalsNum].AppDirectIndex = AppDirectIndex;
-        NumberedGoalsNum++;
-        AppDirectIndex++;
       }
     }
 

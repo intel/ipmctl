@@ -48,9 +48,9 @@ PRINTER_LIST_ATTRIB ShowDimmListAttributes =
 
 /*
 *  PRINTER TABLE ATTRIBUTES (5 columns)
-*   DimmID | Capacity | HealthState | LockState | FWVersion
-*   =======================================================
-*   0x0001 | X        | X           | X         | X
+*   DimmID | Capacity | LockState | HealthState | FWVersion
+*   ========================================================
+*   0x0001 | X        | X         | X           | X
 *   ...
 */
 PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
@@ -67,14 +67,14 @@ PRINTER_TABLE_ATTRIB ShowDimmTableAttributes =
       DS_DIMM_PATH PATH_KEY_DELIM CAPACITY_STR    //COLUMN DATA PATH
     },
     {
-      HEALTH_STR,                                 //COLUMN HEADER
-      HEALTH_MAX_STR_WIDTH,                       //COLUMN MAX STR WIDTH
-      DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
-    },
-    {
       SECURITY_STR,                               //COLUMN HEADER
       SECURITY_MAX_STR_WIDTH,                     //COLUMN MAX STR WIDTH
       DS_DIMM_PATH PATH_KEY_DELIM SECURITY_STR    //COLUMN DATA PATH
+    },
+    {
+      HEALTH_STR,                                 //COLUMN HEADER
+      HEALTH_MAX_STR_WIDTH,                       //COLUMN MAX STR WIDTH
+      DS_DIMM_PATH PATH_KEY_DELIM HEALTH_STR      //COLUMN DATA PATH
     },
     {
       FW_VER_STR,                                 //COLUMN HEADER

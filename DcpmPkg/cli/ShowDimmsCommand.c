@@ -163,6 +163,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   BANK_LABEL_STR,
   MEMORY_TYPE_STR,
   AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY,
+  AVG_PWR_REPORTING_TIME_CONSTANT,
   MANUFACTURER_STR,
   CHANNEL_ID_STR,
   SLOT_ID_STR,
@@ -231,6 +232,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   PACKAGE_SPARES_AVAILABLE_STR,
   IS_NEW_STR,
   AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY,
+  AVG_PWR_REPORTING_TIME_CONSTANT,
   VIRAL_POLICY_STR,
   VIRAL_STATE_STR,
   PEAK_POWER_BUDGET_STR,
@@ -429,7 +431,6 @@ ShowDimms(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
-  BOOLEAN FIS_2_0 = FALSE;
   BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
   BOOLEAN IsMixedSku;
   BOOLEAN IsSkuViolation;
@@ -762,10 +763,6 @@ ShowDimms(
       }
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
-
-      if (pDimms[DimmIndex].FwVer.FwApiMajor >= 2) {
-        FIS_2_0 = TRUE;
-      }
 
       /** always print the DimmID **/
       ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr,
@@ -1137,16 +1134,14 @@ ShowDimms(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, IS_NEW_STR, FORMAT_INT32, pDimms[DimmIndex].IsNew);
         }
 
-        if ((pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA) || (!FIS_2_0)) {
-          /** AveragePowerReportingTimeConstantMultiplier **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, UNKNOWN_ATTRIB_VAL);
-          }
-        } else {
-          /** AveragePowerReportingTimeConstantMultiplier **/
-          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FORMAT_INT32, pDimms[DimmIndex].AvgPowerReportingTimeConstantMultiplier);
-          }
+        /** AveragePowerReportingTimeConstantMultiplier (FIS 2.0 Only) **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerReportingTimeConstantMultiplier, FORMAT_HEX_NOWIDTH));
+        }
+
+        /** AveragePowerReportingTimeConstant (FIS 2.1 and higher) **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerReportingTimeConstant, FORMAT_UINT64 TIME_MSR_MS));
         }
 
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_VIRAL_POLICY) {

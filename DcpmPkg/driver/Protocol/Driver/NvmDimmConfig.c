@@ -1055,7 +1055,25 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_OPTIONAL_CONFIG_DATA;
     }
 
-    pDimmInfo->AvgPowerReportingTimeConstantMultiplier = OptionalDataPolicyPayload.AveragePowerReportingTimeConstantMultiplier;
+    /* AvgPowerReportingTimeConstantMultiplier */
+    if (2 == OptionalDataPolicyPayload.FisMajor && 0 == OptionalDataPolicyPayload.FisMinor) {
+      pDimmInfo->AvgPowerReportingTimeConstantMultiplier.Header.Status.Code = ReturnCode;
+      pDimmInfo->AvgPowerReportingTimeConstantMultiplier.Header.Type = DIMM_INFO_TYPE_UINT8;
+      pDimmInfo->AvgPowerReportingTimeConstantMultiplier.Data = OptionalDataPolicyPayload.Payload.Fis_2_00.AveragePowerReportingTimeConstantMultiplier;
+    }
+    else {
+      pDimmInfo->AvgPowerReportingTimeConstantMultiplier.Header.Status.Code = EFI_UNSUPPORTED;
+    }
+
+    /* AvgPowerReportingTimeConstant */
+    if (2 == OptionalDataPolicyPayload.FisMajor && 1 <= OptionalDataPolicyPayload.FisMinor) {
+      pDimmInfo->AvgPowerReportingTimeConstant.Header.Status.Code = ReturnCode;
+      pDimmInfo->AvgPowerReportingTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->AvgPowerReportingTimeConstant.Data = OptionalDataPolicyPayload.Payload.Fis_2_01.AveragePowerReportingTimeConstant;
+    }
+    else {
+      pDimmInfo->AvgPowerReportingTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+    }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_VIRAL_POLICY)
@@ -8340,6 +8358,7 @@ SetOptionalConfigurationDataPolicy(
   UINT32 Index = 0;
 
   SetMem(pDimms, sizeof(pDimms), 0x0);
+  ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
 
   NVDIMM_ENTRY();
 
@@ -8369,7 +8388,7 @@ SetOptionalConfigurationDataPolicy(
       goto Finish;
     }
 
-    OptionalDataPolicyPayload.AveragePowerReportingTimeConstantMultiplier = AveragePowerReportingTimeConstantMultiplier;
+    OptionalDataPolicyPayload.Payload.Fis_2_00.AveragePowerReportingTimeConstantMultiplier = AveragePowerReportingTimeConstantMultiplier;
 
     ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimms[Index], &OptionalDataPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {

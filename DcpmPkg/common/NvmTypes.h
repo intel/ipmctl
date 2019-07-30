@@ -397,7 +397,8 @@ typedef struct _DIMM_INFO {
   DIMM_INFO_ATTRIB_UINT32 AveragePowerTimeConstant_2_1; //!< The value used as a base time window for power usage measurements [ms].
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
-  UINT8 AvgPowerReportingTimeConstantMultiplier;       //!< The value that is used to multiply the base time value used for average power consumption measurements
+  DIMM_INFO_ATTRIB_UINT8  AvgPowerReportingTimeConstantMultiplier;  //!< The value that is used to multiply the base time value used for average power consumption measurements.
+  DIMM_INFO_ATTRIB_UINT32 AvgPowerReportingTimeConstant;            //!< The value [ms] used to determine the time constant for reporting average power consumption.
 
   //DIMM_INFO_CATEGORY_VIRAL_POLICY
   BOOLEAN ViralPolicyEnable;                //!< true if viral policy is enabled

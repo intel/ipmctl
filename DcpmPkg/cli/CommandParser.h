@@ -222,6 +222,7 @@
 #define PROPERTY_VALUE_NONE               L"None"
 #define PROPERTY_VALUE_SECTOR             L"Sector"
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY   L"AveragePowerReportingTimeConstantMultiplier"
+#define AVG_PWR_REPORTING_TIME_CONSTANT   L"AveragePowerReportingTimeConstant"
 #define ACCESS_TYPE_PROPERTY              L"AccessType"
 #define ERASE_CAPABLE_PROPERTY            L"EraseCapable"
 #define ENCRYPTION_PROPERTY               L"Encryption"

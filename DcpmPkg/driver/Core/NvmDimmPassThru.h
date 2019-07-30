@@ -554,6 +554,22 @@ typedef struct {
   UINT8 Reserved1[3];                                  //!< 2:0 Reserved
   UINT8 AveragePowerReportingTimeConstantMultiplier;   //!< 3 Average Power Reporting Time Constant Multiplier
   UINT8 Reserved2[124];                                //!< 127:4 Reserved
+} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0;
+
+typedef struct {
+  UINT8 Reserved1[4];                                  //!< 3:0 Reserved
+  UINT32 AveragePowerReportingTimeConstant;            //!< 7:4 Average Power Reporting Time Constant
+  UINT8 Reserved2[120];                                //!< 127:4 Reserved
+} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1;
+
+typedef struct {
+  UINT8 FisMajor;
+  UINT8 FisMinor;
+  union {
+    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0   Fis_2_00;
+    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1   Fis_2_01;
+    UINT8 Data[0];
+  }Payload;
 } PT_OPTIONAL_DATA_POLICY_PAYLOAD;
 
 /**

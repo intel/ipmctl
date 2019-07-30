@@ -1469,7 +1469,6 @@ FwCmdGetOptionalConfigurationDataPolicy(
   }
 
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
@@ -1478,7 +1477,7 @@ FwCmdGetOptionalConfigurationDataPolicy(
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetFeatures;
   pFwCmd->SubOpcode = SubopConfigDataPolicy;
-  pFwCmd->OutputPayloadSize = sizeof(*pOptionalDataPolicyPayload);
+  pFwCmd->OutputPayloadSize = sizeof(pOptionalDataPolicyPayload->Payload);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
 
@@ -1488,7 +1487,9 @@ FwCmdGetOptionalConfigurationDataPolicy(
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
     goto Finish;
   }
-  CopyMem_S(pOptionalDataPolicyPayload, sizeof(*pOptionalDataPolicyPayload), pFwCmd->OutPayload, sizeof(*pOptionalDataPolicyPayload));
+  CopyMem_S(pOptionalDataPolicyPayload->Payload.Data, sizeof(pOptionalDataPolicyPayload->Payload), pFwCmd->OutPayload, sizeof(pOptionalDataPolicyPayload->Payload));
+  pOptionalDataPolicyPayload->FisMajor = pDimm->FwVer.FwApiMajor;
+  pOptionalDataPolicyPayload->FisMinor = pDimm->FwVer.FwApiMinor;
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);
@@ -1525,8 +1526,8 @@ FwCmdSetOptionalConfigurationDataPolicy(
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopConfigDataPolicy;
-  pFwCmd->InputPayloadSize = sizeof(*pOptionalDataPolicyPayload);
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pOptionalDataPolicyPayload, pFwCmd->InputPayloadSize);
+  pFwCmd->InputPayloadSize = sizeof(pOptionalDataPolicyPayload->Payload);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pOptionalDataPolicyPayload->Payload.Data, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);

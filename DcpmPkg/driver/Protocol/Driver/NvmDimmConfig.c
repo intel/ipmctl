@@ -6015,6 +6015,7 @@ Finish:
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -6036,6 +6037,7 @@ GetActualRegionsGoalCapacities(
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pNumOfDimmsTargeted         OPTIONAL,
      OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   )
@@ -6048,7 +6050,6 @@ GetActualRegionsGoalCapacities(
   REGION_GOAL_DIMM *pDimmsAsymPerSocket = NULL;
   UINT32 DimmsAsymNumPerSocket = 0;
   DIMM *pReserveDimm = NULL;
-  UINT64 ReservedSize = 0;
   UINT64 ActualVolatileSize = 0;
   REGION_GOAL_TEMPLATE RegionGoalTemplates[MAX_IS_PER_DIMM];
   UINT32 RegionGoalTemplatesNum = 0;
@@ -6118,6 +6119,10 @@ GetActualRegionsGoalCapacities(
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
+  }
+
+  if (pNumOfDimmsTargeted != NULL) {
+    *pNumOfDimmsTargeted = DimmsNum;
   }
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
@@ -6221,15 +6226,9 @@ GetActualRegionsGoalCapacities(
     /* caclulate the  total requested volatile size */
     TotalInputVolatileSize += ActualVolatileSize;
 
-    /** Calculate Reserved size **/
-    ReturnCode = CalculateDimmCapacityFromPercent(pDimmsOnSocket, NumDimmsOnSocket, ReservedPercent, &ReservedSize);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, ActualVolatileSize, ReservedSize, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
@@ -6677,15 +6676,9 @@ CreateGoalConfig(
       goto Finish;
     }
 
-    /** Calculate Reserved size **/
-    ReturnCode = CalculateDimmCapacityFromPercent(pDimmsOnSocket, NumDimmsOnSocket, ReservedPercent, &ReservedSize);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, VolatileSize , ReservedSize, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         NULL, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;

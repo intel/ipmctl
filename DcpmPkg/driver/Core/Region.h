@@ -628,7 +628,7 @@ GetFreeRegionCapacity(
   @param[out] pDimmsAsymmetricalNum Returned number of items in DimmsAsymmetrical
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatileSize Volatile region size
-  @param[in] ReservedSize Reserved size requested by user
+  @param[in] ReservedPercent Amount of AppDirect memory to not map in percent
   @param[in] pMaxPMInterleaveSets Pointer to MaxPmInterleaveSets per Die & per Dcpmm
   @param[out] pVolatileSizeActual Actual Volatile region size
   @param[out] RegionGoalTemplates Array of pool goal templates
@@ -649,7 +649,7 @@ MapRequestToActualRegionGoalTemplates(
      OUT UINT32 *pDimmsAsymmetricalNum,
   IN     UINT8 PersistentMemType,
   IN     UINT64 VolatileSize,
-  IN     UINT64 ReservedSize,
+  IN     UINT32 ReservedPercent,
   IN     MAX_PMINTERLEAVE_SETS *pMaxPMInterleaveSets,
      OUT UINT64 *pVolatileSizeActual OPTIONAL,
      OUT REGION_GOAL_TEMPLATE RegionGoalTemplates[MAX_IS_PER_DIMM],

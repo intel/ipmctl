@@ -809,6 +809,7 @@ EFIAPI GetNamespaces (
   @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -830,6 +831,7 @@ GetActualRegionsGoalCapacities(
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pNumOfDimmsTargeted         OPTIONAL,
      OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   );

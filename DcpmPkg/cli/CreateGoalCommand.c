@@ -186,6 +186,7 @@ CheckAndConfirmAlignments(
   UINT16 TopologyDimmsNumber = 0;
   UINT32 AppDirect1Regions = 0;
   UINT32 AppDirect2Regions = 0;
+  UINT32 NumOfDimmsTargeted = 0;
   UINT32 MaxPMInterleaveSetsPerDie = 0;
 
   NVDIMM_ENTRY();
@@ -221,6 +222,7 @@ CheckAndConfirmAlignments(
     ReserveDimm,
     RegionConfigsInfo,
     &RegionConfigsCount,
+    &NumOfDimmsTargeted,
     &MaxPMInterleaveSetsPerDie,
     pCommandStatus);
 
@@ -334,7 +336,7 @@ CheckAndConfirmAlignments(
 
     if (PersistentMemType == PM_TYPE_AD_NI) {
       pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED);
-      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, (RegionConfigsCount - AppDirect1Regions));
+      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, (NumOfDimmsTargeted - AppDirect1Regions));
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
       FREE_POOL_SAFE(pSingleStatusCodeMessage);
     }

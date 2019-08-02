@@ -1400,7 +1400,7 @@ Finish:
   @param[out] pDimmsAsymmetricalNum Returned number of items in DimmsAsymmetrical
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatileSize Volatile region size
-  @param[in] ReservedSize Reserved size requested by user
+  @param[in] ReservedPercent Amount of AppDirect memory to not map in percent
   @param[in] pMaxPMInterleaveSets Pointer to MaxPmInterleaveSets per Die & per Dcpmm
   @param[out] pVolatileSizeActual Actual Volatile region size
   @param[out] RegionGoalTemplates Array of region goal templates
@@ -1421,7 +1421,7 @@ MapRequestToActualRegionGoalTemplates(
      OUT UINT32 *pDimmsAsymmetricalNum,
   IN     UINT8 PersistentMemType,
   IN     UINT64 VolatileSize,
-  IN     UINT64 ReservedSize,
+  IN     UINT32 ReservedPercent,
   IN     MAX_PMINTERLEAVE_SETS *pMaxPMInterleaveSets,
      OUT UINT64 *pVolatileSizeActual OPTIONAL,
      OUT REGION_GOAL_TEMPLATE RegionGoalTemplates[MAX_IS_PER_DIMM],
@@ -1441,7 +1441,9 @@ MapRequestToActualRegionGoalTemplates(
   UINT64 RegionPersistentAlignment = gNvmDimmData->Alignments.RegionPersistentAlignment;
   UINT64 TotalRawCapacity = 0;
   BOOLEAN AllReserved = FALSE;
+  UINT64 ReservedSize = 0;
   UINT64 UnAllocatedAppDirect = 0;
+  UINT32 AppDirectRegionGoalDimmsNum = 0;
 
   NVDIMM_ENTRY();
 
@@ -1523,13 +1525,13 @@ MapRequestToActualRegionGoalTemplates(
 
     if (PersistentMemType != PM_TYPE_STORAGE) {
       LeastPersistentSize = MAX_UINT64_VALUE;
-       /** Calculate available persistent memory for Interleave Sets **/
+      /** Calculate available persistent memory for Interleave Sets **/
       for (Index = 0; Index < DimmsNum; Index++) {
         // Dimms within the same socket can have different capacities
         if (LeastPersistentSize > (pDimms[Index]->RawCapacity - VolatileSizeActualOnDimm)) {
           LeastPersistentSize = pDimms[Index]->RawCapacity - VolatileSizeActualOnDimm;
           LeastPersistentSize = ROUNDDOWN(LeastPersistentSize, RegionPersistentAlignment);
-          }
+        }
       }
 
       for (Index = 0; Index < DimmsNum; Index++) {
@@ -1554,6 +1556,7 @@ MapRequestToActualRegionGoalTemplates(
             else {
               DimmsSymmetrical[Index].RegionSize = AvailablePersistentSize;
               DimmsSymmetrical[Index].VolatileSize = VolatileSizeActualOnDimm;
+              AppDirectRegionGoalDimmsNum++;
             }
           }
           else {
@@ -1586,6 +1589,14 @@ MapRequestToActualRegionGoalTemplates(
           }
         }
         (*pDimmsSymmetricalNum)++;
+      }
+
+      /** Calculate Reserved size **/
+      ReturnCode = CalculateDimmCapacityFromPercent(pDimms,
+        (AppDirectRegionGoalDimmsNum != 0 ? AppDirectRegionGoalDimmsNum: *pDimmsSymmetricalNum),
+        ReservedPercent, &ReservedSize);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
       }
 
       //If VolatileCapcity is zero there will be some unallocated PM capacity already due to AppDirect alignments

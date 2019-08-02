@@ -46,6 +46,10 @@ EFI_GUID gIntelDimmPbrVariableGuid = INTEL_DIMM_PBR_VARIABLE_GUID;
 
 EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
 
+#ifndef OS_BUILD
+EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
+#endif // !OS_BUILD
+
 /**
   Array of dimms UEFI-related data structures.
 **/
@@ -821,6 +825,22 @@ NvmDimmDriverDriverEntryPoint(
     NVDIMM_WARN("Failed to install the driver protocols, error = 0x%llx.", ReturnCode);
     goto Finish;
   }
+
+  /**
+     Locate DCPMM - BIOS protocol for writing to Maiblox in UEFI
+  **/
+#ifndef OS_BUILD
+  ReturnCode = gBS->LocateProtocol(&gDcpmmProtocolGuid, NULL, (VOID **)&gNvmDimmData->pDcpmmProtocol);
+  if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode == EFI_NOT_FOUND) {
+      NVDIMM_WARN("Dcpmm protocol not found");
+    }
+    else {
+      NVDIMM_WARN("Communication with the device driver failed (dcpmm protocol)");
+    }
+    goto Finish;
+  }
+#endif // !OS_BUILD
 
   /**
     Install Driver Supported EFI Version Protocol onto ImageHandle.

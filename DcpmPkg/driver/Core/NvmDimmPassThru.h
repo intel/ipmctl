@@ -68,8 +68,13 @@ struct _DIMM;
 
 #define SECONDS_TO_MICROSECONDS(Seconds) MultU64x32((UINT64)(Seconds), 1000000)
 
+#define SECONDS_TO_MICROSECONDS_32(Seconds) Seconds*1000000
+
 // PassThru timeout in microseconds
 #define PT_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS(1)
+
+// Dcpmm timeout in microseconds
+#define DCPMM_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS_32(1)
 
 // Smbus delay period in microseconds
 #define SMBUS_PT_DELAY_PERIOD_IN_US  100
@@ -87,23 +92,6 @@ struct _DIMM;
 #define FATAL_ERROR_TRIGGER  (1 << 2)
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
-
-typedef struct {
-  volatile UINT64 *pCommand;                      //!< va of the command register
-  volatile UINT64 *pNonce0;                       //!< va of the nonce0 register
-  volatile UINT64 *pNonce1;                       //!< va of the nonce1 register
-  volatile UINT64 *pInPayload[IN_PAYLOAD_NUM];    //!< va of the payload registers write only
-  volatile UINT64 *pStatus;                       //!< va of the status register
-  volatile UINT64 *pOutPayload[OUT_PAYLOAD_NUM];  //!< va of the payload registers read only
-  UINT32 MbInLineSize;
-  UINT32 MbOutLineSize;
-  UINT32 NumMbInSegments;                         //!< number of segments of the IN mailbox
-  UINT32 NumMbOutSegments;                        //!< number of segments of the OUT mailbox
-  UINT8 SequenceBit;                              //!< current sequence bit state for mailbox
-  volatile VOID **ppMbIn;                         //!< va of the IN mailbox segments
-  volatile VOID **ppMbOut;                        //!< va of the OUT mailbox segments
-  volatile UINT64 *pBsr;                          //!< va of the DIMMs BSR register
-} MAILBOX;
 
 #pragma pack(push)
 #pragma pack(1)
@@ -156,32 +144,6 @@ DurableCacheLineClearInterleavedBuffer(
      OUT VOID **ppInterleavedBuffer,
   IN     UINT32 LineSize,
   IN     UINT32 NumOfBytes
-  );
-
-/**
-  Poll Firmware Command Completion
-  Poll the status register of the mailbox waiting for the
-  mailbox complete bit to be set
-
-  @param[in] pMb - The mailbox the fw cmd was submitted on
-  @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
-             A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
-             If Timeout is greater than zero, then this function will return EFI_TIMEOUT if the time required to execute
-             the receive data command is greater than Timeout.
-  @param[out] pStatus The Fw status to be returned when command completes
-  @param[out] pBsr The boot status register when the command completes OPTIONAL
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR FW error received
-  @retval EFI_TIMEOUT A timeout occurred while waiting for the protocol command to execute.
-
-**/
-EFI_STATUS
-PollCmdCompletion(
-  IN      MAILBOX *pMb,
-  IN      UINT64 Timeout,
-      OUT UINT64 *pStatus,
-      OUT UINT64 *pBsr OPTIONAL
   );
 
 /**

@@ -35,11 +35,11 @@ GUID gAppDirectPmTypeGuid = APPDIRECT_PM_TYPE;
 
 GUID gSpaRangeMailboxCustomGuid = SPA_RANGE_MAILBOX_CUSTOM_GUID;
 
-GUID gDieTypeGuid = PMTT_TYPE_DIE_GUID;
+GUID gDieTypeDeviceGuid = PMTT_TYPE_DIE_GUID;
 
-GUID gChannelTypeGuid = PMTT_TYPE_CHANNEL_GUID;
+GUID gChannelTypeDeviceGuid = PMTT_TYPE_CHANNEL_GUID;
 
-GUID gSlotTypeGuid = PMTT_TYPE_SLOT_GUID;
+GUID gSlotTypeDeviceGuid = PMTT_TYPE_SLOT_GUID;
 
 /**
   CopyMemoryAndAddPointerToArray - Copies the data and adds the result pointer to an array of pointers.
@@ -391,6 +391,7 @@ ParsePmttTable(
   UINT16 ChannelID = 0;
   UINT16 SlotID = 0;
   UINT32 NumOfMemoryDevices = 0;
+  UINT32 DieLevelNumOfMemoryDevices = 0;
 
   NVDIMM_ENTRY();
 
@@ -432,6 +433,13 @@ ParsePmttTable(
       goto FinishError;
     }
 
+    if (!(pPmttCommonTableHeader->Flags & PMTT_PHYSICAL_ELEMENT_OF_TOPOLOGY)) {
+      NVDIMM_DBG("Not a physical element of the topology!");
+      RemainingPmttBytes -= Length;
+      pPmttCommonTableHeader = (PMTT_COMMON_HEADER2 *)((UINT8 *)pPmttCommonTableHeader + Length);
+      continue;
+    }
+
     switch (pPmttCommonTableHeader->Type) {
     case PMTT_TYPE_SOCKET:
     {
@@ -443,15 +451,16 @@ ParsePmttTable(
         goto FinishError;
       }
       SocketID = pParsedPmtt->ppSockets[pParsedPmtt->SocketsNum - 1]->SocketId;
+      DieLevelNumOfMemoryDevices += NumOfMemoryDevices;
       NumOfMemoryDevices = pParsedPmtt->ppSockets[pParsedPmtt->SocketsNum - 1]->Header.NoOfMemoryDevices;
-      DieID = 0;
+      DieID = MAX_DIEID_SINGLE_DIE_SOCKET;
       break;
     }
 
     case PMTT_TYPE_VENDOR_SPECIFIC:
     {
       PMTT_VENDOR_SPECIFIC2 *pVendorDevice = (PMTT_VENDOR_SPECIFIC2 *)((UINT8 *)pPmttCommonTableHeader);
-      if (CompareMem(&pVendorDevice->TypeUUID, &gDieTypeGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
+      if (CompareMem(&pVendorDevice->TypeUUID, &gDieTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
         pParsedPmtt->ppDies = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppDies, pPmttCommonTableHeader, Length,
           &pParsedPmtt->DiesNum);
@@ -460,14 +469,9 @@ ParsePmttTable(
           goto FinishError;
         }
         DieID = pParsedPmtt->ppDies[pParsedPmtt->DiesNum - 1]->DeviceID;
-        if (pParsedPmtt->SocketsNum > 1) {
-          CpuID = (NumOfMemoryDevices & MAX_UINT16) + DieID;
-        }
-        else {
-          CpuID = DieID;
-        }
+        CpuID = (DieLevelNumOfMemoryDevices & MAX_UINT16) + DieID;
       }
-      else if (CompareMem(&pVendorDevice->TypeUUID, &gChannelTypeGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
+      else if (CompareMem(&pVendorDevice->TypeUUID, &gChannelTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
         pParsedPmtt->ppChannels = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppChannels, pPmttCommonTableHeader, Length,
           &pParsedPmtt->ChannelsNum);
@@ -478,7 +482,7 @@ ParsePmttTable(
         ChannelID = pParsedPmtt->ppChannels[pParsedPmtt->ChannelsNum - 1]->DeviceID;
         SlotID = 0;
       }
-      else if (CompareMem(&pVendorDevice->TypeUUID, &gSlotTypeGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
+      else if (CompareMem(&pVendorDevice->TypeUUID, &gSlotTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
         pParsedPmtt->ppSlots = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppSlots, pPmttCommonTableHeader, Length,
           &pParsedPmtt->SlotsNum);

@@ -4,6 +4,7 @@
  */
 #include <Uefi.h>
 #include <Debug.h>
+#include <Library/BaseMemoryLib.h>
 #include <NvmTables.h>
 #include <Utility.h>
 #include <Convert.h>
@@ -14,6 +15,12 @@ UINT32 AcpiIndex = 0;
 CHAR16 *pTypePath = NULL;
 UINT32 TypeIndex = 0;
 ACPI_REVISION PcatRevision;
+
+GUID gDieTypeGuid = PMTT_TYPE_DIE_GUID;
+
+GUID gChannelTypeGuid = PMTT_TYPE_CHANNEL_GUID;
+
+GUID gSlotTypeGuid = PMTT_TYPE_SLOT_GUID;
 
 /**
   DecodePcatMemoryModeCapabilities - decodes the MemoryModeCapabilities field of PCAT structure type: PlatformCapabilityInfoTable
@@ -1108,7 +1115,6 @@ PrintPMTT2(
   IN     PRINT_CONTEXT *pPrinterCtx
 )
 {
-  UINT8 ParentDeviceType = 0;
   CHAR16 *pGuidStr = NULL;
   PMTT_TABLE2 *pPMTT = (PMTT_TABLE2 *)pTable;
 
@@ -1124,7 +1130,6 @@ PrintPMTT2(
     NVDIMM_DBG("Common table length: %d, mem devices: %d, Type: %d",
       pCommonHeader->Length, pCommonHeader->NoOfMemoryDevices, pCommonHeader->Type);
     if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
-      ParentDeviceType = PMTT_TYPE_SOCKET;
       PMTT_SOCKET2 *pSocket = (PMTT_SOCKET2 *)(((UINT8 *)pPMTT) + Offset);
       NVDIMM_DBG("Socket ID: %d, no of sockets: %d", pSocket->SocketId);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
@@ -1140,7 +1145,6 @@ PrintPMTT2(
       Offset += sizeof(PMTT_SOCKET2);
     }
     else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
-      ParentDeviceType = PMTT_TYPE_iMC;
       PMTT_iMC2 *piMC = (PMTT_iMC2 *)(((UINT8 *)pPMTT) + Offset);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
@@ -1158,16 +1162,15 @@ PrintPMTT2(
       PMTT_VENDOR_SPECIFIC2 *pVendorDevice = (PMTT_VENDOR_SPECIFIC2 *)(((UINT8 *)pPMTT) + Offset);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
-      if (ParentDeviceType == PMTT_TYPE_SOCKET) {
+      if (CompareGuid(&pVendorDevice->TypeUUID, &gDieTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Die");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieId", FORMAT_INT32, pVendorDevice->DeviceID);
       }
-      else if (ParentDeviceType == PMTT_TYPE_iMC) {
+      else if (CompareGuid(&pVendorDevice->TypeUUID, &gChannelTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Channel");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ChannelId", FORMAT_INT32, pVendorDevice->DeviceID);
-        ParentDeviceType = PMTT_TYPE_VENDOR_SPECIFIC;
       }
-      else if ((ParentDeviceType == PMTT_TYPE_VENDOR_SPECIFIC)) {
+      else if (CompareGuid(&pVendorDevice->TypeUUID, &gSlotTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Slot");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SlotId", FORMAT_INT32, pVendorDevice->DeviceID);
       }

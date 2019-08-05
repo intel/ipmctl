@@ -10,7 +10,6 @@
 #include "BttLayout.h"
 #include "Namespace.h"
 #include <Convert.h>
-
 GUID gBttAbstractionGuid = EFI_BTT_ABSTRACTION_GUID;
 
 /**
@@ -82,7 +81,7 @@ BttFlogUpdate(
 /**
     Constructs a read tracking table for an arena
 
-    The Rtt is big enough to hold an entry for each free block (NoFree)
+    The Rtt is big enough to hold an entry for each free block (NFree)
 
     @retval EFI_SUCCESS if the routine succeeds
 
@@ -121,13 +120,13 @@ BttReadArena(
     @retval EFI_SUCCESS if the routine succeeds
 
     @param [in] pBtt namespace handle
-    @param [in] NoArenas Number of arenas to be read
+    @param [in] NArenas Number of arenas to be read
 **/
 STATIC
 EFI_STATUS
 BttReadArenas(
   IN     BTT *pBtt,
-  IN     UINT32 NoArenas
+  IN     UINT32 NArenas
   );
 
 /**
@@ -271,9 +270,9 @@ BttInit(
 
     Whether BttReadLayout() finds a valid layout or not, it finishes
     updating these layout-related fields:
-    pBtt->NoFree
-    pBtt->NoLbas
-    pBtt->NoArenas
+    pBtt->NFree
+    pBtt->NLbas
+    pBtt->NArenas
     since these fields are used even before a valid layout it written.
   **/
 
@@ -282,7 +281,7 @@ BttInit(
     return NULL;
   }
   // Set blockcount to usable size, excluding metadata
-  ((NAMESPACE *) pNamespace)->UsableSize = pBtt->NoLbas * pBtt->LbaSize;
+  ((NAMESPACE *) pNamespace)->UsableSize = pBtt->NLbas * pBtt->LbaSize;
 
   NVDIMM_DBG("Success, pBtt=%p", pBtt);
   return pBtt;
@@ -299,8 +298,8 @@ IsLbaValid(
     return EFI_INVALID_PARAMETER;
   }
 
-  if (Lba >= pBtt->NoLbas) {
-    NVDIMM_DBG("lba out of range(NoLbas %lu)", pBtt->NoLbas);
+  if (Lba >= pBtt->NLbas) {
+    NVDIMM_DBG("lba out of range(NLbas %lu)", pBtt->NLbas);
     return EFI_INVALID_PARAMETER;
   }
 
@@ -385,15 +384,17 @@ BttReadFlogPair(
   IN     UINT32 FlogNum
   )
 {
-  BTT_FLOG_PAIR FlogPair;
-  UINT8 CurrentFlog = 0;
+  BTT_FLOG_PAIR * pFlogPair = NULL;
+  UINT8 CurrentFlogIndex = 0;
   UINT64 MapEntryOffset = 0;
   BTT_MAP_ENTRIES Entry;
   UINT8 CurrentMapPos = 0;
   UINT32 CurrentMap = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
-  SetMem(&FlogPair, sizeof(FlogPair), 0x0);
+  pFlogPair = &(pFlogRuntime->FlogPair);
+
+  SetMem(pFlogPair, sizeof(BTT_FLOG_PAIR), 0x0);
   SetMem(&Entry, sizeof(Entry), 0x0);
 
   NVDIMM_VERB("pBttp=%p pArena=%p FlogOffset=%x pFlogRuntime=%p FlogNum=%d",
@@ -412,7 +413,7 @@ BttReadFlogPair(
   ReturnCode = ReadNamespaceBytes(
     pBtt->pNamespace,
     FlogOffset,
-    &FlogPair,
+    pFlogPair,
     sizeof(BTT_FLOG_PAIR)
   );
 
@@ -420,14 +421,14 @@ BttReadFlogPair(
     return ReturnCode;
   }
 
-  if(EFI_ERROR(IsLbaValid(pBtt, FlogPair.Flog[0].Lba)) || EFI_ERROR(IsLbaValid(pBtt, FlogPair.Flog[1].Lba))) {
+  if(EFI_ERROR(IsLbaValid(pBtt, pFlogPair->Flog[0].Lba)) || EFI_ERROR(IsLbaValid(pBtt, pFlogPair->Flog[1].Lba))) {
     return EFI_INVALID_PARAMETER;
   }
 
   NVDIMM_VERB("FlogPair[0] FlogOffset=%x OldMap=%d NewMap=%d Seq=%d",
-    FlogOffset, FlogPair.Flog[0].OldMap, FlogPair.Flog[0].NewMap, FlogPair.Flog[0].Seq);
+    FlogOffset, pFlogPair->Flog[0].OldMap, pFlogPair->Flog[0].NewMap, pFlogPair->Flog[0].Seq);
   NVDIMM_VERB("FlogPair[1] OldMap=%d NewMap=%d Seq=%d",
-    FlogPair.Flog[1].OldMap, FlogPair.Flog[1].NewMap, FlogPair.Flog[1].Seq);
+    pFlogPair->Flog[1].OldMap, pFlogPair->Flog[1].NewMap, pFlogPair->Flog[1].Seq);
 
   /*
     Interesting cases:
@@ -436,41 +437,43 @@ BttReadFlogPair(
       - two valid Seq numbers: higher number is current Entry
       - identical Seq numbers: layout consistency error
   */
-  if (FlogPair.Flog[0].Seq == FlogPair.Flog[1].Seq) {
-    NVDIMM_DBG("Flog layout error: bad Seq numbers %d %d\n", FlogPair.Flog[0].Seq, FlogPair.Flog[1].Seq);
+  if (pFlogPair->Flog[0].Seq == pFlogPair->Flog[1].Seq) {
+    NVDIMM_DBG("Flog layout error: bad Seq numbers %d %d\n", pFlogPair->Flog[0].Seq, pFlogPair->Flog[1].Seq);
     SET_BIT(&pArena->Flags, BTTINFO_FLAG_ERROR);
-    return ReturnCode;
-  } else if (FlogPair.Flog[0].Seq == 0) {
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
+  } else if (pFlogPair->Flog[0].Seq == 0) {
     /* singleton valid Flog at FlogPair[1] */
-    CurrentFlog = 1;
+    CurrentFlogIndex = 1;
     pFlogRuntime->Next = 0;
-  } else if(FlogPair.Flog[1].Seq == 0) {
+  } else if(pFlogPair->Flog[1].Seq == 0) {
     /* singleton valid Flog at FlogPair[0] */
-    CurrentFlog = 0;
+    CurrentFlogIndex = 0;
     pFlogRuntime->Next = 1;
-  } else if(NSEQ(FlogPair.Flog[0].Seq) == FlogPair.Flog[1].Seq) {
+  } else if(NSEQ(pFlogPair->Flog[0].Seq) == pFlogPair->Flog[1].Seq) {
     /* FlogPair[1] has the later Sequence number */
-    CurrentFlog = 1;
+    CurrentFlogIndex = 1;
     pFlogRuntime->Next = 0;
-  } else {
+  } else if (pFlogPair->Flog[0].Seq == NSEQ(pFlogPair->Flog[1].Seq)) {
     /* FlogPair[0] has the later Sequence number */
-    CurrentFlog = 0;
+    CurrentFlogIndex = 0;
     pFlogRuntime->Next = 1;
+  } else {
+    NVDIMM_ERR("Flog layout error, not off by 1");
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
   }
 
   NVDIMM_VERB("run-time Flog Next is %d", pFlogRuntime->Next);
 
-  /* copy current Flog into run-time Flog state */
-  pFlogRuntime->FlogPair = FlogPair;
-
   NVDIMM_VERB("read Flog[%d]: Lba %d old %d%s%s new %d%s%s", FlogNum,
-    FlogPair.Flog[CurrentFlog].Lba,
-    FlogPair.Flog[CurrentFlog].OldMap & BTT_MAP_ENTRY_LBA_MASK,
-     (FlogPair.Flog[CurrentFlog].OldMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",
-     (FlogPair.Flog[CurrentFlog].OldMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "",
-    FlogPair.Flog[CurrentFlog].NewMap & BTT_MAP_ENTRY_LBA_MASK,
-     (FlogPair.Flog[CurrentFlog].NewMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",
-     (FlogPair.Flog[CurrentFlog].NewMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "");
+    pFlogPair->Flog[CurrentFlogIndex].Lba,
+    pFlogPair->Flog[CurrentFlogIndex].OldMap & BTT_MAP_ENTRY_LBA_MASK,
+     (pFlogPair->Flog[CurrentFlogIndex].OldMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",
+     (pFlogPair->Flog[CurrentFlogIndex].OldMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "",
+    pFlogPair->Flog[CurrentFlogIndex].NewMap & BTT_MAP_ENTRY_LBA_MASK,
+     (pFlogPair->Flog[CurrentFlogIndex].NewMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",
+     (pFlogPair->Flog[CurrentFlogIndex].NewMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "");
 
   /*
     Decide if the current Flog Info represents a completed
@@ -485,44 +488,41 @@ BttReadFlogPair(
     and doesn't require reading the map to see if recovery is
     required.
   */
-  if(FlogPair.Flog[CurrentFlog].OldMap == FlogPair.Flog[CurrentFlog].NewMap) {
-    NVDIMM_VERB("Flog[%d] Entry complete(initial state)", FlogNum);
-    return ReturnCode;
+  if(pFlogPair->Flog[CurrentFlogIndex].OldMap == pFlogPair->Flog[CurrentFlogIndex].NewMap) {
+    NVDIMM_ERR("Flog[%d] Entry complete(initial state)", FlogNum);
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
   }
 
   /* convert pre-map LBA into an offset into the map */
-  MapEntryOffset = pArena->MapOffset + sizeof(BTT_MAP_ENTRIES) * BttGetMapFromLba(FlogPair.Flog[CurrentFlog].Lba);
+  MapEntryOffset = pArena->MapOffset + sizeof(BTT_MAP_ENTRIES) * BttGetMapFromLba(pFlogPair->Flog[CurrentFlogIndex].Lba);
 
   /* read current map Entry */
-  EFI_STATUS ReadResult = ReadNamespaceBytes(
+  CHECK_RESULT(ReadNamespaceBytes(
     pBtt->pNamespace,
     MapEntryOffset,
     &Entry,
     sizeof(BTT_MAP_ENTRIES)
-  );
+  ), Finish);
 
-  if(EFI_ERROR(ReadResult)) {
-    return ReadResult;
-  }
-
-  CurrentMapPos = BttGetPositionInMapFromLba(FlogPair.Flog[CurrentFlog].Lba);
+  CurrentMapPos = BttGetPositionInMapFromLba(pFlogPair->Flog[CurrentFlogIndex].Lba);
   CurrentMap = Entry.MapEntryLba [CurrentMapPos];
 
   if (MapEntryIsInitial(CurrentMap)) {
-    Entry.MapEntryLba[CurrentMapPos] = FlogPair.Flog[CurrentFlog].Lba | BTT_MAP_ENTRY_NORMAL;
+    Entry.MapEntryLba[CurrentMapPos] = pFlogPair->Flog[CurrentFlogIndex].Lba | BTT_MAP_ENTRY_NORMAL;
     CurrentMap = Entry.MapEntryLba[CurrentMapPos];
   }
 
-  if(FlogPair.Flog[CurrentFlog].NewMap != CurrentMap && FlogPair.Flog[CurrentFlog].OldMap == CurrentMap) {
+  if(pFlogPair->Flog[CurrentFlogIndex].NewMap != CurrentMap && pFlogPair->Flog[CurrentFlogIndex].OldMap == CurrentMap) {
     /* last update didn't complete */
     NVDIMM_VERB("recover Flog[%d]: map[%d]: %d",
-      FlogNum, FlogPair.Flog[CurrentFlog].Lba, FlogPair.Flog[CurrentFlog].NewMap);
+      FlogNum, pFlogPair->Flog[CurrentFlogIndex].Lba, pFlogPair->Flog[CurrentFlogIndex].NewMap);
 
     /*
       Recovery step is to complete the transaction by
       updating the map Entry.
     */
-    Entry.MapEntryLba [CurrentMapPos] = FlogPair.Flog[CurrentFlog].NewMap;
+    Entry.MapEntryLba [CurrentMapPos] = pFlogPair->Flog[CurrentFlogIndex].NewMap;
     EFI_STATUS WriteResult = WriteNamespaceBytes(
       pBtt->pNamespace,
       MapEntryOffset,
@@ -535,9 +535,24 @@ BttReadFlogPair(
     }
   }
 
-  return EFI_SUCCESS;
+  ReturnCode = EFI_SUCCESS;
+Finish:
+  return ReturnCode;
 }
-
+/*
+ * The flog entries are not checksummed.  Instead, increasing sequence
+ * numbers are used to atomically switch the active flog entry between
+ * the first and second struct btt_flog in each slot.  In order for this
+ * to work, the sequence number must be updated only after all the other
+ * fields in the flog are updated.  So the writes to the flog are broken
+ * into two writes, one for the first three fields (lba, old_map, new_map)
+ * and, only after those fields are known to be written durably, the
+ * second write for the seq field is done.
+ *
+ *
+ * NOTE: Our code differs from the spec in keeping a copy of the flog
+ * pair around instead of just the current flog.
+ */
 STATIC
 EFI_STATUS
 BttFlogUpdate(
@@ -548,48 +563,56 @@ BttFlogUpdate(
   IN     UINT32 NewMap
   )
 {
-  UINT8 CurrentFlog = 0;
-  BTT_FLOG_PAIR FlogPair;
-  UINT64 NewFlogOffset = 0;
+  BTT_FLOG * pCurrentFlog = NULL;
+  BTT_FLOG * pNextFlog = NULL;
+  BTT_FLOG_PAIR * pFlogPair = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT64 NextFlogOffset = 0;
 
-  SetMem(&FlogPair, sizeof(FlogPair), 0x0);
-
-  NVDIMM_VERB("pBttp=%p pArena=%p LBA=%x OldMap=%d NewMap=%d",
-    pBtt, pArena, Lba, OldMap, NewMap);
+  NVDIMM_DBG("pBttp=%p pArena=%p ", pBtt, pArena);
+  NVDIMM_DBG("LBA=%x OldMap=%d NewMap=%d", Lba, OldMap, NewMap);
 
   if(!pBtt || !pArena) {
     return EFI_INVALID_PARAMETER;
   }
-  // Curent flog(0 or 1) is calculated from the stored value of Next flog as !Next
-  CurrentFlog = !(pArena->pFlogs[0].Next | 0xFE);
-  FlogPair = pArena->pFlogs[0].FlogPair;
 
-  FlogPair.Flog[CurrentFlog].Lba = Lba;
-  FlogPair.Flog[CurrentFlog].OldMap = OldMap;
-  FlogPair.Flog[CurrentFlog].NewMap = NewMap;
-  FlogPair.Flog[CurrentFlog].Seq = NSEQ(FlogPair.Flog[CurrentFlog].Seq);
+  pFlogPair = &(pArena->pFlogs[0].FlogPair);
+  pNextFlog = &(pFlogPair->Flog[pArena->pFlogs[0].Next]);
+  pCurrentFlog = &(pFlogPair->Flog[1 - pArena->pFlogs[0].Next]);
 
-  NewFlogOffset = pArena->pFlogs[0].Entry;
+  // Update the pNextFlog of our internal flog pair. We currently differ from
+  // the reference implementation in keeping the flog pair instead of just
+  // the current flog.
+  pNextFlog->Lba = Lba;
+  pNextFlog->OldMap = OldMap;
+  pNextFlog->NewMap = NewMap;
+  pNextFlog->Seq = NSEQ(pCurrentFlog->Seq);
 
-  EFI_STATUS WriteResult = WriteNamespaceBytes
-    (pBtt->pNamespace, NewFlogOffset, &FlogPair, sizeof(BTT_FLOG_PAIR));
-  if(EFI_ERROR(WriteResult)) {
-    return WriteResult;
-  }
+  // Write out the pNextFlog entry to the dimm
 
-  /* Flog Entry written successfully, update run-time state */
+  NextFlogOffset = pArena->pFlogs[0].Entry + pArena->pFlogs[0].Next*sizeof(BTT_FLOG);
+
+  // write out first two fields first
+  CHECK_RESULT(WriteNamespaceBytes(pBtt->pNamespace,
+      NextFlogOffset, pNextFlog, sizeof(UINT32) * 2), Finish);
+
+  NextFlogOffset += sizeof(UINT32) * 2;
+
+  // write out new_map and seq field to make it active
+  CHECK_RESULT(WriteNamespaceBytes(pBtt->pNamespace,
+    NextFlogOffset, &(pNextFlog->NewMap), sizeof(UINT32) * 2), Finish);
+
+  // Flog Entry written successfully, update run-time state
   pArena->pFlogs[0].Next = 1 - pArena->pFlogs[0].Next;
-  pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].Lba = Lba;
-  pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].OldMap = OldMap;
-  pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].NewMap = NewMap;
-  pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].Seq = NSEQ(pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].Seq);
 
   NVDIMM_VERB("update Flog[0]: Lba=%d old=%d%s%s new %d%s%s", Lba,
     OldMap & BTT_MAP_ENTRY_LBA_MASK,(OldMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",
      (OldMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "", NewMap & BTT_MAP_ENTRY_LBA_MASK,
      (NewMap & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",(NewMap & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "");
 
-  return EFI_SUCCESS;
+  ReturnCode = EFI_SUCCESS;
+Finish:
+  return ReturnCode;
 }
 
 STATIC
@@ -608,12 +631,12 @@ BttReadFlogs(
     return EFI_INVALID_PARAMETER;
   }
 
-  pArena->pFlogs = (FLOG_RUNTIME *)AllocatePool(pBtt->NoFree * sizeof(FLOG_RUNTIME));
+  pArena->pFlogs = (FLOG_RUNTIME *)AllocatePool(pBtt->NFree * sizeof(FLOG_RUNTIME));
   if(!pArena->pFlogs) {
-    NVDIMM_VERB("Memory allocation for %d Flog Entries", pBtt->NoFree);
+    NVDIMM_VERB("Memory allocation for %d Flog Entries", pBtt->NFree);
     return EFI_OUT_OF_RESOURCES;
   }
-  ZeroMem(pArena->pFlogs, pBtt->NoFree * sizeof(FLOG_RUNTIME));
+  ZeroMem(pArena->pFlogs, pBtt->NFree * sizeof(FLOG_RUNTIME));
 
   /*
     Load up the Flog state.  BttReadFlogPair() will determine if
@@ -624,7 +647,7 @@ BttReadFlogs(
   FlogOffset = pArena->FlogOffset;
   pFlogRuntime = pArena->pFlogs;
 
-  for(Index = 0; Index < pBtt->NoFree; Index++) {
+  for(Index = 0; Index < pBtt->NFree; Index++) {
     ReadFlogPairResult = BttReadFlogPair(pBtt, pArena, FlogOffset, pFlogRuntime, Index);
     if(EFI_ERROR(ReadFlogPairResult)) {
       BttSetArenaError(pBtt, pArena);
@@ -652,14 +675,14 @@ BttBuildRtt(
     return EFI_INVALID_PARAMETER;
   }
 
-  pArena->pRtt = AllocatePool(pBtt->NoFree * sizeof(UINT32));
+  pArena->pRtt = AllocatePool(pBtt->NFree * sizeof(UINT32));
   if(!pArena->pRtt) {
-    NVDIMM_DBG("Memory allocation for %d Rtt Entries failed", pBtt->NoFree);
+    NVDIMM_DBG("Memory allocation for %d Rtt Entries failed", pBtt->NFree);
     return EFI_OUT_OF_RESOURCES;
   }
 
-  for(Lane = 0; Lane < pBtt->NoFree; Lane++) {
-    pArena->pRtt[0] = BTT_MAP_ENTRY_ERROR;
+  for(Lane = 0; Lane < pBtt->NFree; Lane++) {
+    pArena->pRtt[Lane] = BTT_MAP_ENTRY_ERROR;
   }
 
   return EFI_SUCCESS;
@@ -692,15 +715,12 @@ BttReadArena(
 
   NVDIMM_DBG("ArenaOffset=%lx", ArenaOffset);
 
-  ReturnCode = ReadNamespaceBytes(pBtt->pNamespace, ArenaOffset, pBttInfo, sizeof(BTT_INFO));
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  CHECK_RESULT(ReadNamespaceBytes(pBtt->pNamespace, ArenaOffset, pBttInfo, sizeof(BTT_INFO)), Finish);
 
   pArena->Flags = pBttInfo->Flags;
-  pArena->ExternalNoLbas = pBttInfo->ExternalNoLbas;
+  pArena->ExternalNLbas = pBttInfo->ExternalNLbas;
   pArena->InternalLbaSize = pBttInfo->InternalLbaSize;
-  pArena->InternalNoLbas = pBttInfo->InternalNoLbas;
+  pArena->InternalNLbas = pBttInfo->InternalNLbas;
 
   // pBttInfo offsets are relative to beginning of this arena's info block
   // pArena offsets are relative to beginning of encapsulating namespace
@@ -710,15 +730,8 @@ BttReadArena(
   pArena->FlogOffset = ArenaOffset + pBttInfo->FlogOffset;
   pArena->NextOffset = ArenaOffset + pBttInfo->NextOffset;
 
-  ReturnCode = BttReadFlogs(pBtt, pArena);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = BttBuildRtt(pBtt, pArena);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  CHECK_RESULT(BttReadFlogs(pBtt, pArena), Finish);
+  CHECK_RESULT(BttBuildRtt(pBtt, pArena), Finish);
 
 Finish:
   FREE_POOL_SAFE(pBttInfo);
@@ -729,7 +742,7 @@ STATIC
 EFI_STATUS
 BttReadArenas(
   IN     BTT *pBtt,
-  IN     UINT32 NoArenas
+  IN     UINT32 NArenas
   )
 {
   UINT32 ArenasSize = 0;
@@ -742,10 +755,10 @@ BttReadArenas(
   }
 
   EFI_STATUS ErrorValue = EFI_INVALID_PARAMETER;
-  ArenasSize = NoArenas * sizeof(ARENAS);
+  ArenasSize = NArenas * sizeof(ARENAS);
   pBtt->Arenas = AllocatePool(ArenasSize);
   if(!pBtt->Arenas) {
-    NVDIMM_DBG("Memory allocation for %d Arenas failed", NoArenas);
+    NVDIMM_DBG("Memory allocation for %d Arenas failed", NArenas);
     ErrorValue = EFI_OUT_OF_RESOURCES;
     goto RetVal;
   }
@@ -756,7 +769,7 @@ BttReadArenas(
 
   pArena = pBtt->Arenas;
   EFI_STATUS ReadArenaResult;
-  for(Index = 0; Index < NoArenas; Index++) {
+  for(Index = 0; Index < NArenas; Index++) {
     ReadArenaResult = BttReadArena(pBtt, ArenaOffset, pArena);
     if(EFI_ERROR(ReadArenaResult)) {
       ErrorValue = ReadArenaResult;
@@ -774,7 +787,7 @@ BttReadArenas(
 RetVal:
   NVDIMM_DBG("Error clean up");
   if(pBtt->Arenas) {
-    for(Index = 0; Index < pBtt->NoArenas; Index++) {
+    for(Index = 0; Index < pBtt->NArenas; Index++) {
       if(pBtt->Arenas[Index].pFlogs != NULL) {
         FreePool(pBtt->Arenas[Index].pFlogs);
         pBtt->Arenas[Index].pFlogs = NULL;
@@ -799,14 +812,14 @@ BttWriteLayout(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT64 FlogSize = 0;
   UINT32 InternalLbaSize = 0;
-  UINT64 TotalNoLbas = 0;
+  UINT64 TotalNLbas = 0;
   UINT64 RawSize = 0;
   UINT8 ArenaNumber = 0;
   UINT64 ArenaOffset = 0;
   UINT64 ArenaRawSize = 0;
   UINT64 ArenaDataSize = 0;
-  UINT32 InternalNoLbas = 0;
-  UINT32 ExternalNoLbas = 0;
+  UINT32 InternalNLbas = 0;
+  UINT32 ExternalNLbas = 0;
   UINT64 MapSize = 0;
   UINT64 NextOffset = 0;
   UINT64 InfoOffset = 0;
@@ -833,7 +846,7 @@ BttWriteLayout(
     goto Finish;
   }
 
-  if (pBtt->NoFree == 0) {
+  if (pBtt->NFree == 0) {
     goto Finish;
   }
 
@@ -847,13 +860,13 @@ BttWriteLayout(
     the remainder is at least BTT_MIN_SIZE in size, then
     that adds one more arena.
   **/
-  pBtt->NoArenas = (UINT8)(pBtt->RawSize / BTT_MAX_ARENA_SIZE);
+  pBtt->NArenas = (UINT8)(pBtt->RawSize / BTT_MAX_ARENA_SIZE);
   if(pBtt->RawSize % BTT_MAX_ARENA_SIZE >= BTT_NAMESPACE_MIN_SIZE) {
-    pBtt->NoArenas++;
+    pBtt->NArenas++;
   }
-  NVDIMM_DBG("NoArenas=%d", pBtt->NoArenas);
+  NVDIMM_DBG("NArenas=%d", pBtt->NArenas);
 
-  FlogSize = pBtt->NoFree * ROUNDUP(sizeof(BTT_FLOG_PAIR), BTT_FLOG_PAIR_ALIGN);
+  FlogSize = pBtt->NFree * ROUNDUP(sizeof(BTT_FLOG_PAIR), BTT_FLOG_PAIR_ALIGN);
   FlogSize = ROUNDUP(FlogSize, BTT_ALIGNMENT);
 
   InternalLbaSize = pBtt->LbaSize;
@@ -904,22 +917,22 @@ BttWriteLayout(
     ArenaDataSize -= FlogSize;
 
     /* allow for map alignment padding */
-    InternalNoLbas = (UINT32)((ArenaDataSize - BTT_ALIGNMENT) / (InternalLbaSize + BTT_MAP_ENTRY_SIZE));
-    /* ensure the number of blocks is at least 2*NoFree */
-    if (InternalNoLbas < 2 * pBtt->NoFree) {
-      NVDIMM_DBG("Number of internal blocks: %x, expected at least %d", InternalNoLbas, 2 * pBtt->NoFree);
+    InternalNLbas = (UINT32)((ArenaDataSize - BTT_ALIGNMENT) / (InternalLbaSize + BTT_MAP_ENTRY_SIZE));
+    /* ensure the number of blocks is at least 2*NFree */
+    if (InternalNLbas < 2 * pBtt->NFree) {
+      NVDIMM_DBG("Number of internal blocks: %x, expected at least %d", InternalNLbas, 2 * pBtt->NFree);
       goto Finish;
     }
-    ExternalNoLbas = InternalNoLbas - pBtt->NoFree;
+    ExternalNLbas = InternalNLbas - pBtt->NFree;
 
-    NVDIMM_DBG("InternalNoLbas=%d ExternalNoLbas=%d", InternalNoLbas, ExternalNoLbas);
+    NVDIMM_DBG("InternalNLbas=%d ExternalNLbas=%d", InternalNLbas, ExternalNLbas);
 
-    TotalNoLbas += ExternalNoLbas;
+    TotalNLbas += ExternalNLbas;
 
-    MapSize = ROUNDUP(ExternalNoLbas * BTT_MAP_ENTRY_SIZE, BTT_ALIGNMENT);
+    MapSize = ROUNDUP(ExternalNLbas * BTT_MAP_ENTRY_SIZE, BTT_ALIGNMENT);
     ArenaDataSize -= MapSize;
 
-    if (ArenaDataSize / InternalLbaSize < InternalNoLbas) {
+    if (ArenaDataSize / InternalLbaSize < InternalNLbas) {
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
@@ -966,9 +979,9 @@ BttWriteLayout(
 
     /* write out the initial Flog */
     FlogEntryOffset = ArenaOffset + FlogOffset;
-    NextFreeLba = ExternalNoLbas;
+    NextFreeLba = ExternalNLbas;
     ZeroMem(&FlogPair.Flog[1], sizeof(BTT_FLOG));
-    for (Index = 0; Index < pBtt->NoFree; Index++) {
+    for (Index = 0; Index < pBtt->NFree; Index++) {
       FlogPair.Flog[0].Lba = 0;
       FlogPair.Flog[0].OldMap = FlogPair.Flog[0].NewMap = NextFreeLba;
       FlogPair.Flog[0].Seq = 1;
@@ -1006,10 +1019,10 @@ BttWriteLayout(
       pBttInfo->Minor = 1;
     }
     pBttInfo->ExternalLbaSize = pBtt->LbaSize;
-    pBttInfo->ExternalNoLbas = ExternalNoLbas;
+    pBttInfo->ExternalNLbas = ExternalNLbas;
     pBttInfo->InternalLbaSize = InternalLbaSize;
-    pBttInfo->InternalNoLbas = InternalNoLbas;
-    pBttInfo->NoFree = pBtt->NoFree;
+    pBttInfo->InternalNLbas = InternalNLbas;
+    pBttInfo->NFree = pBtt->NFree;
     pBttInfo->InfoSize = sizeof(*pBttInfo);
     // Following offsets are relative to the beginning of this arena info block
     pBttInfo->NextOffset = NextOffset;
@@ -1040,16 +1053,16 @@ BttWriteLayout(
     ArenaOffset += NextOffset;
   }
 
-  if (pBtt->NoArenas != ArenaNumber) {
+  if (pBtt->NArenas != ArenaNumber) {
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
 
-  pBtt->NoLbas = TotalNoLbas;
+  pBtt->NLbas = TotalNLbas;
 
   if (Write) {
     //The layout is written now, so load up the Arenas, and set laidout flag.
-    BttReadArenas(pBtt, pBtt->NoArenas);
+    BttReadArenas(pBtt, pBtt->NArenas);
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -1067,10 +1080,10 @@ BttReadLayout(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT32 NoArenas = 0;
-  UINT32 SmallestNoFree = MAX_UINT32_VALUE;
+  UINT32 NArenas = 0;
+  UINT32 SmallestNFree = MAX_UINT32_VALUE;
   UINT64 RawSize = 0;
-  UINT64 TotalNoLbas = 0;
+  UINT64 TotalNLbas = 0;
   UINT64 ArenaOffset = 0;
   BTT_INFO *pBttInfo = NULL;
 
@@ -1087,14 +1100,14 @@ BttReadLayout(
     goto Finish;
   }
 
-  pBtt->NoFree = BTT_DEFAULT_NFREE;
+  pBtt->NFree = BTT_DEFAULT_NFREE;
   RawSize = pBtt->RawSize;
 
   ArenaOffset = pBtt->PrimaryInfoOffset;
 
   // For each arena, see if there's a valid Info block
   while(RawSize >= BTT_NAMESPACE_MIN_SIZE) {
-    NoArenas++;
+    NArenas++;
 
     NVDIMM_DBG("ArenaOffset: %llx", ArenaOffset);
 
@@ -1115,9 +1128,9 @@ BttReadLayout(
     if (EFI_ERROR(ReturnCode)) {
       /**
         Failed to find complete BTT metadata.  Just
-        calculate the NoArenas and NoLbas values that will
+        calculate the NArenas and NLbas values that will
         result when BttWriteLayout() gets called.  This
-        allows checks against NoLbas to work correctly
+        allows checks against NLbas to work correctly
         even before the layout is written.
 
         Need to check for a backup info block.
@@ -1135,14 +1148,14 @@ BttReadLayout(
       goto Finish;
     }
 
-    if(pBttInfo->NoFree == 0) {
-      NVDIMM_DBG("invalid NoFree");
+    if(pBttInfo->NFree == 0) {
+      NVDIMM_DBG("invalid NFree");
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
 
-    if(pBttInfo->ExternalNoLbas == 0) {
-      NVDIMM_DBG("invalid ExternalNoLbas");
+    if(pBttInfo->ExternalNLbas == 0) {
+      NVDIMM_DBG("invalid ExternalNLbas");
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
@@ -1153,11 +1166,11 @@ BttReadLayout(
       goto Finish;
     }
 
-    if(pBttInfo->NoFree < SmallestNoFree) {
-      SmallestNoFree = pBttInfo->NoFree;
+    if(pBttInfo->NFree < SmallestNFree) {
+      SmallestNFree = pBttInfo->NFree;
     }
 
-    TotalNoLbas += pBttInfo->ExternalNoLbas;
+    TotalNLbas += pBttInfo->ExternalNLbas;
     ArenaOffset += pBttInfo->NextOffset;
     if(pBttInfo->NextOffset == 0) {
       break;
@@ -1170,21 +1183,21 @@ BttReadLayout(
     RawSize -= pBttInfo->NextOffset;
   }
 
-  if(!NoArenas) {
+  if(!NArenas) {
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
 
-  pBtt->NoArenas = NoArenas;
-  pBtt->NoLbas = TotalNoLbas;
+  pBtt->NArenas = NArenas;
+  pBtt->NLbas = TotalNLbas;
 
-  // All Arenas were valid.  NoFree should be the smallest value found among different arenas.
-  if(SmallestNoFree < pBtt->NoFree) {
-    pBtt->NoFree = SmallestNoFree;
+  // All Arenas were valid.  NFree should be the smallest value found among different arenas.
+  if(SmallestNFree < pBtt->NFree) {
+    pBtt->NFree = SmallestNFree;
   }
 
   // Load up Arenas.
-  ReturnCode = BttReadArenas(pBtt, NoArenas);
+  ReturnCode = BttReadArenas(pBtt, NArenas);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -1228,15 +1241,15 @@ BttLbaToArenaLba(
     return EFI_ABORTED;
   }
 
-  for(Arena = 0; Arena < pBtt->NoArenas; Arena++) {
-    if(Lba < pBtt->Arenas [Arena].ExternalNoLbas) {
+  for(Arena = 0; Arena < pBtt->NArenas; Arena++) {
+    if(Lba < pBtt->Arenas [Arena].ExternalNLbas) {
       break;
     } else {
-      Lba -= pBtt->Arenas [Arena].ExternalNoLbas;
+      Lba -= pBtt->Arenas [Arena].ExternalNLbas;
     }
   }
 
-  if(Arena >= pBtt->NoArenas) {
+  if(Arena >= pBtt->NArenas) {
     return EFI_ABORTED;
   }
 
@@ -1278,7 +1291,7 @@ BttRead(
   SetMem(&Entry, sizeof(Entry), 0x0);
   SetMem(&LatestEntry, sizeof(LatestEntry), 0x0);
 
-  NVDIMM_VERB("pBtt=%p LBA=%x", pBtt, Lba);
+  NVDIMM_VERB("pBtt=%p LBA=%x reading!", pBtt, Lba);
 
   if(!pBtt || !pBuffer) {
     return EFI_INVALID_PARAMETER;
@@ -1404,7 +1417,7 @@ BttCheck(
 
   // for each arena
   pArena = pBtt->Arenas;
-  for(Index = 0; Index < pBtt->NoArenas; Index++) {
+  for(Index = 0; Index < pBtt->NArenas; Index++) {
     // Perform the consistency checks for the arena.
     retVal = BttCheckArena(pBtt, pArena);
     if(EFI_ERROR(retVal)) {
@@ -1434,7 +1447,7 @@ BttCheckArena(
   UINT32 MapBlock = 0;
   UINT32 Index = 0;
   UINT8 Position = 0;
-  UINT8 CurrentFlog = 0;
+  UINT8 CurrentFlogIndex = 0;
   UINT32 Entry = 0;
 
   NVDIMM_DBG("Bttp %p pArena %p", pBtt, pArena);
@@ -1449,7 +1462,7 @@ BttCheckArena(
     goto Finish;
   }
 
-  Bitmapsize = HOW_MANY(pArena->InternalNoLbas, 8);
+  Bitmapsize = HOW_MANY(pArena->InternalNLbas, 8);
   pBitmap = (UINT8 *)AllocatePool(Bitmapsize);
   if(!pBitmap) {
     NVDIMM_DBG("!Memory allocation for Bitmap");
@@ -1463,9 +1476,9 @@ BttCheckArena(
     there are no duplicates.  Bitmap is used to track which LBAs have
     been seen so far.
   **/
-  MapsCount = BttGetMapFromLba(pArena->ExternalNoLbas);
-  MapEndPosition = BttGetPositionInMapFromLba(pArena->ExternalNoLbas);
-  MapSize = ROUNDUP(pArena->ExternalNoLbas * BTT_MAP_ENTRY_SIZE, BTT_ALIGNMENT);
+  MapsCount = BttGetMapFromLba(pArena->ExternalNLbas);
+  MapEndPosition = BttGetPositionInMapFromLba(pArena->ExternalNLbas);
+  MapSize = ROUNDUP(pArena->ExternalNLbas * BTT_MAP_ENTRY_SIZE, BTT_ALIGNMENT);
   // Read entire map layout in 4k blocks
   for(MapBlock = 0; MapBlock <= MapSize / BTT_ALIGNMENT; MapBlock++) {
     ReturnCode = ReadNamespaceBytes
@@ -1504,7 +1517,7 @@ BttCheckArena(
         }
 
         /* check if entry is valid */
-        if(MapEntry >= pArena->ExternalNoLbas) {
+        if(MapEntry >= pArena->ExternalNLbas) {
           NVDIMM_DBG("map[%d] Entry out of bounds: %d", Index, MapEntry);
           goto Finish;
         }
@@ -1525,9 +1538,9 @@ BttCheckArena(
     and checking for duplications.  It is sufficient to read the
     run-time Flog here, avoiding more calls to NsRead.
   */
-  for (Index = 0; Index < pBtt->NoFree; Index++) {
-    CurrentFlog = !(pArena->pFlogs[Index].Next | 0xFE);
-    Entry = pArena->pFlogs[Index].FlogPair.Flog[CurrentFlog].OldMap;
+  for (Index = 0; Index < pBtt->NFree; Index++) {
+    CurrentFlogIndex = 1 - pArena->pFlogs[Index].Next;
+    Entry = pArena->pFlogs[Index].FlogPair.Flog[CurrentFlogIndex].OldMap;
     Entry &= BTT_MAP_ENTRY_LBA_MASK;
 
     if (IS_BIT_SET(pBitmap, Entry)) {
@@ -1543,7 +1556,7 @@ BttCheckArena(
     Make sure every possible post-map LBA was accounted for
     in the two loops above.
   */
-  for(Index = 0; Index < pArena->InternalNoLbas; Index++) {
+  for(Index = 0; Index < pArena->InternalNLbas; Index++) {
     if (IS_BIT_CLEARED(pBitmap, Index)) {
       NVDIMM_DBG("Unreferenced LBA: %d", Index);
       ReturnCode = EFI_ABORTED;
@@ -1582,14 +1595,14 @@ BttMapLock(
   MapEntryOffset = pArena->MapOffset + sizeof(BTT_MAP_ENTRIES) * MapNumber;
 
   /*
-    BttMapLock[] contains NoFree locks which are used to protect the map
+    BttMapLock[] contains NFree locks which are used to protect the map
     from concurrent access to the same cache line. The index into
     BttMapLock[] is calculated by looking at the byte offset into the map
      (PreMapLba * BTT_MAP_ENTRY_SIZE), figuring out how many cache lines
     that is into the map that is(dividing by BTT_MAP_LOCK_ALIGN), and
     then selecting one of nfree locks(the modulo at the end).
   */
-  BttMapLockNum = MapNumber % pBtt->NoFree;
+  BttMapLockNum = MapNumber % pBtt->NFree;
 
   /* read the old map Entry */
   EFI_STATUS ReadResult = ReadNamespaceBytes
@@ -1630,7 +1643,7 @@ BttMapUnlock(
 
   MapNumber = BttGetMapFromLba(PreMapLba);
   MapEntryOffset = pArena->MapOffset + sizeof(BTT_MAP_ENTRIES) * MapNumber;
-  BttMapLockNum = MapNumber % pBtt->NoFree;
+  BttMapLockNum = MapNumber % pBtt->NFree;
 
   /* write the new map Entry */
   EFI_STATUS RetVal = WriteNamespaceBytes
@@ -1661,7 +1674,7 @@ BttWrite(
 {
   ARENAS *pArena = NULL;
   UINT32 PreMapLba = 0;
-  UINT8 CurrentFlog = 0;
+  UINT8 CurrentFlogIndex = 0;
   UINT32 FreeMap = 0;
   UINT32 Index = 0;
   UINT64 DataBlockOffset = 0;
@@ -1669,7 +1682,7 @@ BttWrite(
   UINT8 PosInEntry = 0;
   UINT32 OldMap = 0;
 
-  NVDIMM_VERB("pBtt=%p LBA=%x", pBtt, Lba);
+  NVDIMM_VERB("pBtt=%p LBA=%x writing!", pBtt, Lba);
   SetMem(&MapEntry, sizeof(MapEntry), 0x0);
 
   if(!pBtt) {
@@ -1711,13 +1724,13 @@ BttWrite(
      doesn't appear in the read tracking table, so scan that first
      and if found, wait for the thread reading from it to finish.
   */
-  CurrentFlog = !(pArena->pFlogs[0].Next | 0xFE);
-  FreeMap = (pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].OldMap & BTT_MAP_ENTRY_LBA_MASK) | BTT_MAP_ENTRY_NORMAL;
+  CurrentFlogIndex = 1 - pArena->pFlogs[0].Next;
+  FreeMap = (pArena->pFlogs[0].FlogPair.Flog[CurrentFlogIndex].OldMap & BTT_MAP_ENTRY_LBA_MASK) | BTT_MAP_ENTRY_NORMAL;
 
-  NVDIMM_VERB("FreeMap=%x(before mask %x)", FreeMap, pArena->pFlogs[0].FlogPair.Flog[CurrentFlog].OldMap);
+  NVDIMM_VERB("FreeMap=%x(before mask %x)", FreeMap, pArena->pFlogs[0].FlogPair.Flog[CurrentFlogIndex].OldMap);
 
   /* wait for other threads to finish any reads on free block */
-  for(Index = 0; Index < pBtt->NoLanes; Index++) {
+  for(Index = 0; Index < pBtt->NLanes; Index++) {
     while(pArena->pRtt[Index] == FreeMap) {
       ;
     }
@@ -1840,7 +1853,7 @@ BttRelease(
 
   if(pBtt) {
     if(pBtt->Arenas) {
-      for(Index = 0; Index < pBtt->NoArenas; Index++) {
+      for(Index = 0; Index < pBtt->NArenas; Index++) {
         if(pBtt->Arenas[Index].pFlogs) {
           FreePool(pBtt->Arenas[Index].pFlogs);
         }

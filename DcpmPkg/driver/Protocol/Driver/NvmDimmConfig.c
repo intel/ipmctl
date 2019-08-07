@@ -5663,6 +5663,7 @@ UpdateFw(
   UINT32 UpdateFailures = 0;
   UINT32 VerificationFailures = 0;
   UINT32 ForceRequiredDimms = 0;
+  UINT16 SubsystemDeviceId = 0x0;
 
   EFI_STATUS LongOpStatusReturnCode = 0;
   NVM_STATUS LongOpNvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
@@ -5714,7 +5715,22 @@ UpdateFw(
   FileHandle->Close(FileHandle);
   FileHandle = NULL;
 
-  if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, &pFileHeader, &pErrorMessage)) {
+  // find the device id.  Must be same for all Dimmms
+  if (DimmsNum > 0)
+  {
+    SubsystemDeviceId = pDimms[0]->SubsystemDeviceId;
+    for (Index = 1; Index < DimmsNum; ++Index)
+    {
+      if (SubsystemDeviceId != pDimms[Index]->SubsystemDeviceId)
+      {
+        NVDIMM_DBG("Dimms with different subsystem device ids are not allowed.");
+        pCommandStatus->GeneralStatus = NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED;
+        goto Finish;
+      }
+    }
+  }
+
+  if (!LoadFileAndCheckHeader(pFileName, pWorkingDirectory, FlashSPI, SubsystemDeviceId, &pFileHeader, &pErrorMessage)) {
     for (Index = 0; Index < DimmsNum; Index++) {
       VerificationFailures++;
       SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_IMAGE_FILE_NOT_VALID, TRUE);

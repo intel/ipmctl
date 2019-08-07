@@ -197,6 +197,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: the FW was unable to stage and no long op code was recoverable
   NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
+  NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when dimm that are different generations
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

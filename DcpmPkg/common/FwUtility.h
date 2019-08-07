@@ -10,12 +10,14 @@
 #include "NvmTypes.h"
 
 #define MAX_FIRMWARE_IMAGE_SIZE_KB 788
-#define FIRMWARE_RECOVERY_IMAGE_SIZE_KB 1024
+#define FIRMWARE_RECOVERY_IMAGE_SPI_AEP_SIZE_KB 1024
+#define FIRMWARE_RECOVERY_IMAGE_SPI_BPS_SIZE_KB 2048
 /**
   The maximum file size that a new firmware image can have - in bytes.
 **/
 #define MAX_FIRMWARE_IMAGE_SIZE_B         KIB_TO_BYTES(MAX_FIRMWARE_IMAGE_SIZE_KB)
-#define FIRMWARE_SPI_IMAGE_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SIZE_KB)
+#define FIRMWARE_SPI_IMAGE_AEP_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_AEP_SIZE_KB)
+#define FIRMWARE_SPI_IMAGE_BPS_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_BPS_SIZE_KB)
 #define NO_FW_GIVEN_VERSION_MSG           L"None"
 
 /** Firmware types **/
@@ -263,6 +265,7 @@ ValidateImage(
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
+  @param[in] SubsystemDeviceId is the identifer of the revision of Dimm (AEP vs BPS)
   @param[out] ppError is the pointer to a Unicode string that will contain
     the details about the failure. The caller is responsible to free the allocated
     memory with the FreePool function.
@@ -274,6 +277,7 @@ BOOLEAN
 ValidateRecoverySpiImage(
   IN     FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
+  IN     UINT16 SubsystemDeviceId,
      OUT CHAR16 **ppError
   );
 
@@ -295,6 +299,7 @@ ValidateRecoverySpiImage(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] Recovery flag indicates if this is standard or recovery image
+  @param[in] SubsystemDeviceId identifer for dimm generation
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.
   @param[out] ppError the pointer to the pointer of the Unicode string that will contain
@@ -308,6 +313,7 @@ LoadFileAndCheckHeader(
   IN     CHAR16 *pFilePath,
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN Recovery,
+  IN     UINT16 SubsystemDeviceId,
      OUT FW_IMAGE_HEADER **ppImageHeader,
      OUT CHAR16 **ppError
   );

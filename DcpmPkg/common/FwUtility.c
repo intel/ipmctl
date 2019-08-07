@@ -56,6 +56,7 @@ ValidateImage(
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
+  @param[in] SubsystemDeviceId is the identifer of the revision of Dimm (AEP vs BPS)
   @param[out] ppError is the pointer to a Unicode string that will contain
     the details about the failure. The caller is responsible to free the allocated
     memory with the FreePool function.
@@ -67,6 +68,7 @@ BOOLEAN
 ValidateRecoverySpiImage(
   IN     FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
+  IN     UINT16 SubsystemDeviceId,
      OUT CHAR16** ppError
   )
 {
@@ -80,7 +82,13 @@ ValidateRecoverySpiImage(
     goto Finish;
   }
 
-  if (ImageSize != FIRMWARE_SPI_IMAGE_SIZE_B) {
+  if ((SubsystemDeviceId != SPD_DEVICE_ID_10) && (SubsystemDeviceId != SPD_DEVICE_ID_15)) {
+    *ppError = CatSPrint(NULL, L"Unknown Device Id.  Cannot determine expected image size.");
+    goto Finish;
+  }
+
+  if (((SubsystemDeviceId == SPD_DEVICE_ID_10) && (ImageSize != FIRMWARE_SPI_IMAGE_AEP_SIZE_B)) ||
+    ((SubsystemDeviceId == SPD_DEVICE_ID_15) && (ImageSize != FIRMWARE_SPI_IMAGE_BPS_SIZE_B))) {
     *ppError = CatSPrint(NULL, L"The image has wrong size! Please try another image.");
     goto Finish;
   }
@@ -193,6 +201,7 @@ IsFwStaged(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] FlashSPI flag indicates if this is standard or SPI image
+  @param[in] SubsystemDeviceId identifer for dimm generation
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.
   @param[out] ppError the pointer to the pointer of the Unicode string that will contain
@@ -206,6 +215,7 @@ LoadFileAndCheckHeader(
   IN     CHAR16 *pFilePath,
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN FlashSPI,
+  IN     UINT16 SubsystemDeviceId,
      OUT FW_IMAGE_HEADER **ppImageHeader,
      OUT CHAR16 **ppError
   )
@@ -243,10 +253,25 @@ LoadFileAndCheckHeader(
     goto FinishClose;
   }
 
-  if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
-      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_SIZE_B)) {
-    NVDIMM_DBG("File size equals: %d.\n", BuffSize);
-    *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
+  if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
+    if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
+      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_AEP_SIZE_B)) {
+      NVDIMM_DBG("File size equals: %d.\n", BuffSize);
+      *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
+      ReturnValue = FALSE;
+      goto FinishClose;
+    }
+  } else if (SubsystemDeviceId == SPD_DEVICE_ID_15) {
+    if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
+      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_BPS_SIZE_B)) {
+      NVDIMM_DBG("File size equals: %d.\n", BuffSize);
+      *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
+      ReturnValue = FALSE;
+      goto FinishClose;
+    }
+  } else {
+    NVDIMM_DBG("Unknown Subsystem Device Id recieved: %d.\n", SubsystemDeviceId);
+    *ppError = CatSPrint(NULL, L"Error: Subsystem Device Id is unknown. Cannot determine what file size should be.\n");
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -314,7 +339,7 @@ LoadFileAndCheckHeader(
 
   }
   if (FlashSPI) {
-    ReturnValue = ValidateRecoverySpiImage(*ppImageHeader, FileSize, ppError);
+    ReturnValue = ValidateRecoverySpiImage(*ppImageHeader, FileSize, SubsystemDeviceId, ppError);
   } else {
     ReturnValue = ValidateImage(*ppImageHeader, FileSize, ppError);
   }

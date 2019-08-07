@@ -178,8 +178,11 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR,
   MAX_AVG_POWER_LIMIT_STR,
   MAX_TURBO_MODE_POWER_CONSUMPTION_STR,
-  MAX_AVERAGE_POWER_TIME_CONSTANT,
-  AVERAGE_POWER_TIME_CONSTANT_STEP,
+  MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT,
+  MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT,
+  MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP,
+  MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT,
+  AVERAGE_REPORTING_TIME_CONSTANT_STEP,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
   UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
   THERMAL_THROTTLE_LOSS_STR,
@@ -248,8 +251,11 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR
   MAX_AVG_POWER_LIMIT_STR,
   MAX_TURBO_MODE_POWER_CONSUMPTION_STR,
-  MAX_AVERAGE_POWER_TIME_CONSTANT,
-  AVERAGE_POWER_TIME_CONSTANT_STEP,
+  MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT,
+  MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT,
+  MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP,
+  MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT,
+  AVERAGE_REPORTING_TIME_CONSTANT_STEP,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
   UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
   THERMAL_THROTTLE_LOSS_STR,
@@ -1224,19 +1230,37 @@ ShowDimms(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVG_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxAveragePowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
         }
 
-        /** MaxTurboModePowerConsumption **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_TURBO_MODE_POWER_CONSUMPTION_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_TURBO_MODE_POWER_CONSUMPTION_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxTurboModePowerConsumption, FORMAT_INT32 L" " MILI_WATT_STR));
+        /** 2.1/2.0 MaxMemoryBandwidthBoostMaxPowerLimit/MaxTurboModePowerConsumption **/
+        if (ShowAll 
+          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_TURBO_MODE_POWER_CONSUMPTION_STR))
+          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT))) {
+          if (2 == pDimms[DimmIndex].FwVer.FwApiMajor && 0 == pDimms[DimmIndex].FwVer.FwApiMinor) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_TURBO_MODE_POWER_CONSUMPTION_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxMemoryBandwidthBoostMaxPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
+          }
+          else if ((2 == pDimms[DimmIndex].FwVer.FwApiMajor && 1 <= pDimms[DimmIndex].FwVer.FwApiMinor)
+            || 3 <= pDimms[DimmIndex].FwVer.FwApiMajor) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxMemoryBandwidthBoostMaxPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
+          }
         }
 
-        /** MaxAveragePowerTimeConstant **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_AVERAGE_POWER_TIME_CONSTANT))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVERAGE_POWER_TIME_CONSTANT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxAveragePowerTimeConstant, FORMAT_INT32));
+        /** MaxMemoryBandwidthBoostAveragePowerTimeConstant **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxMemoryBandwidthBoostAveragePowerTimeConstant, FORMAT_INT32 L" " TIME_MSR_MS));
         }
 
-        /** AveragePowerTimeConstantStep **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVERAGE_POWER_TIME_CONSTANT_STEP))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVERAGE_POWER_TIME_CONSTANT_STEP, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AveragePowerTimeConstantStep, FORMAT_INT32));
+        /** MemoryBandwidthBoostAveragePowerTimeConstantStep **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MemoryBandwidthBoostAveragePowerTimeConstantStep, FORMAT_INT32 L" " TIME_MSR_MS));
+        }
+
+        /** MaxAveragePowerReportingTimeConstant **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MaxAveragePowerReportingTimeConstant, FORMAT_INT32 L" " TIME_MSR_MS));
+        }
+
+        /** AverageReportingTimeConstantStep **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVERAGE_REPORTING_TIME_CONSTANT_STEP))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVERAGE_REPORTING_TIME_CONSTANT_STEP, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AverageReportingTimeConstantStep, FORMAT_INT32 L" " TIME_MSR_MS));
         }
 
         /** DcpmmAveragePower **/

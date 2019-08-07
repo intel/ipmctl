@@ -416,10 +416,12 @@ typedef struct {
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
   UINT16 MaxAveragePowerLimit;
-  UINT16 MaxTurboModePowerConsumption;
-  UINT32 MaxAveragePowerTimeConstant;
-  UINT32 AveragePowerTimeConstantStep;
-  UINT8 Reserved[104];
+  UINT16 MaxMemoryBandwidthBoostMaxPowerLimit;
+  UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;
+  UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep;
+  UINT32 MaxAveragePowerReportingTimeConstant;
+  UINT32 AverageReportingTimeConstantStep;
+  UINT8 Reserved[96];
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1;
 
 typedef struct {

@@ -458,10 +458,12 @@ typedef struct _DIMM_INFO {
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
 
   //DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS
-  DIMM_INFO_ATTRIB_UINT16 MaxAveragePowerLimit;         //!< Maximum average power budget supported by the Module in mW
-  DIMM_INFO_ATTRIB_UINT16 MaxTurboModePowerConsumption; //!< Maximum turbo power value supported by the module in mW
-  DIMM_INFO_ATTRIB_UINT32 MaxAveragePowerTimeConstant;  //!< Maximum supported value of the Average Power Time Constant and Average Power Reporting Time Constant [ms]
-  DIMM_INFO_ATTRIB_UINT32 AveragePowerTimeConstantStep; //!< Returns increments [ms] allowed by FW when setting Average Power Time Constant and Average Power Reporting Time Constant
+  DIMM_INFO_ATTRIB_UINT16 MaxAveragePowerLimit;                             //!< Maximum average power limit in increments of 250 [mW], if supported by the module. Else, 0x0.
+  DIMM_INFO_ATTRIB_UINT16 MaxMemoryBandwidthBoostMaxPowerLimit;             //!< Maximum value in increments of 250 [mW] that can be set via Set Power Management Policy, if supported by the module. Else, 0x0.
+  DIMM_INFO_ATTRIB_UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;  //!< Maximum supported value [ms] of the Memory Bandwidth Boost Average Power Time Constant.
+  DIMM_INFO_ATTRIB_UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep; //!< Increments [ms] allowed by the FW when setting the Memory Bandwidth Boost Average Power Time Constant.
+  DIMM_INFO_ATTRIB_UINT32 MaxAveragePowerReportingTimeConstant;             //!< Maximum supported value [ms] of the Reporting Average Power Time Constant.
+  DIMM_INFO_ATTRIB_UINT32 AverageReportingTimeConstantStep;                 //!< Increments [ms] allowed by the FW when setting the Average Power Reporting Time Constant.
 
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled

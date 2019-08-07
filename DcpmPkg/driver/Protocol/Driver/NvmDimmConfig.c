@@ -8337,7 +8337,8 @@ DumpFwDebugLog(
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
-  @param[in] AveragePowerReportingTimeConstantMultiplier - AveragePowerReportingTimeConstantMultiplier value to set
+  @param[in] AveragePowerReportingTimeConstantMultiplier - (FIS 2.0 Only) AveragePowerReportingTimeConstantMultiplier value to set
+  @param[in] AveragePowerReportingTimeConstant - (FIS 2.1 and greater) AveragePowerReportingTimeConstant value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -8351,15 +8352,18 @@ SetOptionalConfigurationDataPolicy(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 AveragePowerReportingTimeConstantMultiplier,
+  IN     UINT8 *pAveragePowerReportingTimeConstantMultiplier,
+  IN     UINT32 *pAveragePowerReportingTimeConstant,
      OUT COMMAND_STATUS *pCommandStatus
-  )
+)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PT_OPTIONAL_DATA_POLICY_PAYLOAD OptionalDataPolicyPayload;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
+  BOOLEAN FIS_2_0;
+  BOOLEAN FIS_GTE_2_1;
 
   SetMem(pDimms, sizeof(pDimms), 0x0);
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
@@ -8386,26 +8390,47 @@ SetOptionalConfigurationDataPolicy(
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
+    FIS_2_0 = (2 == pDimms[Index]->FwVer.FwApiMajor && 0 == pDimms[Index]->FwVer.FwApiMinor);
+    FIS_GTE_2_1 = (2 == pDimms[Index]->FwVer.FwApiMajor && 1 <= pDimms[Index]->FwVer.FwApiMinor);
+
+    if ((!pAveragePowerReportingTimeConstantMultiplier && pAveragePowerReportingTimeConstant && FIS_2_0) 
+      || (pAveragePowerReportingTimeConstantMultiplier && !pAveragePowerReportingTimeConstant && FIS_GTE_2_1)) {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FIRMWARE_VERSION_NOT_VALID);
+      continue;
+    }
+
     ReturnCode = FwCmdGetOptionalConfigurationDataPolicy(pDimms[Index], &OptionalDataPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_DEVICE_ERROR;
       goto Finish;
     }
 
-    OptionalDataPolicyPayload.Payload.Fis_2_00.AveragePowerReportingTimeConstantMultiplier = AveragePowerReportingTimeConstantMultiplier;
+    if (FIS_2_0) {
+      OptionalDataPolicyPayload.Payload.Fis_2_00.AveragePowerReportingTimeConstantMultiplier = *pAveragePowerReportingTimeConstantMultiplier;
+    }
+    else if (FIS_GTE_2_1) {
+      OptionalDataPolicyPayload.Payload.Fis_2_01.AveragePowerReportingTimeConstant = *pAveragePowerReportingTimeConstant;
+    }
+    else {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FW_SET_OPTIONAL_DATA_POLICY_FAILED);
+      continue;
+    }
 
     ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimms[Index], &OptionalDataPolicyPayload);
     if (EFI_ERROR(ReturnCode)) {
       if (ReturnCode == EFI_SECURITY_VIOLATION) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
-      } else if (ReturnCode == EFI_NO_RESPONSE) {
+      }
+      else if (ReturnCode == EFI_NO_RESPONSE) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_BUSY_DEVICE);
-      } else {
+      }
+      else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FW_SET_OPTIONAL_DATA_POLICY_FAILED);
       }
-      goto Finish;
     }
-    SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+    else {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+    }
   }
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

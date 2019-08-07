@@ -221,7 +221,7 @@
 #define MODE_PROPERTY                     L"Mode"
 #define PROPERTY_VALUE_NONE               L"None"
 #define PROPERTY_VALUE_SECTOR             L"Sector"
-#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY   L"AveragePowerReportingTimeConstantMultiplier"
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY L"AveragePowerReportingTimeConstantMultiplier"
 #define AVG_PWR_REPORTING_TIME_CONSTANT   L"AveragePowerReportingTimeConstant"
 #define ACCESS_TYPE_PROPERTY              L"AccessType"
 #define ERASE_CAPABLE_PROPERTY            L"EraseCapable"
@@ -323,6 +323,7 @@
 #define HELP_TEXT_PERFORMANCE_CAT       L"Performance Metrics"
 
 #define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY     L"<0, 32>"
+#define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY          L"<100, 12000>"
 
 #define HELP_TEXT_PERFORMANCE_CAT_DETAILS  L"\n    "DCPMM_PERFORMANCE_MEDIA_READS \
                                            L"\n    "DCPMM_PERFORMANCE_MEDIA_WRITES \

@@ -488,6 +488,11 @@ AveragePowerReportingTimeConstantMultiplier::
   consumption measurements. Can be set to a value between 0 and 32. The default
   value is 0.
 
+AveragePowerReportingTimeConstant::
+  The value, in milliseconds, used to determine the time constant for reporting
+  the average power consumption measurements. Can be set to a value between 100
+  and 12000, by increments of 100. The default value is 1000.
+
 ViralPolicy::
   Whether viral policies are enabled on the DCPMM. One of:
   - 0: Disabled - This is the default.

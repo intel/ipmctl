@@ -1194,7 +1194,8 @@ SetOptionalConfigurationDataPolicy(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 AveragePowerReportingTimeConstantMultiplier,
+  IN     UINT8 *AveragePowerReportingTimeConstantMultiplier,
+  IN     UINT32 *AveragePowerReportingTimeConstant,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

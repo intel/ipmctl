@@ -389,12 +389,12 @@ typedef struct _DIMM_INFO {
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
-  DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;              //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
-  DIMM_INFO_ATTRIB_UINT16 AvgPowerLimit;                //!< The power budget in mW used for average power (10000-18000 mW). The default is 12000 mW.
-  DIMM_INFO_ATTRIB_UINT8  AveragePowerTimeConstant_2_0; //!< The value used as a base time window for power usage measurements [ms].
-  DIMM_INFO_ATTRIB_UINT8  TurboModeState;               //!< Returns if the Turbo Mode is currently enabled or not.
-  DIMM_INFO_ATTRIB_UINT16 TurboPowerLimit;              //!< Power limit [mW] used for limiting the Turbo Mode power consumption.
-  DIMM_INFO_ATTRIB_UINT32 AveragePowerTimeConstant_2_1; //!< The value used as a base time window for power usage measurements [ms].
+  DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;                              //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
+  DIMM_INFO_ATTRIB_UINT16 AvgPowerLimit;                                //!< The power budget in mW used for average power (10000-18000 mW). The default is 12000 mW.
+  DIMM_INFO_ATTRIB_UINT8  AveragePowerTimeConstant;                     //!< The value used as a base time window for power usage measurements [ms].
+  DIMM_INFO_ATTRIB_UINT8  MemoryBandwidthBoostFeature;                  //!< Returns if the Turbo Mode is currently enabled or not.
+  DIMM_INFO_ATTRIB_UINT16 MemoryBandwidthBoostMaxPowerLimit;            //!< Power limit [mW] used for limiting the Turbo Mode power consumption.
+  DIMM_INFO_ATTRIB_UINT32 MemoryBandwidthBoostAveragePowerTimeConstant; //!< The value used as a base time window for power usage measurements [ms].
 
   //DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY
   DIMM_INFO_ATTRIB_UINT8  AvgPowerReportingTimeConstantMultiplier;  //!< The value that is used to multiply the base time value used for average power consumption measurements.

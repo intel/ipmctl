@@ -633,17 +633,17 @@ typedef struct {
   /**
     Returns if the Turbo Mode is currently enabled or not.
   **/
-  UINT8 TurboModeState;
+  UINT8 MemoryBandwidthBoostFeature;
   /**
     Power limit [mW] used for limiting the Turbo Mode power consumption.
     Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
     the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
   **/
-  UINT16 TurboPowerLimit;
+  UINT16 MemoryBandwidthBoostMaxPowerLimit;
   /**
     The value used as a base time window for power usage measurements [ms].
   **/
-  UINT32 AveragePowerTimeConstant;
+  UINT32 MemoryBandwidthBoostAveragePowerTimeConstant;
 
   UINT8 Reserved3[115];
 } PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1;

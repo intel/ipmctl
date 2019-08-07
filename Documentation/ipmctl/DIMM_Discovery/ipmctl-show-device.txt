@@ -343,16 +343,16 @@ AvgPowerLimit::
   If the DCPMM firmware power management policy is enabled, the power limit in
   mW used for average power. Refer to FIS for allowable range and default value.
 
-TurboModeState::
-  Returns if the Turbo Mode is currently enabled or not. One of:
+MemoryBandwidthBoostFeature::
+  Returns if the Memory Bandwidth Boost Feature is currently enabled or not. One of:
   - 0x0: Disabled
   - 0x1: Enabled
 
-TurboPowerLimit::
-  The power limit used for limiting the Turbo Mode power consumption [mW].
+MemoryBandwidthBoostMaxPowerLimit::
+  The power limit used for limiting the Memory Bandwidth Boost Feature's power consumption [mW].
 
-AvgPowerTimeConstant::
-  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Average Power Time Constant and Average Power Time Constant Step from the Get Device Characteristics command.
+MemoryBandwidthBoostAveragePowerTimeConstant::
+  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Memory Bandwidth Boost Average Time Constant and Average Power Time Constant Step from the Get Device Characteristics command.
   - Default: 15000 ms
 
 MaxAveragePowerLimit::

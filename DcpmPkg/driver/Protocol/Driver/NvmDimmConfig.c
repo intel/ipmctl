@@ -968,35 +968,37 @@ GetDimmInfo (
     pDimmInfo->AvgPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerLimit;
 
     if (2 == pPowerManagementPolicyPayload->FisMajor && 0 == pPowerManagementPolicyPayload->FisMinor) {
-      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Status.Code = ReturnCode;
-      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->AveragePowerTimeConstant_2_0.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
+      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
     }
     else {
-      pDimmInfo->AveragePowerTimeConstant_2_0.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
     }
 
     if (2 <= pPowerManagementPolicyPayload->FisMajor) {
-      pDimmInfo->TurboModeState.Header.Status.Code = ReturnCode;
-      pDimmInfo->TurboModeState.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->TurboModeState.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboModeState;
+      /* 2.1/2.0: MemoryBandwidthBoostFeature/TurboModeState */
+      pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = ReturnCode;
+      pDimmInfo->MemoryBandwidthBoostFeature.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->MemoryBandwidthBoostFeature.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostFeature;
 
-      pDimmInfo->TurboPowerLimit.Header.Status.Code = ReturnCode;
-      pDimmInfo->TurboPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->TurboPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.TurboPowerLimit;
+      /* 2.1/2.0: MemoryBandwidthBoostMaxPowerLimit/TurboPowerLimit */
+      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = ReturnCode;
+      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostMaxPowerLimit;
     }
     else {
-      pDimmInfo->TurboModeState.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->TurboPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
     }
 
     if (2 <= pPowerManagementPolicyPayload->FisMajor && 1 <= pPowerManagementPolicyPayload->FisMinor) {
-      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Status.Code = ReturnCode;
-      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->AveragePowerTimeConstant_2_1.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.AveragePowerTimeConstant;
+      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostAveragePowerTimeConstant;
     }
     else {
-      pDimmInfo->AveragePowerTimeConstant_2_1.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
     }
   }
 

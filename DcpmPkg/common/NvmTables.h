@@ -111,8 +111,8 @@
 typedef union {
   UINT8 AsUint8;
   struct {
-    UINT8 Major:4;
     UINT8 Minor:4;
+    UINT8 Major:4;
   }Split;
 } ACPI_REVISION;
 

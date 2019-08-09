@@ -728,6 +728,10 @@ GetDimmInfo (
     goto Finish;
   }
 
+#ifdef OS_BUILD
+  GetDimmMappedMemSize(pDimm);
+#endif // OS_BUILD
+
   pDimmInfo->DimmID = pDimm->DimmID;
   pDimmInfo->SocketId = pDimm->SocketId;
   pDimmInfo->ChannelId = pDimm->ChannelId;
@@ -1106,10 +1110,6 @@ GetDimmInfo (
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_OVERWRITE_STATUS;
     }
   }
-
-#ifdef OS_BUILD
-   GetDimmMappedMemSize(pDimm);
-#endif // OS_BUILD
 
   // Data already in pDimm
   pDimmInfo->Configured = pDimm->Configured;

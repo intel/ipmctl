@@ -401,6 +401,7 @@ ShowDimms(
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   UINT32 DimmCount = 0;
+  UINT32 InitializedDimmCount = 0;
   UINT32 UninitializedDimmCount = 0;
   DIMM_INFO *pDimms = NULL;
   DIMM_INFO *pUninitializedDimms = NULL;
@@ -426,6 +427,7 @@ ShowDimms(
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN Found = FALSE;
   BOOLEAN ShowAll = FALSE;
+  BOOLEAN ShowTableView = FALSE;
   BOOLEAN ContainSocketTarget = FALSE;
   COMMAND_STATUS *pCommandStatus = NULL;
   CHAR16 *pAttributeStr = NULL;
@@ -447,6 +449,7 @@ ShowDimms(
   BOOLEAN IsMixedSku;
   BOOLEAN IsSkuViolation;
   BOOLEAN SkuMixedMode = FALSE;
+  DIMM_INFO_CATEGORIES DimmCategories = DIMM_INFO_CATEGORY_NONE;
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
@@ -533,51 +536,21 @@ ShowDimms(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    goto Finish;
+  ShowTableView = !pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet;
+  if (ShowTableView) {
+    DimmCategories = DIMM_INFO_CATEGORY_SECURITY | DIMM_INFO_CATEGORY_SMART_AND_HEALTH;
+  } else {
+    DimmCategories = DIMM_INFO_CATEGORY_ALL;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+  // Populate the list of DIMM_INFO structures with relevant information
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DimmCategories, &pDimms,
+    &DimmCount, &InitializedDimmCount, &UninitializedDimmCount);
+  if (EFI_ERROR(ReturnCode) || (pDimms == NULL)) {
+    NVDIMM_WARN("Failed to populate the list of DIMM_INFO structures");
     goto Finish;
   }
-
-  if (0 == DimmCount && 0 == UninitializedDimmCount) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_DIMMS);
-    goto Finish;
-  }
-
-  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
-  pUninitializedDimms = AllocateZeroPool(sizeof(*pUninitializedDimms) * UninitializedDimmCount);
-
-  if (pDimms == NULL || pUninitializedDimms == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
-    goto Finish;
-  }
-
-  /** retrieve the DIMM list, populated for the minimal show -dimm call for now **/
-  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-    DIMM_INFO_CATEGORY_SECURITY | DIMM_INFO_CATEGORY_SMART_AND_HEALTH, pDimms);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_ABORTED;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, UninitializedDimmCount,
-    pUninitializedDimms);
-
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_ABORTED;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
-    goto Finish;
-  }
+  pUninitializedDimms = &(pDimms[InitializedDimmCount]);
 
   ReturnCode = IsSkuMixed(&SkuMixedMode);
 
@@ -595,15 +568,14 @@ ShowDimms(
 
   /** if a specific DIMM pid was passed in, set it **/
   if (pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
-    pAllDimms = AllocateZeroPool(sizeof(*pAllDimms) * (DimmCount + UninitializedDimmCount));
+    pAllDimms = AllocateZeroPool(sizeof(*pAllDimms) * (DimmCount));
     if (NULL == pAllDimms) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
     CopyMem_S(pAllDimms, sizeof(*pAllDimms) * (DimmCount), pDimms, sizeof(*pDimms) * DimmCount);
-    CopyMem_S(&pAllDimms[DimmCount], sizeof(*pAllDimms) * (UninitializedDimmCount), pUninitializedDimms, sizeof(*pUninitializedDimms) * UninitializedDimmCount);
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
-    ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pAllDimms, DimmCount + UninitializedDimmCount, &pDimmIds,
+    ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pAllDimms, DimmCount, &pDimmIds,
       &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Target value is not a valid Dimm ID");
@@ -611,7 +583,7 @@ ShowDimms(
     }
 
     /*Mark each dimm as ok to display based on the dimms passed by the user*/
-    for (Index1 = 0; Index1 < DimmCount + UninitializedDimmCount; Index1++) {
+    for (Index1 = 0; Index1 < DimmCount; Index1++) {
       for (Index2 = 0; Index2 < DimmIdsNum; Index2++) {
         if (pAllDimms[Index1].DimmID == pDimmIds[Index2]) {
           DimmIsOkToDisplay[Index1] = TRUE;
@@ -652,9 +624,9 @@ ShowDimms(
   }
 
   /** display a summary table of all dimms **/
-  if (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) {
+  if (ShowTableView) {
 
-    for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
+    for (DimmIndex = 0; DimmIndex < InitializedDimmCount; DimmIndex++) {
       if (SocketsNum > 0 && !ContainUint(pSocketIds, SocketsNum, pDimms[DimmIndex].SocketId)) {
         continue;
       }
@@ -710,7 +682,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmCount + DimmIndex);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, InitializedDimmCount + DimmIndex);
 
       pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pUninitializedDimms[DimmIndex].HealthState);
 
@@ -752,10 +724,7 @@ ShowDimms(
 
   /** display detailed view **/
   else {
-    // Collect all properties if the user calls "show -a -dimm"
-    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-      DIMM_INFO_CATEGORY_ALL, pDimms);
-    ShowAll = (!pDispOptions->AllOptionSet && !pDispOptions->DisplayOptionSet) || pDispOptions->AllOptionSet;
+    ShowAll = pDispOptions->AllOptionSet;
 
     // Get whether the system is has a mixed Sku and/or Sku violation
     ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
@@ -764,7 +733,7 @@ ShowDimms(
     }
 
     /** show dimms from Initialized list **/
-    for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
+    for (DimmIndex = 0; DimmIndex < InitializedDimmCount; DimmIndex++) {
       /** matching pid **/
       if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
         continue;
@@ -1533,7 +1502,7 @@ ShowDimms(
         continue;
       }
 
-      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex + DimmCount);
+      PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex + InitializedDimmCount);
 
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, DIMM_ID_STR, FORMAT_HEX, pUninitializedDimms[DimmIndex].DimmHandle);
 
@@ -1647,7 +1616,6 @@ Finish:
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pAllDimms);
   FREE_POOL_SAFE(pDimmIds);
-  FREE_POOL_SAFE(pUninitializedDimms);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

@@ -178,6 +178,13 @@ GetDimmList(
     NVDIMM_DBG("Failed to retrieve the DIMM inventory");
     goto FinishError;
   }
+
+  ReturnCode = BubbleSort((VOID*)*ppDimms, *pDimmCount, sizeof(**ppDimms), CompareDimmIdInDimmInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Dimms list may not be sorted");
+    goto FinishError;
+  }
+
   goto Finish;
 
 FinishError:

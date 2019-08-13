@@ -13,7 +13,7 @@
 #include <IndustryStandard/SmBios.h>
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
-#include <Dcpmm.h>
+#include <DcpmmTypes.h>
 
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \

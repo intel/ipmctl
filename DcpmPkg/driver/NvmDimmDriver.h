@@ -9,7 +9,7 @@
 #include <Uefi.h>
 #include <NvmDimmDriverData.h>
 #include <Dimm.h>
-#include <Dcpmm.h>
+#include <DcpmmTypes.h>
 
 #if defined(DYNAMIC_WA_ENABLE)
 

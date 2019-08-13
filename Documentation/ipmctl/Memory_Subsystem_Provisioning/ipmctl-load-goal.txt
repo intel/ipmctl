@@ -67,7 +67,8 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Loads the memory allocation goal onto specific DCPMMs by supplying one or more
-  comma separated DCPMM identifiers. The default is to load the memory
+  comma separated DCPMM identifiers. This list must include all unconfigured
+  DCPMMs on the affected socket(s). The default is to load the memory
   allocation goal onto all manageable DCPMMs.
 
 -socket [SocketIds]::

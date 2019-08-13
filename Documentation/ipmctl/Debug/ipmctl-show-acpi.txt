@@ -36,7 +36,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 TARGETS
 -------
 -system [NFIT|PCAT|PMTT]::
-  The system ACPI table(s) to display. By default both the NFIT and PCAT tables
+  The system ACPI table(s) to display. By default NFIT, PCAT and PMTT tables
   are displayed. One of:
   - "NFIT" - The NVDIMM Firmware Interface Table
   - "PCAT" - The Platform Capabilities Table

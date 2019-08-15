@@ -65,7 +65,7 @@ typedef union {
 
 #define CONTROLLER_STEPPING_UNKNOWN_STR L"Unknown stepping"
 
-#define MAX_CONFIG_DUMP_FILE_SIZE MIB_TO_BYTES(1)
+#define MAX_CONFIG_DUMP_FILE_SIZE OUT_MB_SIZE
 
 #define MAX_LINE_CHAR_LENGTH 400
 #define MAX_LINE_BYTE_LENGTH (MAX_LINE_CHAR_LENGTH * sizeof(CHAR8))
@@ -360,7 +360,7 @@ typedef union {
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
     }                                                         \
   } while (0)
 
@@ -374,6 +374,15 @@ typedef union {
     }                                                         \
   } while (0)
 
+#define CHECK_RESULT_FILE(Call, Label)                                    \
+  do {                                                                    \
+    ReturnCode = Call;                                                    \
+    if (EFI_ERROR(ReturnCode)) {                                          \
+      NVDIMM_ERR("Error in file operation");                              \
+      ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED); \
+      goto Label;                                                         \
+    }                                                                     \
+  } while (0)
 /**
   Get a variable from UEFI RunTime services.
 

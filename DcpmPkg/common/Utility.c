@@ -1934,7 +1934,7 @@ FileRead(
   }
 
   if (MaxFileSize != 0 && *pFileSize > MaxFileSize) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
+    ReturnCode = EFI_BUFFER_TOO_SMALL;
     goto Finish;
   }
 
@@ -3698,8 +3698,10 @@ CopyMem_S(
 {
 #ifdef OS_BUILD
   int status = os_memcpy(DestinationBuffer, DestLength, SourceBuffer, Length);
-  if(status != 0)
+  if(status != 0) {
+    NVDIMM_CRIT("0x%x, 0x%x, 0x%x, 0x%x, 0x%x", DestinationBuffer, DestLength, SourceBuffer, Length, status);
     NVDIMM_CRIT("os_memcpy failed with ErrorCode: %x", status);
+  }
   return DestinationBuffer;
 #else
   return CopyMem(DestinationBuffer, SourceBuffer, Length);

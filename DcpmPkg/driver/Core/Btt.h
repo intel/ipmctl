@@ -53,10 +53,10 @@ typedef struct _FLOG_RUNTIME {
 **/
 typedef struct _ARENAS {
     UINT32 Flags;           //!< arena Flags (btt_Info)
-    UINT32 ExternalNoLbas;  //!< Advertised number of LBAs in this arena.
+    UINT32 ExternalNLbas;   //!< Advertised number of LBAs in this arena.
     UINT32 InternalLbaSize; //!< Internal LBA size. Each block in the arena data area is this size in bytes.
                             //!< This may be larger than the ExternalLbaSize due to alignment padding between LBAs.
-    UINT32 InternalNoLbas;  //!< Number of blocks in the arena data area
+    UINT32 InternalNLbas;   //!< Number of blocks in the arena data area
 
     /**
         The following offsets are relative to the beginning of
@@ -110,7 +110,7 @@ typedef struct _BTT {
     /**
       Number of concurrent threads allowed per btt
     **/
-    UINT32 NoLanes;
+    UINT32 NLanes;
 
     /**
       UUID of the BTT
@@ -128,9 +128,9 @@ typedef struct _BTT {
     UINT64 RawSize;              //!< Size of containing namespace
     UINT32 LbaSize;              //!< External LBA size
     UINT32 InternalLbaSize;      //!< Internal LBA size, physical block size for the Windows
-    UINT32 NoFree;               //!< Available Flog Entries
-    UINT64 NoLbas;               //!< Total number of external LBAs
-    UINT32 NoArenas;             //!< Number of Arenas
+    UINT32 NFree;               //!< Available Flog Entries
+    UINT64 NLbas;               //!< Total number of external LBAs
+    UINT32 NArenas;             //!< Number of Arenas
     UINT64 PrimaryInfoOffset;    //!< BTT Info Block offset on first arena
 
     /**
@@ -179,7 +179,7 @@ BttReadInfo(
     When submitted a pristine namespace it will be formatted implicitly when
     touched for the first time.
 
-    If arenas have different NoFree values, we will be using the lowest one
+    If arenas have different NFree values, we will be using the lowest one
     found as limiting to the overall "bandwidth".
 
     @retval PBtt namespace handle, NULL on error
@@ -208,7 +208,7 @@ BttInit(
     layout should be written.
 
     Calling with Write == FALSE tells this routine to do the calculations for
-    Bttp->NoArenas and Bttp->NoLbas, but don't write out any metadata.
+    Bttp->NArenas and Bttp->NLbas, but don't write out any metadata.
 
     If successful, sets Bttp->Laidout to 1.
     Otherwise Bttp->Laidout remains 0 so that later attempts to write will try again to create the layout.

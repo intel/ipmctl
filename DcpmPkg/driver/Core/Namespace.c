@@ -447,7 +447,7 @@ InstallNamespaceProtocols(
       goto Finish;
     }
     // In case of Btt enabled we need to calculate LastBlock based on BTT LBA count
-    pNamespace->Media.LastBlock = pNamespace->pBtt->NoLbas - 1;
+    pNamespace->Media.LastBlock = pNamespace->pBtt->NLbas - 1;
   }
 
   pNamespace->BlockIoInstance.Media = &pNamespace->Media;
@@ -3096,11 +3096,6 @@ IoNamespaceBytes(
   NVDIMM_ENTRY();
 
   if (pNamespace == NULL || pBuffer == NULL) {
-    goto Finish;
-  }
-
-  if (Offset % CACHE_LINE_SIZE != 0) {
-    ReturnCode = EFI_BAD_BUFFER_SIZE;
     goto Finish;
   }
 

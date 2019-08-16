@@ -381,7 +381,7 @@ PrintAcpiHeader(
     ((UINT8 *)&pHeader->CreatorId)[1],
     ((UINT8 *)&pHeader->CreatorId)[2],
     ((UINT8 *)&pHeader->CreatorId)[3]);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"CreatorRevision", FORMAT_HEX_NOWIDTH L"\n", pHeader->CreatorRevision);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"CreatorRevision", FORMAT_HEX_NOWIDTH, pHeader->CreatorRevision);
 }
 
 /**
@@ -1125,22 +1125,24 @@ PrintPMTT2(
 
   UINT64 PmttLen = pPMTT->Header.Length;
   UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->NoOfMemoryDevices);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NumOfMemoryDevices", FORMAT_INT32, pPMTT->NoOfMemoryDevices);
+
   while (Offset < PmttLen) {
     PMTT_COMMON_HEADER2 *pCommonHeader = (PMTT_COMMON_HEADER2 *)(((UINT8 *)pPMTT) + Offset);
     NVDIMM_DBG("Common table length: %d, mem devices: %d, Type: %d",
       pCommonHeader->Length, pCommonHeader->NoOfMemoryDevices, pCommonHeader->Type);
     if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
       PMTT_SOCKET2 *pSocket = (PMTT_SOCKET2 *)(((UINT8 *)pPMTT) + Offset);
-      NVDIMM_DBG("Socket ID: %d, no of sockets: %d", pSocket->SocketId);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Socket");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pSocket->Reserved3);
       Offset += sizeof(PMTT_SOCKET2);
     }
@@ -1149,12 +1151,13 @@ PrintPMTT2(
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"iMC");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_INT32, piMC->MemControllerID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_INT32, piMC->MemControllerID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, piMC->Reserved3);
       Offset += sizeof(PMTT_iMC2);
     }
@@ -1179,6 +1182,7 @@ PrintPMTT2(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
       pGuidStr = GuidToStr(&pVendorDevice->TypeUUID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TypeUUID", FORMAT_STR, pGuidStr);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pVendorDevice->Reserved3);
@@ -1195,6 +1199,7 @@ PrintPMTT2(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_INT32, pModule->SmbiosHandle);
       Offset += sizeof(PMTT_MODULE2);
     }

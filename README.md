@@ -15,6 +15,12 @@ ipmctl refers to the following interface components:
 * libipmctl: An Application Programming Interface (API) library for managing DCPMMs.
 * ipmctl: A Command Line Interface (CLI) application for configuring and managing DCPMMs from the command line.
 
+## Releases
+
+01.00.00.xxxx stable branch
+ 
+02.00.00.xxxx development branch, not for production
+
 ## Packages
 
 Some distributions include ipmctl allowing installation via their package manager.

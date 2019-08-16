@@ -17,6 +17,12 @@ ipmctl refers to the following interface components:
 * ipmctl: A Command Line Interface (CLI) application for configuring and managing PMMs from the command line.
 * ipmctl-monitor: A monitor daemon/system service for monitoring the health and status of PMMs.
 
+## Releases
+
+01.00.00.xxxx stable branch
+ 
+02.00.00.xxxx development branch, not for production
+
 ## Packages
 
 Some distributions include ipmctl allowing installation via their package manager.

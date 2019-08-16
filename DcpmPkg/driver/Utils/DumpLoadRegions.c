@@ -522,9 +522,9 @@ GetDimmsCurrentConfig(
   **/
   if (ISsNum > 1) {
     for (Index = 0; Index < DimmConfigsNum; Index++) {
-      for (Index2 = 0; Index2 < DimmConfigsNum; Index2++) {
-        if ((pDimmConfigs[Index].Persistent[0].PersistentIndex == pDimmConfigs[Index2].Persistent[1].PersistentIndex) ||
-            (pDimmConfigs[Index].Persistent[1].PersistentIndex == pDimmConfigs[Index2].Persistent[0].PersistentIndex)) {
+      for (Index2 = Index + 1; Index2 < DimmConfigsNum; Index2++) {
+        if (((pDimmConfigs[Index].Persistent[0].PersistentIndex == pDimmConfigs[Index2].Persistent[1].PersistentIndex) && (pDimmConfigs[Index].Persistent[0].PersistentIndex != 0)) ||
+            ((pDimmConfigs[Index].Persistent[1].PersistentIndex == pDimmConfigs[Index2].Persistent[0].PersistentIndex) && (pDimmConfigs[Index].Persistent[1].PersistentIndex != 0))) {
           PersistentTmp = pDimmConfigs[Index2].Persistent[1];
           pDimmConfigs[Index2].Persistent[1] = pDimmConfigs[Index2].Persistent[0];
           pDimmConfigs[Index2].Persistent[0] = PersistentTmp;

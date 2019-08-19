@@ -186,6 +186,7 @@ UefiMain(
   CHAR16 **ppArgv = NULL;
   UINT32 NextId = 0;
 
+  NVDIMM_ENTRY();
 #ifndef OS_BUILD
   BOOLEAN Ascii = FALSE;
   SHELL_FILE_HANDLE StdIn = NULL;
@@ -234,7 +235,6 @@ UefiMain(
     goto Finish;
   }
 
-  NVDIMM_ENTRY();
   Index = 0;
   ZeroMem(&Input, sizeof(Input));
   ZeroMem(&Command, sizeof(Command));
@@ -1024,9 +1024,14 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
   BOOLEAN IsSmBusProtocolEnabled = FALSE;
   BOOLEAN IsSmallPayloadEnabled = TRUE;
 #endif // OS_BUILD
-
+  NVDIMM_ENTRY();
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_NOT_FOUND;
+    Print(L"Failed to open the NVM DIMM protocol\n");
+    goto Finish;
+  }
 
   if (IsSmBusProtocolEnabled) {
     pAttribs.Protocol = FisTransportSmbus;
@@ -1044,6 +1049,7 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
   }
 
   ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
-
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

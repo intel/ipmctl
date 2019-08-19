@@ -3892,6 +3892,12 @@ GetMemoryResourcesInfo(
   }
 #endif // OS_BUILD
 
+    // PCD CCUR table missing in DIMM
+    if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
+      ReturnCode = EFI_LOAD_ERROR;
+      goto Finish;
+    }
+
     ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity,
         &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
     if (EFI_ERROR(ReturnCode)) {

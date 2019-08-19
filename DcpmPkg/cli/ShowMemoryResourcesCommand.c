@@ -4,6 +4,7 @@
  */
 
 #include <Library/ShellLib.h>
+#include <Library/HiiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include "ShowMemoryResourcesCommand.h"
 #include <Debug.h>
@@ -63,6 +64,7 @@ ShowMemoryResources(
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
+  CHAR16 *pPcdMissingStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   PRINT_CONTEXT *pPrinterCtx = NULL;
 
@@ -109,7 +111,12 @@ ShowMemoryResources(
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_LOAD_ERROR == ReturnCode) {
+    pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CURR_CONF_MISSING), NULL);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
     goto Finish;
   }
@@ -147,6 +154,7 @@ ShowMemoryResources(
 Finish:
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, &ShowMemResourcesDataSetAttribs);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPcdMissingStr);
   NVDIMM_EXIT_I64(ReturnCode);
 
   return  ReturnCode;

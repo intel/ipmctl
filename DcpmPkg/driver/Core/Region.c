@@ -1744,7 +1744,7 @@ VerifyCreatingSupportedRegionConfigs(
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId) {
-        if (!IsDimmManageable(pDimm)) {
+        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)) {
           continue;
         }
 
@@ -1762,7 +1762,7 @@ VerifyCreatingSupportedRegionConfigs(
     /** Get a number of specified configured and unconfigured DIMMs on a given socket **/
     for (Index = 0; Index < DimmsNum; Index++) {
       if (Socket == pDimms[Index]->SocketId) {
-        if (!IsDimmManageable(pDimms[Index])) {
+        if (!IsDimmManageable(pDimms[Index]) || !IsDimmInSupportedConfig(pDimms[Index])) {
           continue;
         }
 

@@ -3911,6 +3911,15 @@ GetRegions(
 
   NVDIMM_ENTRY();
 
+  //This would be just MAX_REGIONS, except there is some HII constraint
+  //making that figure artificially low. Will update when resolved.
+  if (Count > MAX_SOCKETS * MAX_REGIONS_PER_SOCKET) {
+    Rc = EFI_INVALID_PARAMETER;
+    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
+    NVDIMM_WARN("Count passed exceeds the platform maximum region count.");
+    goto Finish;
+  }
+
   Rc = GetRegionList(&pRegionList, UseNfit);
   if (EFI_ERROR(Rc)) {
     if (EFI_NO_RESPONSE == Rc) {

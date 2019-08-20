@@ -387,6 +387,8 @@ typedef struct _DIMM_INFO {
   UINT8 ThermalThrottlePerformanceLossPrct; //!< the average percentage loss (0..100) due to thermal throttling since last read in current boot
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
   UINT8 AitDramEnabled;                     //!< Whether or not the DIMM AIT DRAM is enabled
+  UINT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
+  UINT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
   DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;                              //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
@@ -959,7 +961,9 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_POWER_CYCLES                    7                ///< Power Cycles Sensor ID
 #define SENSOR_TYPE_FW_ERROR_COUNT                  8                ///< Firmware Error Count Sensor ID
 #define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_ALL                             10               ///< All Sensor IDs
+#define SENSOR_TYPE_MAX_MEDIA_TEMPERATURE           10               ///< Max Media Temperature Sensor IDs
+#define SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE      11               ///< Max Controller Temperature Sensor IDs
+#define SENSOR_TYPE_ALL                             12               ///< All Sensor IDs
 #define SENSOR_TYPE_COUNT                           SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
 
 /** @} */

@@ -91,6 +91,9 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = HealthInfo.MediaErrorCount + HealthInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = HealthInfo.UpTime;
 
+  DimmSensorsSet[SENSOR_TYPE_MAX_MEDIA_TEMPERATURE].Value = HealthInfo.MaxMediaTemperature;
+  DimmSensorsSet[SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE].Value = HealthInfo.MaxControllerTemperature;
+
   /** Determine Health State based on Health Status Bit Mask **/
   ConvertHealthBitmask(HealthInfo.HealthStatus, &DimmHealthState);
   DimmSensorsSet[SENSOR_TYPE_DIMM_HEALTH].Value = DimmHealthState;
@@ -149,6 +152,10 @@ SensorTypeToString(
       return DIMM_HEALTH_STR;
     case SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT:
       return UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR;
+    case SENSOR_TYPE_MAX_MEDIA_TEMPERATURE:
+      return  MAX_MEDIA_TEMPERATURE_STR;
+    case SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE:
+      return MAX_CONTROLLER_TEMPERATURE_STR;
     default:
       return L"Unknown";
   }
@@ -169,6 +176,8 @@ SensorValueMeasure(
   switch(SensorType) {
     case SENSOR_TYPE_MEDIA_TEMPERATURE:
     case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+    case SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE:
+    case SENSOR_TYPE_MAX_MEDIA_TEMPERATURE:
       return TEMPERATURE_MSR;
     case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_MSR;

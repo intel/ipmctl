@@ -185,6 +185,8 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   AVERAGE_REPORTING_TIME_CONSTANT_STEP,
   LATCHED_LAST_SHUTDOWN_STATUS_STR,
   UNLATCHED_LAST_SHUTDOWN_STATUS_STR,
+  MAX_MEDIA_TEMPERATURE_STR,
+  MAX_CONTROLLER_TEMPERATURE_STR,
   THERMAL_THROTTLE_LOSS_STR,
   DIMM_HANDLE_STR,
   DIMM_UID_STR,
@@ -450,6 +452,7 @@ ShowDimms(
   BOOLEAN IsSkuViolation;
   BOOLEAN SkuMixedMode = FALSE;
   DIMM_INFO_CATEGORIES DimmCategories = DIMM_INFO_CATEGORY_NONE;
+  BOOLEAN FIS_2_0 = FALSE;
 
   NVDIMM_ENTRY();
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
@@ -744,6 +747,11 @@ ShowDimms(
       }
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
+
+      //Checking the FIS Version
+      if ((pDimms[DimmIndex].FwVer.FwApiMajor >= 2) || (pDimms[DimmIndex].FwVer.FwApiMajor == 1 && pDimms[DimmIndex].FwVer.FwApiMinor >= 13)) {
+        FIS_2_0 = TRUE;
+      }
 
       /** always print the DimmID **/
       ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr,
@@ -1475,6 +1483,39 @@ ShowDimms(
           if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SW_TRIGGER_CTR_STR))) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SW_TRIGGER_CTR_STR, FORMAT_INT32, pDimms[DimmIndex].SoftwareTriggersCounter);
           }
+          if (!FIS_2_0) {
+            /** Max Controller Temperature **/
+            if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_CONTROLLER_TEMPERATURE_STR))) {
+              PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_CONTROLLER_TEMPERATURE_STR, NOT_APPLICABLE_SHORT_STR);
+            }
+            if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_MEDIA_TEMPERATURE_STR))) {
+              PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_MEDIA_TEMPERATURE_STR, NOT_APPLICABLE_SHORT_STR);
+            }
+          }
+          else {
+            /** Max Controller Temperature **/
+            if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_CONTROLLER_TEMPERATURE_STR))) {
+              if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+                pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+              }
+              else {
+                PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_CONTROLLER_TEMPERATURE_STR, FORMAT_UINT32 L" " TEMPERATURE_MSR, pDimms[DimmIndex].MaxControllerTemperature);
+              }
+              FREE_POOL_SAFE(pAttributeStr);
+            }
+
+            /** Max Media Temperature **/
+            if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_MEDIA_TEMPERATURE_STR))) {
+              if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SMART_AND_HEALTH) {
+                pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+              }
+              else {
+                PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MAX_MEDIA_TEMPERATURE_STR, FORMAT_UINT32 L" " TEMPERATURE_MSR, pDimms[DimmIndex].MaxMediaTemperature);
+              }
+              FREE_POOL_SAFE(pAttributeStr);
+            }
+          }
+
         }
 
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MIXED_SKU_STR))) {

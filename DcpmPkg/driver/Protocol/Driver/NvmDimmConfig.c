@@ -944,6 +944,8 @@ GetDimmInfo (
     pDimmInfo->ThermalThrottlePerformanceLossPrct = HealthInfo.ThermalThrottlePerformanceLossPrct;
     pDimmInfo->LastShutdownTime = HealthInfo.LastShutdownTime;
     pDimmInfo->AitDramEnabled = HealthInfo.AitDramEnabled;
+    pDimmInfo->MaxMediaTemperature = HealthInfo.MaxControllerTemperature;
+    pDimmInfo->MaxControllerTemperature = HealthInfo.MaxMediaTemperature;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_POWER_MGMT_POLICY)
@@ -2580,6 +2582,9 @@ GetSmartAndHealth (
   pHealthInfo->PowerOnTime = (UINT32)pPayloadSmartAndHealth->VendorSpecificData.PowerOnTime;
   pHealthInfo->LatchedDirtyShutdownCount = pPayloadSmartAndHealth->LatchedDirtyShutdownCount;
   pHealthInfo->UnlatchedDirtyShutdownCount = pPayloadSmartAndHealth->VendorSpecificData.UnlatchedDirtyShutdownCount;
+  pHealthInfo->MaxMediaTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->VendorSpecificData.MaxMediaTemperature);
+  pHealthInfo->MaxControllerTemperature = TransformFwTempToRealValue(pPayloadSmartAndHealth->VendorSpecificData.MaxControllerTemperature);
+
   /** Get Device Characteristics data **/
   pHealthInfo->ContrTempShutdownThresh =
       TransformFwTempToRealValue(pDevCharacteristics->Payload.Fis_2_00.ControllerShutdownThreshold);

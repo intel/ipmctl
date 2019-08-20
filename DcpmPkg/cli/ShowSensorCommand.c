@@ -188,6 +188,7 @@ ShowSensor(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
+  BOOLEAN FIS_1_13 = FALSE;
 
   struct {
     CHAR16 *pSensorStr;
@@ -202,7 +203,9 @@ ShowSensor(
       {UPTIME_STR, SENSOR_TYPE_UP_TIME},
       {FW_ERROR_COUNT_STR, SENSOR_TYPE_FW_ERROR_COUNT},
       {DIMM_HEALTH_STR, SENSOR_TYPE_DIMM_HEALTH},
-      {UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT}
+      {UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT},
+      {MAX_MEDIA_TEMPERATURE_STR, SENSOR_TYPE_MAX_MEDIA_TEMPERATURE},
+      {MAX_CONTROLLER_TEMPERATURE_STR, SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE}
   };
   UINT32 SensorsNum = ARRAY_SIZE(Sensors);
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -346,6 +349,11 @@ ShowSensor(
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
 
+    //Checking the FIS Version
+    if ((pDimms[DimmIndex].FwVer.FwApiMajor >= 2 )||(pDimms[DimmIndex].FwVer.FwApiMajor == 1 && pDimms[DimmIndex].FwVer.FwApiMinor >= 13)) {
+      FIS_1_13 = TRUE;
+    }
+
     for (SensorIndex = 0; SensorIndex < SENSOR_TYPE_COUNT; SensorIndex++) {
       if ((SensorToDisplay != SENSOR_TYPE_ALL
         && DimmSensorsSet[SensorIndex].Type != SensorToDisplay)) {
@@ -373,6 +381,13 @@ ShowSensor(
             goto Finish;
           }
         }
+        /**
+         If FIS version is less than 1.13 then Max Media Temperature and Max Controller Temperature is N/A
+        **/
+        else if ((!FIS_1_13) && ((ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_MEDIA_TEMPERATURE_STR)
+          || ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_CONTROLLER_TEMPERATURE_STR)))) {
+          pTempBuff = CatSPrintClean(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+        }
         else {
           pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].Value, DimmSensorsSet[SensorIndex].Type);
         }
@@ -380,6 +395,10 @@ ShowSensor(
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_VALUE_STR, pTempBuff);
         FREE_POOL_SAFE(pTempBuff);
       }
+        if ((!FIS_1_13) && ((ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_MEDIA_TEMPERATURE_STR)
+          || ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_CONTROLLER_TEMPERATURE_STR)))) {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_STATE_STR, L"N/A");
+        }
 
       /**
         AlarmThreshold
@@ -413,7 +432,7 @@ ShowSensor(
       **/
       if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, THROTTLING_STOP_THRESHOLD_STR))) {
         switch (SensorIndex) {
-        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+		case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
         case SENSOR_TYPE_MEDIA_TEMPERATURE:
           // Only Media temperature sensor got lower critical threshold
           pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].ThrottlingStopThreshold, DimmSensorsSet[SensorIndex].Type);

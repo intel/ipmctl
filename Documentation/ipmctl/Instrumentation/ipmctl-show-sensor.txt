@@ -155,3 +155,11 @@ EnabledState::
   - 0: Disabled
   - 1: Enabled
   - N/A
+
+MaxMediaTemperature::
+  The highest die temperature reported in degrees Celsius. 
+  This value is persistent through Power Loss as well as not effected by Overwrite Dimm or Media Temperature Error Injection.
+
+MaxControllerTemperature::
+The highest controller temperature repored in degrees Celsius.
+This value is persistent through Power Loss as well as not effected by Overwrite Dimm.

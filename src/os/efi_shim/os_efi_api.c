@@ -223,27 +223,24 @@ initAcpiTables()
   {
     NVDIMM_WARN("Encountered %d failures.", failures);
     ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
   }
 
   if (NULL == PtrNfitTable || NULL == PtrPcatTable)
   {
     NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
     ReturnCode = EFI_NOT_FOUND;
+  }
+
+  ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,
+    &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.pPmttHead,
+    &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
+  if (EFI_ERROR(ReturnCode))
+  {
+    NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
+    ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
-  else
-  {
-    ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,
-      &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.pPmttHead,
-      &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
-    if (EFI_ERROR(ReturnCode))
-    {
-      NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
-      ReturnCode = EFI_NOT_FOUND;
-      goto Finish;
-    }
-  }
+
 Finish:
   if (PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext)) {
     FREE_POOL_SAFE(PtrNfitTable);

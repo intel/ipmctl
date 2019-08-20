@@ -4245,23 +4245,22 @@ ParseAcpiTables(
 
   NVDIMM_ENTRY();
 
-  if (pNfit == NULL || pPcat == NULL || pPMTT == NULL ||
-    ppFitHead == NULL || ppPcatHead == NULL || ppPmttHead == NULL) {
+  if (ppFitHead == NULL || ppPcatHead == NULL || ppPmttHead == NULL) {
     goto Finish;
   }
 
-  *ppFitHead = ParseNfitTable((VOID *)pNfit);
+  ReturnCode = EFI_SUCCESS;
+
+  *ppFitHead = pNfit == NULL ? NULL : ParseNfitTable((VOID *)pNfit);
   if (*ppFitHead == NULL) {
     NVDIMM_DBG("NFIT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
   }
 
-  *ppPcatHead = ParsePcatTable((VOID *)pPcat);
+  *ppPcatHead = pPcat == NULL ? NULL : ParsePcatTable((VOID *)pPcat);
   if (*ppPcatHead == NULL) {
     NVDIMM_DBG("PCAT parsing error.");
     ReturnCode = EFI_DEVICE_ERROR;
-    goto Finish;
   }
 
   /**
@@ -4269,22 +4268,25 @@ ParseAcpiTables(
     ACPI 6.3 requires DIMM fields to be populated using PMTT
     if NfitDeviceHandle Bit 31 is set
   **/
-  Revision.AsUint8 = pPMTT->Revision;
-  if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
-    *ppPmttHead = ParsePmttTable((VOID *)pPMTT);
-    if (*ppPmttHead == NULL) {
-      NVDIMM_DBG("PMTT parsing error.");
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto Finish;
+  if (pPMTT != NULL) {
+    Revision.AsUint8 = pPMTT->Revision;
+    if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+      *ppPmttHead = ParsePmttTable((VOID *)pPMTT);
+      if (*ppPmttHead == NULL) {
+        NVDIMM_DBG("PMTT parsing error.");
+        ReturnCode = EFI_DEVICE_ERROR;
+      }
     }
+    else {
+      *ppPmttHead = NULL;
+    }
+    *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *)pPMTT);
   }
   else {
+    // if PMTT table is Not available skip MM allowed check and let BIOS handle it
+    *pIsMemoryModeAllowed = TRUE;
     *ppPmttHead = NULL;
   }
-
-  *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *) pPMTT);
-
-  ReturnCode = EFI_SUCCESS;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

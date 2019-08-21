@@ -1237,6 +1237,20 @@ typedef struct {
 } PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
 
 /**
+  Get Command Effect Log Input Payload Enum types
+**/
+
+enum GetCelPayloadType {
+  LargePayload = 0x00,
+  SmallPayload = 0x01
+};
+
+enum GetCelLogAction {
+  EntriesCount = 0x00,
+  CelEntries = 0x01
+};
+
+/**
   Passthrough Output Payload:
      Opcode:      0x08h (Get Log Page)
      Sub-Opcode:  0xFFh (Command Effect Log)
@@ -1244,6 +1258,18 @@ typedef struct {
 typedef struct {
   UINT32  LogEntryCount;
   UINT8   Reserved[124];
+} PT_OUTPUT_PAYLOAD_GET_CEL_COUNT;
+
+typedef struct {
+  COMMAND_EFFECT_LOG_ENTRY CelEntry[16];
+} PT_OUTPUT_PAYLOAD_GET_CEL_ENTRIES;
+
+typedef struct {
+  union {
+    PT_OUTPUT_PAYLOAD_GET_CEL_COUNT CelCount;
+    PT_OUTPUT_PAYLOAD_GET_CEL_ENTRIES CelEntries;
+    UINT8 Data[0];
+  } LogTypeData;
 } PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
 
 /**

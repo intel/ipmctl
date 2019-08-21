@@ -340,6 +340,11 @@ ShowCelCommand(
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowCmdEffectLogDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
+  FREE_POOL_SAFE(pCommandEffectDescription);
+  FREE_POOL_SAFE(pDimms);
+  FREE_POOL_SAFE(pDimmIds);
+  FREE_POOL_SAFE(pCelEntry);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

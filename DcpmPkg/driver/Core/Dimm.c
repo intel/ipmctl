@@ -6797,7 +6797,6 @@ PassThru(
     ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
   }
 #else
-    Print(L"Attempting SMBUS PassThru!\n\n");
     ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
   } else {
     ReturnCode = DcpmmCmd(pDimm, pCmd, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt);

@@ -10733,28 +10733,26 @@ GetCommandEffectLog(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
-    // To be added when fixed in FIS
-    Print(L"The -smbus and -spmb features are not yet supported for this command.\n");
-    ReturnCode = EFI_SUCCESS;
-    goto Finish;
-  }
-
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL || !IsDimmManageable(pDimm)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  // Obtain the CEL table count/size
+  // Format InputPayload for small payload entry count retrieval if necessary
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
+    InputPayload.PayloadType = SmallPayload;
+    InputPayload.LogAction = EntriesCount;
+    InputPayload.EntryOffset = 0;
+  }
+
   ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), NULL, 0);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-  *pEntryCount = OutPayload.LogEntryCount;
+  *pEntryCount = OutPayload.LogTypeData.CelCount.LogEntryCount;
   CelTableSize = sizeof(COMMAND_EFFECT_LOG_ENTRY) * (*pEntryCount);
 
-  // Allocate memory based on obtained table size
   pLargeOutputPayload = AllocateZeroPool(CelTableSize);
   if (pLargeOutputPayload == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -10762,9 +10760,31 @@ GetCommandEffectLog(
   }
   *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
 
-  ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), pLargeOutputPayload, CelTableSize);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
+  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
+    UINT32 EntryCountRemaining = *pEntryCount;
+    UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
+
+    InputPayload.PayloadType = SmallPayload;
+    InputPayload.LogAction = CelEntries;
+    InputPayload.EntryOffset = 0;
+
+    while (EntryCountRemaining > 0) {
+      ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), NULL, 0);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
+
+      CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, sizeof(OutPayload), &OutPayload, sizeof(OutPayload));
+
+      EntryCountRemaining -= CelEntriesPerSmallPayload;
+      InputPayload.EntryOffset += CelEntriesPerSmallPayload;
+    }
+  }
+  else {
+    ReturnCode = FwCmdGetCommandEffectLog(pDimm, &InputPayload, &OutPayload, sizeof(OutPayload), pLargeOutputPayload, CelTableSize);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -10774,7 +10794,6 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
 
 #ifndef OS_BUILD
 /**

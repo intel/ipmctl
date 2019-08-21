@@ -187,6 +187,10 @@ UefiMain(
   UINT32 NextId = 0;
 
   NVDIMM_ENTRY();
+
+  ZeroMem(&Input, sizeof(Input));
+  ZeroMem(&Command, sizeof(Command));
+
 #ifndef OS_BUILD
   BOOLEAN Ascii = FALSE;
   SHELL_FILE_HANDLE StdIn = NULL;
@@ -236,8 +240,6 @@ UefiMain(
   }
 
   Index = 0;
-  ZeroMem(&Input, sizeof(Input));
-  ZeroMem(&Command, sizeof(Command));
 
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
@@ -260,6 +262,7 @@ UefiMain(
     Print(L"Error: EFI Shell support level 3 is required to run this application\n");
     goto Finish;
   }
+
   // We have the shell, we need to initialize the argv, argc and stdin variables
   if (gEfiShellParametersProtocol != NULL) {
     StdIn = gEfiShellParametersProtocol->StdIn;

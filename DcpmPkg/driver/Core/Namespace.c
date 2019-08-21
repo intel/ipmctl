@@ -2473,6 +2473,8 @@ RetrieveNamespacesFromLsa(
         ReturnCode2 = EFI_INVALID_PARAMETER;
 
 #ifndef OS_BUILD
+        BttFound = FALSE;
+        PfnFound = FALSE;
         if (Use_Namespace1_1 || pNamespace->IsBttEnabled) {
           ReturnCode = CheckBttExistence(pNamespace, &BttFound);
         }

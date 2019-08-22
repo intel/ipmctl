@@ -2463,6 +2463,13 @@ SetAlarmThresholds (
 
     if (SensorId == SENSOR_TYPE_CONTROLLER_TEMPERATURE) {
       if (NonCriticalThreshold != THRESHOLD_UNDEFINED) {
+        if (NonCriticalThreshold < CONTROLLER_TEMPERATURE_LOWER_LIMIT) {
+          NonCriticalThreshold = CONTROLLER_TEMPERATURE_LOWER_LIMIT;
+        }
+        else if (NonCriticalThreshold > CONTROLLER_TEMPERATURE_UPPER_LIMIT) {
+          NonCriticalThreshold = CONTROLLER_TEMPERATURE_UPPER_LIMIT;
+        }
+
         pPayloadAlarmThresholds->ControllerTemperatureThreshold = TransformRealValueToFwTemp(NonCriticalThreshold);
         pPayloadAlarmThresholds->Enable.Separated.ControllerTemperature = TRUE;
       }
@@ -2472,6 +2479,12 @@ SetAlarmThresholds (
     }
     if (SensorId == SENSOR_TYPE_MEDIA_TEMPERATURE) {
       if (NonCriticalThreshold != THRESHOLD_UNDEFINED) {
+        if (NonCriticalThreshold < MEDIA_TEMPERATURE_LOWER_LIMIT) {
+          NonCriticalThreshold = MEDIA_TEMPERATURE_LOWER_LIMIT;
+        }
+        else if (NonCriticalThreshold > MEDIA_TEMPERATURE_UPPER_LIMIT) {
+          NonCriticalThreshold = MEDIA_TEMPERATURE_UPPER_LIMIT;
+        }
         pPayloadAlarmThresholds->MediaTemperatureThreshold = TransformRealValueToFwTemp(NonCriticalThreshold);
         pPayloadAlarmThresholds->Enable.Separated.MediaTemperature = TRUE;
       }
@@ -2481,6 +2494,12 @@ SetAlarmThresholds (
     }
     if (SensorId == SENSOR_TYPE_PERCENTAGE_REMAINING) {
       if (NonCriticalThreshold != THRESHOLD_UNDEFINED) {
+        if (NonCriticalThreshold < PERCENTAGE_REMAINING_LOWER_LIMIT) {
+          NonCriticalThreshold = PERCENTAGE_REMAINING_LOWER_LIMIT;
+        }
+        else if (NonCriticalThreshold > PERCENTAGE_REMAINING_UPPER_LIMIT) {
+          NonCriticalThreshold = PERCENTAGE_REMAINING_UPPER_LIMIT;
+        }
         pPayloadAlarmThresholds->PercentageRemainingThreshold = (UINT8) NonCriticalThreshold;
         pPayloadAlarmThresholds->Enable.Separated.PercentageRemaining = TRUE;
       }

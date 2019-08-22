@@ -1003,6 +1003,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
     p_performance->host_writes = pmem_info_output->TotalWriteRequests.Uint64;
     p_performance->block_reads = 0;
     p_performance->block_writes = 0;
+    p_performance->time = time(NULL);
     rc = NVM_SUCCESS;
     goto finish;
   }

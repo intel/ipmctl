@@ -900,6 +900,7 @@ GetAppDirectLabelByUUID(
   BOOLEAN Found = FALSE;
   UINT16 SlotStatus = SLOT_UNKNOWN;
   BOOLEAN Use_Namespace1_1 = FALSE;
+  BOOLEAN lsaIsLocal = FALSE;
 
 
   NVDIMM_ENTRY();
@@ -908,9 +909,16 @@ GetAppDirectLabelByUUID(
     goto Finish;
   }
 
-  ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
-  if (EFI_ERROR(ReturnCode) || pLsa == NULL) {
-    goto Finish;
+  if (pDimm->pLsa == NULL) {
+    NVDIMM_DBG("Loading the actual cache");
+    lsaIsLocal = TRUE;
+    ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
+    if (EFI_ERROR(ReturnCode) || pLsa == NULL) {
+      goto Finish;
+    }
+  } else {
+    NVDIMM_DBG("Using LSA cache pointer on DIMM");
+    pLsa = pDimm->pLsa;
   }
 
   ReturnCode = GetLsaIndexes(pLsa, &CurrentIndex, NULL);
@@ -925,6 +933,7 @@ GetAppDirectLabelByUUID(
     if (SlotStatus == SLOT_FREE) {
       continue;
     }
+
     if (pLsa->Index[CurrentIndex].Major == NSINDEX_MAJOR &&
         pLsa->Index[CurrentIndex].Minor == NSINDEX_MINOR_1) {
       Use_Namespace1_1 = TRUE;
@@ -963,7 +972,9 @@ GetAppDirectLabelByUUID(
   }
 
 Finish:
-  FREE_POOL_SAFE(pLsa);
+  if (lsaIsLocal == TRUE && pLsa != NULL) {
+    FreeLsaSafe(&pLsa);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -2070,7 +2081,6 @@ Finish:
   for Namespace data. Memory for required structures is allocated
   and it's callee responsibility to free it when it's no longer needed.
 
-  @param[in] pLabelStorageArea Pointer to a LSA structure
   @param[in] pDimm Pointer to a DIMM structure to which LSA relates
   @param[in] pFitHead Fully populated NVM Firmware Interface Table
   @param[out] pNamespacesList Pointer to a list to which to add Namespace structures
@@ -2081,7 +2091,6 @@ Finish:
 **/
 EFI_STATUS
 RetrieveNamespacesFromLsa(
-  IN     LABEL_STORAGE_AREA *pLabelStorageArea,
   IN     DIMM *pDimm,
   IN     ParsedFitHeader *pFitHead,
      OUT LIST_ENTRY *pNamespacesList
@@ -2105,34 +2114,46 @@ RetrieveNamespacesFromLsa(
   UINT64 RawCapacity = 0;
   BOOLEAN Use_Namespace1_1 = FALSE;
   EFI_GUID ZeroGuid;
+  LABEL_STORAGE_AREA *pLsa = NULL;
 
   NVDIMM_ENTRY();
 
   ZeroMem(&ZeroGuid, sizeof(EFI_GUID));
 
-  if (pLabelStorageArea == NULL || pNamespacesList == NULL || pDimm == NULL) {
+  if (pNamespacesList == NULL) {
     NVDIMM_DBG("pNamespacesList is NULL");
     goto Finish;
   }
 
-  ReturnCode = GetLsaIndexes(pLabelStorageArea, &CurrentIndex, NULL);
+  if (pDimm == NULL) {
+    NVDIMM_DBG("pDimm is NULL");
+    goto Finish;
+  }
+
+  pLsa = pDimm->pLsa;
+  if (pLsa == NULL) {
+    NVDIMM_DBG("pLsa is NULL");
+    goto Finish;
+  }
+
+  ReturnCode = GetLsaIndexes(pLsa, &CurrentIndex, NULL);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
-  if (pLabelStorageArea->Index[CurrentIndex].Major == NSINDEX_MAJOR &&
-      pLabelStorageArea->Index[CurrentIndex].Minor == NSINDEX_MINOR_1) {
+  if (pLsa->Index[CurrentIndex].Major == NSINDEX_MAJOR &&
+      pLsa->Index[CurrentIndex].Minor == NSINDEX_MINOR_1) {
     Use_Namespace1_1 = TRUE;
   }
 
-  for (Index = 0; Index < pLabelStorageArea->Index[CurrentIndex].NumberOfLabels; Index++) {
+  for (Index = 0; Index < pLsa->Index[CurrentIndex].NumberOfLabels; Index++) {
     RawCapacity = 0;
-    CheckSlotStatus(&pLabelStorageArea->Index[CurrentIndex], (UINT16)Index, &SlotStatus);
+    CheckSlotStatus(&pLsa->Index[CurrentIndex], (UINT16)Index, &SlotStatus);
     if (SlotStatus == SLOT_FREE) {
       continue;
     }
     NVDIMM_DBG("Label found at slot %d", Index);
-    pNamespaceLabel = &pLabelStorageArea->pLabels[Index];
+    pNamespaceLabel = &pLsa->pLabels[Index];
 
     if (GetNamespace(pNamespacesList, pNamespaceLabel->Uuid, &pNamespace)) {
       NVDIMM_DBG("Namespace for this label already initialized");
@@ -2189,8 +2210,8 @@ RetrieveNamespacesFromLsa(
       }
 
       RangeIndex = 0;
-      for (Index2 = 0; Index2 < pLabelStorageArea->Index[CurrentIndex].NumberOfLabels; Index2++) {
-        pNamespaceLabel2 = &pLabelStorageArea->pLabels[Index2];
+      for (Index2 = 0; Index2 < pLsa->Index[CurrentIndex].NumberOfLabels; Index2++) {
+        pNamespaceLabel2 = &pLsa->pLabels[Index2];
 
         if (CompareMem(&pNamespaceLabel->Uuid, &pNamespaceLabel2->Uuid, sizeof(GUID)) == 0) {
           ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);
@@ -2611,23 +2632,28 @@ InitializeNamespaces(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   LIST_ENTRY *pNode = NULL;
   DIMM *pDimm = NULL;
-  LABEL_STORAGE_AREA *pLabelStorageArea = NULL;
+  LABEL_STORAGE_AREA *pLsa = NULL;
 
   NVDIMM_ENTRY();
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
+    if (pDimm->pLsa != NULL) {
+      FreeLsaSafe(&pDimm->pLsa);
+      pDimm->pLsa = NULL;
+    }
 
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
 
-    ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLabelStorageArea);
+    ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
     if (ReturnCode == EFI_NOT_FOUND) {
       NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
       pDimm->LsaStatus = LSA_NOT_INIT;
       continue;
-    } else if (EFI_ERROR(ReturnCode)) {
+    }
+    else if (EFI_ERROR(ReturnCode)) {
       pDimm->LsaStatus = LSA_CORRUPTED;
       /**
         If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
@@ -2637,15 +2663,29 @@ InitializeNamespaces(
       continue;
     }
 
-    ReturnCode = RetrieveNamespacesFromLsa(pLabelStorageArea, pDimm, gNvmDimmData->PMEMDev.pFitHead,
+    pDimm->pLsa = pLsa;
+  }
+
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pNode);
+    ReturnCode = RetrieveNamespacesFromLsa(pDimm, gNvmDimmData->PMEMDev.pFitHead,
         &gNvmDimmData->PMEMDev.Namespaces);
-    FreeLsaSafe(&pLabelStorageArea);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to retrieve Namespaces from LSA");
       pDimm->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
       continue;
     }
+
     pDimm->LsaStatus = LSA_OK;
+  }
+
+  //cleanup cache
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pNode);
+    if (pDimm->pLsa != NULL) {
+      FreeLsaSafe(&pDimm->pLsa);
+      pDimm->pLsa = NULL;
+    }
   }
 
   NVDIMM_EXIT_I64(ReturnCode);

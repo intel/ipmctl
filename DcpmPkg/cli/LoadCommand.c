@@ -649,7 +649,9 @@ BlockForFwStage(
     }
 
     FwStagedPendingCount++;
-    ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+    CmdOpcode = 0;
+    CmdSubOpcode = 0;
+    pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
       &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
     if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw)
     {
@@ -684,7 +686,9 @@ BlockForFwStage(
         continue;
       }
 
-      ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+      CmdOpcode = 0;
+      CmdSubOpcode = 0;
+      pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
         &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
 
       if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw) {

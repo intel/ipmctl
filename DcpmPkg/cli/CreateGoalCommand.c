@@ -54,6 +54,68 @@ struct Command CreateGoalCommand =
   TRUE,                                               //!< enable print control support
 };
 
+/**
+  Traverse targeted dimms to determine if Security is enabled in Unlocked state
+
+  @param[in] SecurityFlag Security mask from FW
+
+  @retval TRUE if at least one targetted dimm has security enabled in unlocked state
+  @retval FALSE if none of targetted dimms have security enabled in unlocked state
+**/
+EFI_STATUS
+EFIAPI
+AreRequestedDimmsSecurityUnlocked(
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+  IN     UINT16 *ppDimmIds,
+  IN     UINT32 pDimmIdsCount,
+  OUT BOOLEAN *isDimmUnlocked
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 i;
+  UINT32 j;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pDimmInfo
+    || NULL == isDimmUnlocked
+    || (NULL == ppDimmIds && 0 < pDimmIdsCount))
+  {
+    goto Finish;
+  }
+
+  *isDimmUnlocked = FALSE;
+
+  if (0 == pDimmIdsCount) {
+    for (i = 0; i < DimmCount; i++)
+    {
+      if (SECURITY_UNLOCKED == pDimmInfo[i].SecurityState) {
+        *isDimmUnlocked = TRUE;
+        break;
+      }
+    }
+  }
+  else {
+    for (i = 0; i < pDimmIdsCount; i++)
+    {
+      for (j = 0; j < DimmCount; j++)
+      {
+        if ((ppDimmIds[i] == pDimmInfo[j].DimmID) && (SECURITY_UNLOCKED == pDimmInfo[i].SecurityState)) {
+          *isDimmUnlocked = TRUE;
+          break;
+        }
+      }
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 STATIC
 EFI_STATUS
 GetPersistentMemTypeValue(
@@ -162,8 +224,7 @@ CheckAndConfirmAlignments(
   IN     UINT32 VolatilePercent,
   IN     UINT32 ReservedPercent,
   IN     UINT8 ReserveDimm,
-  IN     UINT16 UnitsToDisplay,
-     OUT BOOLEAN *pConfirmation
+  IN     UINT16 UnitsToDisplay
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -193,12 +254,10 @@ CheckAndConfirmAlignments(
 
   ZeroMem(RegionConfigsInfo, sizeof(RegionConfigsInfo[0]) * MAX_DIMMS);
 
-  if (pNvmDimmConfigProtocol == NULL || pConfirmation == NULL) {
+  if (pNvmDimmConfigProtocol == NULL) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     goto Finish;
   }
-
-  *pConfirmation = FALSE;
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
@@ -342,19 +401,12 @@ CheckAndConfirmAlignments(
     }
   }
 
-  ReturnCode = PromptYesNo(pConfirmation);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
-    NVDIMM_DBG("Failed on PromptedInput");
-  }
-
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   FREE_POOL_SAFE(pTopologyDimms);
   return ReturnCode;
 }
-
 
 /**
   Execute the Create Goal command
@@ -404,6 +456,7 @@ CreateGoal(
   CHAR16 *pShowGoalOutputArgs = NULL;
   CHAR16 *pSingleStatusCodeMessage = NULL;
   UINT32 MaxPMInterleaveSetsPerDie = 0;
+  BOOLEAN isDimmUnlocked = FALSE;
   NVDIMM_ENTRY();
 
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
@@ -428,7 +481,7 @@ CreateGoal(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -605,8 +658,28 @@ CreateGoal(
 
   if (!Force) {
     ReturnCode = CheckAndConfirmAlignments(pCmd, pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-        PersistentMemType, VolatileMode, ReservedPercent, ReserveDimm, UnitsToDisplay, &Confirmation);
-    if (EFI_ERROR(ReturnCode) || !Confirmation) {
+        PersistentMemType, VolatileMode, ReservedPercent, ReserveDimm, UnitsToDisplay);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    ReturnCode = AreRequestedDimmsSecurityUnlocked(pDimms, DimmCount, pDimmIds, DimmIdsCount, &isDimmUnlocked);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    // send warning if security unlocked for target dimms
+    if (isDimmUnlocked) {
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED);
+    }
+
+    ReturnCode = PromptYesNo(&Confirmation);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
+      NVDIMM_DBG("Failed on PromptedInput");
+      goto Finish;
+    }
+    else if (!Confirmation) {
       goto Finish;
     }
   }

@@ -12,6 +12,24 @@
 #define PROMPT_ALIGN_PERCENTAGE 10
 
 /**
+  Traverse targeted dimms to determine if Security is enabled in Unlocked state
+
+  @param[in] SecurityFlag Security mask from FW
+
+  @retval TRUE if at least one targetted dimm has security enabled in unlocked state
+  @retval FALSE if none of targetted dimms have security enabled in unlocked state
+**/
+EFI_STATUS
+EFIAPI
+AreRequestedDimmsSecurityUnlocked(
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+  IN     UINT16 *ppDimmIds,
+  IN     UINT32 pDimmIdsCount,
+  OUT BOOLEAN *isDimmUnlocked
+);
+
+/**
   Register the Create Goal command
 
   @retval EFI_SUCCESS success

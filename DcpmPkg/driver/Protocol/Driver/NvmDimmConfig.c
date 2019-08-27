@@ -6224,7 +6224,7 @@ GetActualRegionsGoalCapacities(
     if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
-      NVDIMM_DBG("Invalid request to create goal while security is enabled.");
+      NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
     }
   }
@@ -6461,7 +6461,8 @@ CreateGoalConfig(
   REGION_GOAL_DIMM *pDimmsAsymPerSocket = NULL;
   UINT32 DimmsAsymNumPerSocket = 0;
   DIMM *pReserveDimm = NULL;
-  UINT32 DimmSecurityState = 0;
+  UINT32 DimmSecurityStateMask = 0;
+  UINT8 DimmSecurityState = 0;
   UINT64 VolatileSize = 0;
   UINT64 ReservedSize = 0;
   BOOLEAN Found = FALSE;
@@ -6479,6 +6480,7 @@ CreateGoalConfig(
   UINT32 DimmsAsymNum = 0;
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
+  BOOLEAN SendGoalConfigWarning = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -6622,16 +6624,21 @@ CreateGoalConfig(
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
-    ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
+    ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityStateMask);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
 
-    if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
+    if (!IsConfiguringForCreateGoalAllowed(DimmSecurityStateMask)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
-      NVDIMM_DBG("Invalid request to create goal while security is enabled.");
+      NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
+    }
+
+    ConvertSecurityBitmask(DimmSecurityStateMask, &DimmSecurityState);
+    if (SECURITY_UNLOCKED == DimmSecurityState) {
+      SendGoalConfigWarning = TRUE;
     }
   }
 
@@ -6818,6 +6825,11 @@ CreateGoalConfig(
       NVDIMM_DBG("InitializeAllLabelStorageAreas Error");
       goto Finish;
     }
+
+    /* Set pCommandStatus to warning if security state unlocked */
+    if (SendGoalConfigWarning) {
+      SetCmdStatus(pCommandStatus, NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED);
+    }
   }
 
 Finish:
@@ -6896,6 +6908,7 @@ DeleteGoalConfig (
     if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
+      NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
     }
   }
@@ -7156,7 +7169,7 @@ LoadGoalConfig(
     if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
-      NVDIMM_DBG("Invalid request to create goal while security is enabled.");
+      NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
     }
   }
@@ -7224,9 +7237,15 @@ LoadGoalConfig(
       goto Finish;
     }
 
+    if (NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED == pCmdStatusInternal->GeneralStatus) {
+      SetObjStatus(pCommandStatus, Socket, NULL, 0, pCmdStatusInternal->GeneralStatus);
+    }
+
     FreeCommandStatus(&pCmdStatusInternal);
 
-    SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_SUCCESS);
+    if (NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED != pCommandStatus->GeneralStatus) {
+      SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_SUCCESS);
+    }
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -9843,7 +9862,7 @@ AutomaticCreateGoal(
     if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
-      NVDIMM_DBG("Invalid request to create goal while security is enabled.");
+      NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
     }
   }

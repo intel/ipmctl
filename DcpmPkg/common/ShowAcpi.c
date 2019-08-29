@@ -540,6 +540,7 @@ PrintPcatTable(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
             pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
         }
+        FREE_POOL_SAFE(InterleaveFormatSupportedIndex);
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
@@ -563,6 +564,7 @@ PrintPcatTable(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
             pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
         }
+        FREE_POOL_SAFE(InterleaveFormatSupportedIndex);
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);

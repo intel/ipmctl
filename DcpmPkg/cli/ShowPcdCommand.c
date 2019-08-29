@@ -513,6 +513,7 @@ PrintPcdInterleaveInformation(
       pCurrentIdentInfo++;
     }
   }
+  FREE_POOL_SAFE(pPathPcdIdentificationInfo);
 }
 
 VOID

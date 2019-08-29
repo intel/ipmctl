@@ -10,6 +10,12 @@
 
 extern GUID gBttAbstractionGuid;
 
+/* Flog pair indices */
+#define FLOG_0 0  //!< 0th Flog entry
+#define FLOG_1 1  //!< 1st Flog entry
+
+#define FLOG_PAIR_0 0  //!< 0th Flog pair
+
 #define EFI_BTT_ABSTRACTION_GUID \
   { 0x18633BFC, 0x1735, 0x4217, {0x8A, 0xC9, 0x17, 0x23, 0x92, 0x82, 0xD3, 0xF8} }
 

@@ -576,9 +576,18 @@ BttFlogUpdate(
     return EFI_INVALID_PARAMETER;
   }
 
-  pFlogPair = &(pArena->pFlogs[0].FlogPair);
-  pNextFlog = &(pFlogPair->Flog[pArena->pFlogs[0].Next]);
-  pCurrentFlog = &(pFlogPair->Flog[1 - pArena->pFlogs[0].Next]);
+  pFlogPair = &(pArena->pFlogs[FLOG_PAIR_0].FlogPair);
+  pNextFlog = &(pFlogPair->Flog[pArena->pFlogs[FLOG_PAIR_0].Next]);
+  if (FLOG_0 == pArena->pFlogs[FLOG_PAIR_0].Next) {
+    pCurrentFlog = &(pFlogPair->Flog[FLOG_1]);
+  }
+  else if (FLOG_1 == pArena->pFlogs[FLOG_PAIR_0].Next) {
+    pCurrentFlog = &(pFlogPair->Flog[FLOG_0]);
+  }
+  else {
+    NVDIMM_ERR("ERROR: Invalid FLOG[0].Next index value:%d\n", pArena->pFlogs[0].Next);
+    return EFI_BAD_BUFFER_SIZE;
+  }
 
   // Update the pNextFlog of our internal flog pair. We currently differ from
   // the reference implementation in keeping the flog pair instead of just

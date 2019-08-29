@@ -126,7 +126,13 @@ get_table(
   OUT UINT32 *tablesize
 )
 {
+  if (NULL == currentTableName || NULL == tablesize || NULL == table)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
   *table = NULL;
+
   int buf_size = get_acpi_table(currentTableName, NULL, 0);
   if (buf_size <= 0)
   {
@@ -138,7 +144,7 @@ get_table(
   {
     return EFI_END_OF_FILE;
   }
-  *tablesize = buf_size;
+  *tablesize = (UINT32)buf_size;
   get_acpi_table(currentTableName, (struct acpi_table*)*table, buf_size);
   return EFI_SUCCESS;
 }

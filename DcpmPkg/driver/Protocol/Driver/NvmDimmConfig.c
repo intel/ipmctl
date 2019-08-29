@@ -8481,10 +8481,10 @@ SetOptionalConfigurationDataPolicy(
       goto Finish;
     }
 
-    if (FIS_2_0) {
+    if (FIS_2_0 && (NULL != pAveragePowerReportingTimeConstantMultiplier)) {
       OptionalDataPolicyPayload.Payload.Fis_2_00.AveragePowerReportingTimeConstantMultiplier = *pAveragePowerReportingTimeConstantMultiplier;
     }
-    else if (FIS_GTE_2_1) {
+    else if (FIS_GTE_2_1 && (NULL != pAveragePowerReportingTimeConstant)) {
       OptionalDataPolicyPayload.Payload.Fis_2_01.AveragePowerReportingTimeConstant = *pAveragePowerReportingTimeConstant;
     }
     else {

@@ -421,6 +421,8 @@ struct Command
   BOOLEAN ExcludeDriverBinding;
   BOOLEAN Hidden; //!< Never print
   BOOLEAN ShowHelp;
+  BOOLEAN SyntaxErrorHelpNeeded;
+  BOOLEAN VerbMatch;
   UINT8 CommandId;
   UINT8 DispType;
   CHAR16 DispName[DISP_NAME_LEN];

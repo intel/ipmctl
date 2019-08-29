@@ -160,6 +160,67 @@ struct Command VersionCommand =
   TRUE
 };
 
+BOOLEAN HelpRequested = FALSE;
+BOOLEAN FullHelpRequested = FALSE;
+
+/**
+Reviews the passed tokens for help|-h|-help flags and prepares the token
+order for proper display
+**/
+VOID FixHelp(CHAR16** ppTokens, UINT32* pCount){
+  UINT32 Index = 0;
+  UINT32 HelpFlagIndex = 0;
+  CHAR16 *pArgvTmp = NULL;
+  UINT32 HelpFlags = 0;
+  UINT32 HelpVerbs = 0;
+
+  HelpRequested = FALSE;
+  FullHelpRequested = FALSE;
+  if (ppTokens == NULL || pCount  == NULL || *pCount <= 0) {
+    return;
+  }
+
+  //Examine the inputs to determine if/where the help tokens are
+  for (Index = 0; Index < *pCount; Index++) {
+    if (0 == StrICmp(ppTokens[Index], HELP_VERB)) {
+      HelpRequested = TRUE;
+      HelpVerbs++;
+      if (1 == *pCount) {
+        FullHelpRequested = TRUE;
+      }
+    }
+
+    if (0 == StrICmp(ppTokens[Index], HELP_OPTION) ||
+      0 == StrICmp(ppTokens[Index], HELP_OPTION_SHORT)) {
+      HelpRequested = TRUE;
+      HelpFlags++;
+      HelpFlagIndex = Index;
+      if (1 == *pCount) {
+        FullHelpRequested = TRUE;
+      }
+    }
+  }
+
+  if (HelpFlags == 1 && FALSE == FullHelpRequested && 1 != HelpFlagIndex) {
+    //this means the help was embedded in the request, but in the wrong place...
+    pArgvTmp = ppTokens[HelpFlagIndex];
+    //pass 1 - move all the other parameters to positions other than 2
+    if (HelpFlagIndex == 0 && *pCount >= 2) {
+      //rearrange it so the verb comes first
+      ppTokens[0] = ppTokens[1];
+      ppTokens[1] = pArgvTmp;
+    }
+    else {
+      //advance parameters forward until the help parameter is overwritten
+      for (Index = 1; Index < HelpFlagIndex; Index++) {
+        ppTokens[Index + 1] = ppTokens[Index];
+      }
+      //move the help parameter to the 2nd position
+      ppTokens[1] = pArgvTmp;
+    }
+  }
+}
+
 /*                                          ./
  * The entry point for the application.
  *
@@ -192,6 +253,36 @@ UefiMain(
   ZeroMem(&Command, sizeof(Command));
 
 #ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+  /** For UEFI pre-parse CLI arguments for verbose logging **/
+  if (gEfiShellParametersProtocol != NULL) {
+    for (Index = 1; Index < gEfiShellParametersProtocol->Argc; Index++) {
+      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION)
+        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION_SHORT)) {
+        PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
+      }
+
+      /** Need to set some flags in the case that the user wants help, but there are no DIMMs in the system **/
+      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_VERB)
+        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_OPTION)
+        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_OPTION_SHORT)) {
+        HelpRequested = TRUE;
+        if (gEfiShellParametersProtocol->Argc == 2) {
+          FullHelpRequested = TRUE;
+        }
+      }
+    }
+
+    if (gEfiShellParametersProtocol->Argc == 1) {
+      HelpRequested = TRUE;
+      FullHelpRequested = TRUE;
+    }
+  }
+
+#endif
+#endif
+
+#ifndef OS_BUILD
   BOOLEAN Ascii = FALSE;
   SHELL_FILE_HANDLE StdIn = NULL;
   UINTN HandleCount = 0;
@@ -204,39 +295,27 @@ UefiMain(
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 #endif
-  UINT32 Mode;
+  UINT32 Mode = PBR_NORMAL_MODE;
   CHAR16 *pTagDescription = NULL;
 
-  //get the current pbr mode (playback/record/normal)
-  Rc = GetPbrMode(&Mode);
-  if (EFI_ERROR(Rc) && (EFI_NOT_FOUND != Rc)) {
-    goto Finish;
-  }
-
-  if (Mode == PBR_RECORD_MODE) {
-    Print(L"Warning - Executing in recording mode!\n\n");
-  }
-  else if (Mode == PBR_PLAYBACK_MODE) {
-    Print(L"Warning - Executing in playback mode!\n\n");
-  }
-
-#ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
-  /** For UEFI pre-parse CLI arguments for verbose logging **/
-  if (gEfiShellParametersProtocol != NULL) {
-    for (Index = 1; Index < gEfiShellParametersProtocol->Argc; Index++) {
-      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION)
-        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION_SHORT)) {
-        PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
-      }
+  if (!HelpRequested) {
+    //get the current pbr mode (playback/record/normal)
+    Rc = GetPbrMode(&Mode);
+    if (EFI_ERROR(Rc) && (EFI_NOT_FOUND != Rc)) {
+      goto Finish;
     }
-  }
-#endif
-#endif
 
-  Rc = SetDefaultProtocolAndPayloadSizeOptions();
-  if (EFI_ERROR(Rc)) {
-    goto Finish;
+    if (Mode == PBR_RECORD_MODE) {
+      Print(L"Warning - Executing in recording mode!\n\n");
+    }
+    else if (Mode == PBR_PLAYBACK_MODE) {
+      Print(L"Warning - Executing in playback mode!\n\n");
+    }
+
+    Rc = SetDefaultProtocolAndPayloadSizeOptions();
+    if (EFI_ERROR(Rc)) {
+      goto Finish;
+    }
   }
 
   Index = 0;
@@ -245,77 +324,80 @@ UefiMain(
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
 
 #ifndef OS_BUILD
-  InitErrorAndWarningNvmStatusCodes();
+    InitErrorAndWarningNvmStatusCodes();
 
-  /* only support EFI shell 2.0 */
-  Rc = ShellInitialize();
-  if (EFI_ERROR(Rc)) {
-    Rc = EFI_UNSUPPORTED;
-    NVDIMM_WARN("ShellInitialize failed, rc = 0x%llx", Rc);
-    Print(L"Error: EFI Shell 2.0 is required to run this application\n");
-    goto Finish;
-  }
-  /* with shell support level 3 */
-  else if (PcdGet8(PcdShellSupportLevel) < 3) {
-    Rc = EFI_UNSUPPORTED;
-    NVDIMM_WARN("shellsupport level %d too low", PcdGet8(PcdShellSupportLevel));
-    Print(L"Error: EFI Shell support level 3 is required to run this application\n");
-    goto Finish;
-  }
-
-  // We have the shell, we need to initialize the argv, argc and stdin variables
-  if (gEfiShellParametersProtocol != NULL) {
-    StdIn = gEfiShellParametersProtocol->StdIn;
-    Argc = gEfiShellParametersProtocol->Argc;
-    ppArgv = gEfiShellParametersProtocol->Argv;
-  } else if (mEfiShellInterface != NULL) {
-    StdIn = mEfiShellInterface->StdIn;
-    Argc = mEfiShellInterface->Argc;
-    ppArgv = mEfiShellInterface->Argv;
-  } else {
-    NVDIMM_WARN("ShellInitialize succeeded but the shell interface and parameters protocols do not exist");
-    Print(L"Error: EFI Shell 2.0 is required to run this application.\n");
-    goto Finish;
-  }
-
-  gNvmDimmCliHiiHandle = HiiAddPackages(&gNvmDimmCliHiiGuid, ImageHandle, ipmctlStrings, NULL);
-  if (gNvmDimmCliHiiHandle == NULL) {
-    NVDIMM_WARN("Unable to add string package to Hii");
-    goto Finish;
-  }
-
-  // Check for NVM Protocol
-  Rc = gBS->LocateHandleBuffer(ByProtocol, &gNvmDimmConfigProtocolGuid, NULL, &HandleCount, &pHandleBuffer);
-  if (EFI_ERROR(Rc) || HandleCount != 1) {
-    if (Rc == EFI_NOT_FOUND) {
-      Print(FORMAT_STR_NL, CLI_ERR_FAILED_TO_FIND_PROTOCOL);
+    /* only support EFI shell 2.0 */
+    Rc = ShellInitialize();
+    if (EFI_ERROR(Rc)) {
+      Rc = EFI_UNSUPPORTED;
+      NVDIMM_WARN("ShellInitialize failed, rc = 0x%llx", Rc);
+      Print(L"Error: EFI Shell 2.0 is required to run this application\n");
       goto Finish;
     }
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    Rc = EFI_NOT_FOUND;
-    goto Finish;
-  }
+    /* with shell support level 3 */
+    else if (PcdGet8(PcdShellSupportLevel) < 3) {
+      Rc = EFI_UNSUPPORTED;
+      NVDIMM_WARN("shellsupport level %d too low", PcdGet8(PcdShellSupportLevel));
+      Print(L"Error: EFI Shell support level 3 is required to run this application\n");
+      goto Finish;
+    }
 
-  Rc = OpenNvmDimmProtocol(
-    gEfiComponentNameProtocolGuid,
-    (VOID**)&pComponentName, NULL);
-  if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Failed to open the Component Name protocol, error = " FORMAT_EFI_STATUS "", Rc);
-    goto Finish;
-  }
+    // We have the shell, we need to initialize the argv, argc and stdin variables
+    if (gEfiShellParametersProtocol != NULL) {
+      StdIn = gEfiShellParametersProtocol->StdIn;
+      Argc = gEfiShellParametersProtocol->Argc;
+      ppArgv = gEfiShellParametersProtocol->Argv;
+    } else if (mEfiShellInterface != NULL) {
+      StdIn = mEfiShellInterface->StdIn;
+      Argc = mEfiShellInterface->Argc;
+      ppArgv = mEfiShellInterface->Argv;
+    } else {
+      NVDIMM_WARN("ShellInitialize succeeded but the shell interface and parameters protocols do not exist");
+      Print(L"Error: EFI Shell 2.0 is required to run this application.\n");
+      goto Finish;
+    }
 
-  //Get current driver name
-  Rc = pComponentName->GetDriverName(
-    pComponentName, "eng", &pCurrentDriverName);
-  if (EFI_ERROR(Rc)) {
-    NVDIMM_DBG("Could not get the driver name, error = " FORMAT_EFI_STATUS "", Rc);
-    goto Finish;
-  }
+    if (FALSE == HelpRequested) {
+      gNvmDimmCliHiiHandle = HiiAddPackages(&gNvmDimmCliHiiGuid, ImageHandle, ipmctlStrings, NULL);
 
-  //Compare to the CLI version and print warning if there is a version mismatch
-  if (StrCmp(PMEM_MODULE_NAME NVMDIMM_VERSION_STRING L" Driver", pCurrentDriverName) != 0) {
-    Print(FORMAT_STR_NL, CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH);
-  }
+      if (gNvmDimmCliHiiHandle == NULL) {
+        NVDIMM_WARN("Unable to add string package to Hii");
+        goto Finish;
+      }
+
+      // Check for NVM Protocol
+      Rc = gBS->LocateHandleBuffer(ByProtocol, &gNvmDimmConfigProtocolGuid, NULL, &HandleCount, &pHandleBuffer);
+      if (EFI_ERROR(Rc) || HandleCount != 1) {
+        if (Rc == EFI_NOT_FOUND) {
+          Print(FORMAT_STR_NL, CLI_ERR_FAILED_TO_FIND_PROTOCOL);
+          goto Finish;
+        }
+        Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+        Rc = EFI_NOT_FOUND;
+        goto Finish;
+      }
+
+      Rc = OpenNvmDimmProtocol(
+        gEfiComponentNameProtocolGuid,
+        (VOID**)&pComponentName, NULL);
+      if (EFI_ERROR(Rc)) {
+        NVDIMM_DBG("Failed to open the Component Name protocol, error = " FORMAT_EFI_STATUS "", Rc);
+        goto Finish;
+      }
+
+      //Get current driver name
+      Rc = pComponentName->GetDriverName(
+        pComponentName, "eng", &pCurrentDriverName);
+      if (EFI_ERROR(Rc)) {
+        NVDIMM_DBG("Could not get the driver name, error = " FORMAT_EFI_STATUS "", Rc);
+        goto Finish;
+      }
+
+      //Compare to the CLI version and print warning if there is a version mismatch
+      if (StrCmp(PMEM_MODULE_NAME NVMDIMM_VERSION_STRING L" Driver", pCurrentDriverName) != 0) {
+        Print(FORMAT_STR_NL, CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH);
+      }
+    }
 
 #else
   Argc = gEfiShellParametersProtocol->Argc;
@@ -342,7 +424,7 @@ UefiMain(
     if (ShellGetFileInfo(StdIn) == NULL) {
 #endif
       /* 1st arg is the name of the app, so skip it */
-      if (Argc > 1) {
+      if (Argc > 1 && FALSE == FullHelpRequested) {
         MoreInput = FALSE; /* only one command is supported on the command pLine */
 
         for (Index = 1; Index < Argc; Index++) {
@@ -399,24 +481,33 @@ UefiMain(
       }
     }
 #endif
+    /* Fix the passed tokens as needed */
+    FixHelp(Input.ppTokens, &Input.TokenCount);
+    if (TRUE == FullHelpRequested) {
+      showHelp(NULL);
+      break;
+    }
+
     /* run the command */
     Rc = Parse(&Input, &Command);
 
-    if (PBR_NORMAL_MODE != Mode && !Command.ExcludeDriverBinding) {
-      if (PBR_RECORD_MODE == Mode) {
-        pTagDescription = CatSPrint(NULL, L"%d", Rc);
-        SetPbrTag(pLine, pTagDescription);
-        FREE_POOL_SAFE(pTagDescription);
-      }
-      else {
-        //CLI is responsible for tracking the tagid.
-        //The id is saved to a non-persistent volatile store, and is incremented
-        //after each CLI cmd invocation.  Given we have the tagid that should
-        //be executed next, explicitely reset the pbr session to that id before
-        //running the cmd.
-        PbrDcpmmDeserializeTagId(&NextId, 0);
-        ResetPbrSession(NextId);
-        PbrDcpmmSerializeTagId(NextId + 1);
+    if (!HelpRequested) {
+      if (PBR_NORMAL_MODE != Mode && !Command.ExcludeDriverBinding) {
+        if (PBR_RECORD_MODE == Mode) {
+          pTagDescription = CatSPrint(NULL, L"%d", Rc);
+          SetPbrTag(pLine, pTagDescription);
+          FREE_POOL_SAFE(pTagDescription);
+        }
+        else {
+          //CLI is responsible for tracking the tagid.
+          //The id is saved to a non-persistent volatile store, and is incremented
+          //after each CLI cmd invocation.  Given we have the tagid that should
+          //be executed next, explicitely reset the pbr session to that id before
+          //running the cmd.
+          PbrDcpmmDeserializeTagId(&NextId, 0);
+          ResetPbrSession(NextId);
+          PbrDcpmmSerializeTagId(NextId + 1);
+        }
       }
     }
 
@@ -465,13 +556,13 @@ UefiMain(
       }
     } else { /* syntax error */
 
-         /* print the error */
+      /* print the error */
       LongPrint(getSyntaxError());
       Print(L"\n");
       MoreInput = FALSE; /* stop on failures */
     }
 #ifdef OS_BUILD
-      nvm_current_cmd(Command);
+    nvm_current_cmd(Command);
 #endif
     FreeCommandInput(&Input);
     FreeCommandStructure(&Command);
@@ -523,7 +614,7 @@ done:
 **/
 EFI_STATUS
 RegisterCommands(
-  )
+)
 {
   EFI_STATUS Rc;
 
@@ -735,14 +826,14 @@ RegisterCommands(
   }
 
 #ifdef __MFG__
-   Rc = RegisterMfgCommands();
-   if (EFI_ERROR(Rc)) {
-     goto done;
-   }
+  Rc = RegisterMfgCommands();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
 #else
   Rc = RegisterShowPerformanceCommand();
   if (EFI_ERROR(Rc)) {
-      goto done;
+    goto done;
   }
 #endif // __MFG__
 
@@ -786,8 +877,8 @@ EFI_STATUS showHelp(struct Command *pCmd)
 
   if ((pCmd == NULL) || (StrCmp(pCmd->verb, HELP_VERB) == 0 && pCmd->ShowHelp == FALSE)) {
 #ifndef OS_BUILD
-      //Page break option only for UEFI
-          ShellSetPageBreakMode(TRUE);
+    //Page break option only for UEFI
+    ShellSetPageBreakMode(TRUE);
 #endif
     Print(FORMAT_STR_SPACE FORMAT_STR_NL_NL L"    Usage: " FORMAT_STR L" <verb>[<options>][<targets>][<properties>]\n\nCommands:\n", PRODUCT_NAME, APP_DESCRIPTION, EXE_NAME);
     pHelp = getOverallCommandHelp();

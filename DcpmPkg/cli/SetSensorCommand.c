@@ -123,7 +123,7 @@ SetSensor(
   }
 
   if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, &DimmIdsCount, &pDimmIds);
+    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, TRUE, &DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;

@@ -321,11 +321,6 @@ Load(
       Print(FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
-    if (!AllDimmsInListInSupportedConfig(pDimmTargets, DimmTargetsNum, pDimmTargetIds, DimmTargetsNum)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      Print(FORMAT_STR_NL, CLI_ERR_POPULATION_VIOLATION);
-      goto Finish;
-    }
   } else {
     Print(CLI_RECOVER_DIMM_PROMPT_STR);
     for (Index = 0; Index < DimmTargetsNum; Index++) {

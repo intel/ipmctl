@@ -1482,6 +1482,8 @@ GetBSRAndBootStatusBitMask(
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
   @param[in] UninitializedDimms If true only uninitialized dimms are verified, if false only Initialized
+  @param[in] CheckSupportedConfigDimms If true, include dimms in unmapped set of dimms (non-POR) in
+                                       returned dimm list. If false, skip these dimms from returned list
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1497,6 +1499,7 @@ VerifyTargetDimms(
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
   IN     BOOLEAN UninitializedDimms,
+  IN     BOOLEAN CheckSupportedConfigDimms,
   OUT DIMM *pDimms[MAX_DIMMS],
   OUT UINT32 *pDimmsNum,
   OUT COMMAND_STATUS *pCommandStatus

@@ -467,6 +467,8 @@ CheckDisplayList(
   Gets number of Manageable and supported Dimms and their IDs and Handles
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                      returned dimm list. If false, skip these dimms from returned list.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -478,6 +480,7 @@ CheckDisplayList(
 EFI_STATUS
 GetManageableDimmsNumberAndId(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  BOOLEAN CheckSupportedConfigDimm,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 );

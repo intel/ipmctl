@@ -1347,6 +1347,8 @@ Finish:
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
   @param[in] UninitializedDimms If true only uninitialized dimms are verified, if false only Initialized
+  @param[in] CheckSupportedConfigDimms If true, include dimms in unmapped set of dimms (non-POR) in
+                                       returned dimm list. If false, skip these dimms from returned list
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1362,6 +1364,7 @@ VerifyTargetDimms (
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
   IN     BOOLEAN UninitializedDimms,
+  IN     BOOLEAN CheckSupportedConfigDimms,
      OUT DIMM *pDimms[MAX_DIMMS],
      OUT UINT32 *pDimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
@@ -1420,8 +1423,9 @@ VerifyTargetDimms (
         goto Finish;
       }
 
-      if ((IsDimmManageable(pCurrentDimm)
-           && IsDimmInSupportedConfig(pCurrentDimm))
+      if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
+          || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
+              && IsDimmInSupportedConfig(pCurrentDimm)))
           || UninitializedDimms) {
         pDimms[(*pDimmsNum)] = pCurrentDimm;
         (*pDimmsNum)++;
@@ -1487,8 +1491,9 @@ VerifyTargetDimms (
         pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
         for (Index2 = 0; Index2 < SocketIdsCount; Index2++) {
           if (pCurrentDimm != NULL && pCurrentDimm->SocketId == SocketIds[Index2]) {
-            if ((IsDimmManageable(pCurrentDimm)
-                 && IsDimmInSupportedConfig(pCurrentDimm))
+            if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
+                || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
+                    && IsDimmInSupportedConfig(pCurrentDimm)))
                 || UninitializedDimms) {
               pDimms[(*pDimmsNum)] = pCurrentDimm;
               (*pDimmsNum)++;
@@ -1528,9 +1533,10 @@ VerifyTargetDimms (
             goto Finish;
           }
 
-          if ((IsDimmManageable(pCurrentDimm)
-               && IsDimmInSupportedConfig(pCurrentDimm))
-              || UninitializedDimms) {
+          if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
+            || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
+                && IsDimmInSupportedConfig(pCurrentDimm)))
+            || UninitializedDimms) {
             pDimms[(*pDimmsNum)] = pCurrentDimm;
             (*pDimmsNum)++;
           }
@@ -2005,7 +2011,7 @@ GetSecurityState(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2157,7 +2163,7 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
@@ -2170,7 +2176,7 @@ GetGoalConfigs(
 
   //Try to calculate appdirect index for all regional goals for all dimms in advance
   PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     NVDIMM_ERR("ERROR: VerifyTargetDimms");
@@ -2415,7 +2421,7 @@ SetAlarmThresholds (
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2569,7 +2575,7 @@ GetSmartAndHealth (
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL || !IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm) || pHealthInfo == NULL) {
+  if (pDimm == NULL || !IsDimmManageable(pDimm) || pHealthInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -2691,8 +2697,8 @@ SetSecurityState(
   IN     UINT16 SecurityOperation,
   IN     CHAR16 *pPassphrase,
   IN     CHAR16 *pNewPassphrase,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
+  OUT COMMAND_STATUS *pCommandStatus
+)
 {
   EFI_STATUS ReturnCode = EFI_UNSUPPORTED;
   EFI_STATUS TempReturnCode = EFI_UNSUPPORTED;
@@ -2707,6 +2713,7 @@ SetSecurityState(
   BOOLEAN NamespaceFound = FALSE;
   BOOLEAN AreNotPartOfPendingGoal = TRUE;
   BOOLEAN IsSupported = FALSE;
+  BOOLEAN CheckSupportedConfigDimms = TRUE;
   DIMM *pCurrentDimm = NULL;
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
@@ -2735,17 +2742,27 @@ SetSecurityState(
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   if (SecurityOperation != SECURITY_OPERATION_SET_PASSPHRASE &&
-      SecurityOperation != SECURITY_OPERATION_CHANGE_PASSPHRASE &&
-      SecurityOperation != SECURITY_OPERATION_DISABLE_PASSPHRASE &&
-      SecurityOperation != SECURITY_OPERATION_UNLOCK_DEVICE &&
-      SecurityOperation != SECURITY_OPERATION_ERASE_DEVICE &&
-      SecurityOperation != SECURITY_OPERATION_FREEZE_DEVICE &&
-      SecurityOperation != SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE &&
-      SecurityOperation != SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
+    SecurityOperation != SECURITY_OPERATION_CHANGE_PASSPHRASE &&
+    SecurityOperation != SECURITY_OPERATION_DISABLE_PASSPHRASE &&
+    SecurityOperation != SECURITY_OPERATION_UNLOCK_DEVICE &&
+    SecurityOperation != SECURITY_OPERATION_ERASE_DEVICE &&
+    SecurityOperation != SECURITY_OPERATION_FREEZE_DEVICE &&
+    SecurityOperation != SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE &&
+    SecurityOperation != SECURITY_OPERATION_MASTER_ERASE_DEVICE) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_SECURITY_OPERATION);
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  //Erase Device Data operation is supported for Dimms
+  //excluded from POR config
+  if (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
+    || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE)
+  {
+    CheckSupportedConfigDimms = FALSE;
+  }
+
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE,
+                CheckSupportedConfigDimms, pDimms, &DimmsNum, pCommandStatus);
+
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2753,7 +2770,7 @@ SetSecurityState(
   // Prevent user from enabling security when goal is pending due to BIOS restrictions
   if (SecurityOperation == SECURITY_OPERATION_SET_PASSPHRASE) {
     // Check if input DIMMs are not part of a goal
-    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, CheckSupportedConfigDimms);
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
@@ -3407,7 +3424,7 @@ GetPcd(
     goto FinishError;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto FinishError;
@@ -3543,7 +3560,7 @@ DeletePcd(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -3631,7 +3648,7 @@ ModifyPcdConfig(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
     pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -5739,7 +5756,7 @@ UpdateFw(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, FALSE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to verify the target dimms");
     pCommandStatus->GeneralStatus = NVM_ERR_DIMM_NOT_FOUND;
@@ -6185,7 +6202,7 @@ GetActualRegionsGoalCapacities(
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6194,7 +6211,7 @@ GetActualRegionsGoalCapacities(
     *pNumOfDimmsTargeted = DimmsNum;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6528,7 +6545,7 @@ CreateGoalConfig(
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6605,7 +6622,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6894,7 +6911,7 @@ DeleteGoalConfig (
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6913,7 +6930,7 @@ DeleteGoalConfig (
     }
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_VOLUME_CORRUPTED == ReturnCode) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
     goto Finish;
@@ -7153,7 +7170,7 @@ LoadGoalConfig(
   }
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -7497,7 +7514,7 @@ Finish:
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
@@ -8253,7 +8270,7 @@ GetErrorLog(
   }
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -8460,7 +8477,7 @@ SetOptionalConfigurationDataPolicy(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -8667,7 +8684,7 @@ DimmFormat(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, TRUE, pDimms, &DimmsNum, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -9848,7 +9865,7 @@ AutomaticCreateGoal(
   }
 
   // Check for security
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10073,7 +10090,7 @@ CheckPCDAutoConfVars(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, FALSE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10185,7 +10202,7 @@ CheckTopologyChange(
 
   // Check if any DIMMs are uninitialized
   // Can't check topology if a DIMM is non-functional
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, TRUE, ppDimms, &DimmsNumUninitialized,
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, TRUE, FALSE, ppDimms, &DimmsNumUninitialized,
     pCommandStatus);
   if (ReturnCode != EFI_NOT_FOUND) {
       NVDIMM_DBG("Uninitialized DIMM found. Aborting auto conf.");
@@ -10194,7 +10211,7 @@ CheckTopologyChange(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, FALSE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10263,12 +10280,12 @@ CheckGoalStatus(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10345,7 +10362,7 @@ InjectError(
 
     pCommandStatus->ObjectType = ObjectTypeDimm;
 
-    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, pDimms, &DimmsNum, pCommandStatus);
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }

@@ -1166,7 +1166,7 @@ DetermineRegionHealth(
 
   *pHealthState = RegionHealthStateNormal;
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     goto FinishAdvance;
   }
@@ -1807,7 +1807,8 @@ Finish:
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt
+  IN     BOOLEAN RestoreCorrupt,
+  IN     BOOLEAN CheckSupportedConfigDimms
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -1844,7 +1845,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)||!IsDimmInSupportedConfig(pDimm)) {
+    if (!IsDimmManageable(pDimm)||(CheckSupportedConfigDimms && !IsDimmInSupportedConfig(pDimm))) {
       continue;
     }
 

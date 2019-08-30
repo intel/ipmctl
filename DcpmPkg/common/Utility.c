@@ -132,7 +132,7 @@ CHAR16 *DiagnosticResultToStr(
     CHAR16 **TestEventMesg = StrSplit(pResult->Message, L'\n', &NumTokens);
     if (TestEventMesg != NULL) {
       pOutputLines = CatSPrintClean(pOutputLines,
-        L"Message : [ %d ] %ls\n", pResult->ResultCode, TestEventMesg[0]);
+        L"Message : %ls\n", TestEventMesg[0]);
       FreeStringArray(TestEventMesg, NumTokens);
     }
   }

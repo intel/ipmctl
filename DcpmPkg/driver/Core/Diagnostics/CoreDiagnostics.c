@@ -422,44 +422,40 @@ UpdateTestState(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINTN Id = 0;
   BOOLEAN IsTestPassed = TRUE;
-  UINT8 TempState = 0;
 
   if (pBuffer != NULL) {
     for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
       if (pBuffer->SubTestName[Id] != NULL)
       {
         pBuffer->SubTestState[Id] = GetDiagnosticState(pBuffer->SubTestStateVal[Id]);
-        if ((pBuffer->SubTestStateVal[Id] & DIAG_STATE_MASK_ALL) > DIAG_STATE_MASK_OK) {
-          IsTestPassed = FALSE;
+        pBuffer->StateVal |= (pBuffer->SubTestStateVal[Id] & DIAG_STATE_MASK_ALL);
+      }
+    }
+    if ((pBuffer->StateVal & DIAG_STATE_MASK_ALL) > DIAG_STATE_MASK_OK) {
+      IsTestPassed = FALSE;
+    }
+    pBuffer->State = GetDiagnosticState(pBuffer->StateVal);
+
+    if (pBuffer->Message == NULL) {
+      if (IsTestPassed == TRUE) {
+        switch (DiagnosticTestIndex) {
+        case  QuickDiagnosticIndex:
+          APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_QUICK_SUCCESS), EVENT_CODE_500, DIAG_STATE_MASK_OK, &pBuffer->Message, &pBuffer->StateVal);
+          break;
+        case ConfigDiagnosticIndex:
+          APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, &pBuffer->Message, &pBuffer->StateVal);
+          break;
+        case SecurityDiagnosticIndex:
+          APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_SUCCESS), EVENT_CODE_800, DIAG_STATE_MASK_OK, &pBuffer->Message, &pBuffer->StateVal);
+          break;
+        case FwDiagnosticIndex:
+          APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_SUCCESS), EVENT_CODE_900, DIAG_STATE_MASK_OK, &pBuffer->Message, &pBuffer->StateVal);
+          break;
+        default:
+          NVDIMM_DBG("invalid diagnostic test");
+          break;
         }
       }
-    }
-    if (IsTestPassed == TRUE) {
-      switch (DiagnosticTestIndex) {
-      case  QuickDiagnosticIndex:
-        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_QUICK_SUCCESS), EVENT_CODE_500, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
-        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
-        break;
-      case ConfigDiagnosticIndex:
-        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_SUCCESS), EVENT_CODE_600, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
-        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
-        break;
-      case SecurityDiagnosticIndex:
-        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_SUCCESS), EVENT_CODE_800, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
-        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
-        break;
-      case FwDiagnosticIndex:
-        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_SUCCESS), EVENT_CODE_900, DIAG_STATE_MASK_OK, &pBuffer->Message, &TempState);
-        pBuffer->State = CatSPrintClean(pBuffer->State, L"Ok");
-        break;
-      default:
-        NVDIMM_DBG("invalid diagnostic test");
-        break;
-      }
-    }
-    else {
-      pBuffer->Message = CatSPrintClean(pBuffer->Message, L"One or more subtests didn't pass.\n");
-      pBuffer->State = CatSPrintClean(pBuffer->State, L"Failed");
     }
   }
   else {

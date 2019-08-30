@@ -1055,6 +1055,13 @@ RunConfigDiagnostics(
     goto Finish;
   }
 
+  if (DimmCount == 0 || ppDimms == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_MANAGEABLE_DIMMS), EVENT_CODE_601, DIAG_STATE_MASK_OK,
+      &pResult->Message, &pResult->StateVal);
+    goto Finish;
+  }
+
   pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"Dimm specs");
   ReturnCode = CheckUninitializedDimms(&pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
   if (EFI_ERROR(ReturnCode)) {
@@ -1064,12 +1071,6 @@ RunConfigDiagnostics(
         &pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
       goto Finish;
     }
-  }
-
-  if (DimmCount == 0 || ppDimms == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    NVDIMM_DBG("The dimm count and dimm information is missing");
-    goto Finish;
   }
 
   pResult->SubTestName[DUPLICATE_DIMM_TEST_INDEX] = CatSPrint(NULL, L"Duplicate Dimm");

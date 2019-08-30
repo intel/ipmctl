@@ -906,6 +906,7 @@ typedef struct DIAGNOSTIC_INFO
   CHAR16 *TestName;
   CHAR16 *Message;
   CHAR16 *State;
+  UINT8 StateVal;
   UINT32  ResultCode;
   CHAR16 *SubTestName[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];
   UINT8  SubTestStateVal[MAX_NO_OF_DIAGNOSTIC_SUBTESTS];

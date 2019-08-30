@@ -79,10 +79,6 @@ RunQuickDiagnostics(
     ReturnCode = DiagnosticsManageabilityCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode) || (!IsDimmManageable(ppDimms[Index]))) {
       NVDIMM_DBG("The check for manageability for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX], DimmStr);
-      }
       continue;
     }
 

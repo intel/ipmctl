@@ -536,7 +536,7 @@ UefiMain(
               goto Finish;
             }
 
-            if (IS_SMBUS_ENABLED(pAttribs)) {
+            if (IS_SMBUS_FLAG_ENABLED(pAttribs)) {
               Print(CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS, PROTOCOL_OPTION_SMBUS, PROTOCOL_OPTION_DDRT);
             }
           }
@@ -1110,39 +1110,33 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 #ifdef OS_BUILD
-  BOOLEAN IsSmBusProtocolEnabled = ConfigIsDdrtProtocolDisabled();
-  BOOLEAN IsSmallPayloadEnabled = ConfigIsLargePayloadDisabled();
-#else
-  BOOLEAN IsSmBusProtocolEnabled = FALSE;
-  BOOLEAN IsSmallPayloadEnabled = TRUE;
+  // Default value for ini file (OS only) is set in ipmctl_default.h
+  BOOLEAN IsDdrtProtocolDisabled = ConfigIsDdrtProtocolDisabled();
+  BOOLEAN IsLargePayloadDisabled = ConfigIsLargePayloadDisabled();
 #endif // OS_BUILD
   NVDIMM_ENTRY();
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_NOT_FOUND;
-    Print(L"Failed to open the NVM DIMM protocol\n");
-    goto Finish;
+  // Clearly set defaults. Auto = no restrictions
+  Attribs.Protocol = FisTransportAuto;
+  Attribs.PayloadSize = FisTransportSizeAuto;
+
+#ifdef OS_BUILD
+  // Equivalent to passing "-smbus"
+  if (IsDdrtProtocolDisabled) {
+    Attribs.Protocol = FisTransportSmbus;
+    // Not strictly necessary, but makes more sense
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 
-  if (IsSmBusProtocolEnabled) {
-    pAttribs.Protocol = FisTransportSmbus;
-    pAttribs.PayloadSize = FisTransportSmallMb;
+  if (IsLargePayloadDisabled) {
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
-  else {
-    pAttribs.Protocol = FisTransportDdrt;
-  }
+#endif // OS_BUILD
 
-  if (IsSmallPayloadEnabled) {
-    pAttribs.PayloadSize = FisTransportSmallMb;
-  }
-  else {
-    pAttribs.PayloadSize = FisTransportLargeMb;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

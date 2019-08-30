@@ -702,7 +702,7 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
    p_status->health = p_dimm->HealthState;                         // Overall device health.
    p_status->last_shutdown_status_details = p_dimm->LatchedLastShutdownStatusDetails;    // State of last DIMM shutdown.
    p_status->unlatched_last_shutdown_status_details = p_dimm->UnlatchedLastShutdownStatusDetails;
-   
+
    if ((p_dimm->FwVer.FwApiMajor == 0x2 && p_dimm->FwVer.FwApiMinor >= 0x1) ||
        (p_dimm->FwVer.FwApiMajor >= 0x3)) {
      p_status->thermal_throttle_performance_loss_pcnt = p_dimm->ThermalThrottlePerformanceLossPrct;
@@ -2430,7 +2430,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
   if (NULL == (gOsShellParametersProtocol.StdOut = fopen(support_file, "w+")))
     return NVM_ERR_UNKNOWN;
 
-  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index) 
+  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index)
   {
     execute_cli_cmd(exec_commands[Index]);
   }

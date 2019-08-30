@@ -347,6 +347,7 @@ typedef union {
     }                                                         \
   } while (0)
 
+// Return if failure
 #define CHECK_RESULT(Call, Label)                             \
   do {                                                        \
     ReturnCode = Call;                                        \
@@ -356,6 +357,16 @@ typedef union {
     }                                                         \
   } while (0)
 
+// Return if success
+#define CHECK_RESULT_SUCCESS(Call, Label)                                 \
+  do {                                                                    \
+    ReturnCode = Call;                                                    \
+    if (ReturnCode == EFI_SUCCESS) {                                      \
+      goto Label;                                                         \
+    }                                                                     \
+  } while (0)
+
+// Ignore error code, but print it out
 #define CHECK_RESULT_CONTINUE(Call)                           \
   do {                                                        \
     ReturnCode = Call;                                        \

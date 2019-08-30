@@ -1334,7 +1334,7 @@ ReadLabelStorageArea(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     // At first read the Index size only form the beginning of the LSA
     IndexSize = sizeof((*ppLsa)->Index);
     ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
@@ -1399,7 +1399,7 @@ ReadLabelStorageArea(
   }
 
   // Copy the Label area
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     // Copy the Label area
     if (UseNamespace1_1) {
       PageSize = sizeof(NAMESPACE_LABEL_1_1);
@@ -1532,7 +1532,7 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (FALSE == IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (FALSE == IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     pRawData = AllocateZeroPool(TotalPcdSize);
     if (pRawData == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -1547,7 +1547,7 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     // Copy the Label index area
     ReturnCode = FwSetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, pIndexArea, 0, (UINT32)LabelIndexSize);
     if (EFI_ERROR(ReturnCode)) {

@@ -489,7 +489,7 @@ BttReadFlogPair(
     required.
   */
   if(pFlogPair->Flog[CurrentFlogIndex].OldMap == pFlogPair->Flog[CurrentFlogIndex].NewMap) {
-    NVDIMM_ERR("Flog[%d] Entry complete(initial state)", FlogNum);
+    NVDIMM_DBG("Flog[%d] Entry complete(initial state)", FlogNum);
     ReturnCode = EFI_SUCCESS;
     goto Finish;
   }

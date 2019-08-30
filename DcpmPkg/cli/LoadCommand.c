@@ -27,14 +27,12 @@ struct Command LoadCommand =
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
     {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", EXAMINE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
-    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty}
-
+    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    { L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI,HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueOptional }
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
-#ifndef OS_BUILD
-    ,{ L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI,HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueOptional }
-#endif
+
 },
   {                                                                   //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
@@ -113,6 +111,7 @@ Load(
   EFI_STATUS ReturnCodes[MAX_DIMMS];
   NVM_STATUS NvmCodes[MAX_DIMMS];
   NVM_STATUS generalNvmStatus = NVM_SUCCESS;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
 #ifndef OS_BUILD
   EFI_SHELL_PROTOCOL *pEfiShell = NULL;
@@ -173,6 +172,19 @@ Load(
   }
 
   Recovery = containsOption(pCmd, RECOVER_OPTION);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs), Finish);
+    // Also check if user specified "-smbus", then we need to set Recovery (for now)
+  if (IS_SMBUS_FLAG_ENABLED(Attribs)) {
+    Recovery = TRUE;
+  }
+  if (Recovery) {
+    // If user specifies -recovery, force the command
+    // to go over smbus only and not fallback
+    Attribs.Protocol = FisTransportSmbus;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
+    CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
+  }
+
   Examine = containsOption(pCmd, EXAMINE_OPTION) || containsOption(pCmd, EXAMINE_OPTION_SHORT);
   Force = containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT);
   //check for the kind of recovery this might be

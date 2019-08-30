@@ -1879,7 +1879,7 @@ EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
   if (NULL == pCmd) {
     NVDIMM_CRIT("NULL input parameter.\n");
@@ -1910,27 +1910,26 @@ EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   if (containsOption(pCmd, PROTOCOL_OPTION_DDRT)) {
-    pAttribs.Protocol = FisTransportDdrt;
+    Attribs.Protocol = FisTransportDdrt;
   }
   else if (containsOption(pCmd, PROTOCOL_OPTION_SMBUS)) {
-    pAttribs.Protocol = FisTransportSmbus;
-    pAttribs.PayloadSize = FisTransportSmallMb;
+    Attribs.Protocol = FisTransportSmbus;
   }
 
   if (containsOption(pCmd, LARGE_PAYLOAD_OPTION)) {
-    pAttribs.PayloadSize = FisTransportLargeMb;
+    Attribs.PayloadSize = FisTransportSizeLargeMb;
   }
   else if (containsOption(pCmd, SMALL_PAYLOAD_OPTION)) {
-    pAttribs.PayloadSize = FisTransportSmallMb;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
+  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

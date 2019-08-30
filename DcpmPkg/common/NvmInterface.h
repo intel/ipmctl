@@ -22,14 +22,18 @@
 #include <FwUtility.h>
 #include <PcdCommon.h>
 
+// Auto = no restrictions
 typedef enum _TRANSPORT_PROTOCOL {
   FisTransportSmbus = 0,
-  FisTransportDdrt = 1
+  FisTransportDdrt = 1,
+  FisTransportAuto = 2
 } TRANSPORT_PROTOCOL;
 
+// Auto = no restrictions
 typedef enum _TRANSPORT_PAYLOAD_SIZE {
-  FisTransportSmallMb = 0,
-  FisTransportLargeMb = 1
+  FisTransportSizeSmallMb = 0,
+  FisTransportSizeLargeMb = 1,
+  FisTransportSizeAuto = 2
 } TRANSPORT_PAYLOAD_SIZE;
 
 typedef struct _EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS {
@@ -38,24 +42,28 @@ typedef struct _EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS {
 } EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS;
 
 /**
-  Resolves to TRUE if SMBUS transport protocol is enabled. FALSE otherwise.
+  Resolves to TRUE if the "-smbus" flag was passed in via CLI or equivalent.
+  Restricts all communications to smbus only. FALSE otherwise.
 **/
-#define IS_SMBUS_ENABLED(TransportAttribs) (FisTransportSmbus == TransportAttribs.Protocol)
+#define IS_SMBUS_FLAG_ENABLED(TransportAttribs) (FisTransportSmbus == TransportAttribs.Protocol)
 
 /**
-  Resolves to TRUE if DDRT transport protocol is enabled. FALSE otherwise.
+  Resolves to TRUE if the "-ddrt" flag was passed in via CLI or equivalent.
+  Restricts all communications to DDRT only. FALSE otherwise.
 **/
-#define IS_DDRT_ENABLED(TransportAttribs) (FisTransportDdrt == TransportAttribs.Protocol)
+#define IS_DDRT_FLAG_ENABLED(TransportAttribs) (FisTransportDdrt == TransportAttribs.Protocol)
 
 /**
-  Resolves to TRUE if transport small payload size is enabled. FALSE otherwise.
+  Resolves to TRUE if the "-spmb" flag was passed in via CLI or equivalent.
+  Restricts all communications to small payload mailbox only. FALSE otherwise.
 **/
-#define IS_SMALL_PAYLOAD_ENABLED(TransportAttribs) (FisTransportSmallMb == TransportAttribs.PayloadSize)
+#define IS_SMALL_PAYLOAD_FLAG_ENABLED(TransportAttribs) (FisTransportSizeSmallMb == TransportAttribs.PayloadSize)
 
 /**
-  Resolves to TRUE if transport large payload size is enabled. FALSE otherwise.
+  Resolves to TRUE if the "-lpmb" flag was passed in via CLI or equivalent.
+  Restricts all communications to large payload mailbox only. FALSE otherwise.
 **/
-#define IS_LARGE_PAYLOAD_ENABLED(TransportAttribs) (FisTransportLargeMb == TransportAttribs.PayloadSize)
+#define IS_LARGE_PAYLOAD_FLAG_ENABLED(TransportAttribs) (FisTransportSizeLargeMb == TransportAttribs.PayloadSize)
 
 #define MAX_NO_OF_DIAGNOSTIC_SUBTESTS 5
 

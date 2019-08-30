@@ -65,6 +65,23 @@ enum dsm_vendor_error {
 #define MB_COMPLETE 0x1
 #define STATUS_MASK 0xFF
 
+
+#pragma pack(push)
+#pragma pack(1)
+struct input_payload_smbus_os_passthru{
+  unsigned char Opcode;
+  unsigned char SubOpcode;
+  unsigned char TransportInterface;
+  unsigned char Reserved[5];
+  unsigned int Timeout;
+  unsigned char Data[IN_PAYLOAD_SIZE];
+};
+#pragma pack(pop)
+
+// Additional bytes to deal with DSM calls
+// Different name for now to avoid naming conflict, but same value as in FwUtility.h
+#define IN_PAYLOAD_SIZE_EXT_PAD_OS (sizeof(struct input_payload_smbus_os_passthru) - IN_PAYLOAD_SIZE)
+
 #pragma pack(push)
 #pragma pack(1)
 struct fw_cmd {
@@ -72,7 +89,7 @@ struct fw_cmd {
    unsigned int LargeInputPayloadSize;
    unsigned int OutputPayloadSize;
    unsigned int LargeOutputPayloadSize;
-   unsigned char InputPayload[IN_PAYLOAD_SIZE];
+   unsigned char InputPayload[IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD_OS];
    unsigned char LargeInputPayload[IN_MB_SIZE];
    unsigned char OutPayload[OUT_PAYLOAD_SIZE];
    unsigned char LargeOutputPayload[OUT_MB_SIZE];

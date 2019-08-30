@@ -475,7 +475,7 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 			unsigned int Opcode = BUILD_DSM_OPCODE(p_fw_cmd->Opcode, p_fw_cmd->SubOpcode);
 			struct ndctl_cmd *p_vendor_cmd = NULL;
 			if ((p_vendor_cmd = ndctl_dimm_cmd_new_vendor_specific(
-					p_dimm, Opcode, DEV_SMALL_PAYLOAD_SIZE,
+					p_dimm, Opcode, p_fw_cmd->InputPayloadSize,
 					DEV_SMALL_PAYLOAD_SIZE)) == NULL)
 			{
 				rc = NVM_ERR_GENERAL_OS_DRIVER_FAILURE;

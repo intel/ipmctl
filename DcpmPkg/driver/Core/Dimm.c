@@ -1796,7 +1796,7 @@ FwCmdIdDimm (
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtIdentifyDimm;
   pFwCmd->SubOpcode = SubopIdentify;
-  pFwCmd->OutputPayloadSize = 128;
+  pFwCmd->OutputPayloadSize = OUT_PAYLOAD_SIZE;
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
 
@@ -1915,7 +1915,7 @@ FwCmdGetDimmPartitionInfo(
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetAdminFeatures;
   pFwCmd->SubOpcode = SubopDimmPartitionInfo;
-  pFwCmd->OutputPayloadSize = 128;
+  pFwCmd->OutputPayloadSize = OUT_PAYLOAD_SIZE;
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -2167,7 +2167,7 @@ FwCmdGetPlatformConfigData(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     pBuffer = AllocateZeroPool(PcdSize);
     if (pBuffer == NULL) {
       NVDIMM_ERR("Can't allocate memory for PCD partition buffer (%d bytes)", PcdSize);
@@ -2234,7 +2234,7 @@ FwCmdGetPlatformConfigData(
       pTempCacheSz = pDimm->PcdOemPartitionSize;
     }
 
-    if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+    if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
       CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
       if (NULL != pTempCache) {
         CopyMem_S(pTempCache, pTempCacheSz, pBuffer, PcdSize);
@@ -2247,7 +2247,7 @@ FwCmdGetPlatformConfigData(
     }
     goto Finish;
   }
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     CopyMem_S(*ppRawData, PcdSize, pBuffer, PcdSize);
   } else {
     CopyMem_S(*ppRawData, PcdSize, pFwCmd->LargeOutputPayload, PcdSize);
@@ -2877,7 +2877,7 @@ FwCmdSetPlatformConfigData (
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     /** Set PCD by small payload in loop in 64 byte chunks **/
     InPayloadSetData.PayloadType = PCD_CMD_OPT_SMALL_PAYLOAD;
     pFwCmd->LargeInputPayloadSize = 0;
@@ -3212,7 +3212,7 @@ FwCmdGetFwDebugLog (
   pInputPayload->LogAction = LogAction;
 
   // Default for DDRT large payload transactions. 128 bytes for smbus
-  if (IS_SMBUS_ENABLED(pAttribs) || IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMBUS_FLAG_ENABLED(pAttribs) || IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     ChunkSize = SMALL_PAYLOAD_SIZE;
     OutputPayload = pFwCmd->OutPayload;
     pInputPayload->PayloadType = DEBUG_LOG_PAYLOAD_TYPE_SMALL;
@@ -3302,7 +3302,7 @@ FwCmdGetErrorLog (
   pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
   pFwCmd->OutputPayloadSize = OutputPayloadSize;
   pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, sizeof(pFwCmd->InputPayload));
+  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -3373,7 +3373,7 @@ FwCmdGetCommandEffectLog(
   pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
   pFwCmd->OutputPayloadSize = OutputPayloadSize;
   pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, sizeof(pFwCmd->InputPayload));
+  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
@@ -4488,7 +4488,7 @@ GetAndParseFwErrorLogForDimm(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
     InputPayload.LogParameters.Separated.LogInfo = ErrorLogInfoData;
 
     ReturnCode = FwCmdGetErrorLog(pDimm, &InputPayload, &OutPayloadGetErrorLogInfoData, sizeof(OutPayloadGetErrorLogInfoData),
@@ -6779,26 +6779,47 @@ PassThru(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+#ifdef OS_BUILD
+  UINT8 InputPayloadTemp[IN_PAYLOAD_SIZE];
+  INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *pInputPayloadSOP = NULL;
+#endif
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs), Finish);
 
-  if (IS_SMBUS_ENABLED(pAttribs)) {
+  if (IS_SMBUS_FLAG_ENABLED(pAttribs)) {
 #ifdef OS_BUILD
-    ReturnCode = EFI_UNSUPPORTED;
-  } else {
-    ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
+    // Send a particular bios emulated command through the OS passthru dsm, which
+    // BIOS will interpret as a passthru to the DCPMM through Smbus/DDRT
+
+    // Carefully copy the buffers
+    CopyMem(InputPayloadTemp, pCmd->InputPayload, IN_PAYLOAD_SIZE);
+    ZeroMem(pCmd->InputPayload, IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD);
+    // Re-interpret the existing input payload, now using the full buffer
+    pInputPayloadSOP = (INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *)(pCmd->InputPayload);
+    CopyMem(pInputPayloadSOP->Data, InputPayloadTemp, IN_PAYLOAD_SIZE);
+
+    // Update the rest of the parameters
+    pCmd->InputPayloadSize = IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD;
+    pInputPayloadSOP->Opcode = pCmd->Opcode;
+    pInputPayloadSOP->SubOpcode = pCmd->SubOpcode;
+    pInputPayloadSOP->Timeout = PT_TIMEOUT_INTERVAL_EXT;
+    pInputPayloadSOP->TransportInterface = SmbusTransportInterface;
+    pCmd->Opcode = PtEmulatedBiosCommands;
+    pCmd->SubOpcode = SubopExtVendorSpecific;
   }
+  // Use the OS passthru dsm mechanism to talk with the DCPMM
+  ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
+
 #else
-    ReturnCode = SmbusPassThru(pDimm->SmbusAddress, pCmd, PT_LONG_TIMEOUT_INTERVAL);
+    // SMBUS: Use the bios DCPMM protocol to send commands to the DCPMM
+    ReturnCode = DcpmmCmd(pDimm, pCmd, DCPMM_TIMEOUT_INTERVAL, FisOverSmbus);
   } else {
+    // DDRT:  Use the bios DCPMM protocol to send commands to the DCPMM
     ReturnCode = DcpmmCmd(pDimm, pCmd, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt);
   }
 #endif // OS_BUILD

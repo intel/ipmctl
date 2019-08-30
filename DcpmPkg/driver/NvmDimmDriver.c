@@ -827,7 +827,7 @@ NvmDimmDriverDriverEntryPoint(
   }
 
   /**
-     Locate DCPMM - BIOS protocol for writing to Maiblox in UEFI
+     Locate DCPMM - BIOS protocol for writing to mailboxes in UEFI
   **/
 #ifndef OS_BUILD
   ReturnCode = gBS->LocateProtocol(&gDcpmmProtocolGuid, NULL, (VOID **)&gNvmDimmData->pDcpmmProtocol);
@@ -838,6 +838,13 @@ NvmDimmDriverDriverEntryPoint(
     else {
       NVDIMM_WARN("Communication with the device driver failed (dcpmm protocol)");
     }
+    goto Finish;
+  }
+  // Make sure the protocol version is supported.
+  if (gNvmDimmData->pDcpmmProtocol->ProtocolVersion != DCPMM_PROTOCOL_VER_2) {
+    NVDIMM_ERR("Unexpected DCPMM protocol version. Expected %d got %d",
+        DCPMM_PROTOCOL_VER_2,gNvmDimmData->pDcpmmProtocol->ProtocolVersion);
+    ReturnCode = EFI_UNSUPPORTED;
     goto Finish;
   }
 #endif // !OS_BUILD

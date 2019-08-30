@@ -87,7 +87,8 @@ EFI_GUID gNvmDimmPbrProtocolGuid = EFI_DCPMM_PBR_PROTOCOL_GUID;
 
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 extern CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT];
-EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportDdrt, FisTransportSmallMb };
+// These will be overwritten by SetDefaultProtocolAndPayloadSizeOptions()
+EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportAuto, FisTransportSizeAuto };
 
 #ifndef OS_BUILD
 
@@ -5093,7 +5094,7 @@ Finish:
 }
 
 /**
-  Update firmware or training data of a specified NVDIMM
+  Update firmware or training data of a specified NVDIMM over SMBUS
 
   @param[in] DimmPid Dimm ID of a NVDIMM on which update is to be performed
   @param[in] pImageBuffer is a pointer to FW image
@@ -6552,15 +6553,9 @@ CreateGoalConfig(
 
   /** Verify Command Access Policy for Set PCD command **/
   UINT8 CapRestricted = 0;
-  UINT8 RestrictionCheck = 0;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
-  ReturnCode = GetFisTransportAttributes(pThis, &Attribs);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to retrieve FIS transport attributes. ReturnCode=%d.", ReturnCode);
-    goto Finish;
-  }
-  RestrictionCheck = Attribs.Protocol == FisTransportSmbus ? COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY : COMMAND_ACCESS_POLICY_RESTRICTION_NONE;
+  CHECK_RESULT(GetFisTransportAttributes(pThis, &Attribs), Finish);
 
   for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = FwCmdGetCommandAccessPolicy(ppDimms[Index], PtSetAdminFeatures, SubopPlatformDataInfo, &CapRestricted);
@@ -6569,11 +6564,22 @@ CreateGoalConfig(
         PtSetAdminFeatures, SubopPlatformDataInfo, ppDimms[Index]->DimmID, ReturnCode);
       goto Finish;
     }
-    if (CapRestricted != RestrictionCheck) {
+
+    // We're doing this pre-check (can we run Set PCD?) so the user
+    // doesn't have to go through the process of creating and confirming a
+    // goal only to have it fail to apply.
+    // There are a few levels of restriction. Sometimes only DDRT is disabled,
+    // in which case we can use smbus. However, if we can't use smbus then
+    // we can't do anything if there's any limitation. Also can't do
+    // anything if we're restricted to BIOS mailbox only.
+    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY) ||
+        (IS_DDRT_FLAG_ENABLED(Attribs) && CapRestricted != COMMAND_ACCESS_POLICY_RESTRICTION_NONE)) {
       ReturnCode = EFI_UNSUPPORTED;
+      NVDIMM_WARN("Command access policy disallows Set PCD command");
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
       goto Finish;
     }
+
   }
 
 #ifdef OS_BUILD
@@ -8368,7 +8374,7 @@ GetFwDebugLog(
     goto Finish;
   }
 
-  if (!IS_SMBUS_ENABLED(pAttribs) && !IsDimmManageable(pDimm)) {
+  if (!IS_SMBUS_FLAG_ENABLED(pAttribs) && !IsDimmManageable(pDimm)) {
     SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, NULL, 0, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
     goto Finish;
   }
@@ -8486,7 +8492,7 @@ SetOptionalConfigurationDataPolicy(
     FIS_2_0 = (2 == pDimms[Index]->FwVer.FwApiMajor && 0 == pDimms[Index]->FwVer.FwApiMinor);
     FIS_GTE_2_1 = (2 == pDimms[Index]->FwVer.FwApiMajor && 1 <= pDimms[Index]->FwVer.FwApiMinor);
 
-    if ((!pAveragePowerReportingTimeConstantMultiplier && pAveragePowerReportingTimeConstant && FIS_2_0) 
+    if ((!pAveragePowerReportingTimeConstantMultiplier && pAveragePowerReportingTimeConstant && FIS_2_0)
       || (pAveragePowerReportingTimeConstantMultiplier && !pAveragePowerReportingTimeConstant && FIS_GTE_2_1)) {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_FIRMWARE_VERSION_NOT_VALID);
       continue;
@@ -10795,7 +10801,7 @@ GetCommandEffectLog(
   }
 
   // Format InputPayload for small payload entry count retrieval if necessary
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs) || IS_SMBUS_FLAG_ENABLED(pAttribs)) {
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = EntriesCount;
     InputPayload.EntryOffset = 0;
@@ -10815,7 +10821,7 @@ GetCommandEffectLog(
   }
   *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
 
-  if (IS_SMALL_PAYLOAD_ENABLED(pAttribs) || IS_SMBUS_ENABLED(pAttribs)) {
+  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs) || IS_SMBUS_FLAG_ENABLED(pAttribs)) {
     UINT32 EntryCountRemaining = *pEntryCount;
     UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
 
@@ -10981,15 +10987,9 @@ SetFisTransportAttributes(
     goto Finish;
   }
 
-  if (((Attribs.Protocol == FisTransportSmbus) && (Attribs.Protocol == FisTransportDdrt))
-    || ((Attribs.PayloadSize == FisTransportSmallMb) && (Attribs.PayloadSize == FisTransportLargeMb))) {
-    NVDIMM_DBG("Mutually exclusive transport attributes detected");
-    goto Finish;
-  }
-
-  if ((!(Attribs.Protocol == FisTransportSmbus) && !(Attribs.Protocol == FisTransportDdrt))
-    || (!(Attribs.PayloadSize == FisTransportSmallMb) && !(Attribs.PayloadSize == FisTransportLargeMb))) {
-    NVDIMM_DBG("Insufficient transport attributes detected");
+  if ((Attribs.Protocol > FisTransportAuto) || (Attribs.PayloadSize > FisTransportSizeAuto)) {
+    // Covers case where multiple values are somehow set
+    NVDIMM_DBG("Incorrect transport attributes detected");
     goto Finish;
   }
 

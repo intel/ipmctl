@@ -6,7 +6,6 @@
 #ifndef _FWUTILITY_H_
 #define _FWUTILITY_H_
 
-#include <Uefi.h>
 #include "NvmTypes.h"
 
 #define MAX_FIRMWARE_IMAGE_SIZE_KB 788
@@ -15,7 +14,7 @@
 /**
   The maximum file size that a new firmware image can have - in bytes.
 **/
-#define MAX_FIRMWARE_IMAGE_SIZE_B         KIB_TO_BYTES(MAX_FIRMWARE_IMAGE_SIZE_KB)
+#define MAX_FIRMWARE_IMAGE_SIZE_B        KIB_TO_BYTES(MAX_FIRMWARE_IMAGE_SIZE_KB)
 #define FIRMWARE_SPI_IMAGE_AEP_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_AEP_SIZE_KB)
 #define FIRMWARE_SPI_IMAGE_BPS_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_BPS_SIZE_KB)
 // Keep this updated. Used for determining max input file size for now
@@ -52,11 +51,28 @@
 #pragma pack(push)
 #pragma pack(1)
 typedef struct {
+  UINT8 Opcode;
+  UINT8 SubOpcode;
+  UINT8 TransportInterface;
+  UINT8 Reserved[5];
+  UINT32 Timeout;
+  UINT8 Data[IN_PAYLOAD_SIZE];
+} INPUT_PAYLOAD_SMBUS_OS_PASSTHRU;
+#pragma pack(pop)
+
+// Additional bytes to deal with DSM calls
+#define IN_PAYLOAD_SIZE_EXT_PAD (sizeof(INPUT_PAYLOAD_SMBUS_OS_PASSTHRU) - IN_PAYLOAD_SIZE)
+
+#pragma pack(push)
+#pragma pack(1)
+typedef struct {
   UINT32 InputPayloadSize;
   UINT32 LargeInputPayloadSize;
   UINT32 OutputPayloadSize;
   UINT32 LargeOutputPayloadSize;
-  UINT8 InputPayload[IN_PAYLOAD_SIZE];
+  // Additional buffer for potential OS special passthrough
+  // See use of SubopExtVendorSpecific in PassThru()
+  UINT8 InputPayload[IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD];
   UINT8 LargeInputPayload[IN_MB_SIZE];
   UINT8 OutPayload[OUT_PAYLOAD_SIZE];
   UINT8 LargeOutputPayload[OUT_MB_SIZE];
@@ -68,6 +84,7 @@ typedef struct {
   UINT8 DsmStatus;
 #endif
 } FW_CMD;
+
 #pragma pack(pop)
 
 /**

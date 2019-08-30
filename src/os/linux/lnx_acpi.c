@@ -143,7 +143,14 @@ int get_acpi_table(
 					}
 					else
 					{
-						rc = check_acpi_table(signature, p_table);
+						if (p_table->header.length > total_table_size)
+						{
+							rc = ACPI_ERR_BADTABLE;
+						}
+						else
+						{
+							rc = check_acpi_table(signature, p_table);
+						}
 					}
 				}
 			}

@@ -237,14 +237,8 @@ CheckAndConfirmAlignments(
   BOOLEAN CapacityReducedForSKU = FALSE;
   BOOLEAN MaxPmInterleaveSetsExceeded = FALSE;
   CHAR16 *pSingleStatusCodeMessage = NULL;
-  UINT64 TwoLM_NmFmRatioLower = 4;
-  UINT64 TwoLM_NmFmRatioUpper = 16;
-  UINT64 TwoLM_FmLowerLimit = 0;
-  UINT64 TwoLM_FmUpperLimit = 0;
-  UINT64 TwoLM_NMTotal = 0;
-  UINT64 TwoLM_FMTotal = 0;
-  TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
-  UINT16 TopologyDimmsNumber = 0;
+  BOOLEAN IsAboveLimit = FALSE;
+  BOOLEAN IsBelowLimit = FALSE;
   UINT32 AppDirect1Regions = 0;
   UINT32 AppDirect2Regions = 0;
   UINT32 NumOfDimmsTargeted = 0;
@@ -294,34 +288,18 @@ CheckAndConfirmAlignments(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetSystemTopology(pNvmDimmConfigProtocol, &pTopologyDimms, &TopologyDimmsNumber);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    goto Finish;
-  }
-
-  //sum up the near memory
-  for (Index = 0; Index < TopologyDimmsNumber; Index++)
-  {
-    if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DDR4) {
-      TwoLM_NMTotal += pTopologyDimms[Index].VolatileCapacity;
+  if (RegionConfigsCount > 0) {
+    ReturnCode = CheckNmFmLimits(pNvmDimmConfigProtocol, &RegionConfigsInfo[0], RegionConfigsCount, &IsAboveLimit, &IsBelowLimit);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
     }
-  }
 
-  //sum up the near memory
-  for (Index = 0; Index < RegionConfigsCount; Index++)
-  {
-    TwoLM_FMTotal += RegionConfigsInfo[Index].VolatileSize;
-  }
-
-  if (TwoLM_FMTotal > 0) {
-    TwoLM_FmLowerLimit = TwoLM_NMTotal * TwoLM_NmFmRatioLower;
-    TwoLM_FmUpperLimit = TwoLM_NMTotal * TwoLM_NmFmRatioUpper;
-    if (TwoLM_FMTotal > TwoLM_FmUpperLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is above the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioUpper);
+    if (TRUE == IsBelowLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER);
     }
-    else if (TwoLM_FMTotal < TwoLM_FmLowerLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is below the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioLower);
+    else if (TRUE == IsAboveLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_UPPER_VIOLATION, TWOLM_NMFM_RATIO_UPPER);
     }
   }
 
@@ -404,7 +382,6 @@ CheckAndConfirmAlignments(
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
-  FREE_POOL_SAFE(pTopologyDimms);
   return ReturnCode;
 }
 

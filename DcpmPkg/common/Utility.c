@@ -87,6 +87,84 @@ GetEnvVariable(
 #endif
 
 /**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN]  pNvmDimmConfigProtocol the protocol
+  @param[IN]  pRegionConfigsInfo a pointer to the region list to examine
+  @param[IN]  RegionConfigsCount the number of REGION_GOAL_PER_DIMM_INFO elements in the list
+  @param[OUT] pIsAboveLimit the 2LM vs DDR value is above the upper recommended limit
+  @param[OUT] pIsBelowLimit the 2LM vs DDR value is below the lower recommended limit
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_DEVICE_ERROR failed to get the system topology
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
+  IN    UINT32  RegionConfigsCount,
+  OUT   BOOLEAN *pIsAboveLimit,
+  OUT   BOOLEAN *pIsBelowLimit
+) {
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT64 TwoLM_FmMinRecommended = 0;
+  UINT64 TwoLM_FmMaxRecommended = 0;
+  UINT64 TwoLM_NMTotal = 0;
+  UINT64 TwoLM_FMTotal = 0;
+  TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
+  UINT16 TopologyDimmsNumber = 0;
+  UINT32 Index = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pNvmDimmConfigProtocol == NULL || pRegionConfigsInfo  == NULL || pIsAboveLimit == NULL || pIsBelowLimit == NULL) {
+    goto Finish;
+  }
+
+  *pIsAboveLimit = FALSE;
+  *pIsBelowLimit = FALSE;
+  for (Index = 0; Index < RegionConfigsCount; Index++)
+  {
+    TwoLM_FMTotal += pRegionConfigsInfo[Index].VolatileSize;
+  }
+
+  if (TwoLM_FMTotal == 0) {
+    //no limit check necessary - no 2LM goal in play
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetSystemTopology(pNvmDimmConfigProtocol, &pTopologyDimms, &TopologyDimmsNumber);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+  for (Index = 0; Index < TopologyDimmsNumber; Index++)
+  {
+    if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DDR4) {
+      TwoLM_NMTotal += pTopologyDimms[Index].VolatileCapacity;
+    }
+  }
+
+  TwoLM_FmMinRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER;
+  TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
+  if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
+    *pIsAboveLimit = TRUE;
+  }
+  else if (TwoLM_FMTotal < TwoLM_FmMinRecommended) {
+    *pIsBelowLimit = TRUE;
+  }
+
+Finish:
+  NVDIMM_EXIT();
+  return ReturnCode;
+}
+
+/**
   Generates namespace type string, caller must free it
 
   @param[in] Type, value corresponding to namespace type.

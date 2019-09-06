@@ -72,6 +72,8 @@ typedef union {
 
 #define COUNT_TO_INDEX_OFFSET 1
 #define FIRST_CHAR_INDEX 0
+#define TWOLM_NMFM_RATIO_LOWER 4
+#define TWOLM_NMFM_RATIO_UPPER 16
 
 #define UTF_16_BOM L'\xFEFF'
 
@@ -482,6 +484,29 @@ CHAR16 *
 GetEnvVariable(
   IN     CHAR16 *pVarName
   );
+
+/**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN]  pNvmDimmConfigProtocol the protocol
+  @param[IN]  pRegionConfigsInfo a pointer to the region list to examine
+  @param[IN]  RegionConfigsCount the number of REGION_GOAL_PER_DIMM_INFO elements in the list
+  @param[OUT] pIsAboveLimit the 2LM vs DDR value is above the upper recommended limit
+  @param[OUT] pIsBelowLimit the 2LM vs DDR value is below the lower recommended limit
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_DEVICE_ERROR failed to get the system topology
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
+  IN    UINT32  RegionConfigsCount,
+  OUT   BOOLEAN *pIsAboveLimit,
+  OUT   BOOLEAN *pIsBelowLimit
+);
 
 /**
   Checks if the Config Protocol version is right.

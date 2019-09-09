@@ -241,7 +241,7 @@ ShowRegister(
       PRINTER_BUILD_KEY_PATH(pPath, DS_REGISTER_INDEX_PATH, DimmIndex, RegIndex);
       RegIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, REGISTER_TARGET_STR, REGISTER_BSR_STR);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Boot Status", FORMAT_UINT64_HEX, Bsr.AsUint64);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Boot Status", FORMAT_HEX_PREFIX FORMAT_UINT64_HEX, Bsr.AsUint64);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [07:00] MajorCheckpoint -----------------------", FORMAT_HEX_NOWIDTH, Bsr.Separated_Current_FIS.Major);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [15:08] MinorCheckpoint -----------------------", FORMAT_HEX_NOWIDTH, Bsr.Separated_Current_FIS.Minor);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [17:16] MR (Media Ready) ----------------------", FORMAT_HEX_NOWIDTH L" (00:notReady; 1:Ready; 2:Error; 3:Rsv)", Bsr.Separated_Current_FIS.MR);

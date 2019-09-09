@@ -965,7 +965,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE      11               ///< Max Controller Temperature Sensor IDs
 #define SENSOR_TYPE_ALL                             12               ///< All Sensor IDs
 #define SENSOR_TYPE_COUNT                           SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
-
+#define ALARM_COUNT                                 3                ///< Number of Alarm Threshold sensors
 /** @} */
 
 /** Sensor enabled/disabled **/
@@ -1058,11 +1058,16 @@ typedef struct {
   CHAR16 ValueString[HII_SENSOR_VALUE_STRING_SIZE];
   UINT64 Value;
   UINT64 AlarmThreshold;
+  UINT8  AlarmThresholdIsMixed;
   UINT64 NewAlarmThreshold;
   UINT64 ThrottlingStopThreshold;
   UINT64 ThrottlingStartThreshold;
   UINT64 ShutdownThreshold;
 } DIMM_SENSOR_HII;
+
+typedef struct {
+  UINT8 Enabled[MAX_DIMMS];
+}DIMM_ALARM_ENABLED;
 
 #define DIMM_SENSOR_ALARM_DISABLED 0
 #define DIMM_SENSOR_ALARM_ENABLED  1

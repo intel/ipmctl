@@ -2668,8 +2668,12 @@ InitializeNamespaces(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
+    if (pDimm->LsaStatus == LSA_NOT_INIT) {
+      continue;
+    }
+
     ReturnCode = RetrieveNamespacesFromLsa(pDimm, gNvmDimmData->PMEMDev.pFitHead,
-        &gNvmDimmData->PMEMDev.Namespaces);
+      &gNvmDimmData->PMEMDev.Namespaces);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to retrieve Namespaces from LSA");
       pDimm->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;

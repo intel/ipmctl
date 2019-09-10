@@ -4250,6 +4250,12 @@ EFI_STATUS PbrDcpmmSerializeTagId(
     *pPbrId = id;
     NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrId);
     shmdt(pPbrId);
+    //If id is reset to zero it is ok to mark
+    //this share memory to be removed
+    if (0 == id)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
     ReturnCode = EFI_SUCCESS;
   }
 #endif
@@ -4288,6 +4294,12 @@ EFI_STATUS PbrDcpmmDeserializeTagId(
   {
     *id = *pPbrId;
     shmdt(pPbrId);
+    //If id is reset to zero it is ok to mark
+    //this share memory to be removed
+    if (0 == *id)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
   }
 #endif
   return ReturnCode;

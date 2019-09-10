@@ -4312,6 +4312,10 @@ ConvertDimmInfoAttribToString(
     return NULL;
   }
 
+  if (pHeader->Status.Code == EFI_UNSUPPORTED) {
+    return NULL;
+  }
+
   if (pHeader->Status.Code) {
     return CatSPrintClean(NULL, L"Unknown");
   }

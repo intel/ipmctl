@@ -81,13 +81,6 @@ extern EFI_GUID gNvmDimmPbrProtocolGuid;
 #define NFIT_PLATFORM_CAPABILITIES_BIT0     0x1
 #define NFIT_MEMORY_CONTROLLER_FLUSH_BIT1   (NFIT_PLATFORM_CAPABILITIES_BIT0 << 0x1)
 
-#define CONTROLLER_TEMPERATURE_LOWER_LIMIT 20
-#define CONTROLLER_TEMPERATURE_UPPER_LIMIT 102
-#define MEDIA_TEMPERATURE_LOWER_LIMIT      20
-#define MEDIA_TEMPERATURE_UPPER_LIMIT      85
-#define PERCENTAGE_REMAINING_LOWER_LIMIT   1
-#define PERCENTAGE_REMAINING_UPPER_LIMIT   99
-
 /**
   The update goes in 3 steps: initialization, data, end, where the data step can be done many times.
   Each of those steps must be done at least one, so the minimum number of packets will be 3.

@@ -3382,6 +3382,9 @@ GetPcd(
     goto FinishError;
   }
 
+  //Set initial value of *ppDimmPcdInfo
+  *ppDimmPcdInfo = NULL;
+
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {

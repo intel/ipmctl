@@ -196,7 +196,7 @@ Finish:
 
 
 /**
-  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  Retrieve a populated array and count of all DCPMMs (functional and non-functional)
   in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -1237,6 +1237,7 @@ MatchCliReturnCode(
   case NVM_ERR_FORCE_REQUIRED:
   case NVM_ERR_OPERATION_FAILED:
   case NVM_ERR_DIMM_ID_DUPLICATED:
+  case NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID:
   case NVM_ERR_SOCKET_ID_DUPLICATED:
   case NVM_ERR_UNABLE_TO_GET_SECURITY_STATE:
   case NVM_ERR_INCONSISTENT_SECURITY_STATE:

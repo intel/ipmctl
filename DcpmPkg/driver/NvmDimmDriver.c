@@ -1124,15 +1124,8 @@ InitializeDimms()
    if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed on Smbus init, error = " FORMAT_EFI_STATUS ".", ReturnCodeNonBlocking);
    }
+#endif //!OS_BUILD
 
-   // For right now, this only fills in additional smbus information for
-   // uninitialized dimms listed in the NFIT *only* (not any that aren't listed
-   // in the NFIT)
-   ReturnCodeNonBlocking = PopulateUninitializedDimmList();
-   if (EFI_ERROR(ReturnCodeNonBlocking)) {
-    NVDIMM_WARN("Failed on Smbus dimm list init, error = " FORMAT_EFI_STATUS ".", ReturnCodeNonBlocking);
-   }
-#endif
    /**
     Verify that all manageable NVM-DIMMs have unique identifier. Otherwise, print a critical error and
     break further initialization.

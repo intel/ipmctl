@@ -1212,7 +1212,7 @@ ShowDimms(
         }
 
         /** 2.1/2.0 MaxMemoryBandwidthBoostMaxPowerLimit/MaxTurboModePowerConsumption **/
-        if (ShowAll 
+        if (ShowAll
           || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_TURBO_MODE_POWER_CONSUMPTION_STR))
           || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT))) {
           if (2 == pDimms[DimmIndex].FwVer.FwApiMajor && 0 == pDimms[DimmIndex].FwVer.FwApiMinor) {

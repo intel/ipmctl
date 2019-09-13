@@ -18,14 +18,17 @@
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
   if (FW_ERROR(pFwCmd->Status)) { \
+    NVDIMM_ERR("Firmware cmd 0x%x:0x%x failed! FIS Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->Status); \
     ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
   } \
   else if (DSM_ERROR(pFwCmd->DsmStatus)) { \
-      ReturnCode = MatchDsmReturnCode(pFwCmd->DsmStatus); \
+    NVDIMM_ERR("DSM for fw cmd 0x%x:0x%x failed! DSM Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->DsmStatus); \
+    ReturnCode = MatchDsmReturnCode(pFwCmd->DsmStatus); \
   }
 #else
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
   if (FW_ERROR(pFwCmd->Status)) { \
+    NVDIMM_ERR("Firmware cmd 0x%x:0x%x failed! FIS Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->Status); \
     ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
   }
 #endif
@@ -254,6 +257,9 @@ typedef struct _DIMM {
 
   UINT16 ControllerRid;             //!< Revision ID of the subsystem memory controller from FIS
 
+  // If the dimm was declared non-functional during our driver initialization
+  BOOLEAN NonFunctional;
+
   /*
   A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
   is only used during namespace initialzation so it doesn't need to be repeatedly
@@ -342,12 +348,6 @@ InitializeDimmInventory(
 EFI_STATUS
 RemoveDimmInventory(
   IN OUT struct _PMEM_DEV *pDev
-  );
-
-EFI_STATUS
-InsertDimm(
-  IN     DIMM *pDimm,
-     OUT struct _PMEM_DEV *pDev
   );
 
 /**
@@ -554,23 +554,22 @@ FindFreeRanges(
   retrieving and recording partition information
   setting up block windows
 
-  @param[out] ppDimm output parameter for a new DIMM structure
-  @param[in] pFitHead fully populated NVM Firmware Interface Table
-  @param[in] pPmttHead fully populated Platform Memory Topology Table
-  @param[in] Pid SMBIOS Dimm ID of the DIMM to create
+  @param[in] pNewDimm: input dimm structure to populate
+  @param[in] pFitHead: fully populated NVM Firmware Interface Table
+  @param[in] pPmttHead: fully populated Platform Memory Topology Table
+  @param[in] Pid: SMBIOS Dimm ID of the DIMM to create
 
   @retval EFI_SUCCESS          - Success
   @retval EFI_OUT_OF_RESOURCES - AllocateZeroPool failure
   @retval EFI_DEVICE_ERROR     - Other errors
 **/
 EFI_STATUS
-InitializeDimm(
-     OUT DIMM **ppDimm,
+InitializeDimm (
+  IN     DIMM *pNewDimm,
   IN     ParsedFitHeader *pFitHead,
   IN     ParsedPmttHeader *pPmttHead,
   IN     UINT16 Pid
   );
-
 /**
   Check if the DIMM containing the specified DIMM ID is
   manageable by the driver

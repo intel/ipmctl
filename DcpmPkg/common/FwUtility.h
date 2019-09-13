@@ -21,6 +21,8 @@
 #define MAX_FIRMWARE_SPI_IMAGE_SIZE_B    FIRMWARE_SPI_IMAGE_BPS_SIZE_B
 #define NO_FW_GIVEN_VERSION_MSG           L"None"
 
+#define UPDATE_FIRMWARE_DATA_PACKET_SIZE  64
+
 /** Firmware types **/
 #define FW_TYPE_PRODUCTION  29
 #define FW_TYPE_DFX         30

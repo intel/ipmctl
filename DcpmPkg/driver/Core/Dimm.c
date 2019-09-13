@@ -191,7 +191,7 @@ GetDimmByPid(
 
     pCurDimm = DIMM_FROM_NODE(pCurDimmNode);
 
-    if (DimmID == pCurDimm->DimmID) {
+    if (pCurDimm != NULL && DimmID == pCurDimm->DimmID) {
       pTargetDimm = pCurDimm;
       break;
     }
@@ -1178,21 +1178,6 @@ RemoveDimmInventory(
     }
   }
 
-  for (pCurDimmNode = GetFirstNode(&pDev->UninitializedDimms);
-       !IsNull(&pDev->UninitializedDimms, pCurDimmNode) && pCurDimmNode != NULL;
-       pCurDimmNode = pTempDimmNode) {
-    pTempDimmNode = GetNextNode(&pDev->UninitializedDimms, pCurDimmNode);
-    pCurDimm = DIMM_FROM_NODE(pCurDimmNode);
-
-    RemoveEntryList(pCurDimmNode);
-
-    TmpReturnCode = RemoveDimm(pCurDimm, 0);
-    if (EFI_ERROR(TmpReturnCode)) {
-      NVDIMM_WARN("Unable to remove NVDIMM %#x Error: %d", (NULL != pCurDimm) ? pCurDimm->DeviceHandle.AsUint32 : 0, TmpReturnCode);
-      ReturnCode = TmpReturnCode;
-    }
-  }
-
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -1265,6 +1250,33 @@ InitializeDimmFieldsFromAcpiTables(
 }
 
 /**
+  Populate SMBUS fields in each DCPMM
+  Note: Currently only needed for SPI flash recovery scenario in UEFI only
+
+  @param[in] pNewDimm: input dimm structure to populate
+  @retval EFI_SUCCESS Success
+  @retval Other errors from called function
+**/
+EFI_STATUS
+PopulateSmbusFields(
+  IN     DIMM *pNewDimm
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  pNewDimm->SmbusAddress.Cpu = (UINT8)(pNewDimm->DeviceHandle.NfitDeviceHandle.SocketId);
+  pNewDimm->SmbusAddress.Imc = (UINT8)(pNewDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
+  pNewDimm->SmbusAddress.Slot =
+      (UINT8)(pNewDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
+      pNewDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
+
+  //fill in fields provided by SMbus.
+  pNewDimm->Signature = DIMM_SIGNATURE;
+
+  ReturnCode = EFI_SUCCESS;
+  return ReturnCode;
+}
+/**
   Creates the DIMM inventory
   Using the Firmware Interface Table, create an in memory representation
   of each dimm. For each unique dimm call the initialization function
@@ -1282,14 +1294,11 @@ InitializeDimmInventory(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_STATUS TmpReturnCode = EFI_SUCCESS;
   ParsedFitHeader *pFitHead = NULL;
   ParsedPmttHeader *pPmttHead = NULL;
   NvDimmRegionMappingStructure **ppNvDimmRegionMappingStructures = NULL;
-  ControlRegionTbl *pDimmControlRegionTable = NULL;
-  DIMM *pTmpDimm = NULL;
+  DIMM *pNewDimm = NULL;
   UINT32 Index = 0;
-  BOOLEAN isUninitializedDimm = FALSE;
 
   NVDIMM_ENTRY();
   if (pDev == NULL || pDev->pFitHead == NULL || pDev->pFitHead->ppNvDimmRegionMappingStructures == NULL) {
@@ -1303,98 +1312,47 @@ InitializeDimmInventory(
   pPmttHead = pDev->pPmttHead;
   ppNvDimmRegionMappingStructures = pFitHead->ppNvDimmRegionMappingStructures;
 
+  // Iterate over Region Mapping Structures (can be several per NVDIMM)
+  // because they provide the NVDIMM physical ID, which is assigned by BIOS
+  // and unique per boot. Could also use NFIT device handle.
+  // Not iterating over control region tables (one per NVDIMM) because it
+  // doesn't have any unique information other than the UID, but that isn't
+  // as useful and takes longer to calculate and compare.
   for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
-    isUninitializedDimm = TRUE;
-    TmpReturnCode = GetControlRegionTableForNvDimmRegionTable(pDev->pFitHead,
-        ppNvDimmRegionMappingStructures[Index], &pDimmControlRegionTable);
-    // TODO: Clarify in what scenarios the NvDimmRegionMappingStructures will be valid
-    // but the pDimmControlRegionTable won't be to simplify the logic.
-    // Also the below logic is really confusing and probably should
-    // be doing "continue" somewhere. Klocwork is complaining that we're
-    // using potential NULL values since we don't continue.
-    if (EFI_ERROR(TmpReturnCode) || pDimmControlRegionTable == NULL) {
-      ReturnCode = TmpReturnCode;
-      NVDIMM_DBG("Could not find the Control Region Table for the NvDimm Region Table.");
-    }
-    else if (!GetDimmByPid(ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
-      TmpReturnCode = InitializeDimm(&pTmpDimm, pFitHead, pPmttHead, ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
-      if (!EFI_ERROR(TmpReturnCode) && (pTmpDimm != NULL)) {
-        TmpReturnCode = InsertDimm(pTmpDimm, pDev);
-        if (EFI_ERROR(TmpReturnCode)) {
-          ReturnCode = TmpReturnCode;
-          NVDIMM_DBG("Unable to insert NVDIMM Pid 0x%x to initialized list",
-              ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
-          RemoveDimm(pTmpDimm, 0);
-        } else {
-          NVDIMM_DBG("Insert NVDIMM Pid 0x%x to the initialized list",
-              ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
-          isUninitializedDimm = FALSE;
-        }
-      } else {
-        ReturnCode = TmpReturnCode;
-        NVDIMM_WARN("Unable to initialize NVDIMM 0x%x", ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId);
-      }
-    } else {
-      NVDIMM_DBG("DIMM already in the Initialized list");
-      isUninitializedDimm = FALSE;
+
+    if (GetDimmByPid(ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId, &pDev->Dimms)) {
+      // The associated NVDIMM physical ID is already in the dimms list, skip it
+      continue;
     }
 
-    if (isUninitializedDimm == TRUE) {
-      if (GetDimmByHandle(ppNvDimmRegionMappingStructures[Index]->DeviceHandle.AsUint32, &pDev->UninitializedDimms)) {
-        NVDIMM_DBG("NVDIMM device handle already in UninitializedDimms list");
-        continue; // go to next Region Table
-      }
+    // Create a new dimm struct for every NVDIMM, functional or not
+    CHECK_RESULT_MALLOC(pNewDimm,(DIMM *) AllocateZeroPool(sizeof(*pNewDimm)), Finish);
 
-      DIMM *pNewUnInitDimm = NULL;
-      pNewUnInitDimm = (DIMM *) AllocateZeroPool(sizeof(*pNewUnInitDimm));
+    // Assume dimm is functional
+    pNewDimm->NonFunctional = FALSE;
 
-      if (pNewUnInitDimm == NULL) {
-        NVDIMM_WARN("Unable to allocate memory for Intel NVM Dimm - Out of memory");
-        continue;
-      }
+    // Fill in smbus address details
+    CHECK_RESULT_CONTINUE(PopulateSmbusFields(pNewDimm));
 
-      InitializeDimmFieldsFromAcpiTables(ppNvDimmRegionMappingStructures[Index], pDimmControlRegionTable, pPmttHead, pNewUnInitDimm);
+    // Insert into dimms list. We're only inserting a pointer so we can
+    // continue editing the dimm struct
+    InsertTailList(&pDev->Dimms, &pNewDimm->DimmNode);
 
-      InsertTailList(&gNvmDimmData->PMEMDev.UninitializedDimms, &pNewUnInitDimm->DimmNode);
-    }
+    CHECK_RESULT(InitializeDimm(pNewDimm, pFitHead, pPmttHead,
+        ppNvDimmRegionMappingStructures[Index]->NvDimmPhysicalId), ErrorUnresponsiveDimm);
 
+    continue;
+
+ErrorUnresponsiveDimm:
+    // If a dimm is unresponsive, it's also non-functional
+    pNewDimm->NonFunctional = TRUE;
   }
 
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Insert a DIMM into a list of DIMMs
-  Wrapper for adding a DIMM to the global list of DIMMs.
-
-  @param[in] pDimm: Fully initialized DIMM
-  @param[out] pDev: The pmem super structure
-
-  @retval EFI_SUCCESS: Success
-  @retval EFI_INVALID_PARAMETER: DIMM already exists in list
-**/
-EFI_STATUS
-InsertDimm(
-  IN     DIMM *pDimm,
-     OUT PMEM_DEV *pDev
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  NVDIMM_ENTRY();
-  if (GetDimmByPid(pDimm->DimmID, &pDev->Dimms)) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-  InsertTailList(&pDev->Dimms, &pDimm->DimmNode);
-
+  ReturnCode = EFI_SUCCESS;
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-
 
 /**
   Firmware command Get Viral Policy
@@ -3953,8 +3911,6 @@ ParseFwBuild(
   IN     UINT8 Lsb
   )
 {
-  NVDIMM_ENTRY();
-  NVDIMM_EXIT();
   return (BCD_TO_TWO_DEC(Mbs) * 100) + BCD_TO_TWO_DEC(Lsb);
 }
 
@@ -4916,8 +4872,9 @@ ApertureWrite(
   retrieving and recording partition information
   setting up block windows
 
-  @param[out] ppDimm: output parameter for a new DIMM structure
+  @param[in] pNewDimm: input dimm structure to populate
   @param[in] pFitHead: fully populated NVM Firmware Interface Table
+  @param[in] pPmttHead: fully populated Platform Memory Topology Table
   @param[in] Pid: SMBIOS Dimm ID of the DIMM to create
 
   @retval EFI_SUCCESS          - Success
@@ -4926,7 +4883,7 @@ ApertureWrite(
 **/
 EFI_STATUS
 InitializeDimm (
-     OUT DIMM **ppDimm,
+  IN     DIMM *pNewDimm,
   IN     ParsedFitHeader *pFitHead,
   IN     ParsedPmttHeader *pPmttHead,
   IN     UINT16 Pid
@@ -4934,7 +4891,6 @@ InitializeDimm (
 {
   EFI_STATUS ReturnCode = EFI_OUT_OF_RESOURCES;
   UINT32 Index = 0;
-  DIMM *pNewDimm = NULL;
   InterleaveStruct *pMbITbl = NULL;
   InterleaveStruct *pBwITbl = NULL;
   ControlRegionTbl *pControlRegTbl = NULL;
@@ -4947,22 +4903,16 @@ InitializeDimm (
   UINT32 PcdSize = 0;
   ZeroMem(pControlRegTbls, sizeof(pControlRegTbls));
   NVDIMM_ENTRY();
-  pNewDimm = (DIMM *) AllocateZeroPool(sizeof(*pNewDimm));
-  *ppDimm = pNewDimm;
-  if (pNewDimm == NULL) {
-    NVDIMM_WARN("Unable to initialize Intel NVM Dimm - Out of memory");
-    goto out;
-  }
 
   // We don't need a mailbox to talk to the dimm
   CHECK_RESULT(GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, NULL, FALSE,
-      0, &pNewDimm->pRegionMappingStructure), after_dimm);
+      0, &pNewDimm->pRegionMappingStructure), Finish);
 
   ReturnCode = GetControlRegionTableForNvDimmRegionTable(pFitHead, pNewDimm->pRegionMappingStructure, &pControlRegTbl);
   if ((EFI_ERROR(ReturnCode) || (pControlRegTbl == NULL))) {
     NVDIMM_WARN("Unable to initialize Intel NVM Dimm. Control Region is missing in NFIT.");
     ReturnCode = EFI_DEVICE_ERROR;
-    goto after_dimm;
+    goto Finish;
   }
 
   /**
@@ -4988,13 +4938,13 @@ InitializeDimm (
 
   ReturnCode = GetControlRegionTablesForPID(pFitHead, Pid, pControlRegTbls, &ControlRegTblsNum);
   if (EFI_ERROR(ReturnCode)) {
-    goto after_dimm;
+    goto Finish;
   }
 
   if (ControlRegTblsNum > MAX_IFC_NUM) {
     NVDIMM_ERR("The ControlRegTblsNum value greater than %d", MAX_IFC_NUM);
     ReturnCode = EFI_BUFFER_TOO_SMALL;
-    goto after_dimm;
+    goto Finish;
   }
 
   for (Index = 0; Index < ControlRegTblsNum; Index++) {
@@ -5010,7 +4960,7 @@ InitializeDimm (
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("No Interleave Table found for mailbox but the index exists.");
       ReturnCode = EFI_DEVICE_ERROR;
-      goto after_dimm;
+      goto Finish;
     }
   }
   if (pNewDimm->pRegionMappingStructure->SpaRangeDescriptionTableIndex != 0) {
@@ -5019,7 +4969,7 @@ InitializeDimm (
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("No spa range table found for mailbox but the index exists.");
       ReturnCode = EFI_DEVICE_ERROR;
-      goto after_dimm;
+      goto Finish;
     }
   }
 
@@ -5028,13 +4978,13 @@ InitializeDimm (
     pPayload = AllocateZeroPool(sizeof(*pPayload));
     if (!pPayload) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_dimm;
+      goto Finish;
     }
 
     ReturnCode = FwCmdIdDimm(pNewDimm, pPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      goto after_dimm;
+      goto Finish;
     }
 
     NVDIMM_DBG("IdentifyDimm data:\n");
@@ -5060,7 +5010,7 @@ InitializeDimm (
     pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
     if (pPartitionInfoPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_dimm;
+      goto Finish;
     }
 
     ReturnCode = FwCmdGetDimmPartitionInfo(pNewDimm, pPartitionInfoPayload);
@@ -5070,7 +5020,7 @@ InitializeDimm (
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
-        goto after_dimm;
+        goto Finish;
       }
     }
 
@@ -5095,7 +5045,7 @@ InitializeDimm (
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_WARN("No spa range table found for block aperture but the index exists.");
           ReturnCode = EFI_DEVICE_ERROR;
-          goto after_dimm;
+          goto Finish;
         }
       }
     }
@@ -5107,7 +5057,7 @@ InitializeDimm (
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
-        goto after_dimm;
+        goto Finish;
       }
     }
     pNewDimm->PcdOemPartitionSize = PcdSize;
@@ -5120,7 +5070,7 @@ InitializeDimm (
         /** Return success if error from FW is Media Disabled **/
         ReturnCode = EFI_SUCCESS;
       } else {
-        goto after_dimm;
+        goto Finish;
       }
     }
     pNewDimm->PcdLsaPartitionSize = PcdSize;
@@ -5133,7 +5083,7 @@ InitializeDimm (
     pDimmSecurityPayload = AllocateZeroPool(sizeof(*pDimmSecurityPayload));
     if (pDimmSecurityPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto after_dimm;
+      goto Finish;
     }
     ReturnCode = FwCmdGetSecurityInfo(pNewDimm, pDimmSecurityPayload);
     if (EFI_ERROR(ReturnCode)) {
@@ -5155,7 +5105,7 @@ InitializeDimm (
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("No Interleave Table found for block window but the index exists.");
         ReturnCode = EFI_DEVICE_ERROR;
-        goto after_dimm;
+        goto Finish;
       }
     }
 
@@ -5170,12 +5120,8 @@ InitializeDimm (
       }
     }
   }
-  goto out;
 
-after_dimm:
-  FREE_POOL_SAFE(pNewDimm);
-  *ppDimm = NULL;
-out:
+Finish:
   FREE_POOL_SAFE(pPayload);
   FREE_POOL_SAFE(pPartitionInfoPayload);
   FREE_POOL_SAFE(pDimmSecurityPayload);
@@ -5840,7 +5786,6 @@ MatchFwReturnCode (
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
-
   switch (FwStatus) {
   case FW_SUCCESS:
     break;
@@ -6248,6 +6193,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
   @retval EFI_DEVICE_ERROR Retrieved an unexpeced opcode/subopcode when requesting long op status
 **/
+
 EFI_STATUS
 PollOnArsDeviceBusy(
   IN     DIMM *pDimm,
@@ -6779,22 +6725,20 @@ PassThru(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+
 #ifdef OS_BUILD
   UINT8 InputPayloadTemp[IN_PAYLOAD_SIZE];
   INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *pInputPayloadSOP = NULL;
 #endif
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
 
   CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs), Finish);
 
   if (IS_SMBUS_FLAG_ENABLED(pAttribs)) {
 #ifdef OS_BUILD
-    // Send a particular bios emulated command through the OS passthru dsm, which
-    // BIOS will interpret as a passthru to the DCPMM through Smbus/DDRT
+    // SMBUS: Use a special bios emulated command, which BIOS will interpret
+    // as a passthru to the DCPMM through the interface of choice
 
     // Carefully copy the buffers
     CopyMem(InputPayloadTemp, pCmd->InputPayload, IN_PAYLOAD_SIZE);
@@ -6808,12 +6752,24 @@ PassThru(
     pInputPayloadSOP->Opcode = pCmd->Opcode;
     pInputPayloadSOP->SubOpcode = pCmd->SubOpcode;
     pInputPayloadSOP->Timeout = PT_TIMEOUT_INTERVAL_EXT;
+    // Specify SMBUS
     pInputPayloadSOP->TransportInterface = SmbusTransportInterface;
     pCmd->Opcode = PtEmulatedBiosCommands;
     pCmd->SubOpcode = SubopExtVendorSpecific;
   }
   // Use the OS passthru dsm mechanism to talk with the DCPMM
+  // for both DDRT and SMBUS
   ReturnCode = DefaultPassThru(pDimm, pCmd, PT_TIMEOUT_INTERVAL);
+
+  if (IS_SMBUS_FLAG_ENABLED(pAttribs)) {
+    // Restore previous pCmd state, used when caller is iterating through a
+    // large payload buffer and is only updating a field
+    pCmd->Opcode = pInputPayloadSOP->Opcode;
+    pCmd->SubOpcode = pInputPayloadSOP->SubOpcode;
+    ZeroMem(pInputPayloadSOP, IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD);
+    CopyMem(pCmd->InputPayload, InputPayloadTemp, IN_PAYLOAD_SIZE);
+    pCmd->InputPayloadSize = IN_PAYLOAD_SIZE;
+  }
 
 #else
     // SMBUS: Use the bios DCPMM protocol to send commands to the DCPMM

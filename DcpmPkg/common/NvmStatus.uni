@@ -44,6 +44,7 @@
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_FAILED_TO_STAGE    #language en "Failed to validate and stage firmware image."
 #string STR_DCPMM_STATUS_ERR_DIMM_ID_DUPLICATED    #language en "Duplicated DIMM ID"
 #string STR_DCPMM_STATUS_ERR_SOCKET_ID_NOT_VALID   #language en "Invalid SocketID"
+#string STR_DCPMM_STATUS_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID  #language en "Specified SocketID and DimmID conflict"
 #string STR_DCPMM_STATUS_ERR_SOCKET_ID_DUPLICATED  #language en "Duplicated SocketID"
 #string STR_DCPMM_STATUS_ERR_INVALID_PASSPHRASE    #language en "Invalid passphrase"
 

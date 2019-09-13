@@ -95,6 +95,7 @@ EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportAuto, FisTr
 DCPMM_ARS_ERROR_RECORD * gArsBadRecords = NULL;
 INT32 gArsBadRecordsCount = ARS_LIST_NOT_INITIALIZED;
 #endif
+
 /**
   Instance of NvmDimmConfigProtocol
 **/
@@ -368,6 +369,8 @@ GetDimmCount(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pCurrentDimm = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
   NVDIMM_ENTRY();
 
   /* check input parameters */
@@ -376,7 +379,13 @@ GetDimmCount(
     goto Finish;
   }
 
-  GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
+  LIST_FOR_EACH(pCurrentDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (pCurrentDimm->NonFunctional) {
+      continue;
+    }
+    (*pDimmCount)++;
+  }
 
   ReturnCode = EFI_SUCCESS;
 
@@ -386,10 +395,10 @@ Finish:
 }
 
 /**
-  Retrieve the number of uninitialized DCPMMs in the system found thru SMBUS
+  Retrieve the number of non-functional DCPMMs in the system
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMMs.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -402,6 +411,8 @@ GetUninitializedDimmCount(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pCurrentDimm = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
   NVDIMM_ENTRY();
 
   if (pThis == NULL || pDimmCount == NULL) {
@@ -409,7 +420,13 @@ GetUninitializedDimmCount(
     goto Finish;
   }
 
-  GetListSize(&gNvmDimmData->PMEMDev.UninitializedDimms, pDimmCount);
+  LIST_FOR_EACH(pCurrentDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (!pCurrentDimm->NonFunctional) {
+      continue;
+    }
+    (*pDimmCount)++;
+  }
 
   ReturnCode = EFI_SUCCESS;
 
@@ -1211,40 +1228,29 @@ IsSocketIdValid(
   IN     UINT16 SocketId
   )
 {
-//todo: verify we can remove this hard-coded return code (story in backlog to investigate)
-#if OS_BUILD
-  return TRUE;
-#else
   NVDIMM_ENTRY();
   BOOLEAN SocketIdValid = FALSE;
-  UINT32 Index = 0;
-  UINT32 DimmCount = 0;
   DIMM *pDimm = NULL;
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+
 
   // socket id must be within allowed range
   if (SocketId > MAX_SOCKETS) {
     goto Finish;
   }
 
-  ReturnCode = GetListSize(&gNvmDimmData->PMEMDev.Dimms, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed on DimmListSize");
-    goto Finish;
-  }
   // at least one dimm must be plugged to specified socket
-  for (Index = 0; Index < DimmCount; Index++) {
-    pDimm = GetDimmByIndex(Index, &gNvmDimmData->PMEMDev);
+  LIST_FOR_EACH(pCurrentDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pCurrentDimmNode);
     if (pDimm != NULL && pDimm->SocketId == SocketId) {
       SocketIdValid = TRUE;
+      goto Finish;
     }
   }
 
 Finish:
   NVDIMM_EXIT();
-
   return SocketIdValid;
-#endif
 }
 
 /**
@@ -1334,6 +1340,31 @@ Finish:
   NVDIMM_EXIT();
   return Result;
 }
+
+/**
+  Helper function for VerifyTargetDimms()
+  Contains logic for checking if if a DCPMM is not allowed based on parameters
+  provided to VerifyTargetDimms
+
+  @param[in] pCurrentDimm Pointer to DCPMM to test
+  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
+                                       functional dimms. If false only check against functional dimms
+  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
+                                           returned dimm list. If false, include these dimms from
+                                           returned list
+**/
+BOOLEAN IsDimmNotAllowed(
+  IN DIMM *pCurrentDimm,
+  IN BOOLEAN IncludeNonFunctionalDimms,
+  IN BOOLEAN ExcludeUnsupportedConfigDimms
+  )
+{
+
+  return (!IsDimmManageable(pCurrentDimm) ||
+         (!IncludeNonFunctionalDimms &&(pCurrentDimm->NonFunctional)) ||
+          (ExcludeUnsupportedConfigDimms && !IsDimmInSupportedConfig(pCurrentDimm)));
+}
+
 /**
   Verify target DIMM IDs list. Fill output list of pointers to dimms.
 
@@ -1347,9 +1378,11 @@ Finish:
   @param[in] DimmIdsCount Number of items in array of DIMM Ids
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
-  @param[in] UninitializedDimms If true only uninitialized dimms are verified, if false only Initialized
-  @param[in] CheckSupportedConfigDimms If true, include dimms in unmapped set of dimms (non-POR) in
-                                       returned dimm list. If false, skip these dimms from returned list
+  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
+                                       functional dimms. If false only check against functional dimms
+  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
+                                           returned dimm list. If false, include these dimms from
+                                           returned list
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1364,198 +1397,149 @@ VerifyTargetDimms (
   IN     UINT32 DimmIdsCount,
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
-  IN     BOOLEAN UninitializedDimms,
-  IN     BOOLEAN CheckSupportedConfigDimms,
+  IN     BOOLEAN IncludeNonFunctionalDimms,
+  IN     BOOLEAN ExcludeUnsupportedConfigDimms,
      OUT DIMM *pDimms[MAX_DIMMS],
      OUT UINT32 *pDimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_STATUS LocalReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
-  UINT32 PlatformDimmsCount = 0;
   DIMM *pCurrentDimm = NULL;
   UINT16 Index = 0;
   UINT16 Index2 = 0;
-  BOOLEAN Found = FALSE;
+  BOOLEAN FoundMatchDimmId = FALSE;
+  BOOLEAN FoundMatchSocketId = FALSE;
 
   NVDIMM_ENTRY();
 
   if (pDimms == NULL || pDimmsNum == NULL || pCommandStatus == NULL) {
-
-    goto Finish;
-  }
-
-  if (UninitializedDimms && SocketIdsCount > 0) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
-
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   *pDimmsNum = 0;
 
-  if (UninitializedDimms) {
-    pDimmList = &gNvmDimmData->PMEMDev.UninitializedDimms;
-  } else {
-    pDimmList = &gNvmDimmData->PMEMDev.Dimms;
-  }
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
 
-  // get system DIMMs count
-  LocalReturnCode = GetListSize(pDimmList, &PlatformDimmsCount);
-  if (EFI_ERROR(LocalReturnCode)) {
-    NVDIMM_DBG("Failed on DimmListSize");
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-    goto Finish;
-  }
-  if (DimmIdsCount > PlatformDimmsCount) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
+  // Input sanity checking
+  if ((SocketIdsCount > 0 && SocketIds == NULL) ||
+      (DimmIdsCount > 0 && DimmIds == NULL)) {
+    NVDIMM_ERR("Invalid input parameters");
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  /** if dimms and sockets are not specified, then take all dimms **/
-  if (SocketIdsCount == 0 && DimmIdsCount == 0) {
-    LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
-      pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-      if (pCurrentDimm == NULL) {
-        NVDIMM_DBG("Failed on Get Dimm from node %d", *pDimmsNum);
+  // Verify system dimm list
+  LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (pCurrentDimm == NULL) {
+      ReturnCode = EFI_LOAD_ERROR;
+      goto Finish;
+    }
+  }
+
+  // Process through all dimm and socket ids to give maximal feedback, then
+  // go to Finish
+
+  // Verify provided dimms ids
+  for (Index = 0; Index < DimmIdsCount; Index++) {
+    pCurrentDimm = GetDimmByPid(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms);
+    if (pCurrentDimm == NULL) {
+      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_NOT_FOUND);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      continue;
+    }
+
+    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
+      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      continue;
+    }
+    for (Index2 = Index+1; Index2 < DimmIdsCount; Index2++) {
+      if (DimmIds[Index] == DimmIds[Index2]) {
+        NVDIMM_ERR("Duplicate dimm id");
+        SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_ID_DUPLICATED);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        break;
+      }
+    }
+  }
+
+  // Verify provided socket ids
+  for (Index = 0; Index < SocketIdsCount; Index++) {
+    if (!IsSocketIdValid(SocketIds[Index])) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_SOCKET_ID_NOT_VALID);
+      ReturnCode = EFI_INVALID_PARAMETER;
+      continue;
+    }
+    // check for duplicate entries
+    for (Index2 = Index+1; Index2 < SocketIdsCount; Index2++) {
+      if (SocketIds[Index] == SocketIds[Index2]) {
+        ResetCmdStatus(pCommandStatus, NVM_ERR_SOCKET_ID_DUPLICATED);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        break;
+      }
+    }
+  }
+
+  // Go to Finish with any error from previous sections
+  CHECK_RETURN_CODE(ReturnCode, Finish);
+
+  // Main loop, go through each DCPMM in platform
+  LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    // If it's not an allowed DCPMM, skip it
+    // Error was already thrown if it is a specified DCPMM
+    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
+      continue;
+    }
+
+    FoundMatchDimmId = FALSE;
+    FoundMatchSocketId = FALSE;
+    for (Index = 0; Index < DimmIdsCount; Index++) {
+      if (pCurrentDimm->DimmID == DimmIds[Index]) {
+        FoundMatchDimmId = TRUE;
+      }
+    }
+    for (Index = 0; Index < SocketIdsCount; Index++) {
+      if (pCurrentDimm->SocketId == SocketIds[Index]) {
+        FoundMatchSocketId = TRUE;
+      }
+    }
+
+    // Check if specified socket and dimm ids conflict
+    if (DimmIdsCount > 0 && SocketIdsCount > 0 &&
+        (FoundMatchDimmId != FoundMatchSocketId)) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID);
+      goto Finish;
+    }
+
+    // If unspecified or we found a match
+    if ((DimmIdsCount == 0 && SocketIdsCount == 0) ||
+        FoundMatchSocketId == TRUE || FoundMatchDimmId == TRUE) {
+
+      // Check for buffer overflow
+      if (*pDimmsNum >= MAX_DIMMS) {
         ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+        ReturnCode = EFI_BUFFER_TOO_SMALL;
         goto Finish;
       }
 
-      if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
-          || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
-              && IsDimmInSupportedConfig(pCurrentDimm)))
-          || UninitializedDimms) {
-        pDimms[(*pDimmsNum)] = pCurrentDimm;
-        (*pDimmsNum)++;
-      }
-    }
-  } else {
-    if (SocketIdsCount > 0) {
-      if (SocketIds == NULL) {
-        goto Finish;
-      }
-      // verify the sockets first
-      for (Index = 0; Index < SocketIdsCount; Index++) {
-        if (!IsSocketIdValid(SocketIds[Index])) {
-          ResetCmdStatus(pCommandStatus, NVM_ERR_SOCKET_ID_NOT_VALID);
-          goto Finish;
-        }
-        // check for duplicate entries
-        for (Index2 = 0; Index2 < SocketIdsCount; Index2++) {
-          if (Index == Index2) {
-            continue;
-          }
-          if (SocketIds[Index] == SocketIds[Index2]) {
-            ResetCmdStatus(pCommandStatus, NVM_ERR_SOCKET_ID_DUPLICATED);
-            goto Finish;
-          }
-        }
-      }
-    }
-
-    if (DimmIdsCount > 0) {
-      if (DimmIds == NULL) {
-        goto Finish;
-      }
-      // user specified a list of dimms, check for duplicates
-      for (Index = 0; Index < DimmIdsCount; Index++) {
-        pCurrentDimm = GetDimmByPid(DimmIds[Index], pDimmList);
-        if (pCurrentDimm == NULL) {
-          NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", DimmIds[Index]);
-          // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
-          if (UninitializedDimms) {
-            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
-          } else {
-            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
-          }
-          goto Finish;
-        }
-
-        for (Index2 = 0; Index2 < DimmIdsCount; Index2++) {
-          if (Index == Index2) {
-            continue;
-          }
-          if (DimmIds[Index] == DimmIds[Index2]) {
-            SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_ID_DUPLICATED);
-            goto Finish;
-          }
-        }
-      }
-    }
-
-    if (SocketIdsCount > 0 && DimmIdsCount == 0) {
-      /** if sockets are specified and dimms are not, then get all Manageable DIMMs from that sockets **/
-      LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
-        pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-        for (Index2 = 0; Index2 < SocketIdsCount; Index2++) {
-          if (pCurrentDimm != NULL && pCurrentDimm->SocketId == SocketIds[Index2]) {
-            if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
-                || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
-                    && IsDimmInSupportedConfig(pCurrentDimm)))
-                || UninitializedDimms) {
-              pDimms[(*pDimmsNum)] = pCurrentDimm;
-              (*pDimmsNum)++;
-            }
-          }
-        }
-      }
-    } else if (DimmIdsCount > 0) {
-      // check if specified DIMMs exist
-      for (Index = 0; Index < DimmIdsCount; Index++) {
-        pCurrentDimm = GetDimmByPid(DimmIds[Index], pDimmList);
-        if (pCurrentDimm == NULL) {
-          NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", DimmIds[Index]);
-          // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
-          if (UninitializedDimms) {
-            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
-          } else {
-            SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
-          }
-          goto Finish;
-        } else {
-          Found = FALSE;
-          for (Index2 = 0; Index2 < SocketIdsCount; Index2++) {
-            if (pCurrentDimm->SocketId == SocketIds[Index2]) {
-              Found = TRUE;
-              break;
-            }
-          }
-          if (SocketIdsCount > 0 && !Found) {
-            // if dimm was not found, it is probably in the opposite list of dimms so call function with that list
-            if (UninitializedDimms) {
-              SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
-            } else {
-              SetObjStatusForDimmNotFound(DimmIds[Index], &gNvmDimmData->PMEMDev.UninitializedDimms, pCommandStatus);
-            }
-            SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_NOT_FOUND);
-            goto Finish;
-          }
-
-          if ((!CheckSupportedConfigDimms && IsDimmManageable(pCurrentDimm))
-            || (CheckSupportedConfigDimms && (IsDimmManageable(pCurrentDimm)
-                && IsDimmInSupportedConfig(pCurrentDimm)))
-            || UninitializedDimms) {
-            pDimms[(*pDimmsNum)] = pCurrentDimm;
-            (*pDimmsNum)++;
-          }
-        }
-      }
+      // Add to output dimms list
+      pDimms[(*pDimmsNum)] = pCurrentDimm;
+      (*pDimmsNum)++;
     }
   }
 
   // sanity checks
   if (*pDimmsNum == 0) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
-  } else if (*pDimmsNum > MAX_DIMMS) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-    goto Finish;
   }
-
   ReturnCode = EFI_SUCCESS;
 
 Finish:
@@ -1574,7 +1558,7 @@ Finish:
   @param[out] pDimms The dimm list found in NFIT.
 
   @retval EFI_SUCCESS  The dimm list was returned properly
-  @retval EFI_INVALID_PARAMETER one or more parameters are NULL.
+  @retval EFI_INVALID_PARAMETER one or more parameters are NULL or invalid.
   @retval EFI_NOT_FOUND Dimm not found
 **/
 EFI_STATUS
@@ -1586,59 +1570,54 @@ GetDimms(
      OUT DIMM_INFO *pDimms
   )
 {
-  EFI_STATUS Rc = EFI_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
-  DIMM *pDimm = NULL;
-  UINT32 ListSize = 0;
+  LIST_ENTRY *pNode = NULL;
+  DIMM *pCurDimm = NULL;
 
   NVDIMM_ENTRY();
 
   /* check input parameters */
   if (pThis == NULL || pDimms == NULL) {
     NVDIMM_DBG("pDimms is NULL");
-    Rc = EFI_INVALID_PARAMETER;
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  GetListSize(&gNvmDimmData->PMEMDev.Dimms, &ListSize);
-  if (DimmCount > ListSize) {
-    NVDIMM_DBG("Requested more DIMM's than available.");
-    Rc = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
   SetMem(pDimms, sizeof(*pDimms) * DimmCount, 0); // this clears error mask as well
 
-  for (Index = 0; Index < ListSize; Index++) {
+  Index = 0;
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pCurDimm = DIMM_FROM_NODE(pNode);
+    if (pCurDimm->NonFunctional == TRUE) {
+      continue;
+    }
+
     if (DimmCount <= Index) {
       NVDIMM_DBG("Array is too small to hold entire DIMM list");
-      Rc = EFI_INVALID_PARAMETER;
+      ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    pDimm = GetDimmByIndex(Index, &gNvmDimmData->PMEMDev);
-    if (pDimm == NULL) {
-      NVDIMM_DBG("Failed to retrieve the DCPMM index %d", Index);
-      Rc = EFI_NOT_FOUND;
-      goto Finish;
-    }
-    GetDimmInfo(pDimm, dimmInfoCategories, &pDimms[Index]);
+
+    GetDimmInfo(pCurDimm, dimmInfoCategories, &pDimms[Index]);
+    Index++;
   }
 
 Finish:
-  NVDIMM_EXIT_I64(Rc);
-  return Rc;
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 
 /**
-  Retrieve the list of uninitialized DCPMMs found in NFIT and partially
-  populated thru SMBUS
+  Retrieve the list of non-functional DCPMMs found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
   @param[out] pDimms The dimm list found thru SMBUS.
 
   @retval EFI_SUCCESS  The dimm list was returned properly
-  @retval EFI_INVALID_PARAMETER one or more parameter are NULL.
+  @retval EFI_INVALID_PARAMETER one or more parameter are NULL or invalid.
   @retval EFI_NOT_FOUND Dimm not found
 **/
 EFI_STATUS
@@ -1665,14 +1644,16 @@ GetUninitializedDimms(
   SetMem(pDimms, sizeof(*pDimms) * DimmCount, 0); // this clears error mask as well
 
   Index = 0;
-  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.UninitializedDimms) {
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pCurDimm = DIMM_FROM_NODE(pNode);
+    if (pCurDimm->NonFunctional == FALSE) {
+      continue;
+    }
     if (DimmCount <= Index) {
-      NVDIMM_DBG("Array is too small to hold entire Smbus DIMM list");
+      NVDIMM_DBG("Array is too small to hold entire DIMM list");
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-
-    pCurDimm = DIMM_FROM_NODE(pNode);
     InitializeNfitDimmInfoFieldsFromDimm(pCurDimm, &(pDimms[Index]));
     FillSmbiosInfo(&(pDimms[Index]));
     pDimms[Index].MemoryType = MEMORYTYPE_DCPM;
@@ -2313,11 +2294,6 @@ GetAlarmThresholds (
     goto Finish;
   }
 
-  if (!IsDimmManageable(pDimm)) {
-    ReturnCode = EFI_UNSUPPORTED;
-    goto Finish;
-  }
-
   ReturnCode = FwCmdGetAlarmThresholds(pDimm, &pPayloadAlarmThresholds);
   if (pPayloadAlarmThresholds == NULL) {
     ReturnCode = EFI_DEVICE_ERROR;
@@ -2557,7 +2533,7 @@ GetSmartAndHealth (
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL || !IsDimmManageable(pDimm) || pHealthInfo == NULL) {
+  if (pDimm == NULL || pHealthInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -5103,7 +5079,6 @@ UpdateSmbusDimmFw(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-#ifndef OS_BUILD
   FW_CMD *pPassThruCommand = NULL;
   DIMM *pCurrentDimm = NULL;
   FW_IMAGE_HEADER *pFileHeader = NULL;
@@ -5123,7 +5098,7 @@ UpdateSmbusDimmFw(
   pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
 
 // upload FW image to specified DIMMs
-  pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.UninitializedDimms);
+  pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
   if (pCurrentDimm == NULL) {
     *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
     ReturnCode = EFI_NOT_FOUND;
@@ -5146,11 +5121,6 @@ UpdateSmbusDimmFw(
     goto Finish;
   }
 
-  if (ImageBufferSize % UPDATE_FIRMWARE_DATA_PACKET_SIZE != 0) {
-    NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
   PacketsCounter = ImageBufferSize / UPDATE_FIRMWARE_DATA_PACKET_SIZE;
   if (PacketsCounter > FW_UPDATE_SP_MAXIMUM_PACKETS || PacketsCounter < FW_UPDATE_SP_MINIMUM_PACKETS) {
     NVDIMM_DBG("The buffer size divided by packet size gave too many packets: packet size - %d got packets - %d.\n",
@@ -5221,7 +5191,6 @@ FinishClean:
   FREE_POOL_SAFE(pErrorMessage);
 
   NVDIMM_EXIT_I64(ReturnCode);
-  #endif
   return ReturnCode;
 }
 
@@ -5566,9 +5535,9 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  pCurrentDimm = GetDimmByHandle(DimmHandle, &gNvmDimmData->PMEMDev.UninitializedDimms);
+  pCurrentDimm = GetDimmByHandle(DimmHandle, &gNvmDimmData->PMEMDev.Dimms);
   if (pCurrentDimm == NULL) {
-    NVDIMM_ERR("Failed to find handle 0x%x in uninitialized dimm list", DimmHandle);
+    NVDIMM_ERR("Failed to find handle 0x%x in dimm list", DimmHandle);
     *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
     goto Finish;
   }
@@ -8335,9 +8304,6 @@ GetFwDebugLog(
   }
 
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL) {
-    pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-  }
 
   // If we still can't find the dimm, fail out
   if (pDimm == NULL) {
@@ -8767,17 +8733,6 @@ FillDimmList(
       }
     }
     pPrevDimm = pCurDimm;
-  }
-
-  // Fill in smbus address for functional dimms too
-  // Derive from NFIT properties
-  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pCurDimm = DIMM_FROM_NODE(pNode);
-    pCurDimm->SmbusAddress.Cpu = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.SocketId);
-    pCurDimm->SmbusAddress.Imc = (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
-    pCurDimm->SmbusAddress.Slot =
-        (UINT8)(pCurDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
-        pCurDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
   }
 
   NVDIMM_DBG("Found %d DCPMMs", ListSize);
@@ -9219,11 +9174,8 @@ GetSystemTopology(
     if (pDimmInfo->MemoryType == MEMORYTYPE_DCPM) {
       pDimm = GetDimmByPid(DdrEntry->DimmID, &gNvmDimmData->PMEMDev.Dimms);
       if (pDimm == NULL) {
-        pDimm = GetDimmByPid(DdrEntry->DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-        if (pDimm == NULL) {
-          NVDIMM_WARN("Dimm ID: 0x%04x not found!", DdrEntry->DimmID);
-          goto Finish;
-        }
+        NVDIMM_WARN("Dimm ID: 0x%04x not found!", DdrEntry->DimmID);
+        goto Finish;
       }
       (*ppTopologyDimm)[Index].DimmHandle = pDimm->DeviceHandle.AsUint32;
       (*ppTopologyDimm)[Index].ChannelID = pDimm->ChannelId;
@@ -9519,10 +9471,7 @@ GetDdrtIoInitInfo(
 
   pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
-    pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-    if (pDimm == NULL) {
-      goto Finish;
-    }
+    goto Finish;
   }
 
   if (!IsDimmManageable(pDimm)) {
@@ -10166,12 +10115,11 @@ CheckTopologyChange(
      OUT BOOLEAN *pTopologyChanged
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   COMMAND_STATUS *pCommandStatus = NULL;
-  DIMM **ppDimms = NULL;
-  UINT32 DimmsNum = 0;
-  UINT32 DimmsNumUninitialized = 0;
-  UINT32 Index = 0;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  LIST_ENTRY *pDimmList = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+  DIMM *pCurrentDimm = NULL;
 
   NVDIMM_ENTRY();
 
@@ -10181,33 +10129,22 @@ CheckTopologyChange(
     goto Finish;
   }
 
-  ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
-  if (ppDimms == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  // Check if any DIMMs are uninitialized
+  // Check if any DIMMs are non-functional
   // Can't check topology if a DIMM is non-functional
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, TRUE, FALSE, ppDimms, &DimmsNumUninitialized,
-    pCommandStatus);
-  if (ReturnCode != EFI_NOT_FOUND) {
-      NVDIMM_DBG("Uninitialized DIMM found. Aborting auto conf.");
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
+
+  LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+    pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+    if (pCurrentDimm->NonFunctional == TRUE) {
+      NVDIMM_ERR("Non-functional DIMM found. Cannot check topology change");
       ReturnCode = EFI_ABORTED;
       goto Finish;
-  }
+    }
 
-  // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, FALSE, ppDimms, &DimmsNum, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmsNum; Index++) {
-    if (ppDimms[Index]->ConfigStatus != DIMM_CONFIG_SUCCESS) {
-      if ((ppDimms[Index]->ConfigStatus == DIMM_CONFIG_IS_INCOMPLETE) ||
-          (ppDimms[Index]->ConfigStatus == DIMM_CONFIG_NO_MATCHING_IS) ||
-          (ppDimms[Index]->ConfigStatus == DIMM_CONFIG_NEW_DIMM)) {
+    if (pCurrentDimm->ConfigStatus != DIMM_CONFIG_SUCCESS) {
+      if ((pCurrentDimm->ConfigStatus == DIMM_CONFIG_IS_INCOMPLETE) ||
+          (pCurrentDimm->ConfigStatus == DIMM_CONFIG_NO_MATCHING_IS) ||
+          (pCurrentDimm->ConfigStatus == DIMM_CONFIG_NEW_DIMM)) {
         NVDIMM_DBG("Topology changed detected");
         *pTopologyChanged = TRUE;
          ReturnCode = EFI_SUCCESS;
@@ -10228,7 +10165,6 @@ CheckTopologyChange(
 
 Finish:
   FreeCommandStatus(&pCommandStatus);
-  FREE_POOL_SAFE(ppDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -10563,14 +10499,11 @@ GetBSRAndBootStatusBitMask(
   DIMM_BSR Bsr;
   NVDIMM_ENTRY();
   ZeroMem(&Bsr, sizeof(DIMM_BSR));
-  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
 
+  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL) {
-    pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.UninitializedDimms);
-    if (pDimm == NULL) {
-      ReturnCode = EFI_NOT_FOUND;
-      goto Finish;
-    }
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
 #ifdef OS_BUILD

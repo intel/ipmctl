@@ -209,7 +209,8 @@ ShowSensor(
   };
   UINT32 SensorsNum = ARRAY_SIZE(Sensors);
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-  BOOLEAN ShowAllManageableDimmFound = FALSE;
+  UINT32 UninitializedDimmCount = 0;
+  UINT32 InitializedDimmCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -255,7 +256,8 @@ ShowSensor(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount,
+      &InitializedDimmCount, &UninitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -267,26 +269,6 @@ ShowSensor(
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-    if (!AllDimmsInListAreManageable(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-      goto Finish;
-    }
-  }
-
-  if (DimmIdsNum == 0) {
-    for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
-      if ((MANAGEMENT_VALID_CONFIG == pDimms[DimmIndex].ManageabilityState)
-          && (FALSE == pDimms[DimmIndex].IsInPopulationViolation)){
-        ShowAllManageableDimmFound = TRUE;
-        break;
-      }
-    }
-    if (ShowAllManageableDimmFound == FALSE) {
-      ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
       goto Finish;
     }
   }
@@ -316,10 +298,6 @@ ShowSensor(
 
   for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
     if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
-      continue;
-    }
-
-    if (pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
       continue;
     }
 

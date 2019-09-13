@@ -27,6 +27,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: DIMM not found
   NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: DIMM ID duplicated
   NVM_ERR_SOCKET_ID_NOT_VALID                       = 13,   ///< Error: Socket ID not valid
+  NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with dimm ID
   NVM_ERR_SOCKET_ID_DUPLICATED                      = 15,   ///< Error: Socket ID duplicated
   NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
   NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable DIMM not found

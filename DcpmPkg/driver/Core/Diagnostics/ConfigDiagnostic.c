@@ -399,7 +399,7 @@ UpdateBrokenInterleaveSets(
           }
         }
 
-        // If a certain dimm identifier is missing from DimmInventory or not in the right order 
+        // If a certain dimm identifier is missing from DimmInventory or not in the right order
         // for a given Interleave Table, mark it as a bad Interleave set index
         if (pDimm == NULL || DimmLocationIssue) {
           BrokenISFound = FALSE;
@@ -833,8 +833,11 @@ CheckUninitializedDimms(
     goto Finish;
   }
 
-  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.UninitializedDimms) {
+  LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pCurDimm = DIMM_FROM_NODE(pNode);
+    if (pCurDimm->NonFunctional == FALSE) {
+      continue;
+    }
     APPEND_RESULT_TO_THE_LOG(pCurDimm, STRING_TOKEN(STR_CONFIG_DIMM_FAILED_TO_INITIALIZE), EVENT_CODE_618, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
       pCurDimm->DeviceHandle.AsUint32);
   }

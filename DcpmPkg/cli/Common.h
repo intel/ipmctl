@@ -219,7 +219,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM " FORMAT_STR L"?"
 
-#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm: "
+#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm:"
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
 #define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "

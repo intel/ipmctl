@@ -292,8 +292,6 @@ UefiMain(
   SetSerialAttributes();
 #else
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 #endif
   UINT32 Mode = PBR_NORMAL_MODE;
   CHAR16 *pTagDescription = NULL;
@@ -525,21 +523,6 @@ UefiMain(
 #ifdef OS_BUILD
         if (!Command.ExcludeDriverBinding) {
           Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
-          if (EFI_UNSUPPORTED == Rc) {
-            Rc = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-            if (EFI_ERROR(Rc)) {
-              goto Finish;
-            }
-
-            Rc = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-            if (EFI_ERROR(Rc)) {
-              goto Finish;
-            }
-
-            if (IS_SMBUS_FLAG_ENABLED(pAttribs)) {
-              Print(CLI_ERR_TRANSPORT_PROTOCOL_UNSUPPORTED_ON_OS, PROTOCOL_OPTION_SMBUS, PROTOCOL_OPTION_DDRT);
-            }
-          }
         }
 #endif
 
@@ -1126,7 +1109,6 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
   // Equivalent to passing "-smbus"
   if (IsDdrtProtocolDisabled) {
     Attribs.Protocol = FisTransportSmbus;
-    // Not strictly necessary, but makes more sense
     Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 

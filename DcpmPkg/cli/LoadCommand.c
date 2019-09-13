@@ -337,10 +337,9 @@ Load(
     Print(CLI_RECOVER_DIMM_PROMPT_STR);
     for (Index = 0; Index < DimmTargetsNum; Index++) {
       ReturnCode = GetPreferredDimmIdAsString(pDimmTargets[Index].DimmHandle, pDimmTargets[Index].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
-      Print(L"%s ", DimmStr);
+      Print(FORMAT_SPACE_STR, DimmStr);
     }
-
-    Print(L"\n");
+    Print(FORMAT_NL);
   }
 
   /**

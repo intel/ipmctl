@@ -49,7 +49,6 @@ typedef struct {
 
 #define PMEMDEV_INITIALIZER(DEV) \
       InitializeListHead(DEV.Dimms); \
-      InitializeListHead(DEV.UninitializedDimms); \
       InitializeListHead(DEV.ISs); \
       InitializeListHead(DEV.ISsNfit); \
       InitializeListHead(DEV.Namespaces);
@@ -156,7 +155,7 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT8 AitDramEnabled;
   UINT8 ThermalThrottlePerformanceLossPrct;
   INT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  INT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius. 
+  INT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
  } SMART_AND_HEALTH_INFO;
 
 /**

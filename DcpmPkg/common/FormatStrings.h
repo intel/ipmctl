@@ -8,6 +8,7 @@
 #define _FORMAT_STRINGS_H_
 
 #ifndef OS_BUILD
+#define FORMAT_NL                               L"\n"
 #define FORMAT_STR                              L"%s"
 #define FORMAT_STR_WITH_PARANTHESIS             L" (%s)"
 #define FORMAT_STR_SINGLE_QUOTE                 L"'%ls'"
@@ -16,6 +17,7 @@
 #define FORMAT_NL_STR                           L"\n%s"
 #define FORMAT_STR_NL_NL                        L"%s\n\n"
 #define FORMAT_NL_NL_STR                        L"\n\n%s"
+#define FORMAT_SPACE_STR                        L" %s"
 #define FORMAT_STR_SPACE                        L"%s "
 #define SPACE_FORMAT_STR_SPACE                  L" %s "
 #define FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL  L"   %s=%s\n"
@@ -72,12 +74,14 @@
 #define FORMAT_DYNAMIC_WIDTH_LEADING_ZEROS      L"%0*d"
 #define FORMAT_POINTER                          L"%p"
 #else // OS_BUILD
+#define FORMAT_NL                               L"\n"
 #define FORMAT_STR                              L"%ls"
 #define FORMAT_STR_WITH_PARANTHESIS             L" (%ls)"
 #define FORMAT_DYN_STR                          L"%*ls"
 #define FORMAT_STR_NL                           L"%ls\n"
 #define FORMAT_NL_STR                           L"\n%ls"
 #define FORMAT_STR_NL_NL                        L"%ls\n\n"
+#define FORMAT_SPACE_STR                        L" %ls"
 #define FORMAT_STR_SPACE                        L"%ls "
 #define SPACE_FORMAT_STR_SPACE                  L" %ls "
 #define FORMAT_SPACE_SPACE_SPACE_STR_EQ_STR_NL  L"   %ls=%ls\n"

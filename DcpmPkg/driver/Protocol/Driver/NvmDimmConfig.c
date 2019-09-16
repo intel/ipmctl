@@ -379,9 +379,10 @@ GetDimmCount(
     goto Finish;
   }
 
+  *pDimmCount = 0;
   LIST_FOR_EACH(pCurrentDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-    if (pCurrentDimm->NonFunctional) {
+    if (TRUE == pCurrentDimm->NonFunctional) {
       continue;
     }
     (*pDimmCount)++;
@@ -420,9 +421,10 @@ GetUninitializedDimmCount(
     goto Finish;
   }
 
+  *pDimmCount = 0;
   LIST_FOR_EACH(pCurrentDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-    if (!pCurrentDimm->NonFunctional) {
+    if (FALSE == pCurrentDimm->NonFunctional) {
       continue;
     }
     (*pDimmCount)++;

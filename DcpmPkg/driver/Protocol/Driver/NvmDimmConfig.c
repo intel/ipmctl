@@ -4005,7 +4005,14 @@ GetRegion(
   NVDIMM_ENTRY();
   Rc = ReenumerateNamespacesAndISs(FALSE);
   if (EFI_ERROR(Rc)) {
-    goto Finish;
+    if ((Rc == EFI_NOT_FOUND && IsLSANotInitializedOnDimms()))
+    {
+      NVDIMM_WARN("Failure to refresh Namespaces is because LSA not initialized");
+    }
+    else
+    {
+      goto Finish;
+    }
   }
   Rc = GetRegionList(&pRegionList, FALSE);
   if (pRegionList == NULL) {

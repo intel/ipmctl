@@ -1212,8 +1212,8 @@ InitializeDimmFieldsFromAcpiTables(
       pDimm->NvDimmStateFlags = pNvDimmRegionTbl->NvDimmStateFlags;
     } else {
       if (pPmttHead != NULL) {
-        if (!IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPmttHead->pPmtt)) {
-          NVDIMM_DBG("Unexpected PMTT version!");
+        if (!IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPmttHead->pPmtt)) {
+          NVDIMM_DBG("Unexpected PMTT revision!");
           return;
         }
         pPmttModuleInfo = GetDimmModuleByPidFromPmtt(pNvDimmRegionTbl->NvDimmPhysicalId, pPmttHead);

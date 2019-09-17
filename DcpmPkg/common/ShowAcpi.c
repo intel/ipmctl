@@ -1039,8 +1039,8 @@ PrintPMTT(
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SYSTEM_TARGET_STR, L"Platform Memory Topology Table");
   PrintAcpiHeader(pTable, pPrinterCtx);
 
-  // Print PMTT 1.1 table if Rev is 1.1
-  if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision)) {
+  // Print PMTT 0.2 table if Rev is 0.2
+  if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     PrintPMTT2((VOID *)pTable, pPrinterCtx);
     return;
   }
@@ -1106,9 +1106,9 @@ PrintPMTT(
 }
 
 /**
-PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 2.0 table.
+PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 0.2 table.
 
-@param[in] pPcat pointer to the parsed PMTT 2.0 table.
+@param[in] pPcat pointer to the parsed PMTT 0.2 table.
 @param[in] pointer to command's printer context.
 **/
 VOID

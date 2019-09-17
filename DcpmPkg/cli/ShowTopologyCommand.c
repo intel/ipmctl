@@ -391,7 +391,7 @@ ShowTopology(
       FREE_POOL_SAFE(pCapacityStr);
     }
   }
-  /** display detailed view for PMTT 1.O **/
+  /** display detailed view for PMTT 0.1 **/
   else if (IS_ACPI_REV_MAJ_0_MIN_1(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
@@ -464,8 +464,8 @@ ShowTopology(
       ++TopoCnt;
     }
   }
-  /** display detailed view for PMTT 1.1 **/
-  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+  /** display detailed view for PMTT 0.2 **/
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
     //Print detailed topology for DDR4 entries if no dimm target specified

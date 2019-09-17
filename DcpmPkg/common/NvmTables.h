@@ -58,7 +58,6 @@
 
 #define PMTT_HEADER_REVISION_1 1
 #define PMTT_HEADER_REVISION_2 2
-#define PMTT_HEADER_MINOR_REVISION_1 1
 
 /** PMTT table types**/
 #define PMTT_MAX_LEN  4096
@@ -96,7 +95,9 @@
 
 #define IS_ACPI_REV_MAJ_0_MIN_1(revision)     (revision.AsUint8 == ACPI_REVISION_1)
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_1(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_1)
+
 #define IS_ACPI_REV_MAJ_0_MIN_2(revision)     (revision.AsUint8 == ACPI_REVISION_2)
+#define IS_ACPI_HEADER_REV_MAJ_0_MIN_2(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_2)
 
 #define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
                                           ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)))
@@ -979,9 +980,9 @@ FreeParsedPcat(
   );
 
 /**
-  Frees the memory associated in the parsed PMTT 2.0 table.
+  Frees the memory associated in the parsed PMTT table.
 
-  @param[in, out] pParsedPmtt pointer to the PMTT 2.0 header.
+  @param[in, out] pParsedPmtt pointer to the PMTT header.
 **/
 VOID
 FreeParsedPmtt(

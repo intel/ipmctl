@@ -50,7 +50,7 @@
 #define PMTT_INFO_SIGNATURE     SIGNATURE_64('P', 'M', 'T', 'T', 'I', 'N', 'F', 'O')
 #define PMTT_INFO_FROM_NODE(a)  CR(a, PMTT_INFO, PmttNode, PMTT_INFO_SIGNATURE)
 
- /** PMTT 2.0 vendor specific modules: Die, Channel, Slot added **/
+ /** PMTT 0.2 vendor specific modules: Die, Channel, Slot added **/
  typedef struct _PMTT_VERSION {
    ACPI_REVISION  Revision;          //!< PMTT Version
    struct {
@@ -4284,13 +4284,13 @@ ParseAcpiTables(
   }
 
   /**
-    Parse the PMTT Rev 2 table only
+    Parse the PMTT Rev 0.2 table only
     ACPI 6.3 requires DIMM fields to be populated using PMTT
     if NfitDeviceHandle Bit 31 is set
   **/
   if (pPMTT != NULL) {
     Revision.AsUint8 = pPMTT->Revision;
-    if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
       *ppPmttHead = ParsePmttTable((VOID *)pPMTT);
       if (*ppPmttHead == NULL) {
         NVDIMM_DBG("PMTT parsing error.");
@@ -9050,7 +9050,7 @@ MapSockets(
         Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
       }
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision) && pPmttHead != NULL) {
+  } else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision) && pPmttHead != NULL) {
     ppAllMemModules[0] = pPmttHead->ppDDRModules;
     ppAllMemModules[1] = pPmttHead->ppDCPMModules;
     NumOfMemModules[0] = pPmttHead->DDRModulesNum;
@@ -9064,8 +9064,7 @@ MapSockets(
           goto Finish;
         }
 
-        DdrEntry->PmttVersion.Revision.Split.Major = PMTT_HEADER_REVISION_1;
-        DdrEntry->PmttVersion.Revision.Split.Minor = PMTT_HEADER_MINOR_REVISION_1;
+        DdrEntry->PmttVersion.Revision.AsUint8 = PMTT_HEADER_REVISION_2;
         DdrEntry->DimmID = pMemModules[Index2]->SmbiosHandle;
         DdrEntry->NodeControllerID = (UINT16)SOCKET_INDEX_TO_NFIT_NODE_ID(pMemModules[Index2]->SocketId);
         DdrEntry->SocketID = pMemModules[Index2]->SocketId;
@@ -9205,7 +9204,7 @@ GetSystemTopology(
     (*ppTopologyDimm)[Index].PmttVersion = DdrEntry->PmttVersion.Revision.AsUint8;
 
     CopyMem(&Revision, &DdrEntry->PmttVersion.Revision, sizeof(Revision));
-    if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
       (*ppTopologyDimm)[Index].DieID = DdrEntry->PmttVersion.VendorData.DieID;
 
       if (pDimmInfo->MemoryType == MEMORYTYPE_DDR4) {

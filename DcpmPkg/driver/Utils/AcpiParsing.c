@@ -657,13 +657,13 @@ GetLogicalSocketIdFromPmtt(
     //If not a Multi-die socket, Logical Socket will be same as Socket ID
     *pLogicalSocketId = SocketId;
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision)) {
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     if (gNvmDimmData->PMEMDev.pPmttHead == NULL || gNvmDimmData->PMEMDev.pPmttHead->SocketsNum == 0) {
       NVDIMM_DBG("Incorrect PMTT table");
       goto Finish;
     }
     PMTT_TABLE2 *pPmtt = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
-    if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPmtt)) {
+    if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPmtt)) {
       for (Index = 0; Index < gNvmDimmData->PMEMDev.pPmttHead->SocketsNum; Index++) {
         if (SocketId == gNvmDimmData->PMEMDev.pPmttHead->ppSockets[Index]->SocketId) {
           Found = TRUE;
@@ -784,7 +784,7 @@ CheckIsMemoryModeAllowed(
       }
     } // end of socket
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision)) {
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     PMTT_TABLE2 *pPMTT = NULL;
     if (gNvmDimmData->PMEMDev.pPmttHead == NULL
       || gNvmDimmData->PMEMDev.pPmttHead->iMCsNum == 0 || gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum == 0) {
@@ -793,7 +793,7 @@ CheckIsMemoryModeAllowed(
     }
 
     pPMTT = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
-    if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPMTT)) {
+    if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPMTT)) {
       for (Index1 = 0; Index1 < gNvmDimmData->PMEMDev.pPmttHead->iMCsNum; Index1++) {
         for (Index2 = 0; Index2 < gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum; Index2++) {
           if (gNvmDimmData->PMEMDev.pPmttHead->ppiMCs[Index1]->MemControllerID == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->MemControllerId) {

@@ -34,6 +34,43 @@
 *  - Provides BLOCK IO access to the specificed DPCMM Namespaces
 * - EFI_NVDIMM_LABEL_PROTOCOL
 *  - Provides standardized access to the specified DCPMM Labels
+* - Automated Provisioning flow using an EFI_VARIABLE
+*
+* @section autoprovisioning Automated Provisioning
+* Automated Provisioning provides a mechanism to provision both persistent
+* memory regions and namespaces on the next boot by accessing an exposed
+* EFI_VARIABLE. This mechansim may be particularly useful to initiate provisioning
+* via an out-of-band (OOB) path, like a Baseboard Management Controller (BMC).
+*
+* The UEFI driver will determine if mode provisioning is required by first checking
+* the UEFI variable status field and then checking the PCD data stored on the DIMM
+* to ensure it matches (if necessary).
+*
+* The UEFI driver will determine if namespace provisioning is required by first
+* checking the UEFI variable status field and then checking for empty interleave
+* sets.
+*
+* The UEFI_VARIABLE IntelDIMMConfig is described below.
+* GUID: {76fcbfb6-38fe-41fd-901d-16453122f035}
+* Attributes: EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS
+*
+* Variable Name             | Size(bytes)  | Data
+* ------------------------- | ------------ | -----------------------------------
+* Revision                  |            1 | 1 (Read only written by AEP driver)
+* ProvisionCapacityMode     |            1 | 0: Manual - AEP DIMM capacity provisioning via user interface. (Default). <br>1: Auto - Automatically provision all AEP DIMM capacity during system boot if this request does not match the current PCD metadata stored on the AEP DIMMs.<br>Note: Auto provisioning may result is loss of persistent data stored on the AEP DIMMs.
+* MemorySize                |            1 | If ProvisionCapacityMode = Auto, the % of the total AEP capacity to provision in Memory Mode (0-100%). 0: (Default)
+* PMType                    |            1 | If ProvisionCapacityMode = Auto, the type of persistent memory to provision (if not 100% Memory Mode).<br>0: App Direct<br>1: App Direct, Not Interleaved
+* ProvisionNamespaceMode    |            1 | 0: Manual - Namespace provisioning via user interface. (Default).<br>1: Auto - Automatically create a namespace on all AEP DIMM App Direct interleave sets is one doesn't already exist.
+* NamespaceFlags            |            1 | If ProvisionNamespaceMode=Auto, the flags to apply when automatically creating namespaces.<br>0: None (Default).<br>1: BTT
+* ProvisionCapacityStatus   |            1 | 0: Unknown - Check PCD if ProvisionCapacityMode = Auto (Default).<br>1: Successfully provisioned.<br>2: Error.<br>3: Pending reset.
+* ProvisionNamespaceStatus  |            1 | 0: Unknown - Check LSA if ProvisionNamespaceMode = Auto (Default).<br>1: Successfully created namespaces.<br>2: Error.
+* NamespaceLabelVersion     |            1 | Namespace label version to initialize when provision capacity.<br>0: Latest Version (Currently 1.2).<br>1: 1.1.<br>2: 1.2
+* Reserved                  |            7 | Reserved.
+*
+* Figure 'Auto Provisioning Flow Diagram' describes the decision tree implemented.
+*
+* \image latex AutoProvisioningFlowDiagram.png "Auto Provisioning Flow Diagram"
+*
 */
 
 #ifndef _NVMDIMM_CONFIG_H_

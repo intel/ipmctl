@@ -10283,6 +10283,7 @@ InjectError(
     UINT32 Index = 0;
     UINT32 SecurityState = 0;
     PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pPayloadPackageSparingPolicy = NULL;
+    UINT8 FwStatus = FW_SUCCESS;
 
     SetMem(pDimms, sizeof(pDimms), 0x0);
 
@@ -10318,8 +10319,12 @@ InjectError(
       ((PT_INPUT_PAYLOAD_INJECT_TEMPERATURE *)pInputPayload)->Temperature.Separated.TemperatureInteger =
         (UINT16) *pInjectTemperatureValue;
       for (Index = 0; Index < DimmsNum; Index++) {
-        ReturnCode = FwCmdInjectError(pDimms[Index], SubopMediaErrorTemperature, (VOID *)pInputPayload);
+        ReturnCode = FwCmdInjectError(pDimms[Index], SubopMediaErrorTemperature, (VOID *)pInputPayload, &FwStatus);
         if (EFI_ERROR(ReturnCode)) {
+          if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+            continue;
+          }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
           continue;
@@ -10352,8 +10357,12 @@ InjectError(
            ((!ClearStatus && pPayloadPackageSparingPolicy->Supported) ||
             (ClearStatus && !pPayloadPackageSparingPolicy->Supported))) {
           //Inject the error if PackageSparing policy is available and is supported
-          ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
+          ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload, &FwStatus);
           if (EFI_ERROR(ReturnCode)) {
+            if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+              SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+              continue;
+            }
             SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
             ReturnCode = EFI_DEVICE_ERROR;
             FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
@@ -10379,8 +10388,12 @@ InjectError(
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->TriggersToModify = DIRTY_SHUTDOWN_TRIGGER;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->DirtyShutdownTrigger = !ClearStatus;
       for (Index = 0; Index < DimmsNum; Index++) {
-        ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, pInputPayload);
+        ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, pInputPayload, &FwStatus);
         if (EFI_ERROR(ReturnCode)) {
+          if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+            continue;
+          }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
           continue;
@@ -10400,8 +10413,12 @@ InjectError(
     ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->FatalErrorTrigger = !ClearStatus;
 
     for (Index = 0; Index < DimmsNum; Index++) {
-      ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *) pInputPayload);
+      ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *) pInputPayload, &FwStatus);
       if (EFI_ERROR(ReturnCode)) {
+        if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+          continue;
+        }
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
         ReturnCode = EFI_DEVICE_ERROR;
         continue;
@@ -10443,8 +10460,12 @@ InjectError(
           ReturnCode = EFI_INVALID_PARAMETER;
           continue;
         }
-        ReturnCode = FwCmdInjectError(pDimms[Index], SubopErrorPoison, (VOID *) pInputPayload);
+        ReturnCode = FwCmdInjectError(pDimms[Index], SubopErrorPoison, (VOID *) pInputPayload, &FwStatus);
         if (EFI_ERROR(ReturnCode)) {
+          if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+            continue;
+          }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
           continue;
@@ -10468,8 +10489,12 @@ InjectError(
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Enable = !ClearStatus;
       ((PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS *)pInputPayload)->SpareBlockPercentageTrigger.Separated.Value = *pPercentageRemaining;
       for (Index = 0; Index < DimmsNum; Index++) {
-        ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload);
+        ReturnCode = FwCmdInjectError(pDimms[Index], SubopSoftwareErrorTriggers, (VOID *)pInputPayload, &FwStatus);
         if (EFI_ERROR(ReturnCode)) {
+          if (FwStatus == FW_INJECTION_NOT_ENABLED) {
+            SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED);
+            continue;
+          }
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
           ReturnCode = EFI_DEVICE_ERROR;
           continue;

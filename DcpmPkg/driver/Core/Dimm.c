@@ -6417,7 +6417,8 @@ Finish:
 Inject Temperature error payload
 @param[IN] pDimm Target DIMM structure pointer
 @param[IN] subopcode for error injection command
-@param[IN] pinjectInputPayload - input payload to be sent
+@param[OUT] pinjectInputPayload - input payload to be sent
+@param[OUT] pFwStatus FW status returned by dimm
 
 @retval EFI_SUCCESS Success
 @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
@@ -6428,7 +6429,8 @@ EFI_STATUS
 FwCmdInjectError(
   IN  DIMM *pDimm,
   IN  UINT8 SubOpCode,
-  OUT VOID *pinjectInputPayload
+  OUT VOID *pinjectInputPayload,
+  OUT UINT8 *pFwStatus
 )
 {
   FW_CMD *pFwCmd = NULL;
@@ -6436,7 +6438,7 @@ FwCmdInjectError(
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pinjectInputPayload == NULL) {
+  if (pDimm == NULL || pinjectInputPayload == NULL || pFwStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -6456,6 +6458,7 @@ FwCmdInjectError(
   CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pinjectInputPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  *pFwStatus = pFwCmd->Status;
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to inject error, error: %x\n", ReturnCode);
     if (pFwCmd->Status == FW_INJECTION_NOT_ENABLED) {

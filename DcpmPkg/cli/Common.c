@@ -1279,6 +1279,7 @@ MatchCliReturnCode(
     break;
 
   case NVM_ERR_OPERATION_NOT_SUPPORTED:
+  case NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED:
     ReturnCode = EFI_UNSUPPORTED;
     break;
 

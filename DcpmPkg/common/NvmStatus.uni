@@ -131,6 +131,8 @@
 
 #string STR_DCPMM_STATUS_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU #language en "Mixed DCPMM SKU's detected. The command is not supported in the current context."
 
+#string STR_DCPMM_STATUS_ERR_INJECTION_BIOS_KNOB_NOT_ENABLED #language en "The BIOS error injection knob is not enabled. Please enable and try again."
+
 #string STR_DCPMM_STATUS_ERR_NONE_DIMM_FULFILLS_CRITERIA  #language en "No DIMM in the Region fulfills requested properties."
 #string STR_DCPMM_STATUS_ERR_NONE_ISET_FULFILLS_CRITERIA #language en "App Direct Namespace with requested properties can't be created on the Region."
 #string STR_DCPMM_STATUS_ERR_UNSUPPORTED_BLOCK_SIZE  #language en "Unsupported BlockSize specified"

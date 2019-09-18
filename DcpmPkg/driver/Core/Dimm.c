@@ -6393,9 +6393,14 @@ FwCmdGetCommandAccessPolicy(
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending GetCommandAccessPolicy command (RC = %d)", ReturnCode);
-    NVDIMM_DBG("FW CMD Status %d", pFwCmd->Status);
-    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    NVDIMM_DBG("Error detected when sending GetCommandAccessPolicy command (RC = 0x%x)", ReturnCode);
+    NVDIMM_DBG("FW CMD Status 0x%x", pFwCmd->Status);
+    if (pFwCmd->Status == FW_INVALID_COMMAND_PARAMETER) {
+      ReturnCode = EFI_UNSUPPORTED;
+    }
+    else {
+      FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    }
     goto Finish;
   }
 

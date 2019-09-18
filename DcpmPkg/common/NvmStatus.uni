@@ -284,4 +284,5 @@
 #string STR_DCPMM_RESTRICTION_BIOS_ONLY #language en "BIOS only"
 #string STR_DCPMM_RESTRICTION_SMBUS_ONLY #language en "SMBus only"
 #string STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY #language en "BIOS and SMBus only"
+#string STR_DCPMM_RESTRICTION_UNSUPPORTED #language en "Unsupported"
 #string STR_DCPMM_RESTRICTION_INVALID #language en "<Invalid>"

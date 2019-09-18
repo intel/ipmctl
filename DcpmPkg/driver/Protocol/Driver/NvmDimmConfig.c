@@ -10546,15 +10546,16 @@ Finish:
 }
 
 /**
-  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted. Passing pCapInfo as NULL
+  will provide the maximum number of possible return elements by updating pCount.
+
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmID Handle of the DIMM
   @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
-  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with maximum number of elements possible. OPTIONAL
 
-  @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval EFI_SUCCESS Success
-  @retval Other errors failure of FW commands
+  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
 EFIAPI
@@ -10562,37 +10563,38 @@ GetCommandAccessPolicy(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN  UINT16 DimmID,
   IN OUT UINT32 *pCount,
-  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+  OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
   UINT32 Index = 0;
-  UINTN StructSize = 0;
-  COMMAND_ACCESS_POLICY_ENTRY *CapEntries;
+  COMMAND_ACCESS_POLICY_ENTRY *pCapEntries;
+
   COMMAND_ACCESS_POLICY_ENTRY CapEntriesOrig[] = {
-  { PtSetSecInfo, SubopOverwriteDimm, 0xFF},
-  { PtSetSecInfo, SubopSetPass, 0xFF },
-  { PtSetSecInfo, SubopSecFreezeLock, 0xFF },
-  { PtSetFeatures, SubopAlarmThresholds, 0xFF },
-  { PtSetFeatures, SubopConfigDataPolicy, 0xFF },
-  { PtSetFeatures, SubopAddressRangeScrub, 0xFF },
-  { PtSetAdminFeatures, SubopPlatformDataInfo, 0xFF },
-  { PtSetAdminFeatures, SubopLatchSystemShutdownState, 0xFF },
-  { PtUpdateFw, SubopUpdateFw, 0xFF }
+  { PtSetSecInfo, SubopOverwriteDimm, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID},
+  { PtSetSecInfo, SubopSetPass, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetSecInfo, SubopSecFreezeLock, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetFeatures, SubopAlarmThresholds, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetFeatures, SubopConfigDataPolicy, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetFeatures, SubopAddressRangeScrub, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetAdminFeatures, SubopPlatformDataInfo, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtSetAdminFeatures, SubopLatchSystemShutdownState, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+  { PtUpdateFw, SubopUpdateFw, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID }
   };
+
   COMMAND_ACCESS_POLICY_ENTRY CapEntries_2_1[] = {
-    { PtSetSecInfo, SubopOverwriteDimm, 0xFF},
-    { PtSetSecInfo, SubopSetMasterPass, 0xFF },
-    { PtSetSecInfo, SubopSetPass, 0xFF },
-    { PtSetSecInfo, SubopSecEraseUnit, 0xFF },
-    { PtSetSecInfo, SubopSecFreezeLock, 0xFF },
-    { PtSetFeatures, SubopAlarmThresholds, 0xFF },
-    { PtSetFeatures, SubopConfigDataPolicy, 0xFF },
-    { PtSetFeatures, SubopAddressRangeScrub, 0xFF },
-    { PtSetAdminFeatures, SubopPlatformDataInfo, 0xFF },
-    { PtSetAdminFeatures, SubopLatchSystemShutdownState, 0xFF },
-    { PtUpdateFw, SubopUpdateFw, 0xFF }
+    { PtSetSecInfo, SubopOverwriteDimm, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID},
+    { PtSetSecInfo, SubopSetMasterPass, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetSecInfo, SubopSetPass, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetSecInfo, SubopSecEraseUnit, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetSecInfo, SubopSecFreezeLock, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetFeatures, SubopAlarmThresholds, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetFeatures, SubopConfigDataPolicy, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetFeatures, SubopAddressRangeScrub, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetAdminFeatures, SubopPlatformDataInfo, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtSetAdminFeatures, SubopLatchSystemShutdownState, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID },
+    { PtUpdateFw, SubopUpdateFw, COMMAND_ACCESS_POLICY_RESTRICTION_INVALID }
   };
 
   NVDIMM_ENTRY();
@@ -10628,8 +10630,7 @@ GetCommandAccessPolicy(
     (pDimm->FwVer.FwApiMajor >= 0x3)  )
   {
     if (*pCount == COUNT_OF(CapEntries_2_1)) {
-      CapEntries = CapEntries_2_1;
-      StructSize = sizeof(CapEntries_2_1);
+      pCapEntries = CapEntries_2_1;
     }
     else
     {
@@ -10641,8 +10642,7 @@ GetCommandAccessPolicy(
   else
   {
     if (*pCount == COUNT_OF(CapEntriesOrig)) {
-      CapEntries = CapEntriesOrig;
-      StructSize = sizeof(CapEntriesOrig);
+      pCapEntries = CapEntriesOrig;
     }
     else
     {
@@ -10653,16 +10653,27 @@ GetCommandAccessPolicy(
   }
 
   for (Index = 0; Index < *pCount; Index++) {
-    ReturnCode = FwCmdGetCommandAccessPolicy(pDimm, CapEntries[Index].Opcode,
-      CapEntries[Index].SubOpcode, &CapEntries[Index].Restriction);
+    ReturnCode = FwCmdGetCommandAccessPolicy(pDimm, pCapEntries[Index].Opcode,
+      pCapEntries[Index].SubOpcode, &pCapEntries[Index].Restriction);
+
+    if (EFI_UNSUPPORTED == ReturnCode) {
+      NVDIMM_DBG("Command Access Policy for 0x%x:0x%x - Unsupported. ReturnCode=0x%x.",
+        pCapEntries[Index].Opcode, pCapEntries[Index].SubOpcode, ReturnCode);
+      pCapEntries[Index].Restriction = COMMAND_ACCESS_POLICY_RESTRICTION_UNSUPPORTED;
+      CopyMem_S(&pCapInfo[Index], (sizeof(*pCapInfo)), &pCapEntries[Index], (sizeof(*pCapInfo)));
+      continue;
+    }
 
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to retrieve Command Access Policy for %d:%d.  ReturnCode=%d.", CapEntries[Index].Opcode, CapEntries[Index].SubOpcode, ReturnCode);
-      return ReturnCode;
+      NVDIMM_DBG("Failed to retrieve Command Access Policy for 0x%x:0x%x. ReturnCode=0x%x.",
+        pCapEntries[Index].Opcode, pCapEntries[Index].SubOpcode, ReturnCode);
+      continue;
     }
-  }
 
-  CopyMem_S(pCapInfo, (sizeof(*pCapInfo) * (*pCount)), CapEntries, StructSize);
+    CopyMem_S(&pCapInfo[Index], (sizeof(*pCapInfo)), &pCapEntries[Index], (sizeof(*pCapInfo)));
+    NVDIMM_DBG("Retrieved Command Access Policy for 0x%x:0x%x. ReturnCode=0x%x.",
+      pCapEntries[Index].Opcode, pCapEntries[Index].SubOpcode, ReturnCode);
+  }
 
   ReturnCode = EFI_SUCCESS;
   goto Finish;

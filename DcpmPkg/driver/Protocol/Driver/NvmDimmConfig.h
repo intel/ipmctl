@@ -1550,13 +1550,13 @@ CheckForLongOpStatusInProgress(
 );
 
 /**
-  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
-  NOTE: Available only in debug driver.
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted. Passing pCapInfo as NULL
+  will provide the maximum number of possible return elements by updating pCount.
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmID Handle of the DIMM
   @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
-  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with maximum number of elements possible. OPTIONAL
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -1567,7 +1567,7 @@ GetCommandAccessPolicy(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN  UINT16 DimmID,
   IN OUT UINT32 *pCount,
-  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+  OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
 );
 
 /**

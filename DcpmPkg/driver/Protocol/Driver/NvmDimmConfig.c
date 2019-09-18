@@ -3301,18 +3301,24 @@ GetAcpiPMTT(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 #ifdef OS_BUILD
   UINT32 Size = 0;
+  PbrContext *pContext = PBR_CTX();
 #endif
   if (ppPMTTtbl == NULL) {
     goto Finish;
   }
 
 #ifdef OS_BUILD
-  ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl, &Size);
+  if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext)) {
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, ppPMTTtbl, &Size);
+  }
+  else {
+    ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl, &Size);
+  }
   if (EFI_ERROR(ReturnCode) || NULL == *ppPMTTtbl) {
     NVDIMM_DBG("Failed to retrieve PMTT table.");
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
-}
+  }
 #else
   EFI_ACPI_DESCRIPTION_HEADER *pTempPMTTtbl = NULL;
   UINT32 PmttTableLength = 0;

@@ -30,6 +30,9 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ARGS_STR                L"Args"
 #define TAG_STR                     L"Tag"
 
+/** common display values**/
+#define NA_STR                      L"N/A"
+
 #define MAX_FILE_PATH_LEN           512
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
 #define MAX_SHELL_PROTOCOL_HANDLES  2

@@ -282,7 +282,7 @@ ShowGoalPrintDetailedView(
     /** AppDirect1Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_INDEX_PROPERTY))) {
       if (pCurrentGoal->AppDirectSize[0] == 0) {
-        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_1_INDEX_PROPERTY, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_1_INDEX_PROPERTY, NA_STR);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_INDEX_PROPERTY, FORMAT_INT32, pCurrentGoal->AppDirectIndex[0]);
       }
@@ -305,7 +305,7 @@ ShowGoalPrintDetailedView(
     /** AppDirect2Index **/
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_INDEX_PROPERTY))) {
       if (pCurrentGoal->AppDirectSize[1] == 0) {
-        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_2_INDEX_PROPERTY, NOT_APPLICABLE_SHORT_STR);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pCmd->pPrintCtx, pPath, APPDIRECT_2_INDEX_PROPERTY, NA_STR);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_INDEX_PROPERTY, FORMAT_INT32, pCurrentGoal->AppDirectIndex[1]);
       }

@@ -118,7 +118,6 @@
 #define AVERAGE_1_2V_POWER_STR      L"Average1_2vPower"
 #define EXTENDED_ADR_ENABLED_STR    L"ExtendedAdrEnabled"
 #define PPC_EXTENDED_ADR_ENABLED_STR L"PpcExtendedAdrEnabled"
-#define NOT_APPLICABLE_SHORT_STR    L"N/A"
 #define MILI_WATT_STR               L"mW"
 #define MEGA_TRANSFERS_PER_SEC_STR  L"MT/s"
 #define BYTE_STR                    L"b"

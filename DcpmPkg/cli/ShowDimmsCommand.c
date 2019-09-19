@@ -719,7 +719,7 @@ ShowDimms(
 
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CAPACITY_STR, pCapacityStr);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, NOT_APPLICABLE_SHORT_STR);
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, NA_STR);
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_VER_STR, TmpFwVerString);
 
       FREE_POOL_SAFE(pDimmErrStr);
@@ -957,9 +957,8 @@ ShowDimms(
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURING_LOCATION))) {
         if (pDimms[DimmIndex].ManufacturingInfoValid) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURING_LOCATION, FORMAT_HEX_PREFIX FORMAT_UINT8_HEX, pDimms[DimmIndex].ManufacturingLocation);
-        }
-        else {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_LOCATION, NOT_APPLICABLE_SHORT_STR);
+        } else {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_LOCATION, NA_STR);
         }
       }
 
@@ -967,9 +966,8 @@ ShowDimms(
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURING_DATE))) {
         if (pDimms[DimmIndex].ManufacturingInfoValid) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURING_DATE, FORMAT_SHOW_DIMM_MANU_DATE, pDimms[DimmIndex].ManufacturingDate & 0xFF, (pDimms[DimmIndex].ManufacturingDate >> 8) & 0xFF);
-        }
-        else {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_DATE, NOT_APPLICABLE_SHORT_STR);
+        } else {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MANUFACTURING_DATE, NA_STR);
         }
       }
 
@@ -1292,7 +1290,7 @@ ShowDimms(
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, THERMAL_THROTTLE_LOSS_STR, FORMAT_UINT32, pDimms[DimmIndex].ThermalThrottlePerformanceLossPrct);
           }
           else {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, THERMAL_THROTTLE_LOSS_STR, NOT_APPLICABLE_SHORT_STR);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, THERMAL_THROTTLE_LOSS_STR, NA_STR);
           }
         }
 
@@ -1529,7 +1527,7 @@ ShowDimms(
       else {
         for (Index3 = 0; Index3 < ALLOWED_DISP_VALUES_COUNT(pOnlyManageableAllowedDisplayValues); Index3++) {
           if (ContainsValue(pDispOptions->pDisplayValues, pOnlyManageableAllowedDisplayValues[Index3])) {
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, pOnlyManageableAllowedDisplayValues[Index3], NOT_APPLICABLE_SHORT_STR);
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, pOnlyManageableAllowedDisplayValues[Index3], NA_STR);
           }
         }
       }

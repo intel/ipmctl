@@ -13,7 +13,6 @@
 #define DIMM_ID_TABLE_HEADER            L"DimmID"
 
 #define STATUS_STR                      L"Status"
-#define NOT_APPLICABLE_SHORT_STR        L"N/A"
 #define CLI_REBOOT_REQUIRED_MSG         L"A reboot is required to process new memory allocation goals.\n"
 #define CLI_NO_GOALS_MSG                L"There are no goal configs defined in the system.\nPlease use 'show -region' to display currently valid persistent memory regions.\n"
 #define CLI_GET_REGION_MSG              L"Get region configuration goal"

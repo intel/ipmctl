@@ -421,6 +421,10 @@ UnlatchedLastShutdownStatus::
   - PM Idle: Power management idle received
   - DDRT Surprise Reset: Surprise reset received
 
+ThermalThrottleLossPercent::
+  The average performance loss percentage due to thermal throttling
+  in current boot of the DCPMM.
+
 LastShutdownTime::
   The time the system was last shutdown.
 

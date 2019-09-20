@@ -18,8 +18,7 @@ AlarmThreshold=(temperature) EnabledState=(0|1)
 
 DESCRIPTION
 -----------
-Changes the non-critical alarm threshold or enabled state for one or more DCPMMs
-sensors.
+Changes the alarm threshold or enabled state for one or more DCPMMs sensors.
 Use the command Show Sensor to view the current settings.
 
 OPTIONS
@@ -73,14 +72,13 @@ TARGETS
 PROPERTIES
 ----------
 AlarmThreshold::
-  The upper (for temperatures) or lower (for spare capacity) non-critical alarm
-  threshold of the sensor. If the current value of the sensor is at or above for
-  thermal, or below for capacity, the theshold value, then the sensor will
-  indicate a "NonCritical" state. Temperatures may be specified in degrees
+  The threshold value at which an alarm for the respective sensor will be triggered.
+  The upper (for temperatures) or lower (for spare capacity) alarm
+  threshold of the sensor. Temperatures may be specified in degrees
   Celsius to a precision of 1/16 a degree.
 
 EnabledState::
-  Enable or disable the non-critical alarm threshold. One of:
+  Enable or disable the alarm threshold. One of:
   - "0": Disable
   - "1": Enable
 

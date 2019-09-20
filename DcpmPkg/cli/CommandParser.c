@@ -437,7 +437,6 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
     /** loop through the input tokens **/
   while ((pInput->TokenCount - *pStart) > 0) {
     Found = FALSE;
-
     /** loop through the supported commands to find valid options **/
     for (Index = 0; Index < gCommandCount && !Found; Index++) {
       if (gCommandList[Index].options != NULL) {
@@ -486,6 +485,14 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
+                if (pCommand->options[matchedOptions].pOptionValueStr == NULL) {
+                  pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+                  SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+                  Rc = EFI_INVALID_PARAMETER;
+                  goto Finish;
+                }
+
                 StrnCpyS(pCommand->options[matchedOptions].pOptionValueStr, PARSER_OPTION_VALUE_LEN,
                   pInput->ppTokens[*pStart], PARSER_OPTION_VALUE_LEN - 1);
                 (*pStart)++;

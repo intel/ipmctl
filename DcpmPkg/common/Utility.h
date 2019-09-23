@@ -396,6 +396,15 @@ typedef union {
       goto Label;                                                         \
     }                                                                     \
   } while (0)
+
+// Go to Label if not true
+#define CHECK_NOT_TRUE(Call, Label)                                        \
+  do {                                                                    \
+    if (TRUE != Call) {                                                   \
+      NVDIMM_ERR("Statement is not true");                                \
+      goto Label;                                                         \
+    }                                                                     \
+  } while (0)
 /**
   Get a variable from UEFI RunTime services.
 

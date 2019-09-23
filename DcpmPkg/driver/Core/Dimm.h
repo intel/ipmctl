@@ -260,6 +260,9 @@ typedef struct _DIMM {
   // If the dimm was declared non-functional during our driver initialization
   BOOLEAN NonFunctional;
 
+  DIMM_BSR Bsr;
+  UINT16 BootStatusBitmask;
+
   /*
   A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
   is only used during namespace initialzation so it doesn't need to be repeatedly
@@ -1857,6 +1860,20 @@ EFI_STATUS GetPcdOemDataSize(
   UINT32 *pOemDataSize
 );
 
+/**
+  Check if sending a large payload command over the DDRT large payload
+  mailbox is possible. Used by callers often to determine chunking behavior.
+
+  @param[in] pDimm The DCPMM to retrieve information on
+
+  @retval TRUE: DDRT large payload mailbox is available
+  @retval FALSE: DDRT large payload mailbox is not available
+**/
+BOOLEAN
+IsLargePayloadAvailable(
+  IN DIMM *pDimm
+);
+
 EFI_STATUS
 PassThru(
   IN     struct _DIMM *pDimm,
@@ -1865,25 +1882,39 @@ PassThru(
 );
 
 /**
-  Get boot status register by Dcpmm BIOS protocol.
+  Makes Bios emulated pass thru call and acquires the DCPMM Boot
+  Status Register
 
-  @param[in] pDimm Target DIMM structure pointer
-  @param[in] Timeout Optional command timeout in microseconds
-  @param[in] DcpmmInterface Interface for FIS request
-  @param[out] pMailboxStatus Optional pointer to store FW Mailbox Status Code
-  @param[out] pBsrValue Boot status register value
+  @param[in] pDimm The DCPMM to retrieve identify info on
+  @param[out] pBsrValue Pointer to memory to copy BSR value to
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+**/
+
+EFI_STATUS
+EFIAPI
+FwCmdGetBsr(
+  IN     DIMM *pDimm,
+     OUT UINT64 *pBsrValue
+);
+
+/**
+  Gather boot status register value and populate the boot status bitmask
+
+  @param[in] pDimm to retrieve DDRT Training status from
+  @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
+  @param[out] pBootStatusBitmask Pointer to the boot status bitmask
 
   @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
+
 EFI_STATUS
-DcpmmGetBsr(
-  IN     struct _DIMM *pDimm,
-  IN     UINT32 Timeout OPTIONAL,
-  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
-  OUT UINT8 *pMailboxStatus OPTIONAL,
-  OUT UINT64 *pBsrValue
+PopulateDimmBsrAndBootStatusBitmask(
+  IN     DIMM *pDimm,
+  OUT DIMM_BSR *pBsr,
+  OUT UINT16 *pBootStatusBitmask
 );
 
 /**

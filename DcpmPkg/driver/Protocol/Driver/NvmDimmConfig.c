@@ -437,74 +437,6 @@ Finish:
   return ReturnCode;
 }
 
-/**
-  Populate the boot status bitmask
-
-  @param[in] pBsr BSR Boot Status Register to convert to bitmask
-  @param[in] pDimm to retrieve DDRT Training status from
-  @param[out] pBootStatusBitmask Pointer to the boot status bitmask
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-**/
-STATIC
-EFI_STATUS
-PopulateDimmBootStatusBitmask(
-  IN     DIMM_BSR *pBsr,
-  IN     DIMM *pDimm,
-  OUT UINT16 *pBootStatusBitmask
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  UINT16 BootStatusBitmask = 0;
-  UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
-  BOOLEAN FIS_GTE_2_01 = FALSE;
-
-  NVDIMM_ENTRY();
-
-  if (pBsr == NULL || pBootStatusBitmask == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if ((pBsr->AsUint64 == MAX_UINT64_VALUE) || (pBsr->AsUint64 == 0)) {
-    BootStatusBitmask = DIMM_BOOT_STATUS_UNKNOWN;
-  }
-  else {
-    if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_NOT_TRAINED) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_NOT_READY;
-    }
-    if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_ERROR) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_ERROR;
-    }
-    if (pBsr->Separated_Current_FIS.MD == DIMM_BSR_MEDIA_DISABLED) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_DISABLED;
-    }
-    GetDdrtIoInitInfo(NULL, pDimm->DimmID, &DdrtTrainingStatus);
-    if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
-      NVDIMM_DBG("Could not retrieve DDRT training status");
-    }
-    if ((!FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE)
-      || (FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE && DdrtTrainingStatus != NORMAL_MODE_COMPLETE)) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_DDRT_NOT_READY;
-    }
-    if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
-    }
-    if (pBsr->Separated_Current_FIS.RR == DIMM_BSR_REBOOT_REQUIRED) {
-      BootStatusBitmask |= DIMM_BOOT_STATUS_REBOOT_REQUIRED;
-    }
-  }
-
-  *pBootStatusBitmask = BootStatusBitmask;
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-
-  return ReturnCode;
-}
-
 #ifdef OS_BUILD
 /**
 Read the DIMM's PCD and get the mapped memory sizes
@@ -5597,7 +5529,7 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  if (DeviceId != SPD_DEVICE_ID_DCPM_GEN1) {
+  if (DeviceId != SPD_DEVICE_ID_10) {
     NVDIMM_ERR("Incompatible hardware revision 0x%x", DeviceId);
     *pNvmStatus = NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION;
     goto Finish;
@@ -6558,10 +6490,11 @@ CreateGoalConfig(
     // We're doing this pre-check (can we run Set PCD?) so the user
     // doesn't have to go through the process of creating and confirming a
     // goal only to have it fail to apply.
-    // There are a few levels of restriction. Sometimes only DDRT is disabled,
-    // in which case we can use smbus. However, if we can't use smbus then
-    // we can't do anything if there's any limitation. Also can't do
-    // anything if we're restricted to BIOS mailbox only.
+    // There are a few levels of restriction. First, we can't do anything if
+    // we're restricted to BIOS mailbox only. Sometimes only DDRT is disabled,
+    // in which case we can use smbus. However, if we can't use smbus because
+    // the user specified -ddrt, then we can't do anything if there's any CAP
+    // limitation.
     if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY) ||
         (IS_DDRT_FLAG_ENABLED(Attribs) && CapRestricted != COMMAND_ACCESS_POLICY_RESTRICTION_NONE)) {
       ReturnCode = EFI_UNSUPPORTED;
@@ -8326,8 +8259,6 @@ GetFwDebugLog(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
   NVDIMM_ENTRY();
 
@@ -8351,17 +8282,7 @@ GetFwDebugLog(
     goto Finish;
   }
 
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  if (!IS_SMBUS_FLAG_ENABLED(pAttribs) && !IsDimmManageable(pDimm)) {
+  if (!IsDimmManageable(pDimm)) {
     SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, NULL, 0, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
     goto Finish;
   }
@@ -8530,7 +8451,7 @@ Finish:
   @param[in] DimmId - ID of a DIMM.
   @param[out] pBsr - Pointer to buffer for Boot Status register, contains
               high and low 4B register.
-  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status
+  @param[out] Reserved
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
@@ -8542,40 +8463,26 @@ RetrieveDimmRegisters(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmId,
      OUT UINT64 *pBsr,
-     OUT UINT8 *pFwMailboxStatus,
+     OUT UINT8 *Reserved,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
-#ifndef OS_BUILD
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef MDEPKG_NDEBUG
-  DIMM *pDimm = NULL;
-#endif
+  DIMM *pDimms[MAX_DIMMS];
+  UINT32 DimmsNum = 0;
+  UINT16 BootStatusBitmask = 0;
+
   NVDIMM_ENTRY();
 
-#ifdef MDEPKG_NDEBUG
-  ReturnCode = EFI_UNSUPPORTED;
-#else
-  if (pThis == NULL || pBsr == NULL || pFwMailboxStatus == NULL) {
+  if (pThis == NULL || pBsr == NULL || pCommandStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_PARAMETER);
     goto Finish;
   }
 
-  pDimm = GetDimmByPid(DimmId, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL) {
-    ReturnCode = EFI_NOT_FOUND;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
-    goto Finish;
-  }
+  CHECK_RESULT(VerifyTargetDimms(&DimmId, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
 
-  if (!IsDimmManageable(pDimm)) {
-    ReturnCode = EFI_NOT_FOUND;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
-    goto Finish;
-  }
-
-  ReturnCode = DcpmmGetBsr(pDimm, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt, pFwMailboxStatus, pBsr);
+  ReturnCode = pThis->GetBSRAndBootStatusBitMask(pThis, pDimms[0]->DimmID, pBsr, &BootStatusBitmask);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS);
@@ -8584,12 +8491,9 @@ RetrieveDimmRegisters(
 
   ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
 Finish:
-#endif
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
-#else
-  return EFI_UNSUPPORTED;
-#endif //OS_BUILD
+
 }
 
 /**
@@ -10559,41 +10463,24 @@ GetBSRAndBootStatusBitMask(
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  DIMM *pDimm = NULL;
-  DIMM_BSR Bsr;
+  DIMM *pDimms[MAX_DIMMS];
+  UINT32 DimmsNum = 0;
+  COMMAND_STATUS *pCommandStatus = NULL;
   NVDIMM_ENTRY();
-  ZeroMem(&Bsr, sizeof(DIMM_BSR));
 
-  pDimm = GetDimmByPid(DimmID, &gNvmDimmData->PMEMDev.Dimms);
-  if (pDimm == NULL) {
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
+  ZeroMem(pBsrValue, sizeof(DIMM_BSR));
 
-#ifdef OS_BUILD
-  ReturnCode = FwCmdGetBsr(pDimm, &Bsr.AsUint64);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-#else
-  ReturnCode = DcpmmGetBsr(pDimm, DCPMM_TIMEOUT_INTERVAL, FisOverDdrt, NULL, &Bsr.AsUint64);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-#endif
-  if (pBootStatusBitmask != NULL) {
-    ReturnCode = PopulateDimmBootStatusBitmask(&Bsr, pDimm, pBootStatusBitmask);
-  }
-  if (pBsrValue != NULL) {
-    // If Bsr value is MAX_UINT64_VALUE, then it is access violation
-    if (Bsr.AsUint64 == MAX_UINT64_VALUE) {
-      ReturnCode = EFI_DEVICE_ERROR;
-      goto Finish;
-    }
-    *pBsrValue = Bsr.AsUint64;
-  }
+  // Initialize pCommandStatus and throw away eventually because API
+  // doesn't provide it and it's required for VerifyTargetDimms()
+  CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
+
+  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
+
+  CHECK_RESULT(PopulateDimmBsrAndBootStatusBitmask(pDimms[0], (DIMM_BSR *)pBsrValue, pBootStatusBitmask), Finish);
+
   ReturnCode = EFI_SUCCESS;
 Finish:
+  FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -10790,7 +10677,7 @@ GetCommandEffectLog(
   }
 
   // Format InputPayload for small payload entry count retrieval if necessary
-  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs) || IS_SMBUS_FLAG_ENABLED(pAttribs)) {
+  if (!IsLargePayloadAvailable(pDimm)) {
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = EntriesCount;
     InputPayload.EntryOffset = 0;
@@ -10810,7 +10697,7 @@ GetCommandEffectLog(
   }
   *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
 
-  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs) || IS_SMBUS_FLAG_ENABLED(pAttribs)) {
+  if (!IsLargePayloadAvailable(pDimm)) {
     UINT32 EntryCountRemaining = *pEntryCount;
     UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
 

@@ -885,6 +885,7 @@ RegisterCommands(
     goto done;
   }
 #endif
+
 #ifdef FORMAT_SUPPORTED
   Rc = RegisterStartFormatCommand();
   if (EFI_ERROR(Rc)) {

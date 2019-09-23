@@ -1242,7 +1242,7 @@ SetOptionalConfigurationDataPolicy(
   @param[in] DimmId ID of a DIMM.
   @param[out] pBsr Pointer to buffer for Boot Status register, contains
               high and low 4B register.
-  @param[out] pFwMailboxStatus Pointer to buffer for Host Fw Mailbox Status
+  @param[out] Reserved
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_SUCCESS Success
@@ -1254,7 +1254,7 @@ RetrieveDimmRegisters(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmId,
      OUT UINT64 *pBsr,
-     OUT UINT8 *pFwMailboxStatus,
+     OUT UINT8 *Reserved,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

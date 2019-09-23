@@ -69,7 +69,7 @@ size_t gSmbiosTableSize = 0;
 UINT8 gSmbiosMinorVersion = 0;
 UINT8 gSmbiosMajorVersion = 0;
 
-#define SMBIOS_SIZE     0x2800 
+#define SMBIOS_SIZE     0x2800
 typedef struct _smbios_table_recording
 {
   size_t size;
@@ -1859,44 +1859,6 @@ SPrintLength(
   static const int nBuffSprintLenSize = 1024;
   static wchar_t evalSprintBuff[1024];
   return os_vswprintf(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
-}
-/**
-Makes Bios emulated pass thru call and returns the values
-
-@param[in]  pDimm    pointer to current Dimm
-@param[out] pBsrValue   Value from passthru
-
-@retval EFI_SUCCESS  The count was returned properly
-@retval EFI_INVALID_PARAMETER One or more parameters are NULL
-@retval Other errors failure of FW commands
-**/
-
-EFI_STATUS
-EFIAPI
-FwCmdGetBsr(DIMM *pDimm, UINT64 *pBsrValue)
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
-  if (pBsrValue == NULL || pDimm == NULL) {
-    goto Finish;
-  }
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    goto Finish;
-  }
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = BIOS_EMULATED_COMMAND;
-  pFwCmd->SubOpcode = SUBOP_GET_BOOT_STATUS;
-  pFwCmd->OutputPayloadSize = sizeof(unsigned long long);
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-  CopyMem_S(pBsrValue, sizeof(*pBsrValue), pFwCmd->OutPayload, sizeof(UINT64));
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  return ReturnCode;
 }
 
 VOID

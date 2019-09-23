@@ -1334,7 +1334,7 @@ ReadLabelStorageArea(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
+  if (!IsLargePayloadAvailable(pDimm)) {
     // At first read the Index size only form the beginning of the LSA
     IndexSize = sizeof((*ppLsa)->Index);
     ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
@@ -1399,7 +1399,7 @@ ReadLabelStorageArea(
   }
 
   // Copy the Label area
-  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
+  if (!IsLargePayloadAvailable(pDimm)) {
     // Copy the Label area
     if (UseNamespace1_1) {
       PageSize = sizeof(NAMESPACE_LABEL_1_1);
@@ -1532,7 +1532,7 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (FALSE == IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
+  if (IsLargePayloadAvailable(pDimm)) {
     pRawData = AllocateZeroPool(TotalPcdSize);
     if (pRawData == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -1547,7 +1547,7 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (IS_SMALL_PAYLOAD_FLAG_ENABLED(pAttribs)) {
+  if (!IsLargePayloadAvailable(pDimm)) {
     // Copy the Label index area
     ReturnCode = FwSetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, pIndexArea, 0, (UINT32)LabelIndexSize);
     if (EFI_ERROR(ReturnCode)) {
@@ -1582,7 +1582,8 @@ WriteLabelStorageArea(
     }
   }
   else {
-    // Copy the Label index area
+    // Copy the Label index area, but check for NULL first
+    CHECK_NOT_TRUE((NULL != pRawData && NULL != pIndexArea), Finish);
     CopyMem_S(pRawData, TotalPcdSize, pIndexArea, LabelIndexSize);
 
     // Copy the label area
@@ -2614,12 +2615,16 @@ BOOLEAN IsLSANotInitializedOnDimms()
   }
   return returncode;
 }
+
 /**
   Initializes Namespaces inventory
 
   Function reads LSA data from all DIMMs, then scans for Namespaces
   data in it. All found Namespaces are stored in a list in global
   gNvmDimmData->PMEMDev structure.
+
+  If any DCPMMs fail to initialize, continue to initialize the rest of
+  them, but return an error.
 
   @retval EFI_DEVICE_ERROR Reading LSA data failed
   @retval EFI_ABORTED Reading Namespaces data from LSA failed
@@ -2629,7 +2634,8 @@ EFI_STATUS
 InitializeNamespaces(
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_INVALID_PARAMETER;
   LIST_ENTRY *pNode = NULL;
   DIMM *pDimm = NULL;
   LABEL_STORAGE_AREA *pLsa = NULL;
@@ -2647,13 +2653,15 @@ InitializeNamespaces(
       continue;
     }
 
-    ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
-    if (ReturnCode == EFI_NOT_FOUND) {
+    TempReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
+    if (TempReturnCode == EFI_NOT_FOUND) {
       NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
       pDimm->LsaStatus = LSA_NOT_INIT;
+      ReturnCode = TempReturnCode;
       continue;
     }
-    else if (EFI_ERROR(ReturnCode)) {
+    else if (EFI_ERROR(TempReturnCode)) {
+      ReturnCode = TempReturnCode;
       pDimm->LsaStatus = LSA_CORRUPTED;
       /**
         If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
@@ -2672,9 +2680,10 @@ InitializeNamespaces(
       continue;
     }
 
-    ReturnCode = RetrieveNamespacesFromLsa(pDimm, gNvmDimmData->PMEMDev.pFitHead,
+    TempReturnCode = RetrieveNamespacesFromLsa(pDimm, gNvmDimmData->PMEMDev.pFitHead,
       &gNvmDimmData->PMEMDev.Namespaces);
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      ReturnCode = TempReturnCode;
       NVDIMM_DBG("Failed to retrieve Namespaces from LSA");
       pDimm->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
       continue;

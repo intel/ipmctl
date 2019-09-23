@@ -131,7 +131,6 @@ ShowRegister(
   COMMAND_STATUS *pCommandStatus = NULL;
   BOOLEAN ShowAllRegisters = FALSE;
   DIMM_BSR Bsr;
-  UINT8 FwMailboxStatus = 0;
   UINT32 DimmCount = 0;
   DIMM_INFO *pDimms = NULL;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -223,7 +222,7 @@ ShowRegister(
     }
 
     ReturnCode = pNvmDimmConfigProtocol->RetrieveDimmRegisters(pNvmDimmConfigProtocol,
-        pDimms[Index].DimmID, &Bsr.AsUint64, &FwMailboxStatus, pCommandStatus);
+        pDimms[Index].DimmID, &Bsr.AsUint64, NULL, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Failed to retrieve Dimm Registers");
         goto Finish;
@@ -257,12 +256,6 @@ ShowRegister(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [28:27] DR (DRAM Ready(AIT)) ------------------", FORMAT_HEX_NOWIDTH L" (0:Not trained,Not Loaded; 1:Trained,Not Loaded; 2:Error; 3:Trained,Loaded(Ready))", Bsr.Separated_Current_FIS.DR);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [29:29] RR (Reboot Required) ------------------", FORMAT_HEX_NOWIDTH L" (0:No reset is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)", Bsr.Separated_Current_FIS.RR);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [30:63] Rsvd ----------------------------------", FORMAT_HEX_NOWIDTH L" (0:WDB notFlushed; 1:WDB Flushed)\n", Bsr.Separated_Current_FIS.Rsvd);
-    }
-    if (ContainsValue(pRegisterValues, REGISTER_OS_STR) || ShowAllRegisters) {
-      PRINTER_BUILD_KEY_PATH(pPath, DS_REGISTER_INDEX_PATH, DimmIndex, RegIndex);
-      RegIndex++;
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, REGISTER_TARGET_STR, REGISTER_OS_STR);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  FW Mailbox Status -----------------------------", FORMAT_UINT8_HEX, FwMailboxStatus);
     }
     DimmIndex++;
   }

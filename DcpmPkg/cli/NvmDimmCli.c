@@ -169,10 +169,11 @@ order for proper display
 **/
 VOID FixHelp(CHAR16** ppTokens, UINT32* pCount){
   UINT32 Index = 0;
-  UINT32 HelpFlagIndex = 0;
-  CHAR16 *pArgvTmp = NULL;
+  UINT32 Index2 = 0;
+  UINT32 HelpIndex = 0;
+  CHAR16 *pHelpTokenTmp = NULL;
   UINT32 HelpFlags = 0;
-  UINT32 HelpVerbs = 0;
+  BOOLEAN HelpTokenIndexWrong = FALSE;
 
   HelpRequested = FALSE;
   FullHelpRequested = FALSE;
@@ -180,45 +181,82 @@ VOID FixHelp(CHAR16** ppTokens, UINT32* pCount){
     return;
   }
 
-  //Examine the inputs to determine if/where the help tokens are
-  for (Index = 0; Index < *pCount; Index++) {
-    if (0 == StrICmp(ppTokens[Index], HELP_VERB)) {
-      HelpRequested = TRUE;
-      HelpVerbs++;
-      if (1 == *pCount) {
-        FullHelpRequested = TRUE;
-      }
+  //look for simple requests for global help
+  if (0 == StrICmp(ppTokens[0], HELP_VERB) ||
+      0 == StrICmp(ppTokens[0], HELP_OPTION) ||
+      0 == StrICmp(ppTokens[0], HELP_OPTION_SHORT)) {
+    HelpRequested = TRUE;
+    FullHelpRequested = TRUE;
+    for (Index = 1; Index < *pCount; Index++) {
+      FREE_POOL_SAFE(ppTokens[Index]);
     }
+    *pCount = 1;
+    return;
+  }
 
-    if (0 == StrICmp(ppTokens[Index], HELP_OPTION) ||
-      0 == StrICmp(ppTokens[Index], HELP_OPTION_SHORT)) {
-      HelpRequested = TRUE;
+  //Examine the post-verb to determine if/where the help token(s) are
+  for (Index = 1; Index < *pCount; Index++) {
+    if (0 == StrICmp(ppTokens[Index], HELP_VERB) ||
+        0 == StrICmp(ppTokens[Index], HELP_OPTION) ||
+        0 == StrICmp(ppTokens[Index], HELP_OPTION_SHORT)) {
+
       HelpFlags++;
-      HelpFlagIndex = Index;
-      if (1 == *pCount) {
-        FullHelpRequested = TRUE;
+      HelpRequested = TRUE;
+      if (HelpFlags == 1) {
+        //retain the help token, but change to the short version
+        ppTokens[Index][0] = '-';
+        ppTokens[Index][1] = 'h';
+        ppTokens[Index][2] = 0;
+        HelpIndex = Index;
+        pHelpTokenTmp = ppTokens[Index];
+        HelpTokenIndexWrong = Index > 1;
+      }
+      else {
+        //dispose of duplicate help flags
+        FREE_POOL_SAFE(ppTokens[Index]);
+      }
+
+      //create a 'hole' in the array
+      ppTokens[Index] = NULL;
+    }
+  }
+
+  //nothing to do
+  if (HelpFlags == 0) return;
+
+  if (TRUE == HelpTokenIndexWrong) {
+    //make a spot at slot 1 for the help token
+    for (Index = HelpIndex; Index > 1; Index--)
+    {
+      ppTokens[Index] = ppTokens[Index - 1];
+    }
+  }
+
+  //move the token to the right spot
+  ppTokens[1] = pHelpTokenTmp;
+
+  //collapse any 'holes' in the array (caused by multiple help flags)
+  for (Index = 1; Index < *pCount; Index++) {
+    if (ppTokens[Index] == NULL) {
+      for (Index2 = Index + 1; Index2 < *pCount; Index2++) {
+        if (ppTokens[Index2] != NULL) {
+          ppTokens[Index] = ppTokens[Index2];
+          ppTokens[Index2] = NULL;
+          break;
+        }
       }
     }
   }
 
-  if (HelpFlags == 1 && FALSE == FullHelpRequested && 1 != HelpFlagIndex) {
-    //this means the help was embedded in the request, but in the wrong place...
-    pArgvTmp = ppTokens[HelpFlagIndex];
-    //pass 1 - move all the other parameters to positions other than 2
-    if (HelpFlagIndex == 0 && *pCount >= 2) {
-      //rearrange it so the verb comes first
-      ppTokens[0] = ppTokens[1];
-      ppTokens[1] = pArgvTmp;
-    }
-    else {
-      //advance parameters forward until the help parameter is overwritten
-      for (Index = 1; Index < HelpFlagIndex; Index++) {
-        ppTokens[Index + 1] = ppTokens[Index];
-      }
-      //move the help parameter to the 2nd position
-      ppTokens[1] = pArgvTmp;
+  //adjust the count to account for removed parameters
+  for (Index = 1; Index < *pCount; Index++) {
+    if (ppTokens[Index] == NULL) {
+      break;
     }
   }
+
+  //set the new count
+  *pCount = Index;
 }
 
 /*                                          ./
@@ -243,9 +281,13 @@ UefiMain(
   INT32 Index = 0;
   CHAR16 *pLine = NULL;
   BOOLEAN MoreInput = TRUE;
+  BOOLEAN HelpShown = FALSE;
   UINTN Argc = 0;
   CHAR16 **ppArgv = NULL;
   UINT32 NextId = 0;
+#ifndef OS_BUILD
+  SHELL_FILE_HANDLE StdIn = NULL;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -253,38 +295,65 @@ UefiMain(
   ZeroMem(&Command, sizeof(Command));
 
 #ifndef OS_BUILD
+  InitErrorAndWarningNvmStatusCodes();
+
+  /* only support EFI shell 2.0 */
+  Rc = ShellInitialize();
+  if (EFI_ERROR(Rc)) {
+    Rc = EFI_UNSUPPORTED;
+    NVDIMM_WARN("ShellInitialize failed, rc = 0x%llx", Rc);
+    Print(L"Error: EFI Shell 2.0 is required to run this application\n");
+    goto Finish;
+  }
+#endif
+
+
+  if (gEfiShellParametersProtocol == NULL) {
+    Rc = EFI_UNSUPPORTED;
+#ifndef OS_BUILD
+    NVDIMM_WARN("ShellInitialize succeeded but the shell interface and parameters protocols do not exist");
+    Print(L"Error: EFI Shell 2.0 is required to run this application.\n");
+#else
+    NVDIMM_WARN("Shell interface and parameters protocols do not exist");
+#endif
+    goto Finish;
+  }
+
+#ifndef OS_BUILD
+  StdIn = gEfiShellParametersProtocol->StdIn;
+#endif
+  Argc = gEfiShellParametersProtocol->Argc;
+  ppArgv = gEfiShellParametersProtocol->Argv;
+
+  for (Index = 1; Index < Argc; Index++) {
+#ifndef OS_BUILD
 #ifndef MDEPKG_NDEBUG
-  /** For UEFI pre-parse CLI arguments for verbose logging **/
-  if (gEfiShellParametersProtocol != NULL) {
-    for (Index = 1; Index < gEfiShellParametersProtocol->Argc; Index++) {
-      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION)
-        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], VERBOSE_OPTION_SHORT)) {
-        PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
-      }
-
-      /** Need to set some flags in the case that the user wants help, but there are no DIMMs in the system **/
-      if (0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_VERB)
-        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_OPTION)
-        || 0 == StrICmp(gEfiShellParametersProtocol->Argv[Index], HELP_OPTION_SHORT)) {
-        HelpRequested = TRUE;
-        if (gEfiShellParametersProtocol->Argc == 2) {
-          FullHelpRequested = TRUE;
-        }
-      }
+    /** For UEFI pre-parse CLI arguments for verbose logging **/
+    if (0 == StrICmp(ppArgv[Index], VERBOSE_OPTION)
+      || 0 == StrICmp(ppArgv[Index], VERBOSE_OPTION_SHORT)) {
+      PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
     }
+#endif
+#endif
 
-    if (gEfiShellParametersProtocol->Argc == 1) {
+    /** Need to set some flags in the case that the user wants help, but there are no DIMMs in the system **/
+    if (0 == StrICmp(ppArgv[Index], HELP_VERB)
+      || 0 == StrICmp(ppArgv[Index], HELP_OPTION)
+      || 0 == StrICmp(ppArgv[Index], HELP_OPTION_SHORT)) {
       HelpRequested = TRUE;
-      FullHelpRequested = TRUE;
+      if (Argc == 2) {
+        FullHelpRequested = TRUE;
+      }
     }
   }
 
-#endif
-#endif
+  if (Argc == 1) {
+    HelpRequested = TRUE;
+    FullHelpRequested = TRUE;
+  }
 
 #ifndef OS_BUILD
   BOOLEAN Ascii = FALSE;
-  SHELL_FILE_HANDLE StdIn = NULL;
   UINTN HandleCount = 0;
   EFI_HANDLE *pHandleBuffer = NULL;
   CHAR16 *pCurrentDriverName;
@@ -322,36 +391,11 @@ UefiMain(
   NVDIMM_DBG_CLEAN("NvmDimmCliEntryPoint=0x%016lx\n", &UefiMain);
 
 #ifndef OS_BUILD
-    InitErrorAndWarningNvmStatusCodes();
-
-    /* only support EFI shell 2.0 */
-    Rc = ShellInitialize();
-    if (EFI_ERROR(Rc)) {
-      Rc = EFI_UNSUPPORTED;
-      NVDIMM_WARN("ShellInitialize failed, rc = 0x%llx", Rc);
-      Print(L"Error: EFI Shell 2.0 is required to run this application\n");
-      goto Finish;
-    }
     /* with shell support level 3 */
-    else if (PcdGet8(PcdShellSupportLevel) < 3) {
+    if (PcdGet8(PcdShellSupportLevel) < 3) {
       Rc = EFI_UNSUPPORTED;
       NVDIMM_WARN("shellsupport level %d too low", PcdGet8(PcdShellSupportLevel));
       Print(L"Error: EFI Shell support level 3 is required to run this application\n");
-      goto Finish;
-    }
-
-    // We have the shell, we need to initialize the argv, argc and stdin variables
-    if (gEfiShellParametersProtocol != NULL) {
-      StdIn = gEfiShellParametersProtocol->StdIn;
-      Argc = gEfiShellParametersProtocol->Argc;
-      ppArgv = gEfiShellParametersProtocol->Argv;
-    } else if (mEfiShellInterface != NULL) {
-      StdIn = mEfiShellInterface->StdIn;
-      Argc = mEfiShellInterface->Argc;
-      ppArgv = mEfiShellInterface->Argv;
-    } else {
-      NVDIMM_WARN("ShellInitialize succeeded but the shell interface and parameters protocols do not exist");
-      Print(L"Error: EFI Shell 2.0 is required to run this application.\n");
       goto Finish;
     }
 
@@ -398,8 +442,6 @@ UefiMain(
     }
 
 #else
-  Argc = gEfiShellParametersProtocol->Argc;
-  ppArgv = gEfiShellParametersProtocol->Argv;
   if (g_basic_commands)
   {
     Rc = RegisterNonAdminUserCommands();
@@ -445,6 +487,7 @@ UefiMain(
       } else {
         /* user did not enter a command */
         showHelp(NULL);
+        HelpShown = TRUE;
         break;
       }
 #ifndef OS_BUILD
@@ -483,6 +526,7 @@ UefiMain(
     FixHelp(Input.ppTokens, &Input.TokenCount);
     if (TRUE == FullHelpRequested) {
       showHelp(NULL);
+      HelpShown = TRUE;
       break;
     }
 
@@ -513,6 +557,7 @@ UefiMain(
       /* parse success, now run the command */
       if (Command.ShowHelp) {
         showHelp(&Command);
+        HelpShown = TRUE;
       } else {
 #ifdef OS_BUILD //WA, remove after all CMDs convert to "unified printing" mechanism
         if (Command.PrinterCtrlSupported) {
@@ -565,6 +610,11 @@ Finish:
   cov_dumpData();
 #endif // !OS_BUILD
 #endif // _BullseyeCoverage
+
+  //if help was displayed and not explicitly requested, ensure an error is returned
+  if (TRUE == HelpShown && FALSE == HelpRequested && FALSE == FullHelpRequested && EFI_SUCCESS == Rc) {
+    Rc = EFI_INVALID_PARAMETER;
+  }
 
   NVDIMM_EXIT_I64(Rc);
   return Rc;

@@ -194,6 +194,10 @@
 #string STR_DCPMM_SECSTATE_NOT_SUPPORTED     #language en  "Not Supported"
 #string STR_DCPMM_SECSTATE_PW_MAX            #language en  "Exceeded"
 
+#string STR_DCPMM_SEC_OPTIN_SECURE_S3       #language en  "SecureS3"
+#string STR_DCPMM_SEC_OPTIN_UNSECURE_S3     #language en  "UnsecureS3"
+#string STR_DCPMM_SEC_OPTIN_INVALID         #language en  "Invalid"
+
 #string STR_DCPMM_BOOT_STATUS_UNKNOWN #language en "Unknown"
 #string STR_DCPMM_BOOT_STATUS_SUCCESS #language en "Success"
 #string STR_DCPMM_BOOT_STATUS_MEDIA_NOT_READY #language en "Media Not Ready"

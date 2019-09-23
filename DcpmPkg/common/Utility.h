@@ -1365,6 +1365,20 @@ SecurityStateBitmaskToString(
 );
 
 /**
+  Convert dimm's S3 Resume Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's S3 Resume opt-in
+**/
+CHAR16*
+S3ResumeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
+
+/**
   Convert ARS status value to its respective string
 
   @param[in] ARS status value

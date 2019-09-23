@@ -132,6 +132,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   MANAGEABILITY_STR,
   POPULATION_VIOLATION_STR,
   SECURITY_STR,
+  S3_RESUME_OPT_IN_STR,
   HEALTH_STR,
   HEALTH_STATE_REASON_STR,
   FORM_FACTOR_STR,
@@ -418,6 +419,7 @@ ShowDimms(
   UINT32 DimmIdsNum = 0;
   CHAR16 *pSocketsValue = NULL;
   CHAR16 *pSecurityStr = NULL;
+  CHAR16 *pS3ResumeStr = NULL;
   CHAR16 *pHealthStr = NULL;
   CHAR16 *pHealthStateReasonStr = NULL;
   CHAR16 *pManageabilityStr = NULL;
@@ -784,6 +786,17 @@ ShowDimms(
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SECURITY_STR, pSecurityStr);
         FREE_POOL_SAFE(pSecurityStr);
+      }
+
+      /** S3 Resume Opt-In **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, S3_RESUME_OPT_IN_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_S3RESUME) {
+          pS3ResumeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+        } else {
+          pS3ResumeStr = S3ResumeOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, S3_RESUME_OPT_IN_STR, pS3ResumeStr);
+        FREE_POOL_SAFE(pS3ResumeStr);
       }
 
       /** Health State **/

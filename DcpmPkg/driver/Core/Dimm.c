@@ -1555,6 +1555,69 @@ Finish:
 }
 
 /**
+  Firmware command get security Opt-In
+  Execute a FW command to check the security Opt-In code of a DIMM
+
+  @param[in] pDimm: The DIMM to retrieve security info on
+  @param[in] OptInCode: Opt-In Code that is requested status for
+  @param[out] pSecurityOptIn: Area to place the returned from FW
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+  @retval Various errors from FW are still TBD
+**/
+EFI_STATUS
+FwCmdGetSecurityOptIn(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode,
+  OUT PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN *pSecurityOptIn
+)
+{
+  FW_CMD *pFwCmd = NULL;
+  PT_INPUT_PAYLOAD_GET_SECURITY_OPT_IN InputPayload;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pSecurityOptIn == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  SetMem(&InputPayload, sizeof(InputPayload), 0x0);
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetSecInfo;
+  pFwCmd->SubOpcode = SubOpGetSecOptIn;
+  InputPayload.OptInCode = OptInCode;
+  pFwCmd->InputPayloadSize = sizeof(InputPayload);
+  pFwCmd->OutputPayloadSize = sizeof(*pSecurityOptIn);
+
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending PtGetSecOptIn command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  CopyMem_S(pSecurityOptIn, sizeof(*pSecurityOptIn), pFwCmd->OutPayload, sizeof(*pSecurityOptIn));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Firmware command to disable ARS
 
   @param[in] pDimm Pointer to the DIMM to disable ARS on

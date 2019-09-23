@@ -691,6 +691,25 @@ FwCmdGetSecurityInfo(
   );
 
 /**
+  Firmware command get security Opt-In
+  Execute a FW command to check the security Opt-In code of a DIMM
+
+  @param[in] pDimm: The DIMM to retrieve security info on
+  @param[in] OptInCode: Opt-In Code that is requested status for
+  @param[out] pSecurityOptIn: Area to place the returned from FW
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+  @retval Various errors from FW are still TBD
+**/
+EFI_STATUS
+FwCmdGetSecurityOptIn(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode,
+  OUT PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN *pSecurityOptIn
+);
+
+/**
   Firmware command to retrieve the ARS status of a particular DIMM.
 
   @param[in] pDimm Pointer to the DIMM to retrieve ARSStatus on

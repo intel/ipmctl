@@ -26,6 +26,7 @@
 #define HEALTH_STATE_REASON_STR     L"HealthStateReason"
 #define HEALTH_SHORT_STR            L"Health"
 #define SECURITY_STR                L"LockState"
+#define S3_RESUME_OPT_IN_STR        L"S3Resume"
 #define SECURITY_SKU_ID_STR         L"SecuritySKUId"
 #define SECURITY_SHORT_STR          L"Security"
 #define MASTER_STR                  L"Master"

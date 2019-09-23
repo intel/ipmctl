@@ -96,6 +96,9 @@ struct _DIMM;
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
+// Opt-In Codes - values 0x00-0x02 are invalid
+#define OPT_IN_S3_RESUME 0x03
+
 #pragma pack(push)
 #pragma pack(1)
 
@@ -237,6 +240,7 @@ enum IdentifyDimmSubop {
 **/
 enum GetSecInfoSubop {
   SubopGetSecState = 0x00,          //!< Returns the DIMM security state
+  SubOpGetSecOptIn = 0x02           //!< Returns the DIMM security Opt-In
 };
 
 /**
@@ -523,6 +527,32 @@ typedef struct {
 
   UINT8 Reserved[120];
 } PT_GET_SECURITY_PAYLOAD;
+
+/**
+  Passthrough Input Payload:
+    Opcode:     0x02h (Get Security Info)
+    Sub-Opcode: 0x02h (Get Security Opt-In)
+**/
+typedef struct {
+  UINT16 OptInCode;
+  UINT8 Reserved[126];
+} PT_INPUT_PAYLOAD_GET_SECURITY_OPT_IN;
+
+/**
+  Passthrough Output Payload:
+    Opcode:     0x02h (Get Security Info)
+    Sub-Opcode: 0x02h (Get Security Opt-In)
+**/
+typedef struct {
+  UINT16 OptInCode;
+  UINT8 Reserved[2];
+  UINT32 OptInValue;
+  UINT8 OptInModify;
+  UINT8 Reserved2[3];
+  UINT8 OptInWindow;
+  UINT8 Reserved3[51];
+  UINT8 OptInSpecificData[64];
+} PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN;
 
 /**
   Passthrough Payload:
@@ -1356,7 +1386,18 @@ typedef struct {
     0x04 - Normal Mode Complete
   **/
   UINT8 DdrtTrainingStatus; //!<Designates training has been completed by BIOS.
-  UINT8 Reserved[126];
+  union {
+    UINT8 AsUint8;
+    struct {
+      /**
+        Bit 0: CKE Synchronization (0 - disabled (default), 1 - enabled)
+        Bit 1-7: reserved
+      **/
+      UINT8 CKESynchronization : 1; //!< Allows enabling or disabling of the CKE synchronization
+      UINT8                    : 7; //!< reserved
+    } Separated;
+  } AdditionalDDRTOptions;
+  UINT8 Reserved[125];
 } PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO;
 
 /**

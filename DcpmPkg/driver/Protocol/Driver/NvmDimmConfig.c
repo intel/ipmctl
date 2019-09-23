@@ -716,6 +716,7 @@ GetDimmInfo (
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PT_GET_SECURITY_PAYLOAD *pSecurityPayload = NULL;
+  PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN *pSecurityOptInPayload = NULL;
   PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pGetPackageSparingPayload = NULL;
   LIST_ENTRY *pNodeNamespace = NULL;
   NAMESPACE *pCurNamespace = NULL;
@@ -906,6 +907,26 @@ GetDimmInfo (
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_SECURITY)
   {
+    /* Security opt-in */
+    pSecurityOptInPayload = AllocateZeroPool(sizeof(*pSecurityOptInPayload));
+    if (pSecurityOptInPayload == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+    /* Get Security Opt-In S3 Resume */
+    pDimmInfo->S3ResumeOptIn = S3_RESUME_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, OPT_IN_S3_RESUME, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_S3_RESUME): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == OPT_IN_S3_RESUME) {
+      pDimmInfo->S3ResumeOptIn = pSecurityOptInPayload->OptInValue;
+    } else {
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
+    }
+
     /* security state */
     pSecurityPayload = AllocateZeroPool(sizeof(*pSecurityPayload));
     if (pSecurityPayload == NULL) {
@@ -915,7 +936,7 @@ GetDimmInfo (
 
     ReturnCode = FwCmdGetSecurityInfo(pDimm, pSecurityPayload);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
+      NVDIMM_DBG("FW CMD Error (SECURITY_INFO): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURITY_INFO;
     }
     pDimmInfo->SecurityStateBitmask = pSecurityPayload->SecurityStatus.AsUint32;
@@ -1211,6 +1232,7 @@ Finish:
   FREE_POOL_SAFE(pPayloadMemInfoPage4);
   FREE_POOL_SAFE(pPayloadFwImage);
   FREE_POOL_SAFE(pGetPackageSparingPayload);
+  FREE_POOL_SAFE(pSecurityOptInPayload);
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

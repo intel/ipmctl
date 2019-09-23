@@ -2781,6 +2781,43 @@ Finish:
 }
 
 /**
+  Convert dimm's S3 Resume Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's S3 Resume opt-in
+**/
+CHAR16*
+S3ResumeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+    case S3_RESUME_SECURE_S3:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_S3), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+    case S3_RESUME_UNSECURE_S3:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNSECURE_S3), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+    default:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_INVALID), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+  }
+
+  return pOptIntString;
+}
+
+/**
   Convert ARS status value to its respective string
 
   @param[in] ARS status value

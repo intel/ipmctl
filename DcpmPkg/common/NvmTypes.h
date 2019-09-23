@@ -102,6 +102,7 @@ typedef struct {
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
 #define CONTROLLER_RID_LEN             12
 #define SECURITY_STATE_STR_LEN         32
+#define S3_RESUME_STR_LEN              12
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_STR_LEN    6
 
 /** DIMM UID length, including null terminator **/
@@ -297,6 +298,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_MEM_INFO_PAGE                   (1 << 11)
 #define DIMM_INFO_ERROR_MAX                             (1 << 12)
 #define DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS          (1 << 13)
+#define DIMM_INFO_ERROR_S3RESUME                        (1 << 14)
 
 
 #define DIMM_INFO_TYPE_CHAR16   1
@@ -470,6 +472,7 @@ typedef struct _DIMM_INFO {
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
   UINT32 SecurityStateBitmask;
+  UINT32 S3ResumeOptIn;
 
   CHAR16 SecurityStateStr[SECURITY_STATE_STR_LEN];
 
@@ -827,6 +830,13 @@ typedef struct _DEBUG_LOG_INFO {
 #define SECURITY_MASK_NOT_SUPPORTED       BIT5
 #define SECURITY_MASK_MASTER_ENABLED      BIT8
 #define SECURITY_MASK_MASTER_COUNTEXPIRED BIT9
+
+/**
+  Security Opt-In values
+**/
+#define S3_RESUME_SECURE_S3   0x0
+#define S3_RESUME_UNSECURE_S3 0x1
+#define S3_RESUME_INVALID     0xFF
 
 /**
   Form Factor

@@ -757,7 +757,6 @@ if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 		${OUTPUT_DIR}/manpage/ipmctl-change-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-events.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-host.1.gz
@@ -788,8 +787,10 @@ if(ASCIIDOCTOR_FOUND OR A2X_FOUND)
 			list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
 			list(GET MANPAGE_OUTPUT_FILES ${INDEX} MAN_OUTPUT)
 			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
+			string(REGEX REPLACE "1.gz$" "tmp.txt" MAN_TMP_INPUT ${MAN_OUTPUT})
 			add_custom_command(OUTPUT ${MAN_OUTPUT}
-				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_INPUT} 
+				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
+				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
 				COMMAND gzip -f ${MAN_GZ_INPUT}
 				COMMENT "Generating man pages"
 				DEPENDS ${MAN_INPUT}

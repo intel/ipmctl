@@ -92,7 +92,11 @@ EnabledState=1
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
 
 RETURN DATA
 -----------

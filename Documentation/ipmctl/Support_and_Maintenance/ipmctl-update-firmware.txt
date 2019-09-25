@@ -93,7 +93,11 @@ ipmctl load -examine -source sourcefile.pkg -dimm
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
 
 Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
 

@@ -51,6 +51,14 @@ Shows the DCPMM memory resource allocation.
 [verse]
 ipmctl show -memoryresources
 
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
+
 RETURN DATA
 -----------
 Returns the default attributes listed below.

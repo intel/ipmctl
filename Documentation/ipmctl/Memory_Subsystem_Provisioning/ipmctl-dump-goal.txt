@@ -58,9 +58,13 @@ ipmctl dump -destination config.txt -system -config
 
 LIMITATIONS
 -----------
-Only memory allocation settings for manageable DCPMMs that have been
-successfully applied by the BIOS are stored in the file. Unconfigured DCPMMs are
-not included, nor are memory allocation goals that have not been applied.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- Only memory allocation settings for manageable DCPMMs that have been
+  successfully applied by the BIOS are stored in the file. Unconfigured DCPMMs are
+  not included, nor are memory allocation goals that have not been applied.
 
 RETURN DATA
 -----------

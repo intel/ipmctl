@@ -74,6 +74,14 @@ server.
 [verse]
 ipmctl show -dimm -performance MediaReads
 
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
+
 RETURN DATA
 -----------
 This command displays a table of the specified metrics for each specified DCPMM.

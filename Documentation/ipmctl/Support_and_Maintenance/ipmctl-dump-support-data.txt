@@ -80,6 +80,14 @@ related files that start with the file name dumpfile_*. Refer to
 [verse]
 ipmctl dump -destination dumpfile_ -dict nlog_dict.1.1.0.0000.txt -support
 
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
+
 RETURN DATA
 -----------
 Simply returns the status of the operation.

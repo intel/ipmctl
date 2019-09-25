@@ -93,8 +93,12 @@ ipmctl show -a -region 1
 
 LIMITATIONS
 -----------
-All the underlying DCPMMs should be unlocked to accurately reflect the available
-capacities. The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- All the underlying DCPMMs should be unlocked to accurately reflect the available
+  capacities. The specified DCPMM(s) must be manageable by the host software.
 
 RETURN DATA
 -----------

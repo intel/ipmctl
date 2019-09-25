@@ -10468,8 +10468,6 @@ GetBSRAndBootStatusBitMask(
   COMMAND_STATUS *pCommandStatus = NULL;
   NVDIMM_ENTRY();
 
-  ZeroMem(pBsrValue, sizeof(DIMM_BSR));
-
   // Initialize pCommandStatus and throw away eventually because API
   // doesn't provide it and it's required for VerifyTargetDimms()
   CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);

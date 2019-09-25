@@ -7022,6 +7022,7 @@ FwCmdGetBsr(
     goto Finish;
   }
 
+
   CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
 
   pFwCmd->DimmID = pDimm->DimmID;
@@ -7075,10 +7076,12 @@ PopulateDimmBsrAndBootStatusBitmask(
   // Values are optional to limit fw calls
   // However to populate BootStatusBitmask correctly we need
   // to populate Bsr. So make that a requirement
-  if (pBsr == NULL || (pBootStatusBitmask == NULL && pBsr == NULL)) {
+  if (pBsr == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
+  ZeroMem(pBsr, sizeof(DIMM_BSR));
 
   CHECK_RESULT(FwCmdGetBsr(pDimm, &(pBsr->AsUint64)), Finish);
   if (NULL == pBootStatusBitmask) {

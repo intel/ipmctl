@@ -917,8 +917,8 @@ GetDimmInfo (
     pDimmInfo->ThermalThrottlePerformanceLossPrct = HealthInfo.ThermalThrottlePerformanceLossPrct;
     pDimmInfo->LastShutdownTime = HealthInfo.LastShutdownTime;
     pDimmInfo->AitDramEnabled = HealthInfo.AitDramEnabled;
-    pDimmInfo->MaxMediaTemperature = HealthInfo.MaxControllerTemperature;
-    pDimmInfo->MaxControllerTemperature = HealthInfo.MaxMediaTemperature;
+    pDimmInfo->MaxMediaTemperature = HealthInfo.MaxMediaTemperature;
+    pDimmInfo->MaxControllerTemperature = HealthInfo.MaxControllerTemperature;
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_POWER_MGMT_POLICY)

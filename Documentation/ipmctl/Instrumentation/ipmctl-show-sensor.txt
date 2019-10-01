@@ -142,28 +142,15 @@ ThrottlingStartThreshold::
 ShutdownThreshold::
   The threshold value at which device shutdown will occur.
 
-SettableThresholds::
-  A list of user settable thresholds. Zero or more of:
-  - "AlarmThreshold"
-
-SupportedThresholds::
-  A list of supported thresholds. Zero or more of:
-  - "AlarmThreshold"
-  - "ThrottlingStopThreshold"
-  - "ThrottlingStartThreshold"
-  - "ShutdownThreshold"
+NOTE: Supported thresholds for a given sensor are listed as a part of the return data when using the -all or -display flag. Only the alarm threshold is settable.
 
 EnabledState::
-  Whether the alarm threshold is enabled, disabled or not applicable.
+  Current state of the alarm threshold, where applicable.
   One of:
   - 0: Disabled
   - 1: Enabled
   - N/A
 
-MaxMediaTemperature::
-  The highest die temperature reported in degrees Celsius. 
-  This value is persistent through Power Loss as well as not effected by Overwrite Dimm or Media Temperature Error Injection.
-
-MaxControllerTemperature::
-The highest controller temperature repored in degrees Celsius.
-This value is persistent through Power Loss as well as not effected by Overwrite Dimm.
+MaxTemperature::
+  The highest temperature reported in degrees Celsius for a given media or controller sensor.
+  This value is persistent through Power Loss and is read-only.

@@ -79,10 +79,12 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.MediaThrottlingStopThresh;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.MediaThrottlingStartThresh;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ShutdownThreshold = HealthInfo.MediaTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].MaxTemperature = HealthInfo.MaxMediaTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = HealthInfo.ControllerTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ShutdownThreshold = HealthInfo.ContrTempShutdownThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.ControllerThrottlingStopThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.ControllerThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].MaxTemperature = HealthInfo.MaxControllerTemperature;
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = HealthInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = HealthInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = HealthInfo.PowerOnTime;
@@ -90,9 +92,6 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT].Value = HealthInfo.UnlatchedDirtyShutdownCount;
   DimmSensorsSet[SENSOR_TYPE_FW_ERROR_COUNT].Value = HealthInfo.MediaErrorCount + HealthInfo.ThermalErrorCount;
   DimmSensorsSet[SENSOR_TYPE_UP_TIME].Value = HealthInfo.UpTime;
-
-  DimmSensorsSet[SENSOR_TYPE_MAX_MEDIA_TEMPERATURE].Value = HealthInfo.MaxMediaTemperature;
-  DimmSensorsSet[SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE].Value = HealthInfo.MaxControllerTemperature;
 
   /** Determine Health State based on Health Status Bit Mask **/
   ConvertHealthBitmask(HealthInfo.HealthStatus, &DimmHealthState);
@@ -152,10 +151,6 @@ SensorTypeToString(
       return DIMM_HEALTH_STR;
     case SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT:
       return UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR;
-    case SENSOR_TYPE_MAX_MEDIA_TEMPERATURE:
-      return  MAX_MEDIA_TEMPERATURE_STR;
-    case SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE:
-      return MAX_CONTROLLER_TEMPERATURE_STR;
     default:
       return L"Unknown";
   }
@@ -176,8 +171,6 @@ SensorValueMeasure(
   switch(SensorType) {
     case SENSOR_TYPE_MEDIA_TEMPERATURE:
     case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-    case SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE:
-    case SENSOR_TYPE_MAX_MEDIA_TEMPERATURE:
       return TEMPERATURE_MSR;
     case SENSOR_TYPE_PERCENTAGE_REMAINING:
       return SPARE_CAPACITY_MSR;

@@ -24,9 +24,8 @@
 #define THROTTLING_STOP_THRESHOLD_STR     L"ThrottlingStopThreshold"
 #define THROTTLING_START_THRESHOLD_STR    L"ThrottlingStartThreshold"
 #define SHUTDOWN_THRESHOLD_STR            L"ShutdownThreshold"
-#define SETABLE_THRESHOLDS_STR            L"SettableThresholds"
-#define SUPPORTED_THRESHOLDS_STR          L"SupportedThresholds"
 #define ENABLED_STATE_STR                 L"EnabledState"
+#define MAX_TEMPERATURE                   L"MaxTemperature"
 #define DISABLED_STR                      L"Disabled"
 
 #define DS_ROOT_PATH                      L"/SensorList"
@@ -130,8 +129,6 @@ CHAR16 *mppAllowedShowSensorDisplayValues[] =
   THROTTLING_STOP_THRESHOLD_STR,
   THROTTLING_START_THRESHOLD_STR,
   SHUTDOWN_THRESHOLD_STR,
-  SETABLE_THRESHOLDS_STR,
-  SUPPORTED_THRESHOLDS_STR,
   ENABLED_STATE_STR
 };
 
@@ -204,8 +201,6 @@ ShowSensor(
       {FW_ERROR_COUNT_STR, SENSOR_TYPE_FW_ERROR_COUNT},
       {DIMM_HEALTH_STR, SENSOR_TYPE_DIMM_HEALTH},
       {UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT},
-      {MAX_MEDIA_TEMPERATURE_STR, SENSOR_TYPE_MAX_MEDIA_TEMPERATURE},
-      {MAX_CONTROLLER_TEMPERATURE_STR, SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE}
   };
   UINT32 SensorsNum = ARRAY_SIZE(Sensors);
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -353,13 +348,6 @@ ShowSensor(
             goto Finish;
           }
         }
-        /**
-         If FIS version is less than 1.13 then Max Media Temperature and Max Controller Temperature is N/A
-        **/
-        else if ((!FIS_1_13) && ((ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_MEDIA_TEMPERATURE_STR)
-          || ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_CONTROLLER_TEMPERATURE_STR)))) {
-          pTempBuff = CatSPrintClean(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-        }
         else {
           pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].Value, DimmSensorsSet[SensorIndex].Type);
         }
@@ -367,10 +355,6 @@ ShowSensor(
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_VALUE_STR, pTempBuff);
         FREE_POOL_SAFE(pTempBuff);
       }
-        if ((!FIS_1_13) && ((ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_MEDIA_TEMPERATURE_STR)
-          || ContainsValue(SensorTypeToString(DimmSensorsSet[SensorIndex].Type), MAX_CONTROLLER_TEMPERATURE_STR)))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CURRENT_STATE_STR, L"N/A");
-        }
 
       /**
         AlarmThreshold
@@ -381,12 +365,7 @@ ShowSensor(
         case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
         case SENSOR_TYPE_PERCENTAGE_REMAINING:
           // Only media, controller, and percentage posess alarm thresholds
-          if (0 == DimmSensorsSet[SensorIndex].Enabled) {
-            pTempBuff = CatSPrintClean(NULL, FORMAT_STR, DISABLED_STR);
-          }
-          else {
-            pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].AlarmThreshold, DimmSensorsSet[SensorIndex].Type);
-          }
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].AlarmThreshold, DimmSensorsSet[SensorIndex].Type);
           break;
         default:
           pTempBuff = NULL;
@@ -458,6 +437,49 @@ ShowSensor(
 
         if (NULL != pTempBuff) {
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SHUTDOWN_THRESHOLD_STR, pTempBuff);
+          FREE_POOL_SAFE(pTempBuff);
+        }
+      }
+
+      /**
+        EnabledState
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ENABLED_STATE_STR))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_PERCENTAGE_REMAINING:
+          // Only media, controller, and percentage posess alarm thresholds
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ENABLED_STATE_STR, SensorEnabledStateToString(DimmSensorsSet[SensorIndex].Enabled));
+          break;
+        default:
+          //do nothing
+          break;
+        }
+      }
+
+      /**
+        MaxTemperature
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_TEMPERATURE))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Controller/Media temperature sensor have MaxTemperature attribute (FIS 1.13+)
+          if (FIS_1_13) {
+            pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].MaxTemperature, DimmSensorsSet[SensorIndex].Type);
+          }
+          else {
+            pTempBuff = CatSPrintClean(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          }
+          break;
+        default:
+          pTempBuff = NULL;
+          break;
+        }
+
+        if (NULL != pTempBuff) {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MAX_TEMPERATURE, pTempBuff);
           FREE_POOL_SAFE(pTempBuff);
         }
       }

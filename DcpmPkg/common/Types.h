@@ -172,6 +172,7 @@ typedef struct {
   INT64 ThrottlingStopThreshold;
   INT64 ThrottlingStartThreshold;
   INT64 ShutdownThreshold;
+  INT64 MaxTemperature;
 } DIMM_SENSOR;
 
 /**

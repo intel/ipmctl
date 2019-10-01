@@ -971,9 +971,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SENSOR_TYPE_POWER_CYCLES                    7                ///< Power Cycles Sensor ID
 #define SENSOR_TYPE_FW_ERROR_COUNT                  8                ///< Firmware Error Count Sensor ID
 #define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_MAX_MEDIA_TEMPERATURE           10               ///< Max Media Temperature Sensor IDs
-#define SENSOR_TYPE_MAX_CONTROLLER_TEMPERATURE      11               ///< Max Controller Temperature Sensor IDs
-#define SENSOR_TYPE_ALL                             12               ///< All Sensor IDs
+#define SENSOR_TYPE_ALL                             10               ///< All Sensor IDs
 #define SENSOR_TYPE_COUNT                           SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
 #define ALARM_COUNT                                 3                ///< Number of Alarm Threshold sensors
 /** @} */
@@ -1073,6 +1071,7 @@ typedef struct {
   UINT64 ThrottlingStopThreshold;
   UINT64 ThrottlingStartThreshold;
   UINT64 ShutdownThreshold;
+  UINT64 MaxTemperature;
 } DIMM_SENSOR_HII;
 
 typedef struct {

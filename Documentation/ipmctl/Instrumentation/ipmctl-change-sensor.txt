@@ -78,7 +78,8 @@ AlarmThreshold::
   Celsius to a precision of 1/16 a degree.
 
 EnabledState::
-  Enable or disable the alarm threshold. One of:
+  Enable or disable the alarm threshold, where applicable.
+  One of:
   - "0": Disable
   - "1": Enable
 

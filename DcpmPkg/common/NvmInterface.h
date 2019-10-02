@@ -97,10 +97,10 @@ EFI_STATUS
 );
 
 /**
-  Retrieve the number of uninitialized DCPMMs in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMMs in the system found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMMs found through SMBUS.
 
   @retval EFI_SUCCESS  The count was returned properly
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -134,11 +134,11 @@ EFI_STATUS
 );
 
 /**
-  Retrieve the list of uninitialized DCPMMs found thru SMBUS
+  Retrieve the list of uninitialized DCPMMs found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
-  @param[out] pDimms The dimm list found thru SMBUS.
+  @param[out] pDimms The dimm list found through SMBUS.
 
   @retval EFI_SUCCESS  The dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameter are NULL.
@@ -213,11 +213,11 @@ EFI_STATUS
 #endif
 
 /**
-  Retrieve the details about the uninitialized DIMM specified with pid found thru SMBUS
+  Retrieve the details about the uninitialized DIMM specified with pid found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] Pid The ID of the dimm to retrieve
-  @param[out] pDimmInfo A pointer to the dimm found thru SMBUS
+  @param[out] pDimmInfo A pointer to the dimm found through SMBUS
 
   @retval EFI_SUCCESS  The dimm information was returned properly
   @retval EFI_INVALID_PARAMETER pDimm is NULL or the dimm with the pid provided does not exist.
@@ -1488,7 +1488,7 @@ EFI_STATUS
   );
 
 /**
-  Pass Thru command to FW
+  Pass Through command to FW
   Sends a command to FW and waits for response from firmware
 
   @param[in,out] pCmd A firmware command structure
@@ -1683,7 +1683,7 @@ EFI_STATUS
    @param[in] Signature: unique dword identifier that categorizes
       the data to be recorded
    @param[in] pData: Data to be recorded.  If NULL, a zeroed data buffer
-      is allocated.  Usefull, when used with ppData.
+      is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
       Data previously set will be overriden with this data object.

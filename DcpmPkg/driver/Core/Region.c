@@ -2207,7 +2207,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
 
       pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)&pInterleaveInfo->pIdentificationInfoList;
 
-      /** First verify all dimm identifers before assign Region Goal to Dimms **/
+      /** First verify all dimm identifiers before assign Region Goal to Dimms **/
       for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
         if (IS_ACPI_REV_MAJ_0_MIN_1(PcdCinRev)) {
           pDimm = GetDimmBySerialNumber(&gNvmDimmData->PMEMDev.Dimms, pCurrentIdentInfo->DimmIdentification.Version1.DimmSerialNumber);
@@ -2294,7 +2294,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
 
       pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)&pInterleaveInfo->pIdentificationInfoList;
 
-      /** First verify all dimm identifers before assign Region Goal to Dimms **/
+      /** First verify all dimm identifiers before assign Region Goal to Dimms **/
       for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
         pDimm = GetDimmByUniqueIdentifier(&gNvmDimmData->PMEMDev.Dimms, pCurrentIdentInfo->DimmIdentification);
 

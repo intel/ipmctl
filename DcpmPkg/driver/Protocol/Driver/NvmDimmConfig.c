@@ -1570,7 +1570,7 @@ Finish:
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
-  @param[out] pDimms The dimm list found thru SMBUS.
+  @param[out] pDimms The dimm list found through SMBUS.
 
   @retval EFI_SUCCESS  The dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameter are NULL or invalid.
@@ -3023,7 +3023,7 @@ SetSecurityState(
 #endif
     /** @todo(check on real HW)
       WARNING: SetDimmSecurityState will not return EFI_ERROR on SECURITY_MASK_COUNTEXPIRED
-      so we have to check it additionaly with GetDimmSecurityState.
+      so we have to check it additionally with GetDimmSecurityState.
       It could be Simics/FW bug. Check how it is done on real HW.
     **/
     ReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
@@ -5305,7 +5305,7 @@ UpdateDimmFw(
         }
       }
       else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        NVDIMM_DBG("FW Update failed, FW already occured\n");
+        NVDIMM_DBG("FW Update failed, FW already occurred\n");
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
       }
       else {
@@ -6271,7 +6271,7 @@ GetActualRegionsGoalCapacities(
   if (DimmsAsymNum == 0) {
     RegionGoalTemplatesNum = 1;
   }
-  // We have removed all symetrical memory from the system and region templates should be reduced
+  // We have removed all symmetrical memory from the system and region templates should be reduced
   if (DimmsSymNum == 0) {
     RegionGoalTemplatesNum = 0;
   }
@@ -6735,7 +6735,7 @@ CreateGoalConfig(
     RegionGoalTemplatesNum = 1;
   }
 
-  // We have removed all symetrical memory from the system, make the goal template num 0
+  // We have removed all symmetrical memory from the system, make the goal template num 0
   if (DimmsSymNum == 0) {
     RegionGoalTemplatesNum = 0;
   }
@@ -8497,7 +8497,7 @@ Finish:
 }
 
 /**
-  Pass Thru command to FW
+  Pass Through command to FW
   Sends a command to FW and waits for response from firmware
 
   @param[in,out] pCmd A firmware command structure
@@ -10572,7 +10572,7 @@ GetCommandAccessPolicy(
     }
     else
     {
-      NVDIMM_DBG("Parameter pCount should be %d for FIS2.1+ DIMM.  Recieved pCount = %d.", COUNT_OF(CapEntries_2_1), *pCount);
+      NVDIMM_DBG("Parameter pCount should be %d for FIS2.1+ DIMM.  Received pCount = %d.", COUNT_OF(CapEntries_2_1), *pCount);
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
@@ -10584,7 +10584,7 @@ GetCommandAccessPolicy(
     }
     else
     {
-      NVDIMM_DBG("Parameter pCount should be %d for pre-FIS2.1 DIMM.  Recieved pCount = %d.", COUNT_OF(CapEntriesOrig), *pCount);
+      NVDIMM_DBG("Parameter pCount should be %d for pre-FIS2.1 DIMM.  Received pCount = %d.", COUNT_OF(CapEntriesOrig), *pCount);
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }

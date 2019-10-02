@@ -252,7 +252,7 @@ UnicodeSPrint(
   Function returns value of the first argument form the VA_LIST casted as 32bit
   unsigned int
 
-  The funciton is used by the event logger to get the DO_NOT_PARSE_ARGS magic number
+  The function is used by the event logger to get the DO_NOT_PARSE_ARGS magic number
 
   @param[in]  args    VA_LIST arguments
 **/

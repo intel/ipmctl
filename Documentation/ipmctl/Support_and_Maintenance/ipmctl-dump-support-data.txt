@@ -94,4 +94,4 @@ Simply returns the status of the operation.
 
 SAMPLE OUTPUT
 -------------
-Dump support data succesfully written to dumpfile_platform_support_info.txt
+Dump support data successfully written to dumpfile_platform_support_info.txt

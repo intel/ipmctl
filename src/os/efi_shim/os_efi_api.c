@@ -1444,7 +1444,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete sucessfully
+@retval EFI_SUCCESS   the initialization was complete successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -1464,7 +1464,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete sucessfully
+@retval EFI_SUCCESS   the initialization was complete successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -1482,7 +1482,7 @@ Constructor for the Shell Debug1 Commands library.
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS        the shell command handlers were installed sucessfully
+@retval EFI_SUCCESS        the shell command handlers were installed successfully
 @retval EFI_UNSUPPORTED    the shell level required was not found.
 **/
 EFI_STATUS

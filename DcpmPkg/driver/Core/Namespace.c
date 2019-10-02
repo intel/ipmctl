@@ -37,7 +37,7 @@ extern VOID
   VOID *pLinearAddress
   );
 
-/** From EDK Network Controler Driver source code **/
+/** From EDK Network Controller Driver source code **/
 #define GET_RANDOM_UINT32(Seed) ((UINT32) (((Seed) * 1103515245L + 12345) % 4294967295L))
 
 /**
@@ -2507,7 +2507,7 @@ RetrieveNamespacesFromLsa(
 #endif
 
         if ((EFI_ERROR(ReturnCode) && EFI_ERROR(ReturnCode2))  || (BttFound && PfnFound)) {
-          NVDIMM_DBG("Failed to check adress abstraction existence");
+          NVDIMM_DBG("Failed to check address abstraction existence");
           pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
         }
         if (BttFound) {
@@ -2999,7 +2999,7 @@ Finish:
 
 /**
   Performs a read or write to the Storage Namespace.
-  The data is read/written from/to Dimm thru block window aperture.
+  The data is read/written from/to Dimm through block window aperture.
 
   @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
   @param[in] Dpa DIMM DPA where the requested block resides
@@ -5075,7 +5075,7 @@ Finish:
   @param[in] pLsa Target Label Storage Area structure
 
   @retval EFI_INVALID_PARAMETER Invalid set of parameters provided
-  @retval EFI_OUT_OF_RESOURCES Unsuccessfull checksum calculation
+  @retval EFI_OUT_OF_RESOURCES Unsuccessful checksum calculation
   @retval EFI_SUCCESS Operation successful
 **/
 EFI_STATUS

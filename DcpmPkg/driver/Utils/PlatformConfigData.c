@@ -54,7 +54,7 @@ GeneratePcdConfInput(
     goto Finish;
   }
 
-  /** Populate ther revision of the CIN table **/
+  /** Populate their revision of the CIN table **/
   Rc = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
   if (Rc == EFI_DEVICE_ERROR)

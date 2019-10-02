@@ -676,7 +676,7 @@ BlockForFwStage(
     //Check each DIMM that had a image staged to see if it reports a staged version
     for (Index = 0; Index < pDimmTargetsNum; Index++)
     {
-      //dont perform unnecessary checks or repeat checks that already took place
+      //don't perform unnecessary checks or repeat checks that already took place
       if (FwStagedLongOpCodes[Index] == TransmitFwNeverHappened || FwStageDone[Index] == TRUE) {
         continue;
       }

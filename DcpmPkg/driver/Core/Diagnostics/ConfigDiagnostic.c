@@ -181,7 +181,7 @@ GetPlatformConfigOutputPCATStatus(
   @param[in] InterleaveInformationTableStatus_2, Status from the second discovered interleave information table
 
   @retval NULL - failed to retrieve string from HII strings DB
-  @retval Formated CHAR16 string
+  @retval Formatted CHAR16 string
 **/
 STATIC
 CHAR16*

@@ -39,7 +39,7 @@ PbrGetData(
    @param[in] Signature: unique dword identifier that categorizes
       the data to be recorded
    @param[in] pData: Data to be recorded.  If NULL, a zeroed data buffer
-      is allocated.  Usefull, when used with ppData.
+      is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
       Data previously set will be overriden with this data object.

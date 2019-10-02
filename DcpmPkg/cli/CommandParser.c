@@ -1125,7 +1125,7 @@ CHAR16
   //locate which of the commands to display help for
  if (TRUE == SingleCommand && pCommand != NULL) {
     for (Index = 0; Index < gCommandCount; Index++) {
-      //dont bother with commands of a different verb
+      //don't bother with commands of a different verb
       if (FALSE == gCommandList[Index].VerbMatch) {
         continue;
       }
@@ -1151,7 +1151,7 @@ CHAR16
     //no matches = display them all
     if (0 == CommandsToDisplay) {
       for (Index = 0; Index < gCommandCount; Index++) {
-        //dont bother with commands of a different verb
+        //don't bother with commands of a different verb
         if (FALSE == gCommandList[Index].VerbMatch) {
           continue;
         }

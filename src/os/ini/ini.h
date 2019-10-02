@@ -13,7 +13,7 @@
 #include <export_api.h>
 
 /**
-@brief Ini dictionary main object, contians all values and keys stored
+@brief Ini dictionary main object, contains all values and keys stored
 in the ini file.
 */
 typedef struct _dictionary {

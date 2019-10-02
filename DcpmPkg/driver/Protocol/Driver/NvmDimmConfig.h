@@ -170,10 +170,10 @@ GetDimmCount(
   );
 
 /**
-  Retrieve the number of uninitialized DCPMMs in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMMs in the system found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMMs found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -208,11 +208,11 @@ GetDimms(
   );
 
 /**
-  Retrieve the list of uninitialized DCPMMs found thru SMBUS
+  Retrieve the list of uninitialized DCPMMs found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
-  @param[out] pDimms The dimm list found thru SMBUS.
+  @param[out] pDimms The dimm list found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)

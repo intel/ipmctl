@@ -224,7 +224,7 @@ IoNamespaceBlock(
 
 /**
   Performs a read or write to the Storage Namespace.
-  The data is read/written from/to Dimm thru block window aperture.
+  The data is read/written from/to Dimm through block window aperture.
 
   @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
   @param[in] Dpa DIMM DPA where the requested block resides

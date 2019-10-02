@@ -655,11 +655,12 @@ CheckPlatformConfigurationData(
     case DIMM_CONFIG_SUCCESS:
       PcdErrorType = PcdSuccess;
       break;
-    case DIMM_CONFIG_NEW_DIMM:
-      PcdErrorType = PcdErrorDimmLocationIssue;
-      break;
     case DIMM_CONFIG_IS_INCOMPLETE:
       PcdErrorType = PcdErrorMissingDimm;
+      break;
+    case DIMM_CONFIG_NO_MATCHING_IS:
+    case DIMM_CONFIG_NEW_DIMM:
+      PcdErrorType = PcdErrorDimmLocationIssue;
       break;
     case DIMM_CONFIG_OLD_CONFIG_USED:
     case DIMM_CONFIG_BAD_CONFIG:

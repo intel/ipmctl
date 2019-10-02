@@ -1368,7 +1368,7 @@ Finish:
   @param[out] pViralPolicyPayload buffer to retrieve DIMM FW response
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER Paramter supplied is invalid
+  @retval EFI_INVALID_PARAMETER Parameter supplied is invalid
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval Various errors from FW
 **/
@@ -1963,7 +1963,7 @@ Finish:
   Firmware command access/read Platform Config Data using small payload only.
 
   The function allows to specify the requested data offset and the size.
-  The funciton is going to allocate the ppRawData buffer if it is not allocated.
+  The function is going to allocate the ppRawData buffer if it is not allocated.
   The buffer's minimal size is the size of the Partition!
 
   @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
@@ -2692,7 +2692,7 @@ Finish:
 
   The function allows to specify the requested data offset and the size.
   The buffer's minimal size is the size of the Partition!
-  The offset and the data size needs to be alligned to the SET_SMALL_PAYLOAD_DATA_SIZE
+  The offset and the data size needs to be aligned to the SET_SMALL_PAYLOAD_DATA_SIZE
   which is 64 bytes.
 
   @param[in] pDimm The Intel NVM Dimm to send Platform Config Data to
@@ -4229,9 +4229,9 @@ Finish:
 
                   BW Command & Address Register
 
-   | RESERVED | CMD | SIZE | Reserved  |    BW ADRESS    |
+   | RESERVED | CMD | SIZE | Reserved  |    BW ADDRESS    |
    |64      58| 57  |56  49|48       38|37              0|
-                                       |43  DPA ADRESS  6|5    0|
+                                       |43  DPA ADDRESS  6|5    0|
 **/
 VOID
 PrepareBwCommand(
@@ -4649,7 +4649,7 @@ Finish:
   @param[in] BwCommandCode: Read or write operation.
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
   @retval EFI_OUT_OF_RESOURCES in case of failed region allocation
@@ -6326,7 +6326,7 @@ PollOnArsDeviceBusy(
   for(RetryCount = 0; RetryCount < RetryMax; ++RetryCount) {
     ReturnCode = FwCmdGetLongOperationStatus(pDimm, &FwStatus, &LongOpStatus);
     if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_ERR("Error occured while polling for ARS enable/disable state.\n");
+        NVDIMM_ERR("Error occurred while polling for ARS enable/disable state.\n");
         break;
     }
 
@@ -6996,7 +6996,7 @@ Finish:
 }
 
 /**
-  Makes Bios emulated pass thru call and acquires the DCPMM Boot
+  Makes Bios emulated pass through call and acquires the DCPMM Boot
   Status Register
 
   @param[in] pDimm The DCPMM to retrieve BSR from

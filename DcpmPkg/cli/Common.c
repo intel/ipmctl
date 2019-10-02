@@ -281,7 +281,7 @@ GetAllDimmList(
 
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
+    NVDIMM_WARN("Failed to retrieve the DIMM inventory found through SMBUS");
     goto FinishError;
   }
 
@@ -2381,7 +2381,7 @@ AllDimmsInListInSupportedConfig(
 }
 
 /**
-Retrieve the User Cli Display Preferences CMD line arguements.
+Retrieve the User Cli Display Preferences CMD line arguments.
 
 @param[out] pDisplayPreferences pointer to the current driver preferences.
 

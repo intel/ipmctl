@@ -257,7 +257,7 @@ ShowErrorCommand(
   }
 
   /**
-    Printing will still work via compability mode if NULL so no need to check for NULL.
+    Printing will still work via compatibility mode if NULL so no need to check for NULL.
   **/
   pPrinterCtx = pCmd->pPrintCtx;
 

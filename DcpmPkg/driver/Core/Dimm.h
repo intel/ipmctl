@@ -310,7 +310,7 @@ typedef struct _MEMMAP_RANGE {
 #define MEMMAP_RANGE_FROM_NODE(a)  CR(a, MEMMAP_RANGE, MemmapNode, MEMMAP_RANGE_SIGNATURE)
 
 #define DISABLE_ARS_TOTAL_TIMEOUT_SEC     2
-#define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retreive long op
+#define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retrieve long op
 #define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   3
 #define DSM_RETRY_SUGGESTED               0x5
 
@@ -1274,7 +1274,7 @@ GetBwCommandStatus(
   @param[out] pBuffer: Buffer to place bytes into
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/
@@ -1296,7 +1296,7 @@ ApertureRead(
   @param[in] pBuffer: Buffer containing data to write
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/
@@ -1441,7 +1441,7 @@ SetPlatformConfigDataOemPartition(
   @param[out] pViralPolicyPayload buffer to retrieve DIMM FW response
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER Paramter supplied is invalid
+  @retval EFI_INVALID_PARAMETER Parameter supplied is invalid
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval Various errors from FW
 **/
@@ -1882,7 +1882,7 @@ PassThru(
 );
 
 /**
-  Makes Bios emulated pass thru call and acquires the DCPMM Boot
+  Makes Bios emulated pass through call and acquires the DCPMM Boot
   Status Register
 
   @param[in] pDimm The DCPMM to retrieve identify info on

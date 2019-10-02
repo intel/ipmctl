@@ -16,8 +16,8 @@
 
   @param[in] SecurityFlag Security mask from FW
 
-  @retval TRUE if at least one targetted dimm has security enabled in unlocked state
-  @retval FALSE if none of targetted dimms have security enabled in unlocked state
+  @retval TRUE if at least one targeted dimm has security enabled in unlocked state
+  @retval FALSE if none of targeted dimms have security enabled in unlocked state
 **/
 EFI_STATUS
 EFIAPI

@@ -153,11 +153,11 @@ DurableCacheLineClearInterleavedBuffer(
   );
 
 /**
-  Pass thru command to FW
+  Pass through command to FW
   Sends a command to FW and waits for response from firmware
 
   @param[in,out] pCmd A firmware command structure
-  @param[in] pMb OPTIONAL A mailbox to call pass thru command, if NULL passed then mailbox is taken from inventory base
+  @param[in] pMb OPTIONAL A mailbox to call pass through command, if NULL passed then mailbox is taken from inventory base
              Inventory base may be not initialized on early driver stage.
   @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
              A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
@@ -178,11 +178,11 @@ DefaultPassThru (
   );
 
 /**
-  Pass thru command to FW, but retry FW_ABORTED_RETRIES_COUNT_MAX times if we receive a FW_ABORTED
+  Pass through command to FW, but retry FW_ABORTED_RETRIES_COUNT_MAX times if we receive a FW_ABORTED
   response code back.
 
   @param[in,out] pCmd A firmware command structure
-  @param[in] pMb OPTIONAL A mailbox to call pass thru command, if NULL passed then mailbox is taken from inventory base
+  @param[in] pMb OPTIONAL A mailbox to call pass through command, if NULL passed then mailbox is taken from inventory base
              Inventory base may be not initialized on early driver stage.
   @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
              A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
@@ -401,7 +401,7 @@ typedef struct {
   UINT16 Did;                     //!< 3-2   : Device ID
   UINT16 Rid;                     //!< 5-4   : Revision ID
   UINT16 Ifc;                     //!< 7-6   : Interface format code (0x301)
-  UINT8 Fwr[FW_BCD_VERSION_LEN];  //!< 12-8  : BCD formated firmware revision
+  UINT8 Fwr[FW_BCD_VERSION_LEN];  //!< 12-8  : BCD formatted firmware revision
   UINT8 Reserved0;                //!< 13    : Reserved
   UINT8 Fswr;                     //!< 14    : Feature SW Required Mask
   UINT8 Reserved1;                //!< 15    : Reserved
@@ -638,7 +638,7 @@ typedef struct
 /**
   Passthrough Payload:
     Opcode:    0x04h (Get Features)
-    Sub-Opcode:  0x02h (Power Managment Policy)
+    Sub-Opcode:  0x02h (Power Management Policy)
 **/
 typedef struct {
   UINT8 Reserved1;
@@ -905,7 +905,7 @@ typedef struct {
   UINT64 LastShutdownTime;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
@@ -932,7 +932,7 @@ typedef struct {
   LAST_SHUTDOWN_STATUS_DETAILS UnlatchedLastShutdownDetails;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)

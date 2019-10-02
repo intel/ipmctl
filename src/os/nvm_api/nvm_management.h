@@ -1146,7 +1146,7 @@ NVM_API void nvm_uninit();
 * @brief    Initialize the config file. Only the first call to the
 * function changes the conf file configuration, the following
 * function calls have no effect and the conf file configuration
-* remains unchanged up to next applicaiton execution.
+* remains unchanged up to next application execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
 * @return  void

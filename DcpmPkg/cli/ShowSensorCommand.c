@@ -364,7 +364,7 @@ ShowSensor(
         case SENSOR_TYPE_MEDIA_TEMPERATURE:
         case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
         case SENSOR_TYPE_PERCENTAGE_REMAINING:
-          // Only media, controller, and percentage posess alarm thresholds
+          // Only media, controller, and percentage possess alarm thresholds
           pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].AlarmThreshold, DimmSensorsSet[SensorIndex].Type);
           break;
         default:

@@ -275,7 +275,7 @@ LoadFileAndCheckHeader(
       goto FinishClose;
     }
   } else {
-    NVDIMM_DBG("Unknown Subsystem Device Id recieved: %d.\n", SubsystemDeviceId);
+    NVDIMM_DBG("Unknown Subsystem Device Id received: %d.\n", SubsystemDeviceId);
     *ppError = CatSPrint(NULL, L"Error: Subsystem Device Id is unknown. Cannot determine what file size should be.\n");
     ReturnValue = FALSE;
     goto FinishClose;

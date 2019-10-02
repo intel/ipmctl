@@ -36,7 +36,7 @@ extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
    @param[in] Signature: unique dword identifier that categorizes
       the data to be recorded
    @param[in] pData: Data to be recorded.  If NULL, a zeroed data buffer
-      is allocated.  Usefull, when used with ppData.
+      is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
       Data previously set will be overriden with this data object.
@@ -596,7 +596,7 @@ PbrResetSession(
   for (CtxIndex = 0; CtxIndex < MAX_PARTITIONS; ++CtxIndex) {
     //found a partition
     if (PBR_INVALID_SIG != pContext->PartitionContexts[CtxIndex].PartitionSig) {
-      //default is to reset the current offset to the begining
+      //default is to reset the current offset to the beginning
       pContext->PartitionContexts[CtxIndex].PartitionCurrentOffset = 0;
       //find the corresponding TagPartitionInfo associated with the partition signature
       for (TagPartIndex = 0; TagPartIndex < pTag->PartitionInfoCnt; ++TagPartIndex) {
@@ -1176,7 +1176,7 @@ PbrGetPartition(
 #define COPY_CHUNK_SZ_BYTES   1024
 
 /**
-  Helper that breaks up large memory copies into managable sized chunks
+  Helper that breaks up large memory copies into manageable sized chunks
 **/
 STATIC
 EFI_STATUS

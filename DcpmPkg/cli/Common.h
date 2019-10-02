@@ -965,7 +965,7 @@ GetDimmHandleByPid(
   );
 
 /**
-Retrieve the User Cli Display Preferences CMD line arguements.
+Retrieve the User Cli Display Preferences CMD line arguments.
 
 @param[out] pDisplayPreferences pointer to the current driver preferences.
 

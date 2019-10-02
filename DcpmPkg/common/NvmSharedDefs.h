@@ -21,7 +21,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_OPERATION_NOT_STARTED                     = 2,    ///< Error: Operation not started
   NVM_ERR_OPERATION_FAILED                          = 3,    ///< Error: Operation failed
   NVM_ERR_FORCE_REQUIRED                            = 4,    ///< Error: Force parameter required
-  NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid paramter
+  NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid parameter
   NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Commnand not supported by this SKU
 
   NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: DIMM not found
@@ -167,7 +167,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_FW_GET_FA_DATA_FAILED                     = 265,  ///< Error:
 
   NVM_ERR_API_NOT_SUPPORTED                         = 266,  ///< Error: API not supported
-  NVM_ERR_UNKNOWN                                   = 267,  ///< Error: Unkown
+  NVM_ERR_UNKNOWN                                   = 267,  ///< Error: Unknown
   NVM_ERR_INVALID_PERMISSIONS                       = 268,  ///< Error: Invalid permissions
   NVM_ERR_BAD_DEVICE                                = 269,  ///< Error: Bad device
   NVM_ERR_BUSY_DEVICE                               = 270,  ///< Error: Busy device

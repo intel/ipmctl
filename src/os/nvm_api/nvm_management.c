@@ -186,7 +186,7 @@ static void nvm_internal_uninit(BOOLEAN binding_stop)
 * @brief    Initialize the config file
 * Please notice that only the first call to the function changes the conf file
 * configuration, the following function calls have no effect and the conf file
-* configuration remains unchanged up to next applicaiton execution.
+* configuration remains unchanged up to next application execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
 * @return   void
@@ -2833,7 +2833,7 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 
   if (!error_entry)
   {
-    NVDIMM_ERR("Invalid error_entry paramter (NULL).\n");
+    NVDIMM_ERR("Invalid error_entry parameter (NULL).\n");
     return NVM_ERR_INVALID_PARAMETER;
   }
 

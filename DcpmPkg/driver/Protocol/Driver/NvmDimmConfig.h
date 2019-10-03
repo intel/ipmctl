@@ -1535,6 +1535,35 @@ VerifyTargetDimms(
 );
 
 /**
+  Verify target DIMM IDs in list are available for SPI Flash.
+
+  If DIMM Ids were provided then check if those DIMMs exist in a SPI flashable
+  state and return list of verified dimms.
+  If specified DIMMs count is 0 then return all DIMMS that are in SPI
+  Flashable state.
+  Update CommandStatus structure at the end.
+
+  @param[in] DimmIds An array of DIMM Ids
+  @param[in] DimmIdsCount Number of items in array of DIMM Ids
+  @param[out] pDimms Output array of pointers to verified dimms
+  @param[out] pDimmsNum Number of items in array of pointers to dimms
+  @param[out] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_NOT_FOUND a dimm in DimmIds is not in a flashable state or no dimms found
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+VerifyNonfunctionalTargetDimms(
+  IN     UINT16 DimmIds[]      OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  OUT DIMM *pDimms[MAX_DIMMS],
+  OUT UINT32 *pDimmsNum,
+  OUT COMMAND_STATUS *pCommandStatus
+);
+
+/**
   Examine a given DIMM to see if a long op is in progress and report it back
 
   @param[in] pDimm The dimm to check the status of

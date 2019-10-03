@@ -1504,6 +1504,135 @@ Finish:
 }
 
 /**
+  Verify target DIMM IDs in list are available for SPI Flash.
+
+  If DIMM Ids were provided then check if those DIMMs exist in a SPI flashable
+  state and return list of verified dimms.
+  If specified DIMMs count is 0 then return all DIMMS that are in SPI
+  Flashable state.
+  Update CommandStatus structure at the end.
+
+  @param[in] DimmIds An array of DIMM Ids
+  @param[in] DimmIdsCount Number of items in array of DIMM Ids
+  @param[out] pDimms Output array of pointers to verified dimms
+  @param[out] pDimmsNum Number of items in array of pointers to dimms
+  @param[out] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_NOT_FOUND a dimm in DimmIds is not in a flashable state or no dimms found
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+VerifyNonfunctionalTargetDimms(
+  IN     UINT16 DimmIds[]      OPTIONAL,
+  IN     UINT32 DimmIdsCount,
+  OUT DIMM *pDimms[MAX_DIMMS],
+  OUT UINT32 *pDimmsNum,
+  OUT COMMAND_STATUS *pCommandStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  LIST_ENTRY *pDimmList = NULL;
+  DIMM *pCurrentDimm = NULL;
+  LIST_ENTRY *pCurrentDimmNode = NULL;
+  UINT32 Index = 0;
+  BOOLEAN AllRequestedDimmsVerified = TRUE;
+
+  *pDimmsNum = 0;
+
+  pDimmList = &gNvmDimmData->PMEMDev.Dimms;
+
+  // Input sanity checking
+  if (DimmIdsCount > 0 && DimmIds == NULL) {
+    NVDIMM_ERR("Invalid input parameters");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (DimmIdsCount > 0) {
+    // check if specified DIMMs exist in desired state
+    for (Index = 0; Index < DimmIdsCount; Index++) {
+      pCurrentDimm = GetDimmByPid(DimmIds[Index], pDimmList);
+      if (pCurrentDimm == NULL) {
+        NVDIMM_DBG("Failed on GetDimmByPid. Does DIMM 0x%04x exist?", DimmIds[Index]);
+        AllRequestedDimmsVerified = FALSE;
+        ReturnCode = EFI_NOT_FOUND;
+        goto Finish;
+      }
+
+      if (!pCurrentDimm->NonFunctional ||
+        (pCurrentDimm->SubsystemVendorId != SPD_INTEL_VENDOR_ID) ||
+        (pCurrentDimm->SubsystemDeviceId != SPD_DEVICE_ID_15))
+      {
+        AllRequestedDimmsVerified = FALSE;
+      }
+      else {
+        pCurrentDimm->SmbusAddress.Cpu = (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.SocketId);
+        pCurrentDimm->SmbusAddress.Imc = (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
+        pCurrentDimm->SmbusAddress.Slot =
+          (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
+            pCurrentDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
+
+        // add dimm to list of verified dimms
+        pCurrentDimm->Signature = DIMM_SIGNATURE;
+        pDimms[(*pDimmsNum)] = pCurrentDimm;
+        (*pDimmsNum)++;
+      }
+    }
+    if (AllRequestedDimmsVerified) {
+      ReturnCode = EFI_SUCCESS;
+    }
+    else {
+      ReturnCode = EFI_NOT_FOUND;
+    }
+  }
+  else {
+    // get all dimms in system in desired state
+    LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
+      pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
+      if (pCurrentDimm == NULL) {
+        ReturnCode = EFI_LOAD_ERROR;
+        goto Finish;
+      }
+      if ((pCurrentDimm->NonFunctional) &&
+        (pCurrentDimm->SubsystemVendorId == SPD_INTEL_VENDOR_ID) &&
+        (pCurrentDimm->SubsystemDeviceId == SPD_DEVICE_ID_15))
+      {
+        pCurrentDimm->SmbusAddress.Cpu = (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.SocketId);
+        pCurrentDimm->SmbusAddress.Imc = (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.MemControllerId);
+        pCurrentDimm->SmbusAddress.Slot =
+          (UINT8)(pCurrentDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
+            pCurrentDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
+
+        pCurrentDimm->Signature = DIMM_SIGNATURE;
+
+        // add dimm to list of verified dimms
+        pDimms[(*pDimmsNum)] = pCurrentDimm;
+        (*pDimmsNum)++;
+      }
+    }
+    ReturnCode = EFI_SUCCESS;
+  }
+
+  // sanity checks
+  if (*pDimmsNum == 0) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
+  else if (*pDimmsNum > MAX_DIMMS) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+    goto Finish;
+  }
+
+Finish:
+
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Retrieve the list of DCPMMs found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -5491,8 +5620,8 @@ RecoverDimmFw(
 #ifndef OS_BUILD
   DIMM *pCurrentDimm = NULL;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  SPI_DIRECTORY *pSpiDirectoryNewSpiImageBuffer;
-  SPI_DIRECTORY SpiDirectoryTarget;
+  SPI_DIRECTORY_GEN2 *pSpiDirectoryNewSpiImageBuffer;
+  SPI_DIRECTORY_GEN2 SpiDirectoryTarget;
   UINT8 *pFconfigRegionNewSpiImageBuffer = NULL;
   UINT8 *pFconfigRegionTemp = NULL;
   UINT16 DeviceId;
@@ -5503,7 +5632,7 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  pSpiDirectoryNewSpiImageBuffer = (SPI_DIRECTORY *) pNewSpiImageBuffer;
+  pSpiDirectoryNewSpiImageBuffer = (SPI_DIRECTORY_GEN2 *) pNewSpiImageBuffer;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **) &pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -5532,7 +5661,7 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  if (DeviceId != SPD_DEVICE_ID_10) {
+  if (DeviceId != SPD_DEVICE_ID_15) {
     NVDIMM_ERR("Incompatible hardware revision 0x%x", DeviceId);
     *pNvmStatus = NVM_ERR_INCOMPATIBLE_HARDWARE_REVISION;
     goto Finish;
@@ -5559,7 +5688,7 @@ RecoverDimmFw(
         ImageBufferSize, pCurrentDimm, pFconfigRegionTemp);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
-  }
+    }
   }
 
   // Copy original fconfig or generated fconfig to the new image
@@ -5682,7 +5811,11 @@ UpdateFw(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  if (Recovery && FlashSPI) {
+    ReturnCode = VerifyNonfunctionalTargetDimms(pDimmIds, DimmIdsCount, pDimms, &DimmsNum, pCommandStatus);
+  } else {
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  }
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to verify the target dimms");
     pCommandStatus->GeneralStatus = NVM_ERR_DIMM_NOT_FOUND;

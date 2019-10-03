@@ -249,6 +249,13 @@ typedef struct _DIMM {
   UINT32 PcdOemSize;
 
   UINT16 ControllerRid;             //!< Revision ID of the subsystem memory controller from FIS
+
+  /*
+  A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
+  is only used during namespace initialzation so it doesn't need to be repeatedly
+  reloaded. It should not be considered current outside of initialization.
+  */
+  LABEL_STORAGE_AREA *pLsa;
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')

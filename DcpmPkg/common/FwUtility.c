@@ -87,13 +87,17 @@ ValidateRecoverySpiImage(
     goto Finish;
   }
 
-  if ((SubsystemDeviceId != SPD_DEVICE_ID_10) && (SubsystemDeviceId != SPD_DEVICE_ID_15)) {
-    *ppError = CatSPrint(NULL, L"Unknown Device Id.  Cannot determine expected image size.");
+  if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
+    *ppError = CatSPrint(NULL, L"First generation DCPMM are not supported for SPI image recovery. A 1.x release of this software is required.");
     goto Finish;
   }
 
-  if (((SubsystemDeviceId == SPD_DEVICE_ID_10) && (ImageSize != FIRMWARE_SPI_IMAGE_AEP_SIZE_B)) ||
-    ((SubsystemDeviceId == SPD_DEVICE_ID_15) && (ImageSize != FIRMWARE_SPI_IMAGE_BPS_SIZE_B))) {
+  if (SubsystemDeviceId != SPD_DEVICE_ID_15) {
+    *ppError = CatSPrint(NULL, L"Dimm is reporting an unexpected device id.  SPI image recovery is not supported.");
+    goto Finish;
+  }
+
+  if (ImageSize != FIRMWARE_SPI_IMAGE_GEN2_SIZE_B) {
     *ppError = CatSPrint(NULL, L"The image has wrong size! Please try another image.");
     goto Finish;
   }
@@ -227,7 +231,7 @@ LoadFileAndCheckHeader(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_FILE_HANDLE FileHandle;
-  SPI_DIRECTORY SpiDirectory;
+  SPI_DIRECTORY_GEN2 SpiDirectory;
   BOOLEAN ReturnValue = TRUE;
   UINT64 BuffSize = 0;
   UINT64 FileSize = 0;
@@ -260,7 +264,7 @@ LoadFileAndCheckHeader(
 
   if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
     if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
-      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_AEP_SIZE_B)) {
+      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN1_SIZE_B)) {
       NVDIMM_DBG("File size equals: %d.\n", BuffSize);
       *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
       ReturnValue = FALSE;
@@ -268,7 +272,7 @@ LoadFileAndCheckHeader(
     }
   } else if (SubsystemDeviceId == SPD_DEVICE_ID_15) {
     if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
-      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_BPS_SIZE_B)) {
+      (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN2_SIZE_B)) {
       NVDIMM_DBG("File size equals: %d.\n", BuffSize);
       *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
       ReturnValue = FALSE;
@@ -319,7 +323,7 @@ LoadFileAndCheckHeader(
       goto FinishClose;
     }
 
-    ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageOffset);
+    ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageStage1Offset);
     if (EFI_ERROR(ReturnCode)) {
       *ppError = CatSPrint(NULL, L"Error: Could not read the file.\n");
       ReturnValue = FALSE;

@@ -9,16 +9,17 @@
 #include "NvmTypes.h"
 
 #define MAX_FIRMWARE_IMAGE_SIZE_KB 788
-#define FIRMWARE_RECOVERY_IMAGE_SPI_AEP_SIZE_KB 1024
-#define FIRMWARE_RECOVERY_IMAGE_SPI_BPS_SIZE_KB 2048
+#define FIRMWARE_RECOVERY_IMAGE_SPI_GEN1_SIZE_KB 1024
+#define FIRMWARE_RECOVERY_IMAGE_SPI_GEN2_SIZE_KB 2048
 /**
   The maximum file size that a new firmware image can have - in bytes.
 **/
 #define MAX_FIRMWARE_IMAGE_SIZE_B        KIB_TO_BYTES(MAX_FIRMWARE_IMAGE_SIZE_KB)
-#define FIRMWARE_SPI_IMAGE_AEP_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_AEP_SIZE_KB)
-#define FIRMWARE_SPI_IMAGE_BPS_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_BPS_SIZE_KB)
+#define FIRMWARE_SPI_IMAGE_GEN1_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_GEN1_SIZE_KB)
+#define FIRMWARE_SPI_IMAGE_GEN2_SIZE_B    KIB_TO_BYTES(FIRMWARE_RECOVERY_IMAGE_SPI_GEN2_SIZE_KB)
+
 // Keep this updated. Used for determining max input file size for now
-#define MAX_FIRMWARE_SPI_IMAGE_SIZE_B    FIRMWARE_SPI_IMAGE_BPS_SIZE_B
+#define MAX_FIRMWARE_SPI_IMAGE_SIZE_B    FIRMWARE_SPI_IMAGE_GEN2_SIZE_B
 #define NO_FW_GIVEN_VERSION_MSG           L"None"
 
 #define UPDATE_FIRMWARE_DATA_PACKET_SIZE  64
@@ -173,7 +174,9 @@ typedef struct {
 **/
 
 // Copied March 2018 from spi_memory_map_ekvs1.h
-#define SPI_DIRECTORY_VERSION 1
+#define SPI_DIRECTORY_VERSION_GEN1 1
+// Copied August 2019 from spi_memory_map_bwv.h
+#define SPI_DIRECTORY_VERSION_GEN2 2
 
 
 /**
@@ -234,7 +237,32 @@ typedef struct {
   UINT32 reserved[8];
   UINT8  reservedu8[3];
   UINT8  SpiEndOfDirectory;
-} SPI_DIRECTORY;
+} SPI_DIRECTORY_GEN1;
+
+typedef struct
+{
+  UINT16 DirectoryVersion;
+  UINT16 DirectorySize;
+  UINT32 SoftFusesDataOffset;
+  UINT32 FwImageStage1Offset;
+  UINT32 FwImageStage2Offset;
+  UINT32 FwImageCopyStage1Offset;
+  UINT32 FwImageCopyStage2Offset;
+  UINT32 FwImageDfxStage1Offset;
+  UINT32 FwImageDfxStage2Offset;
+  UINT32 MigrationDataOffset;
+  UINT32 SxpSavedRegistersOffset;
+  UINT32 SxpTrainingReportOffset;
+  UINT32 SxpRmtResultsOffset;
+  UINT32 SxpRawTrainingDataOffset;
+  UINT32 BurninInputDataOffset;
+  UINT32 BurninOutputDataOffset;
+  UINT32 FconfigDataOffset;
+  UINT32 SxpTimingParametersOffset;
+  UINT32 PreInjectionModuleFrameworkOffset;
+  UINT32 SpiDebugDataOffset;
+  UINT32 NlogBackupOffset;
+} SPI_DIRECTORY_GEN2;
 
 #pragma pack(pop)
 
@@ -286,7 +314,7 @@ ValidateImage(
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
-  @param[in] SubsystemDeviceId is the identifer of the revision of Dimm (AEP vs BPS)
+  @param[in] SubsystemDeviceId is the identifer of the Dimm revision
   @param[out] ppError is the pointer to a Unicode string that will contain
     the details about the failure. The caller is responsible to free the allocated
     memory with the FreePool function.

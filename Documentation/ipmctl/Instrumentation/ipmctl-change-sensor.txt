@@ -14,7 +14,7 @@ SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
-AlarmThreshold=(temperature) EnabledState=(0|1)
+AlarmThreshold=(temperature) AlarmEnabled=(0|1)
 
 DESCRIPTION
 -----------
@@ -77,7 +77,7 @@ AlarmThreshold::
   threshold of the sensor. Temperatures may be specified in degrees
   Celsius to a precision of 1/16 a degree.
 
-EnabledState::
+AlarmEnabled::
   Enable or disable the alarm threshold, where applicable.
   One of:
   - "0": Disable
@@ -89,7 +89,7 @@ Changes the media temperature threshold to 51 on the specified DCPMM and enable
 the alarm.
 [verse]
 ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51
-EnabledState=1
+AlarmEnabled=1
 
 LIMITATIONS
 -----------

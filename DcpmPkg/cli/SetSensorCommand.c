@@ -31,7 +31,7 @@ struct Command SetSensorCommand =
   },
   {                                                                 //!< properties
     {ALARM_THRESHOLD_PROPERTY, L"", HELP_TEXT_VALUE, FALSE},
-    {ENABLED_STATE_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE}
+    {ALARM_ENABLED_PROPERTY, L"", PROPERTY_VALUE_0 L"|" PROPERTY_VALUE_1, FALSE}
   },
   L"Modify the alarm threshold(s) for one or more DIMMs.",          //!< help
   SetSensor,
@@ -147,8 +147,8 @@ SetSensor(
       goto Finish;
     }
   }
-  if (!EFI_ERROR(ContainsProperty(pCmd, ENABLED_STATE_PROPERTY))) {
-    if (PropertyToUint64(pCmd, ENABLED_STATE_PROPERTY, &TempValue)) {
+  if (!EFI_ERROR(ContainsProperty(pCmd, ALARM_ENABLED_PROPERTY))) {
+    if (PropertyToUint64(pCmd, ALARM_ENABLED_PROPERTY, &TempValue)) {
       EnabledState = (UINT8) TempValue;
       ValidPropertyAndValue = TRUE;
     } else {

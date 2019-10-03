@@ -183,7 +183,7 @@
 #define NEWPASSPHRASE_PROPERTY            L"NewPassphrase"            //!< 'NewPassphrase' property name
 #define CONFIRMPASSPHRASE_PROPERTY        L"ConfirmPassphrase"        //!< 'ConfirmPassphrase' property name
 #define ALARM_THRESHOLD_PROPERTY          L"AlarmThreshold"           //!< 'AlarmThreshold' property
-#define ENABLED_STATE_PROPERTY            L"EnabledState"             //!< 'EnabledState' property
+#define ALARM_ENABLED_PROPERTY            L"AlarmEnabled"             //!< 'AlarmEnabled' property
 #define MEMORY_MODE_PROPERTY              L"MemoryMode"               //!< 'MemoryMode' property name
 #define PERSISTENT_MEM_TYPE_PROPERTY      L"PersistentMemoryType"     //!< 'PersistentMemoryType' property name
 #define MEMORY_SIZE_PROPERTY              L"MemorySize"               //!< 'MemorySize' property name

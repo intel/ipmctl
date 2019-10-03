@@ -19,12 +19,10 @@
 #define DIMM_ID_STR                       L"DimmID"
 #define SENSOR_TYPE_STR                   L"Type"
 #define CURRENT_VALUE_STR                 L"CurrentValue"
-#define CURRENT_STATE_STR                 L"CurrentState"
 #define ALARM_THRESHOLD_STR               L"AlarmThreshold"
 #define THROTTLING_STOP_THRESHOLD_STR     L"ThrottlingStopThreshold"
 #define THROTTLING_START_THRESHOLD_STR    L"ThrottlingStartThreshold"
 #define SHUTDOWN_THRESHOLD_STR            L"ShutdownThreshold"
-#define ENABLED_STATE_STR                 L"EnabledState"
 #define MAX_TEMPERATURE                   L"MaxTemperature"
 #define DISABLED_STR                      L"Disabled"
 
@@ -124,12 +122,12 @@ CHAR16 *mppAllowedShowSensorDisplayValues[] =
   DIMM_ID_STR,
   SENSOR_TYPE_STR,
   CURRENT_VALUE_STR,
-  CURRENT_STATE_STR,
   ALARM_THRESHOLD_STR,
   THROTTLING_STOP_THRESHOLD_STR,
   THROTTLING_START_THRESHOLD_STR,
   SHUTDOWN_THRESHOLD_STR,
-  ENABLED_STATE_STR
+  ALARM_ENABLED_PROPERTY,
+  MAX_TEMPERATURE
 };
 
 
@@ -379,6 +377,23 @@ ShowSensor(
       }
 
       /**
+        AlarmEnabled
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ALARM_ENABLED_PROPERTY))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_PERCENTAGE_REMAINING:
+          // Only media, controller, and percentage posess alarm thresholds
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ALARM_ENABLED_PROPERTY, SensorEnabledStateToString(DimmSensorsSet[SensorIndex].Enabled));
+          break;
+        default:
+          //do nothing
+          break;
+        }
+      }
+
+      /**
         ThrottlingStopThreshold
       **/
       if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, THROTTLING_STOP_THRESHOLD_STR))) {
@@ -438,23 +453,6 @@ ShowSensor(
         if (NULL != pTempBuff) {
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SHUTDOWN_THRESHOLD_STR, pTempBuff);
           FREE_POOL_SAFE(pTempBuff);
-        }
-      }
-
-      /**
-        EnabledState
-      **/
-      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ENABLED_STATE_STR))) {
-        switch (SensorIndex) {
-        case SENSOR_TYPE_MEDIA_TEMPERATURE:
-        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
-        case SENSOR_TYPE_PERCENTAGE_REMAINING:
-          // Only media, controller, and percentage posess alarm thresholds
-          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ENABLED_STATE_STR, SensorEnabledStateToString(DimmSensorsSet[SensorIndex].Enabled));
-          break;
-        default:
-          //do nothing
-          break;
         }
       }
 

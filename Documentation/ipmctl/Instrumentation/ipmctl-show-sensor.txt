@@ -144,7 +144,7 @@ ShutdownThreshold::
 
 NOTE: Supported thresholds for a given sensor are listed as a part of the return data when using the -all or -display flag. Only the alarm threshold is settable.
 
-EnabledState::
+AlarmEnabled::
   Current state of the alarm threshold, where applicable.
   One of:
   - 0: Disabled

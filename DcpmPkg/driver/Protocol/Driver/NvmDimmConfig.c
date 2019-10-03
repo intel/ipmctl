@@ -4076,7 +4076,10 @@ GetMemoryResourcesInfo(
 
 #ifdef OS_BUILD
   ReturnCode = GetDimmMappedMemSize(pDimm);
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_DEVICE_ERROR == ReturnCode) {
+    NVDIMM_WARN("Failed to retrieve PCD data on DIMM: 04x%x", pDimm->DeviceHandle.AsUint32);
+  }
+  else if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 #endif // OS_BUILD

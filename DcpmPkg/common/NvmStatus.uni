@@ -62,7 +62,7 @@
 #string STR_DCPMM_STATUS_ERR_PASSPHRASES_DO_NOT_MATCH             #language en "The new passphrase and the confirmed passphrase do not match"
 
 #string STR_DCPMM_STATUS_ERR_SENSOR_NOT_VALID                     #language en "Invalid sensor"
-#string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid EnabledState value"
+#string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid AlarmEnabled value"
 
 #string STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE                 #language en "The media has been disabled"
 #string STR_DCPMM_STATUS_ERR_AIT_DRAM_NOT_READY                   #language en "The AIT DRAM is not ready"

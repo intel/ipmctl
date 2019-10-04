@@ -2830,7 +2830,6 @@ CheckMasterAndDefaultOptions(
   }
 
 Finish:
-  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

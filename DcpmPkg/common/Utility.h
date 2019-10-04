@@ -480,6 +480,13 @@ typedef union {
 #define SET_STR_VARIABLE(VarName,VendorGuid,VarVal) preferences_set_var_string_wide(VarName,VendorGuid, VarVal)
 #endif
 
+/**
+  Removes all whitespace from before, after, and inside a passed string
+
+  @param[IN, OUT]  buffer - The string to remove whitespace from
+**/
+VOID RemoveAllWhiteSpace(
+  CHAR16* buffer);
 
 /**
   Returns the value of the environment variable with the given name.

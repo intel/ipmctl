@@ -87,6 +87,42 @@ GetEnvVariable(
 #endif
 
 /**
+  Removes all whitespace from before, after, and inside a passed string
+
+  @param[IN, OUT]  buffer - The string to remove whitespace from
+**/
+VOID RemoveAllWhiteSpace(
+  CHAR16* buffer)
+{
+  CHAR16* nextNonWs = NULL;
+
+  if (buffer == NULL) {
+    return;
+  }
+
+  TrimString(buffer);
+  nextNonWs = buffer;
+  while (*buffer)
+  {
+    //Advance the forward-pointer to the next non WS char
+    while (*nextNonWs && *nextNonWs <= L' ') {
+      nextNonWs++;
+    }
+
+    if (buffer != nextNonWs) {
+      *buffer = *nextNonWs;
+
+      if (0 == *nextNonWs) {
+        break;
+      }
+    }
+
+    buffer++;
+    nextNonWs++;
+  }
+}
+
+/**
   Examines the system topology for the system DDR capacity and compares
   it to the 2LM capacity to check for ratio violations
 

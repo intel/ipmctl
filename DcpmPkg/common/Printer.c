@@ -10,7 +10,8 @@
 #include <Common.h>
 
 #define EXPAND_STR_MAX                    1024
-#define ESX_XML_FILE_BEGIN                L"<?xml version=\"1.0\"?><output xmlns=\"http://www.vmware.com/Products/ESX/5.0/esxcli/\">"
+#define XML_FILE_BEGIN                    L"<?xml version=\"1.0\"?>\n"
+#define ESX_XML_FILE_BEGIN                L"<output xmlns=\"http://www.vmware.com/Products/ESX/5.0/esxcli/\">"
 #define ESX_XML_FILE_END                  L"</output>\n"
 #define ESX_XML_STRUCT_LIST_TAG_BEGIN     L"<list type = \"structure\">\n"
 #define ESX_XML_SIMPLE_STR_TAG_END        L"]]></string>"
@@ -736,6 +737,7 @@ VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_AT
 static VOID * NvmlXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
   UINT32 Index = 0;
   UINT32 Ident = 0;
 
@@ -750,7 +752,13 @@ static VOID * NvmlXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *Use
     for (Index = 0; Index < Ident+1; ++Index) {
       Print(NVM_XML_WHITESPACE_IDENT);
     }
-    Print(NVM_XML_KEY_VAL_TAG, KvInfo->Key, Val, KvInfo->Key);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+    Print(NVM_XML_KEY_VAL_TAG, Key, Val, Key);
+
+    FREE_POOL_SAFE(Key);
   }
   return NULL;
 }
@@ -790,6 +798,7 @@ static VOID PrintNvmXml(DATA_SET_CONTEXT *DataSetCtx) {
 static VOID * EsxXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
 
   if (0 == GetKeyCount(DataSetCtx)) {
     return NULL;
@@ -798,7 +807,14 @@ static VOID * EsxXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *User
   Print(L"<structure typeName=\"" FORMAT_STR L"\">\n", GetDataSetName(DataSetCtx));
   while (NULL != (KvInfo = GetNextKey(DataSetCtx, KvInfo))) {
     GetKeyValueWideStr(DataSetCtx, KvInfo->Key, &Val, NULL);
-    Print(L"  <field name=\"" FORMAT_STR L"\"><string>" FORMAT_STR L"</string></field>\n", KvInfo->Key, Val);// KvInfo->Key);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+
+    Print(L"  <field name=\"" FORMAT_STR L"\"><string>" FORMAT_STR L"</string></field>\n", Key, Val);
+
+    FREE_POOL_SAFE(Key);
   }
   Print(L"</structure>\n");
   return NULL;
@@ -825,6 +841,7 @@ static VOID PrintEsxXml(DATA_SET_CONTEXT *DataSetCtx) {
 static VOID * EsxKeyValXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
 
   if (0 == GetKeyCount(DataSetCtx)) {
     return NULL;
@@ -832,9 +849,16 @@ static VOID * EsxKeyValXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID
 
   while (NULL != (KvInfo = GetNextKey(DataSetCtx, KvInfo))) {
     GetKeyValueWideStr(DataSetCtx, KvInfo->Key, &Val, NULL);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+
     Print(L"<structure typeName=\"KeyValue\">\n");
-    Print(L"  <field name=\"Attribute Name\"><string>" FORMAT_STR L"</string></field><field name=\"Value\"><string>" FORMAT_STR L"</string></field>\n", KvInfo->Key, Val);
+    Print(L"  <field name=\"Attribute Name\"><string>" FORMAT_STR L"</string></field><field name=\"Value\"><string>" FORMAT_STR L"</string></field>\n", Key, Val);
     Print(L"</structure>\n");
+
+    FREE_POOL_SAFE(Key);
   }
   return NULL;
 }
@@ -935,6 +959,8 @@ static VOID PrintTextWithNewLine(CHAR16 *Msg) {
 */
 static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
+    Print(ESX_XML_FILE_BEGIN);
+    Print(ESX_XML_SIMPLE_STR_TAG_BEGIN);
     Print(L"ERROR: ");
   }
   else {
@@ -951,6 +977,10 @@ static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCod
 static VOID PrintXmlEndErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (!PrintCtx->FormatTypeFlags.Flags.EsxCustom && !PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
     Print(L"</Error>\n");
+  }
+  else {
+    Print(ESX_XML_SIMPLE_STR_TAG_END);
+    Print(ESX_XML_FILE_END);
   }
 }
 
@@ -1300,6 +1330,8 @@ EFI_STATUS PrinterProcessSetBuffer(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 *FullMsg = NULL;
   PRINT_MODE PrinterMode = PRINT_TEXT;
+  BOOLEAN startXmlSuccessPrinted = FALSE;
+  BOOLEAN startXmlErrorPrinted = FALSE;
 
   if (NULL == pPrintCtx) {
     return EFI_INVALID_PARAMETER;
@@ -1308,12 +1340,16 @@ EFI_STATUS PrinterProcessSetBuffer(
   PrinterMode = PrintMode(pPrintCtx);
 
   //if XML mode print the appropriate start tag
-  if (PRINT_BASIC_XML == PrinterMode) {
-    if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
-      PrintXmlStartErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
-    }
-    else {
+  if (PRINT_XML == PrinterMode || PRINT_BASIC_XML == PrinterMode) {
+    Print(XML_FILE_BEGIN);
+    if (PRINT_BASIC_XML == PrinterMode &&
+      EFI_SUCCESS == pPrintCtx->BufferedObjectLastError) {
       PrintXmlStartSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+      startXmlSuccessPrinted = TRUE;
+    }
+    else if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
+      PrintXmlStartErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+      startXmlErrorPrinted = TRUE;
     }
   }
 
@@ -1355,14 +1391,12 @@ EFI_STATUS PrinterProcessSetBuffer(
     FREE_POOL_SAFE(BufferedObject->Obj);
     FREE_POOL_SAFE(BufferedObject);
   }
-  //if XML mode print the appropriate end tag
-  if (PRINT_BASIC_XML == PrinterMode) {
-    if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
-      PrintXmlEndErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
-    }
-    else {
-      PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
-    }
+
+  if (TRUE == startXmlErrorPrinted) {
+    PrintXmlEndErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+  }
+  else if (TRUE == startXmlSuccessPrinted) {
+    PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
   }
 
   CleanDataSetLookupItems(pPrintCtx);

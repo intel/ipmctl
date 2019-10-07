@@ -479,10 +479,6 @@ ShowRegions(
       continue;
     }
 
-    if (pRegions[RegionIndex].RegionType == PM_TYPE_STORAGE) {
-      continue;
-    }
-
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, RegionIndex);
 
     Found = TRUE;

@@ -432,14 +432,8 @@ PrintDimmMemmap(
     case MEMMAP_RANGE_IS_MIRROR:
       NVDIMM_DBG("MIRRORED INTERLEAVE SET\n");
       break;
-    case MEMMAP_RANGE_BLOCK_NAMESPACE:
-      NVDIMM_DBG("BLOCK NAMESPACE\n");
-      break;
     case MEMMAP_RANGE_IS_NOT_INTERLEAVED:
       NVDIMM_DBG("IS_NOT_INTERLEAVED\n");
-      break;
-    case MEMMAP_RANGE_STORAGE_ONLY:
-      NVDIMM_DBG("STORAGE_ONLY\n");
       break;
     case MEMMAP_RANGE_APPDIRECT_NAMESPACE:
       NVDIMM_DBG("APPDIRECT NAMESPACE\n");
@@ -579,8 +573,6 @@ Finish:
   return ReturnCode;
 }
 
-#define MAX_STORAGE_ONLY_RANGES (MAX_IS_PER_DIMM + 1)
-
 /**
   Retrieve list of memory regions of a DIMM
 
@@ -609,24 +601,12 @@ GetDimmMemmap(
   LIST_ENTRY *pNode = NULL;
   LIST_ENTRY *pNode2 = NULL;
   struct _NVM_IS *pIS = NULL;
-  UINT32 RangeType = 0;
   UINT64 Length = 0;
   UINT32 RegionCount = 0;
   BOOLEAN ISetInterleaved = FALSE;
   UINT32 Type = 0;
-  struct {
-      UINT64 StartDpa;
-      UINT64 EndDpa;
-  } StorageOnly[MAX_STORAGE_ONLY_RANGES];
-  UINT32 StorageOnlyNum = 0;
-  UINT64 ISStart = 0;
-  UINT64 ISEnd = 0;
-  UINT64 StStart = 0;
-  UINT64 StEnd = 0;
 
   NVDIMM_ENTRY();
-
-  ZeroMem(StorageOnly, sizeof(StorageOnly));
 
   if (pDimm == NULL || pMemmap == NULL) {
     goto Finish;
@@ -657,13 +637,6 @@ GetDimmMemmap(
     AddMemmapRange(pMemmap, pDimm, Offset, Length, MEMMAP_RANGE_RESERVED);
   }
 
-  /** Init storage only regions **/
-  if (pDimm->PmCapacity > 0) {
-    StorageOnly[0].StartDpa = pDimm->PmStart;
-    StorageOnly[0].EndDpa = pDimm->PmStart + pDimm->PmCapacity;
-    StorageOnlyNum = 1;
-  }
-
   /** Interleave Sets **/
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.ISs) {
     pIS = IS_FROM_NODE(pNode);
@@ -691,53 +664,12 @@ GetDimmMemmap(
       }
 
       AddMemmapRange(pMemmap, pDimm, Offset, pDimmRegion->PartitionSize, Type);
-
-      /** Subtract interleave sets to get storage only regions **/
-      ISStart = Offset;
-      ISEnd = ISStart + pDimmRegion->PartitionSize;
-      for (Index = 0; Index < StorageOnlyNum; Index++) {
-        StStart = StorageOnly[Index].StartDpa;
-        StEnd = StorageOnly[Index].EndDpa;
-
-        if (ISStart >= StStart && ISEnd <= StEnd) {
-          if (ISStart > StStart && ISEnd < StEnd) {
-            /** Split storage only range **/
-            if ((Index + 1) >= MAX_STORAGE_ONLY_RANGES) {
-              NVDIMM_ERR("Critical error: index is out of range. It never should happen.");
-              goto Finish;
-            }
-            StorageOnly[Index + 1].StartDpa = ISEnd;
-            StorageOnly[Index + 1].EndDpa = StorageOnly[Index].EndDpa;
-            StorageOnly[Index].EndDpa = ISStart;
-            StorageOnlyNum++;
-          } else if (ISStart == StStart && ISEnd < StEnd) {
-            /** Decrease storage only range **/
-            StorageOnly[Index].StartDpa = ISEnd;
-          } else if (ISStart > StStart && ISEnd == StEnd) {
-            /** Decrease storage only range **/
-            StorageOnly[Index].EndDpa = ISStart;
-          }
-          /** Interleave set region may fit only to one storage region **/
-          break;
-        }
-      }
     }
-  }
-
-  /** Add storage only ranges to map **/
-  for (Index = 0; Index < StorageOnlyNum; Index++) {
-    AddMemmapRange(pMemmap, pDimm,
-        StorageOnly[Index].StartDpa,
-        StorageOnly[Index].EndDpa - StorageOnly[Index].StartDpa,
-        MEMMAP_RANGE_STORAGE_ONLY);
   }
 
   /** Namespaces **/
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Namespaces) {
     pNamespace = NAMESPACE_FROM_NODE(pNode, NamespaceNode);
-
-    RangeType = (pNamespace->NamespaceType == STORAGE_NAMESPACE) ?
-        MEMMAP_RANGE_BLOCK_NAMESPACE : MEMMAP_RANGE_APPDIRECT_NAMESPACE;
 
     for (Index = 0; Index < pNamespace->RangesCount; Index++) {
       if (pNamespace->Range[Index].pDimm != pDimm) {
@@ -746,7 +678,7 @@ GetDimmMemmap(
       AddMemmapRange(pMemmap, pDimm,
           pNamespace->Range[Index].Dpa,
           pNamespace->Range[Index].Size,
-          RangeType);
+          MEMMAP_RANGE_APPDIRECT_NAMESPACE);
     }
   }
 
@@ -833,9 +765,7 @@ GetDimmFreemap(
       Ranges may overlap and they will be sorted by DPA start address.
     **/
     if (pMemmapRange->RangeType == MEMMAP_RANGE_PERSISTENT) {
-      if (FreeCapacityTypeArg == FreeCapacityForPersistentRegion ||
-          FreeCapacityTypeArg == FreeCapacityForStMode ||
-          FreeCapacityTypeArg == FreeCapacityForStModeOnStOnly) {
+      if (FreeCapacityTypeArg == FreeCapacityForPersistentRegion) {
         AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
             pMemmapRange->RangeType);
       }
@@ -845,40 +775,20 @@ GetDimmFreemap(
         AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
             pMemmapRange->RangeType);
       }
-    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS) {
-      if (FreeCapacityTypeArg == FreeCapacityForADMode ||
-          FreeCapacityTypeArg == FreeCapacityForStModeOnInterleaved) {
-        AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
-            pMemmapRange->RangeType);
-      }
-    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS_NOT_INTERLEAVED) {
-      if (FreeCapacityTypeArg == FreeCapacityForADMode ||
-          FreeCapacityTypeArg == FreeCapacityForStModeOnNotInterleaved) {
+    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS ||
+               pMemmapRange->RangeType == MEMMAP_RANGE_IS_NOT_INTERLEAVED) {
+      if (FreeCapacityTypeArg == FreeCapacityForADMode) {
         AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
             pMemmapRange->RangeType);
       }
     }
 
-    /**
-      Make list of used ranges for specified mode. For example Block Namespaces can't be created on mirrored
-      Interleave Sets, Block and AppDirect Namespaces.
-
-      Ranges may overlap and they will be sorted by DPA start address.
-    **/
-    if (pMemmapRange->RangeType == MEMMAP_RANGE_BLOCK_NAMESPACE ||
-        pMemmapRange->RangeType == MEMMAP_RANGE_APPDIRECT_NAMESPACE) {
+    /** Make list of used ranges for specified mode. Ranges may overlap and they will be sorted by DPA start address. **/
+    if (pMemmapRange->RangeType == MEMMAP_RANGE_APPDIRECT_NAMESPACE) {
       AddMemmapRange(pOccupiedRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
           pMemmapRange->RangeType);
     } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS_MIRROR) {
-      if (FreeCapacityTypeArg == FreeCapacityForPersistentRegion ||
-          FreeCapacityTypeArg == FreeCapacityForStMode ||
-          FreeCapacityTypeArg == FreeCapacityForStModeOnStOnly) {
-        AddMemmapRange(pOccupiedRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
-            pMemmapRange->RangeType);
-      }
-    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS ||
-        pMemmapRange->RangeType == MEMMAP_RANGE_IS_NOT_INTERLEAVED) {
-      if (FreeCapacityTypeArg == FreeCapacityForStModeOnStOnly) {
+      if (FreeCapacityTypeArg == FreeCapacityForPersistentRegion) {
         AddMemmapRange(pOccupiedRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
             pMemmapRange->RangeType);
       }
@@ -5005,7 +4915,6 @@ InitializeDimm (
     }
   }
 
-  InitializeListHead(&pNewDimm->StorageNamespaceList);
   InitializeDimmFieldsFromAcpiTables(pNewDimm->pRegionMappingStructure, pControlRegTbl, pPmttHead, pNewDimm);
 
   ReturnCode = GetControlRegionTablesForPID(pFitHead, Pid, pControlRegTbls, &ControlRegTblsNum);
@@ -5213,17 +5122,6 @@ InitializeDimm (
         NVDIMM_WARN("No Interleave Table found for block window but the index exists.");
         ReturnCode = EFI_DEVICE_ERROR;
         goto Finish;
-      }
-    }
-
-    if (pNewDimm->PmCapacity > 0 && pNewDimm->SkuInformation.StorageModeEnabled == MODE_ENABLED) {
-      /** Block Window initialize only if there is non-zero pm capacity on the DIMM **/
-      ReturnCode = CreateBw(pNewDimm, pFitHead, pMbITbl, pBwITbl);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Unable to create Block Window.");
-        // If we fail to create BW, we just loose the block IO capabilities, but we still can communicate with the DIMMS
-        pNewDimm->pBw = NULL;
-        ReturnCode = EFI_SUCCESS;
       }
     }
   }

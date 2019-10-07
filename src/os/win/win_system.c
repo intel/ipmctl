@@ -938,7 +938,7 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	p_capabilities->features.run_diagnostic = 0;
 	p_capabilities->features.passthrough = 1;
 	p_capabilities->features.app_direct_mode = 1;
-	p_capabilities->features.storage_mode = 0;
+  p_capabilities->features.storage_mode = 0;
 	return 0;
 }
 

@@ -730,7 +730,7 @@ EFI_STATUS
   @param[in] PersistentMemType Persistent memory type
   @param[in, out] pVolatilePercent Volatile region size in percents.
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
@@ -773,7 +773,7 @@ EFI_STATUS
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -950,25 +950,17 @@ EFI_STATUS
 
 /**
   Create namespace
-  Creates a Storage or AppDirect namespace on the provided pool/dimm.
+  Creates a AppDirect namespace on the provided pool/dimm.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] PoolId the ID of the pool that the Namespace is supposed to be created.
-  @param[in] DimmId the PID of the Dimm that the Storage Namespace is supposed to be created.
-  @param[in] NamespaceType Type of the namespace to be created (Storage or AppDirect).
-  @param[in] PersistentMemType Persistent memory type of pool, that region will be used to create Namespace
+  @param[in] RegionId the ID of the pool that the Namespace is supposed to be created.
+  @param[in] Reserved
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
   @param[in] pName - Namespace name.
-  @param[in] Enabled boolean value to decide when the driver should hide this
-    namespace to the OS
   @param[in] Mode- boolean value to decide when the namespace
     should have the BTT arena included
-               * 0 - Ignore
-               * 1 - Yes
-               * 2 - No
-  @param[in] Encryption Create namespace on an NVM DIMM with encryption enabled. One of:
                * 0 - Ignore
                * 1 - Yes
                * 2 - No
@@ -989,7 +981,7 @@ EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_CREATE_NAMESPACE) (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 RegionId,
-  IN     UINT16 DimmId,
+  IN     UINT16 Reserved,
   IN     UINT32 BlockSize,
   IN     UINT64 BlockCount,
   IN     CHAR8 *pName,

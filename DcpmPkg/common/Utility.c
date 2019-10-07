@@ -3970,8 +3970,7 @@ IsDimmInterfaceCodeSupportedByValues(
   if (interfaceCodes != NULL)
   {
     for (Index = 0; Index < interfaceCodeNum; Index++) {
-      if (DCPMM_FMT_CODE_APP_DIRECT == interfaceCodes[Index] ||
-        DCPMM_FMT_CODE_STORAGE == interfaceCodes[Index]) {
+      if (DCPMM_FMT_CODE_APP_DIRECT == interfaceCodes[Index]) {
         Supported = TRUE;
         break;
       }

@@ -204,7 +204,7 @@ Finish:
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as not interleaved AppDirect memory
   @param[in] UnitsToDisplay The units to be used to display capacity
   @param[out] pConfirmation Confirmation from prompt
 
@@ -595,7 +595,7 @@ CreateGoal(
 
   /** If Volatile and Reserved Percent sum to 100 then never map Appdirect even if alignment would allow it **/
   if (ReservedPercent + VolatileMode == 100) {
-    PersistentMemType = PM_TYPE_STORAGE;
+    PersistentMemType = PM_TYPE_RESERVED;
   }
 
   ReturnCode = ContainsProperty(pCmd, NS_LABEL_VERSION_PROPERTY);

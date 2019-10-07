@@ -78,7 +78,6 @@ IsNamespaceLocked(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT32 SecurityState = 0;
-  BOOLEAN IsStorageNamespace = FALSE;
   DIMM **ppDimms = NULL;
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
@@ -91,19 +90,11 @@ IsNamespaceLocked(
 
   *pIsLocked = FALSE;
 
-  // Storage or AppDirect Namespace
-  IsStorageNamespace = pNamespace->NamespaceType == STORAGE_NAMESPACE;
-
-  if (IsStorageNamespace == FALSE && pNamespace->pParentIS == NULL) {
+  if (pNamespace->pParentIS == NULL) {
    goto Finish;
   }
 
-  if (IsStorageNamespace) {
-    DimmsNum = 1;
-  } else {
-    DimmsNum = pNamespace->RangesCount;
-  }
-
+  DimmsNum = pNamespace->RangesCount;
   ppDimms = AllocateZeroPool(sizeof(*ppDimms) * DimmsNum);
   if (ppDimms == NULL) {
    ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -111,12 +102,8 @@ IsNamespaceLocked(
   }
 
   Index = 0;
-  if (IsStorageNamespace) {
-   ppDimms[Index] = pNamespace->pParentDimm;
-  } else {
-   for (Index = 0; Index < DimmsNum; Index++) {
-     ppDimms[Index] = pNamespace->Range[Index].pDimm;
-   }
+  for (Index = 0; Index < DimmsNum; Index++) {
+    ppDimms[Index] = pNamespace->Range[Index].pDimm;
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
@@ -322,9 +309,7 @@ InstallNamespaceProtocols(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT32 DimmIndex = 0;
   EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
-  BOOLEAN IsStorageNamespace = FALSE;
   EFI_DEVICE_PATH_PROTOCOL *pParentDevicePath = NULL;
   UINT32 MediaBlockSize = 0;
   VENDOR_DEVICE_PATH *pVenHwNamespaceDevicePath = NULL;
@@ -347,30 +332,11 @@ InstallNamespaceProtocols(
     goto Finish;
   }
 
-  // Storage or AppDirect Namespace
-  IsStorageNamespace = pNamespace->NamespaceType == STORAGE_NAMESPACE;
-
-  if (IsStorageNamespace == FALSE && pNamespace->pParentIS == NULL) {
+  if (pNamespace->pParentIS == NULL) {
     goto Finish;
   }
 
-  if (IsStorageNamespace) {
-    if (pNamespace->pParentDimm->pBw == NULL) {
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
-    }
-
-    DimmIndex = GetDimmEfiDataIndex(0, pNamespace->pParentDimm, NULL);
-    if (DimmIndex > ARRAY_SIZE(gDimmsUefiData)) {
-      NVDIMM_DBG("DimmIndex out of allowed range");
-      ReturnCode = EFI_ABORTED;
-      goto Finish;
-    }
-
-    pParentDevicePath = gDimmsUefiData[DimmIndex].pDevicePath;
-  } else {
-    pParentDevicePath = gNvmDimmData->pControllerDevicePathInstance;
-  }
+  pParentDevicePath = gNvmDimmData->pControllerDevicePathInstance;
 
   // Use standarized path if namespace is bootable
   if ((pNamespace->IsBttEnabled == TRUE ) ||
@@ -434,12 +400,8 @@ InstallNamespaceProtocols(
   // Overwrite with actual namespace size
   pNamespace->Media.BlockSize = MediaBlockSize;
   pNamespace->Media.OptimalTransferLengthGranularity = pNamespace->Media.BlockSize;
+  pNamespace->Media.LastBlock = GetAccessibleCapacity(pNamespace) / pNamespace->Media.BlockSize - 1;
 
-  if (IsStorageNamespace) {
-    pNamespace->Media.LastBlock = pNamespace->BlockCount - 1;
-  } else {
-    pNamespace->Media.LastBlock = GetAccessibleCapacity(pNamespace) / pNamespace->Media.BlockSize - 1;
-  }
   if (pNamespace->IsBttEnabled) {
     if (pNamespace->pBtt == NULL) {
       NVDIMM_DBG("Failed to initialize the BTT.\n");
@@ -474,7 +436,7 @@ InstallNamespaceProtocols(
     NVDIMM_WARN("Failed to install the block io protocol, error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
   } else {
     ReturnCode = gBS->OpenProtocol(
-      (IsStorageNamespace) ? gDimmsUefiData[DimmIndex].DeviceHandle : gNvmDimmData->ControllerHandle,
+      gNvmDimmData->ControllerHandle,
       &gEfiDevicePathProtocolGuid,
       (VOID **)&pTempDevicePathInterface,
       gNvmDimmData->DriverHandle,
@@ -627,60 +589,6 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-/**
-  NamespaceIoGetDpaFromNamespaceForByteIo
-  Calculates the DIMM DPA where the requested namespace offset will start.
-  The function finds the correct offset but it does not guarantee that the
-  whole buffer will fit there (because of the possible namespace fragmentation).
-  The amount that can be written at the given DPA is stored under the pAvailableBytes
-  pointer.
-
-  If the caller buffer is larger than the returned pAvailableBytes amount, the caller needs
-  to perform the IO operation partially and then shift the parameters by this value and call this function again.
-
-  The function takes under consideration the non-cache line aligned block sizes of the block namespace.
-
-  @param[in] pNamespace The Intel NVM Dimm Namespace to find the DPA
-  @param[in] Offset bytes offset of the start of the data region in the Namespace
-  @param[in] BufferSize size of the desired space to write to
-  @param[out] pAvailableBytes the actual buffer size that can be written at once
-
-  @retval EFI_SUCCESS when the DPA was successfully found.
-  @retval EFI_INVALID_PARAMETER when pNamespace and/or pAvailableBytes and/or pResultDpa equals NULL.
-  @retval EFI_NOT_FOUND if the requested offset from the namespace could not be mapped on the DIMM.
-**/
-STATIC
-EFI_STATUS
-NamespaceIoGetDpaFromNamespaceForByteIo(
-  IN     NAMESPACE *pNamespace,
-  IN     CONST UINT64 ByteOffset,
-  IN     CONST UINT32 BufferSize,
-     OUT UINT64 *pResultDpa,
-     OUT UINT32 *pAvailableBytes
-  );
-
-/**
-  NamespaceIoGetDpaFromNamespace
-  Calculates the DIMM DPA where the requested namespace block will start.
-
-  The function takes under consideration the non-cache line aligned block sizes of the block namespace.
-
-  @param[in] pNamespace The Intel NVM Dimm Namespace to find the DPA.
-  @param[in] OffsetLba the Namespace LBA offset the the DIMM DPA is requested.
-  @param[out] pResultDpa the resulting DIMM DPA where the requested block resides.
-
-  @retval EFI_SUCCESS when the DPA was successfully found.
-  @retval EFI_INVALID_PARAMETER when pNamespace and/or pResultDpa equals NULL.
-  @retval EFI_NOT_FOUND if the requested offset from the namespace could not be mapped on the DIMM.
-**/
-STATIC
-EFI_STATUS
-NamespaceIoGetDpaFromNamespace(
-  IN     NAMESPACE *pNamespace,
-  IN     CONST UINT64 OffsetLba,
-     OUT UINT64 *pResultDpa
-);
 
 /**
   GetNamespace
@@ -1906,43 +1814,6 @@ Finish:
   return ReturnCode;
 }
 
-/**
-  Compare DPA field in namespace region structure
-
-  @param[in] pFirst First item to compare
-  @param[in] pSecond Second item to compare
-
-  @retval -1 if first is less than second
-  @retval  0 if first is equal to second
-  @retval  1 if first is greater than second
-**/
-STATIC
-INT32
-CompareDpaInRange(
-  IN     VOID *pFirst,
-  IN     VOID *pSecond
-  )
-{
-  NAMESPACE_REGION *pRegionFirst = NULL;
-  NAMESPACE_REGION *pRegionSecond = NULL;
-
-  if (pFirst == NULL || pSecond == NULL) {
-    NVDIMM_DBG("NULL pointer found.");
-    return 0;
-  }
-
-  pRegionFirst = (NAMESPACE_REGION *) pFirst;
-  pRegionSecond = (NAMESPACE_REGION *) pSecond;
-
-  if (pRegionFirst->Dpa < pRegionSecond->Dpa) {
-    return -1;
-  } else if (pRegionFirst->Dpa > pRegionSecond->Dpa) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
 #if 0
 // This flow may not work properly under certain scenarios.
 /**
@@ -2107,9 +1978,7 @@ RetrieveNamespacesFromLsa(
   UINT16 CurrentIndex = 0;
   UINT16 SlotStatus = SLOT_UNKNOWN;
   UINT32 Index = 0;
-  UINT32 Index2 = 0;
   UINT32 LabelsFound = 0;
-  UINT16 RangeIndex = 0;
   BOOLEAN BttFound = FALSE;
   BOOLEAN PfnFound = FALSE;
   UINT64 RawCapacity = 0;
@@ -2188,100 +2057,7 @@ RetrieveNamespacesFromLsa(
     }
 
     LabelsFound = 0;
-    if (!IsNameSpaceTypeAppDirect(pNamespaceLabel, Use_Namespace1_1)) {
-      /**
-        Block Mode Namespace case
-      **/
-      pNamespace->NamespaceType = STORAGE_NAMESPACE;
-      pNamespace->BlockSize = pNamespaceLabel->LbaSize;
-      pNamespace->pParentDimm = pDimm;
-      InsertTailList(&pDimm->StorageNamespaceList, &pNamespace->DimmNode);
-
-      if (!Use_Namespace1_1 && !CompareGuid(&gSpaRangeBlockDataWindowRegionGuid, &pNamespaceLabel->TypeGuid)) {
-       NVDIMM_DBG("Unexpected TypeGuid for Storage NS");
-        pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-        continue;
-      }
-
-      ChecksumMatch =
-        ChecksumOperations(pNamespaceLabel, sizeof(*pNamespaceLabel), &pNamespaceLabel->Checksum, FALSE);
-      if (!Use_Namespace1_1 && !ChecksumMatch) {
-        pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-        continue;
-      }
-
-      RangeIndex = 0;
-      for (Index2 = 0; Index2 < pLsa->Index[CurrentIndex].NumberOfLabels; Index2++) {
-        pNamespaceLabel2 = &pLsa->pLabels[Index2];
-
-        if (CompareMem(&pNamespaceLabel->Uuid, &pNamespaceLabel2->Uuid, sizeof(GUID)) == 0) {
-          ReturnCode = ValidateNamespaceLabel(pNamespaceLabel2, Use_Namespace1_1);
-          if (EFI_ERROR(ReturnCode)) {
-            NVDIMM_DBG("Label invalid or check failed. Skipping");
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
-
-          if (!Use_Namespace1_1 && !CompareGuid(&gSpaRangeBlockDataWindowRegionGuid, &pNamespaceLabel2->TypeGuid)) {
-            NVDIMM_DBG("Unexpected TypeGuid for Storage NS");
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
-
-          ChecksumMatch =
-            ChecksumOperations(pNamespaceLabel2, sizeof(*pNamespaceLabel2), &pNamespaceLabel2->Checksum, FALSE);
-          if (!Use_Namespace1_1 && !ChecksumMatch) {
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
-
-          LabelsFound++;
-          NVDIMM_DBG("Label %d of BLK Namespace %g found", LabelsFound, pNamespace->NamespaceGuid);
-
-          // Check labels consistency
-          if (pNamespaceLabel->Flags.AsUint32 != pNamespaceLabel2->Flags.AsUint32 ||
-              pNamespaceLabel->LbaSize != pNamespaceLabel2->LbaSize ||
-              CompareMem(pNamespaceLabel->Name, pNamespaceLabel2->Name, sizeof(pNamespaceLabel->Name)) != 0 ||
-              pNamespace->InterleaveSetCookie != pNamespaceLabel2->InterleaveSetCookie) {
-            NVDIMM_DBG("BM Namespace labels are not consistent. Skipping the current label.");
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
-
-          if (pNamespaceLabel2->Dpa < pDimm->PmStart ||
-            ((pNamespaceLabel2->Dpa + pNamespaceLabel2->RawSize) > (pDimm->PmStart + pDimm->PmCapacity))) {
-            NVDIMM_DBG("The label location is outside the DIMMs persistent partition.");
-            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            continue;
-          }
-
-          pNamespace->Range[RangeIndex].Dpa = pNamespaceLabel2->Dpa;
-          pNamespace->Range[RangeIndex].Size = pNamespaceLabel2->RawSize;
-          pNamespace->Range[RangeIndex].pDimm = pDimm;
-          pNamespace->RangesCount += 1;
-          RawCapacity += pNamespaceLabel2->RawSize;
-          RangeIndex++;
-        }
-      }
-
-      ReturnCode = BubbleSort(pNamespace->Range, pNamespace->RangesCount, sizeof(NAMESPACE_REGION), CompareDpaInRange);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Address ranges may be not sorted for the namespace");
-        pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-      }
-
-      // The Capacity is the real allocated capacity, because of that we need to divide it by the real block size
-      // to get the proper amount of LBA blocks in the device.
-      pNamespace->BlockCount = RawCapacity / GetPhysicalBlockSize(pNamespace->BlockSize);
-
-      if (pDimm->SkuInformation.StorageModeEnabled == MODE_DISABLED) {
-        NVDIMM_DBG("Storage NS discovered on DIMM that does not support storage mode");
-         pNamespace->HealthState = NAMESPACE_HEALTH_UNSUPPORTED;
-      }
-    } else {
-      /**
-        AppDirect Namespace case
-      **/
+    if (IsNameSpaceTypeAppDirect(pNamespaceLabel, Use_Namespace1_1)) {
       if (!Use_Namespace1_1 &&
         !(CompareGuid(&gSpaRangeIsoPmRegionGuid, &pNamespaceLabel->TypeGuid) ||
           CompareGuid(&gSpaRangeVolatileRegionGuid, &pNamespaceLabel->TypeGuid) ||
@@ -2553,12 +2329,6 @@ RetrieveNamespacesFromLsa(
       }
     }
 
-    // Set the namespace as active so the block protocols will
-    // be installed only if the DIMM is configured for block mode
-    if (pNamespace->NamespaceType == STORAGE_NAMESPACE && pDimm->pBw != NULL &&
-        pNamespace->HealthState == NAMESPACE_HEALTH_OK) {
-      pNamespace->Enabled = TRUE;
-    }
     if (pNamespace->NamespaceType == APPDIRECT_NAMESPACE &&
           (
           pNamespace->HealthState == NAMESPACE_HEALTH_OK ||
@@ -2802,150 +2572,6 @@ WriteNamespaceBytes(
 }
 
 /**
-  NamespaceIoGetDpaFromNamespaceForByteIo
-  Calculates the DIMM DPA where the requested namespace offset will start.
-  The function finds the correct offset but it does not guarantee that the
-  whole buffer will fit there (because of the possible namespace fragmentation).
-  The amount that can be written at the given DPA is stored under the pAvailableBytes
-  pointer.
-
-  If the caller buffer is larger than the returned pAvailableBytes amount, the caller needs
-  to perform the IO operation partially and then shift the parameters by this value and call this function again.
-
-  The function takes under consideration the non-cache line aligned block sizes of the block namespace.
-
-  @param[in] pNamespace The Intel NVM Dimm Namespace to find the DPA
-  @param[in] Offset bytes offset of the start of the data region in the Namespace
-  @param[in] BufferSize size of the desired space to write to
-  @param[in] pResultDpa pointer to where the result DPA offset will be stored
-  @param[out] pAvailableBytes the actual buffer size that can be written at once
-
-  @retval EFI_SUCCESS when the DPA was successfully found.
-  @retval EFI_INVALID_PARAMETER when pNamespace and/or pAvailableBytes and/or pResultDpa equals NULL.
-  @retval EFI_NOT_FOUND if the requested offset from the namespace could not be mapped on the DIMM.
-**/
-STATIC
-EFI_STATUS
-NamespaceIoGetDpaFromNamespaceForByteIo(
-  IN     NAMESPACE *pNamespace,
-  IN     CONST UINT64 ByteOffset,
-  IN     CONST UINT32 BufferSize,
-     OUT UINT64 *pResultDpa,
-     OUT UINT32 *pAvailableBytes
-  )
-{
-  UINT64 RawSize = 0;
-  UINT64 Index = 0;
-  BOOLEAN Found = FALSE;
-  UINT64 BytesToRead = 0;
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
-  NVDIMM_ENTRY();
-
-  if (pNamespace == NULL || pAvailableBytes == NULL || pResultDpa == NULL) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-    if (RawSize <= ByteOffset && (ByteOffset < (RawSize + pNamespace->Range[Index].Size))) {
-      Found = TRUE;
-      break;
-    }
-
-    RawSize += pNamespace->Range[Index].Size;
-  }
-
-  if (!Found) {
-    NVDIMM_DBG("The requested DPA could not be mapped to the DIMM space.");
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
-
-  /**
-    We can't read more than the size of the aperture at a time and we can't read more than is left in the label,
-    taking into account the offset
-  **/
-  BytesToRead = MIN(pNamespace->Range[Index].Size - ByteOffset, BW_APERTURE_LENGTH);
-  // Cap the total amount to copy to the actual buffer size
-  BytesToRead = MIN(BytesToRead, BufferSize);
-  *pAvailableBytes = (UINT32)BytesToRead;
-
-  *pResultDpa = (ByteOffset - RawSize) + pNamespace->Range[Index].Dpa;
-
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  NamespaceIoGetDpaFromNamespace
-  Calculates the DIMM DPA where the requested namespace block will start.
-
-  The function takes under consideration the non-cache line aligned block sizes of the block namespace.
-
-  @param[in] pNamespace The Intel NVM Dimm Namespace to find the DPA.
-  @param[in] OffsetLba the Namespace LBA offset the the DIMM DPA is requested.
-  @param[out] pResultDpa the resulting DIMM DPA where the requested block resides.
-
-  @retval EFI_SUCCESS when the DPA was successfully found.
-  @retval EFI_INVALID_PARAMETER when pNamespace and/or pResultDpa equals NULL.
-  @retval EFI_NOT_FOUND if the requested offset from the namespace could not be mapped on the DIMM.
-**/
-STATIC
-EFI_STATUS
-NamespaceIoGetDpaFromNamespace(
-  IN     NAMESPACE *pNamespace,
-  IN     CONST UINT64 OffsetLba,
-     OUT UINT64 *pResultDpa
-  )
-{
-  UINT64 BlocksAmount = 0;
-  UINT64 BlocksAmountTotal = 0;
-  UINT64 Index = 0;
-  BOOLEAN Found = FALSE;
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
-  NVDIMM_ENTRY();
-
-  if (pNamespace == NULL || pResultDpa == NULL) {
-    goto Finish;
-  }
-
-  // Find which label to save information on, based on Lba offset
-  for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-    BlocksAmount = pNamespace->Range[Index].Size / pNamespace->BlockSize;
-    if (BlocksAmountTotal <= OffsetLba &&
-      (OffsetLba < (BlocksAmountTotal + BlocksAmount))) {
-      Found = TRUE;
-      break;
-    }
-
-    BlocksAmountTotal += BlocksAmount;
-  }
-
-  if (!Found) {
-    NVDIMM_DBG("The requested DPA could not be mapped to the DIMM space.");
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
-
-  /**
-    Calculate the offset in LBA on the label, multiply by the block size rounded
-    up to the nearest 64 bytes to get the offset Dpa on the label
-    Finally add the starting address of the label to get the Dpa on the DIMM
-  **/
-  *pResultDpa = (OffsetLba - BlocksAmountTotal)
-    * GetPhysicalBlockSize(pNamespace->BlockSize) + pNamespace->Range[Index].Dpa;
-
-  ReturnCode = EFI_SUCCESS;
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
   Performs a block read or write to the Namespace.
   The function calculates the proper DPA DIMM offset and issues
   the proper read or write operation on the destination DIMM.
@@ -2959,7 +2585,7 @@ Finish:
 
   @retval EFI_SUCCESS if the IO operation was performed without errors.
   @retval Other return codes from functions:
-    NamespaceIoGetDpaFromNamespace, DimmRead, DimmWrite, AppDirectIo
+    DimmRead, DimmWrite, AppDirectIo
 **/
 EFI_STATUS
 IoNamespaceBlock(
@@ -2971,73 +2597,13 @@ IoNamespaceBlock(
   )
 {
   EFI_STATUS ReturnCode = EFI_ABORTED;
-  UINT64 Dpa = 0;
-  BOOLEAN IsStorageNamespace = FALSE;
   UINT64 Offset = 0;
 
   NVDIMM_ENTRY();
 
-  IsStorageNamespace = (pNamespace->NamespaceType == STORAGE_NAMESPACE);
+  Offset = Lba * pNamespace->Media.BlockSize;
+  ReturnCode = AppDirectIo(pNamespace, Offset, pBuffer, BlockLength, ReadOperation);
 
-  if (IsStorageNamespace) {
-    ReturnCode = NamespaceIoGetDpaFromNamespace(pNamespace, Lba, &Dpa);
-
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
-    ReturnCode = StorageIo(pNamespace, Dpa, pBuffer, BlockLength, ReadOperation);
-  } else {
-    Offset = Lba * pNamespace->Media.BlockSize;
-    ReturnCode = AppDirectIo(pNamespace, Offset, pBuffer, BlockLength, ReadOperation);
-  }
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Performs a read or write to the Storage Namespace.
-  The data is read/written from/to Dimm through block window aperture.
-
-  @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
-  @param[in] Dpa DIMM DPA where the requested block resides
-  @param[in, out] pBuffer Destination/source buffer where or from the data will be copied.
-  @param[in] Nbytes Number of bytes to read/write
-  @param[in] ReadOperation boolean value indicating what type of IO is requested.
-
-  @retval EFI_SUCCESS If the IO operation was performed without errors.
-  @retval EFI_INVALID_PARAMETER Input parameter is NULL
-**/
-EFI_STATUS
-StorageIo(
-  IN     NAMESPACE *pNamespace,
-  IN     UINT64 Dpa,
-  IN OUT CHAR8 *pBuffer,
-  IN     UINT64 Nbytes,
-  IN     BOOLEAN ReadOperation
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
-  NVDIMM_ENTRY();
-
-  if (pNamespace == NULL || pBuffer == NULL) {
-    goto Finish;
-  }
-
-  if (ReadOperation) {
-#ifdef WA_BLOCK_IO_READ_TWICE
-    ApertureRead(pNamespace->pParentDimm, Dpa, Nbytes, pBuffer);
-    // This is a workaround, we don't have to check the return code
-#endif
-    ReturnCode = ApertureRead(pNamespace->pParentDimm, Dpa, Nbytes, pBuffer);
-  } else {
-    ReturnCode = ApertureWrite(pNamespace->pParentDimm, Dpa, Nbytes, pBuffer);
-  }
-
-Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -3130,7 +2696,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER if pNamespace and/or pBuffer equals NULL.
   @retval EFI_BAD_BUFFER_SIZE if Offset and/or BufferLength are not aligned to the cache line size.
   @retval Other return codes from functions:
-    NamespaceIoGetDpaFromNamespaceForByteIo, DimmRead, DimmWrite, AppDirectIo
+    DimmRead, DimmWrite, AppDirectIo
 **/
 EFI_STATUS
 IoNamespaceBytes(
@@ -3141,12 +2707,7 @@ IoNamespaceBytes(
   IN     BOOLEAN ReadOperation
   )
 {
-  UINT64 BytesRead = 0;
-  UINT32 BytesToRead = 0;
-  UINT32 BufferLengthToSave = BufferLength;
-  UINT64 Dpa = 0;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  BOOLEAN IsStorageNamespace = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -3154,41 +2715,9 @@ IoNamespaceBytes(
     goto Finish;
   }
 
-  IsStorageNamespace = (pNamespace->NamespaceType == STORAGE_NAMESPACE);
-
-  if (IsStorageNamespace) {
-    while (BytesRead < BufferLength) {
-      ReturnCode =
-        NamespaceIoGetDpaFromNamespaceForByteIo(pNamespace, Offset, BufferLengthToSave, &Dpa, &BytesToRead);
-
-      if (EFI_ERROR(ReturnCode) || BytesToRead == 0) {
-        NVDIMM_DBG("Could not locate the DIMM DPA.");
-        goto Finish;
-      }
-
-      if (ReadOperation) {
-#ifdef WA_BLOCK_IO_READ_TWICE
-        // This is a workaround, we don't have to check the return code
-        ApertureRead(pNamespace->pParentDimm, Dpa, BytesToRead, pBuffer + BytesRead);
-#endif
-        ReturnCode = ApertureRead(pNamespace->pParentDimm, Dpa, BytesToRead, pBuffer + BytesRead);
-      } else {
-        ReturnCode = ApertureWrite(pNamespace->pParentDimm, Dpa, BytesToRead, pBuffer + BytesRead);
-      }
-
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
-      }
-
-      BytesRead += BytesToRead;
-      BufferLengthToSave -= BytesToRead;
-      Offset += BytesToRead;
-    }
-  } else {
-    ReturnCode = AppDirectIo(pNamespace, Offset, pBuffer, BufferLength, ReadOperation);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
+  ReturnCode = AppDirectIo(pNamespace, Offset, pBuffer, BufferLength, ReadOperation);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
   }
 
 Finish:
@@ -3266,94 +2795,6 @@ WriteBlockDevice(
   } else {
     return EFI_UNSUPPORTED;
   }
-}
-
-/**
-  The function sums up the available block capacity on a DIMM and returns it.
-
-  The function takes the block size under consideration (returning lower values if non-aligned block size is used).
-
-  @param[in] pDimm pointer to the target DIMM that the size should be returned for.
-  @param[in] BlockSize the block size that will be used for the returned size.
-  @param[in] PersistentMemType Persistent memory type of pool, that region will be used to create Namespace
-  @param[out] AvailableCapacity pointer to a 64-bit value, where the result capacity will be stored.
-
-  @retval EFI_SUCCESS everything went fine
-  @retval EFI_OUT_OF_RESOURCES when memory allocation fails
-  Other return codes from functions:
-    GetDimmFreemap
-    GetRealRawSizeAndRealBlockSize
-**/
-EFI_STATUS
-GetMaximumBlockNamespaceSize(
-  IN     DIMM *pDimm,
-  IN     UINT32 BlockSize,
-  IN     UINT8 PersistentMemType,
-     OUT UINT64 *pAvailableCapacity
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  LIST_ENTRY *pFreemapList = NULL;
-  LIST_ENTRY *pNode = NULL;
-  MEMMAP_RANGE *pRange = NULL;
-  UINT64 FreeSpace = 0;
-  UINT32 ActualBlockSize = 0;
-  UINT64 MaximumCapacity = 0;
-  FreeCapacityType CapacityType = 0;
-
-  if (pDimm == NULL || pAvailableCapacity == NULL) {
-    goto Finish;
-  }
-
-  switch (PersistentMemType) {
-    case PM_TYPE_AD:
-      CapacityType = FreeCapacityForStModeOnInterleaved;
-      break;
-    case PM_TYPE_AD_NI:
-      CapacityType = FreeCapacityForStModeOnNotInterleaved;
-      break;
-    case PM_TYPE_STORAGE:
-      CapacityType = FreeCapacityForStModeOnStOnly;
-      break;
-    case PM_TYPE_ALL:
-    default:
-      CapacityType = FreeCapacityForStMode;
-      break;
-  }
-
-  pFreemapList = (LIST_ENTRY *) AllocateZeroPool(sizeof(*pFreemapList));
-  if (pFreemapList == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-  InitializeListHead(pFreemapList);
-
-  ReturnCode = GetDimmFreemap(pDimm, CapacityType, pFreemapList);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  LIST_FOR_EACH(pNode, pFreemapList) {
-    /** Sum up all of the free regions **/
-    pRange = MEMMAP_RANGE_FROM_NODE(pNode);
-    FreeSpace += pRange->RangeLength;
-  }
-
-  /**
-    Calculate the real block size for the namespace (align the block size to the cache line size).
-  **/
-  ReturnCode = GetRealRawSizeAndRealBlockSize(0, BlockSize, 0, NULL, &ActualBlockSize, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not calculate the real namespace capacity. BlockSize: %d", BlockSize);
-    goto Finish;
-  }
-
-  MaximumCapacity = (FreeSpace / ActualBlockSize) * BlockSize;
-
-  *pAvailableCapacity = MaximumCapacity;
-
-Finish:
-  return ReturnCode;
 }
 
 /**
@@ -3656,7 +3097,7 @@ CalculateAppDirectNamespaceBaseSpa(
 
   NVDIMM_ENTRY();
 
-  if (pNamespace == NULL || pIS == NULL || pNamespace->NamespaceType == STORAGE_NAMESPACE) {
+  if (pNamespace == NULL || pIS == NULL) {
     goto Finish;
   }
 
@@ -3797,16 +3238,12 @@ AllocateNamespaceCapacity(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   LIST_ENTRY *pFreemapList = NULL;
   LIST_ENTRY *pNode = NULL;
-  BOOLEAN Allocated = FALSE;
   DIMM_REGION *pRegion = NULL;
-  MEMMAP_RANGE *pRange = NULL;
   MEMMAP_RANGE AppDirectRange;
   UINT32 DimmCount = 0;
   UINT64 AlignedNamespaceCapacitySize = 0;
   UINT64 RegionSize = 0;
   UINT16 Index = 0;
-  UINT64 FreeSpace = 0;
-  UINT64 ToAllocate = 0;
 
   NVDIMM_ENTRY();
 
@@ -3819,74 +3256,7 @@ AllocateNamespaceCapacity(
     goto Finish;
   }
 
-  if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
-    /** Block Mode Namespace **/
-    pFreemapList = (LIST_ENTRY *) AllocateZeroPool(sizeof(*pFreemapList));
-    if (pFreemapList == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-    InitializeListHead(pFreemapList);
-
-    ReturnCode = GetDimmFreemap(pDimm, FreeCapacityForStMode, pFreemapList);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
-    /** Space allocation is done from highest DPA **/
-    LIST_FOR_EACH_REVERSE(pNode, pFreemapList) {
-      /** Try to allocate single contiguous region first **/
-      pRange = MEMMAP_RANGE_FROM_NODE(pNode);
-      if (!Allocated && pRange->RangeLength >= *pNamespaceCapacity) {
-        pNamespace->RangesCount = 1;
-        pNamespace->Range[0].Dpa = pRange->RangeStartDpa + pRange->RangeLength - *pNamespaceCapacity;
-        pNamespace->Range[0].Size = *pNamespaceCapacity;
-        pNamespace->Range[0].pDimm = pDimm;
-        Allocated = TRUE;
-      }
-      FreeSpace += pRange->RangeLength;
-    }
-
-    if (!Allocated && FreeSpace >= *pNamespaceCapacity) {
-      ToAllocate = *pNamespaceCapacity;
-      /** Need to allocate multiple regions for this Namespace **/
-      Index = 0;
-      LIST_FOR_EACH_REVERSE(pNode, pFreemapList) {
-        pRange = MEMMAP_RANGE_FROM_NODE(pNode);
-        pNamespace->RangesCount += 1;
-        pNamespace->Range[Index].pDimm = pDimm;
-        if (ToAllocate > pRange->RangeLength) {
-          pNamespace->Range[Index].Dpa = pRange->RangeStartDpa;
-          pNamespace->Range[Index].Size = pRange->RangeLength;
-          NVDIMM_DBG("Allocated: %llx", pRange->RangeLength);
-          ToAllocate -= pRange->RangeLength;
-          NVDIMM_DBG("Still to go: %llx", ToAllocate);
-        } else {
-          pNamespace->Range[Index].Dpa = pRange->RangeStartDpa + pRange->RangeLength - ToAllocate;
-          pNamespace->Range[Index].Size = ToAllocate;
-          NVDIMM_DBG("Last allocation: %llx", ToAllocate);
-          Allocated = TRUE;
-          break;
-        }
-        Index++;
-      }
-    }
-
-    NVDIMM_DBG("Free space=%llx. Requested space=%llx", FreeSpace, *pNamespaceCapacity);
-    for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-      NVDIMM_DBG("Allocated region [%d/%d] %llx - %llx\n",
-          Index + 1, pNamespace->RangesCount,
-          pNamespace->Range[Index].Dpa,
-          pNamespace->Range[Index].Dpa + pNamespace->Range[Index].Size);
-    }
-
-    if (!Allocated) {
-      NVDIMM_DBG("Did not find free area of requested size %llx", *pNamespaceCapacity);
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-
-  } else if (pNamespace->NamespaceType == APPDIRECT_NAMESPACE) {
+  if (pNamespace->NamespaceType == APPDIRECT_NAMESPACE) {
     if (pIS->State != IS_STATE_HEALTHY) {
       NVDIMM_DBG("Interleave Set %d is not active", pIS->InterleaveSetIndex);
       ReturnCode = EFI_NOT_READY;
@@ -4576,29 +3946,17 @@ CreateNamespaceLabels(
   pLabel->Flags = pNamespace->Flags;
   CopyMem_S(&pLabel->Uuid, sizeof(pLabel->Uuid), pNamespace->NamespaceGuid, sizeof(pLabel->Uuid));
   CopyMem_S(&pLabel->Name, sizeof(pLabel->Name), pNamespace->Name, sizeof(pLabel->Name));
-  if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
-    // Block Mode Namespace
-    pLabel->Position = 0;            //Always zero for Block NS
-    pLabel->NumberOfLabels = 0;      //Always zero for Block NS
-    pLabel->InterleaveSetCookie = 0; //Always zero for Block NS
-    pLabel->LbaSize = pNamespace->BlockSize;
-    if (UseLatestVersion) {
-      CopyGuid(&pLabel->TypeGuid, &gSpaRangeBlockDataWindowRegionGuid);
-    }
-  } else {
-    // AppDirect Namespace
-    pIS = pNamespace->pParentIS;
-    if (pIS == NULL) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-    pLabel->Position = (UINT16)Index;
-    pLabel->NumberOfLabels = (UINT16)pNamespace->RangesCount;
-    pLabel->InterleaveSetCookie = (UseLatestVersion) ? pIS->InterleaveSetCookie : pIS->InterleaveSetCookie_1_1;
-    pLabel->LbaSize = (UseLatestVersion) ? AD_NAMESPACE_LABEL_LBA_SIZE_4K : 0;
-    if (UseLatestVersion) {
-      CopyGuid(&pLabel->TypeGuid, &gSpaRangePmRegionGuid);
-    }
+  pIS = pNamespace->pParentIS;
+  if (pIS == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+  pLabel->Position = (UINT16)Index;
+  pLabel->NumberOfLabels = (UINT16)pNamespace->RangesCount;
+  pLabel->InterleaveSetCookie = (UseLatestVersion) ? pIS->InterleaveSetCookie : pIS->InterleaveSetCookie_1_1;
+  pLabel->LbaSize = (UseLatestVersion) ? AD_NAMESPACE_LABEL_LBA_SIZE_4K : 0;
+  if (UseLatestVersion) {
+    CopyGuid(&pLabel->TypeGuid, &gSpaRangePmRegionGuid);
   }
 
   if (UseLatestVersion) {
@@ -5576,7 +4934,7 @@ IsNamespaceOnDimms(
      OUT BOOLEAN *pFound
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT32 NamespacesNum = 0;
@@ -5584,6 +4942,7 @@ IsNamespaceOnDimms(
   NVDIMM_ENTRY();
 
   if (pDimms == NULL || pFound == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
@@ -5595,14 +4954,6 @@ IsNamespaceOnDimms(
       goto Finish;
     }
 
-    ReturnCode = GetListSize(&pDimms[Index]->StorageNamespaceList, &NamespacesNum);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-    if (NamespacesNum > 0) {
-      *pFound = TRUE;
-      break;
-    }
     for (Index2 = 0; Index2 < pDimms[Index]->ISsNum; Index2++) {
       ReturnCode = GetListSize(&pDimms[Index]->pISs[Index2]->AppDirectNamespaceList, &NamespacesNum);
       if (EFI_ERROR(ReturnCode)) {
@@ -5744,9 +5095,7 @@ GetBlockDeviceBlockSize(
     goto Finish;
   }
 
-  // Use the Media.BlockSize for AD Namespaces and the BlockSize for Storage Namespaces
-  BlockSize = pNamespace->NamespaceType == APPDIRECT_NAMESPACE ?
-      pNamespace->Media.BlockSize : pNamespace->BlockSize;
+  BlockSize = pNamespace->Media.BlockSize;
 
 Finish:
   NVDIMM_EXIT();
@@ -5772,67 +5121,12 @@ GetPersistentMemoryType(
   LIST_ENTRY *pMemmapList = NULL;
   BOOLEAN Interleaved = FALSE;
   UINT32 RegionsNum = 0;
-  UINT32 Index = 0;
-  LIST_ENTRY *pNode = NULL;
-  MEMMAP_RANGE *pMemmapRange = NULL;
-  UINT64 NsRegionStart = 0;
-  UINT64 NsRegionEnd = 0;
-  UINT64 MmRangeStart = 0;
-  UINT64 MmRangeEnd = 0;
-  BOOLEAN MmRangeAndNsRegionOverlap = FALSE;
 
   if (pNamespace == NULL || pPersistentMemType == NULL) {
     goto Finish;
   }
 
-  if (pNamespace->NamespaceType == STORAGE_NAMESPACE) {
-    pMemmapList = (LIST_ENTRY *) AllocateZeroPool(sizeof(*pMemmapList));
-    if (pMemmapList == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-    InitializeListHead(pMemmapList);
-
-    ReturnCode = GetDimmMemmap(pNamespace->pParentDimm, pMemmapList);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-
-    *pPersistentMemType = 0;
-
-    for (Index = 0; Index < pNamespace->RangesCount; Index++) {
-      NsRegionStart = pNamespace->Range[Index].Dpa;
-      NsRegionEnd = NsRegionStart + pNamespace->Range[Index].Size - 1;
-
-      LIST_FOR_EACH(pNode, pMemmapList) {
-        pMemmapRange = MEMMAP_RANGE_FROM_NODE(pNode);
-
-        MmRangeStart = pMemmapRange->RangeStartDpa;
-        MmRangeEnd = MmRangeStart + pMemmapRange->RangeLength - 1;
-
-        /** True if memmap range and Namespace region overlap each other **/
-        MmRangeAndNsRegionOverlap =
-            (NsRegionStart < MmRangeStart && NsRegionEnd > MmRangeStart) ||
-            (NsRegionStart >= MmRangeStart && NsRegionStart < MmRangeEnd);
-
-        if (MmRangeAndNsRegionOverlap) {
-          switch (pMemmapRange->RangeType) {
-          case MEMMAP_RANGE_IS:
-            *pPersistentMemType |= PM_TYPE_AD;
-            break;
-          case MEMMAP_RANGE_IS_NOT_INTERLEAVED:
-            *pPersistentMemType |= PM_TYPE_AD_NI;
-            break;
-          case MEMMAP_RANGE_STORAGE_ONLY:
-            *pPersistentMemType |= PM_TYPE_STORAGE;
-            break;
-          default:
-            break;
-          }
-        }
-      }
-    }
-  } else if (pNamespace->NamespaceType == APPDIRECT_NAMESPACE) {
+  if (pNamespace->NamespaceType == APPDIRECT_NAMESPACE) {
     /** No interleave set found for the AppDirect Namespace **/
     if (pNamespace->pParentIS == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;

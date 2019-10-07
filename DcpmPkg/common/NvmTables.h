@@ -331,7 +331,7 @@ union {
     UINT8 Memory          :1;
     UINT8 AppDirect       :1;
     UINT8 AppDirectCached :1;
-    UINT8 Storage         :1;
+    UINT8 Reserved1       :1;
     UINT8 SubNUMAClster   :1;
     UINT8 Reserved        :2;
   } MemoryModesFlags;

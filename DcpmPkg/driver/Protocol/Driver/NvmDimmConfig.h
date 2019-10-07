@@ -143,7 +143,7 @@ typedef enum {
   /** SKU Capabilities **/
   SkuMemoryModeOnly,
   SkuAppDirectModeOnly,
-  SkuAppDirectStorageMode,
+  DimmSkuType_Reserved,
   SkuTriMode,
   SkuPackageSparingCapable,
 
@@ -842,7 +842,7 @@ EFIAPI GetNamespaces (
   @param[in] PersistentMemType Persistent memory type
   @param[in, out] pVolatilePercent Volatile region size in percents.
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
@@ -884,7 +884,7 @@ GetActualRegionsGoalCapacities(
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
@@ -1041,11 +1041,11 @@ StartDiagnostic(
 
 /**
   Create namespace
-  Creates a Storage or AppDirect namespace on the provided region/dimm.
+  Creates a AppDirect namespace on the provided region/dimm.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] RegionId the ID of the region that the Namespace is supposed to be created.
-  @param[in] DimmPid the PID of the Dimm that the Storage Namespace is supposed to be created.
+  @param[in] Reserved
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
@@ -1066,7 +1066,7 @@ EFIAPI
 CreateNamespace(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 RegionId,
-  IN     UINT16 DimmPid,
+  IN     UINT16 Reserved,
   IN     UINT32 BlockSize,
   IN     UINT64 BlockCount,
   IN     CHAR8 *pName,

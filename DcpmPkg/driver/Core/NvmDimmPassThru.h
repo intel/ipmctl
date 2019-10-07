@@ -777,7 +777,7 @@ typedef struct  {
 **/
 typedef struct _SKU_INFORMATION {
   UINT32 MemoryModeEnabled              : 1;
-  UINT32 StorageModeEnabled             : 1;
+  UINT32                                : 1;   //!< Reserved
   UINT32 AppDirectModeEnabled           : 1;
   UINT32 PackageSparingCapable          : 1;
   UINT32                                : 12;  //!< Reserved
@@ -1453,10 +1453,10 @@ typedef struct {
   UINT8 Reserved1;
 
   /*
-  * 0x00 - Intel_Reserved
+  * 0x00 - Intel Reserved
   * 0x01 - 2LM
   * 0x02 - App Direct
-  * 0x03 - Storage
+  * 0x03 - Intel Reserved
   * 0x04 - Patrol scrub (Memory Transaction type)
   * 0xFF - 0x05 - Intel Reserved
   */

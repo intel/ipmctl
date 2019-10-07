@@ -102,7 +102,6 @@
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_SPECIFIED_INT_SIZES #language en "Platform does not support specified interleave iMC and Channel sizes."
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES #language en "Platform does not support default interleave iMC and Channel sizes for specified configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_HEALTHY #language en "Region is not healthy"
-#string STR_DCPMM_STATUS_ERR_REGION_NOT_ENOUGH_SPACE_FOR_BLOCK_NAMESPACE #language en "Not enough space to create Storage Mode Namespace."
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE #language en "Not enough space to create App Direct Namespace."
 #string STR_DCPMM_STATUS_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM #language en "There is no goal configuration on DIMM."
 #string STR_DCPMM_STATUS_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS #language en "At least 2 DIMMs are required to use reserve DIMM option."

@@ -780,7 +780,6 @@ NvmDimmDriverDriverEntryPoint(
   gNvmDimmData->Alignments.RegionPersistentAlignment = REGION_PERSISTENT_SIZE_ALIGNMENT_B;
 
   gNvmDimmData->Alignments.PmNamespaceMinSize = PM_NAMESPACE_MIN_SIZE;
-  gNvmDimmData->Alignments.BlockNamespaceMinSize = BLOCK_NAMESPACE_MIN_SIZE;
 
 #if defined(DYNAMIC_WA_ENABLE)
 #ifndef OS_BUILD

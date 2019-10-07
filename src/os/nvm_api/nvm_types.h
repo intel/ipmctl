@@ -137,7 +137,7 @@ typedef union
 enum region_type
 {
   REGION_TYPE_UNKNOWN = 0,
-  REGION_TYPE_PERSISTENT = 1, ///< REGION type is non-mirrored App Direct or Storage.
+  REGION_TYPE_PERSISTENT = 1, ///< REGION type is non-mirrored App Direct.
   REGION_TYPE_VOLATILE = 2, ///< Volatile.
   REGION_TYPE_PERSISTENT_MIRROR = 3, ///< Persistent.
 };

@@ -179,8 +179,8 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 **/
 #define PM_TYPE_AD           0x1 // BIT0
 #define PM_TYPE_AD_NI        0x2 // BIT1
-#define PM_TYPE_STORAGE      0x4 // BIT2
-#define PM_TYPE_ALL          0x7 // (PM_TYPE_AD | PM_TYPE_AD_NI | PM_TYPE_STORAGE)
+#define PM_TYPE_RESERVED     0x4 // BIT2
+#define PM_TYPE_ALL          0x7 // (PM_TYPE_AD | PM_TYPE_AD_NI | PM_TYPE_RESERVED)
 
 #define RECOMMENDED_SETTINGS         BIT0
 
@@ -226,10 +226,9 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 
 /**
   Intel NVM Dimm format interface code
-  The current code should be 0x201 for Storage mode and 0x301 for AppDirect mode
+  The current code should be 0x301 for AppDirect mode
   We should use the values that are reported by BIOS
 **/
-#define DCPMM_FMT_CODE_STORAGE     0x201
 #define DCPMM_FMT_CODE_APP_DIRECT  0x301
 
 typedef struct _FIRMWARE_VERSION {
@@ -554,7 +553,7 @@ typedef struct _MEMORY_RESOURCES_INFO {
   UINT64 RawCapacity;               //!< Sum of the raw capacity on all dimms
   UINT64 VolatileCapacity;          //!< Sum of the usable volatile capacity on all dimms
   UINT64 AppDirectCapacity;         //!< Sum of the usable appdirect capacity on all dimms
-  UINT64 UnconfiguredCapacity;      //!< Sum of the capacity that is only accessible as Storage capacity
+  UINT64 UnconfiguredCapacity;      //!< Sum of the capacity that is not configured
   UINT64 InaccessibleCapacity;      //!< Sum of the capacity that is inaccessible due to a licensing issue
   UINT64 ReservedCapacity;          //!< Sum of the capacity reserved for metadata on all dimms
 } MEMORY_RESOURCES_INFO;
@@ -618,7 +617,6 @@ typedef struct _NAMESPACE_INFO {
   Minimum size and alignment of AppDirect and Block Namespace is 1GB
 **/
 #define PM_NAMESPACE_MIN_SIZE           BYTES_IN_GIBIBYTE
-#define BLOCK_NAMESPACE_MIN_SIZE        BYTES_IN_GIBIBYTE
 #define NAMESPACE_4KB_ALIGNMENT_SIZE    KIB_TO_BYTES(4)
 #define NAMESPACE_64KB_ALIGNMENT_SIZE   KIB_TO_BYTES (64)
 #define NAMESPACE_32GB_ALIGNMENT_SIZE   GIB_TO_BYTES (32)
@@ -638,7 +636,6 @@ typedef struct _NAMESPACE_INFO {
 
 /** Reserve Types */
 #define RESERVE_DIMM_NONE                0
-#define RESERVE_DIMM_STORAGE             1
 #define RESERVE_DIMM_AD_NOT_INTERLEAVED  2
 
 #define DEFAULT_CHANNEL_INTERLEAVE_SIZE 0
@@ -674,7 +671,6 @@ typedef struct _REGION_GOAL_PER_DIMM_INFO {
   UINT16 SocketId;                                  //!< Socket ID that DIMM is found
   UINT32 PersistentRegions;                         //!< Count of persistent regions
   UINT64 VolatileSize;                              //!< Volatile capacity
-  UINT64 StorageCapacity;                           //!< Any capacity not allocated to Volatile or AppDirect regions
   UINT8 NumberOfInterleavedDimms[MAX_IS_PER_DIMM];  //!< Count of DIMMs that are part of related Interleaved AppDirect regions
   UINT64 AppDirectSize[MAX_IS_PER_DIMM];            //!< AppDirect capacity
   UINT8 InterleaveSetType[MAX_IS_PER_DIMM];         //!< Type of interleave set: non-interleaved, interleaved, mirrored
@@ -703,7 +699,6 @@ typedef struct _DEBUG_LOG_INFO {
 
 /** Namespace related defines**/
 #define UNKNOWN_TYPE_NAMESPACE            0
-#define STORAGE_NAMESPACE                 1
 #define APPDIRECT_NAMESPACE               2
 
 #define NAMESPACE_BLOCK_COUNT_UNDEFINED   0

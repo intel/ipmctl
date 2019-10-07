@@ -18,7 +18,7 @@
 CONST CHAR16 *pPoisonMemoryTypeStr[POISON_MEMORY_TYPE_COUNT] = {
   L"MemoryMode",
   L"AppDirect",
-  L"NotDefined", // This was storage mode
+  L"NotDefined",
   L"PatrolScrub"
 };
 

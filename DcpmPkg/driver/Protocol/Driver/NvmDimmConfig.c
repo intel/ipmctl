@@ -292,7 +292,6 @@ IsDimmSkuSupported(
   switch (SkuType) {
   case SkuMemoryModeOnly:
     if (pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED &&
-        pDimm->SkuInformation.StorageModeEnabled == MODE_DISABLED &&
         pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {
       ReturnValue = TRUE;
     }
@@ -300,15 +299,6 @@ IsDimmSkuSupported(
 
   case SkuAppDirectModeOnly:
     if (pDimm->SkuInformation.MemoryModeEnabled == MODE_DISABLED &&
-        pDimm->SkuInformation.StorageModeEnabled == MODE_DISABLED &&
-        pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
-      ReturnValue = TRUE;
-    }
-    break;
-
-  case SkuAppDirectStorageMode:
-    if (pDimm->SkuInformation.MemoryModeEnabled == MODE_DISABLED &&
-        pDimm->SkuInformation.StorageModeEnabled == MODE_ENABLED &&
         pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
       ReturnValue = TRUE;
     }
@@ -316,7 +306,6 @@ IsDimmSkuSupported(
 
   case SkuTriMode:
     if (pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED &&
-        pDimm->SkuInformation.StorageModeEnabled == MODE_ENABLED &&
         pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
       ReturnValue = TRUE;
     }
@@ -711,10 +700,6 @@ GetDimmInfo (
     pDimmInfo->ModesSupported |= BIT0;
   }
 
-  if (pDimm->SkuInformation.StorageModeEnabled == MODE_ENABLED) {
-    pDimmInfo->ModesSupported |= BIT1;
-  }
-
   if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
     pDimmInfo->ModesSupported |= BIT2;
   }
@@ -815,14 +800,6 @@ GetDimmInfo (
   } else if (pDimm->MappedPersistentCapacity > 0 && pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {
     pDimmInfo->SKUViolation = TRUE;
   } else {
-    LIST_FOR_EACH(pNodeNamespace, &pDimm->StorageNamespaceList) {
-      pCurNamespace = NAMESPACE_FROM_NODE(pNodeNamespace, DimmNode);
-      if (pCurNamespace->NamespaceType == STORAGE_NAMESPACE &&
-        pDimm->SkuInformation.StorageModeEnabled == MODE_DISABLED) {
-        pDimmInfo->SKUViolation = TRUE;
-        break;
-      }
-    }
     for (Index = 0; Index < pDimm->ISsNum; Index++) {
       LIST_FOR_EACH(pNodeNamespace, &pDimm->pISs[Index]->AppDirectNamespaceList) {
         pCurNamespace = NAMESPACE_FROM_NODE(pNodeNamespace, IsNode);
@@ -2304,9 +2281,6 @@ GetGoalConfigs(
         }
       }
     }
-
-    pCurrentGoal->StorageCapacity = pCurrentDimm->RawCapacity -
-      (pCurrentGoal->VolatileSize + pCurrentGoal->AppDirectSize[0] + pCurrentGoal->AppDirectSize[1]);
 
     pCurrentGoal->Status = pCurrentDimm->GoalConfigStatus;
 
@@ -4972,7 +4946,7 @@ GetSystemCapabilitiesInfo(
   for (Index = 0; Index < SUPPORTED_BLOCK_SIZES_COUNT; Index++) {
     CopyMem_S(&pSysCapInfo->NsBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]),  &gSupportedBlockSizes[Index], sizeof(pSysCapInfo->NsBlockSizes[Index]));
   }
-  pSysCapInfo->MinNsSize = gNvmDimmData->Alignments.BlockNamespaceMinSize;
+  pSysCapInfo->MinNsSize = gNvmDimmData->Alignments.PmNamespaceMinSize;
 
   /**
     Features supported by the driver
@@ -6157,7 +6131,7 @@ Finish:
   @param[in] PersistentMemType Persistent memory type
   @param[in, out] pVolatilePercent Volatile region size in percents.
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
@@ -6310,8 +6284,7 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  if (ReserveDimm != RESERVE_DIMM_NONE && ReserveDimm != RESERVE_DIMM_STORAGE &&
-      ReserveDimm != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
+  if (ReserveDimm != RESERVE_DIMM_NONE && ReserveDimm != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -6499,7 +6472,7 @@ Finish:
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
@@ -6669,8 +6642,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  if (ReserveDimm != RESERVE_DIMM_NONE && ReserveDimm != RESERVE_DIMM_STORAGE &&
-      ReserveDimm != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
+  if (ReserveDimm != RESERVE_DIMM_NONE && ReserveDimm != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
     ReturnCode = EFI_INVALID_PARAMETER;
 
     goto Finish;
@@ -6762,12 +6734,11 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  // TODO: need to refactor this more. We have to remove PM_TYPE_STORAGE as it is no longer used
-  // simple refactoring would be to rename the PM_TYPE_STORAGE to something like PM_TYPE_NO_AD
-  // PM_TYPE_STORAGE is currently used to NOT calculate AD capacity
+  // TODO: need to refactor this more.
+  // PM_TYPE_RESERVED is used to NOT calculate AD capacity
   /** If Volatile and Reserved Percent sum to 100 then never map Appdirect even if alignment would allow it **/
   if (VolatilePercent + ReservedPercent == 100) {
-    PersistentMemType = PM_TYPE_STORAGE;
+    PersistentMemType = PM_TYPE_RESERVED;
   }
 
   /** Check platform support **/
@@ -7446,23 +7417,17 @@ Finish:
 
 /**
   Create namespace
-  Creates a Storage or AppDirect namespace on the provided region/dimm.
+  Creates a AppDirect namespace on the provided region/dimm.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] RegionId the ID of the region that the Namespace is supposed to be created.
-  @param[in] DimmId the PID of the Dimm that the Storage Namespace is supposed to be created.
+  @param[in] Reserved
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
   @param[in] pName - Namespace name. If NULL, name will be empty.
-  @param[in] Enabled boolean value to decide when the driver should hide this
-    namespace to the OS
   @param[in] Mode -  boolean value to decide when the namespace
     should have the BTT arena included
-               * 0 - Ignore
-               * 1 - Yes
-               * 2 - No
-  @param[in] Encryption Create namespace on an NVM DIMM with encryption enabled. One of:
                * 0 - Ignore
                * 1 - Yes
                * 2 - No
@@ -7482,8 +7447,8 @@ Finish:
   EFIAPI
   CreateNamespace(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-    IN     UINT16 RegionId,
-  IN     UINT16 DimmPid,
+  IN     UINT16 RegionId,
+  IN     UINT16 Reserved,
   IN     UINT32 BlockSize,
   IN     UINT64 BlockCount,
   IN     CHAR8 *pName,
@@ -7540,8 +7505,8 @@ Finish:
 
   ReturnCode = GetRegionList(&pRegionList, FALSE);
 
-  if (pThis == NULL || pCommandStatus == NULL || ((DimmPid == DIMM_PID_NOTSET) == (RegionId == REGION_ID_NOTSET)) ||
-    BlockSize == 0 || pActualNamespaceCapacity == NULL || pNamespaceId == NULL || EFI_ERROR(ReturnCode)) {
+  if (pThis == NULL || pCommandStatus == NULL || RegionId == REGION_ID_NOTSET || BlockSize == 0 ||
+    pActualNamespaceCapacity == NULL || pNamespaceId == NULL || EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -10015,8 +9980,8 @@ AutomaticCreateNamespace(
       continue;
     }
       ReturnCode = CreateNamespace(&gNvmDimmDriverNvmDimmConfig,
-                                 pRegions[Index].RegionId,          // Iterate through Regions
-                                   DIMM_PID_NOTSET,                   // Use all DIMMs
+                                   pRegions[Index].RegionId,          // Iterate through Regions
+                                   DIMM_PID_NOTSET,
                                    NAMESPACE_PM_NAMESPACE_BLOCK_SIZE,
                                    NAMESPACE_BLOCK_COUNT_UNDEFINED,   // Use all free space
                                    NULL,                              // No name

@@ -592,7 +592,7 @@ ValidateAndPrepareLoadConfig(
   UINT64 DimmsCapacity = 0;
   UINT64 VolatileCapacity = 0;
   UINT64 ReservedCapacity = 0;
-  BOOLEAN Storage = TRUE;
+  BOOLEAN Reserved = TRUE;
   BOOLEAN AppDirectInterlaved = FALSE;
   UINT16 TempMajor = 0;
   UINT16 TempMinor = 0;
@@ -627,7 +627,7 @@ ValidateAndPrepareLoadConfig(
   }
 
   if (SpecifiedDimmsOnSocketNum > 0) {
-    for (Index = 0; Index < SpecifiedDimmsOnSocketNum && Storage; Index++) {
+    for (Index = 0; Index < SpecifiedDimmsOnSocketNum && Reserved; Index++) {
       DimmsCapacity += pDimmsConfigOnSocket[Index]->Capacity;
       VolatileCapacity += pDimmsConfigOnSocket[Index]->VolatileSize;
 
@@ -643,7 +643,7 @@ ValidateAndPrepareLoadConfig(
       }
 
       if (pDimmsConfigOnSocket[Index]->Persistent[0].PersistentSize > 0) {
-        Storage = FALSE;
+        Reserved = FALSE;
       }
 
       for (Index2 = 0; Index2 < SpecifiedDimmsOnSocketNum && !AppDirectInterlaved; Index2++) {
@@ -670,8 +670,8 @@ ValidateAndPrepareLoadConfig(
       *pReservedPercent = (UINT32) ((ROUNDDOWN((ReservedCapacity * 100), DimmsCapacity)) / DimmsCapacity);
     }
 
-    if (Storage) {
-      *pPersistentMemType = PM_TYPE_STORAGE;
+    if (Reserved) {
+      *pPersistentMemType = PM_TYPE_RESERVED;
     } else if (AppDirectInterlaved) {
       *pPersistentMemType = PM_TYPE_AD;
     } else {

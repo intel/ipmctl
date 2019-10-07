@@ -1204,37 +1204,6 @@ DetermineRegionHealth(
   IsLocked = FALSE;
   HasNewGoal = FALSE;
 
-#if 0 //STORAGE MODE ONLY
-  if (*pHealthState == RegionHealthStateNormal) {
-    /**This path is exposed if the underlying PM type is Storage only **/
-    for (Index = 0; Index < pRegion->DimmsBlockOnlyNum; Index++) {
-      pDimm = pRegion->pDimmsBlockOnly[Index];
-
-      /** Check if the dimm is locked **/
-      ReturnCode = IsDimmLocked(pDimm, &IsLocked);
-      if (EFI_ERROR(ReturnCode)) {
-        goto FinishAdvance;
-      }
-
-      if (IsLocked) {
-        *pHealthState = RegionHealthStateLocked;
-        break;
-      }
-
-      /** Check if any of the DIMMs have a config goal created, but not yet applied **/
-      ReturnCode = FindIfNewGoalOnDimm(pDimm, &HasNewGoal);
-      if (EFI_ERROR(ReturnCode)) {
-        goto FinishAdvance;
-      }
-
-      if (HasNewGoal) {
-        *pHealthState = RegionHealthStatePending;
-        break;
-      }
-    }
-  }
-#endif
-
   /** Check for the static health states **/
   if (*pHealthState == RegionHealthStateNormal) {
     if (pRegion->State != IS_STATE_HEALTHY) {
@@ -1486,7 +1455,7 @@ MapRequestToActualRegionGoalTemplates(
       DimmsSymmetrical[Index].VolatileSize = pDimms[Index]->RawCapacity;
       (*pDimmsSymmetricalNum)++;
     }
-  } else if (VolatileSize > 0 && PersistentMemType == PM_TYPE_STORAGE) {
+  } else if (VolatileSize > 0 && PersistentMemType == PM_TYPE_RESERVED) {
 
     SymmetricalSize = ROUNDDOWN(LeastDimmSize, gNvmDimmData->Alignments.RegionVolatileAlignment) * DimmsNum;
 
@@ -1527,7 +1496,7 @@ MapRequestToActualRegionGoalTemplates(
       }
     }
 
-    if (PersistentMemType != PM_TYPE_STORAGE) {
+    if (PersistentMemType != PM_TYPE_RESERVED) {
       LeastPersistentSize = MAX_UINT64_VALUE;
       /** Calculate available persistent memory for Interleave Sets **/
       for (Index = 0; Index < DimmsNum; Index++) {
@@ -1648,9 +1617,8 @@ MapRequestToActualRegionGoalTemplates(
       }
     }
 
-    // Either the user requested Storage or we have reserved all PM capacity and no volatile capacity exists
-    // need to treat it like storage.
-    if (PersistentMemType == PM_TYPE_STORAGE || *pDimmsSymmetricalNum == 0) {
+    // We have reserved all PM capacity and no volatile capacity exists
+    if (PersistentMemType == PM_TYPE_RESERVED || *pDimmsSymmetricalNum == 0) {
       for (Index = 0; Index < DimmsNum; Index++) {
         DimmsSymmetrical[Index].pDimm = pDimms[Index];
         DimmsSymmetrical[Index].RegionSize = 0;
@@ -2482,8 +2450,7 @@ MapRegionsGoal(
     goto Finish;
   }
 
-  if (pReserveDimm != NULL &&
-      ReserveDimmType != RESERVE_DIMM_STORAGE && ReserveDimmType != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
+  if (pReserveDimm != NULL && ReserveDimmType != RESERVE_DIMM_AD_NOT_INTERLEAVED) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -2933,7 +2900,7 @@ PersistentMemoryTypeValidation(
   switch (PersistentMemType) {
   case PM_TYPE_AD:
   case PM_TYPE_AD_NI:
-  case PM_TYPE_STORAGE:
+  case PM_TYPE_RESERVED:
     ReturnCode = EFI_SUCCESS;
     break;
   default:

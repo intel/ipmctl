@@ -248,8 +248,6 @@ typedef struct _DIMM {
   BOOLEAN PcdSynced;                              //!< Active only if RegionsGoalConfig is TRUE
   UINT8 GoalConfigStatus;                         //!< Active only if RegionsGoalConfig is TRUE
 
-  /** List of Storage Namespaces **/
-  LIST_ENTRY StorageNamespaceList;
   VOID *pPcdLsa;
   // Always allocated to be size of PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE
   VOID *pPcdOem;
@@ -281,8 +279,6 @@ typedef struct _DIMM {
 #define MEMMAP_RANGE_IS                      5
 #define MEMMAP_RANGE_IS_NOT_INTERLEAVED      6
 #define MEMMAP_RANGE_IS_MIRROR               7
-#define MEMMAP_RANGE_STORAGE_ONLY            8
-#define MEMMAP_RANGE_BLOCK_NAMESPACE         9
 #define MEMMAP_RANGE_APPDIRECT_NAMESPACE    10
 #define MEMMAP_RANGE_FREE                   11
 #define MEMMAP_RANGE_LAST_USABLE_DPA        12
@@ -290,10 +286,6 @@ typedef struct _DIMM {
 typedef enum {
   FreeCapacityForPersistentRegion         = 0,
   FreeCapacityForMirrorRegion             = 1,
-  FreeCapacityForStMode                 = 2,
-  FreeCapacityForStModeOnInterleaved    = 3,
-  FreeCapacityForStModeOnNotInterleaved = 4,
-  FreeCapacityForStModeOnStOnly         = 5,
   FreeCapacityForADMode                 = 6
 } FreeCapacityType;
 

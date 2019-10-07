@@ -123,7 +123,6 @@ typedef struct {
   UINT64 RegionPersistentAlignment;
 
   UINT64 PmNamespaceMinSize;
-  UINT64 BlockNamespaceMinSize;
 } ALIGNMENT_SETTINGS;
 
 /** NvmDimmDriver Data structure **/

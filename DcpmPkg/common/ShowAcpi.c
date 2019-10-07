@@ -61,12 +61,6 @@ DecodePcatMemoryModeCapabilities(
         L"AppDirect");
     }
 
-    if (pPcatMemoryModeCapabilities->MemoryModesFlags.Storage) {
-      MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
-        ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        L"Storage");
-    }
-
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),

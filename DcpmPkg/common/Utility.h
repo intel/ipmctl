@@ -78,9 +78,8 @@ typedef union {
 #define UTF_16_BOM L'\xFEFF'
 
 #define SKU_MEMORY_MODE_FLAG      (BIT0)
-#define SKU_STORAGE_MODE_FLAG     (BIT1)
 #define SKU_APP_DIRECT_MODE_FLAG  (BIT2)
-#define SKU_MODES_MASK  (SKU_MEMORY_MODE_FLAG | SKU_STORAGE_MODE_FLAG | SKU_APP_DIRECT_MODE_FLAG)
+#define SKU_MODES_MASK  (SKU_MEMORY_MODE_FLAG | SKU_APP_DIRECT_MODE_FLAG)
 
 #define SKU_ENCRYPTION_MASK                  (BIT17)
 
@@ -179,7 +178,6 @@ typedef union {
 
 // Interface Format Code
 #define FORMAT_CODE_APP_DIRECT_STR  L"(Non-Energy Backed Byte Addressable)"
-#define FORMAT_CODE_STORAGE_STR     L"(Non-Energy Backed Block Addressable)"
 
 
 

@@ -1348,7 +1348,7 @@ int driver_features_to_nvm_features(
 
   // Driver memory mode capabilities
   p_nvm_features->app_direct_mode = p_driver_features->app_direct_mode;
-  p_nvm_features->storage_mode = p_driver_features->storage_mode;
+  p_nvm_features->storage_mode = 0;
 
   return rc;
 }
@@ -2128,7 +2128,7 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
     p_goal[Index].socket_id = pRegionConfigsInfo[Index].SocketId;
     p_goal[Index].persistent_regions = pRegionConfigsInfo[Index].PersistentRegions;
     p_goal[Index].volatile_size = pRegionConfigsInfo[Index].VolatileSize;
-    p_goal[Index].storage_capacity = pRegionConfigsInfo[Index].StorageCapacity;
+    p_goal[Index].storage_capacity = 0;
     for (Index2 = 0; Index2 < MAX_IS_PER_DIMM; Index2++) {
       p_goal[Index].appdirect_size[Index2] =
         pRegionConfigsInfo[Index].AppDirectSize[Index2];

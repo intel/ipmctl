@@ -446,7 +446,6 @@ ShowDimms(
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   BOOLEAN ByteAddressable = FALSE;
-  BOOLEAN BlockAddressable = FALSE;
   UINT16  BootStatusBitMask = 0;
   UINT64  BootStatusRegister = 0;
   CHAR16 *pSteppingStr = NULL;
@@ -838,9 +837,6 @@ ShowDimms(
             if (pDimms[DimmIndex].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_APP_DIRECT) {
               ByteAddressable = TRUE;
             }
-            else if (pDimms[DimmIndex].InterfaceFormatCode[Index2] == DCPMM_FMT_CODE_STORAGE) {
-              BlockAddressable = TRUE;
-            }
           }
 
           if (ByteAddressable) {
@@ -850,11 +846,6 @@ ShowDimms(
 
           if (pDimms[DimmIndex].InterfaceFormatCodeNum > 1) {
             tmpIfc = CatSPrint(tmpIfc, L", ");
-          }
-
-          if (BlockAddressable) {
-            tmpIfc = CatSPrint(tmpIfc, FORMAT_HEX L" ", DCPMM_FMT_CODE_STORAGE);
-            tmpIfc = CatSPrint(tmpIfc, FORMAT_CODE_STORAGE_STR);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, INTERFACE_FORMAT_CODE_STR, tmpIfc);
           FREE_POOL_SAFE(tmpIfc);

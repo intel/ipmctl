@@ -49,7 +49,7 @@ RunSecurityDiagnostics(
   }
 
   if (DimmCount == 0 || ppDimms == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
+    ReturnCode = EFI_SUCCESS;
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_NO_MANAGEABLE_DIMMS), EVENT_CODE_801, DIAG_STATE_MASK_OK,
       &pResult->Message, &pResult->StateVal);
     goto Finish;

@@ -51,8 +51,8 @@ RunFwDiagnostics(
   }
 
   if (DimmCount == 0 || ppDimms == NULL) {
+    ReturnCode = EFI_SUCCESS;
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_NO_MANAGEABLE_DIMMS), EVENT_CODE_901, DIAG_STATE_MASK_OK, &pResult->Message, &pResult->StateVal);
-    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 

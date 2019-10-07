@@ -292,7 +292,7 @@ ShowCelCommand(
 
   // Traverse each DIMM
   for (DimmIndex = 0; DimmIndex < DimmCount; DimmIndex++) {
-    if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
+    if (!ContainUint(pDimmIds, DimmIdsNum, pDimms[DimmIndex].DimmID)) {
       continue;
     }
 
@@ -309,7 +309,7 @@ ShowCelCommand(
     }
 
     // Retrieve DimmHandle and DimmIdindex for given DimmId
-    ReturnCode = GetDimmHandleByPid(pDimmIds[DimmIndex], pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
+    ReturnCode = GetDimmHandleByPid(pDimms[DimmIndex].DimmID, pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;

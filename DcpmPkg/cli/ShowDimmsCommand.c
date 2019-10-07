@@ -234,6 +234,7 @@ CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
 
 CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   MANUFACTURER_ID_STR,
+  CONTROLLER_REVISION_ID_STR,
   MEMORY_MODE_CAPACITY_STR,
   APPDIRECT_MODE_CAPACITY_STR,
   UNCONFIGURED_CAPACITY_STR,
@@ -254,7 +255,7 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   MEMORY_BANDWIDTH_BOOST_FEATURE_STR,
   TURBO_POWER_LIMIT_STR,
   MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR,
-  MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR
+  MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR,
   MAX_AVG_POWER_LIMIT_STR,
   MAX_TURBO_MODE_POWER_CONSUMPTION_STR,
   MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT,
@@ -1530,7 +1531,7 @@ ShowDimms(
       }
       else {
         for (Index3 = 0; Index3 < ALLOWED_DISP_VALUES_COUNT(pOnlyManageableAllowedDisplayValues); Index3++) {
-          if (ContainsValue(pDispOptions->pDisplayValues, pOnlyManageableAllowedDisplayValues[Index3])) {
+          if (ShowAll || ContainsValue(pDispOptions->pDisplayValues, pOnlyManageableAllowedDisplayValues[Index3])) {
             PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, pOnlyManageableAllowedDisplayValues[Index3], NA_STR);
           }
         }

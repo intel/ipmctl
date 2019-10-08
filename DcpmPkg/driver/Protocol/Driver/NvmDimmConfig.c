@@ -3201,17 +3201,14 @@ GetDimmSmbiosTable(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
+
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
   DIMM *pDimm = NULL;
-#endif
+
   NVDIMM_ENTRY();
 
-#ifdef MDEPKG_NDEBUG
-  ReturnCode = EFI_UNSUPPORTED;
-#else
   ZeroMem(&DmiPhysicalDev, sizeof(DmiPhysicalDev));
   ZeroMem(&DmiDeviceMappedAddr, sizeof(DmiDeviceMappedAddr));
   ZeroMem(&SmbiosVersion, sizeof(SmbiosVersion));
@@ -3262,7 +3259,6 @@ GetDimmSmbiosTable(
   }
   ReturnCode = EFI_SUCCESS;
 Finish:
-#endif
   NVDIMM_EXIT_I64(ReturnCode);
 #endif
   return ReturnCode;

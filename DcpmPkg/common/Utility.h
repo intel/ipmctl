@@ -42,8 +42,8 @@ typedef union {
 } CONFIG_PROTOCOL_VERSION;
 
 /** Minimum supported version of FW API: 1.2 **/
-#define DEV_FW_API_VERSION_MAJOR_MIN   1
-#define DEV_FW_API_VERSION_MINOR_MIN   2
+#define MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR   1
+#define MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR   2
 
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000

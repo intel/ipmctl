@@ -4018,11 +4018,13 @@ IsFwApiVersionSupportedByValues(
 {
   BOOLEAN VerSupported = TRUE;
 
-  if ((major < DEV_FW_API_VERSION_MAJOR_MIN) ||
-    (major == DEV_FW_API_VERSION_MAJOR_MIN &&
-      minor < DEV_FW_API_VERSION_MINOR_MIN)) {
+  if (((major <  MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR) ||
+       (major == MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
+        minor <  MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR)) ||
+       (major >  MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR)) {
     VerSupported = FALSE;
   }
+
   return VerSupported;
 }
 

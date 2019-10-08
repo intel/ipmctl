@@ -5107,9 +5107,10 @@ ValidateImageVersion(
     }
   }
 
-  if ((BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) < DEV_FW_API_VERSION_MAJOR_MIN) ||
-      (BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) == DEV_FW_API_VERSION_MAJOR_MIN &&
-        BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit2) < DEV_FW_API_VERSION_MINOR_MIN)) {
+  if (((BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) <  MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR) ||
+       (BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) == MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
+        BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit2) <  MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR)) ||
+       (BCD_TO_TWO_DEC(pImage->FwApiVersion.Byte.Digit1) >  MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR)) {
     *pNvmStatus = NVM_ERR_FIRMWARE_API_NOT_VALID;
     ReturnCode = EFI_ABORTED;
     goto Finish;

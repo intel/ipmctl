@@ -1985,7 +1985,84 @@ Finish:
   FREE_POOL_SAFE(pFwCmd);
   return ReturnCode;
 }
+/**
+  Firmware command to get Partition Data using large payload.
+  Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
+  The caller is responsible for a memory deallocation of the ppPlatformConfigData
+
+  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+  @param[in] PartitionId Partition number to get data from
+  @param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetPcdLargePayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 PartitionId,
+  OUT UINT8 **ppRawData
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  FW_CMD *pFwCmd = NULL;
+  PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
+  NVDIMM_ENTRY();
+
+  SetMem(&InputPayload, sizeof(InputPayload), 0x0);
+
+  if (pDimm == NULL || ppRawData == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *ppRawData = AllocateZeroPool(PCD_PARTITION_SIZE);
+  if (*ppRawData == NULL) {
+    NVDIMM_WARN("Can't allocate memory for Platform Config Data (%u bytes)", PCD_PARTITION_SIZE);
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  /**
+    Retrieve the OEM PCD data
+  **/
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopPlatformDataInfo;
+  InputPayload.PartitionId = PartitionId;
+  InputPayload.CmdOptions.RetrieveOption = PCD_CMD_OPT_PARTITION_DATA;
+  pFwCmd->InputPayloadSize = sizeof(InputPayload);
+
+  /** Get PCD by large payload in single call **/
+  pFwCmd->LargeOutputPayloadSize = PCD_PARTITION_SIZE;
+  InputPayload.Offset = 0;
+  InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
+
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
+#ifdef OS_BUILD
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#else
+  ReturnCode = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
+#endif
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+  CopyMem_S(*ppRawData, PCD_PARTITION_SIZE, pFwCmd->LargeOutputPayload, PCD_PARTITION_SIZE);
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 /**
   Firmware command get Platform Config Data.
   Execute a FW command to get information about DIMM regions and REGIONs configuration.
@@ -2723,6 +2800,7 @@ FwCmdSetPlatformConfigData (
   UINT32 PcdSize = 0;
   VOID *pTempCache = NULL;
   UINTN pTempCacheSz = 0;
+  UINT8 *pOEMPartitionData = NULL;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
 
@@ -2839,10 +2917,23 @@ FwCmdSetPlatformConfigData (
       }
     }
   } else {
+    // If it is OEM_PARTITION_ID we need to read entire
+    // partition, copy over OEM Data and write
+    // back entire partition
+    if (PartitionId == PCD_OEM_PARTITION_ID) {
+      CHECK_RESULT(FwCmdGetPcdLargePayload(pDimm, PCD_OEM_PARTITION_ID, &pOEMPartitionData), Finish);
+      CopyMem_S(pFwCmd->LargeInputPayload + PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
+                 sizeof(pFwCmd->LargeInputPayload)- PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
+                 pOEMPartitionData + PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
+                 PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE);
+      pFwCmd->LargeInputPayloadSize = PCD_PARTITION_SIZE;
+    }
+    else {
+      pFwCmd->LargeInputPayloadSize = PcdSize;
+    }
     /** Set PCD by large payload in single call **/
     InPayloadSetData.Offset = 0;
     InPayloadSetData.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
-    pFwCmd->LargeInputPayloadSize = PcdSize;
     CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
 
     /** Save 128KB partition to Large Payload **/
@@ -2865,6 +2956,7 @@ FwCmdSetPlatformConfigData (
 Finish:
   FREE_POOL_SAFE(pPartition);
   FREE_POOL_SAFE(pFwCmd);
+  FREE_POOL_SAFE(pOEMPartitionData);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

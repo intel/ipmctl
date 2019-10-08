@@ -1404,7 +1404,25 @@ GetPlatformConfigDataOemPartition(
   IN     BOOLEAN RestoreCorrupt,
   OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
 );
+/**
+  Firmware command to get Partition Data using large payload.
+  Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
+  The caller is responsible for a memory deallocation of the ppPlatformConfigData
+
+  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+  @param[in] PartitionId Partition number to get data from
+  @param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetPcdLargePayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 PartitionId,
+  OUT UINT8 **ppRawData
+);
 /**
   Set Platform Config Data OEM Partition Intel config region.
   We only write to the first 64KiB of Intel FW/SW config metadata. The latter

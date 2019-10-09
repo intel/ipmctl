@@ -1341,8 +1341,8 @@ VerifyTargetDimms (
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
   DIMM *pCurrentDimm = NULL;
-  UINT16 Index = 0;
-  UINT16 Index2 = 0;
+  UINT32 Index = 0;
+  UINT32 Index2 = 0;
   BOOLEAN FoundMatchDimmId = FALSE;
   BOOLEAN FoundMatchSocketId = FALSE;
 

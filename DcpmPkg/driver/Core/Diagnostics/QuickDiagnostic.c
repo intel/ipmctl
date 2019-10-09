@@ -195,6 +195,7 @@ SmartAndHealthCheck(
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
+  UINT8 AlarmEnabled = 0;
   DIMM_INFO DimmInfo;
   CHAR16 *pActualHealthStr = NULL;
   CHAR16 *pActualHealthReasonStr = NULL;
@@ -290,7 +291,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_MEDIA_TEMPERATURE,
     &MediaTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -298,7 +299,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
+  if (FALSE == AlarmEnabled && HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_505, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.MediaTemperature, MediaTemperatureThreshold);
   }
@@ -307,7 +308,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_CONTROLLER_TEMPERATURE,
     &ControllerTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -315,7 +316,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
+  if (FALSE == AlarmEnabled && HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_CONTROLLER_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_511, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.ControllerTemperature, ControllerTemperatureThreshold);
   }
@@ -324,7 +325,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_PERCENTAGE_REMAINING,
     &PercentageRemainingThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -332,7 +333,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (FALSE == AlarmEnabled && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }

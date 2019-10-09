@@ -91,7 +91,7 @@ InaccessibleCapacity::
     configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
   - Capacity is inaccessible because it is not mapped into the system physical
     address space (SPA). This is usually due to platform firmware memory alignment requirements.
-  - DCPMM configured capacity but SKU prevents usage. e.g. AppDirectCapcity but
+  - DCPMM configured capacity but SKU prevents usage. e.g. AppDirectCapacity but
     DCPMM SKU is MemoryMode only.
 
 DETAILS

@@ -93,7 +93,7 @@
 //Fw
 #string STR_FW_SUCCESS                                #language en "The firmware consistency and settings check succeeded."
 #string STR_FW_NO_MANAGEABLE_DIMMS                    #language en "The firmware consistency and settings check detected that there are no manageable DCPMMs."
-#string STR_FW_INCONSISTENT                           #language en "The firmware consistency and settings check detected that firmware version on DIMM %ls with part number 0x%04x is nonoptimal, preferred version is %ls."
+#string STR_FW_INCONSISTENT                           #language en "The firmware consistency and settings check detected that firmware version on DIMM %ls with subsystem device ID 0x%04x is nonoptimal, preferred version is %ls."
 #string STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR      #language en "The firmware consistency and settings check detected that DIMM 0x%04x has a non-critical media temperature threshold of %d C which is above the fatal threshold %d C."
 #string STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR       #language en "The firmware consistency and settings check detected that DIMM 0x%04x has a non-critical controller temperature threshold of %d C which is above the fatal threshold %d C."
 #string STR_FW_SPARE_BLOCK_THRESHOLD_ERROR            #language en "The firmware consistency and settings check detected that DIMM 0x%04x is reporting a percentage remaining of %d%% which is below the recommended threshold %d%%"

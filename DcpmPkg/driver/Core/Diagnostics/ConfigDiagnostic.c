@@ -588,7 +588,7 @@ CheckPlatformConfigurationData(
       if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
         // Dimm not configured
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_DIMM_NOT_CONFIGURED), EVENT_CODE_606, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
-          ppDimms[Index]->DeviceHandle.AsUint32);
+          DimmStr);
         FREE_POOL_SAFE(pPcdConfHeader);
         NVDIMM_WARN("There is no Current Config table");
         continue;
@@ -617,7 +617,7 @@ CheckPlatformConfigurationData(
       } else if (pPcdConfHeader->ConfOutputStartOffset == 0 || pPcdConfHeader->ConfOutputDataSize == 0) {
         // No Output table defined yet means the goal has not been applied yet
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
-          ppDimms[Index]->DeviceHandle.AsUint32);
+          DimmStr);
       }
     }
 
@@ -635,13 +635,13 @@ CheckPlatformConfigurationData(
       } else if (pPcdOutputConf->SequenceNumber != pPcdInputConf->SequenceNumber) {
         // The goal has not been applied yet
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_GOAL_NOT_APPLIED), EVENT_CODE_609, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
-          ppDimms[Index]->DeviceHandle.AsUint32);
+          DimmStr);
       }
     }
 
     if (EFI_ERROR(ReturnCode)) {
       APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_CONFIG_INVALID_PCD_DATA), EVENT_CODE_621, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
-        ppDimms[Index]->DeviceHandle.AsUint32);
+        DimmStr);
       continue;
     }
 
@@ -808,6 +808,7 @@ Finish:
 
   @param[in out] ppResult Pointer to the result string of platform config diagnostics message
   @param[out] pDiagState Pointer to the platform config diagnostics test state
+  @param  DimmIdPreference Dimm id preference value
 
   @retval EFI_SUCCESS Test executed correctly
   @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
@@ -817,12 +818,15 @@ STATIC
 EFI_STATUS
 CheckUninitializedDimms(
   IN OUT CHAR16 **ppResultStr,
-     OUT UINT8 *pDiagState
+     OUT UINT8 *pDiagState,
+  IN     UINT8 DimmIdPreference
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   LIST_ENTRY *pNode = NULL;
   DIMM *pCurDimm = NULL;
+  CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
+  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];
 
   NVDIMM_ENTRY();
 
@@ -839,8 +843,21 @@ CheckUninitializedDimms(
     if (pCurDimm->NonFunctional == FALSE) {
       continue;
     }
+    ZeroMem(DimmStr, sizeof(DimmStr));
+    ZeroMem(DimmUid, sizeof(DimmUid));
+    ReturnCode = GetDimmUid(pCurDimm, DimmUid, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("GetDimmUid function for DIMM ID 0x%x failed.", pCurDimm->DeviceHandle.AsUint32);
+      continue;
+    }
+    ReturnCode = GetPreferredValueAsString(pCurDimm->DeviceHandle.AsUint32, DimmUid, DimmIdPreference == DISPLAY_DIMM_ID_HANDLE,
+      DimmStr, MAX_DIMM_UID_LENGTH);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("GetPreferredValueAsString function for DIMM ID 0x%x failed.", pCurDimm->DeviceHandle.AsUint32);
+      continue;
+    }
     APPEND_RESULT_TO_THE_LOG(pCurDimm, STRING_TOKEN(STR_CONFIG_DIMM_FAILED_TO_INITIALIZE), EVENT_CODE_618, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
-      pCurDimm->DeviceHandle.AsUint32);
+      DimmStr);
   }
 
 Finish:
@@ -1067,7 +1084,7 @@ RunConfigDiagnostics(
   }
 
   pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"Dimm specs");
-  ReturnCode = CheckUninitializedDimms(&pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX]);
+  ReturnCode = CheckUninitializedDimms(&pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX],DimmIdPreference);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for uninitialized dimms failed.");
     if ((pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {

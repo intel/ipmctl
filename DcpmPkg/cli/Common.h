@@ -173,6 +173,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
 #define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
+#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the DIMMs."
 #define CLI_ERR_MODIFICATION_OF_NAMESPACE_CAPACITY_NOT_SUPPORTED  L"Error: Modification of namespace capacity is not supported."
 #define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."

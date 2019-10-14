@@ -90,6 +90,11 @@ PRINTER_DATA_SET_ATTRIBS ShowDimmDataSetAttribs =
   &ShowDimmTableAttributes
 };
 
+
+extern BOOLEAN gDisplayNulls;
+extern UINT32 gNullValuesEncounteredForDisplay;
+extern CHAR16* gNullValueToDisplay;
+
 /* Command syntax definition */
 struct Command ShowDimmsCommand =
 {
@@ -442,6 +447,7 @@ ShowDimms(
   CHAR16 *pAttributeStr = NULL;
   CHAR16 *pCapacityStr = NULL;
   CHAR16 *pDimmErrStr = NULL;
+  CHAR16 *pOriginalNullVal = NULL;
   LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LatchedLastShutdownStatusDetails;
   LAST_SHUTDOWN_STATUS_DETAILS_COMBINED UnlatchedLastShutdownStatusDetails;
   DISPLAY_PREFERENCES DisplayPreferences;
@@ -461,6 +467,7 @@ ShowDimms(
   BOOLEAN FIS_2_0 = FALSE;
 
   NVDIMM_ENTRY();
+  gNullValuesEncounteredForDisplay = 0;
   ZeroMem(TmpFwVerString, sizeof(TmpFwVerString));
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
   ZeroMem(DimmStr, sizeof(DimmStr));
@@ -739,6 +746,11 @@ ShowDimms(
   /** display detailed view **/
   else {
     ShowAll = pDispOptions->AllOptionSet;
+    if (pDispOptions->DisplayOptionSet) {
+      gDisplayNulls = TRUE;
+      pOriginalNullVal = gNullValueToDisplay;
+      gNullValueToDisplay = L"Unsupported Field";
+    }
 
     // Get whether the system is has a mixed Sku and/or Sku violation
     ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
@@ -1673,10 +1685,22 @@ ShowDimms(
       }
     }
   }
+
+  if (FALSE == ShowAll && gNullValuesEncounteredForDisplay > 0) {
+    if (ReturnCode == EFI_SUCCESS) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+    }
+
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_SOME_VALUES_NOT_SUPPORTED);
+  }
+
   //Specify table attributes
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowDimmDataSetAttribs);
 
 Finish:
+  gDisplayNulls = FALSE;
+  gNullValuesEncounteredForDisplay = 0;
+  gNullValueToDisplay = pOriginalNullVal;
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
   FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);

@@ -40,6 +40,10 @@
 #define CHAR_WHITE_SPACE                  L' '
 #define CELL_EXTRA_CHARS                  2 //1 for leading whitespace and 1 for terminating pipe
 
+BOOLEAN gDisplayNulls = FALSE;
+UINT32 gNullValuesEncounteredForDisplay = 0;
+CHAR16* gNullValueToDisplay = L"NULL";
+
 typedef enum {
   PRINT_TEXT,
   PRINT_BASIC_XML,

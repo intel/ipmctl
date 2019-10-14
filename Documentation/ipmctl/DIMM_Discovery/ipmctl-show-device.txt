@@ -334,11 +334,6 @@ InaccessibleCapacity::
 ReservedCapacity::
   DCPMM capacity reserved for proper alignment.
 
-PeakPowerBudget::
-  If the DCPMM firmware power management policy is enabled, the power budget in
-  mW used for instantaneous power. Refer to FIS for allowable range and default
-  value.
-
 AvgPowerLimit::
   If the DCPMM firmware power management policy is enabled, the power limit in
   mW used for average power. Refer to FIS for allowable range and default value.

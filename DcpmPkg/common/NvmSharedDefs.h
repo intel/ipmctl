@@ -200,6 +200,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
   NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when dimm that are different generations
+  NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy dimm
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

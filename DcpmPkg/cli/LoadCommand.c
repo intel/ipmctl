@@ -225,7 +225,7 @@ Load(
   DimmTotalCount += NonFunctionalDimmCount;
 
   /*Get the list of functional and non-functional dimms*/
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SMART_AND_HEALTH, &pFunctionalDimms, &FunctionalDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -401,6 +401,14 @@ Load(
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);
 
     for (Index = 0; Index < DimmTargetsNum; Index++) {
+
+      if (pAllDimms[Index].HealthState == HEALTH_HEALTHY && TRUE == FlashSPI) {
+        NvmCodes[Index] = NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE;
+        ReturnCodes[Index] = MatchCliReturnCode(NvmCodes[Index]);
+        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pAllDimms[Index], NvmCodes[Index], TRUE);
+        continue;
+      }
+
       ReturnCodes[Index] = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
         (CHAR16 *)pWorkingDirectory, Examine, FALSE, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
       NvmCodes[Index] = pCommandStatus->GeneralStatus;

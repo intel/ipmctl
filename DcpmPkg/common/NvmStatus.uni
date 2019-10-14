@@ -291,3 +291,5 @@
 #string STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY #language en "BIOS and SMBus only"
 #string STR_DCPMM_RESTRICTION_UNSUPPORTED #language en "Unsupported"
 #string STR_DCPMM_RESTRICTION_INVALID #language en "<Invalid>"
+
+#string STR_DCPMM_DIMM_HEALTHY_FW_NOT_RECOVERABLE #language en "Full SPI flash recovery of FW on healthy DIMM is not supported"

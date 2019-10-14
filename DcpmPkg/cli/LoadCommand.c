@@ -73,6 +73,7 @@ Load(
   IN     struct Command *pCmd
 )
 {
+  BOOLEAN fileExists = FALSE;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
@@ -376,6 +377,14 @@ Load(
     **/
   }
 #endif
+
+  ReturnCode = FileExists(pFileName, &fileExists);
+  if (EFI_ERROR(ReturnCode) || FALSE == fileExists) {
+    NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_FILE_NOT_FOUND);
+    ReturnCode = MatchCliReturnCode(NVM_ERR_FILE_NOT_FOUND);
+    goto Finish;
+  }
 
   pFwImageInfo = AllocateZeroPool(sizeof(*pFwImageInfo));
   if (pFwImageInfo == NULL) {

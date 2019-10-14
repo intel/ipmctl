@@ -2573,6 +2573,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval EFI_DEVICE_ERROR device error detected
+  @retval EFI_NOT_READY the specified DIMM is unmanageable
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
@@ -2594,6 +2595,11 @@ GetSmartAndHealth (
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
   if (pDimm == NULL || pHealthInfo == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (!IsDimmManageable(pDimm)) {
+    ReturnCode = EFI_NOT_READY;
     goto Finish;
   }
 

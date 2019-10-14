@@ -7925,6 +7925,9 @@ GetNamespaces (
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     }
+    else if (EFI_VOLUME_CORRUPTED == ReturnCode) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
+    }
 #ifdef OS_BUILD
       goto Finish;
 #else

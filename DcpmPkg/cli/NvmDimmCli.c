@@ -380,7 +380,7 @@ UefiMain(
     }
 
     Rc = SetDefaultProtocolAndPayloadSizeOptions();
-    if (EFI_ERROR(Rc)) {
+    if (EFI_ERROR(Rc) && (EFI_NOT_FOUND != Rc)) {
       goto Finish;
     }
   }
@@ -409,7 +409,7 @@ UefiMain(
 
       // Check for NVM Protocol
       Rc = gBS->LocateHandleBuffer(ByProtocol, &gNvmDimmConfigProtocolGuid, NULL, &HandleCount, &pHandleBuffer);
-      if (EFI_ERROR(Rc) || HandleCount != 1) {
+      if (EFI_NOT_FOUND != Rc && (EFI_ERROR(Rc) || HandleCount != 1)) {
         if (Rc == EFI_NOT_FOUND) {
           Print(FORMAT_STR_NL, CLI_ERR_FAILED_TO_FIND_PROTOCOL);
           goto Finish;
@@ -422,22 +422,24 @@ UefiMain(
       Rc = OpenNvmDimmProtocol(
         gEfiComponentNameProtocolGuid,
         (VOID**)&pComponentName, NULL);
-      if (EFI_ERROR(Rc)) {
+      if (EFI_ERROR(Rc) && EFI_NOT_FOUND != Rc) {
         NVDIMM_DBG("Failed to open the Component Name protocol, error = " FORMAT_EFI_STATUS "", Rc);
         goto Finish;
       }
 
-      //Get current driver name
-      Rc = pComponentName->GetDriverName(
-        pComponentName, "eng", &pCurrentDriverName);
-      if (EFI_ERROR(Rc)) {
-        NVDIMM_DBG("Could not get the driver name, error = " FORMAT_EFI_STATUS "", Rc);
-        goto Finish;
-      }
+      if (pComponentName != NULL) {
+        //Get current driver name
+        Rc = pComponentName->GetDriverName(
+          pComponentName, "eng", &pCurrentDriverName);
+        if (EFI_ERROR(Rc)) {
+          NVDIMM_DBG("Could not get the driver name, error = " FORMAT_EFI_STATUS "", Rc);
+          goto Finish;
+        }
 
-      //Compare to the CLI version and print warning if there is a version mismatch
-      if (StrCmp(PMEM_MODULE_NAME NVMDIMM_VERSION_STRING L" Driver", pCurrentDriverName) != 0) {
-        Print(FORMAT_STR_NL, CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH);
+        //Compare to the CLI version and print warning if there is a version mismatch
+        if (StrCmp(PMEM_MODULE_NAME NVMDIMM_VERSION_STRING L" Driver", pCurrentDriverName) != 0) {
+          Print(FORMAT_STR_NL, CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH);
+        }
       }
     }
 
@@ -1055,29 +1057,36 @@ EFI_STATUS showVersion(struct Command *pCmd)
   pPrinterCtx = pCmd->pPrintCtx;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
+  if (ReturnCode != EFI_NOT_FOUND && EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
+  if (ReturnCode != EFI_NOT_FOUND) {
 #if !defined(__LINUX__)
-  ReturnCode = pNvmDimmConfigProtocol->GetDriverApiVersion(pNvmDimmConfigProtocol, ApiVersion);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    goto Finish;
+    ReturnCode = pNvmDimmConfigProtocol->GetDriverApiVersion(pNvmDimmConfigProtocol, ApiVersion);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+      goto Finish;
+    }
+#endif
   }
-#endif
 
-  PRINTER_BUILD_KEY_PATH(pPath, DS_SOFTWARE_INDEX_PATH, 0);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " APP_DESCRIPTION);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", NVMDIMM_VERSION_STRING);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_SOFTWARE_INDEX_PATH, 0);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " APP_DESCRIPTION);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", NVMDIMM_VERSION_STRING);
 
 #if !defined(__LINUX__)
-  PRINTER_BUILD_KEY_PATH(pPath, DS_SOFTWARE_INDEX_PATH, 1);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " DRIVER_API_DESCRIPTION);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", ApiVersion);
+    PRINTER_BUILD_KEY_PATH(pPath, DS_SOFTWARE_INDEX_PATH, 1);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Component", PRODUCT_NAME L" " DRIVER_API_DESCRIPTION);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Version", ApiVersion);
 #endif
+
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
+      goto Finish;
+    }
 
   /*Check FIS against compiled version in this SW... warn if the FIS version from FW is > version from this SW*/
   ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
@@ -1168,7 +1177,11 @@ EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions()
   }
 #endif // OS_BUILD
 
-  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

@@ -302,7 +302,7 @@ Parse(
 
   /* If protocol or payload size options present, ensure no mutually exclusive protocol/payload options */
   ReturnCode = ValidateProtocolAndPayloadSizeOptions(pCommand);
-  if (EFI_ERROR(ReturnCode) && FALSE == HelpRequested) {
+  if (EFI_NOT_FOUND != ReturnCode && EFI_ERROR(ReturnCode) && FALSE == HelpRequested) {
     goto Finish;
   }
 

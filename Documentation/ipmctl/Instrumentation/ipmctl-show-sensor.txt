@@ -87,7 +87,7 @@ PowerCycles::
   (Default) The number of power cycles over the lifetime of the DCPMM
 
 FwErrorCount::
-  The total number of firmware error log entries
+  (Default) The total number of firmware error log entries
 
 TARGETS
 -------

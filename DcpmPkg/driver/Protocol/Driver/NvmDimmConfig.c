@@ -1348,7 +1348,8 @@ VerifyTargetDimms (
 
   NVDIMM_ENTRY();
 
-  if (pDimms == NULL || pDimmsNum == NULL || pCommandStatus == NULL) {
+  if (pDimms == NULL || pDimmsNum == NULL || pCommandStatus == NULL ||
+      DimmIdsCount > MAX_DIMMS || SocketIdsCount > MAX_SOCKETS) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }

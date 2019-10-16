@@ -299,7 +299,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (FALSE == AlarmEnabled && HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_505, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.MediaTemperature, MediaTemperatureThreshold);
   }
@@ -316,7 +316,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (FALSE == AlarmEnabled && HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_CONTROLLER_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_511, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.ControllerTemperature, ControllerTemperatureThreshold);
   }
@@ -333,7 +333,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (FALSE == AlarmEnabled && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }

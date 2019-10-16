@@ -98,6 +98,5 @@
 #string STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR       #language en "The firmware consistency and settings check detected that DIMM 0x%04x has a non-critical controller temperature threshold of %d C which is above the fatal threshold %d C."
 #string STR_FW_SPARE_BLOCK_THRESHOLD_ERROR            #language en "The firmware consistency and settings check detected that DIMM 0x%04x is reporting a percentage remaining of %d%% which is below the recommended threshold %d%%"
 #string STR_FW_LOG_LEVEL_ERROR                        #language en "The firmware consistency and settings check detected that DIMM 0x%04x is reporting a firmware log level of %d, default log level is %d."
-#string STR_FW_SYSTEM_TIME_ERROR                      #language en "The firmware consistency and settings check detected that DIMM 0x%04x is %ls than system time by %d seconds."
 #string STR_FW_ABORTED_INTERNAL_ERROR                 #language en "An internal error caused the firmware consistency and settings check to abort."
 #string STR_FW_INCONSISTENT_VIRAL_POLICY              #language en "The firmware consistency and settings check detected that DCPMMs have inconsistent viral policy settings."

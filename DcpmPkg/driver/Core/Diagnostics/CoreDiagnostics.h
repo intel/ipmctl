@@ -104,7 +104,6 @@
 #define EVENT_CODE_904      904
 #define EVENT_CODE_905      905
 #define EVENT_CODE_906      906
-#define EVENT_CODE_907      907
 #define EVENT_CODE_910      910
 #define EVENT_CODE_911      911
 typedef enum {

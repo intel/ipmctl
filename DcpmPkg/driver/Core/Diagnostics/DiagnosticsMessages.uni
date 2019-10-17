@@ -80,8 +80,8 @@
 #string STR_CONFIG_NO_ADR_SUPPORT                         #language en "The platform configuration check detected that the platform does not support ADR and therefore data integrity is not guaranteed on the DCPMM(s)."
 #string STR_CONFIG_ABORTED_INTERNAL_ERROR                 #language en "An internal error caused the platform configuration check to abort."
 #string STR_CONFIG_DIAG_CONFIG_DETAILED_STATUS            #language en "COUT table status: (%d), Partition change table status: (%ls), Interleave change table 1 status: (%ls), Interleave change table 2 status: (%ls)"
-#string STR_CONFIG_IS_BROKEN_DIMMS_MISSING_LOCATION       #language en "The platform configuration check detected that interleave set %d is broken because the DCPMM with UID: %ls is missing from location [Socket: %d]-[Die: %d]-[iMC: %d]-[Channel: %d]-[Slot: %d]"
-#string STR_CONFIG_IS_BROKEN_DIMMS_MISPLACED_LOCATION     #language en "The platform configuration check detected that interleave set %d is broken because the DCPMM with UID: %ls is misplaced. It is currently in location [Socket: %d]-[Die: %d]-[iMC: %d]-[Channel: %d]-[Slot: %d] and should be moved to [Socket: %d]-[Die: %d]-[iMC: %d]-[Channel: %d]-[Slot: %d]"
+#string STR_CONFIG_IS_BROKEN_DIMMS_MISSING_LOCATION       #language en "The platform configuration check detected that interleave set %d is broken because the DCPMM with UID: %ls is missing from location (Socket-Die-iMC-Channel-Slot) %d-%d-%d-%d-%d."
+#string STR_CONFIG_IS_BROKEN_DIMMS_MISPLACED_LOCATION     #language en "The platform configuration check detected that interleave set %d is broken because the DCPMM with UID: %ls is misplaced. It is currently in location (Socket-Die-iMC-Channel-Slot) %d-%d-%d-%d-%d and should be moved to %d-%d-%d-%d-%d."
 
 //Security
 #string STR_SECURITY_SUCCESS                                #language en "The security check succeeded."

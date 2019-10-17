@@ -348,8 +348,15 @@ UefiMain(
   }
 
   if (Argc == 1) {
-    HelpRequested = TRUE;
-    FullHelpRequested = TRUE;
+#ifndef OS_BUILD
+    /* Verify input was not redirected from a file */
+    if (ShellGetFileInfo(StdIn) == NULL) {
+#endif
+      HelpRequested = TRUE;
+      FullHelpRequested = TRUE;
+#ifndef OS_BUILD
+    }
+#endif
   }
 
 #ifndef OS_BUILD

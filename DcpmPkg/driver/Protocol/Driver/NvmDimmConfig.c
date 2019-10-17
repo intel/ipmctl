@@ -1003,15 +1003,15 @@ GetDimmInfo (
       pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
       pDimmInfo->MaxAveragePowerReportingTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxAveragePowerReportingTimeConstant;
 
-      pDimmInfo->AverageReportingTimeConstantStep.Header.Status.Code = ReturnCode;
-      pDimmInfo->AverageReportingTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->AverageReportingTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.AverageReportingTimeConstantStep;
+      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = ReturnCode;
+      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
+      pDimmInfo->AveragePowerReportingTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.AveragePowerReportingTimeConstantStep;
     }
     else {
       pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
       pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
       pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->AverageReportingTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
+      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
     }
   }
 

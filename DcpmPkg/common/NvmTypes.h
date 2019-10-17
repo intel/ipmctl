@@ -466,7 +466,7 @@ typedef struct _DIMM_INFO {
   DIMM_INFO_ATTRIB_UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;  //!< Maximum supported value [ms] of the Memory Bandwidth Boost Average Power Time Constant.
   DIMM_INFO_ATTRIB_UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep; //!< Increments [ms] allowed by the FW when setting the Memory Bandwidth Boost Average Power Time Constant.
   DIMM_INFO_ATTRIB_UINT32 MaxAveragePowerReportingTimeConstant;             //!< Maximum supported value [ms] of the Reporting Average Power Time Constant.
-  DIMM_INFO_ATTRIB_UINT32 AverageReportingTimeConstantStep;                 //!< Increments [ms] allowed by the FW when setting the Average Power Reporting Time Constant.
+  DIMM_INFO_ATTRIB_UINT32 AveragePowerReportingTimeConstantStep;                 //!< Increments [ms] allowed by the FW when setting the Average Power Reporting Time Constant.
 
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
@@ -940,9 +940,13 @@ typedef struct _DEBUG_LOG_INFO {
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_UNKNOWN               0
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MIXED                 1
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX                   32
-#define AVG_PWR_REPORTING_TIME_CONSTANT_MAX                        12000
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_DEFAULT               0
 #define HII_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX_STR_LEN       2
+
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MAX                        12000
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MIN                        100
+#define AVG_PWR_REPORTING_TIME_CONSTANT_STEP                       100
+#define HII_AVG_PWR_REPORTING_TIME_CONSTANT_MAX_STR_LEN            5
 
 /**
   Namespace security capabilities.

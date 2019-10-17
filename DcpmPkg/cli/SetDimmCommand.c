@@ -614,7 +614,7 @@ SetDimm(
     }
 
     if (pAvgPowerReportingTimeConstantValue) {
-      // If average power reporting time constant multiplier property exists, check its validity
+      // If average power reporting time constant property exists, check its validity
       IsNumber = GetU64FromString(pAvgPowerReportingTimeConstantValue, &ParsedNumber);
       if (!IsNumber) {
         NVDIMM_WARN("Average power reporting time constant value is not a number");

@@ -112,7 +112,7 @@
 #define MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT L"MaxMemoryBandwidthBoostAveragePowerTimeConstant"
 #define MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP L"MemoryBandwidthBoostAveragePowerTimeConstantStep"
 #define MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT L"MaxAveragePowerReportingTimeConstant"
-#define AVERAGE_REPORTING_TIME_CONSTANT_STEP L"AverageReportingTimeConstantStep"
+#define AVERAGE_POWER_REPORTING_TIME_CONSTANT_STEP L"AveragePowerReportingTimeConstantStep"
 #define MIXED_SKU_STR               L"MixedSKU"
 #define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
 #define AVERAGE_12V_POWER_STR       L"Average12vPower"

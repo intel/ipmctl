@@ -452,7 +452,7 @@ typedef struct {
   UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;
   UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep;
   UINT32 MaxAveragePowerReportingTimeConstant;
-  UINT32 AverageReportingTimeConstantStep;
+  UINT32 AveragePowerReportingTimeConstantStep;
   UINT8 Reserved[96];
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1;
 

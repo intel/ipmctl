@@ -7057,7 +7057,7 @@ PopulateDimmBsrAndBootStatusBitmask(
 
   UINT16 BootStatusBitmask = 0;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
-  BOOLEAN FIS_GTE_2_01 = FALSE;
+  BOOLEAN FIS_GTE_2_2 = FALSE;
   PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO DdrtIoInitInfo;
   ZeroMem(&DdrtIoInitInfo, sizeof(DdrtIoInitInfo));
 
@@ -7072,6 +7072,10 @@ PopulateDimmBsrAndBootStatusBitmask(
   }
 
   ZeroMem(pBsr, sizeof(DIMM_BSR));
+
+  if (pDimm->FwVer.FwApiMajor > 2 || (pDimm->FwVer.FwApiMajor == 2 && pDimm->FwVer.FwApiMinor >= 2)) {
+    FIS_GTE_2_2 = TRUE;
+  }
 
   CHECK_RESULT(FwCmdGetBsr(pDimm, &(pBsr->AsUint64)), Finish);
   if (NULL == pBootStatusBitmask) {
@@ -7096,8 +7100,8 @@ PopulateDimmBsrAndBootStatusBitmask(
     }
 
     DdrtTrainingStatus = DdrtIoInitInfo.DdrtTrainingStatus;
-    if ((!FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE)
-      || (FIS_GTE_2_01 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE && DdrtTrainingStatus != NORMAL_MODE_COMPLETE)) {
+    if ((!FIS_GTE_2_2 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE)
+      || (FIS_GTE_2_2 && DdrtTrainingStatus != DDRT_TRAINING_COMPLETE && DdrtTrainingStatus != DDRT_S3_COMPLETE && DdrtTrainingStatus != NORMAL_MODE_COMPLETE)) {
       BootStatusBitmask |= DIMM_BOOT_STATUS_DDRT_NOT_READY;
     }
     if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {

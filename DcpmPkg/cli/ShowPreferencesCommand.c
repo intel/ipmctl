@@ -65,7 +65,6 @@ ShowPreferences(
   DISPLAY_PREFERENCES DisplayPreferences;
   CONST CHAR16 *pImcInterleaving = NULL;
   CONST CHAR16 *pChannelInterleaving = NULL;
-  CONST CHAR16 *pAppDirectGranularity = NULL;
 #ifdef OS_BUILD
   CHAR16 tempStr[PROPERTY_VALUE_LEN];
 #endif
@@ -133,24 +132,6 @@ ShowPreferences(
     } else {
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, APP_DIRECT_SETTINGS_PROPERTY, FORMAT_STR L"_" FORMAT_STR_NL, pImcInterleaving, pChannelInterleaving);
     }
-  }
-
-  switch (DriverPreferences.AppDirectGranularity) {
-  case APPDIRECT_GRANULARITY_1GIB:
-    pAppDirectGranularity = L"1";
-    break;
-  case APPDIRECT_GRANULARITY_32GIB:
-    pAppDirectGranularity = L"32";
-    break;
-  default:
-    pAppDirectGranularity = NULL;
-  }
-
-  if (pAppDirectGranularity == NULL) {
-    ReturnCode = EFI_DEVICE_ERROR;
-    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-  } else {
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  APP_DIRECT_GRANULARITY_PROPERTY, pAppDirectGranularity);
   }
 
 #ifdef OS_BUILD

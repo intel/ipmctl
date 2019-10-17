@@ -73,12 +73,6 @@ APPDIRECT_SETTINGS::
   BIOS recommended App Direct settings returned by the command Show System
   Capabilities.
 
-APPDIRECT_GRANULARITY::
-  The minimum App Direct granularity per DCPMM supported by the command Create
-  Memory Allocation Goal. One of:
-  - 1: Allows 1 GiB App Direct granularity.
-  - 32: Allows 32 GiB App Direct granularity.
-
 DBG_LOG_LEVEL::
   Whether debug logging is enabled in the DCPMM host software. These logs
   pertain to the operation of the command-line tool only and do not reflect any

@@ -45,7 +45,6 @@ struct Command SetPreferencesCommand =
     {CLI_DEFAULT_DIMM_ID_PROPERTY, L"", PROPERTY_VALUE_HANDLE L"|" PROPERTY_VALUE_UID, FALSE, ValueRequired},
     {CLI_DEFAULT_SIZE_PROPERTY, L"", HELP_TEXT_DEFAULT_SIZE, FALSE, ValueRequired},
     {APP_DIRECT_SETTINGS_PROPERTY, L"", HELP_TEXT_APPDIRECT_SETTINGS, FALSE, ValueRequired},
-    {APP_DIRECT_GRANULARITY_PROPERTY, L"", HELP_TEXT_APPDIRECT_GRANULARITY, FALSE, ValueRequired},
 #ifdef OS_BUILD
     {DBG_LOG_LEVEL, L"", HELP_DBG_LOG_LEVEL, FALSE, ValueRequired},
 #endif
@@ -396,45 +395,6 @@ SetPreferences(
     }
   }
 
-  if ((TempReturnCode = ContainsProperty(pCmd, APP_DIRECT_GRANULARITY_PROPERTY)) != EFI_NOT_FOUND) {
-    if (EFI_ERROR(ReturnCode)) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      KEEP_ERROR(ReturnCode, TempReturnCode);
-      goto Finish;
-    }
-
-    TempReturnCode = GetPropertyValue(pCmd, APP_DIRECT_GRANULARITY_PROPERTY, &pTypeValue);
-    if (EFI_ERROR(TempReturnCode)) {
-      KEEP_ERROR(ReturnCode, EFI_INVALID_PARAMETER);
-      NVDIMM_WARN("AppDirect Granularity setting type not provided");
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, L"", ReturnCode, PROPERTY_ERROR_GRANULARITY_NOT_PROVIDED);
-    } else {
-      if (StrICmp(pTypeValue, PROPERTY_VALUE_RECOMMENDED) == 0) {
-        //Recommended value is silently omitted from documentation
-        //But it is retained for backwards compatibility
-        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_32GIB;
-      } else if (StrICmp(pTypeValue, L"1") == 0) {
-        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_1GIB;
-      } else if (StrICmp(pTypeValue, L"32") == 0) {
-        DriverPreferences.AppDirectGranularity = APPDIRECT_GRANULARITY_32GIB;
-      } else {
-        TempReturnCode = EFI_INVALID_PARAMETER;
-        KEEP_ERROR(ReturnCode, TempReturnCode);
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_INVALID_GRANULARITY);
-      }
-
-      if (TempReturnCode == EFI_SUCCESS) {
-        TempReturnCode = pNvmDimmConfigProtocol->SetDriverPreferences(pNvmDimmConfigProtocol, &DriverPreferences, pCommandStatus);
-        if (TempReturnCode == EFI_SUCCESS) {
-          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue);
-        } else {
-          TempReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-          KEEP_ERROR(ReturnCode, TempReturnCode);
-          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, APP_DIRECT_GRANULARITY_PROPERTY, pTypeValue, ReturnCode, PROPERTY_ERROR_UNKNOWN);
-        }
-      }
-    }
-  }
 #ifdef OS_BUILD
   SetPreferenceStr(pCmd, DBG_LOG_LEVEL, "Log level setting type not provided", MIN_LOG_LEVEL_VALUE, MAX_LOG_LEVEL_VALUE, pCommandStatus);
 

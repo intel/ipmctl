@@ -246,20 +246,7 @@ ReadRunTimeDriverPreferences(
     goto Finish;
   }
 
-  VariableSize = sizeof(pDriverPreferences->AppDirectGranularity);
-  ReturnCode = GET_VARIABLE(
-    APPDIRECT_GRANULARITY_VARIABLE_NAME,
-    gNvmDimmNgnvmVariableGuid,
-    &VariableSize,
-    &pDriverPreferences->AppDirectGranularity);
-
-  if(ReturnCode == EFI_NOT_FOUND) {
     pDriverPreferences->AppDirectGranularity = APPDIRECT_GRANULARITY_DEFAULT;
-    ReturnCode = EFI_SUCCESS;
-  } else if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed to retrieve AppDirect Granularity Variable");
-    goto Finish;
-  }
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

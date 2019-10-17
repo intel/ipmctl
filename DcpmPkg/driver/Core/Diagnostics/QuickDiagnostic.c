@@ -391,6 +391,7 @@ BootStatusDiagnosticsCheck(
   BOOLEAN FIS_GTE_1_14 = FALSE;
   BOOLEAN FIS_GTE_2_01 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
+  UINT16 BSRStatusBitmask = 0;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
@@ -424,9 +425,9 @@ BootStatusDiagnosticsCheck(
     FIS_GTE_2_01 = TRUE;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+  ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, &BSRStatusBitmask);
 
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_ERROR(ReturnCode) || (BSRStatusBitmask & DIMM_BOOT_STATUS_UNKNOWN)) {
     ReturnCode = EFI_DEVICE_ERROR;
     NVDIMM_WARN("Unable to get the DIMMs BSR.");
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_NOT_READABLE), EVENT_CODE_513, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,

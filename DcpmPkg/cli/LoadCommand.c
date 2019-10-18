@@ -113,6 +113,7 @@ Load(
   NVM_STATUS NvmCodes[MAX_DIMMS];
   NVM_STATUS generalNvmStatus = NVM_SUCCESS;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
+  UINT16 BootStatusBitmask = 0;
 
 #ifndef OS_BUILD
   EFI_SHELL_PROTOCOL *pEfiShell = NULL;
@@ -241,6 +242,98 @@ Load(
     ReturnCode = EFI_NOT_STARTED;
     Print(FORMAT_STR_NL, CLI_INFO_NO_DIMMS);
     goto Finish;
+  }
+
+  // check if any targetted dimms are in media disable, if so then do Recovery flow
+  if (!Recovery && !Examine) {
+    /*Screen for user specific IDs*/
+    pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+    if (pTargetValue != NULL && StrLen(pTargetValue) > 0) {
+      if (FunctionalDimmCount > 0) {
+        // check functional dimms
+        ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pFunctionalDimms, FunctionalDimmCount, &pDimmIds, &DimmTargetsNum);
+        if (((ReturnCode != EFI_NOT_FOUND) && EFI_ERROR(ReturnCode)) || (pDimmIds == NULL)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to get Dimm Ids from String.");
+          goto Finish;
+        }
+        for (Index = 0; Index < DimmTargetsNum; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimmIds[Index], NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+      FREE_POOL_SAFE(pDimmIds);
+      DimmTargetsNum = 0;
+      if ( !Recovery && (NonFunctionalDimmCount > 0)) {
+        pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+        // now check nonfunctinal dimms
+        ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pNonFunctionalDimms, NonFunctionalDimmCount, &pDimmIds, &DimmTargetsNum);
+        if (((ReturnCode != EFI_NOT_FOUND) && EFI_ERROR(ReturnCode)) || (pDimmIds == NULL)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to get Dimm Ids from String.");
+          goto Finish;
+        }
+        for (Index = 0; Index < DimmTargetsNum; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimmIds[Index], NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+      FREE_POOL_SAFE(pDimmIds);
+      DimmTargetsNum = 0;
+    }
+    else
+    {
+      // if any of the dimms targetted are Media Disabled then this a recovery
+      for (Index = 0; Index < NonFunctionalDimmCount; Index++) {
+        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pNonFunctionalDimms[Index].DimmID, NULL, &BootStatusBitmask);
+        if (EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to retrieve bsr");
+          goto Finish;
+        }
+        if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+          Recovery = TRUE;
+          break;
+        }
+      }
+
+      if (Recovery != TRUE) { // if not already recovery check functional dimms for Media Disabled
+        for (Index = 0; Index < FunctionalDimmCount; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pFunctionalDimms[Index].DimmID, NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+    }
+    if (Recovery) {
+      CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs), Finish);
+      Attribs.Protocol = FisTransportSmbus;
+      Attribs.PayloadSize = FisTransportSizeSmallMb;
+      CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
+    }
   }
 
   /*Identify the candidate list*/

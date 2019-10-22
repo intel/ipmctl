@@ -654,14 +654,10 @@ ShowDimms(
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
 
       ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].Capacity, UnitsToDisplay, TRUE, &pCapacityStr);
-      if (MANAGEMENT_VALID_CONFIG != pDimms[DimmIndex].ManageabilityState) {
-        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, HEALTH_UNKNOWN);
-      }
-      else {
-        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
-      }
+      pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
 
-      if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
+      if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO ||
+          MANAGEMENT_VALID_CONFIG != pDimms[DimmIndex].ManageabilityState) {
         pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
       }
       else {
@@ -795,7 +791,8 @@ ShowDimms(
 
       /** Security State **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SECURITY_STR))) {
-        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURITY_INFO ||
+            MANAGEMENT_VALID_CONFIG != pDimms[DimmIndex].ManageabilityState) {
           pSecurityStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         }
         else {
@@ -818,12 +815,7 @@ ShowDimms(
 
       /** Health State **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STR))) {
-        if (MANAGEMENT_VALID_CONFIG != pDimms[DimmIndex].ManageabilityState) {
-          pHealthStr = HealthToString(gNvmDimmCliHiiHandle, HEALTH_UNKNOWN);
-        }
-        else {
-          pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
-        }
+        pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);
 
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, HEALTH_STR, pHealthStr);
         FREE_POOL_SAFE(pHealthStr);

@@ -2013,7 +2013,7 @@ RetrieveChannelWaysFromInterleaveSetMap(
         continue;
       }
 
-      *ppChannelWays = ReallocatePool(sizeof(UINT32) * Length, sizeof(UINT32) * Length + 1, *ppChannelWays);
+      *ppChannelWays = ReallocatePool(sizeof(UINT32) * Length, sizeof(UINT32) * (Length + 1), *ppChannelWays);
       if (*ppChannelWays == NULL) {
         ReturnCode = EFI_OUT_OF_RESOURCES;
         goto Finish;
@@ -2057,7 +2057,7 @@ RetrieveChannelWaysFromInterleaveSetMap(
     }
     // BIOS does not include x1 (non-interleaved)
     // since it is always supported
-    *ppChannelWays = ReallocatePool(sizeof(UINT32) * Length, sizeof(UINT32) * Length + 1, *ppChannelWays);
+    *ppChannelWays = ReallocatePool(sizeof(UINT32) * Length, sizeof(UINT32) * (Length + 1), *ppChannelWays);
     if (*ppChannelWays == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;

@@ -1903,7 +1903,12 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
   return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }
 
-NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count)
+NVM_API int nvm_get_number_of_regions( NVM_UINT8 *count)
+{
+	return nvm_get_number_of_regions_ex( TRUE, count);
+}
+
+NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
@@ -1939,7 +1944,11 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
+NVM_API int nvm_get_regions( struct region *p_regions, NVM_UINT8 *count) {
+	return nvm_get_regions_ex( TRUE, p_regions, count);
+}
+
+NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
   NVM_UINT8 RegionCount, Index, DimmIndex;
@@ -1960,7 +1969,7 @@ NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, N
   if (EFI_ERROR(erc))
     return NVM_ERR_UNKNOWN;
 
-  if (NVM_SUCCESS != (rc = nvm_get_number_of_regions(use_nfit, &RegionCount))) {
+  if (NVM_SUCCESS != (rc = nvm_get_number_of_regions_ex(use_nfit, &RegionCount))) {
     FreeCommandStatus(&pCommandStatus);
     return rc;
   }

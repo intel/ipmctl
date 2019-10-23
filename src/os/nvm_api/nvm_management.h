@@ -126,6 +126,37 @@ extern "C"
  */
 #define BCD_TO_BYTE(bcd) (bcd > 0x255 ? MAX_UINT8_VALUE : (((bcd & 0xF00) >> 8) * 100) + (((bcd & 0xF0) >> 4) * 10) + (bcd & 0xF))
 
+// the following defines and inline functions should no longer be needed but are
+// included for backward compilation compatibility
+
+/**
+ * Convert an array of 8 unsigned chars into an unsigned 64 bit value
+ * @remarks While it doesn't seem right to be casting 8 bit chars to unsigned long
+ * long, this is an issue with gcc - see http:// gcc.gnu.org/bugzilla/show_bug.cgi?id=47821.
+ */
+#define NVM_8_BYTE_ARRAY_TO_64_BIT_VALUE(arr, val) \
+  val = ((unsigned long long)(arr[7] & 0xFF) << 56) + \
+        ((unsigned long long)(arr[6] & 0xFF) << 48) + \
+        ((unsigned long long)(arr[5] & 0xFF) << 40) + \
+        ((unsigned long long)(arr[4] & 0xFF) << 32) + \
+        ((unsigned long long)(arr[3] & 0xFF) << 24) + \
+        ((unsigned long long)(arr[2] & 0xFF) << 16) + \
+        ((unsigned long long)(arr[1] & 0xFF) << 8) + \
+        (unsigned long long)(arr[0] & 0xFF);
+
+/**
+ * Convert an unsigned 64 bit integer to an array of 8 unsigned chars
+ */
+#define NVM_64_BIT_VALUE_TO_8_BYTE_ARRAY(val, arr) \
+  arr[7] = (unsigned char)((val >> 56) & 0xFF); \
+  arr[6] = (unsigned char)((val >> 48) & 0xFF); \
+  arr[5] = (unsigned char)((val >> 40) & 0xFF); \
+  arr[4] = (unsigned char)((val >> 32) & 0xFF); \
+  arr[3] = (unsigned char)((val >> 24) & 0xFF); \
+  arr[2] = (unsigned char)((val >> 16) & 0xFF); \
+  arr[1] = (unsigned char)((val >> 8) & 0xFF); \
+  arr[0] = (unsigned char)(val & 0xFF);
+
 /**
  * ****************************************************************************
  * ENUMS
@@ -987,6 +1018,7 @@ struct event {
   enum event_type		type;                           ///< The type of the event that occurred.
   enum event_severity	severity;                       ///< The severity of the event.
   NVM_UINT16		code;                           ///< A numerical code for the specific event that occurred.
+  NVM_BOOL		Reserved;                ///< Reserved for future use
   NVM_UID			uid;                            ///< The unique ID of the item that had the event.
   time_t			time;                           ///< The time the event occurred.
   NVM_EVENT_MSG		message;                        ///< A detailed description of the event type that occurred in English.
@@ -2017,6 +2049,19 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
+ * @param[in,out] count
+ *              A pointer an integer that will contain the number of region count on return
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_UNKNOWN @n
+ */
+NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
+
+/**
+ * @brief Retrieve the number of configured persistent memory regions in the host server.
+ * @pre The caller has administrative privileges.
+ * @remarks This method should be called before #nvm_get_regions.
  * @param[in] use_nfit
  *              0: Use PCD data to get region information.
  *              1: Use NFIT table to get region information.
@@ -2027,7 +2072,24 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
-NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count);
+NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count);
+
+/**
+ * @brief Retrieve a list of the configured persistent memory regions in host server.
+ * @param[in,out] p_regions
+ *              An array of #region structures allocated by the caller.
+ * @param[in,out] count
+ *              The number of elements in the array allocated by the caller and returns the count of regions that were returned.
+ * @pre The caller has administrative privileges.
+ * @remarks To allocate the array of #region structures,
+ * call #nvm_get_region_count before calling this method.
+ * @return
+ *            ::NVM_SUCCESS
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_UNKNOWN @n
+ *            ::NVM_ERR_NO_MEM @n
+ */
+NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Retrieve a list of the configured persistent memory regions in host server.
@@ -2047,7 +2109,7 @@ NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count)
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NO_MEM @n
  */
-NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count);
+NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Modify how the DCPMM capacity is provisioned by the BIOS on the next reboot.

@@ -1691,6 +1691,12 @@ GetUninitializedDimms(
     goto Finish;
   }
 
+  if (DimmCount > MAX_DIMMS) {
+    NVDIMM_DBG("DimmCount is larger than MAX_DIMMS");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   SetMem(pDimms, sizeof(*pDimms) * DimmCount, 0); // this clears error mask as well
 
   Index = 0;

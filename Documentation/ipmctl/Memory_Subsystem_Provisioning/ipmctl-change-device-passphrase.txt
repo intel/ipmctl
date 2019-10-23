@@ -110,7 +110,7 @@ ConfirmPassphrase=""
 Changes the default master passphrase to masterpassphrase on all DCPMMs.
 
 [verse]
-ipmctl set -master -default NewPassphrase=masterpassphrase ConfirmPassphrase=
+ipmctl set -master -default -dimm NewPassphrase=masterpassphrase ConfirmPassphrase=
 masterpassphrase
 
 Changes the master passphrase from masterpassphrase to newmasterpassphrase on

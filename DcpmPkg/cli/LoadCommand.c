@@ -495,10 +495,10 @@ Load(
 
     for (Index = 0; Index < DimmTargetsNum; Index++) {
 
-      if (pAllDimms[Index].HealthState == HEALTH_HEALTHY && TRUE == FlashSPI) {
+      if (pDimmTargets != NULL && pDimmTargets[Index].HealthState == HEALTH_HEALTHY && TRUE == FlashSPI) {
         NvmCodes[Index] = NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE;
         ReturnCodes[Index] = MatchCliReturnCode(NvmCodes[Index]);
-        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pAllDimms[Index], NvmCodes[Index], TRUE);
+        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
         continue;
       }
 

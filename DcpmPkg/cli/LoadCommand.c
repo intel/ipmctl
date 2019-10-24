@@ -503,7 +503,7 @@ Load(
       }
 
       ReturnCodes[Index] = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
-        (CHAR16 *)pWorkingDirectory, Examine, FALSE, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
+        (CHAR16 *)pWorkingDirectory, Examine, Force, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
       NvmCodes[Index] = pCommandStatus->GeneralStatus;
 
       if (!EFI_ERROR(ReturnCodes[Index])) {

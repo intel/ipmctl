@@ -5791,10 +5791,11 @@ GetPlatformConfigDataOemPartition (
   if(RestoreCorrupt && (EFI_NOT_FOUND == ReturnCode || EFI_VOLUME_CORRUPTED == ReturnCode)) {
     NVDIMM_WARN("Generating new OemPcdHeader due to missing or corrupt PCD config header.");
     *ppPlatformConfigData = AllocateZeroPool(sizeof(NVDIMM_CONFIGURATION_HEADER));
-  if (*ppPlatformConfigData == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
+    if (*ppPlatformConfigData == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
+
     GenerateOemPcdHeader(*ppPlatformConfigData);
     ReturnCode = EFI_SUCCESS;
     goto Finish;

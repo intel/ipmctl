@@ -278,9 +278,6 @@
 #string STR_DCPMM_CAPACITY_UNIT_TB #language  en "TB"
 #string STR_DCPMM_CAPACITY_UNIT_TIB #language  en "TiB"
 
-#string STR_DPCPMM_MSG_VERB_MODIFY #language  en "Modify"
-#string STR_DPCPMM_MSG_VERB_MODIFYING #language  en "Modifying"
-#string STR_DPCPMM_MSG_VERB_SKIPPED_MODIFYING #language  en "Skipped modifying"
 #string STR_DPCPMM_MSG_VERB_DELETE #language  en "Delete"
 #string STR_DPCPMM_MSG_VERB_DELETING #language  en "Deleting"
 #string STR_DPCPMM_MSG_VERB_SKIPPED_DELETING #language  en "Skipped deleting"

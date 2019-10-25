@@ -1078,34 +1078,6 @@ CreateNamespace(
       OUT COMMAND_STATUS *pCommandStatus
   );
 
-
-/**
-  Modify namespace
-  Modifies a block or persistent memory namespace on the provided region/dimm.
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] NamespaceId the ID of the namespace to be modified
-  @param[in] pName pointer to a ASCI NULL-terminated string with
-    user defined name for the namespace
-  @param[in] Force parameter needed to signalize that the caller is aware that this command
-    may cause data corruption
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-
-  Do not change property if NULL pointer provided
-**/
-EFI_STATUS
-EFIAPI
-ModifyNamespace(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 NamespaceId,
-  IN     CHAR8 *pName,
-  IN     BOOLEAN Force,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
 /**
   Delete namespace
   Deletes a block or persistent memory namespace.

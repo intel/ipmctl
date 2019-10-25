@@ -994,36 +994,6 @@ EFI_STATUS
   );
 
 /**
-  Modify namespace
-  Modifies a block or persistent memory namespace on the provided pool/dimm.
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] NamespaceId the ID of the namespace to be modified.
-  @param[in] pName pointer to a ASCI NULL-terminated string with
-    user defined name for the namespace
-  @param[in] Force parameter needed to signalize that the caller is aware that this command
-    may cause data corruption
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS if the operation was successful.
-  @retval EFI_ALREADY_EXISTS if a namespace with the provided GUID does not exist in the system.
-  @retval EFI_DEVICE_ERROR if there was a problem with writing the configuration to the device.
-  @retval EFI_OUT_OF_RESOURCES if there is not enough free space on the DIMM/Pool.
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system.
-
-  Do not change property if NULL pointer provided
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_MODIFY_NAMESPACE) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 NamespaceId,
-  IN     CHAR8 *pName,
-  IN     BOOLEAN Force,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Delete Namespace
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
@@ -1789,7 +1759,6 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_START_DIAGNOSTIC StartDiagnostic;
   EFI_DCPMM_CONFIG_CREATE_NAMESPACE CreateNamespace;
   EFI_DCPMM_CONFIG_GET_NAMESPACES GetNamespaces;
-  EFI_DCPMM_CONFIG_MODIFY_NAMESPACE ModifyNamespace;
   EFI_DCPMM_CONFIG_DELETE_NAMESPACE DeleteNamespace;
   EFI_DCPMM_CONFIG_GET_ERROR_LOG GetErrorLog;
   EFI_DCPMM_CONFIG_GET_FW_DEBUG_LOG GetFwDebugLog;

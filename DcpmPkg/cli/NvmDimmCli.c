@@ -41,7 +41,6 @@
 #include "ShowNamespaceCommand.h"
 #include "CreateNamespaceCommand.h"
 #include "DeleteNamespaceCommand.h"
-#include "SetNamespaceCommand.h"
 #include "ShowErrorCommand.h"
 #include "ShowCelCommand.h"
 #include "ShowTopologyCommand.h"
@@ -738,11 +737,6 @@ RegisterCommands(
   }
 
   Rc = RegisterDeleteNamespaceCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterSetNamespaceCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }

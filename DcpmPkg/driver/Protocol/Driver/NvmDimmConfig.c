@@ -49,6 +49,7 @@
 #define ARS_LIST_NOT_INITIALIZED -1
 #define PMTT_INFO_SIGNATURE     SIGNATURE_64('P', 'M', 'T', 'T', 'I', 'N', 'F', 'O')
 #define PMTT_INFO_FROM_NODE(a)  CR(a, PMTT_INFO, PmttNode, PMTT_INFO_SIGNATURE)
+#define IS_DIMM_SECURITY_ENABLED(SecurityStateBitmask) (SecurityStateBitmask & SECURITY_MASK_ENABLED)
 
  /** PMTT 0.2 vendor specific modules: Die, Channel, Slot added **/
  typedef struct _PMTT_VERSION {
@@ -6173,7 +6174,7 @@ GetActualRegionsGoalCapacities(
   UINT32 Index2 = 0;
   BOOLEAN Found = FALSE;
   MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
-  UINT32 DimmSecurityState = 0;
+  UINT32 DimmSecurityStateMask = 0;
   DIMM *pDimmsOnSocket[MAX_DIMMS];
   UINT32 NumDimmsOnSocket = 0;
   UINT64 TotalInputVolatileSize = 0;
@@ -6185,6 +6186,7 @@ GetActualRegionsGoalCapacities(
   UINT32 DimmsAsymNum = 0;
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
+  BOOLEAN IsDimmUnlocked = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -6263,17 +6265,25 @@ GetActualRegionsGoalCapacities(
   }
 
   for (Index = 0; Index < DimmsNum; Index++) {
-    ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
+    ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityStateMask);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
 
-    if (!IsConfiguringForCreateGoalAllowed(DimmSecurityState)) {
+    if (!IsConfiguringForCreateGoalAllowed(DimmSecurityStateMask)) {
       ReturnCode = EFI_ACCESS_DENIED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_CREATE_GOAL_NOT_ALLOWED);
       NVDIMM_DBG("Invalid request to create goal while security is in locked state.");
       goto Finish;
     }
+
+    if ((DimmSecurityStateMask & SECURITY_MASK_ENABLED) && !(DimmSecurityStateMask & SECURITY_MASK_LOCKED)) {
+      IsDimmUnlocked = TRUE;
+    }
+  }
+
+  if (IsDimmUnlocked) {
+    SetCmdStatus(pCommandStatus, NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED);
   }
 
   ReturnCode = PersistentMemoryTypeValidation(PersistentMemType);
@@ -6508,7 +6518,6 @@ CreateGoalConfig(
   UINT32 DimmsAsymNumPerSocket = 0;
   DIMM *pReserveDimm = NULL;
   UINT32 DimmSecurityStateMask = 0;
-  UINT8 DimmSecurityState = 0;
   UINT64 VolatileSize = 0;
   UINT64 ReservedSize = 0;
   BOOLEAN Found = FALSE;
@@ -6687,8 +6696,7 @@ CreateGoalConfig(
       goto Finish;
     }
 
-    ConvertSecurityBitmask(DimmSecurityStateMask, &DimmSecurityState);
-    if (SECURITY_UNLOCKED == DimmSecurityState) {
+    if (IS_DIMM_SECURITY_ENABLED(DimmSecurityStateMask)) {
       SendGoalConfigWarning = TRUE;
     }
   }

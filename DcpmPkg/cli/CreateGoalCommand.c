@@ -20,6 +20,7 @@
 
 #define CREATE_GOAL_COMMAND_STATUS_HEADER       L"Create region configuration goal"
 #define CREATE_GOAL_COMMAND_STATUS_CONJUNCTION  L" on"
+#define IS_DIMM_UNLOCKED(SecurityStateBitmask) ((SecurityStateBitmask & SECURITY_MASK_ENABLED) && !(SecurityStateBitmask & SECURITY_MASK_LOCKED))
 
 /**
   Command syntax definition
@@ -90,7 +91,7 @@ AreRequestedDimmsSecurityUnlocked(
   if (0 == pDimmIdsCount) {
     for (i = 0; i < DimmCount; i++)
     {
-      if (SECURITY_UNLOCKED == pDimmInfo[i].SecurityState) {
+      if (IS_DIMM_UNLOCKED(pDimmInfo[i].SecurityStateBitmask)) {
         *isDimmUnlocked = TRUE;
         break;
       }
@@ -101,7 +102,7 @@ AreRequestedDimmsSecurityUnlocked(
     {
       for (j = 0; j < DimmCount; j++)
       {
-        if ((ppDimmIds[i] == pDimmInfo[j].DimmID) && (SECURITY_UNLOCKED == pDimmInfo[i].SecurityState)) {
+        if ((ppDimmIds[i] == pDimmInfo[j].DimmID) && IS_DIMM_UNLOCKED(pDimmInfo[i].SecurityStateBitmask)) {
           *isDimmUnlocked = TRUE;
           break;
         }

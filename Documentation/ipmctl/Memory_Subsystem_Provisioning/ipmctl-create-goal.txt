@@ -70,9 +70,12 @@ TARGETS
 -------
 -dimm [DimmIDs]::
     Creates a memory allocation goal on specific DCPMMs by optionally supplying one or
-    more comma-separated DCPMM identifiers. This list must include all
-    unconfigured DCPMMs on the affected socket(s). The default is to configure
-    all manageable DCPMMs on all sockets.
+    more comma-separated DCPMM identifiers. This list must meet one of the following criteria:
+    . Target all DCPMMs on a given socket
+    . Target all unconfigured DCPMMs
+    . Target DCPMMs for 100% MemoryMode with all unspecified DCPMMs configured for MemoryMode only
+    . Target DCPMMs for AppDirect Not-Interleaved with all unspecified DCPMMs configured for AppDirect Not-Interleaved only
+    If dimm target is unspecified, the default is to configure all manageable DCPMMs on all sockets.
 
 -socket [SocketIds]::
     Loads the memory allocation goal onto all manageable DCPMMs on specific

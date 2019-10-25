@@ -356,11 +356,11 @@ CheckAndConfirmAlignments(
 
   if (MaxPmInterleaveSetsExceeded && RegionConfigsCount > 0) {
     for (Index = 0; Index < RegionConfigsCount; ++Index) {
-      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_1_INDEX] > 0) {
+      if (RegionConfigsInfo[Index].AppDirectSize[APPDIRECT_1_INDEX] > 0) {
         AppDirect1Regions++;
       }
 
-      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_2_INDEX] > 0) {
+      if (RegionConfigsInfo[Index].AppDirectSize[APPDIRECT_2_INDEX] > 0) {
         AppDirect2Regions++;
       }
     }

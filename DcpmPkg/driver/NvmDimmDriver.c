@@ -260,11 +260,11 @@ ReenumerateNamespacesAndISs(
       NVDIMM_WARN("Failed to clean namespaces and pools");
     }
   }
+
   /** Initialize Interleave Sets **/
-  ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-    &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
+  ReturnCode = InitializeInterleaveSets(FALSE);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to retrieve the Interleave Set and Region list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    NVDIMM_WARN("Failed to retrieve the REGION/IS list from PCD, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     goto Finish;
   }
 
@@ -1171,10 +1171,15 @@ InitializeDimms()
       We try to initialize all Regions, but if something goes wrong with a specific Region, then we just don't
       create the Region or add a proper error state to it. So even then we continue the driver initialization.
     **/
-    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
+    ReturnCode = InitializeInterleaveSets(FALSE);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the REGION/IS list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      NVDIMM_WARN("Failed to retrieve the REGION/IS list from PCD, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    }
+
+    // Initialize Interleave Sets using NFIT table
+    ReturnCode = InitializeInterleaveSets(TRUE);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the REGION/IS list from NFIT, error = " FORMAT_EFI_STATUS ".", ReturnCode);
     }
 
     /**

@@ -14,6 +14,15 @@
 #include <Dimm.h>
 #include <NvmTypes.h>
 
+#define INTERLEAVE_WAYS_X1  1
+#define INTERLEAVE_WAYS_X2  2
+#define INTERLEAVE_WAYS_X3  3
+#define INTERLEAVE_WAYS_X4  4
+#define INTERLEAVE_WAYS_X8  8
+#define INTERLEAVE_WAYS_X12 12
+#define INTERLEAVE_WAYS_X16 16
+#define INTERLEAVE_WAYS_X24 24
+
 /** IS_STATE value indicates its priority (0 is lowest) **/
 #define IS_STATE_HEALTHY          0
 #define IS_STATE_SPA_MISSING      1
@@ -151,6 +160,20 @@ InitializeISs(
   IN     LIST_ENTRY *pDimmList,
   IN     BOOLEAN UseNfit,
      OUT LIST_ENTRY *pISList
+  );
+
+/**
+  Initialize interleave sets
+  It initializes the interleave sets using NFIT or PCD
+
+  @param[in] UseNfit Flag to indicate usage of NFIT or else default to PCD
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeInterleaveSets(
+  IN     BOOLEAN UseNfit
   );
 
 /**
@@ -739,6 +762,8 @@ DeleteRegionsGoalConfigs(
 
   @param[in] pDimms List of DIMMs to configure
   @param[in] DimmsNum Number of DIMMs to configure
+  @param[in] PersistentMemType Persistent memory type
+  @param[in] VolatilePercent Volatile region size in percents
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS
@@ -749,7 +774,9 @@ EFI_STATUS
 VerifyCreatingSupportedRegionConfigs(
   IN     DIMM *pDimms[],
   IN     UINT32 DimmsNum,
-     OUT COMMAND_STATUS *pCommandStatus
+  IN     UINT8 PersistentMemType,
+  IN     UINT32 VolatilePercent,
+  OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**

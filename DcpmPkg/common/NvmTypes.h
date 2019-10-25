@@ -205,8 +205,8 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
    Goal Config data type has 2 elements
    AppDirect1 & AppDirect2 regions
  **/
-#define GOAL_CONFIG_APPDIRECT_1_INDEX   0
-#define GOAL_CONFIG_APPDIRECT_2_INDEX   1
+#define APPDIRECT_1_INDEX   0
+#define APPDIRECT_2_INDEX   1
 
 /**
  * @}

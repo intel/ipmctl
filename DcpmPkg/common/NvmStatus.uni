@@ -91,7 +91,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current and goal configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_CONF_APPLYING_FAILED #language en "Device error - configuration cannot be sent to DIMM."
-#string STR_DCPMM_STATUS_ERR_REGION_CONF_UNSUPPORTED_CONFIG #language en "All the unconfigured DCPMMs or all modules on a given socket have to be configured at once."
+#string STR_DCPMM_STATUS_ERR_REGION_CONF_UNSUPPORTED_CONFIG #language en "Requests using -dimm must conform to ONE of:\n- Target all DCPMMs on a given socket\n- Target all unconfigured DCPMMs\n- Target DCPMMs for 100%% MemoryMode with all unspecified DCPMMs configured for MemoryMode only\n- Target DCPMMs for AppDirect Not-Interleaved with all unspecified DCPMMs configured for AppDirect Not-Interleaved only"
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_FOUND #language en "Region not found"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT #language en "Platform does not support changing configuration through management software"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MIRRORING #language en "Platform does not support App Direct Memory mirroring"

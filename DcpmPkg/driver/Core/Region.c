@@ -215,6 +215,41 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Initialize interleave sets
+  It initializes the interleave sets using NFIT or PCD
+
+  @param[in] UseNfit Flag to indicate usage of NFIT or else default to PCD
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+InitializeInterleaveSets(
+  IN     BOOLEAN UseNfit
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (UseNfit ? !gNvmDimmData->PMEMDev.RegionsNfitInitialized :
+    !gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
+    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.Dimms,
+      UseNfit, (UseNfit ? &gNvmDimmData->PMEMDev.ISsNfit : &gNvmDimmData->PMEMDev.ISs));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+    }
+    else {
+      if (!UseNfit) {
+        gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
+      }
+      else {
+        gNvmDimmData->PMEMDev.RegionsNfitInitialized = TRUE;
+      }
+    }
+  }
+
+  return ReturnCode;
+}
 
 /**
   Get Region by ID
@@ -1228,6 +1263,54 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Determine if a set of dimms is configuring a given socket
+
+  @param[in] DimmsNum Number of DIMMs to verify on socket
+  @param[in] SocketId SocketId to verify that dimms are configuring
+  @param[out] pWholeSocket True if dimms are fully configuring a socket
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER if one or more parameters are NULL
+**/
+STATIC
+EFI_STATUS
+IsConfigureWholeSocket(
+  IN     UINT32 DimmsNum,
+  IN     UINT32 SocketId,
+  OUT BOOLEAN *pWholeSocket
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+  UINT32 DimmsOnSocket = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pWholeSocket == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *pWholeSocket = FALSE;
+
+  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+
+    if (SocketId == pDimm->SocketId && IsDimmManageable(pDimm)) {
+      DimmsOnSocket++;
+    }
+  }
+
+  if (DimmsNum == DimmsOnSocket) {
+    *pWholeSocket = TRUE;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 
 /**
   For a given set of Region goal dimms reduce the capacity of the Region
@@ -1671,12 +1754,15 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
 /**
   Verify that all the unconfigured DIMMs or all DIMMs on a given socket are configured at once to keep supported
   region configs.
 
   @param[in] pDimms List of DIMMs to configure
   @param[in] DimmsNum Number of DIMMs to configure
+  @param[in] PersistentMemType Persistent memory type
+  @param[in] VolatilePercent Volatile region size in percents
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS
@@ -1687,6 +1773,8 @@ EFI_STATUS
 VerifyCreatingSupportedRegionConfigs(
   IN     DIMM *pDimms[],
   IN     UINT32 DimmsNum,
+  IN     UINT8 PersistentMemType,
+  IN     UINT32 VolatilePercent,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -1699,6 +1787,10 @@ VerifyCreatingSupportedRegionConfigs(
   LIST_ENTRY *pDimmNode = NULL;
   UINT32 Socket = 0;
   UINT32 Index = 0;
+  BOOLEAN WholeSocket = FALSE;
+  UINT32 ExistingADNonInterleavedRegions = 0;
+  UINT32 ExistingVolatileRegions = 0;
+  UINT32 NumOfDimmsOnSocket = 0;
 
   NVDIMM_ENTRY();
 
@@ -1710,13 +1802,24 @@ VerifyCreatingSupportedRegionConfigs(
   for (Socket = 0; Socket < MAX_SOCKETS; Socket++) {
     ConfiguredDimmsNum = 0;
     UnconfiguredDimmsNum = 0;
+    NumOfDimmsOnSocket = 0;
+    ExistingADNonInterleavedRegions = 0;
+    ExistingVolatileRegions = 0;
+    WholeSocket = FALSE;
+
+    Rc = IsConfigureWholeSocket(DimmsNum, Socket, &WholeSocket);
+    if (EFI_ERROR(Rc)) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+      NVDIMM_DBG("Unable to determine if goal request is configuring entire socket or adding unconfigured dimms");
+      goto Finish;
+    }
 
     /** Get a number of all configured and unconfigured Dimms on a given socket **/
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId) {
-        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm) || !pDimm->NonFunctional) {
+        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm) || pDimm->NonFunctional) {
           continue;
         }
 
@@ -1725,6 +1828,21 @@ VerifyCreatingSupportedRegionConfigs(
         } else {
           UnconfiguredDimmsNum += 1;
         }
+
+        if (!WholeSocket && !IsPointerInArray((VOID **)pDimms, DimmsNum, pDimm)) {
+          // Calculate the ADx1 regions on the unspecified DIMMs
+          if (pDimm->VolatileCapacity == 0 &&
+            pDimm->ISsNfitNum > 0 &&
+            pDimm->pISsNfit[APPDIRECT_1_INDEX]->InterleaveFormatWays == INTERLEAVE_WAYS_X1) {
+            ExistingADNonInterleavedRegions++;
+          }
+
+          // Calculate number of unspecified DIMMs with only volatile capacities
+          if (pDimm->VolatileCapacity > 0 && pDimm->ISsNfitNum == 0) {
+            ExistingVolatileRegions++;
+          }
+        }
+        NumOfDimmsOnSocket++;
       }
     }
 
@@ -1736,7 +1854,7 @@ VerifyCreatingSupportedRegionConfigs(
       if (Socket == pDimms[Index]->SocketId) {
         if (!IsDimmManageable(pDimms[Index]) ||
             !IsDimmInSupportedConfig(pDimms[Index]) ||
-            !pDimms[Index]->NonFunctional) {
+            pDimms[Index]->NonFunctional) {
           continue;
         }
 
@@ -1750,13 +1868,18 @@ VerifyCreatingSupportedRegionConfigs(
 
     /**
       If any DIMM is specified for a given socket then:
-      - all unconfigured DIMMs have to be specified
-      - or all DIMMs have to be specified
+      - Target all unconfigured DCPMMs
+      - Target all DCPMMs on a given socket
+      - Target DCPMMs for AppDirect Not-Interleaved with all unspecified DCPMMs configured for AppDirect Not-Interleaved only
+      - Target DCPMMs for 100% MemoryMode with all unspecified DCPMMs configured for MemoryMode only
     **/
     if (!(
         (SpecifiedConfiguredDimmsNum == 0 && SpecifiedUnconfiguredDimmsNum == 0) ||
         (SpecifiedConfiguredDimmsNum == 0 && SpecifiedUnconfiguredDimmsNum == UnconfiguredDimmsNum) ||
-        (SpecifiedConfiguredDimmsNum == ConfiguredDimmsNum && SpecifiedUnconfiguredDimmsNum == UnconfiguredDimmsNum)
+        (SpecifiedConfiguredDimmsNum == ConfiguredDimmsNum && SpecifiedUnconfiguredDimmsNum == UnconfiguredDimmsNum) ||
+        ((PM_TYPE_AD_NI == PersistentMemType || (PM_TYPE_AD == PersistentMemType && (SpecifiedConfiguredDimmsNum + SpecifiedUnconfiguredDimmsNum) == 1)) &&
+          VolatilePercent == 0 && ((SpecifiedConfiguredDimmsNum + SpecifiedUnconfiguredDimmsNum + ExistingADNonInterleavedRegions) == NumOfDimmsOnSocket)) ||
+        (VolatilePercent == 100 && ((SpecifiedConfiguredDimmsNum + SpecifiedUnconfiguredDimmsNum + ExistingVolatileRegions) == NumOfDimmsOnSocket))
         )) {
       Rc = EFI_UNSUPPORTED;
       ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_CONF_UNSUPPORTED_CONFIG);
@@ -2168,7 +2291,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
       if (pInterleaveInfo->MirrorEnable) {
         pRegionGoal->InterleaveSetType = MIRRORED;
       }
-      else if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_SET_1_WAY) {
+      else if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_WAYS_X1) {
         pRegionGoal->InterleaveSetType = NON_INTERLEAVED;
       }
       else {
@@ -2255,7 +2378,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
       GetBitFieldForNumOfChannelWays(pInterleaveInfo->NumOfDimmsInInterleaveSet, &pRegionGoal->NumOfChannelWays);
       pRegionGoal->DimmsNum = pInterleaveInfo->NumOfDimmsInInterleaveSet;
 
-      if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_SET_1_WAY) {
+      if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_WAYS_X1) {
         pRegionGoal->InterleaveSetType = NON_INTERLEAVED;
       }
       else {
@@ -2312,55 +2435,6 @@ FinishError:
   if (!RegionGoalExists) {
     FREE_POOL_SAFE(pRegionGoal);
   }
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Determine if a set of dimms is configuring a given socket
-
-  @param[in] DimmsNum Number of DIMMs to verify on socket
-  @param[in] SocketId SocketId to verify that dimms are configuring
-  @param[out] pWholeSocket True if dimms are fully configuring a socket
-
-  @retval EFI_SUCCESS
-  @retval EFI_INVALID_PARAMETER if one or more parameters are NULL
-**/
-STATIC
-EFI_STATUS
-IsConfigureWholeSocket(
-  IN     UINT32 DimmsNum,
-  IN     UINT32 SocketId,
-  OUT BOOLEAN *pWholeSocket
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  DIMM *pDimm = NULL;
-  LIST_ENTRY *pDimmNode = NULL;
-  UINT32 DimmsOnSocket = 0;
-
-  NVDIMM_ENTRY();
-
-  if (pWholeSocket == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  *pWholeSocket = FALSE;
-
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-
-    if (SocketId == pDimm->SocketId && IsDimmManageable(pDimm)) {
-      DimmsOnSocket++;
-    }
-  }
-
-  if (DimmsNum == DimmsOnSocket) {
-    *pWholeSocket = TRUE;
-  }
-
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

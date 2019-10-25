@@ -6621,15 +6621,14 @@ CreateGoalConfig(
   }
 
 #ifdef OS_BUILD
-  if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
-    ReturnCode = InitializeISs(gNvmDimmData->PMEMDev.pFitHead,
-      &gNvmDimmData->PMEMDev.Dimms, FALSE, &gNvmDimmData->PMEMDev.ISs);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the REGION list, error = " FORMAT_EFI_STATUS ".", ReturnCode);
-    } else {
-      gNvmDimmData->PMEMDev.RegionsAndNsInitialized = TRUE;
-    }
-  }
+  // TODO: Optimize the number of LSA reads happening when interleave sets
+  // are initialized using NFIT & PCD both and namespaces are initialized.
+
+  // Trigger Interleave Set initialization from PCD
+  InitializeInterleaveSets(FALSE);
+
+  // Trigger Interleave Set initialization from NFIT
+  InitializeInterleaveSets(TRUE);
 
   ReturnCode = InitializeNamespaces();
   if (EFI_ERROR(ReturnCode)) {
@@ -6707,7 +6706,7 @@ CreateGoalConfig(
   }
 
   /** User has to configure all the unconfigured DIMMs or all DIMMs on a given socket at once **/
-  ReturnCode = VerifyCreatingSupportedRegionConfigs(ppDimms, DimmsNum, pCommandStatus);
+  ReturnCode = VerifyCreatingSupportedRegionConfigs(ppDimms, DimmsNum, PersistentMemType, VolatilePercent, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("VerifyCreatingSupportedRegionConfigs Error");
     goto Finish;
@@ -7069,7 +7068,7 @@ DumpGoalConfig(
 #ifdef OS_BUILD
   //triggers PCD read
   GetMemoryResourcesInfo(pThis, &MemoryResourcesInfo);
-  GetRegionList(NULL, FALSE);
+  InitializeInterleaveSets(FALSE);
 #endif
   /** Get an array of dimms' current config **/
   ReturnCode = GetDimmsCurrentConfig(&pDimmConfigs, &DimmConfigsNum);

@@ -462,6 +462,7 @@ ThresholdsCheck(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   SMART_AND_HEALTH_INFO HealthInfo;
+  UINT8 AlarmEnabled = 0;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
@@ -490,7 +491,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_MEDIA_TEMPERATURE,
     &MediaTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -498,7 +499,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, MediaTemperatureThreshold, HealthInfo.MediaTempShutdownThresh);
   }
@@ -507,7 +508,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_CONTROLLER_TEMPERATURE,
     &ControllerTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -515,7 +516,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, HealthInfo.ContrTempShutdownThresh);
   }
@@ -524,7 +525,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_PERCENTAGE_REMAINING,
     &PercentageRemainingThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -532,7 +533,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.PercentageRemainingValid && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }

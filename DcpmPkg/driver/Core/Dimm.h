@@ -43,13 +43,6 @@
 #define SQ_SHIFT 63
 #define EXT_SUB_OP_SHIFT 8
 
-#define EMULATOR_DIMM_HEALTH_STATUS       0    //!< Normal
-#define EMULATOR_DIMM_TEMPERATURE         300  //!< 300K is about 26C
-#define EMULATOR_DIMM_TEMPERATURE_THR     310  //!< 310K is about 35C
-#define EMULATOR_DIMM_PERCENTAGE_REMAINING      75   //!< 75% of percentage remaining
-#define EMULATOR_DIMM_PERCENTAGE_REMAINING_THR  5    //!< 5% of percentage remaining
-#define DIMM_OUTPUT_PAYLOAD_SIZE          128  //!< The max size of the DIMM small output payload
-
 #define MAX_SMALL_OUTPUT_REG_COUNT      32
 
 #define BOOT_STATUS_REGISTER_OFFSET 0x20000

@@ -38,7 +38,6 @@
 #string STR_QUICK_BAD_HEALTH_STATE                       #language en "The quick health check detected that DIMM %ls is reporting a bad health state %ls."
 #string STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR           #language en "The quick health check detected that DIMM %ls is reporting a media temperature of %d C which is above the alarm threshold %d C."
 #string STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR         #language en "The quick health check detected that DIMM %ls is reporting percentage remaining at %d%% which is less than the alarm threshold %d%%."
-#string STR_QUICK_PERCENTAGE_REMAINGING_BELOW_THR            #language en "The quick health check detected that DIMM %ls is reporting percentage remaining at %d%% which is less than the recommended threshold %d%%."
 #string STR_QUICK_CONTROLLER_TEMP_EXCEEDS_ALARM_THR      #language en "The quick health check detected that DIMM %ls is reporting a controller temperature of %d C which is above the alarm threshold %d C."
 #string STR_QUICK_BSR_NOT_READABLE                       #language en "The quick health check detected that the boot status register of DIMM %ls is not readable."
 #string STR_QUICK_BSR_MEDIA_NOT_READY                    #language en "The quick health check detected that the firmware on DIMM %ls is reporting that the media is not ready."

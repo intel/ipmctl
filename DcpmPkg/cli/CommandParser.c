@@ -1926,10 +1926,14 @@ EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
     Attribs.Protocol = FisTransportDdrt;
   }
   else if (containsOption(pCmd, PROTOCOL_OPTION_SMBUS)) {
+    // smbus requires small payload size
     Attribs.Protocol = FisTransportSmbus;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 
   if (containsOption(pCmd, LARGE_PAYLOAD_OPTION)) {
+    // large payload implies ddrt (for now)
+    Attribs.Protocol = FisTransportDdrt;
     Attribs.PayloadSize = FisTransportSizeLargeMb;
   }
   else if (containsOption(pCmd, SMALL_PAYLOAD_OPTION)) {

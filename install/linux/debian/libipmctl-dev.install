@@ -1,0 +1,5 @@
+usr/lib/*/libipmctl.so
+usr/include/export_api.h
+usr/include/nvm_management.h
+usr/include/nvm_types.h
+usr/include/NvmSharedDefs.h

@@ -6,7 +6,8 @@ Build-Depends: debhelper (>= 10),
                cmake (>=2.8.12),
                pkg-config,
                python,
-               asciidoctor
+               asciidoctor,
+               libndctl-dev (>= 58.2)
 Standards-Version: 4.1.2
 Homepage: https://github.com/intel/ipmctl
 #Vcs-Git: https://anonscm.debian.org/git/collab-maint/ipmctl.git

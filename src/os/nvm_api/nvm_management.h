@@ -255,6 +255,8 @@ enum sensor_type {
   SENSOR_UNLATCHED_DIRTY_SHUTDOWN_COUNT = 9,    ///!< Number of times that the FW received an unexpected power loss
 };
 
+#define SENSOR_COUNT                10
+
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;
 
 /*
@@ -366,6 +368,18 @@ enum diagnostic_test {
   DIAG_TYPE_FW_CONSISTENCY  = 3     ///< verifies all DCPMMs have consistent FW and attributes
 };
 
+/**
+* Health status type
+*/
+enum health_status {
+  HEALTH_STATUS_UNKNOWN             =  0,    ///< Unknown health status
+  HEALTH_STATUS_HEALTHY             =  1,    ///< DIMM Healthy
+  HEALTH_STATUS_NON_CRITICAL_FAILURE=  2,    ///< Non-Critical (maintenance required)
+  HEALTH_STATUS_CRITICAL_FAILURE    =  3,    ///< Critical (feature or performance degraded due to failure)
+  HEALTH_STATUS_FATAL_FAILURE       =  4,    ///< Fatal (data loss has occurred or is imminent)
+  HEALTH_STATUS_UNMANAGEABLE        =  5,    ///< DIMM is unmanagable
+  HEALTH_STATUS_NON_FUNCTIONAL      =  6
+};
 /**
  * Diagnostic threshold type.
  */

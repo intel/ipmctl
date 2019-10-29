@@ -3010,6 +3010,7 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
 
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device)
 {
+  int Index = 0;
   p_device->all_properties_populated = FALSE;
   p_device->device_handle.handle = p_dimm->DimmHandle;
   p_device->physical_id = p_dimm->DimmID;
@@ -3032,7 +3033,11 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   p_device->manufacturing_info_valid = p_dimm->ManufacturingInfoValid;
   p_device->manufacturing_location = p_dimm->ManufacturingLocation;
   p_device->manufacturing_date = p_dimm->ManufacturingDate;
-  CopyMem_S(p_device->part_number, sizeof(p_device->part_number), p_dimm->PartNumber, PART_NUMBER_LEN);
+  for (Index = 0; Index < PART_NUMBER_LEN; Index++)
+  {
+    p_device->part_number[Index] = (char)p_dimm->PartNumber[Index];
+  }
+  p_device->part_number[PART_NUMBER_LEN - 1] = '\0';
   build_revision(p_device->fw_revision, NVM_VERSION_LEN, p_dimm->FwVer.FwProduct, p_dimm->FwVer.FwRevision,
 		 p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
   snprintf(p_device->fw_api_version, NVM_VERSION_LEN, "%02d.%02d", p_dimm->FwVer.FwApiMajor, p_dimm->FwVer.FwApiMinor);

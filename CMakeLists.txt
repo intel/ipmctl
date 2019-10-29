@@ -752,3 +752,5 @@ endif()
 if(ESX_BUILD)
 	include(CMake/esx.cmake)
 endif()
+
+add_subdirectory(src/os/nvm_api_sample)

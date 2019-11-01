@@ -1028,8 +1028,8 @@ ShowDimms(
         FREE_POOL_SAFE(pFormFactorStr);
       }
 
-      /** If Dimm is Manageable and not in population violation, print rest of the attributes **/
-      if (pDimms[DimmIndex].ManageabilityState && !pDimms[DimmIndex].IsInPopulationViolation) {
+      /** If Dimm is Manageable print rest of the attributes **/
+      if (pDimms[DimmIndex].ManageabilityState) {
         /** ManufacturerId **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MANUFACTURER_ID_STR))) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MANUFACTURER_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].ManufacturerId));

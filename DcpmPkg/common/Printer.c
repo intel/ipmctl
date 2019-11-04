@@ -943,6 +943,44 @@ static VOID PrintAsXml(DATA_SET_CONTEXT *DataSetCtx, PRINT_CONTEXT *PrintCtx) {
 }
 
 /*
+* Print to stdout with each line starting with ERROR
+*/
+static VOID PrintTextAsEsxError(CHAR16 *Msg) {
+  CHAR16 *BeginStr = Msg;
+  CHAR16 *SearchResult = NULL;
+  CHAR16 *tmpStr = NULL;
+  UINT32 Index;
+
+  if (NULL == Msg) {
+    return;
+  }
+
+  while (NULL != (SearchResult = StrStr(BeginStr, FORMAT_NL))) {
+    tmpStr = (CHAR16 *)AllocateZeroPool((1 + SearchResult - BeginStr) * sizeof(Msg[0]));
+    if (NULL != tmpStr) {
+      // replace StrnCpy since it is not available in all environments
+      for (Index = 0; Index < (SearchResult - BeginStr); ++Index) {
+        tmpStr[Index] = BeginStr[Index];
+      }
+      Print(ESX_ERROR_LINE_HEADER);
+      Print(FORMAT_STR FORMAT_NL, tmpStr);
+      FREE_POOL_SAFE(tmpStr);
+      BeginStr = SearchResult + 1;
+    }
+    else {
+      // Cannot copy out substr so just print it all
+      Print(ESX_ERROR_LINE_HEADER);
+      Print(FORMAT_STR FORMAT_NL, BeginStr);
+      BeginStr += StrLen(BeginStr);
+    }
+  }
+  if (0 < StrLen(BeginStr)) {
+    Print(ESX_ERROR_LINE_HEADER);
+    Print(FORMAT_STR FORMAT_NL, BeginStr);
+  }
+}
+
+/*
 * Print to stdout and ensure newline
 */
 static VOID PrintTextWithNewLine(CHAR16 *Msg) {
@@ -962,12 +1000,7 @@ static VOID PrintTextWithNewLine(CHAR16 *Msg) {
 * Display beginning of XML error
 */
 static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
-  if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
-    Print(ESX_XML_FILE_BEGIN);
-    Print(ESX_XML_SIMPLE_STR_TAG_BEGIN);
-    Print(L"ERROR: ");
-  }
-  else {
+  if (!PrintCtx->FormatTypeFlags.Flags.EsxCustom && !PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
 #ifdef OS_BUILD
     CmdExitCode = UefiToOsReturnCode(CmdExitCode);
 #endif
@@ -981,10 +1014,6 @@ static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCod
 static VOID PrintXmlEndErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (!PrintCtx->FormatTypeFlags.Flags.EsxCustom && !PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
     Print(L"</Error>\n");
-  }
-  else {
-    Print(ESX_XML_SIMPLE_STR_TAG_END);
-    Print(ESX_XML_FILE_END);
   }
 }
 
@@ -1345,7 +1374,12 @@ EFI_STATUS PrinterProcessSetBuffer(
 
   //if XML mode print the appropriate start tag
   if (PRINT_XML == PrinterMode || PRINT_BASIC_XML == PrinterMode) {
-    Print(XML_FILE_BEGIN);
+    if ((pPrintCtx->BufferedDataSetCnt != 0) ||
+      (EFI_SUCCESS == pPrintCtx->BufferedObjectLastError) ||
+      (!pPrintCtx->FormatTypeFlags.Flags.EsxCustom && !pPrintCtx->FormatTypeFlags.Flags.EsxKeyVal))
+    {
+      Print(XML_FILE_BEGIN);
+    }
     if (PRINT_BASIC_XML == PrinterMode &&
       EFI_SUCCESS == pPrintCtx->BufferedObjectLastError) {
       PrintXmlStartSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
@@ -1364,8 +1398,19 @@ EFI_STATUS PrinterProcessSetBuffer(
     RemoveEntryList(&BufferedObject->Link);
     if (BUFF_STR_TYPE == BufferedObject->Type) {
       BUFFERED_STR *pTempBs = (BUFFERED_STR *)BufferedObject->Obj;
-      if (PRINT_XML != PrinterMode) {
-        PrintTextWithNewLine(pTempBs->pStr);
+
+      // check if needs to be printed as error for Esx
+      if ((pPrintCtx->BufferedDataSetCnt == 0) &&
+        (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) &&
+        (pPrintCtx->FormatTypeFlags.Flags.EsxCustom || pPrintCtx->FormatTypeFlags.Flags.EsxKeyVal))
+      {
+        PrintTextAsEsxError(pTempBs->pStr);
+      }
+      else
+      {
+        if (PRINT_XML != PrinterMode) {
+          PrintTextWithNewLine(pTempBs->pStr);
+        }
       }
       FREE_POOL_SAFE(pTempBs->pStr);
       pPrintCtx->BufferedMsgCnt--;

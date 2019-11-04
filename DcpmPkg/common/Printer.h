@@ -45,6 +45,8 @@
 #define ON  1
 #define OFF 0
 
+#define ESX_ERROR_LINE_HEADER L"ERROR: "
+
 // Helper to calculate the column width of a CHAR16 string literal
 #define TABLE_MIN_HEADER_LENGTH(Header)     ((sizeof(Header) / sizeof(CHAR16)))
 

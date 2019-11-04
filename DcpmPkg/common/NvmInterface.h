@@ -354,15 +354,6 @@ EFI_STATUS
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_DELETE_PCD) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
 /**
 Clear PCD configs
 
@@ -1113,30 +1104,6 @@ EFI_STATUS
   );
 
 /**
-  Dump FW debug logs
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID identifier of what dimm to get log pages from
-  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pBytesWritten size of output buffer
-  @param[out] pCommandStatus structure containing detailed NVM error codes
-
-  Note: This function is deprecated. Please use the new function GetFwDebugLog.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 DimmDimmID,
-     OUT VOID **ppDebugLogs,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Get Optional Configuration Data Policy using FW command
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -1736,7 +1703,6 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_ACPI_PCAT GetAcpiPcat;
   EFI_DCPMM_CONFIG_GET_ACPI_PMTT GetAcpiPMTT;
   EFI_DCPMM_CONFIG_GET_PCD GetPcd;
-  EFI_DCPMM_CONFIG_DELETE_PCD DeletePcd;
   EFI_DCPMM_CONFIG_GET_SECURITY_STATE GetSecurityState;
   EFI_DCPMM_CONFIG_SET_SECURITY_STATE SetSecurityState;
   EFI_DCPMM_CONFIG_UPDATE_FW UpdateFw;
@@ -1762,7 +1728,6 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_DELETE_NAMESPACE DeleteNamespace;
   EFI_DCPMM_CONFIG_GET_ERROR_LOG GetErrorLog;
   EFI_DCPMM_CONFIG_GET_FW_DEBUG_LOG GetFwDebugLog;
-  EFI_DCPMM_CONFIG_DUMP_FW_DEBUG_LOG DumpFwDebugLog;
   EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY SetOptionalConfigurationDataPolicy;
   EFI_DCPMM_CONFIG_RETRIEVE_DIMM_REGISTERS RetrieveDimmRegisters;
   EFI_DCPMM_CONFIG_GET_SYSTEM_TOPOLOGY GetSystemTopology;

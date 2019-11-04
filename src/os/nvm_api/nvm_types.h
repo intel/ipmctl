@@ -45,7 +45,6 @@ byte swap
 #define NVM_MAX_HANDLE_LEN 11 ///< Max length of a uint32 in decimal + '\0'
 #define NVM_MAX_UID_LEN 22 ///< Max Length of Unique ID
 #define NVM_MAX_DIMMID_STR_LEN 7 ///< Max length of Dimm ID string
-#define NVM_SOCKET_MANUFACTURER_LEN 16 ///< Socket manufacturer string length
 #define NVM_MANUFACTURER_LEN  2 ///< Number of bytes in the manufacturer ID
 #define NVM_MANUFACTURERSTR_LEN 256 ///< Manufacturer string length
 #define NVM_SERIAL_LEN  4 ///< Number of bytes in the serial number

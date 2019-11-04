@@ -461,28 +461,6 @@ GetPcd(
 );
 
 /**
-  Clear LSA Namespace partition
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-
-  Note: This function is deprecated. Please use the new function DeletePcdConfig.
-**/
-EFI_STATUS
-EFIAPI
-DeletePcd(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
 Modifies select partition data from the PCD
 
 @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -1154,31 +1132,6 @@ GetFwDebugLog(
   IN     UINT32 Reserved,
      OUT VOID **ppDebugLogBuffer,
      OUT UINTN *pDebugLogBufferSize,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-
-/**
-  Dump FW debug logs
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID identifier of what dimm to get log pages from
-  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pBytesWritten size of output buffer
-  @param[out] pCommandStatus structure containing detailed NVM error codes
-
-  Note: This function is deprecated. Please use the new function GetFwDebugLog.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-EFIAPI
-DumpFwDebugLog(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT VOID **ppDebugLogs,
-     OUT UINT64 *pBytesWritten,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

@@ -931,14 +931,12 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	p_capabilities->features.get_features = 1;
 	p_capabilities->features.set_features = 1;
 	p_capabilities->features.create_namespace = 0;
-	p_capabilities->features.rename_namespace = 0;
 	p_capabilities->features.delete_namespace = 0;
 	p_capabilities->features.set_security_state = 0;
 	p_capabilities->features.enable_logging = 1;
 	p_capabilities->features.run_diagnostic = 0;
 	p_capabilities->features.passthrough = 1;
 	p_capabilities->features.app_direct_mode = 1;
-  p_capabilities->features.storage_mode = 0;
 	return 0;
 }
 

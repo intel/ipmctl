@@ -42,7 +42,6 @@
 
 #ifdef OS_BUILD
 #include <os_efi_api.h>
-#include "event.h"
 #endif // OS_BUILD
 
 #define INVALID_SOCKET_ID 0xFFFF
@@ -118,7 +117,6 @@ EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetAcpiPcat,
   GetAcpiPMTT,
   GetPcd,
-  DeletePcd,
   GetSecurityState,
   SetSecurityState,
   UpdateFw,
@@ -144,7 +142,6 @@ EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   DeleteNamespace,
   GetErrorLog,
   GetFwDebugLog,
-  DumpFwDebugLog,
   SetOptionalConfigurationDataPolicy,
   RetrieveDimmRegisters,
   GetSystemTopology,
@@ -3540,85 +3537,6 @@ FinishError:
     FreeDimmPcdInfoArray(*ppDimmPcdInfo, DimmsCount);
     *ppDimmPcdInfo = NULL;
   }
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Clear LSA Namespace partition
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
-  @retval EFI_NO_RESPONSE FW busy for one or more dimms
-  @retval EFI_OUT_OF_RESOURCES Memory allocation failure
-**/
-EFI_STATUS
-EFIAPI
-DeletePcd(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  EFI_STATUS TmpReturnCode = EFI_SUCCESS;
-  DIMM *pDimms[MAX_DIMMS];
-  UINT32 DimmsCount = 0;
-  UINT32 Index = 0;
-  UINT32 SecurityState = 0;
-
-  NVDIMM_ENTRY();
-
-  ZeroMem(pDimms, sizeof(pDimms));
-
-  if (pThis == NULL || pCommandStatus == NULL) {
-    goto Finish;
-  }
-
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
-      pCommandStatus);
-  if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmsCount; Index++) {
-
-    TmpReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &SecurityState);
-    if (EFI_ERROR(TmpReturnCode)) {
-      KEEP_ERROR(ReturnCode, TmpReturnCode);
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
-      NVDIMM_DBG("Failed to get DIMM security state");
-      goto Finish;
-    }
-
-    if (!IsConfiguringAllowed(SecurityState)) {
-      KEEP_ERROR(ReturnCode, EFI_ACCESS_DENIED);
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
-      NVDIMM_DBG("Locked DIMM discovered : 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-      continue;
-    }
-
-    TmpReturnCode = ZeroLabelStorageArea(pDimms[Index]->DimmID);
-    if (EFI_ERROR(TmpReturnCode)) {
-      KEEP_ERROR(ReturnCode, TmpReturnCode);
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
-      NVDIMM_DBG("Error in zero-ing the LSA: " FORMAT_EFI_STATUS "", TmpReturnCode);
-      continue;
-    }
-
-    SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
-    NVDIMM_DBG("Zero'ed the LSA on DIMM : 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-  }
-
-  ReenumerateNamespacesAndISs(TRUE);
-
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -8263,39 +8181,6 @@ GetFwDebugLog(
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Dump FW debug logs
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID identifier of what dimm to get log pages from
-  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pBytesWritten size of output buffer
-  @param[out] pCommandStatus structure containing detailed NVM error codes
-
-  Note: This function is deprecated. Please use the new function GetFwDebugLog.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-EFIAPI
-DumpFwDebugLog(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT VOID **ppDebugLogs,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT32 Reserved = 0;
-
-  ReturnCode = GetFwDebugLog(pThis, DimmID, FW_DEBUG_LOG_SOURCE_MEDIA,
-      Reserved, ppDebugLogs, pBytesWritten, pCommandStatus);
-
   return ReturnCode;
 }
 

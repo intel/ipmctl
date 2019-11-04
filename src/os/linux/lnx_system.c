@@ -448,9 +448,6 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	p_capabilities->features.get_features = 1;
 	p_capabilities->features.set_features = 1;
 	p_capabilities->features.create_namespace = 0;
-	p_capabilities->features.rename_namespace = 0;
-	p_capabilities->features.grow_namespace = 0;
-	p_capabilities->features.shrink_namespace = 0;
 	p_capabilities->features.delete_namespace = 0;
 	p_capabilities->features.enable_namespace = 0;
 	p_capabilities->features.disable_namespace = 0;
@@ -461,7 +458,6 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	p_capabilities->features.passthrough = 1;
 	p_capabilities->features.start_address_scrub = 1;
 	p_capabilities->features.app_direct_mode = 1;
-	p_capabilities->features.storage_mode = 0;
 
 	p_capabilities->min_namespace_size = ndctl_min_namespace_size();
 	get_supported_block_sizes(p_capabilities);

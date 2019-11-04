@@ -43,7 +43,6 @@
 #include "os_common.h"
 #include <os_efi_api.h>
 #include <os_types.h>
-#include "event.h"
 #include "Pbr.h"
 #include "PbrDcpmm.h"
 #include <os_str.h>
@@ -436,6 +435,26 @@ IsDebugLoggerEnabled()
 #ifdef NDEBUG
 void (*rel_assert) (void) = NULL;
 #endif // NDEBUG
+
+/*
+* Sends system event entry to standard output.
+*/
+static void write_system_event_to_stdout(const char* source, const char* message)
+{
+  NVM_EVENT_MSG ascii_event_message = { 0 };
+  CHAR16 w_event_message[sizeof(ascii_event_message)] = { 0 };
+
+  // Prepare string
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), source);
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), " ");
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), message);
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), "\n");
+  // Convert to the unicode
+  AsciiStrToUnicodeStr(ascii_event_message, w_event_message);
+
+  // Send it to standard output
+  Print(FORMAT_STR, w_event_message);
+}
 
 /**
 Prints a debug message to the debug output device if the specified error level is enabled.

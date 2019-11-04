@@ -102,7 +102,7 @@ API for development of Intel Optane DC persistent memory management utilities.
 %{_mandir}/man1/ipmctl*
 
 %files -n libipmctl
-%{_libdir}/libipmctl.so.3*
+%{_libdir}/libipmctl.so.4*
 %dir %{_datadir}/doc/ipmctl
 %doc %{_datadir}/doc/ipmctl/ipmctl_default.conf
 %config(noreplace) %{_datadir}/ipmctl/ipmctl.conf
@@ -118,6 +118,9 @@ API for development of Intel Optane DC persistent memory management utilities.
 %{_libdir}/pkgconfig/libipmctl.pc
 
 %changelog
+* Thu Oct 10 2019 Amy Wang <Amy2.Wang@intel.com> - 02.00.00.3613-1
+- Change the reference to the share libraries
+
 * Mon Sep 17 2018 Juston Li <juston.li@intel.com> - 01.00.00.3262-1
 - Clean up spec for fedora review
 

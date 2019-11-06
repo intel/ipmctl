@@ -1026,20 +1026,24 @@ typedef struct _DEBUG_LOG_INFO {
   08 - Configuration Input Checksum not valid
   09 - Configuration Input data Revision is not supported
   10 - Current Configuration Checksum not valid
+  11 - DCPMM is not mapped to SPA due to a health issue or configuration change.
+  12 - DCPMM is not mapped due to a population issue.
+  14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit.
 **/
-#define DIMM_CONFIG_UNDEFINED               0
-#define DIMM_CONFIG_SUCCESS                 1
-#define DIMM_CONFIG_RESERVED                2
-#define DIMM_CONFIG_IS_INCOMPLETE           3
-#define DIMM_CONFIG_NO_MATCHING_IS          4
-#define DIMM_CONFIG_NEW_DIMM                5
-#define DIMM_CONFIG_OLD_CONFIG_USED         6
-#define DIMM_CONFIG_BAD_CONFIG              7
-#define DIMM_CONFIG_IN_CHECKSUM_NOT_VALID   8
-#define DIMM_CONFIG_REVISION_NOT_SUPPORTED  9
-#define DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID 10
-#define DIMM_CONFIG_PM_NOT_MAPPED           11
-#define DIMM_CONFIG_DCPMM_POPULATION_ISSUE  12
+#define DIMM_CONFIG_UNDEFINED                      0
+#define DIMM_CONFIG_SUCCESS                        1
+#define DIMM_CONFIG_RESERVED                       2
+#define DIMM_CONFIG_IS_INCOMPLETE                  3
+#define DIMM_CONFIG_NO_MATCHING_IS                 4
+#define DIMM_CONFIG_NEW_DIMM                       5
+#define DIMM_CONFIG_OLD_CONFIG_USED                6
+#define DIMM_CONFIG_BAD_CONFIG                     7
+#define DIMM_CONFIG_IN_CHECKSUM_NOT_VALID          8
+#define DIMM_CONFIG_REVISION_NOT_SUPPORTED         9
+#define DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID        10
+#define DIMM_CONFIG_PM_NOT_MAPPED                  11
+#define DIMM_CONFIG_DCPMM_POPULATION_ISSUE         12
+#define DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION 14
 
 /**
   00 - Valid

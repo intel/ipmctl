@@ -442,6 +442,13 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
+                if (pCommand->options[matchedOptions].OptionValue == NULL) {
+                  pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+                  SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+                  Rc = EFI_INVALID_PARAMETER;
+                  goto Finish;
+                }
                 StrnCpyS(pCommand->options[matchedOptions].OptionValue, OPTION_VALUE_LEN, pInput->ppTokens[*pStart], OPTION_VALUE_LEN - 1);
                 (*pStart)++;
               }

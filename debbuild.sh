@@ -37,7 +37,7 @@ sed -i "s/Maintainer/$MAINTAINER/g ; s/^ipmctl (99.99.99.9999/ipmctl ($BUILDNUM/
 
 # Make output directories
 mkdir -p $ORIGDIR/output/debbuild
-
+chmod -x debian/*.install
 # call utility that does the build -- unfortunately output is to .. (parent directory)
 debuild --no-lintian -us -uc -sd
 

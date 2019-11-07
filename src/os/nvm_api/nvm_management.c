@@ -39,7 +39,7 @@
 #include <wchar.h>
 #include <CommandParser.h>
 #include "event.h"
-#include <Protocol/EfiShellParameters.h>
+#include <ShellParameters.h>
 #include "LoadCommand.h"
 #include <os_str.h>
 

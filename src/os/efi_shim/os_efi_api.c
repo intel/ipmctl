@@ -7,9 +7,8 @@
 #include <memory.h>
 #include <Uefi.h>
 #include <Library/BaseLib.h>
-#include <ShellBase.h>
 #include <Guid/FileInfo.h>
-#include <EfiShellParameters.h>
+#include <ShellParameters.h>
 #include <LoadedImage.h>
 #include <EfiShellInterface.h>
 #include <NvmStatus.h>

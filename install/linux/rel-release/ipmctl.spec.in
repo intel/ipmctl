@@ -67,7 +67,7 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
     -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir} \
     -DCMAKE_INSTALL_BINDIR=%{_bindir} \
-    -DCMAKE_INSTALL_DATAROOTDIR=%{_datadir} \
+    -DCMAKE_INSTALL_DATAROOTDIR=%{_datarootdir} \
     -DCMAKE_INSTALL_MANDIR=%{_mandir} \
     -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
@@ -79,7 +79,7 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
     -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir} \
     -DCMAKE_INSTALL_BINDIR=%{_bindir} \
-    -DCMAKE_INSTALL_DATAROOTDIR=%{_datadir} \
+    -DCMAKE_INSTALL_DATAROOTDIR=%{_datarootdir} \
     -DCMAKE_INSTALL_MANDIR=%{_mandir} \
     -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
@@ -107,7 +107,7 @@ API for development of Intel Optane DC persistent memory management utilities.
 %doc %{_datadir}/doc/ipmctl/ipmctl_default.conf
 %config(noreplace) %{_datadir}/ipmctl/ipmctl.conf
 %dir %{_localstatedir}/log/ipmctl
-%config(noreplace) %{_sysconfdir}/logrotate.d/ipmctl.conf
+%config(noreplace) %{_sysconfdir}/logrotate.d/ipmctl
 
 %files -n libipmctl-devel
 %{_libdir}/libipmctl.so
@@ -123,4 +123,3 @@ API for development of Intel Optane DC persistent memory management utilities.
 
 * Wed May 02 2018 Juston Li <juston.li@intel.com> - 01.00.00.3000-1
 - initial spec
-

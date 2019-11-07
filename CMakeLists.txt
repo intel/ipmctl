@@ -551,7 +551,7 @@ FILE(GLOB NVM_HEADERS
 FILE(COPY ${NVM_HEADERS}
 	DESTINATION ${OUTPUT_DIR})
 
-FILE(COPY install/linux/logrotate/ipmctl.conf
+FILE(COPY install/linux/logrotate/ipmctl.logrotate.conf
 	DESTINATION ${OUTPUT_DIR})
 
 if(LNX_BUILD)
@@ -592,8 +592,9 @@ if(LNX_BUILD)
 		DESTINATION ${CMAKE_INSTALL_LOCALSTATEDIR}/log
 		)
 
-	install(FILES ${OUTPUT_DIR}/ipmctl.conf
+	install(FILES ${OUTPUT_DIR}/ipmctl.logrotate.conf
 		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
+		RENAME ipmctl
 		)
 
 	install(FILES ${OUTPUT_DIR}/libipmctl.pc

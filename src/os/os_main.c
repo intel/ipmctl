@@ -10,6 +10,7 @@
 #include "event.h"
 
 extern NVM_API int nvm_run_cli(int argc, char *argv[]);
+
 int main(int argc, char *argv[])
 {
 	return nvm_run_cli(argc, argv);

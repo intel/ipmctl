@@ -11,7 +11,6 @@
 #include <FwUtility.h>
 #include <NvmInterface.h>
 #include <Library/UefiShellLib/UefiShellLib.h>
-#include <Protocol/EfiShell.h>
 #include "NvmDimmCli.h"
 #include "Common.h"
 

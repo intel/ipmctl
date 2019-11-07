@@ -726,12 +726,15 @@ GetDimmInfo (
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
+  // Set defaults first
+  pDimmInfo->ManageabilityState = MANAGEMENT_VALID_CONFIG;
+  pDimmInfo->HealthState = HEALTH_UNKNOWN;
+  // Then change as needed.
   if (!IsDimmManageable(pDimm)) {
     pDimmInfo->ManageabilityState = MANAGEMENT_INVALID_CONFIG;
     pDimmInfo->HealthState = HEALTH_UNMANAGEABLE;
-  } else {
-    pDimmInfo->ManageabilityState = MANAGEMENT_VALID_CONFIG;
-    pDimmInfo->HealthState = HEALTH_UNKNOWN;
+  } else if (TRUE == pDimm->NonFunctional) {
+    pDimmInfo->HealthState = HEALTH_NON_FUNCTIONAL;
   }
 
   pDimmInfo->IsNew = pDimm->IsNew;
@@ -871,7 +874,9 @@ GetDimmInfo (
     if (EFI_ERROR(ReturnCode)) {
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SMART_AND_HEALTH;
     }
-    if (HEALTH_UNMANAGEABLE != pDimmInfo->HealthState) {
+    // Fill in the DCPMM's understanding of its own HealthState if we didn't have any
+    // other opinions earlier
+    if (HEALTH_UNKNOWN == pDimmInfo->HealthState) {
        ConvertHealthBitmask(HealthInfo.HealthStatus, &pDimmInfo->HealthState);
     }
     pDimmInfo->HealthStatusReason = HealthInfo.HealthStatusReason;

@@ -527,7 +527,9 @@ InitializeNfitDimmInfoFieldsFromDimm(
  * Helper function for initializing information from the SMBIOS
  */
 EFI_STATUS
-FillSmbiosInfo(IN OUT DIMM_INFO *pDimmInfo)
+FillSmbiosInfo(
+  IN OUT DIMM_INFO *pDimmInfo
+  )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
@@ -4058,6 +4060,9 @@ GetMemoryResourcesInfo(
   UINT64 UnconfiguredCapacity = 0;
   UINT64 ReservedCapacity = 0;
   UINT64 InaccessibleCapacity = 0;
+  UINT64 DDRRawCapacity = 0;
+  UINT64 DDRCacheCapacity = 0;
+  UINT64 DDRVolatileCapacity = 0;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -4127,6 +4132,17 @@ GetMemoryResourcesInfo(
     pMemoryResourcesInfo->InaccessibleCapacity += InaccessibleCapacity;
     pMemoryResourcesInfo->UnconfiguredCapacity += UnconfiguredCapacity;
   }
+
+  // Get DDR Sizes
+  ReturnCode = GetDDRCapacities(&DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
+
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  pMemoryResourcesInfo->DDRRawCapacity = DDRRawCapacity;
+  pMemoryResourcesInfo->DDRCacheCapacity = DDRCacheCapacity;
+  pMemoryResourcesInfo->DDRVolatileCapacity = DDRVolatileCapacity;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -8612,7 +8628,6 @@ GetCapacities(
 
   // All shall be zero to start
   *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
-
   ReturnCode = CurrentMemoryMode(&CurrentMode);
 
   if (EFI_ERROR(ReturnCode)) {
@@ -8625,7 +8640,7 @@ GetCapacities(
     ReservedCapacity = GetReservedCapacity(pDimm);
     AppDirectCapacity = pDimm->MappedPersistentCapacity;
   } else {
-    if (CurrentMode == MEMORY_MODE_2LM) {
+    if (MEMORY_MODE_2LM == CurrentMode) {
       VolatileCapacity = ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
       ReservedCapacity = GetReservedCapacity(pDimm);
     }
@@ -8647,7 +8662,7 @@ GetCapacities(
     *pInaccessibleCapacity += AppDirectCapacity;
   }
 
-  if (CurrentMode != MEMORY_MODE_2LM && !pDimm->Configured) {
+  if ((MEMORY_MODE_2LM != CurrentMode) && !pDimm->Configured) {
     //DIMM is unconfigured and system is in 1LM mode
     *pUnconfiguredCapacity = pDimm->RawCapacity;
     // No useable capacity
@@ -8661,6 +8676,156 @@ GetCapacities(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+
+/**
+  Retrieve and calculate DDR cache and memory capacity to return.
+
+  @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
+  @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
+  @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+EFIAPI
+GetDDRCapacities(
+  OUT UINT64 *pDDRRawCapacity,
+  OUT UINT64 *pDDRCacheCapacity,
+  OUT UINT64 *pDDRVolatileCapacity
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT64 CacheSize = 0;
+  UINT64 PhysicalSize = 0;
+  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pDDRRawCapacity || NULL == pDDRCacheCapacity || NULL == pDDRVolatileCapacity) {
+    NVDIMM_DBG("A pointer is null.");
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
+
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine current memory mode.");
+    goto Finish;
+  }
+
+  // Get total physical size of all non-DCPMM DIMMs through PMTT
+  ReturnCode = GetDDRPhysicalSize(&PhysicalSize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not retrieve memory capacity.");
+    goto Finish;
+  }
+  *pDDRRawCapacity = PhysicalSize;
+
+  // Gets DDR cache size
+  if (MEMORY_MODE_2LM == CurrentMode) {
+    CacheSize = PhysicalSize;
+  }
+  else if (MEMORY_MODE_1LM == CurrentMode) {
+    CacheSize = 0;
+  }
+  else {
+    ReturnCode = EFI_UNSUPPORTED;
+    NVDIMM_DBG("Unsupported mode discovered.");
+    goto Finish;
+  }
+  *pDDRCacheCapacity = CacheSize;
+
+  // Subtract Cache from total memory size
+  if (CacheSize <= PhysicalSize) {
+    *pDDRVolatileCapacity = PhysicalSize - CacheSize;
+  }
+  else {
+    ReturnCode = EFI_DEVICE_ERROR;
+    NVDIMM_DBG("DDR cache capacity cannot be larger than DDR volatile capacity.");
+    goto Finish;
+  }
+
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Calculate the total size of available memory in the DIMMs
+  according to the smbios and return the result.
+
+  @param[out] pResult Pointer to total memory size.
+
+  @retval EFI_INVALID_PARAMETER Passed NULL argument
+  @retval EFI_LOAD_ERROR Failure to calculate DDR memory size
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDDRPhysicalSize(
+  OUT UINT64 *pResult
+)
+{
+  EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
+  UINT64 TotalDDRMemorySize = 0;
+  UINT16 Index = 0;
+  ParsedPmttHeader *pPmttHead;
+  UINT32 DDRModulesNum;
+  PMTT_MODULE_INFO **ppDDRModules;
+  DIMM_INFO *pDimmInfo = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pResult) {
+    NVDIMM_DBG("Null pointer passed.");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
+  if (NULL == pPmttHead) {
+    NVDIMM_DBG("Pmtt head not found.");
+    goto Finish;
+    }
+  // Get list of DIMM modules from PMTT
+  DDRModulesNum = pPmttHead->DDRModulesNum;
+  ppDDRModules = pPmttHead->ppDDRModules;
+
+  pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
+  if (pDimmInfo == NULL) {
+    NVDIMM_WARN("Memory allocation error");
+    goto Finish;
+  }
+  SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
+
+  /* For every module, get its total capacity and add it to the system total capacity */
+  for (Index = 0; Index < DDRModulesNum; Index++) {
+    // Get dimm information from smbios handle
+    pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
+    ReturnCode = FillSmbiosInfo(pDimmInfo);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Smbios information could not be retrieved.");
+      goto Finish;
+    }
+    // Get dimm capacity and add it to the total
+    TotalDDRMemorySize += pDimmInfo->CapacityFromSmbios;
+  }
+
+  // Set total to the result output
+  *pResult = TotalDDRMemorySize;
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  FREE_POOL_SAFE(pDimmInfo);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

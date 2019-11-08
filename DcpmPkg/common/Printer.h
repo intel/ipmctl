@@ -40,6 +40,9 @@
 #define MEMORY_SIZE_MAX_STR_WIDTH           18
 #define MEMORY_TYPE_MAX_STR_WIDTH           30
 #define DEVICE_LOCATOR_MAX_STR_WIDTH        15
+#define DDR_MAX_STR_WIDTH                   25
+#define DCPMM_MAX_STR_WIDTH                 25
+#define TOTAL_STR_WIDTH                     25
 
 
 #define ON  1

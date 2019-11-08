@@ -550,12 +550,16 @@ typedef struct _SYSTEM_CAPABILITIES_INFO {
 } SYSTEM_CAPABILITIES_INFO;
 
 typedef struct _MEMORY_RESOURCES_INFO {
-  UINT64 RawCapacity;               //!< Sum of the raw capacity on all dimms
-  UINT64 VolatileCapacity;          //!< Sum of the usable volatile capacity on all dimms
-  UINT64 AppDirectCapacity;         //!< Sum of the usable appdirect capacity on all dimms
-  UINT64 UnconfiguredCapacity;      //!< Sum of the capacity that is not configured
-  UINT64 InaccessibleCapacity;      //!< Sum of the capacity that is inaccessible due to a licensing issue
+  UINT64 RawCapacity;               //!< Sum of the raw capacity on all DCPMM dimms
+  UINT64 VolatileCapacity;          //!< Sum of the usable volatile capacity on all DCPMM dimms
+  UINT64 AppDirectCapacity;         //!< Sum of the usable appdirect capacity on all DCPMM dimms
+  UINT64 UnconfiguredCapacity;      //!< Sum of the DCPMM capacity that is not configured
+  UINT64 InaccessibleCapacity;      //!< Sum of the DCPMM capacity that is inaccessible due to a licensing issue
   UINT64 ReservedCapacity;          //!< Sum of the capacity reserved for metadata on all dimms
+  UINT64 DDRRawCapacity;            //!< Sum of the raw capacity on all DDR dimms
+  UINT64 DDRCacheCapacity;          //!< Sum of the DDR capacity used for caching
+  UINT64 DDRVolatileCapacity;       //!< Sum of the DDR capacity used as volatile memory
+  UINT64 Reserved[7];
 } MEMORY_RESOURCES_INFO;
 
 typedef struct _DIMM_PERFORMANCE_DATA {

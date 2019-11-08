@@ -29,9 +29,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define EXIT_CODE_STR               L"RC"
 #define CLI_ARGS_STR                L"Args"
 #define TAG_STR                     L"Tag"
+#define DDR_STR                     L"DDR"
+#define DCPMM_STR                   L"DCPMM"
+#define TOTAL_STR                   L"Total"
+#define MEMORY_TYPE_STR             L"MemoryType"
 
 /** common display values**/
 #define NA_STR                      L"N/A"
+#define DASH_STR                    L"-"
 
 #define MAX_FILE_PATH_LEN           512
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096

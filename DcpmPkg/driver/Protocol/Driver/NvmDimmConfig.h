@@ -1251,6 +1251,40 @@ GetCapacities(
 );
 
 /**
+  Retrieve and calculate DDR cache and memory capacity to return.
+
+  @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
+  @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
+  @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+EFIAPI
+GetDDRCapacities(
+  OUT UINT64 *pDDRRawCapacity,
+  OUT UINT64 *pDDRCacheCapacity,
+  OUT UINT64 *pDDRVolatileCapacity
+);
+
+/**
+  Calculate the total size of available memory in the DIMMs
+  according to the smbios and return the result.
+
+  @param[out] pResult Pointer to total memory size.
+
+  @retval EFI_INVALID_PARAMETER Passed NULL argument
+  @retval EFI_LOAD_ERROR Failure to calculate DDR memory size
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDDRPhysicalSize(
+  OUT UINT64 *pResult
+);
+
+/**
   Get system topology from SMBIOS table
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.

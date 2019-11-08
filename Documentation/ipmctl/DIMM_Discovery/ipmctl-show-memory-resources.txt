@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-memory-resources - Shows the total DCPMM memory resource allocation
+ipmctl-show-memory-resources - Shows how DCPMM and DDR memory resources are allocated
 
 SYNOPSIS
 --------
@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -memoryresources
 
 DESCRIPTION
 -----------
-Shows the total DCPMM memory resource allocation across the host server.
+Shows the total DCPMM and DDR memory resource allocation distribution across the host server.
 
 OPTIONS
 -------
@@ -47,7 +47,7 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Shows the DCPMM memory resource allocation.
+Shows the DCPMM and DDR memory resource allocation.
 [verse]
 ipmctl show -memoryresources
 
@@ -61,47 +61,72 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-Returns the default attributes listed below.
+Returns a table containing the attributes listed below.
 
 NOTE: Capacities from unmanageable DCPMMs are not included in the following
 aggregated totals.
 
-Capacity::
-  Total system DCPMM capacity.
+Volatile DDR Capacity::
+  Total DDR capacity that is used as volatile memory.
 
-MemoryCapacity::
-  Total usable system DCPMM Memory Mode capacity.
+Volatile DCPMM Capacity::
+  Total DCPMM capacity that is used as volatile memory.
 
-AppDirectCapacity::
-  Total usable system DCPMM App Direct capacity.
+Total Volatile Capacity::
+  Total DDR and DCPMM capacity that is used as volatile memory.
 
-UnconfiguredCapacity::
-  Total system DCPMM capacity that is unusable because it has not been configured.
+AppDirect DCPMM Capacity::
+  Total DCPMM capacity used as persistent memory.
 
-ReservedCapacity::
-  Total system DCPMM persistent memory capacity that is reserved. This capacity
-  is the persistent memory partition capacity (rounded down for alignment)
-  less any App Direct capacity. Reserved capacity typically results from
-  a Memory Allocation Goal request that specified the Reserved property. This
-  capacity is not mapped to system physical address (SPA) space.
+Total AppDirect Capacity::
+  Total DDR and DCPMM capacity used as persistent memory.
 
-InaccessibleCapacity::
-  Total system DCPMM capacity that is inaccessible due any of:
-  - Platform configuration prevents accessing this capacity. e.g. MemoryCapacity is
-    configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
-  - Capacity is inaccessible because it is not mapped into the system physical
-    address space (SPA). This is usually due to platform firmware memory alignment requirements.
-  - DCPMM configured capacity but SKU prevents usage. e.g. AppDirectCapacity but
-    DCPMM SKU is MemoryMode only.
+Cache DDR Capacity::
+  Total DDR capacity used as a cache for DCPMMs. 
+
+Total Cache Capacity::
+  Total DDR capacity used as a cache for DCPMMs.
+
+Inaccessible DDR Capacity::
+  Total DDR capacity that is inaccessible. This cell will not be populated.
+
+Inaccessible DCPMM Capacity::
+  Total DCPMM capacity that is inaccessible due to any of:
+    - Platform configuration prevents accessing this capacity. e.g. MemoryCapacity is
+      configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
+    - Capacity is inaccessible because it is not mapped into the system physical
+      address space (SPA). This is usually due to platform firmware memory alignment requirements.
+    - Persistent capacity that is reserved. This capacity is the persistent memory partition capacity
+      (rounded down for alignment) less any App Direct capacity. Reserved capacity typically results from
+      a Memory Allocation Goal request that specified the Reserved property. This
+      capacity is not mapped to system physical address (SPA) space.
+    - Capacity that is unusable because it has not been configured.
+    - DCPMM configured capacity but SKU prevents usage. e.g. AppDirectCapcity but
+      DCPMM SKU is MemoryMode only.
+
+Total Inaccessible Capacity::
+  Total capacity of DDR and DCPMM that is inaccessible.
+
+Physical DDR Capacity::
+  Total physical DDR capacity populated on the platform.
+
+Physical DCPMM Capacity::
+  Total physical DCPMM capacity populated on the plaform.
+
+Total Physical Capacity::
+  Total physical capacity populated on the platform.
 
 DETAILS
 -------
-DCPMMs are partitioned into Memory and Persistent partitions. ipmctl will align
+DCPMMs are partitioned into Memory and Persistent partitions. ipmctl aligns
 the Memory partition on a 1 GiB boundary with the Persistent partition consuming
-the remaining capacity. An exception: if DCPMM is configured for 100% Memory Mode
-then Memory partition will consume 100% of the capacity, while Persistent
-partition will be 0 length. Any capacity that falls outside the Memory and
-Persistent partitions is InaccessibleCapacity and is not useable.
+the remaining capacity. Any capacity that falls outside the Memory and Persistent partitions
+is InaccessibleCapacity and is not useable. If the DCPMM is configured for 100% Memory Mode,
+then the Memory partition consumes all of the capacity and the Persistent partition has none.
+
+The mode determines how the DDR capacities are allocated. In 1LM and AppDirect, all DDR capacity
+is used as additional volatile memory. In MemoryMode, all DDR capacity that the CPU will support
+is used as a cache for the DCPMM.
 
 Platform firmware alignment restrictions may result in some capacity from the
 Memory and Persistent partitions not mapped to system physical address (SPA) space.
@@ -109,26 +134,29 @@ This memory is considered InaccessibleCapacity and is not usable.
 
 Definitions:
 
-Total Capacity (TC)::
-  Raw Capacity (total usable) reported by DCPMM DIMM Partition Info
+DCPMM Physical Capacity (DCPC)::
+  Raw capacity (total usable) reported by DCPMM DIMM Partition Info
 
-Memory Partition Capacity (MPC)::
-  Volatile Capacity reported by DCPMM DIMM Partition Info
+DCPMM Memory Partition Capacity (DCMPC)::
+  Volatile capacity reported by DCPMM DIMM Partition Info
 
-Persistent Partition Capacity (PPC)::
-  Persistent Capacity reported by DCPMM DIMM Partition Info
+DCPMM Persistent Partition Capacity (DCPPC)::
+  Persistent capacity reported by DCPMM DIMM Partition Info
 
-Volatile Memory Size (VMS)::
+DCPMM Volatile Memory Capacity (DCVMC)::
   Usable voliatile memory capacity as reported by platform FW
   via _Intel NVDIMM Current Config->Volatile Memory Size Mapped into SPA_ field
 
-Persistent Memory Size (PMS) ::
+DCPMM Persistent Memory Capacity (DCPMC) ::
   Usable persistent memory capacity as reported by platform FW via
   _Intel NVDIMM Current Config->Persistent Memory Size Mapped into SPA_ field
 
 DCPMM DIMM Partition Info::
-  DIMM Partition Info provided by DCPMM firmware. See _Intel(R) Optane(TM)
+  DIMM partition info provided by DCPMM firmware. See _Intel(R) Optane(TM)
   DC Persistent Memory Module Firmware Interface Specification_ for details.
+
+DDR Total Capacity (DDRTC)::
+  Total amount of memory available for use on the populated DDRs
 
 Intel NVDIMM Current Config::
   See _Intel(R) NVM Dimm Management Software-Firmware Interface Specification_
@@ -137,17 +165,17 @@ Intel NVDIMM Current Config::
 *Calculations:*
 
 [verse]
-MemoryCapacity = Volatile Memory Size
+if (CurrentMode == 1LM) then
+  DDRCacheCapacity = 0
+  DDRVolatileCapacity = DDRTC
+else if (CurrentMode == 2LM) then
+  DDRCacheCapacity = DDRTC
+  DDRVolatileCapacity = 0
 
 [verse]
-AppDirectCapacity = Persistent Memory Size
+TotalVolatileCapacity = DCVMC + DDRVolatileCapacity
 
 [verse]
-ReservedCapacity = PPC (rounded down for PM alignment) - PMS
-
-[verse]
-InaccessibleCapacity = 
-  + TC - VMS - PMS - ReservedCapacity
- if (CurrentMode == 1LM) then
-  + VMS (rounded down for alignment)
-
+InaccessibleCapacity = DCPC - DCPMC
+ if (CurrentMode != 1LM) then
+  InaccessibleCapacity -= DCVMC (rounded down for alignment)

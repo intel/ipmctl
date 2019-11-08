@@ -1463,7 +1463,7 @@ VerifyTargetDimms (
 
   // sanity checks
   if (*pDimmsNum == 0) {
-    ResetCmdStatus(pCommandStatus, NVM_ERR_DIMM_NOT_FOUND);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_NO_USABLE_DIMMS);
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }

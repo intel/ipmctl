@@ -203,6 +203,7 @@ InitErrorAndWarningNvmStatusCodes()
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU);
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_DIMM_NOT_FOUND);
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+  SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_NO_USABLE_DIMMS);
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_DIMM_ID_DUPLICATED);
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_SOCKET_ID_NOT_VALID);
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_SOCKET_ID_DUPLICATED);
@@ -326,6 +327,8 @@ GetSingleNvmStatusCodeMessage(
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_DIMM_NOT_FOUND), NULL);
   case NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MANAGEABLE_DIMM_NOT_FOUND), NULL);
+  case NVM_ERR_NO_USABLE_DIMMS:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_NO_USABLE_DIMMS), NULL);
   case NVM_ERR_FIRMWARE_API_NOT_VALID:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_FIRMWARE_API_NOT_VALID), NULL);
   case NVM_ERR_DIMM_ID_DUPLICATED:

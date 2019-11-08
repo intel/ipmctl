@@ -38,6 +38,7 @@
 #string STR_DCPMM_STATUS_ERR_FORCE_REQUIRED        #language en "This operation requires force option"
 #string STR_DCPMM_STATUS_ERR_DIMM_NOT_FOUND        #language en "DIMM not found"
 #string STR_DCPMM_STATUS_ERR_MANAGEABLE_DIMM_NOT_FOUND  #language en "No manageable DIMMs in the system."
+#string STR_DCPMM_STATUS_ERR_NO_USABLE_DIMMS            #language en "No usable DIMMs due to all DIMMs being one of the following:\n- DIMMs unmanageable\n- DIMMs non-functional\n- DIMMs have a population issue"
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_API_NOT_VALID     #language en "The firmware image is not compatible with this version of software."
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_DOWNGRADE         #language en "Firmware unchanged."
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_ALREADY_LOADED    #language en "A firmware image is already staged for execution. A power cycle is required before another can be staged."

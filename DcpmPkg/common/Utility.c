@@ -2557,9 +2557,51 @@ Finish:
 }
 
 /**
-  Converts the dimm Id to its  HII string equivalent
-  @param[in] HiiHandle - handle for hii
+  Get Dimm Info by device handle
+  Scan the dimm list for a DimmInfo identified by device handle
+
+  @param[in] DeviceHandle Device Handle of the dimm
+  @param[in] pDimmInfo Array of DimmInfo
+  @param[in] DimmCount Size of DimmInfo array
+  @param[out] ppRequestedDimmInfo Pointer to the request DimmInfo struct
+
+  @retval EFI_INVALID_PARAMETER pDimmInfo or pRequestedDimmInfo is NULL
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDimmInfoByHandle(
+  IN     UINT32 DeviceHandle,
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+     OUT DIMM_INFO **ppRequestedDimmInfo
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 Index = 0;
+  NVDIMM_ENTRY();
+
+  if (pDimmInfo == NULL || ppRequestedDimmInfo == NULL) {
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmCount; Index++) {
+    if (DeviceHandle == pDimmInfo[Index].DimmHandle) {
+      *ppRequestedDimmInfo = &pDimmInfo[Index];
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Converts the Dimm IDs within a region to its  HII string equivalent
   @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
 
   @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
@@ -2567,25 +2609,64 @@ Finish:
   @retval EFI_SUCCESS The conversion was successful
 **/
 EFI_STATUS
-ConvertDimmIdToDimmListStr(
+ConvertRegionDimmIdsToDimmListStr(
   IN     REGION_INFO *pRegionInfo,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     UINT8 DimmIdentifier,
   OUT CHAR16 **ppDimmIdStr
-)
+  )
 {
 
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   INT32 Index = 0;
+  DIMM_INFO *pDimmInfo = NULL;
+  UINT32 DimmCount = 0;
+  DIMM_INFO *pDimmList = NULL;
+
   NVDIMM_ENTRY();
 
-  if (ppDimmIdStr == NULL) {
+  if (pRegionInfo == NULL || pNvmDimmConfigProtocol == NULL || ppDimmIdStr == NULL) {
     goto Finish;
   }
   *ppDimmIdStr = NULL;
 
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Communication with driver failed");
+    goto Finish;
+  }
+
+  pDimmList = AllocateZeroPool(sizeof(*pDimmList) * DimmCount);
+  if (pDimmList == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    NVDIMM_DBG("Could not allocate memory");
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_NONE, pDimmList);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Communication with driver failed");
+    goto Finish;
+  }
+
   for (Index = 0; Index < pRegionInfo->DimmIdCount; Index++) {
-    *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
-      ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
-         pRegionInfo->DimmId[Index]);
+    if (DimmIdentifier == DISPLAY_DIMM_ID_HANDLE) {
+      *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
+        ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
+        pRegionInfo->DimmId[Index]);
+    }
+    else {
+      ReturnCode = GetDimmInfoByHandle(pRegionInfo->DimmId[Index], pDimmList, DimmCount, &pDimmInfo);
+      if (EFI_ERROR(ReturnCode)) {
+        FREE_POOL_SAFE(*ppDimmIdStr);
+        NVDIMM_DBG("Failed to retrieve DimmInfo by Device Handle");
+        goto Finish;
+      }
+
+      *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
+        ((*ppDimmIdStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        pDimmInfo->DimmUid);
+    }
   }
 
   if (*ppDimmIdStr == NULL) {
@@ -2595,6 +2676,7 @@ ConvertDimmIdToDimmListStr(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FREE_POOL_SAFE(pDimmList);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -851,8 +851,30 @@ ConvertHealthStateReasonToHiiStr(
 );
 
 /**
-  Converts the dimm Id to its  HII string equivalent
+  Get Dimm Info by device handle
+  Scan the dimm list for a DimmInfo identified by device handle
+
+  @param[in] DeviceHandle Device Handle of the dimm
+  @param[in] pDimmInfo Array of DimmInfo
+  @param[in] DimmCount Size of DimmInfo array
+  @param[out] ppRequestedDimmInfo Pointer to the request DimmInfo struct
+
+  @retval EFI_INVALID_PARAMETER pDimmInfo or pRequestedDimmInfo is NULL
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDimmInfoByHandle(
+  IN     UINT32 DeviceHandle,
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+  OUT DIMM_INFO **ppRequestedDimmInfo
+  );
+
+/**
+  Converts the Dimm IDs within a region to its  HII string equivalent
   @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
 
   @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
@@ -860,11 +882,12 @@ ConvertHealthStateReasonToHiiStr(
   @retval EFI_SUCCESS The conversion was successful
 **/
 EFI_STATUS
-  ConvertDimmIdToDimmListStr(
-    IN     REGION_INFO *pRegionInfo,
-    OUT CHAR16 **ppDimmIdStr
+ConvertRegionDimmIdsToDimmListStr(
+  IN     REGION_INFO *pRegionInfo,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     UINT8 DimmIdentifier,
+  OUT CHAR16 **ppDimmIdStr
   );
-
 
 /**
   Open file handle of root directory from given path

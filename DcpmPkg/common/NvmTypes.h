@@ -45,7 +45,7 @@
 #define HII_SENSOR_VALUE_STRING_SIZE   19
 #define HII_HEALTH_REASON_STRNG_SIZE   110
 #define HII_ISET_ID_STRNG_SIZE   64
-#define HII_DIMM_ID_STRNG_SIZE   72
+#define HII_DIMM_ID_STRNG_SIZE   255
 #define HII_APPDIRECT_PREFERENCE_OPTION_SIZE 30
 
 /** UINT128_DIGITS + 1; it has to be a number because of Vfr compilator requirements **/

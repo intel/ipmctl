@@ -1084,8 +1084,8 @@ GetDeviceAndFilePath(
     goto Finish;
   }
 
-  // Add " .\ "(current dir) to the file path if no path is specified
-  if (!ContainsCharacter(L'\\', pUserFilePath)) {
+  // Add " .\ "(current dir) to the file path if relative path is specified
+  if (!ContainsCharacter(L':', pUserFilePath)) {
     pCurDirPath = CatSPrint(NULL, L".\\" FORMAT_STR, pUserFilePath);
   }
   else {

@@ -1640,6 +1640,15 @@ GetDimms(
     goto Finish;
   }
 
+  LIST_COUNT(pNode, &gNvmDimmData->PMEMDev.Dimms, Index);
+
+  if (DimmCount > Index)
+  {
+    NVDIMM_DBG("DimmCount is more than DIMM list count");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   SetMem(pDimms, sizeof(*pDimms) * DimmCount, 0); // this clears error mask as well
 
   Index = 0;

@@ -326,6 +326,11 @@ typedef union {
 #define LIST_FOR_UNTIL_INDEX(Entry, ListHead, Index, Iterator) \
   for (Entry = (ListHead)->ForwardLink, Iterator = 0; Entry != (ListHead) && Iterator < Index; Entry = Entry->ForwardLink, Iterator++)
 /**
+  Iterates over list entries in forward direction and counts the no of elements in list
+**/
+#define LIST_COUNT(Entry, ListHead, Count) \
+  for (Entry = (ListHead)->ForwardLink, Count = 0;Entry != (ListHead); Entry = Entry->ForwardLink, Count++)
+/**
   The maximum buffer size for the Print function.
   This value depends on the UDK, it may change with a new version.
 **/

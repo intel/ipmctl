@@ -92,6 +92,7 @@
 #define LARGE_PAYLOAD_OPTION            L"-lpmb"                               //!< 'large payload mailbox' option name
 #define SMALL_PAYLOAD_OPTION            L"-spmb"                               //!< 'small payload mailbox' option name
 #define NFIT_OPTION                     L"-nfit"                               //!< 'nfit' option name
+#define PCD_OPTION                      L"-pcd"                                //!< 'pcd' option name
 
 /** command targets **/
 #define DIMM_TARGET                          L"-dimm"                    //!< 'dimm' target name
@@ -305,7 +306,8 @@
 #define HELP_TEXT_APPDIRECT_SETTINGS    PROPERTY_VALUE_RECOMMENDED L"|" L"(IMCSize)_(ChannelSize)"
 #define HELP_TEXT_NO_MIRROR_APPDIRECT_SETTINGS L"ByOne|(iMCSize)_(ChannelSize)"
 #define HELP_TEXT_NS_LABEL_VERSION      L"1.1|1.2"
-#define HELP_NFIT_DETAILS_TEXT         L"Used to specify NFIT as the source"
+#define HELP_NFIT_DETAILS_TEXT          L"Used to specify NFIT as the source"
+#define HELP_PCD_DETAILS_TEXT           L"Used to specify PCD as the source"
 #define HELP_TEXT_DEFAULT_SIZE          PROPERTY_VALUE_AUTO   L"|" \
                                         PROPERTY_VALUE_AUTO10 L"|" \
                                         UNITS_OPTION_B        L"|" \

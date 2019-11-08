@@ -180,6 +180,79 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Retrieve ObjectId strings for objects set in command status pointer.
+
+  @param[in] HiiHandle handle to the HII database that contains NvmStatusStrings
+  @param[in] pCommandStatus Command status data
+  @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
+  @param[out] ppObjectStrings buffer where output will be saved
+
+  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
+  @retval EFI_NOT_FOUND pCommandStatus ObjectType not found
+  @retval EFI_SUCCESS All Ok
+**/
+EFI_STATUS
+RetrieveCmdStatusObjectStrings(
+  IN     EFI_HANDLE HiiHandle,
+  IN     COMMAND_STATUS *pCommandStatus,
+  IN     BOOLEAN ObjectIdNumberPreferred,
+     OUT CHAR16 **ppObjectStrings
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  LIST_ENTRY *pObjectStatusNode = NULL;
+  OBJECT_STATUS *pObjectStatus = NULL;
+  CHAR16 *pObjectTypeString = NULL;
+  CHAR16 ObjectStr[MAX_OBJECT_ID_STR_LEN];
+  CHAR16 *pOutputString = NULL;
+
+  ZeroMem(ObjectStr, sizeof(ObjectStr));
+
+  NVDIMM_ENTRY();
+
+  if (pCommandStatus == NULL || ppObjectStrings == NULL) {
+    goto Finish;
+  }
+
+  pObjectTypeString = GetObjectTypeString(HiiHandle, pCommandStatus->ObjectType);
+  if ((pObjectTypeString == NULL) || (pObjectTypeString[0] == L'\0')) {
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
+
+  LIST_FOR_EACH(pObjectStatusNode, &pCommandStatus->ObjectStatusList) {
+    pObjectStatus = OBJECT_STATUS_FROM_NODE(pObjectStatusNode);
+
+    ReturnCode = GetPreferredValueAsString(
+      pObjectStatus->ObjectId,
+      (pObjectStatus->IsObjectIdStr) ? pObjectStatus->ObjectIdStr : NULL,
+      ObjectIdNumberPreferred,
+      ObjectStr,
+      MAX_OBJECT_ID_STR_LEN
+    );
+
+    if (EFI_ERROR(ReturnCode)) {
+      FREE_POOL_SAFE(pOutputString);
+      goto Finish;
+    }
+
+    if (pOutputString == NULL) {
+      pOutputString = CatSPrintClean(pOutputString, FORMAT_STR, ObjectStr);
+    }
+    else {
+      pOutputString = CatSPrintClean(pOutputString, FORMAT_STR_WITH_COMMA, ObjectStr);
+    }
+  }
+
+  *ppObjectStrings = pOutputString;
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  FREE_POOL_SAFE(pObjectTypeString);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 
 /**
   Fill global variables containing all Error/Warning NVM Statuses
@@ -194,6 +267,7 @@ InitErrorAndWarningNvmStatusCodes()
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_2LM_MODE_OFF);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+  SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_REGION_DIMMS_WITH_BROKEN_INTERLEAVE_SETS);
 
   // Errors:
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_OPERATION_NOT_STARTED);
@@ -421,6 +495,8 @@ GetSingleNvmStatusCodeMessage(
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_NAMESPACE_TOO_SMALL_FOR_BTT), NULL);
   case NVM_ERR_PCD_BAD_DEVICE_CONFIG:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_BAD_DEVICE_CONFIG), NULL);
+  case NVM_WARN_REGION_DIMMS_WITH_BROKEN_INTERLEAVE_SETS:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_DIMMS_WITH_BROKEN_INTERLEAVE_SETS), NULL);
   case NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM), NULL);
   case NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM:

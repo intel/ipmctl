@@ -186,7 +186,10 @@ struct Command ShowRegionsCommand =
     {VERBOSE_OPTION_SHORT, VERBOSE_OPTION, L"", L"", HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
-    {L"", NFIT_OPTION, L"", L"",HELP_NFIT_DETAILS_TEXT, FALSE, ValueEmpty},
+    {L"", NFIT_OPTION, L"", L"", HELP_NFIT_DETAILS_TEXT, FALSE, ValueEmpty},
+#ifndef MDEPKG_NDEBUG
+    {L"", PCD_OPTION, L"", L"", HELP_PCD_DETAILS_TEXT, FALSE, ValueEmpty},
+#endif
     {L"", LARGE_PAYLOAD_OPTION, L"", L"", HELP_LPAYLOAD_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", SMALL_PAYLOAD_OPTION, L"", L"", HELP_SPAYLOAD_DETAILS_TEXT, FALSE, ValueEmpty},
     {ALL_OPTION_SHORT, ALL_OPTION, L"", L"",HELP_ALL_DETAILS_TEXT, FALSE, ValueEmpty},
@@ -308,8 +311,8 @@ ShowRegions(
   UINT32 AppDirectRegionCount = 0;
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   CHAR16 *pDimmIds = NULL;
-  CHAR16 *pNfitOption = NULL;
   BOOLEAN UseNfit = FALSE;
+  BOOLEAN UsePcd = FALSE;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
 
@@ -409,12 +412,20 @@ ShowRegions(
   }
 
   /** Check if nfit option is set **/
-  pNfitOption = getOptionValue(pCmd, NFIT_OPTION);
-  if (pNfitOption) {
-    UseNfit = TRUE;
-  }
+  UseNfit = containsOption(pCmd, NFIT_OPTION);
 
-  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, UseNfit, &RegionCount);
+#ifndef MDEPKG_NDEBUG
+  /** Check if pcd option is set **/
+  UsePcd = containsOption(pCmd, PCD_OPTION);
+
+  if (UseNfit && UsePcd) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_PARSER_ERR_MUTUALLY_EXCLUSIVE_OPTIONS, NFIT_OPTION, PCD_OPTION);
+    goto Finish;
+  }
+#endif
+
+  ReturnCode = pNvmDimmConfigProtocol->GetRegionCount(pNvmDimmConfigProtocol, !UsePcd, &RegionCount);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -436,7 +447,7 @@ ShowRegions(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetRegions(pNvmDimmConfigProtocol, RegionCount, UseNfit, pRegions, pCommandStatus);
+  ReturnCode = pNvmDimmConfigProtocol->GetRegions(pNvmDimmConfigProtocol, RegionCount, !UsePcd, pRegions, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
       ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
@@ -592,6 +603,10 @@ ShowRegions(
 
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  // TODO: Clean up required after Printer xml handles command status warning messages when ReturnCode is EFI_EUCCESS
+  if (!EFI_ERROR(ReturnCode)) {
+    DisplayCommandStatus(CLI_INFO_SHOW_REGION, L"", pCommandStatus);
+  }
   if (pRegions != NULL) {
     for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
       pInterleaveFormat = (INTERLEAVE_FORMAT *) pRegions[RegionIndex].PtrInterlaveFormats;
@@ -603,7 +618,6 @@ Finish:
   FREE_POOL_SAFE(pRegions);
   FREE_POOL_SAFE(pRegionsIds);
   FREE_POOL_SAFE(pSocketIds);
-  FREE_POOL_SAFE(pNfitOption);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

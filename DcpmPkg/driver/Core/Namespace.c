@@ -4746,6 +4746,7 @@ FindAndAssignISForNamespace(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   LIST_ENTRY *pIsNode = NULL;
+  LIST_ENTRY *pRegionList = NULL;
   NVM_IS *pIs = NULL;
   LIST_ENTRY *pRegionNode = NULL;
   LIST_ENTRY *pFreeMapNode = NULL;
@@ -4765,7 +4766,13 @@ FindAndAssignISForNamespace(
     goto Finish;
   }
 
-  LIST_FOR_EACH(pIsNode, &gNvmDimmData->PMEMDev.ISs) {
+  // Retrieve Interleave Set data initialized using NFIT
+  ReturnCode = GetRegionList(&pRegionList, TRUE);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  LIST_FOR_EACH(pIsNode, pRegionList) {
     pIs = IS_FROM_NODE(pIsNode);
     ISetFound = FALSE;
 
@@ -4955,7 +4962,7 @@ IsNamespaceOnDimms(
     }
 
     for (Index2 = 0; Index2 < pDimms[Index]->ISsNum; Index2++) {
-      ReturnCode = GetListSize(&pDimms[Index]->pISs[Index2]->AppDirectNamespaceList, &NamespacesNum);
+      ReturnCode = GetListSize(&pDimms[Index]->pISsNfit[Index2]->AppDirectNamespaceList, &NamespacesNum);
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }

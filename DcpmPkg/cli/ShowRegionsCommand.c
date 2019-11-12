@@ -604,7 +604,7 @@ ShowRegions(
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   // TODO: Clean up required after Printer xml handles command status warning messages when ReturnCode is EFI_EUCCESS
-  if (!EFI_ERROR(ReturnCode)) {
+  if (pCommandStatus != NULL && pCommandStatus->GeneralStatus == NVM_WARN_REGION_DIMMS_WITH_BROKEN_INTERLEAVE_SETS) {
     DisplayCommandStatus(CLI_INFO_SHOW_REGION, L"", pCommandStatus);
   }
   if (pRegions != NULL) {

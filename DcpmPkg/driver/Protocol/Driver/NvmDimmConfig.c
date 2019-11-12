@@ -792,7 +792,7 @@ GetDimmInfo (
     pDimmInfo->SKUViolation = TRUE;
   } else {
     for (Index = 0; Index < pDimm->ISsNum; Index++) {
-      LIST_FOR_EACH(pNodeNamespace, &pDimm->pISs[Index]->AppDirectNamespaceList) {
+      LIST_FOR_EACH(pNodeNamespace, &pDimm->pISsNfit[Index]->AppDirectNamespaceList) {
         pCurNamespace = NAMESPACE_FROM_NODE(pNodeNamespace, IsNode);
         if (pCurNamespace->NamespaceType == APPDIRECT_NAMESPACE &&
           pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {

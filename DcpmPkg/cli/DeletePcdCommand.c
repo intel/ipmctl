@@ -172,6 +172,7 @@ DeletePcdCmd(
 #ifdef OS_BUILD
     ReturnCode = EFI_INVALID_PARAMETER;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_PCD);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode,  L"LSA option not available. Refer to your OSV tools for DCPMM namespace management.");
     goto Finish;
 #endif
     ConfigIdMask |= DELETE_PCD_CONFIG_LSA_MASK;

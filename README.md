@@ -40,9 +40,11 @@ Run
 > rpm –ivh *.rpm
 
 
-EPEL 7 packages can be found at: https://copr.fedorainfracloud.org/coprs/jhli/ipmctl
+CentOS and RHEL systems maybe able to use an EPEL package found at: https://src.fedoraproject.org/rpms/ipmctl
 
-OpenSUSE and SLES packages can be found at: https://build.opensuse.org/package/show/home:jhli/ipmctl
+OpenSUSE and SLES packages can be found at: https://build.opensuse.org/package/show/hardware:nvdimm/ipmctl
+
+Ubuntu releases can be found at: https://launchpad.net/ubuntu/+source/ipmctl
 
 ### libsafec
 

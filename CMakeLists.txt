@@ -662,7 +662,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-cap.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-host.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
@@ -701,7 +700,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-host.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz

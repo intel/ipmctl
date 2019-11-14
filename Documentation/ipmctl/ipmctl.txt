@@ -118,9 +118,6 @@ View and update the firmware on DCPMMs. Other support and maintenance commands.
 *ipmctl-show-firmware*(1)::
   Shows detailed information about the firmware
 
-*ipmctl-show-host*(1)::
-  Shows basic information about the host server
-
 *ipmctl-show-preferences*(1)::
   Displays a list of the DCPMM software user preferences
 
@@ -192,7 +189,6 @@ SEE ALSO
 *ipmctl-help*(1),
 *ipmctl-modify-device*(1),
 *ipmctl-show-firmware*(1),
-*ipmctl-show-host*(1),
 *ipmctl-show-preferences*(1),
 *ipmctl-update-firmware*(1),
 *ipmctl-version*(1),

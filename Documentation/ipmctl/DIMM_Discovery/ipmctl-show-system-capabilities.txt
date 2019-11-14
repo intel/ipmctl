@@ -85,10 +85,6 @@ AllowedVolatileMode::
   - Memory Mode: DCPMMs act as system memory under the control of the
     operating system. In Memory Mode, any DDR in the platform will act as a
     cache working in conjunction with the DCPMMs.
-  - 1LM + 2LM: DCPMMs act as system memory under the control of the
-    operating system. In addition to this, some percentage capacity of DDR
-    is also used as system memory and the remamaing portion will act as
-    a cache working in conjunction with the DCPMMs.
   - Unknown: The allowed volatile mode cannot be determined.
 
 CurrentVolatileMode::
@@ -98,10 +94,6 @@ CurrentVolatileMode::
   - Memory Mode: DCPMMs act as system memory under the control of the
     operating system. In Memory Mode, any DDR in the platform will act as a cache
     working in conjunction with the DCPMMs.
-  - 1LM + 2LM: DCPMMs act as system memory under the control of the
-    operating system. In addition to this, some percentage capacity of DDR
-    is also used as system memory and the remamaing portion will act as
-    a cache working in conjunction with the DCPMMs.
   - Unknown: The current volatile mode cannot be determined.
 
 AllowedAppDirectMode::

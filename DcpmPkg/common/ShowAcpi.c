@@ -168,11 +168,6 @@ DecodePcatCurrentMemoryMode(
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
         L"-Current Volatile Memory Mode", L"2LM");
     }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == BIT1) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"1LM + 2LM");
-    }
 
     if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == 0) {
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
@@ -194,11 +189,6 @@ DecodePcatCurrentMemoryMode(
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
         L"-Allowed Volatile Memory Mode", L"1LM or 2LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == BIT1) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"1LM + 2LM");
     }
 
   }

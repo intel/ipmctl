@@ -391,7 +391,7 @@ typedef struct {
     Bits[1:0] - Current Volatile Memory Mode
     00b - 1LM Mode
     01b - 2LM Mode
-    10b - 1LM + 2LM Mode
+    10b - Reserved
     11b - Reserved
 
     Bits[3:2] - Allowed Persistent Memory Mode
@@ -403,7 +403,7 @@ typedef struct {
     Bits[5:4] - Allowed Volatile Memory Mode
     00b - 1LM Mode Only
     01b - 1LM or 2LM Mode
-    10b - 1LM + 2LM Mode
+    10b - Reserved
     11b - Reserved
 
     Bits[7:6] - Reserved

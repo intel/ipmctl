@@ -241,7 +241,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   if (gOsShellParametersProtocol.StdOut == stdout)
   {
     //WA to ensure wprintf work throughout invocation of DCPMM mgmt stack.
-    wprintf(L"\n");
+    wprintf(L"");
   }
 
   nvm_status = nvm_internal_init(FALSE);

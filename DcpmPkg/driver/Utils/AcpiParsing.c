@@ -1225,54 +1225,6 @@ RdpaToSpa(
 }
 
 /**
-  Retrieve Device Handle List for DIMMs having unmapped region
-
-  @param[in] pFitHead pointer to the parsed NFit Header structure
-  @param[out] ppDimmListBrokenISs Array of DIMM Device Handles with unmapped region
-  @param[out] pDimmListLength Pointer to the ppDimmListBrokenISs array Length
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES Memory Allocation failure
-  @retval EFI_INVALID_PARAMETER ppInterleaveSetMap or InterleaveMapListLength is NULL
-**/
-EFI_STATUS
-RetrieveDimmsWithBrokenISs(
-  IN     ParsedFitHeader *pFitHead,
-     OUT UINT32 **ppDimmListBrokenISs,
-     OUT UINT32 *pDimmListLength
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT32 Index = 0;
-  UINT32 Length = 0;
-
-  if (pFitHead == NULL || ppDimmListBrokenISs == NULL || pDimmListLength == NULL) {
-    goto Finish;
-  }
-
-  *pDimmListLength = 0;
-
-  for (Index = 0; Index < pFitHead->NvDimmRegionMappingStructuresNum; Index++) {
-    if (pFitHead->ppNvDimmRegionMappingStructures[Index]->NvDimmStateFlags & NVDIMM_STATE_FLAGS_NOT_MAPPED) {
-      *ppDimmListBrokenISs = ReallocatePool(sizeof(UINT32) * Length, sizeof(UINT32) * (Length + 1), *ppDimmListBrokenISs);
-      if (*ppDimmListBrokenISs == NULL) {
-        ReturnCode = EFI_OUT_OF_RESOURCES;
-        goto Finish;
-      }
-      (*ppDimmListBrokenISs)[Length] = pFitHead->ppNvDimmRegionMappingStructures[Index]->DeviceHandle.AsUint32;
-      Length++;
-    }
-  }
-
-  ReturnCode = EFI_SUCCESS;
-  *pDimmListLength = Length;
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
   CopyMemoryAndAddPointerToArray - Copies the data and adds the result pointer to an array of pointers.
 
   @param[in, out] ppTable pointer to the array of pointers. Warning! This pointer will be freed.

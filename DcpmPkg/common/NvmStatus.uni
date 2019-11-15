@@ -88,7 +88,6 @@
 #string STR_DCPMM_STATUS_ERR_NAMESPACE_TOO_SMALL_FOR_BTT #language en "The specified size is too small for an Optimized Namespace"
 #string STR_DCPMM_STATUS_ERR_DIMMS_CAPACITY_EXCEEDED     #language en "DIMM's capacity exceeded."
 #string STR_DCPMM_STATUS_ERR_PCD_BAD_DEVICE_CONFIG #language en "The configuration data is invalid or unrecognized."
-#string STR_DCPMM_STATUS_WARN_DIMMS_WITH_BROKEN_INTERLEAVE_SETS #language en "DIMM has unmapped region(s)"
 #string STR_DCPMM_STATUS_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region goal configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current and goal configuration."

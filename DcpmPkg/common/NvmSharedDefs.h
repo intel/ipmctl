@@ -70,7 +70,6 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
 
-  NVM_WARN_REGION_DIMMS_WITH_BROKEN_INTERLEAVE_SETS     = 96,   ///< Error: DIMMs with broken unmapped Interleave Sets
   NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED              = 97,   ///< Warning: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!
   NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode

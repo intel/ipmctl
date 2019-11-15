@@ -791,8 +791,8 @@ GetDimmInfo (
   } else if (pDimm->MappedPersistentCapacity > 0 && pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {
     pDimmInfo->SKUViolation = TRUE;
   } else {
-    for (Index = 0; Index < pDimm->ISsNfitNum; Index++) {
-      LIST_FOR_EACH(pNodeNamespace, &pDimm->pISsNfit[Index]->AppDirectNamespaceList) {
+    for (Index = 0; Index < pDimm->ISsNum; Index++) {
+      LIST_FOR_EACH(pNodeNamespace, &pDimm->pISs[Index]->AppDirectNamespaceList) {
         pCurNamespace = NAMESPACE_FROM_NODE(pNodeNamespace, IsNode);
         if (pCurNamespace->NamespaceType == APPDIRECT_NAMESPACE &&
           pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {
@@ -3907,9 +3907,6 @@ GetRegions(
   NVM_IS *pCurRegion = NULL;
   LIST_ENTRY *pCurRegionNode = NULL;
   LIST_ENTRY *pRegionList = NULL;
-  DIMM *pDimm = NULL;
-  UINT32 *pDimmListBrokenISs = NULL;
-  UINT32 DimmListLength = 0;
 
   NVDIMM_ENTRY();
 
@@ -3929,7 +3926,6 @@ GetRegions(
     }
     goto Finish;
   }
-
   /**
     check input parameters
   **/
@@ -3972,34 +3968,9 @@ GetRegions(
     Index++;
   }
 
-   /**
-     If NFIT table is used for initialization of interleave sets, get list of all DIMMs which have unmapped regions.
-     This is to keep the output in parity with initialization done using PCD data, where it still shows regions which
-     are broken or not mapped.
-   **/
-  if (UseNfit) {
-    Rc = RetrieveDimmsWithBrokenISs(gNvmDimmData->PMEMDev.pFitHead, &pDimmListBrokenISs, &DimmListLength);
-    if (EFI_ERROR(Rc)) {
-      NVDIMM_WARN("Unable to retrieve DIMM Device Handle List with broken unmapped interleave sets, error = " FORMAT_EFI_STATUS ".", Rc);
-      goto Finish;
-    }
-
-    for (Index = 0; Index < DimmListLength; Index++) {
-      pDimm = GetDimmByHandle(pDimmListBrokenISs[Index], &gNvmDimmData->PMEMDev.Dimms);
-      if (pDimm != NULL) {
-        SetObjStatusForDimm(pCommandStatus, pDimm, NVM_WARN_REGION_DIMMS_WITH_BROKEN_INTERLEAVE_SETS);
-      }
-    }
-  }
-
   BubbleSort(pRegions, Count, sizeof(*pRegions), SortRegionInfoById);
 
-  if (pDimmListBrokenISs == NULL) {
-    ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
-  }
-
 Finish:
-  FREE_POOL_SAFE(pDimmListBrokenISs);
   NVDIMM_EXIT_I64(Rc);
   return Rc;
 }
@@ -4040,7 +4011,7 @@ GetRegion(
       goto Finish;
     }
   }
-  Rc = GetRegionList(&pRegionList, TRUE);
+  Rc = GetRegionList(&pRegionList, FALSE);
   if (pRegionList == NULL) {
     goto Finish;
   }
@@ -7486,7 +7457,7 @@ Finish:
 
   SetMem(&Region, sizeof(Region), 0x0);
 
-  ReturnCode = GetRegionList(&pRegionList, TRUE);
+  ReturnCode = GetRegionList(&pRegionList, FALSE);
 
   if (pThis == NULL || pCommandStatus == NULL || RegionId == REGION_ID_NOTSET || BlockSize == 0 ||
     pActualNamespaceCapacity == NULL || pNamespaceId == NULL || EFI_ERROR(ReturnCode)) {
@@ -9917,14 +9888,14 @@ AutomaticCreateNamespace(
   }
 
   // Find all Regions
-  GetRegionCount(&gNvmDimmDriverNvmDimmConfig, TRUE, &RegionCount);
+  GetRegionCount(&gNvmDimmDriverNvmDimmConfig, FALSE, &RegionCount);
 
   pRegions = AllocateZeroPool(sizeof(REGION_INFO) * RegionCount);
   if (pRegions == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
-  ReturnCode = GetRegions(&gNvmDimmDriverNvmDimmConfig, RegionCount, TRUE, pRegions, pCommandStatus);
+  ReturnCode = GetRegions(&gNvmDimmDriverNvmDimmConfig, RegionCount, FALSE, pRegions, pCommandStatus);
 
   for (Index = 0; Index < RegionCount; Index++) {
     // Check if Region is empty

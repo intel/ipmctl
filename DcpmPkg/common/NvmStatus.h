@@ -107,28 +107,6 @@ CreateCommandStatusString(
   );
 
 /**
-  Retrieve ObjectId strings for objects set in command status pointer.
-
-  @param[in] HiiHandle handle to the HII database that contains NvmStatusStrings
-  @param[in] pCommandStatus Command status data
-  @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
-  @param[out] ppObjectStrings buffer where output will be saved
-
-  Warning: ppOutputMessage - should be freed in caller.
-
-  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
-  @retval EFI_NOT_FOUND pCommandStatus ObjectType not found
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-RetrieveCmdStatusObjectStrings(
-  IN     EFI_HANDLE HiiHandle,
-  IN     COMMAND_STATUS *pCommandStatus,
-  IN     BOOLEAN ObjectIdNumberPreferred,
-     OUT CHAR16 **ppObjectStrings
-  );
-
-/**
   Disable previously saved status code
 
   @param[in] pObjectStatus pointer to object status (with Nvm Status bit field)

@@ -315,24 +315,6 @@ RdpaToSpa(
   );
 
 /**
-  Retrieve Device Handle List for DIMMs having unmapped region
-
-  @param[in] pFitHead pointer to the parsed NFit Header structure
-  @param[out] ppDimmListBrokenISs Array of DIMM Device Handles with unmapped region
-  @param[out] pDimmListLength Pointer to the ppDimmListBrokenISs array Length
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_OUT_OF_RESOURCES Memory Allocation failure
-  @retval EFI_INVALID_PARAMETER ppInterleaveSetMap or InterleaveMapListLength is NULL
-**/
-EFI_STATUS
-RetrieveDimmsWithBrokenISs(
-  IN     ParsedFitHeader *pFitHead,
-     OUT UINT32 **ppDimmListBrokenISs,
-     OUT UINT32 *pDimmListLength
-  );
-
-/**
   Return the current memory mode chosen by the BIOS during boot-up. 1LM is
   the fallback option and will always be available. 2LM will only be enabled
   if the AllowedMemoryMode is 2LM, there is memory configured for 2LM, and

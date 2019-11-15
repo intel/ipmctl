@@ -136,6 +136,12 @@ Debug and troubleshoot DCPMMs.
 *ipmctl-inject-error*(1)::
   Injects an error or clears a previously injected error
 
+*ipmctl-show-cap*(1)::
+  Shows the current Command Access Policy restrictions.
+
+*ipmctl-show-cel*(1)::
+  Shows the current Command Effect Log.
+
 *ipmctl-start-diagnostic*(1)::
   Runs a diagnostic test
 

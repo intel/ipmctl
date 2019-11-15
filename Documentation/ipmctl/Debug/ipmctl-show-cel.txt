@@ -1,0 +1,93 @@
+// Copyright (c) 2019, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-cel(1)
+===================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-cel - Shows the current DCPMM firmware Command Effect Log.
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -cel [TARGETS]
+
+DESCRIPTION
+-----------
+Retrieves the DCPMM command effect log and presents the response as a list of
+DimmID, Opcode, SubOpcode and DCPMM firmware command effect(s).
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+    Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Restricts output to specific DCPMMs by supplying one or more comma separated
+  DCPMM identifiers. The default is to display all manageable DCPMMs.
+
+EXAMPLES
+--------
+Lists command effects for all DCPMMs installed in the system
+[verse]
+ipmctl show -cel
+
+Lists command effects for DCPMM 0x1001
+[verse]
+ipmctl show -dimm 0x1001 -cel
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
+
+RETURN DATA
+-----------
+The default behavior is to return a table which lists the command effects per Opcode and SubOpcode.
+
+DimmID::
+  The default display of DCPMM identifiers. One of:
+  - UID: Use the DimmUID attribute as defined in the command Show Device.
+  - HANDLE: Use the DimmHandle attribute as defined in the command Show Device.
+    This is the default.
+
+Opcode::
+  The Opcode for a command.
+
+SubOpcode::
+  The SubOpcode for a command.
+
+CE Description::
+  A comma seperated list that includes one or more of:
+  - NE:   No Effect
+  - SSC:  Security State Change
+  - DCC:  DIMM Configuration Change after reboot
+  - IDCC: Immediate DIMM Configuration Change
+  - QIO:  Quiesce All IO
+  - IDDC: Immediate DIMM Data Change
+  - TM:   Test Mode
+  - DM:   Debug Mode
+  - IDPC: Immediate DIMM Policy Change

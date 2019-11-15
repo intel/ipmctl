@@ -660,7 +660,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-dump-support-data.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-cap.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
@@ -668,6 +667,8 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-cap.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-cel.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-diagnostic.txt
 #		${ROOT}/Documentation/ipmctl/Debug/ipmctl-diagnostic-events.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
@@ -698,7 +699,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
@@ -706,6 +706,8 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-cel.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-start-diagnostic.1.gz
 #		${OUTPUT_DIR}/manpage/ipmctl-diagnostic-events.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz

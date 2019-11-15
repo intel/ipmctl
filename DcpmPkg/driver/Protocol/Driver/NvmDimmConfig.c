@@ -791,7 +791,7 @@ GetDimmInfo (
   } else if (pDimm->MappedPersistentCapacity > 0 && pDimm->SkuInformation.AppDirectModeEnabled == MODE_DISABLED) {
     pDimmInfo->SKUViolation = TRUE;
   } else {
-    for (Index = 0; Index < pDimm->ISsNum; Index++) {
+    for (Index = 0; Index < pDimm->ISsNfitNum; Index++) {
       LIST_FOR_EACH(pNodeNamespace, &pDimm->pISsNfit[Index]->AppDirectNamespaceList) {
         pCurNamespace = NAMESPACE_FROM_NODE(pNodeNamespace, IsNode);
         if (pCurNamespace->NamespaceType == APPDIRECT_NAMESPACE &&

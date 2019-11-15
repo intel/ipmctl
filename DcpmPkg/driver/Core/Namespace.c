@@ -4961,7 +4961,7 @@ IsNamespaceOnDimms(
       goto Finish;
     }
 
-    for (Index2 = 0; Index2 < pDimms[Index]->ISsNum; Index2++) {
+    for (Index2 = 0; Index2 < pDimms[Index]->ISsNfitNum; Index2++) {
       ReturnCode = GetListSize(&pDimms[Index]->pISsNfit[Index2]->AppDirectNamespaceList, &NamespacesNum);
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;

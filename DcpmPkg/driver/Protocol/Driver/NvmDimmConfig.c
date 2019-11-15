@@ -9391,21 +9391,6 @@ SetDriverPreferences(
     goto Finish;
   }
 
-  VariableSize = sizeof(pDriverPreferences->AppDirectGranularity);
-  ReturnCode = SET_VARIABLE_NV(
-    APPDIRECT_GRANULARITY_VARIABLE_NAME,
-    gNvmDimmNgnvmVariableGuid,
-    VariableSize,
-    &pDriverPreferences->AppDirectGranularity);
-
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed to set AppDirect Granularity Variable");
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-    goto Finish;
-  }
-
-  gNvmDimmData->Alignments.RegionPartitionAlignment = ConvertAppDirectGranularityPreference(pDriverPreferences->AppDirectGranularity);
-
   ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
 Finish:

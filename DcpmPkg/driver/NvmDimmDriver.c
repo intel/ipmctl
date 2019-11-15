@@ -722,7 +722,6 @@ NvmDimmDriverDriverEntryPoint(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_HANDLE ExistingDriver = NULL;
-  DRIVER_PREFERENCES DriverPreferences;
 #ifndef OS_BUILD
   SetSerialAttributes();
   EFI_LOADED_IMAGE_PROTOCOL *pLoadedImage = NULL;
@@ -747,8 +746,6 @@ NvmDimmDriverDriverEntryPoint(
   /** Print runtime function address to ease calculation of GDB symbol loading offset. **/
   NVDIMM_DBG_CLEAN("NvmDimmDriverDriverEntryPoint=0x%x\n", (UINT64)&NvmDimmDriverDriverEntryPoint);
 
-  ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
-
   gSystemTable = pSystemTable;
 
   /**
@@ -769,13 +766,7 @@ NvmDimmDriverDriverEntryPoint(
   }
 
   gNvmDimmData->DriverHandle = ImageHandle;
-
-  ReturnCode = ReadRunTimeDriverPreferences(&DriverPreferences);
-  if (EFI_ERROR(ReturnCode)) {
-    gNvmDimmData->Alignments.RegionPartitionAlignment = SIZE_32GB;
-  } else {
-    gNvmDimmData->Alignments.RegionPartitionAlignment = ConvertAppDirectGranularityPreference(DriverPreferences.AppDirectGranularity);
-  }
+  gNvmDimmData->Alignments.RegionPartitionAlignment = SIZE_1GB;
   gNvmDimmData->Alignments.RegionVolatileAlignment = REGION_VOLATILE_SIZE_ALIGNMENT_B;
   gNvmDimmData->Alignments.RegionPersistentAlignment = REGION_PERSISTENT_SIZE_ALIGNMENT_B;
 

@@ -2232,10 +2232,15 @@ GetGoalConfigs(
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
-    NVDIMM_ERR("ERROR: VerifyTargetDimms");
-    goto Finish;
+    if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
+      NVDIMM_DBG("No usable dimms found in GetGoalConfigs");
+    }
+    else
+    {
+      NVDIMM_ERR("ERROR: VerifyTargetDimms");
+      goto Finish;
+    }
   }
-
   /** Fetch region goals **/
   for (Index1 = 0; Index1 < DimmsCount; ++Index1) {
     pCurrentDimm = pDimms[Index1];

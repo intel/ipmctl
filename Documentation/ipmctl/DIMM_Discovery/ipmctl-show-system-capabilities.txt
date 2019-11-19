@@ -145,20 +145,19 @@ AppDirectMigrationSupported::
   - 1: Supported
 
 RenameNamespaceSupported::
-  If the host software supports renaming a namespace with the command Section
-  <<Modify Namespace>>. One of:
+  If the host software supports renaming a namespace. One of:
   - 0: Not supported
   - 1: Supported
 
 GrowAppDirectNamespaceSupported::
   If the host software supports increasing the capacity of an App Direct
-  namespace with the command Section <<Modify Namespace>>. One of:
+  namespace. One of:
   - 0: Not supported
   - 1: Supported
 
 ShrinkAppDirectNamespaceSupported::
   If the host software supports decreasing the capacity of an App Direct
-  namespace with the command Section <<Modify Namespace>>. One of:
+  namespace. One of:
   - 0: Not supported
   - 1: Supported
 

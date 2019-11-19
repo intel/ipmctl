@@ -153,5 +153,5 @@ EventCode::
   Event code associated with Message.
 
 ifdef::manpage[]
-include::ipmctl-diagnostic-events.txt[leveloffset=+0]
+include::ipmctl-diagnostic-events.txt[leveloffset=+1]
 endif::manpage[]

@@ -2446,6 +2446,9 @@ InitializeNamespaces(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
+    if (!IsDimmManageable(pDimm)) {
+      continue;
+    }
     if (pDimm->LsaStatus == LSA_NOT_INIT) {
       continue;
     }

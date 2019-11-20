@@ -4106,7 +4106,7 @@ GetMemoryResourcesInfo(
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm) && (!IsDimmInSupportedConfig(pDimm))) {
+    if (!IsDimmManageable(pDimm) || (!IsDimmInSupportedConfig(pDimm))) {
       continue;
     }
 

@@ -21,6 +21,8 @@ Creates a support snapshot and dump support data to a file for off-line analysis
 by support personnel. Support data may include system log(s), error log(s),
 trace log(s), platform configuration, sensor information and diagnostic results.
 
+This command may take significantly longer than other commands to complete.
+
 Commands executed:
 * version
 * show -memoryresources

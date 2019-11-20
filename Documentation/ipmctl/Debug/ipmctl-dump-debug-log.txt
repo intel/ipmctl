@@ -19,7 +19,7 @@ ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug [TARGETS]
 DESCRIPTION
 -----------
 Dumps encoded firmware debug logs from specified DCPMMs and optionally
-decodes to human readable text.
+decodes to human readable text using a dictionary file.
 
 ifndef::os_build[]
 NOTE: For any non-functional DCPMMs logs will be retreived via SMBus.
@@ -59,7 +59,11 @@ file_prefix_Uid_Handle_logsource.[bin,txt]
 -dict (path)::
   Optional file path to the dictionary file. If supplied, the command will
   create both the binary debug log and a text file with decoded log data with
-  the file prefix specified by -destination.
+  the file prefix specified by -destination. Firmware dictionaries are lookup tables
+  that match firmware codes to their text descriptions. When referenced, the dictionary
+  will be used to substitute the provided codes with text, making the logs more human
+  readable. Dictionaries are included in every firmware release under the format
+  nlog_dict.X.X.X.XXXX.txt.
 
 -dimm [DimmIDs]::
   Dumps the debug logs from the specified DCPMMs.

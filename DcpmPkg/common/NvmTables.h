@@ -104,6 +104,10 @@
 #define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
                                           ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)))
 
+#define IS_NFIT_REVISION_INVALID(revision)   (revision.AsUint8 != ACPI_REVISION_1)
+#define IS_PCAT_REVISION_INVALID(revision)   IS_ACPI_REV_INVALID(revision)
+#define IS_PMTT_REVISION_INVALID(revision)   ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2))
+
 /** NFIT Tables structures **/
 #pragma pack(push)
 #pragma pack(1)

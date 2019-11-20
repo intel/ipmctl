@@ -27,6 +27,13 @@
 //
 #string STR_DCPMM_STATUS_EXECUTE_SUCCESS  #language en "executed successfully"
 
+#string STR_ACPI_STATUS_NFIT                              #language en "NFIT"
+#string STR_ACPI_STATUS_PCAT                              #language en "PCAT"
+#string STR_ACPI_STATUS_PMTT                              #language en "PMTT"
+#string STR_ACPI_STATUS_UNKNOWN_TABLE                     #language en "Unknown Table"
+#string STR_ACPI_STATUS_ERR_INVALID_REVISION              #language en "[%ls] Invalid ACPI table revision(0x%02x)"
+#string STR_ACPI_STATUS_ERR_INVALID_MAJOR_MINOR_REVISION  #language en "[%ls] Invalid ACPI table revision(Major: 0x%x, Minor: 0x%x)"
+
 #string STR_DCPMM_STATUS_CONTROLLER_OUT_OF_RANGE  #language en "Given controller temperature is out of range <%d,%d>"
 #string STR_DCPMM_STATUS_MEDIA_OUT_OF_RANGE       #language en "Given media temperature is out of range <%d,%d>"
 #string STR_DCPMM_STATUS_CAPACITY_OUT_OF_RANGE    #language en "Given capacity is out of range <%d,%d>"

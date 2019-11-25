@@ -2209,13 +2209,6 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-    ReturnCode = EFI_UNSUPPORTED;
-    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
-    NVDIMM_ERR("ERROR: DimmSkuConsistency");
-    goto Finish;
-  }
-
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
@@ -2234,6 +2227,10 @@ GetGoalConfigs(
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
       NVDIMM_DBG("No usable dimms found in GetGoalConfigs");
+      ResetCmdStatus(pCommandStatus, NVM_SUCCESS);
+      *pConfigGoalsCount = 0;
+      ReturnCode = EFI_SUCCESS;
+      goto Finish;
     }
     else
     {
@@ -2241,6 +2238,14 @@ GetGoalConfigs(
       goto Finish;
     }
   }
+
+  if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+    ReturnCode = EFI_UNSUPPORTED;
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
+    NVDIMM_ERR("ERROR: DimmSkuConsistency");
+    goto Finish;
+  }
+
   /** Fetch region goals **/
   for (Index1 = 0; Index1 < DimmsCount; ++Index1) {
     pCurrentDimm = pDimms[Index1];

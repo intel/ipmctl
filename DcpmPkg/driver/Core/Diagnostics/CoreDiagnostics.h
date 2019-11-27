@@ -90,6 +90,7 @@
 #define EVENT_CODE_630      630
 #define EVENT_CODE_631      631
 #define EVENT_CODE_632      632
+#define EVENT_CODE_633      633
 /* Diagnostic Security Events **/
 #define EVENT_CODE_800      800
 #define EVENT_CODE_801      801

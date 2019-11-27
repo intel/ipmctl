@@ -46,6 +46,7 @@ GeneratePcdConfInput(
   UINT64 PmPartitionSize = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigEfiVar = NULL;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigIn = NULL;
+  PMTT_MODULE_INFO *pPmttModuleInfo = NULL;
 
   NVDIMM_ENTRY();
 
@@ -106,7 +107,7 @@ GeneratePcdConfInput(
       ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(Revision)) {
     ConfInputSize =
       sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
       + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
@@ -253,7 +254,7 @@ GeneratePcdConfInput(
       LastPersistentMemoryOffset += PmPartitionSize;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1((*ppConfigInput)))  {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2((*ppConfigInput)))  {
     for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
       NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurrentOffset;
 
@@ -302,8 +303,25 @@ GeneratePcdConfInput(
         pIdentInfo->DimmIdentification.SerialNumber = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SerialNumber;
         pIdentInfo->PmPartitionSize = PmPartitionSize;
         pIdentInfo->PartitionOffset = LastPersistentMemoryOffset;
-        //Valid for CCUR. Populated by BIOS on successful request
+
         pIdentInfo->DimmLocation.AsUint64 = 0;
+        // Update the DIMM location field
+        pPmttModuleInfo = GetDimmModuleByPidFromPmtt(pDimm->pRegionsGoal[Index]->pDimms[Index2]->DimmID, gNvmDimmData->PMEMDev.pPmttHead);
+        if (pPmttModuleInfo == NULL) {
+          NVDIMM_ERR("DIMM Module with pid: %d not found in PMTT", pDimm->DimmID);
+          pIdentInfo->DimmLocation.Split.SocketId = pDimm->SocketId;
+          pIdentInfo->DimmLocation.Split.DieId = MAX_DIEID_SINGLE_DIE_SOCKET;
+          pIdentInfo->DimmLocation.Split.MemControllerId = pDimm->ImcId;
+          pIdentInfo->DimmLocation.Split.ChannelId = pDimm->ChannelId;
+          pIdentInfo->DimmLocation.Split.SlotId = pDimm->ChannelPos;
+        }
+        else {
+          pIdentInfo->DimmLocation.Split.SocketId = pPmttModuleInfo->SocketId;
+          pIdentInfo->DimmLocation.Split.DieId = pPmttModuleInfo->DieId;
+          pIdentInfo->DimmLocation.Split.MemControllerId = pPmttModuleInfo->MemControllerId;
+          pIdentInfo->DimmLocation.Split.ChannelId = pPmttModuleInfo->ChannelId;
+          pIdentInfo->DimmLocation.Split.SlotId = pPmttModuleInfo->SlotId;
+        }
 
         pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
       }

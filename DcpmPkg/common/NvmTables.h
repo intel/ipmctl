@@ -86,9 +86,12 @@
 #define ACPI_REVISION_2        2
 #define ACPI_MAJOR_REVISION_1  1
 #define ACPI_MINOR_REVISION_1  1
+#define ACPI_MINOR_REVISION_2  2
 
-#define IS_ACPI_REV_MAJ_1_MIN_1(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && (revision.Split.Minor == ACPI_MINOR_REVISION_1))
-#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1))
+#define IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                       ((revision.Split.Minor == ACPI_MINOR_REVISION_1) || (revision.Split.Minor == ACPI_MINOR_REVISION_2)))
+#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                       ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2)))
 
 #define IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
@@ -100,9 +103,11 @@
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_2(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_2)
 
 #define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
-                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)))
 #define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
-                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)))
 
 #define IS_NFIT_REVISION_INVALID(revision)   (revision.AsUint8 != ACPI_REVISION_1)
 #define IS_PCAT_REVISION_INVALID(revision)   IS_ACPI_REV_INVALID(revision)
@@ -421,13 +426,7 @@ typedef struct {
     0 means there is no limit defined.
   **/
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
-  /**
-    Capacity in GiB per DDR DIMM for use as near
-    memory cache if 2LM is enabled. The remaining
-    DDR capacity will be used as 1LM.
-  **/
-  UINT32 DDRCacheSize;
-  UINT8 Reserved[3];
+  UINT8 Reserved[7];
 } PLATFORM_CAPABILITY_INFO3;
 
 typedef struct {

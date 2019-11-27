@@ -273,7 +273,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo = (PLATFORM_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->PlatformCapabilityInfoNum);
@@ -294,7 +294,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->MemoryInterleaveCapabilityInfoNum);
@@ -335,7 +335,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable = (DIE_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable, pPcatSubTableHeader, Length,
           &pParsedPcat->SocketSkuInfoNum);
@@ -1329,7 +1329,7 @@ CurrentMemoryMode(
     }
     *pResult = pPlatformCapability->CurrentMemoryMode.MemoryModeSplit.CurrentVolatileMode;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1404,7 +1404,7 @@ AllowedMemoryMode(
     }
     *pResult = pPlatformCapability->CurrentMemoryMode.MemoryModeSplit.AllowedVolatileMode;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1480,7 +1480,7 @@ CheckIfBiosSupportsConfigChange(
       goto Finish;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1563,7 +1563,7 @@ CheckMemModeCapabilities(
     AppDirectPMSupported = pPlatformCapability->MemoryModeCapabilities.MemoryModesFlags.AppDirect;
     MemMode1LMSupported = pPlatformCapability->MemoryModeCapabilities.MemoryModesFlags.OneLm;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1663,7 +1663,7 @@ RetrievePcatSocketSkuInfoTable(
       }
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
@@ -1818,7 +1818,7 @@ RetrieveSupportediMcAndChannelInterleaveSizes(
       *pInterleaveAlignmentSize = pMemoryInterleaveCapability->InterleaveAlignmentSize;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
@@ -1917,7 +1917,7 @@ RetrieveInterleaveSetMap(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -1990,7 +1990,7 @@ RetrieveChannelWaysFromInterleaveSetMap(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -2110,7 +2110,7 @@ RetrieveMaxPMInterleaveSets(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {

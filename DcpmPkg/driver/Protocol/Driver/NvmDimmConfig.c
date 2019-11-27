@@ -761,14 +761,21 @@ GetDimmInfo (
       break;
     case DIMM_CONFIG_IS_INCOMPLETE:
     case DIMM_CONFIG_NO_MATCHING_IS:
-    case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_BROKEN_INTERLEAVE;
+      break;
+    case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
+      if ((pDimm->ISsNum > 0) && (pDimm->NvDimmStateFlags & NVDIMM_STATE_FLAGS_NOT_MAPPED)) {
+        pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_BROKEN_INTERLEAVE;
+      } else {
+        pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_UNSUPPORTED;
+      }
       break;
     case DIMM_CONFIG_BAD_CONFIG:
     case DIMM_CONFIG_IN_CHECKSUM_NOT_VALID:
     case DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID:
     case DIMM_CONFIG_PM_NOT_MAPPED:
     case DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION:
+    case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_BAD_CONFIG;
       break;
     default:
@@ -1971,7 +1978,7 @@ GetSockets(
       (*ppSockets)[Index].TotalMappedMemory = pSocketSkuInfo->TotalMemorySizeMappedToSpa;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(pPcat->pPlatformConfigAttr)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
     DIE_SKU_INFO_TABLE *pDieSkuInfo = NULL;
     if (SocketCount == 0 || pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable == NULL) {
       NVDIMM_DBG("Platform does not support socket SKU limits.");
@@ -4798,7 +4805,7 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->PartitioningAlignment = gNvmDimmData->Alignments.RegionPartitionAlignment;
   pSysCapInfo->InterleaveSetsAlignment = gNvmDimmData->Alignments.RegionPersistentAlignment;
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {
@@ -4845,7 +4852,7 @@ GetSystemCapabilitiesInfo(
     }
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -6280,7 +6287,7 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6313,7 +6320,7 @@ GetActualRegionsGoalCapacities(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
@@ -6741,7 +6748,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6771,7 +6778,7 @@ CreateGoalConfig(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         NULL, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;

@@ -2367,10 +2367,7 @@ EFI_STATUS ValidatePcdOemHeader(
     return EFI_VOLUME_CORRUPTED;
   }
 
-  if (((pOemHeader->Header.Revision.AsUint8 > NVDIMM_CONFIGURATION_HEADER_REVISION) ||
-  (pOemHeader->Header.Revision.AsUint8 < NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION)) &&
-    ((pOemHeader->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_REVISION_1) ||
-    (pOemHeader->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1))) {
+  if (IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(pOemHeader)) {
     NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
     return EFI_VOLUME_CORRUPTED;
   }

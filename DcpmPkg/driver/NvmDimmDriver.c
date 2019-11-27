@@ -980,7 +980,6 @@ NvmDimmDriverDriverBindingSupported(
   ReturnCode = gBS->OpenProtocol(ControllerHandle, &gNfitBindingProtocolGuid,
     (VOID **)&pDummy, pThis->DriverBindingHandle, ControllerHandle,
     EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-
   if (!EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Detected the Intel NVM Dimm device");
 

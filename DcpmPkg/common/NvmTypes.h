@@ -1020,19 +1020,22 @@ typedef struct _DEBUG_LOG_INFO {
   01 - DIMM is configured successfully
   02 - Reserved
   03 - All the DIMMs in the interleave set not found. Volatile memory is mapped to the SPA if possible
-  04 - Matching Interleave set not found. Volatile memory is mapped to the SPA if possible
-  05 - DIMM added to the system or moved within the system or DIMM is not yet configured.
-  Volatile memory is mapped to the SPA if possible. Current configuration present in the DIMM is not modified.
+  04 - Persistent Memory not mapped due to matching Interleave set not found. Volatile memory is mapped to the SPA if possible
+  05 - DIMM added to the system or moved within the system or DIMM is not yet configured
+       Volatile memory is mapped to the SPA if possible. Current configuration present in the DIMM is not modified (Reserved)
   06 - New configuration input structures have errors, old configuration used. Refer to the config output structures
-  for additional errors.
-  07 - New configuration input structures have errors. Volatile memory is mapped to the SPA if possible.
-  Refer to the config output structures for addition errors
+       for additional errors
+  07 - New configuration input structures have errors. Volatile memory is mapped to the SPA if possible
+       Refer to the config output structures for addition errors
   08 - Configuration Input Checksum not valid
   09 - Configuration Input data Revision is not supported
   10 - Current Configuration Checksum not valid
-  11 - DCPMM is not mapped to SPA due to a health issue or configuration change.
-  12 - DCPMM is not mapped due to a population issue.
-  14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit.
+  11 - DCPMM is not mapped to SPA due to a health issue or configuration change
+  12 - DCPMM persistent and volatile memory is not mapped due to a population issue
+  13 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
+  14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
+
+  Other values reserved
 **/
 #define DIMM_CONFIG_UNDEFINED                      0
 #define DIMM_CONFIG_SUCCESS                        1
@@ -1047,6 +1050,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID        10
 #define DIMM_CONFIG_PM_NOT_MAPPED                  11
 #define DIMM_CONFIG_DCPMM_POPULATION_ISSUE         12
+#define DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED  13
 #define DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION 14
 
 /**

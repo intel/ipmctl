@@ -34,9 +34,14 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define NVDIMM_CONFIGURATION_HEADER_CREATOR_REVISION 0
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_1       1
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_2       2
-#define NVDIMM_CONFIGURATION_TABLES_REVISION_3       3
+#define NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1 1
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1 1
+#define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2 2
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_DEFAULT NVDIMM_CONFIGURATION_TABLES_REVISION_2
+
+#define IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_1) && (table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_2) && \
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1)) && \
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2)))
 
 #define LSA_NAMESPACE_INDEX_SIG_L        SIGNATURE_64('N', 'A', 'M', 'E', 'S', 'P', 'A', 'C')
 #define LSA_NAMESPACE_INDEX_SIG_H        SIGNATURE_64('E', '_', 'I', 'N', 'D', 'E', 'X', '\0')
@@ -70,12 +75,11 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define PCD_OEM_PARTITION_ID                         1
 #define PCD_LSA_PARTITION_ID                         2
 
-#define CONFIG_OUTPUT_STATUS_UNKNOWN                  0
-#define CONFIG_OUTPUT_STATUS_SUCCESS                  1
-#define CONFIG_OUTPUT_STATUS_ERROR                    2
-#define CONFIG_OUTPUT_STATUS_RUNTIME_VAL_IN_PROGRESS  3
-#define CONFIG_OUTPUT_STATUS_RUNTIME_VAL_SUCCESS      4
-#define CONFIG_OUTPUT_STATUS_RUNTIME_VAL_ERROR        5
+#define CONFIG_OUTPUT_STATUS_UNKNOWN                         0
+#define CONFIG_OUTPUT_STATUS_SUCCESS                         1
+#define CONFIG_OUTPUT_STATUS_ERROR                           2
+#define CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED         6
+#define CONFIG_OUTPUT_STATUS_CPU_MAX_MEMORY_LIMIT_VIOLATION  7
 
 #define PARTITION_SIZE_CHANGE_STATUS_UNDEFINED              0
 #define PARTITION_SIZE_CHANGE_STATUS_SUCCESS                1
@@ -136,18 +140,20 @@ typedef struct {
     01 - DIMM is configured successfully
     02 - Reserved
     03 - All the DIMMs in the interleave set not found. Volatile memory is mapped to the SPA if possible
-    04 - Matching Interleave set not found. Volatile memory is mapped to the SPA if possible
-    05 - DIMM added to the system or moved within the system or DIMM is not yet configured.
-         Volatile memory is mapped to the SPA if possible. Current configuration present in the DIMM is not modified.
+    04 - Persistent Memory not mapped due to matching Interleave set not found. Volatile memory is mapped to the SPA if possible
+    05 - DIMM added to the system or moved within the system or DIMM is not yet configured
+         Volatile memory is mapped to the SPA if possible. Current configuration present in the DIMM is not modified (Reserved)
     06 - New configuration input structures have errors, old configuration used. Refer to the config output structures
-         for additional errors.
-    07 - New configuration input structures have errors. Volatile memory is mapped to the SPA if possible.
+         for additional errors
+    07 - New configuration input structures have errors. Volatile memory is mapped to the SPA if possible
          Refer to the config output structures for addition errors
     08 - Configuration Input Checksum not valid
     09 - Configuration Input data Revision is not supported
     10 - Current Configuration Checksum not valid
-
-    Other values reserved
+    11 - DCPMM is not mapped to SPA due to a health issue or configuration change
+    12 - DCPMM persistent and volatile memory is not mapped due to a population issue
+    13 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
+    14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
   **/
   UINT16 ConfigStatus;
   UINT8 Reserved[2];
@@ -241,14 +247,20 @@ typedef struct {
     Reserved zero
 
     Config Output:
-    0 - Information not processed
-    1 - Successfully interleaved the request
-    2 - Unable to find matching DIMMs in the interleave set
-    3 - Matching DIMMs found, but interleave information does not match
-    4 - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
-        This interleave set may not be mapped to system address space
-    5 - Memory mapping failed due to unavailable system address space
-    6 - Mirror mapping failed due to unavailable resources
+    0  - Information not processed
+    1  - Successfully interleaved the request
+    2  - Information not processed due to an error
+    3  - Unable to find matching DIMMs in the interleave set
+    4  - Matching DIMMs found, but interleave information does not match
+    5  - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
+         This interleave set may not be mapped to system address space
+    6  - Memory mapping failed due to unavailable system address space
+    7  - Reserved
+    8  - Partitioning request failed
+    9  - Matching DIMMs found, but CIN missing in a DIMM in the interleave set
+    10 - Channel interleave does not match between the MCs being interleaved
+    11 - Partition Offset or Size is not a multiple of Interleave Aligment Size in Memory Interleave
+         Capability Information sub-table of PCAT
     12 - Request unsuppported
   **/
   UINT8 InterleaveChangeStatus;
@@ -413,9 +425,8 @@ typedef struct {
     0 - Undefined
     1 - Config Change applied successfully
     2 - Boot time processing complete, errors found. Refer to individual records for error details
-    3 - Runtime validation is in progress
-    4 - Runtime validation complete, no errors found
-    5 - Runtime validation complete, errors found. Refer to individual records for error details
+    6 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
+    7 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
   **/
   UINT8 ValidationStatus;
   UINT8 Reserved[7];

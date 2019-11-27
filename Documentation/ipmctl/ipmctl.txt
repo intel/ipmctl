@@ -130,6 +130,9 @@ View and update the firmware on DCPMMs. Other support and maintenance commands.
 === DEBUG
 Debug and troubleshoot DCPMMs.
 
+*ipmctl-delete-pcd*(1)
+  Clears select partition data from the PCD
+
 *ipmctl-dump-debug-log*(1)::
   Dumps encoded firmware debug logs from DCPMM
 
@@ -198,8 +201,11 @@ SEE ALSO
 *ipmctl-show-preferences*(1),
 *ipmctl-update-firmware*(1),
 *ipmctl-version*(1),
+*impctl-delete-pcd*(1),
 *ipmctl-dump-debug-log*(1),
 *ipmctl-inject-error*(1),
+*ipmctl-show-cap*(1),
+*ipmctl-show-cel*(1),
 *ipmctl-start-diagnostic*(1),
 *ipmctl-show-acpi*(1),
 *ipmctl-show-error-log*(1),

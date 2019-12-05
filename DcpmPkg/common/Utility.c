@@ -3680,42 +3680,42 @@ GoalStatusToString(
   switch (Status) {
     case GOAL_CONFIG_STATUS_UNKNOWN:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NEW:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_BAD_REQUEST:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NOT_ENOUGH_RESOURCES:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_FIRMWARE_ERROR:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     default:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;

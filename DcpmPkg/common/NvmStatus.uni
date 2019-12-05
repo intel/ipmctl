@@ -221,12 +221,12 @@
 #string STR_DCPMM_VIEW_FIRMWARE_VERSION_NOT_VALID    #language en "Incorrect FW version"
 #string STR_DCPMM_VIEW_FIRMWARE_INCOMPATIBLE_TO_CTLR_STEPPING    #language en "Image not compatible with this DCPMM"
 
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN #language en "Unknown: The status cannot be determined."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED #language en "New: A reboot is required for the memory allocation goal to be processed by the BIOS."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL #language en "Failed - Bad request: The BIOS failed to process the memory allocation goal because it was invalid."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES #language en "Failed - Not enough resources: There were not enough resources for the BIOS to process the memory allocation goal."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR #language en "Failed - Firmware error: The BIOS failed to process the memory allocation goal due to a firmware error."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR #language en "Failed - Unknown: The BIOS failed to process the memory allocation goal due to an unknown error."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN #language en "Unknown: The status cannot be determined."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_REBOOT_REQUIRED #language en "New: A reboot is required for the memory allocation goal to be processed by the BIOS."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_INVALID_GOAL #language en "Failed - Bad request: The BIOS failed to process the memory allocation goal because it was invalid."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES #language en "Failed - Not enough resources: There were not enough resources for the BIOS to process the memory allocation goal."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_FIRMWARE_ERROR #language en "Failed - Firmware error: The BIOS failed to process the memory allocation goal due to a firmware error."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN_ERROR #language en "Failed - Unknown: The BIOS failed to process the memory allocation goal due to an unknown error."
 
 #string STR_DCPMM_STATUS_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE #language en "Failed to get firmware debug log size"
 #string STR_DCPMM_STATUS_ERR_FW_SET_LOG_LEVEL_FAILED #language en "Failed to set firmware log level"

@@ -1787,7 +1787,6 @@ VerifyCreatingSupportedRegionConfigs(
   LIST_ENTRY *pDimmNode = NULL;
   UINT32 Socket = 0;
   UINT32 Index = 0;
-  BOOLEAN WholeSocket = FALSE;
   UINT32 ExistingADNonInterleavedRegions = 0;
   UINT32 ExistingVolatileRegions = 0;
   UINT32 NumOfDimmsOnSocket = 0;
@@ -1805,14 +1804,6 @@ VerifyCreatingSupportedRegionConfigs(
     NumOfDimmsOnSocket = 0;
     ExistingADNonInterleavedRegions = 0;
     ExistingVolatileRegions = 0;
-    WholeSocket = FALSE;
-
-    Rc = IsConfigureWholeSocket(DimmsNum, Socket, &WholeSocket);
-    if (EFI_ERROR(Rc)) {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-      NVDIMM_DBG("Unable to determine if goal request is configuring entire socket or adding unconfigured dimms");
-      goto Finish;
-    }
 
     /** Get a number of all configured and unconfigured Dimms on a given socket **/
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
@@ -1829,7 +1820,7 @@ VerifyCreatingSupportedRegionConfigs(
           UnconfiguredDimmsNum += 1;
         }
 
-        if (!WholeSocket && !IsPointerInArray((VOID **)pDimms, DimmsNum, pDimm)) {
+        if (!IsPointerInArray((VOID **)pDimms, DimmsNum, pDimm)) {
           // Calculate the ADx1 regions on the unspecified DIMMs
           if (pDimm->VolatileCapacity == 0 &&
             pDimm->ISsNfitNum > 0 &&

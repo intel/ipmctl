@@ -1,0 +1,228 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+Playback and Record (PBR) is a capability included to enable efficient reproduction and debug
+of issues a user may encounter. The capability is designed to capture the current state of
+the platform as it relates to DCPMMs, and all interactions with the DCPMM firmware. This data
+can then be stored in a file and sent to the development team for rapid reproduction and debug.
+
+The PBR file contains the following:
+
+- ACPI tables: NFIT, PCAT and PMTT
+- SMBIOS tables
+- Raw firmware command response data
+
+[.lead]
+*Theory of operation: Recording*
+
+. Start a recording session (start -session)
+ifndef::os_build[]
+. Manually unload the Intel DC Persistent Memory Driver
+. Manually load the Intel DC Persistent Memory Driver
+endif::os_build[]
+. Execute all commands to be included in session
+. Save the recording to a file (dump -session)
+. Stop the recording session (stop -session)
+. Send PBR file(s) to support personnel for analysis
+
+ifndef::os_build[]
+NOTE: PBR functionality has some differences in the UEFI shell environment. General
+usage remains the same as OS shell usage, but the additional steps to unload and load the
+driver are required to capture driver initialization.
+endif::os_build[]
+
+[.lead]
+*Example Recording Sequence*
+
+To record CLI commands you begin by starting a recording session.
+
+```
+# ipmctl start -session -mode record
+
+Setting to record mode.
+```
+
+All commands executed from this point forward will be added to the recording session.
+
+```
+# ipmctl show -dimm 1
+Warning - Executing in recording mode!
+
+ DimmID | Capacity    | LockState | HealthState | FWVersion
+===============================================================
+ 0x0001 | 253.734 GiB | Disabled  | Healthy     | 02.01.00.1034
+
+# ipmctl show -dimm -firmware
+Warning - Executing in recording mode!
+
+ DimmID | ActiveFWVersion | StagedFWVersion
+============================================
+ 0x0001 | 02.01.00.1034   | N/A
+ 0x0101 | 02.01.00.1034   | N/A
+ 0x1001 | 02.01.00.1034   | N/A
+ 0x1101 | 02.01.00.1034   | N/A
+
+# ipmctl show -dimm 1 -sensor
+Warning - Executing in recording mode!
+
+ DimmID | Type                        | CurrentValue
+=====================================================
+ 0x0001 | Health                      | Healthy
+ 0x0001 | MediaTemperature            | 38C
+ 0x0001 | ControllerTemperature       | 40C
+ 0x0001 | PercentageRemaining         | 100%
+ 0x0001 | LatchedDirtyShutdownCount   | 4
+ 0x0001 | PowerOnTime                 | 10661690s
+ 0x0001 | UpTime                      | 4138492s
+ 0x0001 | PowerCycles                 | 46
+ 0x0001 | FwErrorCount                | 2
+ 0x0001 | UnlatchedDirtyShutdownCount | 26
+```
+
+To preserve the session for later playback, dump the session to a file.
+
+```
+# ipmctl dump -destination myrecording.pbr -session
+
+Warning - Executing in recording mode!
+
+Successfully dumped 101405 bytes to file.
+```
+
+NOTE: Session related commands are ignored by the recording/playback mechanism.
+
+Don't forget to stop the session when you're done recording. Note, stopping a session frees all recording data saved, thus the prompt to verify (use -force option to skip check).
+
+```
+# ipmctl stop -session
+
+Warning - Executing in recording mode!
+
+Stopping a session will free all recording content.
+
+Do you want to continue? [y/n] y
+
+Stopped PBR session.
+```
+
+[.lead]
+*Theory of operation: Playback*
+
+. Load the recorded session (load -session)
+. Start playback to execute commands all at once or individually (start -session)
+. Debug as necessary
+. Stop the playback session (stop -session)
+
+[.lead]
+*Example Playback Sequence*
+
+Load the existing PBR file.
+
+```
+# ipmctl load -source myrecording.pbr -session
+Successfully loaded 35175 bytes to session buffer.
+```
+
+To examine the recorded command sequence, show the session.
+
+```
+# ipmctl show -session
+ TagID | Args
+=======================================
+ 0x0*  | show -dimm 1
+ 0x1   | show -dimm -firmware
+ 0x2   | show -dimm 1 -sensor
+```
+
+During playback, all the commands can be run at once or individually.
+
+To run all the commands at once, use playback mode.
+
+```
+# ipmctl start -session -mode playback
+ DimmID | Capacity    | LockState | HealthState | FWVersion
+===============================================================
+ 0x0001 | 253.734 GiB | Disabled  | Healthy     | 02.01.00.1034
+
+
+ DimmID | ActiveFWVersion | StagedFWVersion
+============================================
+ 0x0001 | 02.01.00.1034   | N/A
+ 0x0101 | 02.01.00.1034   | N/A
+ 0x1001 | 02.01.00.1034   | N/A
+ 0x1101 | 02.01.00.1034   | N/A
+
+ DimmID | Type                        | CurrentValue
+=====================================================
+ 0x0001 | Health                      | Healthy
+ 0x0001 | MediaTemperature            | 38C
+ 0x0001 | ControllerTemperature       | 40C
+ 0x0001 | PercentageRemaining         | 100%
+ 0x0001 | LatchedDirtyShutdownCount   | 4
+ 0x0001 | PowerOnTime                 | 10661690s
+ 0x0001 | UpTime                      | 4138492s
+ 0x0001 | PowerCycles                 | 46
+ 0x0001 | FwErrorCount                | 2
+ 0x0001 | UnlatchedDirtyShutdownCount | 26
+```
+
+To run the commands individually (one at a time), use playback_manual mode.
+
+This requires invoking the commands in the correct order - the same order they were recorded.
+To see which command is next, use 'show -session' and note the asterisk (*) denotes the command
+that will be executed next.
+
+To set the next command to be executed, use the -tag option. In this example,
+the command associated with tag 1 will be set as next.
+
+```
+# ipmctl start -session -mode playback_manual -tag 1
+Warning - Executing in playback mode!
+
+Setting to playback_manual mode.
+
+# ipmctl show -session
+Warning - Executing in playback mode!
+
+ TagID | Args
+=======================================
+ 0x0   | show -dimm 1
+ 0x1*  | show -dimm -firmware
+ 0x2   | show -dimm 1 -sensor
+```
+
+Now the command 'show -dimm -firmware' can be run and the next command to be executed
+will advance to tag 2.
+
+```
+# ipmctl show -dimm -firmware
+Warning - Executing in playback mode!
+
+ DimmID | ActiveFWVersion | StagedFWVersion
+============================================
+ 0x0001 | 02.01.00.1034   | N/A
+ 0x0101 | 02.01.00.1034   | N/A
+ 0x1001 | 02.01.00.1034   | N/A
+ 0x1101 | 02.01.00.1034   | N/A
+
+# ipmctl show -session
+Warning - Executing in playback mode!
+
+ TagID | Args
+=======================================
+ 0x0   | show -dimm 1
+ 0x1   | show -dimm -firmware
+ 0x2*  | show -dimm 1 -sensor
+```
+
+When done with the playback session, use 'stop -session' to disable the
+playback mode and resume normal operation.
+
+```
+# ipmctl stop -session
+Warning - Executing in playback mode!
+
+Stopping a session will free all recording content.
+Do you want to continue? [y/n] y
+Stopped PBR session.
+```

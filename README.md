@@ -31,7 +31,7 @@ This will update the required dependencies.
 
 For systems that cannot reach the Internet use another system to download the following rpms required to install ipmctl and then copy them to the original system (e.g. via thumb drive).
 
-> ipmctl.rpm, libipmctl.rpm, libsafec.rpm, ndctl, ndctl-libs, json-c.rpm
+> ipmctl.rpm, libipmctl.rpm, libsafec.rpm (only needed for 1.x releases), libndctl, json-c.rpm
 
 Run 
 
@@ -56,7 +56,7 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 
 ### Specific Instructions Reported as Working on RHEL7.6, CentOS7.6 and Fedora 30.
  
-Ipmctl has dependency on libsafec-devel, libndctl-devel and rubygem-asciidoctor
+Ipmctl has dependency on libsafec-devel (for 1.x builds only), libndctl-devel and rubygem-asciidoctor
 *	copr/jhli repo has libipmctl and its dependency, libsafec-devel.
     * cd /etc/yum.repos.d/
 >       wget https://copr.fedorainfracloud.org/coprs/jhli/ipmctl/repo/epel-7/jhli-ipmctl-epel-7.repo
@@ -78,7 +78,7 @@ Ipmctl has dependency on libsafec-devel, libndctl-devel and rubygem-asciidoctor
 
 The latest stable Linux kernel version available is recommended.
 
-ndctl package is required.
+libndctl-devel package is required.
 
 All other dependencies are widely available.
 

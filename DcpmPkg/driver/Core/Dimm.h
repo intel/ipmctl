@@ -1867,14 +1867,16 @@ EFI_STATUS GetPcdOemDataSize(
   Check if sending a large payload command over the DDRT large payload
   mailbox is possible. Used by callers often to determine chunking behavior.
 
-  @param[in] pDimm The DCPMM to retrieve information on
+  @param[in] pDimm The DCPMM to transact with
+  @param[out] Available Whether large payload is available. Pointer to boolean variable
 
-  @retval TRUE: DDRT large payload mailbox is available
-  @retval FALSE: DDRT large payload mailbox is not available
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
 **/
-BOOLEAN
+EFI_STATUS
 IsLargePayloadAvailable(
-  IN DIMM *pDimm
+  IN DIMM *pDimm,
+  OUT BOOLEAN *Available
 );
 
 EFI_STATUS

@@ -292,11 +292,6 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_PBR_PROT
 
   for (Index = TagId; Index < TagCount; ++Index) {
 
-    //ensure whitespace between cmd output
-    if (Index % 2) {
-      Print(L"\n\n");
-    }
-
     ReturnCode = pNvmDimmPbrProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_GET_SESSION_TAG);

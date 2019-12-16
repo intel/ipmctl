@@ -5269,6 +5269,7 @@ UpdateDimmFw(
   FW_IMAGE_HEADER *pFileHeader = NULL;
   CHAR16 *pErrorMessage = NULL;
   FW_SMALL_PAYLOAD_UPDATE_PACKET FwUpdatePacket;
+  BOOLEAN LargePayloadAvailable = FALSE;
 
 
 
@@ -5330,7 +5331,8 @@ UpdateDimmFw(
   pPassThruCommand->OutputPayloadSize = 0;
 
 #ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
-  if (IsLargePayloadAvailable(pCurrentDimm)) {
+  CHECK_RESULT(IsLargePayloadAvailable(pCurrentDimm, &LargePayloadAvailable), Finish);
+  if (LargePayloadAvailable) {
     FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_LARGE_PAYLOAD_SELECTOR;
     pPassThruCommand->LargeInputPayloadSize = (UINT32)ImageBufferSize;
     CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
@@ -10512,7 +10514,6 @@ GetBSRAndBootStatusBitMask(
 
   CHECK_RESULT(PopulateDimmBsrAndBootStatusBitmask(pDimms[0], (DIMM_BSR *)pLocalBsr, pBootStatusBitmask), Finish);
 
-  ReturnCode = EFI_SUCCESS;
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -10685,6 +10686,7 @@ GetCommandEffectLog(
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
   UINT32 CelTableSize = 0;
+  BOOLEAN LargePayloadAvailable = FALSE;
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
   ZeroMem(&OutPayload, sizeof(OutPayload));
@@ -10711,7 +10713,8 @@ GetCommandEffectLog(
   }
 
   // Format InputPayload for small payload entry count retrieval if necessary
-  if (!IsLargePayloadAvailable(pDimm)) {
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (!LargePayloadAvailable) {
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = EntriesCount;
     InputPayload.EntryOffset = 0;
@@ -10731,7 +10734,7 @@ GetCommandEffectLog(
   }
   *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
 
-  if (!IsLargePayloadAvailable(pDimm)) {
+  if (!LargePayloadAvailable) {
     UINT32 EntryCountRemaining = *pEntryCount;
     UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
 

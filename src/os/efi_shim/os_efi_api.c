@@ -130,7 +130,12 @@ DefaultPassThru(
 
   if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
   {
-      Rc = PbrSetPassThruRecord(pContext, pCmd, Rc);
+      PbrRc = PbrSetPassThruRecord(pContext, pCmd, Rc);
+
+      // If PBR fails, show error but don't abort
+      if (EFI_SUCCESS != PbrRc) {
+        NVDIMM_ERR("PBR failed to record transaction. RC: 0x%x", PbrRc);
+      }
   }
   pCmd->DimmID = DimmID;
 

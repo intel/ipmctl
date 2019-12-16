@@ -1215,6 +1215,7 @@ ReadLabelStorageArea(
   UINT8 PageIndexMask = 0;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  BOOLEAN LargePayloadAvailable = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -1242,7 +1243,8 @@ ReadLabelStorageArea(
     goto Finish;
   }
 
-  if (!IsLargePayloadAvailable(pDimm)) {
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (!LargePayloadAvailable) {
     // At first read the Index size only form the beginning of the LSA
     IndexSize = sizeof((*ppLsa)->Index);
     ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
@@ -1307,7 +1309,7 @@ ReadLabelStorageArea(
   }
 
   // Copy the Label area
-  if (!IsLargePayloadAvailable(pDimm)) {
+  if (!LargePayloadAvailable) {
     // Copy the Label area
     if (UseNamespace1_1) {
       PageSize = sizeof(NAMESPACE_LABEL_1_1);
@@ -1402,6 +1404,7 @@ WriteLabelStorageArea(
   UINT8 PageIndexMask = 0;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  BOOLEAN LargePayloadAvailable = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -1440,7 +1443,8 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (IsLargePayloadAvailable(pDimm)) {
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (LargePayloadAvailable) {
     pRawData = AllocateZeroPool(TotalPcdSize);
     if (pRawData == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -1455,7 +1459,7 @@ WriteLabelStorageArea(
     goto Finish;
   }
 
-  if (!IsLargePayloadAvailable(pDimm)) {
+  if (!LargePayloadAvailable) {
     // Copy the Label index area
     ReturnCode = FwSetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, pIndexArea, 0, (UINT32)LabelIndexSize);
     if (EFI_ERROR(ReturnCode)) {

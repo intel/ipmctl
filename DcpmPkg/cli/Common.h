@@ -302,7 +302,7 @@ GetDimmList(
   );
 
 /**
-  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  Retrieve a populated array and count of all DCPMMs (functional and non-functional)
   in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -311,13 +311,8 @@ GetDimmList(
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
   @param[out] ppDimms A pointer to a combined DCPMM list (initialized and
-              uninitialized) from NFIT. The initialized DIMM_INFO entries
-              occur first, then the uninitialized DIMM_INFO entries. So
-              0 to pInitializedDimmCount-1 = initialized dimms, and
-              pInitializedDimmCount to pDimmCount - 1 contain the uninitialized entries
+              uninitialized) from NFIT.
   @param[out] pDimmCount A pointer to the total number of DCPMMs found in NFIT.
-  @param[out] pInitializedDimmCount A pointer to the number of initialized DCPMMs in ppDimms
-  @param[out] pUninitializedDimmCount A pointer to the number of uninitialized DCPMMs in ppDimms.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -330,9 +325,7 @@ GetAllDimmList(
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
-  OUT UINT32 *pDimmCount,
-  OUT UINT32 *pInitializedDimmCount,
-  OUT UINT32 *pUninitializedDimmCount
+  OUT UINT32 *pDimmCount
 );
 
 /**

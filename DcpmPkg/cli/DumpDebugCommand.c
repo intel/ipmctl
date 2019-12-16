@@ -74,8 +74,6 @@ DumpDebugCommand(
   COMMAND_STATUS *pCommandStatus = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT32 DimmCount = 0;
-  UINT32 InitializedDimmCount = 0;
-  UINT32 UninitializedDimmCount = 0;
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   CHAR16 *pTargetValue = NULL;
@@ -120,8 +118,7 @@ DumpDebugCommand(
     goto Finish;
   }
 
-  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms,
-      &DimmCount, &InitializedDimmCount, &UninitializedDimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);

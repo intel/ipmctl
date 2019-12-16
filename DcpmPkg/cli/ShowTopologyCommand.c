@@ -190,8 +190,6 @@ ShowTopology(
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsNum = 0;
   UINT32 DimmCount = 0;
-  UINT32 InitializedDimmCount = 0;
-  UINT32 UninitializedDimmCount = 0;
   UINT16 Index = 0;
   UINT16 Index2 = 0;
   UINT16 TopologyDimmsNumber = 0;
@@ -290,8 +288,7 @@ ShowTopology(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms,
-      &DimmCount, &InitializedDimmCount, &UninitializedDimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode) || (pDimms == NULL)) {
     goto Finish;
   }

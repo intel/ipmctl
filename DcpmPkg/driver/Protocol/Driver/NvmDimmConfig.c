@@ -326,7 +326,7 @@ Finish:
 }
 
 /**
-  Retrieve the number of DCPMMs in the system found in NFIT
+  Retrieve the number of functional DCPMMs in the system found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] pDimmCount The number of DCPMMs found in NFIT.

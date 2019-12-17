@@ -74,7 +74,9 @@ ParseNfitTable(
   IN     VOID *pTable
   )
 {
+  ParsedFitHeader **ppParsedHeader = NULL; // This pointer is needed to resolve static analysis tool errors
   ParsedFitHeader *pParsedHeader = NULL;
+  ppParsedHeader = &pParsedHeader;
   NFitHeader *pNFit = NULL;
   UINT8 *pTabPointer = NULL;
   SubTableHeader *pTableHeader = NULL;
@@ -194,7 +196,7 @@ ParseNfitTable(
   goto FinishSuccess;
 
 FinishError:
-  FreeParsedNfit(pParsedHeader);
+  FreeParsedNfit(ppParsedHeader);
   pParsedHeader = NULL;
 FinishSuccess:
   NVDIMM_EXIT();
@@ -214,7 +216,9 @@ ParsePcatTable (
   IN     VOID *pTable
   )
 {
+  ParsedPcatHeader **ppParsedPcat = NULL;               // This pointer is needed to resolve static analysis tool errors
   ParsedPcatHeader *pParsedPcat = NULL;                 //!< Output Parsed PCAT structures
+  ppParsedPcat = &pParsedPcat;
   PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPcatHeader = NULL; //!< PCAT header
   PCAT_TABLE_HEADER *pPcatSubTableHeader = NULL;        //!< PCAT subtable header
   UINT32 RemainingPcatBytes = 0;
@@ -358,7 +362,7 @@ ParsePcatTable (
   goto FinishSuccess;
 
 FinishError:
-  FreeParsedPcat(pParsedPcat);
+  FreeParsedPcat(ppParsedPcat);
   pParsedPcat = NULL;
 FinishSuccess:
   NVDIMM_EXIT();
@@ -378,7 +382,9 @@ ParsePmttTable(
   IN     VOID *pTable
   )
 {
+  ParsedPmttHeader ** ppParsedPmtt = NULL;              // This pointer is needed to resolve static analysis tool errors
   ParsedPmttHeader *pParsedPmtt = NULL;                 //!< Output Parsed PMTT structures
+  ppParsedPmtt = &pParsedPmtt;
   PMTT_TABLE2 *pPmttHeader = NULL; //!< PMTT header
   PMTT_COMMON_HEADER2 *pPmttCommonTableHeader = NULL;        //!< PMTT common header
   PMTT_MODULE_INFO *pModuleInfo = NULL;
@@ -572,7 +578,7 @@ ParsePmttTable(
   goto FinishSuccess;
 
   FinishError:
-    FreeParsedPmtt(pParsedPmtt);
+    FreeParsedPmtt(ppParsedPmtt);
     pParsedPmtt = NULL;
   FinishSuccess:
     NVDIMM_EXIT();

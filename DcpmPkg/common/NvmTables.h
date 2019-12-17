@@ -979,7 +979,7 @@ typedef struct {
 **/
 VOID
 FreeParsedPcat(
-  IN OUT ParsedPcatHeader *pParsedPcat
+  IN OUT ParsedPcatHeader **ppParsedPcat
   );
 
 /**
@@ -989,7 +989,7 @@ FreeParsedPcat(
 **/
 VOID
 FreeParsedPmtt(
-  IN OUT ParsedPmttHeader *pParsedPmtt
+  IN OUT ParsedPmttHeader **ppParsedPmtt
   );
 
 /**
@@ -999,7 +999,7 @@ FreeParsedPmtt(
 **/
 VOID
 FreeParsedNfit(
-  IN     ParsedFitHeader *pParsedNfit
+  IN     ParsedFitHeader **ppParsedNfit
   );
 
 #if defined(_MSC_VER)

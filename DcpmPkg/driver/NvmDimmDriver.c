@@ -1813,13 +1813,13 @@ NvmDimmDriverDriverBindingStop(
   }
 
   /** Free PCAT tables memory **/
-  FreeParsedPcat(gNvmDimmData->PMEMDev.pPcatHead);
+  FreeParsedPcat(&gNvmDimmData->PMEMDev.pPcatHead);
 
   /** Free NFIT tables memory **/
-  FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+  FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
 
   /** Free PMTT tables memory **/
-  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
+  FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
 
   if (gNvmDimmData->HiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmData->HiiHandle);
@@ -1839,13 +1839,13 @@ Finish:
   ReturnCode = FreeDimmList();
 
   /** Free PCAT tables memory **/
-  FreeParsedPcat(gNvmDimmData->PMEMDev.pPcatHead);
+  FreeParsedPcat(&gNvmDimmData->PMEMDev.pPcatHead);
 
   /** Free NFIT tables memory **/
-  FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+  FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
 
   /** Free PMTT tables memory **/
-  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
+  FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
 
 #endif //not OS_BUILD
 #if _BullseyeCoverage

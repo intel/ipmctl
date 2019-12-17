@@ -8604,7 +8604,7 @@ FreeDimmList(
     NVDIMM_DBG("Unable to remove dimm inventory.");
   }
   if (gNvmDimmData->PMEMDev.pFitHead != NULL) {
-    FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+    FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
     gNvmDimmData->PMEMDev.pFitHead = NULL;
   }
 

@@ -26,15 +26,16 @@ FreeNfitSubTables(
 **/
 VOID
 FreeParsedPcat(
-  IN OUT ParsedPcatHeader *pParsedPcat
+  IN OUT ParsedPcatHeader **ppParsedPcat
   )
 {
   UINT32 Index = 0;
   ACPI_REVISION Revision;
-
-  if (pParsedPcat == NULL) {
+  ParsedPcatHeader * pParsedPcat = NULL;
+  if (ppParsedPcat == NULL || *ppParsedPcat == NULL) {
     return;
   }
+  pParsedPcat = *ppParsedPcat;
 
   Revision = pParsedPcat->pPlatformConfigAttr->Header.Revision;
   FREE_POOL_SAFE(pParsedPcat->pPlatformConfigAttr);
@@ -88,7 +89,7 @@ FreeParsedPcat(
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable);
   }
 
-  FREE_POOL_SAFE(pParsedPcat);
+  FREE_POOL_SAFE(*ppParsedPcat);
 }
 
 /**
@@ -98,15 +99,16 @@ FreeParsedPcat(
 **/
 VOID
 FreeParsedPmtt(
-  IN OUT ParsedPmttHeader *pParsedPmtt
+  IN OUT ParsedPmttHeader **ppParsedPmtt
   )
 {
   UINT32 Index = 0;
-
-  if (pParsedPmtt == NULL) {
+  ParsedPmttHeader * pParsedPmtt = NULL;
+  if (ppParsedPmtt == NULL || *ppParsedPmtt == NULL) {
     return;
   }
 
+  pParsedPmtt = *ppParsedPmtt;
   FREE_POOL_SAFE(pParsedPmtt->pPmtt);
 
   for (Index = 0; Index < pParsedPmtt->SocketsNum; Index++) {
@@ -144,7 +146,7 @@ FreeParsedPmtt(
   }
   FREE_POOL_SAFE(pParsedPmtt->ppDCPMModules);
 
-  FREE_POOL_SAFE(pParsedPmtt);
+  FREE_POOL_SAFE(*ppParsedPmtt);
 }
 
 /**
@@ -214,15 +216,16 @@ FreeNfitSubTables(
 **/
 VOID
 FreeParsedNfit(
-  IN     ParsedFitHeader *pParsedNfit
+  IN     ParsedFitHeader **ppParsedNfit
   )
 {
-  if (pParsedNfit == NULL) {
+  ParsedFitHeader *pParsedNfit = NULL;
+  if (ppParsedNfit == NULL || *ppParsedNfit == NULL) {
     return;
   }
-
+  pParsedNfit = *ppParsedNfit;
   FREE_POOL_SAFE(pParsedNfit->pFit);
   FreeNfitSubTables(pParsedNfit);
 
-  FreePool(pParsedNfit);
+  FREE_POOL_SAFE(*ppParsedNfit);
 }

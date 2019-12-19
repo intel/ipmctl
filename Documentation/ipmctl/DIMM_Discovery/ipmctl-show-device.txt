@@ -475,7 +475,9 @@ ARSStatus::
 
 OverwriteStatus::
   The overwrite DIMM operation status for the DCPMM. One of:
-  - Unknown - The overwrite DIMM operation status cannot be determined.
+  - Unknown - The overwrite DIMM operation status cannot be determined. This may
+    occur if the status gets overwritten due to a different long operation
+    running on this DCPMM.
   - Not started - An overwrite DIMM operation was not started on the last
     boot.
   - In progress - An overwrite DIMM operation is currently in progress.

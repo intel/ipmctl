@@ -44,12 +44,14 @@ By default returns the following inventory information.
 Component::
   The name of the software component. One of:
   - [Product Name] Software Version: The DCPMM management software version
+ifndef::os_build[]
   - [Product Name] Driver Version: The vendor specific DCPMM driver version
+endif::os_build[]
 
 Version::
   The current version of the software component if found or an error if not.
 
 NOTE: If the software version is incompatible, the version will be followed by
-an error message indicating such. If DCPMMs are found with a 
+an error message indicating such. If DCPMMs are found with a
 FIS implementation higher than supported by the SW version, this command
 will print a warning.

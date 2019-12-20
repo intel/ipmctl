@@ -3,7 +3,7 @@
 
 ifdef::manpage[]
 ipmctl-stop-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
@@ -18,7 +18,6 @@ ipmctl stop [OPTIONS] -session
 DESCRIPTION
 -----------
 Stops the active playback or recording session.
-
 
 OPTIONS
 -------
@@ -60,11 +59,12 @@ RETURN DATA
 SAMPLE OUTPUT
 -------------
 [verse]
+____
 Successfully dumped 1060619 bytes to file.
-
 
 Warning - Executing in playback mode!
 
 Stopping a session will free all recording content.
 Do you want to continue? [y/n] y
 Stopped PBR session.
+____

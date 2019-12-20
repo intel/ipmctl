@@ -3,13 +3,12 @@
 
 ifdef::manpage[]
 ipmctl-start-session(1)
-========================
+=======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-start-session - Starts a recording or playback
-session.
+ipmctl-start-session - Starts a recording or playback session.
 
 SYNOPSIS
 --------
@@ -87,7 +86,3 @@ taken in Linux can be played back in Windows.
 RETURN DATA
 -----------
 In 'playback' mode the output will be a concatination of the output from each played back command.
-
-SAMPLE OUTPUT
--------------
-

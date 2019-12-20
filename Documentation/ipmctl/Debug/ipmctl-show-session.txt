@@ -3,13 +3,12 @@
 
 ifdef::manpage[]
 ipmctl-show-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-show-session - Displays the command
-history of a session.
+ipmctl-show-session - Displays the playback and record (PBR) command history of a session.
 
 SYNOPSIS
 --------
@@ -20,7 +19,6 @@ DESCRIPTION
 -----------
 Displays the command history of a session.  Also displays which
 command to execute next during 'playback_manual' mode (see 'start -session').
-
 
 OPTIONS
 -------

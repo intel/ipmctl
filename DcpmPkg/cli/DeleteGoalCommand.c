@@ -36,7 +36,7 @@ struct Command DeleteGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Delete the region configuration goal from one or more DIMMs",        //!< help
+  L"Delete the region configuration goal from one or more DCPMMs.",      //!< help
   DeleteGoal,
   TRUE,                                                                  //!< enable print control support
 };

@@ -21,6 +21,10 @@ Shows thermal or media errors on the specified DCPMMs.
 
 OPTIONS
 -------
+-a::
+-all::
+  Shows all attributes.
+
 -h::
 -help::
   Displays help for the command.
@@ -50,8 +54,8 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Filter output to events on a specific DCPMM by supplying the dimm target and
-  one DCPMM identifier.
+  Filter output to specific DCPMMs by optionally supplying one or more
+  comma-separated DCPMM identifiers. The default is to include all manageable DCPMMs.
 
 PROPERTIES
 ----------
@@ -95,12 +99,11 @@ No errors found on DIMM (DimmID)
 SAMPLE OUTPUT
 -------------
 [verse]
-Thermal Error occurred on Dimm (DimmID):
-System Timestamp : 1527273299
-Temperature : 88C
-Reported : 4 - Critical
-Temperature Type : 0 - Media Temperature
-Sequence Number : 1
+ DimmID | System Timestamp    | Error Type
+=============================================================
+ 0x0001 | 01/01/1970 00:00:20 | 0x04 - Locked/Illegal Access
+ 0x0001 | 01/01/1970 00:00:21 | 0x04 - Locked/Illegal Access
+Show error executed successfully
 
 [verse]
 Media Error occurred on Dimm (DimmID):

@@ -121,7 +121,7 @@ struct Command ShowDimmsCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
-  L"Show information about one or more DIMMs.",           //!< help
+  L"Show information about one or more DCPMMs.",           //!< help
   ShowDimms,                                              //!< run function
   TRUE,                                                   //!< enable print control support
 };

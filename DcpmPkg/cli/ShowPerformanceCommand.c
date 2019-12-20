@@ -69,9 +69,9 @@ struct Command ShowPerformanceCommand =
     {                                                                   //!< properties
         { L"", L"", L"", FALSE, ValueOptional },
     },
-    L"Show performance statistics per DIMM",                            //!< help
+    L"Show performance statistics of one or more DCPMMs.",              //!< help
     ShowPerformance,
-    TRUE,                                               //!< enable print control support
+    TRUE,                                                               //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowPerformanceDisplayValues[] =

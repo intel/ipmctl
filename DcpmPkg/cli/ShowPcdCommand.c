@@ -34,8 +34,8 @@ struct Command ShowPcdCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show pool configuration goal stored on one or more DIMMs",        //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                                    //!< properties
+  L"Show platform configuration data (PCD) stored on one or more DCPMMs.",    //!< help
   ShowPcd,
   TRUE
 };

@@ -41,7 +41,7 @@ struct Command LoadGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load stored configuration goal for specific DIMMs",            //!< help
+  L"Create a memory allocation goal request from a file.",              //!< help
   LoadGoal,
   TRUE
 };

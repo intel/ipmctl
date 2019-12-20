@@ -40,7 +40,7 @@ struct Command ShowErrorCommandSyntax =
     {LEVEL_PROPERTY, L"", HELP_TEXT_ERROR_LOG_LEVEL_PROPERTY, FALSE, ValueRequired},
     {COUNT_PROPERTY, L"", HELP_TEXT_ERROR_LOG_COUNT_PROPERTY, FALSE, ValueRequired}
   },                                                                  //!< properties
-  L"Show error log for given DIMM",                                   //!< help
+  L"Show error log for one or more DCPMMs.",                          //!< help
   ShowErrorCommand,                                                   //!< run function
   TRUE
 };

@@ -35,7 +35,7 @@ struct Command LoadSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load Recording into memory",                                         //!< help
+  L"Load a recorded (PBR) session into memory for playback.",           //!< help
   LoadSession,
   TRUE,
   TRUE

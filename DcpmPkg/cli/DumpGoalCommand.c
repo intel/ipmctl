@@ -30,12 +30,12 @@ struct Command DumpGoalCommand =
   ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
   },
-  {                                                                               //!< targets
+  {                                                                                //!< targets
     {SYSTEM_TARGET, L"", L"", TRUE, ValueEmpty},
     {CONFIG_TARGET, L"", L"", TRUE, ValueEmpty}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Store the region configuration goal from one or more DIMMs to a file",        //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                                         //!< properties
+  L"Store the current configured memory allocation settings to a file.",           //!< help
   DumpGoal,
   TRUE,
   FALSE,

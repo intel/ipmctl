@@ -50,32 +50,45 @@ endif::os_build[]
 SENSORS
 -------
 MediaTemperature::
-  The current DCPMM media temperature in Celsius. +
-  Valid values: [underline]#0-2047#
+  The DCPMM media temperature in Celsius.
 
 ControllerTemperature::
-  The current DCPMM controller temperature in Celsius. +
-  Valid values [underline]#0-2047#
+  The DCPMM controller temperature in Celsius.
 
 PercentageRemaining::
   Remaining DCPMM’s life as a percentage value of factory expected
-  life span. +
-  Valid values: [underline]#1-99#
+  life span.
 
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to the sensors on specific DCPMMs by optionally supplying the DIMM
+  Update specified sensors on specific DCPMMs by optionally supplying the DIMM
   target and one or more comma-separated DCPMM identifiers. The default is to
-  display sensors for all manageable DCPMMs.
+  update the specified sensors for all manageable DCPMMs.
 
 PROPERTIES
 ----------
 AlarmThreshold::
   The threshold value at which an alarm for the respective sensor will be triggered.
-  The upper (for temperatures) or lower (for spare capacity) alarm
-  threshold of the sensor. Temperatures may be specified in degrees
-  Celsius to a precision of 1/16 a degree.
+  The upper (for temperatures) or lower (for percentage remaining) alarm
+  threshold of the sensor. Temperatures may be specified to a precision of 1 degree Celsius.
++
+.Allowed AlarmThreshold
+|===
+|Sensor |Allowed AlarmThreshold values |Units
+
+|MediaTemperature
+|0-2047
+|Celsius
+
+|ControllerTemperature
+|0-2047
+|Celsius
+
+|PercentageRemaining
+|1-99
+|%
+|===
 
 AlarmEnabled::
   Enable or disable the alarm threshold, where applicable.
@@ -85,11 +98,11 @@ AlarmEnabled::
 
 EXAMPLES
 --------
-Changes the media temperature threshold to 51 on the specified DCPMM and enable
+Changes the media temperature alarm threshold to 51C on the specified DCPMM and enables
 the alarm.
+
 [verse]
-ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51
-AlarmEnabled=1
+ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51 AlarmEnabled=1
 
 LIMITATIONS
 -----------

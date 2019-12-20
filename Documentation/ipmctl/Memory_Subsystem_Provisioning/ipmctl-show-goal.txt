@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-goal - Shows the memory allocation goal on one or more DCPMM
+ipmctl-show-goal - Shows the memory allocation goal on one or more DCPMMs
 
 SYNOPSIS
 --------
@@ -18,10 +18,10 @@ ipmctl show [OPTIONS] -goal [TARGETS] [PROPERTIES]
 DESCRIPTION
 -----------
 Shows the memory allocation goal on one or more DCPMMs. Once the goal is
-successfully applied by the BIOS, it is no longer displayed. Use the command
-Section <<Show Memory Resources>> to view the system-wide memory resources
-or the command *_Show Persistent Memory_* for detailed persistent
-memory information.
+successfully applied by the platform firmware (BIOS), it is no longer
+displayed. Use the command <<Show Memory Resources>> to view
+the system-wide memory resources or the command
+<<Show Persistent Memory>> for detailed persistent memory information.
 
 OPTIONS
 -------

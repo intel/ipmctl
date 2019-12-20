@@ -20,8 +20,8 @@ DESCRIPTION
 Updates the firmware on one or more DCPMMs. On the next power cycle, the
 firmware will become active.
 
-NOTE: If Address Range Scrub (ARS) is in progress on any target DIMM,
-an attempt will be made to abort ARS and the proceed with the firmware update.
+NOTE: If Address Range Scrub (ARS) is in progress on any target DCPMM,
+an attempt will be made to abort ARS and then proceed with the firmware update.
 
 NOTE: A power cycle reboot is required to activate the updated firmware image and is
 recommended to ensure ARS runs to completion.
@@ -30,8 +30,8 @@ OPTIONS
 -------
 -x::
 -examine::
-  Verifies the target DIMM is compatible with and ready to receive the recovery
-  firmware image specified in the source option. Return the recovery firmware
+  Verifies the target DCPMMs are compatible and ready to receive the
+  firmware image specified in the source option. Returns the firmware
   image version.
 
 -f::
@@ -63,7 +63,7 @@ ifndef::os_build[]
   The FlashSPI option is a modifier that forces an update of the entire SPI
   Flash. This requires a specific flash image that is intended as full SPI flash
   update. This update method is only possible if existing SPI firmware images
-  are all corrupt and cannot be loaded by the DIMM's ROM.
+  are both corrupt and cannot be loaded by the DCPMM's ROM.
 endif::os_build[]
 
 ifdef::os_build[]

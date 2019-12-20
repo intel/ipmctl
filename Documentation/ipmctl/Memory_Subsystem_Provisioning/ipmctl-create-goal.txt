@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-create-goal - Creates a memory allocation goal on one or more DCPMM
+ipmctl-create-goal - Creates a memory allocation goal on one or more DCPMMs
 
 SYNOPSIS
 --------
@@ -29,7 +29,8 @@ invalid or not possible it may be rejected by platform firmware.
 NOTE: Deleting the PCD can be used as a way to prepare individual DCPMMs for provisioning.
 See the delete -pcd command.
 
-include::../ipmctl-change-goal-config-warning.txt[]
+include::../ipmctl-command-data-loss-warning.txt[]
+include::../ipmctl-change-goal-config-note.txt[]
 
 OPTIONS
 -------
@@ -148,14 +149,14 @@ In order to successfully execute this command:
   associated with the requested DCPMM(s) must be deleted before running
   this command.
 
-- Goal requests may not be applied by UEFI FW if the DCPMM is in security enabled, locked state.
+- Goal requests may not be applied by platform firmware (BIOS) if the DCPMM is in security enabled, locked state.
 
 NOTE: It is recommended to disable security prior to reboot if requesting a new goal.
 
 NOTE: A goal request may be initiated even if a target DCPMM is in security state enabled, but care
   must be taken to ensure the DCPMM is in either unlocked or disabled security state prior to the
-  UEFI FW provisioning flow following a reboot. In addition, a warning will be presented to the
-  user: 'WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!'
+  platform firmware (BIOS) provisioning flow following a reboot. In addition, a warning will be presented to the
+  user: 'WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!'
 
 - Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to

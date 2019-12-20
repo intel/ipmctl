@@ -80,7 +80,7 @@ struct Command ShowMemoryResourcesCommand = {
   },
   {{MEMORY_RESOURCES_TARGET, L"", L"", TRUE, ValueEmpty}},                            //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                            //!< properties
-  L"Show information about total DIMM resource allocation.",                          //!< help
+  L"Show memory allocation information for this platform.",                           //!< help
   ShowMemoryResources,
   TRUE,                                                                               //!< enable print control support
 };

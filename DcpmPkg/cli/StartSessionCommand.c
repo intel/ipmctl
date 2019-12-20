@@ -57,7 +57,7 @@ struct Command StartSessionCommand =
     {PBR_MODE_TAG, L"", L"", FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Starts a playback or record session",                                //!< help
+  L"Start a playback or record (PBR) session.",                          //!< help
   StartSession,
   TRUE,
   TRUE //exclude from PBR

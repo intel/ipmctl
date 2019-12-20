@@ -672,28 +672,33 @@ RegisterCommands(
     goto done;
   }
 
-  /* Base Utility commands */
-
-  Rc = RegisterLoadCommand();
+  // Dimm Discovery Commands
+  Rc = RegisterShowTopologyCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterSetDimmCommand();
+  Rc = RegisterShowSocketsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterDeleteDimmCommand();
+  Rc = RegisterShowDimmsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterShowRegionsCommand();
+  Rc = RegisterShowMemoryResourcesCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
+  Rc = RegisterShowSystemCapabilitiesCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  // Provisioning Commands
   Rc = RegisterCreateGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
@@ -704,8 +709,7 @@ RegisterCommands(
     goto done;
   }
 
-
-  Rc = RegisterDeleteGoalCommand();
+  Rc = RegisterDumpGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -715,12 +719,24 @@ RegisterCommands(
     goto done;
   }
 
-  Rc = RegisterDumpGoalCommand();
+  Rc = RegisterDeleteGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterSetSensorCommand();
+  // Security Commands
+  Rc = RegisterSetDimmCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDeleteDimmCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  // Persistent Memory Provisioning Commands
+  Rc = RegisterShowRegionsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -741,100 +757,38 @@ RegisterCommands(
     goto done;
   }
 #endif
-  Rc = RegisterStartSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
 
-  Rc = RegisterStopSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterDumpSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterLoadSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterDeletePcdCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterShowErrorCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowCelCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterDumpDebugCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowDimmsCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowSocketsCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
+  // Instrumentation Commands
   Rc = RegisterShowSensorCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-  Rc = RegisterStartDiagnosticCommand();
+  Rc = RegisterSetSensorCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterShowTopologyCommand();
+#ifdef OS_BUILD
+#ifdef __MFG__
+  Rc = RegisterMfgCommands();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-  Rc = RegisterShowMemoryResourcesCommand();
+#else
+  Rc = RegisterShowPerformanceCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+#endif // __MFG__
+#endif // OS_BUILD
 
-  Rc = RegisterShowSystemCapabilitiesCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
+  // Support and Maintenance Commands
   Rc = RegisterShowFirmwareCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = registerShowAcpiCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowPcdCommand();
+  Rc = RegisterLoadCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -849,31 +803,53 @@ RegisterCommands(
     goto done;
   }
 
+#ifdef OS_BUILD
+  Rc = RegisterDumpSupportCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+#endif // OS_BUILD
+
+  // Debug Commands
+  Rc = RegisterStartDiagnosticCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowErrorCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDumpDebugCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowAcpiCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowPcdCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDeletePcdCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
   Rc = RegisterShowCmdAccessPolicyCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-#ifdef OS_BUILD
-
-  Rc = RegisterDumpSupportCommand();
+  Rc = RegisterShowCelCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-#ifdef __MFG__
-  Rc = RegisterMfgCommands();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-#else
-  Rc = RegisterShowPerformanceCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-#endif // __MFG__
-
-#endif // OS_BUILD
 
 #ifndef OS_BUILD
   /* Debug Utility commands */
@@ -896,6 +872,31 @@ RegisterCommands(
   }
 #endif
 #endif
+
+  // PBR Commands
+  Rc = RegisterStartSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDumpSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+  Rc = RegisterLoadSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterStopSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
 
 done:
   NVDIMM_EXIT_I64(Rc);

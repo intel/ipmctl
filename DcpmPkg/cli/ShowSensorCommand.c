@@ -112,7 +112,7 @@ struct Command ShowSensorCommand =
   {
     {L"", L"", L"", FALSE, ValueOptional},
   },                                                                  //!< properties
-  L"Show health statistics ",                                         //!< help
+  L"Show health statistics.",                                         //!< help
   ShowSensor,
   TRUE,                                                               //!< enable print control support
 };

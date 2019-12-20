@@ -36,7 +36,7 @@ struct Command DumpSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Dump the PBR session buffer to a file",                                       //!< help
+  L"Dump the current recording (PBR) session buffer to a file.",                   //!< help
   DumpSession,
   TRUE
 };

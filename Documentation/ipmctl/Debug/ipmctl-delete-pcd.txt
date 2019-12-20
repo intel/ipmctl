@@ -81,6 +81,12 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 
 NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
 
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
 TARGETS
 -------
 -dimm [DimmIDs]::

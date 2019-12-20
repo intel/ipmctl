@@ -18,7 +18,13 @@ ipmctl delete [OPTIONS] -goal [TARGETS]
 DESCRIPTION
 -----------
 Deletes the memory allocation goal from one or more DCPMMs. This command only
-deletes a memory allocation goal request that has not been processed by BIOS.
+deletes a memory allocation goal request that has not yet been processed by
+platform firmware (BIOS).
+
+If the dimm target is used and the specified dimms do not include all dimms
+that are part of a memory allocation goal request the result will be dimms
+(those not included) that have a broken request which will be rejected by
+platform firmware (BIOS) upon the next reboot.
 
 OPTIONS
 -------
@@ -91,5 +97,4 @@ SAMPLE OUTPUT
 Delete memory allocation goal from DIMM (DimmID): Success
 
 [verse]
-Delete memory allocation goal from DIMM (DimmID): Error:
-(Description)
+Delete memory allocation goal from DIMM (DimmID): Error (Code) - (Description)

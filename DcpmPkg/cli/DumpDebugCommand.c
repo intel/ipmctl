@@ -35,7 +35,7 @@ struct Command DumpDebugCommandSyntax =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
-  L"Dump firmware debug log",                                       //!< help
+  L"Dump firmware debug log.",                                       //!< help
   DumpDebugCommand, TRUE                                                  //!< run function
 };
 

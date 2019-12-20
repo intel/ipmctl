@@ -63,7 +63,7 @@ struct Command showAcpiCommand =
   },                        //!< options
   {{SYSTEM_TARGET, L"", SYSTEM_ACPI_TARGETS, TRUE, ValueOptional}},    //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                             //!< properties
-  L"Show the ACPI tables related to the DIMMs in the system.",//!< help
+  L"Show the ACPI tables related to the DCPMMs in the system.",        //!< help
   showAcpi,                                                            //!< run function
   TRUE                                                                 //!< enable print control support
 };
@@ -71,7 +71,7 @@ struct Command showAcpiCommand =
 /*
  * Register the show acpi command
  */
-EFI_STATUS registerShowAcpiCommand() {
+EFI_STATUS RegisterShowAcpiCommand() {
   EFI_STATUS rc = EFI_SUCCESS;
   NVDIMM_ENTRY();
 

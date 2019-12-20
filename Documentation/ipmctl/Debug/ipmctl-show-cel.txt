@@ -34,6 +34,14 @@ OPTIONS
 
 NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
 
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
+
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::

@@ -202,7 +202,7 @@ struct Command ShowRegionsCommand =
     { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional },
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
-  L"Show information about one or more Regions.",         //!< help
+  L"Show information about one or more regions.",         //!< help
   ShowRegions,                                            //!< run function
   TRUE,                                                   //!< enable print control support
 };

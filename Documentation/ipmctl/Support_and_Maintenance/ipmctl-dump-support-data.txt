@@ -13,7 +13,7 @@ ipmctl-dump-support-data - Dumps a support snapshot to a file
 SYNOPSIS
 --------
 [verse]
-ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -support
+ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (filename)] -support
 
 DESCRIPTION
 -----------
@@ -21,9 +21,11 @@ Creates a support snapshot and dump support data to a file for off-line analysis
 by support personnel. Support data may include system log(s), error log(s),
 trace log(s), platform configuration, sensor information and diagnostic results.
 
-This command may take significantly longer than other commands to complete.
+This command may take significantly longer than other commands to complete, because
+it combines and executes multiple individual commands.
 
 Commands executed:
+
 * version
 * show -memoryresources
 * show -a -system -capabilities
@@ -32,6 +34,7 @@ Commands executed:
 * show -system
 
 Commands executed per DCPMM:
+
 * show -a -dimm
 * show -a -sensor -dimm
 * show -pcd -dimm
@@ -61,13 +64,13 @@ endif::os_build[]
 
 TARGET
 ------
--destination (file_prefix)::
+-destination (filename)::
   This command creates a text file with a name starting with the given
-  file_prefix option and dumps the platform support information into it.
+  filename option and dumps the platform support information into it.
   In addition, this command also outputs the debug log information in
   separate files. Refer to *_Dump Debug Log_* for more details.
 
--dict (path)::
+-dict (filename)::
   Optional file path to the dictionary file. If supplied, the command will
   create both the binary debug log and a text file with decoded log data with
   the file prefix specified by -destination. This option is used only to dump
@@ -81,7 +84,7 @@ related files that start with the file name dumpfile_*. Refer to
 *_Dump Debug Log_* for more info on the output files.
 
 [verse]
-ipmctl dump -destination dumpfile_ -dict nlog_dict.1.1.0.0000.txt -support
+ipmctl dump -destination filename -dict nlog_dict.1.1.0.0000.txt -support
 
 LIMITATIONS
 -----------
@@ -93,8 +96,10 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-Simply returns the status of the operation.
+Returns the status of the operation.
 
 SAMPLE OUTPUT
 -------------
-Dump support data successfully written to dumpfile_platform_support_info.txt
+On success:
+[verse]
+Dump support data successfully written to filename_platform_support_info.txt.

@@ -37,7 +37,7 @@ struct Command DeletePcdCommand =
     , TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                         //!< properties
-  L"Clear the namespace LSA partition on one or more DIMMs",                       //!< help
+  L"Clear the namespace LSA partition on one or more DCPMMs.",                     //!< help
   DeletePcdCmd,
   TRUE                                                                             //!< enable print control support
 };

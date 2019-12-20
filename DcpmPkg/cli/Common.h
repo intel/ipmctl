@@ -216,7 +216,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_CREATE_GOAL_PROMPT_VOLATILE                       L"The requested goal was adjusted more than 10%% to find a valid configuration."
 #define CLI_CREATE_GOAL_PROMPT_HEADER                         L"The following configuration will be applied:"
-#define CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED              L"WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!"
+#define CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED              L"WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!"
 #define CLI_ERR_CREATE_GOAL_AUTO_PROV_ENABLED                 L"Error: Automatic provisioning is enabled. Please disable to manually create goals."
 
 #define CLI_CREATE_NAMESPACE_PROMPT_ROUNDING_CAPACITY         L"The requested namespace capacity %lld B will be rounded up to %lld B to align properly."

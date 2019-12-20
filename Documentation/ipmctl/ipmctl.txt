@@ -43,7 +43,7 @@ Discover DCPMMs on the platform.
   Shows information about one or more DCPMMs
 
 *ipmctl-show-memory-resources*(1)::
-  Shows the total DCPMM memory resource allocation
+  Shows memory allocation information for this platform
 
 *ipmctl-show-socket(1)*::
   Shows basic information about the physical processors

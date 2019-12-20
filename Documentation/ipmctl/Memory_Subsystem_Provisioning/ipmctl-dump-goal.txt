@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-goal - Stores the current system configuration in a file
+ipmctl-dump-goal - Stores the current configured memory allocation settings to a file
 
 SYNOPSIS
 --------

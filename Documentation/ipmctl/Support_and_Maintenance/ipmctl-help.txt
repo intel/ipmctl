@@ -48,11 +48,8 @@ SAMPLE OUTPUT
 [verse]
 ipmctl help
 Commands:
-(name)
-(synopsis)
-(name)
-(synopsis)
-(name)
-(synopsis)
-(name)
-(synopsis)
+(command synopsis)
+(command syntax)
+\...
+(command synopsis)
+(command syntax)

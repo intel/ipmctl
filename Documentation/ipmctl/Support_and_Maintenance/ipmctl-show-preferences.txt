@@ -73,6 +73,7 @@ APPDIRECT_SETTINGS::
   BIOS recommended App Direct settings returned by the command Show System
   Capabilities.
 
+ifdef::os_build[]
 DBG_LOG_LEVEL::
   Whether debug logging is enabled in the DCPMM host software. These logs
   pertain to the operation of the command-line tool only and do not reflect any
@@ -82,3 +83,4 @@ DBG_LOG_LEVEL::
   - 2: Log Warnings, Errors.
   - 3: Log Informational, Warnings, Errors.
   - 4: Log Verbose, Informational, Warnings, Errors.
+endif::os_build[]

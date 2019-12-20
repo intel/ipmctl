@@ -56,7 +56,7 @@ struct Command SetDimmCommand =
     {AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FALSE, ValueRequired},
     {AVG_PWR_REPORTING_TIME_CONSTANT, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY, FALSE, ValueRequired}
     }, //!< properties
-    L"Set properties of one/more DIMMs such as device security and modify device.",                          //!< help
+    L"Set properties of one or more DCPMMs, such as device security and modify device.",                          //!< help
   SetDimm,
   TRUE
 };
@@ -341,7 +341,7 @@ SetDimm(
             ErrorInjectionTypeSet = 1;
         }
     }
-    /*Clear error injection requires exacly one  error injection type being set*/
+    /*Clear error injection requires exacly one error injection type being set*/
     if (!EFI_ERROR(ContainsProperty(pCmd, CLEAR_ERROR_INJ_PROPERTY))) {
         if ((ActionSpecified && !ErrorInjectionTypeSet) || !ActionSpecified) {
           ReturnCode = EFI_INVALID_PARAMETER;

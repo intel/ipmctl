@@ -37,7 +37,7 @@ struct Command LoadCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Update the firmware on one or more DIMMs",                        //!< help
+  L"Update the firmware on one or more DCPMMs.",                       //!< help
   Load                                                                //!< run function
 };
 

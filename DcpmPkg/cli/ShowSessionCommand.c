@@ -89,7 +89,7 @@ struct Command ShowSessionCommand = {
   },                                                                                            //!< options
   {{SESSION_TARGET, L"", L"", TRUE, ValueEmpty}},                                               //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                                      //!< properties
-  L"Show basic information about session pbr file",                                             //!< help
+  L"Show information about the current playback or record (PBR) session.",                       //!< help
   ShowSession,
   TRUE,
   TRUE //exclude from PBR

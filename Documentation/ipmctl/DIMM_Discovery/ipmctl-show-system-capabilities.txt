@@ -17,7 +17,8 @@ ipmctl show [OPTIONS] -system -capabilities
 
 DESCRIPTION
 -----------
-Shows the total DCPMM memory resource allocation across the host server.
+Shows the capabilities of the current platform as determined by platform firmware
+(BIOS) and this application.
 
 OPTIONS
 -------

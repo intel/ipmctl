@@ -38,7 +38,7 @@ struct Command DeleteDimmCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},         //!< targets
   {{PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional}},  //!< properties
-  L"Erase persistent data on one or more DIMMs.",                        //!< help
+  L"Erase persistent data on one or more DCPMMs.",                        //!< help
   DeleteDimm, TRUE
 };
 

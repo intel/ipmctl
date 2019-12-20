@@ -39,7 +39,7 @@ struct Command StopSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Stops the active playback or recording session.", //!< help
+  L"Stop the active playback or record (PBR) session.",               //!< help
   StopSession,
   TRUE,
   TRUE

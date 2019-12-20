@@ -3,18 +3,12 @@
 
 ifdef::manpage[]
 ipmctl-dump-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-session - Dumps content captured during
-a recording session.  Captured content includes ACPI,
-SMBIOS tables, and FIS requests and responses.
-The resulting session file that is generated can be
-used to playback commands recorded on a real platform
-in a simulated environment, making it possible to debug
-issues offline.
+ipmctl-dump-session - Dumps content captured during a recording session.
 
 SYNOPSIS
 --------
@@ -75,4 +69,3 @@ SAMPLE OUTPUT
 -------------
 [verse]
 Successfully dumped 1060619 bytes to file.
-

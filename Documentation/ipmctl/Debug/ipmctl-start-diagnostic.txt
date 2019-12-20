@@ -107,37 +107,51 @@ Test::
   - "Security"
   - "FW"
 
+State::
+  The collective result state for each test. One of:
+  - "Ok"
+  - "Warning"
+  - "Failed"
+  - "Aborted"
+
 Message::
   The message indicates the status of the test. One of:
   - "Ok"
   - "Failed"
 
-Result Code::
-  Event code associated with message.
-
 SubTestName::
   The subtest name for given Test.
-  For "Quick", sub-tests are :
-  - "Manageability"
-  - "Boot status"
-  - "Health"
+[cols="1,2a", options="header"]
+|===
+|Test Name
+|Valid SubTest Names
 
-  For "Config", sub-tests are:
-  - "Dimm specs"
-  - "Duplicate Dimm"
-  - "System Capability"
-  - "Namespace LSA"
-  - "PCD"
+|Quick
+|
+* Manageability
+* Boot status
+* Health
 
-  For "Security", sub-tests are:
-  - "Encryption status"
-  - "Inconsistency"
+|Config
+|
+* Dimm specs
+* Duplicate Dimm
+* System Capability
+* Namespace LSA
+* PCD
 
-  For "FW", sub-tests are:
-  - "FW Consistency"
-  - "Viral Policy"
-  - "Threshold check"
-  - "System Time"
+|Security
+|
+* Encryption status
+* Inconsistency
+
+|FW
+|
+* FW Consistency
+* Viral Policy
+* Threshold check
+* System Time
+|===
 
 State::
   The severity of the error for each sub-test displayed with SubTestName. One of:
@@ -145,12 +159,6 @@ State::
   - "Warning"
   - "Failed"
   - "Aborted"
-
-Message::
-  A free form textual description of the error associated with eact subtest.
-
-EventCode::
-  Event code associated with Message.
 
 ifdef::manpage[]
 include::ipmctl-diagnostic-events.txt[leveloffset=+1]

@@ -41,8 +41,8 @@ struct Command ShowCelCommandSyntax =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show command effect log for given DIMM",                          //!< help
-  ShowCelCommand,                                                   //!< run function
+  L"Show command effect log (CEL) for one or more DCPMMs.",           //!< help
+  ShowCelCommand,                                                     //!< run function
   TRUE
 };
 

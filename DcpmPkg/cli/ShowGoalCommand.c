@@ -100,15 +100,15 @@ struct Command ShowGoalCommand =
     , {OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP,HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired}
 #endif // OS_BUILD
   },
-  {                                                                   //!< targets
+  {                                                                     //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {GOAL_TARGET, L"", L"", TRUE, ValueEmpty},
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Show region configuration goal stored on one or more DIMMs",        //!< help
+  L"Show a pending memory allocation goal on one or more DCPMMs to be applied on reboot.",            //!< help
   ShowGoal,
-  TRUE,                                               //!< enable print control support
+  TRUE,                                                                 //!< enable print control support
 };
 
 

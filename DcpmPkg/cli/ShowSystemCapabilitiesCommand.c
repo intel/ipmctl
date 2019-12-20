@@ -39,7 +39,7 @@ struct Command ShowSystemCapabilitiesCommand = {
     {CAPABILITIES_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                      //!< properties
-  L"Show information about BIOS memory management capabilities.",
+  L"Show the platform supported DCPMM capabilities.",
   ShowSystemCapabilities,
   TRUE
 };

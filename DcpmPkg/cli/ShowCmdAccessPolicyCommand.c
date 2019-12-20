@@ -48,10 +48,10 @@ struct Command ShowCmdAccessPolicyCommand =
     { DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional },
     { CAP_TARGET, L"", L"", TRUE, ValueEmpty },
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                    //!< properties
-  L"Show Command Access Policy Restrictions for DIMM(s).",    //!< help
-  ShowCmdAccessPolicy,                                        //!< run function
-  TRUE,                                                       //!< enable print control support
+  {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
+  L"Show command access policy (CAP) restrictions for one ore more DCPMM(s).",    //!< help
+  ShowCmdAccessPolicy,                                                            //!< run function
+  TRUE,                                                                           //!< enable print control support
 };
 
 // Table heading names

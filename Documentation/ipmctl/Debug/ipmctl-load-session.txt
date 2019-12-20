@@ -3,15 +3,12 @@
 
 ifdef::manpage[]
 ipmctl-load-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-load-session - Loads content captured during
-a recording session into internal memory buffers.
-Captured content includes ACPI, SMBIOS tables, 
-and FIS requests and responses.
+ipmctl-load-session - Loads content captured during a recording session.
 
 SYNOPSIS
 --------
@@ -24,7 +21,6 @@ Loads content captured during a recording session into
 internal memory buffers. Captured content includes ACPI,
 SMBIOS tables, and FIS requests and responses.  A loaded
 session can be executed using the 'start -session' command.
-
 
 OPTIONS
 -------
@@ -64,4 +60,3 @@ SAMPLE OUTPUT
 -------------
 [verse]
 Successfully loaded 1060619 bytes to session buffer.
-

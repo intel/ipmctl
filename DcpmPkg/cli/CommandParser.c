@@ -1191,10 +1191,10 @@ CHAR16
         }
       }
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       /* add the targets pHelp */
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
@@ -1251,10 +1251,10 @@ CHAR16
 
       /* Source and Destination are required for load and dump commands*/
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
       {
@@ -1378,10 +1378,10 @@ CHAR16
     /* add the Targets to pHelp */
     if (gCommandList[Index].targets > 0) {
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++) {
         if (gCommandList[Index].targets[Index2].TargetName

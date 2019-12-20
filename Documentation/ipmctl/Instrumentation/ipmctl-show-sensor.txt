@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-sensor - Shows health statistics for one or more DCPMMs
+ipmctl-show-sensor - Shows sensor data for one or more DCPMMs
 
 SYNOPSIS
 --------
@@ -17,7 +17,8 @@ ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
 
 DESCRIPTION
 -----------
-ipmctl-show-device to view more detailed information about a DCPMM.
+Shows sensor data for one or more DCPMMs. This data includes DCPMM health, temperatures,
+percentage remaining, up-time and more.
 
 OPTIONS
 -------
@@ -104,7 +105,7 @@ ipmctl show -sensor
 
 Shows the media temperature sensor for the specified DCPMM.
 [verse]
-ipmctl show -sensor MediaTemperature -dimm 1234
+ipmctl show -sensor MediaTemperature -dimm 0x0001
 
 LIMITATIONS
 -----------

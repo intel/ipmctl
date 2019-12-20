@@ -20,7 +20,7 @@ typedef enum {
   Register the show ACPI tables command
 **/
 EFI_STATUS
-registerShowAcpiCommand(
+RegisterShowAcpiCommand(
   );
 
 /**

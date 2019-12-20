@@ -9,10 +9,10 @@ endif::manpage[]
 NAME
 ----
 ifndef::os_build[]
-ipmctl-enable-device-security - Enable data-at-rest security on DCPMM
+ipmctl-enable-device-security - Enables data-at-rest security on DCPMM
 endif::os_build[]
 ifdef::os_build[]
-ipmctl-enable-device-security - Enable data-at-rest security on DCPMM on supported OS
+ipmctl-enable-device-security - Enables data-at-rest security on DCPMM on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -48,6 +48,12 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
   File path to a local file containing the new passphrase (1-32 characters).
 
 NOTE: The file does not need to contain the ConfirmPassphrase property
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
 
 TARGETS
 -------

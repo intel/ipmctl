@@ -2429,9 +2429,13 @@ InitializeNamespaces(
 
     TempReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
     if (TempReturnCode == EFI_NOT_FOUND) {
+      /**
+        Return code is purposefully not set here. EFI_NOT_FOUND is
+        returned due to LSA not being initialized. In this
+        case success code should be returned
+      **/
       NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
       pDimm->LsaStatus = LSA_NOT_INIT;
-      ReturnCode = TempReturnCode;
       continue;
     }
     else if (EFI_ERROR(TempReturnCode)) {

@@ -767,15 +767,17 @@ RegisterCommands(
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+#ifndef __MFG__
+  // Mfg has a low latency version of this command in RegisterMfgCommands()
+  Rc = RegisterShowPerformanceCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+#endif // !__MFG__
 
 #ifdef OS_BUILD
 #ifdef __MFG__
   Rc = RegisterMfgCommands();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-#else
-  Rc = RegisterShowPerformanceCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }

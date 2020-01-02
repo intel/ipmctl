@@ -1,28 +1,42 @@
 %define build_version 99.99.99.9999
 %define platform_type purley
 
-Name:		ipmctl
-Version:	%{build_version}
-Release:	1%{?dist}
-Summary:	Utility for managing Intel Optane DC persistent memory modules
-License:	BSD
-URL:		https://github.com/intel/ipmctl
-Source:		https://github.com/intel/ipmctl/archive/v%{version}/%{name}-%{version}.tar.gz
-ExclusiveArch:	x86_64
+Name:           ipmctl
+Version:        %{build_version}
+Release:        1%{?dist}
+Summary:        Utility for managing Intel Optane DC persistent memory modules
+License:        BSD
+URL:            https://github.com/intel/ipmctl
+Source:         https://github.com/intel/ipmctl/archive/v%{version}/%{name}-%{version}.tar.gz
+ExclusiveArch:  x86_64
 
-Requires:	libipmctl%{?_isa} = %{version}-%{release}
-BuildRequires:	pkgconfig(libndctl)
-BuildRequires:	cmake
+Requires:       libipmctl%{?_isa} = %{version}-%{release}
+BuildRequires:  pkgconfig(libndctl)
+BuildRequires:  cmake
+
 %if 0%{?fedora}
-BuildRequires:	python2
+BuildRequires:  python2
 %endif
-%if 0%{?rhel}
-BuildRequires:	python
+
+%if 0%{?rhel} == 8
+BuildRequires:  python3
 %endif
-BuildRequires:	gcc
-BuildRequires:	gcc-c++
-BuildRequires:	asciidoctor
-Obsoletes:	ixpdimm-cli < 01.00.00.3000
+
+
+BuildRequires:  gcc
+BuildRequires:  gcc-c++
+
+%if 0%{?suse_version}
+BuildRequires:  ruby2.5-rubygem-asciidoctor
+%else
+  %if 0%{?rhel} == 8
+BuildRequires:  rubygems
+  %else
+BuildRequires:  asciidoctor
+  %endif
+%endif
+
+Obsoletes:      ixpdimm-cli < 01.00.00.3000
 
 %description
 Utility for managing Intel Optane DC persistent memory modules
@@ -38,24 +52,24 @@ Debug and troubleshoot DCPMMs.
 %setup -q -n %{name}-%{version}
 
 %package -n libipmctl
-Summary:	Library for Intel DCPMM management
-Obsoletes:	ixpdimm_sw < 01.00.00.3000
-Obsoletes:	libixpdimm-common < 01.00.00.3000
-Obsoletes:	libixpdimm-core < 01.00.00.3000
-Obsoletes:	libixpdimm-cli < 01.00.00.3000
-Obsoletes:	libixpdimm-cim < 01.00.00.3000
-Obsoletes:	libixpdimm < 01.00.00.3000
-Obsoletes:	ixpdimm-data < 01.00.00.3000
+Summary:        Library for Intel DCPMM management
+Obsoletes:      ixpdimm_sw < 01.00.00.3000
+Obsoletes:      libixpdimm-common < 01.00.00.3000
+Obsoletes:      libixpdimm-core < 01.00.00.3000
+Obsoletes:      libixpdimm-cli < 01.00.00.3000
+Obsoletes:      libixpdimm-cim < 01.00.00.3000
+Obsoletes:      libixpdimm < 01.00.00.3000
+Obsoletes:      ixpdimm-data < 01.00.00.3000
 
 %description -n libipmctl
 An Application Programming Interface (API) library for managing Intel Optane DC
 persistent memory modules.
 
 %package -n libipmctl-devel
-Summary:	Development packages for libipmctl
-Requires:	libipmctl%{?_isa} = %{version}-%{release}
-Obsoletes:	ixpdimm-devel < 01.00.00.3000
-Obsoletes:	ixpdimm_sw-devel < 01.00.00.3000
+Summary:        Development packages for libipmctl
+Requires:       libipmctl%{?_isa} = %{version}-%{release}
+Obsoletes:      ixpdimm-devel < 01.00.00.3000
+Obsoletes:      ixpdimm_sw-devel < 01.00.00.3000
 
 %description -n libipmctl-devel
 API for development of Intel Optane DC persistent memory management utilities.
@@ -85,7 +99,7 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON \
-	-DWHITLEY=ON
+    -DWHITLEY=ON
 %endif
 %make_build
 

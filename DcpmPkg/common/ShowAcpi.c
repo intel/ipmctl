@@ -492,10 +492,10 @@ PrintPcatTable(
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
         L"-Per DCPMM", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
       if (MaxPMInterleaveSets != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR L"\n",
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16, MaxPMInterleaveSets);
       } else {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH L"\n",
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16);
       }
       FREE_POOL_SAFE(MaxPMInterleaveSets);

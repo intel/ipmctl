@@ -3630,7 +3630,7 @@ ReduceCapacityForSocketSKU(
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
-      if (Socket == pDimm->SocketId && pDimm->Configured && IsDimmManageable(pDimm)) {
+      if (Socket == pDimm->SocketId && !IsPointerInArray((VOID **)pDimmsOnSocket, NumDimmsOnSocket, pDimm) && IsDimmManageable(pDimm)) {
         TotalRequestedMemoryOnSocket += pDimm->MappedPersistentCapacity;
       }
     }
@@ -3642,7 +3642,7 @@ ReduceCapacityForSocketSKU(
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
-      if (Socket == pDimm->SocketId && pDimm->Configured && IsDimmManageable(pDimm)) {
+      if (Socket == pDimm->SocketId && !IsPointerInArray((VOID **)pDimmsOnSocket, NumDimmsOnSocket, pDimm) && IsDimmManageable(pDimm)) {
         TotalRequestedMemoryOnSocket += pDimm->MappedPersistentCapacity;
         TotalRequestedMemoryOnSocket += pDimm->MappedVolatileCapacity;
       }

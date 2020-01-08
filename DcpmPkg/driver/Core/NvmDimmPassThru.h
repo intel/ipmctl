@@ -96,8 +96,14 @@ struct _DIMM;
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
-// Opt-In Codes - values 0x00-0x02 are invalid
-#define OPT_IN_S3_RESUME 0x03
+// Opt-In Codes - value 0x00 is invalid
+enum OPT_IN_CODE {
+  SVN_DOWNGRADE = 0x01,
+  SECURE_ERASE_POLICY = 0x02,
+  S3_RESUME = 0x03,
+  FW_ACTIVATE = 0x04
+};
+
 
 #pragma pack(push)
 #pragma pack(1)
@@ -1015,9 +1021,11 @@ typedef struct {
   UINT16 FWImageMaxSize;
   UINT8 Reserved2[8];
   UINT8 StagedFwRevision[FW_BCD_VERSION_LEN];
-  UINT8 Reserved3;
+  UINT8 StagedFwActivatable;
   UINT8 LastFwUpdateStatus;
-  UINT8 Reserved4[105];
+  UINT8 QuiesceRequired;
+  UINT16 ActivationTime;
+  UINT8 Reserved4[102];
 } PT_PAYLOAD_FW_IMAGE_INFO;
 
 

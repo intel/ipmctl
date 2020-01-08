@@ -87,7 +87,8 @@ ipmctl show -error Media Level=Low
 LIMITATIONS
 -----------
 To successfully execute this command, the specified DCPMM(s) must be manageable
-by the host software.
+by the host software. In addition, for DCPMMs with firmware version 2.3 and above,
+errors due to AIT operations are no longer exposed.
 
 RETURN DATA
 -----------

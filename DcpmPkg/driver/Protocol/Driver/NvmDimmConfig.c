@@ -820,18 +820,58 @@ GetDimmInfo (
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
+    /* Get Security Opt-In SVN Downgrade*/
+    pDimmInfo->SVNDowngradeOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, SVN_DOWNGRADE, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_SVN_DOWNGRADE): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SVN_DOWNGRADE;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == SVN_DOWNGRADE) {
+      pDimmInfo->SVNDowngradeOptIn = pSecurityOptInPayload->OptInValue;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
+    /* Get Security Opt-In Secure Erase Policy*/
+    pDimmInfo->SecureErasePolicyOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, SECURE_ERASE_POLICY, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_SECURE_ERASE_POLICY): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURE_ERASE_POLICY;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == SECURE_ERASE_POLICY) {
+      pDimmInfo->SecureErasePolicyOptIn = pSecurityOptInPayload->OptInValue;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
     /* Get Security Opt-In S3 Resume */
-    pDimmInfo->S3ResumeOptIn = S3_RESUME_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, OPT_IN_S3_RESUME, pSecurityOptInPayload);
+    pDimmInfo->S3ResumeOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, S3_RESUME, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_S3_RESUME): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
     }
 
-    if (pSecurityOptInPayload->OptInCode == OPT_IN_S3_RESUME) {
+    if (pSecurityOptInPayload->OptInCode == S3_RESUME) {
       pDimmInfo->S3ResumeOptIn = pSecurityOptInPayload->OptInValue;
-    } else {
-      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
+    /* Get FW Activate Opt-In Secure Erase Policy*/
+    pDimmInfo->FwActivateOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, FW_ACTIVATE, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_FW_ACTIVATE): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_FW_ACTIVATE;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == FW_ACTIVATE) {
+      pDimmInfo->FwActivateOptIn = pSecurityOptInPayload->OptInValue;
     }
 
     /* security state */
@@ -1080,7 +1120,10 @@ GetDimmInfo (
     else {
       pDimmInfo->LastFwUpdateStatus = pPayloadFwImage->LastFwUpdateStatus;
       pDimmInfo->StagedFwVersion = ParseFwVersion(pPayloadFwImage->StagedFwRevision);
+      pDimmInfo->StagedFwActivatable = pPayloadFwImage->StagedFwActivatable;
       pDimmInfo->FWImageMaxSize = pPayloadFwImage->FWImageMaxSize * 4096;
+      pDimmInfo->QuiesceRequired = pPayloadFwImage->QuiesceRequired;
+      pDimmInfo->ActivationTime = pPayloadFwImage->ActivationTime;
     }
   }
 

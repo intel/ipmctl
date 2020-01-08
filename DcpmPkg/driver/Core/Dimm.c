@@ -1527,6 +1527,12 @@ FwCmdGetSecurityOptIn(
   }
 
   CopyMem_S(pSecurityOptIn, sizeof(*pSecurityOptIn), pFwCmd->OutPayload, sizeof(*pSecurityOptIn));
+  if (pSecurityOptIn->OptInCode != OptInCode)
+  {
+    NVDIMM_DBG("Error detected when sending PtGetSecOptIn command (Requested OptInCode = %d , Received OptInCode = %d)",
+      OptInCode, pSecurityOptIn->OptInCode);
+    ReturnCode = EFI_NOT_FOUND;
+  }
 
 Finish:
   FREE_POOL_SAFE(pFwCmd);

@@ -13,6 +13,7 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include "NvmHealth.h"
+#include "FwVersion.h"
 #include <Library/SerialPortLib.h>
 #ifdef OS_BUILD
 #include <os_efi_preferences.h>
@@ -41,9 +42,7 @@ typedef union {
   CpVersionSeparated Separated;
 } CONFIG_PROTOCOL_VERSION;
 
-/** Minimum supported version of FW API: 1.2 **/
-#define MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR   1
-#define MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR   2
+
 
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000
@@ -114,6 +113,7 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
 #define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
 #define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR     L"Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR L"Extended Flush Not Complete"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"
@@ -1405,6 +1405,32 @@ SecurityStateBitmaskToString(
   IN     EFI_HANDLE HiiHandle,
   IN     UINT32 SecurityStateBitmask
 );
+/**
+  Convert dimm's SVN Downgrade Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's SVN Downgrade opt-in
+**/
+CHAR16*
+SVNDowngradeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
+/**
+  Convert dimm's Secure Erase Policy Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Secure erase policy opt-in
+**/
+CHAR16*
+SecureErasePolicyOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
 
 /**
   Convert dimm's S3 Resume Opt-In to its respective string
@@ -1416,6 +1442,19 @@ SecurityStateBitmaskToString(
 **/
 CHAR16*
 S3ResumeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
+/**
+  Convert dimm's Fw Activate Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Fw Activate opt-in
+**/
+CHAR16*
+FwActivateOptInToString(
   IN     EFI_HANDLE HiiHandle,
   IN     UINT32 OptInValue
 );
@@ -1572,6 +1611,7 @@ UnitsToStr (
   Convert last firmware update status to string.
   The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Last Firmware update status value to convert
 
   @retval output string or NULL if memory allocation failed
@@ -1582,6 +1622,34 @@ LastFwUpdateStatusToString(
   IN     UINT8 LastFwUpdateStatus
   );
 
+/**
+  Convert quiesce required value to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Quiesce required value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+QuiesceRequiredToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 QuiesceRequired
+);
+/**
+  Convert StagedFwActivatable to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Staged Fw activatable value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+StagedFwActivatableToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 StagedFwActivatable
+);
 /**
   Determines if an array, whose size is known in bytes has all elements as zero
 

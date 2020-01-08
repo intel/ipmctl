@@ -43,6 +43,14 @@
 #define FW_UPDATE_STATUS_LOAD_SUCCESS 2
 #define FW_UPDATE_STATUS_FAILED 3
 
+/** Quiesce required values **/
+#define QUIESCE_NOT_REQUIRED 0
+#define QUIESCE_REQUIRED     1
+
+/** Staged fw activatable values **/
+#define STAGED_FW_NOT_ACTIVATABLE 0
+#define STAGED_FW_ACTIVATABLE 1
+
 #define IN_MB_SIZE          (1 << 20)   //!< Size of the OS mailbox large input payload
 #define OUT_MB_SIZE         (1 << 20)   //!< Size of the OS mailbox large output payload
 #define IN_PAYLOAD_SIZE     (128)       //!< Total size of the input payload registers

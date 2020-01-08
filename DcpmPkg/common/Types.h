@@ -36,9 +36,6 @@
 #define ERROR_INJ_DIRTY_SHUTDOWN        0X06
 #define ERROR_INJ_TYPE_INVALID          0x08
 
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR    2
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    2
-
 /**
   The device path type for our driver and HII driver.
 **/

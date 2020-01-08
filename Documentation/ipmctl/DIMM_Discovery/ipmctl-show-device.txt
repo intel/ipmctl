@@ -277,6 +277,34 @@ LockState::
     is required to change the security state.
   - Not Supported - Security is not supported on the DCPMM.
 
+SVNDowngrade::
+  (Default) The Opt-in value of SVN Downgrade security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - SVN Downgrade Disabled
+  - SVN Downgrade Enabled
+
+SecureErasePolicy::
+  (Default) The Opt-in value of Secure erase policy opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - No Master Passphrase
+  - Master Passphrase Enabled
+
+S3ResumeOptIn::
+  (Default) The Opt-in value of S3 Resume security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - UnsecureS3
+  - SecureS3
+
+FwActivateOptIn::
+  (Default) The Opt-in value of Fw Activate security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - Fw Activate Disabled
+  - Fw Activate Enabled
+
 FWVersion::
   (Default) The BCD-formatted revision of the active firmware in the format
   PN.RN.SV.bbbb where:

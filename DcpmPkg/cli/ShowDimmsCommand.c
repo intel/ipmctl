@@ -137,7 +137,10 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   MANAGEABILITY_STR,
   POPULATION_VIOLATION_STR,
   SECURITY_STR,
+  SVN_DOWNGRADE_OPT_IN_STR,
+  SEP_OPT_IN_STR,
   S3_RESUME_OPT_IN_STR,
+  FW_ACTIVATE_OPT_IN_STR,
   HEALTH_STR,
   HEALTH_STATE_REASON_STR,
   FORM_FACTOR_STR,
@@ -424,7 +427,10 @@ ShowDimms(
   UINT32 DimmIdsNum = 0;
   CHAR16 *pSocketsValue = NULL;
   CHAR16 *pSecurityStr = NULL;
+  CHAR16 *pSVNDowngradeStr = NULL;
+  CHAR16 *pSecureErasePolicyStr = NULL;
   CHAR16 *pS3ResumeStr = NULL;
+  CHAR16 *pFwActivateStr = NULL;
   CHAR16 *pHealthStr = NULL;
   CHAR16 *pHealthStateReasonStr = NULL;
   CHAR16 *pManageabilityStr = NULL;
@@ -750,6 +756,30 @@ ShowDimms(
         FREE_POOL_SAFE(pSecurityStr);
       }
 
+      /** SVN Downgrade Opt-In **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SVN_DOWNGRADE_OPT_IN_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SVN_DOWNGRADE) {
+          pSVNDowngradeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+        }
+        else {
+          pSVNDowngradeStr = SVNDowngradeOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SVN_DOWNGRADE_OPT_IN_STR, pSVNDowngradeStr);
+        FREE_POOL_SAFE(pSVNDowngradeStr);
+      }
+
+      /** Secure Erase Policy Opt-In **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SEP_OPT_IN_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_SECURE_ERASE_POLICY) {
+          pSecureErasePolicyStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+        }
+        else {
+          pSecureErasePolicyStr = SecureErasePolicyOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SEP_OPT_IN_STR, pSecureErasePolicyStr);
+        FREE_POOL_SAFE(pSecureErasePolicyStr);
+      }
+
       /** S3 Resume Opt-In **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, S3_RESUME_OPT_IN_STR))) {
         if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_S3RESUME) {
@@ -761,6 +791,17 @@ ShowDimms(
         FREE_POOL_SAFE(pS3ResumeStr);
       }
 
+      /** FW Activate Opt-In **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_ACTIVATE_OPT_IN_STR))) {
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_FW_ACTIVATE) {
+          pFwActivateStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+        }
+        else {
+          pFwActivateStr = FwActivateOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+        }
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_ACTIVATE_OPT_IN_STR, pFwActivateStr);
+        FREE_POOL_SAFE(pFwActivateStr);
+      }
       /** Health State **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, HEALTH_STR))) {
         pHealthStr = HealthToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].HealthState);

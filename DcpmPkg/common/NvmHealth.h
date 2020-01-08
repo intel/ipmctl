@@ -54,7 +54,7 @@ typedef enum {
 #define SENSOR_ENABLED_STATE_DISABLED_STR   L"0"
 
 #define NOT_APPLICABLE_SHORT_STR                              L"N/A"
-
+#define EXTENDED_ADR_FLUSH_COMPLETE        0b1111
 /**
   Namespace PM Capable values
 **/

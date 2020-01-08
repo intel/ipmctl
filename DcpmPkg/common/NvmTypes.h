@@ -94,6 +94,8 @@ typedef struct {
 #define MEMORY_TYPE                    30
 #define BOOT_STATUS_LEN               100
 #define FW_UPDATE_STATUS_LEN           64
+#define QUIESCE_REQUIRED_LEN           30
+#define STAGED_FW_ACTIVATABLE_LEN      50
 #define FW_BUILD_LEN                   16
 #define FW_BUILD_STR_LEN               17
 #define FW_COMMIT_ID_LEN               40
@@ -102,7 +104,11 @@ typedef struct {
 #define SW_TRIG_ENABLED_DETAILS_LEN   120
 #define CONTROLLER_RID_LEN             12
 #define SECURITY_STATE_STR_LEN         32
-#define S3_RESUME_STR_LEN              12
+#define SVN_DOWNGRADE_STR_LEN          30
+#define S3_RESUME_STR_LEN              30
+#define SECURE_ERASE_POLICY_STR_LEN    30
+#define FW_ACTIVATE_STR_LEN            30
+
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_STR_LEN    6
 
 /** DIMM UID length, including null terminator **/
@@ -298,6 +304,9 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_MAX                             (1 << 12)
 #define DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS          (1 << 13)
 #define DIMM_INFO_ERROR_S3RESUME                        (1 << 14)
+#define DIMM_INFO_ERROR_SVN_DOWNGRADE                   (1 << 15)
+#define DIMM_INFO_ERROR_SECURE_ERASE_POLICY             (1 << 16)
+#define DIMM_INFO_ERROR_FW_ACTIVATE                     (1 << 17)
 
 
 #define DIMM_INFO_TYPE_CHAR16   1
@@ -456,7 +465,7 @@ typedef struct _DIMM_INFO {
   UINT32 DimmHandle;                        //!< The DIMM handle
   SMBUS_DIMM_ADDR SmbusAddress;             //!< SMBUS address
   CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM id (in hexadecimal format representation)
-  UINT16 ErrorMask;                         //!< Bit mask representing which FW functions failed, see DIMM_INFO_ERROR types
+  UINT32 ErrorMask;                         //!< Bit mask representing which FW functions failed, see DIMM_INFO_ERROR types
 
   UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
 
@@ -471,7 +480,10 @@ typedef struct _DIMM_INFO {
   //DIMM_INFO_CATEGORY_SECURITY
   BOOLEAN MasterPassphraseEnabled;          //!< If 1, master passphrase is enabled
   UINT32 SecurityStateBitmask;
+  UINT32 SVNDowngradeOptIn;
+  UINT32 SecureErasePolicyOptIn;
   UINT32 S3ResumeOptIn;
+  UINT32 FwActivateOptIn;
 
   CHAR16 SecurityStateStr[SECURITY_STATE_STR_LEN];
 
@@ -483,6 +495,11 @@ typedef struct _DIMM_INFO {
   //Extended ADR Status Info
   DIMM_INFO_ATTRIB_UINT8 ExtendedAdrEnabled; //!< Is extended ADR flow enabled in the FW
   DIMM_INFO_ATTRIB_UINT8 PrevPwrCycleExtendedAdrEnabled; //!< Was extended ADR flow enabled in the FW during the last power cycle
+
+  //DIMM_INFO_CATEGORY_FW_IMAGE_INFO
+  UINT8 StagedFwActivatable;                //!< Specifies if the staged firmware is activatable
+  UINT8 QuiesceRequired;                    //!< Specifies if FW Activate requires host to quiesce traffic before calling
+  UINT16 ActivationTime;                    //!< Specifies activation time in ms for fw activate
 
   } DIMM_INFO;
 
@@ -835,8 +852,14 @@ typedef struct _DEBUG_LOG_INFO {
 **/
 #define S3_RESUME_SECURE_S3   0x0
 #define S3_RESUME_UNSECURE_S3 0x1
-#define S3_RESUME_INVALID     0xFF
+#define SVN_DOWNGRADE_DISABLE 0x0
+#define SVN_DOWNGRADE_ENABLE 0x1
+#define SECURE_ERASE_NO_MASTER_PASSPHRASE      0x0
+#define SECURE_ERASE_MASTER_PASSPHRASE_ENABLED 0x1
+#define FW_ACTIVATE_DISABLED 0x0
+#define FW_ACTIVATE_ENABLED 0x1
 
+#define OPT_IN_VALUE_INVALID 0xFF
 /**
   Form Factor
 **/

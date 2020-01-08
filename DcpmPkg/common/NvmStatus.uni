@@ -201,9 +201,15 @@
 #string STR_DCPMM_SECSTATE_NOT_SUPPORTED     #language en  "Not Supported"
 #string STR_DCPMM_SECSTATE_PW_MAX            #language en  "Exceeded"
 
+#string STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_DISABLED #language en  "Disabled"
+#string STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_ENABLED  #language en  "Enabled"
+#string STR_DCPMM_SEC_OPTIN_SECURE_ERASE_NO_MASTER_PASSPHRASE #language en  "No Master Passphrase"
+#string STR_DCPMM_SEC_OPTIN_SECURE_ERASE_MASTER_PASSPHRASE_ENABLED     #language en  "Master Passphrase Enabled"
 #string STR_DCPMM_SEC_OPTIN_SECURE_S3       #language en  "SecureS3"
 #string STR_DCPMM_SEC_OPTIN_UNSECURE_S3     #language en  "UnsecureS3"
-#string STR_DCPMM_SEC_OPTIN_INVALID         #language en  "Invalid"
+#string STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_DISABLED    #language en  "Disabled"
+#string STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_ENABLED     #language en  "Enabled"
+#string STR_DCPMM_SEC_OPTIN_UNKNOWN         #language en  "Unknown"
 
 #string STR_DCPMM_BOOT_STATUS_UNKNOWN #language en "Unknown"
 #string STR_DCPMM_BOOT_STATUS_SUCCESS #language en "Success"
@@ -218,6 +224,11 @@
 #string STR_DCPMM_FW_UPDATE_STATUS_SUCCESS    #language en "Update loaded successfully"
 #string STR_DCPMM_FW_UPDATE_STATUS_FAIL       #language en "Update failed to load, fell back to previous firmware"
 #string STR_DCPMM_FW_UPDATE_STATUS_UNKNOWN    #language en "Unknown"
+#string STR_DCPMM_QUIESCE_REQUIRED            #language en "Required"
+#string STR_DCPMM_QUIESCE_NOT_REQUIRED        #language en "Not required"
+#string STR_DCPMM_STAGED_FW_NOT_ACTIVATABLE   #language en "Not activatable, reboot is required"
+#string STR_DCPMM_STAGED_FW_ACTIVATABLE       #language en "Activatable"
+
 #string STR_DCPMM_VIEW_FIRMWARE_VERSION_NOT_VALID    #language en "Incorrect FW version"
 #string STR_DCPMM_VIEW_FIRMWARE_INCOMPATIBLE_TO_CTLR_STEPPING    #language en "Image not compatible with this DCPMM"
 

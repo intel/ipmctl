@@ -2447,10 +2447,15 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR);
   }
-  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.EnhancedAdrFlushStatus) {
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.EnhancedAdrFlushStatus == EXTENDED_ADR_FLUSH_COMPLETE) {
     pStatusStr = CatSPrintClean(pStatusStr,
       FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR);
   }
+  else {
+    pStatusStr = CatSPrintClean(pStatusStr,
+      FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR);
+  }
+
   if (pStatusStr == NULL) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR, LAST_SHUTDOWN_STATUS_UNKNOWN_STR);
@@ -2899,6 +2904,78 @@ Finish:
 }
 
 /**
+  Convert dimm's SVN Downgrade Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's SVN Downgrade opt-in
+**/
+CHAR16*
+SVNDowngradeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case SVN_DOWNGRADE_DISABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_DISABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case SVN_DOWNGRADE_ENABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
+/**
+  Convert dimm's Secure Erase Policy Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Secure Erase Policy opt-in
+**/
+CHAR16*
+SecureErasePolicyOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case SECURE_ERASE_NO_MASTER_PASSPHRASE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_NO_MASTER_PASSPHRASE), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case SECURE_ERASE_MASTER_PASSPHRASE_ENABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_MASTER_PASSPHRASE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
+/**
   Convert dimm's S3 Resume Opt-In to its respective string
 
   @param[in] HiiHandle handle to the HII database that contains i18n strings
@@ -2926,7 +3003,7 @@ S3ResumeOptInToString(
       FREE_POOL_SAFE(pTempStr);
       break;
     default:
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_INVALID), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
       pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
@@ -2934,7 +3011,42 @@ S3ResumeOptInToString(
 
   return pOptIntString;
 }
+/**
+  Convert dimm's Fw Activate Opt-In to its respective string
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Fw Activate opt-in
+**/
+CHAR16*
+FwActivateOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case FW_ACTIVATE_DISABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_DISABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case FW_ACTIVATE_ENABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
 /**
   Convert ARS status value to its respective string
 
@@ -3433,6 +3545,7 @@ Finish:
   Convert last firmware update status to string.
   The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Last Firmware update status value to convert
 
   @retval output string or NULL if memory allocation failed
@@ -3471,7 +3584,82 @@ LastFwUpdateStatusToString(
 
   return pLastFwUpdateStatusString;
 }
+/**
+  Convert Quiesce required to string.
+  The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Quiesce required value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+QuiesceRequiredToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 QuiesceRequired
+)
+{
+  CHAR16 *pQuiesceRequiredString = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  switch (QuiesceRequired) {
+  case QUIESCE_NOT_REQUIRED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_QUIESCE_NOT_REQUIRED), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case QUIESCE_REQUIRED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_QUIESCE_REQUIRED), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pQuiesceRequiredString;
+}
+/**
+  Convert StagedFwActivatable to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Staged Fw activatable value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+StagedFwActivatableToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 StagedFwActivatable
+)
+{
+  CHAR16 *pStagedFwActivatableString = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  switch (StagedFwActivatable) {
+  case STAGED_FW_NOT_ACTIVATABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STAGED_FW_NOT_ACTIVATABLE), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case STAGED_FW_ACTIVATABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STAGED_FW_ACTIVATABLE), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pStagedFwActivatableString;
+}
 /**
   Determines if an array, whose size is known in bytes has all elements as zero
   @param[in] pArray    Pointer to the input array

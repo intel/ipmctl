@@ -5743,15 +5743,37 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Generate the OEM PCD Header
+
+  @param[in out] pPlatformConfigData Pointer to Platform Config Data Header
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR Unable to retrieve PCAT table
+  @retval EFI_INVALID_PARAMETER pPlatformConfigData is NULL
+**/
 STATIC
-VOID
+EFI_STATUS
 GenerateOemPcdHeader (
   IN OUT NVDIMM_CONFIGURATION_HEADER *pPlatformConfigData
   )
 {
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pPlatformConfigData == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (gNvmDimmData->PMEMDev.pPcatHead == NULL) {
+    NVDIMM_DBG("PCAT table not found");
+    ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
+  }
+
   pPlatformConfigData->Header.Signature = NVDIMM_CONFIGURATION_HEADER_SIG;
   pPlatformConfigData->Header.Length = sizeof (*pPlatformConfigData);
-  pPlatformConfigData->Header.Revision.AsUint8 = NVDIMM_CONFIGURATION_HEADER_REVISION;
+  pPlatformConfigData->Header.Revision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
   CopyMem_S(&pPlatformConfigData->Header.OemId, sizeof(pPlatformConfigData->Header.OemId), NVDIMM_CONFIGURATION_HEADER_OEM_ID, NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN);
   pPlatformConfigData->Header.OemTableId = NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID;
   pPlatformConfigData->Header.OemRevision = NVDIMM_CONFIGURATION_HEADER_OEM_REVISION;
@@ -5759,6 +5781,10 @@ GenerateOemPcdHeader (
   pPlatformConfigData->Header.CreatorRevision = NVDIMM_CONFIGURATION_HEADER_CREATOR_REVISION;
 
   GenerateChecksum(pPlatformConfigData, pPlatformConfigData->Header.Length, PCAT_TABLE_HEADER_CHECKSUM_OFFSET);
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 
@@ -5803,8 +5829,11 @@ GetPlatformConfigDataOemPartition (
       goto Finish;
     }
 
-    GenerateOemPcdHeader(*ppPlatformConfigData);
-    ReturnCode = EFI_SUCCESS;
+    ReturnCode = GenerateOemPcdHeader(*ppPlatformConfigData);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Generating new OemPcdHeader failed.");
+      goto Finish;
+    }
     goto Finish;
   }
 

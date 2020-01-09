@@ -91,6 +91,7 @@ typedef struct _BTT_MAP_ENTRIES {
 /*!
     Layout of a BTT "map" entry. 4-byte internal LBA offset.
 */
+#define BTT_MAP_ENTRY_INITIAL (0)           //!< Both error and zero bits are 0
 #define BTT_MAP_ENTRY_ZERO (1u << 31)       //!< Zero'th bit
 #define BTT_MAP_ENTRY_ERROR (1u << 30)      //!< Error bit
 #define BTT_MAP_ENTRY_NORMAL (3u << 30)     //!< Normal map entry has both the zero and error bits set

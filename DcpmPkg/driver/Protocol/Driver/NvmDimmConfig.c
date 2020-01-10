@@ -8846,12 +8846,10 @@ GetDDRPhysicalSize(
 )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
+  TABLE_HEADER *pTable = NULL;
+  DIMM_INFO *pDimmInfo = NULL;
   UINT64 TotalDDRMemorySize = 0;
   UINT16 Index = 0;
-  ParsedPmttHeader *pPmttHead;
-  UINT32 DDRModulesNum;
-  PMTT_MODULE_INFO **ppDDRModules;
-  DIMM_INFO *pDimmInfo = NULL;
 
   NVDIMM_ENTRY();
 
@@ -8861,33 +8859,73 @@ GetDDRPhysicalSize(
     goto Finish;
   }
 
-  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
-  if (NULL == pPmttHead) {
-    NVDIMM_DBG("Pmtt head not found.");
-    goto Finish;
-    }
-  // Get list of DIMM modules from PMTT
-  DDRModulesNum = pPmttHead->DDRModulesNum;
-  ppDDRModules = pPmttHead->ppDDRModules;
-
-  pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
-  if (pDimmInfo == NULL) {
-    NVDIMM_WARN("Memory allocation error");
+  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to retrieve PMTT table.");
     goto Finish;
   }
-  SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
 
-  /* For every module, get its total capacity and add it to the system total capacity */
-  for (Index = 0; Index < DDRModulesNum; Index++) {
-    // Get dimm information from smbios handle
-    pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
-    ReturnCode = FillSmbiosInfo(pDimmInfo);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Smbios information could not be retrieved.");
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
+    PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
+    PMTT_COMMON_HEADER *pCommonHeader = NULL;
+    PMTT_MODULE *pModule = NULL;
+    UINT64 Offset = 0;
+
+    Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+    //Iterate through the table and look for DDR Modules
+    while (Offset < pPMTT->Header.Length) {
+      pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+      if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
+        Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
+      }
+      else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
+        Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
+      }
+      else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
+        pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+        if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
+          if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && (pModule->SizeOfDimm > 0)) {
+            TotalDDRMemorySize += MIB_TO_BYTES(pModule->SizeOfDimm);
+          }
+        }
+        Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
+      }
+    }
+  }
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
+    ParsedPmttHeader *pPmttHead = NULL;
+    UINT32 DDRModulesNum;
+    PMTT_MODULE_INFO **ppDDRModules = NULL;
+
+    pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
+    if (NULL == pPmttHead) {
+      NVDIMM_DBG("Pmtt head not found.");
       goto Finish;
     }
-    // Get dimm capacity and add it to the total
-    TotalDDRMemorySize += pDimmInfo->CapacityFromSmbios;
+
+    // Get list of DIMM modules from PMTT
+    DDRModulesNum = pPmttHead->DDRModulesNum;
+    ppDDRModules = pPmttHead->ppDDRModules;
+
+    pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
+    if (pDimmInfo == NULL) {
+      NVDIMM_WARN("Memory allocation error");
+      goto Finish;
+    }
+    SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
+
+    /* For every module, get its total capacity and add it to the system total capacity */
+    for (Index = 0; Index < DDRModulesNum; Index++) {
+      // Get dimm information from smbios handle
+      pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
+      ReturnCode = FillSmbiosInfo(pDimmInfo);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Smbios information could not be retrieved.");
+        goto Finish;
+      }
+      // Get dimm capacity and add it to the total
+      TotalDDRMemorySize += pDimmInfo->CapacityFromSmbios;
+    }
   }
 
   // Set total to the result output
@@ -8897,6 +8935,7 @@ GetDDRPhysicalSize(
 
 Finish:
   FREE_POOL_SAFE(pDimmInfo);
+  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

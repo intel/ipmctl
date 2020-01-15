@@ -1318,27 +1318,46 @@ Finish:
 }
 
 /**
-  Helper function for VerifyTargetDimms()
-  Contains logic for checking if if a DCPMM is not allowed based on parameters
-  provided to VerifyTargetDimms
+  Helper function for VerifyTargetDimms().
+  Contains logic for checking if a DCPMM is allowed based on the
+  RequireDcpmmsBitfield provided to VerifyTargetDimms.
 
   @param[in] pCurrentDimm Pointer to DCPMM to test
-  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
-                                       functional dimms. If false only check against functional dimms
-  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
-                                           returned dimm list. If false, include these dimms from
-                                           returned list
+  @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated
+  on the list of DCPMMs discovered.
 **/
-BOOLEAN IsDimmNotAllowed(
-  IN DIMM *pCurrentDimm,
-  IN BOOLEAN IncludeNonFunctionalDimms,
-  IN BOOLEAN ExcludeUnsupportedConfigDimms
+BOOLEAN IsDimmAllowed(
+  IN DIMM *pDimm,
+  IN REQUIRE_DCPMMS RequireDcpmmsBitfield
   )
 {
+  BOOLEAN Allowed = TRUE;
 
-  return (!IsDimmManageable(pCurrentDimm) ||
-         (!IncludeNonFunctionalDimms &&(pCurrentDimm->NonFunctional)) ||
-          (ExcludeUnsupportedConfigDimms && !IsDimmInSupportedConfig(pCurrentDimm)));
+  // Generally we only work with manageable NVDIMMs, which are
+  // an Intel DCPMM with a reasonable FIS API version.
+  if ((REQUIRE_DCPMMS_MANAGEABLE & RequireDcpmmsBitfield) && !IsDimmManageable(pDimm)) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_UNMANAGEABLE & RequireDcpmmsBitfield) && IsDimmManageable(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  // Non-functional DCPMMs generally means just that DDRT is untrained, but there
+  // can be other causes. Keeping previous behavior for now until we split up the
+  // meaning of non-functional more.
+  if ((REQUIRE_DCPMMS_FUNCTIONAL & RequireDcpmmsBitfield) && pDimm->NonFunctional) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_NON_FUNCTIONAL & RequireDcpmmsBitfield) && !pDimm->NonFunctional) {
+    Allowed = FALSE;
+  }
+
+  // Require accepted DCPMMs to not be in population violation
+  if ((REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield) && !IsDimmInSupportedConfig(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  return Allowed;
 }
 
 /**
@@ -1348,17 +1367,14 @@ BOOLEAN IsDimmNotAllowed(
   If DIMM Ids were provided then check if those DIMMs exist.
   If there are duplicate DIMM/socket Ids then report error.
   If specified DIMMs count is 0 then take all Manageable DIMMs.
-  Update CommandStatus structure at the end.
+  Update CommandStatus structure with any warnings/errors found.
 
   @param[in] DimmIds An array of DIMM Ids
   @param[in] DimmIdsCount Number of items in array of DIMM Ids
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
-  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
-                                       functional dimms. If false only check against functional dimms
-  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
-                                           returned dimm list. If false, include these dimms from
-                                           returned list
+  @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated on
+  the list of DCPMMs discovered.
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1373,8 +1389,7 @@ VerifyTargetDimms (
   IN     UINT32 DimmIdsCount,
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
-  IN     BOOLEAN IncludeNonFunctionalDimms,
-  IN     BOOLEAN ExcludeUnsupportedConfigDimms,
+  IN     REQUIRE_DCPMMS RequireDcpmmsBitfield,
      OUT DIMM *pDimms[MAX_DIMMS],
      OUT UINT32 *pDimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
@@ -1430,7 +1445,7 @@ VerifyTargetDimms (
       continue;
     }
 
-    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
+    if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
       SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
       ReturnCode = EFI_INVALID_PARAMETER;
       continue;
@@ -1470,7 +1485,7 @@ VerifyTargetDimms (
     pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
     // If it's not an allowed DCPMM, skip it
     // Error was already thrown if it is a specified DCPMM
-    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
+    if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
       continue;
     }
 
@@ -1654,7 +1669,7 @@ Finish:
 }
 
 /**
-  Retrieve the list of DCPMMs found in NFIT
+  Retrieve the list of functional DCPMMs found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -2114,7 +2129,9 @@ GetSecurityState(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+    pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2129,7 +2146,7 @@ GetSecurityState(
       if (ReturnCode == EFI_SECURITY_VIOLATION) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
       } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index],NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
       }
       goto Finish;
     }
@@ -2272,8 +2289,9 @@ GetGoalConfigs(
 
   //Try to calculate appdirect index for all regional goals for all dimms in advance
   PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsCount,
-      pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL | REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      pDimms, &DimmsCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
       NVDIMM_DBG("No usable dimms found in GetGoalConfigs");
@@ -2332,7 +2350,7 @@ GetGoalConfigs(
 
     for (Index2 = 0; Index2 < pCurrentDimm->RegionsGoalNum; ++Index2) {
       SequenceIndex = pCurrentDimm->pRegionsGoal[Index2]->SequenceIndex;
-	  NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
+    NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
       pCurrentGoal->NumberOfInterleavedDimms[SequenceIndex] = (UINT8)pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
       pCurrentGoal->AppDirectSize[SequenceIndex] =
           pCurrentDimm->pRegionsGoal[Index2]->Size / pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
@@ -2526,7 +2544,11 @@ SetAlarmThresholds (
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2806,6 +2828,7 @@ SetSecurityState(
   BOOLEAN AreNotPartOfPendingGoal = TRUE;
   BOOLEAN IsSupported = FALSE;
   BOOLEAN CheckSupportedConfigDimms = TRUE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
   DIMM *pCurrentDimm = NULL;
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
@@ -2844,16 +2867,17 @@ SetSecurityState(
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_SECURITY_OPERATION);
   }
 
-  //Erase Device Data operation is supported for Dimms
-  //excluded from POR config
-  if (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
-    || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE)
+  // Erase Device Data operation is supported for Dimms
+  // excluded from POR config. For any other commands, the DCPMM needs
+  // to be in a POR config
+  if (!(SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
+    || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE))
   {
-    CheckSupportedConfigDimms = FALSE;
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE,
-                CheckSupportedConfigDimms, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, RequireDcpmmsBitfield,
+      pDimms, &DimmsNum, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -3521,7 +3545,8 @@ GetPcd(
   //Set initial value of *ppDimmPcdInfo
   *ppDimmPcdInfo = NULL;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto FinishError;
@@ -3666,7 +3691,8 @@ ModifyPcdConfig(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
     pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -5330,6 +5356,7 @@ UpdateFw(
   UINT32 VerificationFailures = 0;
   UINT32 ForceRequiredDimms = 0;
   UINT16 SubsystemDeviceId = 0x0;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE;
 
   EFI_STATUS LongOpStatusReturnCode = 0;
   NVM_STATUS LongOpNvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
@@ -5360,11 +5387,19 @@ UpdateFw(
   }
 
   if (Recovery && FlashSPI) {
+    // In FlashSPI scenario.
+    // For now, keep existing behavior of skipping the standard VerifyTargetDimms()
     ReturnCode = VerifyNonfunctionalTargetDimms(pDimmIds, DimmIdsCount, pDimms, &DimmsNum, pCommandStatus);
   } else {
-    // Include non-functional DCPMMs by default (IncludeNonFunctionalDimms = TRUE)
-    // Will fix to use the Recovery flag soon.
-    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus);
+    if (Recovery) {
+      // Not FlashSPI.
+      // For backwards compatibility, keep "-recover" meaning
+      // "only run on non-functional DCPMMs". Reject functional DCPMMs.
+      RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NON_FUNCTIONAL;
+    }
+    // Note: By default non-functional DCPMMs are included in normal firmware
+    // update (don't require "-recover" to be passed in)
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, RequireDcpmmsBitfield, pDimms, &DimmsNum, pCommandStatus);
   }
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to verify the target dimms");
@@ -5809,7 +5844,11 @@ GetActualRegionsGoalCapacities(
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6158,7 +6197,11 @@ CreateGoalConfig(
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6526,7 +6569,11 @@ DeleteGoalConfig (
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6785,7 +6832,11 @@ LoadGoalConfig(
   }
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -7735,7 +7786,9 @@ GetErrorLog(
   }
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -7894,7 +7947,11 @@ SetOptionalConfigurationDataPolicy(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -7983,7 +8040,8 @@ RetrieveDimmRegisters(
     goto Finish;
   }
 
-  CHECK_RESULT(VerifyTargetDimms(&DimmId, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
+  CHECK_RESULT(VerifyTargetDimms(&DimmId, 1, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE, pDimms, &DimmsNum, pCommandStatus), Finish);
 
   ReturnCode = pThis->GetBSRAndBootStatusBitMask(pThis, pDimms[0]->DimmID, pBsr, &BootStatusBitmask);
   if (EFI_ERROR(ReturnCode)) {
@@ -9420,7 +9478,11 @@ AutomaticCreateGoal(
   }
 
   // Check for security
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -9645,7 +9707,9 @@ CheckPCDAutoConfVars(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -9822,7 +9886,11 @@ CheckGoalStatus(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -9905,7 +9973,10 @@ InjectError(
 
     pCommandStatus->ObjectType = ObjectTypeDimm;
 
-    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION, pDimms, &DimmsNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
@@ -10155,7 +10226,8 @@ GetBSRAndBootStatusBitMask(
   // doesn't provide it and it's required for VerifyTargetDimms()
   CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
-  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
+  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, REQUIRE_DCPMMS_MANAGEABLE,
+    pDimms, &DimmsNum, pCommandStatus), Finish);
 
   CHECK_RESULT(PopulateDimmBsrAndBootStatusBitmask(pDimms[0], (DIMM_BSR *)pLocalBsr, pBootStatusBitmask), Finish);
 

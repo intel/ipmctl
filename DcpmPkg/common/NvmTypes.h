@@ -260,10 +260,19 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define FSDAX_MODE 1
 #define SECTOR_MODE 2
 
+// VFR compiler doesn't support typedef, that's why we use #define
+// A bitfield used for determining which DCPMMs to work with for a given
+// operation. Used as input to VerifyTargetDimms()
+#define REQUIRE_DCPMMS                                 UINT32
+#define REQUIRE_DCPMMS_SELECT_ALL                     (0)           // Allow all *NVDIMMs* (not just DCPMMs)
+#define REQUIRE_DCPMMS_MANAGEABLE                     (1 << 0)      // See IsDimmManageableByValues() for definition
+#define REQUIRE_DCPMMS_UNMANAGEABLE                   (1 << 1)      //
+#define REQUIRE_DCPMMS_FUNCTIONAL                     (1 << 2)      // Currently vague, but means it initialized fully with no errors
+#define REQUIRE_DCPMMS_NON_FUNCTIONAL                 (1 << 3)      // Generally means that DDRT is unusable, but can be non-functional for other reasons
+#define REQUIRE_DCPMMS_NO_POPULATION_VIOLATION        (1 << 4)      // Require DCPMMs that are not in population violation
 
 /* VFR compiler doesn't support typedef, that's why we use defines **/
 #define DIMM_INFO_CATEGORIES        UINT16                          ///< @ref DIMM_INFO_CATEGORY_TYPES
-
 /**
  * @defgroup DIMM_INFO_CATEGORY_TYPES DIMM Info Category Types
  * @{

@@ -1438,35 +1438,33 @@ GetBSRAndBootStatusBitMask(
   If DIMM Ids were provided then check if those DIMMs exist.
   If there are duplicate DIMM/socket Ids then report error.
   If specified DIMMs count is 0 then take all Manageable DIMMs.
-  Update CommandStatus structure at the end.
+  Update CommandStatus structure with any warnings/errors found.
 
   @param[in] DimmIds An array of DIMM Ids
   @param[in] DimmIdsCount Number of items in array of DIMM Ids
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
-  @param[in] UninitializedDimms If true only uninitialized dimms are verified, if false only Initialized
-  @param[in] CheckSupportedConfigDimms If true, include dimms in unmapped set of dimms (non-POR) in
-                                       returned dimm list. If false, skip these dimms from returned list
+  @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated on
+  the list of DCPMMs discovered.
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-**/
+  @retval EFI_INVALID_PARAMETER Problem with getting specified DIMMs
+  @retval EFI_SUCCESS All Ok
+ **/
 EFI_STATUS
 EFIAPI
-VerifyTargetDimms(
+VerifyTargetDimms (
   IN     UINT16 DimmIds[]      OPTIONAL,
   IN     UINT32 DimmIdsCount,
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
-  IN     BOOLEAN UninitializedDimms,
-  IN     BOOLEAN CheckSupportedConfigDimms,
-  OUT DIMM *pDimms[MAX_DIMMS],
-  OUT UINT32 *pDimmsNum,
-  OUT COMMAND_STATUS *pCommandStatus
-);
+  IN     REQUIRE_DCPMMS RequireDcpmmsBitfield,
+     OUT DIMM *pDimms[MAX_DIMMS],
+     OUT UINT32 *pDimmsNum,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
 
 /**
   Verify target DIMM IDs in list are available for SPI Flash.

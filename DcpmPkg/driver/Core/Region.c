@@ -494,7 +494,10 @@ InitializeDimmRegionFromNfit(
 
     (*ppDimmRegion)->pDimm = pDimm;
 
-    ASSERT(pDimm->ISsNfitNum < MAX_IS_PER_DIMM);
+    if (MAX_IS_PER_DIMM <= pDimm->ISsNfitNum) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      goto Finish;
+    }
     pDimm->pISsNfit[pDimm->ISsNfitNum] = *ppCurrentIS;
     pDimm->ISsNfitNum++;
 
@@ -514,6 +517,7 @@ Finish:
 /**
   Allocate and initialize the dimm region by using Interleave Information table from Platform Config Data
 
+  @param[in] pCurDimm the DIMM from which Interleave Information table was retrieved
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
   @param[in] pISList List of interleaveset formed so far
   @param[in] pIdentificationInfoTable Identification Information table
@@ -530,6 +534,7 @@ Finish:
 **/
 EFI_STATUS
 InitializeDimmRegion(
+  IN     DIMM *pCurDimm,
 	IN     LIST_ENTRY *pDimmList,
 	IN     LIST_ENTRY *pISList,
 	IN     VOID *pIdentificationInfoTable,
@@ -558,8 +563,8 @@ InitializeDimmRegion(
 
 	ZeroMem(&DimmUidInPcd, sizeof(DimmUidInPcd));
 
-	if (pDimmList == NULL || pISList == NULL || pIdentificationInfoTable == NULL || pInterleaveInfoTable == NULL ||
-		pRegionId == NULL || ppDimmRegion == NULL || ppNewIS == NULL || pISAlreadyExists == NULL) {
+	if (pCurDimm == NULL || pDimmList == NULL || pISList == NULL || pIdentificationInfoTable == NULL ||
+    pInterleaveInfoTable == NULL || pRegionId == NULL || ppDimmRegion == NULL || ppNewIS == NULL || pISAlreadyExists == NULL) {
 		Rc = EFI_INVALID_PARAMETER;
 		goto Finish;
 	}
@@ -656,13 +661,24 @@ InitializeDimmRegion(
 
     (*ppDimmRegion)->pDimm = pDimm;
 
-    ASSERT(pDimm->ISsNum < MAX_IS_PER_DIMM);
-    pDimm->pISs[pDimm->ISsNum] = *ppNewIS;
-    pDimm->ISsNum++;
+    /**
+      Insert only mapped/healthy regions into pDimm->pISs array.
+      PCD is not updated by BIOS on non-functional DIMMS. So
+      non-functional DIMMs need to be excluded to avoid false
+      indication of being in configured state.
+    **/
+    if (pCurDimm->Configured && !pCurDimm->NonFunctional) {
+      if (MAX_IS_PER_DIMM <= pDimm->ISsNum) {
+        Rc = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
+      pDimm->pISs[pDimm->ISsNum] = *ppNewIS;
+      pDimm->ISsNum++;
+    }
 
-		(*ppDimmRegion)->Signature = DIMM_REGION_SIGNATURE;
-		(*ppDimmRegion)->PartitionOffset = PartitionOffset;
-		(*ppDimmRegion)->PartitionSize = PartitionSize;
+    (*ppDimmRegion)->Signature = DIMM_REGION_SIGNATURE;
+    (*ppDimmRegion)->PartitionOffset = PartitionOffset;
+    (*ppDimmRegion)->PartitionSize = PartitionSize;
 	}
 Finish:
   NVDIMM_EXIT_I64(Rc);
@@ -740,7 +756,10 @@ RetrieveISsFromNfit(
       InsertTailList(&pIS->DimmRegionList, &pNewDimmRegion->DimmRegionNode);
 
       IsRegionIndex = pNewDimmRegion->pDimm->IsRegionsNfitNum;
-      ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
+      if (MAX_IS_PER_DIMM <= IsRegionIndex) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        goto Finish;
+      }
       pNewDimmRegion->pDimm->pIsRegionsNfit[IsRegionIndex] = pDimmRegion;
       pNewDimmRegion->pDimm->IsRegionsNfitNum = IsRegionIndex + 1;
 
@@ -835,7 +854,6 @@ RetrieveISsFromPlatformConfigData(
   CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE *pConfigManagementAttributesInfo = NULL;
   PCAT_TABLE_HEADER *pCurPcatTable = NULL;
   UINT32 SizeOfPcatTables = 0;
-  UINT32 Index = 0;
   UINT16 RegionId = 1; // region id  used internally to distinguish different regions. Will be used when creating namespace.
 
   if (pDimmList == NULL || pISList == NULL) {
@@ -948,12 +966,6 @@ RetrieveISsFromPlatformConfigData(
       }
     }
 
-    if (pDimm->ConfigStatus != DIMM_CONFIG_SUCCESS && pDimm->ConfigStatus != DIMM_CONFIG_OLD_CONFIG_USED) {
-      for (Index = 0; Index < pDimm->ISsNum; Index++) {
-        pDimm->pISs[Index]->State = SetISStateWithPriority(pDimm->pISs[Index]->State, IS_STATE_CONFIG_INACTIVE);
-      }
-    }
-
     FREE_POOL_SAFE(pPcdConfHeader);
     pPcdConfHeader = NULL;
   }
@@ -1019,7 +1031,7 @@ RetrieveISFromInterleaveInformationTable(
   }
 
     for (Index = 0; Index < NumOfDimmsInInterleaveSet; Index++) {
-      Rc = InitializeDimmRegion(pDimmList, pISList, pCurrentIdentInfo, pInterleaveInfoTable, PcdCurrentConfRevision, pRegionId, &pIS, &pDimmRegion, &ISAlreadyExists);
+      Rc = InitializeDimmRegion(pDimm, pDimmList, pISList, pCurrentIdentInfo, pInterleaveInfoTable, PcdCurrentConfRevision, pRegionId, &pIS, &pDimmRegion, &ISAlreadyExists);
       // pIS will be null when the IS already exist or when there is no memory to do malloc. In either case go to Finish.
       if (ISAlreadyExists || pIS == NULL) {
         goto Finish;
@@ -1035,9 +1047,21 @@ RetrieveISFromInterleaveInformationTable(
           InsertTailList(&pIS->DimmRegionList, &pDimmRegion->DimmRegionNode);
 
           IsRegionIndex = pDimmRegion->pDimm->IsRegionsNum;
-          ASSERT(IsRegionIndex < MAX_IS_PER_DIMM);
-          pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
-          pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
+
+          /**
+            Insert only mapped/healthy DimmRegions into pDimm->pIsRegions array.
+            PCD is not updated by BIOS on non-functional DIMMS. So
+            non-functional DIMMs need to be excluded to avoid false
+            indication of being in configured state.
+          **/
+          if (pDimm->Configured && !pDimm->NonFunctional) {
+            if (MAX_IS_PER_DIMM <= IsRegionIndex) {
+              Rc = EFI_OUT_OF_RESOURCES;
+              goto Finish;
+            }
+            pDimmRegion->pDimm->pIsRegions[IsRegionIndex] = pDimmRegion;
+            pDimmRegion->pDimm->IsRegionsNum = IsRegionIndex + 1;
+          }
 
           pIS->Size += pDimmRegion->PartitionSize;
         }
@@ -1048,6 +1072,11 @@ RetrieveISFromInterleaveInformationTable(
         pCurrentIdentInfo = (UINT8 *)pCurrentIdentInfo + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
       }
     }
+
+    if (pIS != NULL && pDimm->ConfigStatus != DIMM_CONFIG_SUCCESS && pDimm->ConfigStatus != DIMM_CONFIG_OLD_CONFIG_USED) {
+      pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_CONFIG_INACTIVE);
+    }
+
     Rc = RetrieveAppDirectMappingFromNfit(pFitHead, pIS);
     if (pIS != NULL) {
       if (EFI_ERROR(Rc)) {
@@ -2500,6 +2529,9 @@ MapRegionsGoal(
   ACPI_REVISION PcatRevision;
   BOOLEAN WholeSocket = FALSE;
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
+  LIST_ENTRY *pRegionList = NULL;
+  LIST_ENTRY *pRegionNode = NULL;
+  NVM_IS *pRegion = NULL;
 
   NVDIMM_ENTRY();
 
@@ -2553,16 +2585,19 @@ MapRegionsGoal(
       This can happen when adding new dimms to the system with previously configured regions.
   **/
   if (0x0 == AvailableISIndex) {
+
+    ReturnCode = GetRegionList(&pRegionList, FALSE);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to retrieve the region list.");
+      goto Finish;
+    }
+
     /** Get the largest interleave set index in existing regions on DIMMs. **/
-    LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-      pDimm = DIMM_FROM_NODE(pDimmNode);
-      if (!IsDimmManageable(pDimm)) {
-        continue;
-      }
-      for (Index = 0; Index < MAX_IS_PER_DIMM; Index++) {
-        if (NULL != pDimm->pISs[Index] && pDimm->pISs[Index]->InterleaveSetIndex > AvailableISIndex) {
-          AvailableISIndex = pDimm->pISs[Index]->InterleaveSetIndex;
-        }
+    LIST_FOR_EACH(pRegionNode, pRegionList) {
+      pRegion = IS_FROM_NODE(pRegionNode);
+
+      if (pRegion->InterleaveSetIndex > AvailableISIndex) {
+        AvailableISIndex = pRegion->InterleaveSetIndex;
       }
     }
   }

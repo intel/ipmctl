@@ -199,8 +199,16 @@ typedef struct _DIMM {
   UINT64 PmCapacity;                       //!< DIMM Capacity (Bytes) to reserve for PM
   UINT64 InaccessibleVolatileCapacity;     //!< Capacity in bytes for use as volatile memory that has not been exposed
   UINT64 InaccessiblePersistentCapacity;   //!< Capacity in bytes for use as persistent memory that has not been exposed
+
+  /**
+    Insert only mapped/healthy DimmRegions into pDimm->pIsRegions array.
+    PCD is not updated by BIOS on non-functional DIMMS. So
+    non-functional DIMMs need to be excluded to avoid false
+    indication of being in configured state.
+  **/
   struct _DIMM_REGION *pIsRegions[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNum;
+
   struct _DIMM_REGION *pIsRegionsNfit[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNfitNum;
 
@@ -224,9 +232,17 @@ typedef struct _DIMM {
   BOOLEAN Configured;                           //!< true if the DIMM is configured
   UINT64 MappedVolatileCapacity;
   UINT64 MappedPersistentCapacity;
+
+  /**
+    Insert only mapped/healthy regions into pDimm->pISs array.
+    PCD is not updated by BIOS on non-functional DIMMS. So
+    non-functional DIMMs need to be excluded to avoid false
+    indication of being in configured state.
+  **/
   struct _NVM_IS *pISs[MAX_IS_PER_DIMM];
-  UINT8 ConfigStatus;                           //!< Configuration Status code
   UINT32 ISsNum;
+
+  UINT8 ConfigStatus;                           //!< Configuration Status code
   struct _NVM_IS *pISsNfit[MAX_IS_PER_DIMM];
   UINT32 ISsNfitNum;
 

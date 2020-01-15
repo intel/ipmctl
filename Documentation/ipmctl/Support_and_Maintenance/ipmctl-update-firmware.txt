@@ -52,18 +52,30 @@ OPTIONS
 
 NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
 
-ifndef::os_build[]
--recover::
-  The recover option forces the firmware update to attempt using SMBus instead
-  of DDRT. This is necessary in case the DDRT link is not trained. This update
-  method will be much slower than using the DDRT interface. If this option is used
-  to downgrade the firmware then force option must be specified.
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
 
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
+-source::
+  Specifies the firmware image binary to upload to the DCPMM.
+
+-recover::
+  *--DEPRECATED--* +
+  This flag is no longer necessary to run firmware update on DCPMMs
+  where the DDRT link is not trained. These untrained DCPMMs are now automatically
+  included when the command is run without the '-recover' option.. However, this
+  flag is still maintained for backwards compatibility.
+
+ifndef::os_build[]
 -recover FlashSPI::
   The FlashSPI option is a modifier that forces an update of the entire SPI
-  Flash. This requires a specific flash image that is intended as full SPI flash
-  update. This update method is only possible if existing SPI firmware images
-  are both corrupt and cannot be loaded by the DCPMM's ROM.
+  Flash. This requires a specific flash image that is intended as a full SPI flash
+  update. This update method is only possible if the existing firmware images
+  on the DCPMM SPI flash are all corrupt and cannot be loaded by the DCPMM's ROM.
 endif::os_build[]
 
 ifdef::os_build[]
@@ -82,14 +94,14 @@ TARGETS
 
 EXAMPLES
 --------
-Updates the firmware on all DCPMMs in the system to the image in sourcefile.pkg on
+Updates the firmware on all DCPMMs in the system to the image in sourcefile.bin on
 the next power cycle.
 [verse]
-ipmctl load -source sourcefile.pkg -dimm
+ipmctl load -source sourcefile.bin -dimm
 
-Checks the firmware image in c:\sourcefile.pkg and retrieve the version.
+Checks the firmware image in sourcefile.bin and retrieves the version.
 [verse]
-ipmctl load -examine -source sourcefile.pkg -dimm
+ipmctl load -examine -source sourcefile.bin -dimm
 
 
 LIMITATIONS

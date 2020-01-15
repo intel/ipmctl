@@ -45,7 +45,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_INCONSISTENT_SECURITY_STATE               = 40,   ///< Error: Inconsistent security state
   NVM_ERR_INVALID_PASSPHRASE                        = 41,   ///< Error: Invalid passphrase
   NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED            = 42,   ///< Error: Security count for user passphrase expired
-  NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED               = 43,   ///< Error: Recovery access not enabled
+  NVM_ERR_SPI_ACCESS_NOT_ENABLED                    = 43,   ///< Error: DCPMM SPI access not enabled
   NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS             = 44,   ///< Error: Namespace exists - cannot execute request
   NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED          = 45,   ///< Error: Security count for master passphrase expired
 

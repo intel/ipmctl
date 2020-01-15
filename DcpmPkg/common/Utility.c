@@ -4298,7 +4298,6 @@ IsFwApiVersionSupportedByValues(
   return VerSupported;
 }
 
-
 /**
   Convert controller revision id to string
 

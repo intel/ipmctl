@@ -234,6 +234,7 @@ SetImage (
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 pImageSizeError[] = L"Error: The image size is too large.";
   CHAR16 pImageContentError[] = L"Error: Invalid image file.";
+  CHAR16 pImageVersionError[] = L"Error: Firmware version too low. Force required.";
   NVM_STATUS Status = NVM_ERR_OPERATION_NOT_STARTED;
   CONST CHAR16 *pSingleStatusCodeMessage = NULL;
   SET_IMAGE_ATTRIBUTES *SetImageAttributes = (SET_IMAGE_ATTRIBUTES *)VendorCode;
@@ -271,7 +272,16 @@ SetImage (
     Force = SetImageAttributes->Force;
   }
 
-  ReturnCode = UpdateDimmFw(GET_DIMM_FROM_INSTANCE(This)->pDimm->DimmID, Image, ImageSize, Force, &Status);
+  ReturnCode = ValidateImageVersion((FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
+  if (EFI_ERROR(ReturnCode)) {
+    if (Status == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+      *AbortReason = AllocateCopyPool (StrSize(pImageVersionError), pImageVersionError);
+    }
+    goto Finish;
+  }
+
+  ReturnCode = FwCmdUpdateFw(GET_DIMM_FROM_INSTANCE(This)->pDimm, Image, ImageSize, &Status, NULL);
+
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmData->HiiHandle, Status);

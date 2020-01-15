@@ -572,8 +572,8 @@ EFI_STATUS
   @param[in] pWorkingDirectory is a pointer to a path to FW image file
   @param[in] Examine flag enables image verification only
   @param[in] Force flag suppresses warning message in case of attempted downgrade
-  @param[in] Recovery flag determine that recovery update should be performed
-  @param[in] FlashSpi flag determine if the recovery update should be through the SPI
+  @param[in] Recovery **Deprecated** Run the update on non-functional DCPMMs only
+  @param[in] FlashSpi Run a full DCPMM SPI recovery
 
   @param[out] pFwImageInfo is a pointer to a structure containing FW image information
     need to be provided if examine flag is set

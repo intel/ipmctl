@@ -62,11 +62,11 @@
 #string STR_DCPMM_STATUS_ERR_SECURITY_USER_PP_COUNT_EXPIRED       #language en "The maximum user passphrase submission limit has been reached"
 #string STR_DCPMM_STATUS_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED     #language en "The maximum master passphrase submission limit has been reached"
 
-#string STR_DCPMM_STATUS_ERR_RECOVERY_ACCESS_NOT_ENABLED          #language en "Recovery access to DIMM is not enabled. Use Firmware update instead"
+#string STR_DCPMM_STATUS_ERR_SPI_ACCESS_NOT_ENABLED               #language en "DCPMM SPI access is not enabled."
 #string STR_DCPMM_STATUS_ERR_SECURE_ERASE_NAMESPACE_EXISTS        #language en "Namespaces exist on specified DIMM. They must be removed before an erase."
 
 #string STR_DCPMM_STATUS_ERR_PASSPHRASE_TOO_LONG                  #language en "Provided passphrase is too long"
-#string STR_DCPMM_STATUS_ERR_PASSPHRASE_NOT_PROVIDED               #language en "Passphrase not provided"
+#string STR_DCPMM_STATUS_ERR_PASSPHRASE_NOT_PROVIDED              #language en "Passphrase not provided"
 #string STR_DCPMM_STATUS_ERR_PASSPHRASES_DO_NOT_MATCH             #language en "The new passphrase and the confirmed passphrase do not match"
 
 #string STR_DCPMM_STATUS_ERR_SENSOR_NOT_VALID                     #language en "Invalid sensor"

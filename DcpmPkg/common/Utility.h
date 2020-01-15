@@ -343,11 +343,12 @@ typedef union {
 #define DAYS_IN_YEAR(Year)              (IS_LEAP_YEAR(Year) ? 366 : 365)
 
 // Helper macros to streamline the reading of code
-// NVDIMM_ERR will print out the line number, so no need to be specific
+// NVDIMM_ERR will print out the line number and file, so no need to have
+// specific messages
 #define CHECK_RETURN_CODE(ReturnCode, Label)                  \
   do {                                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
       goto Label;                                             \
     }                                                         \
   } while (0)
@@ -357,9 +358,20 @@ typedef union {
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
       goto Label;                                             \
     }                                                         \
+  } while (0)
+
+// Return if failure
+#define CHECK_RESULT_SET_NVM_STATUS(Call, pNvmStatus, NvmStatusCode, Label) \
+  do {                                                                      \
+    ReturnCode = Call;                                                      \
+    if (EFI_ERROR(ReturnCode)) {                                            \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);                    \
+      *pNvmStatus = NvmStatusCode;                                          \
+      goto Label;                                                           \
+    }                                                                       \
   } while (0)
 
 // Return if success
@@ -408,6 +420,7 @@ typedef union {
       goto Label;                                                         \
     }                                                                     \
   } while (0)
+
 /**
   Get a variable from UEFI RunTime services.
 

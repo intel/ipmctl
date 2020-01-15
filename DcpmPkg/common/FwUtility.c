@@ -40,8 +40,8 @@ ValidateImage(
     return FALSE;
   }
 
-  if (ImageSize % UPDATE_FIRMWARE_DATA_PACKET_SIZE != 0) {
-    NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_DATA_PACKET_SIZE);
+  if (ImageSize % UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE != 0) {
+    NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE);
     return FALSE;
   }
 

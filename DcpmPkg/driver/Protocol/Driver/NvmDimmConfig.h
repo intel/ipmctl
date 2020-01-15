@@ -122,7 +122,7 @@ extern EFI_GUID gNvmDimmPbrProtocolGuid;
   Each of those steps must be done at least one, so the minimum number of packets will be 3.
 **/
 #define FW_UPDATE_SP_MINIMUM_PACKETS      3
-#define FW_UPDATE_SP_MAXIMUM_PACKETS      MAX_FIRMWARE_IMAGE_SIZE_B / UPDATE_FIRMWARE_DATA_PACKET_SIZE
+#define FW_UPDATE_SP_MAXIMUM_PACKETS      MAX_FIRMWARE_IMAGE_SIZE_B / UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE
 
 #pragma pack(push)
 #pragma pack(1)
@@ -131,7 +131,7 @@ typedef struct {
     UINT16 PacketNumber : 14;
     UINT8 PayloadTypeSelector;
     UINT8 Reserved;
-    UINT8 Data[UPDATE_FIRMWARE_DATA_PACKET_SIZE];
+    UINT8 Data[UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE];
     UINT8 Reserved1[60];
 } FW_SMALL_PAYLOAD_UPDATE_PACKET;
 #pragma pack(pop)
@@ -485,52 +485,27 @@ ModifyPcdConfig(
 );
 
 /**
-  Update firmware or training data of a specified NVDIMM
+  Flash new SPI image to a specified DCPMM
 
-  @param[in] DimmPid Dimm ID of a NVDIMM on which update is to be performed
-  @param[in] pImageBuffer is a pointer to FW image
-  @param[in] ImageBufferSize is Image size in bytes
-  @param[in] Force flag suppresses warning message in case of attempted downgrade
-
-  @param[out] pNvmStatus NVM status code
-
-  @remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
-  an attempt will be made to abort ARS and the proceed with the firmware update.
-
-  @remarks A reboot is required to activate the updated firmware image and is
-  recommended to ensure ARS runs to completion.
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-**/
-EFI_STATUS
-EFIAPI
-UpdateDimmFw(
-  IN     UINT16 DimmPid,
-  IN     CONST VOID *pImageBuffer,
-  IN     UINT64 ImageBufferSize,
-  IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus
-  );
-
-/**
-  Recover firmware of a specified NVDIMM
-
-  @param[in] DimmHandle Dimm ID of a NVDIMM on which recovery is to be performed
-  @param[in] pImageBuffer is a pointer to FW image
-  @param[in] ImageBufferSize is Image size in bytes
+  @param[in] DimmPid Dimm ID of a DCPMM on which recovery is to be performed
+  @param[in] pNewSpiImageBuffer is a pointer to new SPI FW image
+  @param[in] ImageBufferSize is SPI image size in bytes
 
   @param[out] pNvmStatus NVM error code
   @param[out] pCommandStatus  command status list
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
+  @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
+  @retval EFI_NOT_FOUND there is no DCPMM with such Pid
+  @retval EFI_DEVICE_ERROR Unable to communicate with Dimm SPI
+  @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
+  @retval EFI_ACCESS_DENIED When SPI access is not unlocked
+  @retval EFI_SUCCESS Update has completed successfully
 **/
 EFI_STATUS
 EFIAPI
 RecoverDimmFw(
   IN     UINT32 DimmHandle,
-  IN     CONST VOID *pImageBuffer,
+  IN     CONST VOID *pNewSpiImageBuffer,
   IN     UINT64 ImageBufferSize,
   IN     CHAR16 *pWorkingDirectory OPTIONAL,
      OUT NVM_STATUS *pNvmStatus,

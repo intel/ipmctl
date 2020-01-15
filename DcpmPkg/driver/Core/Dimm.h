@@ -1000,6 +1000,29 @@ FwCmdSetAlarmThresholds(
   );
 
 /**
+  Runs and handles errors errors for firmware update over both large and
+  small payloads.
+
+  @param[in] pDimm Pointer to DIMM
+  @param[in] pImageBuffer Pointer to fw image buffer
+  @param[in] ImageBufferSize Size in bytes of fw image buffer
+  @param[out] pNvmStatus Pointer to Nvm status variable to set on error
+  @param[out] pCommandStatus optional structure containing detailed NVM error codes
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdUpdateFw(
+  IN     DIMM *pDimm,
+  IN     CONST VOID *pImageBuffer,
+  IN     UINTN ImageBufferSize,
+     OUT NVM_STATUS *pNvmStatus,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
+);
+
+/**
   Firmware command to get SMART and Health Info
 
   @param[in] pDimm The Intel NVM Dimm to retrieve SMART and Health Info

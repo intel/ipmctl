@@ -3084,6 +3084,155 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Runs and handles errors errors for firmware update over both large and
+  small payloads.
+
+  @param[in] pDimm Pointer to DIMM
+  @param[in] pImageBuffer Pointer to fw image buffer
+  @param[in] ImageBufferSize Size in bytes of fw image buffer
+  @param[out] pNvmStatus Pointer to Nvm status variable to set on error
+  @param[out] pCommandStatus OPTIONAL structure containing detailed NVM error codes
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdUpdateFw(
+  IN     DIMM *pDimm,
+  IN     CONST VOID *pImageBuffer,
+  IN     UINTN ImageBufferSize,
+     OUT NVM_STATUS *pNvmStatus,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  FW_CMD *pFwCmd = NULL;
+  FW_SMALL_PAYLOAD_UPDATE_PACKET *pInputPayload = NULL;
+  UINT64 ChunkSize = 0;
+  UINT64 BytesToCopy = 0;
+  UINT64 BytesWrittenTotal = 0;
+  UINT16 PacketOffset = 0;
+  UINT8 CurrentRetryCount = 0;
+  UINT8 *InputPayloadBuffer = NULL;
+  UINT8 ArsStatus = 0;
+  UINT8 Percent = 0;
+  BOOLEAN LargePayloadAvailable = FALSE;
+
+  if (NULL == pDimm || NULL == pImageBuffer || NULL == pNvmStatus) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
+
+  pFwCmd->Opcode = PtUpdateFw;       //!< Firmware update category
+  pFwCmd->SubOpcode = SubopUpdateFw; //!< Execute the firmware image
+  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
+  pInputPayload = (FW_SMALL_PAYLOAD_UPDATE_PACKET *) &pFwCmd->InputPayload;
+
+  // Limited number of bytes in small payload packet
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (!LargePayloadAvailable) {
+    ChunkSize = UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE;
+    pInputPayload->PayloadTypeSelector = FW_UPDATE_SMALL_PAYLOAD_SELECTOR;
+    InputPayloadBuffer = pInputPayload->Data;
+  } else {
+    ChunkSize = ImageBufferSize;
+    pInputPayload->PayloadTypeSelector = FW_UPDATE_LARGE_PAYLOAD_SELECTOR;
+    pFwCmd->LargeInputPayloadSize = (UINT32)ImageBufferSize;
+    InputPayloadBuffer = pFwCmd->LargeInputPayload;
+  }
+
+  // Send new firmware image in chunks
+  PacketOffset = 0;
+  BytesWrittenTotal = 0;
+  BytesToCopy = ChunkSize;
+  // Large payload will only execute the loop once (one big chunk)
+  // and only call INIT_TRANSFER.
+  // Small payload will call all of INIT, CONTINUE, and END TRANSFER
+  // during chunking.
+  while (BytesWrittenTotal < ImageBufferSize) {
+    Percent = (UINT8)((BytesWrittenTotal*100)/ImageBufferSize);
+    if (NULL != pCommandStatus) {
+      SetObjProgress(pCommandStatus, pDimm->DeviceHandle.AsUint32, Percent);
+    }
+
+    pInputPayload->PacketNumber = PacketOffset;
+    if (BytesWrittenTotal == 0) {
+      // Needs to run at the beginning
+      pInputPayload->TransactionType = FW_UPDATE_INIT_TRANSFER;
+    } else if (BytesWrittenTotal < ImageBufferSize - BytesToCopy) {
+      // Should run in the middle. Won't occur for large payload
+      pInputPayload->TransactionType = FW_UPDATE_CONTINUE_TRANSFER;
+    } else {
+      // Runs at end for small payload only, it includes final chunk.
+      // Not needed for large payload
+      pInputPayload->TransactionType = FW_UPDATE_END_TRANSFER;
+    }
+
+    // The chunksize won't change for small payload (fw image size was already
+    // enforced to be a multiple of 64 bytes), but it potentially could for
+    // large payload at some point.
+    BytesToCopy = MIN(ImageBufferSize - BytesWrittenTotal, ChunkSize);
+
+
+    NVDIMM_DBG("BytesToCopy: %d %d / %d. TT: 0x%x", BytesToCopy, BytesWrittenTotal, ImageBufferSize, pInputPayload->TransactionType);
+    CopyMem_S(InputPayloadBuffer, BytesToCopy, (UINT8 *)pImageBuffer + BytesWrittenTotal, BytesToCopy);
+
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_UPDATEFW_TIMEOUT_INTERVAL);
+
+    if (EFI_ERROR(ReturnCode)) {
+      // Try to cancel Address Range Scrub (ARS) if it's in progress
+      // on the DCPMM (and is returning FW_DEVICE_BUSY as a result).
+      // There's no other reason that we should retry a current packet at
+      // this layer (there's no noisy channel that we need to account for)
+      if (pFwCmd->Status == FW_DEVICE_BUSY) {
+        if (++CurrentRetryCount >= MAX_FW_UPDATE_RETRY_ON_DEV_BUSY) {
+          *pNvmStatus = NVM_ERR_BUSY_DEVICE;
+          ReturnCode = EFI_ABORTED;
+          goto Finish;
+        }
+        CHECK_RESULT_SET_NVM_STATUS(FwCmdGetARS(pDimm, &ArsStatus), pNvmStatus, NVM_ERR_OPERATION_FAILED, Finish);
+
+        if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
+          NVDIMM_DBG("ARS in progress.\n");
+          CHECK_RESULT_SET_NVM_STATUS(FwCmdDisableARS(pDimm), pNvmStatus, NVM_ERR_OPERATION_FAILED, Finish);
+        }
+        // Retry current packet
+        continue;
+      }
+      else if (pFwCmd->Status == FW_UPDATE_ALREADY_OCCURED) {
+        NVDIMM_DBG("FW Update failed, FW already occured\n");
+        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
+        goto Finish;
+      }
+      else {
+        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+        goto Finish;
+      }
+    }
+
+    PacketOffset++;
+    BytesWrittenTotal += BytesToCopy;
+  }
+
+  pDimm->RebootNeeded = TRUE;
+
+  *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  if (NULL != pCommandStatus && NULL != pDimm) {
+    ClearNvmStatus(GetObjectStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32), NVM_OPERATION_IN_PROGRESS);
+  }
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+
  /**
   Firmware command to get debug logs size in MB
 

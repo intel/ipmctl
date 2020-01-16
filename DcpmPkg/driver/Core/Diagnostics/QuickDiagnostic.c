@@ -441,7 +441,10 @@ BootStatusDiagnosticsCheck(
       APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_CPU_EXCEPTION), EVENT_CODE_537, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
         pDimmStr, Bsr.Separated_Current_FIS.Major, Bsr.Separated_Current_FIS.Minor);
     }
-
+    if (Bsr.Separated_Current_FIS.DT == DIMM_BSR_DDRT_IO_INIT_NOT_STARTED) {
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_DDRT_IO_NOT_STARTED), EVENT_CODE_544, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
+        pDimmStr);
+    }
     GetDdrtIoInitInfo(NULL, pDimm->DimmID, &DdrtTrainingStatus);
     if (DdrtTrainingStatus == DDRT_TRAINING_UNKNOWN) {
       NVDIMM_DBG("Could not retrieve DDRT training status");

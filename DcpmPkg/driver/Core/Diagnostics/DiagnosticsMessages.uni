@@ -54,6 +54,7 @@
 #string STR_QUICK_FW_LOAD_FAILED                         #language en "The quick health check detected that the firmware on DIMM %ls failed to load successfully."
 #string STR_QUICK_BSR_CPU_EXCEPTION                      #language en "The quick health check detected that the firmware on DIMM %ls has an internal CPU error, last known Major:Minor Checkpoint is 0x%x:0x%x."
 #string STR_QUICK_BSR_DDRT_IO_NOT_COMPLETE               #language en "DIMM %ls is reporting that the DDRT IO Init is not complete."
+#string STR_QUICK_BSR_DDRT_IO_NOT_STARTED                #language en "DIMM %ls is reporting that the DDRT IO Init did not start."
 #string STR_QUICK_BSR_MAILBOX_NOT_READY                  #language en "DIMM %ls is reporting that the mailbox interface is not ready."
 #string STR_QUICK_DDRT_TRAINING_NOT_COMPLETE_FAILED      #language en "DIMM %ls is reporting that DDRT Training is not complete/failed."
 #string STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR            #language en "An internal error caused the quick health check to abort on DIMM %ls."

@@ -70,7 +70,7 @@ typedef struct {
 #define DIMM_BSR_AIT_DRAM_ERROR 0x2
 #define DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY 0x3
 
-#define DIMM_BSR_OIE_ENABLED 0x1
+#define DIMM_BSR_SVNDE_ENABLED 0x1
 #define DIMM_BSR_REBOOT_REQUIRED 0x1
 #define DIMM_BSR_MEDIA_INTERFACE_ENGINE_STALLED 0x01
 
@@ -80,42 +80,47 @@ typedef struct {
 typedef union {
   UINT64 AsUint64;
   struct {
-    UINT64 Major : 8;       //7:0
-    UINT64 Minor : 8;       //15:8
-    UINT64 MR : 2;          //17:16
-    UINT64 DT : 1;          //18
-    UINT64 PCR : 1;         //19
-    UINT64 MBR : 1;         //20
-    UINT64 WTS : 1;         //21
-    UINT64 FRCF : 1;        //22
-    UINT64 CR : 1;          //23
-    UINT64 MD: 1;           //24
-    UINT64 OIE: 1;          //25
-    UINT64 OIWE: 1;         //26
-    UINT64 DR: 2;           //28:27
-    UINT64 RR: 1;           //29
-    UINT64 Rsvd: 34;        //63:30
-  } Separated_FIS_1_13;
+    UINT64 Major : 8;         //7:0
+    UINT64 Minor : 8;         //15:8
+    UINT64 MR : 2;            //17:16
+    UINT64 DT : 1;            //18
+    UINT64 PCR : 1;           //19
+    UINT64 MBR : 1;           //20
+    UINT64 WTS : 1;           //21
+    UINT64 FRCF : 1;          //22
+    UINT64 CR : 1;            //23
+    UINT64 MD : 1;            //24
+    UINT64 SVNDE : 1;         //25
+    UINT64 SVNCOIS : 1;       //26
+    UINT64 DR : 2;            //28:27
+    UINT64 RR : 1;            //29
+    UINT64 LFOPB : 1;         //30
+    UINT64 SVNWC : 1;         //31
+    UINT64 Rsvd : 2;          //33:32
+    UINT64 DTS : 2;           //35:34
+    UINT64 Rsvd1 : 28;         //63:36
+  } Separated_FIS_1_15; // DCPMM Gen 1 FIS
   struct {
-    UINT64 Major : 8;       //7:0
-    UINT64 Minor : 8;       //15:8
-    UINT64 MR : 2;          //17:16
-    UINT64 DT : 1;          //18
-    UINT64 PCR : 1;         //19
-    UINT64 MBR : 1;         //20
-    UINT64 WTS : 1;         //21
-    UINT64 FRCF : 1;        //22
-    UINT64 CR : 1;          //23
-    UINT64 MD : 1;           //24
-    UINT64 OIE : 1;          //25
-    UINT64 OIWE : 1;         //26
-    UINT64 DR : 2;           //28:27
-    UINT64 RR : 1;           //29
-    UINT64 LFOPB : 1;        //30
-    UINT64 SVNWC : 1;        //31
-    UINT64 Rsvd : 2;         //33:32
-    UINT64 DTS : 2;          //35:34
-    UINT64 Rsvd1 : 28;        //63:36
+    UINT64 Major : 8;         //7:0
+    UINT64 Minor : 8;         //15:8
+    UINT64 MR : 2;            //17:16
+    UINT64 DT : 1;            //18
+    UINT64 PCR : 1;           //19
+    UINT64 MBR : 1;           //20
+    UINT64 WTS : 1;           //21
+    UINT64 FRCF : 1;          //22
+    UINT64 CR : 1;            //23
+    UINT64 MD : 1;            //24
+    UINT64 SVNDE : 1;         //25
+    UINT64 SVNCOIS : 1;       //26
+    UINT64 DR : 2;            //28:27
+    UINT64 RR : 1;            //29
+    UINT64 LFOPB : 1;         //30
+    UINT64 SVNWC : 1;         //31
+    UINT64 Rsvd : 2;          //33:32
+    UINT64 DTS : 2;           //35:34
+    UINT64 FAC : 1;           //36
+    UINT64 Rsvd1 : 27;        //63:37
   } Separated_Current_FIS;
 } DIMM_BSR;
 

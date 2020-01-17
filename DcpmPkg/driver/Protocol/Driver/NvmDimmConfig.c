@@ -5074,7 +5074,7 @@ ValidateImageVersion(
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
-    if (Bsr.Separated_Current_FIS.OIE != DIMM_BSR_OIE_ENABLED) {
+    if (Bsr.Separated_Current_FIS.SVNDE != DIMM_BSR_SVNDE_ENABLED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
       ReturnCode = EFI_ABORTED;
       goto Finish;

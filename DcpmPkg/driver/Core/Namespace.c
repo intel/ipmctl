@@ -2457,7 +2457,7 @@ InitializeNamespaces(
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
-    if (pDimm->LsaStatus == LSA_NOT_INIT) {
+    if (pDimm->LsaStatus == LSA_NOT_INIT || pDimm->LsaStatus == LSA_CORRUPTED) {
       continue;
     }
 

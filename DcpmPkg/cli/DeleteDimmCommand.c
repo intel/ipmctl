@@ -132,7 +132,7 @@ DeleteDimm(
 
   /** If no dimm IDs are specified get IDs from all dimms **/
   if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, &DimmIdsCount, &pDimmIds);
+    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, FALSE, &DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;

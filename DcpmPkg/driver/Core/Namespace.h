@@ -211,7 +211,7 @@ UninstallNamespaceProtocols(
 
   @retval EFI_SUCCESS if the IO operation was performed without errors.
   @retval Other return codes from functions:
-    NamespaceIoGetDpaFromNamespace, DimmRead, DimmWrite, AppDirectIo
+    DimmRead, DimmWrite, AppDirectIo
 **/
 EFI_STATUS
 IoNamespaceBlock(
@@ -220,28 +220,6 @@ IoNamespaceBlock(
      OUT CHAR8 *pBuffer,
   IN     CONST UINT32 BlockLength,
   IN     CONST BOOLEAN ReadOperation
-  );
-
-/**
-  Performs a read or write to the Storage Namespace.
-  The data is read/written from/to Dimm thru block window aperture.
-
-  @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
-  @param[in] Dpa DIMM DPA where the requested block resides
-  @param[in, out] pBuffer Destination/source buffer where or from the data will be copied.
-  @param[in] Nbytes Number of bytes to read/write
-  @param[in] ReadOperation boolean value indicating what type of IO is requested.
-
-  @retval EFI_SUCCESS If the IO operation was performed without errors.
-  @retval EFI_INVALID_PARAMETER Input parameter is NULL
-**/
-EFI_STATUS
-StorageIo(
-  IN     NAMESPACE *pNamespace,
-  IN     UINT64 Dpa,
-  IN OUT CHAR8 *pBuffer,
-  IN     UINT64 Nbytes,
-  IN     BOOLEAN ReadOperation
   );
 
 /**
@@ -282,7 +260,7 @@ AppDirectIo(
   @retval EFI_INVALID_PARAMETER if pNamespace and/or pBuffer equals NULL.
   @retval EFI_BAD_BUFFER_SIZE if Offset and/or BufferLength are not aligned to the cache line size.
   @retval Other return codes from functions:
-    NamespaceIoGetDpaFromNamespaceForByteIo, DimmRead, DimmWrite, AppDirectIo
+    DimmRead, DimmWrite, AppDirectIo
 **/
 EFI_STATUS
 IoNamespaceBytes(
@@ -634,30 +612,6 @@ InitializeAllLabelStorageAreas(
   IN     UINT16 LabelVersionMajor,
   IN     UINT16 LabelVersionMinor,
      OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
-  The function sums up the available block capacity on a DIMM and returns it.
-
-  The function takes the block size under consideration (returning lower values if non-aligned block size is used).
-
-  @param[in] pDimm pointer to the target DIMM that the size should be returned for.
-  @param[in] BlockSize the block size that will be used for the returned size.
-  @param[in] PersistentMemType Persistent memory type of pool, that region will be used to create Namespace
-  @param[out] AvailableCapacity pointer to a 64-bit value, where the result capacity will be stored.
-
-  @retval EFI_SUCCESS everything went fine
-  @retval EFI_OUT_OF_RESOURCES when memory allocation fails
-  Other return codes from functions:
-    GetDimmFreemap
-    GetRealRawSizeAndRealBlockSize
-**/
-EFI_STATUS
-GetMaximumBlockNamespaceSize(
-  IN     DIMM *pDimm,
-  IN     UINT32 BlockSize,
-  IN     UINT8 PersistentMemType,
-     OUT UINT64 *pAvailableCapacity
   );
 
 /**

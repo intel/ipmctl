@@ -85,10 +85,6 @@ AllowedVolatileMode::
   - Memory Mode: DCPMMs act as system memory under the control of the
     operating system. In Memory Mode, any DDR in the platform will act as a
     cache working in conjunction with the DCPMMs.
-  - 1LM + 2LM: DCPMMs act as system memory under the control of the
-    operating system. In addition to this, some percentage capacity of DDR
-    is also used as system memory and the remamaing portion will act as
-    a cache working in conjunction with the DCPMMs.
   - Unknown: The allowed volatile mode cannot be determined.
 
 CurrentVolatileMode::
@@ -98,10 +94,6 @@ CurrentVolatileMode::
   - Memory Mode: DCPMMs act as system memory under the control of the
     operating system. In Memory Mode, any DDR in the platform will act as a cache
     working in conjunction with the DCPMMs.
-  - 1LM + 2LM: DCPMMs act as system memory under the control of the
-    operating system. In addition to this, some percentage capacity of DDR
-    is also used as system memory and the remamaing portion will act as
-    a cache working in conjunction with the DCPMMs.
   - Unknown: The current volatile mode cannot be determined.
 
 AllowedAppDirectMode::
@@ -153,20 +145,19 @@ AppDirectMigrationSupported::
   - 1: Supported
 
 RenameNamespaceSupported::
-  If the host software supports renaming a namespace with the command Section
-  <<Modify Namespace>>. One of:
+  If the host software supports renaming a namespace. One of:
   - 0: Not supported
   - 1: Supported
 
 GrowAppDirectNamespaceSupported::
   If the host software supports increasing the capacity of an App Direct
-  namespace with the command Section <<Modify Namespace>>. One of:
+  namespace. One of:
   - 0: Not supported
   - 1: Supported
 
 ShrinkAppDirectNamespaceSupported::
   If the host software supports decreasing the capacity of an App Direct
-  namespace with the command Section <<Modify Namespace>>. One of:
+  namespace. One of:
   - 0: Not supported
   - 1: Supported
 

@@ -11,6 +11,8 @@
 #include <NvmInterface.h>
 #include <NvmTables.h>
 #include "Common.h"
+#include "NvmDimmCli.h"
+#include <Library/HiiLib.h>
 #include <ShowAcpi.h>
 
  /*
@@ -79,6 +81,59 @@ EFI_STATUS registerShowAcpiCommand() {
   return rc;
 }
 
+/**
+  PrintInvalidAcpiRevisionString - Prints the invalid ACPI revision string
+
+  @param[in] Revision ACPI Table Revision
+  @param[in] AcpiTableType ACPI Table (NFIT/PCAT/PMTT)
+  @param[in] DisplayAsMajorMinor flag to indicate if Revision needs to be printed as Major & Minor
+  @param[in] pPrinterCtx pointer to command's printer context
+**/
+VOID
+PrintInvalidAcpiRevisionString(
+  IN     ACPI_REVISION Revision,
+  IN     AcpiType AcpiTableType,
+  IN     BOOLEAN DisplayAsMajorMinor,
+  IN     PRINT_CONTEXT *pPrinterCtx
+)
+{
+  CHAR16 *pInvalidAcpiRevisionMessage = NULL;
+  CHAR16 *pAcpiTableTypeString = NULL;
+
+  if (pPrinterCtx == NULL) {
+    return;
+  }
+
+  switch (AcpiTableType) {
+  case AcpiNfit:
+    pAcpiTableTypeString = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_NFIT), NULL);
+    break;
+  case AcpiPcat:
+    pAcpiTableTypeString = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_PCAT), NULL);
+    break;
+  case AcpiPMTT:
+    pAcpiTableTypeString = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_PMTT), NULL);
+    break;
+  default:
+    pAcpiTableTypeString = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_UNKNOWN_TABLE), NULL);
+    break;
+  }
+
+  if (DisplayAsMajorMinor) {
+    pInvalidAcpiRevisionMessage = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_ERR_INVALID_MAJOR_MINOR_REVISION), NULL);
+    pInvalidAcpiRevisionMessage = CatSPrintClean(NULL, pInvalidAcpiRevisionMessage, pAcpiTableTypeString, Revision.Split.Major, Revision.Split.Minor);
+  }
+  else {
+    pInvalidAcpiRevisionMessage = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_ACPI_STATUS_ERR_INVALID_REVISION), NULL);
+    pInvalidAcpiRevisionMessage = CatSPrintClean(NULL, pInvalidAcpiRevisionMessage, pAcpiTableTypeString, Revision.AsUint8);
+  }
+
+  PRINTER_SET_MSG(pPrinterCtx, EFI_INVALID_PARAMETER, FORMAT_STR, pInvalidAcpiRevisionMessage);
+
+  FREE_POOL_SAFE(pInvalidAcpiRevisionMessage);
+  FREE_POOL_SAFE(pAcpiTableTypeString);
+}
+
 /*
  * Execute the show acpi command
  */
@@ -94,6 +149,7 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
   UINT8 ChosenAcpiSystem = AcpiUnknown;
   UINT16 Index = 0;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+
   NVDIMM_ENTRY();
 
   if (pCmd == NULL) {
@@ -143,6 +199,9 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
     if (EFI_ERROR(ReturnCode) || pNFit == NULL) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: Failed to find the NVDIMM Firmware Interface ACPI tables\n");
       ReturnCode = EFI_ABORTED;
+    } else if (IS_NFIT_REVISION_INVALID(pNFit->pFit->Header.Revision)) {
+      PrintInvalidAcpiRevisionString(pNFit->pFit->Header.Revision, AcpiNfit, FALSE, pCmd->pPrintCtx);
+      ReturnCode = EFI_UNSUPPORTED;
     } else {
       PrintNFit(pNFit, pPrinterCtx);
     }
@@ -152,6 +211,9 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
     ReturnCode = pNvmDimmConfigProtocol->GetAcpiPcat(pNvmDimmConfigProtocol, &pPcat);
     if (EFI_ERROR(ReturnCode) || pPcat == NULL) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: Failed to find the PCAT tables\n");
+    } else if (IS_PCAT_REVISION_INVALID(pPcat->pPlatformConfigAttr->Header.Revision)) {
+      PrintInvalidAcpiRevisionString(pPcat->pPlatformConfigAttr->Header.Revision, AcpiPcat, TRUE, pCmd->pPrintCtx);
+      ReturnCode = EFI_UNSUPPORTED;
     } else {
       PrintPcat(pPcat, pPrinterCtx);
     }
@@ -164,6 +226,10 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
       ReturnCode = EFI_SUCCESS;
     } else if (EFI_ERROR(ReturnCode)|| pPMTT == NULL) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: Failed to find the PMTT tables\n");
+    } else if (IS_PMTT_REVISION_INVALID(pPMTT->Revision)) {
+      PrintInvalidAcpiRevisionString(pPMTT->Revision, AcpiPMTT, FALSE, pCmd->pPrintCtx);
+      FREE_POOL_SAFE(pPMTT);
+      ReturnCode = EFI_UNSUPPORTED;
     } else {
       PrintPMTT(pPMTT, pPrinterCtx);
       FREE_POOL_SAFE(pPMTT);

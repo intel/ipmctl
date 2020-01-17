@@ -4,6 +4,7 @@
  */
 
 #include <Library/ShellLib.h>
+#include <Library/HiiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include "ShowMemoryResourcesCommand.h"
 #include <Debug.h>
@@ -18,6 +19,50 @@
 #include <ReadRunTimePreferences.h>
 
 #define DS_MEMORY_RESOURCES_PATH                    L"/MemoryResources"
+#define DS_MEMORY_RESOURCES_DATA_PATH               L"/MemoryResources/data"
+#define DS_MEMORY_RESOURCES_DATA_INDEX_PATH         L"/MemoryResources/data[%d]"
+
+ /*
+ *  PRINTER TABLE ATTRIBUTES (5 columns)
+ *                |     DDR    |   DCPMM  |    Total   |
+ *   ===================================================
+ *   Volatile     | Volatile DDR Mem  | Volatile DCPMM Mem  | Volatile Mem     |
+ *   AppDirect    | N/A               | AppDirect Mem       | AppDirect Mem    |
+ *   Cache        | DDR Cache Mem     | N/A                 | Cache Mem        |
+ *   Inaccessible | N/A               | Inaccessible Mem    | Inaccessible Mem |
+ *   Physical     | Total DDR Mem     | Total DCPMM Mem     | Total Mem        |
+ */
+PRINTER_TABLE_ATTRIB ShowMemoryResourcesTableAttributes =
+{
+  {
+    {
+      MEMORY_TYPE_STR,                                                    //COLUMN HEADER
+      MEMORY_TYPE_MAX_STR_WIDTH,                                          //COLUMN MAX STR WIDTH
+      DS_MEMORY_RESOURCES_DATA_PATH PATH_KEY_DELIM MEMORY_TYPE_STR        //COLUMN DATA PATH
+    },
+    {
+      DDR_STR,                                                            //COLUMN HEADER
+      DDR_MAX_STR_WIDTH,                                                  //COLUMN MAX STR WIDTH
+      DS_MEMORY_RESOURCES_DATA_PATH PATH_KEY_DELIM DDR_STR                //COLUMN DATA PATH
+    },
+    {
+      DCPMM_STR,                                                          //COLUMN HEADER
+      DCPMM_MAX_STR_WIDTH,                                                //COLUMN MAX STR WIDTH
+      DS_MEMORY_RESOURCES_DATA_PATH PATH_KEY_DELIM DCPMM_STR              //COLUMN DATA PATH
+    },
+    {
+      TOTAL_STR,                                                          //COLUMN HEADER
+      TOTAL_STR_WIDTH,                                                    //COLUMN MAX STR WIDTH
+      DS_MEMORY_RESOURCES_DATA_PATH PATH_KEY_DELIM TOTAL_STR              //COLUMN DATA PATH
+    }
+  }
+};
+
+PRINTER_DATA_SET_ATTRIBS ShowMemoryResourcesDataSetAttribsPmtt3 =
+{
+  NULL,
+  &ShowMemoryResourcesTableAttributes
+};
 
 /**
   Command syntax definition
@@ -67,9 +112,14 @@ ShowMemoryResources(
   MEMORY_RESOURCES_INFO MemoryResourcesInfo;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT64 InaccessibleCapacity = 0;
+  UINT64 TotalCapacity = 0;
   CHAR16 *pCapacityStr = NULL;
+  CHAR16 *pPcdMissingStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+  CHAR16 *pPath = NULL;
+  UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
@@ -114,44 +164,112 @@ ShowMemoryResources(
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_LOAD_ERROR == ReturnCode) {
+    pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CURR_CONF_MISSING), NULL);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
+    goto Finish;
+  }
+  else if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
     goto Finish;
   }
 
-  ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
-
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_CAPACITY_STR, pCapacityStr);
+  /* Print Volatile Capacities */
+  Index = 0;
+  PRINTER_BUILD_KEY_PATH(pPath, DS_MEMORY_RESOURCES_DATA_INDEX_PATH, Index);
+  // Print Header
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"Volatile");
+  // Print DDR Memory/Volatile Capacity
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.DDRVolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
-
+  // Print DCPMM Volatile Capacity
   TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.VolatileCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_MEMORY_CAPACITY_STR, pCapacityStr);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, pCapacityStr);
+  FREE_POOL_SAFE(pCapacityStr);
+  // Print Total Volatile Capacity
+  TotalCapacity = MemoryResourcesInfo.DDRVolatileCapacity + MemoryResourcesInfo.VolatileCapacity;
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
+  /* Print App Direct Capacities */
+  Index = 1;
+  PRINTER_BUILD_KEY_PATH(pPath, DS_MEMORY_RESOURCES_DATA_INDEX_PATH, Index);
+  // Print Header
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"AppDirect");
+  // Print DDR App Direct Capacities (as of now, this is N/A)
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, DASH_STR);
+  // Print DCPMM DDR App Direct Capacities
   TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.AppDirectCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_APPDIRECT_CAPACITY_STR, pCapacityStr);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, pCapacityStr);
+  // Print Total App Direct Capacities
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.UnconfiguredCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  /* Print DDR Cache Capacities */
+  Index = 2;
+  PRINTER_BUILD_KEY_PATH(pPath, DS_MEMORY_RESOURCES_DATA_INDEX_PATH, Index);
+  // Print header
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"Cache");
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.DDRCacheCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_UNCONFIGURED_CAPACITY_STR, pCapacityStr);
+  // Print DDR Cache Capacity
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, pCapacityStr);
+  // Print DCPMM Cache Capacity
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, DASH_STR);
+  // Print Total Cache Capacity
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  Index = 3;
+  PRINTER_BUILD_KEY_PATH(pPath, DS_MEMORY_RESOURCES_DATA_INDEX_PATH, Index);
+  // Print Header
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"Inaccessible");
+  // Print DDR Inaccessible Capacity
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, DASH_STR);
+  // Print DCPMM Inaccessible Capacity
+  InaccessibleCapacity = MemoryResourcesInfo.InaccessibleCapacity + MemoryResourcesInfo.ReservedCapacity + MemoryResourcesInfo.UnconfiguredCapacity;
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_INACCESSIBLE_CAPACITY_STR, pCapacityStr);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, pCapacityStr);
+  // Print Total Inaccessible Capacity
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 
-  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.ReservedCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  /* Print Physical Capacities */
+  Index = 4;
+  PRINTER_BUILD_KEY_PATH(pPath, DS_MEMORY_RESOURCES_DATA_INDEX_PATH, Index);
+  // Print header
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"Physical");
+  // Print DDR Physical Capacity
+  ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.DDRRawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, DISPLAYED_RESERVED_CAPACITY_STR, pCapacityStr);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
+  // Print DCPMM Physical Capacity
+  ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.RawCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, pCapacityStr);
+  FREE_POOL_SAFE(pCapacityStr);
+  // Print Total Physical Capacity
+  TotalCapacity = MemoryResourcesInfo.DDRRawCapacity + MemoryResourcesInfo.RawCapacity;
+  ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
+  FREE_POOL_SAFE(pCapacityStr);
+
 
 Finish:
-  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, &ShowMemResourcesDataSetAttribs);
+  PRINTER_ENABLE_TEXT_TABLE_FORMAT(pPrinterCtx);
+  PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_MEMORY_RESOURCES_PATH, &ShowMemoryResourcesDataSetAttribsPmtt3);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pPath);
+  FREE_POOL_SAFE(pPcdMissingStr);
   NVDIMM_EXIT_I64(ReturnCode);
 
   return  ReturnCode;

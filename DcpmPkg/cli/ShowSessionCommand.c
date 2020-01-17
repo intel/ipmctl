@@ -153,7 +153,7 @@ ShowSession(
     goto Finish;
   }
 
-  //Retreive the current TagID (CLI's job to track/increment/reset the tag id).
+  //Retrieve the current TagID (CLI's job to track/increment/reset the tag id).
   PbrDcpmmDeserializeTagId(&TagId, 0);
 
   ReturnCode = pNvmDimmPbrProtocol->PbrGetTagCount(&TagCount);

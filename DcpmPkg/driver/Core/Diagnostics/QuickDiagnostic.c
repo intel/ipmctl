@@ -79,10 +79,6 @@ RunQuickDiagnostics(
     ReturnCode = DiagnosticsManageabilityCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode) || (!IsDimmManageable(ppDimms[Index]))) {
       NVDIMM_DBG("The check for manageability for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-        APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->SubTestMessage[MANAGEABILITY_TEST_INDEX], &pResult->SubTestStateVal[MANAGEABILITY_TEST_INDEX], DimmStr);
-      }
       continue;
     }
 
@@ -199,6 +195,7 @@ SmartAndHealthCheck(
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
+  UINT8 AlarmEnabled = 0;
   DIMM_INFO DimmInfo;
   CHAR16 *pActualHealthStr = NULL;
   CHAR16 *pActualHealthReasonStr = NULL;
@@ -294,7 +291,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_MEDIA_TEMPERATURE,
     &MediaTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -302,7 +299,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.MediaTemperatureValid && HealthInfo.MediaTemperature > MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_505, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.MediaTemperature, MediaTemperatureThreshold);
   }
@@ -311,7 +308,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_CONTROLLER_TEMPERATURE,
     &ControllerTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -319,7 +316,7 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.ControllerTemperatureValid && HealthInfo.ControllerTemperature > ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_CONTROLLER_TEMP_EXCEEDS_ALARM_THR), EVENT_CODE_511, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.ControllerTemperature, ControllerTemperatureThreshold);
   }
@@ -328,7 +325,7 @@ SmartAndHealthCheck(
     pDimm->DimmID,
     SENSOR_TYPE_PERCENTAGE_REMAINING,
     &PercentageRemainingThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -336,14 +333,9 @@ SmartAndHealthCheck(
     goto Finish;
   }
 
-  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.PercentageRemainingValid && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
-  }
-
-  if ((HealthInfo.PercentageRemainingValid) && (HealthInfo.PercentageRemaining < EMULATOR_DIMM_PERCENTAGE_REMAINING_THR)) {
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_PERCENTAGE_REMAINGING_BELOW_THR), EVENT_CODE_506, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
-      pDimmStr, HealthInfo.PercentageRemaining, EMULATOR_DIMM_PERCENTAGE_REMAINING_THR);
   }
 
   //Package spare availability check
@@ -394,6 +386,7 @@ BootStatusDiagnosticsCheck(
   BOOLEAN FIS_GTE_1_14 = FALSE;
   BOOLEAN FIS_GTE_2_01 = FALSE;
   UINT8 DdrtTrainingStatus = DDRT_TRAINING_UNKNOWN;
+  UINT16 BSRStatusBitmask = 0;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
 
   NVDIMM_ENTRY();
@@ -427,9 +420,9 @@ BootStatusDiagnosticsCheck(
     FIS_GTE_2_01 = TRUE;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, NULL);
+  ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimm->DimmID, &Bsr.AsUint64, &BSRStatusBitmask);
 
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_ERROR(ReturnCode) || (BSRStatusBitmask & DIMM_BOOT_STATUS_UNKNOWN)) {
     ReturnCode = EFI_DEVICE_ERROR;
     NVDIMM_WARN("Unable to get the DIMMs BSR.");
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BSR_NOT_READABLE), EVENT_CODE_513, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,

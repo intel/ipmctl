@@ -87,7 +87,7 @@ PowerCycles::
   (Default) The number of power cycles over the lifetime of the DCPMM
 
 FwErrorCount::
-  The total number of firmware error log entries
+  (Default) The total number of firmware error log entries
 
 TARGETS
 -------
@@ -108,7 +108,11 @@ ipmctl show -sensor MediaTemperature -dimm 1234
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -138,20 +142,15 @@ ThrottlingStartThreshold::
 ShutdownThreshold::
   The threshold value at which device shutdown will occur.
 
-SettableThresholds::
-  A list of user settable thresholds. Zero or more of:
-  - "AlarmThreshold"
+NOTE: Supported thresholds for a given sensor are listed as a part of the return data when using the -all or -display flag. Only the alarm threshold is settable.
 
-SupportedThresholds::
-  A list of supported thresholds. Zero or more of:
-  - "AlarmThreshold"
-  - "ThrottlingStopThreshold"
-  - "ThrottlingStartThreshold"
-  - "ShutdownThreshold"
-
-EnabledState::
-  Whether the alarm threshold is enabled, disabled or not applicable.
+AlarmEnabled::
+  Current state of the alarm threshold, where applicable.
   One of:
   - 0: Disabled
   - 1: Enabled
   - N/A
+
+MaxTemperature::
+  The highest temperature reported in degrees Celsius for a given media or controller sensor.
+  This value is persistent through Power Loss and is read-only.

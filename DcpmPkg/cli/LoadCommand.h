@@ -11,7 +11,7 @@
 #include <Debug.h>
 #include <Types.h>
 
-#define MAX_CHECKS_FOR_SUCCESSFUL_STAGING 40
+#define MAX_CHECKS_FOR_SUCCESSFUL_STAGING 80
 #define MICROSECONDS_PERIOD_BETWEEN_STAGING_CHECKS 250000
 /**
   Register the load command

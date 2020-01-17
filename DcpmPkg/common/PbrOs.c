@@ -265,6 +265,12 @@ VOID SerializePbrMode(
     *pPbrMode = mode;
     NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrMode);
     shmdt(pPbrMode);
+    //If the mode was set to Normal Mode(0x0)
+    //Then it is ok to mark it to be removed
+    if (PBR_NORMAL_MODE == mode)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
   }
 #endif
 }
@@ -299,6 +305,12 @@ VOID DeserializePbrMode(
   {
     *pMode = *pPbrMode;
     shmdt(pPbrMode);
+    //If the mode was set to Normal Mode(0x0)
+    //Then it is ok to mark it to be removed
+    if (PBR_NORMAL_MODE == *pMode)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
   }
 #endif
 }

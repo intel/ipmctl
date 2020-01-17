@@ -126,7 +126,7 @@ inline static const char * nvm_dictionary_get_set_value(dictionary *p_dict, cons
         // Set function call
         string_size = (size_t)(strlen(p_value));
         if (0 == nvm_set_value(&p_dict->p_value, p_value, string_size)) {
-          // Value set successfuly
+          // Value set successfully
           return p_dict->p_value;
         }
         return NULL;

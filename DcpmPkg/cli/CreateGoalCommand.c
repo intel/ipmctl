@@ -20,6 +20,7 @@
 
 #define CREATE_GOAL_COMMAND_STATUS_HEADER       L"Create region configuration goal"
 #define CREATE_GOAL_COMMAND_STATUS_CONJUNCTION  L" on"
+#define IS_DIMM_UNLOCKED(SecurityStateBitmask) ((SecurityStateBitmask & SECURITY_MASK_ENABLED) && !(SecurityStateBitmask & SECURITY_MASK_LOCKED))
 
 /**
   Command syntax definition
@@ -53,6 +54,68 @@ struct Command CreateGoalCommand =
   CreateGoal,
   TRUE,                                               //!< enable print control support
 };
+
+/**
+  Traverse targeted dimms to determine if Security is enabled in Unlocked state
+
+  @param[in] SecurityFlag Security mask from FW
+
+  @retval TRUE if at least one targeted dimm has security enabled in unlocked state
+  @retval FALSE if none of targeted dimms have security enabled in unlocked state
+**/
+EFI_STATUS
+EFIAPI
+AreRequestedDimmsSecurityUnlocked(
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+  IN     UINT16 *ppDimmIds,
+  IN     UINT32 pDimmIdsCount,
+  OUT BOOLEAN *isDimmUnlocked
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 i;
+  UINT32 j;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pDimmInfo
+    || NULL == isDimmUnlocked
+    || (NULL == ppDimmIds && 0 < pDimmIdsCount))
+  {
+    goto Finish;
+  }
+
+  *isDimmUnlocked = FALSE;
+
+  if (0 == pDimmIdsCount) {
+    for (i = 0; i < DimmCount; i++)
+    {
+      if (IS_DIMM_UNLOCKED(pDimmInfo[i].SecurityStateBitmask)) {
+        *isDimmUnlocked = TRUE;
+        break;
+      }
+    }
+  }
+  else {
+    for (i = 0; i < pDimmIdsCount; i++)
+    {
+      for (j = 0; j < DimmCount; j++)
+      {
+        if ((ppDimmIds[i] == pDimmInfo[j].DimmID) && IS_DIMM_UNLOCKED(pDimmInfo[i].SecurityStateBitmask)) {
+          *isDimmUnlocked = TRUE;
+          break;
+        }
+      }
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 
 STATIC
 EFI_STATUS
@@ -142,7 +205,7 @@ Finish:
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as not interleaved AppDirect memory
   @param[in] UnitsToDisplay The units to be used to display capacity
   @param[out] pConfirmation Confirmation from prompt
 
@@ -162,8 +225,7 @@ CheckAndConfirmAlignments(
   IN     UINT32 VolatilePercent,
   IN     UINT32 ReservedPercent,
   IN     UINT8 ReserveDimm,
-  IN     UINT16 UnitsToDisplay,
-     OUT BOOLEAN *pConfirmation
+  IN     UINT16 UnitsToDisplay
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -176,28 +238,21 @@ CheckAndConfirmAlignments(
   BOOLEAN CapacityReducedForSKU = FALSE;
   BOOLEAN MaxPmInterleaveSetsExceeded = FALSE;
   CHAR16 *pSingleStatusCodeMessage = NULL;
-  UINT64 TwoLM_NmFmRatioLower = 4;
-  UINT64 TwoLM_NmFmRatioUpper = 16;
-  UINT64 TwoLM_FmLowerLimit = 0;
-  UINT64 TwoLM_FmUpperLimit = 0;
-  UINT64 TwoLM_NMTotal = 0;
-  UINT64 TwoLM_FMTotal = 0;
-  TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
-  UINT16 TopologyDimmsNumber = 0;
+  BOOLEAN IsAboveLimit = FALSE;
+  BOOLEAN IsBelowLimit = FALSE;
   UINT32 AppDirect1Regions = 0;
   UINT32 AppDirect2Regions = 0;
+  UINT32 NumOfDimmsTargeted = 0;
   UINT32 MaxPMInterleaveSetsPerDie = 0;
 
   NVDIMM_ENTRY();
 
   ZeroMem(RegionConfigsInfo, sizeof(RegionConfigsInfo[0]) * MAX_DIMMS);
 
-  if (pNvmDimmConfigProtocol == NULL || pConfirmation == NULL) {
+  if (pNvmDimmConfigProtocol == NULL) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
     goto Finish;
   }
-
-  *pConfirmation = FALSE;
 
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
@@ -221,6 +276,7 @@ CheckAndConfirmAlignments(
     ReserveDimm,
     RegionConfigsInfo,
     &RegionConfigsCount,
+    &NumOfDimmsTargeted,
     &MaxPMInterleaveSetsPerDie,
     pCommandStatus);
 
@@ -233,34 +289,18 @@ CheckAndConfirmAlignments(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetSystemTopology(pNvmDimmConfigProtocol, &pTopologyDimms, &TopologyDimmsNumber);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    goto Finish;
-  }
-
-  //sum up the near memory
-  for (Index = 0; Index < TopologyDimmsNumber; Index++)
-  {
-    if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DDR4) {
-      TwoLM_NMTotal += pTopologyDimms[Index].VolatileCapacity;
+  if (RegionConfigsCount > 0) {
+    ReturnCode = CheckNmFmLimits(pNvmDimmConfigProtocol, &RegionConfigsInfo[0], RegionConfigsCount, &IsAboveLimit, &IsBelowLimit);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+      goto Finish;
     }
-  }
 
-  //sum up the near memory
-  for (Index = 0; Index < RegionConfigsCount; Index++)
-  {
-    TwoLM_FMTotal += RegionConfigsInfo[Index].VolatileSize;
-  }
-
-  if (TwoLM_FMTotal > 0) {
-    TwoLM_FmLowerLimit = TwoLM_NMTotal * TwoLM_NmFmRatioLower;
-    TwoLM_FmUpperLimit = TwoLM_NMTotal * TwoLM_NmFmRatioUpper;
-    if (TwoLM_FMTotal > TwoLM_FmUpperLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is above the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioUpper);
+    if (TRUE == IsBelowLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER);
     }
-    else if (TwoLM_FMTotal < TwoLM_FmLowerLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"WARNING! The requested 2LM goal is below the recommended NM:FM limit of 1:%d", TwoLM_NmFmRatioLower);
+    else if (TRUE == IsAboveLimit) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_UPPER_VIOLATION, TWOLM_NMFM_RATIO_UPPER);
     }
   }
 
@@ -316,11 +356,11 @@ CheckAndConfirmAlignments(
 
   if (MaxPmInterleaveSetsExceeded && RegionConfigsCount > 0) {
     for (Index = 0; Index < RegionConfigsCount; ++Index) {
-      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_1_INDEX] > 0) {
+      if (RegionConfigsInfo[Index].AppDirectSize[APPDIRECT_1_INDEX] > 0) {
         AppDirect1Regions++;
       }
 
-      if (RegionConfigsInfo[Index].AppDirectSize[GOAL_CONFIG_APPDIRECT_2_INDEX] > 0) {
+      if (RegionConfigsInfo[Index].AppDirectSize[APPDIRECT_2_INDEX] > 0) {
         AppDirect2Regions++;
       }
     }
@@ -334,25 +374,17 @@ CheckAndConfirmAlignments(
 
     if (PersistentMemType == PM_TYPE_AD_NI) {
       pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED);
-      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, (RegionConfigsCount - AppDirect1Regions));
+      pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie, (NumOfDimmsTargeted - AppDirect1Regions));
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
       FREE_POOL_SAFE(pSingleStatusCodeMessage);
     }
   }
 
-  ReturnCode = PromptYesNo(pConfirmation);
-  if (EFI_ERROR(ReturnCode)) {
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
-    NVDIMM_DBG("Failed on PromptedInput");
-  }
-
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
-  FREE_POOL_SAFE(pTopologyDimms);
   return ReturnCode;
 }
-
 
 /**
   Execute the Create Goal command
@@ -402,6 +434,7 @@ CreateGoal(
   CHAR16 *pShowGoalOutputArgs = NULL;
   CHAR16 *pSingleStatusCodeMessage = NULL;
   UINT32 MaxPMInterleaveSetsPerDie = 0;
+  BOOLEAN isDimmUnlocked = FALSE;
   NVDIMM_ENTRY();
 
   ZeroMem(&DisplayPreferences, sizeof(DisplayPreferences));
@@ -426,7 +459,7 @@ CreateGoal(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -481,6 +514,11 @@ CreateGoal(
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
+      goto Finish;
+    }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
       goto Finish;
     }
   }
@@ -558,7 +596,7 @@ CreateGoal(
 
   /** If Volatile and Reserved Percent sum to 100 then never map Appdirect even if alignment would allow it **/
   if (ReservedPercent + VolatileMode == 100) {
-    PersistentMemType = PM_TYPE_STORAGE;
+    PersistentMemType = PM_TYPE_RESERVED;
   }
 
   ReturnCode = ContainsProperty(pCmd, NS_LABEL_VERSION_PROPERTY);
@@ -598,8 +636,28 @@ CreateGoal(
 
   if (!Force) {
     ReturnCode = CheckAndConfirmAlignments(pCmd, pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-        PersistentMemType, VolatileMode, ReservedPercent, ReserveDimm, UnitsToDisplay, &Confirmation);
-    if (EFI_ERROR(ReturnCode) || !Confirmation) {
+        PersistentMemType, VolatileMode, ReservedPercent, ReserveDimm, UnitsToDisplay);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    ReturnCode = AreRequestedDimmsSecurityUnlocked(pDimms, DimmCount, pDimmIds, DimmIdsCount, &isDimmUnlocked);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
+    // send warning if security unlocked for target dimms
+    if (isDimmUnlocked) {
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED);
+    }
+
+    ReturnCode = PromptYesNo(&Confirmation);
+    if (EFI_ERROR(ReturnCode)) {
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_PROMPT_INVALID);
+      NVDIMM_DBG("Failed on PromptedInput");
+      goto Finish;
+    }
+    else if (!Confirmation) {
       goto Finish;
     }
   }

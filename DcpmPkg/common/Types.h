@@ -37,7 +37,7 @@
 #define ERROR_INJ_TYPE_INVALID          0x08
 
 #define MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR    2
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    0
+#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    2
 
 /**
   The device path type for our driver and HII driver.
@@ -49,7 +49,6 @@ typedef struct {
 
 #define PMEMDEV_INITIALIZER(DEV) \
       InitializeListHead(DEV.Dimms); \
-      InitializeListHead(DEV.UninitializedDimms); \
       InitializeListHead(DEV.ISs); \
       InitializeListHead(DEV.ISsNfit); \
       InitializeListHead(DEV.Namespaces);
@@ -155,7 +154,9 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT64 LastShutdownTime;
   UINT8 AitDramEnabled;
   UINT8 ThermalThrottlePerformanceLossPrct;
-} SMART_AND_HEALTH_INFO;
+  INT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
+  INT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
+ } SMART_AND_HEALTH_INFO;
 
 /**
   Individual sensor attributes struct
@@ -171,6 +172,7 @@ typedef struct {
   INT64 ThrottlingStopThreshold;
   INT64 ThrottlingStartThreshold;
   INT64 ShutdownThreshold;
+  INT64 MaxTemperature;
 } DIMM_SENSOR;
 
 /**
@@ -200,6 +202,36 @@ typedef struct _MEDIA_ERROR_LOG_PER_DIMM_INFO {
   UINT16  SequenceNum;        //!< Log entry sequence number
   UINT8   Reserved[2];
 } MEDIA_ERROR_LOG_INFO;
+
+/**
+  Passthrough Output Command Effect Log Entry Format
+**/
+typedef struct {
+  union {
+    struct {
+      UINT32 Opcode : 8;
+      UINT32 SubOpcode : 8;
+      UINT32 : 16;
+    } Separated;
+    UINT32 AsUint32;
+  } Opcode;
+
+  union {
+    struct {
+      UINT32 NoEffects : 1;
+      UINT32 SecurityStateChange : 1;
+      UINT32 DimmConfigChangeAfterReboot : 1;
+      UINT32 ImmediateDimmConfigChange : 1;
+      UINT32 QuiesceAllIo : 1;
+      UINT32 ImmediateDimmDataChange : 1;
+      UINT32 TestMode : 1;
+      UINT32 DebugMode : 1;
+      UINT32 ImmediateDimmPolicyChange : 1;
+      UINT32 : 23;
+    } Separated;
+    UINT32 AsUint32;
+  } EffectName;
+} COMMAND_EFFECT_LOG_ENTRY;
 
 /**
 * @defgroup ERROR_LOG_TYPES Error Log Types

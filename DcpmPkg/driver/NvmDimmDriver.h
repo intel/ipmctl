@@ -9,6 +9,7 @@
 #include <Uefi.h>
 #include <NvmDimmDriverData.h>
 #include <Dimm.h>
+#include <DcpmmTypes.h>
 
 #if defined(DYNAMIC_WA_ENABLE)
 
@@ -97,7 +98,6 @@ extern EFI_DCPMM_PBR_PROTOCOL gNvmDimmDriverNvmDimmPbr;
 
 typedef struct _PMEM_DEV {
   LIST_ENTRY Dimms;
-  LIST_ENTRY UninitializedDimms;
   LIST_ENTRY ISs;
   LIST_ENTRY ISsNfit;
   LIST_ENTRY Namespaces;
@@ -123,7 +123,6 @@ typedef struct {
   UINT64 RegionPersistentAlignment;
 
   UINT64 PmNamespaceMinSize;
-  UINT64 BlockNamespaceMinSize;
 } ALIGNMENT_SETTINGS;
 
 /** NvmDimmDriver Data structure **/
@@ -133,6 +132,13 @@ typedef struct {
   EFI_HANDLE ControllerHandle;
   EFI_HANDLE HiiHandle;
   EFI_DEVICE_PATH_PROTOCOL *pControllerDevicePathInstance;
+
+#ifndef OS_BUILD
+  /**
+  BIOS Dcpmm protocol
+  **/
+  EFI_DCPMM_PROTOCOL *pDcpmmProtocol;
+#endif // !OS_BUILD
 
   PMEM_DEV PMEMDev;
   /**

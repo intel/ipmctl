@@ -7,9 +7,8 @@
 #include <memory.h>
 #include <Uefi.h>
 #include <Library/BaseLib.h>
-#include <ShellBase.h>
 #include <Guid/FileInfo.h>
-#include <EfiShellParameters.h>
+#include <ShellParameters.h>
 #include <LoadedImage.h>
 #include <EfiShellInterface.h>
 #include <NvmStatus.h>
@@ -44,7 +43,6 @@
 #include "os_common.h"
 #include <os_efi_api.h>
 #include <os_types.h>
-#include "event.h"
 #include "Pbr.h"
 #include "PbrDcpmm.h"
 #include <os_str.h>
@@ -69,7 +67,7 @@ size_t gSmbiosTableSize = 0;
 UINT8 gSmbiosMinorVersion = 0;
 UINT8 gSmbiosMajorVersion = 0;
 
-#define SMBIOS_SIZE     0x2800 
+#define SMBIOS_SIZE     0x2800
 typedef struct _smbios_table_recording
 {
   size_t size;
@@ -223,27 +221,24 @@ initAcpiTables()
   {
     NVDIMM_WARN("Encountered %d failures.", failures);
     ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
   }
 
   if (NULL == PtrNfitTable || NULL == PtrPcatTable)
   {
     NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
     ReturnCode = EFI_NOT_FOUND;
+  }
+
+  ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,
+    &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.pPmttHead,
+    &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
+  if (EFI_ERROR(ReturnCode))
+  {
+    NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
+    ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
-  else
-  {
-    ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,
-      &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead, &gNvmDimmData->PMEMDev.pPmttHead,
-      &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
-    if (EFI_ERROR(ReturnCode))
-    {
-      NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
-      ReturnCode = EFI_NOT_FOUND;
-      goto Finish;
-    }
-  }
+
 Finish:
   if (PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext)) {
     FREE_POOL_SAFE(PtrNfitTable);
@@ -440,6 +435,26 @@ IsDebugLoggerEnabled()
 #ifdef NDEBUG
 void (*rel_assert) (void) = NULL;
 #endif // NDEBUG
+
+/*
+* Sends system event entry to standard output.
+*/
+static void write_system_event_to_stdout(const char* source, const char* message)
+{
+  NVM_EVENT_MSG ascii_event_message = { 0 };
+  CHAR16 w_event_message[sizeof(ascii_event_message)] = { 0 };
+
+  // Prepare string
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), source);
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), " ");
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), message);
+  os_strcat(ascii_event_message, sizeof(ascii_event_message), "\n");
+  // Convert to the unicode
+  AsciiStrToUnicodeStr(ascii_event_message, w_event_message);
+
+  // Send it to standard output
+  Print(FORMAT_STR, w_event_message);
+}
 
 /**
 Prints a debug message to the debug output device if the specified error level is enabled.
@@ -1447,7 +1462,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete sucessfully
+@retval EFI_SUCCESS   the initialization was complete successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -1467,7 +1482,7 @@ Initialize the library and determine if the underlying is a UEFI Shell 2.0 or an
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS   the initialization was complete sucessfully
+@retval EFI_SUCCESS   the initialization was complete successfully
 **/
 EFI_STATUS
 EFIAPI
@@ -1485,7 +1500,7 @@ Constructor for the Shell Debug1 Commands library.
 @param ImageHandle    the image handle of the process
 @param SystemTable    the EFI System Table pointer
 
-@retval EFI_SUCCESS        the shell command handlers were installed sucessfully
+@retval EFI_SUCCESS        the shell command handlers were installed successfully
 @retval EFI_UNSUPPORTED    the shell level required was not found.
 **/
 EFI_STATUS
@@ -1862,44 +1877,6 @@ SPrintLength(
   static const int nBuffSprintLenSize = 1024;
   static wchar_t evalSprintBuff[1024];
   return os_vswprintf(evalSprintBuff, nBuffSprintLenSize, FormatString, Marker);
-}
-/**
-Makes Bios emulated pass thru call and returns the values
-
-@param[in]  pDimm    pointer to current Dimm
-@param[out] pBsrValue   Value from passthru
-
-@retval EFI_SUCCESS  The count was returned properly
-@retval EFI_INVALID_PARAMETER One or more parameters are NULL
-@retval Other errors failure of FW commands
-**/
-
-EFI_STATUS
-EFIAPI
-FwCmdGetBsr(DIMM *pDimm, UINT64 *pBsrValue)
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
-  if (pBsrValue == NULL || pDimm == NULL) {
-    goto Finish;
-  }
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    goto Finish;
-  }
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = BIOS_EMULATED_COMMAND;
-  pFwCmd->SubOpcode = SUBOP_GET_BOOT_STATUS;
-  pFwCmd->OutputPayloadSize = sizeof(unsigned long long);
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-  CopyMem_S(pBsrValue, sizeof(*pBsrValue), pFwCmd->OutPayload, sizeof(UINT64));
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  return ReturnCode;
 }
 
 VOID

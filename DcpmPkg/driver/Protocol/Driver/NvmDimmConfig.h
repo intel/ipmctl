@@ -34,6 +34,43 @@
 *  - Provides BLOCK IO access to the specificed DPCMM Namespaces
 * - EFI_NVDIMM_LABEL_PROTOCOL
 *  - Provides standardized access to the specified DCPMM Labels
+* - Automated Provisioning flow using an EFI_VARIABLE
+*
+* @section autoprovisioning Automated Provisioning
+* Automated Provisioning provides a mechanism to provision both persistent
+* memory regions and namespaces on the next boot by accessing an exposed
+* EFI_VARIABLE. This mechansim may be particularly useful to initiate provisioning
+* via an out-of-band (OOB) path, like a Baseboard Management Controller (BMC).
+*
+* The UEFI driver will determine if mode provisioning is required by first checking
+* the UEFI variable status field and then checking the PCD data stored on the DIMM
+* to ensure it matches (if necessary).
+*
+* The UEFI driver will determine if namespace provisioning is required by first
+* checking the UEFI variable status field and then checking for empty interleave
+* sets.
+*
+* The UEFI_VARIABLE IntelDIMMConfig is described below.
+* GUID: {76fcbfb6-38fe-41fd-901d-16453122f035}
+* Attributes: EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS
+*
+* Variable Name             | Size(bytes)  | Data
+* ------------------------- | ------------ | -----------------------------------
+* Revision                  |            1 | 1 (Read only written by AEP driver)
+* ProvisionCapacityMode     |            1 | 0: Manual - AEP DIMM capacity provisioning via user interface. (Default). <br>1: Auto - Automatically provision all AEP DIMM capacity during system boot if this request does not match the current PCD metadata stored on the AEP DIMMs.<br>Note: Auto provisioning may result is loss of persistent data stored on the AEP DIMMs.
+* MemorySize                |            1 | If ProvisionCapacityMode = Auto, the % of the total AEP capacity to provision in Memory Mode (0-100%). 0: (Default)
+* PMType                    |            1 | If ProvisionCapacityMode = Auto, the type of persistent memory to provision (if not 100% Memory Mode).<br>0: App Direct<br>1: App Direct, Not Interleaved
+* ProvisionNamespaceMode    |            1 | 0: Manual - Namespace provisioning via user interface. (Default).<br>1: Auto - Automatically create a namespace on all AEP DIMM App Direct interleave sets is one doesn't already exist.
+* NamespaceFlags            |            1 | If ProvisionNamespaceMode=Auto, the flags to apply when automatically creating namespaces.<br>0: None (Default).<br>1: BTT
+* ProvisionCapacityStatus   |            1 | 0: Unknown - Check PCD if ProvisionCapacityMode = Auto (Default).<br>1: Successfully provisioned.<br>2: Error.<br>3: Pending reset.
+* ProvisionNamespaceStatus  |            1 | 0: Unknown - Check LSA if ProvisionNamespaceMode = Auto (Default).<br>1: Successfully created namespaces.<br>2: Error.
+* NamespaceLabelVersion     |            1 | Namespace label version to initialize when provision capacity.<br>0: Latest Version (Currently 1.2).<br>1: 1.1.<br>2: 1.2
+* Reserved                  |            7 | Reserved.
+*
+* Figure 'Auto Provisioning Flow Diagram' describes the decision tree implemented.
+*
+* \image latex AutoProvisioningFlowDiagram.png "Auto Provisioning Flow Diagram"
+*
 */
 
 #ifndef _NVMDIMM_CONFIG_H_
@@ -70,7 +107,6 @@ extern EFI_GUID gNvmDimmPbrProtocolGuid;
 #define EFI_PERSISTENT_MEMORY_REGION 14
 #define MSR_RAPL_POWER_UNIT 0x618
 
-#define UPDATE_FIRMWARE_DATA_PACKET_SIZE  64
 #define FW_UPDATE_INIT_TRANSFER        0x0
 #define FW_UPDATE_CONTINUE_TRANSFER    0x1
 #define FW_UPDATE_END_TRANSFER         0x2
@@ -107,7 +143,7 @@ typedef enum {
   /** SKU Capabilities **/
   SkuMemoryModeOnly,
   SkuAppDirectModeOnly,
-  SkuAppDirectStorageMode,
+  DimmSkuType_Reserved,
   SkuTriMode,
   SkuPackageSparingCapable,
 
@@ -134,10 +170,10 @@ GetDimmCount(
   );
 
 /**
-  Retrieve the number of uninitialized DCPMMs in the system found thru SMBUS
+  Retrieve the number of uninitialized DCPMMs in the system found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found thru SMBUS.
+  @param[out] pDimmCount The number of DCPMMs found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -172,11 +208,11 @@ GetDimms(
   );
 
 /**
-  Retrieve the list of uninitialized DCPMMs found thru SMBUS
+  Retrieve the list of uninitialized DCPMMs found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
-  @param[out] pDimms The dimm list found thru SMBUS.
+  @param[out] pDimms The dimm list found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -423,28 +459,6 @@ GetPcd(
   OUT UINT32 *pDimmPcdInfoCount,
   OUT COMMAND_STATUS *pCommandStatus
 );
-
-/**
-  Clear LSA Namespace partition
-
-  @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-
-  Note: This function is deprecated. Please use the new function DeletePcdConfig.
-**/
-EFI_STATUS
-EFIAPI
-DeletePcd(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds OPTIONAL,
-  IN     UINT32 DimmIdsCount,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
 
 /**
 Modifies select partition data from the PCD
@@ -806,9 +820,10 @@ EFIAPI GetNamespaces (
   @param[in] PersistentMemType Persistent memory type
   @param[in, out] pVolatilePercent Volatile region size in percents.
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
+  @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -830,6 +845,7 @@ GetActualRegionsGoalCapacities(
   IN     UINT8 ReserveDimm,
      OUT REGION_GOAL_PER_DIMM_INFO *pConfigGoals,
      OUT UINT32 *pConfigGoalsCount,
+     OUT UINT32 *pNumOfDimmsTargeted         OPTIONAL,
      OUT UINT32 *pMaxPMInterleaveSetsPerDie  OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
   );
@@ -846,7 +862,7 @@ GetActualRegionsGoalCapacities(
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a Storage or not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
@@ -1003,11 +1019,11 @@ StartDiagnostic(
 
 /**
   Create namespace
-  Creates a Storage or AppDirect namespace on the provided region/dimm.
+  Creates a AppDirect namespace on the provided region/dimm.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] RegionId the ID of the region that the Namespace is supposed to be created.
-  @param[in] DimmPid the PID of the Dimm that the Storage Namespace is supposed to be created.
+  @param[in] Reserved
   @param[in] BlockSize the size of each of the block in the device.
     Valid block sizes are: 1 (for AppDirect Namespace), 512 (default), 514, 520, 528, 4096, 4112, 4160, 4224.
   @param[in] BlockCount the amount of block that this namespace should consist
@@ -1028,7 +1044,7 @@ EFIAPI
 CreateNamespace(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 RegionId,
-  IN     UINT16 DimmPid,
+  IN     UINT16 Reserved,
   IN     UINT32 BlockSize,
   IN     UINT64 BlockCount,
   IN     CHAR8 *pName,
@@ -1038,34 +1054,6 @@ CreateNamespace(
       OUT UINT64 *pActualNamespaceCapacity,
       OUT UINT16 *pNamespaceId,
       OUT COMMAND_STATUS *pCommandStatus
-  );
-
-
-/**
-  Modify namespace
-  Modifies a block or persistent memory namespace on the provided region/dimm.
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] NamespaceId the ID of the namespace to be modified
-  @param[in] pName pointer to a ASCI NULL-terminated string with
-    user defined name for the namespace
-  @param[in] Force parameter needed to signalize that the caller is aware that this command
-    may cause data corruption
-  @param[out] pCommandStatus Structure containing detailed NVM error codes
-
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
-
-  Do not change property if NULL pointer provided
-**/
-EFI_STATUS
-EFIAPI
-ModifyNamespace(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 NamespaceId,
-  IN     CHAR8 *pName,
-  IN     BOOLEAN Force,
-     OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**
@@ -1147,31 +1135,6 @@ GetFwDebugLog(
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-
-/**
-  Dump FW debug logs
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID identifier of what dimm to get log pages from
-  @param[out] ppDebugLogs pointer to allocated output buffer of debug messages, caller is responsible for freeing
-  @param[out] pBytesWritten size of output buffer
-  @param[out] pCommandStatus structure containing detailed NVM error codes
-
-  Note: This function is deprecated. Please use the new function GetFwDebugLog.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-EFIAPI
-DumpFwDebugLog(
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 DimmID,
-     OUT VOID **ppDebugLogs,
-     OUT UINT64 *pBytesWritten,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
 /**
   Set Optional Configuration Data Policy using FW command
 
@@ -1192,7 +1155,8 @@ SetOptionalConfigurationDataPolicy(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 *pDimmIds,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 AveragePowerReportingTimeConstantMultiplier,
+  IN     UINT8 *AveragePowerReportingTimeConstantMultiplier,
+  IN     UINT32 *AveragePowerReportingTimeConstant,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -1203,9 +1167,7 @@ SetOptionalConfigurationDataPolicy(
   @param[in] DimmId ID of a DIMM.
   @param[out] pBsr Pointer to buffer for Boot Status register, contains
               high and low 4B register.
-  @param[out] pFwMailboxStatus Pointer to buffer for Host Fw Mailbox Status Register
-  @param[in] SmallOutputRegisterCount Number of small output registers to get, max 32.
-  @param[out] pFwMailboxOutput Pointer to buffer for Host Fw Mailbox small output Register.
+  @param[out] Reserved
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_SUCCESS Success
@@ -1217,9 +1179,7 @@ RetrieveDimmRegisters(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT16 DimmId,
      OUT UINT64 *pBsr,
-     OUT UINT64 *pFwMailboxStatus,
-  IN     UINT32 SmallOutputRegisterCount,
-     OUT UINT64 *pFwMailboxOutput,
+     OUT UINT8 *Reserved,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -1288,6 +1248,40 @@ GetCapacities(
   OUT UINT64 *pUnconfiguredCapacity,
   OUT UINT64 *pReservedCapacity,
   OUT UINT64 *pInaccessibleCapacity
+);
+
+/**
+  Retrieve and calculate DDR cache and memory capacity to return.
+
+  @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
+  @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
+  @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+EFIAPI
+GetDDRCapacities(
+  OUT UINT64 *pDDRRawCapacity,
+  OUT UINT64 *pDDRCacheCapacity,
+  OUT UINT64 *pDDRVolatileCapacity
+);
+
+/**
+  Calculate the total size of available memory in the DIMMs
+  according to the smbios and return the result.
+
+  @param[out] pResult Pointer to total memory size.
+
+  @retval EFI_INVALID_PARAMETER Passed NULL argument
+  @retval EFI_LOAD_ERROR Failure to calculate DDR memory size
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDDRPhysicalSize(
+  OUT UINT64 *pResult
 );
 
 /**
@@ -1476,6 +1470,8 @@ GetBSRAndBootStatusBitMask(
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
   @param[in] UninitializedDimms If true only uninitialized dimms are verified, if false only Initialized
+  @param[in] CheckSupportedConfigDimms If true, include dimms in unmapped set of dimms (non-POR) in
+                                       returned dimm list. If false, skip these dimms from returned list
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1491,6 +1487,36 @@ VerifyTargetDimms(
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
   IN     BOOLEAN UninitializedDimms,
+  IN     BOOLEAN CheckSupportedConfigDimms,
+  OUT DIMM *pDimms[MAX_DIMMS],
+  OUT UINT32 *pDimmsNum,
+  OUT COMMAND_STATUS *pCommandStatus
+);
+
+/**
+  Verify target DIMM IDs in list are available for SPI Flash.
+
+  If DIMM Ids were provided then check if those DIMMs exist in a SPI flashable
+  state and return list of verified dimms.
+  If specified DIMMs count is 0 then return all DIMMS that are in SPI
+  Flashable state.
+  Update CommandStatus structure at the end.
+
+  @param[in] DimmIds An array of DIMM Ids
+  @param[in] DimmIdsCount Number of items in array of DIMM Ids
+  @param[out] pDimms Output array of pointers to verified dimms
+  @param[out] pDimmsNum Number of items in array of pointers to dimms
+  @param[out] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_NOT_FOUND a dimm in DimmIds is not in a flashable state or no dimms found
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+VerifyNonfunctionalTargetDimms(
+  IN     UINT16 DimmIds[]      OPTIONAL,
+  IN     UINT32 DimmIdsCount,
   OUT DIMM *pDimms[MAX_DIMMS],
   OUT UINT32 *pDimmsNum,
   OUT COMMAND_STATUS *pCommandStatus
@@ -1512,13 +1538,13 @@ CheckForLongOpStatusInProgress(
 );
 
 /**
-  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted.
-  NOTE: Available only in debug driver.
+  Get Command Access Policy is used to retrieve a list of FW commands that may be restricted. Passing pCapInfo as NULL
+  will provide the maximum number of possible return elements by updating pCount.
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmID Handle of the DIMM
   @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
-  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with number of elements required. OPTIONAL
+  @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with maximum number of elements possible. OPTIONAL
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -1529,7 +1555,25 @@ GetCommandAccessPolicy(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN  UINT16 DimmID,
   IN OUT UINT32 *pCount,
-  IN OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+  OUT COMMAND_ACCESS_POLICY_ENTRY *pCapInfo OPTIONAL
+);
+
+/**
+  Get Command Effect Log is used to retrieve a list DIMM FW commands and their effects on the DIMM subsystem.
+
+  @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] DimmID Handle of the DIMM
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+GetCommandEffectLog(
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN  UINT16 DimmID,
+  IN OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+  IN OUT UINT32 *pEntryCount
 );
 
 #ifndef OS_BUILD

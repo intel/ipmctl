@@ -141,24 +141,4 @@ ThresholdsCheck(
   IN OUT CHAR16 **ppResultStr,
   IN OUT UINT8 *pDiagState
 );
-
-#ifdef OS_BUILD
-/**
-Get the DIMMs system time and compare it to the local system time.
-Log proper events in case of any error.
-
-@param[in] pDimm Pointer to the DIMM
-@param[in out] ppResult Pointer to the result string of fw diagnostics message
-@param[out] pDiagState Pointer to the quick diagnostics test state
-
-@retval EFI_SUCCESS Test executed correctly
-@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
-**/
-EFI_STATUS
-SystemTimeCheck(
-  IN     DIMM *pDimm,
-  IN OUT CHAR16 **ppResultStr,
-  IN OUT UINT8 *pDiagState
-);
-#endif // OS_BUILD
 #endif

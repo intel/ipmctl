@@ -104,9 +104,9 @@ PrintPMTT(
 );
 
 /**
-PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 2.0 table.
+PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 0.2 table.
 
-@param[in] pPcat pointer to the parsed PMTT 2.0 table.
+@param[in] pPcat pointer to the parsed PMTT 0.2 table.
 @param[in] pointer to command's printer context.
 **/
 VOID

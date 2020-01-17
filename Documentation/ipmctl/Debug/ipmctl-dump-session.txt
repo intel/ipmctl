@@ -68,7 +68,7 @@ To successfully execute this command, there must be an active recording session.
 RETURN DATA
 -----------
 The resulting file includes, NFIT, PCAT, PMTT and SMBIOS tables that are used by IPMCTL
-to determine the DCPMM topology.  DCPMM data that is transfered to/from DCPMM(s)
+to determine the DCPMM topology.  DCPMM data that is transferred to/from DCPMM(s)
 over the mailbox interface.
 
 SAMPLE OUTPUT

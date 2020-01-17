@@ -178,6 +178,13 @@ GetDimmList(
     NVDIMM_DBG("Failed to retrieve the DIMM inventory");
     goto FinishError;
   }
+
+  ReturnCode = BubbleSort((VOID*)*ppDimms, *pDimmCount, sizeof(**ppDimms), CompareDimmIdInDimmInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Dimms list may not be sorted");
+    goto FinishError;
+  }
+
   goto Finish;
 
 FinishError:
@@ -189,7 +196,7 @@ Finish:
 
 
 /**
-  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  Retrieve a populated array and count of all DCPMMs (functional and non-functional)
   in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -274,7 +281,7 @@ GetAllDimmList(
 
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Failed to retrieve the DIMM inventory found thru SMBUS");
+    NVDIMM_WARN("Failed to retrieve the DIMM inventory found through SMBUS");
     goto FinishError;
   }
 
@@ -674,9 +681,11 @@ Finish:
 }
 
 /**
-  Gets number of Manageable Dimms and their IDs
+  Gets number of Manageable and supported Dimms and their IDs
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                      returned dimm list. If false, skip these dimms from returned list.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -688,6 +697,7 @@ Finish:
 EFI_STATUS
 GetManageableDimmsNumberAndId(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  BOOLEAN CheckSupportedConfigDimm,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 )
@@ -726,7 +736,9 @@ GetManageableDimmsNumberAndId(
   }
 
   for (Index = 0; Index < *pDimmIdsCount; Index++) {
-    if (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
+    if ((!CheckSupportedConfigDimm && (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG))
+        ||((CheckSupportedConfigDimm && !pDimms[Index].IsInPopulationViolation)
+           && pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG)){
       (*ppDimmIds)[NewListIndex] = pDimms[Index].DimmID;
       NewListIndex++;
     }
@@ -1072,8 +1084,8 @@ GetDeviceAndFilePath(
     goto Finish;
   }
 
-  // Add " .\ "(current dir) to the file path if no path is specified
-  if (!ContainsCharacter(L'\\', pUserFilePath)) {
+  // Add " .\ "(current dir) to the file path if relative path is specified
+  if (!ContainsCharacter(L':', pUserFilePath)) {
     pCurDirPath = CatSPrint(NULL, L".\\" FORMAT_STR, pUserFilePath);
   }
   else {
@@ -1173,6 +1185,7 @@ MatchCliReturnCode(
   case NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU:
   case NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED:
   case NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED:
+  case NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED:
     ReturnCode = EFI_SUCCESS;
     break;
 
@@ -1190,7 +1203,6 @@ MatchCliReturnCode(
   case NVM_ERR_NONE_DIMM_FULFILLS_CRITERIA:
   case NVM_ERR_INVALID_NAMESPACE_CAPACITY:
   case NVM_ERR_NAMESPACE_TOO_SMALL_FOR_BTT:
-  case NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_BLOCK_NAMESPACE:
   case NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE:
   case NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS:
   case NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS:
@@ -1205,6 +1217,7 @@ MatchCliReturnCode(
 
   case NVM_ERR_DIMM_NOT_FOUND:
   case NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND:
+  case NVM_ERR_NO_USABLE_DIMMS:
   case NVM_ERR_SOCKET_ID_NOT_VALID:
   case NVM_ERR_REGION_NOT_FOUND:
   case NVM_ERR_NAMESPACE_DOES_NOT_EXIST:
@@ -1224,6 +1237,7 @@ MatchCliReturnCode(
   case NVM_ERR_FORCE_REQUIRED:
   case NVM_ERR_OPERATION_FAILED:
   case NVM_ERR_DIMM_ID_DUPLICATED:
+  case NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID:
   case NVM_ERR_SOCKET_ID_DUPLICATED:
   case NVM_ERR_UNABLE_TO_GET_SECURITY_STATE:
   case NVM_ERR_INCONSISTENT_SECURITY_STATE:
@@ -1265,6 +1279,7 @@ MatchCliReturnCode(
     break;
 
   case NVM_ERR_OPERATION_NOT_SUPPORTED:
+  case NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED:
     ReturnCode = EFI_UNSUPPORTED;
     break;
 
@@ -2324,9 +2339,49 @@ AllDimmsInListAreManageable(
   NVDIMM_EXIT();
   return Manageable;
 }
+/**
+  Check if all dimms in the specified pDimmIds list are in supported
+  config. This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pDimmInfo The dimm list found in NFIT.
+  @param[in] DimmCount Size of the pDimmInfo array.
+  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
+  @param[in] pDimmIdsCount Size of the pDimmIds array.
+
+  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval FALSE if at least one DIMM is not manageable
+**/
+BOOLEAN
+AllDimmsInListInSupportedConfig(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+)
+{
+  BOOLEAN InSupportedConfig = TRUE;
+  UINT32 AllDimmListIndex = 0;
+  UINT32 DimmsToCheckIndex = 0;
+  NVDIMM_ENTRY();
+
+  for (DimmsToCheckIndex = 0; DimmsToCheckIndex < DimmsToCheckCount; DimmsToCheckIndex++) {
+    for (AllDimmListIndex = 0; AllDimmListIndex < AllDimmCount; AllDimmListIndex++) {
+      if (pAllDimms[AllDimmListIndex].DimmID == pDimmsListToCheck[DimmsToCheckIndex]) {
+        if (pAllDimms[AllDimmListIndex].IsInPopulationViolation == TRUE) {
+          InSupportedConfig = FALSE;
+          break;
+        }
+      }
+    }
+  }
+
+  NVDIMM_EXIT();
+  return InSupportedConfig;
+}
 
 /**
-Retrieve the User Cli Display Preferences CMD line arguements.
+Retrieve the User Cli Display Preferences CMD line arguments.
 
 @param[out] pDisplayPreferences pointer to the current driver preferences.
 
@@ -2775,7 +2830,6 @@ CheckMasterAndDefaultOptions(
   }
 
 Finish:
-  PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

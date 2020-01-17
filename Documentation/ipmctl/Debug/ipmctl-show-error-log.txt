@@ -78,7 +78,7 @@ ipmctl show -error Thermal Level=High
 
 Show all low media error log entries
 [verse]
-ipmctl show -error Thermal Level=High
+ipmctl show -error Media Level=Low
 
 LIMITATIONS
 -----------

@@ -49,9 +49,6 @@ struct driver_feature_flags
 	unsigned int get_features : 1;
 	unsigned int set_features : 1;
 	unsigned int create_namespace : 1;
-	unsigned int rename_namespace : 1;
-	unsigned int grow_namespace : 1;
-	unsigned int shrink_namespace : 1;
 	unsigned int delete_namespace : 1;
 	unsigned int enable_namespace : 1;
 	unsigned int disable_namespace : 1;
@@ -62,7 +59,6 @@ struct driver_feature_flags
 	unsigned int passthrough : 1;
 	unsigned int start_address_scrub : 1;
 	unsigned int app_direct_mode : 1;
-	unsigned int storage_mode : 1;
 };
 
 struct nvm_driver_capabilities

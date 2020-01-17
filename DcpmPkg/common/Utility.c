@@ -87,6 +87,120 @@ GetEnvVariable(
 #endif
 
 /**
+  Removes all whitespace from before, after, and inside a passed string
+
+  @param[IN, OUT]  buffer - The string to remove whitespace from
+**/
+VOID RemoveAllWhiteSpace(
+  CHAR16* buffer)
+{
+  CHAR16* nextNonWs = NULL;
+
+  if (buffer == NULL) {
+    return;
+  }
+
+  TrimString(buffer);
+  nextNonWs = buffer;
+  while (*buffer)
+  {
+    //Advance the forward-pointer to the next non WS char
+    while (*nextNonWs && *nextNonWs <= L' ') {
+      nextNonWs++;
+    }
+
+    if (buffer != nextNonWs) {
+      *buffer = *nextNonWs;
+
+      if (0 == *nextNonWs) {
+        break;
+      }
+    }
+
+    buffer++;
+    nextNonWs++;
+  }
+}
+
+/**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN]  pNvmDimmConfigProtocol the protocol
+  @param[IN]  pRegionConfigsInfo a pointer to the region list to examine
+  @param[IN]  RegionConfigsCount the number of REGION_GOAL_PER_DIMM_INFO elements in the list
+  @param[OUT] pIsAboveLimit the 2LM vs DDR value is above the upper recommended limit
+  @param[OUT] pIsBelowLimit the 2LM vs DDR value is below the lower recommended limit
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+  @retval EFI_DEVICE_ERROR failed to get the system topology
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
+  IN    UINT32  RegionConfigsCount,
+  OUT   BOOLEAN *pIsAboveLimit,
+  OUT   BOOLEAN *pIsBelowLimit
+) {
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT64 TwoLM_FmMinRecommended = 0;
+  UINT64 TwoLM_FmMaxRecommended = 0;
+  UINT64 TwoLM_NMTotal = 0;
+  UINT64 TwoLM_FMTotal = 0;
+  TOPOLOGY_DIMM_INFO  *pTopologyDimms = NULL;
+  UINT16 TopologyDimmsNumber = 0;
+  UINT32 Index = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pNvmDimmConfigProtocol == NULL || pRegionConfigsInfo  == NULL || pIsAboveLimit == NULL || pIsBelowLimit == NULL) {
+    goto Finish;
+  }
+
+  *pIsAboveLimit = FALSE;
+  *pIsBelowLimit = FALSE;
+  for (Index = 0; Index < RegionConfigsCount; Index++)
+  {
+    TwoLM_FMTotal += pRegionConfigsInfo[Index].VolatileSize;
+  }
+
+  if (TwoLM_FMTotal == 0) {
+    //no limit check necessary - no 2LM goal in play
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetSystemTopology(pNvmDimmConfigProtocol, &pTopologyDimms, &TopologyDimmsNumber);
+  if (EFI_ERROR(ReturnCode)) {
+    ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+  for (Index = 0; Index < TopologyDimmsNumber; Index++)
+  {
+    if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DDR4) {
+      TwoLM_NMTotal += pTopologyDimms[Index].VolatileCapacity;
+    }
+  }
+
+  TwoLM_FmMinRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER;
+  TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
+  if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
+    *pIsAboveLimit = TRUE;
+  }
+  else if (TwoLM_FMTotal < TwoLM_FmMinRecommended) {
+    *pIsBelowLimit = TRUE;
+  }
+
+Finish:
+  NVDIMM_EXIT();
+  return ReturnCode;
+}
+
+/**
   Generates namespace type string, caller must free it
 
   @param[in] Type, value corresponding to namespace type.
@@ -132,7 +246,7 @@ CHAR16 *DiagnosticResultToStr(
     CHAR16 **TestEventMesg = StrSplit(pResult->Message, L'\n', &NumTokens);
     if (TestEventMesg != NULL) {
       pOutputLines = CatSPrintClean(pOutputLines,
-        L"Message : [ %d ] %ls\n", pResult->ResultCode, TestEventMesg[0]);
+        L"Message : %ls\n", TestEventMesg[0]);
       FreeStringArray(TestEventMesg, NumTokens);
     }
   }
@@ -1934,7 +2048,7 @@ FileRead(
   }
 
   if (MaxFileSize != 0 && *pFileSize > MaxFileSize) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
+    ReturnCode = EFI_BUFFER_TOO_SMALL;
     goto Finish;
   }
 
@@ -2443,9 +2557,51 @@ Finish:
 }
 
 /**
-  Converts the dimm Id to its  HII string equivalent
-  @param[in] HiiHandle - handle for hii
+  Get Dimm Info by device handle
+  Scan the dimm list for a DimmInfo identified by device handle
+
+  @param[in] DeviceHandle Device Handle of the dimm
+  @param[in] pDimmInfo Array of DimmInfo
+  @param[in] DimmCount Size of DimmInfo array
+  @param[out] ppRequestedDimmInfo Pointer to the request DimmInfo struct
+
+  @retval EFI_INVALID_PARAMETER pDimmInfo or pRequestedDimmInfo is NULL
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetDimmInfoByHandle(
+  IN     UINT32 DeviceHandle,
+  IN     DIMM_INFO *pDimmInfo,
+  IN     UINT32 DimmCount,
+     OUT DIMM_INFO **ppRequestedDimmInfo
+  )
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 Index = 0;
+  NVDIMM_ENTRY();
+
+  if (pDimmInfo == NULL || ppRequestedDimmInfo == NULL) {
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmCount; Index++) {
+    if (DeviceHandle == pDimmInfo[Index].DimmHandle) {
+      *ppRequestedDimmInfo = &pDimmInfo[Index];
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Converts the Dimm IDs within a region to its  HII string equivalent
   @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
 
   @retval EFI_OUT_OF_RESOURCES if there is no space available to allocate memory for string
@@ -2453,25 +2609,64 @@ Finish:
   @retval EFI_SUCCESS The conversion was successful
 **/
 EFI_STATUS
-ConvertDimmIdToDimmListStr(
+ConvertRegionDimmIdsToDimmListStr(
   IN     REGION_INFO *pRegionInfo,
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN     UINT8 DimmIdentifier,
   OUT CHAR16 **ppDimmIdStr
-)
+  )
 {
 
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   INT32 Index = 0;
+  DIMM_INFO *pDimmInfo = NULL;
+  UINT32 DimmCount = 0;
+  DIMM_INFO *pDimmList = NULL;
+
   NVDIMM_ENTRY();
 
-  if (ppDimmIdStr == NULL) {
+  if (pRegionInfo == NULL || pNvmDimmConfigProtocol == NULL || ppDimmIdStr == NULL) {
     goto Finish;
   }
   *ppDimmIdStr = NULL;
 
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Communication with driver failed");
+    goto Finish;
+  }
+
+  pDimmList = AllocateZeroPool(sizeof(*pDimmList) * DimmCount);
+  if (pDimmList == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    NVDIMM_DBG("Could not allocate memory");
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_NONE, pDimmList);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Communication with driver failed");
+    goto Finish;
+  }
+
   for (Index = 0; Index < pRegionInfo->DimmIdCount; Index++) {
-    *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
-      ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
-         pRegionInfo->DimmId[Index]);
+    if (DimmIdentifier == DISPLAY_DIMM_ID_HANDLE) {
+      *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
+        ((*ppDimmIdStr == NULL) ? FORMAT_HEX : FORMAT_HEX_WITH_COMMA),
+        pRegionInfo->DimmId[Index]);
+    }
+    else {
+      ReturnCode = GetDimmInfoByHandle(pRegionInfo->DimmId[Index], pDimmList, DimmCount, &pDimmInfo);
+      if (EFI_ERROR(ReturnCode)) {
+        FREE_POOL_SAFE(*ppDimmIdStr);
+        NVDIMM_DBG("Failed to retrieve DimmInfo by Device Handle");
+        goto Finish;
+      }
+
+      *ppDimmIdStr = CatSPrintClean(*ppDimmIdStr,
+        ((*ppDimmIdStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        pDimmInfo->DimmUid);
+    }
   }
 
   if (*ppDimmIdStr == NULL) {
@@ -2481,6 +2676,7 @@ ConvertDimmIdToDimmListStr(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  FREE_POOL_SAFE(pDimmList);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -2700,6 +2896,43 @@ SecurityStateBitmaskToString(
 
 Finish:
   return pSecurityString;
+}
+
+/**
+  Convert dimm's S3 Resume Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's S3 Resume opt-in
+**/
+CHAR16*
+S3ResumeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+    case S3_RESUME_SECURE_S3:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_S3), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+    case S3_RESUME_UNSECURE_S3:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNSECURE_S3), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+    default:
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_INVALID), NULL);
+      pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+      FREE_POOL_SAFE(pTempStr);
+      break;
+  }
+
+  return pOptIntString;
 }
 
 /**
@@ -3447,42 +3680,42 @@ GoalStatusToString(
   switch (Status) {
     case GOAL_CONFIG_STATUS_UNKNOWN:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NEW:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_REBOOT_REQUIRED), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_BAD_REQUEST:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_INVALID_GOAL), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_NOT_ENOUGH_RESOURCES:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     case GOAL_CONFIG_STATUS_FIRMWARE_ERROR:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_FIRMWARE_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
 
     default:
       pTempStr = HiiGetString(HiiHandle,
-        STRING_TOKEN(STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
+        STRING_TOKEN(STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN_ERROR), NULL);
       pGoalStatusString = CatSPrintClean(pGoalStatusString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
@@ -3698,8 +3931,10 @@ CopyMem_S(
 {
 #ifdef OS_BUILD
   int status = os_memcpy(DestinationBuffer, DestLength, SourceBuffer, Length);
-  if(status != 0)
+  if(status != 0) {
+    NVDIMM_CRIT("0x%x, 0x%x, 0x%x, 0x%x, 0x%x", DestinationBuffer, DestLength, SourceBuffer, Length, status);
     NVDIMM_CRIT("os_memcpy failed with ErrorCode: %x", status);
+  }
   return DestinationBuffer;
 #else
   return CopyMem(DestinationBuffer, SourceBuffer, Length);
@@ -3817,8 +4052,7 @@ IsDimmInterfaceCodeSupportedByValues(
   if (interfaceCodes != NULL)
   {
     for (Index = 0; Index < interfaceCodeNum; Index++) {
-      if (DCPMM_FMT_CODE_APP_DIRECT == interfaceCodes[Index] ||
-        DCPMM_FMT_CODE_STORAGE == interfaceCodes[Index]) {
+      if (DCPMM_FMT_CODE_APP_DIRECT == interfaceCodes[Index]) {
         Supported = TRUE;
         break;
       }
@@ -3866,11 +4100,13 @@ IsFwApiVersionSupportedByValues(
 {
   BOOLEAN VerSupported = TRUE;
 
-  if ((major < DEV_FW_API_VERSION_MAJOR_MIN) ||
-    (major == DEV_FW_API_VERSION_MAJOR_MIN &&
-      minor < DEV_FW_API_VERSION_MINOR_MIN)) {
+  if (((major <  MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR) ||
+       (major == MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
+        minor <  MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR)) ||
+       (major >  MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR)) {
     VerSupported = FALSE;
   }
+
   return VerSupported;
 }
 
@@ -4170,6 +4406,12 @@ EFI_STATUS PbrDcpmmSerializeTagId(
     *pPbrId = id;
     NVDIMM_DBG("Writing to shared memory: %d\n", *pPbrId);
     shmdt(pPbrId);
+    //If id is reset to zero it is ok to mark
+    //this share memory to be removed
+    if (0 == id)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
     ReturnCode = EFI_SUCCESS;
   }
 #endif
@@ -4208,6 +4450,12 @@ EFI_STATUS PbrDcpmmDeserializeTagId(
   {
     *id = *pPbrId;
     shmdt(pPbrId);
+    //If id is reset to zero it is ok to mark
+    //this share memory to be removed
+    if (0 == *id)
+    {
+      shmctl(ShmId, IPC_RMID, NULL);
+    }
   }
 #endif
   return ReturnCode;
@@ -4229,6 +4477,10 @@ ConvertDimmInfoAttribToString(
   DIMM_INFO_ATTRIB_HEADER *pHeader = (DIMM_INFO_ATTRIB_HEADER *)pAttrib;
 
   if (NULL == pAttrib) {
+    return NULL;
+  }
+
+  if (pHeader->Status.Code == EFI_UNSUPPORTED) {
     return NULL;
   }
 

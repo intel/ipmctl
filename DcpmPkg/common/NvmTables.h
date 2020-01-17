@@ -58,39 +58,60 @@
 
 #define PMTT_HEADER_REVISION_1 1
 #define PMTT_HEADER_REVISION_2 2
-#define PMTT_HEADER_MINOR_REVISION_1 1
 
 /** PMTT table types**/
-#define  PMTT_MAX_LEN  4096
+#define PMTT_MAX_LEN  4096
 #define PMTT_TYPE_SOCKET 0
 #define PMTT_TYPE_iMC 1
 #define PMTT_TYPE_MODULE 2
 #define PMTT_TYPE_VENDOR_SPECIFIC 0XFF
 #define PMTT_TYPE_RESERVED (BIT2 | BIT3)
 #define PMTT_COMMON_HDR_LEN 8
+#define PMTT_PHYSICAL_ELEMENT_OF_TOPOLOGY BIT1
 #define PMTT_DDR_DCPM_FLAG BIT2
 #define PMTT_INVALID_SMBIOS_HANDLE 0xFFFFFFFF
+
+// PMTT Rev 1.1 GUIDs
+#define PMTT_TYPE_DIE_GUID \
+  { 0xA2555053, 0xCDE4, 0x40A5, {0x80, 0x76, 0x00, 0xE3, 0xAB, 0xA6, 0xCA, 0xA7} }
+
+#define PMTT_TYPE_CHANNEL_GUID \
+  { 0x23BF9281, 0xE69c, 0x471F, {0xB2, 0x99, 0xB0, 0x98, 0x2B, 0x2F, 0x55, 0xF9} }
+
+#define PMTT_TYPE_SLOT_GUID \
+  { 0xFDCB2a68, 0xC203, 0x4312, {0xB2, 0x91, 0xB8, 0xE8, 0x62, 0x86, 0xC2, 0xC1} }
 
 /** Macros for Intel ACPI Revisions **/
 #define ACPI_REVISION_1        1
 #define ACPI_REVISION_2        2
 #define ACPI_MAJOR_REVISION_1  1
 #define ACPI_MINOR_REVISION_1  1
+#define ACPI_MINOR_REVISION_2  2
 
-#define IS_ACPI_REV_MAJ_1_MIN_1(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && (revision.Split.Minor == ACPI_MINOR_REVISION_1))
-#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1))
+#define IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                       ((revision.Split.Minor == ACPI_MINOR_REVISION_1) || (revision.Split.Minor == ACPI_MINOR_REVISION_2)))
+#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                       ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2)))
 
 #define IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
 
 #define IS_ACPI_REV_MAJ_0_MIN_1(revision)     (revision.AsUint8 == ACPI_REVISION_1)
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_1(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_1)
+
 #define IS_ACPI_REV_MAJ_0_MIN_2(revision)     (revision.AsUint8 == ACPI_REVISION_2)
+#define IS_ACPI_HEADER_REV_MAJ_0_MIN_2(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_2)
 
 #define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
-                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)))
 #define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
-                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)))
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)))
+
+#define IS_NFIT_REVISION_INVALID(revision)   (revision.AsUint8 != ACPI_REVISION_1)
+#define IS_PCAT_REVISION_INVALID(revision)   IS_ACPI_REV_INVALID(revision)
+#define IS_PMTT_REVISION_INVALID(revision)   ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2))
 
 /** NFIT Tables structures **/
 #pragma pack(push)
@@ -100,8 +121,8 @@
 typedef union {
   UINT8 AsUint8;
   struct {
-    UINT8 Major:4;
     UINT8 Minor:4;
+    UINT8 Major:4;
   }Split;
 } ACPI_REVISION;
 
@@ -319,7 +340,7 @@ union {
     UINT8 Memory          :1;
     UINT8 AppDirect       :1;
     UINT8 AppDirectCached :1;
-    UINT8 Storage         :1;
+    UINT8 Reserved1       :1;
     UINT8 SubNUMAClster   :1;
     UINT8 Reserved        :2;
   } MemoryModesFlags;
@@ -379,7 +400,7 @@ typedef struct {
     Bits[1:0] - Current Volatile Memory Mode
     00b - 1LM Mode
     01b - 2LM Mode
-    10b - 1LM + 2LM Mode
+    10b - Reserved
     11b - Reserved
 
     Bits[3:2] - Allowed Persistent Memory Mode
@@ -391,7 +412,7 @@ typedef struct {
     Bits[5:4] - Allowed Volatile Memory Mode
     00b - 1LM Mode Only
     01b - 1LM or 2LM Mode
-    10b - 1LM + 2LM Mode
+    10b - Reserved
     11b - Reserved
 
     Bits[7:6] - Reserved
@@ -405,13 +426,7 @@ typedef struct {
     0 means there is no limit defined.
   **/
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
-  /**
-    Capacity in GiB per DDR DIMM for use as near
-    memory cache if 2LM is enabled. The remaining
-    DDR capacity will be used as 1LM.
-  **/
-  UINT32 DDRCacheSize;
-  UINT8 Reserved[3];
+  UINT8 Reserved[7];
 } PLATFORM_CAPABILITY_INFO3;
 
 typedef struct {
@@ -968,9 +983,9 @@ FreeParsedPcat(
   );
 
 /**
-  Frees the memory associated in the parsed PMTT 2.0 table.
+  Frees the memory associated in the parsed PMTT table.
 
-  @param[in, out] pParsedPmtt pointer to the PMTT 2.0 header.
+  @param[in, out] pParsedPmtt pointer to the PMTT header.
 **/
 VOID
 FreeParsedPmtt(

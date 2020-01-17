@@ -147,6 +147,14 @@ ManageabilityState::
   - Unmanageable: The DCPMM is not supported by this version of
     the software.
 
+PopulationViolationState::
+  Memory configurations are evaluated based on a new setup option to
+  allow all configs, supported configs, or supported and validated configs.
+  If supported or supported and validated is selected then some memory
+  may fall outside of the configs. One of:
+  - Is in supported configuration: The DCPMM is in supported configuration.
+  - Is in population violation: The DCPMM is not in supported configuration.
+
 PhysicalID::
   The DCPMM physical identifier (i.e., SMBIOS Type 17 handle).
 
@@ -326,25 +334,20 @@ InaccessibleCapacity::
 ReservedCapacity::
   DCPMM capacity reserved for proper alignment.
 
-PeakPowerBudget::
-  If the DCPMM firmware power management policy is enabled, the power budget in
-  mW used for instantaneous power. Refer to FIS for allowable range and default
-  value.
-
 AvgPowerLimit::
   If the DCPMM firmware power management policy is enabled, the power limit in
   mW used for average power. Refer to FIS for allowable range and default value.
 
-TurboModeState::
-  Returns if the Turbo Mode is currently enabled or not. One of:
+MemoryBandwidthBoostFeature::
+  Returns if the Memory Bandwidth Boost Feature is currently enabled or not. One of:
   - 0x0: Disabled
   - 0x1: Enabled
 
-TurboPowerLimit::
-  The power limit used for limiting the Turbo Mode power consumption [mW].
+MemoryBandwidthBoostMaxPowerLimit::
+  The power limit used for limiting the Memory Bandwidth Boost Feature's power consumption [mW].
 
-AvgPowerTimeConstant::
-  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Average Power Time Constant and Average Power Time Constant Step from the Get Device Characteristics command.
+MemoryBandwidthBoostAveragePowerTimeConstant::
+  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Memory Bandwidth Boost Average Time Constant and Average Power Time Constant Step from the Get Device Characteristics command.
   - Default: 15000 ms
 
 MaxAveragePowerLimit::
@@ -376,20 +379,20 @@ LatchedLastShutdownStatus::
   The status of the last shutdown of the DCPMM. One or more of:
   - Unknown: The last shutdown status cannot be determined.
   - FW Flush Complete: FW flush completed.
-  - PM ADR Command: Power management ADR command received.
-  - PM S3: Power management S3 command received.
-  - PM S5: Power management S5 command received.
-  - DDRT Power Fail Command: DDR power fail command received.
+  - PM ADR Command Received: Power management ADR command received.
+  - PM S3 Received: Power management S3 command received.
+  - PM S5 Received: Power management S5 command received.
+  - DDRT Power Fail Command Received: DDR power fail command received.
   - PMIC 12V/DDRT 1.2V Power Loss (PLI)
-  - PM Warm Reset: Power management warm reset received.
-  - Thermal Shutdown: Thermal shutdown triggered.
+  - PM Warm Reset Received: Power management warm reset received.
+  - Thermal Shutdown Received: Thermal shutdown triggered.
   - Controller’s FW State Flush Complete: Flush Completed.
-  - Viral Interrupt: Viral interrupt received.
-  - Surprise Clock Stop: Surprise clock stop received.
+  - Viral Interrupt Received: Viral interrupt received.
+  - Surprise Clock Stop Received: Surprise clock stop received.
   - Write Data Flush Complete: Write data flush completed.
-  - PM S4: Power management S4 command received.
-  - PM Idle: Power management idle received
-  - DDRT Surprise Reset: Surprise reset received
+  - PM S4 Received: Power management S4 command received.
+  - PM Idle Received: Power management idle received
+  - DDRT Surprise Reset Received: Surprise reset received
 
 UnlatchedLastShutdownStatus::
   The status of the last shutdown status of the DCPMM. Same fields as the
@@ -412,6 +415,10 @@ UnlatchedLastShutdownStatus::
   - PM S4: Power management S4 command received.
   - PM Idle: Power management idle received
   - DDRT Surprise Reset: Surprise reset received
+
+ThermalThrottleLossPercent::
+  The average performance loss percentage due to thermal throttling
+  in current boot of the DCPMM.
 
 LastShutdownTime::
   The time the system was last shutdown.
@@ -479,6 +486,11 @@ AveragePowerReportingTimeConstantMultiplier::
   The value that is used to multiply the base time value used for average power
   consumption measurements. Can be set to a value between 0 and 32. The default
   value is 0.
+
+AveragePowerReportingTimeConstant::
+  The value, in milliseconds, used to determine the time constant for reporting
+  the average power consumption measurements. Can be set to a value between 100
+  and 12000, by increments of 100. The default value is 1000.
 
 ViralPolicy::
   Whether viral policies are enabled on the DCPMM. One of:
@@ -557,6 +569,14 @@ MediaTemperatureInjectionsCounter::
 SoftwareTriggersCounter::
   This counter is incremented each time a software trigger is enabled.
 
+MaxMediaTemperature::
+  The highest die temperature reported in degrees Celsius.
+  This value is persistent through Power Loss as well as not effected by Overwrite Dimm or Media Temperature Error Injection.
+
+MaxControllerTemperature::
+  The highest controller temperature reported in degrees Celsius.
+  This value is persistent through Power Loss as well as not effected by Overwrite Dimm.
+  
 MixedSKU::
   One or more DCPMMs in the system have different SKUs. One of:
   - 0: False

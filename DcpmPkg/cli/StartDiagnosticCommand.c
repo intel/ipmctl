@@ -276,11 +276,12 @@ StartDiagnosticCmd(
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIAGNOSTIC_INDEX_PATH, Index);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TEST_NAME_STR, pLoc->TestName);
 
+    if (pLoc->State != NULL) {
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"State", pLoc->State);
+    }
     EventMesg = StrSplit(pLoc->Message, DIAG_ENTRY_EOL, &i);
     if(EventMesg != NULL){
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath,L"Message" ,EventMesg[0]);
-      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"State", pLoc->State);
-      PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, L"Result Code", pLoc->ResultCode, DECIMAL);
       FREE_POOL_SAFE(EventMesg);
     }
     for (Id = 0; Id < MAX_NO_OF_DIAGNOSTIC_SUBTESTS; Id++) {
@@ -291,17 +292,14 @@ StartDiagnosticCmd(
         // Split message string and set printer in unique key-> value form.
         if (pLoc->SubTestMessage[Id] != NULL) {
           ppSplitDiagResultLines = StrSplit(pLoc->SubTestMessage[Id], DIAG_ENTRY_EOL, &NumTokens);
-          if (ppSplitDiagResultLines == NULL) {
-            NVDIMM_WARN("Message string split failed");
-            FREE_POOL_SAFE(pPath);
-            return EFI_OUT_OF_RESOURCES;
-          }
           if (pLoc->SubTestEventCode[Id] != NULL) {
             ppSplitDiagEventCode = StrSplit(pLoc->SubTestEventCode[Id], DIAG_ENTRY_EOL, &CodeTokens);
           }
           for (i = 0; i < NumTokens; i++) {
-            MsgStr = CatSPrint(NULL, L"Message.%d", i + 1);
-            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MsgStr, ppSplitDiagResultLines[i]);
+            if (ppSplitDiagResultLines != NULL) {
+              MsgStr = CatSPrint(NULL, L"Message.%d", i + 1);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MsgStr, ppSplitDiagResultLines[i]);
+            }
             if (ppSplitDiagEventCode != NULL) {
               EventCodeStr = CatSPrint(NULL, L"EventCode.%d", i + 1);
               PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, EventCodeStr, ppSplitDiagEventCode[i]);

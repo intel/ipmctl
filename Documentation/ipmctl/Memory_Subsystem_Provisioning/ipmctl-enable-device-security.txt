@@ -89,10 +89,11 @@ LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-The caller must have the appropriate privileges. The specified DCPMM must
-have security disabled and be manageable by the host software.
+- The caller must have the appropriate privileges.
 
-There must not be any goal creation pending.
+- The specified DCPMM must have security disabled and be manageable by the host software.
+
+- There must not be any goal creation pending.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,

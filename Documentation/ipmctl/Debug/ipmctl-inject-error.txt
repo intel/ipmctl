@@ -127,10 +127,10 @@ DirtyShutdown::
 
 EXAMPLES
 --------
-Sets the media temperature on all manageable DCPMMs to 100 degrees
+Sets the media temperature on all manageable DCPMMs to 50 degrees
 Celsius.
 [verse]
-ipmctl set -dimm Temperature=100
+ipmctl set -dimm Temperature=50
 
 Clears the injected media temperature on all manageable DCPMMs.
 [verse]

@@ -138,7 +138,7 @@ DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): 0x%x\n", \
 #endif // DEBUG_BUILD
 
 /**
-Error level messages are messages that tell the user what hapened in the case
+Error level messages are messages that tell the user what happened in the case
 of a critical failure.  They should be general enough for the end user and
 only show if the CLI command fails (not all failures have these debug messages).
 These are usually something the user can fix or the message they will get
@@ -232,7 +232,7 @@ DebugPrint(EFI_D_VERBOSE, "NVDIMM-VERB:Exiting %s::%s(): 0x%x\n", \
 
 
 /**
-  Error level messages are messages that tell the user what hapened in the case
+  Error level messages are messages that tell the user what happened in the case
   of a critical failure.  They should be general enough for the end user and
   only show if the CLI command fails (not all failures have these debug messages).
   These are usually something the user can fix or the message they will get
@@ -322,7 +322,7 @@ OutputCheckpoint(
   IN    UINT8 MinorCode
   )
 {
-  /** In release this funtion will be cut by compilator **/
+  /** In release this function will be cut by compilator **/
 }
 #endif /** MDEPKG_NDEBUG **/
 

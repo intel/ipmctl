@@ -40,13 +40,22 @@
 #define MEMORY_SIZE_MAX_STR_WIDTH           18
 #define MEMORY_TYPE_MAX_STR_WIDTH           30
 #define DEVICE_LOCATOR_MAX_STR_WIDTH        15
+#define DDR_MAX_STR_WIDTH                   25
+#define DCPMM_MAX_STR_WIDTH                 25
+#define TOTAL_STR_WIDTH                     25
 
 
 #define ON  1
 #define OFF 0
 
+#define ESX_ERROR_LINE_HEADER L"ERROR: "
+
 // Helper to calculate the column width of a CHAR16 string literal
 #define TABLE_MIN_HEADER_LENGTH(Header)     ((sizeof(Header) / sizeof(CHAR16)))
+
+extern BOOLEAN gDisplayNulls;
+extern UINT32 gNullValuesEncounteredForDisplay;
+extern CHAR16* gNullValueToDisplay;
 
 typedef enum {
   TEXT,
@@ -296,16 +305,21 @@ do { \
   path = BuildPath(fmt,  ## __VA_ARGS__); \
 } while (0)
 
-/**Set a wide str into a dataset that resides in the "set buffer"**/
+/**Set a wide str into a dataset that resides in the "set buffer". If the value is NULL, nothing will be done**/
 #define PRINTER_SET_KEY_VAL_WIDE_STR(ctx, key_path, key_name, val) \
 do { \
-  EFI_STATUS rc; \
-  DATA_SET_CONTEXT *pDataSet = NULL; \
-  if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
-    NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
-  } \
-  if( EFI_SUCCESS != (rc = SetKeyValueWideStr(pDataSet, key_name, val))) { \
-    NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
+  if(NULL != (VOID*)((UINTN)val) || TRUE == gDisplayNulls) { \
+    EFI_STATUS rc; \
+    DATA_SET_CONTEXT *pDataSet = NULL; \
+    if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
+      NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
+    } \
+    if(NULL == (VOID*)((UINTN)val)){ \
+      gNullValuesEncounteredForDisplay++; \
+    } \
+    if( EFI_SUCCESS != (rc = SetKeyValueWideStr(pDataSet, key_name, (NULL == (VOID*)((UINTN)val) ? gNullValueToDisplay : val)))) { \
+      NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
+    } \
   } \
 } while (0)
 
@@ -348,13 +362,18 @@ do { \
 /**Set a wide str into a dataset that resides in the "set buffer"**/
 #define PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(ctx, key_path, key_name, val, ...) \
 do { \
-  EFI_STATUS rc; \
-  DATA_SET_CONTEXT *pDataSet = NULL; \
-  if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
-    NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
-  } \
-  if( EFI_SUCCESS != (rc = SetKeyValueWideStrFormat(pDataSet, key_name, val, ## __VA_ARGS__))) { \
-    NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
+  if(NULL != (VOID*)((UINTN)val) || TRUE == gDisplayNulls) { \
+    EFI_STATUS rc; \
+    DATA_SET_CONTEXT *pDataSet = NULL; \
+    if( EFI_SUCCESS != (rc = LookupDataSet(ctx, key_path, &pDataSet))) { \
+      NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
+    } \
+    if(NULL == (VOID*)((UINTN)val)){ \
+      gNullValuesEncounteredForDisplay++; \
+    } \
+    if( EFI_SUCCESS != (rc = SetKeyValueWideStrFormat(pDataSet, key_name, (NULL == (VOID*)((UINTN)val) ? gNullValueToDisplay : val), ## __VA_ARGS__))) { \
+      NVDIMM_CRIT("Failed to Set Key (%ls) Val (%ls) ReturnCode (" FORMAT_EFI_STATUS ")", key_name, val, rc); \
+    } \
   } \
 } while (0)
 

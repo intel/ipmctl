@@ -67,9 +67,17 @@ struct _DIMM;
 #define FW_IMG_MAX_CHUNK_SIZE   126     //!< The maximum size of a firmware image chunk
 
 #define SECONDS_TO_MICROSECONDS(Seconds) MultU64x32((UINT64)(Seconds), 1000000)
+#define SECONDS_TO_MICROSECONDS_32(Seconds) Seconds*1000000
+#define SECONDS_TO_MILLISECONDS(Seconds) (Seconds * 1000)
 
 // PassThru timeout in microseconds
 #define PT_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS(1)
+
+// PassThru timeout in milliseconds
+#define PT_TIMEOUT_INTERVAL_EXT SECONDS_TO_MILLISECONDS(1)
+
+// Dcpmm timeout in microseconds
+#define DCPMM_TIMEOUT_INTERVAL SECONDS_TO_MICROSECONDS_32(1)
 
 // Smbus delay period in microseconds
 #define SMBUS_PT_DELAY_PERIOD_IN_US  100
@@ -88,22 +96,8 @@ struct _DIMM;
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
-typedef struct {
-  volatile UINT64 *pCommand;                      //!< va of the command register
-  volatile UINT64 *pNonce0;                       //!< va of the nonce0 register
-  volatile UINT64 *pNonce1;                       //!< va of the nonce1 register
-  volatile UINT64 *pInPayload[IN_PAYLOAD_NUM];    //!< va of the payload registers write only
-  volatile UINT64 *pStatus;                       //!< va of the status register
-  volatile UINT64 *pOutPayload[OUT_PAYLOAD_NUM];  //!< va of the payload registers read only
-  UINT32 MbInLineSize;
-  UINT32 MbOutLineSize;
-  UINT32 NumMbInSegments;                         //!< number of segments of the IN mailbox
-  UINT32 NumMbOutSegments;                        //!< number of segments of the OUT mailbox
-  UINT8 SequenceBit;                              //!< current sequence bit state for mailbox
-  volatile VOID **ppMbIn;                         //!< va of the IN mailbox segments
-  volatile VOID **ppMbOut;                        //!< va of the OUT mailbox segments
-  volatile UINT64 *pBsr;                          //!< va of the DIMMs BSR register
-} MAILBOX;
+// Opt-In Codes - values 0x00-0x02 are invalid
+#define OPT_IN_S3_RESUME 0x03
 
 #pragma pack(push)
 #pragma pack(1)
@@ -159,37 +153,11 @@ DurableCacheLineClearInterleavedBuffer(
   );
 
 /**
-  Poll Firmware Command Completion
-  Poll the status register of the mailbox waiting for the
-  mailbox complete bit to be set
-
-  @param[in] pMb - The mailbox the fw cmd was submitted on
-  @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
-             A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
-             If Timeout is greater than zero, then this function will return EFI_TIMEOUT if the time required to execute
-             the receive data command is greater than Timeout.
-  @param[out] pStatus The Fw status to be returned when command completes
-  @param[out] pBsr The boot status register when the command completes OPTIONAL
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_DEVICE_ERROR FW error received
-  @retval EFI_TIMEOUT A timeout occurred while waiting for the protocol command to execute.
-
-**/
-EFI_STATUS
-PollCmdCompletion(
-  IN      MAILBOX *pMb,
-  IN      UINT64 Timeout,
-      OUT UINT64 *pStatus,
-      OUT UINT64 *pBsr OPTIONAL
-  );
-
-/**
-  Pass thru command to FW
+  Pass through command to FW
   Sends a command to FW and waits for response from firmware
 
   @param[in,out] pCmd A firmware command structure
-  @param[in] pMb OPTIONAL A mailbox to call pass thru command, if NULL passed then mailbox is taken from inventory base
+  @param[in] pMb OPTIONAL A mailbox to call pass through command, if NULL passed then mailbox is taken from inventory base
              Inventory base may be not initialized on early driver stage.
   @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
              A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
@@ -210,11 +178,11 @@ DefaultPassThru (
   );
 
 /**
-  Pass thru command to FW, but retry FW_ABORTED_RETRIES_COUNT_MAX times if we receive a FW_ABORTED
+  Pass through command to FW, but retry FW_ABORTED_RETRIES_COUNT_MAX times if we receive a FW_ABORTED
   response code back.
 
   @param[in,out] pCmd A firmware command structure
-  @param[in] pMb OPTIONAL A mailbox to call pass thru command, if NULL passed then mailbox is taken from inventory base
+  @param[in] pMb OPTIONAL A mailbox to call pass through command, if NULL passed then mailbox is taken from inventory base
              Inventory base may be not initialized on early driver stage.
   @param[in] Timeout The timeout, in 100ns units, to use for the execution of the protocol command.
              A Timeout value of 0 means that this function will wait indefinitely for the protocol command to execute.
@@ -255,7 +223,8 @@ enum PassthroughOpcode {
   PtUpdateFw = 0x09,           //!< Move an image to the DIMM
   PtInjectError = 0x0A,        //!< Validation only CMD to trigger error conditions
   PtCustomerFormat = 0xF1,     //!< DFX command for factory reset
-  PtMax = 0xF2
+  PtEmulatedBiosCommands = 0xFD, //!< Perform BIOS emulated command
+  PtMax = 0xFE
 };
 
 /**
@@ -271,6 +240,7 @@ enum IdentifyDimmSubop {
 **/
 enum GetSecInfoSubop {
   SubopGetSecState = 0x00,          //!< Returns the DIMM security state
+  SubOpGetSecOptIn = 0x02           //!< Returns the DIMM security Opt-In
 };
 
 /**
@@ -351,6 +321,30 @@ enum InjectErrorSubop
   SubopMediaErrorTemperature = 0x02,  //!< Injects a particular temperature to cause a temperature error
   SubopSoftwareErrorTriggers = 0x03   //!< SW override triggers to trip various SW alarms
 };
+
+/**
+  Defines the Sub-Opcodes for PtEmulatedBiosCommands
+**/
+enum PtEmulatedBiosCommandsSubop {
+  SubopGetLPInfo = 0x00,
+  SubopWriteLPInput = 0x01,           //!< Returns large payload mailbox information
+  SubopReadLPOutput = 0x02,           //!< Copies a buffer to the large payload input mailbox
+  SubopGetBSR = 0x03,                 //!< Copies the large payload output mailbox to a buffer
+  SubopReserved2 = 0x04,              //!< Reserved
+  SubopExtVendorSpecific = 0x05,      //!< Performs specified command with user-defined timeout and transport interface
+};
+
+/**
+  Defines the Transport Interface type for PtExtVendorSpecific
+**/
+enum GetTransportInterface {
+  DdrtTransportInterface = 0x00,
+  SmbusTransportInterface = 0x01,
+  Reserved1 = 0x02,
+  Reserved2 = 0x03
+};
+
+
 /**
   Payload -> command options -> payload type.
 **/
@@ -407,7 +401,7 @@ typedef struct {
   UINT16 Did;                     //!< 3-2   : Device ID
   UINT16 Rid;                     //!< 5-4   : Revision ID
   UINT16 Ifc;                     //!< 7-6   : Interface format code (0x301)
-  UINT8 Fwr[FW_BCD_VERSION_LEN];  //!< 12-8  : BCD formated firmware revision
+  UINT8 Fwr[FW_BCD_VERSION_LEN];  //!< 12-8  : BCD formatted firmware revision
   UINT8 Reserved0;                //!< 13    : Reserved
   UINT8 Fswr;                     //!< 14    : Feature SW Required Mask
   UINT8 Reserved1;                //!< 15    : Reserved
@@ -454,10 +448,12 @@ typedef struct {
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
   UINT16 MaxAveragePowerLimit;
-  UINT16 MaxTurboModePowerConsumption;
-  UINT32 MaxAveragePowerTimeConstant;
-  UINT32 AveragePowerTimeConstantStep;
-  UINT8 Reserved[104];
+  UINT16 MaxMemoryBandwidthBoostMaxPowerLimit;
+  UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;
+  UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep;
+  UINT32 MaxAveragePowerReportingTimeConstant;
+  UINT32 AveragePowerReportingTimeConstantStep;
+  UINT8 Reserved[96];
 } PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1;
 
 typedef struct {
@@ -533,6 +529,32 @@ typedef struct {
 } PT_GET_SECURITY_PAYLOAD;
 
 /**
+  Passthrough Input Payload:
+    Opcode:     0x02h (Get Security Info)
+    Sub-Opcode: 0x02h (Get Security Opt-In)
+**/
+typedef struct {
+  UINT16 OptInCode;
+  UINT8 Reserved[126];
+} PT_INPUT_PAYLOAD_GET_SECURITY_OPT_IN;
+
+/**
+  Passthrough Output Payload:
+    Opcode:     0x02h (Get Security Info)
+    Sub-Opcode: 0x02h (Get Security Opt-In)
+**/
+typedef struct {
+  UINT16 OptInCode;
+  UINT8 Reserved[2];
+  UINT32 OptInValue;
+  UINT8 OptInModify;
+  UINT8 Reserved2[3];
+  UINT8 OptInWindow;
+  UINT8 Reserved3[51];
+  UINT8 OptInSpecificData[64];
+} PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN;
+
+/**
   Passthrough Payload:
     Opcode:     0x02h (Set Security Info)
     Sub-Opcode: 0xF1h (Set Passphrase)
@@ -554,6 +576,22 @@ typedef struct {
   UINT8 Reserved1[3];                                  //!< 2:0 Reserved
   UINT8 AveragePowerReportingTimeConstantMultiplier;   //!< 3 Average Power Reporting Time Constant Multiplier
   UINT8 Reserved2[124];                                //!< 127:4 Reserved
+} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0;
+
+typedef struct {
+  UINT8 Reserved1[4];                                  //!< 3:0 Reserved
+  UINT32 AveragePowerReportingTimeConstant;            //!< 7:4 Average Power Reporting Time Constant
+  UINT8 Reserved2[120];                                //!< 127:4 Reserved
+} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1;
+
+typedef struct {
+  UINT8 FisMajor;
+  UINT8 FisMinor;
+  union {
+    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0   Fis_2_00;
+    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1   Fis_2_01;
+    UINT8 Data[0];
+  }Payload;
 } PT_OPTIONAL_DATA_POLICY_PAYLOAD;
 
 /**
@@ -600,7 +638,7 @@ typedef struct
 /**
   Passthrough Payload:
     Opcode:    0x04h (Get Features)
-    Sub-Opcode:  0x02h (Power Managment Policy)
+    Sub-Opcode:  0x02h (Power Management Policy)
 **/
 typedef struct {
   UINT8 Reserved1;
@@ -655,17 +693,17 @@ typedef struct {
   /**
     Returns if the Turbo Mode is currently enabled or not.
   **/
-  UINT8 TurboModeState;
+  UINT8 MemoryBandwidthBoostFeature;
   /**
     Power limit [mW] used for limiting the Turbo Mode power consumption.
     Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
     the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
   **/
-  UINT16 TurboPowerLimit;
+  UINT16 MemoryBandwidthBoostMaxPowerLimit;
   /**
     The value used as a base time window for power usage measurements [ms].
   **/
-  UINT32 AveragePowerTimeConstant;
+  UINT32 MemoryBandwidthBoostAveragePowerTimeConstant;
 
   UINT8 Reserved3[115];
 } PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1;
@@ -711,16 +749,6 @@ typedef struct {
     Sub-Opcode:  0x01h (Platform Config Data)
 **/
 typedef struct {
-  UINT32 Size;      //!< Size in bytes of the selected partition
-  UINT32 TotalSize; //!< Total size in bytes of the Platform Config Area
-} PT_OUTPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA;
-
-/**
-  Passthrough Payload:
-    Opcode:      0x06h (Get Admin Features)
-    Sub-Opcode:  0x01h (Platform Config Data)
-**/
-typedef struct {
   UINT32 Size;
   UINT8 Reserved[124];
 } PT_OUTPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA_SIZE;
@@ -749,7 +777,7 @@ typedef struct  {
 **/
 typedef struct _SKU_INFORMATION {
   UINT32 MemoryModeEnabled              : 1;
-  UINT32 StorageModeEnabled             : 1;
+  UINT32                                : 1;   //!< Reserved
   UINT32 AppDirectModeEnabled           : 1;
   UINT32 PackageSparingCapable          : 1;
   UINT32                                : 12;  //!< Reserved
@@ -877,7 +905,7 @@ typedef struct {
   UINT64 LastShutdownTime;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
@@ -904,7 +932,7 @@ typedef struct {
   LAST_SHUTDOWN_STATUS_DETAILS UnlatchedLastShutdownDetails;
 
   /**
-    Display extended details of the last shutdown that occured
+    Display extended details of the last shutdown that occurred
     Bit 0: Viral Interrupt Command (0 - Not Received, 1 - Received)
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
@@ -1031,15 +1059,6 @@ typedef struct {
   UINT8 Reserved[127];
 } PT_INPUT_PAYLOAD_MEMORY_INFO;
 
-typedef struct {
-  UINT8  CmdOpcode;
-  UINT8  CmdSubcode;
-  UINT16 Percent;
-  UINT32 EstimatedTimeLeft;
-  UINT8  Status;
-  UINT8  CmdSpecificData[119];
-} PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS;
-
 /**
   Passthrough Output Payload:
     Opcode:      0x08h (Get Log Page)
@@ -1104,28 +1123,18 @@ typedef struct {
 } PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4;
 
 /**
-  Passthrough Payload:
+  Passthrough Output Payload:
     Opcode:      0x08h (Get Log Page)
-    Sub-Opcode:  0x04h (Long Operations Status)
+    Sub-Opcode:  0x04h (Long Operation Status)
 **/
-typedef struct
-{
-  /**
-    This will coincide with the opcode & sub-opcode
-    Bits 7:0 - Opcode
-    Bits 15:8 - Sub-Opcode
-  **/
-  UINT16 Command;
-  UINT16 PercentComplete; //!< The % complete of the current command (BCD encoded)
-
-  /**
-    Estimated Time to Completion.
-    Time in seconds till the Long Operation in Progress is expected to be completed
-  **/
-  UINT32 EstimatedTimeToCompletion;
-  UINT8 StatusCode; //!< The completed mailbox status code of the long operation
-  UINT8 reserved[119]; //!< Reserved
-} PT_PAYLOAD_LONG_OPERATION_STATUS;
+typedef struct {
+  UINT8  CmdOpcode;
+  UINT8  CmdSubcode;
+  UINT16 Percent;
+  UINT32 EstimatedTimeLeft;
+  UINT8  Status;
+  UINT8  CmdSpecificData[119];
+} PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS;
 
 enum GetErrorLogLevel {
   ErrorLogLowPriority = 0x00,
@@ -1274,6 +1283,54 @@ typedef struct {
 } PT_OUTPUT_PAYLOAD_GET_ERROR_LOG_THERMAL_ENTRY;
 
 /**
+  Passthrough Input Payload:
+     Opcode:      0x08h (Get Log Page)
+     Sub-Opcode:  0xFFh (Command Effect Log)
+**/
+typedef struct {
+  UINT8 PayloadType;
+  UINT8 LogAction;
+  UINT8 EntryOffset;
+  UINT8 Reserved[125];
+} PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
+
+/**
+  Get Command Effect Log Input Payload Enum types
+**/
+
+enum GetCelPayloadType {
+  LargePayload = 0x00,
+  SmallPayload = 0x01
+};
+
+enum GetCelLogAction {
+  EntriesCount = 0x00,
+  CelEntries = 0x01
+};
+
+/**
+  Passthrough Output Payload:
+     Opcode:      0x08h (Get Log Page)
+     Sub-Opcode:  0xFFh (Command Effect Log)
+**/
+typedef struct {
+  UINT32  LogEntryCount;
+  UINT8   Reserved[124];
+} PT_OUTPUT_PAYLOAD_GET_CEL_COUNT;
+
+typedef struct {
+  COMMAND_EFFECT_LOG_ENTRY CelEntry[16];
+} PT_OUTPUT_PAYLOAD_GET_CEL_ENTRIES;
+
+typedef struct {
+  union {
+    PT_OUTPUT_PAYLOAD_GET_CEL_COUNT CelCount;
+    PT_OUTPUT_PAYLOAD_GET_CEL_ENTRIES CelEntries;
+    UINT8 Data[0];
+  } LogTypeData;
+} PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG;
+
+/**
 Passthrough Input Payload:
 Opcode:    0x07h (Get Admin Feature)
 Sub-Opcode:  0xCAh (Command Access Policy)
@@ -1329,7 +1386,18 @@ typedef struct {
     0x04 - Normal Mode Complete
   **/
   UINT8 DdrtTrainingStatus; //!<Designates training has been completed by BIOS.
-  UINT8 Reserved[126];
+  union {
+    UINT8 AsUint8;
+    struct {
+      /**
+        Bit 0: CKE Synchronization (0 - disabled (default), 1 - enabled)
+        Bit 1-7: reserved
+      **/
+      UINT8 CKESynchronization : 1; //!< Allows enabling or disabling of the CKE synchronization
+      UINT8                    : 7; //!< reserved
+    } Separated;
+  } AdditionalDDRTOptions;
+  UINT8 Reserved[125];
 } PT_OUTPUT_PAYLOAD_GET_DDRT_IO_INIT_INFO;
 
 /**
@@ -1385,10 +1453,10 @@ typedef struct {
   UINT8 Reserved1;
 
   /*
-  * 0x00 - Intel_Reserved
+  * 0x00 - Intel Reserved
   * 0x01 - 2LM
   * 0x02 - App Direct
-  * 0x03 - Storage
+  * 0x03 - Intel Reserved
   * 0x04 - Patrol scrub (Memory Transaction type)
   * 0xFF - 0x05 - Intel Reserved
   */

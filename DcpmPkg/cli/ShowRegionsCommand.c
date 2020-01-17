@@ -219,8 +219,6 @@ CHAR16 *mppAllowedShowRegionsDisplayValues[] =
   ISET_ID_STR,
 };
 
-STATIC CHAR16 *CreateDimmsStr(REGION_INFO *pRegions);
-
 /**
   Register the show regions command
 
@@ -479,10 +477,6 @@ ShowRegions(
       continue;
     }
 
-    if (pRegions[RegionIndex].RegionType == PM_TYPE_STORAGE) {
-      continue;
-    }
-
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, RegionIndex);
 
     Found = TRUE;
@@ -547,7 +541,10 @@ ShowRegions(
     **/
     if (AllOptionSet ||
       (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, DIMM_ID_STR))) {
-      pDimmIds = CreateDimmsStr(&pRegions[RegionIndex]);
+      ReturnCode = ConvertRegionDimmIdsToDimmListStr(&pRegions[RegionIndex], pNvmDimmConfigProtocol, DisplayPreferences.DimmIdentifier, &pDimmIds);
+      if (EFI_ERROR(ReturnCode)) {
+        goto Finish;
+      }
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, pDimmIds);
       FREE_POOL_SAFE(pDimmIds);
     }
@@ -610,28 +607,4 @@ Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
-}
-
-/**
-Create comma deliminted list of DimmIDs
-
-@param[in] pRegions - pointer to a REGION_INFO struct
-
-@retval Heap allocated string of DimmIDs (caller to free)
-**/
-STATIC CHAR16 *CreateDimmsStr(REGION_INFO *pRegions) {
-  CHAR16 *DimmsStr = NULL;
-  UINT16 DimmIdx;
-
-  if (NULL == pRegions) {
-    return NULL;
-  }
-
-  for (DimmIdx = 0; DimmIdx < pRegions->DimmIdCount; DimmIdx++) {
-    if (DimmIdx > 0) {
-      DimmsStr = CatSPrintClean(DimmsStr, DIMM_ID_STR_DELIM);
-    }
-    DimmsStr = CatSPrintClean(DimmsStr, FORMAT_HEX, pRegions->DimmId[DimmIdx]);
-  }
-  return DimmsStr;
 }

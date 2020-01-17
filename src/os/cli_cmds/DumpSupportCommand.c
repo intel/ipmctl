@@ -2,7 +2,7 @@
  * Copyright (c) 2018, Intel Corporation.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <Protocol/EfiShellParameters.h>
+#include <ShellParameters.h>
 #include <Library/BaseMemoryLib.h>
 #include "DumpSupportCommand.h"
 #include "NvmDimmCli.h"

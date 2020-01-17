@@ -18,7 +18,7 @@
 CONST CHAR16 *pPoisonMemoryTypeStr[POISON_MEMORY_TYPE_COUNT] = {
   L"MemoryMode",
   L"AppDirect",
-  L"NotDefined", // This was storage mode
+  L"NotDefined",
   L"PatrolScrub"
 };
 
@@ -53,7 +53,8 @@ struct Command SetDimmCommand =
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
-    {AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FALSE, ValueRequired}
+    {AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FALSE, ValueRequired},
+    {AVG_PWR_REPORTING_TIME_CONSTANT, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY, FALSE, ValueRequired}
     }, //!< properties
     L"Set properties of one/more DIMMs such as device security and modify device.",                          //!< help
   SetDimm,
@@ -105,9 +106,11 @@ SetDimm(
   CHAR16 *pNewPassphraseStatic = NULL;
   CHAR16 *pConfirmPassphraseStatic = NULL;
   CHAR16 *pAvgPowerReportingTimeConstantMultValue = NULL;
+  CHAR16 *pAvgPowerReportingTimeConstantValue = NULL;
   BOOLEAN IsNumber = FALSE;
   UINT64 ParsedNumber = 0;
-  UINT8 AvgPowerReportingTimeConstantMult = AVG_PWR_REPORTING_TIME_CONSTANT_MULT_DEFAULT;
+  UINT8 *pAvgPowerReportingTimeConstantMult = NULL;
+  UINT32 *pAvgPowerReportingTimeConstant = NULL;
   CHAR16 *pTargetValue = NULL;
   CHAR16 *pLoadUserPath = NULL;
   CHAR16 *pLoadFilePath = NULL;
@@ -207,11 +210,16 @@ SetDimm(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
+      goto Finish;
+    }
   }
 
   /** If no dimm IDs are specified get IDs from all dimms **/
   if (DimmIdsCount == 0) {
-      ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, &DimmIdsCount, &pDimmIds);
+      ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, TRUE, &DimmIdsCount, &pDimmIds);
       if (EFI_ERROR(ReturnCode)) {
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
         goto Finish;
@@ -230,19 +238,20 @@ SetDimm(
   DefaultOptionSpecified = containsOption(pCmd, DEFAULT_OPTION);
 
   /** Check force option **/
-    if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
-        Force = TRUE;
-    }
+  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
+    Force = TRUE;
+  }
 
   /**
       This command allows for different property sets depending on what action is to be taken.
       Here we check if input contains properties from different actions because they are not
       allowed together.
   **/
-  if (!EFI_ERROR(ContainsProperty(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))) {
-      /** Found specified action **/
-      ActionSpecified = TRUE;
+  if (!EFI_ERROR(ContainsProperty(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))
+    || !EFI_ERROR(ContainsProperty(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT))) {
+    ActionSpecified = TRUE;
   }
+
   if (containsOption(pCmd, SOURCE_OPTION) ||
     !EFI_ERROR(ContainsProperty(pCmd, PASSPHRASE_PROPERTY)) ||
     !EFI_ERROR(ContainsProperty(pCmd, NEWPASSPHRASE_PROPERTY)) ||
@@ -579,27 +588,52 @@ SetDimm(
   }
 
   /**
-    Set AveragePowerReportingTimeConstantMultiplier
+    Set AveragePowerReportingTimeConstantMultiplier, AveragePowerReportingTimeConstantMultiplier
   **/
-  ReturnCode = GetPropertyValue(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, &pAvgPowerReportingTimeConstantMultValue);
-  if (!EFI_ERROR(ReturnCode)) {
-    // If average power reporting time constant multiplier property exists, check its validity
-    IsNumber = GetU64FromString(pAvgPowerReportingTimeConstantMultValue, &ParsedNumber);
-    if (!IsNumber) {
-      NVDIMM_WARN("Average power reporting time constant multiplier value is not a number");
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT);
-      goto Finish;
-    } else if (ParsedNumber > AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX) {
-      NVDIMM_WARN("Average power reporting time constant multiplier value %d is greater than maximum %d", ParsedNumber, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX);
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT);
-      goto Finish;
-    }
-    AvgPowerReportingTimeConstantMult = (UINT8)ParsedNumber;
+  GetPropertyValue(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, &pAvgPowerReportingTimeConstantMultValue);
+  GetPropertyValue(pCmd, AVG_PWR_REPORTING_TIME_CONSTANT, &pAvgPowerReportingTimeConstantValue);
 
-    pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Modify");
-    pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L"");
+  if (pAvgPowerReportingTimeConstantMultValue || pAvgPowerReportingTimeConstantValue) {
+    if (pAvgPowerReportingTimeConstantMultValue) {
+      // If average power reporting time constant multiplier property exists, check its validity
+      IsNumber = GetU64FromString(pAvgPowerReportingTimeConstantMultValue, &ParsedNumber);
+      if (!IsNumber) {
+        NVDIMM_WARN("Average power reporting time constant multiplier value is not a number");
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT);
+        goto Finish;
+      }
+      else if (ParsedNumber > AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX) {
+        NVDIMM_WARN("Average power reporting time constant multiplier value %d is greater than maximum %d", ParsedNumber, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT);
+        goto Finish;
+      }
+      pAvgPowerReportingTimeConstantMult = AllocateZeroPool(sizeof(UINT8));
+      *pAvgPowerReportingTimeConstantMult = (UINT8)ParsedNumber;
+    }
+
+    if (pAvgPowerReportingTimeConstantValue) {
+      // If average power reporting time constant property exists, check its validity
+      IsNumber = GetU64FromString(pAvgPowerReportingTimeConstantValue, &ParsedNumber);
+      if (!IsNumber) {
+        NVDIMM_WARN("Average power reporting time constant value is not a number");
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT);
+        goto Finish;
+      }
+      else if (ParsedNumber > AVG_PWR_REPORTING_TIME_CONSTANT_MAX) {
+        NVDIMM_WARN("Average power reporting time constant value %d is greater than maximum %d", ParsedNumber, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX);
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT);
+        goto Finish;
+      }
+      pAvgPowerReportingTimeConstant = AllocateZeroPool(sizeof(UINT32));
+      *pAvgPowerReportingTimeConstant = (UINT32)ParsedNumber;
+    }
+
+      pCommandStatusMessage = CatSPrint(NULL, FORMAT_STR, L"Modify");
+      pCommandStatusPreposition = CatSPrint(NULL, FORMAT_STR, L"");
 
     if (!Force) {
       for (Index = 0; Index < DimmIdsCount; Index++) {
@@ -617,10 +651,7 @@ SetDimm(
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-            &pDimmIds[Index], 1, AvgPowerReportingTimeConstantMult, pCommandStatus);
-          if (EFI_ERROR(ReturnCode)) {
-            goto FinishCommandStatusSet;
-          }
+            &pDimmIds[Index], 1, pAvgPowerReportingTimeConstantMult, pAvgPowerReportingTimeConstant, pCommandStatus);
         } else {
           PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
           continue;
@@ -628,7 +659,7 @@ SetDimm(
       }
     } else {
       ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
-        pDimmIds, DimmIdsCount, AvgPowerReportingTimeConstantMult, pCommandStatus);
+        pDimmIds, DimmIdsCount, pAvgPowerReportingTimeConstantMult, pAvgPowerReportingTimeConstant, pCommandStatus);
       goto FinishCommandStatusSet;
     }
   } else {
@@ -834,6 +865,8 @@ Finish:
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pCommandStatusMessage);
   FREE_POOL_SAFE(pCommandStatusPreposition);
+  FREE_POOL_SAFE(pAvgPowerReportingTimeConstantMult);
+  FREE_POOL_SAFE(pAvgPowerReportingTimeConstant);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -110,7 +110,7 @@ ConfirmPassphrase=""
 Changes the default master passphrase to masterpassphrase on all DCPMMs.
 
 [verse]
-ipmctl set -master -default NewPassphrase=masterpassphrase ConfirmPassphrase=
+ipmctl set -master -default -dimm NewPassphrase=masterpassphrase ConfirmPassphrase=
 masterpassphrase
 
 Changes the master passphrase from masterpassphrase to newmasterpassphrase on
@@ -122,8 +122,12 @@ ConfirmPassphrase=newmasterpassphrase
 
 LIMITATIONS
 -----------
-The specified DCPMM must be manageable by the host software, have
-security enabled and not be in the "Frozen" or "Exceeded" lock states.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM must be manageable by the host software, have
+  security enabled and not be in the "Frozen" or "Exceeded" lock states.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,

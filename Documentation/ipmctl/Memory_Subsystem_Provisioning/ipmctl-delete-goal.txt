@@ -69,9 +69,14 @@ ipmctl delete -goal
 
 LIMITATIONS
 -----------
-The appropriate privileges and the specified DCPMM(s) must be manageable by the
-host software and unlocked if security is enabled.
-given socket and all specified DCPMMs must contain a memory allocation goal.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software and unlocked if
+  security is enabled.
+
+- Given socket and all specified DCPMMs must contain a memory allocation goal.
 
 RETURN DATA
 -----------

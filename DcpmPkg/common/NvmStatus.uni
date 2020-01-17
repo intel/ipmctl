@@ -27,6 +27,13 @@
 //
 #string STR_DCPMM_STATUS_EXECUTE_SUCCESS  #language en "executed successfully"
 
+#string STR_ACPI_STATUS_NFIT                              #language en "NFIT"
+#string STR_ACPI_STATUS_PCAT                              #language en "PCAT"
+#string STR_ACPI_STATUS_PMTT                              #language en "PMTT"
+#string STR_ACPI_STATUS_UNKNOWN_TABLE                     #language en "Unknown Table"
+#string STR_ACPI_STATUS_ERR_INVALID_REVISION              #language en "[%ls] Invalid ACPI table revision(0x%02x)"
+#string STR_ACPI_STATUS_ERR_INVALID_MAJOR_MINOR_REVISION  #language en "[%ls] Invalid ACPI table revision(Major: 0x%x, Minor: 0x%x)"
+
 #string STR_DCPMM_STATUS_CONTROLLER_OUT_OF_RANGE  #language en "Given controller temperature is out of range <%d,%d>"
 #string STR_DCPMM_STATUS_MEDIA_OUT_OF_RANGE       #language en "Given media temperature is out of range <%d,%d>"
 #string STR_DCPMM_STATUS_CAPACITY_OUT_OF_RANGE    #language en "Given capacity is out of range <%d,%d>"
@@ -38,12 +45,14 @@
 #string STR_DCPMM_STATUS_ERR_FORCE_REQUIRED        #language en "This operation requires force option"
 #string STR_DCPMM_STATUS_ERR_DIMM_NOT_FOUND        #language en "DIMM not found"
 #string STR_DCPMM_STATUS_ERR_MANAGEABLE_DIMM_NOT_FOUND  #language en "No manageable DIMMs in the system."
+#string STR_DCPMM_STATUS_ERR_NO_USABLE_DIMMS            #language en "No usable DIMMs due to all DIMMs being one of the following:\n- DIMMs unmanageable\n- DIMMs non-functional\n- DIMMs have a population issue"
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_API_NOT_VALID     #language en "The firmware image is not compatible with this version of software."
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_DOWNGRADE         #language en "Firmware unchanged."
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_ALREADY_LOADED    #language en "A firmware image is already staged for execution. A power cycle is required before another can be staged."
 #string STR_DCPMM_STATUS_ERR_FIRMWARE_FAILED_TO_STAGE    #language en "Failed to validate and stage firmware image."
 #string STR_DCPMM_STATUS_ERR_DIMM_ID_DUPLICATED    #language en "Duplicated DIMM ID"
 #string STR_DCPMM_STATUS_ERR_SOCKET_ID_NOT_VALID   #language en "Invalid SocketID"
+#string STR_DCPMM_STATUS_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID  #language en "Specified SocketID and DimmID conflict"
 #string STR_DCPMM_STATUS_ERR_SOCKET_ID_DUPLICATED  #language en "Duplicated SocketID"
 #string STR_DCPMM_STATUS_ERR_INVALID_PASSPHRASE    #language en "Invalid passphrase"
 
@@ -61,7 +70,7 @@
 #string STR_DCPMM_STATUS_ERR_PASSPHRASES_DO_NOT_MATCH             #language en "The new passphrase and the confirmed passphrase do not match"
 
 #string STR_DCPMM_STATUS_ERR_SENSOR_NOT_VALID                     #language en "Invalid sensor"
-#string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid EnabledState value"
+#string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid AlarmEnabled value"
 
 #string STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE                 #language en "The media has been disabled"
 #string STR_DCPMM_STATUS_ERR_AIT_DRAM_NOT_READY                   #language en "The AIT DRAM is not ready"
@@ -90,7 +99,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM #language en "Unspecified DIMM affected by region current and goal configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_CONF_APPLYING_FAILED #language en "Device error - configuration cannot be sent to DIMM."
-#string STR_DCPMM_STATUS_ERR_REGION_CONF_UNSUPPORTED_CONFIG #language en "All the unconfigured DCPMMs or all modules on a given socket have to be configured at once."
+#string STR_DCPMM_STATUS_ERR_REGION_CONF_UNSUPPORTED_CONFIG #language en "Requests using -dimm must conform to ONE of:\n- Target all DCPMMs on a given socket\n- Target all unconfigured DCPMMs\n- Target DCPMMs for 100%% MemoryMode with all unspecified DCPMMs configured for MemoryMode only\n- Target DCPMMs for AppDirect Not-Interleaved with all unspecified DCPMMs configured for AppDirect Not-Interleaved only"
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_FOUND #language en "Region not found"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT #language en "Platform does not support changing configuration through management software"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MIRRORING #language en "Platform does not support App Direct Memory mirroring"
@@ -101,7 +110,6 @@
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_SPECIFIED_INT_SIZES #language en "Platform does not support specified interleave iMC and Channel sizes."
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES #language en "Platform does not support default interleave iMC and Channel sizes for specified configuration."
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_HEALTHY #language en "Region is not healthy"
-#string STR_DCPMM_STATUS_ERR_REGION_NOT_ENOUGH_SPACE_FOR_BLOCK_NAMESPACE #language en "Not enough space to create Storage Mode Namespace."
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE #language en "Not enough space to create App Direct Namespace."
 #string STR_DCPMM_STATUS_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM #language en "There is no goal configuration on DIMM."
 #string STR_DCPMM_STATUS_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS #language en "At least 2 DIMMs are required to use reserve DIMM option."
@@ -109,6 +117,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY #language en "Remaining value can be used only for one property and only on the last App Direct Size property"
 #string STR_DCPMM_STATUS_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS #language en "Unable to find a valid mapping for the requested configuration."
 #string STR_DCPMM_STATUS_ERR_CREATE_NAMESPACE_NOT_ALLOWED #language en "Pending goal request found on DCPMMs that are part of this namespace request. Please reboot to apply the goal or delete the goal and try again."
+#string STR_DCPMM_STATUS_CURR_CONF_MISSING #language en "One or more DIMMs have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
 
 #string STR_DCPMM_STATUS_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED  #language en "Open or create the file with write mode failed."
 #string STR_DCPMM_STATUS_ERR_DUMP_NO_CONFIGURED_DIMMS  #language en "There are no configured DIMMs to dump."
@@ -128,6 +137,8 @@
 #string STR_DCPMM_STATUS_ERR_DIMM_SKU_SECURITY_MISMATCH #language en "Inconsistent Security capabilities of the DIMMs"
 
 #string STR_DCPMM_STATUS_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU #language en "Mixed DCPMM SKU's detected. The command is not supported in the current context."
+
+#string STR_DCPMM_STATUS_ERR_INJECTION_BIOS_KNOB_NOT_ENABLED #language en "The BIOS error injection knob is not enabled. Please enable and try again."
 
 #string STR_DCPMM_STATUS_ERR_NONE_DIMM_FULFILLS_CRITERIA  #language en "No DIMM in the Region fulfills requested properties."
 #string STR_DCPMM_STATUS_ERR_NONE_ISET_FULFILLS_CRITERIA #language en "App Direct Namespace with requested properties can't be created on the Region."
@@ -190,6 +201,10 @@
 #string STR_DCPMM_SECSTATE_NOT_SUPPORTED     #language en  "Not Supported"
 #string STR_DCPMM_SECSTATE_PW_MAX            #language en  "Exceeded"
 
+#string STR_DCPMM_SEC_OPTIN_SECURE_S3       #language en  "SecureS3"
+#string STR_DCPMM_SEC_OPTIN_UNSECURE_S3     #language en  "UnsecureS3"
+#string STR_DCPMM_SEC_OPTIN_INVALID         #language en  "Invalid"
+
 #string STR_DCPMM_BOOT_STATUS_UNKNOWN #language en "Unknown"
 #string STR_DCPMM_BOOT_STATUS_SUCCESS #language en "Success"
 #string STR_DCPMM_BOOT_STATUS_MEDIA_NOT_READY #language en "Media Not Ready"
@@ -206,12 +221,12 @@
 #string STR_DCPMM_VIEW_FIRMWARE_VERSION_NOT_VALID    #language en "Incorrect FW version"
 #string STR_DCPMM_VIEW_FIRMWARE_INCOMPATIBLE_TO_CTLR_STEPPING    #language en "Image not compatible with this DCPMM"
 
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN #language en "Unknown: The status cannot be determined."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_REBOOT_REQUIRED #language en "New: A reboot is required for the memory allocation goal to be processed by the BIOS."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_INVALID_GOAL #language en "Failed - Bad request: The BIOS failed to process the memory allocation goal because it was invalid."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES #language en "Failed - Not enough resources: There were not enough resources for the BIOS to process the memory allocation goal."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_FIRMWARE_ERROR #language en "Failed - Firmware error: The BIOS failed to process the memory allocation goal due to a firmware error."
-#string STR_DCPMM_REGIONS_FORM_GOAL_STATUS_UNKNOWN_ERROR #language en "Failed - Unknown: The BIOS failed to process the memory allocation goal due to an unknown error."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN #language en "Unknown: The status cannot be determined."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_REBOOT_REQUIRED #language en "New: A reboot is required for the memory allocation goal to be processed by the BIOS."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_INVALID_GOAL #language en "Failed - Bad request: The BIOS failed to process the memory allocation goal because it was invalid."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_NOT_ENOUGH_RESOURCES #language en "Failed - Not enough resources: There were not enough resources for the BIOS to process the memory allocation goal."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_FIRMWARE_ERROR #language en "Failed - Firmware error: The BIOS failed to process the memory allocation goal due to a firmware error."
+#string STR_DCPMM_PROVISIONING_FORM_GOAL_STATUS_UNKNOWN_ERROR #language en "Failed - Unknown: The BIOS failed to process the memory allocation goal due to an unknown error."
 
 #string STR_DCPMM_STATUS_ERR_FW_DBG_LOG_FAILED_TO_GET_SIZE #language en "Failed to get firmware debug log size"
 #string STR_DCPMM_STATUS_ERR_FW_SET_LOG_LEVEL_FAILED #language en "Failed to set firmware log level"
@@ -271,9 +286,6 @@
 #string STR_DCPMM_CAPACITY_UNIT_TB #language  en "TB"
 #string STR_DCPMM_CAPACITY_UNIT_TIB #language  en "TiB"
 
-#string STR_DPCPMM_MSG_VERB_MODIFY #language  en "Modify"
-#string STR_DPCPMM_MSG_VERB_MODIFYING #language  en "Modifying"
-#string STR_DPCPMM_MSG_VERB_SKIPPED_MODIFYING #language  en "Skipped modifying"
 #string STR_DPCPMM_MSG_VERB_DELETE #language  en "Delete"
 #string STR_DPCPMM_MSG_VERB_DELETING #language  en "Deleting"
 #string STR_DPCPMM_MSG_VERB_SKIPPED_DELETING #language  en "Skipped deleting"
@@ -282,4 +294,7 @@
 #string STR_DCPMM_RESTRICTION_BIOS_ONLY #language en "BIOS only"
 #string STR_DCPMM_RESTRICTION_SMBUS_ONLY #language en "SMBus only"
 #string STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY #language en "BIOS and SMBus only"
+#string STR_DCPMM_RESTRICTION_UNSUPPORTED #language en "Unsupported"
 #string STR_DCPMM_RESTRICTION_INVALID #language en "<Invalid>"
+
+#string STR_DCPMM_DIMM_HEALTHY_FW_NOT_RECOVERABLE #language en "Full SPI flash recovery of FW on healthy DIMM is not supported"

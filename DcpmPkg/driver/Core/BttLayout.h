@@ -27,10 +27,10 @@ typedef struct _BTT_INFO {
     UINT16 Major;                           //!< major version
     UINT16 Minor;                           //!< minor version
     UINT32 ExternalLbaSize;                 //!< advertised LBA size (bytes)
-    UINT32 ExternalNoLbas;                  //!< advertised LBAs in this arena
+    UINT32 ExternalNLbas;                   //!< advertised LBAs in this arena
     UINT32 InternalLbaSize;                 //!< size of data area blocks (bytes)
-    UINT32 InternalNoLbas;                  //!< number of blocks in data area
-    UINT32 NoFree;                          //!< number of free blocks
+    UINT32 InternalNLbas;                   //!< number of blocks in data area
+    UINT32 NFree;                           //!< number of free blocks
     UINT32 InfoSize;                        //!< size of this Info block
 
     /*!

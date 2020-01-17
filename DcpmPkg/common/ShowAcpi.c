@@ -4,6 +4,7 @@
  */
 #include <Uefi.h>
 #include <Debug.h>
+#include <Library/BaseMemoryLib.h>
 #include <NvmTables.h>
 #include <Utility.h>
 #include <Convert.h>
@@ -14,6 +15,12 @@ UINT32 AcpiIndex = 0;
 CHAR16 *pTypePath = NULL;
 UINT32 TypeIndex = 0;
 ACPI_REVISION PcatRevision;
+
+GUID gDieTypeGuid = PMTT_TYPE_DIE_GUID;
+
+GUID gChannelTypeGuid = PMTT_TYPE_CHANNEL_GUID;
+
+GUID gSlotTypeGuid = PMTT_TYPE_SLOT_GUID;
 
 /**
   DecodePcatMemoryModeCapabilities - decodes the MemoryModeCapabilities field of PCAT structure type: PlatformCapabilityInfoTable
@@ -54,18 +61,12 @@ DecodePcatMemoryModeCapabilities(
         L"AppDirect");
     }
 
-    if (pPcatMemoryModeCapabilities->MemoryModesFlags.Storage) {
-      MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
-        ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        L"Storage");
-    }
-
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         L"SubNUMA Cluster");
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     SUPPORTED_MEMORY_MODE3 *pPcatMemoryModeCapabilities = (SUPPORTED_MEMORY_MODE3 *)pPcatMemoryModeCapabilitiesField;
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.OneLm) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
@@ -155,7 +156,7 @@ DecodePcatCurrentMemoryMode(
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_STR,
         L"-SubNUMA Cluster Mode ", ((pPcatCurrentMemoryMode->MemoryModeSplit.SubNumaCluster) ? L"Enabled" : L"Disabled"));
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     CURRENT_MEMORY_MODE3 *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE3 *)pPcatCurrentMemoryModeField;
     if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
@@ -166,11 +167,6 @@ DecodePcatCurrentMemoryMode(
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
         L"-Current Volatile Memory Mode", L"2LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == BIT1) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"1LM + 2LM");
     }
 
     if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == 0) {
@@ -193,11 +189,6 @@ DecodePcatCurrentMemoryMode(
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
         L"-Allowed Volatile Memory Mode", L"1LM or 2LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == BIT1) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"1LM + 2LM");
     }
 
   }
@@ -246,7 +237,7 @@ DecodePcatInterleaveFormatSupported(
     NumberOfChannelWays = pPcatInterleaveFormatSupported->InterleaveFormatSplit.NumberOfChannelWays & MAX_UINT16;
     Recommended = pPcatInterleaveFormatSupported->InterleaveFormatSplit.Recommended;
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     INTERLEAVE_FORMAT3 *pPcatInterleaveFormatSupported = (INTERLEAVE_FORMAT3 *)pPcatInterleaveFormatSupportedField;
     ChannelInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.ChannelInterleaveSize;
     ImcInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.iMCInterleaveSize;
@@ -374,7 +365,7 @@ PrintAcpiHeader(
     ((UINT8 *)&pHeader->CreatorId)[1],
     ((UINT8 *)&pHeader->CreatorId)[2],
     ((UINT8 *)&pHeader->CreatorId)[3]);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"CreatorRevision", FORMAT_HEX_NOWIDTH L"\n", pHeader->CreatorRevision);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"CreatorRevision", FORMAT_HEX_NOWIDTH, pHeader->CreatorRevision);
 }
 
 /**
@@ -469,7 +460,7 @@ PrintPcatTable(
           pPlatformCapabilityInfoTable->PersistentMemoryRasCapability);
       }
       FREE_POOL_SAFE(PersistentMemoryRasCapability);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -508,7 +499,6 @@ PrintPcatTable(
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16);
       }
       FREE_POOL_SAFE(MaxPMInterleaveSets);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DDRCacheSize", FORMAT_UINT32 L" GiB per DDR DIMM" L"\n", pPlatformCapabilityInfoTable->DDRCacheSize);
     }
     break;
   case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
@@ -533,10 +523,11 @@ PrintPcatTable(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
             pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
         }
+        FREE_POOL_SAFE(InterleaveFormatSupportedIndex);
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -556,6 +547,7 @@ PrintPcatTable(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, InterleaveFormatSupportedIndex, FORMAT_HEX_NOWIDTH,
             pMemoryInterleaveCapabilityInfoTable->InterleaveFormatList[Index]);
         }
+        FREE_POOL_SAFE(InterleaveFormatSupportedIndex);
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
@@ -605,7 +597,7 @@ PrintPcatTable(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", L"%ld", pSocketSkuInfoTable->MappedMemorySizeLimit);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", L"%ld", pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", L"%ld\n", pSocketSkuInfoTable->CachingMemorySize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       DIE_SKU_INFO_TABLE *pDieSkuInfoTable = (DIE_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->DieId);
@@ -653,7 +645,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -669,7 +661,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -699,7 +691,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index] == NULL) {
         return;
       }
@@ -1030,8 +1022,8 @@ PrintPMTT(
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SYSTEM_TARGET_STR, L"Platform Memory Topology Table");
   PrintAcpiHeader(pTable, pPrinterCtx);
 
-  // Print PMTT 1.1 table if Rev is 1.1
-  if (IS_ACPI_REV_MAJ_1_MIN_1(pTable->Revision)) {
+  // Print PMTT 0.2 table if Rev is 0.2
+  if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     PrintPMTT2((VOID *)pTable, pPrinterCtx);
     return;
   }
@@ -1097,9 +1089,9 @@ PrintPMTT(
 }
 
 /**
-PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 2.0 table.
+PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 0.2 table.
 
-@param[in] pPcat pointer to the parsed PMTT 2.0 table.
+@param[in] pPcat pointer to the parsed PMTT 0.2 table.
 @param[in] pointer to command's printer context.
 **/
 VOID
@@ -1108,7 +1100,6 @@ PrintPMTT2(
   IN     PRINT_CONTEXT *pPrinterCtx
 )
 {
-  UINT8 ParentDeviceType = 0;
   CHAR16 *pGuidStr = NULL;
   PMTT_TABLE2 *pPMTT = (PMTT_TABLE2 *)pTable;
 
@@ -1119,38 +1110,39 @@ PrintPMTT2(
 
   UINT64 PmttLen = pPMTT->Header.Length;
   UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->NoOfMemoryDevices);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NumOfMemoryDevices", FORMAT_INT32, pPMTT->NoOfMemoryDevices);
+
   while (Offset < PmttLen) {
     PMTT_COMMON_HEADER2 *pCommonHeader = (PMTT_COMMON_HEADER2 *)(((UINT8 *)pPMTT) + Offset);
     NVDIMM_DBG("Common table length: %d, mem devices: %d, Type: %d",
       pCommonHeader->Length, pCommonHeader->NoOfMemoryDevices, pCommonHeader->Type);
     if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
-      ParentDeviceType = PMTT_TYPE_SOCKET;
       PMTT_SOCKET2 *pSocket = (PMTT_SOCKET2 *)(((UINT8 *)pPMTT) + Offset);
-      NVDIMM_DBG("Socket ID: %d, no of sockets: %d", pSocket->SocketId);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Socket");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pSocket->Reserved3);
       Offset += sizeof(PMTT_SOCKET2);
     }
     else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
-      ParentDeviceType = PMTT_TYPE_iMC;
       PMTT_iMC2 *piMC = (PMTT_iMC2 *)(((UINT8 *)pPMTT) + Offset);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"iMC");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_INT32, piMC->MemControllerID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_INT32, piMC->MemControllerID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, piMC->Reserved3);
       Offset += sizeof(PMTT_iMC2);
     }
@@ -1158,16 +1150,15 @@ PrintPMTT2(
       PMTT_VENDOR_SPECIFIC2 *pVendorDevice = (PMTT_VENDOR_SPECIFIC2 *)(((UINT8 *)pPMTT) + Offset);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
-      if (ParentDeviceType == PMTT_TYPE_SOCKET) {
+      if (CompareGuid(&pVendorDevice->TypeUUID, &gDieTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Die");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieId", FORMAT_INT32, pVendorDevice->DeviceID);
       }
-      else if (ParentDeviceType == PMTT_TYPE_iMC) {
+      else if (CompareGuid(&pVendorDevice->TypeUUID, &gChannelTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Channel");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ChannelId", FORMAT_INT32, pVendorDevice->DeviceID);
-        ParentDeviceType = PMTT_TYPE_VENDOR_SPECIFIC;
       }
-      else if ((ParentDeviceType == PMTT_TYPE_VENDOR_SPECIFIC)) {
+      else if (CompareGuid(&pVendorDevice->TypeUUID, &gSlotTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Slot");
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SlotId", FORMAT_INT32, pVendorDevice->DeviceID);
       }
@@ -1176,6 +1167,7 @@ PrintPMTT2(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
       pGuidStr = GuidToStr(&pVendorDevice->TypeUUID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TypeUUID", FORMAT_STR, pGuidStr);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pVendorDevice->Reserved3);
@@ -1192,6 +1184,7 @@ PrintPMTT2(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_INT32, pModule->SmbiosHandle);
       Offset += sizeof(PMTT_MODULE2);
     }

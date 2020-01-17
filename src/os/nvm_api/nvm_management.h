@@ -126,6 +126,37 @@ extern "C"
  */
 #define BCD_TO_BYTE(bcd) (bcd > 0x255 ? MAX_UINT8_VALUE : (((bcd & 0xF00) >> 8) * 100) + (((bcd & 0xF0) >> 4) * 10) + (bcd & 0xF))
 
+// the following defines and inline functions should no longer be needed but are
+// included for backward compilation compatibility
+
+/**
+ * Convert an array of 8 unsigned chars into an unsigned 64 bit value
+ * @remarks While it doesn't seem right to be casting 8 bit chars to unsigned long
+ * long, this is an issue with gcc - see http:// gcc.gnu.org/bugzilla/show_bug.cgi?id=47821.
+ */
+#define NVM_8_BYTE_ARRAY_TO_64_BIT_VALUE(arr, val) \
+  val = ((unsigned long long)(arr[7] & 0xFF) << 56) + \
+        ((unsigned long long)(arr[6] & 0xFF) << 48) + \
+        ((unsigned long long)(arr[5] & 0xFF) << 40) + \
+        ((unsigned long long)(arr[4] & 0xFF) << 32) + \
+        ((unsigned long long)(arr[3] & 0xFF) << 24) + \
+        ((unsigned long long)(arr[2] & 0xFF) << 16) + \
+        ((unsigned long long)(arr[1] & 0xFF) << 8) + \
+        (unsigned long long)(arr[0] & 0xFF);
+
+/**
+ * Convert an unsigned 64 bit integer to an array of 8 unsigned chars
+ */
+#define NVM_64_BIT_VALUE_TO_8_BYTE_ARRAY(val, arr) \
+  arr[7] = (unsigned char)((val >> 56) & 0xFF); \
+  arr[6] = (unsigned char)((val >> 48) & 0xFF); \
+  arr[5] = (unsigned char)((val >> 40) & 0xFF); \
+  arr[4] = (unsigned char)((val >> 32) & 0xFF); \
+  arr[3] = (unsigned char)((val >> 24) & 0xFF); \
+  arr[2] = (unsigned char)((val >> 16) & 0xFF); \
+  arr[1] = (unsigned char)((val >> 8) & 0xFF); \
+  arr[0] = (unsigned char)(val & 0xFF);
+
 /**
  * ****************************************************************************
  * ENUMS
@@ -223,6 +254,8 @@ enum sensor_type {
   SENSOR_FWERRORLOGCOUNT = 8,    ///< The total number of firmware error log entries.
   SENSOR_UNLATCHED_DIRTY_SHUTDOWN_COUNT = 9,    ///!< Number of times that the FW received an unexpected power loss
 };
+
+#define SENSOR_COUNT                10
 
 typedef NVM_UINT64 NVM_SENSOR_CATEGORY_BITMASK;
 
@@ -335,6 +368,18 @@ enum diagnostic_test {
   DIAG_TYPE_FW_CONSISTENCY  = 3     ///< verifies all DCPMMs have consistent FW and attributes
 };
 
+/**
+* Health status type
+*/
+enum health_status {
+  HEALTH_STATUS_UNKNOWN             =  0,    ///< Unknown health status
+  HEALTH_STATUS_HEALTHY             =  1,    ///< DIMM Healthy
+  HEALTH_STATUS_NON_CRITICAL_FAILURE=  2,    ///< Non-Critical (maintenance required)
+  HEALTH_STATUS_CRITICAL_FAILURE    =  3,    ///< Critical (feature or performance degraded due to failure)
+  HEALTH_STATUS_FATAL_FAILURE       =  4,    ///< Fatal (data loss has occurred or is imminent)
+  HEALTH_STATUS_UNMANAGEABLE        =  5,    ///< DIMM is unmanagable
+  HEALTH_STATUS_NON_FUNCTIONAL      =  6
+};
 /**
  * Diagnostic threshold type.
  */
@@ -530,15 +575,9 @@ struct sw_inventory {
 struct memory_topology {
   NVM_UINT16		physical_id;                            ///< Memory device's physical identifier (SMBIOS handle)
   enum memory_type	memory_type;                            ///< Type of memory device
-  enum device_form_factor form_factor;                            ///< DEPRECATED; Form factor of the memory device
-  NVM_UINT64		raw_capacity;                           ///< DEPRECATED; Raw capacity of the device in bytes
-  NVM_UINT64		data_width;                             ///< DEPRECATED; Width in bits used to store user data
-  NVM_UINT64		total_width;                            ///< DEPRECATED; Width in bits for data and error correction/data redundancy
-  NVM_UINT64		speed;                                  ///< DEPRECATED; Speed in MHz
-  char			part_number[NVM_PART_NUM_LEN];          ///< DEPRECATED; Part number assigned by the vendor
   char			device_locator[NVM_DEVICE_LOCATOR_LEN]; ///< Physically-labeled socket of device location
   char			bank_label[NVM_BANK_LABEL_LEN];         ///< Physically-labeled bank of device location
-  NVM_UINT8     reserved[56];                                   ///< reserved
+  NVM_UINT8     reserved[58];                                   ///< reserved
 };
 
 /**
@@ -558,9 +597,8 @@ struct device_security_capabilities {
 struct device_capabilities {
   NVM_BOOL	package_sparing_capable;        ///< DCPMM supports package sparing
   NVM_BOOL	memory_mode_capable;            ///< DCPMM supports memory mode
-  NVM_BOOL	storage_mode_capable;           ///< DCPMM supports storage mode
   NVM_BOOL	app_direct_mode_capable;        ///< DCPMM supports app direct mode
-  NVM_UINT8     reserved[4];                    ///< reserved
+  NVM_UINT8     reserved[5];                    ///< reserved
 };
 
 /**
@@ -669,21 +707,18 @@ struct device_status {
   NVM_UINT32		last_shutdown_status_details;           ///< Extended fields as per FIS 1.6 (Latched LSS Details/Extended Details)
   enum config_status		config_status;                  ///< Status of last configuration request.
   NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970
-  NVM_BOOL			mixed_sku;                              ///< DEPRECATED; One or more DCPMMs have different SKUs.
+  NVM_BOOL			mixed_sku;                              ///< One or more DCPMMs have different SKUs.
   NVM_BOOL			sku_violation;                          ///< The DCPMM configuration is unsupported due to a license issue.
   NVM_BOOL			viral_state;                            ///< Current viral status of DCPMM.
   enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the DCPMM
   enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite DCPMM operation status for the DCPMM
-  NVM_UINT32			new_error_count;                        ///< DEPRECATED; Count of new fw errors from the DCPMM
-  NVM_UINT64			newest_error_log_timestamp;             ///< DEPRECATED Timestamp of the newest log entry in the fw error log
   NVM_BOOL			ait_dram_enabled;                       ///< Whether or not the AIT DRAM is enabled.
   NVM_UINT64			boot_status;                            ///< The status of the DCPMM as reported by the firmware in the BSR
   NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on DCPMM
   NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on DCPMM
-  struct device_error_log_status	error_log_status;               ///> DEPRECATED;
   NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per FIS 1.13+ (Unlatched LSS Details/Extended Details)
   NVM_UINT8     thermal_throttle_performance_loss_pcnt;   ///< the average percentage loss (0..100) due to thermal throttling since last read in current boot (FIS 2.1+)
-  NVM_UINT8                             reserved[51];                   ///< reserved
+  NVM_UINT8                             reserved[64];                   ///< reserved
 };
 
 /**
@@ -750,7 +785,6 @@ struct device_capacities {
   NVM_UINT64  memory_capacity;                ///< The total DCPMM capacity in bytes for memory mode.
   NVM_UINT64  app_direct_capacity;            ///< The total DCPMM capacity in bytes for app direct mode.
   NVM_UINT64  mirrored_app_direct_capacity;   ///< The total DCPMM mirrored app direct capacity.
-  NVM_UINT64  storage_capacity;               ///< DCPMM capacity allocated that can be used as storage.
   NVM_UINT64  unconfigured_capacity;          ///< Unconfigured DCPMM capacity. Can be used as storage.
   NVM_UINT64  inaccessible_capacity;          ///< DCPMM capacity that is not acccessible.
   NVM_UINT64  reserved_capacity;              ///< DCPMM app direct capacity reserved and unmapped to SPA.
@@ -761,10 +795,9 @@ struct device_capacities {
  * Modifiable settings of a device.
  */
 struct device_settings {
-  NVM_BOOL  first_fast_refresh;     ///< DEPRECATED; Enable/disable acceleration of first refresh cycle.
   NVM_BOOL  viral_policy;           ///< Viral Policy Enabled/Disabled
   NVM_BOOL  viral_status;           ///< Viral Policy Status
-  NVM_UINT8 reserved[5];            ///< reserved
+  NVM_UINT8 reserved[6];            ///< reserved
 };
 
 /**
@@ -830,7 +863,6 @@ struct platform_capabilities {
   NVM_BOOL			bios_config_support;            ///< available BIOS support for DCPMM config changes
   NVM_BOOL			bios_runtime_support;           ///< runtime interface used to validate management configuration
   NVM_BOOL			memory_mirror_supported;        ///< indicates if DCPMM mirror is supported
-  NVM_BOOL			storage_mode_supported;         ///< is storage mode supported
   NVM_BOOL			memory_spare_supported;         ///< pm spare is supported
   NVM_BOOL			memory_migration_supported;     ///< pm memory migration is supported
   struct memory_capabilities	one_lm_mode;                    ///< capabilities for 1LM mode
@@ -864,9 +896,6 @@ struct nvm_features {
   NVM_BOOL	get_namespaces;                 ///< retrieve the list of namespaces allocated from regions
   NVM_BOOL	get_namespace_details;          ///< retrieve detailed info about each namespace
   NVM_BOOL	create_namespace;               ///< create a new namespace
-  NVM_BOOL	rename_namespace;               ///< rename an existing namespace
-  NVM_BOOL	grow_namespace;                 ///< increase the capacity of a namespace
-  NVM_BOOL	shrink_namespace;               ///< decrease the capacity of a namespace
   NVM_BOOL	enable_namespace;               ///< enable a namespace
   NVM_BOOL	disable_namespace;              ///< disable a namespace
   NVM_BOOL	delete_namespace;               ///< delete a namespace
@@ -879,9 +908,8 @@ struct nvm_features {
   NVM_BOOL	fw_consistency_diagnostic;      ///< firmware consistency diagnostic
   NVM_BOOL	memory_mode;                    ///< access DCPMM capacity as memory
   NVM_BOOL	app_direct_mode;                ///< access DCPMM persistent memory in App Direct Mode
-  NVM_BOOL	storage_mode;                   ///< access DCPMM persistent memory in Storage Mode
   NVM_BOOL	error_injection;                ///< error injection on DCPMMs
-  NVM_UINT8	reserved[28];			///< reserved
+  NVM_UINT8	reserved[32];			///< reserved
 };
 
 /**
@@ -901,8 +929,7 @@ struct dimm_sku_capabilities {
   NVM_BOOL	sku_violation;  ///< One or more DCPMMs are in violation of their SKU.
   NVM_BOOL	memory_sku;     ///< One or more DCPMMs support memory mode.
   NVM_BOOL	app_direct_sku; ///< One or more DCPMMs support app direct mode.
-  NVM_BOOL	storage_sku;    ///< One or more DCPMMs support storage mode.
-  NVM_UINT8	reserved[3];	///< reserved
+  NVM_UINT8	reserved[4];	///< reserved
 };
 
 /**
@@ -987,6 +1014,7 @@ struct event {
   enum event_type		type;                           ///< The type of the event that occurred.
   enum event_severity	severity;                       ///< The severity of the event.
   NVM_UINT16		code;                           ///< A numerical code for the specific event that occurred.
+  NVM_BOOL		Reserved;                ///< Reserved for future use
   NVM_UID			uid;                            ///< The unique ID of the item that had the event.
   time_t			time;                           ///< The time the event occurred.
   NVM_EVENT_MSG		message;                        ///< A detailed description of the event type that occurred in English.
@@ -1044,12 +1072,8 @@ struct event_filter {
  * An entry in the native API trace log.
  */
 struct nvm_log {
-  NVM_PATH	file_name;                      ///< DEPRECATED, message string contains all data; The file that generated the log.
-  int		line_number;                    ///< DEPRECATED, message string contains all data; The line number that generated the log.
-  enum log_level	level;                          ///< DEPRECATED, message string contains all data; The log level.
   char		message[NVM_LOG_MESSAGE_LEN];   ///< The log message
-  time_t		time;                           ///< DEPRECATED, message string contains all data; The time
-  NVM_UINT8		reserved[48];	///< reserved
+  NVM_UINT8		reserved[64];	///< reserved
 };
 
 /**
@@ -1091,17 +1115,8 @@ struct diagnostic {
  */
 struct socket {
   NVM_UINT16	id;                                             ///< Zero-indexed NUMA node number
-  NVM_UINT8	type;                                           ///< DEPRECATED; Physical processor type number (via CPUID)
-  NVM_UINT8	model;                                          ///< DEPRECATED; Physical processor model number (via CPUID)
-  NVM_UINT8	brand;                                          ///< DEPRECATED; Physical processor brand index (via CPUID)
-  NVM_UINT8	family;                                         ///< DEPRECATED; Physical processor family number (via CPUID)
-  NVM_UINT8	stepping;                                       ///< DEPRECATED; Physical processor stepping number (via CPUID)
-  char		manufacturer[NVM_SOCKET_MANUFACTURER_LEN];      ///< DEPRECATED; Physical processor manufacturer (via CPUID)
-  NVM_UINT16	logical_processor_count;                        ///< DEPRECATED; Logical processor count on node (incl. Hyperthreading)
   NVM_UINT64	mapped_memory_limit;                            ///< Maximum allowed memory (via PCAT)
   NVM_UINT64	total_mapped_memory;                            ///< Current occupied memory (via PCAT)
-  NVM_UINT64	total_2lm_ddr_cache_memory;                     ///< DEPRECATED; cache size when in 2LM (via PCAT)
-  NVM_BOOL	is_capacity_skuing_supported;                   ///< DEPRECATED; set to 1 if PCAT type 6 table found
   NVM_UINT8	reserved[64];					///< reserved
 };
 
@@ -1146,7 +1161,7 @@ NVM_API void nvm_uninit();
 * @brief    Initialize the config file. Only the first call to the
 * function changes the conf file configuration, the following
 * function calls have no effect and the conf file configuration
-* remains unchanged up to next applicaiton execution.
+* remains unchanged up to next application execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
 * @return  void
@@ -1164,112 +1179,6 @@ NVM_API void nvm_conf_file_flush();
 /*
  * system.c
  */
-
- /**
- * @deprecated
- *
- * @brief Create a context for a particular DCPMM to be used by all other acpi_event_* APIs
- *
- * @param[in] dimm_handle NFIT DCPMM handle
- * @param[out] ctx Pointer to the context.  Note, this context needs to be freed
- * by acpi_event_free_ctx.
- *
- * @return
- *  ::NVM_SUCCESS @n
- *  ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void **ctx);
-
-/**
-* @deprecated
-*
-* @brief Free a context previously created by acpi_event_create_ctx.
-*
-* @param[in] ctx pointer to a context created by acpi_event_create_ctx
-*
-* @return
-*  ::NVM_SUCCESS @n
-*/
-NVM_API int nvm_acpi_event_free_ctx(void *ctx);
-
-/**
-* @deprecated
-*
-* @brief Retrieve the NFIT DCPMM handle associated with the context.
-*
-* @param[in] ctx pointer to a context created by acpi_event_create_ctx
-* @param[out] dev_handle pointer to NFIT DCPMM handle associated with the context
-*
-* @return
-*  ::NVM_SUCCESS @n
-*  ::NVM_ERR_INVALID_PARAMETER @n
-*/
-NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void *ctx, unsigned int *dev_handle);
-
-/**
-* @deprecated
-*
-* @brief Retrieve an ACPI notification state of a DCPMM.
-*
-* @param[in] ctx pointer to a context created by acpi_event_create_ctx
-* @param[in] event_type event type to retrieve
-* @param[out] event_state pointer to current state of event type. Can be of types:
-*   ::ACPI_EVENT_SIGNALLED
-*   ::ACPI_EVENT_NOT_SIGNALLED
-*   ::ACPI_EVENT_UNKNOWN
-*
-* @return
-*  ::NVM_SUCCESS @n
-*  ::NVM_ERR_INVALID_PARAMETER @n
-*/
-NVM_API int nvm_acpi_event_get_event_state(void *ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state);
-
-/**
-* @deprecated
-*
-* @brief Set which ACPI events should be monitored.
-*
-* @param[in] ctx pointer to a context created by acpi_event_create_ctx
-* @param[in] mask mask of ACPI events to be monitored
-*
-* @return
-*  ::NVM_SUCCESS @n
-*/
-NVM_API int nvm_acpi_event_set_monitor_mask(void *ctx, const unsigned int mask);
-
-/**
-* @deprecated
-*
-* @brief Set which ACPI events should be monitored.
-*
-* @param[in] ctx pointer to a context created by acpi_event_create_ctx
-* @param[out] mask pointer to mask of events currently monitored
-*
-* @return
-* ::NVM_SUCCESS @n
-* ::NVM_ERR_INVALID_PARAMETER @n
-*/
-NVM_API int nvm_acpi_event_get_monitor_mask(void *ctx, unsigned int *mask);
-
-/**
-* @deprecated
-*
-* @brief Wait for an asynchronous ACPI notification. This function will return when the timeout expires or an acpi notification
-* occurs for any DCPMM, whichever happens first.
-*
-* @param[in] acpi_event_contexts Array of contexts
-* @param[in] dimm_cnt Number of contexts in the array
-* @param[in] timeout_sec (-1) No timeout, all other non-negative values represent a second granularity timeout value
-* @param[out] event_result pointer to event result which returns one of the following:
-*   ::ACPI_EVENT_SIGNALLED_RESULT
-*   ::ACPI_EVENT_TIMED_OUT_RESULT
-*   ::ACPI_EVENT_UNKNOWN_RESULT
-*
-* @return
-* ::NVM_SUCCESS @n
-* ::NVM_ERR_INVALID_PARAMETER @n
-*/
-NVM_API int nvm_acpi_wait_for_event(void *acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result *event_result);
 
 /**
 * @brief Convert DCPMM UID to DCPMM ID and/or DCPMM Handle
@@ -1541,25 +1450,6 @@ NVM_API int nvm_set_pmon_registers(const NVM_UID device_uid, NVM_UINT8 PMONGroup
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_device_settings(const NVM_UID device_uid, struct device_settings *p_settings);
-
-/**
- * @brief Set one or more configurable properties on the specified device.
- * @param[in] device_uid
- *              The device identifier.
- * @param[in] p_settings
- *              A pointer to an #device_settings structure containing the modified settings.
- * @pre The caller must have administrative privileges.
- * @pre The device is manageable.
- * @remarks Retrieve the current #device_settings using #nvm_get_device_details and change
- * the specific settings as desired.
- * @remarks A given property change may require similar changes to related devices to
- * represent a consistent correct configuration.
- * @return
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALID_PARAMETER @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_modify_device_settings(const NVM_UID device_uid, const struct device_settings *p_settings);
 
 /**
  * @brief Retrieve #device_details information about the device specified.
@@ -2017,6 +1907,19 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  * @brief Retrieve the number of configured persistent memory regions in the host server.
  * @pre The caller has administrative privileges.
  * @remarks This method should be called before #nvm_get_regions.
+ * @param[in,out] count
+ *              A pointer an integer that will contain the number of region count on return
+ * @return
+ *            ::NVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_UNKNOWN @n
+ */
+NVM_API int nvm_get_number_of_regions(NVM_UINT8 *count);
+
+/**
+ * @brief Retrieve the number of configured persistent memory regions in the host server.
+ * @pre The caller has administrative privileges.
+ * @remarks This method should be called before #nvm_get_regions.
  * @param[in] use_nfit
  *              0: Use PCD data to get region information.
  *              1: Use NFIT table to get region information.
@@ -2027,7 +1930,24 @@ NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id);
  *            ::NVM_ERR_INVALID_PARAMETER @n
  *            ::NVM_ERR_UNKNOWN @n
  */
-NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count);
+NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count);
+
+/**
+ * @brief Retrieve a list of the configured persistent memory regions in host server.
+ * @param[in,out] p_regions
+ *              An array of #region structures allocated by the caller.
+ * @param[in,out] count
+ *              The number of elements in the array allocated by the caller and returns the count of regions that were returned.
+ * @pre The caller has administrative privileges.
+ * @remarks To allocate the array of #region structures,
+ * call #nvm_get_region_count before calling this method.
+ * @return
+ *            ::NVM_SUCCESS
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_UNKNOWN @n
+ *            ::NVM_ERR_NO_MEM @n
+ */
+NVM_API int nvm_get_regions(struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Retrieve a list of the configured persistent memory regions in host server.
@@ -2047,7 +1967,7 @@ NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count)
  *            ::NVM_ERR_UNKNOWN @n
  *            ::NVM_ERR_NO_MEM @n
  */
-NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count);
+NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count);
 
 /**
  * @brief Modify how the DCPMM capacity is provisioned by the BIOS on the next reboot.
@@ -2347,50 +2267,6 @@ NVM_API int nvm_debug_logging_enabled();
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled);
-
-/**
- * @deprecated
- *
- * @brief Clear any debug logs captured by the native API library.
- * @pre The caller must have administrative privileges.
- * @return
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_purge_debug_log();
-
-/**
- * @deprecated
- *
- * @brief Retrieve the number of debug log entries in the native API library database.
- * @param[in,out] count
- *              pointer an integer that will contain the number of debug log entries
- * @pre The caller must have administrative privileges.
- * @return
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_UNKNOWN @n
- */
-NVM_API int nvm_get_number_of_debug_logs(int *count);
-
-/**
- * @deprecated
- *
- * @brief Retrieve a list of stored debug log entries from the native API library database
- * @param[in,out] p_logs
- *              An array of #log structures allocated by the caller.
- * @param[in] count
- *              The number of elements in the array.
- * @pre The caller must have administrative privileges.
- * @remarks To allocate the array of #log structures,
- * call #nvm_get_number_of_debug_logs before calling this method.
- * @return
- *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALID_PARAMETER @n
- *            ::NVM_ERR_UNKNOWN @n
- *            ::NVM_ERR_NOT_ENOUGH_FREE_SPACE @n
- *            ::NVM_ERR_BAD_SIZE @n
- */
-NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count);
 
 /**
  * @brief Retrieves #job information about each device in the system

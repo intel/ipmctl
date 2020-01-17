@@ -157,6 +157,8 @@ ShowCmdAccessPolicy(
   CHAR16 *pSMBusOnly = NULL;
   CHAR16 *pBiosSMBusOnly = NULL;
   CHAR16 *pInvalid = NULL;
+  CHAR16* pUnsupported = NULL;
+  UINT32 CapCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -204,7 +206,7 @@ ShowCmdAccessPolicy(
 
   /** If no dimm IDs are specified get IDs from all dimms **/
   if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, &DimmIdsCount, &pDimmIds);
+    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, FALSE, &DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
@@ -220,7 +222,6 @@ ShowCmdAccessPolicy(
 /**
   Retrieve the count of access policy entries.
 **/
-  UINT32 CapCount = 0;
   ReturnCode = pNvmDimmConfigProtocol->GetCommandAccessPolicy(pNvmDimmConfigProtocol, pDimmIds[0], &CapCount, NULL);
   if (EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
@@ -240,6 +241,8 @@ ShowCmdAccessPolicy(
     **/
     ReturnCode = pNvmDimmConfigProtocol->GetCommandAccessPolicy(pNvmDimmConfigProtocol, pDimmIds[DimmIndex], &CapCount, &pCapEntries[DimmIndex]);
     if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to get the access policy for pDimmIds[%d] - ReturnCode=0x%x",
+        DimmIndex, ReturnCode);
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
@@ -256,6 +259,7 @@ ShowCmdAccessPolicy(
      */
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIdIndex].DimmHandle, pDimms[DimmIdIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;
     }
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
@@ -264,6 +268,7 @@ ShowCmdAccessPolicy(
     pBiosOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_ONLY), NULL);
     pSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_SMBUS_ONLY), NULL);
     pBiosSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY), NULL);
+    pUnsupported = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_UNSUPPORTED), NULL);
     pInvalid = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_INVALID), NULL);
     // set max column width based on longest output string.  Should always be less than 80 (required param)
     ShowCapTableAttributes.ColumnAttribs[3].ColumnMaxStrLen = (UINT32)StrnSizeS(pBiosSMBusOnly,80);
@@ -284,6 +289,9 @@ ShowCmdAccessPolicy(
       case COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY:
         RestrictionStr = pBiosSMBusOnly;
         break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_UNSUPPORTED:
+        RestrictionStr = pUnsupported;
+        break;
       default:
         RestrictionStr = pInvalid;
         break;
@@ -294,6 +302,7 @@ ShowCmdAccessPolicy(
     FREE_POOL_SAFE(pBiosOnly);
     FREE_POOL_SAFE(pSMBusOnly);
     FREE_POOL_SAFE(pBiosSMBusOnly);
+    FREE_POOL_SAFE(pUnsupported);
     FREE_POOL_SAFE(pInvalid);
   }
 
@@ -307,6 +316,7 @@ Finish:
   FREE_POOL_SAFE(pBiosOnly);
   FREE_POOL_SAFE(pSMBusOnly);
   FREE_POOL_SAFE(pBiosSMBusOnly);
+  FREE_POOL_SAFE(pUnsupported);
   FREE_POOL_SAFE(pInvalid);
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);

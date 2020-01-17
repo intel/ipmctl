@@ -29,6 +29,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define EXIT_CODE_STR               L"RC"
 #define CLI_ARGS_STR                L"Args"
 #define TAG_STR                     L"Tag"
+#define DDR_STR                     L"DDR"
+#define DCPMM_STR                   L"DCPMM"
+#define TOTAL_STR                   L"Total"
+#define MEMORY_TYPE_STR             L"MemoryType"
+
+/** common display values**/
+#define NA_STR                      L"N/A"
+#define DASH_STR                    L"-"
 
 #define MAX_FILE_PATH_LEN           512
 #define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
@@ -80,9 +88,12 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_WRONG_REGISTER                L"Error: Register not found"
 #define CLI_ERR_INVALID_PASSPHRASE_FROM_FILE  L"Error: The file contains empty or bad formatted passphrases."
 #define CLI_ERR_UNMANAGEABLE_DIMM             L"Error: The specified device is not manageable by the driver."
+#define CLI_ERR_POPULATION_VIOLATION          L"Error: The specified device is in population violation."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
 #define CLI_ERR_OPENING_PBR_PROTOCOL            L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
+#define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%d"
+#define CLI_ERR_NMFM_UPPER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is above the recommended NM:FM limit of 1:%d"
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
 
@@ -117,13 +128,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType."
-#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT    L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstantMultiplier."
+#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstantMultiplier."
+#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT      L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstant."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CATEGORY             L"Syntax Error: Incorrect value for property Category."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_SEQ_NUM              L"Syntax Error: Incorrect value for property SequenceNumber."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ALARM_THRESHOLD      L"Syntax Error: Incorrect value for property AlarmThreshold."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property EnabledState."
+#define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property AlarmThreshold."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CCONFIG              L"Syntax Error: Incorrect value for property Config."
@@ -166,7 +178,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
 #define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
-#define CLI_ERR_MODIFICATION_OF_NAMESPACE_CAPACITY_NOT_SUPPORTED  L"Error: Modification of namespace capacity is not supported."
+#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the DIMMs."
 #define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
 #define CLI_INJECT_ERROR_FAILED                                   L"Error: Inject error command failed"
@@ -193,7 +205,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR               L"Create a media fatal error"
 #define CLI_INFO_DIRTY_SHUT_DOWN_INJECT_ERROR                 L"Trigger a dirty shut down"
 #define CLI_INFO_TEMPERATURE_INJECT_ERROR                     L"Set temperature"
-#define CLI_INFO_CLEAR_PACKAGE_SPARING_INJECT_ERROR           L"Trigger package sparing"
+#define CLI_INFO_CLEAR_PACKAGE_SPARING_INJECT_ERROR           L"Clear injected package sparing"
 #define CLI_INFO_CLEAR_POISON_INJECT_ERROR                    L"Clear injected poison of address " FORMAT_STR
 #define CLI_INFO_CLEAR_PERCENTAGE_REMAINING_INJECT_ERROR      L"Clear injected percentage remaining"
 #define CLI_INFO_CLEAR_FATAL_MEDIA_ERROR_INJECT_ERROR         L"Clear injected media fatal error"
@@ -204,6 +216,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_CREATE_GOAL_PROMPT_VOLATILE                       L"The requested goal was adjusted more than 10%% to find a valid configuration."
 #define CLI_CREATE_GOAL_PROMPT_HEADER                         L"The following configuration will be applied:"
+#define CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED              L"WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!"
 #define CLI_ERR_CREATE_GOAL_AUTO_PROV_ENABLED                 L"Error: Automatic provisioning is enabled. Please disable to manually create goals."
 
 #define CLI_CREATE_NAMESPACE_PROMPT_ROUNDING_CAPACITY         L"The requested namespace capacity %lld B will be rounded up to %lld B to align properly."
@@ -214,7 +227,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM " FORMAT_STR L"?"
 
-#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm: "
+#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm:"
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
 #define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
@@ -461,9 +474,11 @@ CheckDisplayList(
   );
 
 /**
-  Gets number of Manageable Dimms and their IDs and Handles
+  Gets number of Manageable and supported Dimms and their IDs and Handles
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                      returned dimm list. If false, skip these dimms from returned list.
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
@@ -475,6 +490,7 @@ CheckDisplayList(
 EFI_STATUS
 GetManageableDimmsNumberAndId(
   IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  BOOLEAN CheckSupportedConfigDimm,
   OUT UINT32 *pDimmIdsCount,
   OUT UINT16 **ppDimmIds
 );
@@ -819,6 +835,27 @@ AllDimmsInListAreManageable(
  );
 
 /**
+  Check if all dimms in the specified pDimmIds list are in supported
+  config. This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pDimmInfo The dimm list found in NFIT.
+  @param[in] DimmCount Size of the pDimmInfo array.
+  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
+  @param[in] pDimmIdsCount Size of the pDimmIds array.
+
+  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval FALSE if at least one DIMM is not manageable
+**/
+BOOLEAN
+AllDimmsInListInSupportedConfig(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+);
+
+/**
    Get Dimm identifier preference
 
    @param[out] pDimmIdentifier Variable to store Dimm identerfier preference
@@ -933,7 +970,7 @@ GetDimmHandleByPid(
   );
 
 /**
-Retrieve the User Cli Display Preferences CMD line arguements.
+Retrieve the User Cli Display Preferences CMD line arguments.
 
 @param[out] pDisplayPreferences pointer to the current driver preferences.
 

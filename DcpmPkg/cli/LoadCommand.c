@@ -11,7 +11,6 @@
 #include <FwUtility.h>
 #include <NvmInterface.h>
 #include <Library/UefiShellLib/UefiShellLib.h>
-#include <Protocol/EfiShell.h>
 #include "NvmDimmCli.h"
 #include "Common.h"
 
@@ -27,14 +26,12 @@ struct Command LoadCommand =
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
     {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", EXAMINE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
-    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty}
-
+    {FORCE_OPTION_SHORT, FORCE_OPTION, L"", FORCE_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueEmpty},
+    { L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI,HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueOptional }
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
-#ifndef OS_BUILD
-    ,{ L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI,HELP_VERBOSE_DETAILS_TEXT, FALSE, ValueOptional }
-#endif
+
 },
   {                                                                   //!< targets
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
@@ -75,6 +72,7 @@ Load(
   IN     struct Command *pCmd
 )
 {
+  BOOLEAN fileExists = FALSE;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
@@ -113,6 +111,8 @@ Load(
   EFI_STATUS ReturnCodes[MAX_DIMMS];
   NVM_STATUS NvmCodes[MAX_DIMMS];
   NVM_STATUS generalNvmStatus = NVM_SUCCESS;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
+  UINT16 BootStatusBitmask = 0;
 
 #ifndef OS_BUILD
   EFI_SHELL_PROTOCOL *pEfiShell = NULL;
@@ -173,6 +173,19 @@ Load(
   }
 
   Recovery = containsOption(pCmd, RECOVER_OPTION);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs), Finish);
+    // Also check if user specified "-smbus", then we need to set Recovery (for now)
+  if (IS_SMBUS_FLAG_ENABLED(Attribs)) {
+    Recovery = TRUE;
+  }
+  if (Recovery) {
+    // If user specifies -recovery, force the command
+    // to go over smbus only and not fallback
+    Attribs.Protocol = FisTransportSmbus;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
+    CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
+  }
+
   Examine = containsOption(pCmd, EXAMINE_OPTION) || containsOption(pCmd, EXAMINE_OPTION_SHORT);
   Force = containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT);
   //check for the kind of recovery this might be
@@ -212,7 +225,7 @@ Load(
   DimmTotalCount += NonFunctionalDimmCount;
 
   /*Get the list of functional and non-functional dimms*/
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pFunctionalDimms, &FunctionalDimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SMART_AND_HEALTH, &pFunctionalDimms, &FunctionalDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -228,6 +241,98 @@ Load(
     ReturnCode = EFI_NOT_STARTED;
     Print(FORMAT_STR_NL, CLI_INFO_NO_DIMMS);
     goto Finish;
+  }
+
+  // check if any targetted dimms are in media disable, if so then do Recovery flow
+  if (!Recovery && !Examine) {
+    /*Screen for user specific IDs*/
+    pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+    if (pTargetValue != NULL && StrLen(pTargetValue) > 0) {
+      if (FunctionalDimmCount > 0) {
+        // check functional dimms
+        ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pFunctionalDimms, FunctionalDimmCount, &pDimmIds, &DimmTargetsNum);
+        if (((ReturnCode != EFI_NOT_FOUND) && EFI_ERROR(ReturnCode)) || (pDimmIds == NULL)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to get Dimm Ids from String.");
+          goto Finish;
+        }
+        for (Index = 0; Index < DimmTargetsNum; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimmIds[Index], NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+      FREE_POOL_SAFE(pDimmIds);
+      DimmTargetsNum = 0;
+      if ( !Recovery && (NonFunctionalDimmCount > 0)) {
+        pTargetValue = GetTargetValue(pCmd, DIMM_TARGET);
+        // now check nonfunctinal dimms
+        ReturnCode = GetDimmIdsFromString(pCmd, pTargetValue, pNonFunctionalDimms, NonFunctionalDimmCount, &pDimmIds, &DimmTargetsNum);
+        if (((ReturnCode != EFI_NOT_FOUND) && EFI_ERROR(ReturnCode)) || (pDimmIds == NULL)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to get Dimm Ids from String.");
+          goto Finish;
+        }
+        for (Index = 0; Index < DimmTargetsNum; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimmIds[Index], NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+      FREE_POOL_SAFE(pDimmIds);
+      DimmTargetsNum = 0;
+    }
+    else
+    {
+      // if any of the dimms targetted are Media Disabled then this a recovery
+      for (Index = 0; Index < NonFunctionalDimmCount; Index++) {
+        ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pNonFunctionalDimms[Index].DimmID, NULL, &BootStatusBitmask);
+        if (EFI_ERROR(ReturnCode)) {
+          PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+          NVDIMM_DBG("Failed to retrieve bsr");
+          goto Finish;
+        }
+        if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+          Recovery = TRUE;
+          break;
+        }
+      }
+
+      if (Recovery != TRUE) { // if not already recovery check functional dimms for Media Disabled
+        for (Index = 0; Index < FunctionalDimmCount; Index++) {
+          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pFunctionalDimms[Index].DimmID, NULL, &BootStatusBitmask);
+          if (EFI_ERROR(ReturnCode)) {
+            PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
+            NVDIMM_DBG("Failed to retrieve bsr");
+            goto Finish;
+          }
+          if (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) {
+            Recovery = TRUE;
+            break;
+          }
+        }
+      }
+    }
+    if (Recovery) {
+      CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs), Finish);
+      Attribs.Protocol = FisTransportSmbus;
+      Attribs.PayloadSize = FisTransportSizeSmallMb;
+      CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs), Finish);
+    }
   }
 
   /*Identify the candidate list*/
@@ -325,10 +430,9 @@ Load(
     Print(CLI_RECOVER_DIMM_PROMPT_STR);
     for (Index = 0; Index < DimmTargetsNum; Index++) {
       ReturnCode = GetPreferredDimmIdAsString(pDimmTargets[Index].DimmHandle, pDimmTargets[Index].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
-      Print(L"%s ", DimmStr);
+      Print(FORMAT_SPACE_STR, DimmStr);
     }
-
-    Print(L"\n");
+    Print(FORMAT_NL);
   }
 
   /**
@@ -366,6 +470,14 @@ Load(
   }
 #endif
 
+  ReturnCode = FileExists(pFileName, &fileExists);
+  if (EFI_ERROR(ReturnCode) || FALSE == fileExists) {
+    NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_FILE_NOT_FOUND);
+    ReturnCode = MatchCliReturnCode(NVM_ERR_FILE_NOT_FOUND);
+    goto Finish;
+  }
+
   pFwImageInfo = AllocateZeroPool(sizeof(*pFwImageInfo));
   if (pFwImageInfo == NULL) {
     Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
@@ -381,8 +493,16 @@ Load(
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);
 
     for (Index = 0; Index < DimmTargetsNum; Index++) {
+
+      if (pDimmTargets != NULL && pDimmTargets[Index].HealthState == HEALTH_HEALTHY && TRUE == FlashSPI) {
+        NvmCodes[Index] = NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE;
+        ReturnCodes[Index] = MatchCliReturnCode(NvmCodes[Index]);
+        SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
+        continue;
+      }
+
       ReturnCodes[Index] = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
-        (CHAR16 *)pWorkingDirectory, Examine, FALSE, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
+        (CHAR16 *)pWorkingDirectory, Examine, Force, TRUE, FlashSPI, pFwImageInfo, pCommandStatus);
       NvmCodes[Index] = pCommandStatus->GeneralStatus;
 
       if (!EFI_ERROR(ReturnCodes[Index])) {
@@ -644,7 +764,9 @@ BlockForFwStage(
     }
 
     FwStagedPendingCount++;
-    ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+    CmdOpcode = 0;
+    CmdSubOpcode = 0;
+    pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
       &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
     if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw)
     {
@@ -663,7 +785,7 @@ BlockForFwStage(
     //Check each DIMM that had a image staged to see if it reports a staged version
     for (Index = 0; Index < pDimmTargetsNum; Index++)
     {
-      //dont perform unnecessary checks or repeat checks that already took place
+      //don't perform unnecessary checks or repeat checks that already took place
       if (FwStagedLongOpCodes[Index] == TransmitFwNeverHappened || FwStageDone[Index] == TRUE) {
         continue;
       }
@@ -679,7 +801,9 @@ BlockForFwStage(
         continue;
       }
 
-      ReturnCode = pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
+      CmdOpcode = 0;
+      CmdSubOpcode = 0;
+      pNvmDimmConfigProtocol->GetLongOpStatus(pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID,
         &CmdOpcode, &CmdSubOpcode, NULL, NULL, &LongOpEfiStatus);
 
       if (CmdOpcode == PtUpdateFw && CmdSubOpcode == SubopUpdateFw) {

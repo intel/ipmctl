@@ -51,7 +51,8 @@ RunFwDiagnostics(
   }
 
   if (DimmCount == 0 || ppDimms == NULL) {
-    NVDIMM_DBG("The dimm count and dimm information is missing");
+    ReturnCode = EFI_SUCCESS;
+    APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_NO_MANAGEABLE_DIMMS), EVENT_CODE_901, DIAG_STATE_MASK_OK, &pResult->Message, &pResult->StateVal);
     goto Finish;
   }
 
@@ -95,18 +96,6 @@ RunFwDiagnostics(
         goto Finish;
       }
     }
-
-#ifdef OS_BUILD
-    ReturnCode = SystemTimeCheck(ppDimms[Index], &pResult->SubTestMessage[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("The check for Dimm's system time failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((pResult->SubTestStateVal[SYS_TIME_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
-        APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-          &pResult->SubTestMessage[SYS_TIME_TEST_INDEX], &pResult->SubTestStateVal[SYS_TIME_TEST_INDEX]);
-        goto Finish;
-      }
-    }
-#endif // OS_BUILD
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -473,6 +462,7 @@ ThresholdsCheck(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   SMART_AND_HEALTH_INFO HealthInfo;
+  UINT8 AlarmEnabled = 0;
   INT16 MediaTemperatureThreshold = 0;
   INT16 ControllerTemperatureThreshold = 0;
   INT16 PercentageRemainingThreshold = 0;
@@ -501,7 +491,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_MEDIA_TEMPERATURE,
     &MediaTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -509,7 +499,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.MediaTempShutdownThresh < MediaTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_MEDIA_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_903, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, MediaTemperatureThreshold, HealthInfo.MediaTempShutdownThresh);
   }
@@ -518,7 +508,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_CONTROLLER_TEMPERATURE,
     &ControllerTemperatureThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -526,7 +516,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.ContrTempShutdownThresh < ControllerTemperatureThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_CONTROLLER_TEMPERATURE_THRESHOLD_ERROR), EVENT_CODE_904, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, ControllerTemperatureThreshold, HealthInfo.ContrTempShutdownThresh);
   }
@@ -535,7 +525,7 @@ ThresholdsCheck(
     pDimm->DimmID,
     SENSOR_TYPE_PERCENTAGE_REMAINING,
     &PercentageRemainingThreshold,
-    NULL,
+    &AlarmEnabled,
     NULL);
   if (EFI_ERROR(ReturnCode)) {
     *pDiagState |= DIAG_STATE_MASK_ABORTED;
@@ -543,7 +533,7 @@ ThresholdsCheck(
     goto Finish;
   }
 
-  if (HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
+  if (FALSE != AlarmEnabled && HealthInfo.PercentageRemainingValid && HealthInfo.PercentageRemaining < PercentageRemainingThreshold) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SPARE_BLOCK_THRESHOLD_ERROR), EVENT_CODE_905, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimm->DeviceHandle.AsUint32, HealthInfo.PercentageRemaining, PercentageRemainingThreshold);
   }
@@ -552,72 +542,3 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-#ifdef OS_BUILD
-/**
-Get the DIMMs system time and compare it to the local system time.
-Log proper events in case of any error.
-
-@param[in] pDimm Pointer to the DIMM
-@param[in out] ppResult Pointer to the result string of fw diagnostics message
-@param[out] pDiagState Pointer to the quick diagnostics test state
-
-@retval EFI_SUCCESS Test executed correctly
-@retval EFI_INVALID_PARAMETER if any of the parameters is a NULL
-**/
-EFI_STATUS
-SystemTimeCheck(
-  IN     DIMM *pDimm,
-  IN OUT CHAR16 **ppResultStr,
-  IN OUT UINT8 *pDiagState
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  time_t raw_start_time;
-  time_t raw_end_time;
-  PT_SYTEM_TIME_PAYLOAD SystemTimePayload;
-
-  NVDIMM_ENTRY();
-
-  if ((NULL == pDimm) || (NULL == pDiagState) || (NULL == ppResultStr)) {
-    if (pDiagState != NULL) {
-      *pDiagState |= DIAG_STATE_MASK_ABORTED;
-    }
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  // Get the start test system time
-  time(&raw_start_time);
-  // Get the DIMM's time
-  ReturnCode = FwCmdGetSystemTime(pDimm, &SystemTimePayload);
-  if (EFI_ERROR(ReturnCode)) {
-    *pDiagState |= DIAG_STATE_MASK_ABORTED;
-    NVDIMM_ERR("Failed to get system time Dimm handle 0x%x", pDimm->DeviceHandle.AsUint32);
-    goto Finish;
-  }
-  // Get the end test system time
-  time(&raw_end_time);
-
-  // Validate resulats
-  if ((time_t) SystemTimePayload.UnixTime < raw_start_time) {
-    CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_LOWER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, pTmpStr, (raw_start_time - SystemTimePayload.UnixTime));
-    FREE_POOL_SAFE(pTmpStr)
-  }
-  else if ((time_t) SystemTimePayload.UnixTime > raw_end_time) {
-    CHAR16 *pTmpStr = HiiGetString(gNvmDimmData->HiiHandle, STR_DIAGNOSTIC_GREATER, NULL);
-    APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_FW_SYSTEM_TIME_ERROR), EVENT_CODE_907, DIAG_STATE_MASK_OK, ppResultStr, pDiagState,
-      pDimm->DeviceHandle.AsUint32, pTmpStr, (SystemTimePayload.UnixTime - raw_end_time));
-    FREE_POOL_SAFE(pTmpStr);
-  }
-  else {
-    NVDIMM_DBG("Dimm 0x%x time verification diagnostic test: success", pDimm->DeviceHandle.AsUint32);
-  }
-
-Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-#endif // OS_BUILD

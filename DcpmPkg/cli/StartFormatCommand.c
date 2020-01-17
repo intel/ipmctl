@@ -71,7 +71,7 @@ StartFormat(
   }
 
   /**
-    Printing will still work via compability mode if NULL so no need to check for NULL.
+    Printing will still work via compatibility mode if NULL so no need to check for NULL.
   **/
   pPrinterCtx = pCmd->pPrintCtx;
 
@@ -138,6 +138,11 @@ StartFormat(
       if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
         ReturnCode = EFI_INVALID_PARAMETER;
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
+        goto Finish;
+      }
+      if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_POPULATION_VIOLATION);
         goto Finish;
       }
     }

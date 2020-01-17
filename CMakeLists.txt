@@ -11,8 +11,8 @@ get_filename_component(ROOT ./ ABSOLUTE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake/Find")
 
-set(LIBIPMCTL_VERSION_MAJOR 3)
-set(LIBIPMCTL_VERSION_MINOR 1)
+set(LIBIPMCTL_VERSION_MAJOR 4)
+set(LIBIPMCTL_VERSION_MINOR 0)
 set(LIBIPMCTL_VERSION_PATCH 0)
 set(LIBIPMCTL_VERSION_STRING ${LIBIPMCTL_VERSION_MAJOR}.${LIBIPMCTL_VERSION_MINOR}.${LIBIPMCTL_VERSION_PATCH})
 
@@ -21,7 +21,7 @@ set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
 set(IPMCTL_SPEC_VERSION_MAJOR 2)
-set(IPMCTL_SPEC_VERSION_MINOR 01)
+set(IPMCTL_SPEC_VERSION_MINOR 02)
 set(IPMCTL_DRAFT "-draft")
 set(IPMCTL_SPEC_VERSION_STRING ${IPMCTL_SPEC_VERSION_MAJOR}.${IPMCTL_SPEC_VERSION_MINOR}${IPMCTL_DRAFT})
 
@@ -292,6 +292,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/cli/ShowGoalCommand.c
 	DcpmPkg/cli/DeleteGoalCommand.c
 	DcpmPkg/cli/ShowErrorCommand.c
+	DcpmPkg/cli/ShowCelCommand.c
 	DcpmPkg/cli/DumpDebugCommand.c
 	DcpmPkg/cli/StartDiagnosticCommand.c
 	DcpmPkg/cli/ShowPreferencesCommand.c
@@ -550,7 +551,7 @@ FILE(GLOB NVM_HEADERS
 FILE(COPY ${NVM_HEADERS}
 	DESTINATION ${OUTPUT_DIR})
 
-FILE(COPY install/linux/logrotate/ipmctl.conf
+FILE(COPY install/linux/logrotate/ipmctl.logrotate.conf
 	DESTINATION ${OUTPUT_DIR})
 
 if(LNX_BUILD)
@@ -591,8 +592,9 @@ if(LNX_BUILD)
 		DESTINATION ${CMAKE_INSTALL_LOCALSTATEDIR}/log
 		)
 
-	install(FILES ${OUTPUT_DIR}/ipmctl.conf
+	install(FILES ${OUTPUT_DIR}/ipmctl.logrotate.conf
 		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
+		RENAME ipmctl
 		)
 
 	install(FILES ${OUTPUT_DIR}/libipmctl.pc
@@ -659,12 +661,14 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-host.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-cap.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-cel.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-diagnostic.txt
 #		${ROOT}/Documentation/ipmctl/Debug/ipmctl-diagnostic-events.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
@@ -696,12 +700,14 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-host.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
+		${OUTPUT_DIR}/manpage/ipmctl-show-cel.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-start-diagnostic.1.gz
 #		${OUTPUT_DIR}/manpage/ipmctl-diagnostic-events.1.gz
 		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz
@@ -747,3 +753,5 @@ endif()
 if(ESX_BUILD)
 	include(CMake/esx.cmake)
 endif()
+
+add_subdirectory(src/os/nvm_api_sample)

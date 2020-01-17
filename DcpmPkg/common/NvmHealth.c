@@ -79,10 +79,12 @@ GetSensorsInfo(
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.MediaThrottlingStopThresh;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.MediaThrottlingStartThresh;
   DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].ShutdownThreshold = HealthInfo.MediaTempShutdownThresh;
+  DimmSensorsSet[SENSOR_TYPE_MEDIA_TEMPERATURE].MaxTemperature = HealthInfo.MaxMediaTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].Value = HealthInfo.ControllerTemperature;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ShutdownThreshold = HealthInfo.ContrTempShutdownThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStopThreshold = HealthInfo.ControllerThrottlingStopThresh;
   DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].ThrottlingStartThreshold = HealthInfo.ControllerThrottlingStartThresh;
+  DimmSensorsSet[SENSOR_TYPE_CONTROLLER_TEMPERATURE].MaxTemperature = HealthInfo.MaxControllerTemperature;
   DimmSensorsSet[SENSOR_TYPE_PERCENTAGE_REMAINING].Value = HealthInfo.PercentageRemaining;
   DimmSensorsSet[SENSOR_TYPE_POWER_CYCLES].Value = HealthInfo.PowerCycles;
   DimmSensorsSet[SENSOR_TYPE_POWER_ON_TIME].Value = HealthInfo.PowerOnTime;

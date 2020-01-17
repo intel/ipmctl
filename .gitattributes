@@ -7,3 +7,5 @@ src/os/** text eol=lf
 Dcpmpkg/** text eol=lf
 CMakeLists.txt text eol=lf
 CMake/** text eol=lf
+install/linux/logrotate/** text eol=lf
+install/linux/debian/** text eol=lf

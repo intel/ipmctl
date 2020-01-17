@@ -233,9 +233,8 @@ IsConfiguringForCreateGoalAllowed(
 {
     BOOLEAN IsAllowed = FALSE;
 
-    IsAllowed = !(SecurityFlag & SECURITY_MASK_ENABLED);
+    IsAllowed = !(SecurityFlag & SECURITY_MASK_ENABLED)
+      || ((SecurityFlag & SECURITY_MASK_ENABLED) && !(SecurityFlag & SECURITY_MASK_LOCKED));
 
     return IsAllowed;
-
 }
-

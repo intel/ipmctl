@@ -14,12 +14,11 @@ SYNOPSIS
 --------
 [verse]
 ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
-AlarmThreshold=(temperature) EnabledState=(0|1)
+AlarmThreshold=(temperature) AlarmEnabled=(0|1)
 
 DESCRIPTION
 -----------
-Changes the non-critical alarm threshold or enabled state for one or more DCPMMs
-sensors.
+Changes the alarm threshold or enabled state for one or more DCPMMs sensors.
 Use the command Show Sensor to view the current settings.
 
 OPTIONS
@@ -73,14 +72,14 @@ TARGETS
 PROPERTIES
 ----------
 AlarmThreshold::
-  The upper (for temperatures) or lower (for spare capacity) non-critical alarm
-  threshold of the sensor. If the current value of the sensor is at or above for
-  thermal, or below for capacity, the theshold value, then the sensor will
-  indicate a "NonCritical" state. Temperatures may be specified in degrees
+  The threshold value at which an alarm for the respective sensor will be triggered.
+  The upper (for temperatures) or lower (for spare capacity) alarm
+  threshold of the sensor. Temperatures may be specified in degrees
   Celsius to a precision of 1/16 a degree.
 
-EnabledState::
-  Enable or disable the non-critical alarm threshold. One of:
+AlarmEnabled::
+  Enable or disable the alarm threshold, where applicable.
+  One of:
   - "0": Disable
   - "1": Enable
 
@@ -90,11 +89,15 @@ Changes the media temperature threshold to 51 on the specified DCPMM and enable
 the alarm.
 [verse]
 ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51
-EnabledState=1
+AlarmEnabled=1
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
 
 RETURN DATA
 -----------

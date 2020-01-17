@@ -263,6 +263,11 @@ ShowPerformance(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
       goto Finish;
     }
+    if (!AllDimmsInListInSupportedConfig(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
+      goto Finish;
+    }
   }
 
   // So, instead of parsing the -d parameter with CheckAllAndDisplayOptions(),

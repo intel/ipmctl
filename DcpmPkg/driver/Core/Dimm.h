@@ -13,18 +13,22 @@
 #include <IndustryStandard/SmBios.h>
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
+#include <DcpmmTypes.h>
 
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
   if (FW_ERROR(pFwCmd->Status)) { \
+    NVDIMM_ERR("Firmware cmd 0x%x:0x%x failed! FIS Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->Status); \
     ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
   } \
   else if (DSM_ERROR(pFwCmd->DsmStatus)) { \
-      ReturnCode = MatchDsmReturnCode(pFwCmd->DsmStatus); \
+    NVDIMM_ERR("DSM for fw cmd 0x%x:0x%x failed! DSM Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->DsmStatus); \
+    ReturnCode = MatchDsmReturnCode(pFwCmd->DsmStatus); \
   }
 #else
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
   if (FW_ERROR(pFwCmd->Status)) { \
+    NVDIMM_ERR("Firmware cmd 0x%x:0x%x failed! FIS Error code: 0x%x", pFwCmd->Opcode, pFwCmd->SubOpcode, pFwCmd->Status); \
     ReturnCode = MatchFwReturnCode(pFwCmd->Status); \
   }
 #endif
@@ -37,13 +41,7 @@
 #define SUB_OP_SHIFT 40
 #define OP_SHIFT 32
 #define SQ_SHIFT 63
-
-#define EMULATOR_DIMM_HEALTH_STATUS       0    //!< Normal
-#define EMULATOR_DIMM_TEMPERATURE         300  //!< 300K is about 26C
-#define EMULATOR_DIMM_TEMPERATURE_THR     310  //!< 310K is about 35C
-#define EMULATOR_DIMM_PERCENTAGE_REMAINING      75   //!< 75% of percentage remaining
-#define EMULATOR_DIMM_PERCENTAGE_REMAINING_THR  5    //!< 5% of percentage remaining
-#define DIMM_OUTPUT_PAYLOAD_SIZE          128  //!< The max size of the DIMM small output payload
+#define EXT_SUB_OP_SHIFT 8
 
 #define MAX_SMALL_OUTPUT_REG_COUNT      32
 
@@ -212,11 +210,6 @@ typedef struct _DIMM {
   UINT8 LsaStatus;                         //!< The status of the LSA partition parsing for this DIMM
 
   BLOCK_WINDOW *pBw;
-#ifndef OS_BUILD
-  MAILBOX *pHostMailbox;
-#else // OS_BUILD
-  VOID *Reserved;
-#endif // OS_BUILD
   NvDimmRegionMappingStructure *pRegionMappingStructure;      //!< ptr to the table used to configure the mailbox
   SpaRangeTbl *pCtrlSpaTbl;       //!> ptr to the spa range table associated with the mailbox table
   NvDimmRegionMappingStructure *pBlockDataRegionMappingStructure;      //!< ptr to the table used to configure the block windows
@@ -248,14 +241,25 @@ typedef struct _DIMM {
   BOOLEAN PcdSynced;                              //!< Active only if RegionsGoalConfig is TRUE
   UINT8 GoalConfigStatus;                         //!< Active only if RegionsGoalConfig is TRUE
 
-  /** List of Storage Namespaces **/
-  LIST_ENTRY StorageNamespaceList;
   VOID *pPcdLsa;
   // Always allocated to be size of PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE
   VOID *pPcdOem;
   UINT32 PcdOemSize;
 
   UINT16 ControllerRid;             //!< Revision ID of the subsystem memory controller from FIS
+
+  // If the dimm was declared non-functional during our driver initialization
+  BOOLEAN NonFunctional;
+
+  DIMM_BSR Bsr;
+  UINT16 BootStatusBitmask;
+
+  /*
+  A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
+  is only used during namespace initialzation so it doesn't need to be repeatedly
+  reloaded. It should not be considered current outside of initialization.
+  */
+  LABEL_STORAGE_AREA *pLsa;
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')
@@ -268,8 +272,6 @@ typedef struct _DIMM {
 #define MEMMAP_RANGE_IS                      5
 #define MEMMAP_RANGE_IS_NOT_INTERLEAVED      6
 #define MEMMAP_RANGE_IS_MIRROR               7
-#define MEMMAP_RANGE_STORAGE_ONLY            8
-#define MEMMAP_RANGE_BLOCK_NAMESPACE         9
 #define MEMMAP_RANGE_APPDIRECT_NAMESPACE    10
 #define MEMMAP_RANGE_FREE                   11
 #define MEMMAP_RANGE_LAST_USABLE_DPA        12
@@ -277,10 +279,6 @@ typedef struct _DIMM {
 typedef enum {
   FreeCapacityForPersistentRegion         = 0,
   FreeCapacityForMirrorRegion             = 1,
-  FreeCapacityForStMode                 = 2,
-  FreeCapacityForStModeOnInterleaved    = 3,
-  FreeCapacityForStModeOnNotInterleaved = 4,
-  FreeCapacityForStModeOnStOnly         = 5,
   FreeCapacityForADMode                 = 6
 } FreeCapacityType;
 
@@ -297,7 +295,7 @@ typedef struct _MEMMAP_RANGE {
 #define MEMMAP_RANGE_FROM_NODE(a)  CR(a, MEMMAP_RANGE, MemmapNode, MEMMAP_RANGE_SIGNATURE)
 
 #define DISABLE_ARS_TOTAL_TIMEOUT_SEC     2
-#define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retreive long op
+#define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retrieve long op
 #define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   3
 #define DSM_RETRY_SUGGESTED               0x5
 
@@ -338,12 +336,6 @@ InitializeDimmInventory(
 EFI_STATUS
 RemoveDimmInventory(
   IN OUT struct _PMEM_DEV *pDev
-  );
-
-EFI_STATUS
-InsertDimm(
-  IN     DIMM *pDimm,
-     OUT struct _PMEM_DEV *pDev
   );
 
 /**
@@ -550,23 +542,22 @@ FindFreeRanges(
   retrieving and recording partition information
   setting up block windows
 
-  @param[out] ppDimm output parameter for a new DIMM structure
-  @param[in] pFitHead fully populated NVM Firmware Interface Table
-  @param[in] pPmttHead fully populated Platform Memory Topology Table
-  @param[in] Pid SMBIOS Dimm ID of the DIMM to create
+  @param[in] pNewDimm: input dimm structure to populate
+  @param[in] pFitHead: fully populated NVM Firmware Interface Table
+  @param[in] pPmttHead: fully populated Platform Memory Topology Table
+  @param[in] Pid: SMBIOS Dimm ID of the DIMM to create
 
   @retval EFI_SUCCESS          - Success
   @retval EFI_OUT_OF_RESOURCES - AllocateZeroPool failure
   @retval EFI_DEVICE_ERROR     - Other errors
 **/
 EFI_STATUS
-InitializeDimm(
-     OUT DIMM **ppDimm,
+InitializeDimm (
+  IN     DIMM *pNewDimm,
   IN     ParsedFitHeader *pFitHead,
   IN     ParsedPmttHeader *pPmttHead,
   IN     UINT16 Pid
   );
-
 /**
   Check if the DIMM containing the specified DIMM ID is
   manageable by the driver
@@ -638,29 +629,6 @@ DimmWPQFlush(
   IN     DIMM *pDimm
   );
 
-/**
-  Create and Configure the OS Mailbox
-  Using the NVDIMM region table, determine the location of the OS mailbox
-  in the system physical address space. For each piece of the mailbox in SPA
-  map them into the virtual address space and record the location.
-
-  @param[in] pDimm: The DIMM to create the OS mailbox for
-  @parma[in] pITbl: the interleave table referenced by the mdsarmt_tbl
-
-  @retval Success - The pointer to the completed mailbox structure
-  @retval Error - NULL on error
-**/
-MAILBOX *
-CreateMailbox(
-  IN     DIMM *pDimm,
-  IN     InterleaveStruct *pITbl
-  );
-
-VOID
-FreeMailbox(
-     OUT MAILBOX *pMb
-  );
-
 VOID
 FreeDimm(
      OUT DIMM *pDimm
@@ -709,6 +677,25 @@ FwCmdGetSecurityInfo(
   IN     DIMM *pDimm,
      OUT PT_GET_SECURITY_PAYLOAD *pSecurityPayload
   );
+
+/**
+  Firmware command get security Opt-In
+  Execute a FW command to check the security Opt-In code of a DIMM
+
+  @param[in] pDimm: The DIMM to retrieve security info on
+  @param[in] OptInCode: Opt-In Code that is requested status for
+  @param[out] pSecurityOptIn: Area to place the returned from FW
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+  @retval Various errors from FW are still TBD
+**/
+EFI_STATUS
+FwCmdGetSecurityOptIn(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode,
+  OUT PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN *pSecurityOptIn
+);
 
 /**
   Firmware command to retrieve the ARS status of a particular DIMM.
@@ -783,6 +770,23 @@ FwCmdGetErrorLog (
      OUT VOID *pLargeOutputPayload OPTIONAL,
   IN     UINT32 LargeOutputPayloadSize OPTIONAL
   );
+
+/**
+  Firmware command to get Command Effect Log Entries
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetCommandEffectLog(
+  IN      DIMM  *pDimm,
+  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
+  OUT VOID *pOutputPayload OPTIONAL,
+  IN      UINT32 OutputPayloadSize OPTIONAL,
+  OUT VOID *pLargeOutputPayload OPTIONAL,
+  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+);
 
 /**
   Firmware command to get a specified debug log
@@ -1255,7 +1259,7 @@ GetBwCommandStatus(
   @param[out] pBuffer: Buffer to place bytes into
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/
@@ -1277,7 +1281,7 @@ ApertureRead(
   @param[in] pBuffer: Buffer containing data to write
 
   @retval EFI_ACCESS_DENIED if BW request attempts to access a locked or disabled BW or PM region
-  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occured
+  @retval EFI_DEVICE_ERROR If DIMM DPA address is invalid or uncorrectable access error occurred
   @retval EFI_INVALID_PARAMETER If pDimm, pBuffer or some internal BW pointer is NULL
   @retval EFI_TIMEOUT A timeout occurred while waiting for the command to execute.
 **/
@@ -1393,7 +1397,25 @@ GetPlatformConfigDataOemPartition(
   IN     BOOLEAN RestoreCorrupt,
   OUT NVDIMM_CONFIGURATION_HEADER **ppPlatformConfigData
 );
+/**
+  Firmware command to get Partition Data using large payload.
+  Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
+  The caller is responsible for a memory deallocation of the ppPlatformConfigData
+
+  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
+  @param[in] PartitionId Partition number to get data from
+  @param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetPcdLargePayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 PartitionId,
+  OUT UINT8 **ppRawData
+);
 /**
   Set Platform Config Data OEM Partition Intel config region.
   We only write to the first 64KiB of Intel FW/SW config metadata. The latter
@@ -1422,7 +1444,7 @@ SetPlatformConfigDataOemPartition(
   @param[out] pViralPolicyPayload buffer to retrieve DIMM FW response
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER Paramter supplied is invalid
+  @retval EFI_INVALID_PARAMETER Parameter supplied is invalid
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
   @retval Various errors from FW
 **/
@@ -1476,27 +1498,6 @@ GetAndParseFwErrorLogForDimm(
      OUT ERROR_LOG_INFO *pErrorLogs
   );
 
-/**
-  Get requested number of specific DIMM registers for given DIMM id
-
-  @param[in] pDimm - pointer to DIMM to get registers for.
-  @param[out] pBsr - Pointer to buffer for Boot Status register, contains
-              high and low 4B register.
-  @param[out] pFwMailboxStatus - Pointer to buffer for Host Fw Mailbox Status Register
-  @param[in] SmallOutputRegisterCount - Number of small output registers to get, max 32.
-  @param[out] pFwMailboxOutput - Pointer to buffer for Host Fw Mailbox small output Register.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-EFI_STATUS
-GetKeyDimmRegisters(
-  IN     DIMM *pDimm,
-     OUT UINT64 *pBsr,
-     OUT UINT64 *pFwMailboxStatus,
-  IN     UINT32 SmallOutputRegisterCount,
-     OUT UINT64 *pFwMailboxOutput
-  );
 
 /**
   Get count of media and/or thermal errors on given DIMM
@@ -1698,7 +1699,8 @@ FwCmdGetCommandAccessPolicy(
   Inject Temperature error payload
   @param[IN] pDimm Target DIMM structure pointer
   @param[IN] subopcode for error injection command
-  @param[IN] pinjectInputPayload - input payload to be sent
+  @param[OUT] pinjectInputPayload - input payload to be sent
+  @param[OUT] pFwStatus FW status returned by dimm
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
@@ -1709,7 +1711,8 @@ EFI_STATUS
 FwCmdInjectError(
   IN     DIMM *pDimm,
   IN     UINT8 SubOpcode,
-  OUT void *pinjectInputPayload
+  OUT void *pinjectInputPayload,
+  OUT UINT8 *pFwStatus
 );
 
 /**
@@ -1759,6 +1762,17 @@ IsDimmManageable(
   IN  DIMM *pDimm
 );
 
+/**
+Get supported configuration state for Dimm
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in supported config
+**/
+BOOLEAN
+IsDimmInSupportedConfig(
+  IN  DIMM *pDimm
+);
 
 /**
 Check if the dimm interface code of this DIMM is supported
@@ -1849,10 +1863,154 @@ EFI_STATUS GetPcdOemDataSize(
   UINT32 *pOemDataSize
 );
 
+/**
+  Check if sending a large payload command over the DDRT large payload
+  mailbox is possible. Used by callers often to determine chunking behavior.
+
+  @param[in] pDimm The DCPMM to retrieve information on
+
+  @retval TRUE: DDRT large payload mailbox is available
+  @retval FALSE: DDRT large payload mailbox is not available
+**/
+BOOLEAN
+IsLargePayloadAvailable(
+  IN DIMM *pDimm
+);
+
 EFI_STATUS
 PassThru(
   IN     struct _DIMM *pDimm,
   IN OUT FW_CMD *pCmd,
   IN     UINT64 Timeout
+);
+
+/**
+  Makes Bios emulated pass through call and acquires the DCPMM Boot
+  Status Register
+
+  @param[in] pDimm The DCPMM to retrieve identify info on
+  @param[out] pBsrValue Pointer to memory to copy BSR value to
+
+  @retval EFI_SUCCESS: Success
+  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
+**/
+
+EFI_STATUS
+EFIAPI
+FwCmdGetBsr(
+  IN     DIMM *pDimm,
+     OUT UINT64 *pBsrValue
+);
+
+/**
+  Gather boot status register value and populate the boot status bitmask
+
+  @param[in] pDimm to retrieve DDRT Training status from
+  @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
+  @param[out] pBootStatusBitmask Pointer to the boot status bitmask
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+**/
+
+EFI_STATUS
+PopulateDimmBsrAndBootStatusBitmask(
+  IN     DIMM *pDimm,
+  OUT DIMM_BSR *pBsr,
+  OUT UINT16 *pBootStatusBitmask
+);
+
+/**
+  Passthrough FIS command by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in, out] pCmd Firmware command structure pointer
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmCmd(
+  IN     struct _DIMM *pDimm,
+  IN OUT FW_CMD *pCmd,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface
+);
+
+/**
+  Get large payload info by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pOutput Large payload info output data buffer
+  @param[out] pStatus FIS request status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadInfo(
+  IN     struct _DIMM *pDimm,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+     OUT DCPMM_FIS_OUTPUT *pOutput,
+     OUT UINT8 *pStatus
+);
+
+/**
+  Write large payload by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] pInput Input data buffer
+  @param[in] InputSize Total input data size
+  @param[in] MaxChunkSize Maximum chunk of data to write
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pStatus FIS request status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadWrite(
+  IN     struct _DIMM *pDimm,
+  IN     UINT8 *pInput,
+  IN     UINT32 InputSize,
+  IN     UINT32 MaxChunkSize,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+     OUT UINT8 *pStatus
+);
+
+/**
+  Read large payload by Dcpmm BIOS protocol.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] OutputSize Total output data size
+  @param[in] MaxChunkSize Maximum chunk of data to read
+  @param[in] Timeout Optional command timeout in microseconds
+  @param[in] DcpmmInterface Interface for FIS request
+  @param[out] pOutput Output data buffer
+  @param[out] pStatus FIS request status pointer
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+DcpmmLargePayloadRead(
+  IN     struct _DIMM *pDimm,
+  IN     UINT32 OutputSize,
+  IN     UINT32 MaxChunkSize,
+  IN     UINT32 Timeout OPTIONAL,
+  IN     DCPMM_FIS_INTERFACE DcpmmInterface,
+  IN OUT UINT8 *pOutput,
+     OUT UINT8 *pStatus
 );
 #endif

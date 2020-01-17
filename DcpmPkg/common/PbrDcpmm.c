@@ -64,11 +64,11 @@ PbrGetPassThruRecord(
     goto Finish;
   }
 
-  //skip past the pass thru request header
+  //skip past the pass through request header
   CurDataPos += sizeof(PbrPassThruReq);
   //verify we didn't run out of data
   if (CurDataPos > DataSize) {
-    NVDIMM_ERR("Failed to skip past the pass thru request\n");
+    NVDIMM_ERR("Failed to skip past the pass through request\n");
     ReturnCode = EFI_LOAD_ERROR;
     goto Finish;
   }

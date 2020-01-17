@@ -590,7 +590,7 @@ int s_strrep_char(char *dst_str, size_t dst_size, const char *src_str, size_t sr
 					dst_idx++;
 				}
 			}
-			else // wont fit when null-terminated
+			else // won't fit when null-terminated
 			{
 				// return number of src_chars processed and break
 				rc = (int)src_idx;

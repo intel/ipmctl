@@ -108,6 +108,7 @@
 #define CONFIG_TARGET                        L"-config"                  //!< 'config' target name
 #define SENSOR_TARGET                        L"-sensor"                  //!< 'sensor' target name
 #define ERROR_TARGET                         L"-error"                   //!< 'error' target name
+#define CEL_TARGET                         L"-cel"                   //!< 'cel' target name
 #define DEBUG_TARGET                         L"-debug"                   //!< 'debug' target name
 #define REGISTER_TARGET                      L"-register"                //!< 'register' target name
 #define FIRMWARE_TARGET                      L"-firmware"                //!< 'firmware' target name
@@ -182,7 +183,7 @@
 #define NEWPASSPHRASE_PROPERTY            L"NewPassphrase"            //!< 'NewPassphrase' property name
 #define CONFIRMPASSPHRASE_PROPERTY        L"ConfirmPassphrase"        //!< 'ConfirmPassphrase' property name
 #define ALARM_THRESHOLD_PROPERTY          L"AlarmThreshold"           //!< 'AlarmThreshold' property
-#define ENABLED_STATE_PROPERTY            L"EnabledState"             //!< 'EnabledState' property
+#define ALARM_ENABLED_PROPERTY            L"AlarmEnabled"             //!< 'AlarmEnabled' property
 #define MEMORY_MODE_PROPERTY              L"MemoryMode"               //!< 'MemoryMode' property name
 #define PERSISTENT_MEM_TYPE_PROPERTY      L"PersistentMemoryType"     //!< 'PersistentMemoryType' property name
 #define MEMORY_SIZE_PROPERTY              L"MemorySize"               //!< 'MemorySize' property name
@@ -220,14 +221,14 @@
 #define MODE_PROPERTY                     L"Mode"
 #define PROPERTY_VALUE_NONE               L"None"
 #define PROPERTY_VALUE_SECTOR             L"Sector"
-#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY   L"AveragePowerReportingTimeConstantMultiplier"
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY L"AveragePowerReportingTimeConstantMultiplier"
+#define AVG_PWR_REPORTING_TIME_CONSTANT   L"AveragePowerReportingTimeConstant"
 #define ACCESS_TYPE_PROPERTY              L"AccessType"
 #define ERASE_CAPABLE_PROPERTY            L"EraseCapable"
 #define ENCRYPTION_PROPERTY               L"Encryption"
 #define CLI_DEFAULT_DIMM_ID_PROPERTY      L"CLI_DEFAULT_DIMM_ID"
 #define CLI_DEFAULT_SIZE_PROPERTY         L"CLI_DEFAULT_SIZE"
 #define APP_DIRECT_SETTINGS_PROPERTY      L"APPDIRECT_SETTINGS"
-#define APP_DIRECT_GRANULARITY_PROPERTY   L"APPDIRECT_GRANULARITY"
 #define LABEL_VERSION_PROPERTY            L"LabelVersion"
 #define NS_LABEL_VERSION_PROPERTY         L"NamespaceLabelVersion"
 #define SEVERITY_PROPERTY                 L"Severity"
@@ -302,7 +303,6 @@
 #define HELP_TEXT_ERROR_LOG             L"Thermal|Media"
 #define HELP_TEXT_PERCENT               L"0|%%"
 #define HELP_TEXT_APPDIRECT_SETTINGS    PROPERTY_VALUE_RECOMMENDED L"|" L"(IMCSize)_(ChannelSize)"
-#define HELP_TEXT_APPDIRECT_GRANULARITY L"1|32"
 #define HELP_TEXT_NO_MIRROR_APPDIRECT_SETTINGS L"ByOne|(iMCSize)_(ChannelSize)"
 #define HELP_TEXT_NS_LABEL_VERSION      L"1.1|1.2"
 #define HELP_NFIT_DETAILS_TEXT         L"Used to specify NFIT as the source"
@@ -321,6 +321,7 @@
 #define HELP_TEXT_PERFORMANCE_CAT       L"Performance Metrics"
 
 #define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY     L"<0, 32>"
+#define HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY          L"<100, 12000>"
 
 #define HELP_TEXT_PERFORMANCE_CAT_DETAILS  L"\n    "DCPMM_PERFORMANCE_MEDIA_READS \
                                            L"\n    "DCPMM_PERFORMANCE_MEDIA_WRITES \
@@ -418,6 +419,8 @@ struct Command
   BOOLEAN ExcludeDriverBinding;
   BOOLEAN Hidden; //!< Never print
   BOOLEAN ShowHelp;
+  BOOLEAN SyntaxErrorHelpNeeded;
+  BOOLEAN VerbMatch;
   UINT8 CommandId;
   UINT8 DispType;
   CHAR16 DispName[DISP_NAME_LEN];

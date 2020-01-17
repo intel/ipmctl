@@ -10,6 +10,11 @@ NAME
 ----
 ipmctl-start-diagnostic - Starts a diagnostic test
 
+ifndef::manpage[]
+For a complete list of diagnostic test results, refer to addendum
+section <<Diagnostic Events>>.
+endif::manpage[]
+
 SYNOPSIS
 --------
 [verse]
@@ -146,3 +151,7 @@ Message::
 
 EventCode::
   Event code associated with Message.
+
+ifdef::manpage[]
+include::ipmctl-diagnostic-events.txt[leveloffset=+1]
+endif::manpage[]

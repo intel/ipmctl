@@ -90,10 +90,8 @@ PrintAllowedVolatileMode(
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_STR);
     break;
   case VOLATILE_MODE_2LM:
+    // Memory Mode is the volatile implementation of 2LM
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, MEMORY_STR);
-    break;
-  case VOLATILE_MODE_1LM_2LM:
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, UNKNOWN_STR);
@@ -119,10 +117,8 @@ PrintCurrentVolatileMode(
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, ONE_LM_STR);
     break;
   case VOLATILE_MODE_2LM:
+    // Memory Mode is the volatile implementation of 2LM
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, MEMORY_STR);
-    break;
-  case VOLATILE_MODE_1LM_2LM:
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, UNKNOWN_STR);

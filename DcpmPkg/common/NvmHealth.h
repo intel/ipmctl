@@ -23,10 +23,12 @@
 #define FW_ERROR_COUNT_STR                    L"FwErrorCount"
 #define DIMM_HEALTH_STR                       L"Health"
 #define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR    L"UnlatchedDirtyShutdownCount"
+#define MAX_MEDIA_TEMPERATURE_STR             L"MaxMediaTemperature"
+#define MAX_CONTROLLER_TEMPERATURE_STR        L"MaxControllerTemperature"
 
 #define SENSORS_COMBINED \
   L"Health|MediaTemperature|ControllerTemperature|PercentageRemaining|LatchedDirtyShutdownCount|PowerOnTime|" \
-  L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdownCount" \
+  L"UpTime|PowerCycles|FwErrorCount|UnlatchedDirtyShutdownCount|MaxMediaTemperature|MaxControllerTemperature" \
 
 
 #define TEMPERATURE_MSR     L"C"

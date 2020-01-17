@@ -5,7 +5,7 @@
 
 /**
   Dynamic workarounds flag.
-  Only in the debug version, we enable the runtime workarounds that can be set by an enviromental
+  Only in the debug version, we enable the runtime workarounds that can be set by an environmental
   variable in the shell (before loading the driver).
 **/
 #if !defined(MDEPKG_NDEBUG)

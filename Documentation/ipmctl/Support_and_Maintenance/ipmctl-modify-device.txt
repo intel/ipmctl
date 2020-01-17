@@ -13,7 +13,7 @@ ipmctl-modify-device - Changes the configurable setting(s) on one or more DCPMMs
 SYNOPSIS
 --------
 [verse]
-ipmctl set [OPTIONS] -dimm (DimmIDs) FirstFastRefresh=(0|1)
+ipmctl set [OPTIONS] -dimm (DimmIDs) AveragePowerReportingTimeConstant=(100-12000)
 
 DESCRIPTION
 -----------
@@ -46,21 +46,29 @@ TARGETS
 
 PROPERTIES
 ----------
-FirstFastRefresh::
-  Whether acceleration of the first refresh cycle is enabled. One of:
-  - "0": Disable - This is the default.
-  - "1": Enable - Customers will have to wait a pre-determined time (5-6 minutes)
-       before starting benchmark tests.
+AveragePowerReportingTimeConstantMultiplier::
+  The value that is used to multiply the base time value used for average power
+  consumption measurements. Can be set to a value between 0 and 32. The default
+  value is 0.
+
+AveragePowerReportingTimeConstant::
+  The value, in milliseconds, used to determine the time constant for reporting
+  the average power consumption measurements. Can be set to a value between 100
+  and 12000, by increments of 100. The default value is 1000.
 
 EXAMPLES
 --------
-Enables acceleration of the first fast refresh cycle on all manageable DCPMMs
+Sets average power reporting time constant multiplier to 1 on all manageable DCPMMs
 [verse]
-set -dimm FirstFastRefresh=1
+set -dimm AveragePowerReportingTimeConstant=1500
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified DCPMM(s) must be manageable by the host software.
 
 RETURN DATA
 -----------

@@ -19,14 +19,11 @@
 #define DIMM_ID_STR                       L"DimmID"
 #define SENSOR_TYPE_STR                   L"Type"
 #define CURRENT_VALUE_STR                 L"CurrentValue"
-#define CURRENT_STATE_STR                 L"CurrentState"
 #define ALARM_THRESHOLD_STR               L"AlarmThreshold"
 #define THROTTLING_STOP_THRESHOLD_STR     L"ThrottlingStopThreshold"
 #define THROTTLING_START_THRESHOLD_STR    L"ThrottlingStartThreshold"
 #define SHUTDOWN_THRESHOLD_STR            L"ShutdownThreshold"
-#define SETABLE_THRESHOLDS_STR            L"SettableThresholds"
-#define SUPPORTED_THRESHOLDS_STR          L"SupportedThresholds"
-#define ENABLED_STATE_STR                 L"EnabledState"
+#define MAX_TEMPERATURE                   L"MaxTemperature"
 #define DISABLED_STR                      L"Disabled"
 
 #define DS_ROOT_PATH                      L"/SensorList"
@@ -125,14 +122,12 @@ CHAR16 *mppAllowedShowSensorDisplayValues[] =
   DIMM_ID_STR,
   SENSOR_TYPE_STR,
   CURRENT_VALUE_STR,
-  CURRENT_STATE_STR,
   ALARM_THRESHOLD_STR,
   THROTTLING_STOP_THRESHOLD_STR,
   THROTTLING_START_THRESHOLD_STR,
   SHUTDOWN_THRESHOLD_STR,
-  SETABLE_THRESHOLDS_STR,
-  SUPPORTED_THRESHOLDS_STR,
-  ENABLED_STATE_STR
+  ALARM_ENABLED_PROPERTY,
+  MAX_TEMPERATURE
 };
 
 
@@ -188,6 +183,7 @@ ShowSensor(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
+  BOOLEAN FIS_1_13 = FALSE;
 
   struct {
     CHAR16 *pSensorStr;
@@ -202,11 +198,12 @@ ShowSensor(
       {UPTIME_STR, SENSOR_TYPE_UP_TIME},
       {FW_ERROR_COUNT_STR, SENSOR_TYPE_FW_ERROR_COUNT},
       {DIMM_HEALTH_STR, SENSOR_TYPE_DIMM_HEALTH},
-      {UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT}
+      {UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR, SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT},
   };
   UINT32 SensorsNum = ARRAY_SIZE(Sensors);
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
-  BOOLEAN ShowAllManageableDimmFound = FALSE;
+  UINT32 UninitializedDimmCount = 0;
+  UINT32 InitializedDimmCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -252,7 +249,8 @@ ShowSensor(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount,
+      &InitializedDimmCount, &UninitializedDimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -264,25 +262,6 @@ ShowSensor(
     pDimmsValue = GetTargetValue(pCmd, DIMM_TARGET);
     ReturnCode = GetDimmIdsFromString(pCmd, pDimmsValue, pDimms, DimmsCount, &pDimmIds, &DimmIdsNum);
     if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
-    }
-    if (!AllDimmsInListAreManageable(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-      goto Finish;
-    }
-  }
-
-  if (DimmIdsNum == 0) {
-    for (DimmIndex = 0; DimmIndex < DimmsCount; DimmIndex++) {
-      if (pDimms[DimmIndex].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
-        ShowAllManageableDimmFound = TRUE;
-        break;
-      }
-    }
-    if (ShowAllManageableDimmFound == FALSE) {
-      ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
       goto Finish;
     }
   }
@@ -315,20 +294,6 @@ ShowSensor(
       continue;
     }
 
-    if (pDimms[DimmIndex].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
-      continue;
-    }
-
-    ReturnCode = GetSensorsInfo(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, DimmSensorsSet);
-    if (EFI_ERROR(ReturnCode)) {
-      /**
-        We do not return on error. Just inform the user and skip to the next DIMM or end.
-      **/
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from DIMM %d. Code: " FORMAT_EFI_STATUS "\n",
-        pDimms[DimmIndex].DimmID, ReturnCode);
-      continue;
-    }
-
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid,
       DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
@@ -336,8 +301,29 @@ ShowSensor(
       goto Finish;
     }
 
+    ReturnCode = GetSensorsInfo(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, DimmSensorsSet);
+    if (EFI_ERROR(ReturnCode)) {
+      /**
+        We do not return on error. Just inform the user and skip to the next DIMM or end.
+      **/
+      if (ReturnCode == EFI_NOT_READY) {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from DIMM " FORMAT_STR L" - Dimm is unmanageable.\n",
+          DimmStr);
+      }
+      else {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from DIMM " FORMAT_STR L". Code: " FORMAT_EFI_STATUS "\n",
+          DimmStr, ReturnCode);
+      }
+      continue;
+    }
+
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+
+    //Checking the FIS Version
+    if ((pDimms[DimmIndex].FwVer.FwApiMajor >= 2 )||(pDimms[DimmIndex].FwVer.FwApiMajor == 1 && pDimms[DimmIndex].FwVer.FwApiMinor >= 13)) {
+      FIS_1_13 = TRUE;
+    }
 
     for (SensorIndex = 0; SensorIndex < SENSOR_TYPE_COUNT; SensorIndex++) {
       if ((SensorToDisplay != SENSOR_TYPE_ALL
@@ -382,13 +368,8 @@ ShowSensor(
         case SENSOR_TYPE_MEDIA_TEMPERATURE:
         case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
         case SENSOR_TYPE_PERCENTAGE_REMAINING:
-          // Only media, controller, and percentage posess alarm thresholds
-          if (0 == DimmSensorsSet[SensorIndex].Enabled) {
-            pTempBuff = CatSPrintClean(NULL, FORMAT_STR, DISABLED_STR);
-          }
-          else {
-            pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].AlarmThreshold, DimmSensorsSet[SensorIndex].Type);
-          }
+          // Only media, controller, and percentage possess alarm thresholds
+          pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].AlarmThreshold, DimmSensorsSet[SensorIndex].Type);
           break;
         default:
           pTempBuff = NULL;
@@ -402,11 +383,28 @@ ShowSensor(
       }
 
       /**
+        AlarmEnabled
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ALARM_ENABLED_PROPERTY))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_PERCENTAGE_REMAINING:
+          // Only media, controller, and percentage posess alarm thresholds
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ALARM_ENABLED_PROPERTY, SensorEnabledStateToString(DimmSensorsSet[SensorIndex].Enabled));
+          break;
+        default:
+          //do nothing
+          break;
+        }
+      }
+
+      /**
         ThrottlingStopThreshold
       **/
       if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, THROTTLING_STOP_THRESHOLD_STR))) {
         switch (SensorIndex) {
-        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+		case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
         case SENSOR_TYPE_MEDIA_TEMPERATURE:
           // Only Media temperature sensor got lower critical threshold
           pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].ThrottlingStopThreshold, DimmSensorsSet[SensorIndex].Type);
@@ -460,6 +458,32 @@ ShowSensor(
 
         if (NULL != pTempBuff) {
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SHUTDOWN_THRESHOLD_STR, pTempBuff);
+          FREE_POOL_SAFE(pTempBuff);
+        }
+      }
+
+      /**
+        MaxTemperature
+      **/
+      if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MAX_TEMPERATURE))) {
+        switch (SensorIndex) {
+        case SENSOR_TYPE_CONTROLLER_TEMPERATURE:
+        case SENSOR_TYPE_MEDIA_TEMPERATURE:
+          // Only Controller/Media temperature sensor have MaxTemperature attribute (FIS 1.13+)
+          if (FIS_1_13) {
+            pTempBuff = GetSensorValue(DimmSensorsSet[SensorIndex].MaxTemperature, DimmSensorsSet[SensorIndex].Type);
+          }
+          else {
+            pTempBuff = CatSPrintClean(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+          }
+          break;
+        default:
+          pTempBuff = NULL;
+          break;
+        }
+
+        if (NULL != pTempBuff) {
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MAX_TEMPERATURE, pTempBuff);
           FREE_POOL_SAFE(pTempBuff);
         }
       }

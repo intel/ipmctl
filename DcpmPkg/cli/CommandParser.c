@@ -26,6 +26,9 @@ EFI_STATUS MatchTargets(struct Command *pInputCmd, struct Command *pCmdToMatch);
 EFI_STATUS MatchProperties(struct Command *pInput, struct Command *pMatch);
 static EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd);
 
+UINT16 TargetCount(struct Command *pCmd);
+UINT16 TargetMatchCount(struct Command *pInputCmd, struct Command *pCmdToMatch);
+
 /*
  * Global variables
  */
@@ -212,6 +215,8 @@ InvalidTokenScreen(
   return EFI_SUCCESS;
 }
 
+extern BOOLEAN HelpRequested;
+
 /*
  * Parse the given the command line arguments to
  * identify the correct command.
@@ -297,7 +302,7 @@ Parse(
 
   /* If protocol or payload size options present, ensure no mutually exclusive protocol/payload options */
   ReturnCode = ValidateProtocolAndPayloadSizeOptions(pCommand);
-  if (EFI_ERROR(ReturnCode)) {
+  if (EFI_NOT_FOUND != ReturnCode && EFI_ERROR(ReturnCode) && FALSE == HelpRequested) {
     goto Finish;
   }
 
@@ -325,6 +330,17 @@ Parse(
       pCommand->PrinterCtrlSupported = gCommandList[Index].PrinterCtrlSupported;
       pCommand->ExcludeDriverBinding = gCommandList[Index].ExcludeDriverBinding;
       break;
+    }
+  }
+
+  if (EFI_ERROR(ReturnCode)) {
+    for (Index = 0; Index < gCommandCount; Index++) {
+      //if at least the verb matches, then set this command up for help display
+      if (StrICmp(pCommand->verb, gCommandList[Index].verb) == 0) {
+        pCommand->ShowHelp = TRUE;
+        ReturnCode = EFI_SUCCESS;
+        break;
+      }
     }
   }
 
@@ -421,7 +437,6 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
     /** loop through the input tokens **/
   while ((pInput->TokenCount - *pStart) > 0) {
     Found = FALSE;
-
     /** loop through the supported commands to find valid options **/
     for (Index = 0; Index < gCommandCount && !Found; Index++) {
       if (gCommandList[Index].options != NULL) {
@@ -470,6 +485,14 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
                 Rc = EFI_BUFFER_TOO_SMALL;
                 break;
               } else {
+                if (pCommand->options[matchedOptions].pOptionValueStr == NULL) {
+                  pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+                  SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+                  Rc = EFI_INVALID_PARAMETER;
+                  goto Finish;
+                }
+
                 StrnCpyS(pCommand->options[matchedOptions].pOptionValueStr, PARSER_OPTION_VALUE_LEN,
                   pInput->ppTokens[*pStart], PARSER_OPTION_VALUE_LEN - 1);
                 (*pStart)++;
@@ -827,6 +850,79 @@ Finish:
 }
 
 /*
+Gives the total number of targets associated with a command
+*/
+UINT16 TargetCount(struct Command *pCmd)
+{
+  UINT16 val = 0;
+  UINT16 Index = 0;
+  CHAR16 *TargetName = NULL;
+  UINTN TargetNameLen = 0;
+  if (pCmd == NULL) {
+    return val;
+  }
+
+  for (Index = 0; Index < MAX_TARGETS; ++Index) {
+    TargetName = pCmd->targets[Index].TargetName;
+    TargetNameLen = StrLen(TargetName);
+
+    if (TargetNameLen == 0) {
+      // All targets from Input was processed, quit from loop.
+      break;
+    }
+
+    val++;
+  }
+
+  return val;
+}
+
+/*
+Gives the total number of targets that match an input as compared to a given
+*/
+UINT16 TargetMatchCount(struct Command *pInputCmd, struct Command *pCmdToMatch)
+{
+  UINT16 val = 0;
+  UINT16 Index1 = 0;
+  UINT16 Index2 = 0;
+  CHAR16 *InputName = NULL;
+  UINTN InputNameLen = 0;
+  CHAR16 *MatchName = NULL;
+  UINTN MatchNameLen = 0;
+
+  if (pInputCmd == NULL || pCmdToMatch == NULL ||
+    StrICmp(pInputCmd->verb, pCmdToMatch->verb) != 0) {
+    return val;
+  }
+
+  for (Index1 = 0; Index1 < MAX_TARGETS; ++Index1) {
+    InputName = pInputCmd->targets[Index1].TargetName;
+    InputNameLen = StrLen(InputName);
+
+    if (InputNameLen == 0) {
+      // All targets from Input was processed, quit from loop.
+      break;
+    }
+
+    for (Index2 = 0; Index2 < MAX_TARGETS; ++Index2) {
+      MatchName = pCmdToMatch->targets[Index2].TargetName;
+      MatchNameLen = StrLen(MatchName);
+
+      if (MatchNameLen == 0) {
+        // All targets from Input was processed, quit from loop.
+        break;
+      }
+
+      if (StrICmp(InputName, MatchName) == 0) {
+        val++;
+      }
+    }
+  }
+
+  return val;
+}
+
+/*
  * Attempt to match the input based on the targets
  */
 EFI_STATUS MatchTargets(struct Command *pInputCmd, struct Command *pCmdToMatch)
@@ -1014,18 +1110,64 @@ CHAR16
 {
   UINTN Index = 0;
   UINTN Index2 = 0;
-  EFI_STATUS CommandMatchingStatus = EFI_SUCCESS;
+  UINT16 CommandsToDisplay = 0;
+  UINT16 MatchingTargets = 0;
   CHAR16 *pHelp = NULL;
 
   NVDIMM_ENTRY();
+
+  //reset flags
+  for (Index = 0; Index < gCommandCount; Index++) {
+    gCommandList[Index].SyntaxErrorHelpNeeded = FALSE;
+    gCommandList[Index].VerbMatch = pCommand != NULL && StrICmp(pCommand->verb, gCommandList[Index].verb) == 0;
+  }
+
+  //locate which of the commands to display help for
+ if (TRUE == SingleCommand && pCommand != NULL) {
+    for (Index = 0; Index < gCommandCount; Index++) {
+      //don't bother with commands of a different verb
+      if (FALSE == gCommandList[Index].VerbMatch) {
+        continue;
+      }
+
+      //Exact matches are an immediate break for displaying that one command
+      if (EFI_SUCCESS == MatchCommand(pCommand, &gCommandList[Index])) {
+        for (Index2 = 0; Index2 < gCommandCount; Index2++) {
+          gCommandList[Index2].SyntaxErrorHelpNeeded = FALSE;
+        }
+        gCommandList[Index].SyntaxErrorHelpNeeded = TRUE;
+        CommandsToDisplay++;
+        break;
+      }
+
+      //if the caller has sent in a target, see if there is a partial match
+      MatchingTargets = TargetMatchCount(pCommand, &gCommandList[Index]);
+      if (MatchingTargets > 0) {
+        gCommandList[Index].SyntaxErrorHelpNeeded = TRUE;
+        CommandsToDisplay++;
+      }
+    }
+
+    //no matches = display them all
+    if (0 == CommandsToDisplay) {
+      for (Index = 0; Index < gCommandCount; Index++) {
+        //don't bother with commands of a different verb
+        if (FALSE == gCommandList[Index].VerbMatch) {
+          continue;
+        }
+        gCommandList[Index].SyntaxErrorHelpNeeded = TRUE;
+      }
+    }
+  }
+
   for (Index = 0; Index < gCommandCount; Index++) {
     /**
       if the user wants help for a specific command
       and it matches the verb, then continue to add the pHelp
     **/
-    CommandMatchingStatus = MatchCommand(pCommand, &gCommandList[Index]);
+
     if (!gCommandList[Index].Hidden &&
-      ((!SingleCommand && (pCommand == NULL || (pCommand != NULL && StrICmp(pCommand->verb, gCommandList[Index].verb) == 0)))))
+      ((!SingleCommand && (pCommand == NULL || TRUE == gCommandList[Index].VerbMatch))))
 {
       /** full verb syntax with help string **/
       if (pCommand == NULL || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
@@ -1094,7 +1236,7 @@ CHAR16
       }
       pHelp = CatSPrintClean(pHelp, L"\n\n");
    }
-    else if (SingleCommand && !EFI_ERROR(CommandMatchingStatus)) {
+    else if (gCommandList[Index].SyntaxErrorHelpNeeded) {
       /** full verb syntax with help string **/
       if (pCommand == NULL || SingleCommand || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
@@ -1744,7 +1886,7 @@ EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
   if (NULL == pCmd) {
     NVDIMM_CRIT("NULL input parameter.\n");
@@ -1775,27 +1917,30 @@ EFI_STATUS ValidateProtocolAndPayloadSizeOptions(struct Command *pCmd)
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
+  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &Attribs);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   if (containsOption(pCmd, PROTOCOL_OPTION_DDRT)) {
-    pAttribs.Protocol = FisTransportDdrt;
+    Attribs.Protocol = FisTransportDdrt;
   }
   else if (containsOption(pCmd, PROTOCOL_OPTION_SMBUS)) {
-    pAttribs.Protocol = FisTransportSmbus;
-    pAttribs.PayloadSize = FisTransportSmallMb;
+    // smbus requires small payload size
+    Attribs.Protocol = FisTransportSmbus;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 
   if (containsOption(pCmd, LARGE_PAYLOAD_OPTION)) {
-    pAttribs.PayloadSize = FisTransportLargeMb;
+    // large payload implies ddrt (for now)
+    Attribs.Protocol = FisTransportDdrt;
+    Attribs.PayloadSize = FisTransportSizeLargeMb;
   }
   else if (containsOption(pCmd, SMALL_PAYLOAD_OPTION)) {
-    pAttribs.PayloadSize = FisTransportSmallMb;
+    Attribs.PayloadSize = FisTransportSizeSmallMb;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, pAttribs);
+  ReturnCode = pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, Attribs);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

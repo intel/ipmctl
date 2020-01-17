@@ -242,6 +242,7 @@ ShowErrorCommand(
   CMD_DISPLAY_OPTIONS *pDispOptions = NULL;
   BOOLEAN FoundMediaErrorFlag = FALSE;
   UINT8 MediaErrorInfoCount = 0;
+  BOOLEAN ExcludeInvalidFields = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -256,7 +257,7 @@ ShowErrorCommand(
   }
 
   /**
-    Printing will still work via compability mode if NULL so no need to check for NULL.
+    Printing will still work via compatibility mode if NULL so no need to check for NULL.
   **/
   pPrinterCtx = pCmd->pPrintCtx;
 
@@ -413,7 +414,7 @@ ShowErrorCommand(
     }
 
     for (Index = 0; Index < DimmIdsNum; Index++) {
-      if (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
+      if (MANAGEMENT_VALID_CONFIG == pDimms[Index].ManageabilityState){
         pDimmIds[ManageableListIndex] = pDimms[Index].DimmID;
         ManageableListIndex++;
       }
@@ -542,11 +543,13 @@ ShowErrorCommand(
             PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_LOCKED_ILLEGAL_ACCESS_STR);
             break;
           case ERROR_TYPE_PERCENTAGE_REMAINING:
+            ExcludeInvalidFields = TRUE;
             PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERCENTAGE_REMAINING, HEX);
             PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
             PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_PERCENTAGE_REMAINING_STR);
             break;
           case ERROR_TYPE_SMART_CHANGE:
+            ExcludeInvalidFields = TRUE;
             PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_SMART_CHANGE, HEX);
             PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
             PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_ERROR_TYPE_STR, ERROR_TYPE_SMART_CHANGE_STR);
@@ -562,7 +565,8 @@ ShowErrorCommand(
           }
 
           // Transaction Type
-          if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_TRANSACTION_TYPE_STR))) {
+          if (!ExcludeInvalidFields && (pDispOptions->AllOptionSet ||
+            (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_TRANSACTION_TYPE_STR)))) {
             switch (pMediaErrorInfo->TransactionType) {
             case TRANSACTION_TYPE_2LM_READ:
               PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_2LM_READ, HEX);
@@ -629,6 +633,9 @@ ShowErrorCommand(
               break;
             }
           }
+          else if (ExcludeInvalidFields) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, NA_STR);
+          }
 
           // Media Error info flags
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_ERROR_FLAGS_STR))) {
@@ -666,16 +673,31 @@ ShowErrorCommand(
           }
 
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_DPA_STR))) {
-            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa, HEX);
+            if (ExcludeInvalidFields || !pMediaErrorInfo->DpaValid) {
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_DPA_STR, NA_STR);
+            }
+            else {
+              PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_DPA_STR, pMediaErrorInfo->Dpa, HEX);
+            }
           }
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_PDA_STR))) {
-            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda, HEX);
+            if (ExcludeInvalidFields || !pMediaErrorInfo->PdaValid) {
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_PDA_STR, NA_STR);
+            }
+            else {
+              PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_PDA_STR, pMediaErrorInfo->Pda, HEX);
+            }
           }
           // Range in bytes
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_MEDIA_RANGE_STR))) {
             RangeInBytes = Pow(2, pMediaErrorInfo->Range);
-            PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, RangeInBytes, DECIMAL);
-            PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, ERROR_MSG_BYTE_CHAR);
+            if (ExcludeInvalidFields) {
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, NA_STR);
+            }
+            else {
+              PRINTER_SET_KEY_VAL_UINT64(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, RangeInBytes, DECIMAL);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_RANGE_STR, ERROR_MSG_BYTE_CHAR);
+            }
           }
 
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {

@@ -21,15 +21,17 @@ typedef enum _NvmStatusCode {
   NVM_ERR_OPERATION_NOT_STARTED                     = 2,    ///< Error: Operation not started
   NVM_ERR_OPERATION_FAILED                          = 3,    ///< Error: Operation failed
   NVM_ERR_FORCE_REQUIRED                            = 4,    ///< Error: Force parameter required
-  NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid paramter
+  NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid parameter
   NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Commnand not supported by this SKU
 
   NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: DIMM not found
   NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: DIMM ID duplicated
   NVM_ERR_SOCKET_ID_NOT_VALID                       = 13,   ///< Error: Socket ID not valid
+  NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with dimm ID
   NVM_ERR_SOCKET_ID_DUPLICATED                      = 15,   ///< Error: Socket ID duplicated
   NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
   NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable DIMM not found
+  NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable DIMMs due to all DIMMs being unmanageable, non-functional, or having a population issue
 
   NVM_ERR_PASSPHRASE_NOT_PROVIDED                   = 30,   ///< Error: Passphrase not provided
   NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED               = 31,   ///< Error: New passphrase not provided
@@ -64,9 +66,11 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SENSOR_CONTROLLER_TEMP_OUT_OF_RANGE       = 72,   ///< Error: Sensor controller temperature out of range
   NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE              = 73,   ///< Error: Capacity out of range
   NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE        = 74,   ///< Error: Sensor invalid value
+  NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED     = 75,   ///< Error: BIOS error injection knob is not enabled
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
 
+  NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED              = 97,   ///< Warning: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!
   NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode
   NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED = 100,  ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Non-Interleaved mode
@@ -90,7 +94,6 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PLATFORM_NOT_SUPPORT_SPECIFIED_INT_SIZES  = 117,   ///< Error: Platform does not support specified interleave sizes
   NVM_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES    = 118,   ///< Error: Platform does not support default interleave sizes
   NVM_ERR_REGION_NOT_HEALTHY                          = 119, ///< Error: Region not healthy
-  NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_BLOCK_NAMESPACE = 120, ///< Error: Not enough space for block namespace
   NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namesapce
   NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on DIMM
   NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve DIMM requires at least 2 DIMMs
@@ -164,7 +167,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_FW_GET_FA_DATA_FAILED                     = 265,  ///< Error:
 
   NVM_ERR_API_NOT_SUPPORTED                         = 266,  ///< Error: API not supported
-  NVM_ERR_UNKNOWN                                   = 267,  ///< Error: Unkown
+  NVM_ERR_UNKNOWN                                   = 267,  ///< Error: Unknown
   NVM_ERR_INVALID_PERMISSIONS                       = 268,  ///< Error: Invalid permissions
   NVM_ERR_BAD_DEVICE                                = 269,  ///< Error: Bad device
   NVM_ERR_BUSY_DEVICE                               = 270,  ///< Error: Busy device
@@ -197,6 +200,8 @@ typedef enum _NvmStatusCode {
   NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: the FW was unable to stage and no long op code was recoverable
   NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
+  NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when dimm that are different generations
+  NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy dimm
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

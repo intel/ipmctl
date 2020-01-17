@@ -10,7 +10,8 @@
 #include <Common.h>
 
 #define EXPAND_STR_MAX                    1024
-#define ESX_XML_FILE_BEGIN                L"<?xml version=\"1.0\"?><output xmlns=\"http://www.vmware.com/Products/ESX/5.0/esxcli/\">"
+#define XML_FILE_BEGIN                    L"<?xml version=\"1.0\"?>\n"
+#define ESX_XML_FILE_BEGIN                L"<output xmlns=\"http://www.vmware.com/Products/ESX/5.0/esxcli/\">"
 #define ESX_XML_FILE_END                  L"</output>\n"
 #define ESX_XML_STRUCT_LIST_TAG_BEGIN     L"<list type = \"structure\">\n"
 #define ESX_XML_SIMPLE_STR_TAG_END        L"]]></string>"
@@ -38,6 +39,10 @@
 #define CHAR_PATH_DELIM                   L'/'
 #define CHAR_WHITE_SPACE                  L' '
 #define CELL_EXTRA_CHARS                  2 //1 for leading whitespace and 1 for terminating pipe
+
+BOOLEAN gDisplayNulls = FALSE;
+UINT32 gNullValuesEncounteredForDisplay = 0;
+CHAR16* gNullValueToDisplay = L"NULL";
 
 typedef enum {
   PRINT_TEXT,
@@ -114,7 +119,7 @@ static CHAR16 *TextListExpandStr(IN DATA_SET_CONTEXT *DataSetCtx, IN const CHAR1
 
   while (*OriginalStrTmpBegin != CHAR_NULL_TERM) {
     AppendSize = 0;
-    //Found begining of $(key) identifier
+    //Found beginning of $(key) identifier
     if (OriginalStrTmpBegin[0] == L'$' && OriginalStrTmpBegin[1] == L'(') {
       //Find end of $(key) identifier
       do {
@@ -122,7 +127,7 @@ static CHAR16 *TextListExpandStr(IN DATA_SET_CONTEXT *DataSetCtx, IN const CHAR1
       }
       //Find end of $(key) identifier or end of str, which ever comes first
       while(*OriginalStrTmpEnd != CHAR_NULL_TERM && *OriginalStrTmpEnd != L')');
-      //OriginalStrTmpBegin points to begining of $(key) identifier, OriginalStrTmpEnd points to the end
+      //OriginalStrTmpBegin points to beginning of $(key) identifier, OriginalStrTmpEnd points to the end
       //allocate enough memory to copy the string that sits between pointers
       //plus 1 char worth of mem for NULL term to make it a string
       MacroKeyName = AllocateZeroPool(((UINTN)OriginalStrTmpEnd - (UINTN)OriginalStrTmpBegin) + sizeof(CHAR16));
@@ -649,7 +654,7 @@ VOID PrintDataSetAsTextTable(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB 
   //Loop generates a string that represents the table's header
   for (Index = 0; Index < NumColumns; ++Index) {
     //TableRowStart contains cells in a row already processed, now add more memory for the next cell in the row
-    RowSizeInBytes = StrSize(TableHeaderStart) + ((Attribs->ColumnAttribs[Index].ColumnMaxStrLen + CELL_EXTRA_CHARS) * sizeof(CHAR16)); //+CELL_EXTRA_CHARS on ColumnWidth to accomadate whitespace and pipe
+    RowSizeInBytes = StrSize(TableHeaderStart) + ((Attribs->ColumnAttribs[Index].ColumnMaxStrLen + CELL_EXTRA_CHARS) * sizeof(CHAR16)); //+CELL_EXTRA_CHARS on ColumnWidth to accommodate whitespace and pipe
     if (NULL == (TableHeaderStart = ReallocatePool(StrSize(TableHeaderStart), RowSizeInBytes, TableHeaderStart))) {
       return;
     }
@@ -727,7 +732,7 @@ VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_AT
 /*
 * Callback routine for printing out NVM XML.
 * -Start by printing indentation whitespace based on depth of node in tree.
-* -Print begining tag: <DataSetName>
+* -Print beginning tag: <DataSetName>
 * -ForEach KeyValue Pair:
 * -  Print indentation whitespace
 * -  Print <KeyName>KeyVal</KeyName>
@@ -736,6 +741,7 @@ VOID CalculateTextTableDimensions(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_AT
 static VOID * NvmlXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
   UINT32 Index = 0;
   UINT32 Ident = 0;
 
@@ -750,7 +756,13 @@ static VOID * NvmlXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *Use
     for (Index = 0; Index < Ident+1; ++Index) {
       Print(NVM_XML_WHITESPACE_IDENT);
     }
-    Print(NVM_XML_KEY_VAL_TAG, KvInfo->Key, Val, KvInfo->Key);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+    Print(NVM_XML_KEY_VAL_TAG, Key, Val, Key);
+
+    FREE_POOL_SAFE(Key);
   }
   return NULL;
 }
@@ -782,7 +794,7 @@ static VOID PrintNvmXml(DATA_SET_CONTEXT *DataSetCtx) {
 /*
 * Callback routine for printing out ESX XML.
 * -Start by printing indentation whitespace based on depth of node in tree.
-* -Print begining tag: <structure typeName="DataSetName">
+* -Print beginning tag: <structure typeName="DataSetName">
 * -ForEach KeyValue Pair:
 * -   <field name = "Key"><string>"Value"</string></field>
 * -Print closing tag: </structure>
@@ -790,6 +802,7 @@ static VOID PrintNvmXml(DATA_SET_CONTEXT *DataSetCtx) {
 static VOID * EsxXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
 
   if (0 == GetKeyCount(DataSetCtx)) {
     return NULL;
@@ -798,7 +811,14 @@ static VOID * EsxXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *User
   Print(L"<structure typeName=\"" FORMAT_STR L"\">\n", GetDataSetName(DataSetCtx));
   while (NULL != (KvInfo = GetNextKey(DataSetCtx, KvInfo))) {
     GetKeyValueWideStr(DataSetCtx, KvInfo->Key, &Val, NULL);
-    Print(L"  <field name=\"" FORMAT_STR L"\"><string>" FORMAT_STR L"</string></field>\n", KvInfo->Key, Val);// KvInfo->Key);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+
+    Print(L"  <field name=\"" FORMAT_STR L"\"><string>" FORMAT_STR L"</string></field>\n", Key, Val);
+
+    FREE_POOL_SAFE(Key);
   }
   Print(L"</structure>\n");
   return NULL;
@@ -825,6 +845,7 @@ static VOID PrintEsxXml(DATA_SET_CONTEXT *DataSetCtx) {
 static VOID * EsxKeyValXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID *UserData, VOID *ParentUserData) {
   KEY_VAL_INFO *KvInfo = NULL;
   CHAR16 *Val = NULL;
+  CHAR16 *Key = NULL;
 
   if (0 == GetKeyCount(DataSetCtx)) {
     return NULL;
@@ -832,9 +853,16 @@ static VOID * EsxKeyValXmlCb(DATA_SET_CONTEXT *DataSetCtx, CHAR16 *CurPath, VOID
 
   while (NULL != (KvInfo = GetNextKey(DataSetCtx, KvInfo))) {
     GetKeyValueWideStr(DataSetCtx, KvInfo->Key, &Val, NULL);
+
+    Key = CatSPrint(NULL, KvInfo->Key);
+    RemoveAllWhiteSpace(Key);
+    TrimString(Val);
+
     Print(L"<structure typeName=\"KeyValue\">\n");
-    Print(L"  <field name=\"Attribute Name\"><string>" FORMAT_STR L"</string></field><field name=\"Value\"><string>" FORMAT_STR L"</string></field>\n", KvInfo->Key, Val);
+    Print(L"  <field name=\"Attribute Name\"><string>" FORMAT_STR L"</string></field><field name=\"Value\"><string>" FORMAT_STR L"</string></field>\n", Key, Val);
     Print(L"</structure>\n");
+
+    FREE_POOL_SAFE(Key);
   }
   return NULL;
 }
@@ -915,6 +943,44 @@ static VOID PrintAsXml(DATA_SET_CONTEXT *DataSetCtx, PRINT_CONTEXT *PrintCtx) {
 }
 
 /*
+* Print to stdout with each line starting with ERROR
+*/
+static VOID PrintTextAsEsxError(CHAR16 *Msg) {
+  CHAR16 *BeginStr = Msg;
+  CHAR16 *SearchResult = NULL;
+  CHAR16 *tmpStr = NULL;
+  UINT32 Index;
+
+  if (NULL == Msg) {
+    return;
+  }
+
+  while (NULL != (SearchResult = StrStr(BeginStr, FORMAT_NL))) {
+    tmpStr = (CHAR16 *)AllocateZeroPool((1 + SearchResult - BeginStr) * sizeof(Msg[0]));
+    if (NULL != tmpStr) {
+      // replace StrnCpy since it is not available in all environments
+      for (Index = 0; Index < (SearchResult - BeginStr); ++Index) {
+        tmpStr[Index] = BeginStr[Index];
+      }
+      Print(ESX_ERROR_LINE_HEADER);
+      Print(FORMAT_STR FORMAT_NL, tmpStr);
+      FREE_POOL_SAFE(tmpStr);
+      BeginStr = SearchResult + 1;
+    }
+    else {
+      // Cannot copy out substr so just print it all
+      Print(ESX_ERROR_LINE_HEADER);
+      Print(FORMAT_STR FORMAT_NL, BeginStr);
+      BeginStr += StrLen(BeginStr);
+    }
+  }
+  if (0 < StrLen(BeginStr)) {
+    Print(ESX_ERROR_LINE_HEADER);
+    Print(FORMAT_STR FORMAT_NL, BeginStr);
+  }
+}
+
+/*
 * Print to stdout and ensure newline
 */
 static VOID PrintTextWithNewLine(CHAR16 *Msg) {
@@ -931,13 +997,10 @@ static VOID PrintTextWithNewLine(CHAR16 *Msg) {
 }
 
 /*
-* Display begining of XML error
+* Display beginning of XML error
 */
 static VOID PrintXmlStartErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
-  if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
-    Print(L"ERROR: ");
-  }
-  else {
+  if (!PrintCtx->FormatTypeFlags.Flags.EsxCustom && !PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
 #ifdef OS_BUILD
     CmdExitCode = UefiToOsReturnCode(CmdExitCode);
 #endif
@@ -955,7 +1018,7 @@ static VOID PrintXmlEndErrorTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode)
 }
 
 /*
-* Display begining of XML success msg
+* Display beginning of XML success msg
 */
 static VOID PrintXmlStartSuccessTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCode) {
   if (PrintCtx->FormatTypeFlags.Flags.EsxCustom || PrintCtx->FormatTypeFlags.Flags.EsxKeyVal) {
@@ -1268,7 +1331,7 @@ Finish:
 }
 
 /*
-* Proces mode
+* Process mode
 */
 static PRINT_MODE PrintMode(
   IN     PRINT_CONTEXT *pPrintCtx
@@ -1300,6 +1363,8 @@ EFI_STATUS PrinterProcessSetBuffer(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 *FullMsg = NULL;
   PRINT_MODE PrinterMode = PRINT_TEXT;
+  BOOLEAN startXmlSuccessPrinted = FALSE;
+  BOOLEAN startXmlErrorPrinted = FALSE;
 
   if (NULL == pPrintCtx) {
     return EFI_INVALID_PARAMETER;
@@ -1308,12 +1373,21 @@ EFI_STATUS PrinterProcessSetBuffer(
   PrinterMode = PrintMode(pPrintCtx);
 
   //if XML mode print the appropriate start tag
-  if (PRINT_BASIC_XML == PrinterMode) {
-    if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
-      PrintXmlStartErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+  if (PRINT_XML == PrinterMode || PRINT_BASIC_XML == PrinterMode) {
+    if ((pPrintCtx->BufferedDataSetCnt != 0) ||
+      (EFI_SUCCESS == pPrintCtx->BufferedObjectLastError) ||
+      (!pPrintCtx->FormatTypeFlags.Flags.EsxCustom && !pPrintCtx->FormatTypeFlags.Flags.EsxKeyVal))
+    {
+      Print(XML_FILE_BEGIN);
     }
-    else {
+    if (PRINT_BASIC_XML == PrinterMode &&
+      EFI_SUCCESS == pPrintCtx->BufferedObjectLastError) {
       PrintXmlStartSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+      startXmlSuccessPrinted = TRUE;
+    }
+    else if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
+      PrintXmlStartErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+      startXmlErrorPrinted = TRUE;
     }
   }
 
@@ -1324,8 +1398,19 @@ EFI_STATUS PrinterProcessSetBuffer(
     RemoveEntryList(&BufferedObject->Link);
     if (BUFF_STR_TYPE == BufferedObject->Type) {
       BUFFERED_STR *pTempBs = (BUFFERED_STR *)BufferedObject->Obj;
-      if (PRINT_XML != PrinterMode) {
-        PrintTextWithNewLine(pTempBs->pStr);
+
+      // check if needs to be printed as error for Esx
+      if ((pPrintCtx->BufferedDataSetCnt == 0) &&
+        (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) &&
+        (pPrintCtx->FormatTypeFlags.Flags.EsxCustom || pPrintCtx->FormatTypeFlags.Flags.EsxKeyVal))
+      {
+        PrintTextAsEsxError(pTempBs->pStr);
+      }
+      else
+      {
+        if (PRINT_XML != PrinterMode) {
+          PrintTextWithNewLine(pTempBs->pStr);
+        }
       }
       FREE_POOL_SAFE(pTempBs->pStr);
       pPrintCtx->BufferedMsgCnt--;
@@ -1355,14 +1440,12 @@ EFI_STATUS PrinterProcessSetBuffer(
     FREE_POOL_SAFE(BufferedObject->Obj);
     FREE_POOL_SAFE(BufferedObject);
   }
-  //if XML mode print the appropriate end tag
-  if (PRINT_BASIC_XML == PrinterMode) {
-    if (EFI_SUCCESS != pPrintCtx->BufferedObjectLastError) {
-      PrintXmlEndErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
-    }
-    else {
-      PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
-    }
+
+  if (TRUE == startXmlErrorPrinted) {
+    PrintXmlEndErrorTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
+  }
+  else if (TRUE == startXmlSuccessPrinted) {
+    PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
   }
 
   CleanDataSetLookupItems(pPrintCtx);

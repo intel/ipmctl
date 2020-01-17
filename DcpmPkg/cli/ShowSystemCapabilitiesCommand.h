@@ -14,7 +14,6 @@
 **/
 #define VOLATILE_MODE_1LM           0x00 // 00b - 1LM Mode
 #define VOLATILE_MODE_2LM           0x01 // 01b - Memory Mode (2LM)
-#define VOLATILE_MODE_1LM_2LM       0X02 // 10b - (1LM + 2LM) Mode (PCAT 1.1 onwards)
 #define PERSISTENT_MODE_DISABLED    0x00 // 00b - Disabled
 #define PERSISTENT_MODE_APP_DIRECT  0x01 // 01b - AppDirect PM Mode
 
@@ -48,7 +47,6 @@
 #define APPDIRECT_STR                            L"App Direct"
 #define MEMORY_STR                               L"Memory Mode"
 #define ONE_LM_STR                               L"1LM"
-#define ONE_LM_PLUS_TWO_LM_STR                   L"1LM + 2LM"
 #define DISABLED_STR                             L"Disabled"
 #define UNKNOWN_STR                              L"Unknown"
 

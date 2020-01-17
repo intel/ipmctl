@@ -38,8 +38,7 @@
 #include <s_str.h>
 #include <wchar.h>
 #include <CommandParser.h>
-#include "event.h"
-#include <Protocol/EfiShellParameters.h>
+#include <ShellParameters.h>
 #include "LoadCommand.h"
 #include <os_str.h>
 
@@ -186,7 +185,7 @@ static void nvm_internal_uninit(BOOLEAN binding_stop)
 * @brief    Initialize the config file
 * Please notice that only the first call to the function changes the conf file
 * configuration, the following function calls have no effect and the conf file
-* configuration remains unchanged up to next applicaiton execution.
+* configuration remains unchanged up to next application execution.
 *
 * @param    p_ini_file_name Pointer to the name of the ini file to read
 * @return   void
@@ -242,7 +241,7 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   if (gOsShellParametersProtocol.StdOut == stdout)
   {
     //WA to ensure wprintf work throughout invocation of DCPMM mgmt stack.
-    wprintf(L"\n");
+    wprintf(L"");
   }
 
   nvm_status = nvm_internal_init(FALSE);
@@ -702,7 +701,7 @@ static void dimm_info_to_device_status(DIMM_INFO *p_dimm, struct device_status *
    p_status->health = p_dimm->HealthState;                         // Overall device health.
    p_status->last_shutdown_status_details = p_dimm->LatchedLastShutdownStatusDetails;    // State of last DIMM shutdown.
    p_status->unlatched_last_shutdown_status_details = p_dimm->UnlatchedLastShutdownStatusDetails;
-   
+
    if ((p_dimm->FwVer.FwApiMajor == 0x2 && p_dimm->FwVer.FwApiMinor >= 0x1) ||
        (p_dimm->FwVer.FwApiMajor >= 0x3)) {
      p_status->thermal_throttle_performance_loss_pcnt = p_dimm->ThermalThrottlePerformanceLossPrct;
@@ -772,6 +771,7 @@ NVM_API int nvm_get_device_status(const NVM_UID   device_uid,
   }
   p_status->boot_status = BootstatusBitmask;
   dimm_info_to_device_status(&dimm_info, p_status);
+  p_status->mixed_sku = gNvmDimmData->PMEMDev.DimmSkuConsistency;
   return NVM_SUCCESS;
 }
 
@@ -869,12 +869,6 @@ NVM_API int nvm_get_device_settings(const NVM_UID   device_uid,
   }
 
   return NVM_SUCCESS;
-}
-
-NVM_API int nvm_modify_device_settings(const NVM_UID      device_uid,
-               const struct device_settings * p_settings)
-{
-  return NVM_ERR_API_NOT_SUPPORTED;
 }
 
 NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
@@ -1003,6 +997,7 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
     p_performance->host_writes = pmem_info_output->TotalWriteRequests.Uint64;
     p_performance->block_reads = 0;
     p_performance->block_writes = 0;
+    p_performance->time = time(NULL);
     rc = NVM_SUCCESS;
     goto finish;
   }
@@ -1335,9 +1330,6 @@ int driver_features_to_nvm_features(
   p_nvm_features->get_namespaces = 0;
   p_nvm_features->get_namespace_details = 0;
   p_nvm_features->create_namespace = 0;
-  p_nvm_features->rename_namespace = 0;
-  p_nvm_features->grow_namespace = 0;
-  p_nvm_features->shrink_namespace = 0;
   p_nvm_features->enable_namespace = 0;
   p_nvm_features->disable_namespace = 0;
   p_nvm_features->delete_namespace = 0;
@@ -1347,7 +1339,6 @@ int driver_features_to_nvm_features(
 
   // Driver memory mode capabilities
   p_nvm_features->app_direct_mode = p_driver_features->app_direct_mode;
-  p_nvm_features->storage_mode = p_driver_features->storage_mode;
 
   return rc;
 }
@@ -1881,28 +1872,12 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_get_number_of_events(const struct event_filter *p_filter, int *count)
+NVM_API int nvm_get_number_of_regions( NVM_UINT8 *count)
 {
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
+	return nvm_get_number_of_regions_ex( TRUE, count);
 }
 
-NVM_API int nvm_get_events(const struct event_filter *p_filter,
-         struct event *p_events, const NVM_UINT16 count)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_purge_events(const struct event_filter *p_filter)
-{
-  return 0; // deprecated
-}
-
-NVM_API int nvm_acknowledge_event(NVM_UINT32 event_id)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_get_number_of_regions(const NVM_BOOL use_nfit, NVM_UINT8 *count)
+NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   COMMAND_STATUS *pCommandStatus = NULL;
@@ -1938,7 +1913,11 @@ Finish:
   return rc;
 }
 
-NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
+NVM_API int nvm_get_regions( struct region *p_regions, NVM_UINT8 *count) {
+	return nvm_get_regions_ex( TRUE, p_regions, count);
+}
+
+NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
 {
   COMMAND_STATUS *pCommandStatus = NULL;
   NVM_UINT8 RegionCount, Index, DimmIndex;
@@ -1959,7 +1938,7 @@ NVM_API int nvm_get_regions(const NVM_BOOL use_nfit, struct region *p_regions, N
   if (EFI_ERROR(erc))
     return NVM_ERR_UNKNOWN;
 
-  if (NVM_SUCCESS != (rc = nvm_get_number_of_regions(use_nfit, &RegionCount))) {
+  if (NVM_SUCCESS != (rc = nvm_get_number_of_regions_ex(use_nfit, &RegionCount))) {
     FreeCommandStatus(&pCommandStatus);
     return rc;
   }
@@ -2127,7 +2106,6 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
     p_goal[Index].socket_id = pRegionConfigsInfo[Index].SocketId;
     p_goal[Index].persistent_regions = pRegionConfigsInfo[Index].PersistentRegions;
     p_goal[Index].volatile_size = pRegionConfigsInfo[Index].VolatileSize;
-    p_goal[Index].storage_capacity = pRegionConfigsInfo[Index].StorageCapacity;
     for (Index2 = 0; Index2 < MAX_IS_PER_DIMM; Index2++) {
       p_goal[Index].appdirect_size[Index2] =
         pRegionConfigsInfo[Index].AppDirectSize[Index2];
@@ -2429,7 +2407,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
   if (NULL == (gOsShellParametersProtocol.StdOut = fopen(support_file, "w+")))
     return NVM_ERR_UNKNOWN;
 
-  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index) 
+  for (Index = 0; Index < MAX_EXEC_CMDS; ++Index)
   {
     execute_cli_cmd(exec_commands[Index]);
   }
@@ -2635,7 +2613,7 @@ NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
     NVDIMM_ERR("Failed to get dimm ID %d\n", nvm_status);
     return NVM_ERR_DIMM_NOT_FOUND;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.DeletePcd(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, p_command_status);
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.ModifyPcdConfig(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, DELETE_PCD_CONFIG_LSA_MASK, p_command_status);
   if (EFI_ERROR(ReturnCode)) {
     FreeCommandStatus(&p_command_status);
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -2676,21 +2654,6 @@ NVM_API int nvm_toggle_debug_logging(const NVM_BOOL enabled)
   return DebugLoggerEnable(enabled);
 }
 
-NVM_API int nvm_purge_debug_log()
-{
-  return 0; // deprecated
-}
-
-NVM_API int nvm_get_number_of_debug_logs(int *count)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_get_debug_logs(struct nvm_log *p_logs, const NVM_UINT32 count)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
 NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -2700,7 +2663,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
   UINT32 DimmCount = 0;
   PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *pLongOpStatus;
   int job_index = 0;
-  unsigned int i;
+  unsigned int i, j;
   int nvm_status = 0;
   struct Command CmdStub;
 
@@ -2777,8 +2740,17 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     else {
       p_jobs[i].status = NVM_JOB_STATUS_UNKNOWN;
     }
-    memmove(p_jobs[i].uid, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
-    memmove(p_jobs[i].affected_element, pDimms[i].DimmUid, MAX_DIMM_UID_LENGTH);
+
+    for (j = 0; j < MAX_DIMM_UID_LENGTH; j++)
+    {
+      p_jobs[i].uid[j] = (char)pDimms[i].DimmUid[j];
+    }
+
+    for (j = 0; j < MAX_DIMM_UID_LENGTH; j++)
+    {
+      p_jobs[i].affected_element[j] = (char)pDimms[i].DimmUid[j];
+    }
+
     p_jobs[i].result = NULL;
     job_index++;
   }
@@ -2823,7 +2795,7 @@ NVM_API int nvm_get_fw_error_log_entry_cmd(
 
   if (!error_entry)
   {
-    NVDIMM_ERR("Invalid error_entry paramter (NULL).\n");
+    NVDIMM_ERR("Invalid error_entry parameter (NULL).\n");
     return NVM_ERR_INVALID_PARAMETER;
   }
 
@@ -2991,6 +2963,7 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
 
 void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p_device)
 {
+  int Index = 0;
   p_device->all_properties_populated = FALSE;
   p_device->device_handle.handle = p_dimm->DimmHandle;
   p_device->physical_id = p_dimm->DimmID;
@@ -3013,7 +2986,11 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   p_device->manufacturing_info_valid = p_dimm->ManufacturingInfoValid;
   p_device->manufacturing_location = p_dimm->ManufacturingLocation;
   p_device->manufacturing_date = p_dimm->ManufacturingDate;
-  CopyMem_S(p_device->part_number, sizeof(p_device->part_number), p_dimm->PartNumber, PART_NUMBER_LEN);
+  for (Index = 0; Index < PART_NUMBER_LEN; Index++)
+  {
+    p_device->part_number[Index] = (char)p_dimm->PartNumber[Index];
+  }
+  p_device->part_number[PART_NUMBER_LEN - 1] = '\0';
   build_revision(p_device->fw_revision, NVM_VERSION_LEN, p_dimm->FwVer.FwProduct, p_dimm->FwVer.FwRevision,
 		 p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
   snprintf(p_device->fw_api_version, NVM_VERSION_LEN, "%02d.%02d", p_dimm->FwVer.FwApiMajor, p_dimm->FwVer.FwApiMinor);
@@ -3154,39 +3131,4 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
 finish:
   FREE_POOL_SAFE(cmd);
   return rc;
-}
-
-NVM_API int nvm_acpi_event_create_ctx(unsigned int dimm_handle, void ** ctx)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_event_free_ctx(void * ctx)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_event_ctx_get_dimm_handle(void * ctx, unsigned int  * dev_handle)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_event_get_event_state(void * ctx, enum acpi_event_type event_type, enum acpi_event_state *event_state)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_event_set_monitor_mask(void * ctx, const unsigned int acpi_monitored_event_mask)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_event_get_monitor_mask(void * ctx, unsigned int * mask)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
-}
-
-NVM_API int nvm_acpi_wait_for_event(void * acpi_event_contexts[], const NVM_UINT32 dimm_cnt, const int timeout_sec, enum acpi_get_event_result * event_result)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; // deprecated
 }

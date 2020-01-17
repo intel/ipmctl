@@ -4167,7 +4167,7 @@ GetMemoryResourcesInfo(
   /** Make sure we start with zero values **/
   ZeroMem(pMemoryResourcesInfo, sizeof(*pMemoryResourcesInfo));
 
-  ReturnCode = ReenumerateNamespacesAndISs(FALSE);
+  ReturnCode = ReenumerateNamespacesAndISs(TRUE);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to refresh Namespaces and Interleave Sets information");
 #ifdef OS_BUILD
@@ -6654,9 +6654,7 @@ DumpGoalConfig(
   DIMM_CONFIG *pDimmConfigs = NULL;
   UINT32 DimmConfigsNum = 0;
 
-#ifdef OS_BUILD
-  MEMORY_RESOURCES_INFO MemoryResourcesInfo;
-#else
+#ifndef OS_BUILD
   UINT64 FileSize = 0;
 #endif
 
@@ -6689,7 +6687,6 @@ DumpGoalConfig(
 
 #ifdef OS_BUILD
   //triggers PCD read
-  GetMemoryResourcesInfo(pThis, &MemoryResourcesInfo);
   InitializeInterleaveSets(FALSE);
 #endif
   /** Get an array of dimms' current config **/

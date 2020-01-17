@@ -259,6 +259,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FAILED_TO_READ_FILE                           L"Failed to read pbr file."
 #define CLI_ERR_FAILED_TO_SET_SESSION_BUFFER                  L"Failed to set session buffer."
 #define CLI_ERR_FAILED_TO_RESET_SESSION                       L"Failed to reset the session."
+#define CLI_ERR_CMD_FAILED_NOT_ADMIN                          L"Error: The ipmctl command you have attempted to execute requires administrator privileges."
 
 #define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"

@@ -299,6 +299,22 @@ typedef union {
   } \
 };
 
+#ifdef OS_BUILD
+#ifdef _MSC_VER
+#define CHECK_WIN_ADMIN_PERMISSIONS() { \
+if (NVM_SUCCESS != os_check_admin_permissions()) { \
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CMD_FAILED_NOT_ADMIN); \
+  ReturnCode = EFI_UNSUPPORTED; \
+  goto Finish; \
+} \
+};
+#else // MSC_VER
+#define CHECK_WIN_ADMIN_PERMISSIONS()
+#endif // MSC_VER
+#else // OS_BUILD
+#define CHECK_WIN_ADMIN_PERMISSIONS()
+#endif // OS_BUILD
+
 /**
   Persist the first error encountered.
   @param[in,out] ReturnCode

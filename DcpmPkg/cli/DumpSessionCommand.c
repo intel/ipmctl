@@ -78,6 +78,9 @@ DumpSession(
     goto Finish;
   }
 
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
+
   pDumpFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDumpFilePath));
   if (pDumpFilePath == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;

@@ -201,6 +201,9 @@ GetCCurDetailedStatusStr(
   case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
     pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION), NULL);
     break;
+  case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
+    pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION_BUT_PM_MAPPED), NULL);
+    break;
   default:
     pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_UNKNOWN), NULL);
     break;
@@ -331,6 +334,9 @@ GetCoutDetailedStatusStr(
     break;
   case CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED:
     pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_NM_FM_RATIO_UNSUPPORTED), NULL);
+    break;
+  case CONFIG_OUTPUT_STATUS_POPULATION_ISSUE:
+    pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION), NULL);
     break;
   default:
     pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_UNKNOWN), NULL);
@@ -730,6 +736,7 @@ CheckPlatformConfigurationData(
         PcdErrorType = PcdErrorDimmLocationIssue;
         break;
       case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
+      case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
       case DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION:
         PcdErrorType = PcdErrorCurConfig;
@@ -826,7 +833,8 @@ CheckPlatformConfigurationData(
           PcdErrorType = PcdErrorUnknown;
         }
       } else if (pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_CPU_MAX_MEMORY_LIMIT_VIOLATION ||
-        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED) {
+        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED ||
+        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_POPULATION_ISSUE) {
         PcdErrorType = PcdErrorGoalData;
       } else {
         PcdErrorType = PcdErrorUnknown;

@@ -914,6 +914,7 @@ RetrieveISsFromPlatformConfigData(
     switch (pPcdCurrentConf->ConfigStatus) {
       case DIMM_CONFIG_SUCCESS:
       case DIMM_CONFIG_OLD_CONFIG_USED:
+      case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
         pDimm->Configured = TRUE;
         break;
       default:
@@ -1073,7 +1074,7 @@ RetrieveISFromInterleaveInformationTable(
       }
     }
 
-    if (pIS != NULL && pDimm->ConfigStatus != DIMM_CONFIG_SUCCESS && pDimm->ConfigStatus != DIMM_CONFIG_OLD_CONFIG_USED) {
+    if (pIS != NULL && !pDimm->Configured) {
       pIS->State = SetISStateWithPriority(pIS->State, IS_STATE_CONFIG_INACTIVE);
     }
 
@@ -1839,7 +1840,12 @@ VerifyCreatingSupportedRegionConfigs(
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId) {
-        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm) || pDimm->NonFunctional) {
+        // Unmanageable and non-functional DCPMMs are not included in goal requests
+        if (!IsDimmManageable(pDimm) || pDimm->NonFunctional) {
+          continue;
+        }
+        // Population Violation DCPMMs are not included in goal requests except ADx1 100%
+        if (IsDimmInPopulationViolation(pDimm) && !(PM_TYPE_AD_NI == PersistentMemType && 0 == VolatilePercent)) {
           continue;
         }
 
@@ -1872,9 +1878,12 @@ VerifyCreatingSupportedRegionConfigs(
     /** Get a number of specified configured and unconfigured DIMMs on a given socket **/
     for (Index = 0; Index < DimmsNum; Index++) {
       if (Socket == pDimms[Index]->SocketId) {
-        if (!IsDimmManageable(pDimms[Index]) ||
-            !IsDimmInSupportedConfig(pDimms[Index]) ||
-            pDimms[Index]->NonFunctional) {
+        // Unmanageable and non-functional DCPMMs are not included in goal requests
+        if (!IsDimmManageable(pDimms[Index]) || pDimms[Index]->NonFunctional) {
+          continue;
+        }
+        // Population Violation DCPMMs are not included in goal requests except ADx1 100%
+        if (IsDimmInPopulationViolation(pDimms[Index]) && !(PM_TYPE_AD_NI == PersistentMemType && 0 == VolatilePercent)) {
           continue;
         }
 
@@ -2113,7 +2122,8 @@ RetrieveGoalConfigsFromPlatformConfigData(
       continue;
     }
     else if (pPcdConfOutput->ValidationStatus == CONFIG_OUTPUT_STATUS_CPU_MAX_MEMORY_LIMIT_VIOLATION ||
-             pPcdConfOutput->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED) {
+             pPcdConfOutput->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED ||
+             pPcdConfOutput->ValidationStatus == CONFIG_OUTPUT_STATUS_POPULATION_ISSUE) {
       pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_BAD_REQUEST;
     }
 
@@ -3799,7 +3809,7 @@ ApplyGoalConfigsToDimms(
   **/
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
-    if (!IsDimmManageable(pDimm)||!IsDimmInSupportedConfig(pDimm)) {
+    if (!IsDimmManageable(pDimm)) {
       continue;
     }
     if (pDimm->PcdSynced) {
@@ -3819,10 +3829,10 @@ ApplyGoalConfigsToDimms(
   **/
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm) || !pDimm->RegionsGoalConfig) {
       continue;
     }
-    if (pDimm->PcdSynced || !pDimm->RegionsGoalConfig) {
+    if (pDimm->PcdSynced) {
       continue;
     }
 
@@ -4661,7 +4671,7 @@ VerifyDeletingSupportedRegionConfigs(
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
-      if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)){
+      if (!IsDimmManageable(pDimm)){
         continue;
       }
 

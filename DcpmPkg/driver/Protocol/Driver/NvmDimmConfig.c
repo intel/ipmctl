@@ -461,11 +461,12 @@ GetDimmMappedMemSize(
   switch (pPcdCurrentConf->ConfigStatus) {
     case DIMM_CONFIG_SUCCESS:
     case DIMM_CONFIG_OLD_CONFIG_USED:
+    case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       pDimm->Configured = TRUE;
       break;
     default:
       pDimm->Configured = FALSE;
-    break;
+      break;
   }
 
   pDimm->MappedVolatileCapacity = pPcdCurrentConf->VolatileMemSizeIntoSpa;
@@ -770,6 +771,9 @@ GetDimmInfo (
         pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_UNSUPPORTED;
       }
       break;
+    case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
+      pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_PARTIALLY_SUPPORTED;
+      break;
     case DIMM_CONFIG_BAD_CONFIG:
     case DIMM_CONFIG_IN_CHECKSUM_NOT_VALID:
     case DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID:
@@ -782,13 +786,8 @@ GetDimmInfo (
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_NOT_CONFIG;
       break;
   }
-  /* Determine if DIMM is in Population Violation */
-  pDimmInfo->IsInPopulationViolation = FALSE;
-  if (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus && BIT6 == (pDimm->NvDimmStateFlags & BIT6))
-  {
-    pDimmInfo->IsInPopulationViolation = TRUE;
-  }
 
+  pDimmInfo->IsInPopulationViolation = IsDimmInPopulationViolation(pDimm);
   pDimmInfo->SkuInformation = *((UINT32 *) &pDimm->SkuInformation);
 
   /* SKU Violation */
@@ -1333,6 +1332,8 @@ BOOLEAN IsDimmAllowed(
 {
   BOOLEAN Allowed = TRUE;
 
+  // Verify the mutually exclusive REQUIRE_DCPMMS_MANAGEABLE and REQUIRE_DCPMMS_UNMANAGEABLE flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_MANAGEABLE & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_UNMANAGEABLE & RequireDcpmmsBitfield)));
   // Generally we only work with manageable NVDIMMs, which are
   // an Intel DCPMM with a reasonable FIS API version.
   if ((REQUIRE_DCPMMS_MANAGEABLE & RequireDcpmmsBitfield) && !IsDimmManageable(pDimm)) {
@@ -1342,6 +1343,8 @@ BOOLEAN IsDimmAllowed(
     Allowed = FALSE;
   }
 
+  // Verify the mutually exclusive REQUIRE_DCPMMS_FUNCTIONAL and REQUIRE_DCPMMS_NON_FUNCTIONAL flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_FUNCTIONAL & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_NON_FUNCTIONAL & RequireDcpmmsBitfield)));
   // Non-functional DCPMMs generally means just that DDRT is untrained, but there
   // can be other causes. Keeping previous behavior for now until we split up the
   // meaning of non-functional more.
@@ -1352,8 +1355,17 @@ BOOLEAN IsDimmAllowed(
     Allowed = FALSE;
   }
 
-  // Require accepted DCPMMs to not be in population violation
-  if ((REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield) && !IsDimmInSupportedConfig(pDimm)) {
+  // Verify the mutually exclusive REQUIRE_DCPMMS_POPULATION_VIOLATION and REQUIRE_DCPMMS_NO_POPULATION_VIOLATION flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_POPULATION_VIOLATION & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield)));
+  // Population violation DCPMMs means DCPMMs that are in locations that are not part of a POR configuration
+  if ((REQUIRE_DCPMMS_POPULATION_VIOLATION & RequireDcpmmsBitfield) && !IsDimmInPopulationViolation(pDimm)) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield) && IsDimmInPopulationViolation(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  if ((REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION & RequireDcpmmsBitfield) && IsDimmInUnmappedPopulationViolation(pDimm)) {
     Allowed = FALSE;
   }
 
@@ -2290,7 +2302,7 @@ GetGoalConfigs(
   //Try to calculate appdirect index for all regional goals for all dimms in advance
   PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL | REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
       pDimms, &DimmsCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
@@ -2546,8 +2558,7 @@ SetAlarmThresholds (
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_FUNCTIONAL,
        pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -2869,11 +2880,11 @@ SetSecurityState(
 
   // Erase Device Data operation is supported for Dimms
   // excluded from POR config. For any other commands, the DCPMM needs
-  // to be in a POR config
+  // to be in a POR config.
   if (!(SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
     || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE))
   {
-    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION;
   }
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, RequireDcpmmsBitfield,
@@ -5797,6 +5808,7 @@ GetActualRegionsGoalCapacities(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN IsDimmUnlocked = FALSE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -5843,11 +5855,12 @@ GetActualRegionsGoalCapacities(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-      REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == *pVolatilePercent))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, RequireDcpmmsBitfield,
       ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -6150,6 +6163,7 @@ CreateGoalConfig(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN SendGoalConfigWarning = FALSE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -6196,11 +6210,12 @@ CreateGoalConfig(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-      REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == VolatilePercent))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, RequireDcpmmsBitfield,
       ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -6571,8 +6586,7 @@ DeleteGoalConfig (
   /** Verify input parameters and determine a list of DIMMs **/
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_FUNCTIONAL,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -7946,8 +7960,7 @@ SetOptionalConfigurationDataPolicy(
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_FUNCTIONAL,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -8340,6 +8353,11 @@ GetCapacities(
 
   if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
     *pVolatileCapacity += VolatileCapacity;
+    // If the DCPMM was configured, but the volatile memory was not mapped, then the volatile memory
+    // partition is considered inaccessible capacity.
+    if (DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE == pDimm->ConfigStatus) {
+      *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
+    }
   } else {
     // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
     *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
@@ -8359,7 +8377,6 @@ GetCapacities(
   } else {
     // Any capacity not mapped to a partition
     *pInaccessibleCapacity += pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
-
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -9440,6 +9457,7 @@ AutomaticCreateGoal(
   UINT32 DimmsNum = 0;
   UINT32 DimmSecurityState = 0;
   UINT32 Index = 0;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -9481,16 +9499,18 @@ AutomaticCreateGoal(
     goto Finish;
   }
 
-  // Check for security
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
-      REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == pIntelDIMMConfig->MemorySize))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, RequireDcpmmsBitfield,
       ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
+  // Check for security
   for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
@@ -9892,8 +9912,7 @@ CheckGoalStatus(
   // Get all DIMMs
   ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_FUNCTIONAL,
       ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -9979,8 +9998,8 @@ InjectError(
 
     ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION, pDimms, &DimmsNum, pCommandStatus);
+      REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }

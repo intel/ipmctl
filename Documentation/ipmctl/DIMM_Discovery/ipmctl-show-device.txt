@@ -147,13 +147,12 @@ ManageabilityState::
   - Unmanageable: The DCPMM is not supported by this version of
     the software.
 
-PopulationViolationState::
-  Memory configurations are evaluated based on a new setup option to
-  allow all configs, supported configs, or supported and validated configs.
-  If supported or supported and validated is selected then some memory
-  may fall outside of the configs. One of:
-  - Is in supported configuration: The DCPMM is in supported configuration.
-  - Is in population violation: The DCPMM is not in supported configuration.
+PopulationViolation::
+  Memory populations are evaluated based on the "Enforce Population POR" setup option in UEFI Firmware.
+  If enforcement of POR populations is selected, then some DCPMM memory may be in population
+  violation. See <<DCPMMs in non-POR configuration>> for details. One of:
+  - Yes: The DCPMM is in population violation.
+  - No: The DCPMM is not in population violation.
 
 PhysicalID::
   The DCPMM physical identifier (i.e., SMBIOS Type 17 handle).

@@ -6871,7 +6871,7 @@ Finish:
 }
 
 /**
-Get manageability state for Dimm
+Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct
 
@@ -6896,7 +6896,7 @@ IsDimmManageable(
 }
 
 /**
-Get supported config state for Dimm
+Check if DIMM is in supported config
 
 @param[in] pDimm the DIMM struct
 
@@ -6911,12 +6911,66 @@ IsDimmInSupportedConfig(
   {
     return FALSE;
   }
-  if (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus && BIT6 == (pDimm->NvDimmStateFlags & BIT6))
+  return !IsDimmInUnmappedPopulationViolation(pDimm);
+}
+
+/**
+Check if DIMM is in population violation
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation
+**/
+BOOLEAN
+IsDimmInPopulationViolation(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
   {
     return FALSE;
   }
-  return TRUE;
+  return (IsDimmInUnmappedPopulationViolation(pDimm) || IsDimmInPmMappedPopulationViolation(pDimm));
 }
+
+/**
+Check if DIMM is in population violation and fully unmapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and fully unmapped
+**/
+BOOLEAN
+IsDimmInUnmappedPopulationViolation(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+  return (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus);
+}
+
+/**
+Check if DIMM is in population violation and persistent memory is still mapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and persistent memory is still mapped
+**/
+BOOLEAN
+IsDimmInPmMappedPopulationViolation(
+  IN  DIMM *pDimm
+)
+{
+  if (pDimm == NULL)
+  {
+    return FALSE;
+  }
+  return (DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE == pDimm->ConfigStatus);
+}
+
 /**
 Check if the dimm interface code of this DIMM is supported
 

@@ -175,6 +175,9 @@ NOTE: A goal request may be initiated even if a target DCPMM is in security stat
  - Provisioning DCPMMs for Memory Mode while not all iMCs have at least one DCPMM
    will result in unused capacity.
 
+- DCPMM(s) in population violation can be targeted for goal creation only if PersistentMemoryType=AppDirectNotInterleaved
+  and no volatile memory is requested (100% ADx1).
+
 RETURN DATA
 -----------
 Minor adjustments (up to 10%) in the requested capacities are sometimes

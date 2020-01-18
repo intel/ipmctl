@@ -1790,7 +1790,7 @@ FwCmdGetExtendedAdrInfo(
 );
 
 /**
-Get manageability state for Dimm
+Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct
 
@@ -1802,7 +1802,7 @@ IsDimmManageable(
 );
 
 /**
-Get supported configuration state for Dimm
+Check if DIMM is in supported config
 
 @param[in] pDimm the DIMM struct
 
@@ -1810,6 +1810,42 @@ Get supported configuration state for Dimm
 **/
 BOOLEAN
 IsDimmInSupportedConfig(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation
+**/
+BOOLEAN
+IsDimmInPopulationViolation(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation and fully unmapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and fully unmapped
+**/
+BOOLEAN
+IsDimmInUnmappedPopulationViolation(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation and persistent memory is still mapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and persistent memory is still mapped
+**/
+BOOLEAN
+IsDimmInPmMappedPopulationViolation(
   IN  DIMM *pDimm
 );
 

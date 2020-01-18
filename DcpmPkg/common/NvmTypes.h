@@ -264,12 +264,14 @@ typedef struct _SMBUS_DIMM_ADDR {
 // A bitfield used for determining which DCPMMs to work with for a given
 // operation. Used as input to VerifyTargetDimms()
 #define REQUIRE_DCPMMS                                 UINT32
-#define REQUIRE_DCPMMS_SELECT_ALL                     (0)           // Allow all *NVDIMMs* (not just DCPMMs)
-#define REQUIRE_DCPMMS_MANAGEABLE                     (1 << 0)      // See IsDimmManageableByValues() for definition
-#define REQUIRE_DCPMMS_UNMANAGEABLE                   (1 << 1)      //
-#define REQUIRE_DCPMMS_FUNCTIONAL                     (1 << 2)      // Currently vague, but means it initialized fully with no errors
-#define REQUIRE_DCPMMS_NON_FUNCTIONAL                 (1 << 3)      // Generally means that DDRT is unusable, but can be non-functional for other reasons
-#define REQUIRE_DCPMMS_NO_POPULATION_VIOLATION        (1 << 4)      // Require DCPMMs that are not in population violation
+#define REQUIRE_DCPMMS_SELECT_ALL                       (0)           // Allow all DCPMMs
+#define REQUIRE_DCPMMS_MANAGEABLE                       (1 << 0)      // See IsDimmManageable() for definition
+#define REQUIRE_DCPMMS_UNMANAGEABLE                     (1 << 1)      // See IsDimmManageable() for definition
+#define REQUIRE_DCPMMS_FUNCTIONAL                       (1 << 2)      // Currently vague, but means it initialized fully with no errors
+#define REQUIRE_DCPMMS_NON_FUNCTIONAL                   (1 << 3)      // Generally means that DDRT is unusable, but can be non-functional for other reasons
+#define REQUIRE_DCPMMS_POPULATION_VIOLATION             (1 << 4)      // See IsDimmInPopulationViolation() for definition
+#define REQUIRE_DCPMMS_NO_POPULATION_VIOLATION          (1 << 5)      // See IsDimmInPopulationViolation() for definition
+#define REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION (1 << 6)      // See IsDimmInUnmappedPopulationViolation() for definition
 
 /* VFR compiler doesn't support typedef, that's why we use defines **/
 #define DIMM_INFO_CATEGORIES        UINT16                          ///< @ref DIMM_INFO_CATEGORY_TYPES
@@ -1066,6 +1068,7 @@ typedef struct _DEBUG_LOG_INFO {
   12 - DCPMM persistent and volatile memory is not mapped due to a population issue
   13 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
   14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
+  15 - DCPMM persistent memory mapped, but volatile memory is not mapped due to a population issue
 
   Other values reserved
 **/
@@ -1084,6 +1087,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_CONFIG_DCPMM_POPULATION_ISSUE         12
 #define DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED  13
 #define DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION 14
+#define DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE  15
 
 /**
   00 - Valid
@@ -1092,6 +1096,7 @@ typedef struct _DEBUG_LOG_INFO {
   03 - Failed - Broken interleave
   04 - Failed - Reverted
   05 - Failed - Unsupported
+  06 - Failed - Partially supported
 **/
 #define DIMM_INFO_CONFIG_VALID                   0
 #define DIMM_INFO_CONFIG_NOT_CONFIG              1
@@ -1099,6 +1104,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_INFO_CONFIG_BROKEN_INTERLEAVE       3
 #define DIMM_INFO_CONFIG_REVERTED                4
 #define DIMM_INFO_CONFIG_UNSUPPORTED             5
+#define DIMM_INFO_CONFIG_PARTIALLY_SUPPORTED     6
 
 typedef struct {
   UINT8  Type;

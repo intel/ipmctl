@@ -170,16 +170,13 @@
 #define LOCKSTATE_VALUE_DISABLED          L"Disabled"                 //!< 'LockState' property Disabled value
 #define LOCKSTATE_VALUE_UNLOCKED          L"Unlocked"                 //!< 'LockState' property Unlocked value
 #define LOCKSTATE_VALUE_FROZEN            L"Frozen"                   //!< 'LockState' property Frozen value
-#define CONFIG_STATUS_VALUE_VALID         L"Valid"                    //!< 'ConfigStatus' property Valid value
-#define CONFIG_STATUS_VALUE_NOT_CONFIG    L"Not Configured"           //!< 'ConfigStatus' property Not Configured value
-#define CONFIG_STATUS_VALUE_BAD_CONFIG \
-  L"Failed - Bad configuration"                                   //!< 'ConfigStatus' property Bad Configuration value
-#define CONFIG_STATUS_VALUE_BROKEN_INTERLEAVE \
-  L"Failed - Broken interleave"                                   //!< 'ConfigStatus' property Broken Interleave value
-#define CONFIG_STATUS_VALUE_REVERTED \
-  L"Failed - Reverted"                                            //!< 'ConfigStatus' property Reverted value
-#define CONFIG_STATUS_VALUE_UNSUPPORTED \
-  L"Failed - Unsupported"                                                  //!< 'ConfigStatus' property Unsupported value
+#define CONFIG_STATUS_VALUE_VALID               L"Valid"                        //!< 'ConfigStatus' property Valid value
+#define CONFIG_STATUS_VALUE_NOT_CONFIG          L"Not configured"               //!< 'ConfigStatus' property Not Configured value
+#define CONFIG_STATUS_VALUE_BAD_CONFIG          L"Failed - Bad configuration"   //!< 'ConfigStatus' property Bad Configuration value
+#define CONFIG_STATUS_VALUE_BROKEN_INTERLEAVE   L"Failed - Broken interleave"   //!< 'ConfigStatus' property Broken Interleave value
+#define CONFIG_STATUS_VALUE_REVERTED            L"Failed - Reverted"            //!< 'ConfigStatus' property Reverted value
+#define CONFIG_STATUS_VALUE_UNSUPPORTED         L"Failed - Unsupported"         //!< 'ConfigStatus' property Unsupported value
+#define CONFIG_STATUS_VALUE_PARTIALLY_SUPPORTED L"Failed - Partially supported" //!< 'ConfigStatus' property Partially Supported value
 #define PASSPHRASE_PROPERTY               L"Passphrase"               //!< 'Passphrase' property name
 #define NEWPASSPHRASE_PROPERTY            L"NewPassphrase"            //!< 'NewPassphrase' property name
 #define CONFIRMPASSPHRASE_PROPERTY        L"ConfirmPassphrase"        //!< 'ConfirmPassphrase' property name

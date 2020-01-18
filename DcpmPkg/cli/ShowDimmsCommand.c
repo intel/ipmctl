@@ -238,6 +238,7 @@ CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
   CONFIG_STATUS_VALUE_BROKEN_INTERLEAVE,
   CONFIG_STATUS_VALUE_REVERTED,
   CONFIG_STATUS_VALUE_UNSUPPORTED,
+  CONFIG_STATUS_VALUE_PARTIALLY_SUPPORTED,
 };
 
 CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
@@ -1603,15 +1604,7 @@ PopulationViolationToString(
 )
 {
   CHAR16 *pPopulationViolationString = NULL;
-
-  if (IsInPopulationViolation)
-  {
-    pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, L"Is in population violation.");
-  }
-  else
-  {
-    pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, L"Is in supported configuration.");
-  }
+  pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, IsInPopulationViolation ? L"Yes" : L"No");
   return pPopulationViolationString;
 }
 /**

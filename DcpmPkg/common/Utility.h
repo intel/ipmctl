@@ -43,6 +43,7 @@ typedef union {
 } CONFIG_PROTOCOL_VERSION;
 
 
+#define SOCKET_ID_ALL MAX_UINT16
 
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000

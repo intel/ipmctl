@@ -3524,17 +3524,18 @@ ReduceCapacityForSocketSKU(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   BOOLEAN WholeSocket = FALSE;
    UINT64 TotalRequestedMemoryOnSocket = 0;
-  VOID *pSocketSkuInfoTable = NULL;
   BOOLEAN CurrentConfigurationMemoryMode = FALSE;
   BOOLEAN NewConfigurationMemoryMode = FALSE;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
   UINT32 Index = 0;
   UINT64 ReduceCapacity = 0;
-  ACPI_REVISION PcatRevision;
   UINT64 MappedMemorySizeLimit = 0;
-  UINT64 TotalMemorySizeMappedToSpa = 0;
-  UINT64 CachingMemorySize = 0;
+  UINT64 DDRRawCapacity = 0;
+  UINT64 DDRCacheCapacity = 0;
+  UINT64 DDRVolatileCapacity = 0;
+  ACPI_REVISION PcatRevision;
+  VOID* pSocketSkuInfoTable = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3564,15 +3565,18 @@ ReduceCapacityForSocketSKU(
   if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
     SOCKET_SKU_INFO_TABLE *pSocketSkuInfo = (SOCKET_SKU_INFO_TABLE *)pSocketSkuInfoTable;
     MappedMemorySizeLimit = pSocketSkuInfo->MappedMemorySizeLimit;
-    TotalMemorySizeMappedToSpa = pSocketSkuInfo->TotalMemorySizeMappedToSpa;
-    CachingMemorySize = pSocketSkuInfo->CachingMemorySize;
   }
   else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
     DIE_SKU_INFO_TABLE *pDieSkuInfo = (DIE_SKU_INFO_TABLE *)pSocketSkuInfoTable;
     MappedMemorySizeLimit = pDieSkuInfo->MappedMemorySizeLimit;
-    TotalMemorySizeMappedToSpa = pDieSkuInfo->TotalMemorySizeMappedToSpa;
-    CachingMemorySize = pDieSkuInfo->CachingMemorySize;
   }
+
+  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not retrieve DDR capacities");
+    goto Finish;
+  }
+
 
   // If no PCAT tables exist for a socket then that socket will not be reduced.
   if (ReturnCode == EFI_NOT_FOUND) {
@@ -3629,38 +3633,15 @@ ReduceCapacityForSocketSKU(
     TotalRequestedMemoryOnSocket += DimmsAsymmetricalOnSocket[Index].RegionSize;
   }
 
-  // If we configure entire socket and we are moving from 1LM+AD to 1LM+AD
-  // we need to account for the VolatileMemory in the new configuration
-  if (!CurrentConfigurationMemoryMode && !NewConfigurationMemoryMode) {
+  // Adding full DDR4 capacity only if new config will contain 1LM
+  if (!NewConfigurationMemoryMode) {
+    TotalRequestedMemoryOnSocket += DDRRawCapacity;
+  }
 
-    // Add in what is currently mapped and take out old AD to get the amount of 1LM VM
-    TotalRequestedMemoryOnSocket += TotalMemorySizeMappedToSpa;
-
-    for (Index = 0; Index < NumDimmsOnSocket; Index++) {
-      if (TRUE == pDimmsOnSocket[Index]->Configured) {
-        if (TotalRequestedMemoryOnSocket < pDimmsOnSocket[Index]->MappedPersistentCapacity) {
-          NVDIMM_DBG("Mapping negative capacity");
-          ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-          ReturnCode = EFI_UNSUPPORTED;
-          goto Finish;
-        }
-
-        TotalRequestedMemoryOnSocket -= pDimmsOnSocket[Index]->MappedPersistentCapacity;
-      }
-    }
-
-    // if we will be removing all MemoryMode from the socket we need to add in the DDR4
-    // volatile memory that was being used as cache
-  } else if (CurrentConfigurationMemoryMode && !NewConfigurationMemoryMode && WholeSocket) {
-
-    TotalRequestedMemoryOnSocket += CachingMemorySize;
-
-    // when adding a new dimm to a configuration the BIOS will configure it as MemoryMode,
-    // since this dimm is unconfigured it can be configured by itself and a corner case exists
-    // where we can go from 2LM -> 1LM by only changing a single dimm.
-  } else if (CurrentConfigurationMemoryMode && !NewConfigurationMemoryMode && !WholeSocket) {
-
-    TotalRequestedMemoryOnSocket += CachingMemorySize;
+  // when adding a new dimm to a configuration the BIOS will configure it as MemoryMode,
+  // since this dimm is unconfigured it can be configured by itself and a corner case exists
+  // where we can go from 2LM -> 1LM by only changing a single dimm.
+  if (CurrentConfigurationMemoryMode && !NewConfigurationMemoryMode && !WholeSocket) {
 
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);

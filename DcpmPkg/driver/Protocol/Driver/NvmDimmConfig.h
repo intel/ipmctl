@@ -1228,6 +1228,7 @@ GetCapacities(
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
@@ -1239,6 +1240,7 @@ GetCapacities(
 EFI_STATUS
 EFIAPI
 GetDDRCapacities(
+  IN     UINT16 SocketId,
   OUT UINT64 *pDDRRawCapacity,
   OUT UINT64 *pDDRCacheCapacity,
   OUT UINT64 *pDDRVolatileCapacity
@@ -1248,6 +1250,7 @@ GetDDRCapacities(
   Calculate the total size of available memory in the DIMMs
   according to the smbios and return the result.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
   @param[out] pResult Pointer to total memory size.
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
@@ -1256,6 +1259,7 @@ GetDDRCapacities(
 **/
 EFI_STATUS
 GetDDRPhysicalSize(
+  IN     UINT16 SocketId,
   OUT UINT64 *pResult
 );
 

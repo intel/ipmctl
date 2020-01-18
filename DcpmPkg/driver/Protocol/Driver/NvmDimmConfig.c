@@ -4229,7 +4229,7 @@ GetMemoryResourcesInfo(
   }
 
   // Get DDR Sizes
-  ReturnCode = GetDDRCapacities(&DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
+  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
 
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -8373,6 +8373,7 @@ Finish:
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
@@ -8384,9 +8385,10 @@ Finish:
 EFI_STATUS
 EFIAPI
 GetDDRCapacities(
-  OUT UINT64 *pDDRRawCapacity,
-  OUT UINT64 *pDDRCacheCapacity,
-  OUT UINT64 *pDDRVolatileCapacity
+  IN     UINT16 SocketId,
+     OUT UINT64 *pDDRRawCapacity,
+     OUT UINT64 *pDDRCacheCapacity,
+     OUT UINT64 *pDDRVolatileCapacity
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -8409,7 +8411,7 @@ GetDDRCapacities(
   }
 
   // Get total physical size of all non-DCPMM DIMMs through PMTT
-  ReturnCode = GetDDRPhysicalSize(&PhysicalSize);
+  ReturnCode = GetDDRPhysicalSize(SocketId, &PhysicalSize);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not retrieve memory capacity.");
     goto Finish;
@@ -8452,6 +8454,7 @@ Finish:
   Calculate the total size of available memory in the DIMMs
   according to the smbios and return the result.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
   @param[out] pResult Pointer to total memory size.
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
@@ -8460,7 +8463,8 @@ Finish:
 **/
 EFI_STATUS
 GetDDRPhysicalSize(
-  OUT UINT64 *pResult
+  IN     UINT16 SocketId,
+     OUT UINT64 *pResult
 )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
@@ -8534,6 +8538,9 @@ GetDDRPhysicalSize(
 
     /* For every module, get its total capacity and add it to the system total capacity */
     for (Index = 0; Index < DDRModulesNum; Index++) {
+    if (SocketId != SOCKET_ID_ALL && ppDDRModules[Index]->SocketId != SocketId) {
+      continue;
+    }
       // Get dimm information from smbios handle
       pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
       ReturnCode = FillSmbiosInfo(pDimmInfo);

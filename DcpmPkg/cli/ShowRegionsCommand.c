@@ -425,7 +425,13 @@ ShowRegions(
   }
   if (0 == RegionCount) {
     ReturnCode = EFI_SUCCESS;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
+    //WA, to ensure ESX prints a message when no entries are found.
+    if (PRINTER_ESX_FORMAT_ENABLED(pPrinterCtx)) {
+      PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_INFO_NO_REGIONS);
+    }
+    else {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
+    }
     goto Finish;
   }
 

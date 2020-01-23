@@ -89,7 +89,8 @@ typedef union {
 #define LONG_OP_POLL_EVENT_TIMEOUT 1                             //timer used for timeout event
 #define LONG_OP_POLL_EVENT_SIZE 2                                //total number of events to wait for
 
-#define LONG_OP_FW_UPDATE_TIMEOUT EFI_TIMER_PERIOD_SECONDS(10)   //Average time is 2-3 seconds
+#define FW_UPDATE_TIMEOUT_SECONDS 20
+#define LONG_OP_FW_UPDATE_TIMEOUT EFI_TIMER_PERIOD_SECONDS(FW_UPDATE_TIMEOUT_SECONDS)
 
 //Firmware update opcodes to match long operation status
 #define FW_UPDATE_OPCODE    0x09

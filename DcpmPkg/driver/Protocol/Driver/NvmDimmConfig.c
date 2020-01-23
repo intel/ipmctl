@@ -1458,7 +1458,7 @@ VerifyTargetDimms (
     }
 
     if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
-      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_EXCLUDED);
       ReturnCode = EFI_INVALID_PARAMETER;
       continue;
     }

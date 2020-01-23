@@ -32,6 +32,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
   NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable DIMM not found
   NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable DIMMs due to all DIMMs being unmanageable, non-functional, or having a population issue
+  NVM_ERR_DIMM_EXCLUDED                             = 19,   ///< Error: DIMM excluded as it is unmanageable, non-functional, or has a population issue.
 
   NVM_ERR_PASSPHRASE_NOT_PROVIDED                   = 30,   ///< Error: Passphrase not provided
   NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED               = 31,   ///< Error: New passphrase not provided

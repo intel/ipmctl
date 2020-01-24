@@ -1213,8 +1213,6 @@ ReadLabelStorageArea(
   UINT32 AlignPageIndex = 0;
   UINT32 PageSize = 0;
   UINT8 PageIndexMask = 0;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
   BOOLEAN LargePayloadAvailable = FALSE;
 
   NVDIMM_ENTRY();
@@ -1232,16 +1230,6 @@ ReadLabelStorageArea(
   }
 
   NVDIMM_DBG("Reading LSA for DIMM %x ...", pDimm->DeviceHandle.AsUint32);
-
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
 
   CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
   if (!LargePayloadAvailable) {

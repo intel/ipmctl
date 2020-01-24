@@ -1984,7 +1984,7 @@ FwCmdGetBsr(
 
   @param[in] pDimm to retrieve DDRT Training status from
   @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
-  @param[out] pBootStatusBitmask Pointer to the boot status bitmask
+  @param[in, out] pBootStatusBitmask Pointer to the boot status bitmask
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -1993,8 +1993,8 @@ FwCmdGetBsr(
 EFI_STATUS
 PopulateDimmBsrAndBootStatusBitmask(
   IN     DIMM *pDimm,
-  OUT DIMM_BSR *pBsr,
-  OUT UINT16 *pBootStatusBitmask
+     OUT DIMM_BSR *pBsr,
+  IN OUT UINT16 *pBootStatusBitmask OPTIONAL
 );
 
 /**

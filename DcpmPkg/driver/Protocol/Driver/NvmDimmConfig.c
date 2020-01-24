@@ -10423,8 +10423,6 @@ GetCommandEffectLog(
   PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG InputPayload;
   PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG OutPayload;
   VOID *pLargeOutputPayload = NULL;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
   UINT32 CelTableSize = 0;
   BOOLEAN LargePayloadAvailable = FALSE;
 
@@ -10433,16 +10431,6 @@ GetCommandEffectLog(
 
   if (pThis == NULL) {
     NVDIMM_DBG("One or more parameters are NULL");
-    goto Finish;
-  }
-
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 

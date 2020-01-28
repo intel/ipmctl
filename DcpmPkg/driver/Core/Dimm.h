@@ -693,7 +693,21 @@ FwCmdGetSecurityInfo(
   IN     DIMM *pDimm,
      OUT PT_GET_SECURITY_PAYLOAD *pSecurityPayload
   );
+/**
+  Is Firmware command get security Opt-In supported
+  Get security opt-in command is supported for certain
+  fw versions with certain opt-in codes
 
+  @param[in] pDimm: The DIMM to send get security opt-in command
+  @param[in] OptInCode: Opt-In Code that is requested status for
+
+  @retval BOOLEAN: return if the command is supported for opt-in code
+
+**/
+BOOLEAN IsGetSecurityOptInSupported(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode
+);
 /**
   Firmware command get security Opt-In
   Execute a FW command to check the security Opt-In code of a DIMM

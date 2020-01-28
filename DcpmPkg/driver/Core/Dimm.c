@@ -1470,7 +1470,39 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+/**
+  Is Firmware command get security Opt-In supported
+  Get security opt-in command is supported for certain
+  fw versions with certain opt-in codes
 
+  @param[in] pDimm: The DIMM to send get security opt-in command
+  @param[in] OptInCode: Opt-In Code that is requested status for
+
+  @retval BOOLEAN: return if the command is supported for opt-in code
+
+**/
+BOOLEAN IsGetSecurityOptInSupported(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode)
+{
+  BOOLEAN FIS_GT_2_1 = FALSE;
+  BOOLEAN FIS_GTE_2_3 = FALSE;
+  FIS_GT_2_1 = (2 <= pDimm->FwVer.FwApiMajor && 1 < pDimm->FwVer.FwApiMinor);
+  FIS_GTE_2_3 = (2 <= pDimm->FwVer.FwApiMajor && 3 <= pDimm->FwVer.FwApiMinor);
+
+  //If Fis is not greater than 2.1 get security opt in is not supported
+  if (!FIS_GT_2_1)
+  {
+    return FALSE;
+  }
+  //If Fis is 2.2 only s3 resume is supported
+  if (FIS_GT_2_1 && !FIS_GTE_2_3 && OptInCode != S3_RESUME)
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
 /**
   Firmware command get security Opt-In
   Execute a FW command to check the security Opt-In code of a DIMM
@@ -1493,11 +1525,15 @@ FwCmdGetSecurityOptIn(
   FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_SECURITY_OPT_IN InputPayload;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-
   NVDIMM_ENTRY();
 
   if (pDimm == NULL || pSecurityOptIn == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if(!IsGetSecurityOptInSupported(pDimm,OptInCode)) {
+    ReturnCode = EFI_UNSUPPORTED;
     goto Finish;
   }
 

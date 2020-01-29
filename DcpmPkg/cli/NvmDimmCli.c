@@ -450,7 +450,8 @@ UefiMain(
     }
 
 #else
-  if (g_basic_commands)
+  // if help is requested Register all the commands so parsing will work later
+  if (g_basic_commands && !HelpRequested)
   {
     Rc = RegisterNonAdminUserCommands();
     if (EFI_ERROR(Rc)) {

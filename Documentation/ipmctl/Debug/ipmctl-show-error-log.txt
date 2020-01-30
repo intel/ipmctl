@@ -13,7 +13,9 @@ ipmctl-show-error-log - Shows thermal or media errors on the specified DCPMMs
 SYNOPSIS
 --------
 [verse]
+____
 ipmctl show [OPTIONS] -error (Thermal|Media) [TARGETS] [PROPERTIES]
+____
 
 DESCRIPTION
 -----------
@@ -78,11 +80,15 @@ EXAMPLES
 --------
 Show all high thermal error log entries
 [verse]
+____
 ipmctl show -error Thermal Level=High
+____
 
 Show all low media error log entries
 [verse]
+____
 ipmctl show -error Media Level=Low
+____
 
 LIMITATIONS
 -----------
@@ -95,18 +101,23 @@ RETURN DATA
 Prints errors of the specified type for the specified DCPMMs. If no errors are found, the
 following message will be printed:
 [verse]
+____
 No errors found on DIMM (DimmID)
+____
 
 SAMPLE OUTPUT
 -------------
 [verse]
+____
  DimmID | System Timestamp    | Error Type
 =============================================================
  0x0001 | 01/01/1970 00:00:20 | 0x04 - Locked/Illegal Access
  0x0001 | 01/01/1970 00:00:21 | 0x04 - Locked/Illegal Access
 Show error executed successfully
+____
 
 [verse]
+____
 Media Error occurred on Dimm (DimmID):
 System Timestamp : 1527266471
 DPA : 0x000014c0
@@ -116,3 +127,4 @@ Error Type : 4 - Locked/Illegal Access
 Error Flags : DPA Valid
 Transaction Type : 11 - CSR Write
 Sequence Number : 2
+____

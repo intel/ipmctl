@@ -13,7 +13,9 @@ ipmctl-show-session - Displays the playback and record (PBR) command history of 
 SYNOPSIS
 --------
 [verse]
+____
 ipmctl show [OPTIONS] -session
+____
 
 DESCRIPTION
 -----------
@@ -44,7 +46,9 @@ EXAMPLES
 Show the contents of the loaded/active session.
 
 [verse]
+____
 ipmctl show -session
+____
 
 LIMITATIONS
 -----------
@@ -58,7 +62,9 @@ RETURN DATA
 SAMPLE OUTPUT
 -------------
 [verse]
+____
 TagID | RC | Args
 ============================
  0x0*  | 0  | show -sensor
  0x1   | 0  | show -dimm
+____

@@ -13,7 +13,9 @@ ipmctl-load-session - Loads content captured during a recording session.
 SYNOPSIS
 --------
 [verse]
+____
 ipmctl load [OPTIONS] -source (path) -session
+____
 
 DESCRIPTION
 -----------
@@ -48,7 +50,9 @@ EXAMPLES
 --------
 Load the contents of a previously recorded session from /tmp/session.pbr.
 [verse]
+____
 ipmctl load -source /tmp/session.pbr -session
+____
 
 LIMITATIONS
 -----------
@@ -59,4 +63,6 @@ RETURN DATA
 SAMPLE OUTPUT
 -------------
 [verse]
+____
 Successfully loaded 1060619 bytes to session buffer.
+____

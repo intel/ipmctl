@@ -434,7 +434,7 @@ Load(
   }
 
 Finish:
-  DisplayCommandStatus(CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
+  PRINTER_PROMPT_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
   FreeCommandStatus(&pCommandStatus);
 
 FinishNoCommandStatus:

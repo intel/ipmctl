@@ -922,56 +922,6 @@ Finish:
   return ReturnCode;
 }
 
-
-/**
-  Display command status with specified command message.
-  Function displays per DIMM status if such exists and
-  summarizing status for whole command. Memory allocated
-  for status message and command status is freed after
-  status is displayed.
-
-  @param[in] pStatusMessage String with command information
-  @param[in] pStatusPreposition String with preposition
-  @param[in] pCommandStatus Command status data
-
-  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-DisplayCommandStatus(
-  IN     CONST CHAR16 *pStatusMessage,
-  IN     CONST CHAR16 *pStatusPreposition,
-  IN     COMMAND_STATUS *pCommandStatus
-)
-
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  CHAR16 *pOutputBuffer = NULL;
-  UINT8 DimmIdentifier = 0;
-  BOOLEAN ObjectIdNumberPreferred = FALSE;
-
-  if (pStatusMessage == NULL || pCommandStatus == NULL) {
-    goto Finish;
-  }
-
-  ReturnCode = GetDimmIdentifierPreference(&DimmIdentifier);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ObjectIdNumberPreferred = DimmIdentifier == DISPLAY_DIMM_ID_HANDLE;
-
-  ReturnCode = CreateCommandStatusString(gNvmDimmCliHiiHandle, pStatusMessage, pStatusPreposition, pCommandStatus,
-    ObjectIdNumberPreferred, &pOutputBuffer);
-
-  Print(FORMAT_STR, pOutputBuffer);
-
-Finish:
-  FREE_POOL_SAFE(pOutputBuffer);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
 /**
   Retrieve property by name and assign its value to UINT64.
 

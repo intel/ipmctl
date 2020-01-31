@@ -259,7 +259,7 @@ ShowPcd(
     &pDimmPcdInfo, &DimmPcdInfoCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Get Platform Config Data", L" on", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Get Platform Config Data", CLI_INFO_ON, pCommandStatus);
     goto Finish;
   }
 

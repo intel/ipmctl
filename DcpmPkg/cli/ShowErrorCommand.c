@@ -715,9 +715,9 @@ ShowErrorCommand(
     PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowThermalErrorDataSetAttribs);
   }
 Finish:
+  PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Show Error", CLI_INFO_ON, pCommandStatus);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
-  DisplayCommandStatus(L"Show error", L" on", pCommandStatus);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);

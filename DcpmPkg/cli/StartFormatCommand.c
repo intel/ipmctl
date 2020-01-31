@@ -194,7 +194,7 @@ StartFormat(
   if (!EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR);
   } else {
-    DisplayCommandStatus(CLI_INFO_START_FORMAT, L"", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_START_FORMAT, L"", pCommandStatus);
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   }
 

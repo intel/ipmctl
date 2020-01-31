@@ -527,27 +527,6 @@ CheckAllAndDisplayOptions(
 );
 
 /**
-  Display command status with specified command message.
-  Function displays per DIMM status if such exists and
-  summarizing status for whole command. Memory allocated
-  for status message and command status is freed after
-  status is displayed.
-
-  @param[in] pStatusMessage String with command information
-  @param[in] pStatusPreposition String with preposition
-  @param[in] pCommandStatus Command status data
-
-  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-DisplayCommandStatus (
-  IN     CONST CHAR16 *pStatusMessage,
-  IN     CONST CHAR16 *pStatusPreposition,
-  IN     COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Retrieve property by name and assign its value to UINT64.
 
   @param[in] pCmd Command containing the property

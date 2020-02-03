@@ -58,7 +58,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+    Changes the output format. One of: "text" (default) or "nvmxml". The "nvmxml" format implies the "-force" flag.
 endif::os_build[]
 
 -u (B|MB|MiB|GB|GiB|TB| TiB)::

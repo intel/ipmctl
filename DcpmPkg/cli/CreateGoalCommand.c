@@ -467,7 +467,7 @@ CreateGoal(
     goto Finish;
   }
 
-  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
+  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT) || XML == pPrinterCtx->FormatType) {
     Force = TRUE;
   }
 

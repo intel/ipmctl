@@ -1244,7 +1244,7 @@ EFI_STATUS EFIAPI PrinterSetMsg(
   VA_END(Marker);
 
   //here for backwards compatibility
-  if (NULL == pPrintCtx || !pPrintCtx->FormatTypeFlags.Flags.Buffered) {
+  if (NULL == pPrintCtx || (!pPrintCtx->FormatTypeFlags.Flags.Buffered && XML != pPrintCtx->FormatType)) {
     PrintTextWithNewLine(FullMsg);
     FREE_POOL_SAFE(FullMsg);
     return EFI_SUCCESS;

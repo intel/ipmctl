@@ -1628,6 +1628,12 @@ NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
   CHAR16 UnicodeOldMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
   CHAR16 UnicodeNewMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
 
+  if (old_master_passphrase_len > PASSPHRASE_BUFFER_SIZE
+       || new_master_passphrase_len > PASSPHRASE_BUFFER_SIZE) {
+    rc = NVM_ERR_PASSPHRASE_TOO_LONG;
+    return rc;
+  }
+
   SetMem(UnicodeOldMasterPassphrase, sizeof(UnicodeOldMasterPassphrase), 0x0);
   SetMem(UnicodeNewMasterPassphrase, sizeof(UnicodeNewMasterPassphrase), 0x0);
 

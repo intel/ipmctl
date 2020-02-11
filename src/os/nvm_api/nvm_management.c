@@ -168,7 +168,7 @@ static void nvm_internal_uninit(BOOLEAN binding_stop)
 {
   EFI_HANDLE FakeBindHandle = (EFI_HANDLE)0x1;
 
-  if (binding_stop) {
+  if (binding_stop && (!g_fast_path && !g_basic_commands)) {
     NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
   }
   NvmDimmDriverUnload(FakeBindHandle);

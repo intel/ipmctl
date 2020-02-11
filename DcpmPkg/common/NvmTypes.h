@@ -829,6 +829,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define DDRT_TRAINING_UNKNOWN       0xFF
 
 /** Dimm Boot Status Bitmask **/
+#define DIMM_BOOT_STATUS_NORMAL               0
 #define DIMM_BOOT_STATUS_UNKNOWN              BIT0
 #define DIMM_BOOT_STATUS_MEDIA_NOT_READY      BIT1
 #define DIMM_BOOT_STATUS_MEDIA_ERROR          BIT2

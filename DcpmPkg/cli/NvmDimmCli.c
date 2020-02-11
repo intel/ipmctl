@@ -84,6 +84,7 @@ extern int cov_dumpData(void);
 extern void nvm_current_cmd(struct Command Command);
 extern BOOLEAN ConfigIsDdrtProtocolDisabled();
 extern BOOLEAN ConfigIsLargePayloadDisabled();
+extern int g_fast_path;
 #else
 #include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG2_PROTOCOL_GUID;
@@ -575,7 +576,7 @@ UefiMain(
 #endif
 
 #ifdef OS_BUILD
-        if (!Command.ExcludeDriverBinding) {
+        if (!Command.ExcludeDriverBinding && !g_fast_path) {
           Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
         }
 #endif
@@ -583,7 +584,7 @@ UefiMain(
         Rc = ExecuteCmd(&Command);
 
 #ifdef OS_BUILD
-        if (!Command.ExcludeDriverBinding) {
+        if (!Command.ExcludeDriverBinding && !g_fast_path) {
           NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
         }
 #endif

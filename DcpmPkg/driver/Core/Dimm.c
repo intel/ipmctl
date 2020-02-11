@@ -7160,7 +7160,7 @@ DeterminePassThruMethod(
     // We did not succeed in calling IdentifyDimm over any interface in
     // InitializeDimm(). Seems like a dead DCPMM. Don't bother sending anything more.
     ReturnCode = EFI_DEVICE_ERROR;
-    NVDIMM_ERR("DCPMM BSR is unknown. Cancelling PassThru()");
+    NVDIMM_ERR("DCPMM mailbox is not ready. Cancelling PassThru()");
     goto Finish;
   }
 

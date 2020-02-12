@@ -2223,6 +2223,8 @@ NVM_API int nvm_run_diagnostic(const NVM_UID device_uid, const struct diagnostic
 NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY key, const NVM_PREFERENCE_VALUE value);
 
 /**
+ * @deprecated
+ *
  * @brief Clear namespace label storage area in PCD on the specified DCPMM.
  * @param[in] device_uid
  *              The device identifier.

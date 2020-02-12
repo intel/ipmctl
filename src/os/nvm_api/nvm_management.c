@@ -2602,31 +2602,7 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
 
 NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT16 dimm_id;
-  int nvm_status;
-  COMMAND_STATUS *p_command_status;
-
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    return nvm_status;
-  }
-  ReturnCode = InitializeCommandStatus(&p_command_status);
-  if (EFI_ERROR(ReturnCode))
-    return NVM_ERR_UNKNOWN;
-  if (NVM_SUCCESS != (nvm_status = get_dimm_id((char *)device_uid, &dimm_id, NULL))) {
-    FreeCommandStatus(&p_command_status);
-    NVDIMM_ERR("Failed to get dimm ID %d\n", nvm_status);
-    return NVM_ERR_DIMM_NOT_FOUND;
-  }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.ModifyPcdConfig(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, DELETE_PCD_CONFIG_LSA_MASK, p_command_status);
-  if (EFI_ERROR(ReturnCode)) {
-    FreeCommandStatus(&p_command_status);
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    return NVM_ERR_UNKNOWN;
-  }
-  FreeCommandStatus(&p_command_status);
-  return NVM_SUCCESS;
+  return NVM_ERR_API_NOT_SUPPORTED; //deprecated
 }
 
 /*

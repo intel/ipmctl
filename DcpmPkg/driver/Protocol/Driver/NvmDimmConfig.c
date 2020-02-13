@@ -10465,7 +10465,7 @@ GetCommandEffectLog(
   if (!LargePayloadAvailable) {
     UINT32 EntryCountRemaining = *pEntryCount;
     UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
-
+    UINT32 OutputBytes = 0;
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = CelEntries;
     InputPayload.EntryOffset = 0;
@@ -10475,10 +10475,9 @@ GetCommandEffectLog(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-
-      CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, sizeof(OutPayload), &OutPayload, sizeof(OutPayload));
-
-      EntryCountRemaining -= CelEntriesPerSmallPayload;
+      OutputBytes = EntryCountRemaining > CelEntriesPerSmallPayload ? sizeof(OutPayload) : sizeof(COMMAND_EFFECT_LOG_ENTRY) * EntryCountRemaining;
+      CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, sizeof(COMMAND_EFFECT_LOG_ENTRY) * EntryCountRemaining, &OutPayload, OutputBytes);
+      EntryCountRemaining = EntryCountRemaining > CelEntriesPerSmallPayload ? EntryCountRemaining - CelEntriesPerSmallPayload : 0;
       InputPayload.EntryOffset += CelEntriesPerSmallPayload;
     }
   }

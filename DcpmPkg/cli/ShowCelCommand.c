@@ -332,6 +332,7 @@ ShowCelCommand(
       PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CE_DESCRIPTION_STR, pCommandEffectDescription);
       FREE_POOL_SAFE(pCommandEffectDescription);
     }
+    FREE_POOL_SAFE(pCelEntry);
   }
 
   //Switch text output type to display as a table

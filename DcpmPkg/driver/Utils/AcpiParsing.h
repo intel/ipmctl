@@ -386,21 +386,51 @@ CheckMemModeCapabilities(
   );
 
 /**
-  Retrieve the PCAT Socket SKU info table for a given Socket
+  Retrieve the PCAT Socket SKU Mapped Memory Limit for a given socket
 
   @param[in] SocketId SocketID to retrieve the table for
-  @param[out] ppSocketSkuInfoTable Sku info table referenced by socket ID
-  @param[out] PCAT Table revision
+  @param[out] pMappedMemoryLimit Pointer to Mapped Memory Limit
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
-  @retval EFI_NOT_FOUND PCAT socket sku info table not found for given socketID
+  @retval EFI_NOT_FOUND PCAT socket sku mapped memory limit not found for given socketID
 **/
 EFI_STATUS
-RetrievePcatSocketSkuInfoTable(
+RetrievePcatSocketSkuMappedMemoryLimit(
   IN     UINT32 SocketId,
-  OUT    VOID **ppSocketSkuInfoTable,
-  OUT    ACPI_REVISION *pPcatRevison
+  OUT    UINT64 *pMappedMemoryLimit
+  );
+
+/**
+  Retrieve the PCAT Socket SKU Total Mapped Memory for a given socket
+
+  @param[in] SocketId SocketID, 0xFFFF indicates all sockets
+  @param[out] pTotalMappedMemory Pointer to Total Mapped Memory
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND PCAT socket sku total mapped memory not found for given socketID
+**/
+EFI_STATUS
+RetrievePcatSocketSkuTotalMappedMemory(
+  IN     UINT32 SocketId,
+  OUT    UINT64 *pTotalMappedMemory
+  );
+
+/**
+  Retrieve the PCAT Socket SKU Cached Memory for a given socket
+
+  @param[in] SocketId SocketID, 0xFFFF indicates all sockets
+  @param[out] pCachedMemory Pointer to Cached Memory Size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND PCAT socket sku cached memory size not found for given socketID
+**/
+EFI_STATUS
+RetrievePcatSocketSkuCachedMemory(
+  IN     UINT32 SocketId,
+  OUT    UINT64 *pCachedMemory
   );
 
 /**

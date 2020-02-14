@@ -6242,18 +6242,45 @@ Finish:
 
 /**
   Calculate a size of capacity considered Reserved. It is the aligned PM
-  capacity less the AD capacity
+  capacity less the mapped AD capacity
 
   @param[in] Dimm to retrieve reserved size for
+  @param[out] pReservedCapacity pointer to reserved capacity
 
-  @retval Amount of capacity that will be reserved
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_ABORTED Failure to retrieve current memory mode
+  @retval EFI_SUCCESS Success
 **/
-UINT64
+EFI_STATUS
 GetReservedCapacity(
-  IN     DIMM *pDimm
+  IN     DIMM *pDimm,
+  OUT UINT64 *pReservedCapacity
   )
 {
-  return ROUNDDOWN(pDimm->PmCapacity, REGION_PERSISTENT_SIZE_ALIGNMENT_B) - pDimm->MappedPersistentCapacity;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
+
+  if (pDimm == NULL || pReservedCapacity == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine current memory mode");
+    goto Finish;
+  }
+
+  if (pDimm->Configured || (MEMORY_MODE_2LM == CurrentMode)) {
+    *pReservedCapacity =  ROUNDDOWN(pDimm->PmCapacity, REGION_PERSISTENT_SIZE_ALIGNMENT_B) - pDimm->MappedPersistentCapacity;
+  }
+  else {
+    *pReservedCapacity = 0;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 #define FW_TEMPERATURE_CONST_1 625

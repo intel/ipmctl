@@ -437,6 +437,12 @@ GetDimmMappedMemSize(
     return EFI_NOT_READY;
   }
 
+  // DIMM PCD already read
+  if (pDimm->PcdMappedMemInfoRead) {
+    NVDIMM_DBG("DIMM: 0x%04x PCD already read!", pDimm->DeviceHandle.AsUint32);
+    return EFI_SUCCESS;
+  }
+
   ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   if (EFI_ERROR(ReturnCode)) {
     return EFI_DEVICE_ERROR;
@@ -471,6 +477,8 @@ GetDimmMappedMemSize(
 
   pDimm->MappedVolatileCapacity = pPcdCurrentConf->VolatileMemSizeIntoSpa;
   pDimm->MappedPersistentCapacity = pPcdCurrentConf->PersistentMemSizeIntoSpa;
+
+  pDimm->PcdMappedMemInfoRead = TRUE;
 
   FreePool(pPcdConfHeader);
   return EFI_SUCCESS;
@@ -670,7 +678,6 @@ GetDimmInfo (
   }
   pDimmInfo->InterfaceFormatCodeNum = pDimm->FmtInterfaceCodeNum;
 
-  pDimmInfo->Capacity = pDimm->RawCapacity;
   pDimmInfo->DimmHandle = pDimm->DeviceHandle.AsUint32;
   pDimmInfo->FwVer = pDimm->FwVer;
 
@@ -1104,8 +1111,9 @@ GetDimmInfo (
 
   // Data already in pDimm
   pDimmInfo->Configured = pDimm->Configured;
-  ReturnCode = GetCapacities(pDimm->DimmID, &pDimmInfo->VolatileCapacity, &pDimmInfo->AppDirectCapacity,
-    &pDimmInfo->UnconfiguredCapacity, &pDimmInfo->ReservedCapacity, &pDimmInfo->InaccessibleCapacity);
+  ReturnCode = GetDcpmmCapacities(pDimm->DimmID, &pDimmInfo->Capacity, &pDimmInfo->VolatileCapacity,
+    &pDimmInfo->AppDirectCapacity, &pDimmInfo->UnconfiguredCapacity, &pDimmInfo->ReservedCapacity,
+    &pDimmInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_CAPACITY;
   }
@@ -4159,16 +4167,6 @@ GetMemoryResourcesInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  DIMM *pDimm = NULL;
-  LIST_ENTRY *pDimmNode = NULL;
-  UINT64 VolatileCapacity = 0;
-  UINT64 AppDirectCapacity = 0;
-  UINT64 UnconfiguredCapacity = 0;
-  UINT64 ReservedCapacity = 0;
-  UINT64 InaccessibleCapacity = 0;
-  UINT64 DDRRawCapacity = 0;
-  UINT64 DDRCacheCapacity = 0;
-  UINT64 DDRVolatileCapacity = 0;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -4195,60 +4193,21 @@ GetMemoryResourcesInfo(
 #endif
   }
 
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-
-    if (!IsDimmManageable(pDimm) || (!IsDimmInSupportedConfig(pDimm))) {
-      continue;
-    }
-
-    pMemoryResourcesInfo->RawCapacity += pDimm->RawCapacity;
-
-    if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-      pMemoryResourcesInfo->InaccessibleCapacity += pDimm->RawCapacity;
-      continue;
-    }
-
-#ifdef OS_BUILD
-  ReturnCode = GetDimmMappedMemSize(pDimm);
-  if (EFI_DEVICE_ERROR == ReturnCode) {
-    NVDIMM_WARN("Failed to retrieve PCD data on DIMM: 04x%x", pDimm->DeviceHandle.AsUint32);
-  }
-  else if (EFI_ERROR(ReturnCode)) {
+  // Get DCPMM Sizes
+  ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->RawCapacity, &pMemoryResourcesInfo->VolatileCapacity,
+    &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
+    &pMemoryResourcesInfo->InaccessibleCapacity);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
     goto Finish;
-  }
-#endif // OS_BUILD
-
-    // PCD CCUR table missing in DIMM
-    if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
-      ReturnCode = EFI_LOAD_ERROR;
-      goto Finish;
-    }
-
-    ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity,
-        &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
-    if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    pMemoryResourcesInfo->VolatileCapacity += VolatileCapacity;
-    pMemoryResourcesInfo->ReservedCapacity += ReservedCapacity;
-    pMemoryResourcesInfo->AppDirectCapacity += AppDirectCapacity;
-    pMemoryResourcesInfo->InaccessibleCapacity += InaccessibleCapacity;
-    pMemoryResourcesInfo->UnconfiguredCapacity += UnconfiguredCapacity;
   }
 
   // Get DDR Sizes
-  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
-
+  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &pMemoryResourcesInfo->DDRRawCapacity, &pMemoryResourcesInfo->DDRCacheCapacity,
+    &pMemoryResourcesInfo->DDRVolatileCapacity, &pMemoryResourcesInfo->DDRInaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-
-  pMemoryResourcesInfo->DDRRawCapacity = DDRRawCapacity;
-  pMemoryResourcesInfo->DDRCacheCapacity = DDRCacheCapacity;
-  pMemoryResourcesInfo->DDRVolatileCapacity = DDRVolatileCapacity;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -8288,14 +8247,85 @@ FreeDimmList(
 }
 
 /**
+  Get Total DCPMM Volatile, AppDirect, Unconfigured, Reserved and Inaccessible capacities
+
+  @param[in]  pDimms The head of the dimm list
+  @param[out] pRawCapacity  pointer to raw capacity
+  @param[out] pVolatileCapacity  pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_LOAD_ERROR PCD CCUR table missing in one or more DIMMs
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetTotalDcpmmCapacities(
+  IN     LIST_ENTRY *pDimms,
+  OUT UINT64 *pRawCapacity,
+  OUT UINT64 *pVolatileCapacity,
+  OUT UINT64 *pAppDirectCapacity,
+  OUT UINT64 *pUnconfiguredCapacity,
+  OUT UINT64 *pReservedCapacity,
+  OUT UINT64 *pInaccessibleCapacity
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+  UINT64 RawCapacity = 0;
+  UINT64 VolatileCapacity = 0;
+  UINT64 AppDirectCapacity = 0;
+  UINT64 UnconfiguredCapacity = 0;
+  UINT64 ReservedCapacity = 0;
+  UINT64 InaccessibleCapacity = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pDimms == NULL || pRawCapacity == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL ||
+    pReservedCapacity == NULL || pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // All shall be zero to start
+  *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
+
+  LIST_FOR_EACH(pDimmNode, pDimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+
+    ReturnCode = GetDcpmmCapacities(pDimm->DimmID, &RawCapacity, &VolatileCapacity,
+      &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to retrieve capacities for DIMM: 0x%04x", pDimm->DeviceHandle.AsUint32);
+      goto Finish;
+    }
+
+    *pRawCapacity += RawCapacity;
+    *pVolatileCapacity += VolatileCapacity;
+    *pReservedCapacity += ReservedCapacity;
+    *pAppDirectCapacity += AppDirectCapacity;
+    *pInaccessibleCapacity += InaccessibleCapacity;
+    *pUnconfiguredCapacity += UnconfiguredCapacity;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Gather capacities from dimm
 
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pVolatileCapacity required volatile capacity
-  @param[out] pAppDirectCapacity required appdirect capacity
-  @param[out] pUnconfiguredCapacity required unconfigured capacity
-  @param[out] pReservedCapacity required reserved capacity
-  @param[out] pInaccessibleCapacity required inaccessible capacity
+  @param[out] pRawCapacity pointer to raw capacity
+  @param[out] pVolatileCapacity pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval Other errors failure of FW commands
@@ -8303,8 +8333,9 @@ FreeDimmList(
 **/
 EFI_STATUS
 EFIAPI
-GetCapacities(
+GetDcpmmCapacities(
   IN     UINT16 DimmPid,
+     OUT UINT64 *pRawCapacity,
      OUT UINT64 *pVolatileCapacity,
      OUT UINT64 *pAppDirectCapacity,
      OUT UINT64 *pUnconfiguredCapacity,
@@ -8312,74 +8343,94 @@ GetCapacities(
      OUT UINT64 *pInaccessibleCapacity
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
-  UINT64 VolatileCapacity = 0;
-  UINT64 AppDirectCapacity = 0;
-  UINT64 ReservedCapacity = 0;
   MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
 
-  if (pDimm == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL || pReservedCapacity == NULL ||
-      pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+  if (pDimm == NULL || pRawCapacity == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL ||
+      pReservedCapacity == NULL || pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   // All shall be zero to start
-  *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
-  ReturnCode = CurrentMemoryMode(&CurrentMode);
+  *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
 
+  *pRawCapacity = pDimm->RawCapacity;
+
+  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+    *pInaccessibleCapacity = pDimm->RawCapacity;
+    goto Finish;
+  }
+
+#ifdef OS_BUILD
+  ReturnCode = GetDimmMappedMemSize(pDimm);
+  if (EFI_DEVICE_ERROR == ReturnCode) {
+    NVDIMM_WARN("Failed to retrieve PCD data on DIMM: 04x%x", pDimm->DeviceHandle.AsUint32);
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+#endif // OS_BUILD
+
+  // PCD CCUR table missing in DIMM
+  if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to determine current memory mode");
     goto Finish;
   }
 
-  if (pDimm->Configured) {
-    VolatileCapacity = pDimm->MappedVolatileCapacity;
-    ReservedCapacity = GetReservedCapacity(pDimm);
-    AppDirectCapacity = pDimm->MappedPersistentCapacity;
-  } else {
-    if (MEMORY_MODE_2LM == CurrentMode) {
-      VolatileCapacity = ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
-      ReservedCapacity = GetReservedCapacity(pDimm);
-    }
-  }
-  // PM partition inaccessible due to alignment/rounding
-  *pInaccessibleCapacity = pDimm->PmCapacity - AppDirectCapacity - ReservedCapacity;
-  *pReservedCapacity = ReservedCapacity;
-
-  if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
-    *pVolatileCapacity += VolatileCapacity;
-    // If the DCPMM was configured, but the volatile memory was not mapped, then the volatile memory
-    // partition is considered inaccessible capacity.
-    if (DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE == pDimm->ConfigStatus) {
-      *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
-    }
-  } else {
-    // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
-    *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
-  }
-
-  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
-    *pAppDirectCapacity = AppDirectCapacity;
-  } else {
-    *pInaccessibleCapacity += AppDirectCapacity;
-  }
-
-  if ((MEMORY_MODE_2LM != CurrentMode) && !pDimm->Configured) {
+  if (pDimm->NonFunctional || IsDimmInUnmappedPopulationViolation(pDimm)) {
+    // DIMM not mapped into SPA space
+    *pInaccessibleCapacity = pDimm->RawCapacity;
+    // No useable capacity
+    *pAppDirectCapacity = *pReservedCapacity = *pUnconfiguredCapacity = *pVolatileCapacity = 0;
+    goto Finish;
+  } else if ((MEMORY_MODE_2LM != CurrentMode) && !pDimm->Configured) {
     //DIMM is unconfigured and system is in 1LM mode
     *pUnconfiguredCapacity = pDimm->RawCapacity;
     // No useable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
+    goto Finish;
   } else {
     // Any capacity not mapped to a partition
-    *pInaccessibleCapacity += pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
+    *pInaccessibleCapacity = pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
   }
 
-  ReturnCode = EFI_SUCCESS;
+  // Calculate Volatile Capacity
+  if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
+    *pVolatileCapacity = pDimm->MappedVolatileCapacity;
+    *pInaccessibleCapacity += pDimm->VolatileCapacity - pDimm->MappedVolatileCapacity;
+  } else {
+    // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
+    *pInaccessibleCapacity += pDimm->VolatileCapacity;
+  }
+
+  // Calculate AppDirect Capacity
+  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
+    *pAppDirectCapacity = pDimm->MappedPersistentCapacity;
+
+    // Calculate Reserved Capacity
+    ReturnCode = GetReservedCapacity(pDimm, pReservedCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve DCPMM reserved capacity.");
+      goto Finish;
+    }
+
+    // PM partition inaccessible due to alignment/rounding
+    *pInaccessibleCapacity += pDimm->PmCapacity - pDimm->MappedPersistentCapacity - *pReservedCapacity;
+  } else {
+    *pInaccessibleCapacity += pDimm->PmCapacity;
+  }
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -8394,9 +8445,10 @@ Finish:
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+  @param[out] pDDRInaccessibleCapacity Pointer to value of the DDR inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_DEVICE_ERROR Total mapped DCPMM Persistent & Volatile capacity is larger than total mapped memory
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
@@ -8405,12 +8457,20 @@ GetDDRCapacities(
   IN     UINT16 SocketId,
      OUT UINT64 *pDDRRawCapacity,
      OUT UINT64 *pDDRCacheCapacity,
-     OUT UINT64 *pDDRVolatileCapacity
+     OUT UINT64 *pDDRVolatileCapacity,
+     OUT UINT64 *pDDRInaccessibleCapacity
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT64 CacheSize = 0;
-  UINT64 PhysicalSize = 0;
+  UINT64 CurrentCachedMemorySize = 0;
+  UINT64 SocketSkuTotalMappedMemory = 0;
+  UINT64 DDRPhysicalSize = 0;
+  UINT64 DcpmmRawCapacity = 0;
+  UINT64 DcpmmVolatileCapacity = 0;
+  UINT64 DcpmmAppDirectCapacity = 0;
+  UINT64 DcpmmUnconfiguredCapacity = 0;
+  UINT64 DcpmmReservedCapacity = 0;
+  UINT64 DcpmmInaccessibleCapacity = 0;
   MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
@@ -8428,37 +8488,46 @@ GetDDRCapacities(
   }
 
   // Get total physical size of all non-DCPMM DIMMs through PMTT
-  ReturnCode = GetDDRPhysicalSize(SocketId, &PhysicalSize);
+  ReturnCode = GetDDRPhysicalSize(SocketId, &DDRPhysicalSize);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not retrieve memory capacity.");
     goto Finish;
   }
-  *pDDRRawCapacity = PhysicalSize;
+  *pDDRRawCapacity = DDRPhysicalSize;
 
-  // Gets DDR cache size
-  if (MEMORY_MODE_2LM == CurrentMode) {
-    CacheSize = PhysicalSize;
-  }
-  else if (MEMORY_MODE_1LM == CurrentMode) {
-    CacheSize = 0;
-  }
-  else {
-    ReturnCode = EFI_UNSUPPORTED;
-    NVDIMM_DBG("Unsupported mode discovered.");
+  // Get total DDR cache size
+  ReturnCode = RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, &CurrentCachedMemorySize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to retrieve Socket SKU Cached Memory");
     goto Finish;
   }
-  *pDDRCacheCapacity = CacheSize;
+  *pDDRCacheCapacity = CurrentCachedMemorySize;
 
-  // Subtract Cache from total memory size
-  if (CacheSize <= PhysicalSize) {
-    *pDDRVolatileCapacity = PhysicalSize - CacheSize;
+  // Get DDR volatile capacity: Subtract mapped DCPMM Persistent & Volatile capacity from total mapped memory
+  ReturnCode = RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to retrieve Socket SKU Total Mapped Memory");
+    goto Finish;
+  }
+
+  ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
+    &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
+    goto Finish;
+  }
+
+  if ((DcpmmVolatileCapacity + DcpmmAppDirectCapacity) <= SocketSkuTotalMappedMemory) {
+    *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
   }
   else {
     ReturnCode = EFI_DEVICE_ERROR;
-    NVDIMM_DBG("DDR cache capacity cannot be larger than DDR volatile capacity.");
+    NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
     goto Finish;
   }
 
+  // Get DDR inaccessible capacity
+  *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
 
   ReturnCode = EFI_SUCCESS;
 

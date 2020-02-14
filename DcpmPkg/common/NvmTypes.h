@@ -587,7 +587,8 @@ typedef struct _MEMORY_RESOURCES_INFO {
   UINT64 DDRRawCapacity;            //!< Sum of the raw capacity on all DDR dimms
   UINT64 DDRCacheCapacity;          //!< Sum of the DDR capacity used for caching
   UINT64 DDRVolatileCapacity;       //!< Sum of the DDR capacity used as volatile memory
-  UINT64 Reserved[7];
+  UINT64 DDRInaccessibleCapacity;   //!< Sum of the DDR capacity that is inaccessible
+  UINT64 Reserved[6];
 } MEMORY_RESOURCES_INFO;
 
 typedef struct _DIMM_PERFORMANCE_DATA {

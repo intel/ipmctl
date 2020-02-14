@@ -3544,8 +3544,7 @@ ReduceCapacityForSocketSKU(
   UINT64 DDRRawCapacity = 0;
   UINT64 DDRCacheCapacity = 0;
   UINT64 DDRVolatileCapacity = 0;
-  ACPI_REVISION PcatRevision;
-  VOID* pSocketSkuInfoTable = NULL;
+  UINT64 DDRInaccessibleCapacity = 0;
 
   NVDIMM_ENTRY();
 
@@ -3570,24 +3569,7 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-  ReturnCode = RetrievePcatSocketSkuInfoTable(Socket, &pSocketSkuInfoTable, &PcatRevision);
-
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
-    SOCKET_SKU_INFO_TABLE *pSocketSkuInfo = (SOCKET_SKU_INFO_TABLE *)pSocketSkuInfoTable;
-    MappedMemorySizeLimit = pSocketSkuInfo->MappedMemorySizeLimit;
-  }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
-    DIE_SKU_INFO_TABLE *pDieSkuInfo = (DIE_SKU_INFO_TABLE *)pSocketSkuInfoTable;
-    MappedMemorySizeLimit = pDieSkuInfo->MappedMemorySizeLimit;
-  }
-
-  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not retrieve DDR capacities");
-    goto Finish;
-  }
-
-
+  ReturnCode = RetrievePcatSocketSkuMappedMemoryLimit(Socket, &MappedMemorySizeLimit);
   // If no PCAT tables exist for a socket then that socket will not be reduced.
   if (ReturnCode == EFI_NOT_FOUND) {
     ReturnCode = EFI_SUCCESS;
@@ -3595,6 +3577,12 @@ ReduceCapacityForSocketSKU(
   } else if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to retrieve socket sku info table for socket");
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+    goto Finish;
+  }
+
+  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity, &DDRInaccessibleCapacity);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not retrieve DDR capacities");
     goto Finish;
   }
 

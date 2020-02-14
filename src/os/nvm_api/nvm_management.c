@@ -73,7 +73,7 @@ extern EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig;
 extern EFI_STATUS EFIAPI NvmDimmDriverUnload(IN EFI_HANDLE ImageHandle);
 extern EFI_STATUS
 EFIAPI
-GetCapacities(IN UINT16 DimmPid, OUT UINT64 *pVolatileCapacity, OUT UINT64 *pAppDirectCapacity, OUT UINT64 *pUnconfiguredCapacity, OUT UINT64 *pReservedCapacity, OUT UINT64 *pInaccessibleCapacity);
+GetDcpmmCapacities(IN UINT16 DimmPid, OUT UINT64 *pRawCapacity, OUT UINT64 *pVolatileCapacity, OUT UINT64 *pAppDirectCapacity, OUT UINT64 *pUnconfiguredCapacity, OUT UINT64 *pReservedCapacity, OUT UINT64 *pInaccessibleCapacity);
 extern EFI_STATUS
 ParseSourceDumpFile(IN CHAR16 *pFilePath, IN EFI_DEVICE_PATH_PROTOCOL *pDevicePath, OUT CHAR8 **pFileString);
 extern EFI_STATUS RegisterCommands();
@@ -1380,6 +1380,7 @@ NVM_API int nvm_get_nvm_capabilities(struct nvm_capabilities *p_capabilties)
 
 NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
 {
+  UINT64 RawCapacity;
   UINT64 VolatileCapacity;
   UINT64 AppDirectCapacity;
   UINT64 UnconfiguredCapacity;
@@ -1404,6 +1405,8 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
     return NVM_ERR_UNKNOWN;
   }
 
+  ZeroMem(p_capacities, sizeof(*p_capacities));
+
   DIMM_INFO *pdimms = (DIMM_INFO *)AllocatePool(sizeof(DIMM_INFO) * dimm_cnt);
   if (NULL == pdimms) {
     NVDIMM_ERR("Failed to allocate memory\n");
@@ -1417,12 +1420,12 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
     goto Finish;
   }
   for (i = 0; i < dimm_cnt; ++i) {
-    ReturnCode = GetCapacities(pdimms[i].DimmID, &VolatileCapacity, &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
+    ReturnCode = GetDcpmmCapacities(pdimms[i].DimmID, &RawCapacity, &VolatileCapacity, &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
     if (EFI_ERROR(ReturnCode)) {
       rc = NVM_ERR_UNKNOWN;
       goto Finish;
     }
-    p_capacities->capacity += VolatileCapacity + AppDirectCapacity + UnconfiguredCapacity + ReservedCapacity + InaccessibleCapacity;
+    p_capacities->capacity += RawCapacity;
     p_capacities->app_direct_capacity += AppDirectCapacity;
     p_capacities->unconfigured_capacity += UnconfiguredCapacity;
     p_capacities->reserved_capacity += ReservedCapacity;

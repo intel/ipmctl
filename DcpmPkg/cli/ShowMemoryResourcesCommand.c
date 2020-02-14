@@ -112,7 +112,7 @@ ShowMemoryResources(
   MEMORY_RESOURCES_INFO MemoryResourcesInfo;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
-  UINT64 InaccessibleCapacity = 0;
+  UINT64 DcpmmInaccessibleCapacity = 0;
   UINT64 TotalCapacity = 0;
   CHAR16 *pCapacityStr = NULL;
   CHAR16 *pPcdMissingStr = NULL;
@@ -231,13 +231,20 @@ ShowMemoryResources(
   // Print Header
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MEMORY_TYPE_STR, L"Inaccessible");
   // Print DDR Inaccessible Capacity
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, DASH_STR);
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, MemoryResourcesInfo.DDRInaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, pCapacityStr);
+  FREE_POOL_SAFE(pCapacityStr);
   // Print DCPMM Inaccessible Capacity
-  InaccessibleCapacity = MemoryResourcesInfo.InaccessibleCapacity + MemoryResourcesInfo.ReservedCapacity + MemoryResourcesInfo.UnconfiguredCapacity;
-  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, InaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  DcpmmInaccessibleCapacity = MemoryResourcesInfo.InaccessibleCapacity + MemoryResourcesInfo.ReservedCapacity + MemoryResourcesInfo.UnconfiguredCapacity;
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, DcpmmInaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DCPMM_STR, pCapacityStr);
+  FREE_POOL_SAFE(pCapacityStr);
   // Print Total Inaccessible Capacity
+  TotalCapacity = MemoryResourcesInfo.DDRInaccessibleCapacity + DcpmmInaccessibleCapacity;
+  TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
+  KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
 

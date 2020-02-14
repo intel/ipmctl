@@ -1202,28 +1202,57 @@ DimmFormat(
   );
 
 /**
-  Gather capacities from dimm
+  Get Total DCPMM Volatile, AppDirect, Unconfigured, Reserved and Inaccessible capacities
 
-  @param[in]  DimmPid The ID of the DIMM
-  @param[out] pVolatileCapacity required volatile capacity
-  @param[out] pAppDirectCapacity required appdirect capacity
-  @param[out] pUnconfiguredCapacity required unconfigured capacity
-  @param[out] pReservedCapacity required reserved capacity
-  @param[out] pInaccessibleCapacity required inaccessible capacity
+  @param[in]  pDimms The head of the dimm list
+  @param[out] pRawCapacity  pointer to raw capacity
+  @param[out] pVolatileCapacity  pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
 
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_LOAD_ERROR PCD CCUR table missing in one or more DIMMs
   @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
-EFIAPI
-GetCapacities(
-  IN     UINT16 DimmPid,
+GetTotalDcpmmCapacities(
+  IN     LIST_ENTRY *pDimms,
+  OUT UINT64 *pRawCapacity,
   OUT UINT64 *pVolatileCapacity,
   OUT UINT64 *pAppDirectCapacity,
   OUT UINT64 *pUnconfiguredCapacity,
   OUT UINT64 *pReservedCapacity,
   OUT UINT64 *pInaccessibleCapacity
-);
+  );
+
+/**
+  Gather capacities from dimm
+
+  @param[in]  DimmPid The ID of the DIMM
+  @param[out] pRawCapacity pointer to raw capacity
+  @param[out] pVolatileCapacity pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval Other errors failure of FW commands
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+EFIAPI
+GetDcpmmCapacities(
+  IN     UINT16 DimmPid,
+  OUT UINT64 *pRawCapacity,
+  OUT UINT64 *pVolatileCapacity,
+  OUT UINT64 *pAppDirectCapacity,
+  OUT UINT64 *pUnconfiguredCapacity,
+  OUT UINT64 *pReservedCapacity,
+  OUT UINT64 *pInaccessibleCapacity
+  );
 
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
@@ -1232,9 +1261,10 @@ GetCapacities(
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+  @param[out] pDDRInaccessibleCapacity Pointer to value of the DDR inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_DEVICE_ERROR Total DCPMM Persistent & Volatile capacity is larger than total mapped memory
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
@@ -1243,8 +1273,9 @@ GetDDRCapacities(
   IN     UINT16 SocketId,
   OUT UINT64 *pDDRRawCapacity,
   OUT UINT64 *pDDRCacheCapacity,
-  OUT UINT64 *pDDRVolatileCapacity
-);
+  OUT UINT64 *pDDRVolatileCapacity,
+  OUT UINT64 *pDDRInaccessibleCapacity
+  );
 
 /**
   Calculate the total size of available memory in the DIMMs

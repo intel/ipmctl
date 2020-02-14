@@ -89,7 +89,7 @@ Total Cache Capacity::
   Total DDR capacity used as a cache for DCPMMs.
 
 Inaccessible DDR Capacity::
-  Total DDR capacity that is inaccessible. This cell will not be populated.
+  Total DDR capacity that is inaccessible.
 
 Inaccessible DCPMM Capacity::
   Total DCPMM capacity that is inaccessible due to any of:

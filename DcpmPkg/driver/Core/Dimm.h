@@ -276,6 +276,15 @@ typedef struct _DIMM {
   reloaded. It should not be considered current outside of initialization.
   */
   LABEL_STORAGE_AREA *pLsa;
+
+#ifdef OS_BUILD
+  /**
+    Flag to indicate that ConfigStatus, IsNew, Configured,
+    MappedVolatileCapacity & MappedPersistentCapacity values
+    have been initialized using PCD in OS.
+  **/
+  BOOLEAN PcdMappedMemInfoRead;
+#endif
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')
@@ -1613,15 +1622,20 @@ IsDimmSkuModeMismatch(
   );
 
 /**
-  Calculate a size of capacity lost to volatile alignment and space that is not partitioned
+  Calculate a size of capacity considered Reserved. It is the aligned PM
+  capacity less the mapped AD capacity
 
   @param[in] Dimm to retrieve reserved size for
+  @param[out] pReservedCapacity pointer to reserved capacity
 
-  @retval Amount of capacity that will be reserved
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_ABORTED Failure to retrieve current memory mode
+  @retval EFI_SUCCESS Success
 **/
-UINT64
+EFI_STATUS
 GetReservedCapacity(
-  IN     DIMM *pDimm
+  IN     DIMM *pDimm,
+  OUT UINT64 *pReservedCapacity
   );
 
 /**

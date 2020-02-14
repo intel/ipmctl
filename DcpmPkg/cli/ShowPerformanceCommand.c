@@ -110,10 +110,12 @@ PrintPerformanceData(PRINT_CONTEXT *pPrinterCtx, UINT16 *DimmId, UINT32 DimmIdsN
     BOOLEAN AllOptionSet, BOOLEAN DisplayOptionSet, CHAR16 *pDisplayOptionValue)
 {
   UINT32 AllDimmsIndex = 0;
+  UINT32 InfoIndex = 0;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   UINT32 DimmIndex = 0;
   CHAR16 *pPath = NULL;
+  BOOLEAN InfoFound = FALSE;
 
   // Account for multiple or no input dimms given
   for (AllDimmsIndex = 0; AllDimmsIndex < DimmCount; AllDimmsIndex++) {
@@ -123,9 +125,23 @@ PrintPerformanceData(PRINT_CONTEXT *pPrinterCtx, UINT16 *DimmId, UINT32 DimmIdsN
       continue;
     }
 
+    // find info record that corresponds to the performance data
+    InfoFound = FALSE;
+    for (InfoIndex = 0; InfoIndex < DimmCount; InfoIndex++) {
+      if (AllDimmInfos[InfoIndex].DimmID == pDimmsPerformanceData[AllDimmsIndex].DimmId) {
+        InfoFound = TRUE;
+        break;
+      }
+    }
+
+    // skip record with no matching info record
+    if (!InfoFound) {
+      continue;
+    }
+
     // Print the DimmID
-    ReturnCode = GetPreferredDimmIdAsString(AllDimmInfos[AllDimmsIndex].DimmHandle,
-      AllDimmInfos[AllDimmsIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
+    ReturnCode = GetPreferredDimmIdAsString(AllDimmInfos[InfoIndex].DimmHandle,
+      AllDimmInfos[InfoIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
       continue;
     }
@@ -261,11 +277,6 @@ ShowPerformance(
     if (!AllDimmsInListAreManageable(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-      goto Finish;
-    }
-    if (!AllDimmsInListInSupportedConfig(pDimms, DimmsCount, pDimmIds, DimmIdsNum)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
       goto Finish;
     }
   }

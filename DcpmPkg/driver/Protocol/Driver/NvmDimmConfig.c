@@ -4259,7 +4259,7 @@ GetDimmsPerformanceData(
     LIST_FOR_UNTIL_INDEX(pDimmNode, &gNvmDimmData->PMEMDev.Dimms, *pDimmCount, Index) {
         pDimm = DIMM_FROM_NODE(pDimmNode);
 
-        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)) {
+        if (!IsDimmManageable(pDimm)) {
             NVDIMM_WARN("Dimm 0x%x is not manageable", pDimm->DeviceHandle.AsUint32);
             continue;
         }

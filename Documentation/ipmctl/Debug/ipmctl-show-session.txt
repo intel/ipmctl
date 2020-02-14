@@ -56,9 +56,6 @@ A session must be loaded or active prior to executing this command.  A session
 may be loaded via the 'load -session' command or made active via the
 'start -session' command.
 
-RETURN DATA
------------
-
 SAMPLE OUTPUT
 -------------
 [verse]

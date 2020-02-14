@@ -56,9 +56,7 @@ ____
 
 LIMITATIONS
 -----------
-
-RETURN DATA
------------
+A session must be already started.
 
 SAMPLE OUTPUT
 -------------

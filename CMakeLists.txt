@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
+message("cmake version: " ${CMAKE_VERSION})
+
 project(ipmctl)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -681,51 +683,27 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-session.txt
 		)
 
-	set(MANPAGE_OUTPUT_FILES
-		${OUTPUT_DIR}/manpage/ipmctl.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-device.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-memory-resources.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-socket.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-system-capabilities.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-topology.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-device-passphrase.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-device-security.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-create-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-delete-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-enable-device-security.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-erase-device-data.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-load-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-region.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-sensor.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-performance.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-sensor.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-preferences.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-pcd.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-cel.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-start-diagnostic.1.gz
-#		${OUTPUT_DIR}/manpage/ipmctl-diagnostic-events.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-error-log.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-start-session.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-stop-session.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-session.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-load-session.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-session.1.gz
-		)
-
+	list(LENGTH DOCUMENTATION_INPUT_FILES LEN)
+	math(EXPR INPUT_LENGTH "${LEN} -1")
+	foreach(INDEX RANGE ${INPUT_LENGTH})
+		list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
+		string(REGEX MATCH "[^/]*$" MAN_BARE_FILENAME ${MAN_INPUT})
+		set(MAN_TMP_INPUT ${OUTPUT_DIR}"/manpage/"${MAN_BARE_FILENAME})
+		string(REGEX REPLACE "txt$" "1.gz" MAN_OUTPUT "${MAN_TMP_INPUT}")
+		list(APPEND MANPAGE_OUTPUT_FILES ${MAN_OUTPUT})
+		if(NOT ASCIIDOCTOR_FOUND)
+			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
+			add_custom_command(OUTPUT ${MAN_OUTPUT}
+				COMMENT "Clean out link markup because they are invalid in the manpages"
+				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
+				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
+				COMMAND gzip -f ${MAN_GZ_INPUT}
+				COMMAND rm -f ${MAN_TMP_INPUT}
+				COMMENT "Generating man pages"
+				DEPENDS ${MAN_INPUT}
+			)
+		endif()
+	endforeach()
 	add_custom_target(manpage ALL
 		DEPENDS ${MANPAGE_OUTPUT_FILES} ${DOCUMENTATION_INPUT_FILES}
 		)
@@ -736,22 +714,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 			COMMENT "Generating man pages"
 			DEPENDS ${DOCUMENTATION_INPUT_FILES}
 			)
-	else()
-		list(LENGTH DOCUMENTATION_INPUT_FILES LEN)
-		math(EXPR INPUT_LENGTH "${LEN} -1")
-		foreach(INDEX RANGE ${INPUT_LENGTH})
-			list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
-			list(GET MANPAGE_OUTPUT_FILES ${INDEX} MAN_OUTPUT)
-			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
-			string(REGEX REPLACE "1.gz$" "tmp.txt" MAN_TMP_INPUT ${MAN_OUTPUT})
-			add_custom_command(OUTPUT ${MAN_OUTPUT}
-				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
-				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
-				COMMAND gzip -f ${MAN_GZ_INPUT}
-				COMMENT "Generating man pages"
-				DEPENDS ${MAN_INPUT}
-				)
-		endforeach()
 	endif()
 endif()
 

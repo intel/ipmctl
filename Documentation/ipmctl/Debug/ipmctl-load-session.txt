@@ -54,12 +54,6 @@ ____
 ipmctl load -source /tmp/session.pbr -session
 ____
 
-LIMITATIONS
------------
-
-RETURN DATA
------------
-
 SAMPLE OUTPUT
 -------------
 [verse]

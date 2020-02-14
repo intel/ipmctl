@@ -8509,12 +8509,15 @@ GetDDRPhysicalSize(
     PMTT_COMMON_HEADER *pCommonHeader = NULL;
     PMTT_MODULE *pModule = NULL;
     UINT64 Offset = 0;
+    UINT16 CurrentSocketId = 0;
 
     Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
     //Iterate through the table and look for DDR Modules
     while (Offset < pPMTT->Header.Length) {
-      pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+      pCommonHeader = (PMTT_COMMON_HEADER *)((UINT8 *)pPMTT + Offset);
       if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
+        PMTT_SOCKET *pSocket = (PMTT_SOCKET *)((UINT8 *)pCommonHeader + PMTT_COMMON_HDR_LEN);
+        CurrentSocketId = pSocket->SocketId;
         Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
       }
       else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
@@ -8522,11 +8525,14 @@ GetDDRPhysicalSize(
       }
       else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
         pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
-        if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
-          if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && (pModule->SizeOfDimm > 0)) {
-            TotalDDRMemorySize += MIB_TO_BYTES(pModule->SizeOfDimm);
+        if (SocketId == SOCKET_ID_ALL || CurrentSocketId == SocketId) {
+          if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
+            if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && (pModule->SizeOfDimm > 0)) {
+              TotalDDRMemorySize += MIB_TO_BYTES(pModule->SizeOfDimm);
+            }
           }
         }
+
         Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
       }
     }

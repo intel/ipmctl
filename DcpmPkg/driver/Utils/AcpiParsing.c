@@ -524,8 +524,7 @@ ParsePmttTable(
       // skip if Bits [3:2] are reserved
       if ((pPmttCommonTableHeader->Flags & PMTT_TYPE_RESERVED) == PMTT_TYPE_RESERVED) {
         NVDIMM_DBG("Reserved. No indication in PMTT if this module is volatile or non-volatile memory!");
-        pPmttCommonTableHeader = (PMTT_COMMON_HEADER2 *)((UINT8 *)pPmttCommonTableHeader + Length);
-        continue;
+        break;
       }
 
       pModuleInfo = (PMTT_MODULE_INFO *)AllocateZeroPool(sizeof(*pModuleInfo));
@@ -541,6 +540,7 @@ ParsePmttTable(
       pModuleInfo->MemControllerId = iMCID;
       pModuleInfo->ChannelId = ChannelID;
       pModuleInfo->SlotId = SlotID;
+
       // BIT 2 is set then DCPMM or else DDR type
       if (pPmttCommonTableHeader->Flags & PMTT_DDR_DCPM_FLAG) {
         pModuleInfo->MemoryType = MEMORYTYPE_DCPM;
@@ -728,8 +728,6 @@ CheckIsMemoryModeAllowed(
   BOOLEAN MMCanBeConfigured = FALSE;
   BOOLEAN IsDDR = FALSE;
   BOOLEAN IsDCPM = FALSE;
-  UINT32 Index1 = 0;
-  UINT32 Index2 = 0;
 
   if (pTable == NULL) {
     goto Finish;
@@ -743,6 +741,7 @@ CheckIsMemoryModeAllowed(
     PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
     UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
     PMTT_COMMON_HEADER *pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+
     while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_SOCKET) {
       // check if socket is enabled
       if (pCommonHeader->Flags) {
@@ -792,38 +791,36 @@ CheckIsMemoryModeAllowed(
   }
   else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     PMTT_TABLE2 *pPMTT = NULL;
+    UINT32 Index1 = 0;
+    UINT32 Index2 = 0;
+
     if (gNvmDimmData->PMEMDev.pPmttHead == NULL
-      || gNvmDimmData->PMEMDev.pPmttHead->iMCsNum == 0 || gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum == 0) {
+      || gNvmDimmData->PMEMDev.pPmttHead->iMCsNum == 0) {
       NVDIMM_DBG("Incorrect PMTT table");
       goto Finish;
     }
 
     pPMTT = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
     if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPMTT)) {
-      for (Index1 = 0; Index1 < gNvmDimmData->PMEMDev.pPmttHead->iMCsNum; Index1++) {
+      for (Index1 = 0; Index1 < gNvmDimmData->PMEMDev.pPmttHead->DDRModulesNum; Index1++) {
         for (Index2 = 0; Index2 < gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum; Index2++) {
-          if (gNvmDimmData->PMEMDev.pPmttHead->ppiMCs[Index1]->MemControllerID == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->MemControllerId) {
+          if (gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->SocketId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->SocketId &&
+            gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->DieId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->DieId &&
+            gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->MemControllerId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->MemControllerId) {
             IsDCPM = TRUE;
             break;
           }
         }
-        for (Index2 = 0; Index2 < gNvmDimmData->PMEMDev.pPmttHead->DDRModulesNum; Index2++) {
-          if (gNvmDimmData->PMEMDev.pPmttHead->ppiMCs[Index1]->MemControllerID == gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index2]->MemControllerId) {
-            IsDDR = TRUE;
-            break;
-          }
-        }
 
-        if (IsDDR && !IsDCPM) {
+        if (!IsDCPM) {
           MMCanBeConfigured = FALSE;
           goto Finish;
         }
-        IsDDR = FALSE;
         IsDCPM = FALSE;
       }
       MMCanBeConfigured = TRUE;
     }
-  } // end of socket
+  }
 
 Finish:
   return MMCanBeConfigured;

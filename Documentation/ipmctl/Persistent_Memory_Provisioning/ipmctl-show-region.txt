@@ -140,7 +140,11 @@ HealthState::
     Reboot or delete any existing memory allocation goals before creating
     namespaces on the region.
   - Error: There is an issue with some or all of the underlying DCPMM capacity
-    because the interleave set has failed.
+    because the interleave set has failed. One of:
+    + DCPMM missing (serial number of dimm from the Platform Config Data not found in the dimm list)
+    + DCPMM not configured
+    + Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing)
+    + Interleave set or DCPMM region initialization failure (out of memory)
   - Locked: One or more of the of the underlying DCPMMs are locked.
 
 ifndef::os_build[]

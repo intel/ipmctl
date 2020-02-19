@@ -107,15 +107,17 @@ HealthState::
   - Healthy
   - Noncritical: Maintenance is required.
   - Critical: Features or performance are degraded due to failure.
-  - Fatal: Data loss has occurred or is imminent. In this case, the
-    firmware will disable the media and access to user data and operations
-    that require use of the media will fail.
-  - Non-functional: The DCPMM is present but is non-responsive via the DDRT
-  communication path. It may be possible to communicate with this DCPMM via SMBus
-  for a subset of commands.
+  - Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
+    AIT Failure, etc) is non-recoverable and data loss has occurred or is imminent.
+	In this case, the firmware will disable the media and access to user data and
+	operations that require use of the media will fail.
+  - Non-functional: The DCPMM is present but failed to initialize and is
+	non-responsive via the DDRT communication path. It may be possible to
+	communicate with this DCPMM via SMBus for a subset of commands.
   - Unmanageable: The DCPMM is not supported by this version of
     the software
   - Unknown: Unable to determine the DCPMM health state.
+  Refer to _HealthStateReason_ for _HealthState_ details.
 
 HealthStateReason::
   Indicates why the DCPMM is in the current Health State.
@@ -127,8 +129,10 @@ HealthStateReason::
   - Percentage Remaining is 0
   - Die Failure
   - AIT DRAM disabled
-  - CAP Self-Test fail
-  - Critical internal failure
+  - CAP Self-Test failure
+  - Critical internal state failure
+  - Performance degraded
+  - CAP Self-Test communication failure
    +
   Refer to the _Intel® Optane™ DC Persistent Memory Firmware
   Interface Specification_, document number 556488, Section 4.8

@@ -13,7 +13,30 @@
 #include <IndustryStandard/SmBios.h>
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
+
+#ifndef OS_BUILD
 #include <DcpmmTypes.h>
+#else
+
+typedef enum {
+  PlaceHolder1,
+  PlaceHolder2
+} DCPMM_FIS_INTERFACE;
+
+#pragma pack(1)
+typedef struct {
+  struct {
+    UINT32   Data;
+  } Junk;
+} DCPMM_FIS_INPUT;
+
+typedef struct {
+  struct {
+    UINT32   Data;
+  } Junk;
+} DCPMM_FIS_OUTPUT;
+#pragma pack()
+#endif
 
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \

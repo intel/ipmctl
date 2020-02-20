@@ -137,7 +137,7 @@
 #define PMTT_TARGET_VALUE                    L"PMTT"                     //!< 'system' target value
 #define SYSTEM_ACPI_TARGETS \
   L"NFIT|PCAT|PMTT"                                                           //!< the system acpi combined
-#define SMBIOS_TARGET_VALUES                 L"17|20"                    ///< 'smbios' target values
+#define SMBIOS_TARGET_VALUES                 L"17"                    ///< 'smbios' target values
 #define FORMAT_TARGET                        L"-format"                  //!< 'format' target value
 #define PREFERENCES_TARGET                   L"-preferences"             //!< 'preferences' target value
 #define PERFORMANCE_TARGET                   L"-performance"             //!< 'performance' target value

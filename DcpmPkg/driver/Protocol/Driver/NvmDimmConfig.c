@@ -645,6 +645,7 @@ GetDimmInfo (
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
   PT_OUTPUT_PAYLOAD_GET_EADR PayloadExtendedAdr;
+  PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE PayloadLatchSystemShutdownState;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
@@ -1180,6 +1181,16 @@ GetDimmInfo (
       pDimmInfo->PrevPwrCycleExtendedAdrEnabled.Data = PayloadExtendedAdr.PreviousExtendedAdrStatus;
       pDimmInfo->PrevPwrCycleExtendedAdrEnabled.Header.Type = DIMM_INFO_TYPE_BOOLEAN;
     }
+  }
+
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_LATCH_SYSTEM_SHUTDOWN_STATE) {
+    ReturnCode = FwCmdGetLatchSystemShutdownStateInfo(pDimm, &PayloadLatchSystemShutdownState);
+    if (EFI_ERROR(ReturnCode)) {
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_LATCH_SYSTEM_SHUTDOWN_STATE;
+    }
+
+    pDimmInfo->LatchSystemShutdownState = PayloadLatchSystemShutdownState.LatchSystemShutdownState;
+    pDimmInfo->PrevPwrCycleLatchSystemShutdownState = PayloadLatchSystemShutdownState.PreviousPowerCycleLatchSystemShutdownState;
   }
 
   ReturnCode = EFI_SUCCESS;

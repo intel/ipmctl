@@ -294,6 +294,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)   ///< Device Characteristics fields will be populated: CTST, MTST, MTSTT, MTSPT, CTSTT, CTSPT, MaxAveragePowerLimit, MaxTurboModePowerConsumption, MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4              (1 << 12)   ///< Memory info page 4 fields will be populated
 #define DIMM_INFO_CATEGORY_EXTENDED_ADR                 (1 << 13)   ///< Extended ADR status info
+#define DIMM_INFO_CATEGORY_LATCH_SYSTEM_SHUTDOWN_STATE  (1 << 14)   ///< Latch System Shutdown State fields will be populated: LatchSystemShutdownState, PreviousPowerCycleLatchSystemShutdownState
 #define DIMM_INFO_CATEGORY_ALL                          (0xFFFF)    ///< All DIMM_INFO fields will be populated.
 
 /**
@@ -318,6 +319,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_ERROR_SVN_DOWNGRADE                   (1 << 15)
 #define DIMM_INFO_ERROR_SECURE_ERASE_POLICY             (1 << 16)
 #define DIMM_INFO_ERROR_FW_ACTIVATE                     (1 << 17)
+#define DIMM_INFO_ERROR_LATCH_SYSTEM_SHUTDOWN_STATE     (1 << 18)
 
 
 #define DIMM_INFO_TYPE_CHAR16   1
@@ -511,6 +513,10 @@ typedef struct _DIMM_INFO {
   UINT8 StagedFwActivatable;                //!< Specifies if the staged firmware is activatable
   UINT8 QuiesceRequired;                    //!< Specifies if FW Activate requires host to quiesce traffic before calling
   UINT16 ActivationTime;                    //!< Specifies activation time in ms for fw activate
+
+  //DIMM_INFO_CATEGORY_LATCH_SYSTEM_SHUTDOWN_STATE
+  UINT8 LatchSystemShutdownState;                  //!< Specifies whether latch is enabled
+  UINT8 PrevPwrCycleLatchSystemShutdownState;      //!< Specifies whether latch was enabled during the last power cycle
 
   } DIMM_INFO;
 

@@ -6938,6 +6938,58 @@ Finish:
 }
 
 /**
+  Firmware command to get Latch System Shutdown State
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] pExtendedAdrInfo pointer to filled payload with Latch System Shutdown State info
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetLatchSystemShutdownStateInfo(
+  IN     DIMM *pDimm,
+  OUT PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE *pLastSystemShutdownStateInfo
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  FW_CMD *pFwCmd = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pLastSystemShutdownStateInfo == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetAdminFeatures;
+  pFwCmd->SubOpcode = SubopLatchSystemShutdownState;
+  pFwCmd->OutputPayloadSize = sizeof(*pLastSystemShutdownStateInfo);
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to get Latch System Shutdown State info");
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  CopyMem_S(pLastSystemShutdownStateInfo, sizeof(*pLastSystemShutdownStateInfo), pFwCmd->OutPayload, sizeof(*pLastSystemShutdownStateInfo));
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
 Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct

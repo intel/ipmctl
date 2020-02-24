@@ -307,20 +307,20 @@ GeneratePcdConfInput(
         pIdentInfo->DimmLocation.AsUint64 = 0;
         // Update the DIMM location field
         pPmttModuleInfo = GetDimmModuleByPidFromPmtt(pDimm->pRegionsGoal[Index]->pDimms[Index2]->DimmID, gNvmDimmData->PMEMDev.pPmttHead);
-        if (pPmttModuleInfo == NULL) {
-          NVDIMM_ERR("DIMM Module with pid: %d not found in PMTT", pDimm->DimmID);
-          pIdentInfo->DimmLocation.Split.SocketId = pDimm->SocketId;
-          pIdentInfo->DimmLocation.Split.DieId = MAX_DIEID_SINGLE_DIE_SOCKET;
-          pIdentInfo->DimmLocation.Split.MemControllerId = pDimm->ImcId;
-          pIdentInfo->DimmLocation.Split.ChannelId = pDimm->ChannelId;
-          pIdentInfo->DimmLocation.Split.SlotId = pDimm->ChannelPos;
-        }
-        else {
+        if (pPmttModuleInfo != NULL) {
           pIdentInfo->DimmLocation.Split.SocketId = pPmttModuleInfo->SocketId;
           pIdentInfo->DimmLocation.Split.DieId = pPmttModuleInfo->DieId;
           pIdentInfo->DimmLocation.Split.MemControllerId = pPmttModuleInfo->MemControllerId;
           pIdentInfo->DimmLocation.Split.ChannelId = pPmttModuleInfo->ChannelId;
           pIdentInfo->DimmLocation.Split.SlotId = pPmttModuleInfo->SlotId;
+        }
+        else {
+          NVDIMM_ERR("DIMM Module with pid: %d not found in PMTT", pDimm->pRegionsGoal[Index]->pDimms[Index2]->DimmID);
+          pIdentInfo->DimmLocation.Split.SocketId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->SocketId;
+          pIdentInfo->DimmLocation.Split.DieId = MAX_DIEID_SINGLE_DIE_SOCKET;
+          pIdentInfo->DimmLocation.Split.MemControllerId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ImcId;
+          pIdentInfo->DimmLocation.Split.ChannelId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ChannelId;
+          pIdentInfo->DimmLocation.Split.SlotId = pDimm->pRegionsGoal[Index]->pDimms[Index2]->ChannelPos;
         }
 
         pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);

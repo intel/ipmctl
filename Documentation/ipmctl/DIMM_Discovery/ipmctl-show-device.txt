@@ -564,8 +564,29 @@ BootStatus::
   functional.*
   - FW Assert - The firmware reported an assert during initialization.
 
- BootStatusRegister::
+BootStatusRegister::
   The raw hex value of the DCPMM Boot Status Register of the DCPMM
+
+LatchSystemShutdownState::
+  Status of the latch. Specifies whether the DCPMM will latch the SMART Last Shutdown Status and SMART
+  Dirty Shutdown Count.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+
+PreviousPowerCycleLatchSystemShutdownState::
+  The status of the latch during the previous power cycle.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+
+ExtendedAdrEnabled::
+  Specifies whether extended ADR flow is enabled in the FW.
+  - 0: Disabled
+  - 1: Enabled
+
+PpcExtendedAdrEnabled::
+  Specifies whether extended ADR flow was enabled in the FW during the last power cycle.
+  - 0: Disabled
+  - 1: Enabled
 
 ErrorInjectionEnabled::
   Error injection status.

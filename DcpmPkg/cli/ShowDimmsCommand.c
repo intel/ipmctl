@@ -228,6 +228,8 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   AVERAGE_1_2V_POWER_STR,
   EXTENDED_ADR_ENABLED_STR,
   PPC_EXTENDED_ADR_ENABLED_STR,
+  LATCH_SYSTEM_SHUTDOWN_STATE_STR,
+  PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR,
   MIXED_SKU_STR
 };
 
@@ -301,6 +303,8 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   AVERAGE_1_2V_POWER_STR,
   EXTENDED_ADR_ENABLED_STR,
   PPC_EXTENDED_ADR_ENABLED_STR,
+  LATCH_SYSTEM_SHUTDOWN_STATE_STR,
+  PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR,
   MIXED_SKU_STR
 };
 /* local functions */
@@ -1399,6 +1403,29 @@ ShowDimms(
           if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR))) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, BOOT_STATUS_REGISTER_STR,
               FORMAT_HEX_PREFIX FORMAT_UINT32_HEX L"_" FORMAT_UINT32_HEX, ((BootStatusRegister >> 32) & 0xFFFFFFFF), (BootStatusRegister & 0xFFFFFFFF));
+          }
+        }
+
+        if (pDimms[DimmIndex].ErrorMask & DIMM_INFO_ERROR_LATCH_SYSTEM_SHUTDOWN_STATE) {
+          /** LatchSystemShutdownState **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LATCH_SYSTEM_SHUTDOWN_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LATCH_SYSTEM_SHUTDOWN_STATE_STR, UNKNOWN_ATTRIB_VAL);
+          }
+
+          /** PreviousPowerCycleLatchSystemShutdownState **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR, UNKNOWN_ATTRIB_VAL);
+          }
+        }
+        else {
+          /** LatchSystemShutdownState **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, LATCH_SYSTEM_SHUTDOWN_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, LATCH_SYSTEM_SHUTDOWN_STATE_STR, FORMAT_INT32, pDimms[DimmIndex].LatchSystemShutdownState);
+          }
+
+          /** PreviousPowerCycleLatchSystemShutdownState **/
+          if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR))) {
+            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR, FORMAT_INT32, pDimms[DimmIndex].PrevPwrCycleLatchSystemShutdownState);
           }
         }
 

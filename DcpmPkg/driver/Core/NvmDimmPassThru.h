@@ -1570,6 +1570,17 @@ typedef struct {
   UINT8 Reserved[126];                //!< Padding to meet 128byte payload size
 } PT_OUTPUT_PAYLOAD_GET_EADR;
 
+/**
+  Passthrough Payload:
+    Opcode:    0x06h (Get Admin Features)
+    Sub-Opcode:  0x09h (Latch System Shutdown State)
+**/
+typedef struct {
+  UINT8 LatchSystemShutdownState;                       //!< Specifies whether latch is enabled
+  UINT8 PreviousPowerCycleLatchSystemShutdownState;     //!< Specifies whether latch was enabled during the last power cycle
+  UINT8 Reserved[126];
+} PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE;
+
 #pragma pack(pop)
 
 #ifdef __cplusplus

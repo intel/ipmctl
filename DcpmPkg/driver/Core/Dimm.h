@@ -1841,6 +1841,22 @@ FwCmdGetExtendedAdrInfo(
 );
 
 /**
+  Firmware command to get Latch System Shutdown State
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] pExtendedAdrInfo pointer to filled payload with Latch System Shutdown State info
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetLatchSystemShutdownStateInfo(
+  IN     DIMM *pDimm,
+  OUT PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE *pLastSystemShutdownStateInfo
+);
+
+/**
 Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct

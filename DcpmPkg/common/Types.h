@@ -5,7 +5,7 @@
 
 /**
  * @file Types.h
- * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs. These types don't compile with VFR compiler and are kept separate.
+ * @brief Types for EFI_DCPMM_CONFIG2_PROTOCOL to configure and manage PMem modules. These types don't compile with VFR compiler and are kept separate.
  */
 
 #ifndef _TYPES_H_
@@ -22,10 +22,10 @@
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#define PMEM_MODULE_NAME L"Intel(R) DCPMM "  //short version for drivers list
-#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMM" //comma separated search string
+#define PMEM_MODULE_NAME L"Intel(R) PMem module "  //short version for drivers list
+#define PMEM_MODULE_NAME_SEARCH L"Intel(R),PMemModule" //comma separated search string
 
-#define PMEM_DIMM_NAME  L"Intel Persistent Memory DIMM %d Controller"
+#define PMEM_DIMM_NAME  L"Intel Persistent Memory Module %d Controller"
 
 /*This should match the error_type definition in nvm_management.h*/
 #define ERROR_INJ_POISON                0X01
@@ -99,7 +99,7 @@ typedef union {
     UINT64 Rsvd : 2;          //33:32
     UINT64 DTS : 2;           //35:34
     UINT64 Rsvd1 : 28;         //63:36
-  } Separated_FIS_1_15; // DCPMM Gen 1 FIS
+  } Separated_FIS_1_15; // PMem module Gen 1 FIS
   struct {
     UINT64 Major : 8;         //7:0
     UINT64 Minor : 8;         //15:8
@@ -125,7 +125,7 @@ typedef union {
 } DIMM_BSR;
 
 /**
-  Contains SMART and Health attributes of a DIMM
+  Contains SMART and Health attributes of a PMem module
 **/
 typedef struct _SMART_AND_HEALTH_INFO {
   BOOLEAN PercentageRemainingValid;     ///< Indicates if PercentageRemaining is valid
@@ -140,9 +140,9 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT32 LatchedDirtyShutdownCount;     ///< Latched Dirty Shutdowns count
   UINT8 LatchedLastShutdownStatus;      ///< Latched Last Shutdown Status. See FIS field LSS for additional details
   UINT8 UnlatchedLastShutdownStatus;
-  UINT32 PowerOnTime;                   ///< Lifetime DIMM has been powered on in seconds. See FIS field POT for additional details
-  UINT32 UpTime;                        ///< DIMM uptime in seconds since last AC cycle. See FIS field UT for additional details
-  UINT64 PowerCycles;                   ///< Number of DIMM power cycles. See FIS field PC for additional details
+  UINT32 PowerOnTime;                   ///< Lifetime PMem module has been powered on in seconds. See FIS field POT for additional details
+  UINT32 UpTime;                        ///< PMem module uptime in seconds since last AC cycle. See FIS field UT for additional details
+  UINT64 PowerCycles;                   ///< Number of PMem module power cycles. See FIS field PC for additional details
   UINT8 HealthStatus;                  ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
   UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
   UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
@@ -168,7 +168,7 @@ typedef struct _SMART_AND_HEALTH_INFO {
 **/
 typedef struct {
   UINT8 Type;
-  UINT8 State;      //!< DEPRECATED; current state of a given dimm sensor
+  UINT8 State;      //!< DEPRECATED; current state of a given PMem module sensor
   UINT8 Enabled;
   INT64 Value;
   UINT8 SettableThresholds;

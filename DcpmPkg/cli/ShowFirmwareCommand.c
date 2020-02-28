@@ -94,7 +94,7 @@ struct Command ShowFirmwareCommand =
     {FIRMWARE_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
-  L"Show information about firmware on one or more DCPMMs.",        //!< help
+  L"Show information about firmware on one or more " PMEM_MODULES_STR L".",        //!< help
   ShowFirmware,                                                     //!< run function
   TRUE,                                                             //!< enable print control support
 };

@@ -17,7 +17,7 @@ ipmctl dump [OPTIONS] -destination (path) -system -config
 
 DESCRIPTION
 -----------
-Store the currently configured memory allocation settings for all DCPMMs in the
+Store the currently configured memory allocation settings for all PMem modules in the
 system to a file in order to replicate the configuration elsewhere. Apply the
 stored memory allocation settings using the command Section
 <<Load Memory Allocation Goal>>.
@@ -52,7 +52,7 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Stores the memory allocation settings from all the DCPMMs into the file "config.txt".
+Stores the memory allocation settings from all the PMem modules into the file "config.txt".
 [verse]
 ipmctl dump -destination config.txt -system -config
 
@@ -62,33 +62,33 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- Only memory allocation settings for manageable DCPMMs that have been
-  successfully applied by the BIOS are stored in the file. Unconfigured DCPMMs are
+- Only memory allocation settings for manageable PMem modules that have been
+  successfully applied by the BIOS are stored in the file. Unconfigured PMem modules are
   not included, nor are memory allocation goals that have not been applied.
 
 RETURN DATA
 -----------
 The CLI will indicate the overall status of the operation when complete. If a
-failure occurs when dumping the memory allocation from multiple DCPMMs, the
+failure occurs when dumping the memory allocation from multiple PMem modules, the
 process will stop and the output file will be removed.
 
-The output file is formatted as an ASCII file with one row per DCPMM containing
+The output file is formatted as an ASCII file with one row per PMem module containing
 the following comma-separated values.
 
 SocketID::
-  unsigned short int Identifier for the socket the DCPMM is associated with.
+  unsigned short int Identifier for the socket the PMem module is associated with.
 
 DimmHandle::
-  unsigned int DCPMM device handle.
+  unsigned int PMem module device handle.
 
 Capacity::
-  unsigned long long int Total capacity of the DCPMM in GiB.
+  unsigned long long int Total capacity of the PMem module in GiB.
 
 MemorySize::
-  unsigned long long int Capacity of the DCPMM allocated as Memory Mode in GiB.
+  unsigned long long int Capacity of the PMem module allocated as Memory Mode in GiB.
 
 AppDirect1Size::
-  unsigned long long int Capacity of the DCPMM allocated for the first App
+  unsigned long long int Capacity of the PMem module allocated for the first App
   Direct interleave set in GiB.
 
 AppDirect1Format::
@@ -103,7 +103,7 @@ AppDirect1Index::
   unsigned short int Unique index of the first App Direct interleave set.
 
 AppDirect2Size::
-  unsigned long long int Capacity of the DCPMM allocated for the second App
+  unsigned long long int Capacity of the PMem module allocated for the second App
   Direct interleave set in GiB.
 
 AppDirect2Format::

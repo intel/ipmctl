@@ -640,11 +640,11 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 
 	set(DOCUMENTATION_INPUT_FILES
 		${ROOT}/Documentation/ipmctl/ipmctl.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-device.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-memory-resources.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-socket.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilities.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-topology.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-device.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-memory-resources.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-socket.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-system-capabilities.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-topology.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-create-goal.txt

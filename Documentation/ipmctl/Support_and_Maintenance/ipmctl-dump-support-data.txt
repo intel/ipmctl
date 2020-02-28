@@ -18,8 +18,8 @@ ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (filename)] -support
 DESCRIPTION
 -----------
 Creates a support snapshot and dump support data to a file for off-line analysis
-by support personnel. Support data may include system log(s), error log(s),
-trace log(s), platform configuration, sensor information and diagnostic results.
+by support personnel. Support data may include system logs, error logs,
+trace logs, platform configuration, sensor information and diagnostic results.
 
 This command may take significantly longer than other commands to complete, because
 it combines and executes multiple individual commands.
@@ -33,7 +33,7 @@ Commands executed:
 * start -diagnostic
 * show -system
 
-Commands executed per DCPMM:
+Commands executed per PMem module:
 
 * show -a -dimm
 * show -a -sensor -dimm
@@ -92,7 +92,7 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------

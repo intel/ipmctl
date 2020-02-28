@@ -76,7 +76,7 @@ struct Command ShowRegisterCommand =
     {REGISTER_TARGET, L"", L"Register", TRUE, ValueOptional},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                    //!< properties
-  L"Show Key DIMM Registers.",                                //!< help
+  L"Show Key " PMEM_MODULE_STR L" Registers.",                                //!< help
   ShowRegister,
   TRUE                                                        //!< enable print control support
 };
@@ -254,7 +254,7 @@ ShowRegister(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [25:25] SVNDE (SVN Downgrade Opt-In Enable) ------", FORMAT_HEX_NOWIDTH L" (0:Not Enabled; 1:Enabled)", Bsr.Separated_Current_FIS.SVNDE);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [26:26] SVNCOIS (SVN Downgrade Opt-In Was Enabled)", FORMAT_HEX_NOWIDTH L" (0:Never Enabled; 1:Has Been Enabled)", Bsr.Separated_Current_FIS.SVNCOIS);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [28:27] DR (DRAM Ready(AIT)) ---------------------", FORMAT_HEX_NOWIDTH L" (0:Not trained,Not Loaded; 1:Trained,Not Loaded; 2:Error; 3:Trained,Loaded(Ready))", Bsr.Separated_Current_FIS.DR);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [29:29] RR (Reboot Required) ---------------------", FORMAT_HEX_NOWIDTH L" (0:No reset is needed by the DIMM; 1:The DIMMs internal state requires a platform power cycle)", Bsr.Separated_Current_FIS.RR);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [29:29] RR (Reboot Required) ---------------------", FORMAT_HEX_NOWIDTH L" (0:No reset is needed by the " PMEM_MODULE_STR L"; 1:The " PMEM_MODULES_STR L" internal state requires a platform power cycle)", Bsr.Separated_Current_FIS.RR);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [30:30] LFOPB ------------------------------------", FORMAT_HEX_NOWIDTH L" (0:No Error; 1:Fatal Link Error)", Bsr.Separated_Current_FIS.LFOPB);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [31:31] SVNWC ------------------------------------", FORMAT_HEX_NOWIDTH L" (0:The SVN Opt-In Window is open; 1:The SVN Opt-In Window is closed)", Bsr.Separated_Current_FIS.SVNWC);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"  [33:32] Rsvd -------------------------------------", FORMAT_HEX_NOWIDTH L" (Rsvd)", Bsr.Separated_Current_FIS.Rsvd);

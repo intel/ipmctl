@@ -5,7 +5,7 @@
 
  /**
  * @file NvmStatus.h
- * @brief Status Types for EFI_NVMDIMMS_CONFIG_PROTOCOL.
+ * @brief Status Types for EFI_DCPMM_CONFIG2_PROTOCOL.
  */
 
 #ifndef _NVM_STATUS_H_
@@ -26,7 +26,7 @@ typedef INT16 NVM_STATUS;
 /** Object type used by #COMMAND_STATUS **/
 typedef enum {
   ObjectTypeSocket    = 0,  ///< Socket
-  ObjectTypeDimm      = 1,  ///< DIMM
+  ObjectTypeDimm      = 1,  ///< PMem module
   ObjectTypeRegion    = 2,  ///< Region
   ObjectTypeNamespace = 3,  ///< Namespace
   ObjectTypeUnknown   = 4   ///< Unknown
@@ -79,7 +79,7 @@ InitErrorAndWarningNvmStatusCodes(
 
 /**
   Create command status as with specified command message.
-  Function displays per DIMM status if such exists and
+  Function displays per PMem module status if such exists and
   summarizing status for whole command. Memory allocated
   for status message and command status is freed after
   status is displayed.

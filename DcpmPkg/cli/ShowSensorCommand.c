@@ -294,21 +294,21 @@ ShowSensor(
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid,
       DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to translate DIMM identifier to string\n");
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to translate " PMEM_MODULE_STR L" identifier to string\n");
       goto Finish;
     }
 
     ReturnCode = GetSensorsInfo(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, DimmSensorsSet);
     if (EFI_ERROR(ReturnCode)) {
       /**
-        We do not return on error. Just inform the user and skip to the next DIMM or end.
+        We do not return on error. Just inform the user and skip to the next PMem module or end.
       **/
       if (ReturnCode == EFI_NOT_READY) {
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from DIMM " FORMAT_STR L" - Dimm is unmanageable.\n",
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from " PMEM_MODULE_STR L" " FORMAT_STR L" - " PMEM_MODULE_STR L" is unmanageable.\n",
           DimmStr);
       }
       else {
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from DIMM " FORMAT_STR L". Code: " FORMAT_EFI_STATUS "\n",
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to read the sensors or thresholds values from " PMEM_MODULE_STR L" " FORMAT_STR L". Code: " FORMAT_EFI_STATUS "\n",
           DimmStr, ReturnCode);
       }
       continue;

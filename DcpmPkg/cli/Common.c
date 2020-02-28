@@ -494,7 +494,7 @@ GetDimmIdsFromString(
 
     if (!DimmIdFound) {
       Rc = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pCmd->pPrintCtx, Rc, L"DIMM not found. Invalid DimmID: " FORMAT_STR_NL, ppDimmIdTokensStr[Index]);
+      PRINTER_SET_MSG(pCmd->pPrintCtx, Rc, PMEM_MODULE_STR L" not found. Invalid DimmID: " FORMAT_STR_NL, ppDimmIdTokensStr[Index]);
       goto FinishError;
     }
   }

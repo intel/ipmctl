@@ -46,7 +46,7 @@ ValidateImage(
   }
 
   if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the DIMMs.");
+    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the PMem modules.");
     return FALSE;
   }
 
@@ -88,12 +88,12 @@ ValidateRecoverySpiImage(
   }
 
   if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
-    *ppError = CatSPrint(NULL, L"First generation DCPMM are not supported for SPI image recovery. A 1.x release of this software is required.");
+    *ppError = CatSPrint(NULL, L"First generation " PMEM_MODULES_STR " are not supported for SPI image recovery. A 1.x release of this software is required.");
     goto Finish;
   }
 
   if (SubsystemDeviceId != SPD_DEVICE_ID_15) {
-    *ppError = CatSPrint(NULL, L"Dimm is reporting an unexpected device id.  SPI image recovery is not supported.");
+    *ppError = CatSPrint(NULL, PMEM_MODULE_STR L" is reporting an unexpected device id.  SPI image recovery is not supported.");
     goto Finish;
   }
 
@@ -103,7 +103,7 @@ ValidateRecoverySpiImage(
   }
 
   if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the DIMMs.");
+    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the " PMEM_MODULES_STR ".");
     goto Finish;
   }
   ReturnValue = TRUE;

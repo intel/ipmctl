@@ -38,7 +38,7 @@ struct Command DeleteDimmCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},         //!< targets
   {{PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional}},  //!< properties
-  L"Erase persistent data on one or more DCPMMs.",                        //!< help
+  L"Erase persistent data on one or more " PMEM_MODULES_STR L".",                        //!< help
   DeleteDimm, TRUE
 };
 
@@ -295,7 +295,7 @@ DeleteDimm(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Erasing DIMM " FORMAT_STR L".", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Erasing " PMEM_MODULE_STR L" " FORMAT_STR L".", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
@@ -304,7 +304,7 @@ DeleteDimm(
           goto FinishCommandStatusSet;
         }
       } else {
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from DIMM " FORMAT_STR L"\n", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from " PMEM_MODULE_STR L" " FORMAT_STR L"\n", DimmStr);
         continue;
       }
     }

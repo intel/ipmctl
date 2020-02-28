@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-change-device-security - Changes the DCPMM security lock state
+ipmctl-change-device-security - Changes the PMem module security lock state
 
 SYNOPSIS
 --------
@@ -19,11 +19,11 @@ Passphrase=(string)
 DESCRIPTION
 -----------
 Changes the data-at-rest security lock state for the persistent memory on one or more
-DCPMMs.
+PMem modules.
 
 ifdef::os_build[]
 NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
-An exception is if the DCPMM is Unlocked Seurity State, then transitioning to Disabled
+An exception is if the PMem module is Unlocked Seurity State, then transitioning to Disabled
 is permitted.
 endif::os_build[]
 
@@ -53,19 +53,19 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Changes the lock state of a specific DCPMMs by supplying one or more comma
-  separated DCPMM identifiers. However, this is not recommended as it may put
+  Changes the lock state of a specific PMem modules by supplying one or more comma
+  separated PMem module identifiers. However, this is not recommended as it may put
   the system in an undesirable state. The default is to modify all manageable
-  DCPMMs.
+  PMem modules.
 
 PROPERTIES
 ----------
 LockState::
   The desired lock state.
-  - "Disabled": Removes the passphrase on an DCPMM to disable security. Permitted
+  - "Disabled": Removes the passphrase on an PMem module to disable security. Permitted
     only when LockState is Unlocked.
-  - "Unlocked": Unlocks the persistent memory on a locked DCPMM.
-  - "Frozen": Prevents further lock state changes to the DCPMM until the next
+  - "Unlocked": Unlocks the persistent memory on a locked PMem module.
+  - "Frozen": Prevents further lock state changes to the PMem module until the next
     reboot.
 
 Passphrase::
@@ -94,13 +94,13 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMMs must be manageable by the host software, have security enabled,
+- The specified PMem modules must be manageable by the host software, have security enabled,
   not be in the "Frozen" or "Exceeded" lock states, and not executing a long operation
   (ARS, Overwrite, FWUpdate).
 
 ifdef::os_build[]
 The command is subject to OS Vendor (OSV) support. If OSV does not provide support,
-the command may return "Not Supported." An exception is if the DCPMM is Unlocked
+the command may return "Not Supported." An exception is if the PMem module is Unlocked
 (via UEFI or OSV tool), then transitioning to Disabled is possible regardless of
 OSV support.
 endif::os_build[]
@@ -108,19 +108,19 @@ endif::os_build[]
 RETURN DATA
 -----------
 If an empty string is provided for the passphrase property and the source option is not
-included, the user will be prompted (once for all DCPMMs) to enter the current
+included, the user will be prompted (once for all PMem modules) to enter the current
 passphrase. The passphrase characters are hidden.
 
 Current passphrase: ****
 
-For each DCPMM, the CLI will indicate the status of the security state change.
-If a failure occurs when changing multiple DCPMMs, the process will exit and
-not continue updating the remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the security state change.
+If a failure occurs when changing multiple PMem modules, the process will exit and
+not continue updating the remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------
 [verse]
-Unlock DIMM (DimmID): Success
-Unlock DIMM (DimmID): Error (Code) - (Description)
-Remove passphrase from DIMM (DimmID): Success
-Remove passphrase from DIMM (DimmID): Error (Code) - (Description)
+Unlock PMem module (DimmID): Success
+Unlock PMem module (DimmID): Error (Code) - (Description)
+Remove passphrase from PMem module (DimmID): Success
+Remove passphrase from PMem module (DimmID): Error (Code) - (Description)

@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-cel - Shows the current DCPMM firmware Command Effect Log.
+ipmctl-show-cel - Shows the current PMem module firmware Command Effect Log.
 
 SYNOPSIS
 --------
@@ -17,8 +17,8 @@ ipmctl show [OPTIONS] -cel [TARGETS]
 
 DESCRIPTION
 -----------
-Retrieves the DCPMM command effect log and presents the response as a list of
-DimmID, Opcode, SubOpcode and DCPMM firmware command effect(s).
+Retrieves the PMem module command effect log and presents the response as a list of
+DimmID, Opcode, SubOpcode and PMem module firmware command effects.
 
 OPTIONS
 -------
@@ -51,16 +51,16 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to specific DCPMMs by supplying one or more comma separated
-  DCPMM identifiers. The default is to display all manageable DCPMMs.
+  Restricts output to specific PMem modules by supplying one or more comma separated
+  PMem module identifiers. The default is to display all manageable PMem modules.
 
 EXAMPLES
 --------
-Lists command effects for all DCPMMs installed in the system
+Lists command effects for all PMem modules installed in the system
 [verse]
 ipmctl show -cel
 
-Lists command effects for DCPMM 0x1001
+Lists command effects for PMem module 0x1001
 [verse]
 ipmctl show -dimm 0x1001 -cel
 
@@ -70,14 +70,14 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
 The default behavior is to return a table which lists the command effects per Opcode and SubOpcode.
 
 DimmID::
-  The default display of DCPMM identifiers. One of:
+  The default display of PMem module identifiers. One of:
   - UID: Use the DimmUID attribute as defined in the command Show Device.
   - HANDLE: Use the DimmHandle attribute as defined in the command Show Device.
     This is the default.

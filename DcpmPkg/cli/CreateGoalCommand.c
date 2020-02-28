@@ -50,7 +50,7 @@ struct Command CreateGoalCommand =
     {RESERVED_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {NS_LABEL_VERSION_PROPERTY, L"", HELP_TEXT_NS_LABEL_VERSION, FALSE, ValueRequired}
   },
-  L"Provision capacity on one or more DCPMMs into regions.",     //!< help
+  L"Provision capacity on one or more " PMEM_MODULES_STR L" into regions.",     //!< help
   CreateGoal,
   TRUE,                                               //!< enable print control support
 };

@@ -39,7 +39,7 @@ struct Command LoadCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Update the firmware on one or more DCPMMs.",                       //!< help
+  L"Update the firmware on one or more " PMEM_MODULES_STR L".",                       //!< help
   Load                                                                //!< run function
 };
 
@@ -300,7 +300,7 @@ Load(
 
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
   if (!Examine) {
-    Print(L"Starting update on %d dimm(s)...\n", DimmTargetsNum);
+    Print(L"Starting update on %d " PMEM_MODULE_STR L"(s)...\n", DimmTargetsNum);
     // Create callback that will print progress
     gBS->CreateEvent((EVT_TIMER | EVT_NOTIFY_SIGNAL), PRINT_PRIORITY, PrintProgress, pCommandStatus, &ProgressEvent);
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);

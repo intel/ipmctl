@@ -15,7 +15,7 @@
 
 //Object Types
 #string STR_DCPMM_STATUS_SOCKET           #language en "Socket"
-#string STR_DCPMM_STATUS_PMM              #language en "DIMM"
+#string STR_DCPMM_STATUS_PMM              #language en "PMem module"
 #string STR_DCPMM_STATUS_NAMESPACE        #language en "Namespace"
 #string STR_DCPMM_STATUS_REGION           #language en "Region"
 

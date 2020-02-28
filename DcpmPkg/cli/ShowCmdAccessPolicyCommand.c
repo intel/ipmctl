@@ -49,7 +49,7 @@ struct Command ShowCmdAccessPolicyCommand =
     { CAP_TARGET, L"", L"", TRUE, ValueEmpty },
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Show command access policy (CAP) restrictions for one ore more DCPMM(s).",    //!< help
+  L"Show command access policy (CAP) restrictions for one ore more " PMEM_MODULE_STR L"(s).",    //!< help
   ShowCmdAccessPolicy,                                                            //!< run function
   TRUE,                                                                           //!< enable print control support
 };

@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-sensor - Shows sensor data for one or more DCPMMs
+ipmctl-show-sensor - Shows sensor data for one or more PMem modules
 
 SYNOPSIS
 --------
@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
 
 DESCRIPTION
 -----------
-Shows sensor data for one or more DCPMMs. This data includes DCPMM health, temperatures,
+Shows sensor data for one or more PMem modules. This data includes PMem module health, temperatures,
 percentage remaining, up-time and more.
 
 OPTIONS
@@ -56,36 +56,36 @@ endif::os_build[]
 SENSORS
 -------
 Health::
-  (Default) The current DCPMM health as reported in the SMART log
+  (Default) The current PMem module health as reported in the SMART log
 
 MediaTemperature::
-  (Default) The current DCPMM media temperature in Celsius
+  (Default) The current PMem module media temperature in Celsius
 
 ControllerTemperature::
-  (Default) The current DCPMM controller temperature in Celsius
+  (Default) The current PMem module controller temperature in Celsius
 
 PercentageRemaining::
-  (Default) Remaining DCPMM’s life as a percentage value of factory expected
+  (Default) Remaining PMem module’s life as a percentage value of factory expected
   life span
 
 LatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
-  the DCPMM
+  the PMem module
 
 UnlatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
-  the DCPMM. This counter is the same as LatchedDirtyShutdownCount except it will
+  the PMem module. This counter is the same as LatchedDirtyShutdownCount except it will
   always be incremented on a dirty shutdown, even if Latch System Shutdown Status
   was not enabled
 
 PowerOnTime::
-  (Default) The total power-on time over the lifetime of the DCPMM
+  (Default) The total power-on time over the lifetime of the PMem module
 
 UpTime::
-  (Default) The total power-on time since the last power cycle of the DCPMM
+  (Default) The total power-on time since the last power cycle of the PMem module
 
 PowerCycles::
-  (Default) The number of power cycles over the lifetime of the DCPMM
+  (Default) The number of power cycles over the lifetime of the PMem module
 
 FwErrorCount::
   (Default) The total number of firmware error log entries
@@ -93,17 +93,17 @@ FwErrorCount::
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to the sensors on specific DCPMMs by supplying the DIMM
-  target and one or more comma-separated DCPMM identifiers. The default is to
-  display sensors for all manageable DCPMMs.
+  Restricts output to the sensors on specific PMem modules by supplying the DIMM
+  target and one or more comma-separated PMem module identifiers. The default is to
+  display sensors for all manageable PMem modules.
 
 EXAMPLES
 --------
-Gets all sensor information for all DCPMMs.
+Gets all sensor information for all PMem modules.
 [verse]
 ipmctl show -sensor
 
-Shows the media temperature sensor for the specified DCPMM.
+Shows the media temperature sensor for the specified PMem module.
 [verse]
 ipmctl show -sensor MediaTemperature -dimm 0x0001
 
@@ -113,16 +113,16 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
-This command displays a table with a row for each sensor on each DCPMM. Applying
-a specific DCPMM or sensor type target limits the number of rows. Applying
+This command displays a table with a row for each sensor on each PMem module. Applying
+a specific PMem module or sensor type target limits the number of rows. Applying
 options can be used to expand or restrict the output.
 
 DimmID::
-  (Default) The DCPMM identifier
+  (Default) The PMem module identifier
 
 Type::
   (Default) The sensor type. Refer to the sensor table above.
@@ -135,10 +135,10 @@ AlarmThreshold::
   The threshold value at which an alarm for the respective sensor will be triggered.
 
 ThrottlingStopThreshold::
-  The threshold value at which firmware will stop throttling to reduce overall thermals and keep the DIMM within safe operating temperatures.
+  The threshold value at which firmware will stop throttling to reduce overall thermals and keep the PMem module within safe operating temperatures.
 
 ThrottlingStartThreshold::
-  The threshold value at which firmware will start throttling to reduce overall thermals and keep the DIMM within safe operating temperatures.
+  The threshold value at which firmware will start throttling to reduce overall thermals and keep the PMem module within safe operating temperatures.
 
 ShutdownThreshold::
   The threshold value at which device shutdown will occur.

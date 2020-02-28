@@ -5,7 +5,7 @@
 
  /**
  * @file NvmFirmwareManagement.c
- * @brief The file describes the UEFI Firmware Management Protocol support Barlow Pass.
+ * @brief The file describes the UEFI Firmware Management Protocol support for Intel Optane Persistent Memory.
  **/
 
 #include <Uefi.h>
@@ -48,7 +48,7 @@ typedef struct _SET_IMAGE_ATTRIBUTES{
 /*
   In addition to the function information from the library header.
 
-  As for the Intel DCPMM implementation, one DCPMM stores only one Firmware,
+  As for the Intel PMem module implementation, one PMem module stores only one Firmware,
   so the *DescriptorCount will be always 1.
 
   Even if there are more images on the FV we have access only to
@@ -190,9 +190,9 @@ Finish:
 }
 
 /**
-Updates the firmware image of the DCPMM.
+Updates the firmware image of the PMem module.
 
-@remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+@remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
 an attempt will be made to abort ARS and the proceed with the firmware update.
 
 @remarks A reboot is required to activate the updated firmware image and is
@@ -299,7 +299,7 @@ Finish:
 }
 
 /**
-Returns information about the firmware package on the specified DCPMM.
+Returns information about the firmware package on the specified PMem module.
 
 @param[in] This A pointer to the EFI_FIRMWARE_MANAGEMENT_PROTOCOL instance.
 @param[out] PackageVersion A version number that represents all the firmware images in the device. The

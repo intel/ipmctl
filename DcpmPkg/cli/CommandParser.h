@@ -10,6 +10,7 @@
 #include <Debug.h>
 #include <Types.h>
 #include <Printer.h>
+#include <Utility.h>
 
 #define DISP_NAME_LEN             32    //!< Display string length (used when formatting output in alternative formats)
 #define DISP_DELIMS_LEN           10    //!< Deliminter string length (used when formatting output in alternative formats)
@@ -63,7 +64,7 @@
 #define FORCE_OPTION_DETAILS_TEXT       L"Suppress confirmations"              //!< 'force' option help text detail
 #define RECOVER_OPTION                  L"-recover"                            //!< 'recover' option name
 #define RECOVER_OPTION_FLASH_SPI        L"FlashSPI"                            //!< 'recover' option value to FlashSpi during update
-#define RECOVER_OPTION_DETAILS_TEXT     L"Run update on non-functional DCPMMs only (deprecated) or run SPI Flash recovery"     //!< 'recover' option value to FlashSpi during update
+#define RECOVER_OPTION_DETAILS_TEXT     L"Run update on non-functional" PMEM_MODULES_STR L"only (deprecated) or run SPI Flash recovery"     //!< 'recover' option value to FlashSpi during update
 #define UNITS_OPTION                    L"-units"                              //!< 'units' option name
 #define UNITS_OPTION_B                  L"B"                                   //!< 'units' option value for B
 #define UNITS_OPTION_MB                 L"MB"                                  //!< 'units' option value for MB
@@ -261,18 +262,18 @@
 #define DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS    L"TotalWriteRequests"
 
 /** Sensor Detail Messages **/
-#define DIMM_HEALTH_STR_DETAIL                       L"Health -  The current DCPMM health as reported in the SMART log"
-#define MEDIA_TEMPERATURE_STR_DETAIL                 L"MediaTemperature-The current DCPMM media temperature in Celsius"
-#define CONTROLLER_TEMPERATURE_STR_DETAIL            L"ControllerTemperature - The current DCPMM controller temperature in Celsius"
-#define SPARE_CAPACITY_STR_DETAIL                    L"PercentageRemaining - Remaining DCPMMs life as a percentage value of factory expected\
+#define DIMM_HEALTH_STR_DETAIL                       L"Health - The current " PMEM_MODULE_STR L" health as reported in the SMART log"
+#define MEDIA_TEMPERATURE_STR_DETAIL                 L"MediaTemperature - The current " PMEM_MODULE_STR L" media temperature in Celsius"
+#define CONTROLLER_TEMPERATURE_STR_DETAIL            L"ControllerTemperature - The current " PMEM_MODULE_STR " controller temperature in Celsius"
+#define SPARE_CAPACITY_STR_DETAIL                    L"PercentageRemaining - Remaining " PMEM_MODULES_STR L" life as a percentage value of factory expected\
  life spa"
 #define LATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL      L"LatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
- the DCPMM"
+ the " PMEM_MODULE_STR
 #define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL    L"UnlatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
- the DCPMM."
-#define POWER_ON_TIME_STR_DETAIL                     L"PowerOnTime - The total power-on time over the lifetime of the DCPMM"
-#define UPTIME_STR_DETAIL                            L"UpTime - The total power-on time since the last power cycle of the DCPMM"
-#define POWER_CYCLES_STR_DETAIL                      L"PowerCycles - The number of power cycles over the lifetime of the DCPMM"
+ the " PMEM_MODULE_STR L"."
+#define POWER_ON_TIME_STR_DETAIL                     L"PowerOnTime - The total power-on time over the lifetime of the " PMEM_MODULE_STR
+#define UPTIME_STR_DETAIL                            L"UpTime - The total power-on time since the last power cycle of the " PMEM_MODULE_STR
+#define POWER_CYCLES_STR_DETAIL                      L"PowerCycles - The number of power cycles over the lifetime of the " PMEM_MODULE_STR
 #define FW_ERROR_COUNT_STR_DETAIL                    L"FwErrorCount - The total number of firmware error log entries"
 
 

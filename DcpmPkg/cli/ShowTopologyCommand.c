@@ -156,7 +156,7 @@ struct Command ShowTopologyCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                   //!< properties
-  L"Show the topology of all the DDRs and DCPMMs.",                          //!< help
+  L"Show the topology of all the DDRs and " PMEM_MODULES_STR L".",                          //!< help
   ShowTopology,
   TRUE
 };

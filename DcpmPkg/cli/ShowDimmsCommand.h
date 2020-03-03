@@ -117,7 +117,7 @@
 #define MAX_AVERAGE_POWER_REPORTING_TIME_CONSTANT L"MaxAveragePowerReportingTimeConstant"
 #define AVERAGE_POWER_REPORTING_TIME_CONSTANT_STEP L"AveragePowerReportingTimeConstantStep"
 #define MIXED_SKU_STR               L"MixedSKU"
-#define DCPMM_AVERAGE_POWER_STR     L"DcpmmAveragePower"
+#define DCPMM_AVERAGE_POWER_STR     L"AveragePower"
 #define AVERAGE_12V_POWER_STR       L"Average12vPower"
 #define AVERAGE_1_2V_POWER_STR      L"Average1_2vPower"
 #define EXTENDED_ADR_ENABLED_STR    L"ExtendedAdrEnabled"

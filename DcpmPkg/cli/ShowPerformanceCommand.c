@@ -69,7 +69,7 @@ struct Command ShowPerformanceCommand =
     {                                                                   //!< properties
         { L"", L"", L"", FALSE, ValueOptional },
     },
-    L"Show performance statistics of one or more DCPMMs.",              //!< help
+    L"Show performance statistics of one or more " PMEM_MODULES_STR L".",              //!< help
     ShowPerformance,
     TRUE,                                                               //!< enable print control support
 };

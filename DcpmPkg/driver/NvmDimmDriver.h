@@ -36,7 +36,7 @@ extern UINT8  NvmDimmDriverFormsBin[];
   This data array is ready to be used as input of HiiAddPackages() to
   create a packagelist (which contains Form packages, String packages, etc).
 **/
-extern UINT8  IntelDCPersistentMemoryDriverStrings[];
+extern UINT8  IntelOptanePMemDriverStrings[];
 
 /**
   Libraries

@@ -9,10 +9,10 @@ endif::manpage[]
 NAME
 ----
 ifndef::os_build[]
-ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM
+ipmctl-change-device-passphrase - Changes the security passphrase on PMem module
 endif::os_build[]
 ifdef::os_build[]
-ipmctl-change-device-passphrase - Changes the security passphrase on DCPMM on supported OS
+ipmctl-change-device-passphrase - Changes the security passphrase on PMem module on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -23,7 +23,7 @@ ConfirmPassphrase=(string)
 
 DESCRIPTION
 -----------
-Changes the security passphrase on one or more DCPMMs.
+Changes the security passphrase on one or more PMem modules.
 
 ifdef::os_build[]
 NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
@@ -45,7 +45,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 
 -master::
   Changes the master passphrase. Valid only if master passphrase is enabled on specified
-  DCPMMs (see MasterPassphraseEnabled attribute in section <<Show Device>>).
+  PMem modules (see MasterPassphraseEnabled attribute in section <<Show Device>>).
 
 -default::
   Use this option when the current master passphrase is set to the default value. Valid
@@ -60,10 +60,10 @@ NOTE: The file does not need to contain the ConfirmPassphrase property
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Changes the passphrase on specific DCPMMs by supplying one or more
-  comma separated DCPMM identifiers. However, this is not recommended as
+  Changes the passphrase on specific PMem modules by supplying one or more
+  comma separated PMem module identifiers. However, this is not recommended as
   it may put the system in an undesirable state. The default is to change the
-  passphrase on all manageable DCPMMs.
+  passphrase on all manageable PMem modules.
 
 PROPERTIES
 ----------
@@ -85,18 +85,18 @@ ConfirmPassphrase::
 
 EXAMPLES
 --------
-Changes the passphrase from mypassphrase to mynewpassphrase on all DCPMMs.
+Changes the passphrase from mypassphrase to mynewpassphrase on all PMem modules.
 
 [verse]
 ipmctl set -dimm Passphrase=mypassphrase NewPassphrase=mynewpassphrase
  ConfirmPassphrase=mynewpassphrase
 
-Changes the passphrase on all DCPMMs by having the CLI prompt for the
+Changes the passphrase on all PMem modules by having the CLI prompt for the
 current and new passphrases.
 [verse]
 ipmctl set -dimm Passphrase="" NewPassphrase="" ConfirmPassphrase=""
 
-Changes the passphrase on all DCPMMs by supplying the current and new
+Changes the passphrase on all PMem modules by supplying the current and new
 passphrases from the specified file. In this example, the format of the file
 would be:
 
@@ -107,14 +107,14 @@ NewPassphrase=myNewPassphrase
 ipmctl set -source passphrase.file -dimm Passphrase="" NewPassphrase=""
 ConfirmPassphrase=""
 
-Changes the default master passphrase to masterpassphrase on all DCPMMs.
+Changes the default master passphrase to masterpassphrase on all PMem modules.
 
 [verse]
 ipmctl set -master -default -dimm NewPassphrase=masterpassphrase ConfirmPassphrase=
 masterpassphrase
 
 Changes the master passphrase from masterpassphrase to newmasterpassphrase on
-all DCPMMs.
+all PMem modules.
 
 [verse]
 ipmctl set -master -dimm Passphrase=masterpassphrase NewPassphrase=newmasterpassphrase
@@ -126,7 +126,7 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM must be manageable by the host software, have
+- The specified PMem module must be manageable by the host software, have
   security enabled and not be in the "Frozen" or "Exceeded" lock states.
 
 ifdef::os_build[]
@@ -137,16 +137,16 @@ endif::os_build[]
 RETURN DATA
 -----------
 If empty strings are provided for the passphrase properties and the source
-option is not included, the user will be prompted (once for all DCPMM) to enter
+option is not included, the user will be prompted (once for all PMem module) to enter
 the current passphrase, then again for the new passphrase and then again to
 confirm the new passphrase as described below. The passphrase characters are
 hidden.
 
 Current passphrase: \****
 
-For each DIMM, the CLI will indicate the status of the passphrase change
-operation. If a failure occurs when updating the passphrase on multiple DCPMMs,
-the process will exit and not continue updating the remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the passphrase change
+operation. If a failure occurs when updating the passphrase on multiple PMem modules,
+the process will exit and not continue updating the remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------

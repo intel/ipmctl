@@ -9,10 +9,10 @@ endif::manpage[]
 NAME
 ----
 ifndef::os_build[]
-ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs
+ipmctl-erase-device-data - Erases the persistent data on one or more PMem modules
 endif::os_build[]
 ifdef::os_build[]
-ipmctl-erase-device-data - Erases the persistent data on one or more DCPMMs on supported OS
+ipmctl-erase-device-data - Erases the persistent data on one or more PMem modules on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -22,7 +22,7 @@ ipmctl delete [OPTIONS] -dimm [TARGETS] Passphrase=(string)
 
 DESCRIPTION
 -----------
-Erases the persistent data on one or more DCPMMs. This commands invokes the DCPMM 'Secure Erase'
+Erases the persistent data on one or more PMem modules. This commands invokes the PMem module 'Secure Erase'
 command.
 
 NOTE: This command does not zero out the persistent data, but instead randomizes the data.
@@ -35,8 +35,8 @@ OPTIONS
 -------
 -f::
 -force::
-  Erasing DCPMM data is a destructive operation which requires confirmation from
-  the user for each DCPMM. This option suppresses the confirmation.
+  Erasing PMem module data is a destructive operation which requires confirmation from
+  the user for each PMem module. This option suppresses the confirmation.
 
 -h::
 -help::
@@ -51,8 +51,8 @@ OPTIONS
 NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
 
 -master::
-  Erases DCPMMs using master passphrase. Valid only if master passphrase is enabled on specified
-  DCPMMs (see MasterPassphraseEnabled attribute in section <<Show Device>>).
+  Erases PMem modules using master passphrase. Valid only if master passphrase is enabled on specified
+  PMem modules (see MasterPassphraseEnabled attribute in section <<Show Device>>).
 
 -default::
   Use this option when the current master passphrase is set to the default value. Valid only
@@ -70,9 +70,9 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-Erases specific DCPMMs by supplying one or more comma-separated DCPMM
+Erases specific PMem modules by supplying one or more comma-separated PMem module
 identifiers. However, this is not recommended as it may put the system in an
-undesirable state. The default is to erase all manageable DCPMMs.
+undesirable state. The default is to erase all manageable PMem modules.
 
 PROPERTIES
 ----------
@@ -86,27 +86,27 @@ Passphrase::
 
 EXAMPLES
 --------
-Security disabled DCPMMs: Erases all the persistent data on all DCPMMs in the
+Security disabled PMem modules: Erases all the persistent data on all PMem modules in the
 system.
 [verse]
 ipmctl delete -dimm
 
-Security enabled specifics: Erases all the persistent data on all DCPMMs in the
+Security enabled specifics: Erases all the persistent data on all PMem modules in the
 system.
 [verse]
 ipmctl delete -dimm Passphrase=123
 
-Security enabled specifics: Erases all the persistent data on all DCPMMs in the
+Security enabled specifics: Erases all the persistent data on all PMem modules in the
 system using the default master passphrase.
 [verse]
 ipmctl delete -master -default -dimm
 
-Security enabled specifics: Erases all the persistent data on all DCPMMs in the
+Security enabled specifics: Erases all the persistent data on all PMem modules in the
 system using the master passphrase.
 [verse]
 ipmctl delete -master -dimm Passphrase=masterpassphrase
 
-Erases all the persistent data on all DCPMMs by having the CLI prompt for
+Erases all the persistent data on all PMem modules by having the CLI prompt for
 the current passphrase.
 [verse]
 ipmctl delete -dimm Passphrase=""
@@ -117,9 +117,9 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software, not be
+- The specified PMem modules must be manageable by the host software, not be
   in the "Frozen" or "Exceeded" lock states and any namespaces associated with the
-  requested DCPMM(s) must be deleted before running this command.
+  requested PMem modules must be deleted before running this command.
 
 ifdef::os_build[]
 The command is subject to OS Vendor (OSV) support. If OSV does not provide
@@ -129,17 +129,17 @@ endif::os_build[]
 RETURN DATA
 -----------
 If an empty string is provided for the passphrase property and the source option is not
-included, the user will be prompted (once for all DCPMMs) to enter the current
+included, the user will be prompted (once for all PMem modules) to enter the current
 passphrase. The passphrase characters are hidden.
 
 Current passphrase: ****
 
-For each DCPMM, the CLI will indicate the status of the security state change.
-If a failure occurs when changing multiple DCPMMs, the process will exit and
-not continue updating the remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the security state change.
+If a failure occurs when changing multiple PMem modules, the process will exit and
+not continue updating the remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------
 [verse]
-Erase DIMM (DimmID): Success
-Erase DIMM (DimmID): Error (Code) - (Description)
+Erase PMem module (DimmID): Success
+Erase PMem module (DimmID): Error (Code) - (Description)

@@ -6,34 +6,34 @@
 /**
 * @file NvmDimmConfig.h
 * @brief Implementation of the EFI_DCPMM_CONFIG2_PROTOCOL, a custom protocol
-* to configure and manage DCPMMs
+* to configure and manage PMem modules
 *
-* @mainpage Barlow Pass Software UEFI FW Protocols
+* @mainpage Intel Optane Persistent Memory Software UEFI FW Protocols
 *
 * @section Introduction
 * This document provides descriptions of protocols implemented by the
-* Barlow Pass Driver for UEFI FW. Protocols implemented include:
+* Intel Optane Persistent Memory Driver for UEFI FW. Protocols implemented include:
 * - EFI_DRIVER_BINDING_PROTOCOL
 * - EFI_COMPONENT_NAME_PROTOCOL & EFI_COMPONENT_NAME2_PROTOCOL
 * - EFI_DRIVER_DIAGNOSTICS_PROTOCOL & EFI_DRIVER_DIAGNOSTICS2_PROTOCOL
-*  - Provides diagnostic tests for the specified DCPMM
+*  - Provides diagnostic tests for the specified PMem module
 * - EFI_DRIVER_HEALTH_PROTOCOL
-*  - Provides standardized health status for the specified DCPMM
+*  - Provides standardized health status for the specified PMem module
 * - EFI_DCPMM_CONFIG2_PROTOCOL
-*  - Provides configuration management for the specified DCPMM, including:
+*  - Provides configuration management for the specified PMem module, including:
 *   - Discovery
 *   - Provisioning
 *   - Health & Instrumentation
 *   - Support and Maintenance
 *   - Diagnostics & Debug
 * - EFI_FIRMWARE_MANAGEMENT_PROTOCOL
-*  - Provides standardized DCPMM firmware management
+*  - Provides standardized PMem module firmware management
 * - EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
-*  - Provides standardizd DCPMM security functionality
+*  - Provides standardizd PMem module security functionality
 * - EFI_BLOCK_IO_PROTOCOL
-*  - Provides BLOCK IO access to the specificed DPCMM Namespaces
+*  - Provides BLOCK IO access to the specificed PMem module Namespaces
 * - EFI_NVDIMM_LABEL_PROTOCOL
-*  - Provides standardized access to the specified DCPMM Labels
+*  - Provides standardized access to the specified PMem module Labels
 * - Automated Provisioning flow using an EFI_VARIABLE
 *
 * @section autoprovisioning Automated Provisioning
@@ -43,7 +43,7 @@
 * via an out-of-band (OOB) path, like a Baseboard Management Controller (BMC).
 *
 * The UEFI driver will determine if mode provisioning is required by first checking
-* the UEFI variable status field and then checking the PCD data stored on the DIMM
+* the UEFI variable status field and then checking the PCD data stored on the PMem module
 * to ensure it matches (if necessary).
 *
 * The UEFI driver will determine if namespace provisioning is required by first
@@ -56,11 +56,11 @@
 *
 * Variable Name             | Size(bytes)  | Data
 * ------------------------- | ------------ | -----------------------------------
-* Revision                  |            1 | 1 (Read only written by AEP driver)
-* ProvisionCapacityMode     |            1 | 0: Manual - AEP DIMM capacity provisioning via user interface. (Default). <br>1: Auto - Automatically provision all AEP DIMM capacity during system boot if this request does not match the current PCD metadata stored on the AEP DIMMs.<br>Note: Auto provisioning may result is loss of persistent data stored on the AEP DIMMs.
-* MemorySize                |            1 | If ProvisionCapacityMode = Auto, the % of the total AEP capacity to provision in Memory Mode (0-100%). 0: (Default)
+* Revision                  |            1 | 1 (Read only written by driver)
+* ProvisionCapacityMode     |            1 | 0: Manual - PMem module capacity provisioning via user interface. (Default). <br>1: Auto - Automatically provision all  PMem module capacity during system boot if this request does not match the current PCD metadata stored on the  PMem modules.<br>Note: Auto provisioning may result is loss of persistent data stored on the  PMem modules.
+* MemorySize                |            1 | If ProvisionCapacityMode = Auto, the % of the total  capacity to provision in Memory Mode (0-100%). 0: (Default)
 * PMType                    |            1 | If ProvisionCapacityMode = Auto, the type of persistent memory to provision (if not 100% Memory Mode).<br>0: App Direct<br>1: App Direct, Not Interleaved
-* ProvisionNamespaceMode    |            1 | 0: Manual - Namespace provisioning via user interface. (Default).<br>1: Auto - Automatically create a namespace on all AEP DIMM App Direct interleave sets is one doesn't already exist.
+* ProvisionNamespaceMode    |            1 | 0: Manual - Namespace provisioning via user interface. (Default).<br>1: Auto - Automatically create a namespace on all  PMem module App Direct interleave sets is one doesn't already exist.
 * NamespaceFlags            |            1 | If ProvisionNamespaceMode=Auto, the flags to apply when automatically creating namespaces.<br>0: None (Default).<br>1: BTT
 * ProvisionCapacityStatus   |            1 | 0: Unknown - Check PCD if ProvisionCapacityMode = Auto (Default).<br>1: Successfully provisioned.<br>2: Error.<br>3: Pending reset.
 * ProvisionNamespaceStatus  |            1 | 0: Unknown - Check LSA if ProvisionNamespaceMode = Auto (Default).<br>1: Successfully created namespaces.<br>2: Error.
@@ -99,7 +99,7 @@
 extern EFI_GUID gNvmDimmConfigProtocolGuid;
 extern EFI_GUID gNvmDimmPbrProtocolGuid;
 
-#define DEVICE_LOCATOR_LEN 128 //!< DIMM Device Locator buffer length
+#define DEVICE_LOCATOR_LEN 128 //!< PMem module Device Locator buffer length
 
 #define FEATURE_NOT_SUPPORTED 0
 #define FEATURE_SUPPORTED     1
@@ -154,10 +154,10 @@ typedef enum {
 } DimmSkuType;
 
 /**
-  Retrieve the number of DCPMMs in the system found in NFIT
+  Retrieve the number of PMem modules in the system found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found in NFIT.
+  @param[out] pDimmCount The number of PMem modules found in NFIT.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -170,10 +170,10 @@ GetDimmCount(
   );
 
 /**
-  Retrieve the number of uninitialized DCPMMs in the system found through SMBUS
+  Retrieve the number of uninitialized PMem modules in the system found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] pDimmCount The number of DCPMMs found through SMBUS.
+  @param[out] pDimmCount The number of PMem modules found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -186,14 +186,14 @@ GetUninitializedDimmCount(
   );
 
 /**
-  Retrieve the list of DCPMMs found in NFIT
+  Retrieve the list of PMem modules found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
   @param[in] DimmInfoCategories See @ref DIMM_INFO_CATEGORY_TYPES specifies which (if any)
   additional FW api calls is desired. If ::DIMM_INFO_CATEGORY_NONE, then only
   the properties from the pDimms struct(s) will be populated.
-  @param[out] pDimms The dimm list found in NFIT.
+  @param[out] pDimms The PMem module list found in NFIT.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -208,11 +208,11 @@ GetDimms(
   );
 
 /**
-  Retrieve the list of uninitialized DCPMMs found through SMBUS
+  Retrieve the list of uninitialized PMem modules found through SMBUS
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
-  @param[out] pDimms The dimm list found through SMBUS.
+  @param[out] pDimms The PMem module list found through SMBUS.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -226,14 +226,14 @@ GetUninitializedDimms(
   );
 
 /**
-  Retrieve the details about the DIMM specified with pid found in NFIT
+  Retrieve the details about the PMem module specified with pid found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] Pid The ID of the PMem module to retrieve
   @param[in] DimmInfoCategories  @ref DIMM_INFO_CATEGORY_TYPES specifies which (if any)
   additional FW api calls is desired. If ::DIMM_INFO_CATEGORY_NONE, then only
   the properties from the pDimm struct will be populated.
-  @param[out] pDimmInfo A pointer to the dimm found in NFIT
+  @param[out] pDimmInfo A pointer to the PMem module found in NFIT
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -249,10 +249,10 @@ GetDimm(
 
 #ifdef OS_BUILD
 /**
-  Retrieve the PMON register values from the dimm
+  Retrieve the PMON register values from the PMem module
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] Pid The ID of the PMem module to retrieve
   @param[in] SmartDataMask This will specify whether or not to return the extra smart data along with the PMON
   Counter data
   @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
@@ -270,10 +270,10 @@ GetPMONRegisters(
   );
 
 /**
-  Set the PMON register values from the dimm
+  Set the PMON register values from the PMem module
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] Pid The ID of the dimm to retrieve
+  @param[in] Pid The ID of the PMem module to retrieve
   @param[in] PMONGroupEnable Specifies which PMON Group to enable
   @param[out] pPayloadPMONRegisters A pointer to the output payload PMON registers
 
@@ -308,12 +308,12 @@ GetSockets(
   );
 
 /*
-  Retrieve an SMBIOS table type 17 or type 20 for a specific DIMM
+  Retrieve an SMBIOS table type 17 or type 20 for a specific PMem module
 
   Function available in the DEBUG build only!
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] Pid The ID of the DIMM to retrieve
+  @param[in] Pid The ID of the PMem module to retrieve
   @param[in] Type The Type of SMBIOS table to retrieve. Valid values: 17, 20.
   @param[out] pTable A pointer to the SMBIOS table
 
@@ -332,13 +332,13 @@ GetDimmSmbiosTable(
 /**
   Check NVM device security state
 
-  Function checks security state of a set of DIMMs. It sets security state
-  to mixed when not all DIMMs have the same state.
+  Function checks security state of a set of PMem modules. It sets security state
+  to mixed when not all PMem modules have the same state.
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
-  @param[out] pSecurityState security state of a DIMM or all DIMMs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
+  @param[out] pSecurityState security state of a PMem module or all PMem modules
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS Success
@@ -357,13 +357,13 @@ GetSecurityState(
 /**
   Set NVM device security state.
 
-  Function sets security state on a set of DIMMs. If there is a failure on
-  one of DIMMs function continues with setting state on following DIMMs
+  Function sets security state on a set of PMem modules. If there is a failure on
+  one of PMem modules function continues with setting state on following PMem modules
   but exits with error.
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] pDimmIds Pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs - if NULL, execute operation on all PMem modules
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] SecurityOperation Security Operation code
   @param[in] pPassphrase a pointer to string with current passphrase
   @param[in] pNewPassphrase a pointer to string with new passphrase
@@ -439,10 +439,10 @@ GetAcpiPMTT(
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
-  @param[out] pDimmPcdInfoCount Number of items in Dimm PCD Info
+  @param[out] pDimmPcdInfoCount Number of items in PMem module PCD Info
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS Success
@@ -464,14 +464,14 @@ GetPcd(
 Modifies select partition data from the PCD
 
 @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-@param[in] pDimmIds Pointer to an array of DIMM IDs
-@param[in] DimmIdsCount Number of items in array of DIMM IDs
+@param[in] pDimmIds Pointer to an array of PMem module IDs
+@param[in] DimmIdsCount Number of items in array of PMem module IDs
 @param[in] ConfigIdMask Bitmask that defines which config to delete. See @ref DELETE_PCD_CONFIG_ALL_MASK
 @param[out] pCommandStatus Structure containing detailed NVM error codes
 
 @retval EFI_SUCCESS Success
 @retval EFI_INVALID_PARAMETER One or more input parameters are NULL
-@retval EFI_NO_RESPONSE FW busy for one or more dimms
+@retval EFI_NO_RESPONSE FW busy for one or more PMem modules
 @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -485,9 +485,9 @@ ModifyPcdConfig(
 );
 
 /**
-  Flash new SPI image to a specified DCPMM
+  Flash new SPI image to a specified PMem module
 
-  @param[in] DimmPid Dimm ID of a DCPMM on which recovery is to be performed
+  @param[in] DimmPid PMem module ID of a PMem module on which recovery is to be performed
   @param[in] pNewSpiImageBuffer is a pointer to new SPI FW image
   @param[in] ImageBufferSize is SPI image size in bytes
 
@@ -495,8 +495,8 @@ ModifyPcdConfig(
   @param[out] pCommandStatus  command status list
 
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-  @retval EFI_NOT_FOUND there is no DCPMM with such Pid
-  @retval EFI_DEVICE_ERROR Unable to communicate with Dimm SPI
+  @retval EFI_NOT_FOUND there is no PMem module with such Pid
+  @retval EFI_DEVICE_ERROR Unable to communicate with PMem module SPI
   @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
   @retval EFI_ACCESS_DENIED When SPI access is not unlocked
   @retval EFI_SUCCESS Update has completed successfully
@@ -513,11 +513,11 @@ RecoverDimmFw(
   );
 
 /**
-  Update firmware or training data in one or all NVDIMMs of the system
+  Update firmware or training data in one or all PMem modules of the system
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds is a pointer to an array of PMem module IDs - if NULL, execute operation on all PMem modules
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pFileName Name is a pointer to a file containing FW image
   @param[in] pWorkingDirectory is a pointer to a path to FW image file
   @param[in] Examine flag enables image verification only
@@ -529,7 +529,7 @@ RecoverDimmFw(
     need to be provided if examine flag is set
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+  @remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
   an attempt will be made to abort ARS and the proceed with the firmware update.
 
   @remarks A reboot is required to activate the updated firmware image and is
@@ -616,7 +616,7 @@ GetRegion(
 );
 
 /**
-  Gather info about total capacities on all dimms
+  Gather info about total capacities on all PMem modules
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[out] pMemoryResourcesInfo structure filled with required information
@@ -632,11 +632,11 @@ GetMemoryResourcesInfo(
   );
 
 /**
-  Gather info about performance on all dimms
+  Gather info about performance on all PMem modules
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[out] pDimmCount pointer to the number of dimms on list
-  @param[out] pDimmsPerformanceData list of dimms' performance data
+  @param[out] pDimmCount pointer to the number of PMem modules on list
+  @param[out] pDimmsPerformanceData list of PMem modules' performance data
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -668,10 +668,10 @@ GetSystemCapabilitiesInfo(
   );
 
 /**
-  Get DIMM alarm thresholds
+  Get PMem module alarm thresholds
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in]  DimmPid The ID of the DIMM
+  @param[in]  DimmPid The ID of the PMem module
   @param[in]  SensorId Sensor ID to retrieve information for. See @ref SENSOR_TYPES
   @param[out] pNonCriticalThreshold Current non-critical threshold for sensor
   @param[out] pEnabledState Current enable state for sensor
@@ -692,11 +692,11 @@ GetAlarmThresholds (
   );
 
 /**
-  Set DIMM alarm thresholds
+  Set PMem module alarm thresholds
 
   @param[in]  pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in]  pDimmIds Pointer to an array of DIMM IDs
-  @param[in]  DimmIdsCount Number of items in array of DIMM IDs
+  @param[in]  pDimmIds Pointer to an array of PMem module IDs
+  @param[in]  DimmIdsCount Number of items in array of PMem module IDs
   @param[in]  SensorId Sensor id to set values for
   @param[in]  NonCriticalThreshold New non-critical threshold for sensor
   @param[in]  EnabledState New enable state for sensor
@@ -718,7 +718,7 @@ SetAlarmThresholds (
   );
 
 /**
-  Get DIMM Health Info
+  Get PMem module Health Info
 
   This FW command is used to retrieve current health of system, including SMART information:
   * Overall health status
@@ -731,11 +731,11 @@ SetAlarmThresholds (
   * Last shutdown time
   * AIT DRAM status
   * Power Cycles (does not include warm resets or S3 resumes)
-  * Power on time (life of DIMM has been powered on)
+  * Power on time (life of PMem module has been powered on)
   * Uptime for current power cycle in seconds
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in]  DimmPid The ID of the DIMM
+  @param[in]  DimmPid The ID of the PMem module
   @param[out] pHealthInfo pointer to structure containing all Health and Smarth variables
 
   @retval EFI_SUCCESS Success
@@ -788,21 +788,21 @@ EFIAPI GetNamespaces (
   Get actual Region goal capacities that would be used based on input values.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[in] PersistentMemType Persistent memory type
   @param[in, out] pVolatilePercent Volatile region size in percents.
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one PMem module for use as a not interleaved AppDirect memory
   @param[out] pConfigGoals pointer to output array
   @param[out] pConfigGoalsCount number of elements written
-  @param[out] pNumOfDimmsTargeted number of DIMMs targeted in a goal config request
+  @param[out] pNumOfDimmsTargeted number of PMem modules targeted in a goal config request
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All Ok
 **/
@@ -830,22 +830,22 @@ GetActualRegionsGoalCapacities(
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] Examine Do a dry run if set
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[in] PersistentMemType Persistent memory type
   @param[in] VolatilePercent Volatile region size in percents
   @param[in] ReservedPercent Amount of AppDirect memory to not map in percents
-  @param[in] ReserveDimm Reserve one DIMM for use as a not interleaved AppDirect memory
+  @param[in] ReserveDimm Reserve one PMem module for use as a not interleaved AppDirect memory
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
   @param[out] pMaxPMInterleaveSetsPerDie pointer to Maximum PM Interleave Sets per Die
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_NO_RESPONSE FW busy for one or more PMem modules
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -871,8 +871,8 @@ CreateGoalConfig (
   Delete region goal configuration
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[out] pCommandStatus Structure containing detailed NVM error codes
@@ -895,8 +895,8 @@ DeleteGoalConfig (
   Get region goal configuration
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[in] ConfigGoalTableSize Number of elements in the pConfigGoals array passed in
@@ -945,8 +945,8 @@ DumpGoalConfig(
   Load region goal configuration from file
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] pSocketIds Pointer to an array of Socket IDs
   @param[in] SocketIdsCount Number of items in array of Socket IDs
   @param[in] pFileString Buffer for Region Goal configuration from file
@@ -971,10 +971,10 @@ LoadGoalConfig(
   Start Diagnostic Tests with Detail parameter
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds Pointer to an array of DIMM IDs
-  @param[in] DimmIdsCount Number of items in array of DIMM IDs
+  @param[in] pDimmIds Pointer to an array of PMem module IDs
+  @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[in] DiagnosticTests bitfield with selected diagnostic tests to be started
-  @param[in] DimmIdPreference Preference for the Dimm ID (handle or UID)
+  @param[in] DimmIdPreference Preference for the PMem module ID (handle or UID)
   @param[out] ppResult Pointer to the structure with information about test
 
   @retval EFI_SUCCESS Success
@@ -994,7 +994,7 @@ StartDiagnostic(
 
 /**
   Create namespace
-  Creates a AppDirect namespace on the provided region/dimm.
+  Creates a AppDirect namespace on the provided region/PMem module.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] RegionId the ID of the region that the Namespace is supposed to be created.
@@ -1036,7 +1036,7 @@ CreateNamespace(
   Deletes a block or persistent memory namespace.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] Force Force to perform deleting namespace configs on all affected DIMMs
+  @param[in] Force Force to perform deleting namespace configs on all affected PMem modules
   @param[in] NamespaceId the ID of the namespace to be removed.
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
@@ -1053,11 +1053,11 @@ DeleteNamespace(
   );
 
 /**
-  Get Error log for given dimm
+  Get Error log for given PMem module
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds - array of dimm pids. Use all dimms if pDimms is NULL and DimmsCount is 0.
-  @param[in] DimmsCount - number of dimms in array. Use all dimms if pDimms is NULL and DimmsCount is 0.
+  @param[in] pDimmIds - array of PMem module pids. Use all PMem modules if pDimms is NULL and DimmsCount is 0.
+  @param[in] DimmsCount - number of PMem modules in array. Use all PMem modules if pDimms is NULL and DimmsCount is 0.
   @param[in] ThermalError - TRUE = Thermal error, FALSE = media error
   @param[in] SequenceNumber - sequence number of error to fetch in queue
   @param[in] HighLevel - high level if true, low level otherwise
@@ -1083,12 +1083,12 @@ GetErrorLog(
   );
 
 /**
-  Get the debug log from a specified dimm and fw debug log source
+  Get the debug log from a specified PMem module and fw debug log source
 
   Note: The caller is responsible for freeing the returned buffer
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID identifier of what dimm to get log pages from
+  @param[in] DimmID identifier of what PMem module to get log pages from
   @param[in] LogSource debug log source buffer to retrieve
   @param[in] Reserved for future use. Must be 0 for now.
   @param[out] ppDebugLogBuffer an allocated buffer containing the raw debug log
@@ -1114,15 +1114,15 @@ GetFwDebugLog(
   Set Optional Configuration Data Policy using FW command
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to set
+  @param[in] pDimmIds - pointer to array of UINT16 PMem module ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] AveragePowerReportingTimeConstantMultiplier - AveragePowerReportingTimeConstantMultiplier value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
-  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_NO_RESPONSE FW busy for one or more PMem modules
 **/
 EFI_STATUS
 EFIAPI
@@ -1136,10 +1136,10 @@ SetOptionalConfigurationDataPolicy(
   );
 
 /**
-  Get requested number of specific DIMM registers for given DIMM id
+  Get requested number of specific PMem module registers for given PMem module id
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmId ID of a DIMM.
+  @param[in] DimmId ID of a PMem module.
   @param[out] pBsr Pointer to buffer for Boot Status register, contains
               high and low 4B register.
   @param[out] Reserved
@@ -1180,12 +1180,12 @@ PassThruCommand(
   );
 
 /**
-  Attempt to format a dimm through a customer format command
+  Attempt to format a PMem module through a customer format command
 
   @param[in]  pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in]  pDimmIds is a pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
-  @param[in]  DimmIdsCount Number of items in array of DIMM IDs
-  @param[in]  Recovery - Perform on non-functional dimms
+  @param[in]  pDimmIds is a pointer to an array of PMem module IDs - if NULL, execute operation on all PMem modules
+  @param[in]  DimmIdsCount Number of items in array of PMem module IDs
+  @param[in]  Recovery - Perform on non-functional PMem modules
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
   @retval EFI_SUCCESS Success
@@ -1202,9 +1202,9 @@ DimmFormat(
   );
 
 /**
-  Get Total DCPMM Volatile, AppDirect, Unconfigured, Reserved and Inaccessible capacities
+  Get Total PMem module Volatile, AppDirect, Unconfigured, Reserved and Inaccessible capacities
 
-  @param[in]  pDimms The head of the dimm list
+  @param[in]  pDimms The head of the PMem module list
   @param[out] pRawCapacity  pointer to raw capacity
   @param[out] pVolatileCapacity  pointer to volatile capacity
   @param[out] pAppDirectCapacity pointer to appdirect capacity
@@ -1213,7 +1213,7 @@ DimmFormat(
   @param[out] pInaccessibleCapacity pointer to inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_LOAD_ERROR PCD CCUR table missing in one or more DIMMs
+  @retval EFI_LOAD_ERROR PCD CCUR table missing in one or more PMem modules
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
@@ -1228,9 +1228,8 @@ GetTotalDcpmmCapacities(
   );
 
 /**
-  Gather capacities from dimm
-
-  @param[in]  DimmPid The ID of the DIMM
+  Gather capacities from Pmem module
+  @param[in]  DimmPid The ID of the PMem module
   @param[out] pRawCapacity pointer to raw capacity
   @param[out] pVolatileCapacity pointer to volatile capacity
   @param[out] pAppDirectCapacity pointer to appdirect capacity
@@ -1278,7 +1277,7 @@ GetDDRCapacities(
   );
 
 /**
-  Calculate the total size of available memory in the DIMMs
+  Calculate the total size of available memory in the PMem modules
   according to the smbios and return the result.
 
   @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
@@ -1316,7 +1315,7 @@ GetSystemTopology(
 /**
   Get the system-wide ARS status for the persistent memory capacity of the system.
   In this function, the system-wide ARS status is determined based on the ARS status
-  values for the individual DIMMs.
+  values for the individual PMem modules.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
 
@@ -1373,7 +1372,7 @@ SetDriverPreferences(
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] DimmID DimmID of device to retrieve support data from
-  @param[out] pDdrtTrainingStatus pointer to the dimms DDRT training status
+  @param[out] pDdrtTrainingStatus pointer to the PMem modules DDRT training status
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -1416,7 +1415,7 @@ GetLongOpStatus(
   InjectError
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 Dimm ids to get data for
+  @param[in] pDimmIds - pointer to array of UINT16 PMem module ids to get data for
   @param[in] DimmIdsCount - number of elements in pDimmIds
   @param[in] ErrorInjType - Error Inject type
   @param[in] ClearStatus - Is clear status set
@@ -1450,7 +1449,7 @@ InjectError(
   OS - Get BSR value from BIOS emulated command
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID -  dimm handle of the DIMM
+  @param[in] DimmID -  PMem module handle of the PMem module
   @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
   @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
 
@@ -1467,25 +1466,25 @@ GetBSRAndBootStatusBitMask(
 );
 
 /**
-  Verify target DIMM IDs list. Fill output list of pointers to dimms.
+  Verify target DimmIds list. Fill output list of pointers to PMem modules.
 
-  If sockets were specified then get all DIMMs from these sockets.
-  If DIMM Ids were provided then check if those DIMMs exist.
-  If there are duplicate DIMM/socket Ids then report error.
-  If specified DIMMs count is 0 then take all Manageable DIMMs.
+  If sockets were specified then get all PMem modules from these sockets.
+  If PMem module Ids were provided then check if those PMem modules exist.
+  If there are duplicate PMem module/socket Ids then report error.
+  If specified PMem modules count is 0 then take all Manageable PMem modules.
   Update CommandStatus structure with any warnings/errors found.
 
-  @param[in] DimmIds An array of DIMM Ids
-  @param[in] DimmIdsCount Number of items in array of DIMM Ids
+  @param[in] DimmIds An array of PMem module Ids
+  @param[in] DimmIdsCount Number of items in array of PMem module Ids
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
   @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated on
-  the list of DCPMMs discovered.
-  @param[out] pDimms Output array of pointers to verified dimms
-  @param[out] pDimmsNum Number of items in array of pointers to dimms
+  the list of PMem modules discovered.
+  @param[out] pDimms Output array of pointers to verified PMem modules
+  @param[out] pDimmsNum Number of items in array of pointers to PMem modules
   @param[out] pCommandStatus Pointer to command status structure
 
-  @retval EFI_INVALID_PARAMETER Problem with getting specified DIMMs
+  @retval EFI_INVALID_PARAMETER Problem with getting specified PMem modules
   @retval EFI_SUCCESS All Ok
  **/
 EFI_STATUS
@@ -1502,22 +1501,22 @@ VerifyTargetDimms (
   );
 
 /**
-  Verify target DIMM IDs in list are available for SPI Flash.
+  Verify target DimmIds in list are available for SPI Flash.
 
-  If DIMM Ids were provided then check if those DIMMs exist in a SPI flashable
-  state and return list of verified dimms.
-  If specified DIMMs count is 0 then return all DIMMS that are in SPI
+  If PMem module Ids were provided then check if those PMem modules exist in a SPI flashable
+  state and return list of verified PMem modules.
+  If specified PMem modules count is 0 then return all PMem moduleS that are in SPI
   Flashable state.
   Update CommandStatus structure at the end.
 
-  @param[in] DimmIds An array of DIMM Ids
-  @param[in] DimmIdsCount Number of items in array of DIMM Ids
-  @param[out] pDimms Output array of pointers to verified dimms
-  @param[out] pDimmsNum Number of items in array of pointers to dimms
+  @param[in] DimmIds An array of PMem module Ids
+  @param[in] DimmIdsCount Number of items in array of PMem module Ids
+  @param[out] pDimms Output array of pointers to verified PMem modules
+  @param[out] pDimmsNum Number of items in array of pointers to PMem modules
   @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS Success
-  @retval EFI_NOT_FOUND a dimm in DimmIds is not in a flashable state or no dimms found
+  @retval EFI_NOT_FOUND a PMem module in DimmIds is not in a flashable state or no PMem modules found
   @retval ERROR any non-zero value is an error (more details in Base.h)
 **/
 EFI_STATUS
@@ -1531,10 +1530,10 @@ VerifyNonfunctionalTargetDimms(
 );
 
 /**
-  Examine a given DIMM to see if a long op is in progress and report it back
+  Examine a given PMem module to see if a long op is in progress and report it back
 
-  @param[in] pDimm The dimm to check the status of
-  @param[out] pNvmStatus The status of the dimm's long op status. NVM_SUCCESS = No long op status is under way.
+  @param[in] pDimm The PMem module to check the status of
+  @param[out] pNvmStatus The status of the PMem module's long op status. NVM_SUCCESS = No long op status is under way.
 
   @retval EFI_SUCCESS if the request for long op status was successful (whether a long op status is under way or not)
   @retval EFI_... the error preventing the check for the long op status
@@ -1550,7 +1549,7 @@ CheckForLongOpStatusInProgress(
   will provide the maximum number of possible return elements by updating pCount.
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID Handle of the DIMM
+  @param[in] DimmID Handle of the PMem module
   @param[in,out] pCount IN: Count is number of elements in the pCapInfo array. OUT: number of elements written to pCapInfo
   @param[out] pCapInfo Array of Command Access Policy Entries. If NULL, pCount will be updated with maximum number of elements possible. OPTIONAL
 
@@ -1567,10 +1566,10 @@ GetCommandAccessPolicy(
 );
 
 /**
-  Get Command Effect Log is used to retrieve a list DIMM FW commands and their effects on the DIMM subsystem.
+  Get Command Effect Log is used to retrieve a list PMem module FW commands and their effects on the PMem module subsystem.
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID Handle of the DIMM
+  @param[in] DimmID Handle of the PMem module
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -1586,7 +1585,7 @@ GetCommandEffectLog(
 
 #ifndef OS_BUILD
 /**
-  This function makes calls to the dimms required to initialize the driver.
+  This function makes calls to the PMem modules required to initialize the driver.
 
   @retval EFI_SUCCESS if no errors.
   @retval EFI_xxxx depending on error encountered.

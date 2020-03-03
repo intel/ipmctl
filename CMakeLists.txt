@@ -18,7 +18,7 @@ set(LIBIPMCTL_VERSION_MINOR 0)
 set(LIBIPMCTL_VERSION_PATCH 0)
 set(LIBIPMCTL_VERSION_STRING ${LIBIPMCTL_VERSION_MAJOR}.${LIBIPMCTL_VERSION_MINOR}.${LIBIPMCTL_VERSION_PATCH})
 
-set(IPMCTL_VERSION_MAJOR 01)
+set(IPMCTL_VERSION_MAJOR 02)
 set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
@@ -43,7 +43,7 @@ else()
 	endif()
 
 	if(NOT GIT_FOUND OR ${GIT_RETURN_CODE})
-		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.9999)
+		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.3722)
 	endif()
 endif()
 
@@ -640,11 +640,11 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 
 	set(DOCUMENTATION_INPUT_FILES
 		${ROOT}/Documentation/ipmctl/ipmctl.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-device.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-memory-resources.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-socket.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilities.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-topology.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-device.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-memory-resources.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-socket.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-system-capabilities.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-topology.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-create-goal.txt

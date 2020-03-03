@@ -1542,7 +1542,7 @@ NvmDimmDriverDriverBindingStart(
       goto FinishSkipClose;
    }
 
-   gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelDCPersistentMemoryDriverStrings, NULL);
+   gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelOptanePMemDriverStrings, NULL);
    if (gNvmDimmData->HiiHandle == NULL) {
       NVDIMM_WARN("Unable to add string package to Hii");
       goto Finish;

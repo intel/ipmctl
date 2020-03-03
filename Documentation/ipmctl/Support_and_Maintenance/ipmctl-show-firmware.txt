@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -firmware [TARGETS]
 
 DESCRIPTION
 -----------
-Shows detailed information about the firmware on one or more DCPMMs.
+Shows detailed information about the firmware on one or more PMem modules.
 
 OPTIONS
 -------
@@ -55,13 +55,13 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to the firmware information for specific DCPMMs by supplying
-  one or more comma-separated DCPMM identifiers. The default is to display the
-  firmware information for all manageable DCPMMs.
+  Restricts output to the firmware information for specific PMem modules by supplying
+  one or more comma-separated PMem module identifiers. The default is to display the
+  firmware information for all manageable PMem modules.
 
 EXAMPLES
 --------
-Shows the firmware information for all DCPMMs in the server.
+Shows the firmware information for all PMem modules in the server.
 [verse]
 ipmctl show -dimm -firmware
 
@@ -71,7 +71,7 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -79,7 +79,7 @@ The default behavior is to display a table with the default attributes listed
 below; the options can be used to expand or restrict the output.
 
 DimmID::
-  (Default) The DCPMM identifier
+  (Default) The PMem module identifier
 
 ActiveFWVersion::
   (Default) The BCD-formatted revision of the active firmware in the format

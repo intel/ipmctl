@@ -56,7 +56,7 @@ struct Command SetDimmCommand =
     {AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FALSE, ValueRequired},
     {AVG_PWR_REPORTING_TIME_CONSTANT, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY, FALSE, ValueRequired}
     }, //!< properties
-    L"Set properties of one or more DCPMMs, such as device security and modify device.",                          //!< help
+    L"Set properties of one or more " PMEM_MODULES_STR L", such as device security and modify device.",                          //!< help
   SetDimm,
   TRUE
 };
@@ -647,13 +647,13 @@ SetDimm(
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
           goto Finish;
         }
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on " PMEM_MODULE_STR L" (" FORMAT_STR L").", DimmStr);
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
             &pDimmIds[Index], 1, pAvgPowerReportingTimeConstantMult, pAvgPowerReportingTimeConstant, pCommandStatus);
         } else {
-          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
+          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on " PMEM_MODULE_STR L" (" FORMAT_STR L")\n", DimmStr);
           continue;
         }
       }

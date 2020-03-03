@@ -106,7 +106,7 @@ struct Command ShowGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Show a pending memory allocation goal on one or more DCPMMs to be applied on reboot.",            //!< help
+  L"Show a pending memory allocation goal on one or more " PMEM_MODULES_STR L" to be applied on reboot.",            //!< help
   ShowGoal,
   TRUE,                                                                 //!< enable print control support
 };

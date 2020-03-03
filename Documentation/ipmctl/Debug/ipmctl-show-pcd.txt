@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-pcd - Shows the platform configuration data for one or more DCPMMs
+ipmctl-show-pcd - Shows the platform configuration data for one or more PMem modules
 
 SYNOPSIS
 --------
@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -pcd [TARGETS]
 
 DESCRIPTION
 -----------
-Shows the platform configuration data for one or more DCPMMs.
+Shows the platform configuration data for one or more PMem modules.
 
 OPTIONS
 -------
@@ -44,9 +44,9 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to the platform configuration data on specific DCPMMs by
-  supplying one or more comma-separated DCPMM identifiers. The default is to
-  display the platform configuration data for all manageable DCPMMs.
+  Restricts output to the platform configuration data on specific PMem modules by
+  supplying one or more comma-separated PMem module identifiers. The default is to
+  display the platform configuration data for all manageable PMem modules.
 
 -pcd [Config|LSA]::
   Restricts output to a specific partition of the platform configuration data.
@@ -57,20 +57,20 @@ TARGETS
 EXAMPLES
 --------
 Shows the configuration information from the platform configuration data for all
-manageable DCPMMs.
+manageable PMem modules.
 [verse]
 ipmctl show -dimm -pcd
 
 Shows the configuration information from the platform configuration data for
-DCPMM 0x1.
+PMem module 0x1.
 [verse]
 ipmctl show -dimm -pcd Config
 
 LIMITATIONS
 -----------
-The specified DCPMM(s) must be manageable by the host software.
+The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
 Returns the formatted data from the requested platform configuration data for
-the specified DCPMMs for debugging and troubleshooting purposes.
+the specified PMem modules for debugging and troubleshooting purposes.

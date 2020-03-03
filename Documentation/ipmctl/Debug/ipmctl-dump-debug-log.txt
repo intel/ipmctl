@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -9,7 +9,7 @@ endif::manpage[]
 NAME
 ----
 ipmctl-dump-debug-log - Dumps encoded firmware debug logs from specified
-DCPMMs and optionally decodes to human readable text.
+PMem modules and optionally decodes to human readable text.
 
 SYNOPSIS
 --------
@@ -18,11 +18,11 @@ ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug [TARGETS]
 
 DESCRIPTION
 -----------
-Dumps encoded firmware debug logs from specified DCPMMs and optionally
+Dumps encoded firmware debug logs from specified PMem modules and optionally
 decodes to human readable text using a dictionary file.
 
 ifndef::os_build[]
-NOTE: For any non-functional DCPMMs logs will be retreived via SMBus.
+NOTE: For any non-functional PMem modules logs will be retreived via SMBus.
 endif::os_build[]
 
 OPTIONS
@@ -51,7 +51,7 @@ TARGET
 ------
 -destination (file_prefix)::
   The command will create files that use the given filename as a prefix
-  and append the DCPMM UID, DCPMM handle, debug log source, and the appropriate
+  and append the PMem module UID, PMem module handle, debug log source, and the appropriate
   file type (.bin for encoded logs, .txt for decoded logs) onto the end.
 [verse]
 file_prefix_Uid_Handle_logsource.[bin,txt]
@@ -66,24 +66,24 @@ file_prefix_Uid_Handle_logsource.[bin,txt]
   nlog_dict.X.X.X.XXXX.txt.
 
 -dimm [DimmIDs]::
-  Dumps the debug logs from the specified DCPMMs.
+  Dumps the debug logs from the specified PMem modules.
 
 EXAMPLES
 --------
-Dumps and decodes the debug log from DCPMM 0x0001 and 0x0011 using the
+Dumps and decodes the debug log from PMem module 0x0001 and 0x0011 using the
 dictionary file.
 [verse]
 ipmctl dump -destination file_prefix -dict nlog_dict.txt -debug -dimm 0x0001,0x0011
 
 LIMITATIONS
 -----------
-To successfully execute this command, the specified DCPMM(s) must be manageable
+To successfully execute this command, the specified PMem modules must be manageable
 by the host software.
 
 RETURN DATA
 -----------
 Dumps the encoded and optionally decoded contents of all 3 firmware debug log
-sources for the specified DCPMMs. Output file names are generated based on the
+sources for the specified PMem modules. Output file names are generated based on the
 -destination parameter above.
 
 SAMPLE OUTPUT

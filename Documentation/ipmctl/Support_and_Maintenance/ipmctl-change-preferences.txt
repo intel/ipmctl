@@ -17,7 +17,7 @@ ipmctl set [OPTIONS] -preferences [PROPERTIES]
 
 DESCRIPTION
 -----------
-Modifies one or more user preferences in the DCPMM software.
+Modifies one or more user preferences in the PMem module software.
 
 OPTIONS
 -------
@@ -42,7 +42,7 @@ endif::os_build[]
 PROPERTIES
 ----------
 CLI_DEFAULT_DIMM_ID::
-  The default display of DCPMM identifiers. One of:
+  The default display of PMem module identifiers. One of:
   - "UID": Use the DimmUID attribute as defined in the section
   *_Show Device_*.
   - "HANDLE": Use the DimmHandle attribute as defined in section
@@ -76,9 +76,9 @@ preference cannot be changed.
 
 ifdef::os_build[]
 DBG_LOG_LEVEL::
-  Whether debug logging is enabled in the DCPMM host software. These logs
+  Whether debug logging is enabled in the PMem module host software. These logs
   pertain to the operation of the command-line tool only and do not reflect any
-  logging functionality of the DCPMM. One of:
+  logging functionality of the PMem module. One of:
   - "0": Logging is disabled. This is the default.
   - "1": Log Errors.
   - "2": Log Warnings, Errors.
@@ -88,7 +88,7 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Use DimmUID as the default DCPMM identifier, and display all capacities in bytes.
+Use DimmUID as the default PMem module identifier, and display all capacities in bytes.
 [verse]
 ipmctl set -preferences CLI_DEFAULT_DIMM_ID=UID CLI_DEFAULT_SIZE=B
 

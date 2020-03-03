@@ -418,10 +418,10 @@ PrintPcatTable(
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L" & Runtime Interface for config validation");
       }
       if (DcpmmMgmtSWConfigInputSupport != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, DcpmmMgmtSWConfigInputSupport);
       } else {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport);
       }
       FREE_POOL_SAFE(DcpmmMgmtSWConfigInputSupport);
@@ -463,10 +463,10 @@ PrintPcatTable(
     } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"Yes");
       } else {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DcpmmMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"No");
       }
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
@@ -488,9 +488,9 @@ PrintPcatTable(
       }
       FREE_POOL_SAFE(CurrentMemoryMode);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
-        L"-Per Die", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie);
+        L"-Per CPU Die", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
-        L"-Per DCPMM", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
+        L"-Per PMem module", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
       if (MaxPMInterleaveSets != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR L"\n",
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16, MaxPMInterleaveSets);
@@ -552,9 +552,9 @@ PrintPcatTable(
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH, pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
-        L"-Per Die", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDie);
+        L"-Per CPU Die", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDie);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
-        L"-Per DCPMM", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDcpmm);
+        L"-Per PMem module", pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.MaxInterleaveSetsSplit.PerDcpmm);
       if (MaxPMInterleaveSets != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSetsPerMemType", FORMAT_HEX_NOWIDTH FORMAT_STR L"\n",
           pMemoryInterleaveCapabilityInfoTable->MaxInterleaveSetsPerMemType.AsUint16, MaxPMInterleaveSets);

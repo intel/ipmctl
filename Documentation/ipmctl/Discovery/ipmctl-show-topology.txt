@@ -1,0 +1,118 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-topology(1)
+=======================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-topology - Shows the topology of the memory installed
+
+SYNOPSIS
+--------
+[verse]
+ipmctl show [OPTIONS] -topology [TARGETS]
+
+DESCRIPTION
+-----------
+Shows the topology of the memory installed in the host server. Use the command
+ipmctl-show-device to view more detailed information about a PMem module.
+
+OPTIONS
+-------
+-a::
+-all::
+  Shows all attributes.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Restricts output to specific PMem modules by optionally supplying the PMem module target and one or
+  more comma-separated PMem module identifiers. The default is to display all PMem modules.
+
+-socket [SocketIDs]::
+  Restricts output to the PMem modules installed on specific sockets by supplying the
+  socket target and one or more comma-separated socket identifiers. The default
+  is to display all sockets.
+
+NOTE: If ACPI PMTT table is not present, then DDR4 memory will not be
+displayed in the filtered socket list.
+
+EXAMPLES
+--------
+Displays the system memory topology.
+[verse]
+ipmctl show -topology
+
+RETURN DATA
+-----------
+Displays a table with the attributes listed below for each memory PMem module installed
+in the host server.
+
+MemoryType::
+  (Default) The DIMM type. One of:
+  - Unknown
+  - DDR4
+  - Logical Non-volatile Device
+
+Capacity::
+  (Default) The raw capacity of the PMem module as reported in the SMBIOS Type 17
+  table.
+
+DimmID::
+  (Default) The DIMM identifier. For DRAM DIMMs, the DimmID is "N/A".
+
+PhysicalID::
+  (Default) The PMem module physical identifier (i.e., SMBIOS Type 17 handle).
+
+DeviceLocator::
+  (Default) The string that identifies the physically-labeled socket or board
+  position where the PMem module is located.
+
+SocketID::
+  The processor socket identifier (i.e., NUMA node) where the PMem module is installed.
+
+DieID::
+  The processor die identifier where the PMem module is installed.
+
+MemControllerID::
+  The associated memory controller identifier.
+
+ChannelID::
+  The associated channel. For DRAM DIMMs, the channel identifier is "N/A".
+
+ChannelPos::
+  The PMem module position in the channel.
+
+NodeControllerID::
+  The node controller identifier.
+
+BankLabel::
+  The string that identifies the physically-labeled bank where the PMem module is
+  located.

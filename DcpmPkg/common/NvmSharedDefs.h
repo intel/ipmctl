@@ -24,15 +24,15 @@ typedef enum _NvmStatusCode {
   NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid parameter
   NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Commnand not supported by this SKU
 
-  NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: DIMM not found
-  NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: DIMM ID duplicated
+  NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: PMem module not found
+  NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: PMem module ID duplicated
   NVM_ERR_SOCKET_ID_NOT_VALID                       = 13,   ///< Error: Socket ID not valid
-  NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with dimm ID
+  NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with PMem module ID
   NVM_ERR_SOCKET_ID_DUPLICATED                      = 15,   ///< Error: Socket ID duplicated
   NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
-  NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable DIMM not found
-  NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable DIMMs due to all DIMMs being unmanageable, non-functional, or having a population issue
-  NVM_ERR_DIMM_EXCLUDED                             = 19,   ///< Error: DIMM excluded as it is unmanageable, non-functional, or has a population issue.
+  NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable PMem module not found
+  NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable PMem modules due to all PMem modules being unmanageable, non-functional, or having a population issue
+  NVM_ERR_DIMM_EXCLUDED                             = 19,   ///< Error: PMem module excluded as it is unmanageable, non-functional, or has a population issue.
 
   NVM_ERR_PASSPHRASE_NOT_PROVIDED                   = 30,   ///< Error: Passphrase not provided
   NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED               = 31,   ///< Error: New passphrase not provided
@@ -46,11 +46,11 @@ typedef enum _NvmStatusCode {
   NVM_ERR_INCONSISTENT_SECURITY_STATE               = 40,   ///< Error: Inconsistent security state
   NVM_ERR_INVALID_PASSPHRASE                        = 41,   ///< Error: Invalid passphrase
   NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED            = 42,   ///< Error: Security count for user passphrase expired
-  NVM_ERR_SPI_ACCESS_NOT_ENABLED                    = 43,   ///< Error: DCPMM SPI access not enabled
+  NVM_ERR_SPI_ACCESS_NOT_ENABLED                    = 43,   ///< Error: PMem module SPI access not enabled
   NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS             = 44,   ///< Error: Namespace exists - cannot execute request
   NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED          = 45,   ///< Error: Security count for master passphrase expired
 
-  NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING     = 59,   ///< Error: Image not compatible with this DCPMM
+  NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING     = 59,   ///< Error: Image not compatible with this PMem module
   NVM_ERR_FILENAME_NOT_PROVIDED                     = 60,   ///< Error: Filename not provided
   NVM_SUCCESS_IMAGE_EXAMINE_OK                      = 61,   ///< Success: Image OK
   NVM_ERR_IMAGE_FILE_NOT_VALID                      = 62,   ///< Error: Image file not valid
@@ -76,13 +76,13 @@ typedef enum _NvmStatusCode {
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode
   NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED = 100,  ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Non-Interleaved mode
   NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interlaeved mode request when MaxPMInterleaveSetsPerDie limit exceeeded
-  NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED        = 102,  ///< Error: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation (error if existing regions + new region goals for specific DIMMs greater then MaxPMInterleaveSetsPerDie limit)
+  NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED        = 102,  ///< Error: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation (error if existing regions + new region goals for specific PMem modules greater then MaxPMInterleaveSetsPerDie limit)
   NVM_WARN_2LM_MODE_OFF                             = 103,  ///< Error: MemoryMode off
   NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config
-  NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM      = 106,  ///< Error: Goal config affects unspecified DIMM
-  NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM      = 107,  ///< Error: Current config affects unspecified DIMM
-  NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM = 108,  ///< Error: Current and goal config affects unspecified DIMM
+  NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM      = 106,  ///< Error: Goal config affects unspecified PMem module
+  NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM      = 107,  ///< Error: Current config affects unspecified PMem module
+  NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM = 108,  ///< Error: Current and goal config affects unspecified PMem module
   NVM_ERR_REGION_CONF_APPLYING_FAILED               = 109,  ///< Error: Failed to apply goal
   NVM_ERR_REGION_CONF_UNSUPPORTED_CONFIG            = 110,  ///< Error: Unsupported config
 
@@ -96,28 +96,28 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES    = 118,   ///< Error: Platform does not support default interleave sizes
   NVM_ERR_REGION_NOT_HEALTHY                          = 119, ///< Error: Region not healthy
   NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namesapce
-  NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on DIMM
-  NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve DIMM requires at least 2 DIMMs
+  NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on PMem module
+  NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve PMem module requires at least 2 PMem modules
   NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS                = 124, ///< Error: Namespace exists
   NVM_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY  = 125, ///< Error: Remaining size not in last property
-  NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS     = 126,  ///< Error: Persistent memory must be applied to all DIMMs
+  NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS     = 126,  ///< Error: Persistent memory must be applied to all PMem modules
   NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU        = 127,  ///< Warning: Mapped memory reduced due to CPU SKU limit
   NVM_ERR_REGION_GOAL_AUTO_PROV_ENABLED             = 128,  ///< Error: Automatic provision enabled
   NVM_ERR_CREATE_NAMESPACE_NOT_ALLOWED              = 129,  ///< Error: Create namespace not allowed
 
   NVM_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED          = 130,  ///< Error: Failed to open file with write mode
-  NVM_ERR_DUMP_NO_CONFIGURED_DIMMS                  = 131,  ///< Error: No configured DIMMs
+  NVM_ERR_DUMP_NO_CONFIGURED_DIMMS                  = 131,  ///< Error: No configured PMem modules
   NVM_ERR_DUMP_FILE_OPERATION_FAILED                = 132,  ///< Error: File IO failed
 
   NVM_ERR_LOAD_VERSION                              = 140,  ///< Error: Invalid version
   NVM_ERR_LOAD_INVALID_DATA_IN_FILE                 = 141,  ///< Error: Invalid data in file
   NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE              = 142,  ///< Error: Improper config in file
-  NVM_ERR_LOAD_DIMM_COUNT_MISMATCH                  = 148,  ///< Error: Mismatch in DIMMs
+  NVM_ERR_LOAD_DIMM_COUNT_MISMATCH                  = 148,  ///< Error: Mismatch in PMem modules
 
   NVM_ERR_DIMM_SKU_MODE_MISMATCH                    = 151,  ///< Error: SKU mode mismatch
   NVM_ERR_DIMM_SKU_SECURITY_MISMATCH                = 152,  ///< Error: SKU security mismatch
 
-  NVM_ERR_NONE_DIMM_FULFILLS_CRITERIA               = 168,  ///< Error: No DIMM matches request
+  NVM_ERR_NONE_DIMM_FULFILLS_CRITERIA               = 168,  ///< Error: No PMem module matches request
   NVM_ERR_UNSUPPORTED_BLOCK_SIZE                    = 171,  ///< Error: Unsupported block size
   NVM_ERR_INVALID_NAMESPACE_CAPACITY                = 174,  ///< Error: Invalid namespace capacity
   NVM_ERR_NOT_ENOUGH_FREE_SPACE                     = 175,  ///< Error: Not enough free space
@@ -151,9 +151,9 @@ typedef enum _NvmStatusCode {
   NVM_ERR_FW_SET_OPTIONAL_DATA_POLICY_FAILED        = 230,  ///< Error: Set data policy failed
   NVM_ERR_INVALID_OPTIONAL_DATA_POLICY_STATE        = 231,  ///< Error: Invalid data policy state
 
-  NVM_ERR_FAILED_TO_GET_DIMM_INFO                   = 235,  ///< Error: Failed to get DIMM info
+  NVM_ERR_FAILED_TO_GET_DIMM_INFO                   = 235,  ///< Error: Failed to get PMem module info
 
-  NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS              = 240,  ///< Error: Failed to get DIMM registers
+  NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS              = 240,  ///< Error: Failed to get PMem module registers
   NVM_ERR_SMBIOS_DIMM_ENTRY_NOT_FOUND_IN_NFIT       = 241,  ///< Error:  SMBIOS entry not found in NFIT
 
   NVM_OPERATION_IN_PROGRESS                         = 250,  ///< Error: Operation in progress
@@ -201,8 +201,8 @@ typedef enum _NvmStatusCode {
   NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: the FW was unable to stage and no long op code was recoverable
   NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
-  NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when dimm that are different generations
-  NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy dimm
+  NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when PMem module that are different generations
+  NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy PMem module
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

@@ -39,7 +39,7 @@ struct Command ShowSystemCapabilitiesCommand = {
     {CAPABILITIES_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                      //!< properties
-  L"Show the platform supported DCPMM capabilities.",
+  L"Show the platform supported " PMEM_MODULE_STR L" capabilities.",
   ShowSystemCapabilities,
   TRUE
 };

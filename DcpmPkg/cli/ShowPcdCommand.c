@@ -35,7 +35,7 @@ struct Command ShowPcdCommand =
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                    //!< properties
-  L"Show platform configuration data (PCD) stored on one or more DCPMMs.",    //!< help
+  L"Show platform configuration data (PCD) stored on one or more " PMEM_MODULES_STR L".",    //!< help
   ShowPcd,
   TRUE
 };

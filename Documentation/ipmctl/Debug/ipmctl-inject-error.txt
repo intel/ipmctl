@@ -17,7 +17,7 @@ ipmctl set [OPTIONS] -dimm [TARGETS] [PROPERTIES]
 
 DESCRIPTION
 -----------
-Injects an error or clears a previously injected error on one or more DCPMM for
+Injects an error or clears a previously injected error on one or more PMem module for
 testing purposes.
 
 OPTIONS
@@ -43,9 +43,9 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Injects or clears an error on specific DCPMMs by supplying one or more comma
-  separated DCPMM identifiers. The default is to inject the error on all
-  manageable DCPMMs.
+  Injects or clears an error on specific PMem modules by supplying one or more comma
+  separated PMem module identifiers. The default is to inject the error on all
+  manageable PMem modules.
 
 PROPERTIES
 ----------
@@ -56,9 +56,9 @@ Clear::
   one of the other properties indicating the previously injected error to clear.
 
 Temperature::
-  Injects an artificial media temperature in degrees Celsius into the DCPMM. The
-  firmware that is monitoring the temperature of the DCPMM will then be alerted
-  and take necessary precautions to preserve the DCPMM. The value is injected
+  Injects an artificial media temperature in degrees Celsius into the PMem module. The
+  firmware that is monitoring the temperature of the PMem module will then be alerted
+  and take necessary precautions to preserve the PMem module. The value is injected
   immediately and will override the firmware from reading the actual media
   temperature of the device and use this value instead which may cause adverse
   reactions by the firmware and result in an alert or log.
@@ -66,9 +66,9 @@ Temperature::
 NOTE: The injected temperature value will remain until the next reboot or until it is cleared.
 The media temperature is an artificial temperature and will not cause harm to the
 part. Although firmware actions due to improper temperature injections may
-cause adverse effects on the DCPMM. +
+cause adverse effects on the PMem module. +
 If the Critical Shutdown Temperature, or higher, is passed in, this may cause the
-DCPMM firmware to perform a shutdown in order to preserve the part and
+PMem module firmware to perform a shutdown in order to preserve the part and
 data. +
 The temperature value will be ignored on clear.
 
@@ -103,11 +103,11 @@ memory type, an error is returned.
 
 PackageSparing::
   - "1": Triggers an artificial package sparing. If package sparing is enabled
-  and the DCPMM still has spares remaining, this will cause the firmware to
+  and the PMem module still has spares remaining, this will cause the firmware to
   report that there are no spares remaining.
 
 PercentageRemaining::
-  Injects an artificial percentage remaining value into the DCPMM. This
+  Injects an artificial percentage remaining value into the PMem module. This
   will cause the firmware to take appropriate action based on the value and if
   necessary generate an error log, an alert, and update the health status.
 
@@ -128,81 +128,81 @@ DirtyShutdown::
 
 EXAMPLES
 --------
-Sets the media temperature on all manageable DCPMMs to 50 degrees
+Sets the media temperature on all manageable PMem modules to 50 degrees
 Celsius.
 [verse]
 ipmctl set -dimm Temperature=50
 
-Clears the injected media temperature on all manageable DCPMMs.
+Clears the injected media temperature on all manageable PMem modules.
 [verse]
 ipmctl set -dimm Clear=1 Temperature=1
 
-Poison address 0x10000200 on DCPMM 1234.
+Poison address 0x10000200 on PMem module 1234.
 [verse]
 ipmctl set -dimm 1234 Poison=0x10000200
 
-Clears the injected poison of address 0x10000200 on DCPMM 1234.
+Clears the injected poison of address 0x10000200 on PMem module 1234.
 [verse]
 ipmctl set -dimm 1234 Poison=0x10000200 Clear=1
 
-Triggers an artificial package sparing on all manageable DCPMMs.
+Triggers an artificial package sparing on all manageable PMem modules.
 [verse]
 ipmctl set -dimm PackageSparing=1
 
-Sets the life remaining percentage on all manageable DCPMMs to 10%.
+Sets the life remaining percentage on all manageable PMem modules to 10%.
 [verse]
 ipmctl set -dimm PercentageRemaining=10
 
-Clears the injected remaining life percentage on all manageable DCPMMs. The
+Clears the injected remaining life percentage on all manageable PMem modules. The
 value of PercentageRemaining is irrelevant.
 [verse]
 ipmctl set -dimm PercentageRemaining=10 Clear=1
 
-Triggers an artificial ADR failure on all manageable DCPMM s resulting in a dirty
-shutdown on each DCPMM on the next reboot.
+Triggers an artificial ADR failure on all manageable PMem module s resulting in a dirty
+shutdown on each PMem module on the next reboot.
 [verse]
 ipmctl set -dimm DirtyShutdown=1
 
 LIMITATIONS
 -----------
-This command is available only when error injection is enabled on the DCPMM(s)
-in the BIOS. To successfully execute this command, the specified DCPMM(s) must
+This command is available only when error injection is enabled on the PMem modules
+in the BIOS. To successfully execute this command, the specified PMem modules must
 be manageable by the host software.
 
 RETURN DATA
 -----------
-For each DCPMM, the CLI will indicate the status of the operation. If a failure
-occurs when injecting an error on multiple DCPMMs, the process will continue
-with the remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the operation. If a failure
+occurs when injecting an error on multiple PMem modules, the process will continue
+with the remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------
 [verse]
-Set temperature on DCPMM (DimmID): Success|Error (Code) -
+Set temperature on PMem module (DimmID): Success|Error (Code) -
 (Description)
-Clear injected temperature on DCPMM (DimmID): Success|Error
+Clear injected temperature on PMem module (DimmID): Success|Error
 (Code) - (Description)
 
 [verse]
-Poison address (Address) on DCPMM (DimmID): Success|Error
+Poison address (Address) on PMem module (DimmID): Success|Error
 (Code) - (Description)
-Clear injected poison of address (Address) on DCPMM
+Clear injected poison of address (Address) on PMem module
 (DimmID): Success|Error (Code) - (Description)
 
 [verse]
-Trigger package sparing on DCPMM (DimmID): Success|Error
+Trigger package sparing on PMem module (DimmID): Success|Error
 (Code) - (Description)
-Clear injected package sparing on DCPMM (DimmID):
+Clear injected package sparing on PMem module (DimmID):
 Success|Error (Code) - (Description)
 
 [verse]
-Trigger a spare capacity alarm on DCPMM (DimmID):
+Trigger a spare capacity alarm on PMem module (DimmID):
 Success|Error (Code) - (Description)
-Clear injected spare capacity alarm on DCPMM (DimmID):
+Clear injected spare capacity alarm on PMem module (DimmID):
 Success|Error (Code) - (Description)
 
 [verse]
-Create a media fatal error on DCPMM (DimmID): Success|Error
+Create a media fatal error on PMem module (DimmID): Success|Error
 (Code) - (Description)
-Clear injected media fatal error on DCPMM (DimmID):
+Clear injected media fatal error on PMem module (DimmID):
 Success|Error (Code) - (Description)

@@ -30,7 +30,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ARGS_STR                L"Args"
 #define TAG_STR                     L"Tag"
 #define DDR_STR                     L"DDR"
-#define DCPMM_STR                   L"DCPMM"
+// Find PMEM_MODULE_STR in CommandParser.h
 #define TOTAL_STR                   L"Total"
 #define MEMORY_TYPE_STR             L"MemoryType"
 
@@ -76,8 +76,8 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMM_CONFIG2_PROTOCOL not found."
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
-#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."
-#define CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET            L"Error: None of the specified dimm(s) belong to the specified socket(s)."
+#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no " PMEM_MODULES_STR L" on the specified socket(s)."
+#define CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET            L"Error: None of the specified " PMEM_MODULE_STR L"(s) belong to the specified socket(s)."
 #define CLI_ERR_INVALID_SOCKET_ID             L"Error: The socket identifier is not valid."
 #define CLI_ERR_OUT_OF_MEMORY                 L"Error: There is not enough memory to complete the requested operation."
 #define CLI_ERR_WRONG_FILE_PATH               L"Error: Wrong file path."
@@ -91,7 +91,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_POPULATION_VIOLATION          L"Error: The specified device is in population violation."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
-#define CLI_ERR_OPENING_PBR_PROTOCOL            L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
+#define CLI_ERR_OPENING_PBR_PROTOCOL          L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
 #define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%d"
 #define CLI_ERR_NMFM_UPPER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is above the recommended NM:FM limit of 1:%d"
 
@@ -155,11 +155,11 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
 
-#define CLI_INFO_NO_DIMMS                                     L"No DIMMs in the system."
-#define CLI_INFO_NO_FUNCTIONAL_DIMMS                          L"No functional DIMMs in the system."
+#define CLI_INFO_NO_DIMMS                                     L"No " PMEM_MODULES_STR L" in the system."
+#define CLI_INFO_NO_FUNCTIONAL_DIMMS                          L"No functional " PMEM_MODULES_STR L" in the system."
 #define CLI_INFO_NO_REGIONS                                   L"There are no Regions defined in the system."
-#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable DIMMs in the system."
-#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional DIMMs in the system."
+#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable " PMEM_MODULES_STR L" in the system."
+#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional " PMEM_MODULES_STR L" in the system."
 #define CLI_INFO_SHOW_REGION                                  L"Show Region"
 #define CLI_INFO_NO_NAMESPACES_DEFINED                        L"No Namespaces defined in the system."
 #define CLI_INFO_SHOW_NAMESPACE                               L"Show Namespace"
@@ -167,10 +167,10 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DELETE_NAMESPACE                             L"Delete Namespace"
 #define CLI_INFO_DUMP_DEBUG_LOG                               L"Dump Debug Log"
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
-#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the DIMMs on the next reboot."
+#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the " PMEM_MODULES_STR L" on the next reboot."
 #define CLI_INFO_SHOW_REGISTER                                L"Show Register"
 
-#define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified dimms."
+#define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified " PMEM_MODULES_STR L"."
 #define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."
 #define CLI_ERR_DEFAULT_OPTION_NOT_COMBINED                       L"Syntax Error: Default option should be given in combination with master option."
 #define CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER  L"Syntax Error: Passphrase property and default option cannot be used together."
@@ -178,7 +178,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
 #define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
-#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the DIMMs."
+#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the " PMEM_MODULES_STR L"."
 #define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
 #define CLI_INJECT_ERROR_FAILED                                   L"Error: Inject error command failed"
@@ -190,9 +190,9 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_INFO_LOAD_FW                                      L"Load FW"
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
-#define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
+#define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified " PMEM_MODULE_STR L" does not exist or is not in a non-functional state."
 #define CLI_INFO_ON                                           L" on"
-#define CLI_PROGRESS_STR                                      L"\rOperation on DIMM 0x%04x Progress: %d%%"
+#define CLI_PROGRESS_STR                                      L"\rOperation on " PMEM_MODULE_STR L" 0x%04x Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"
 #define CLI_INJECT_MFG                                        L"MFG Inject command"
@@ -225,14 +225,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE                  L"Unable to retrieve user display preferences."
 
-#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM " FORMAT_STR L"?"
+#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on " PMEM_MODULE_STR L" " FORMAT_STR L"?"
 
-#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm:"
+#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover " PMEM_MODULE_STR L":"
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
-#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
+#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on " PMEM_MODULE_STR L" "
 #define CLI_INFO_START_FORMAT                                 L"Format"
-#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting DIMM(s)..."
+#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting " PMEM_MODULE_STR L"(s)..."
 
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
 #define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL

@@ -37,7 +37,7 @@ struct Command DeletePcdCommand =
     , TRUE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                         //!< properties
-  L"Clear the namespace LSA partition on one or more DCPMMs.",                     //!< help
+  L"Clear the namespace LSA partition on one or more " PMEM_MODULES_STR L".",                     //!< help
   DeletePcdCmd,
   TRUE                                                                             //!< enable print control support
 };
@@ -172,7 +172,7 @@ DeletePcdCmd(
 #ifdef OS_BUILD
     ReturnCode = EFI_INVALID_PARAMETER;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCORRECT_VALUE_TARGET_PCD);
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode,  L"LSA option not available. Refer to your OSV tools for DCPMM namespace management.");
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode,  L"LSA option not available. Refer to your OSV tools for " PMEM_MODULE_STR L" namespace management.");
     goto Finish;
 #endif
     ConfigIdMask |= DELETE_PCD_CONFIG_LSA_MASK;
@@ -238,7 +238,7 @@ DeletePcdCmd(
 
   if (!Force) {
     PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"WARNING: Modifying the Platform Configuration Data can result in loss of data!\n");
-    PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Clear " FORMAT_STR L"partition(s) on %d DIMM(s).", pDisplayTargets, DimmIdsCount);
+    PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Clear " FORMAT_STR L"partition(s) on %d " PMEM_MODULE_STR L"(s).", pDisplayTargets, DimmIdsCount);
     ReturnCode = PromptYesNo(&Confirmation);
     if (EFI_ERROR(ReturnCode) || !Confirmation) {
       ReturnCode = EFI_NOT_STARTED;
@@ -277,7 +277,7 @@ DeletePcdCmd(
     }
 
     if (DimmInNamespace) {
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"DIMM " FORMAT_STR L" is a member of a Namespace. Will not delete data from this DIMM.", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" is a member of a Namespace. Will not delete data from this " PMEM_MODULE_STR ".", DimmStr);
       SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
     } else {
       pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;

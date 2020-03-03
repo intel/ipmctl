@@ -96,6 +96,10 @@ typedef union {
 #define FW_UPDATE_OPCODE    0x09
 #define FW_UPDATE_SUBOPCODE 0x00
 
+// Product name string values
+#define PMEM_MODULE_STR             L"PMem module"
+#define PMEM_MODULES_STR            PMEM_MODULE_STR L"s"
+
 // Last shutdown status string values
 #define LAST_SHUTDOWN_STATUS_PM_ADR_STR               L"PM ADR Command Received"
 #define LAST_SHUTDOWN_STATUS_PM_S3_STR                L"PM S3 Received"

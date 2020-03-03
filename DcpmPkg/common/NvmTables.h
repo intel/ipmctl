@@ -5,7 +5,7 @@
 
  /**
  * @file NvmTables.h
- * @brief ACPI Data Types for EFI_NVMDIMMS_CONFIG_PROTOCOL.
+ * @brief ACPI Data Types for EFI_DCPMM_CONFIG2_PROTOCOL.
  */
 
 #ifndef _NVMTABLES_H_
@@ -167,7 +167,7 @@ typedef struct {
 /** NFIT Device Handle */
 typedef union {
   struct {
-    UINT32 DimmNumber:4;          ///< DIMM Number
+    UINT32 DimmNumber:4;          ///< PMem module Number
     UINT32 MemChannel:4;          ///< Memory Channel
     UINT32 MemControllerId:4;     ///< Memory Controller ID
     UINT32 SocketId:4;            ///< Socket ID
@@ -177,10 +177,10 @@ typedef union {
   UINT32 AsUint32;                ///< Combined value
 } NfitDeviceHandle;
 
-/** DIMM Region table */
+/** PMem module Region table */
 typedef struct {
   SubTableHeader Header;                              ///< Header
-  NfitDeviceHandle DeviceHandle;                      ///< DIMM Handle
+  NfitDeviceHandle DeviceHandle;                      ///< PMem module Handle
   UINT16 NvDimmPhysicalId;                            ///< Physical ID
   UINT16 NvDimmRegionalId;                            ///< Region ID
   UINT16 SpaRangeDescriptionTableIndex;               ///< SPA Range Description table index
@@ -567,7 +567,7 @@ typedef struct {
    CH0 | 0b000001 | 0b000010 |
    CH1 | 0b000100 | 0b001000 |
    CH2 | 0b010000 | 0b100000 |
-    Byte[0-1] - Interleave Bitmap based on physical DCPMM population
+    Byte[0-1] - Interleave Bitmap based on physical PMem module population
     For ex: Purley Platform
     0b001111 x4
     0b111100 x4
@@ -722,7 +722,7 @@ typedef struct {
     0 - None
     1 - Busy
     2 - Done
-    Results are updated in the DIMMs' config output structures
+    Results are updated in the PMem modules' config output structures
   **/
   UINT64 StatusMask;
 } RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE;
@@ -873,8 +873,8 @@ typedef struct {
   PMTT_VENDOR_SPECIFIC2 **ppSlots;        ///< Slot Type Data Tables
   UINT32 DDRModulesNum;                   ///< Count of DDR4 Devices
   PMTT_MODULE_INFO **ppDDRModules;        ///< DDR4 Module Type Data Tables
-  UINT32 DCPMModulesNum;                  ///< Count of DCPM Devices
-  PMTT_MODULE_INFO **ppDCPMModules;       ///< DCPM Module Type Data Tables
+  UINT32 DCPMModulesNum;                  ///< Count of PMem module Devices
+  PMTT_MODULE_INFO **ppDCPMModules;       ///< PMem module Type Data Tables
 } ParsedPmttHeader;
 
 

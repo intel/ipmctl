@@ -1121,7 +1121,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_ABORTED;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine DCPMM id for DCPMM ID %d", pDimms[DimmIndex].DimmHandle);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine " PMEM_MODULE_STR L" id for " PMEM_MODULE_STR " ID %d", pDimms[DimmIndex].DimmHandle);
       goto Finish;
     }
 
@@ -1129,7 +1129,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
       (pDimms[DimmIndex].FwVer.FwApiMajor == MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
         pDimms[DimmIndex].FwVer.FwApiMinor > MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR)) {
       DimmFromTheFutureCount++;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"DCPMM " FORMAT_STR L" supports FIS %d.%d\r\n",
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" supports FIS %d.%d\r\n",
         DimmStr,
         pDimms[DimmIndex].FwVer.FwApiMajor,
         pDimms[DimmIndex].FwVer.FwApiMinor);
@@ -1138,7 +1138,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   }
 
   if (DimmFromTheFutureCount > 0) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"This ipmctl software version predates the firmware interface specification version (FIS | FWAPIVersion: %d.%d) for %d DCPMM(s). It is recommended to update ipmctl.\r\n",
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"This ipmctl software version predates the firmware interface specification version (FIS | FWAPIVersion: %d.%d) for %d " PMEM_MODULE_STR L"(s). It is recommended to update ipmctl.\r\n",
       MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
       MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR,
       DimmFromTheFutureCount);

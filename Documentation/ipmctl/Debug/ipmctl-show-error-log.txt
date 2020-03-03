@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -8,7 +8,7 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-error-log - Shows thermal or media errors on the specified DCPMMs
+ipmctl-show-error-log - Shows thermal or media errors on the specified PMem modules
 
 SYNOPSIS
 --------
@@ -19,7 +19,7 @@ ____
 
 DESCRIPTION
 -----------
-Shows thermal or media errors on the specified DCPMMs.
+Shows thermal or media errors on the specified PMem modules.
 
 OPTIONS
 -------
@@ -56,8 +56,8 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Filter output to specific DCPMMs by optionally supplying one or more
-  comma-separated DCPMM identifiers. The default is to include all manageable DCPMMs.
+  Filter output to specific PMem modules by optionally supplying one or more
+  comma-separated PMem module identifiers. The default is to include all manageable PMem modules.
 
 PROPERTIES
 ----------
@@ -92,17 +92,17 @@ ____
 
 LIMITATIONS
 -----------
-To successfully execute this command, the specified DCPMM(s) must be manageable
-by the host software. In addition, for DCPMMs with firmware version 2.3 and above,
+To successfully execute this command, the specified PMem modules must be manageable
+by the host software. In addition, for PMem modules with firmware version 2.3 and above,
 errors due to AIT operations are no longer exposed.
 
 RETURN DATA
 -----------
-Prints errors of the specified type for the specified DCPMMs. If no errors are found, the
+Prints errors of the specified type for the specified PMem modules. If no errors are found, the
 following message will be printed:
 [verse]
 ____
-No errors found on DIMM (DimmID)
+No errors found on PMem module (DimmID)
 ____
 
 SAMPLE OUTPUT

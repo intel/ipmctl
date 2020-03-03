@@ -63,7 +63,7 @@ struct Command showAcpiCommand =
   },                        //!< options
   {{SYSTEM_TARGET, L"", SYSTEM_ACPI_TARGETS, TRUE, ValueOptional}},    //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                             //!< properties
-  L"Show the ACPI tables related to the DCPMMs in the system.",        //!< help
+  L"Show the ACPI tables related to the " PMEM_MODULES_STR L" in the system.",        //!< help
   showAcpi,                                                            //!< run function
   TRUE                                                                 //!< enable print control support
 };

@@ -17,7 +17,7 @@ ipmctl show [OPTIONS] -region [TARGETS]
 
 DESCRIPTION
 -----------
-Retrieves a list of persistent memory regions of DCPMM capacity
+Retrieves a list of persistent memory regions of PMem module capacity
 
 OPTIONS
 -------
@@ -74,7 +74,7 @@ TARGETS
 -region [RegionIDs]::
   Restricts output to specific persistent memory regions by providing one or
   more comma separated region identifiers. The default is to display the
-  persistent memory regions across all manageable DCPMMs.
+  persistent memory regions across all manageable PMem modules.
 
 -socket [SocketIDs]::
   Restricts output to the persistent memory regions on specific sockets by
@@ -97,8 +97,8 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- All the underlying DCPMMs should be unlocked to accurately reflect the available
-  capacities. The specified DCPMM(s) must be manageable by the host software.
+- All the underlying PMem modules should be unlocked to accurately reflect the available
+  capacities. The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -116,12 +116,12 @@ ISetID::
 endif::os_build[]
 
 PersistentMemoryType::
-  (Default) A comma-separated list of the underlying type(s) of persistent
+  (Default) A comma-separated list of the underlying types of persistent
   memory capacity in the region. One or more of:
-  - AppDirect: App Direct capacity interleaved across two or more DCPMMs that is
+  - AppDirect: App Direct capacity interleaved across two or more PMem modules that is
     fully mapped into the system physical address space.
   - AppDirectNotInterleaved: App Direct capacity wholly contained on a single
-    DCPMMs that is fully mapped into the system physical address space.
+    PMem modules that is fully mapped into the system physical address space.
 
 Capacity::
   (Default) Total usable capacity, both allocated and unallocated
@@ -133,19 +133,19 @@ SocketID::
   (Default) Socket ID to which the region belongs
 
 HealthState::
-  The rolled up health of the underlying DCPMMs. One of:
+  The rolled up health of the underlying PMem modules. One of:
   - Unknown: The region health cannot be determined.
-  - Healthy: All underlying DCPMM persistent memory capacity is available.
+  - Healthy: All underlying PMem module persistent memory capacity is available.
   - Pending: A new memory allocation goal has been created but not applied.
     Reboot or delete any existing memory allocation goals before creating
     namespaces on the region.
-  - Error: There is an issue with some or all of the underlying DCPMM capacity
+  - Error: There is an issue with some or all of the underlying PMem module capacity
     because the interleave set has failed. One of:
-    + DCPMM missing (serial number of dimm from the Platform Config Data not found in the dimm list)
-    + DCPMM not configured
+    + PMem module missing (serial number of PMem module from the Platform Config Data not found in the PMem module list)
+    + PMem module not configured
     + Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing)
-    + Interleave set or DCPMM region initialization failure (out of memory)
-  - Locked: One or more of the of the underlying DCPMMs are locked.
+    + Interleave set or PMem module region initialization failure (out of memory)
+    + Locked: One or more of the of the underlying Pmem moduless are locked.
 
 ifndef::os_build[]
 ISetID::
@@ -153,4 +153,4 @@ ISetID::
 endif::os_build[]
 
 DimmID::
-  A list of all the DIMMs that are part of this reg.
+  A list of all the PMem modules that are part of this reg.

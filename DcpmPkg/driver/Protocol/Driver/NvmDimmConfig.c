@@ -8466,9 +8466,9 @@ EFIAPI
 GetDDRCapacities(
   IN     UINT16 SocketId,
      OUT UINT64 *pDDRRawCapacity,
-     OUT UINT64 *pDDRCacheCapacity,
-     OUT UINT64 *pDDRVolatileCapacity,
-     OUT UINT64 *pDDRInaccessibleCapacity
+     OUT UINT64 *pDDRCacheCapacity OPTIONAL,
+     OUT UINT64 *pDDRVolatileCapacity OPTIONAL,
+     OUT UINT64 *pDDRInaccessibleCapacity OPTIONAL
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -8481,19 +8481,11 @@ GetDDRCapacities(
   UINT64 DcpmmUnconfiguredCapacity = 0;
   UINT64 DcpmmReservedCapacity = 0;
   UINT64 DcpmmInaccessibleCapacity = 0;
-  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
-  if (NULL == pDDRRawCapacity || NULL == pDDRCacheCapacity || NULL == pDDRVolatileCapacity) {
+  if (NULL == pDDRRawCapacity) {
     NVDIMM_DBG("A pointer is null.");
-    goto Finish;
-  }
-
-  ReturnCode = CurrentMemoryMode(&CurrentMode);
-
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to determine current memory mode.");
     goto Finish;
   }
 
@@ -8506,38 +8498,44 @@ GetDDRCapacities(
   *pDDRRawCapacity = DDRPhysicalSize;
 
   // Get total DDR cache size
-  ReturnCode = RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, &CurrentCachedMemorySize);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve Socket SKU Cached Memory");
-    goto Finish;
+  if (pDDRCacheCapacity != NULL) {
+    ReturnCode = RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, &CurrentCachedMemorySize);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve Socket SKU Cached Memory");
+      goto Finish;
+    }
+    *pDDRCacheCapacity = CurrentCachedMemorySize;
   }
-  *pDDRCacheCapacity = CurrentCachedMemorySize;
 
   // Get DDR volatile capacity: Subtract mapped DCPMM Persistent & Volatile capacity from total mapped memory
-  ReturnCode = RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve Socket SKU Total Mapped Memory");
-    goto Finish;
-  }
+  if (pDDRVolatileCapacity != NULL) {
+    ReturnCode = RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve Socket SKU Total Mapped Memory");
+      goto Finish;
+    }
 
-  ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
-    &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
-    goto Finish;
-  }
+    ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
+      &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
+      goto Finish;
+    }
 
-  if ((DcpmmVolatileCapacity + DcpmmAppDirectCapacity) <= SocketSkuTotalMappedMemory) {
-    *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
-  }
-  else {
-    ReturnCode = EFI_DEVICE_ERROR;
-    NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
-    goto Finish;
+    if ((DcpmmVolatileCapacity + DcpmmAppDirectCapacity) <= SocketSkuTotalMappedMemory) {
+      *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
+    }
+    else {
+      ReturnCode = EFI_DEVICE_ERROR;
+      NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
+      goto Finish;
+    }
   }
 
   // Get DDR inaccessible capacity
-  *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+  if (pDDRInaccessibleCapacity != NULL) {
+    *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+  }
 
   ReturnCode = EFI_SUCCESS;
 

@@ -1271,9 +1271,9 @@ EFIAPI
 GetDDRCapacities(
   IN     UINT16 SocketId,
   OUT UINT64 *pDDRRawCapacity,
-  OUT UINT64 *pDDRCacheCapacity,
-  OUT UINT64 *pDDRVolatileCapacity,
-  OUT UINT64 *pDDRInaccessibleCapacity
+  OUT UINT64 *pDDRCacheCapacity OPTIONAL,
+  OUT UINT64 *pDDRVolatileCapacity OPTIONAL,
+  OUT UINT64 *pDDRInaccessibleCapacity OPTIONAL
   );
 
 /**

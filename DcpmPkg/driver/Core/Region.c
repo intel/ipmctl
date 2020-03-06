@@ -3541,9 +3541,6 @@ ReduceCapacityForSocketSKU(
   UINT64 ReduceCapacity = 0;
   UINT64 MappedMemorySizeLimit = 0;
   UINT64 DDRRawCapacity = 0;
-  UINT64 DDRCacheCapacity = 0;
-  UINT64 DDRVolatileCapacity = 0;
-  UINT64 DDRInaccessibleCapacity = 0;
 
   NVDIMM_ENTRY();
 
@@ -3579,7 +3576,7 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity, &DDRInaccessibleCapacity);
+  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not retrieve DDR capacities");
     goto Finish;

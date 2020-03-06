@@ -99,6 +99,7 @@ typedef union {
 // Product name string values
 #define PMEM_MODULE_STR             L"PMem module"
 #define PMEM_MODULES_STR            PMEM_MODULE_STR L"s"
+#define PMEM_MODULE_PASCAL_CASE_STR L"PMemModule"
 
 // Last shutdown status string values
 #define LAST_SHUTDOWN_STATUS_PM_ADR_STR               L"PM ADR Command Received"

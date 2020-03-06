@@ -7,11 +7,6 @@ fi
 
 BUILDNUM=$1
 SOURCEDIR=$PWD
-PLATFORM="purley"
-
-if [ "$2" = "whitley" ]; then
-	PLATFORM="whitley"
-fi
 
 # remove all rpmbuild
 rm -rf $SOURCEDIR/output/rpmbuild
@@ -29,8 +24,8 @@ mkdir -p $SOURCEDIR/output/rpmbuild/ipmctl-$BUILDNUM
 cp install/linux/rel-release/ipmctl.spec.in $SOURCEDIR/output/rpmbuild/SPECS/ipmctl.spec
 
 
-# Update the spec file with build version and platform type
-sed -i "s/^%define build_version .*/%define build_version $BUILDNUM/g ; s/^%define platform_type .*/%define platform_type $PLATFORM/g" $SOURCEDIR/output/rpmbuild/SPECS/ipmctl.spec
+# Update the spec file with build version
+sed -i "s/^%define build_version .*/%define build_version $BUILDNUM/g" $SOURCEDIR/output/rpmbuild/SPECS/ipmctl.spec
 
 # Archive the directory
 tar --exclude-vcs --exclude="*output" --exclude="*.swp*" --transform="s,^.,ipmctl-$BUILDNUM," -zcf $SOURCEDIR/output/rpmbuild/SOURCES/ipmctl-$BUILDNUM.tar.gz .

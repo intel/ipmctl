@@ -291,7 +291,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
-#define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)   ///< Device Characteristics fields will be populated: CTST, MTST, MTSTT, MTSPT, CTSTT, CTSPT, MaxAveragePowerLimit, MaxTurboModePowerConsumption, MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep.
+#define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)   ///< Device Characteristics fields will be populated: CTST, MTST, MTSTT, MTSPT, CTSTT, CTSPT, MaxAveragePowerLimit, MaxMemoryBandwidthBoostMaxPowerLimit, MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4              (1 << 12)   ///< Memory info page 4 fields will be populated
 #define DIMM_INFO_CATEGORY_EXTENDED_ADR                 (1 << 13)   ///< Extended ADR status info
 #define DIMM_INFO_CATEGORY_LATCH_SYSTEM_SHUTDOWN_STATE  (1 << 14)   ///< Latch System Shutdown State fields will be populated: LatchSystemShutdownState, PreviousPowerCycleLatchSystemShutdownState

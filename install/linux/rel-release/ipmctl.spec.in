@@ -75,7 +75,6 @@ Obsoletes:      ixpdimm_sw-devel < 01.00.00.3000
 API for development of Intel Optane DC persistent memory management utilities.
 
 %build
-%if "%{platform_type}" == "purley"
 %cmake -DBUILDNUM=%{version} -DCMAKE_INSTALL_PREFIX=/ \
     -DLINUX_PRODUCT_NAME=%{name} \
     -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
@@ -87,20 +86,6 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON
-%else
-%cmake -DBUILDNUM=%{version} -DCMAKE_INSTALL_PREFIX=/ \
-    -DLINUX_PRODUCT_NAME=%{name} \
-    -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
-    -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir} \
-    -DCMAKE_INSTALL_BINDIR=%{_bindir} \
-    -DCMAKE_INSTALL_DATAROOTDIR=%{_datarootdir} \
-    -DCMAKE_INSTALL_MANDIR=%{_mandir} \
-    -DCMAKE_INSTALL_LOCALSTATEDIR=%{_localstatedir} \
-    -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
-    -DRELEASE=ON \
-    -DRPM_BUILD=ON \
-    -DWHITLEY=ON
-%endif
 %make_build
 
 %install

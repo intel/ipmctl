@@ -56,39 +56,83 @@ endif::os_build[]
 SENSORS
 -------
 Health::
-  (Default) The current PMem module health as reported in the SMART log
+  (Default) The current PMem module health as reported in the SMART log. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 MediaTemperature::
-  (Default) The current PMem module media temperature in Celsius
+  (Default) The current PMem module media temperature in Celsius. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
+  - AlarmThreshold
+  - AlarmEnabled
+  - ThrottlingStopThreshold
+  - ThrottlingStartThreshold
+  - ShutdownThreshold
+  - MaxTemperature
 
 ControllerTemperature::
-  (Default) The current PMem module controller temperature in Celsius
+  (Default) The current PMem module controller temperature in Celsius. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
+  - AlarmThreshold
+  - AlarmEnabled
+  - ThrottlingStopThreshold
+  - ThrottlingStartThreshold
+  - ShutdownThreshold
+  - MaxTemperature
 
 PercentageRemaining::
   (Default) Remaining PMem module’s life as a percentage value of factory expected
-  life span
+  life span. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
+  - AlarmThreshold
+  - AlarmEnabled
 
 LatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
-  the PMem module
+  the PMem module. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 UnlatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
   the PMem module. This counter is the same as LatchedDirtyShutdownCount except it will
   always be incremented on a dirty shutdown, even if Latch System Shutdown Status
-  was not enabled
+  was not enabled. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 PowerOnTime::
-  (Default) The total power-on time over the lifetime of the PMem module
+  (Default) The total power-on time over the lifetime of the PMem module. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 UpTime::
-  (Default) The total power-on time since the last power cycle of the PMem module
+  (Default) The total power-on time since the last power cycle of the PMem module. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 PowerCycles::
-  (Default) The number of power cycles over the lifetime of the PMem module
+  (Default) The number of power cycles over the lifetime of the PMem module. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 FwErrorCount::
-  (Default) The total number of firmware error log entries
+  (Default) The total number of firmware error log entries. Attributes include:
+  - DimmID
+  - Type
+  - CurrentValue
 
 TARGETS
 -------
@@ -121,6 +165,8 @@ This command displays a table with a row for each sensor on each PMem module. Ap
 a specific PMem module or sensor type target limits the number of rows. Applying
 options can be used to expand or restrict the output.
 
+NOTE: Supported thresholds for a given sensor are listed as a part of the return data when using the -all or -display flag. Only the alarm threshold is settable.
+
 DimmID::
   (Default) The PMem module identifier
 
@@ -134,6 +180,13 @@ CurrentValue::
 AlarmThreshold::
   The threshold value at which an alarm for the respective sensor will be triggered.
 
+AlarmEnabled::
+  Current state of the alarm threshold, where applicable.
+  One of:
+  - 0: Disabled
+  - 1: Enabled
+  - N/A
+
 ThrottlingStopThreshold::
   The threshold value at which firmware will stop throttling to reduce overall thermals and keep the PMem module within safe operating temperatures.
 
@@ -142,15 +195,6 @@ ThrottlingStartThreshold::
 
 ShutdownThreshold::
   The threshold value at which device shutdown will occur.
-
-NOTE: Supported thresholds for a given sensor are listed as a part of the return data when using the -all or -display flag. Only the alarm threshold is settable.
-
-AlarmEnabled::
-  Current state of the alarm threshold, where applicable.
-  One of:
-  - 0: Disabled
-  - 1: Enabled
-  - N/A
 
 MaxTemperature::
   The highest temperature reported in degrees Celsius for a given media or controller sensor.

@@ -384,8 +384,8 @@ MemoryBandwidthBoostAveragePowerTimeConstant::
 MaxAveragePowerLimit::
    Maximum average power limit [mW] supported by the PMem module.
 
-MaxTurboModePowerConsumption::
-   Maximum Turbo Power value [mW] that can be set for the PMem module. Will return 0 if unsupported by current FIS.
+MaxMemoryBandwidthBoostMaxPowerLimit::
+   Maximum Memory Bandwidth Boost Power value [mW] that can be set for the PMem module. Will return 0 if unsupported by current FIS.
 
 MaxAveragePowerTimeConstant::
    This field returns the maximum supported value of the Average Power Time Constant and Average Power Reporting Time constant [ms] that can be set via the Set Power Management Policy and the Optional Configuration Data Policy Commands.

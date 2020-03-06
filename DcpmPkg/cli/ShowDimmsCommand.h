@@ -110,7 +110,6 @@
 #define MAX_AVG_POWER_LIMIT_STR     L"MaxAveragePowerLimit"
 #define MAX_MEDIA_TEMPERATURE_STR             L"MaxMediaTemperature"
 #define MAX_CONTROLLER_TEMPERATURE_STR        L"MaxControllerTemperature"
-#define MAX_TURBO_MODE_POWER_CONSUMPTION_STR L"MaxTurboModePowerConsumption"
 #define MAX_MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT L"MaxMemoryBandwidthBoostMaxPowerLimit"
 #define MAX_MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT L"MaxMemoryBandwidthBoostAveragePowerTimeConstant"
 #define MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STEP L"MemoryBandwidthBoostAveragePowerTimeConstantStep"

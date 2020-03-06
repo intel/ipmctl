@@ -64,7 +64,7 @@
 #define FORCE_OPTION_DETAILS_TEXT       L"Suppress confirmations"              //!< 'force' option help text detail
 #define RECOVER_OPTION                  L"-recover"                            //!< 'recover' option name
 #define RECOVER_OPTION_FLASH_SPI        L"FlashSPI"                            //!< 'recover' option value to FlashSpi during update
-#define RECOVER_OPTION_DETAILS_TEXT     L"Run update on non-functional" PMEM_MODULES_STR L"only (deprecated) or run SPI Flash recovery"     //!< 'recover' option value to FlashSpi during update
+#define RECOVER_OPTION_DETAILS_TEXT     L"Run update on non-functional " PMEM_MODULES_STR L" only (deprecated) or run SPI Flash recovery"     //!< 'recover' option value to FlashSpi during update
 #define UNITS_OPTION                    L"-units"                              //!< 'units' option name
 #define UNITS_OPTION_B                  L"B"                                   //!< 'units' option value for B
 #define UNITS_OPTION_MB                 L"MB"                                  //!< 'units' option value for MB

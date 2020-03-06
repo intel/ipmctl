@@ -703,7 +703,7 @@ typedef struct {
   /**
     Power limit [mW] used for limiting the Turbo Mode power consumption.
     Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
-    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
+    the value returned from Get Device Characteristics command's Max Memory Bandwidth Boost Max Power Limit field.
   **/
   UINT16 MemoryBandwidthBoostMaxPowerLimit;
   /**

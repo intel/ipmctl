@@ -8484,8 +8484,9 @@ GetDDRCapacities(
 
   NVDIMM_ENTRY();
 
-  if (NULL == pDDRRawCapacity) {
-    NVDIMM_DBG("A pointer is null.");
+  if (pDDRRawCapacity == NULL ||
+    (pDDRInaccessibleCapacity != NULL && (pDDRCacheCapacity == NULL || pDDRVolatileCapacity == NULL))) {
+    NVDIMM_DBG("Invalid parameter");
     goto Finish;
   }
 

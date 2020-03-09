@@ -87,7 +87,7 @@ typedef struct {
 #define PART_NUMBER_STR_LEN            22
 #define DEVICE_LOCATOR_LEN            128
 #define BANKLABEL_LEN                  32 // @todo confirm label length
-#define SHUTDOWN_STATUS_LEN           136 // @todo confirm label length
+#define SHUTDOWN_STATUS_LEN           255 // @todo confirm label length
 #define SECURITYCAPABILITES_LEN        18 // @todo confirm label length
 #define IFC_STRING_LEN                255
 #define MEMORY_MODES_LEN               40 // @todo confirm label length

@@ -143,6 +143,10 @@ file_open(
   {
     flags |= _O_BINARY;
   }
+  if (OpenMode & EFI_FILE_MODE_CREATE)
+  {
+    flags |= _O_CREAT;
+  }
 #endif
 #endif
 
@@ -150,7 +154,14 @@ file_open(
 #ifndef _MSC_VER
   pFc->fd = _open(pFc->filename_ascii, flags, FILE_MODE);
 #else
-  pFc->fd = _open(pFc->filename_ascii, flags);
+  if (flags & _O_CREAT)
+  {
+    pFc->fd = _open(pFc->filename_ascii, flags , _S_IREAD | _S_IWRITE);
+  }
+  else
+  {
+    pFc->fd = _open(pFc->filename_ascii, flags);
+  }
 #endif
 
   if (-1 == pFc->fd)

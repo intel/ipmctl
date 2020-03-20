@@ -541,6 +541,7 @@ FillSmbiosInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
@@ -585,22 +586,25 @@ FillSmbiosInfo(
 
     pDimmInfo->CapacityFromSmbios = CapacityFromSmbios;
 
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->DeviceLocator,
       pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->DeviceLocator, DEVICE_LOCATOR_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->BankLocator,
       pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->BankLabel, BANKLABEL_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->Manufacturer,
       pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->ManufacturerStr, MANUFACTURER_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
   }

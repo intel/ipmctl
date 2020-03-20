@@ -931,6 +931,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SMBIOS_MEMORY_TYPE_DDR4                   0x1A
 #define SMBIOS_MEMORY_TYPE_DCPM                   0x18
 #define SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE   0x1F
+#define SMBIOS_STR_UNKNOWN                        L"Unknown"
 
 /**
   Package Sparing Capable

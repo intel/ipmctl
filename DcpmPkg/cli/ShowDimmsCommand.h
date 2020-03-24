@@ -17,6 +17,7 @@
 **/
 #define FW_VER_STR                  L"FWVersion"
 #define FW_API_VER_STR              L"FWAPIVersion"
+#define FW_ACTIVE_API_VER_STR       L"FWActiveAPIVersion"
 #define INTERFACE_FORMAT_CODE_STR   L"InterfaceFormatCode"
 #define CAPACITY_STR                L"Capacity"
 #define MANAGEABILITY_STR           L"ManageabilityState"

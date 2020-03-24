@@ -518,6 +518,10 @@ typedef struct _DIMM_INFO {
   UINT8 LatchSystemShutdownState;                  //!< Specifies whether latch is enabled
   UINT8 PrevPwrCycleLatchSystemShutdownState;      //!< Specifies whether latch was enabled during the last power cycle
 
+  //Fw Active Version
+  UINT8 FwActiveApiVersionMajor;               //!< Specifies the FW Active API major version
+  UINT8 FwActiveApiVersionMinor;               //!< Specifies the FW Active API minor version
+
   } DIMM_INFO;
 
 typedef struct _TOPOLOGY_DIMM_INFO {

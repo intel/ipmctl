@@ -685,6 +685,8 @@ GetDimmInfo (
 
   pDimmInfo->DimmHandle = pDimm->DeviceHandle.AsUint32;
   pDimmInfo->FwVer = pDimm->FwVer;
+  pDimmInfo->FwActiveApiVersionMajor = pDimm->FwActiveApiVersionMajor;
+  pDimmInfo->FwActiveApiVersionMinor = pDimm->FwActiveApiVersionMinor;
 
   /* Package Sparing Capable */
   if (pDimm->SkuInformation.PackageSparingCapable) {

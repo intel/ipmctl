@@ -420,7 +420,8 @@ typedef struct {
   UINT8 Reserved3[2];             //!< 66-67 : Reserved
   UINT16 ApiVer;                  //!< 69-68 : API Version
   UINT8 DimmUid[9];               //!< 78-70 : DIMM Unique ID (UID)
-  UINT8 Reserved4[49];            //!< 127-70: Reserved
+  UINT16 ActiveApiVer;            //!< 80-79 : Active API
+  UINT8 Reserved4[47];            //!< 127-81: Reserved
 } PT_ID_DIMM_PAYLOAD;
 
 typedef struct {

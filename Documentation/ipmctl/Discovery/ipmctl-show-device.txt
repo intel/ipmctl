@@ -331,6 +331,14 @@ FWAPIVersion::
 *The following information is only applicable when the PMem module is manageable by the
 software as indicated by the "ManageabilityState".*
 
+FWActiveAPIVersion::
+  The firmware interface revision locked in the BIOS API handshake in the format
+  aa.bb where:
+  - aa = 2-digit major version
+  - bb = 2-digit minor version
+   +
+  Value may be N/A if the PMem module is not manageable by the software.
+
 ManufacturerID::
   The manufacturer identifier of the PMem module.
   This value is presented in big endian format.

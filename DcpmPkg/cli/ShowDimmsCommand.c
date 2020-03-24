@@ -837,6 +837,12 @@ ShowDimms(
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_API_VER_STR, TmpFwVerString);
       }
 
+      /** FwActiveApiVersion **/
+      if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_ACTIVE_API_VER_STR))) {
+        ConvertFwApiVersion(TmpFwVerString, pDimms[DimmIndex].FwActiveApiVersionMajor, pDimms[DimmIndex].FwActiveApiVersionMinor);
+        PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_ACTIVE_API_VER_STR, TmpFwVerString);
+      }
+
       /** InterfaceFormatCode **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, INTERFACE_FORMAT_CODE_STR))) {
         if (pDimms[DimmIndex].InterfaceFormatCodeNum <= MAX_IFC_NUM) {

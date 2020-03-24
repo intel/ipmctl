@@ -4193,16 +4193,21 @@ ParseFwApiVersion(
   IN     PT_ID_DIMM_PAYLOAD *pPayload
   )
 {
-  API_VERSION FwApiVersion;
+  API_VERSION ApiVersion;
 
   NVDIMM_ENTRY();
 
-  ZeroMem(&FwApiVersion, sizeof(FwApiVersion));
+  ZeroMem(&ApiVersion, sizeof(ApiVersion));
 
-  FwApiVersion.Version = pPayload->ApiVer;
+  ApiVersion.Version = pPayload->ApiVer;
 
-  pDimm->FwVer.FwApiMajor = BCD_TO_TWO_DEC(FwApiVersion.Byte.Digit1);
-  pDimm->FwVer.FwApiMinor = BCD_TO_TWO_DEC(FwApiVersion.Byte.Digit2);
+  pDimm->FwVer.FwApiMajor = BCD_TO_TWO_DEC(ApiVersion.Byte.Digit1);
+  pDimm->FwVer.FwApiMinor = BCD_TO_TWO_DEC(ApiVersion.Byte.Digit2);
+
+  ZeroMem(&ApiVersion, sizeof(ApiVersion));
+  ApiVersion.Version = pPayload->ActiveApiVer;
+  pDimm->FwActiveApiVersionMajor = BCD_TO_TWO_DEC(ApiVersion.Byte.Digit1);
+  pDimm->FwActiveApiVersionMinor = BCD_TO_TWO_DEC(ApiVersion.Byte.Digit2);
 
   NVDIMM_EXIT();
 }

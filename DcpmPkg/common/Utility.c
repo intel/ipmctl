@@ -3106,7 +3106,7 @@ BootStatusBitmaskToStr(
 
   NVDIMM_ENTRY();
 
-  if (BootStatusBitmask == 0) {
+  if (DIMM_BOOT_STATUS_NORMAL == BootStatusBitmask) {
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_SUCCESS), NULL);
     pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);

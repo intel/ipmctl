@@ -5134,6 +5134,7 @@ InitializeDimm (
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsOrig;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsTemp;
+  UINT16 TempBootStatusBitmask = DIMM_BOOT_STATUS_NORMAL;
   NVDIMM_ENTRY();
 
   // We don't need a mailbox to talk to the dimm
@@ -5268,11 +5269,15 @@ RestoreAttribs:
     // Go to Finish if error
     CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsOrig), Finish);
 
-    // Populate some more boot status bitmask bits. This function ORs its findings,
-    // so previously set bits of the boot status bitmask above are preserved.
+    // Populate some more boot status bitmask bits.
     // Ignore return code, as this is an optional step
     CHECK_RESULT_CONTINUE(PopulateDimmBsrAndBootStatusBitmask(pNewDimm,
-      &pNewDimm->Bsr, &pNewDimm->BootStatusBitmask));
+      &pNewDimm->Bsr, &TempBootStatusBitmask));
+    // If we're successful in getting BSR and BootStatusBitmask, OR in the
+    // findings into previous findings for BootStatusBitmask bits
+    if (EFI_SUCCESS == ReturnCode) {
+      pNewDimm->BootStatusBitmask |= TempBootStatusBitmask;
+    }
 
     // Since a BSR bit can affect MAILBOX_NOT_READY, run this after
     // PopulateDimmBsrAndBootStatusBitmask()
@@ -7450,11 +7455,10 @@ EFI_STATUS
 PopulateDimmBsrAndBootStatusBitmask(
   IN     DIMM *pDimm,
      OUT DIMM_BSR *pBsr,
-  IN OUT UINT16 *pBootStatusBitmask OPTIONAL
+     OUT UINT16 *pBootStatusBitmask OPTIONAL
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  UINT16 BootStatusBitmask = 0;
 
   NVDIMM_ENTRY();
 
@@ -7481,27 +7485,28 @@ PopulateDimmBsrAndBootStatusBitmask(
     goto Finish;
   }
 
+  // Clear caller's value before use
+  *pBootStatusBitmask = DIMM_BOOT_STATUS_NORMAL;
+
+  // This section is notably missing the DIMM_BOOT_STATUS_DDRT_NOT_READY
+  // bit. We use this to determine if DDRT is accessible to us, and if only
+  // the BSR is used, it's not the full picture. It's more accurate
+  // to test the interface directly, so it's done in InitializeDimm() currently.
   if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_NOT_TRAINED) {
-    BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_NOT_READY;
+    *pBootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_NOT_READY;
   }
   if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_ERROR) {
-    BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_ERROR;
+    *pBootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_ERROR;
   }
   if (pBsr->Separated_Current_FIS.MD == DIMM_BSR_MEDIA_DISABLED) {
-    BootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_DISABLED;
+    *pBootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_DISABLED;
   }
-
   if (pBsr->Separated_Current_FIS.MBR == DIMM_BSR_MAILBOX_NOT_READY) {
-    BootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
+    *pBootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
   }
   if (pBsr->Separated_Current_FIS.RR == DIMM_BSR_REBOOT_REQUIRED) {
-    BootStatusBitmask |= DIMM_BOOT_STATUS_REBOOT_REQUIRED;
+    *pBootStatusBitmask |= DIMM_BOOT_STATUS_REBOOT_REQUIRED;
   }
-
-  // Only set caller's value on success of everything.
-  // Since pBootStatusBitmask has some other properties that are set
-  // in InitializeDimm, only OR in the results
-  *pBootStatusBitmask |= BootStatusBitmask;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

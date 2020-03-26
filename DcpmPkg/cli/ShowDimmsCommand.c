@@ -765,7 +765,7 @@ ShowDimms(
           pSVNDowngradeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         }
         else {
-          pSVNDowngradeStr = SVNDowngradeOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+          pSVNDowngradeStr = SVNDowngradeOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SVNDowngradeOptIn);
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SVN_DOWNGRADE_OPT_IN_STR, pSVNDowngradeStr);
         FREE_POOL_SAFE(pSVNDowngradeStr);
@@ -777,7 +777,7 @@ ShowDimms(
           pSecureErasePolicyStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         }
         else {
-          pSecureErasePolicyStr = SecureErasePolicyOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+          pSecureErasePolicyStr = SecureErasePolicyOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].SecureErasePolicyOptIn);
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SEP_OPT_IN_STR, pSecureErasePolicyStr);
         FREE_POOL_SAFE(pSecureErasePolicyStr);
@@ -800,7 +800,7 @@ ShowDimms(
           pFwActivateStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
         }
         else {
-          pFwActivateStr = FwActivateOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].S3ResumeOptIn);
+          pFwActivateStr = FwActivateOptInToString(gNvmDimmCliHiiHandle, pDimms[DimmIndex].FwActivateOptIn);
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FW_ACTIVATE_OPT_IN_STR, pFwActivateStr);
         FREE_POOL_SAFE(pFwActivateStr);

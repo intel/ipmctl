@@ -162,6 +162,7 @@ ShowFirmware(
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
   CHAR16 FwVerStr[FW_VERSION_LEN];
+  UINT8 ManageableDimmsCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -200,13 +201,7 @@ ShowFirmware(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_FW_IMAGE_INFO, &pDimms, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    if(ReturnCode == EFI_NOT_FOUND) {
-        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
-    }
-    goto Finish;
-  }
+  CHECK_RESULT(GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_FW_IMAGE_INFO, &pDimms, &DimmCount), Finish);
 
   /** Initialize status structure **/
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
@@ -230,25 +225,18 @@ ShowFirmware(
     }
   }
 
-  /** If no dimm IDs are specified get IDs from all dimms **/
-  if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol,FALSE, &DimmIdsCount, &pDimmIds);
-    if (EFI_ERROR(ReturnCode)) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      goto Finish;
-    }
-    if (DimmIdsCount == 0) {
-      ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
-      goto Finish;
-    }
-  }
-
   /** Print table **/
   for (Index = 0; Index < DimmCount; Index++) {
-    if (!ContainUint(pDimmIds, DimmIdsCount, pDimms[Index].DimmID)) {
+    if (DimmIdsCount > 0) {
+      if (!ContainUint(pDimmIds, DimmIdsCount, pDimms[Index].DimmID)) {
+        continue;
+      }
+    }
+
+    if (pDimms[Index].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
       continue;
     }
+    ManageableDimmsCount++;
 
     ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
       DimmStr, MAX_DIMM_UID_LENGTH);
@@ -322,6 +310,12 @@ ShowFirmware(
     if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTIVATION_TIME_STR))) {
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTIVATION_TIME_STR, FORMAT_UINT32, pDimms[Index].ActivationTime);
     }
+  }
+
+  if (ManageableDimmsCount == 0) {
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
+    goto Finish;
   }
 
   ReturnCode = EFI_SUCCESS;

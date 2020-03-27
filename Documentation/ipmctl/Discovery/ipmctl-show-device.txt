@@ -104,19 +104,23 @@ Capacity::
 
 HealthState::
   (Default) Overall PMem module health. One of:
-  - Healthy
-  - Noncritical: Maintenance is required.
-  - Critical: Features or performance are degraded due to failure.
-  - Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
+  * Healthy
+  * Noncritical: Maintenance is required.
+  * Critical: Features or performance are degraded due to failure.
+  * Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
     AIT Failure, etc) is non-recoverable and data loss has occurred or is imminent.
-	In this case, the firmware will disable the media and access to user data and
-	operations that require use of the media will fail.
-  - Non-functional: The PMem module is present but failed to initialize and is
-	non-responsive via the DDRT communication path. It may be possible to
-	communicate with this PMem module via SMBus for a subset of commands.
-  - Unmanageable: The PMem module is not supported by this version of
-    the software
-  - Unknown: Unable to determine the PMem module health state.
+    In this case, the firmware will disable the media and access to user data and
+    operations that require use of the media will fail.
+  * Non-functional: The PMem module is detected and manageable, though some
+    commands and capabilities may be limited. The PMem module has limited
+    communication or another error preventing complete functionality. Common
+    causes include:
+    - DDRT memory interface training failure
+    - Expected region mapping to SPA range unable to be found
+  * Unmanageable: The PMem module has an incompatible firmware API version or
+    hardware revision or is unresponsive (possibly due to a communication
+    interface failure or a firmware/hardware error).
+  * Unknown: Unable to determine the PMem module health state.
   Refer to _HealthStateReason_ for _HealthState_ details.
 
 HealthStateReason::

@@ -6215,11 +6215,11 @@ CreateGoalConfig(
     // goal only to have it fail to apply.
     // There are a few levels of restriction. First, we can't do anything if
     // we're restricted to BIOS mailbox only. Sometimes only DDRT is disabled,
-    // in which case we can use smbus. However, if we can't use smbus because
-    // the user specified -ddrt, then we can't do anything if there's any CAP
-    // limitation.
-    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY) ||
-        (IS_DDRT_FLAG_ENABLED(Attribs) && CapRestricted != COMMAND_ACCESS_POLICY_RESTRICTION_NONE)) {
+    // in which case we can use SMBus. However, if SMBus is not requested or
+    // enabled via -smbus flag or default configuration, then we can't do
+    // anything if there's CAP is restricted to SMBus.
+    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY)
+      || (!IS_SMBUS_FLAG_ENABLED(Attribs) && (CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY || CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY))) {
       ReturnCode = EFI_UNSUPPORTED;
       NVDIMM_WARN("Command access policy disallows Set PCD command");
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);

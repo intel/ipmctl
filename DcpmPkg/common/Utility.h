@@ -748,7 +748,7 @@ FreeStringArray(
   If the user does not provide a handle, the function will try
   to match the driver or the controller handle based on the
   provided protocol GUID.
-  No need to call close protocol because of the way it's opened.
+  No need to call close protocol because of the way it is opened.
 
   @param[in] Guid is the EFI GUID of the protocol we want to open.
   @param[out] ppProtocol is the pointer to a pointer where the opened

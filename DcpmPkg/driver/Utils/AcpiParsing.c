@@ -1288,7 +1288,7 @@ Finish:
   Return the current memory mode chosen by the BIOS during boot-up. 1LM is
   the fallback option and will always be available. 2LM will only be enabled
   if the AllowedMemoryMode is 2LM, there is memory configured for 2LM, and
-  it's in a BIOS-supported configuration. We read this information from the
+  it is in a BIOS-supported configuration. We read this information from the
   PCAT table provided by BIOS.
 
   @param[out] pResult The current memory mode chosen by BIOS

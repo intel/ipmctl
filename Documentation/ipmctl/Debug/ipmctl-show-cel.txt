@@ -12,7 +12,7 @@ ipmctl-show-cel - Shows the current PMem module firmware Command Effect Log.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -cel [TARGETS]
 
 DESCRIPTION
@@ -45,7 +45,7 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
@@ -57,11 +57,11 @@ TARGETS
 EXAMPLES
 --------
 Lists command effects for all PMem modules installed in the system
-[verse]
+[listing]
 ipmctl show -cel
 
 Lists command effects for PMem module 0x1001
-[verse]
+[listing]
 ipmctl show -dimm 0x1001 -cel
 
 LIMITATIONS

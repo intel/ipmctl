@@ -678,7 +678,7 @@ ValidateAndPrepareLoadConfig(
       *pPersistentMemType = PM_TYPE_AD_NI;
     }
   } else {
-    /** No DIMMs specified on that socket, so it's also successful path. **/
+    /** No DIMMs specified on that socket, so it is also successful path. **/
   }
 
   /** Label Version sanity check. Use default version if there are invalid inputs **/

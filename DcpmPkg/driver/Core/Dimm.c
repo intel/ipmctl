@@ -486,8 +486,8 @@ Finish:
   Add DIMM address space region to a linked list in appropriate place
   making sure target list will be already sorted by start DPA
 
-  Function allocates memory for object with range item. It's caller
-  responsibility to free this memory after it's no longer needed
+  Function allocates memory for object with range item. It is caller
+  responsibility to free this memory after it is no longer needed
 
   @param[in] pMemmapList Initialized list head to which region items will be added
   @param[in] pDimm Target DIMM structure pointer
@@ -1260,7 +1260,7 @@ InitializeDimmInventory(
     continue;
 
 ErrorInitializeDimm:
-    // If a dimm fails to initialize for any reason, it's also non-functional
+    // If a dimm fails to initialize for any reason, it is also non-functional
     // for right now
     pNewDimm->NonFunctional = TRUE;
   }
@@ -3196,7 +3196,7 @@ FwCmdUpdateFw(
     ReturnCode = PassThru(pDimm, pFwCmd, PT_UPDATEFW_TIMEOUT_INTERVAL);
 
     if (EFI_ERROR(ReturnCode)) {
-      // Try to cancel Address Range Scrub (ARS) if it's in progress
+      // Try to cancel Address Range Scrub (ARS) if it is in progress
       // on the DCPMM (and is returning FW_DEVICE_BUSY as a result).
       // There's no other reason that we should retry a current packet at
       // this layer (there's no noisy channel that we need to account for)
@@ -5222,7 +5222,7 @@ InitializeDimm (
     // the previous state of these flags so we can force which interface to use
     // and then restore the original interface flags afterwards.
     // This does mean that the flags are not honored for 1-2 commands, but
-    // it's a lot simpler than other methods.
+    // it is a lot simpler than other methods.
     // Note: DDRT large payload accessibility (DIMM_BOOT_STATUS_MEDIA_*)
     // is determined the normal way by reading the BSR directly in
     // PopulateDimmBsrAndBootStatusBitmask() (2nd half of this code).
@@ -6509,7 +6509,7 @@ GetOverwriteDimmStatus(
   if (EFI_ERROR(ReturnCode)) {
     if ((pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4 && FwStatus == FW_INTERNAL_DEVICE_ERROR) ||
       FwStatus == FW_DATA_NOT_SET) {
-      /** It's valid case when there is no long operation status **/
+      /** It is valid case when there is no long operation status **/
       *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
       ReturnCode = EFI_SUCCESS;
     }

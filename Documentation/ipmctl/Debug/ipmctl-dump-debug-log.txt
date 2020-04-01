@@ -13,7 +13,7 @@ PMem modules and optionally decodes to human readable text.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (file)] -debug [TARGETS] [PROPERTIES]
 
 DESCRIPTION
@@ -53,7 +53,7 @@ TARGET
   The command will create files that use the given filename as a prefix
   and append the PMem module UID, PMem module handle, debug log source, and the appropriate
   file type (.bin for encoded logs, .txt for decoded logs) onto the end.
-[verse]
+[listing]
 file_prefix_Uid_Handle_logsource.[bin,txt]
 
 -dict (path)::
@@ -72,7 +72,7 @@ EXAMPLES
 --------
 Dumps and decodes the debug log from PMem module 0x0001 and 0x0011 using the
 dictionary file.
-[verse]
+[listing]
 ipmctl dump -destination file_prefix -dict nlog_dict.txt -debug -dimm 0x0001,0x0011
 
 LIMITATIONS
@@ -88,7 +88,7 @@ sources for the specified PMem modules. Output file names are generated based on
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Dumped media FW debug logs to file (file_prefix_8089-A1-1816-00000016_0x0001_media.bin)
 Decoded 456 records to file (file_prefix_8089-A1-1816-00000016_0x0001_media.txt)
 No spi FW debug logs found

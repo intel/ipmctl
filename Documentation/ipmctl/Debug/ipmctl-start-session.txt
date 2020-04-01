@@ -12,9 +12,9 @@ ipmctl-start-session - Starts a recording or playback session.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ____
-ipmctl start [OPTIONS] -session -mode (record|playback|playback_manual)
+ipmctl start [OPTIONS] -session -mode (record|playback|playback_manual) [TARGETS]
 ____
 
 DESCRIPTION
@@ -22,16 +22,17 @@ DESCRIPTION
 Starts a recording or playback session.  The recording session records the platform's
 ACPI NFIT, PCAT, PMTT tables, SMBIOS tables, and FIS mailbox transactions that
 occur during the recording session.  The normal use-case would be to start a recording
-session, execute commands (i.e. create -goal, show -sensors, etc.) to be recorded,
+session, execute commands (e.g., create -goal, show -sensors, etc.) to be recorded,
 dump the recorded session using the <<Dump Session>> command, followed by stopping
 the session using the <<Stop Session>> command. The "dumped" session can then be
 loaded and "played" back on any platform that can execute the ipmctl tool.
 
-The playback session has two modes, 'playback' and 'playback_manual'.  The 'playback'
+The playback session has two modes: 'playback' and 'playback_manual'.  The 'playback'
 mode will automatically execute all commands that were previously recorded.  The
 'playback_manual' mode allows commands to be executed one at a time in a manual
-fashion.  Note, the <<Show Session>> command displays the order and commands to execute,
-where the '*' denotes which command to execute next.
+fashion.  If a tag is given, the playback will begin at the command that corresponds
+with the tagID.  Note, the <<Show Session>> command displays the order and
+commands to execute, where the '*' denotes which command to execute next.
 
 
 OPTIONS
@@ -64,22 +65,26 @@ TARGET
   - "playback" - automatically executes commands previously recorded
   - "playback_manual" - enables manual execution of commands previously recorded
 
+-tag [tagID]::
+  Specifies the starting command by tagID. Only available with "playback"
+   and "playback_manual" mode.
+
 EXAMPLES
 --------
 Start a recording session.
-[verse]
+[listing]
 ____
 ipmctl start -session -mode record
 ____
 
 Automatically execute commands in a session.
-[verse]
+[listing]
 ____
 ipmctl start -session -mode playback
 ____
 
 Allow for manual execution of commands in playback mode
-[verse]
+[listing]
 ____
 ipmctl start -session -mode playback_manual
 ____
@@ -88,8 +93,8 @@ LIMITATIONS
 -----------
 Recordings should be played back on the same IPMCTL version that created the recording.
 Recordings taken in UEFI should be played back in the UEFI environment (simulated or real).
-Recordings taken in an OS are binary compatible with other OS versions of IPMCTL, i.e. recording
-taken in Linux can be played back in Windows.
+Recordings taken in an OS are binary compatible with other OS versions of IPMCTL (i.e., recording
+taken in Linux can be played back in Windows).
 
 RETURN DATA
 -----------

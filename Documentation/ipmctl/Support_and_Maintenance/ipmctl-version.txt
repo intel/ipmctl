@@ -12,7 +12,7 @@ ipmctl-version - Shows the PMem module host software versions
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl version [OPTIONS]
 
 DESCRIPTION
@@ -28,13 +28,13 @@ OPTIONS
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 EXAMPLES
 --------
 Displays the available version information for the PMem module software components.
-[verse]
+[listing]
 ipmctl version
 
 RETURN DATA

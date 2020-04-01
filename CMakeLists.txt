@@ -614,27 +614,6 @@ if(LNX_BUILD)
 endif()
 
 #----------------------------------------------------------------------------------------------------
-# Documentation
-#----------------------------------------------------------------------------------------------------
-find_package(Doxygen)
-
-if(DOXYGEN_FOUND)
-
-#----------------------------------------------------------------------------------------------------
-# Generate NVM C API documentation with Doxygen
-#----------------------------------------------------------------------------------------------------
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api @ONLY)
-	add_custom_target(doc-api
-		mkdir -p ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
-		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/Documentation/nvm_management_api/nvm_management_api_latex_header.tex ${CMAKE_BINARY_DIR}/docs/nvm_api/
-		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api
-		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
-		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
-		COMMENT "Generating API documentation with Doxygen" VERBATIM
-		)
-endif()
-
-#----------------------------------------------------------------------------------------------------
 # Generate man pages with asciidoctor
 #----------------------------------------------------------------------------------------------------
 if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)

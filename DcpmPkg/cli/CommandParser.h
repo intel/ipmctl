@@ -486,7 +486,7 @@ void FreeCommandInput(struct CommandInput *pCommandInput);
 /**
   Parse the given the command line arguments to
   identify the correct command.
-  It's the responsibility of the caller function to free the allocated
+  It is the responsibility of the caller function to free the allocated
   memory for target values in the Command structure.
 
   @param[in] the command input

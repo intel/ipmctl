@@ -12,7 +12,7 @@ ipmctl-show-preferences - Displays a list of the PMem module software user prefe
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -preferences
 
 DESCRIPTION
@@ -41,8 +41,8 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Displays the current values for all the user preferences
-[verse]
+Displays the current values for all the user preferences.
+[listing]
 ipmctl show -preferences
 
 RETURN DATA

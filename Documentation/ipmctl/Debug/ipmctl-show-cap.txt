@@ -12,7 +12,7 @@ ipmctl-show-cap - Shows the current Command Access Policy restrictions.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -cap [TARGETS]
 
 DESCRIPTION
@@ -36,7 +36,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
@@ -48,11 +48,11 @@ TARGETS
 EXAMPLES
 --------
 Lists restrictions for all PMem modules installed in the system
-[verse]
+[listing]
 ipmctl show -cap
 
 Lists restrictions for PMem module 0x1001
-[verse]
+[listing]
 ipmctl show -dimm 0x1001 -cap
 
 LIMITATIONS
@@ -65,7 +65,7 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-The default behavior is to return a table which indicates the restrictions enforced by Command Access Policy (CAP)
+The default behavior is to return a table which indicates the restrictions enforced by Command Access Policy (CAP).
 
 DimmID::
   The default display of PMem module identifiers. One of:

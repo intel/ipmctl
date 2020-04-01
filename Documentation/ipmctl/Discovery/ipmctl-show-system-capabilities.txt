@@ -8,11 +8,11 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-system-capabilities - Shows the platform supported PMem module capabilities
+ipmctl-show-system-capabilities - Shows the platform supported PMem module capabilities.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -system -capabilities
 
 DESCRIPTION
@@ -62,7 +62,7 @@ endif::os_build[]
 EXAMPLES
 --------
 Displays the supported PMem module capabilities
-[verse]
+[listing]
 ipmctl show -system -capabilities
 
 RETURN DATA
@@ -76,8 +76,8 @@ PlatformConfigSupported::
   - 0: Changes must be made in the BIOS.
   - 1: The command *_Create Memory Allocation Goal_* is supported.
 
-Alignment (Default)::
-  Capacity alignment requirement for all memory types as reported by the BIOS.
+Alignment::
+  (Default) Capacity alignment requirement for all memory types as reported by the BIOS.
 
 AllowedVolatileMode::
   (Default) The volatile mode allowed as determined by BIOS setup. One of:

@@ -12,7 +12,7 @@ ipmctl-show-performance - Shows performance metrics for one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -performance [METRICS] [TARGETS]
 
 DESCRIPTION
@@ -66,12 +66,12 @@ TARGETS
 EXAMPLES
 --------
 Shows all performance metrics for all PMem modules in the server.
-[verse]
+[listing]
 ipmctl show -dimm -performance
 
 Shows the number of 64 byte reads since last AC cycle for all PMem modules in the
 server.
-[verse]
+[listing]
 ipmctl show -dimm -performance MediaReads
 
 LIMITATIONS

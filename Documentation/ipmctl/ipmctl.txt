@@ -6,11 +6,11 @@ ipmctl(1)
 
 NAME
 ----
-ipmctl - Utility for managing Intel Optane persistent memory modules (PMem module)
+ipmctl - Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl COMMAND [OPTIONS] [TARGETS] [PROPERTIES]
 
 OPTIONS
@@ -21,7 +21,7 @@ OPTIONS
 
 DESCRIPTION
 -----------
-Utility for managing Intel Optane persistent memory modules (PMem module)
+Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
 
 Supports functionality to:
 

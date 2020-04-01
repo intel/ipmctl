@@ -2,6 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 NOTE: Changing a memory allocation goal modifies how the platform firmware maps
-persistent memory in the system address space (SPA) which may result in data loss or
+persistent memory in the System Physical Address space (SPA) which may result in data loss or
 inaccessible data, but does not explicitly delete or modify user data
 found in persistent memory.

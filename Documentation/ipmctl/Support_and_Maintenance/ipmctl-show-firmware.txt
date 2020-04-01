@@ -12,7 +12,7 @@ ipmctl-show-firmware - Shows detailed information about the firmware
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -firmware [TARGETS]
 
 DESCRIPTION
@@ -49,7 +49,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
@@ -62,7 +62,7 @@ TARGETS
 EXAMPLES
 --------
 Shows the firmware information for all PMem modules in the server.
-[verse]
+[listing]
 ipmctl show -dimm -firmware
 
 LIMITATIONS
@@ -97,6 +97,11 @@ StagedFWVersion::
   - SV = 2-digit security version number
   - bbbb = 4-digit build version
 
+StagedFWActivatable::
+  The state of whether the staged firmware is activatable or not, where:
+  - 0 = Not activatable, reboot is required
+  - 1 = Activatable
+
 FWUpdateStatus::
   The status of the last firmware update operation. One of:
   - Unknown
@@ -105,4 +110,13 @@ FWUpdateStatus::
   - Update failed to load, fell back to previous firmware
 
 FWImageMaxSize::
-  The maximum size of a firmware image
+  The maximum size of a firmware image.
+
+QuiesceRequired::
+  The state of whether activating the firmware requires the host
+  to quiesce traffic prior to calling the command.
+  - 0 = No traffic quiesce required prior to activate
+  - 1 = Traffic quiesce required prior to activate
+
+ActivationTime::
+  The estimated activation time, in ms, required for activating the firmware.

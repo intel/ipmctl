@@ -12,7 +12,7 @@ ipmctl-show-device - Shows information about one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -dimm [TARGETS]
 
 DESCRIPTION
@@ -75,15 +75,15 @@ in the filtered socket list.
 EXAMPLES
 --------
 Lists a few key fields for each PMem module.
-[verse]
+[listing]
 ipmctl show -dimm
 
 Lists all properties for PMem module 0x0001.
-[verse]
+[listing]
 ipmctl show -a -dimm 0x0001
 
 Retrieves specific properties for each PMem module.
-[verse]
+[listing]
 ipmctl show -d HealthState,LockState -dimm
 
 RETURN DATA
@@ -96,7 +96,7 @@ manageable by the software as indicated by the "ManageabilityState" property.
 NOTE: Some data is endian-swapped for human readability.
 
 DimmID::
-  (Default)  The PMem module identifier.
+  (Default) The PMem module identifier.
 
 Capacity::
   (Default) The usable capacity of the PMem module as reported by the
@@ -108,7 +108,7 @@ HealthState::
   * Noncritical: Maintenance is required.
   * Critical: Features or performance are degraded due to failure.
   * Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
-    AIT Failure, etc) is non-recoverable and data loss has occurred or is imminent.
+    AIT Failure, etc.) is non-recoverable and data loss has occurred or is imminent.
     In this case, the firmware will disable the media and access to user data and
     operations that require use of the media will fail.
   * Non-functional: The PMem module is detected and manageable, though some
@@ -138,7 +138,7 @@ HealthStateReason::
   - Performance degraded
   - CAP Self-Test communication failure
    +
-  Refer to the _Intel® Optane™ Persistent Memory Firmware
+  Refer to the _Intel(R) Optane(TM) Persistent Memory Firmware
   Interface Specification_, document number 556488, Section 4.8
   SMART and Health.
 
@@ -270,7 +270,7 @@ FormFactor::
   - SODIMM
 
 LockState::
-  (Default) The current security state of the persistent memory on the PMem module.
+  The current security state of the persistent memory on the PMem module.
   One ore more of:
   - Unknown - The security state cannot be determined (e.g., when the
     PMem module is not manageable by the software).
@@ -285,28 +285,28 @@ LockState::
   - Not Supported - Security is not supported on the PMem module.
 
 SVNDowngrade::
-  (Default) The Opt-in value of SVN Downgrade security opt-in feature for PMem module.
+  The Opt-in value of SVN Downgrade security opt-in feature for PMem module.
   One of :
   - Unknown
   - Disabled
   - Enabled
 
 SecureErasePolicy::
-  (Default) The Opt-in value of Secure erase policy opt-in feature for PMem module.
+  The Opt-in value of Secure erase policy opt-in feature for PMem module.
   One of :
   - Unknown
   - No Master Passphrase
   - Master Passphrase Enabled
 
 S3ResumeOptIn::
-  (Default) The Opt-in value of S3 Resume security opt-in feature for PMem module.
+  The Opt-in value of S3 Resume security opt-in feature for PMem module.
   One of :
   - Unknown
   - UnsecureS3
   - SecureS3
 
 FwActivateOptIn::
-  (Default) The Opt-in value of Fw Activate security opt-in feature for PMem module.
+  The Opt-in value of Fw Activate security opt-in feature for PMem module.
   One of :
   - Unknown
   - Disabled
@@ -369,8 +369,8 @@ UnconfiguredCapacity::
 
 InaccessibleCapacity::
   PMem module capacity that is inaccessible due to:
-  - licensing issue
-  - platform configuration prevents accessing this capacity. For example,
+  - Licensing issue
+  - Platform configuration prevents accessing this capacity. For example,
   MemoryCapacity is configured and available on a PMem module but MemoryMode is not
   enabled by BIOS.
 
@@ -494,7 +494,7 @@ SecurityCapabilities::
 MasterPassphraseEnabled::
   This property indicates if master passphrase is enabled. If it is disabled,
   then it cannot be enabled. One of:
-  - 0: Disabled - Cannot be enabled
+  - 0: Disabled - Cannot be enabled.
   - 1: Enabled - Master passphrase can be changed. Cannot be disabled.
 
 ConfigurationStatus::

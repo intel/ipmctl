@@ -12,7 +12,7 @@ ipmctl-delete-goal - Deletes the memory allocation goal from PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl delete [OPTIONS] -goal [TARGETS]
 
 DESCRIPTION
@@ -51,7 +51,7 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
@@ -70,7 +70,7 @@ TARGETS
 EXAMPLES
 --------
 Deletes the memory allocation goal from all PMem modules on all sockets.
-[verse]
+[listing]
 ipmctl delete -goal
 
 LIMITATIONS
@@ -93,8 +93,8 @@ message for those that did.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Delete memory allocation goal from PMem module (DimmID): Success
 
-[verse]
+[listing]
 Delete memory allocation goal from PMem module (DimmID): Error (Code) - (Description)

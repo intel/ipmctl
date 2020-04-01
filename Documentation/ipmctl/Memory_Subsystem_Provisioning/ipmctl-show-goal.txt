@@ -12,7 +12,7 @@ ipmctl-show-goal - Shows the memory allocation goal on one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -goal [TARGETS] [PROPERTIES]
 
 DESCRIPTION
@@ -53,7 +53,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 -u (B|MB|MiB|GB|GiB|TB| TiB)::
@@ -77,11 +77,11 @@ TARGETS
 EXAMPLES
 --------
 Shows the default memory allocation goal attributes for each PMem module.
-[verse]
+[listing]
 ipmctl show -goal
 
 Shows all the memory allocation goal attributes for the PMem modules on socket 1.
-[verse]
+[listing]
 ipmctl show -a -goal -socket 1
 
 LIMITATIONS
@@ -100,8 +100,8 @@ PMem module; applying options changes the output to a more detailed format.
 SocketID::
   (Default) The processor socket identifier where the PMem module is installed.
 
-DimmID:: (Default)
-  The PMem module identifier
+DimmID::
+  (Default) The PMem module identifier
 
 MemorySize::
   (Default) The PMem module capacity that will be configured in Memory Mode.
@@ -150,5 +150,5 @@ SAMPLE OUTPUT
 -------------
 If a new memory allocation goal has been created, a prompt to reboot will be
 presented.
-[verse]
+[listing]
 A reboot is required to process new memory allocation goals.

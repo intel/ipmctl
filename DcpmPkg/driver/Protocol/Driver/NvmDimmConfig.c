@@ -489,7 +489,7 @@ GetDimmMappedMemSize(
 /*
  * Helper function for initializing information from the NFIT for non-functional
  * dimms only. This should eventually include functional dimms as well
- * (GetDimmInfo), but currently avoiding as it's hard to extract the NFIT-only
+ * (GetDimmInfo), but currently avoiding as it is hard to extract the NFIT-only
  * calls from GetDimmInfo.
  */
 VOID
@@ -1219,7 +1219,7 @@ Finish:
 
   @param[in] SocketId
 
-  @retval FALSE SocketId is not valid, it's out of allowed range or
+  @retval FALSE SocketId is not valid, it is out of allowed range or
     there was a problem with getting DIMM list
 **/
 STATIC
@@ -1520,7 +1520,7 @@ VerifyTargetDimms (
   // Main loop, go through each DCPMM in platform
   LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
     pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-    // If it's not an allowed DCPMM, skip it
+    // If it is not an allowed DCPMM, skip it
     // Error was already thrown if it is a specified DCPMM
     if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
       continue;
@@ -2270,9 +2270,10 @@ static void PopulateAppDirectIndex(
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_NOT_FOUND PMem module could not be found
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -8080,7 +8081,7 @@ PassThruCommand(
   pDimm = GetDimmByPid(pCmd->DimmID, &gNvmDimmData->PMEMDev.Dimms);
 
   if (pDimm == NULL || !IsDimmManageable(pDimm)) {
-    NVDIMM_DBG("Could not find the specified DIMM or it's unmanageable.");
+    NVDIMM_DBG("Could not find the specified DIMM or it is unmanageable.");
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
@@ -10336,7 +10337,7 @@ GetBSRAndBootStatusBitMask(
   }
 
   // Initialize pCommandStatus and throw away eventually because API
-  // doesn't provide it and it's required for VerifyTargetDimms()
+  // doesn't provide it and it is required for VerifyTargetDimms()
   CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
   CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, REQUIRE_DCPMMS_MANAGEABLE,

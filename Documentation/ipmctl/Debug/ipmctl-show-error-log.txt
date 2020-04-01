@@ -12,7 +12,7 @@ ipmctl-show-error-log - Shows thermal or media errors on the specified PMem modu
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ____
 ipmctl show [OPTIONS] -error (Thermal|Media) [TARGETS] [PROPERTIES]
 ____
@@ -79,13 +79,13 @@ Count::
 EXAMPLES
 --------
 Show all high thermal error log entries
-[verse]
+[listing]
 ____
 ipmctl show -error Thermal Level=High
 ____
 
 Show all low media error log entries
-[verse]
+[listing]
 ____
 ipmctl show -error Media Level=Low
 ____
@@ -100,14 +100,14 @@ RETURN DATA
 -----------
 Prints errors of the specified type for the specified PMem modules. If no errors are found, the
 following message will be printed:
-[verse]
+[listing]
 ____
 No errors found on PMem module (DimmID)
 ____
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 ____
  DimmID | System Timestamp    | Error Type
 =============================================================
@@ -116,7 +116,7 @@ ____
 Show error executed successfully
 ____
 
-[verse]
+[listing]
 ____
 Media Error occurred on Dimm (DimmID):
 System Timestamp : 1527266471

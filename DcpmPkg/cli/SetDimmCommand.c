@@ -663,7 +663,7 @@ SetDimm(
       goto FinishCommandStatusSet;
     }
   } else {
-    // It's ok if average power reporting time constant multiplier property doesn't exist, it is an optional param
+    // It is ok if average power reporting time constant multiplier property doesn't exist, it is an optional param
     ReturnCode = EFI_SUCCESS;
   }
 

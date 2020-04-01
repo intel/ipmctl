@@ -47,7 +47,7 @@ EFI_STATUS RegisterCommand(struct Command *pCommand)
 
   /* make sure a verb is specified */
   if (!pCommand || !pCommand->verb || StrLen(pCommand->verb) == 0) {
-    NVDIMM_WARN("Failed to register the command because it's invalid");
+    NVDIMM_WARN("Failed to register the command because it is invalid");
     Rc = EFI_ABORTED;
   } else {
     /* allocate memory */
@@ -224,7 +224,7 @@ extern BOOLEAN HelpRequested;
  * Parsing is a two step process to first identify the tokens of the input
  * and then try to match it against the list of supported commands.
  *
- * It's the responsibility of the caller function to free the allocated
+ * It is the responsibility of the caller function to free the allocated
  * memory for target values in the Command structure.
  */
 EFI_STATUS

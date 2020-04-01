@@ -778,10 +778,10 @@ Finish:
 
 
 /**
-  Get Namespace label from of specified DIMM by it's UUID.
+  Get Namespace label from of specified DIMM by its UUID.
 
-  Function allocates memory for the label data. It's callee responsibility
-  to free it after it's no longer needed. If more than one label is detected
+  Function allocates memory for the label data. It is callee responsibility
+  to free it after it is no longer needed. If more than one label is detected
   then return error.
 
   @param[in] pDimm Target DIMM
@@ -1086,7 +1086,7 @@ Finish:
 /**
   Copies the Raw LSA Index data into proper data structures
 
-  It's the caller's responsibility to free the memory.
+  It is the caller's responsibility to free the memory.
 
   @param[in] pRawData Raw data from the PCD
   @param[in] PcdLsaPartitionSize for checking Index size
@@ -1180,7 +1180,7 @@ Finish:
 
   Function reads Platform Config Data partition 3. of a DIMM and invokes
   validation subroutine to check for data consistency. Required memory
-  will be allocated, it's caller responsibility to free it after it's
+  will be allocated, it is caller responsibility to free it after it is
   no longer needed.
 
   @param[in] DimmPid Dimm ID of DIMM from which to read the data
@@ -1943,7 +1943,7 @@ Finish:
 
   Function scans Namespaces Index of LSA and reads Namespace slots
   for Namespace data. Memory for required structures is allocated
-  and it's callee responsibility to free it when it's no longer needed.
+  and it is callee responsibility to free it when it is no longer needed.
 
   @param[in] pDimm Pointer to a DIMM structure to which LSA relates
   @param[in] pFitHead Fully populated NVM Firmware Interface Table
@@ -3427,7 +3427,7 @@ Finish:
 /**
   Gets the Label Index Data in a contiguous memory
 
-  It's the caller's responsibility to free the memory.
+  It is the caller's responsibility to free the memory.
 
   @param[in] pLsa The Label Storage Area
   @param[in] LabelIndex The index of the LSA
@@ -3516,7 +3516,7 @@ Finish:
 /**
   Check if LSA of a specified DIMM is initialized.
   If empty LSA is detected then it is initialized.
-  If non empty LSA is detected then it's validated
+  If non empty LSA is detected then it is validated
   for data correctness.
 
   @param[in] pDimm Target DIMM

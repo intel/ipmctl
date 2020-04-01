@@ -17,7 +17,7 @@ endif::manpage[]
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl start [OPTIONS] -diagnostic [TARGETS]
 
 DESCRIPTION
@@ -64,14 +64,14 @@ TARGETS
     the installed hardware and the platform configuration conforms to best known
     practices.
   - "Security" - This test verifies that all PMem modules have a consistent security
-    state. It's a best practice to enable security on all PMem modules rather than
+    state. It is a best practice to enable security on all PMem modules rather than
     just some.
   - "FW" - This test verifies that all PMem modules of a given model have consistent
     FW installed and other FW modifiable attributes are set in accordance with
     best practices. +
     Note that the test does not have a means of verifying that
     the installed FW is the optimal version for a given PMem module model just that
-    it's been consistently applied across the system.
+    it has been consistently applied across the system.
 
 -dimm [DimmIDS]::
   Starts a diagnostic test on specific PMem modules by optionally supplying one or more
@@ -81,11 +81,11 @@ TARGETS
 EXAMPLES
 --------
 Starts all diagnostics.
-[verse]
+[listing]
 ipmctl start -diagnostic
 
-Starts the quick check diagnostic on PMem module 0x0001
-[verse]
+Starts the quick check diagnostic on PMem module 0x0001.
+[listing]
 ipmctl start -diagnostic Quick -dimm 0x0001
 
 LIMITATIONS

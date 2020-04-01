@@ -209,7 +209,7 @@ GetRegionById(
 /**
   Get Region List
   Retruns the pointer to the region list.
-  It's also initializing the region list if it's necessary.
+  It is also initializing the region list if it is necessary.
 
   @param[in] pRegionList Head of the list for Regions
   @param[in] UseNfit Flag to indicate usage of NFIT

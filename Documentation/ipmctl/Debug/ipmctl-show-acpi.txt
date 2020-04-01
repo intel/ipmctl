@@ -12,7 +12,7 @@ ipmctl-show-acpi - Shows the system ACPI tables related to the PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -system
 
 DESCRIPTION
@@ -47,7 +47,7 @@ Refer to the ACPI specification for detailed information about the ACPI tables.
 EXAMPLES
 --------
 Show the ACPI NFIT
-[verse]
+[listing]
 ipmctl show -system NFIT
 
 RETURN DATA

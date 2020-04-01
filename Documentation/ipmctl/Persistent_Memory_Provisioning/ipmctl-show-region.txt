@@ -8,16 +8,16 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-region - Retrieves a list of persistent memory regions
+ipmctl-show-region - Retrieves a list of persistent memory regions.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -region [TARGETS]
 
 DESCRIPTION
 -----------
-Retrieves a list of persistent memory regions of PMem module capacity
+Retrieves a list of persistent memory regions of PMem module capacity.
 
 OPTIONS
 -------
@@ -55,7 +55,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
 
 -nfit::
-  Used to specify NFIT table as the source instead of PCD(default) for the current invocation of ipmctl.
+  Used to specify NFIT table as the source instead of PCD (default) for the current invocation of ipmctl.
 
 ifdef::os_build[]
 -o (text|nvmxml)::
@@ -84,11 +84,11 @@ TARGETS
 EXAMPLES
 --------
 Shows all attributes of all persistent memory regions in the server.
-[verse]
+[listing]
 ipmctl show -a -region
 
 Shows all attributes for the specified persistent memory region.
-[verse]
+[listing]
 ipmctl show -a -region 1
 
 LIMITATIONS

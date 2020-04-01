@@ -12,7 +12,7 @@ ipmctl-show-sensor - Shows sensor data for one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
 
 DESCRIPTION
@@ -144,11 +144,11 @@ TARGETS
 EXAMPLES
 --------
 Gets all sensor information for all PMem modules.
-[verse]
+[listing]
 ipmctl show -sensor
 
 Shows the media temperature sensor for the specified PMem module.
-[verse]
+[listing]
 ipmctl show -sensor MediaTemperature -dimm 0x0001
 
 LIMITATIONS

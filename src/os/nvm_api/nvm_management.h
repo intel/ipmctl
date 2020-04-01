@@ -1120,7 +1120,7 @@ struct socket {
   NVM_UINT8	reserved[64];					///< reserved
 };
 
-/** Describes the status of a job */
+/** Describes the status of a job. */
 struct job {
   NVM_UID			uid;                ///< UID of the PMem module
   NVM_UINT8		percent_complete;   ///< Percent complete
@@ -1893,8 +1893,8 @@ NVM_API int nvm_get_events(const struct event_filter *p_filter, struct event *p_
 NVM_API int nvm_purge_events(const struct event_filter *p_filter);
 
 /**
- * @brief Acknowledge an event from the native API database.
- * (i.e. setting action required field from true to false)
+ * @brief Acknowledge an event from the native API database
+ * (i.e., setting action required field from true to false).
  * @param[in] event_id
  *              The event id of the event to be acknowledged.
  * @return
@@ -2008,7 +2008,8 @@ NVM_API int nvm_create_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uid
  *              configuration goal from a PMem module.
  * @return
  *            ::NVM_SUCCESS @n
- *            ::NVM_ERR_INVALID_PARAMETER @nNVM_SUCCESS @n
+ *            ::NVM_ERR_INVALID_PARAMETER @n
+ *            ::NVM_ERR_DIMM_NOT_FOUND @n
  *            ::NVM_ERR_UNKNOWN @n
  */
 NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_count, struct config_goal *p_goal);
@@ -2261,7 +2262,7 @@ NVM_API int nvm_debug_logging_enabled();
  * @pre The caller must have administrative privileges.
  * @remarks By default, the native API library starts logging errors only.
  * @remarks Debug logging may impact native API library performance depending
- * on the workload of the library.  It's recommended that debug logging is only
+ * on the workload of the library.  It is recommended that debug logging is only
  * turned on during troubleshooting or debugging.
  * @remarks Changing the debug log level is NOT persistent.
  * @return

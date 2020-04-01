@@ -12,7 +12,7 @@ ipmctl-stop-session - Stops the active playback or recording session.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ____
 ipmctl stop [OPTIONS] -session
 ____
@@ -49,7 +49,7 @@ EXAMPLES
 --------
 Stop the current session.
 
-[verse]
+[listing]
 ____
 ipmctl stop -session
 ____
@@ -60,7 +60,7 @@ A session must be already started.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 ____
 Successfully dumped 1060619 bytes to file.
 

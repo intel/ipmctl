@@ -12,7 +12,7 @@ ipmctl-load-goal - Creates a memory allocation goal request from a file
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
 
 DESCRIPTION
@@ -57,7 +57,7 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml". The "nvmxml" format implies the "-force" flag.
+  Changes the output format. One of: "text" (default) or "nvmxml". The "nvmxml" format implies the "-force" flag.
 endif::os_build[]
 
 -u (B|MB|MiB|GB|GiB|TB| TiB)::
@@ -85,18 +85,18 @@ EXAMPLES
 Loads the configuration settings stored in "config.txt" onto all the PMem modules in
 the system as a memory allocation goal to be applied by the BIOS on the next
 reboot.
-[verse]
+[listing]
 ipmctl load -source config.txt -goal
 
 Loads the configuration settings stored in "config.txt" onto a specified set of
 PMem modules as a memory allocation goal to be applied by the BIOS on the next reboot.
-[verse]
+[listing]
 ipmctl load -source config.txt -goal -dimm 1,2,3
 
 Loads the configuration settings stored in "config.txt" onto all manageable
 PMem modules on sockets 1 and 2 as a memory allocation goal to be applied by the BIOS
 on the next reboot.
-[verse]
+[listing]
 ipmctl load -source config.txt -goal -socket 1,2
 
 LIMITATIONS
@@ -108,7 +108,7 @@ In order to successfully execute this command:
 - The specified PMem modules must be manageable by the host software and
   must all have the same SKU.
 
-- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>
+- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
 
 - Existing memory allocation goals that have not been applied and any namespaces
   associated with the requested PMem modules must be deleted before running

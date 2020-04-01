@@ -12,7 +12,7 @@ ipmctl-show-topology - Shows the topology of the memory installed
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -topology [TARGETS]
 
 DESCRIPTION
@@ -67,7 +67,7 @@ displayed in the filtered socket list.
 EXAMPLES
 --------
 Displays the system memory topology.
-[verse]
+[listing]
 ipmctl show -topology
 
 RETURN DATA

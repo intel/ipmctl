@@ -12,7 +12,7 @@ ipmctl-update-firmware - Updates the firmware on one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl load [OPTIONS] -source (path) -dimm [TARGETS]
 
 DESCRIPTION
@@ -81,7 +81,7 @@ endif::os_build[]
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
@@ -96,11 +96,11 @@ EXAMPLES
 --------
 Updates the firmware on all PMem modules in the system to the image in sourcefile.bin on
 the next power cycle.
-[verse]
+[listing]
 ipmctl load -source sourcefile.bin -dimm
 
 Checks the firmware image in sourcefile.bin and retrieves the version.
-[verse]
+[listing]
 ipmctl load -examine -source sourcefile.bin -dimm
 
 
@@ -136,7 +136,7 @@ PMem module.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 (file path): MM.mm.hh.bbbb
 Load FW on PMem module (DimmID): (Valid|Downgrade) [(with
 confirmation or the force option)]
@@ -145,7 +145,7 @@ If the firmware is being downgraded and the force option is not provided, the us
 be prompted to confirm the downgrade for each PMem module. Otherwise, for each PMem module,
 the CLI will indicate the status of the operation.
 
-[verse]
+[listing]
 Downgrade firmware on PMem module (DimmID)? (y or [n]) Downgrade firmware
 on PMem module (DimmID)? (y or [n])
 
@@ -155,9 +155,9 @@ become active until the next power cycle. Use the command Section
 <<Show Device Firmware>> to view more detailed information about the active
 and staged firmware.
 
-[verse]
+[listing]
 Load FW on PMem module (DimmID): Success, a power cycle is required to
 activate the FW.
 
-[verse]
+[listing]
 Load FW on PMem module (DimmID): Error (Code) - (Description)

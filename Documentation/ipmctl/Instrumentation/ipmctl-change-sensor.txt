@@ -12,7 +12,7 @@ ipmctl-change-sensor - Changes the threshold or enabled state for PMem modules s
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
 AlarmThreshold=(temperature) AlarmEnabled=(0|1)
 
@@ -101,7 +101,7 @@ EXAMPLES
 Changes the media temperature alarm threshold to 51C on the specified PMem module and enables
 the alarm.
 
-[verse]
+[listing]
 ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51 AlarmEnabled=1
 
 LIMITATIONS
@@ -120,9 +120,9 @@ remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Modify (Sensor) settings on DIMM (DimmID): Success
 
-[verse]
+[listing]
 Modify (Sensor) settings on DIMM (DimmID): Error (Code) -
 (Description)

@@ -3307,7 +3307,6 @@ Finish:
   CleanStringMemory(AsciiPassword);
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
-
   return ReturnCode;
 }
 
@@ -4983,11 +4982,12 @@ GetSystemCapabilitiesInfo(
 #ifdef OS_BUILD
   pSysCapInfo->EraseDeviceDataSupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->EnableDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
-  pSysCapInfo->DisableDeviceSecuritySupported = FEATURE_SUPPORTED;
+  pSysCapInfo->DisableDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->UnlockDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_NOT_SUPPORTED;
+  pSysCapInfo->ChangeMasterPassphraseSupported = FEATURE_NOT_SUPPORTED;
 #else
   pSysCapInfo->EraseDeviceDataSupported = FEATURE_SUPPORTED;
   pSysCapInfo->EnableDeviceSecuritySupported = FEATURE_SUPPORTED;
@@ -4996,9 +4996,8 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_SUPPORTED;
   pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_SUPPORTED;
-#endif
-
   pSysCapInfo->ChangeMasterPassphraseSupported = FEATURE_SUPPORTED;
+#endif
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

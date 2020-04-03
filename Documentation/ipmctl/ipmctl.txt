@@ -58,11 +58,13 @@ Discover PMem modules on the platform.
 Provision the platform memory configuration and configure data-at-rest security
 on PMem modules.
 
+ifndef::os_build[]
 *ipmctl-change-device-passphrase*(1)::
   Changes the security passphrase on PMem module
 
 *ipmctl-change-device-security*(1)::
   Changes the PMem module security lock state
+endif::os_build[]
 
 *ipmctl-create-goal(1)*::
   Creates a memory allocation goal on one or more PMem module
@@ -73,11 +75,13 @@ on PMem modules.
 *ipmctl-dump-goal(1)*::
    Stores the current system configuration in a file
 
+ifndef::os_build[]
 *ipmctl-enable-device-security(1)*::
   Enable data-at-rest security on PMem module
 
 *ipmctl-erase-device-data(1)*::
   Erases the persistent data on one or more PMem modules
+endif::os_build[]
 
 *ipmctl-load-goal(1)*::
   Load a memory allocation goal from a file onto PMem modules
@@ -179,14 +183,18 @@ SEE ALSO
 *ipmctl-show-socket*(1),
 *ipmctl-show-system-capabilities*(1),
 *ipmctl-show-topology*(1),
+ifndef::os_build[]
 *ipmctl-change-device-passphrase*(1),
 *ipmctl-change-device-security*(1),
+endif::os_build[]
 *ipmctl-create-goal*(1),
 *ipmctl-create-goal*(1),
 *ipmctl-delete-goal*(1),
 *ipmctl-dump-goal*(1),
+ifndef::os_build[]
 *ipmctl-enable-device-security*(1),
 *ipmctl-erase-device-data*(1),
+endif::os_build[]
 *ipmctl-load-goal*(1),
 *ipmctl-show-goal*(1),
 *ipmctl-show-region*(1),

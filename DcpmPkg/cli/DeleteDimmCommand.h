@@ -2,7 +2,7 @@
  * Copyright (c) 2018, Intel Corporation.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-
+#ifndef OS_BUILD
 #ifndef _DELETE_DIMM_COMMAND_
 #define _DELETE_DIMM_COMMAND_
 
@@ -35,3 +35,4 @@ DeleteDimm(
   );
 
 #endif /** _DELETE_DIMM_COMMAND_ **/
+#endif /** OS_BUILD **/

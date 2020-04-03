@@ -732,10 +732,12 @@ RegisterCommands(
     goto done;
   }
 
+#ifndef OS_BUILD
   Rc = RegisterDeleteDimmCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+#endif
 
   // Persistent Memory Provisioning Commands
   Rc = RegisterShowRegionsCommand();

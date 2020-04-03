@@ -624,13 +624,9 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-socket.txt
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-system-capabilities.txt
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-topology.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-create-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-delete-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-dump-goal.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-enable-device-security.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-erase-device-data.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-load-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-show-goal.txt
 		${ROOT}/Documentation/ipmctl/Persistent_Memory_Provisioning/ipmctl-show-region.txt

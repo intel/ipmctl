@@ -2,7 +2,7 @@
  * Copyright (c) 2018, Intel Corporation.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-
+#ifndef OS_BUILD
 #include <Uefi.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiShellLib/UefiShellLib.h>
@@ -353,4 +353,4 @@ RegisterDeleteDimmCommand(
   return rc;
 }
 
-
+#endif /** OS_BUILD **/

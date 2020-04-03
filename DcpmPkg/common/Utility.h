@@ -1965,6 +1965,18 @@ CHAR16 * ConvertDimmInfoAttribToString(
   CHAR16* pFormatStr OPTIONAL
 );
 
+/**
+  Match driver command status to EFI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+EFI_STATUS
+MatchCliReturnCode (
+  IN     NVM_STATUS Status
+ );
+
 #ifndef OS_BUILD
 /**
   Find serial attributes from SerialProtocol and set on

@@ -580,18 +580,6 @@ GetDeviceAndFilePath(
   );
 
 /**
-  Match driver command status to CLI return code
-
-  @param[in] Status - NVM_STATUS returned from driver
-
-  @retval - Appropriate EFI return code
-**/
-EFI_STATUS
-MatchCliReturnCode (
-  IN     NVM_STATUS Status
- );
-
-/**
   Get free space of volume from given path
 
   @param[in] pFileHandle - file handle protocol

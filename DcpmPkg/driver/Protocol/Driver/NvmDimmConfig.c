@@ -5274,13 +5274,28 @@ RecoverDimmFw(
   DebugWriteSpiImageToFile(pWorkingDirectory, pCurrentDimm->DeviceHandle.AsUint32, pNewSpiImageBuffer, ImageBufferSize);
   ///////////////////////////////////////////////////
 
-  CHECK_RESULT(SpiEraseChip(pCurrentDimm, pCommandStatus), Finish);
+  CHECK_RESULT_SET_NVM_STATUS(SpiEraseChip(pCurrentDimm), pNvmStatus, NVM_ERR_SPI_ACCESS_NOT_ENABLED, Finish);
 
-  CHECK_RESULT(SpiWrite(pCurrentDimm, pNewSpiImageBuffer, (UINT32)ImageBufferSize,
-      SPI_START_ADDRESS, FALSE, pCommandStatus), Finish);
+  // Only using pCommandStatus for providing progress. Setting more detailed
+  // error codes out here
+  ReturnCode = SpiWrite(pCurrentDimm, pNewSpiImageBuffer, (UINT32)ImageBufferSize,
+      SPI_START_ADDRESS, FALSE, pCommandStatus);
+  if (EFI_SUCCESS == ReturnCode) {
+    *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
+  } else if (ReturnCode == EFI_INVALID_PARAMETER) {
+    *pNvmStatus = NVM_ERR_INVALID_PARAMETER;
+  } else {
+    // pNvmStatus isn't currently an argument to SpiWrite, so just use a
+    // default error here
+    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+  }
 
 Finish:
   FREE_POOL_SAFE(pFconfigRegionTemp);
+  // If ReturnCode isn't already set with an error, use the NvmStatus error
+  if (EFI_SUCCESS == ReturnCode) {
+    MatchCliReturnCode(*pNvmStatus);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   #endif
   return ReturnCode;

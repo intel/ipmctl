@@ -17,7 +17,7 @@
  */
 typedef enum _NvmStatusCode {
   NVM_SUCCESS                                       = 0,    ///< Success
-  NVM_SUCCESS_FW_RESET_REQUIRED                     = 1,    ///< Success, but FW reset required
+  NVM_SUCCESS_FW_RESET_REQUIRED                     = 1,    ///< Success, a power cycle is required to activate the FW.
   NVM_ERR_OPERATION_NOT_STARTED                     = 2,    ///< Error: Operation not started
   NVM_ERR_OPERATION_FAILED                          = 3,    ///< Error: Operation failed
   NVM_ERR_FORCE_REQUIRED                            = 4,    ///< Error: Force parameter required

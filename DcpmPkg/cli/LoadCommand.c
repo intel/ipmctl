@@ -399,7 +399,7 @@ Load(
   } else {
     gBS->CloseEvent(ProgressEvent);
     Print(L"\n");
-    if (StagedFwUpdates > 0) {
+    if (!FlashSPI && StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
       Loop until they all report a staged version

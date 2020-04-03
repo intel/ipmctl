@@ -73,10 +73,20 @@ TARGETS
     Creates a memory allocation goal on specific PMem modules by optionally supplying one or
     more comma-separated PMem module identifiers. This list must meet one of the following criteria:
     . Target all PMem modules on a given socket.
+      * For example, all PMem modules located within a single socket may be specified together using the
+        dimm target.
     . Target all unconfigured PMem modules.
+      * For example, when PMem modules have had their PCD deleted, then these PMem modules may all be specified
+        together using the dimm target.
     . Target PMem modules for 100% MemoryMode with all unspecified PMem modules configured for MemoryMode only.
-    . Target PMem modules for AppDirect Not-Interleaved with all unspecified PMem modules configured for AppDirect Not-Interleaved only
-    If PMem module target is unspecified, the default is to configure all manageable PMem modules on all sockets.
+      * For example, when existing PMem modules are 100% MM, then any newly added PMem modules may all be specified
+        together using the dimm target and configured as 100% MM to match the existing configuration.
+    . Target PMem modules for App Direct Not-Interleaved with all unspecified PMem modules configured for App Direct Not-Interleaved only
+      * For example, when existing PMem modules are 100% App Direct Not-Interleaved, then any newly added PMem modules may all be
+        specified together using the dimm target and configured as 100% App Direct Not-Interleaved to match the existing configuration.
+
++
+NOTE: If the dimm target is not specified, the default is to configure all manageable PMem modules on all sockets.
 
 -socket [SocketIds]::
     Loads the memory allocation goal onto all manageable PMem modules on specific

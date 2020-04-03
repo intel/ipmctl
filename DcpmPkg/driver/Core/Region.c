@@ -1243,6 +1243,11 @@ DetermineRegionHealth(
   LIST_FOR_EACH(pNode, &pRegion->DimmRegionList) {
     pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
     pDimm = pDimmRegion->pDimm;
+
+    if (!IsDimmManageable(pDimm)) {
+      continue;
+    }
+
     /** Check if any of the DIMMs are locked **/
     ReturnCode = IsDimmLocked(pDimm, &IsLocked);
     if (EFI_ERROR(ReturnCode)) {

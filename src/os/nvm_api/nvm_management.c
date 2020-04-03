@@ -179,6 +179,7 @@ static void nvm_internal_uninit(BOOLEAN binding_stop)
     os_mutex_delete(g_api_mutex, NVM_API_MUTEX);
     g_api_mutex = NULL;
   }
+  g_nvm_initialized = 0;
 }
 
 /**

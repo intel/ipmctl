@@ -1195,7 +1195,7 @@ CheckIfLanguageIsSupported(
 
   @retval - upper character
 **/
-CHAR16 ToUpper(
+CHAR16 NvmToUpper(
   IN      CHAR16 InChar
   );
 

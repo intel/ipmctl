@@ -527,7 +527,7 @@ InitializeNfitDimmInfoFieldsFromDimm(
   pDimmInfo->SmbusAddress = pDimm->SmbusAddress;
 
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 }
@@ -731,7 +731,7 @@ GetDimmInfo (
 
   ReturnCode = FillSmbiosInfo(pDimmInfo);
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
@@ -739,7 +739,7 @@ GetDimmInfo (
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
@@ -835,13 +835,13 @@ GetDimmInfo (
     }
     /* Get Security Opt-In SVN Downgrade*/
     pDimmInfo->SVNDowngradeOptIn = OPT_IN_VALUE_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, SVN_DOWNGRADE, pSecurityOptInPayload);
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_SVN_DOWNGRADE, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_SVN_DOWNGRADE): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SVN_DOWNGRADE;
     }
 
-    if (pSecurityOptInPayload->OptInCode == SVN_DOWNGRADE) {
+    if (pSecurityOptInPayload->OptInCode == NVM_SVN_DOWNGRADE) {
       pDimmInfo->SVNDowngradeOptIn = pSecurityOptInPayload->OptInValue;
     }
 
@@ -849,13 +849,13 @@ GetDimmInfo (
 
     /* Get Security Opt-In Secure Erase Policy*/
     pDimmInfo->SecureErasePolicyOptIn = OPT_IN_VALUE_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, SECURE_ERASE_POLICY, pSecurityOptInPayload);
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_SECURE_ERASE_POLICY, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_SECURE_ERASE_POLICY): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURE_ERASE_POLICY;
     }
 
-    if (pSecurityOptInPayload->OptInCode == SECURE_ERASE_POLICY) {
+    if (pSecurityOptInPayload->OptInCode == NVM_SECURE_ERASE_POLICY) {
       pDimmInfo->SecureErasePolicyOptIn = pSecurityOptInPayload->OptInValue;
     }
 
@@ -863,13 +863,13 @@ GetDimmInfo (
 
     /* Get Security Opt-In S3 Resume */
     pDimmInfo->S3ResumeOptIn = OPT_IN_VALUE_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, S3_RESUME, pSecurityOptInPayload);
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_S3_RESUME, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_S3_RESUME): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
     }
 
-    if (pSecurityOptInPayload->OptInCode == S3_RESUME) {
+    if (pSecurityOptInPayload->OptInCode == NVM_S3_RESUME) {
       pDimmInfo->S3ResumeOptIn = pSecurityOptInPayload->OptInValue;
     }
 
@@ -877,13 +877,13 @@ GetDimmInfo (
 
     /* Get FW Activate Opt-In Secure Erase Policy*/
     pDimmInfo->FwActivateOptIn = OPT_IN_VALUE_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, FW_ACTIVATE, pSecurityOptInPayload);
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_FW_ACTIVATE, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_FW_ACTIVATE): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_FW_ACTIVATE;
     }
 
-    if (pSecurityOptInPayload->OptInCode == FW_ACTIVATE) {
+    if (pSecurityOptInPayload->OptInCode == NVM_FW_ACTIVATE) {
       pDimmInfo->FwActivateOptIn = pSecurityOptInPayload->OptInValue;
     }
 
@@ -2871,14 +2871,14 @@ SetSecurityState(
 
   NVDIMM_ENTRY();
 
+  SetMem(pDimms, sizeof(pDimms), 0x0);
+  SetMem(AsciiPassword, sizeof(AsciiPassword), 0x0);
+
   IsSupported = IsSecurityOpSupported(SecurityOperation);
   if (!IsSupported) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
     goto Finish;
   }
-
-  SetMem(pDimms, sizeof(pDimms), 0x0);
-  SetMem(AsciiPassword, sizeof(AsciiPassword), 0x0);
 
   if (pCommandStatus == NULL) {
     goto Finish;
@@ -4265,7 +4265,13 @@ GetDimmsPerformanceData(
     }
 
     // Get total DIMM count and allocate memory for the table
-    GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
+    ReturnCode = GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Failed to get DIMM count; Return code 0x%08x", ReturnCode);
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+
     if(NULL == (*pDimmsPerformanceData = AllocateZeroPool(sizeof(DIMM_PERFORMANCE_DATA) * (*pDimmCount)))) {
         NVDIMM_ERR("Memory allocation failure");
         ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -5007,7 +5013,7 @@ Finish:
 
 EFI_STATUS
 ValidateImageVersion(
-  IN       FW_IMAGE_HEADER *pImage,
+  IN       NVM_FW_IMAGE_HEADER *pImage,
   IN       BOOLEAN Force,
   IN       DIMM *pDimm,
       OUT  NVM_STATUS *pNvmStatus
@@ -5185,8 +5191,8 @@ RecoverDimmFw(
 #ifndef OS_BUILD
   DIMM *pCurrentDimm = NULL;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  SPI_DIRECTORY_GEN2 *pSpiDirectoryNewSpiImageBuffer;
-  SPI_DIRECTORY_GEN2 SpiDirectoryTarget;
+  NVM_SPI_DIRECTORY_GEN2 *pSpiDirectoryNewSpiImageBuffer;
+  NVM_SPI_DIRECTORY_GEN2 SpiDirectoryTarget;
   UINT8 *pFconfigRegionNewSpiImageBuffer = NULL;
   UINT8 *pFconfigRegionTemp = NULL;
   UINT16 DeviceId;
@@ -5197,7 +5203,7 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  pSpiDirectoryNewSpiImageBuffer = (SPI_DIRECTORY_GEN2 *) pNewSpiImageBuffer;
+  pSpiDirectoryNewSpiImageBuffer = (NVM_SPI_DIRECTORY_GEN2 *) pNewSpiImageBuffer;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **) &pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -5336,7 +5342,7 @@ UpdateFw(
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
   IN     BOOLEAN FlashSPI,
-  OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
+  OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
   OUT COMMAND_STATUS *pCommandStatus
 )
 {
@@ -5344,7 +5350,7 @@ UpdateFw(
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
-  FW_IMAGE_HEADER *pFileHeader = NULL;
+  NVM_FW_IMAGE_HEADER *pFileHeader = NULL;
   EFI_FILE_HANDLE FileHandle = NULL;
   VOID *pImageBuffer = NULL;
   CHAR16 *pErrorMessage = NULL;
@@ -5567,6 +5573,10 @@ UpdateFw(
     if (Recovery && FlashSPI) {
       ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
       pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
+      if (EFI_ERROR(ReturnCode))
+      {
+        NVDIMM_ERR("RecoverDimmFw returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+      }
     }
     else {
       ReturnCode = FwCmdUpdateFw(pDimms[Index], pImageBuffer, BuffSize, &NvmStatus, pCommandStatus);
@@ -5806,7 +5816,7 @@ GetActualRegionsGoalCapacities(
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
   ZeroMem(&PcatRevision, sizeof(PcatRevision));
 
-  if (pThis == NULL || RegionGoalTemplates == NULL || pCommandStatus == NULL
+  if (pThis == NULL || pCommandStatus == NULL
     || pVolatilePercent == NULL || pConfigGoals == NULL
     || pConfigGoalsCount == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -7312,11 +7322,6 @@ Build NAMESPACE structure
   }
   pNamespace->BlockSize = BlockSize;
 
-  if (pIS == NULL) {
-    NVDIMM_DBG("No target IS for namespace");
-    FailFlag = TRUE;
-    goto Finish;
-  }
   // AppDirect namespaces initially stored with 'updating flag'.
   pNamespace->Flags.Values.Updating = TRUE;
   pNamespace->pParentIS = pIS;
@@ -8077,7 +8082,7 @@ Finish:
 EFI_STATUS
 EFIAPI
 PassThruCommand(
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   )
 {
@@ -8810,6 +8815,11 @@ MapSockets(
 #ifndef MDEPKG_NDEBUG
   LIST_ENTRY *pNode = NULL;
 #endif
+
+  if (NULL == pPmttInfo) {
+    NVDIMM_ERR("Invalid Parameter");
+    return;
+  }
 
   InitializeListHead(pPmttInfo);
 

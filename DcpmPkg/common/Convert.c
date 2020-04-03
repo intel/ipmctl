@@ -182,7 +182,7 @@ return EFI_SUCCESS;
 **/
 BOOLEAN
 EFIAPI
-IsDecimalDigitCharacter (
+NvmIsDecimalDigitCharacter (
   IN     CHAR16 Char
   )
 {
@@ -230,7 +230,7 @@ CrCharToUpper (
 **/
 BOOLEAN
 EFIAPI
-IsHexaDecimalDigitCharacter (
+NvmIsHexaDecimalDigitCharacter (
   IN     CHAR16 Char
   )
 {
@@ -299,11 +299,11 @@ IsHexOrDecimalNumber (
   //
   for ( ; pString != NULL && *pString != CHAR_NULL && !(StopAtSpace && *pString == L' ') ; pString++){
     if (Hex) {
-      if (!IsHexaDecimalDigitCharacter(*pString)) {
+      if (!NvmIsHexaDecimalDigitCharacter(*pString)) {
         return (FALSE);
       }
     } else {
-      if (!IsDecimalDigitCharacter(*pString)) {
+      if (!NvmIsDecimalDigitCharacter(*pString)) {
         return (FALSE);
       }
     }
@@ -367,7 +367,7 @@ IsHexValue(
   // loop through the remaining characters and use the lib function
   //
   for ( ; pString != NULL && *pString != CHAR_NULL && !(StopAtSpace && *pString == L' ') ; pString++) {
-      if (!IsHexaDecimalDigitCharacter(*pString)) {
+      if (!NvmIsHexaDecimalDigitCharacter(*pString)) {
         return FALSE;
       }
   }
@@ -473,7 +473,7 @@ CrStrDecimalToUint64 (
   while (StopAtSpace && *pString == L' ') {
     pString++;
   }
-  while (IsDecimalDigitCharacter (*pString)) {
+  while (NvmIsDecimalDigitCharacter (*pString)) {
     //
     // If the number represented by String overflows according
     // to the range defined by UINT64, then ASSERT().
@@ -517,7 +517,7 @@ CrHexCharToUint (
   IN     CHAR16 Char
   )
 {
-  if (IsDecimalDigitCharacter (Char)) {
+  if (NvmIsDecimalDigitCharacter (Char)) {
     return Char - L'0';
   }
 
@@ -601,7 +601,7 @@ CrStrHexToUint64 (
     pString++;
   }
 
-  while (IsHexaDecimalDigitCharacter (*pString)) {
+  while (NvmIsHexaDecimalDigitCharacter (*pString)) {
     //
     // If the Hex Number represented by String overflows according
     // to the range defined by UINTN, then ASSERT().

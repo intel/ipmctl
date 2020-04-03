@@ -605,17 +605,14 @@ load_nlog_dict(
     goto Finish;
   }
 
-  if (bytes_read > 0)
+  while (bytes_read > 0 &&
+    (file_buffer[bytes_read - 1] == '\n' ||
+      file_buffer[bytes_read - 1] == '\r' ||
+      file_buffer[bytes_read - 1] == '\t' ||
+      file_buffer[bytes_read - 1] == ' '))
   {
-    while (bytes_read >= 0 &&
-      (file_buffer[bytes_read - 1] == '\n' ||
-        file_buffer[bytes_read - 1] == '\r' ||
-        file_buffer[bytes_read - 1] == '\t' ||
-        file_buffer[bytes_read - 1] == ' '))
-    {
-      file_buffer[bytes_read - 1] = 0;
-      bytes_read--;
-    }
+    file_buffer[bytes_read - 1] = 0;
+    bytes_read--;
   }
 
   file_lines = string_split(file_buffer, '\n', 0, &line_count);

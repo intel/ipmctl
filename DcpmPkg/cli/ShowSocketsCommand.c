@@ -159,7 +159,7 @@ ShowSockets(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 *pMappedMemLimitStr = NULL;
   CHAR16 *pTotalMappedMemStr = NULL;

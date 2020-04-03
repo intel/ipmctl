@@ -9,6 +9,8 @@
 #include <IndustryStandard/SmBios.h>
 #include <Guid/SmBios.h>
 
+#define SMBIOS_STRING_INVALID 0
+
 typedef struct {
   UINT8   AnchorString[5];
   UINT8   EntryPointStructureChecksum;

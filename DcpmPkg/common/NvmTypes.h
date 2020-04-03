@@ -1236,9 +1236,9 @@ typedef struct _INTEL_DIMM_CONFIG {
 #define OUTPUT_ALL            0xFFFFFFFF
 
 typedef struct _DISPLAY_PREFERENCES {
-  UINT8 DimmIdentifier; //!< Default display of PMem module identifiers
-  UINT8 SizeUnit;       //!< Default display capacity unit
-  UINT8 OutputTypeMask;
+  UINT8   DimmIdentifier; //!< Default display of PMem module identifiers
+  UINT16  SizeUnit;       //!< Default display capacity unit
+  UINT8   OutputTypeMask;
 } DISPLAY_PREFERENCES;
 
 #define OUTPUT_NVM_XML_OPTION_SET(DispPref) ((DispPref.OutputTypeMask & OUTPUT_NVM_XML) != 0)

@@ -25,7 +25,7 @@ ReadRunTimePreferences(
 ) {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINTN VariableSize = 0;
-  UINT8 CapacityUnit;
+  UINT16 CapacityUnit;
 
   NVDIMM_ENTRY();
 
@@ -35,10 +35,10 @@ ReadRunTimePreferences(
   }
 
   if (DISPLAY_HII_INFO == DisplayRequest) {
-    CapacityUnit = FixedPcdGet32(PcdDcpmmHiiDefaultCapacityUnit);
+    CapacityUnit = FixedPcdGet16(PcdDcpmmHiiDefaultCapacityUnit);
   }
   else if (DISPLAY_CLI_INFO == DisplayRequest) {
-    CapacityUnit = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+    CapacityUnit = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   }
   else {
     NVDIMM_DBG("Invalid display information requested");

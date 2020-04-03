@@ -446,7 +446,7 @@ ShowDimms(
   UINT32 Index2 = 0;
   UINT32 Index3 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   BOOLEAN Found = FALSE;
   BOOLEAN ShowAll = FALSE;
   BOOLEAN ShowTableView = FALSE;
@@ -589,7 +589,7 @@ ShowDimms(
   }
 
   /** if a specific DIMM pid was passed in, set it **/
-  if (pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
+  if (NULL != pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
     pAllDimms = AllocateZeroPool(sizeof(*pAllDimms) * (DimmCount));
     if (NULL == pAllDimms) {
       ReturnCode = EFI_OUT_OF_RESOURCES;

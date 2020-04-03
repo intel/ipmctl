@@ -179,7 +179,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
 #define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
 #define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the " PMEM_MODULES_STR L"."
-#define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
 #define CLI_INJECT_ERROR_FAILED                                   L"Error: Inject error command failed"
 #define CLI_ERR_NOT_UTF16                                         L"Error: The file is not in UTF16 format, BOM header missing.\n"
@@ -892,7 +891,7 @@ CONST CHAR16 *GetDimmIDStr(
   @retval Size String of user display preference
 **/
 CONST CHAR16 *GetDisplaySizeStr(
-  IN  UINT8 DisplaySizeIndex
+  IN  UINT16 DisplaySizeIndex
   );
 
 /**

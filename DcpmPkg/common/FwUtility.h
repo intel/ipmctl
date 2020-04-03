@@ -68,11 +68,11 @@ typedef struct {
   UINT8 Reserved[5];
   UINT32 Timeout;
   UINT8 Data[IN_PAYLOAD_SIZE];
-} INPUT_PAYLOAD_SMBUS_OS_PASSTHRU;
+} NVM_INPUT_PAYLOAD_SMBUS_OS_PASSTHRU;
 #pragma pack(pop)
 
 // Additional bytes to deal with DSM calls
-#define IN_PAYLOAD_SIZE_EXT_PAD (sizeof(INPUT_PAYLOAD_SMBUS_OS_PASSTHRU) - IN_PAYLOAD_SIZE)
+#define IN_PAYLOAD_SIZE_EXT_PAD (sizeof(NVM_INPUT_PAYLOAD_SMBUS_OS_PASSTHRU) - IN_PAYLOAD_SIZE)
 
 #pragma pack(push)
 #pragma pack(1)
@@ -94,7 +94,7 @@ typedef struct {
 #ifdef OS_BUILD
   UINT8 DsmStatus;
 #endif
-} FW_CMD;
+} NVM_FW_CMD;
 
 #pragma pack(pop)
 
@@ -107,7 +107,7 @@ typedef union {
     UINT8 Digit1:4;
   } Nibble;
   UINT8 Version;
-} VERSION_BYTE;
+} NVM_VERSION_BYTE;
 
 typedef union {
   struct {
@@ -117,7 +117,7 @@ typedef union {
     UINT16 Digit1:4;
   } Nibble;
   UINT16 Build;
-} BUILD_WORD;
+} NVM_BUILD_WORD;
 
 typedef union {
    struct {
@@ -125,7 +125,7 @@ typedef union {
     UINT8 Digit1;
   } Byte;
   UINT16 Version;
-} API_VERSION;
+} NVM_API_VERSION;
 
 typedef union {
   struct {
@@ -134,19 +134,19 @@ typedef union {
     UINT8 Day:8;
   } Separated;
   UINT32 Value;
-} DATE;
+} NVM_DATE;
 
 /**
   All BCD encoded aa.bb.cc.dddd
 **/
 #pragma pack(push)
 #pragma pack(1)
-typedef struct _FW_VERSION {
-  BUILD_WORD BuildNumber;             //!< dddd
-  VERSION_BYTE SecurityRevisionNumber; //!< cc
-  VERSION_BYTE RevisionNumber;        //!< bb
-  VERSION_BYTE ProductNumber;         //!< aa
-} FW_VERSION;
+typedef struct _NVM_FW_VERSION {
+  NVM_BUILD_WORD BuildNumber;             //!< dddd
+  NVM_VERSION_BYTE SecurityRevisionNumber; //!< cc
+  NVM_VERSION_BYTE RevisionNumber;        //!< bb
+  NVM_VERSION_BYTE ProductNumber;         //!< aa
+} NVM_FW_VERSION;
 
 /**
   FW Image header: Intel CSS Header (128 bytes)
@@ -157,17 +157,17 @@ typedef struct {
   UINT32 HeaderVersion;      //!< bits [31:16] are major version, bits [15:0] are minor version
   UINT32 ModuleID;           //!< if bit 31 == 1 this is a debug module
   UINT32 ModuleVendor;       //!< moduleVendor = 0x00008086
-  DATE Date;                 //!< BCD format: yyyymmdd
+  NVM_DATE Date;                 //!< BCD format: yyyymmdd
   UINT32 Size;               //!< Size of entire module (header, crypto(modulus, exponent, signature), data) in DWORDs
   UINT32 KeySize;            //!< Size of RSA public key in DWORDs
   UINT32 ModulusSize;        //!< Size of RSA public key modulus in DWORDs
   UINT32 ExponentSize;       //!< Size of RSA public key exponent
   UINT8  ImageType;          //!< Image type: 0x1D - PRQ, 0x1E - DFX, 0x1F - DBG
-  FW_VERSION ImageVersion;   //!< Image version
+  NVM_FW_VERSION ImageVersion;   //!< Image version
   UINT32 PerPartIdHigh;      //!< Part id high
   UINT32 PerPartIdLow;       //!< Part id low
   UINT32 ImageSize;          //!< Size of (header , signature , data) in DWORDs (ie size - 65 DWORDs)
-  API_VERSION FwApiVersion;  //!< BCD format: aa.bb
+  NVM_API_VERSION FwApiVersion;  //!< BCD format: aa.bb
   UINT8 StageNumber;         //!< Stage number: 0 - stage1 , 1 - stage 2
   UINT32 fwImageStartAddr;   //!< Firmware SRAM start address. This value must agree with actual image start produced by the .ld file. The fwImageStartAddr address MUST be 64 byte aligned.
   UINT16 VendorId;           //!< Specifies vendor. Intel (0x8086)
@@ -175,7 +175,7 @@ typedef struct {
   UINT16 RevisionId;         //!< Specifies base and metal steppings of arch (A0, A1 , S0, S1, B0, B2, etc.).
   UINT8 NumberofStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
   UINT8 Reserved[56];
-} FW_IMAGE_HEADER;
+} NVM_FW_IMAGE_HEADER;
 
 /**
   SPI Directory structure that holds SPI memory map
@@ -245,7 +245,7 @@ typedef struct {
   UINT32 reserved[8];
   UINT8  reservedu8[3];
   UINT8  SpiEndOfDirectory;
-} SPI_DIRECTORY_GEN1;
+} NVM_SPI_DIRECTORY_GEN1;
 
 typedef struct
 {
@@ -270,7 +270,7 @@ typedef struct
   UINT32 PreInjectionModuleFrameworkOffset;
   UINT32 SpiDebugDataOffset;
   UINT32 NlogBackupOffset;
-} SPI_DIRECTORY_GEN2;
+} NVM_SPI_DIRECTORY_GEN2;
 
 #pragma pack(pop)
 
@@ -280,12 +280,12 @@ typedef struct
   FW Image header information
 **/
 typedef struct {
-  FW_VERSION ImageVersion;
+  NVM_FW_VERSION ImageVersion;
   UINT8 FirmwareType;
   UINT32 ModuleVendor;  //!< moduleVendor = 0x00008086
-  DATE Date;            //!< BCD format: yyyymmdd
+  NVM_DATE Date;            //!< BCD format: yyyymmdd
   UINT32 Size;          //!< Size of entire module (header, crypto, data) in DWORDs
-} FW_IMAGE_INFO;
+} NVM_FW_IMAGE_INFO;
 
 /**
   The persistent memory module type code (taken from FW image)
@@ -309,7 +309,7 @@ typedef struct {
 **/
 BOOLEAN
 ValidateImage(
-  IN     FW_IMAGE_HEADER *pImage,
+  IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
      OUT CHAR16 **ppError
   );
@@ -332,7 +332,7 @@ ValidateImage(
 **/
 BOOLEAN
 ValidateRecoverySpiImage(
-  IN     FW_IMAGE_HEADER *pImage,
+  IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
   IN     UINT16 SubsystemDeviceId,
      OUT CHAR16 **ppError
@@ -371,7 +371,7 @@ LoadFileAndCheckHeader(
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN Recovery,
   IN     UINT16 SubsystemDeviceId,
-     OUT FW_IMAGE_HEADER **ppImageHeader,
+     OUT NVM_FW_IMAGE_HEADER **ppImageHeader,
      OUT CHAR16 **ppError
   );
 

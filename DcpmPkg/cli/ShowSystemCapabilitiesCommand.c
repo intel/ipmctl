@@ -216,7 +216,7 @@ ShowSystemCapabilities(
   CHAR16 *pDisplayValues = NULL;
   CHAR16 *pCapacityStr = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CURRENT_MEMORY_MODE TempCurrentMode;
   SUPPORTED_MEMORY_MODE TempSupportedMode;
   DISPLAY_PREFERENCES DisplayPreferences;

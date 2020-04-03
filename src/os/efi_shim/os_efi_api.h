@@ -153,7 +153,7 @@ recording/playback as specified
 EFI_STATUS
 passthru_os(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     long Timeout
 );
 
@@ -164,7 +164,7 @@ provides playback functionality
 **/
 EFI_STATUS
 passthru_playback(
-  IN OUT FW_CMD *pCmd
+  IN OUT NVM_FW_CMD *pCmd
 );
 
 /**
@@ -177,7 +177,7 @@ provides the start of record functionality
 EFI_STATUS
 passthru_record_setup(
   FILE **f_passthru_ptr,
-  IN OUT FW_CMD *pCmd
+  IN OUT NVM_FW_CMD *pCmd
 );
 
 
@@ -191,7 +191,7 @@ completes recording functionality started in passthru_record_setup
 EFI_STATUS
 passthru_record_finalize(
   FILE * file,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   UINT32 DimmID,
   EFI_STATUS PassthruReturnCode
 );

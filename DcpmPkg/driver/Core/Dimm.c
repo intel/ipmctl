@@ -1289,7 +1289,7 @@ FwCmdGetViralPolicy(
   OUT PT_VIRAL_POLICY_PAYLOAD *pViralPolicyPayload
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1336,7 +1336,7 @@ FwCmdGetOptionalConfigurationDataPolicy(
      OUT PT_OPTIONAL_DATA_POLICY_PAYLOAD *pOptionalDataPolicyPayload
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1384,7 +1384,7 @@ FwCmdSetOptionalConfigurationDataPolicy(
   IN     PT_OPTIONAL_DATA_POLICY_PAYLOAD *pOptionalDataPolicyPayload
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1440,7 +1440,7 @@ FwCmdGetSecurityInfo(
      OUT PT_GET_SECURITY_PAYLOAD *pSecurityPayload
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1496,7 +1496,7 @@ BOOLEAN IsGetSecurityOptInSupported(
     return FALSE;
   }
   //If Fis is 2.2 only s3 resume is supported
-  if (FIS_GT_2_1 && !FIS_GTE_2_3 && OptInCode != S3_RESUME)
+  if (FIS_GT_2_1 && !FIS_GTE_2_3 && OptInCode != NVM_S3_RESUME)
   {
     return FALSE;
   }
@@ -1522,7 +1522,7 @@ FwCmdGetSecurityOptIn(
   OUT PT_OUTPUT_PAYLOAD_GET_SECURITY_OPT_IN *pSecurityOptIn
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_SECURITY_OPT_IN InputPayload;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   NVDIMM_ENTRY();
@@ -1591,7 +1591,7 @@ FwCmdDisableARS(
   IN     DIMM *pDimm
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB *pARSInpugPayload = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
@@ -1651,7 +1651,7 @@ FwCmdGetARS(
      OUT UINT8 *pDimmARSStatus
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
@@ -1756,7 +1756,7 @@ FwCmdIdDimm (
      OUT PT_ID_DIMM_PAYLOAD *pPayload
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1812,7 +1812,7 @@ FwCmdDeviceCharacteristics (
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -1877,7 +1877,7 @@ FwCmdGetDimmPartitionInfo(
      OUT PT_DIMM_PARTITION_INFO_PAYLOAD *pPayload
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 
   NVDIMM_ENTRY();
@@ -1936,7 +1936,7 @@ FwGetPCDFromOffsetSmallPayload(
   OUT UINT8 **ppRawData)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
   UINT32 StartingPageOffset = ((ReqOffset / PCD_GET_SMALL_PAYLOAD_DATA_SIZE)*PCD_GET_SMALL_PAYLOAD_DATA_SIZE);
   UINT32 ReadOffset = 0;
@@ -2049,7 +2049,7 @@ FwCmdGetPcdLargePayload(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
   NVDIMM_ENTRY();
 
@@ -2128,7 +2128,7 @@ FwCmdGetPlatformConfigData(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
   UINT8 *pBuffer = NULL;
   UINT32 Offset = 0;
@@ -2151,9 +2151,7 @@ FwCmdGetPlatformConfigData(
     goto Finish;
   }
 
-  if (PartitionId == PCD_OEM_PARTITION_ID) {
-    PcdSize = pDimm->PcdOemPartitionSize;
-  } else if (PartitionId == PCD_LSA_PARTITION_ID) {
+  if (PartitionId == PCD_LSA_PARTITION_ID) {
     PcdSize = pDimm->PcdLsaPartitionSize;
   } else {
     ReturnCode = EFI_UNSUPPORTED;
@@ -2173,8 +2171,6 @@ FwCmdGetPlatformConfigData(
     if (EFI_ERROR(ReturnCode) || PcdSize == 0) {
       NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
       goto Finish;
-    } else if (PartitionId == PCD_OEM_PARTITION_ID){
-      pDimm->PcdOemPartitionSize = PcdSize;
     } else if (PartitionId == PCD_LSA_PARTITION_ID) {
       pDimm->PcdLsaPartitionSize = PcdSize;
     }
@@ -2190,9 +2186,6 @@ FwCmdGetPlatformConfigData(
   if (gPCDCacheEnabled) {
     if (pDimm->pPcdLsa && PartitionId == PCD_LSA_PARTITION_ID) {
       CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdLsa, PcdSize);
-      goto Finish;
-    } else if (pDimm->pPcdOem && PartitionId == PCD_OEM_PARTITION_ID) {
-      CopyMem_S(*ppRawData, PcdSize, pDimm->pPcdOem, PcdSize);
       goto Finish;
     }
   }
@@ -2274,10 +2267,6 @@ FwCmdGetPlatformConfigData(
       pDimm->pPcdLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
       pTempCache = pDimm->pPcdLsa;
       pTempCacheSz = pDimm->PcdLsaPartitionSize;
-    } else if (PartitionId == PCD_OEM_PARTITION_ID) {
-      pDimm->pPcdOem = AllocateZeroPool(pDimm->PcdOemPartitionSize);
-      pTempCache = pDimm->pPcdOem;
-      pTempCacheSz = pDimm->PcdOemPartitionSize;
     }
 
     if (!LargePayloadAvailable) {
@@ -2327,7 +2316,7 @@ FwCmdGetPlatformConfigDataSize (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
   PT_OUTPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA_SIZE OutputPcdSize;
 
@@ -2504,7 +2493,7 @@ FwCmdGetPcdSmallPayload(
   IN     UINT8  DataSize
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA *pInputPayload = NULL;
 
@@ -2729,7 +2718,7 @@ FwSetPCDFromOffsetSmallPayload(
 {
 
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_SET_DATA_PLATFORM_CONFIG_DATA InPayloadSetData;
   UINT32 StartingPageOffset = ((ReqOffset / PCD_SET_SMALL_PAYLOAD_DATA_SIZE)*PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
   UINT32 WriteOffset = 0;
@@ -2822,7 +2811,7 @@ FwCmdSetPlatformConfigData (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_SET_DATA_PLATFORM_CONFIG_DATA InPayloadSetData;
   UINT8 *pPartition = NULL;
   UINT32 Offset = 0;
@@ -2998,7 +2987,7 @@ FwCmdGetAlarmThresholds (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3061,7 +3050,7 @@ FwCmdSetAlarmThresholds (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3120,7 +3109,7 @@ FwCmdUpdateFw(
 )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   FW_SMALL_PAYLOAD_UPDATE_PACKET *pInputPayload = NULL;
   UINT64 ChunkSize = 0;
   UINT64 BytesToCopy = 0;
@@ -3262,7 +3251,7 @@ FwCmdGetFwDebugLogSize(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_OUTPUT_PAYLOAD_FW_DEBUG_LOG *pDbgSmallOutPayload = NULL;
   PT_INPUT_PAYLOAD_FW_DEBUG_LOG *pInputPayload = NULL;
 
@@ -3326,7 +3315,7 @@ FwCmdGetFwDebugLog (
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 LogPageOffset = 0;
   UINT64 CurrentDebugLogSizeInMbs = 0;
@@ -3470,7 +3459,7 @@ FwCmdGetErrorLog (
   IN     UINT32 LargeOutputPayloadSize OPTIONAL
   )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -3541,7 +3530,7 @@ FwCmdGetCommandEffectLog(
   IN      UINT32 LargeOutputPayloadSize OPTIONAL
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -3607,7 +3596,7 @@ FwCmdGetSmartAndHealth (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3669,7 +3658,7 @@ FwCmdGetMemoryInfoPage (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   PT_INPUT_PAYLOAD_MEMORY_INFO InputPayload;
 
   NVDIMM_ENTRY();
@@ -3740,7 +3729,7 @@ FwCmdGetFirmwareImageInfo (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3799,7 +3788,7 @@ FwCmdGetPowerManagementPolicy(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3869,7 +3858,7 @@ FwCmdGetPMONRegisters(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -3923,7 +3912,7 @@ FwCmdSetPMONRegisters(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
 
   NVDIMM_ENTRY();
@@ -3979,7 +3968,7 @@ FwCmdGetPackageSparingPolicy (
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -4039,7 +4028,7 @@ FwCmdGetLongOperationStatus(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -4193,7 +4182,7 @@ ParseFwApiVersion(
   IN     PT_ID_DIMM_PAYLOAD *pPayload
   )
 {
-  API_VERSION ApiVersion;
+  NVM_API_VERSION ApiVersion;
 
   NVDIMM_ENTRY();
 
@@ -6621,7 +6610,7 @@ FwCmdFormatDimm(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -6670,7 +6659,7 @@ FwCmdGetDdrtIoInitInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -6724,7 +6713,7 @@ FwCmdGetCommandAccessPolicy(
   OUT UINT8 *pRestriction
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   PT_INPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY *pInputCAP = NULL;
   PT_OUTPUT_PAYLOAD_GET_COMMAND_ACCESS_POLICY *pOutputCAP = NULL;
@@ -6793,7 +6782,7 @@ FwCmdInjectError(
   OUT UINT8 *pFwStatus
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -6851,7 +6840,7 @@ FwCmdGetSystemTime(
   OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -6907,7 +6896,7 @@ FwCmdGetExtendedAdrInfo(
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -6964,7 +6953,7 @@ FwCmdGetLatchSystemShutdownStateInfo(
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
 
   NVDIMM_ENTRY();
 
@@ -7308,7 +7297,7 @@ Finish:
 EFI_STATUS
 PassThru(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
 )
 {
@@ -7318,7 +7307,7 @@ PassThru(
 
 #ifdef OS_BUILD
   UINT8 InputPayloadTemp[IN_PAYLOAD_SIZE];
-  INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *pInputPayloadSOP = NULL;
+  NVM_INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *pInputPayloadSOP = NULL;
 #endif
 
   IsLargePayloadCommand = pCmd->LargeInputPayloadSize > 0;
@@ -7345,7 +7334,7 @@ PassThru(
     CopyMem(InputPayloadTemp, pCmd->InputPayload, IN_PAYLOAD_SIZE);
     ZeroMem(pCmd->InputPayload, IN_PAYLOAD_SIZE + IN_PAYLOAD_SIZE_EXT_PAD);
     // Re-interpret the existing input payload, now using the full buffer
-    pInputPayloadSOP = (INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *)(pCmd->InputPayload);
+    pInputPayloadSOP = (NVM_INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *)(pCmd->InputPayload);
     CopyMem(pInputPayloadSOP->Data, InputPayloadTemp, IN_PAYLOAD_SIZE);
 
     // Update the rest of the parameters
@@ -7407,7 +7396,7 @@ FwCmdGetBsr(
      OUT UINT64 *pBsrValue
 )
 {
-  FW_CMD *pFwCmd = NULL;
+  NVM_FW_CMD *pFwCmd = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -7530,7 +7519,7 @@ Finish:
 EFI_STATUS
 DcpmmCmd(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT32 Timeout OPTIONAL,
   IN     DCPMM_FIS_INTERFACE DcpmmInterface
 )

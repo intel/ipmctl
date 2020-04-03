@@ -643,10 +643,7 @@ RegisterNonAdminUserCommands(
 
   NVDIMM_ENTRY();
   Rc = RegisterCommand(&VersionCommand);
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-done:
+
   NVDIMM_EXIT_I64(Rc);
   return Rc;
 }

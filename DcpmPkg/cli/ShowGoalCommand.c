@@ -349,7 +349,7 @@ ShowGoal(
   UINT16 *pDimmIds = NULL;
   UINT16 *pSocketIds = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   UINT32 DimmIdsCount = 0;
   UINT32 SocketIdsCount = 0;
   UINT32 RegionConfigsCount = 0;

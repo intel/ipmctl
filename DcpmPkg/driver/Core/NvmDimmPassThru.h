@@ -98,10 +98,10 @@ struct _DIMM;
 
 // Opt-In Codes - value 0x00 is invalid
 enum OPT_IN_CODE {
-  SVN_DOWNGRADE = 0x01,
-  SECURE_ERASE_POLICY = 0x02,
-  S3_RESUME = 0x03,
-  FW_ACTIVATE = 0x04
+  NVM_SVN_DOWNGRADE = 0x01,
+  NVM_SECURE_ERASE_POLICY = 0x02,
+  NVM_S3_RESUME = 0x03,
+  NVM_FW_ACTIVATE = 0x04
 };
 
 
@@ -179,7 +179,7 @@ EFI_STATUS
 EFIAPI
 DefaultPassThru (
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
 
@@ -204,7 +204,7 @@ EFI_STATUS
 EFIAPI
 PassThruWithRetryOnFwAborted(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
 
@@ -801,6 +801,7 @@ typedef struct _SKU_INFORMATION {
 typedef struct {
   UINT8 ViralPolicyEnable;     //!< Viral Policy Enable: 0 - Disabled, 1 - Enabled
   UINT8 ViralStatus;           //!< Viral Status: 0 - Not Viral, 1 - Viral
+  UINT8 Reserved[126];         //!< Reserved
 } PT_VIRAL_POLICY_PAYLOAD;
 
 /**

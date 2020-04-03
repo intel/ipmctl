@@ -2471,7 +2471,7 @@ CONST CHAR16 *GetDimmIDStr(
   @retval Size String of user display preference
 **/
 CONST CHAR16 *GetDisplaySizeStr(
-  IN  UINT8 DisplaySizeIndex
+  IN  UINT16 DisplaySizeIndex
 )
 {
   if (DisplaySizeIndex >= DISPLAY_SIZE_MAX_SIZE) {

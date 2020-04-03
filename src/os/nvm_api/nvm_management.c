@@ -954,7 +954,7 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
 NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
                struct device_performance *  p_performance)
 {
-  FW_CMD *cmd = NULL;
+  NVM_FW_CMD *cmd = NULL;
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE1 *pmem_info_output;
   PT_INPUT_PAYLOAD_MEMORY_INFO mem_info_input;
   int rc = NVM_ERR_UNKNOWN;
@@ -969,12 +969,12 @@ NVM_API int nvm_get_device_performance(const NVM_UID      device_uid,
     return rc;
   }
 
-  if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
+  if (NULL == (cmd = (NVM_FW_CMD *)AllocatePool(sizeof(NVM_FW_CMD)))) {
     NVDIMM_ERR("Failed to allocate memory\n");
     goto finish;
   }
 
-  ZeroMem(cmd, sizeof(FW_CMD));
+  ZeroMem(cmd, sizeof(NVM_FW_CMD));
   ZeroMem(&mem_info_input, sizeof(mem_info_input));
   mem_info_input.MemoryPage = 1;
   UINT16 dimm_id;
@@ -1181,7 +1181,7 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid,
   EFI_STATUS ReturnCode;
   COMMAND_STATUS *p_command_status;
   CHAR16 file_name[NVM_PATH_LEN];
-  FW_IMAGE_INFO *p_fw_image_info = NULL;
+  NVM_FW_IMAGE_INFO *p_fw_image_info = NULL;
   UINT16 dimm_id;
 
   if (path_len > NVM_PATH_LEN)
@@ -1218,7 +1218,7 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
   EFI_STATUS ReturnCode;
   COMMAND_STATUS *p_command_status;
   CHAR16 file_name[NVM_PATH_LEN];
-  FW_IMAGE_INFO *p_fw_image_info = NULL;
+  NVM_FW_IMAGE_INFO *p_fw_image_info = NULL;
   UINT16 dimm_id;
 
   if ((path_len > NVM_PATH_LEN) || (NULL == image_version))
@@ -2644,7 +2644,7 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   int rc = NVM_SUCCESS;
-  FW_CMD *cmd;
+  NVM_FW_CMD *cmd;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *pLongOpStatus;
@@ -2673,12 +2673,12 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
     return NVM_ERR_BAD_SIZE;
   }
 
-  if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
+  if (NULL == (cmd = (NVM_FW_CMD *)AllocatePool(sizeof(NVM_FW_CMD)))) {
     NVDIMM_ERR("Failed to allocate memory\n");
     return NVM_ERR_NOT_ENOUGH_FREE_SPACE;
   }
 
-  ZeroMem(cmd, sizeof(FW_CMD));
+  ZeroMem(cmd, sizeof(NVM_FW_CMD));
   pLongOpStatus = (PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS *)cmd->OutPayload;
   // Populate the list of DIMM_INFO structures with relevant information
   CmdStub.pPrintCtx = NULL;
@@ -2995,14 +2995,14 @@ int get_fw_err_log_stats(
   LOG_INFO_DATA_RETURN *	log_info)
 {
   int rc = NVM_ERR_UNKNOWN;
-  FW_CMD *cmd;
+  NVM_FW_CMD *cmd;
   PT_INPUT_PAYLOAD_GET_ERROR_LOG get_error_log_input;
 
-  if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
+  if (NULL == (cmd = (NVM_FW_CMD *)AllocatePool(sizeof(NVM_FW_CMD)))) {
     NVDIMM_ERR("Failed to allocate memory\n");
     goto finish;
   }
-  ZeroMem(cmd, sizeof(FW_CMD));
+  ZeroMem(cmd, sizeof(NVM_FW_CMD));
   ZeroMem(&get_error_log_input, sizeof(get_error_log_input));
   get_error_log_input.SequenceNumber = 0;
   get_error_log_input.LogParameters.Separated.LogInfo = 1;
@@ -3029,7 +3029,7 @@ finish:
 NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
               struct device_pt_cmd *  p_cmd)
 {
-  FW_CMD *cmd = NULL;
+  NVM_FW_CMD *cmd = NULL;
   UINT16 dimm_id;
   unsigned int dimm_handle;
   int rc = NVM_ERR_UNKNOWN;
@@ -3057,12 +3057,12 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
     return rc;
   }
 
-  if (NULL == (cmd = (FW_CMD *)AllocatePool(sizeof(FW_CMD)))) {
+  if (NULL == (cmd = (NVM_FW_CMD *)AllocatePool(sizeof(NVM_FW_CMD)))) {
     NVDIMM_ERR("Failed to allocate memory\n");
     goto finish;
   }
 
-  ZeroMem(cmd, sizeof(FW_CMD));
+  ZeroMem(cmd, sizeof(NVM_FW_CMD));
 
   if (NVM_SUCCESS != (rc = get_dimm_id((char *)device_uid, &dimm_id, &dimm_handle))) {
     NVDIMM_ERR("Failed to get dimm ID %d\n", rc);

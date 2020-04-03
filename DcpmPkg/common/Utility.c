@@ -1924,7 +1924,7 @@ Finish:
 
   @retval - upper character
 **/
-CHAR16 ToUpper(
+CHAR16 NvmToUpper(
   IN      CHAR16 InChar
   ) {
   CHAR16 upper = InChar;
@@ -1955,7 +1955,7 @@ INTN StrICmp(
       StrLen(pSecondString) != 0 &&
       StrSize(pFirstString) == StrSize(pSecondString)) {
 
-    while (*pFirstString != L'\0' && ToUpper(*pFirstString) == ToUpper(*pSecondString)) {
+    while (*pFirstString != L'\0' && NvmToUpper(*pFirstString) == NvmToUpper(*pSecondString)) {
       pFirstString++;
       pSecondString++;
     }
@@ -2163,8 +2163,8 @@ CleanStringMemory(
     return;
   }
 
-  while (*pString != L'\0') {
-    *pString = L'\0';
+  while (*pString != '\0') {
+    *pString = '\0';
     ++pString;
   }
 }
@@ -3204,7 +3204,7 @@ StringToDouble(
 
   // Delete trailing zeros
   if (StrStr(pString, pDecimalMarkStr) != NULL) {
-    pLastChar = pString + StrLen(pString) * sizeof(pString[0]) - 1;
+    pLastChar = pString + (StrLen(pString) * sizeof(*pString)) - 1;
     while (*pLastChar == L'0') {
       *pLastChar = L'\0';
       pLastChar--;
@@ -3936,18 +3936,18 @@ PollLongOpStatus(
   EFI_STATUS ReturnCode = EFI_DEVICE_ERROR;
   UINT64 WaitIndex = 0;
   EFI_EVENT WaitList[2];
-  EFI_STATUS LongOpEfiStatus = EFI_SUCCESS;
+  EFI_STATUS LongOpEfiStatus = EFI_NOT_READY;
   UINT8 CmdOpcode = 0;
   UINT8 CmdSubOpcode = 0;
 
   ZeroMem(WaitList, sizeof(WaitList));
 
-  gBS->CreateEvent(EVT_TIMER, 0, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMER]);
+  gBS->CreateEvent(EVT_TIMER, TPL_NOTIFY, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMER]);
   gBS->SetTimer(WaitList[LONG_OP_POLL_EVENT_TIMER], TimerPeriodic, LONG_OP_POLL_TIMER_INTERVAL);
   EventCount++;
 
   if (Timeout > 0) {
-    gBS->CreateEvent(EVT_TIMER, 0, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMEOUT]);
+    gBS->CreateEvent(EVT_TIMER, TPL_NOTIFY, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMEOUT]);
     gBS->SetTimer(WaitList[LONG_OP_POLL_EVENT_TIMEOUT], TimerRelative, Timeout);
     EventCount++;
   }

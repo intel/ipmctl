@@ -550,7 +550,7 @@ UpdateFw(
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
   IN     BOOLEAN FlashSPI,
-     OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
+     OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
 );
 
@@ -1175,7 +1175,7 @@ RetrieveDimmRegisters(
 EFI_STATUS
 EFIAPI
 PassThruCommand(
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
 

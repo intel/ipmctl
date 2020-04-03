@@ -111,7 +111,7 @@ ShowMemoryResources(
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   MEMORY_RESOURCES_INFO MemoryResourcesInfo;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   UINT64 DcpmmInaccessibleCapacity = 0;
   UINT64 TotalCapacity = 0;
   CHAR16 *pCapacityStr = NULL;

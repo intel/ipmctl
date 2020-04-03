@@ -470,7 +470,7 @@ CHAR8* u32_to_a(
   {
     current_val = (val % base);
     len++;
-    if (current_val >= 0 && current_val <= 9)
+    if (current_val <= 9)
     {
       *int_str_ptr = (CHAR8)(current_val + (UINT32)'0');
     }

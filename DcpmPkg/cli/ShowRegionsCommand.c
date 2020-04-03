@@ -300,7 +300,7 @@ ShowRegions(
   CHAR16 *pRegionTempStr = NULL;
   INTERLEAVE_FORMAT *pInterleaveFormat = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
   CONST CHAR16 *pHealthStateStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
@@ -378,7 +378,7 @@ ShowRegions(
   /**
     if Region IDs were passed in, read them
   **/
-  if (pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
+  if (NULL != pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
     pRegionsValue = GetTargetValue(pCmd, REGION_TARGET);
     ReturnCode = GetUintsFromString(pRegionsValue, &pRegionsIds, &RegionIdsNum);
 

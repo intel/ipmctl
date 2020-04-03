@@ -1110,7 +1110,7 @@ InitializeDimms()
    }
 #ifndef OS_BUILD
    ReturnCodeNonBlocking = SmbusInit();
-   if (EFI_ERROR(ReturnCode)) {
+   if (EFI_ERROR(ReturnCodeNonBlocking)) {
     NVDIMM_WARN("Failed on Smbus init, error = " FORMAT_EFI_STATUS ".", ReturnCodeNonBlocking);
    }
 #endif //!OS_BUILD

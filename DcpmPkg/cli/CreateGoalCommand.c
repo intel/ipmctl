@@ -423,7 +423,7 @@ CreateGoal(
   UINT32 DimmCount = 0;
   BOOLEAN Valid = FALSE;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pUnitsStr = NULL;
   CHAR16 *pCommandStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
@@ -701,7 +701,9 @@ CreateGoal(
     }
 
     goto FinishSkipPrinterProcess;
-  } else {
+  }
+  else
+  {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CREATE_GOAL_COMMAND_STATUS_HEADER, CLI_INFO_ON, pCommandStatus);
   }

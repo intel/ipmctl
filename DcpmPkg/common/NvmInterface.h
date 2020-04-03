@@ -597,7 +597,7 @@ EFI_STATUS
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
   IN     BOOLEAN FlashSPI,
-     OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
+     OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
 );
 
@@ -1436,7 +1436,7 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_PASS_THRU) (
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
 );
 

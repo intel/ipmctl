@@ -103,7 +103,7 @@ OUT CHAR16 *Destination
 **/
 BOOLEAN
 EFIAPI
-IsDecimalDigitCharacter (
+NvmIsDecimalDigitCharacter (
   IN     CHAR16 Char
   );
 
@@ -141,7 +141,7 @@ CrCharToUpper (
 **/
 BOOLEAN
 EFIAPI
-IsHexaDecimalDigitCharacter (
+NvmIsHexaDecimalDigitCharacter (
   IN     CHAR16 Char
   );
 

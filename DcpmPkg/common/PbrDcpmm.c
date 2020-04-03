@@ -24,7 +24,7 @@
 EFI_STATUS
 PbrGetPassThruRecord(
   IN    PbrContext *pContext,
-  OUT   FW_CMD *pCmd,
+  OUT   NVM_FW_CMD *pCmd,
   OUT   EFI_STATUS *pPassThruRc
 )
 {
@@ -146,7 +146,7 @@ Finish:
 EFI_STATUS
 PbrSetPassThruRecord(
   IN    PbrContext *pContext,
-  OUT   FW_CMD *pCmd,
+  OUT   NVM_FW_CMD *pCmd,
   EFI_STATUS PassthruReturnCode
 )
 {

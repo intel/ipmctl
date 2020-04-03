@@ -87,7 +87,7 @@ Load(
   COMMAND_STATUS *pCommandStatus = NULL;
   BOOLEAN Examine = FALSE;
   BOOLEAN Force = FALSE;
-  FW_IMAGE_INFO *pFwImageInfo = NULL;
+  NVM_FW_IMAGE_INFO *pFwImageInfo = NULL;
   volatile UINT32 Index = 0;
   volatile UINT32 Index2 = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -378,23 +378,17 @@ Load(
 
 
   if (Examine) {
-    if (pFwImageInfo != NULL) {
-
-      //only print non 0.0.0.0 versions...
-      if (pFwImageInfo->ImageVersion.ProductNumber.Version != 0 ||
-        pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
-        pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version != 0 ||
-        pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
-        Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
-          pFileName,
-          pFwImageInfo->ImageVersion.ProductNumber.Version,
-          pFwImageInfo->ImageVersion.RevisionNumber.Version,
-          pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version,
-          pFwImageInfo->ImageVersion.BuildNumber.Build);
-      }
-    }
-    else {
-      Print(FORMAT_STR L" " FORMAT_STR_NL, pFileName, CLI_ERR_VERSION_RETRIEVE);
+    //only print non 0.0.0.0 versions...
+    if (pFwImageInfo->ImageVersion.ProductNumber.Version != 0 ||
+      pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
+      pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version != 0 ||
+      pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
+      Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
+        pFileName,
+        pFwImageInfo->ImageVersion.ProductNumber.Version,
+        pFwImageInfo->ImageVersion.RevisionNumber.Version,
+        pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version,
+        pFwImageInfo->ImageVersion.BuildNumber.Build);
     }
   } else {
     gBS->CloseEvent(ProgressEvent);

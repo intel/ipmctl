@@ -80,7 +80,7 @@ LoadGoal(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pUnitsStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT32 SocketIndex = 0;

@@ -34,7 +34,7 @@ GetDimmSecurityState(
      OUT UINT32 *pSecurityState
   )
 {
-  FW_CMD *pPassThruCommand = NULL;
+  NVM_FW_CMD *pPassThruCommand = NULL;
   PT_GET_SECURITY_PAYLOAD *pSecurityPayload = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 
@@ -103,7 +103,7 @@ SetDimmSecurityState(
   IN     UINT64 Timeout
   )
 {
-  FW_CMD *pPassThruCommand = NULL;
+  NVM_FW_CMD *pPassThruCommand = NULL;
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 
   NVDIMM_ENTRY();

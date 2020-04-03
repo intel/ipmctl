@@ -255,7 +255,7 @@ SetImage (
     goto Finish;
   }
 
-  if (ImageSize < sizeof(FW_IMAGE_HEADER)) {
+  if (ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
     *AbortReason = AllocateCopyPool(sizeof(pImageContentError), pImageContentError);
     ReturnCode = EFI_ABORTED;
     goto Finish;
@@ -272,7 +272,7 @@ SetImage (
     Force = SetImageAttributes->Force;
   }
 
-  ReturnCode = ValidateImageVersion((FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
+  ReturnCode = ValidateImageVersion((NVM_FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
   if (EFI_ERROR(ReturnCode)) {
     if (Status == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
       *AbortReason = AllocateCopyPool (StrSize(pImageVersionError), pImageVersionError);

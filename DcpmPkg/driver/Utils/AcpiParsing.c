@@ -1210,7 +1210,7 @@ RdpaToSpa(
       return ReturnCode;
     }
 
-    RotationSize = pInterleaveTable->LineSize * pInterleaveTable->NumberOfLinesDescribed;
+    RotationSize = ((UINT64) pInterleaveTable->LineSize) * pInterleaveTable->NumberOfLinesDescribed;
     RotationNum = Rdpa / RotationSize;
     LineNum = (UINT32)((Rdpa % RotationSize) / pInterleaveTable->LineSize);
 

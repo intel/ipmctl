@@ -1817,19 +1817,19 @@ FwCmdDeviceCharacteristics (
   NVDIMM_ENTRY();
 
   if (pDimm == NULL || ppPayload == NULL) {
-    goto FinishError;
+    goto Finish;
   }
 
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishError;
+    goto Finish;
   }
 
   *ppPayload = AllocateZeroPool(sizeof(**ppPayload));
   if (*ppPayload == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishError;
+    goto Finish;
   }
 
   pFwCmd->DimmID = pDimm->DimmID;
@@ -1841,20 +1841,18 @@ FwCmdDeviceCharacteristics (
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Error detected when sending Device Characteristics command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto FinishError;
+    goto Finish;
   }
   CopyMem_S((*ppPayload)->Payload.Data, sizeof((*ppPayload)->Payload), pFwCmd->OutPayload, sizeof((*ppPayload)->Payload));
   (*ppPayload)->FisMajor = pDimm->FwVer.FwApiMajor;
   (*ppPayload)->FisMinor = pDimm->FwVer.FwApiMinor;
 
   ReturnCode = EFI_SUCCESS;
-  goto Finish;
 
-FinishError:
-  if (ppPayload != NULL) {
+Finish:
+  if (EFI_ERROR(ReturnCode) && (NULL != ppPayload)) {
     FREE_POOL_SAFE(*ppPayload);
   }
-Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -3800,13 +3798,13 @@ FwCmdGetPowerManagementPolicy(
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishError;
+    goto Finish;
   }
 
   *ppPayloadPowerManagementPolicy = AllocateZeroPool(sizeof(**ppPayloadPowerManagementPolicy));
   if (NULL == *ppPayloadPowerManagementPolicy) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishError;
+    goto Finish;
   }
 
   pFwCmd->DimmID = pDimm->DimmID;
@@ -3818,20 +3816,19 @@ FwCmdGetPowerManagementPolicy(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Error detected when sending PowerManagementPolicy command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto FinishError;
+    goto Finish;
   }
 
   CopyMem_S((*ppPayloadPowerManagementPolicy)->Payload.Data, sizeof((*ppPayloadPowerManagementPolicy)->Payload), pFwCmd->OutPayload, sizeof((*ppPayloadPowerManagementPolicy)->Payload));
   (*ppPayloadPowerManagementPolicy)->FisMajor = pDimm->FwVer.FwApiMajor;
   (*ppPayloadPowerManagementPolicy)->FisMinor = pDimm->FwVer.FwApiMinor;
 
-  goto Finish;
+  ReturnCode = EFI_SUCCESS;
 
-FinishError:
-  if (NULL != ppPayloadPowerManagementPolicy) {
+Finish:
+  if (EFI_ERROR(ReturnCode) && (NULL != ppPayloadPowerManagementPolicy)) {
     FREE_POOL_SAFE(*ppPayloadPowerManagementPolicy);
   }
-Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

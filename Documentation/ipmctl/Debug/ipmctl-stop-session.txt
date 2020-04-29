@@ -13,9 +13,7 @@ ipmctl-stop-session - Stops the active playback or recording session.
 SYNOPSIS
 --------
 [listing]
-____
 ipmctl stop [OPTIONS] -session
-____
 
 DESCRIPTION
 -----------
@@ -50,9 +48,7 @@ EXAMPLES
 Stop the current session.
 
 [listing]
-____
 ipmctl stop -session
-____
 
 LIMITATIONS
 -----------
@@ -61,7 +57,7 @@ A session must be already started.
 SAMPLE OUTPUT
 -------------
 [listing]
-____
+--
 Successfully dumped 1060619 bytes to file.
 
 Warning - Executing in playback mode!
@@ -69,4 +65,4 @@ Warning - Executing in playback mode!
 Stopping a session will free all recording content.
 Do you want to continue? [y/n] y
 Stopped PBR session.
-____
+--

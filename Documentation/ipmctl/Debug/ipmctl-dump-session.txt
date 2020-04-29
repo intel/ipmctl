@@ -13,9 +13,7 @@ ipmctl-dump-session - Dumps content captured during a recording session.
 SYNOPSIS
 --------
 [listing]
-____
 ipmctl dump [OPTIONS] -destination (path) -session
-____
 
 DESCRIPTION
 -----------
@@ -55,9 +53,7 @@ EXAMPLES
 Dump the contents associated with the current active recording session to
 /tmp/session.pbr.
 [listing]
-____
 ipmctl dump -destination /tmp/session.pbr -session
-____
 
 LIMITATIONS
 -----------
@@ -72,6 +68,4 @@ over the mailbox interface.
 SAMPLE OUTPUT
 -------------
 [listing]
-____
 Successfully dumped 1060619 bytes to file.
-____

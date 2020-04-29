@@ -22,7 +22,17 @@ BuildRequires:	python
 %endif
 BuildRequires:	gcc
 BuildRequires:	gcc-c++
+
+%if 0%{?suse_version}
+BuildRequires:	ruby2.5-rubygem-asciidoctor
+%else
+  %if 0%{?rhel} == 8
+BuildRequires:	rubygems
+  %else
 BuildRequires:	asciidoctor
+  %endif
+%endif
+
 Obsoletes:	ixpdimm-cli < 01.00.00.3000
 
 %description

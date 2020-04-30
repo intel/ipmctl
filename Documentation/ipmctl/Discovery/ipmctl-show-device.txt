@@ -105,7 +105,7 @@ Capacity::
 HealthState::
   (Default) Overall PMem module health. One of:
   * Healthy
-  * Noncritical: Maintenance is required.
+  * Noncritical: Maintenance may be required.
   * Critical: Features or performance are degraded due to failure.
   * Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
     AIT Failure, etc.) is non-recoverable and data loss has occurred or is imminent.

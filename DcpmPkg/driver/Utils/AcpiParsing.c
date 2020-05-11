@@ -533,7 +533,7 @@ ParsePmttTable(
         goto FinishError;
       }
       pModuleInfo->Header = pModule->Header;
-      pModuleInfo->SmbiosHandle = pModule->SmbiosHandle & 0xFF;
+      pModuleInfo->SmbiosHandle = pModule->SmbiosHandle & SMBIOS_HANDLE_MASK;
       pModuleInfo->SocketId = SocketID;
       pModuleInfo->DieId = DieID;
       pModuleInfo->CpuId = CpuID;

@@ -8860,7 +8860,7 @@ MapSockets(
               goto Finish;
             }
             DdrEntry->PmttVersion.Revision.AsUint8 = PMTT_HEADER_REVISION_1;
-            DdrEntry->DimmID = pModule->SmbiosHandle & 0xFF;
+            DdrEntry->DimmID = pModule->SmbiosHandle & SMBIOS_HANDLE_MASK;
             DdrEntry->SocketID = pSocket->SocketId;
             DdrEntry->Signature = PMTT_INFO_SIGNATURE;
             InsertTailList(pPmttInfo, &DdrEntry->PmttNode);

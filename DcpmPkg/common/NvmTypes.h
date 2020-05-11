@@ -936,6 +936,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SMBIOS_MEMORY_TYPE_DCPM                   0x18
 #define SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE   0x1F
 #define SMBIOS_STR_UNKNOWN                        L"Unknown"
+#define SMBIOS_HANDLE_MASK                        MAX_UINT16
 
 /**
   Package Sparing Capable

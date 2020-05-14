@@ -514,6 +514,7 @@ ShowErrorCommand(
         else {
 
           pMediaErrorInfo = (MEDIA_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
+          ExcludeInvalidFields = FALSE;
 
           // Error Type
           switch (pMediaErrorInfo->ErrorType) {

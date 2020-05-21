@@ -186,7 +186,7 @@ CheckNmFmLimits(
     }
   }
 
-  TwoLM_FmMinRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER;
+  TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER);
   TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
   if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
     *pIsAboveLimit = TRUE;

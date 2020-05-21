@@ -297,7 +297,7 @@ CheckAndConfirmAlignments(
     }
 
     if (TRUE == IsBelowLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER_STR);
     }
     else if (TRUE == IsAboveLimit) {
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_UPPER_VIOLATION, TWOLM_NMFM_RATIO_UPPER);

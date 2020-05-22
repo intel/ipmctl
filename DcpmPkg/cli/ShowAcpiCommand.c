@@ -231,7 +231,7 @@ EFI_STATUS showAcpi(struct Command *pCmd) {
       FREE_POOL_SAFE(pPMTT);
       ReturnCode = EFI_UNSUPPORTED;
     } else {
-      PrintPMTT(pPMTT, pPrinterCtx);
+      PrintPmtt(pPMTT, pPrinterCtx);
       FREE_POOL_SAFE(pPMTT);
     }
   }

@@ -92,26 +92,14 @@ PrintNFit(
   );
 
 /**
-PrintPMTT - prints the header and all of the tables in the parsed PMTT table.
+  PrintPmtt - prints the header and all of the sub-tables in PMTT table.
 
-@param[in] pPMTT pointer to the parsed PMTT.
-@param[in] pointer to command's printer context.
+  @param[in] pTable pointer to the PMTT table
+  @param[in] pointer to command's printer context
 **/
 VOID
-PrintPMTT(
-  IN     TABLE_HEADER *pPMTT,
+PrintPmtt(
+  IN     TABLE_HEADER *pTable,
   IN     PRINT_CONTEXT *pPrinterCtx
-);
-
-/**
-PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 0.2 table.
-
-@param[in] pPcat pointer to the parsed PMTT 0.2 table.
-@param[in] pointer to command's printer context.
-**/
-VOID
-PrintPMTT2(
-  IN     VOID *pTable,
-  IN     PRINT_CONTEXT *pPrinterCtx
-);
+  );
 #endif

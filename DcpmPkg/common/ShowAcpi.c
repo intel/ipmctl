@@ -332,7 +332,7 @@ PrintAcpiHeader(
     ((UINT8 *)&pHeader->Signature)[2],
     ((UINT8 *)&pHeader->Signature)[3]);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Length", FORMAT_INT32 L" bytes", pHeader->Length);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Revision", FORMAT_HEX_NOWIDTH, pHeader->Revision);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Revision", FORMAT_HEX_NOWIDTH, pHeader->Revision.AsUint8);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"Checksum", FORMAT_HEX_NOWIDTH, pHeader->Checksum);
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx,
     pPath,
@@ -428,19 +428,19 @@ PrintPcatTable(
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
       if (MemoryModeCapabilities != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
-          pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes, MemoryModeCapabilities);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
-          pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes);
       }
       FREE_POOL_SAFE(MemoryModeCapabilities);
       CurrentMemoryMode = DecodePcatCurrentMemoryMode((VOID *)&pPlatformCapabilityInfoTable->CurrentMemoryMode, &pPlatformCapabilityInfoTable->MemoryModeCapabilities);
       if (CurrentMemoryMode != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR,
-          pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+          pPlatformCapabilityInfoTable->CurrentMemoryMode.MemoryMode, CurrentMemoryMode);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH,
-          pPlatformCapabilityInfoTable->CurrentMemoryMode);
+          pPlatformCapabilityInfoTable->CurrentMemoryMode.MemoryMode);
       }
       FREE_POOL_SAFE(CurrentMemoryMode);
       if (pPlatformCapabilityInfoTable->PersistentMemoryRasCapability & PERSISTENT_MEMORY_REGION_MIRRORING) {
@@ -472,19 +472,19 @@ PrintPcatTable(
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
       if (MemoryModeCapabilities != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
-          pPlatformCapabilityInfoTable->MemoryModeCapabilities, MemoryModeCapabilities);
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes, MemoryModeCapabilities);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
-          pPlatformCapabilityInfoTable->MemoryModeCapabilities);
+          pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes);
       }
       FREE_POOL_SAFE(MemoryModeCapabilities);
       CurrentMemoryMode = DecodePcatCurrentMemoryMode((VOID *)&pPlatformCapabilityInfoTable->CurrentMemoryMode, NULL);
       if (CurrentMemoryMode != NULL) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR,
-          pPlatformCapabilityInfoTable->CurrentMemoryMode, CurrentMemoryMode);
+          pPlatformCapabilityInfoTable->CurrentMemoryMode.MemoryMode, CurrentMemoryMode);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CurrentMemoryMode", FORMAT_HEX_NOWIDTH,
-          pPlatformCapabilityInfoTable->CurrentMemoryMode);
+          pPlatformCapabilityInfoTable->CurrentMemoryMode.MemoryMode);
       }
       FREE_POOL_SAFE(CurrentMemoryMode);
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
@@ -594,16 +594,16 @@ PrintPcatTable(
     if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
       SOCKET_SKU_INFO_TABLE *pSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pSocketSkuInfoTable->SocketId);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", L"%ld", pSocketSkuInfoTable->MappedMemorySizeLimit);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", L"%ld", pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", L"%ld\n", pSocketSkuInfoTable->CachingMemorySize);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", FORMAT_UINT64, pSocketSkuInfoTable->MappedMemorySizeLimit);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", FORMAT_UINT64, pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", FORMAT_UINT64 L"\n", pSocketSkuInfoTable->CachingMemorySize);
     } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
       DIE_SKU_INFO_TABLE *pDieSkuInfoTable = (DIE_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->DieId);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", L"%ld", pDieSkuInfoTable->MappedMemorySizeLimit);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", L"%ld", pDieSkuInfoTable->TotalMemorySizeMappedToSpa);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", L"%ld\n", pDieSkuInfoTable->CachingMemorySize);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", FORMAT_UINT64, pDieSkuInfoTable->MappedMemorySizeLimit);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", FORMAT_UINT64, pDieSkuInfoTable->TotalMemorySizeMappedToSpa);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", FORMAT_UINT64 L"\n", pDieSkuInfoTable->CachingMemorySize);
     }
     break;
   default:
@@ -1000,120 +1000,159 @@ PrintNFit(
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pTypePath);
 }
-/**
-PrintPMTT - prints the header and all of the tables in the parsed PMTT table.
 
-@param[in] pPcat pointer to the parsed PMTT.
-@param[in] pointer to command's printer context.
+/**
+  Prints the PMTT common header
+
+  @param[in] pPmttCommonHeader pointer to the PMTT Common Header
+  @param[in] pPrinterCtx pointer to command's printer context
+  @param[in] Revision PMMT table revision
 **/
 VOID
-PrintPMTT(
-  IN     TABLE_HEADER *pTable,
-  IN     PRINT_CONTEXT *pPrinterCtx
-)
+PrintPmttCommonHeader(
+  IN     VOID *pPmttCommonHeader,
+  IN     PRINT_CONTEXT *pPrinterCtx,
+  IN     ACPI_REVISION Revision
+  )
 {
-  if (pTable == NULL) {
+  PMTT_COMMON_HEADER *pCommonHeader = NULL;
+  PMTT_COMMON_HEADER2 *pCommonHeader2 = NULL;
+
+  if (pPmttCommonHeader == NULL || pPrinterCtx == NULL) {
     NVDIMM_DBG("NULL Pointer provided");
     return;
   }
 
-  PRINTER_BUILD_KEY_PATH(pPath, DS_ACPI_INDEX_PATH, AcpiIndex);
-  AcpiIndex++;
-  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SYSTEM_TARGET_STR, L"Platform Memory Topology Table");
-  PrintAcpiHeader(pTable, pPrinterCtx);
-
-  // Print PMTT 0.2 table if Rev is 0.2
-  if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    PrintPMTT2((VOID *)pTable, pPrinterCtx);
+  if (!IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+    NVDIMM_DBG("Unknown PMTT Revision: ", FORMAT_UINT8_HEX, Revision.AsUint8);
     return;
   }
 
-  PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
+  pCommonHeader = (PMTT_COMMON_HEADER *)pPmttCommonHeader;
 
-  UINT64 PmttLen = pPMTT->Header.Length;
-  UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_UINT8, pCommonHeader->Type);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_UINT8, pCommonHeader->Reserved1);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_UINT16, pCommonHeader->Length);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_UINT16, pCommonHeader->Flags);
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_UINT16, pCommonHeader->Reserved2);
+
+  if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
+    pCommonHeader2 = (PMTT_COMMON_HEADER2 *)pPmttCommonHeader;
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_UINT32, pCommonHeader2->NoOfMemoryDevices);
+  }
+}
+
+/**
+  Prints all of the sub-tables in the PMTT 0.1 table
+
+  @param[in] pTable pointer to PMTT table
+  @param[in] pPrinterCtx pointer to command's printer context
+**/
+VOID
+PrintPmttRev1(
+  IN     VOID *pTable,
+  IN     PRINT_CONTEXT *pPrinterCtx
+  )
+{
+  PMTT_TABLE *pPMTT = NULL;
+  PMTT_COMMON_HEADER *pCommonHeader = NULL;
+  UINT64 PmttLen = 0;
+  UINT64 Offset = 0;
+
+  if (pTable == NULL || pPrinterCtx == NULL) {
+    NVDIMM_DBG("NULL Pointer provided");
+    return;
+  }
+
+  pPMTT = (PMTT_TABLE *)pTable;
+
+  if (!IS_ACPI_REV_MAJ_0_MIN_1(pPMTT->Header.Revision)) {
+    NVDIMM_DBG("Invalid PMTT Revision: ", FORMAT_HEX_NOWIDTH, pPMTT->Header.Revision.AsUint8);
+  }
+
+  PmttLen = pPMTT->Header.Length;
+  Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+
   while (Offset < PmttLen) {
-    PMTT_COMMON_HEADER *pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+    pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
     if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
       PMTT_SOCKET *pSocket = (PMTT_SOCKET *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Socket");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pSocket->Reserved3);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_UINT16, pSocket->SocketId);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, pSocket->Reserved3);
       Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
-    } else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
+    }
+    else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
       PMTT_iMC *piMC = (PMTT_iMC *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"iMC");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ReadLatency", FORMAT_INT32, piMC->ReadLatency);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"WriteLatency", FORMAT_INT32, piMC->WriteLatency);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ReadBW", FORMAT_INT32, piMC->ReadBW);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"WriteBW", FORMAT_INT32, piMC->WriteBW);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"OptimalAccessUnit", FORMAT_INT32, piMC->OptimalAccessUnit);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"OptimalAccessAlignment", FORMAT_INT32, piMC->OptimalAccessAlignment);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, piMC->Reserved3);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NoOfProximityDomains", FORMAT_INT32, piMC->NoOfProximityDomains);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ProximityDomainArray", FORMAT_INT32, piMC->ProximityDomainArray);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ReadLatency", FORMAT_UINT32, piMC->ReadLatency);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"WriteLatency", FORMAT_UINT32, piMC->WriteLatency);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ReadBW", FORMAT_UINT32, piMC->ReadBW);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"WriteBW", FORMAT_UINT32, piMC->WriteBW);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"OptimalAccessUnit", FORMAT_UINT16, piMC->OptimalAccessUnit);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"OptimalAccessAlignment", FORMAT_UINT16, piMC->OptimalAccessAlignment);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, piMC->Reserved3);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NoOfProximityDomains", FORMAT_UINT16, piMC->NoOfProximityDomains);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ProximityDomainArray", FORMAT_UINT32, piMC->ProximityDomainArray);
       Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
-    } else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
+    }
+    else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
       PMTT_MODULE *pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"MODULE");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PhysicalComponentId", FORMAT_INT32, pModule->PhysicalComponentId);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pModule->Reserved3);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SizeOfDimm", FORMAT_INT32, pModule->SizeOfDimm);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_INT32, pModule->SmbiosHandle);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PhysicalComponentId", FORMAT_UINT16, pModule->PhysicalComponentId);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, pModule->Reserved3);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SizeOfDimm", FORMAT_UINT32, pModule->SizeOfDimm);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_HEX_PREFIX FORMAT_UINT32_HEX, pModule->SmbiosHandle);
       Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
     }
   }
-  FREE_POOL_SAFE(pPath);
-  FREE_POOL_SAFE(pTypePath);
 }
 
 /**
-PrintPMTT2 - prints the header and all of the tables in the parsed PMTT 0.2 table.
+  Prints all of the sub-tables in PMTT 0.2 table
 
-@param[in] pPcat pointer to the parsed PMTT 0.2 table.
-@param[in] pointer to command's printer context.
+  @param[in] pTable pointer to PMTT table
+  @param[in] pPrinterCtx pointer to command's printer context
 **/
 VOID
-PrintPMTT2(
+PrintPmttRev2(
   IN     VOID *pTable,
   IN     PRINT_CONTEXT *pPrinterCtx
-)
+  )
 {
+  PMTT_TABLE2 *pPMTT = NULL;
+  PMTT_COMMON_HEADER2 *pCommonHeader = NULL;
   CHAR16 *pGuidStr = NULL;
-  PMTT_TABLE2 *pPMTT = (PMTT_TABLE2 *)pTable;
+  UINT64 PmttLen = 0;
+  UINT64 Offset = 0;
 
-  if (pPMTT == NULL) {
+  if (pTable == NULL || pPrinterCtx == NULL) {
     NVDIMM_DBG("NULL Pointer provided");
     return;
   }
 
-  UINT64 PmttLen = pPMTT->Header.Length;
-  UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->NoOfMemoryDevices);
-  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NumOfMemoryDevices", FORMAT_INT32, pPMTT->NoOfMemoryDevices);
+  pPMTT = (PMTT_TABLE2 *)pTable;
+
+  if (!IS_ACPI_REV_MAJ_0_MIN_2(pPMTT->Header.Revision)) {
+    NVDIMM_DBG("Invalid PMTT Revision: ", FORMAT_HEX_NOWIDTH, pPMTT->Header.Revision.AsUint8);
+  }
+
+  PmttLen = pPMTT->Header.Length;
+  Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->NoOfMemoryDevices);
+
+  PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"NumOfMemoryDevices", FORMAT_UINT32, pPMTT->NoOfMemoryDevices);
 
   while (Offset < PmttLen) {
-    PMTT_COMMON_HEADER2 *pCommonHeader = (PMTT_COMMON_HEADER2 *)(((UINT8 *)pPMTT) + Offset);
+    pCommonHeader = (PMTT_COMMON_HEADER2 *)(((UINT8 *)pPMTT) + Offset);
     NVDIMM_DBG("Common table length: %d, mem devices: %d, Type: %d",
       pCommonHeader->Length, pCommonHeader->NoOfMemoryDevices, pCommonHeader->Type);
     if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
@@ -1121,14 +1160,9 @@ PrintPMTT2(
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Socket");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_INT32, pSocket->SocketId);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pSocket->Reserved3);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketId", FORMAT_UINT16, pSocket->SocketId);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, pSocket->Reserved3);
       Offset += sizeof(PMTT_SOCKET2);
     }
     else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
@@ -1136,41 +1170,31 @@ PrintPMTT2(
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"iMC");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_INT32, piMC->MemControllerID);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, piMC->Reserved3);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemControllerId", FORMAT_UINT16, piMC->MemControllerID);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, piMC->Reserved3);
       Offset += sizeof(PMTT_iMC2);
     }
-    else if (pCommonHeader->Type == PMTT_TYPE_VENDOR_SPECIFIC){
+    else if (pCommonHeader->Type == PMTT_TYPE_VENDOR_SPECIFIC) {
       PMTT_VENDOR_SPECIFIC2 *pVendorDevice = (PMTT_VENDOR_SPECIFIC2 *)(((UINT8 *)pPMTT) + Offset);
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       if (CompareGuid(&pVendorDevice->TypeUUID, &gDieTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Die");
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieId", FORMAT_INT32, pVendorDevice->DeviceID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieId", FORMAT_UINT16, pVendorDevice->DeviceID);
       }
       else if (CompareGuid(&pVendorDevice->TypeUUID, &gChannelTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Channel");
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ChannelId", FORMAT_INT32, pVendorDevice->DeviceID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"ChannelId", FORMAT_UINT16, pVendorDevice->DeviceID);
       }
       else if (CompareGuid(&pVendorDevice->TypeUUID, &gSlotTypeGuid)) {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"Slot");
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SlotId", FORMAT_INT32, pVendorDevice->DeviceID);
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SlotId", FORMAT_UINT16, pVendorDevice->DeviceID);
       }
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
       pGuidStr = GuidToStr(&pVendorDevice->TypeUUID);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TypeUUID", FORMAT_STR, pGuidStr);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_INT32, pVendorDevice->Reserved3);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved3", FORMAT_UINT16, pVendorDevice->Reserved3);
       FREE_POOL_SAFE(pGuidStr);
       Offset += sizeof(PMTT_VENDOR_SPECIFIC2);
     }
@@ -1179,16 +1203,47 @@ PrintPMTT2(
       PRINTER_BUILD_KEY_PATH(pTypePath, DS_ACPITYPE_INDEX_PATH, AcpiIndex - 1, TypeIndex);
       TypeIndex++;
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, ACPI_TYPE_STR, L"MODULE");
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Type", FORMAT_INT32, pCommonHeader->Type);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved1", FORMAT_INT32, pCommonHeader->Reserved1);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Length", FORMAT_INT32, pCommonHeader->Length);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Flags", FORMAT_INT32, pCommonHeader->Flags);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"Reserved2", FORMAT_INT32, pCommonHeader->Reserved2);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"NumOfMemoryDevices", FORMAT_INT32, pCommonHeader->NoOfMemoryDevices);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_INT32, pModule->SmbiosHandle);
+      PrintPmttCommonHeader((VOID *)pCommonHeader, pPrinterCtx, pPMTT->Header.Revision);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SmbiosHandle", FORMAT_HEX_PREFIX FORMAT_UINT32_HEX, pModule->SmbiosHandle);
       Offset += sizeof(PMTT_MODULE2);
     }
   }
+}
+
+/**
+  PrintPmtt - prints the header and all of the sub-tables in PMTT table.
+
+  @param[in] pTable pointer to the PMTT table
+  @param[in] pointer to command's printer context
+**/
+VOID
+PrintPmtt(
+  IN     TABLE_HEADER *pTable,
+  IN     PRINT_CONTEXT *pPrinterCtx
+  )
+{
+  if (pTable == NULL || pPrinterCtx == NULL) {
+    NVDIMM_DBG("NULL Pointer provided");
+    return;
+  }
+
+  if (!IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(pTable->Revision)) {
+    NVDIMM_DBG("Unknown PMTT Revision: ", FORMAT_HEX_NOWIDTH, pTable->Revision.AsUint8);
+    return;
+  }
+
+  PRINTER_BUILD_KEY_PATH(pPath, DS_ACPI_INDEX_PATH, AcpiIndex);
+  AcpiIndex++;
+  PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, SYSTEM_TARGET_STR, L"Platform Memory Topology Table");
+  PrintAcpiHeader(pTable, pPrinterCtx);
+
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
+    PrintPmttRev1((VOID *)pTable, pPrinterCtx);
+  }
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
+    PrintPmttRev2((VOID *)pTable, pPrinterCtx);
+  }
+
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pTypePath);
 }

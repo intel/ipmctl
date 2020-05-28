@@ -4977,7 +4977,7 @@ GetSystemCapabilitiesInfo(
   /**
     Features supported by the driver
   **/
-  pSysCapInfo->RenameNsSupported = FEATURE_SUPPORTED;
+  pSysCapInfo->RenameNsSupported = FEATURE_NOT_SUPPORTED;
 
   /**
     The UEFI driver does not support this feature

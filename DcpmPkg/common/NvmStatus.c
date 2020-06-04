@@ -191,7 +191,6 @@ InitErrorAndWarningNvmStatusCodes()
   // Warnings:
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_BLOCK_MODE_DISABLED);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_SMART_NONCRITICAL_HEALTH_ISSUE);
-  SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_2LM_MODE_OFF);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
 
@@ -405,8 +404,6 @@ GetSingleNvmStatusCodeMessage(
   case NVM_ERR_INCONSISTENT_SECURITY_STATE:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_INCONSISTENT_SECURITY_STATE), NULL);
 
-  case NVM_WARN_2LM_MODE_OFF:
-    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_2LM_MODE_OFF), NULL);
   case NVM_WARN_IMC_DDR_PMM_NOT_PAIRED:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED), NULL);
   case NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU:

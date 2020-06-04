@@ -332,12 +332,6 @@ CheckAndConfirmAlignments(
 
   MaxPmInterleaveSetsExceeded = IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
 
-  if (pCommandStatus->GeneralStatus == NVM_WARN_2LM_MODE_OFF) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_2LM_MODE_OFF);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
-
   if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
     PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);

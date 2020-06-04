@@ -2420,7 +2420,7 @@ GetGoalConfigs(
     goto Finish;
   }
   if (AllowedMode != MEMORY_MODE_2LM) {
-    ResetCmdStatus(pCommandStatus, NVM_WARN_2LM_MODE_OFF);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE);
   }
 
   *pConfigGoalsCount = ConfigRegionCount;
@@ -6080,7 +6080,8 @@ GetActualRegionsGoalCapacities(
     /** Check if volatile memory has been requested **/
     for (Index = 0; Index < *pConfigGoalsCount; Index++) {
       if (pConfigGoals[Index].VolatileSize > 0) {
-        SetCmdStatus(pCommandStatus, NVM_WARN_2LM_MODE_OFF);
+        ReturnCode = EFI_UNSUPPORTED;
+        ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE);
         break;
       }
     }

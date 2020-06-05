@@ -49,6 +49,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SPI_ACCESS_NOT_ENABLED                    = 43,   ///< Error: PMem module SPI access not enabled
   NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS             = 44,   ///< Error: Namespace exists - cannot execute request
   NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED          = 45,   ///< Error: Security count for master passphrase expired
+  NVM_ERR_FLASH_SPI_NO_LONGER_SUPPORTED             = 46,   ///< Error: PMem module FlashSPI recovery is no longer supported
 
   NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING     = 59,   ///< Error: Image not compatible with this PMem module
   NVM_ERR_FILENAME_NOT_PROVIDED                     = 60,   ///< Error: Filename not provided

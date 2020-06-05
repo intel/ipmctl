@@ -29,7 +29,7 @@ struct Command LoadCommand =
     {L"", SMALL_PAYLOAD_OPTION, L"", L"", HELP_SPAYLOAD_DETAILS_TEXT, FALSE, ValueEmpty},
     {EXAMINE_OPTION_SHORT, EXAMINE_OPTION, L"", L"", EXAMINE_OPTION_DETAILS_TEXT, FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FORCE_OPTION_DETAILS_TEXT, FALSE, ValueEmpty},
-    { L"", RECOVER_OPTION, L"", HELP_TEXT_FLASH_SPI, RECOVER_OPTION_DETAILS_TEXT, FALSE, ValueOptional }
+    { L"", RECOVER_OPTION, L"", L"", RECOVER_OPTION_DETAILS_TEXT, FALSE, ValueEmpty }
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
 #endif
@@ -92,7 +92,6 @@ Load(
   volatile UINT32 Index2 = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   EFI_EVENT ProgressEvent = NULL;
-  BOOLEAN FlashSPI = FALSE;
   CHAR16 *pOptionsValue = NULL;
   BOOLEAN Recovery = FALSE;
   DIMM_INFO *pDimmTargets = NULL;
@@ -171,18 +170,6 @@ Load(
   Recovery = containsOption(pCmd, RECOVER_OPTION);
   Examine = containsOption(pCmd, EXAMINE_OPTION) || containsOption(pCmd, EXAMINE_OPTION_SHORT);
   Force = containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT);
-  //check for the kind of recovery this might be
-  pOptionsValue = getOptionValue(pCmd, RECOVER_OPTION);
-  if (pOptionsValue != NULL) {
-    if (StrICmp(pOptionsValue, RECOVER_OPTION_FLASH_SPI) == 0) {
-      FlashSPI = TRUE;
-    }
-    else if (StrLen(pOptionsValue) > 0) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      Print(FORMAT_STR_NL, CLI_ERR_INCORRECT_VALUE_OPTION_RECOVER);
-      goto Finish;
-    }
-  }
 
   /*Get the list of functional and non-functional dimms*/
   CHECK_RESULT(GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SMART_AND_HEALTH,
@@ -310,13 +297,6 @@ Load(
 
     pCommandStatus->GeneralStatus = NVM_SUCCESS; //ensure that only the last error gets reported
 
-    if (pDimmTargets != NULL && pDimmTargets[Index].HealthState == HEALTH_HEALTHY && TRUE == Recovery && TRUE == FlashSPI) {
-      NvmCodes[Index] = NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE;
-      ReturnCodes[Index] = MatchCliReturnCode(NvmCodes[Index]);
-      SetObjStatusForDimmInfoWithErase(pCommandStatus, &pDimmTargets[Index], NvmCodes[Index], TRUE);
-      continue;
-    }
-
     //if the FW is already staged and this isn't an examine operation, the outcome is already known
     if (pDimmTargets != NULL && FALSE == Examine && TRUE == FwHasBeenStaged(pCmd, pNvmDimmConfigProtocol, pDimmTargets[Index].DimmID)) {
       pCommandStatus->GeneralStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
@@ -327,7 +307,7 @@ Load(
     }
 
     ReturnCodes[Index] = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
-        (CHAR16 *)pWorkingDirectory, Examine, Force, Recovery, FlashSPI, pFwImageInfo, pCommandStatus);
+        (CHAR16 *)pWorkingDirectory, Examine, Force, Recovery, FALSE, pFwImageInfo, pCommandStatus);
     NvmCodes[Index] = pCommandStatus->GeneralStatus;
 
     if (Examine) {
@@ -365,7 +345,7 @@ Load(
       }
 
       ReturnCodes[Index] = pNvmDimmConfigProtocol->UpdateFw(pNvmDimmConfigProtocol, &pDimmTargetIds[Index], 1, pRelativeFileName,
-        (CHAR16 *)pWorkingDirectory, Examine, TRUE, Recovery, FlashSPI, pFwImageInfo, pCommandStatus);
+        (CHAR16 *)pWorkingDirectory, Examine, TRUE, Recovery, FALSE, pFwImageInfo, pCommandStatus);
       if (EFI_ERROR(ReturnCodes[Index])) {
         continue;
       }
@@ -393,7 +373,7 @@ Load(
   } else {
     gBS->CloseEvent(ProgressEvent);
     Print(L"\n");
-    if (!FlashSPI && StagedFwUpdates > 0) {
+    if (StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
       Loop until they all report a staged version

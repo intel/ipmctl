@@ -523,7 +523,7 @@ RecoverDimmFw(
   @param[in] Examine flag enables image verification only
   @param[in] Force flag suppresses warning message in case of attempted downgrade
   @param[in] Recovery flag determine that recovery update should be performed
-  @param[in] FlashSPI flag determine if the recovery update should be through the SPI
+  @param[in] Reserved Set to FALSE
 
   @param[out] pFwImageInfo is a pointer to a structure containing FW image information
     need to be provided if examine flag is set
@@ -549,7 +549,7 @@ UpdateFw(
   IN     BOOLEAN Examine,
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
-  IN     BOOLEAN FlashSPI,
+  IN     BOOLEAN Reserved,
      OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
      OUT COMMAND_STATUS *pCommandStatus
 );

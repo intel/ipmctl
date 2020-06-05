@@ -64,6 +64,7 @@
 #string STR_DCPMM_STATUS_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED     #language en "The maximum master passphrase submission limit has been reached"
 
 #string STR_DCPMM_STATUS_ERR_SPI_ACCESS_NOT_ENABLED               #language en "PMem module SPI access is not enabled."
+#string STR_DCPMM_STATUS_ERR_FLASH_SPI_NO_LONGER_SUPPORTED        #language en "PMem module FlashSPI recovery is no longer supported"
 #string STR_DCPMM_STATUS_ERR_SECURE_ERASE_NAMESPACE_EXISTS        #language en "Namespaces exist on specified PMem module. They must be removed before an erase."
 
 #string STR_DCPMM_STATUS_ERR_PASSPHRASE_TOO_LONG                  #language en "Provided passphrase is too long"

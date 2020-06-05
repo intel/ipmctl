@@ -5320,7 +5320,7 @@ Update firmware or training data in one or all NVDIMMs of the system
 @param[in] Examine flag enables image verification only
 @param[in] Force flag suppresses warning message in case of attempted downgrade
 @param[in] Recovery flag determine that recovery update should be performed
-@param[in] FlashSpi flag determine if the recovery update should be through the SPI
+@param[in] Reserved Set to FALSE
 
 @param[out] pFwImageInfo is a pointer to a structure containing FW image information
 need to be provided if examine flag is set
@@ -5343,7 +5343,7 @@ UpdateFw(
   IN     BOOLEAN Examine,
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
-  IN     BOOLEAN FlashSPI,
+  IN     BOOLEAN Reserved,
   OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
   OUT COMMAND_STATUS *pCommandStatus
 )
@@ -5366,6 +5366,8 @@ UpdateFw(
   UINT32 ForceRequiredDimms = 0;
   UINT16 SubsystemDeviceId = 0x0;
   REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE;
+  // FlashSPI is unsupported. Will remove more completely in a future change
+  BOOLEAN FlashSPI = FALSE;
 
   EFI_STATUS LongOpStatusReturnCode = 0;
   NVM_STATUS LongOpNvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
@@ -5387,6 +5389,11 @@ UpdateFw(
 
   if (pFileName == NULL) {
     pCommandStatus->GeneralStatus = NVM_ERR_FILENAME_NOT_PROVIDED;
+    goto Finish;
+  }
+
+  if (Reserved == TRUE) {
+    pCommandStatus->GeneralStatus = NVM_ERR_FLASH_SPI_NO_LONGER_SUPPORTED;
     goto Finish;
   }
 

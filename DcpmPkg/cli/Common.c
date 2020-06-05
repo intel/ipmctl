@@ -2127,12 +2127,12 @@ Finish:
   This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.
 
-  @param[in] pDimmInfo The dimm list found in NFIT.
-  @param[in] DimmCount Size of the pDimmInfo array.
-  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
-  @param[in] pDimmIdsCount Size of the pDimmIds array.
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
 
-  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval TRUE if all Dimms in pDimmsListToCheck array are manageable
   @retval FALSE if at least one DIMM is not manageable
 **/
 BOOLEAN
@@ -2162,18 +2162,19 @@ AllDimmsInListAreManageable(
   NVDIMM_EXIT();
   return Manageable;
 }
+
 /**
   Check if all dimms in the specified pDimmIds list are in supported
   config. This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.
 
-  @param[in] pDimmInfo The dimm list found in NFIT.
-  @param[in] DimmCount Size of the pDimmInfo array.
-  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
-  @param[in] pDimmIdsCount Size of the pDimmIds array.
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
 
-  @retval TRUE if all Dimms in pDimmIds list are manageable
-  @retval FALSE if at least one DIMM is not manageable
+  @retval TRUE if all Dimms in pDimmsListToCheck array are in supported config
+  @retval FALSE if at least one DIMM is not in supported config
 **/
 BOOLEAN
 AllDimmsInListInSupportedConfig(
@@ -2201,6 +2202,65 @@ AllDimmsInListInSupportedConfig(
 
   NVDIMM_EXIT();
   return InSupportedConfig;
+}
+
+/**
+  Check if all dimms in the specified pDimmIds list have master passphrase enabled.
+  This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
+
+  @retval TRUE if all Dimms in pDimmsListToCheck array have master passphrase enabled
+  @retval FALSE if at least one DIMM does not have master passphrase enabled
+**/
+BOOLEAN
+AllDimmsInListHaveMasterPassphraseEnabled(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+  )
+{
+  BOOLEAN MasterPassphraseEnabled = FALSE;
+  UINT32 AllDimmListIndex = 0;
+  UINT32 DimmsToCheckIndex = 0;
+  BOOLEAN DimmFound = FALSE;
+
+  NVDIMM_ENTRY();
+
+  if (pAllDimms == NULL || pDimmsListToCheck == NULL ||
+    AllDimmCount == 0 || DimmsToCheckCount == 0) {
+    NVDIMM_DBG("Invalid parameter.");
+    goto Finish;
+  }
+
+  for (DimmsToCheckIndex = 0; DimmsToCheckIndex < DimmsToCheckCount; DimmsToCheckIndex++) {
+    DimmFound = FALSE;
+
+    for (AllDimmListIndex = 0; AllDimmListIndex < AllDimmCount; AllDimmListIndex++) {
+      if (pAllDimms[AllDimmListIndex].DimmID == pDimmsListToCheck[DimmsToCheckIndex]) {
+        DimmFound = TRUE;
+        if (pAllDimms[AllDimmListIndex].MasterPassphraseEnabled == FALSE) {
+          goto Finish;
+        }
+      }
+    }
+
+    if (!DimmFound) {
+      NVDIMM_DBG("DimmID: 0x%04x not found.", pDimmsListToCheck[DimmsToCheckIndex]);
+      goto Finish;
+    }
+  }
+
+  MasterPassphraseEnabled = TRUE;
+
+Finish:
+  NVDIMM_EXIT();
+  return MasterPassphraseEnabled;
 }
 
 /**

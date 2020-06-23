@@ -71,10 +71,12 @@ endif::os_build[]
 
 TARGETS
 -------
+ifndef::os_build[]
 -region [RegionIDs]::
   Restricts output to specific persistent memory regions by providing one or
   more comma separated region identifiers. The default is to display the
   persistent memory regions across all manageable PMem modules.
+endif::os_build[]
 
 -socket [SocketIDs]::
   Restricts output to the persistent memory regions on specific sockets by
@@ -87,9 +89,11 @@ Shows all attributes of all persistent memory regions in the server.
 [listing]
 ipmctl show -a -region
 
+ifndef::os_build[]
 Shows all attributes for the specified persistent memory region.
 [listing]
 ipmctl show -a -region 1
+endif::os_build[]
 
 LIMITATIONS
 -----------

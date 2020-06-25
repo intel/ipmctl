@@ -145,7 +145,7 @@ HealthState::
     + PMem module not configured
     + Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing)
     + Interleave set or PMem module region initialization failure (out of memory)
-    + Locked: One or more of the of the underlying Pmem moduless are locked.
+    + Locked: One or more of the of the underlying PMem modules are locked.
 
 ifndef::os_build[]
 ISetID::

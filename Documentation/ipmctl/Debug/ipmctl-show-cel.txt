@@ -89,7 +89,7 @@ SubOpcode::
   The SubOpcode for a command.
 
 CE Description::
-  A comma seperated list that includes one or more of:
+  A comma separated list that includes one or more of:
   - NE:   No Effect
   - SSC:  Security State Change
   - DCC:  DIMM Configuration Change after reboot

@@ -156,7 +156,7 @@ DCPMM Persistent Partition Capacity (DCPPC)::
   Persistent capacity reported by DCPMM DIMM Partition Info
 
 DCPMM Volatile Memory Capacity (DCVMC)::
-  Usable voliatile memory capacity as reported by platform FW
+  Usable volatile memory capacity as reported by platform FW
   via _Intel NVDIMM Current Config->Volatile Memory Size Mapped into SPA_ field
 
 DCPMM Persistent Memory Capacity (DCPMC) ::

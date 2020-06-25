@@ -96,8 +96,14 @@ struct _DIMM;
 #define SPARE_BLOCK_PERCENTAGE_TRIGGER  (1 << 3)
 #define DIRTY_SHUTDOWN_TRIGGER  (1 << 4)
 
-// Opt-In Codes - values 0x00-0x02 are invalid
-#define OPT_IN_S3_RESUME 0x03
+// Opt-In Codes - value 0x00 is invalid
+enum OPT_IN_CODE {
+  NVM_SVN_DOWNGRADE = 0x01,
+  NVM_SECURE_ERASE_POLICY = 0x02,
+  NVM_S3_RESUME = 0x03,
+  NVM_FW_ACTIVATE = 0x04
+};
+
 
 #pragma pack(push)
 #pragma pack(1)
@@ -173,7 +179,7 @@ EFI_STATUS
 EFIAPI
 DefaultPassThru (
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
 
@@ -198,7 +204,7 @@ EFI_STATUS
 EFIAPI
 PassThruWithRetryOnFwAborted(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   );
 
@@ -414,7 +420,8 @@ typedef struct {
   UINT8 Reserved3[2];             //!< 66-67 : Reserved
   UINT16 ApiVer;                  //!< 69-68 : API Version
   UINT8 DimmUid[9];               //!< 78-70 : DIMM Unique ID (UID)
-  UINT8 Reserved4[49];            //!< 127-70: Reserved
+  UINT16 ActiveApiVer;            //!< 80-79 : Active API
+  UINT8 Reserved4[47];            //!< 127-81: Reserved
 } PT_ID_DIMM_PAYLOAD;
 
 typedef struct {
@@ -697,7 +704,7 @@ typedef struct {
   /**
     Power limit [mW] used for limiting the Turbo Mode power consumption.
     Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
-    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
+    the value returned from Get Device Characteristics command's Max Memory Bandwidth Boost Max Power Limit field.
   **/
   UINT16 MemoryBandwidthBoostMaxPowerLimit;
   /**
@@ -794,6 +801,7 @@ typedef struct _SKU_INFORMATION {
 typedef struct {
   UINT8 ViralPolicyEnable;     //!< Viral Policy Enable: 0 - Disabled, 1 - Enabled
   UINT8 ViralStatus;           //!< Viral Status: 0 - Not Viral, 1 - Viral
+  UINT8 Reserved[126];         //!< Reserved
 } PT_VIRAL_POLICY_PAYLOAD;
 
 /**
@@ -1015,9 +1023,11 @@ typedef struct {
   UINT16 FWImageMaxSize;
   UINT8 Reserved2[8];
   UINT8 StagedFwRevision[FW_BCD_VERSION_LEN];
-  UINT8 Reserved3;
+  UINT8 StagedFwActivatable;
   UINT8 LastFwUpdateStatus;
-  UINT8 Reserved4[105];
+  UINT8 QuiesceRequired;
+  UINT16 ActivationTime;
+  UINT8 Reserved4[102];
 } PT_PAYLOAD_FW_IMAGE_INFO;
 
 
@@ -1561,6 +1571,17 @@ typedef struct {
   UINT8 PreviousExtendedAdrStatus;    //!< Was extended ADR flow enabled during last power cycle
   UINT8 Reserved[126];                //!< Padding to meet 128byte payload size
 } PT_OUTPUT_PAYLOAD_GET_EADR;
+
+/**
+  Passthrough Payload:
+    Opcode:    0x06h (Get Admin Features)
+    Sub-Opcode:  0x09h (Latch System Shutdown State)
+**/
+typedef struct {
+  UINT8 LatchSystemShutdownState;                       //!< Specifies whether latch is enabled
+  UINT8 PreviousPowerCycleLatchSystemShutdownState;     //!< Specifies whether latch was enabled during the last power cycle
+  UINT8 Reserved[126];
+} PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE;
 
 #pragma pack(pop)
 

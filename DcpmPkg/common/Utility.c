@@ -186,7 +186,7 @@ CheckNmFmLimits(
     }
   }
 
-  TwoLM_FmMinRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER;
+  TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER);
   TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
   if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
     *pIsAboveLimit = TRUE;
@@ -1072,7 +1072,7 @@ Finish:
   If the user does not provide a handle, the function will try
   to match the driver or the controller handle basing on the
   provided protocol GUID.
-  No need to call close protocol because of the way it's opened.
+  No need to call close protocol because of the way it is opened.
 
   @param[in] Guid is the EFI GUID of the protocol we want to open.
   @param[out] ppProtocol is the pointer to a pointer where the opened
@@ -1924,7 +1924,7 @@ Finish:
 
   @retval - upper character
 **/
-CHAR16 ToUpper(
+CHAR16 NvmToUpper(
   IN      CHAR16 InChar
   ) {
   CHAR16 upper = InChar;
@@ -1955,7 +1955,7 @@ INTN StrICmp(
       StrLen(pSecondString) != 0 &&
       StrSize(pFirstString) == StrSize(pSecondString)) {
 
-    while (*pFirstString != L'\0' && ToUpper(*pFirstString) == ToUpper(*pSecondString)) {
+    while (*pFirstString != L'\0' && NvmToUpper(*pFirstString) == NvmToUpper(*pSecondString)) {
       pFirstString++;
       pSecondString++;
     }
@@ -2163,8 +2163,8 @@ CleanStringMemory(
     return;
   }
 
-  while (*pString != L'\0') {
-    *pString = L'\0';
+  while (*pString != '\0') {
+    *pString = '\0';
     ++pString;
   }
 }
@@ -2447,10 +2447,15 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR);
   }
-  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.EnhancedAdrFlushStatus) {
+  if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.EnhancedAdrFlushStatus == EXTENDED_ADR_FLUSH_COMPLETE) {
     pStatusStr = CatSPrintClean(pStatusStr,
       FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR);
   }
+  else {
+    pStatusStr = CatSPrintClean(pStatusStr,
+      FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR);
+  }
+
   if (pStatusStr == NULL) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR, LAST_SHUTDOWN_STATUS_UNKNOWN_STR);
@@ -2899,6 +2904,78 @@ Finish:
 }
 
 /**
+  Convert dimm's SVN Downgrade Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's SVN Downgrade opt-in
+**/
+CHAR16*
+SVNDowngradeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case SVN_DOWNGRADE_DISABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_DISABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case SVN_DOWNGRADE_ENABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SVN_DOWNGRADE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
+/**
+  Convert dimm's Secure Erase Policy Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Secure Erase Policy opt-in
+**/
+CHAR16*
+SecureErasePolicyOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case SECURE_ERASE_NO_MASTER_PASSPHRASE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_NO_MASTER_PASSPHRASE), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case SECURE_ERASE_MASTER_PASSPHRASE_ENABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_MASTER_PASSPHRASE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
+/**
   Convert dimm's S3 Resume Opt-In to its respective string
 
   @param[in] HiiHandle handle to the HII database that contains i18n strings
@@ -2926,7 +3003,7 @@ S3ResumeOptInToString(
       FREE_POOL_SAFE(pTempStr);
       break;
     default:
-      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_INVALID), NULL);
+      pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
       pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
       FREE_POOL_SAFE(pTempStr);
       break;
@@ -2934,7 +3011,42 @@ S3ResumeOptInToString(
 
   return pOptIntString;
 }
+/**
+  Convert dimm's Fw Activate Opt-In to its respective string
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Fw Activate opt-in
+**/
+CHAR16*
+FwActivateOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+)
+{
+  CHAR16 *pOptIntString = NULL;
+  CHAR16 *pTempStr = NULL;
+  switch (OptInValue) {
+  case FW_ACTIVATE_DISABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_DISABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case FW_ACTIVATE_ENABLED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_ENABLED), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_UNKNOWN), NULL);
+    pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pOptIntString;
+}
 /**
   Convert ARS status value to its respective string
 
@@ -2994,7 +3106,7 @@ BootStatusBitmaskToStr(
 
   NVDIMM_ENTRY();
 
-  if (BootStatusBitmask == 0) {
+  if (DIMM_BOOT_STATUS_NORMAL == BootStatusBitmask) {
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_BOOT_STATUS_SUCCESS), NULL);
     pBootStatusStr = CatSPrintClean(pBootStatusStr, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
@@ -3092,7 +3204,7 @@ StringToDouble(
 
   // Delete trailing zeros
   if (StrStr(pString, pDecimalMarkStr) != NULL) {
-    pLastChar = pString + StrLen(pString) * sizeof(pString[0]) - 1;
+    pLastChar = pString + (StrLen(pString) * sizeof(*pString)) - 1;
     while (*pLastChar == L'0') {
       *pLastChar = L'\0';
       pLastChar--;
@@ -3433,6 +3545,7 @@ Finish:
   Convert last firmware update status to string.
   The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Last Firmware update status value to convert
 
   @retval output string or NULL if memory allocation failed
@@ -3471,7 +3584,82 @@ LastFwUpdateStatusToString(
 
   return pLastFwUpdateStatusString;
 }
+/**
+  Convert Quiesce required to string.
+  The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Quiesce required value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+QuiesceRequiredToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 QuiesceRequired
+)
+{
+  CHAR16 *pQuiesceRequiredString = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  switch (QuiesceRequired) {
+  case QUIESCE_NOT_REQUIRED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_QUIESCE_NOT_REQUIRED), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case QUIESCE_REQUIRED:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_QUIESCE_REQUIRED), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
+    pQuiesceRequiredString = CatSPrintClean(pQuiesceRequiredString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pQuiesceRequiredString;
+}
+/**
+  Convert StagedFwActivatable to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Staged Fw activatable value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+StagedFwActivatableToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 StagedFwActivatable
+)
+{
+  CHAR16 *pStagedFwActivatableString = NULL;
+  CHAR16 *pTempStr = NULL;
+
+  switch (StagedFwActivatable) {
+  case STAGED_FW_NOT_ACTIVATABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STAGED_FW_NOT_ACTIVATABLE), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  case STAGED_FW_ACTIVATABLE:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STAGED_FW_ACTIVATABLE), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  default:
+    pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
+    pStagedFwActivatableString = CatSPrintClean(pStagedFwActivatableString, FORMAT_STR, pTempStr);
+    FREE_POOL_SAFE(pTempStr);
+    break;
+  }
+
+  return pStagedFwActivatableString;
+}
 /**
   Determines if an array, whose size is known in bytes has all elements as zero
   @param[in] pArray    Pointer to the input array
@@ -3748,18 +3936,18 @@ PollLongOpStatus(
   EFI_STATUS ReturnCode = EFI_DEVICE_ERROR;
   UINT64 WaitIndex = 0;
   EFI_EVENT WaitList[2];
-  EFI_STATUS LongOpEfiStatus = EFI_SUCCESS;
+  EFI_STATUS LongOpEfiStatus = EFI_NOT_READY;
   UINT8 CmdOpcode = 0;
   UINT8 CmdSubOpcode = 0;
 
   ZeroMem(WaitList, sizeof(WaitList));
 
-  gBS->CreateEvent(EVT_TIMER, 0, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMER]);
+  gBS->CreateEvent(EVT_TIMER, TPL_NOTIFY, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMER]);
   gBS->SetTimer(WaitList[LONG_OP_POLL_EVENT_TIMER], TimerPeriodic, LONG_OP_POLL_TIMER_INTERVAL);
   EventCount++;
 
   if (Timeout > 0) {
-    gBS->CreateEvent(EVT_TIMER, 0, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMEOUT]);
+    gBS->CreateEvent(EVT_TIMER, TPL_NOTIFY, NULL, NULL, &WaitList[LONG_OP_POLL_EVENT_TIMEOUT]);
     gBS->SetTimer(WaitList[LONG_OP_POLL_EVENT_TIMEOUT], TimerRelative, Timeout);
     EventCount++;
   }
@@ -4109,7 +4297,6 @@ IsFwApiVersionSupportedByValues(
 
   return VerSupported;
 }
-
 
 /**
   Convert controller revision id to string
@@ -4518,6 +4705,141 @@ ConvertDimmInfoAttribToString(
   }
   return NULL;
 }
+
+/**
+  Match driver command status to EFI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+
+EFI_STATUS
+MatchCliReturnCode(
+  IN     NVM_STATUS Status
+)
+{
+  EFI_STATUS ReturnCode = EFI_ABORTED;
+  switch (Status) {
+  case NVM_SUCCESS:
+  case NVM_SUCCESS_IMAGE_EXAMINE_OK:
+  case NVM_SUCCESS_FW_RESET_REQUIRED:
+  case NVM_WARN_BLOCK_MODE_DISABLED:
+  case NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU:
+  case NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED:
+  case NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED:
+  case NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED:
+    ReturnCode = EFI_SUCCESS;
+    break;
+
+  case NVM_ERR_PASSPHRASE_TOO_LONG:
+  case NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED:
+  case NVM_ERR_PASSPHRASE_NOT_PROVIDED:
+  case NVM_ERR_PASSPHRASES_DO_NOT_MATCH:
+  case NVM_ERR_IMAGE_FILE_NOT_VALID:
+  case NVM_ERR_SENSOR_NOT_VALID:
+  case NVM_ERR_SENSOR_CONTROLLER_TEMP_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_MEDIA_TEMP_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE:
+  case NVM_ERR_UNSUPPORTED_BLOCK_SIZE:
+  case NVM_ERR_NONE_DIMM_FULFILLS_CRITERIA:
+  case NVM_ERR_INVALID_NAMESPACE_CAPACITY:
+  case NVM_ERR_NAMESPACE_TOO_SMALL_FOR_BTT:
+  case NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE:
+  case NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS:
+  case NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS:
+  case NVM_ERR_INVALID_PARAMETER:
+    ReturnCode = EFI_INVALID_PARAMETER;
+    break;
+
+  case NVM_ERR_NOT_ENOUGH_FREE_SPACE:
+  case NVM_ERR_NOT_ENOUGH_FREE_SPACE_BTT:
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    break;
+
+  case NVM_ERR_DIMM_NOT_FOUND:
+  case NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND:
+  case NVM_ERR_DIMM_EXCLUDED:
+  case NVM_ERR_NO_USABLE_DIMMS:
+  case NVM_ERR_SOCKET_ID_NOT_VALID:
+  case NVM_ERR_REGION_NOT_FOUND:
+  case NVM_ERR_NAMESPACE_DOES_NOT_EXIST:
+  case NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM:
+  case NVM_ERR_FILE_NOT_FOUND:
+    ReturnCode = EFI_NOT_FOUND;
+    break;
+
+  case NVM_ERR_ENABLE_SECURITY_NOT_ALLOWED:
+  case NVM_ERR_CREATE_GOAL_NOT_ALLOWED:
+  case NVM_ERR_INVALID_SECURITY_STATE:
+  case NVM_ERR_INVALID_PASSPHRASE:
+  case NVM_ERR_SPI_ACCESS_NOT_ENABLED:
+    ReturnCode = EFI_ACCESS_DENIED;
+    break;
+
+  case NVM_ERR_OPERATION_NOT_STARTED:
+  case NVM_ERR_FORCE_REQUIRED:
+  case NVM_ERR_OPERATION_FAILED:
+  case NVM_ERR_DIMM_ID_DUPLICATED:
+  case NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID:
+  case NVM_ERR_SOCKET_ID_DUPLICATED:
+  case NVM_ERR_UNABLE_TO_GET_SECURITY_STATE:
+  case NVM_ERR_INCONSISTENT_SECURITY_STATE:
+  case NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED:
+  case NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED:
+  case NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_CONF_APPLYING_FAILED:
+  case NVM_ERR_REGION_CONF_UNSUPPORTED_CONFIG:
+  case NVM_ERR_DUMP_FILE_OPERATION_FAILED:
+  case NVM_ERR_LOAD_VERSION:
+  case NVM_ERR_LOAD_INVALID_DATA_IN_FILE:
+  case NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE:
+  case NVM_ERR_LOAD_DIMM_COUNT_MISMATCH:
+  case NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN:
+  case NVM_ERR_INVALID_SECURITY_OPERATION:
+  case NVM_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED:
+  case NVM_ERR_DUMP_NO_CONFIGURED_DIMMS:
+  case NVM_ERR_REGION_NOT_HEALTHY:
+  case NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS:
+  case NVM_ERR_FAILED_TO_UPDATE_BTT:
+  case NVM_ERR_SMBIOS_DIMM_ENTRY_NOT_FOUND_IN_NFIT:
+  case NVM_ERR_IMAGE_EXAMINE_INVALID:
+  case NVM_ERR_FIRMWARE_API_NOT_VALID:
+  case NVM_ERR_FIRMWARE_VERSION_NOT_VALID:
+  case NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED:
+  case NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS:
+  case NVM_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY:
+  case NVM_ERR_ARS_IN_PROGRESS:
+  case NVM_ERR_FWUPDATE_IN_PROGRESS:
+  case NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS:
+  case NVM_ERR_UNKNOWN_LONG_OP_IN_PROGRESS:
+  case NVM_ERR_APPDIRECT_IN_SYSTEM:
+  case NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU:
+  case NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS:
+  case NVM_ERR_CREATE_NAMESPACE_NOT_ALLOWED:
+    ReturnCode = EFI_ABORTED;
+    break;
+
+  case NVM_ERR_OPERATION_NOT_SUPPORTED:
+  case NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED:
+    ReturnCode = EFI_UNSUPPORTED;
+    break;
+
+  case NVM_ERR_FIRMWARE_ALREADY_LOADED:
+    ReturnCode = EFI_ALREADY_STARTED;
+    break;
+
+  default:
+    ReturnCode = EFI_ABORTED;
+    break;
+  }
+  return ReturnCode;
+}
+
+
 #ifndef OS_BUILD
 
 #define EFI_ACPI_16550_UART_HID EISA_PNP_ID(0x0501)
@@ -4526,8 +4848,8 @@ extern EFI_GUID gEfiSerialIoProtocolGuid;
 /**
   Check whether the device path node is ISA Serial Node.
   @param[in] Acpi           Device path node to be checked
-  @retval TRUE          It's ISA Serial Node.
-  @retval FALSE         It's NOT ISA Serial Node.
+  @retval TRUE          It is ISA Serial Node.
+  @retval FALSE         It is NOT ISA Serial Node.
 **/
 BOOLEAN
 IsISASerialNode(

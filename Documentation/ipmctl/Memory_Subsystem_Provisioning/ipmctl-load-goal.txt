@@ -8,27 +8,28 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-load-goal - Load a memory allocation goal from a file onto DCPMMs
+ipmctl-load-goal - Creates a memory allocation goal request from a file
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
 
 DESCRIPTION
 -----------
-Load a memory allocation goal from a file onto one or more DCPMMs.
+Creates a memory allocation goal request from a file onto one or more PMem modules.
 
-NOTE: Deleting the PCD can be used as a way to prepare individual DCPMMs for provisioning.
+NOTE: Deleting the PCD can be used as a way to prepare individual PMem modules for provisioning.
 See the delete -pcd command.
 
-include::../ipmctl-change-goal-config-warning.txt[]
+include::../ipmctl-command-data-loss-warning.txt[]
+include::../ipmctl-change-goal-config-note.txt[]
 
 OPTIONS
 -------
 -f::
 -force::
-    Reconfiguring DCPMMs is a destructive operation which requires
+    Reconfiguring PMem modules is a destructive operation which requires
     confirmation from the user. This option suppresses the confirmation.
 	The force flag will also suppress the security enabled warning as well as all other
 	warning prompts.
@@ -56,7 +57,7 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml". The "nvmxml" format implies the "-force" flag.
 endif::os_build[]
 
 -u (B|MB|MiB|GB|GiB|TB| TiB)::
@@ -68,34 +69,34 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Loads the memory allocation goal onto specific DCPMMs by supplying one or more
-  comma separated DCPMM identifiers. This list must include all unconfigured
-  DCPMMs on the affected socket(s). The default is to load the memory
-  allocation goal onto all manageable DCPMMs.
+  Loads the memory allocation goal onto specific PMem modules by supplying one or more
+  comma separated PMem module identifiers. This list must include all unconfigured
+  PMem modules on the affected sockets. The default is to load the memory
+  allocation goal onto all manageable PMem modules.
 
 -socket [SocketIds]::
-  Loads the memory allocation goal onto all manageable DCPMMs on specific
+  Loads the memory allocation goal onto all manageable PMem modules on specific
   sockets by supplying the socket target and one or more comma-separated socket
   identifiers. The default is to load the memory allocation goal onto all
-  manageable DCPMMs on all sockets.
+  manageable PMem modules on all sockets.
 
 EXAMPLES
 --------
-Loads the configuration settings stored in "config.txt" onto all the DCPMMs in
+Loads the configuration settings stored in "config.txt" onto all the PMem modules in
 the system as a memory allocation goal to be applied by the BIOS on the next
 reboot.
-[verse]
+[listing]
 ipmctl load -source config.txt -goal
 
 Loads the configuration settings stored in "config.txt" onto a specified set of
-DCPMMs as a memory allocation goal to be applied by the BIOS on the next reboot.
-[verse]
+PMem modules as a memory allocation goal to be applied by the BIOS on the next reboot.
+[listing]
 ipmctl load -source config.txt -goal -dimm 1,2,3
 
 Loads the configuration settings stored in "config.txt" onto all manageable
-DCPMMs on sockets 1 and 2 as a memory allocation goal to be applied by the BIOS
+PMem modules on sockets 1 and 2 as a memory allocation goal to be applied by the BIOS
 on the next reboot.
-[verse]
+[listing]
 ipmctl load -source config.txt -goal -socket 1,2
 
 LIMITATIONS
@@ -104,45 +105,46 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software and
+- The specified PMem modules must be manageable by the host software and
   must all have the same SKU.
 
-- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>
+- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
 
 - Existing memory allocation goals that have not been applied and any namespaces
-  associated with the requested DCPMM(s) must be deleted before running
+  associated with the requested PMem modules must be deleted before running
   this command.
 
-- Goal requests may not be applied by UEFI FW if the DCPMM is in security enabled, locked state.
+- Goal requests may not be applied by platform firmware (BIOS) if the PMem module is in
+security enabled, locked state.
 
 NOTE: It is recommended to disable security prior to reboot if requesting a new goal.
 
-NOTE: A goal request may be initiated even if a target DCPMM is in security state enabled, but care
-  must be taken to ensure the DCPMM is in either unlocked or disabled security state prior to the
-  UEFI FW provisioning flow following a reboot. In addition, a warning will be presented to the
-  user: 'WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!'
+NOTE: A goal request may be initiated even if a target PMem module is in security state enabled, but care
+  must be taken to ensure the PMem module is in either unlocked or disabled security state prior to the
+  platform firmware (BIOS) provisioning flow following a reboot. In addition, a warning will be presented to the
+  user: 'WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!'
 
 - Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to
   other storage before executing this command.
-  Targets may be limited to individual DCPMMs or sockets, but all DCPMMs
+  Targets may be limited to individual PMem modules or sockets, but all PMem modules
   on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
   Refer to *_Show System Capabilities_* for a list of BIOS
   supported modes.
 
 - Some requests are dependent on BIOS and/or platform configuration. For details, refer
-  to the _Intel(R) Optane(TM) DC Persistent Memory Software Memory Allocation Rules_,
+  to the _Intel(R) Optane(TM) Persistent Memory Software Memory Allocation Rules_,
   document number 564194. For example:
- - Provisioning DCPMMs for Memory Mode while BIOS is configured for 1LM only
+ - Provisioning PMem modules for Memory Mode while BIOS is configured for 1LM only
    will result in unused capacity.
- - Provisioning DCPMMs for Memory Mode while not all iMCs have at least one DCPMM
+ - Provisioning PMem modules for Memory Mode while not all iMCs have at least one PMem module
    will result in unused capacity.
 
 RETURN DATA
 -----------
 If successful, the CLI will display the memory allocation goal stored on each
-DCPMM as documented in the command Section <<Show Memory Allocation Goal>>.
+PMem module as documented in the command Section <<Show Memory Allocation Goal>>.
 If a failure occurs, an error code and message will be displayed. If a failure
-occurs when configuring multiple DCPMMs, the process will exit and remove the
-memory allocation goal from any DCPMMs that succeeded prior to the failure.
+occurs when configuring multiple PMem modules, the process will exit and remove the
+memory allocation goal from any PMem modules that succeeded prior to the failure.

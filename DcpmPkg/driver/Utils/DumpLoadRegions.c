@@ -36,9 +36,16 @@ WriteDumpFileHeader(
     goto Finish;
   }
 
+#ifdef _MSC_VER
+  // file is open in binary mode so have to include carriage return in Windows version
+  AsciiSPrint(pHeaderBuffer, MAX_LINE_BYTE_LENGTH, "#SocketID,DimmHandle,Capacity,MemorySize,"
+                                  "AppDirect1Size,AppDirect1Format,AppDirect1Mirrored,AppDirect1Index,"
+                                  "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index\r\n");
+#else
   AsciiSPrint(pHeaderBuffer, MAX_LINE_BYTE_LENGTH, "#SocketID,DimmHandle,Capacity,MemorySize,"
                                   "AppDirect1Size,AppDirect1Format,AppDirect1Mirrored,AppDirect1Index,"
                                   "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index\n");
+#endif
 
   ReturnCode = WriteAsciiLine(FileHandle, pHeaderBuffer);
   if (EFI_ERROR(ReturnCode)) {
@@ -109,7 +116,12 @@ DumpConfigToFile(
     }
 
     /** Prepare a line to save to file **/
+#ifdef _MSC_VER
+// file is open in binary mode so have to include carriage return in Windows version
+    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d\r\n",
+#else
     AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d\n",
+#endif
         pDimmConfig->Socket,
         pDimmConfig->DeviceHandle,
         BYTES_TO_GIB(pDimmConfig->Capacity),
@@ -678,7 +690,7 @@ ValidateAndPrepareLoadConfig(
       *pPersistentMemType = PM_TYPE_AD_NI;
     }
   } else {
-    /** No DIMMs specified on that socket, so it's also successful path. **/
+    /** No DIMMs specified on that socket, so it is also successful path. **/
   }
 
   /** Label Version sanity check. Use default version if there are invalid inputs **/

@@ -36,7 +36,7 @@ struct Command DumpSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                                        //!< properties
-  L"Dump the PBR session buffer to a file",                                       //!< help
+  L"Dump the current recording (PBR) session buffer to a file.",                   //!< help
   DumpSession,
   TRUE
 };
@@ -77,6 +77,9 @@ DumpSession(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
+
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
 
   pDumpFilePath = AllocateZeroPool(OPTION_VALUE_LEN * sizeof(*pDumpFilePath));
   if (pDumpFilePath == NULL) {

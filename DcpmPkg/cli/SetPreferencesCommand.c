@@ -49,7 +49,7 @@ struct Command SetPreferencesCommand =
     {DBG_LOG_LEVEL, L"", HELP_DBG_LOG_LEVEL, FALSE, ValueRequired},
 #endif
   },
-  L"Set user preferences",                  //!< help
+  L"Set user preferences.",                  //!< help
   SetPreferences,
   TRUE
 };

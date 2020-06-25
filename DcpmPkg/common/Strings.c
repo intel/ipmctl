@@ -103,7 +103,7 @@ CHAR8** string_split(CHAR8* str, CHAR8 splitchar, UINT64 maxelements, UINT64* el
   UINT32 x = 0;
   *elements = 1;
 
-  //count the number of substrings, up to maxelements (unless it's <= 0)
+  //count the number of substrings, up to maxelements (unless it is <= 0)
   while (*str_head)
   {
     if (*str_head == splitchar)
@@ -470,7 +470,7 @@ CHAR8* u32_to_a(
   {
     current_val = (val % base);
     len++;
-    if (current_val >= 0 && current_val <= 9)
+    if (current_val <= 9)
     {
       *int_str_ptr = (CHAR8)(current_val + (UINT32)'0');
     }

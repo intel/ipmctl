@@ -5,7 +5,7 @@
 
 /**
  * @file Types.h
- * @brief Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs. These types don't compile with VFR compiler and are kept separate.
+ * @brief Types for EFI_DCPMM_CONFIG2_PROTOCOL to configure and manage PMem modules. These types don't compile with VFR compiler and are kept separate.
  */
 
 #ifndef _TYPES_H_
@@ -22,10 +22,10 @@
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-#define PMEM_MODULE_NAME L"Intel(R) DCPMM "  //short version for drivers list
-#define PMEM_MODULE_NAME_SEARCH L"Intel(R),DCPMM" //comma separated search string
+#define PMEM_MODULE_NAME L"Intel(R) PMem module "  //short version for drivers list
+#define PMEM_MODULE_NAME_SEARCH L"Intel(R),PMemModule" //comma separated search string
 
-#define PMEM_DIMM_NAME  L"Intel Persistent Memory DIMM %d Controller"
+#define PMEM_DIMM_NAME  L"Intel Persistent Memory Module %d Controller"
 
 /*This should match the error_type definition in nvm_management.h*/
 #define ERROR_INJ_POISON                0X01
@@ -35,9 +35,6 @@
 #define ERROR_INJ_FATAL_MEDIA_ERR       0X05
 #define ERROR_INJ_DIRTY_SHUTDOWN        0X06
 #define ERROR_INJ_TYPE_INVALID          0x08
-
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR    2
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    2
 
 /**
   The device path type for our driver and HII driver.
@@ -63,6 +60,9 @@ typedef struct {
 #define DIMM_BSR_MEDIA_TRAINED 0x1
 #define DIMM_BSR_MEDIA_ERROR 0x2
 #define DIMM_BSR_MEDIA_DISABLED 0x1
+#define DIMM_BSR_PCR_UNLOCKED 0x0
+#define DIMM_BSR_PCR_LOCKED 0x1
+#define DIMM_BSR_DDRT_IO_INIT_NOT_STARTED 0x0
 
 // FIS >= 1.5
 #define DIMM_BSR_AIT_DRAM_NOTTRAINED 0x0
@@ -70,7 +70,7 @@ typedef struct {
 #define DIMM_BSR_AIT_DRAM_ERROR 0x2
 #define DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY 0x3
 
-#define DIMM_BSR_OIE_ENABLED 0x1
+#define DIMM_BSR_SVNDE_ENABLED 0x1
 #define DIMM_BSR_REBOOT_REQUIRED 0x1
 #define DIMM_BSR_MEDIA_INTERFACE_ENGINE_STALLED 0x01
 
@@ -80,47 +80,52 @@ typedef struct {
 typedef union {
   UINT64 AsUint64;
   struct {
-    UINT64 Major : 8;       //7:0
-    UINT64 Minor : 8;       //15:8
-    UINT64 MR : 2;          //17:16
-    UINT64 DT : 1;          //18
-    UINT64 PCR : 1;         //19
-    UINT64 MBR : 1;         //20
-    UINT64 WTS : 1;         //21
-    UINT64 FRCF : 1;        //22
-    UINT64 CR : 1;          //23
-    UINT64 MD: 1;           //24
-    UINT64 OIE: 1;          //25
-    UINT64 OIWE: 1;         //26
-    UINT64 DR: 2;           //28:27
-    UINT64 RR: 1;           //29
-    UINT64 Rsvd: 34;        //63:30
-  } Separated_FIS_1_13;
+    UINT64 Major : 8;         //7:0
+    UINT64 Minor : 8;         //15:8
+    UINT64 MR : 2;            //17:16
+    UINT64 DT : 1;            //18
+    UINT64 PCR : 1;           //19
+    UINT64 MBR : 1;           //20
+    UINT64 WTS : 1;           //21
+    UINT64 FRCF : 1;          //22
+    UINT64 CR : 1;            //23
+    UINT64 MD : 1;            //24
+    UINT64 SVNDE : 1;         //25
+    UINT64 SVNCOIS : 1;       //26
+    UINT64 DR : 2;            //28:27
+    UINT64 RR : 1;            //29
+    UINT64 LFOPB : 1;         //30
+    UINT64 SVNWC : 1;         //31
+    UINT64 Rsvd : 2;          //33:32
+    UINT64 DTS : 2;           //35:34
+    UINT64 Rsvd1 : 28;         //63:36
+  } Separated_FIS_1_15; // PMem module Gen 1 FIS
   struct {
-    UINT64 Major : 8;       //7:0
-    UINT64 Minor : 8;       //15:8
-    UINT64 MR : 2;          //17:16
-    UINT64 DT : 1;          //18
-    UINT64 PCR : 1;         //19
-    UINT64 MBR : 1;         //20
-    UINT64 WTS : 1;         //21
-    UINT64 FRCF : 1;        //22
-    UINT64 CR : 1;          //23
-    UINT64 MD : 1;           //24
-    UINT64 OIE : 1;          //25
-    UINT64 OIWE : 1;         //26
-    UINT64 DR : 2;           //28:27
-    UINT64 RR : 1;           //29
-    UINT64 LFOPB : 1;        //30
-    UINT64 SVNWC : 1;        //31
-    UINT64 Rsvd : 2;         //33:32
-    UINT64 DTS : 2;          //35:34
-    UINT64 Rsvd1 : 28;        //63:36
+    UINT64 Major : 8;         //7:0
+    UINT64 Minor : 8;         //15:8
+    UINT64 MR : 2;            //17:16
+    UINT64 DT : 1;            //18
+    UINT64 PCR : 1;           //19
+    UINT64 MBR : 1;           //20
+    UINT64 WTS : 1;           //21
+    UINT64 FRCF : 1;          //22
+    UINT64 CR : 1;            //23
+    UINT64 MD : 1;            //24
+    UINT64 SVNDE : 1;         //25
+    UINT64 SVNCOIS : 1;       //26
+    UINT64 DR : 2;            //28:27
+    UINT64 RR : 1;            //29
+    UINT64 LFOPB : 1;         //30
+    UINT64 SVNWC : 1;         //31
+    UINT64 Rsvd : 2;          //33:32
+    UINT64 DTS : 2;           //35:34
+    UINT64 FAC : 1;           //36
+    UINT64 Rsvd1 : 27;        //63:37
   } Separated_Current_FIS;
 } DIMM_BSR;
 
 /**
-  Contains SMART and Health attributes of a DIMM
+  Contains SMART and Health attributes of a PMem module
 **/
 typedef struct _SMART_AND_HEALTH_INFO {
   BOOLEAN PercentageRemainingValid;     ///< Indicates if PercentageRemaining is valid
@@ -135,9 +140,9 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT32 LatchedDirtyShutdownCount;     ///< Latched Dirty Shutdowns count
   UINT8 LatchedLastShutdownStatus;      ///< Latched Last Shutdown Status. See FIS field LSS for additional details
   UINT8 UnlatchedLastShutdownStatus;
-  UINT32 PowerOnTime;                   ///< Lifetime DIMM has been powered on in seconds. See FIS field POT for additional details
-  UINT32 UpTime;                        ///< DIMM uptime in seconds since last AC cycle. See FIS field UT for additional details
-  UINT64 PowerCycles;                   ///< Number of DIMM power cycles. See FIS field PC for additional details
+  UINT32 PowerOnTime;                   ///< Lifetime PMem module has been powered on in seconds. See FIS field POT for additional details
+  UINT32 UpTime;                        ///< PMem module uptime in seconds since last AC cycle. See FIS field UT for additional details
+  UINT64 PowerCycles;                   ///< Number of PMem module power cycles. See FIS field PC for additional details
   UINT8 HealthStatus;                  ///< Overall health summary as specified by @ref HEALTH_STATUS. See FIS field HS for additional details.
   UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
   UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
@@ -163,7 +168,7 @@ typedef struct _SMART_AND_HEALTH_INFO {
 **/
 typedef struct {
   UINT8 Type;
-  UINT8 State;      //!< DEPRECATED; current state of a given dimm sensor
+  UINT8 State;      //!< DEPRECATED; current state of a given PMem module sensor
   UINT8 Enabled;
   INT64 Value;
   UINT8 SettableThresholds;

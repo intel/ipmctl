@@ -32,8 +32,10 @@ struct Command SetDimmCommand =
     {L"", PROTOCOL_OPTION_DDRT, L"", L"",HELP_DDRT_DETAILS_TEXT, FALSE, ValueEmpty},
     {L"", PROTOCOL_OPTION_SMBUS, L"", L"",HELP_SMBUS_DETAILS_TEXT, FALSE, ValueEmpty},
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"",HELP_FORCE_DETAILS_TEXT, FALSE, ValueEmpty},
+#ifndef OS_BUILD
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, L"Source of the Passphrase file",FALSE, ValueRequired},
     {L"", MASTER_OPTION, L"", L"",L"Set Master Passphrase", FALSE, ValueEmpty},
+#endif
     {L"", DEFAULT_OPTION, L"", L"",L"Set Default Settings", FALSE, ValueEmpty}
 #ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, HELP_OPTIONS_DETAILS_TEXT, FALSE, ValueRequired }
@@ -49,14 +51,20 @@ struct Command SetDimmCommand =
     {PERCENTAGE_REAMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
+#ifndef OS_BUILD
     {LOCKSTATE_PROPERTY, L"", LOCKSTATE_VALUE_DISABLED L"|" LOCKSTATE_VALUE_UNLOCKED L"|" LOCKSTATE_VALUE_FROZEN, FALSE, ValueRequired},
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {CONFIRMPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
+#endif
     {AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, FALSE, ValueRequired},
     {AVG_PWR_REPORTING_TIME_CONSTANT, L"", HELP_TEXT_AVG_PWR_REPORTING_TIME_CONSTANT_PROPERTY, FALSE, ValueRequired}
     }, //!< properties
-    L"Set properties of one/more DIMMs such as device security and modify device.",                          //!< help
+#ifndef OS_BUILD
+    L"Set properties of one or more " PMEM_MODULES_STR L", such as device security and modify device.",                          //!< help
+#else
+    L"Set properties of one or more " PMEM_MODULES_STR L", such as modify device.", //!< help
+#endif
   SetDimm,
   TRUE
 };
@@ -181,7 +189,7 @@ SetDimm(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -208,11 +216,6 @@ SetDimm(
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-      goto Finish;
-    }
-    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
       goto Finish;
     }
   }
@@ -341,7 +344,7 @@ SetDimm(
             ErrorInjectionTypeSet = 1;
         }
     }
-    /*Clear error injection requires exacly one  error injection type being set*/
+    /*Clear error injection requires exacly one error injection type being set*/
     if (!EFI_ERROR(ContainsProperty(pCmd, CLEAR_ERROR_INJ_PROPERTY))) {
         if ((ActionSpecified && !ErrorInjectionTypeSet) || !ActionSpecified) {
           ReturnCode = EFI_INVALID_PARAMETER;
@@ -372,20 +375,10 @@ SetDimm(
   GetPropertyValue(pCmd, CONFIRMPASSPHRASE_PROPERTY, &pConfirmPassphraseStatic);
 
   if (MasterOptionSpecified) {
-    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_SECURITY, pDimms);
-    if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_ABORTED;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
       goto Finish;
-    }
-
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (pDimms[Index].MasterPassphraseEnabled != TRUE) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
-        goto Finish;
-      }
     }
   }
 
@@ -647,13 +640,13 @@ SetDimm(
           PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
           goto Finish;
         }
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on DIMM (" FORMAT_STR L").", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Modifying device settings on " PMEM_MODULE_STR L" (" FORMAT_STR L").", DimmStr);
         ReturnCode = PromptYesNo(&Confirmation);
         if (!EFI_ERROR(ReturnCode) && Confirmation) {
           ReturnCode = pNvmDimmConfigProtocol->SetOptionalConfigurationDataPolicy(pNvmDimmConfigProtocol,
             &pDimmIds[Index], 1, pAvgPowerReportingTimeConstantMult, pAvgPowerReportingTimeConstant, pCommandStatus);
         } else {
-          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on DIMM (" FORMAT_STR L")\n", DimmStr);
+          PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipping modify device settings on " PMEM_MODULE_STR L" (" FORMAT_STR L")\n", DimmStr);
           continue;
         }
       }
@@ -663,7 +656,7 @@ SetDimm(
       goto FinishCommandStatusSet;
     }
   } else {
-    // It's ok if average power reporting time constant multiplier property doesn't exist, it is an optional param
+    // It is ok if average power reporting time constant multiplier property doesn't exist, it is an optional param
     ReturnCode = EFI_SUCCESS;
   }
 

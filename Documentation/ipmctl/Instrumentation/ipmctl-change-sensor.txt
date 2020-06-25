@@ -8,17 +8,17 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-change-sensor - Changes the threshold or enabled state for DCPMMs sensors
+ipmctl-change-sensor - Changes the threshold or enabled state for PMem modules sensors
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl set [OPTIONS] -sensor (SENSORS) [TARGETS]
 AlarmThreshold=(temperature) AlarmEnabled=(0|1)
 
 DESCRIPTION
 -----------
-Changes the alarm threshold or enabled state for one or more DCPMMs sensors.
+Changes the alarm threshold or enabled state for one or more PMem modules sensors.
 Use the command Show Sensor to view the current settings.
 
 OPTIONS
@@ -26,7 +26,7 @@ OPTIONS
 -f::
 -force::
   Changing the sensor settings is a potentially destructive operation which
-  requires confirmation from the user for each DCPMM. This option suppresses the
+  requires confirmation from the user for each PMem module. This option suppresses the
   confirmation.
 
 -h::
@@ -50,32 +50,45 @@ endif::os_build[]
 SENSORS
 -------
 MediaTemperature::
-  The current DCPMM media temperature in Celsius. +
-  Valid values: [underline]#0-2047#
+  The PMem module media temperature in Celsius.
 
 ControllerTemperature::
-  The current DCPMM controller temperature in Celsius. +
-  Valid values [underline]#0-2047#
+  The PMem module controller temperature in Celsius.
 
 PercentageRemaining::
-  Remaining DCPMM’s life as a percentage value of factory expected
-  life span. +
-  Valid values: [underline]#1-99#
+  Remaining PMem module’s life as a percentage value of factory expected
+  life span.
 
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Restricts output to the sensors on specific DCPMMs by optionally supplying the DIMM
-  target and one or more comma-separated DCPMM identifiers. The default is to
-  display sensors for all manageable DCPMMs.
+  Update specified sensors on specific PMem modules by optionally supplying the PMem module
+  target and one or more comma-separated PMem module identifiers. The default is to
+  update the specified sensors for all manageable PMem modules.
 
 PROPERTIES
 ----------
 AlarmThreshold::
   The threshold value at which an alarm for the respective sensor will be triggered.
-  The upper (for temperatures) or lower (for spare capacity) alarm
-  threshold of the sensor. Temperatures may be specified in degrees
-  Celsius to a precision of 1/16 a degree.
+  The upper (for temperatures) or lower (for percentage remaining) alarm
+  threshold of the sensor. Temperatures may be specified to a precision of 1 degree Celsius.
++
+.Allowed AlarmThreshold
+|===
+|Sensor |Allowed AlarmThreshold values |Units
+
+|MediaTemperature
+|0-2047
+|Celsius
+
+|ControllerTemperature
+|0-2047
+|Celsius
+
+|PercentageRemaining
+|1-99
+|%
+|===
 
 AlarmEnabled::
   Enable or disable the alarm threshold, where applicable.
@@ -85,11 +98,11 @@ AlarmEnabled::
 
 EXAMPLES
 --------
-Changes the media temperature threshold to 51 on the specified DCPMM and enable
+Changes the media temperature alarm threshold to 51C on the specified PMem module and enables
 the alarm.
-[verse]
-ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51
-AlarmEnabled=1
+
+[listing]
+ipmctl set -sensor MediaTemperature –dimm 0x0001 AlarmThreshold=51 AlarmEnabled=1
 
 LIMITATIONS
 -----------
@@ -97,19 +110,19 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
-For each DCPMM, the CLI will indicate the status of the operation. If a failure occurs
-when modifying multiple DCPMMs, the process will exit and not continue modifying the
-remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the operation. If a failure occurs
+when modifying multiple PMem modules, the process will exit and not continue modifying the
+remaining PMem modules.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Modify (Sensor) settings on DIMM (DimmID): Success
 
-[verse]
+[listing]
 Modify (Sensor) settings on DIMM (DimmID): Error (Code) -
 (Description)

@@ -1,24 +1,18 @@
-// Copyright (c) 2018, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
 ipmctl-dump-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-session - Dumps content captured during
-a recording session.  Captured content includes ACPI,
-SMBIOS tables, and FIS requests and responses.
-The resulting session file that is generated can be
-used to playback commands recorded on a real platform
-in a simulated environment, making it possible to debug
-issues offline.
+ipmctl-dump-session - Dumps content captured during a recording session.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl dump [OPTIONS] -destination (path) -session
 
 DESCRIPTION
@@ -58,7 +52,7 @@ EXAMPLES
 --------
 Dump the contents associated with the current active recording session to
 /tmp/session.pbr.
-[verse]
+[listing]
 ipmctl dump -destination /tmp/session.pbr -session
 
 LIMITATIONS
@@ -68,11 +62,10 @@ To successfully execute this command, there must be an active recording session.
 RETURN DATA
 -----------
 The resulting file includes, NFIT, PCAT, PMTT and SMBIOS tables that are used by IPMCTL
-to determine the DCPMM topology.  DCPMM data that is transferred to/from DCPMM(s)
+to determine the PMem module topology.  PMem module data that is transferred to/from PMem modules
 over the mailbox interface.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Successfully dumped 1060619 bytes to file.
-

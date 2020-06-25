@@ -45,7 +45,7 @@ int win_scm2_passthrough(struct fw_cmd *p_cmd, unsigned int *p_dsm_status)
 
 /*
  * For non-large_payload commands, the Windows driver always expects an output payload of
- * size 128, even if the FIS doesn't indicate there is one, or even if it's smaller than
+ * size 128, even if the FIS doesn't indicate there is one, or even if it is smaller than
  * 128 bytes. It should never be greater than 128 bytes.
  */
 #define PAYLOAD_SIZE 128

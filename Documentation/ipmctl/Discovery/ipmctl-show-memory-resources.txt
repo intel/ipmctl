@@ -1,0 +1,185 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-memory-resources(1)
+===============================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-memory-resources - Shows PMem module and DDR memory allocation
+
+SYNOPSIS
+--------
+[listing]
+ipmctl show [OPTIONS] -memoryresources
+
+DESCRIPTION
+-----------
+Shows PMem module and DDR memory allocation information for this platform.
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+EXAMPLES
+--------
+Shows the PMem module and DDR memory allocation.
+
+[listing]
+ipmctl show -memoryresources
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+- The caller must have the appropriate privileges.
+
+- The specified PMem modules must be manageable by the host software.
+
+RETURN DATA
+-----------
+Returns a table containing the attributes listed below.
+
+NOTE: Capacities from unmanageable PMem modules are not included in the following
+aggregated totals.
+
+Volatile DDR Capacity::
+  Total DDR capacity that is used as volatile memory.
+
+Volatile PMem module Capacity::
+  Total PMem module capacity that is used as volatile memory.
+
+Total Volatile Capacity::
+  Total DDR and PMem module capacity that is used as volatile memory.
+
+AppDirect PMem module Capacity::
+  Total PMem module capacity used as persistent memory.
+
+Total AppDirect Capacity::
+  Total DDR and PMem module capacity used as persistent memory.
+
+Cache DDR Capacity::
+  Total DDR capacity used as a cache for PMem modules.
+
+Total Cache Capacity::
+  Total DDR capacity used as a cache for PMem modules.
+
+Inaccessible DDR Capacity::
+  Total DDR capacity that is inaccessible.
+
+Inaccessible PMem module Capacity::
+  Total PMem module capacity that is inaccessible due to any of:
+    - Platform configuration prevents accessing this capacity. For example, MemoryCapacity is
+      configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
+    - Capacity is inaccessible because it is not mapped into the System Physical
+      Address space (SPA). This is usually due to platform firmware memory alignment requirements.
+    - Persistent capacity that is reserved. This capacity is the persistent memory partition capacity
+      (rounded down for alignment) less any App Direct capacity. Reserved capacity typically results from
+      a Memory Allocation Goal request that specified the Reserved property. This
+      capacity is not mapped to System Physical Address space (SPA).
+    - Capacity that is unusable because it has not been configured.
+    - PMem module configured capacity but SKU prevents usage. For example, AppDirectCapacity but
+      PMem module SKU is MemoryMode only.
+
+Total Inaccessible Capacity::
+  Total capacity of DDR and PMem module that is inaccessible.
+
+Physical DDR Capacity::
+  Total physical DDR capacity populated on the platform.
+
+Physical PMem module Capacity::
+  Total physical PMem module capacity populated on the plaform.
+
+Total Physical Capacity::
+  Total physical capacity populated on the platform.
+
+DETAILS
+-------
+PMem modules are partitioned into Memory and Persistent partitions. Memory partitions are aligned
+on a 1 GiB boundary by ipmctl with the Persistent partition consuming the remaining capacity.
+Any capacity that falls outside the Memory and Persistent partitions
+is InaccessibleCapacity and is not useable. If the PMem module is configured for 100% Memory Mode,
+then the Memory partition consumes all of the capacity and the Persistent partition has none.
+
+The mode determines how the DDR capacities are allocated. In 1LM and AppDirect, all DDR capacity
+is used as additional volatile memory. In MemoryMode, all DDR capacity that the CPU will support
+is used as a cache for the PMem module.
+
+Platform firmware alignment restrictions may result in some capacity from the
+Memory and Persistent partitions not mapped to System Physical Address space (SPA).
+This memory is considered InaccessibleCapacity and is not usable.
+
+The definitions and calculations that follow intend to describe how each of the values
+are determined.
+
+*Definitions:*
+
+Intel PMem module Current Config::
+  See the _Intel(R) Optane(TM) Persistent Memory Software-Firmware Interface Specification_
+  for details.
+
+PMem module Partition Info::
+  PMem module partition information provided by PMem module firmware. See the _Intel(R) Optane(TM)
+  Persistent Memory Module Firmware Interface Specification_ for details.
+
+PMem module Physical Capacity (PC)::
+  Raw capacity (total usable) reported by PMem module Partition Info
+
+PMem module Memory Partition Capacity (MPC)::
+  Volatile capacity reported by PMem module Partition Info
+
+PMem module Persistent Partition Capacity (PPC)::
+  Persistent capacity reported by PMem module Partition Info
+
+PMem module Volatile Memory Capacity (VMC)::
+  Usable voliatile memory capacity as reported by platform FW
+  via the _Intel PMem module Current Config->Volatile Memory Size Mapped into SPA_ field
+
+PMem module Persistent Memory Capacity (PMC) ::
+  Usable persistent memory capacity as reported by platform FW via the
+  _Intel PMem module Current Config->Persistent Memory Size Mapped into SPA_ field
+
+DDR Total Capacity (DDRTC)::
+  Total amount of memory available for use on the populated DDRs
+
+*Calculations:*
+
+[listing]
+if (CurrentMode == 1LM) then
+  DDRCacheCapacity = 0
+  DDRVolatileCapacity = DDRTC
+else if (CurrentMode == 2LM) then
+  DDRCacheCapacity = DDRTC
+  DDRVolatileCapacity = 0
+
+[listing]
+TotalVolatileCapacity = VMC + DDRVolatileCapacity
+
+[listing]
+InaccessibleCapacity = PC - PMC
+ if (CurrentMode != 1LM) then
+  InaccessibleCapacity -= VMC (rounded down for alignment)

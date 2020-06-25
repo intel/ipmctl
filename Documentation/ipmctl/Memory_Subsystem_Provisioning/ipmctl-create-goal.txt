@@ -8,17 +8,17 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-create-goal - Creates a memory allocation goal on one or more DCPMM
+ipmctl-create-goal - Creates a memory allocation goal on one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl create [OPTIONS] -goal [TARGETS] [PROPERTIES]
 
 DESCRIPTION
 -----------
 Creates a memory allocation goal on one or more for the BIOS to read on the next
-reboot in order to map the DCPMM capacity into the system address space.
+reboot in order to map the PMem module capacity into the system address space.
 Persistent memory can then be utilized by creating a namespace.
 
 NOTE: The capacity values presented by this command are a target goal or
@@ -26,17 +26,18 @@ request to platform firmware. The actual capacity values are subject to
 change due to rounding and alignment requirements. If the goal request is
 invalid or not possible it may be rejected by platform firmware.
 
-NOTE: Deleting the PCD can be used as a way to prepare individual DCPMMs for provisioning.
+NOTE: Deleting the PCD can be used as a way to prepare individual PMem modules for provisioning.
 See the delete -pcd command.
 
-include::../ipmctl-change-goal-config-warning.txt[]
+include::../ipmctl-command-data-loss-warning.txt[]
+include::../ipmctl-change-goal-config-note.txt[]
 
 OPTIONS
 -------
 
 -f::
 -force::
-    Reconfiguring DCPMMs is a destructive operation which requires
+    Reconfiguring PMem modules is a destructive operation which requires
     confirmation from the user. This option suppresses the confirmation.
     This option can also be used to recover/override corrupted Platform Configuration Data (PCD).
 	The force flag will also suppress the security enabled warning as well as all other
@@ -57,7 +58,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml". The "nvmxml" format implies the "-force" flag.
 endif::os_build[]
 
 -u (B|MB|MiB|GB|GiB|TB| TiB)::
@@ -69,19 +70,29 @@ endif::os_build[]
 TARGETS
 -------
 -dimm [DimmIDs]::
-    Creates a memory allocation goal on specific DCPMMs by optionally supplying one or
-    more comma-separated DCPMM identifiers. This list must meet one of the following criteria:
-    . Target all DCPMMs on a given socket
-    . Target all unconfigured DCPMMs
-    . Target DCPMMs for 100% MemoryMode with all unspecified DCPMMs configured for MemoryMode only
-    . Target DCPMMs for AppDirect Not-Interleaved with all unspecified DCPMMs configured for AppDirect Not-Interleaved only
-    If dimm target is unspecified, the default is to configure all manageable DCPMMs on all sockets.
+    Creates a memory allocation goal on specific PMem modules by optionally supplying one or
+    more comma-separated PMem module identifiers. This list must meet one of the following criteria:
+    . Target all PMem modules on a given socket.
+      * For example, all PMem modules located within a single socket may be specified together using the
+        dimm target.
+    . Target all unconfigured PMem modules.
+      * For example, when PMem modules have had their PCD deleted, then these PMem modules may all be specified
+        together using the dimm target.
+    . Target PMem modules for 100% MemoryMode with all unspecified PMem modules configured for MemoryMode only.
+      * For example, when existing PMem modules are 100% MM, then any newly added PMem modules may all be specified
+        together using the dimm target and configured as 100% MM to match the existing configuration.
+    . Target PMem modules for App Direct Not-Interleaved with all unspecified PMem modules configured for App Direct Not-Interleaved only
+      * For example, when existing PMem modules are 100% App Direct Not-Interleaved, then any newly added PMem modules may all be
+        specified together using the dimm target and configured as 100% App Direct Not-Interleaved to match the existing configuration.
+
++
+NOTE: If the dimm target is not specified, the default is to configure all manageable PMem modules on all sockets.
 
 -socket [SocketIds]::
-    Loads the memory allocation goal onto all manageable DCPMMs on specific
+    Loads the memory allocation goal onto all manageable PMem modules on specific
     sockets by supplying the socket target and one or more comma-separated socket
     identifiers. The default is to load the memory allocation goal onto all
-    manageable DCPMMs on all sockets.
+    manageable PMem modules on all sockets.
 
 PROPERTIES
 ----------
@@ -92,9 +103,9 @@ MemoryMode::
 PersistentMemoryType::
     If MemoryMode is not 100%, the type of persistent memory to create.
     - "AppDirect": (Default) Create App Direct capacity utilizing hardware interleaving across the
-    requested DCPMMs if applicable given the specified target.
+    requested PMem modules if applicable given the specified target.
     - "AppDirectNotInterleaved": Create App Direct capacity that is not interleaved any
-    other DCPMMs.
+    other PMem modules.
 
 NamespaceLabelVersion::
     The version of the namespace label storage area (LSA) index block
@@ -102,77 +113,83 @@ NamespaceLabelVersion::
     - "1.1": Legacy 1.1 namespace label support
 
 Reserved::
-    Reserve a percentage [underline]#(0-100)# of the requested DCPMM App Direct capacity
+    Reserve a percentage [underline]#(0-100)# of the requested PMem module App Direct capacity
     that will not be mapped into the system physical address space and will be
     presented as Reserved Capacity with Show Device and Show Memory Resources
     Commands.
 
 EXAMPLES
 --------
-Configures all the DCPMM capacity in Memory Mode.
-[verse]
+Configures all the PMem module capacity in Memory Mode.
+[listing]
 ipmctl create -goal MemoryMode=100
 
-Configures all the DCPMM capacity as App Direct.
-[verse]
+Configures all the PMem module capacity as App Direct.
+[listing]
 ipmctl create -goal PersistentMemoryType=AppDirect
 
-Configures the capacity on each DCPMM with 20% of the capacity in Memory
+Configures the capacity on each PMem module with 20% of the capacity in Memory
 Mode and the remaining as App Direct capacity that does not use hardware
 interleaving.
-[verse]
+[listing]
 ipmctl create -goal MemoryMode=20 PersistentMemoryType=AppDirectNotInterleaved
 
-Configures the DCPMM capacity across the entire system with 25% of the
+Configures the PMem module capacity across the entire system with 25% of the
 capacity in Memory Mode, 25% reserved and the remaining 50% as App Direct.
-Configures the DCPMM capacity across the entire system with 25% of the
+Configures the PMem module capacity across the entire system with 25% of the
 capacity in Memory Mode and the remaining 75% as App Direct.
-[verse]
+[listing]
 ipmctl create -goal MemoryMode=25 PersistentMemoryType=AppDirect Reserved=25
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software and
+* The specified PMem modules must be manageable by the host software and
   must all have the same SKU.
 
-- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>
+* SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
 
-- If no DCPMM(s) are specified, then during goal creation all DCPMMs in a non-functional,
-  population violation, or unmanageable state are not included in the goal creation.
+* If no PMem modules are specified, all PMem modules in a non-functional or unmanageable state
+  will not be included in the goal's creation.
 
-- Existing memory allocation goals that have not been applied and any namespaces
-  associated with the requested DCPMM(s) must be deleted before running
+* If the goal request is for an interleaved set, PMem modules in population violation will not
+  be included in the goal's creation.
+
+* Existing memory allocation goals that have not been applied and any namespaces
+  associated with the requested PMem modules must be deleted before running
   this command.
 
-- Goal requests may not be applied by UEFI FW if the DCPMM is in security enabled, locked state.
+* Goal requests may not be applied by platform firmware (BIOS) if the PMem module is in security enabled, locked state.
 
 NOTE: It is recommended to disable security prior to reboot if requesting a new goal.
 
-NOTE: A goal request may be initiated even if a target DCPMM is in security state enabled, but care
-  must be taken to ensure the DCPMM is in either unlocked or disabled security state prior to the
-  UEFI FW provisioning flow following a reboot. In addition, a warning will be presented to the
-  user: 'WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!'
+NOTE: A goal request may be initiated even if a target PMem module is in security state enabled, but care
+  must be taken to ensure the PMem module is in either unlocked or disabled security state prior to the
+  platform firmware (BIOS) provisioning flow following a reboot. In addition, a warning will be presented to the
+  user: 'WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!'
 
 - Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to
   other storage before executing this command.
-  Targets may be limited to individual DCPMMs or sockets, but all DCPMMs
+  Targets may be limited to individual PMem modules or sockets, but all PMem modules
   on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
   Refer to *_Show System Capabilities_* for a list of BIOS
   supported modes.
 
 - Some requests are dependent on BIOS and/or platform configuration. For details, refer
-  to the _Intel® Optane™ DC Persistent Memory Software Memory Allocation Rules_,
+  to the _Intel(R) Optane(TM) Persistent Memory Software Memory Allocation Rules_,
   document number 564194. For example:
- - Provisioning DCPMMs for Memory Mode while BIOS is configured for 1LM only
+ - Provisioning PMem modules for Memory Mode while BIOS is configured for 1LM only
    will result in unused capacity.
- - Provisioning DCPMMs for Memory Mode while not all iMCs have at least one DCPMM
+ - Provisioning PMem modules for Memory Mode while not all iMCs have at least one PMem module
    will result in unused capacity.
+
+- PMem modules in population violation can be targeted for goal creation only if PersistentMemoryType=AppDirectNotInterleaved
+  and no volatile memory is requested (100% ADx1).
 
 RETURN DATA
 -----------
@@ -183,17 +200,16 @@ result in a non- optimal configuration (i.e., reduced performance).
 These are described below.:
 
 *The requested goal may result in a non-optimal configuration due to the
-population of DIMMs in the system* +
-
-Memory Mode capacity requested but the population of DRAM DIMMs and DCPMMs in
-the system may result in reduced performance (i.e., the ratio of DRAM and DCPMMs
-is not balanced, DRAM and DCPMMs are not on the same channel or not all the same
+population of PMem modules in the system.* +
+Memory Mode capacity requested but the population of DRAM DIMMs and PMem modules in
+the system may result in reduced performance (i.e., the ratio of DRAM and PMem modules
+is not balanced, DRAM and PMem modules are not on the same channel or not all the same
 size).
 
 *The requested goal may result in a non-optimal configuration due to
-the population of DIMMs in the system.* +
-App Direct capacity requested but the population of DCPMMs in the system may
-result in reduced performance (i.e., DCPMMs are not the same size or populated
+the population of PMem modules in the system.* +
+App Direct capacity requested but the population of PMem modules in the system may
+result in reduced performance (i.e., PMem modules are not the same size or populated
 asymmetrically across the socket).
 
 *The requested goal will result in App Direct capacity which is not supported by
@@ -213,11 +229,11 @@ capacity.* +
 Mapped memory was limited based on the CPU SKU.
 
 Therefore, before making any changes to the configuration, a prompt is displayed
-showing the memory allocation goals that will be created on each DCPMM as
+showing the memory allocation goals that will be created on each PMem module as
 documented in the command Section <<Show Memory Allocation Goal>>, along
 with any additional confirmation messages. The force option can be used to
 override this confirmation and proceed directly with creating the goals.
-[verse]
+[listing]
 The following configuration will be applied:
 SocketID DimmID MemorySize AppDirect1Size AppDirect2Size (Refer to
 the command Section <<Show Memory Allocation Goal>>)

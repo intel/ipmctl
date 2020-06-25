@@ -140,11 +140,6 @@ StartFormat(
         PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_UNMANAGEABLE_DIMM);
         goto Finish;
       }
-      if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_POPULATION_VIOLATION);
-        goto Finish;
-      }
     }
   }
 
@@ -199,7 +194,7 @@ StartFormat(
   if (!EFI_ERROR(ReturnCode)) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR);
   } else {
-    DisplayCommandStatus(CLI_INFO_START_FORMAT, L"", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_START_FORMAT, L"", pCommandStatus);
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   }
 

@@ -8,16 +8,16 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-show-acpi - Shows the system ACPI tables related to the DCPMMs
+ipmctl-show-acpi - Shows the system ACPI tables related to the PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -system
 
 DESCRIPTION
 -----------
-Shows the system ACPI tables related to the DCPMMs in the system.
+Shows the system ACPI tables related to the PMem modules in the system.
 
 OPTIONS
 -------
@@ -36,7 +36,7 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 TARGETS
 -------
 -system [NFIT|PCAT|PMTT]::
-  The system ACPI table(s) to display. By default NFIT, PCAT and PMTT tables
+  The system ACPI tables to display. By default NFIT, PCAT and PMTT tables
   are displayed. One of:
   - "NFIT" - The NVDIMM Firmware Interface Table
   - "PCAT" - The Platform Capabilities Table
@@ -47,7 +47,7 @@ Refer to the ACPI specification for detailed information about the ACPI tables.
 EXAMPLES
 --------
 Show the ACPI NFIT
-[verse]
+[listing]
 ipmctl show -system NFIT
 
 RETURN DATA

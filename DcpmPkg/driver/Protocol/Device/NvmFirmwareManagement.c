@@ -5,7 +5,7 @@
 
  /**
  * @file NvmFirmwareManagement.c
- * @brief The file describes the UEFI Firmware Management Protocol support Barlow Pass.
+ * @brief The file describes the UEFI Firmware Management Protocol support for Intel Optane Persistent Memory.
  **/
 
 #include <Uefi.h>
@@ -48,7 +48,7 @@ typedef struct _SET_IMAGE_ATTRIBUTES{
 /*
   In addition to the function information from the library header.
 
-  As for the Intel DCPMM implementation, one DCPMM stores only one Firmware,
+  As for the Intel PMem module implementation, one PMem module stores only one Firmware,
   so the *DescriptorCount will be always 1.
 
   Even if there are more images on the FV we have access only to
@@ -190,9 +190,9 @@ Finish:
 }
 
 /**
-Updates the firmware image of the DCPMM.
+Updates the firmware image of the PMem module.
 
-@remarks If Address Range Scrub (ARS) is in progress on any target DIMM,
+@remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
 an attempt will be made to abort ARS and the proceed with the firmware update.
 
 @remarks A reboot is required to activate the updated firmware image and is
@@ -234,6 +234,7 @@ SetImage (
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 pImageSizeError[] = L"Error: The image size is too large.";
   CHAR16 pImageContentError[] = L"Error: Invalid image file.";
+  CHAR16 pImageVersionError[] = L"Error: Firmware version too low. Force required.";
   NVM_STATUS Status = NVM_ERR_OPERATION_NOT_STARTED;
   CONST CHAR16 *pSingleStatusCodeMessage = NULL;
   SET_IMAGE_ATTRIBUTES *SetImageAttributes = (SET_IMAGE_ATTRIBUTES *)VendorCode;
@@ -254,7 +255,7 @@ SetImage (
     goto Finish;
   }
 
-  if (ImageSize < sizeof(FW_IMAGE_HEADER)) {
+  if (ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
     *AbortReason = AllocateCopyPool(sizeof(pImageContentError), pImageContentError);
     ReturnCode = EFI_ABORTED;
     goto Finish;
@@ -271,7 +272,16 @@ SetImage (
     Force = SetImageAttributes->Force;
   }
 
-  ReturnCode = UpdateDimmFw(GET_DIMM_FROM_INSTANCE(This)->pDimm->DimmID, Image, ImageSize, Force, &Status);
+  ReturnCode = ValidateImageVersion((NVM_FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
+  if (EFI_ERROR(ReturnCode)) {
+    if (Status == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+      *AbortReason = AllocateCopyPool (StrSize(pImageVersionError), pImageVersionError);
+    }
+    goto Finish;
+  }
+
+  ReturnCode = FwCmdUpdateFw(GET_DIMM_FROM_INSTANCE(This)->pDimm, Image, ImageSize, &Status, NULL);
+
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmData->HiiHandle, Status);
@@ -289,7 +299,7 @@ Finish:
 }
 
 /**
-Returns information about the firmware package on the specified DCPMM.
+Returns information about the firmware package on the specified PMem module.
 
 @param[in] This A pointer to the EFI_FIRMWARE_MANAGEMENT_PROTOCOL instance.
 @param[out] PackageVersion A version number that represents all the firmware images in the device. The

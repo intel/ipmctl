@@ -326,7 +326,7 @@ Finish:
 }
 
 /**
-  Retrieve the number of DCPMMs in the system found in NFIT
+  Retrieve the number of functional DCPMMs in the system found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[out] pDimmCount The number of DCPMMs found in NFIT.
@@ -437,6 +437,12 @@ GetDimmMappedMemSize(
     return EFI_NOT_READY;
   }
 
+  // DIMM PCD already read
+  if (pDimm->PcdMappedMemInfoRead) {
+    NVDIMM_DBG("DIMM: 0x%04x PCD already read!", pDimm->DeviceHandle.AsUint32);
+    return EFI_SUCCESS;
+  }
+
   ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   if (EFI_ERROR(ReturnCode)) {
     return EFI_DEVICE_ERROR;
@@ -461,15 +467,18 @@ GetDimmMappedMemSize(
   switch (pPcdCurrentConf->ConfigStatus) {
     case DIMM_CONFIG_SUCCESS:
     case DIMM_CONFIG_OLD_CONFIG_USED:
+    case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       pDimm->Configured = TRUE;
       break;
     default:
       pDimm->Configured = FALSE;
-    break;
+      break;
   }
 
   pDimm->MappedVolatileCapacity = pPcdCurrentConf->VolatileMemSizeIntoSpa;
   pDimm->MappedPersistentCapacity = pPcdCurrentConf->PersistentMemSizeIntoSpa;
+
+  pDimm->PcdMappedMemInfoRead = TRUE;
 
   FreePool(pPcdConfHeader);
   return EFI_SUCCESS;
@@ -480,7 +489,7 @@ GetDimmMappedMemSize(
 /*
  * Helper function for initializing information from the NFIT for non-functional
  * dimms only. This should eventually include functional dimms as well
- * (GetDimmInfo), but currently avoiding as it's hard to extract the NFIT-only
+ * (GetDimmInfo), but currently avoiding as it is hard to extract the NFIT-only
  * calls from GetDimmInfo.
  */
 VOID
@@ -518,7 +527,7 @@ InitializeNfitDimmInfoFieldsFromDimm(
   pDimmInfo->SmbusAddress = pDimm->SmbusAddress;
 
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 }
@@ -532,6 +541,7 @@ FillSmbiosInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
@@ -576,22 +586,25 @@ FillSmbiosInfo(
 
     pDimmInfo->CapacityFromSmbios = CapacityFromSmbios;
 
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->DeviceLocator,
       pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->DeviceLocator, DEVICE_LOCATOR_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->BankLocator,
       pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->BankLabel, BANKLABEL_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
-    ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
+    TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->Manufacturer,
       pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
-    if (EFI_ERROR(ReturnCode)) {
+    if (EFI_ERROR(TempReturnCode)) {
+      StrnCpyS(pDimmInfo->ManufacturerStr, MANUFACTURER_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
   }
@@ -636,6 +649,7 @@ GetDimmInfo (
   PT_OUTPUT_PAYLOAD_MEMORY_INFO_PAGE4 *pPayloadMemInfoPage4 = NULL;
   PT_PAYLOAD_FW_IMAGE_INFO *pPayloadFwImage = NULL;
   PT_OUTPUT_PAYLOAD_GET_EADR PayloadExtendedAdr;
+  PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE PayloadLatchSystemShutdownState;
   SMBIOS_STRUCTURE_POINTER DmiPhysicalDev;
   SMBIOS_STRUCTURE_POINTER DmiDeviceMappedAddr;
   SMBIOS_VERSION SmbiosVersion;
@@ -669,9 +683,10 @@ GetDimmInfo (
   }
   pDimmInfo->InterfaceFormatCodeNum = pDimm->FmtInterfaceCodeNum;
 
-  pDimmInfo->Capacity = pDimm->RawCapacity;
   pDimmInfo->DimmHandle = pDimm->DeviceHandle.AsUint32;
   pDimmInfo->FwVer = pDimm->FwVer;
+  pDimmInfo->FwActiveApiVersionMajor = pDimm->FwActiveApiVersionMajor;
+  pDimmInfo->FwActiveApiVersionMinor = pDimm->FwActiveApiVersionMinor;
 
   /* Package Sparing Capable */
   if (pDimm->SkuInformation.PackageSparingCapable) {
@@ -716,7 +731,7 @@ GetDimmInfo (
 
   ReturnCode = FillSmbiosInfo(pDimmInfo);
   CHECK_RESULT_CONTINUE(GetDimmUid(pDimm, pDimmInfo->DimmUid, MAX_DIMM_UID_LENGTH));
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
@@ -724,7 +739,7 @@ GetDimmInfo (
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-  if ((pDimmInfo->DimmUid == NULL) || !(StrLen(pDimmInfo->DimmUid) > 0)) {
+  if (StrLen(pDimmInfo->DimmUid) == 0) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_UID;
   }
 
@@ -770,6 +785,9 @@ GetDimmInfo (
         pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_UNSUPPORTED;
       }
       break;
+    case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
+      pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_PARTIALLY_SUPPORTED;
+      break;
     case DIMM_CONFIG_BAD_CONFIG:
     case DIMM_CONFIG_IN_CHECKSUM_NOT_VALID:
     case DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID:
@@ -782,13 +800,8 @@ GetDimmInfo (
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_NOT_CONFIG;
       break;
   }
-  /* Determine if DIMM is in Population Violation */
-  pDimmInfo->IsInPopulationViolation = FALSE;
-  if (DIMM_CONFIG_DCPMM_POPULATION_ISSUE == pDimm->ConfigStatus && BIT6 == (pDimm->NvDimmStateFlags & BIT6))
-  {
-    pDimmInfo->IsInPopulationViolation = TRUE;
-  }
 
+  pDimmInfo->IsInPopulationViolation = IsDimmInPopulationViolation(pDimm);
   pDimmInfo->SkuInformation = *((UINT32 *) &pDimm->SkuInformation);
 
   /* SKU Violation */
@@ -820,18 +833,58 @@ GetDimmInfo (
       ReturnCode = EFI_OUT_OF_RESOURCES;
       goto Finish;
     }
+    /* Get Security Opt-In SVN Downgrade*/
+    pDimmInfo->SVNDowngradeOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_SVN_DOWNGRADE, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_SVN_DOWNGRADE): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SVN_DOWNGRADE;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == NVM_SVN_DOWNGRADE) {
+      pDimmInfo->SVNDowngradeOptIn = pSecurityOptInPayload->OptInValue;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
+    /* Get Security Opt-In Secure Erase Policy*/
+    pDimmInfo->SecureErasePolicyOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_SECURE_ERASE_POLICY, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_SECURE_ERASE_POLICY): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_SECURE_ERASE_POLICY;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == NVM_SECURE_ERASE_POLICY) {
+      pDimmInfo->SecureErasePolicyOptIn = pSecurityOptInPayload->OptInValue;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
     /* Get Security Opt-In S3 Resume */
-    pDimmInfo->S3ResumeOptIn = S3_RESUME_INVALID;
-    ReturnCode = FwCmdGetSecurityOptIn(pDimm, OPT_IN_S3_RESUME, pSecurityOptInPayload);
+    pDimmInfo->S3ResumeOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_S3_RESUME, pSecurityOptInPayload);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("FW CMD Error (OPT_IN_S3_RESUME): " FORMAT_EFI_STATUS "", ReturnCode);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
     }
 
-    if (pSecurityOptInPayload->OptInCode == OPT_IN_S3_RESUME) {
+    if (pSecurityOptInPayload->OptInCode == NVM_S3_RESUME) {
       pDimmInfo->S3ResumeOptIn = pSecurityOptInPayload->OptInValue;
-    } else {
-      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_S3RESUME;
+    }
+
+    pSecurityOptInPayload = ZeroMem(pSecurityOptInPayload, sizeof(*pSecurityOptInPayload));
+
+    /* Get FW Activate Opt-In Secure Erase Policy*/
+    pDimmInfo->FwActivateOptIn = OPT_IN_VALUE_INVALID;
+    ReturnCode = FwCmdGetSecurityOptIn(pDimm, NVM_FW_ACTIVATE, pSecurityOptInPayload);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FW CMD Error (OPT_IN_FW_ACTIVATE): " FORMAT_EFI_STATUS "", ReturnCode);
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_FW_ACTIVATE;
+    }
+
+    if (pSecurityOptInPayload->OptInCode == NVM_FW_ACTIVATE) {
+      pDimmInfo->FwActivateOptIn = pSecurityOptInPayload->OptInValue;
     }
 
     /* security state */
@@ -902,116 +955,118 @@ GetDimmInfo (
   {
     /* Get current Power Management Policy info */
     ReturnCode = FwCmdGetPowerManagementPolicy(pDimm, &pPowerManagementPolicyPayload);
-    if (pPowerManagementPolicyPayload == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
+    if (ReturnCode == EFI_OUT_OF_RESOURCES) {
       goto Finish;
     }
-    if (EFI_ERROR(ReturnCode)) {
+    else if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FwCmdGetPowerManagementPolicy failed with error " FORMAT_EFI_STATUS " for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_POWER_MGMT;
     }
-
-    if (2 > pPowerManagementPolicyPayload->FisMajor) {
-      pDimmInfo->PeakPowerBudget.Header.Status.Code = ReturnCode;
-      pDimmInfo->PeakPowerBudget.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->PeakPowerBudget.Data = pPowerManagementPolicyPayload->Payload.Fis_1_15.PeakPowerBudget;
-    }
     else {
-      pDimmInfo->PeakPowerBudget.Header.Status.Code = EFI_UNSUPPORTED;
-    }
+      if (2 > pPowerManagementPolicyPayload->FisMajor) {
+        pDimmInfo->PeakPowerBudget.Header.Status.Code = ReturnCode;
+        pDimmInfo->PeakPowerBudget.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->PeakPowerBudget.Data = pPowerManagementPolicyPayload->Payload.Fis_1_15.PeakPowerBudget;
+      }
+      else {
+        pDimmInfo->PeakPowerBudget.Header.Status.Code = EFI_UNSUPPORTED;
+      }
 
-    pDimmInfo->AvgPowerLimit.Header.Status.Code = ReturnCode;
-    pDimmInfo->AvgPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
-    pDimmInfo->AvgPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerLimit;
+      pDimmInfo->AvgPowerLimit.Header.Status.Code = ReturnCode;
+      pDimmInfo->AvgPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+      pDimmInfo->AvgPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerLimit;
 
-    if (2 == pPowerManagementPolicyPayload->FisMajor && 0 == pPowerManagementPolicyPayload->FisMinor) {
-      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = ReturnCode;
-      pDimmInfo->AveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->AveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
-    }
-    else {
-      pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
-    }
+      if (2 == pPowerManagementPolicyPayload->FisMajor && 0 == pPowerManagementPolicyPayload->FisMinor) {
+        pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+        pDimmInfo->AveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->AveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_00.AveragePowerTimeConstant;
+      }
+      else {
+        pDimmInfo->AveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+      }
 
-    if (2 <= pPowerManagementPolicyPayload->FisMajor) {
-      /* 2.1/2.0: MemoryBandwidthBoostFeature/TurboModeState */
-      pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = ReturnCode;
-      pDimmInfo->MemoryBandwidthBoostFeature.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->MemoryBandwidthBoostFeature.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostFeature;
+      if (2 <= pPowerManagementPolicyPayload->FisMajor) {
+        /* 2.1/2.0: MemoryBandwidthBoostFeature/TurboModeState */
+        pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = ReturnCode;
+        pDimmInfo->MemoryBandwidthBoostFeature.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->MemoryBandwidthBoostFeature.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostFeature;
 
-      /* 2.1/2.0: MemoryBandwidthBoostMaxPowerLimit/TurboPowerLimit */
-      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = ReturnCode;
-      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostMaxPowerLimit;
-    }
-    else {
-      pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
-    }
+        /* 2.1/2.0: MemoryBandwidthBoostMaxPowerLimit/TurboPowerLimit */
+        pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = ReturnCode;
+        pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostMaxPowerLimit;
+      }
+      else {
+        pDimmInfo->MemoryBandwidthBoostFeature.Header.Status.Code = EFI_UNSUPPORTED;
+        pDimmInfo->MemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+      }
 
-    if (2 <= pPowerManagementPolicyPayload->FisMajor && 1 <= pPowerManagementPolicyPayload->FisMinor) {
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostAveragePowerTimeConstant;
-    }
-    else {
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+      if (2 <= pPowerManagementPolicyPayload->FisMajor && 1 <= pPowerManagementPolicyPayload->FisMinor) {
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Data = pPowerManagementPolicyPayload->Payload.Fis_2_01.MemoryBandwidthBoostAveragePowerTimeConstant;
+      }
+      else {
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+      }
     }
   }
 
   if (dimmInfoCategories & DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS)
   {
     ReturnCode = FwCmdDeviceCharacteristics(pDimm, &pDevCharacteristics);
-    if (pDevCharacteristics == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
+    if (ReturnCode == EFI_OUT_OF_RESOURCES) {
       goto Finish;
     }
-    if (EFI_ERROR(ReturnCode)) {
+    else if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("FwCmdDeviceCharacteristics failed with error " FORMAT_EFI_STATUS " for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_DEVICE_CHARACTERISTICS;
     }
-
-    /* MaxAveragePowerLimit */
-    if ((1 <= pDevCharacteristics->FisMajor && 13 <= pDevCharacteristics->FisMinor) || 2 <= pDevCharacteristics->FisMajor) {
-      pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = ReturnCode;
-      pDimmInfo->MaxAveragePowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->MaxAveragePowerLimit.Data = pDevCharacteristics->Payload.Fis_2_00.MaxAveragePowerLimit;
-    }
     else {
-      pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
-    }
+      /* MaxAveragePowerLimit */
+      if ((1 <= pDevCharacteristics->FisMajor && 13 <= pDevCharacteristics->FisMinor) || 2 <= pDevCharacteristics->FisMajor) {
+        pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = ReturnCode;
+        pDimmInfo->MaxAveragePowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->MaxAveragePowerLimit.Data = pDevCharacteristics->Payload.Fis_2_00.MaxAveragePowerLimit;
+      }
+      else {
+        pDimmInfo->MaxAveragePowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+      }
 
-    /* 2.1/2.0 MaxMemoryBandwidthBoostMaxPowerLimit/MaxTurboModePowerConsumption */
-    if (2 <= pDevCharacteristics->FisMajor) {
-      pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = ReturnCode;
-      pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
-      pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Data = pDevCharacteristics->Payload.Fis_2_00.MaxTurboModePowerConsumption;
-    }
-    else {
-      pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
-    }
+      /* 2.1/2.0 MaxMemoryBandwidthBoostMaxPowerLimit/MaxTurboModePowerConsumption */
+      if (2 <= pDevCharacteristics->FisMajor) {
+        pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = ReturnCode;
+        pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Type = DIMM_INFO_TYPE_UINT16;
+        pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Data = pDevCharacteristics->Payload.Fis_2_00.MaxTurboModePowerConsumption;
+      }
+      else {
+        pDimmInfo->MaxMemoryBandwidthBoostMaxPowerLimit.Header.Status.Code = EFI_UNSUPPORTED;
+      }
 
-    /* MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep */
-    if (2 <= pDevCharacteristics->FisMajor && 1 <= pDevCharacteristics->FisMinor) {
-      pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
-      pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxMemoryBandwidthBoostAveragePowerTimeConstant;
+      /* MaxAveragePowerTimeConstant, AveragePowerTimeConstantStep */
+      if (2 <= pDevCharacteristics->FisMajor && 1 <= pDevCharacteristics->FisMinor) {
+        pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = ReturnCode;
+        pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+        pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxMemoryBandwidthBoostAveragePowerTimeConstant;
 
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Status.Code = ReturnCode;
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.MemoryBandwidthBoostAveragePowerTimeConstantStep;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Status.Code = ReturnCode;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.MemoryBandwidthBoostAveragePowerTimeConstantStep;
 
-      pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Status.Code = ReturnCode;
-      pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->MaxAveragePowerReportingTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxAveragePowerReportingTimeConstant;
+        pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Status.Code = ReturnCode;
+        pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Type = DIMM_INFO_TYPE_UINT32;
+        pDimmInfo->MaxAveragePowerReportingTimeConstant.Data = pDevCharacteristics->Payload.Fis_2_01.MaxAveragePowerReportingTimeConstant;
 
-      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = ReturnCode;
-      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
-      pDimmInfo->AveragePowerReportingTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.AveragePowerReportingTimeConstantStep;
-    }
-    else {
-      pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
-      pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
+        pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = ReturnCode;
+        pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Type = DIMM_INFO_TYPE_UINT32;
+        pDimmInfo->AveragePowerReportingTimeConstantStep.Data = pDevCharacteristics->Payload.Fis_2_01.AveragePowerReportingTimeConstantStep;
+      }
+      else {
+        pDimmInfo->MaxMemoryBandwidthBoostAveragePowerTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+        pDimmInfo->MemoryBandwidthBoostAveragePowerTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
+        pDimmInfo->MaxAveragePowerReportingTimeConstant.Header.Status.Code = EFI_UNSUPPORTED;
+        pDimmInfo->AveragePowerReportingTimeConstantStep.Header.Status.Code = EFI_UNSUPPORTED;
+      }
     }
   }
 
@@ -1065,8 +1120,9 @@ GetDimmInfo (
 
   // Data already in pDimm
   pDimmInfo->Configured = pDimm->Configured;
-  ReturnCode = GetCapacities(pDimm->DimmID, &pDimmInfo->VolatileCapacity, &pDimmInfo->AppDirectCapacity,
-    &pDimmInfo->UnconfiguredCapacity, &pDimmInfo->ReservedCapacity, &pDimmInfo->InaccessibleCapacity);
+  ReturnCode = GetDcpmmCapacities(pDimm->DimmID, &pDimmInfo->Capacity, &pDimmInfo->VolatileCapacity,
+    &pDimmInfo->AppDirectCapacity, &pDimmInfo->UnconfiguredCapacity, &pDimmInfo->ReservedCapacity,
+    &pDimmInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
     pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_CAPACITY;
   }
@@ -1080,7 +1136,10 @@ GetDimmInfo (
     else {
       pDimmInfo->LastFwUpdateStatus = pPayloadFwImage->LastFwUpdateStatus;
       pDimmInfo->StagedFwVersion = ParseFwVersion(pPayloadFwImage->StagedFwRevision);
+      pDimmInfo->StagedFwActivatable = pPayloadFwImage->StagedFwActivatable;
       pDimmInfo->FWImageMaxSize = pPayloadFwImage->FWImageMaxSize * 4096;
+      pDimmInfo->QuiesceRequired = pPayloadFwImage->QuiesceRequired;
+      pDimmInfo->ActivationTime = pPayloadFwImage->ActivationTime;
     }
   }
 
@@ -1132,6 +1191,16 @@ GetDimmInfo (
     }
   }
 
+  if (dimmInfoCategories & DIMM_INFO_CATEGORY_LATCH_SYSTEM_SHUTDOWN_STATE) {
+    ReturnCode = FwCmdGetLatchSystemShutdownStateInfo(pDimm, &PayloadLatchSystemShutdownState);
+    if (EFI_ERROR(ReturnCode)) {
+      pDimmInfo->ErrorMask |= DIMM_INFO_ERROR_LATCH_SYSTEM_SHUTDOWN_STATE;
+    }
+
+    pDimmInfo->LatchSystemShutdownState = PayloadLatchSystemShutdownState.LatchSystemShutdownState;
+    pDimmInfo->PrevPwrCycleLatchSystemShutdownState = PayloadLatchSystemShutdownState.PreviousPowerCycleLatchSystemShutdownState;
+  }
+
   ReturnCode = EFI_SUCCESS;
 
 Finish:
@@ -1152,7 +1221,7 @@ Finish:
 
   @param[in] SocketId
 
-  @retval FALSE SocketId is not valid, it's out of allowed range or
+  @retval FALSE SocketId is not valid, it is out of allowed range or
     there was a problem with getting DIMM list
 **/
 STATIC
@@ -1275,27 +1344,59 @@ Finish:
 }
 
 /**
-  Helper function for VerifyTargetDimms()
-  Contains logic for checking if if a DCPMM is not allowed based on parameters
-  provided to VerifyTargetDimms
+  Helper function for VerifyTargetDimms().
+  Contains logic for checking if a DCPMM is allowed based on the
+  RequireDcpmmsBitfield provided to VerifyTargetDimms.
 
   @param[in] pCurrentDimm Pointer to DCPMM to test
-  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
-                                       functional dimms. If false only check against functional dimms
-  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
-                                           returned dimm list. If false, include these dimms from
-                                           returned list
+  @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated
+  on the list of DCPMMs discovered.
 **/
-BOOLEAN IsDimmNotAllowed(
-  IN DIMM *pCurrentDimm,
-  IN BOOLEAN IncludeNonFunctionalDimms,
-  IN BOOLEAN ExcludeUnsupportedConfigDimms
+BOOLEAN IsDimmAllowed(
+  IN DIMM *pDimm,
+  IN REQUIRE_DCPMMS RequireDcpmmsBitfield
   )
 {
+  BOOLEAN Allowed = TRUE;
 
-  return (!IsDimmManageable(pCurrentDimm) ||
-         (!IncludeNonFunctionalDimms &&(pCurrentDimm->NonFunctional)) ||
-          (ExcludeUnsupportedConfigDimms && !IsDimmInSupportedConfig(pCurrentDimm)));
+  // Verify the mutually exclusive REQUIRE_DCPMMS_MANAGEABLE and REQUIRE_DCPMMS_UNMANAGEABLE flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_MANAGEABLE & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_UNMANAGEABLE & RequireDcpmmsBitfield)));
+  // Generally we only work with manageable NVDIMMs, which are
+  // an Intel DCPMM with a reasonable FIS API version.
+  if ((REQUIRE_DCPMMS_MANAGEABLE & RequireDcpmmsBitfield) && !IsDimmManageable(pDimm)) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_UNMANAGEABLE & RequireDcpmmsBitfield) && IsDimmManageable(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  // Verify the mutually exclusive REQUIRE_DCPMMS_FUNCTIONAL and REQUIRE_DCPMMS_NON_FUNCTIONAL flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_FUNCTIONAL & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_NON_FUNCTIONAL & RequireDcpmmsBitfield)));
+  // Non-functional DCPMMs generally means just that DDRT is untrained, but there
+  // can be other causes. Keeping previous behavior for now until we split up the
+  // meaning of non-functional more.
+  if ((REQUIRE_DCPMMS_FUNCTIONAL & RequireDcpmmsBitfield) && pDimm->NonFunctional) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_NON_FUNCTIONAL & RequireDcpmmsBitfield) && !pDimm->NonFunctional) {
+    Allowed = FALSE;
+  }
+
+  // Verify the mutually exclusive REQUIRE_DCPMMS_POPULATION_VIOLATION and REQUIRE_DCPMMS_NO_POPULATION_VIOLATION flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_POPULATION_VIOLATION & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield)));
+  // Population violation DCPMMs means DCPMMs that are in locations that are not part of a POR configuration
+  if ((REQUIRE_DCPMMS_POPULATION_VIOLATION & RequireDcpmmsBitfield) && !IsDimmInPopulationViolation(pDimm)) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_NO_POPULATION_VIOLATION & RequireDcpmmsBitfield) && IsDimmInPopulationViolation(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  if ((REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION & RequireDcpmmsBitfield) && IsDimmInUnmappedPopulationViolation(pDimm)) {
+    Allowed = FALSE;
+  }
+
+  return Allowed;
 }
 
 /**
@@ -1305,17 +1406,14 @@ BOOLEAN IsDimmNotAllowed(
   If DIMM Ids were provided then check if those DIMMs exist.
   If there are duplicate DIMM/socket Ids then report error.
   If specified DIMMs count is 0 then take all Manageable DIMMs.
-  Update CommandStatus structure at the end.
+  Update CommandStatus structure with any warnings/errors found.
 
   @param[in] DimmIds An array of DIMM Ids
   @param[in] DimmIdsCount Number of items in array of DIMM Ids
   @param[in] SocketIds An array of Socket Ids
   @param[in] SocketIdsCount Number of items in array of Socket Ids
-  @param[in] IncludeNonFunctionalDimms If true include non-functional dimms in verification along with
-                                       functional dimms. If false only check against functional dimms
-  @param[in] ExcludeUnsupportedConfigDimms If true, exclude dimms in unmapped set of dimms (non-POR) in
-                                           returned dimm list. If false, include these dimms from
-                                           returned list
+  @param[in] RequireDcpmmsBitfield Indicate what requirements should be validated on
+  the list of DCPMMs discovered.
   @param[out] pDimms Output array of pointers to verified dimms
   @param[out] pDimmsNum Number of items in array of pointers to dimms
   @param[out] pCommandStatus Pointer to command status structure
@@ -1330,8 +1428,7 @@ VerifyTargetDimms (
   IN     UINT32 DimmIdsCount,
   IN     UINT16 SocketIds[]    OPTIONAL,
   IN     UINT32 SocketIdsCount,
-  IN     BOOLEAN IncludeNonFunctionalDimms,
-  IN     BOOLEAN ExcludeUnsupportedConfigDimms,
+  IN     REQUIRE_DCPMMS RequireDcpmmsBitfield,
      OUT DIMM *pDimms[MAX_DIMMS],
      OUT UINT32 *pDimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
@@ -1387,8 +1484,8 @@ VerifyTargetDimms (
       continue;
     }
 
-    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
-      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+    if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
+      SetObjStatusForDimm(pCommandStatus, pCurrentDimm, NVM_ERR_DIMM_EXCLUDED);
       ReturnCode = EFI_INVALID_PARAMETER;
       continue;
     }
@@ -1425,9 +1522,9 @@ VerifyTargetDimms (
   // Main loop, go through each DCPMM in platform
   LIST_FOR_EACH(pCurrentDimmNode, pDimmList) {
     pCurrentDimm = DIMM_FROM_NODE(pCurrentDimmNode);
-    // If it's not an allowed DCPMM, skip it
+    // If it is not an allowed DCPMM, skip it
     // Error was already thrown if it is a specified DCPMM
-    if (IsDimmNotAllowed(pCurrentDimm, IncludeNonFunctionalDimms, ExcludeUnsupportedConfigDimms)) {
+    if (!IsDimmAllowed(pCurrentDimm, RequireDcpmmsBitfield)) {
       continue;
     }
 
@@ -1611,7 +1708,7 @@ Finish:
 }
 
 /**
-  Retrieve the list of DCPMMs found in NFIT
+  Retrieve the list of functional DCPMMs found in NFIT
 
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] DimmCount The size of pDimms.
@@ -2071,7 +2168,9 @@ GetSecurityState(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+    pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2086,7 +2185,7 @@ GetSecurityState(
       if (ReturnCode == EFI_SECURITY_VIOLATION) {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
       } else {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index],NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
       }
       goto Finish;
     }
@@ -2173,9 +2272,10 @@ static void PopulateAppDirectIndex(
   @param[out] pConfigGoalsCount number of elements written
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_NOT_FOUND PMem module could not be found
   @retval EFI_SUCCESS All Ok
 **/
 EFI_STATUS
@@ -2216,7 +2316,7 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
@@ -2229,8 +2329,9 @@ GetGoalConfigs(
 
   //Try to calculate appdirect index for all regional goals for all dimms in advance
   PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsCount,
-      pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
       NVDIMM_DBG("No usable dimms found in GetGoalConfigs");
@@ -2289,7 +2390,7 @@ GetGoalConfigs(
 
     for (Index2 = 0; Index2 < pCurrentDimm->RegionsGoalNum; ++Index2) {
       SequenceIndex = pCurrentDimm->pRegionsGoal[Index2]->SequenceIndex;
-	  NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
+    NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
       pCurrentGoal->NumberOfInterleavedDimms[SequenceIndex] = (UINT8)pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
       pCurrentGoal->AppDirectSize[SequenceIndex] =
           pCurrentDimm->pRegionsGoal[Index2]->Size / pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
@@ -2319,7 +2420,7 @@ GetGoalConfigs(
     goto Finish;
   }
   if (AllowedMode != MEMORY_MODE_2LM) {
-    ResetCmdStatus(pCommandStatus, NVM_WARN_2LM_MODE_OFF);
+    ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE);
   }
 
   *pConfigGoalsCount = ConfigRegionCount;
@@ -2483,7 +2584,10 @@ SetAlarmThresholds (
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL,
+       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -2762,21 +2866,21 @@ SetSecurityState(
   BOOLEAN NamespaceFound = FALSE;
   BOOLEAN AreNotPartOfPendingGoal = TRUE;
   BOOLEAN IsSupported = FALSE;
-  BOOLEAN CheckSupportedConfigDimms = TRUE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
   DIMM *pCurrentDimm = NULL;
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
 
   NVDIMM_ENTRY();
 
+  SetMem(pDimms, sizeof(pDimms), 0x0);
+  SetMem(AsciiPassword, sizeof(AsciiPassword), 0x0);
+
   IsSupported = IsSecurityOpSupported(SecurityOperation);
   if (!IsSupported) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
     goto Finish;
   }
-
-  SetMem(pDimms, sizeof(pDimms), 0x0);
-  SetMem(AsciiPassword, sizeof(AsciiPassword), 0x0);
 
   if (pCommandStatus == NULL) {
     goto Finish;
@@ -2801,16 +2905,17 @@ SetSecurityState(
     ResetCmdStatus(pCommandStatus, NVM_ERR_INVALID_SECURITY_OPERATION);
   }
 
-  //Erase Device Data operation is supported for Dimms
-  //excluded from POR config
-  if (SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
-    || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE)
+  // Erase Device Data operation is supported for Dimms
+  // excluded from POR config. For any other commands, the DCPMM needs
+  // to be in a POR config.
+  if (!(SecurityOperation == SECURITY_OPERATION_MASTER_ERASE_DEVICE
+    || SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE))
   {
-    CheckSupportedConfigDimms = FALSE;
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE,
-                CheckSupportedConfigDimms, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, RequireDcpmmsBitfield,
+      pDimms, &DimmsNum, pCommandStatus);
 
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -2819,7 +2924,7 @@ SetSecurityState(
   // Prevent user from enabling security when goal is pending due to BIOS restrictions
   if (SecurityOperation == SECURITY_OPERATION_SET_PASSPHRASE) {
     // Check if input DIMMs are not part of a goal
-    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, CheckSupportedConfigDimms);
+    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
@@ -3204,7 +3309,6 @@ Finish:
   CleanStringMemory(AsciiPassword);
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
-
   return ReturnCode;
 }
 
@@ -3478,7 +3582,8 @@ GetPcd(
   //Set initial value of *ppDimmPcdInfo
   *ppDimmPcdInfo = NULL;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto FinishError;
@@ -3623,7 +3728,8 @@ ModifyPcdConfig(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsCount,
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
     pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -4079,16 +4185,6 @@ GetMemoryResourcesInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  DIMM *pDimm = NULL;
-  LIST_ENTRY *pDimmNode = NULL;
-  UINT64 VolatileCapacity = 0;
-  UINT64 AppDirectCapacity = 0;
-  UINT64 UnconfiguredCapacity = 0;
-  UINT64 ReservedCapacity = 0;
-  UINT64 InaccessibleCapacity = 0;
-  UINT64 DDRRawCapacity = 0;
-  UINT64 DDRCacheCapacity = 0;
-  UINT64 DDRVolatileCapacity = 0;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -4098,7 +4194,7 @@ GetMemoryResourcesInfo(
   /** Make sure we start with zero values **/
   ZeroMem(pMemoryResourcesInfo, sizeof(*pMemoryResourcesInfo));
 
-  ReturnCode = ReenumerateNamespacesAndISs(FALSE);
+  ReturnCode = ReenumerateNamespacesAndISs(TRUE);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to refresh Namespaces and Interleave Sets information");
 #ifdef OS_BUILD
@@ -4115,60 +4211,21 @@ GetMemoryResourcesInfo(
 #endif
   }
 
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-
-    if (!IsDimmManageable(pDimm) || (!IsDimmInSupportedConfig(pDimm))) {
-      continue;
-    }
-
-    pMemoryResourcesInfo->RawCapacity += pDimm->RawCapacity;
-
-    if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-      pMemoryResourcesInfo->InaccessibleCapacity += pDimm->RawCapacity;
-      continue;
-    }
-
-#ifdef OS_BUILD
-  ReturnCode = GetDimmMappedMemSize(pDimm);
-  if (EFI_DEVICE_ERROR == ReturnCode) {
-    NVDIMM_WARN("Failed to retrieve PCD data on DIMM: 04x%x", pDimm->DeviceHandle.AsUint32);
-  }
-  else if (EFI_ERROR(ReturnCode)) {
+  // Get DCPMM Sizes
+  ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->RawCapacity, &pMemoryResourcesInfo->VolatileCapacity,
+    &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
+    &pMemoryResourcesInfo->InaccessibleCapacity);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
     goto Finish;
-  }
-#endif // OS_BUILD
-
-    // PCD CCUR table missing in DIMM
-    if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
-      ReturnCode = EFI_LOAD_ERROR;
-      goto Finish;
-    }
-
-    ReturnCode = GetCapacities(pDimm->DimmID, &VolatileCapacity, &AppDirectCapacity,
-        &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
-    if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    pMemoryResourcesInfo->VolatileCapacity += VolatileCapacity;
-    pMemoryResourcesInfo->ReservedCapacity += ReservedCapacity;
-    pMemoryResourcesInfo->AppDirectCapacity += AppDirectCapacity;
-    pMemoryResourcesInfo->InaccessibleCapacity += InaccessibleCapacity;
-    pMemoryResourcesInfo->UnconfiguredCapacity += UnconfiguredCapacity;
   }
 
   // Get DDR Sizes
-  ReturnCode = GetDDRCapacities(&DDRRawCapacity, &DDRCacheCapacity, &DDRVolatileCapacity);
-
+  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &pMemoryResourcesInfo->DDRRawCapacity, &pMemoryResourcesInfo->DDRCacheCapacity,
+    &pMemoryResourcesInfo->DDRVolatileCapacity, &pMemoryResourcesInfo->DDRInaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
-
-  pMemoryResourcesInfo->DDRRawCapacity = DDRRawCapacity;
-  pMemoryResourcesInfo->DDRCacheCapacity = DDRCacheCapacity;
-  pMemoryResourcesInfo->DDRVolatileCapacity = DDRVolatileCapacity;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -4210,7 +4267,13 @@ GetDimmsPerformanceData(
     }
 
     // Get total DIMM count and allocate memory for the table
-    GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
+    ReturnCode = GetListSize(&gNvmDimmData->PMEMDev.Dimms, pDimmCount);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Failed to get DIMM count; Return code 0x%08x", ReturnCode);
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+
     if(NULL == (*pDimmsPerformanceData = AllocateZeroPool(sizeof(DIMM_PERFORMANCE_DATA) * (*pDimmCount)))) {
         NVDIMM_ERR("Memory allocation failure");
         ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -4220,7 +4283,7 @@ GetDimmsPerformanceData(
     LIST_FOR_UNTIL_INDEX(pDimmNode, &gNvmDimmData->PMEMDev.Dimms, *pDimmCount, Index) {
         pDimm = DIMM_FROM_NODE(pDimmNode);
 
-        if (!IsDimmManageable(pDimm) || !IsDimmInSupportedConfig(pDimm)) {
+        if (!IsDimmManageable(pDimm)) {
             NVDIMM_WARN("Dimm 0x%x is not manageable", pDimm->DeviceHandle.AsUint32);
             continue;
         }
@@ -4914,7 +4977,7 @@ GetSystemCapabilitiesInfo(
   /**
     Features supported by the driver
   **/
-  pSysCapInfo->RenameNsSupported = FEATURE_SUPPORTED;
+  pSysCapInfo->RenameNsSupported = FEATURE_NOT_SUPPORTED;
 
   /**
     The UEFI driver does not support this feature
@@ -4927,11 +4990,12 @@ GetSystemCapabilitiesInfo(
 #ifdef OS_BUILD
   pSysCapInfo->EraseDeviceDataSupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->EnableDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
-  pSysCapInfo->DisableDeviceSecuritySupported = FEATURE_SUPPORTED;
+  pSysCapInfo->DisableDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->UnlockDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_NOT_SUPPORTED;
   pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_NOT_SUPPORTED;
+  pSysCapInfo->ChangeMasterPassphraseSupported = FEATURE_NOT_SUPPORTED;
 #else
   pSysCapInfo->EraseDeviceDataSupported = FEATURE_SUPPORTED;
   pSysCapInfo->EnableDeviceSecuritySupported = FEATURE_SUPPORTED;
@@ -4940,61 +5004,18 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->FreezeDeviceSecuritySupported = FEATURE_SUPPORTED;
   pSysCapInfo->ChangeDevicePassphraseSupported = FEATURE_SUPPORTED;
   pSysCapInfo->MasterEraseDeviceDataSupported = FEATURE_SUPPORTED;
-#endif
-
   pSysCapInfo->ChangeMasterPassphraseSupported = FEATURE_SUPPORTED;
+#endif
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
 
-/**
-  This function fills the opcode and subopcode for the FV Firmware command.
-  After that it sends the command - update or update and execute, depending on the Exec flag.
-
-  The caller must ensure, that the LargeInputPayloadSize is set and the buffer is already copied to the command.
-
-  @param[in] pDimm Pointer to DIMM
-  @param[in,out] pPassThruCommand the pointer to the allocated command. After completion the FV response is
-    in the structure, so the caller needs to read it after calling this function.
-
-  @retval EFI_SUCCESS if the command was send successfully.
-  @retval the PassThru function from the PassThruProtocol return values.
-**/
-STATIC
-EFI_STATUS
-EFIAPI
-SendUpdatePassThru(
-  IN     DIMM *pDimm,
-  IN OUT FW_CMD *pPassThruCommand
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  if (pDimm == NULL || pPassThruCommand == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  pPassThruCommand->Opcode = PtUpdateFw;       //!< Firmware update category
-  pPassThruCommand->SubOpcode = SubopUpdateFw; //!< Execute the firmware image
-  ReturnCode = PassThru(pDimm, pPassThruCommand, PT_UPDATEFW_TIMEOUT_INTERVAL);
-
-  if (EFI_ERROR(ReturnCode)) {
-    if (FW_ERROR(pPassThruCommand->Status)) {
-      FW_CMD_ERROR_TO_EFI_STATUS(pPassThruCommand, ReturnCode);
-    }
-    goto Finish;
-  }
-
-Finish:
-  return ReturnCode;
-}
 
 EFI_STATUS
 ValidateImageVersion(
-  IN       FW_IMAGE_HEADER *pImage,
+  IN       NVM_FW_IMAGE_HEADER *pImage,
   IN       BOOLEAN Force,
   IN       DIMM *pDimm,
       OUT  NVM_STATUS *pNvmStatus
@@ -5047,7 +5068,7 @@ ValidateImageVersion(
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
-    if (Bsr.Separated_Current_FIS.OIE != DIMM_BSR_OIE_ENABLED) {
+    if (Bsr.Separated_Current_FIS.SVNDE != DIMM_BSR_SVNDE_ENABLED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
       ReturnCode = EFI_ABORTED;
       goto Finish;
@@ -5092,396 +5113,9 @@ Finish:
   return ReturnCode;
 }
 
-/**
-  Update firmware or training data of a specified NVDIMM over SMBUS
-
-  @param[in] DimmPid Dimm ID of a NVDIMM on which update is to be performed
-  @param[in] pImageBuffer is a pointer to FW image
-  @param[in] ImageBufferSize is Image size in bytes
-  @param[in] Force flag suppresses warning message in case of attempted downgrade
-
-  @param[out] pNvmStatus NVM status code
-
-  @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-  @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-  @retval EFI_DEVICE_ERROR Unable to communicate with PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-  @retval EFI_ACCESS_DENIED When the firmware major API version is lower than the current on the DIMM
-  @retval EFI_SUCCESS Update has completed successfully
-**/
-STATIC
-EFI_STATUS
-UpdateSmbusDimmFw(
-  IN     UINT16 DimmPid,
-  IN     CONST VOID *pImageBuffer,
-  IN     UINT64 ImageBufferSize,
-  IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus,
-     OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pPassThruCommand = NULL;
-  DIMM *pCurrentDimm = NULL;
-  FW_IMAGE_HEADER *pFileHeader = NULL;
-  CHAR16 *pErrorMessage = NULL;
-  UINT64 PacketsCounter = 0;
-  UINT16 CurrentPacket = 0;
-  FW_SMALL_PAYLOAD_UPDATE_PACKET FwUpdatePacket;
-  UINT8 Percent = 0;
-
-  NVDIMM_ENTRY();
-
-  ZeroMem(&FwUpdatePacket, sizeof(FwUpdatePacket));
-
-  if (pImageBuffer == NULL || pCommandStatus == NULL || pNvmStatus == NULL) {
-    goto FinishClean;
-  }
-  pFileHeader = (FW_IMAGE_HEADER *) pImageBuffer;
-
-// upload FW image to specified DIMMs
-  pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pCurrentDimm == NULL) {
-    *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
-    ReturnCode = EFI_NOT_FOUND;
-    goto FinishClean;
-  }
-
-  if (!ValidateImage(pFileHeader, ImageBufferSize, &pErrorMessage)) {
-    *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
-    ReturnCode = EFI_ABORTED;
-    goto Finish;
-  }
-
-  /**
-    Prepare the FV PassThru command
-  **/
-  pPassThruCommand = AllocateZeroPool(sizeof(*pPassThruCommand));
-  if (pPassThruCommand == NULL) {
-    NVDIMM_DBG("Failed on allocating the command, NULL returned.");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  PacketsCounter = ImageBufferSize / UPDATE_FIRMWARE_DATA_PACKET_SIZE;
-  if (PacketsCounter > FW_UPDATE_SP_MAXIMUM_PACKETS || PacketsCounter < FW_UPDATE_SP_MINIMUM_PACKETS) {
-    NVDIMM_DBG("The buffer size divided by packet size gave too many packets: packet size - %d got packets - %d.\n",
-      UPDATE_FIRMWARE_DATA_PACKET_SIZE, PacketsCounter);
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  pPassThruCommand->InputPayloadSize = sizeof(FwUpdatePacket);
-  FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SMALL_PAYLOAD_SELECTOR;
-
-  FwUpdatePacket.TransactionType = FW_UPDATE_INIT_TRANSFER;
-  FwUpdatePacket.PacketNumber = CurrentPacket;
-
-  CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-
-  CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-  CurrentPacket++;
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-  if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-    goto Finish;
-  }
-
-  while (CurrentPacket < (PacketsCounter - 1)) {
-    Percent = (UINT8)((CurrentPacket*100)/PacketsCounter);
-    SetObjProgress(pCommandStatus, pCurrentDimm->DeviceHandle.AsUint32, Percent);
-
-    FwUpdatePacket.TransactionType = FW_UPDATE_CONTINUE_TRANSFER;
-    FwUpdatePacket.PacketNumber = CurrentPacket;
-
-    CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-    CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-    CurrentPacket++;
-
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-    if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      goto Finish;
-    }
-  }
-
-  FwUpdatePacket.TransactionType = FW_UPDATE_END_TRANSFER;
-  FwUpdatePacket.PacketNumber = CurrentPacket;
-
-  CopyMem(&FwUpdatePacket.Data, (UINT8 *) pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-  CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-
-  ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-  if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-    NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-    goto Finish;
-  }
-
-  pCurrentDimm->RebootNeeded = TRUE;
-
-  *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  ClearNvmStatus(GetObjectStatus(pCommandStatus, pCurrentDimm->DeviceHandle.AsUint32), NVM_OPERATION_IN_PROGRESS);
-
-FinishClean:
-  FREE_POOL_SAFE(pPassThruCommand);
-  FREE_POOL_SAFE(pErrorMessage);
-
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Update firmware or training data of a specified NVDIMM
-
-  @param[in] DimmPid Dimm ID of a NVDIMM on which update is to be performed
-  @param[in] pImageBuffer is a pointer to FW image
-  @param[in] ImageBufferSize is Image size in bytes
-  @param[in] Force flag suppresses warning message in case of attempted downgrade
-
-  @param[out] pNvmStatus NVM status code
-
-  @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-  @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
-  @retval EFI_DEVICE_ERROR Unable to communicate with PassThru protocol
-  @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
-  @retval EFI_ACCESS_DENIED When the firmware major API version is lower than the current on the DIMM
-  @retval EFI_SUCCESS Update has completed successfully
-**/
-EFI_STATUS
-EFIAPI
-UpdateDimmFw(
-  IN     UINT16 DimmPid,
-  IN     CONST VOID *pImageBuffer,
-  IN     UINT64 ImageBufferSize,
-  IN     BOOLEAN Force,
-     OUT NVM_STATUS *pNvmStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  FW_CMD *pPassThruCommand = NULL;
-  DIMM *pCurrentDimm = NULL;
-  FW_IMAGE_HEADER *pFileHeader = NULL;
-  CHAR16 *pErrorMessage = NULL;
-  FW_SMALL_PAYLOAD_UPDATE_PACKET FwUpdatePacket;
-
-
-
-  UINT64 PacketsCounter = 0;
-  UINT16 CurrentPacket = 0;
-#ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
-  // TODO: These are needed in small payload too
-  // The flows (including UpdateSmbusDimmFw()) should all be merged and
-  // moved to Dimm.c in the style of FwCmdGetFwDebugLog().
-  UINT8 ArsStatus = 0;
-  UINT8 CurrentRetryCount = 0;
-#endif
-
-  NVDIMM_ENTRY();
-
-  SetMem(&FwUpdatePacket, sizeof(FwUpdatePacket), 0x0);
-
-  if (pImageBuffer == NULL || pNvmStatus == NULL) {
-    NVDIMM_DBG("an input buffer is null\n");
-    goto Finish;
-}
-  pFileHeader = (FW_IMAGE_HEADER *)pImageBuffer;
-
-  // upload FW image to specified DIMMs
-  pCurrentDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
-  if (pCurrentDimm == NULL) {
-    *pNvmStatus = NVM_ERR_DIMM_NOT_FOUND;
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
-
-  if (!IsDimmManageable(pCurrentDimm)) {
-    *pNvmStatus = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if (!ValidateImage(pFileHeader, ImageBufferSize, &pErrorMessage)) {
-    *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_VALID;
-    ReturnCode = EFI_ABORTED;
-    goto Finish;
-  }
-
-  /**
-    Prepare the FV PassThru command
-  **/
-  pPassThruCommand = AllocateZeroPool(sizeof(*pPassThruCommand));
-  if (pPassThruCommand == NULL) {
-    NVDIMM_DBG("Failed on allocating the command, NULL returned.\n");
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  // Clear out and initialize fw update packet
-  // Still need to send full small payload even in large payload fw update
-  ZeroMem(&FwUpdatePacket, sizeof(FwUpdatePacket));
-  pPassThruCommand->InputPayloadSize = sizeof(FwUpdatePacket);
-  FwUpdatePacket.TransactionType = FW_UPDATE_INIT_TRANSFER;
-  pPassThruCommand->OutputPayloadSize = 0;
-
-#ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
-  if (IsLargePayloadAvailable(pCurrentDimm)) {
-    FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_LARGE_PAYLOAD_SELECTOR;
-    pPassThruCommand->LargeInputPayloadSize = (UINT32)ImageBufferSize;
-    CopyMem_S(pPassThruCommand->LargeInputPayload, sizeof(pPassThruCommand->LargeInputPayload), pImageBuffer, ImageBufferSize);
-    CopyMem_S(pPassThruCommand->InputPayload, sizeof(pPassThruCommand->InputPayload), &FwUpdatePacket, sizeof(FwUpdatePacket));
-    do {
-      pPassThruCommand->Status = 0;
-#ifdef OS_BUILD
-      pPassThruCommand->DsmStatus = 0;
-#endif
-      ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-#ifdef OS_BUILD
-      NVDIMM_DBG("SendUpdatePassThru: Device %x, RetVal %x, MB Status %x, DSM Status %x\n", pCurrentDimm->DeviceHandle, ReturnCode, pPassThruCommand->Status, pPassThruCommand->DsmStatus);
-#else
-      NVDIMM_DBG("SendUpdatePassThru: Device %x, RetVal %x, MB Status %x\n", pCurrentDimm->DeviceHandle, ReturnCode, pPassThruCommand->Status);
-#endif
-#ifdef OS_BUILD
-      if (pPassThruCommand->DsmStatus == DSM_RETRY_SUGGESTED) {
-        pPassThruCommand->Status = FW_DEVICE_BUSY;
-      }
-#endif
-      if (EFI_ERROR(ReturnCode)) {
-        if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-          if (++CurrentRetryCount < MAX_FW_UPDATE_RETRY_ON_DEV_BUSY) {
-            ReturnCode = FwCmdGetARS(pCurrentDimm, &ArsStatus);
-            if (EFI_ERROR(ReturnCode)) {
-              NVDIMM_DBG("Failed to retrieve ARS status.\n");
-              *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-              goto Finish;
-            }
-            if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
-              NVDIMM_DBG("ARS in progress.\n");
-              FwCmdDisableARS(pCurrentDimm);
-            }
-            continue;
-          }
-          else {
-            *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-          }
-        }
-        else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-          NVDIMM_DBG("FW Update failed, FW already occurred\n");
-          *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-        }
-        else {
-#ifdef OS_BUILD
-          NVDIMM_DBG("FW Update failed, operation failed (status - %x), (dsmstatus - %x)\n", pPassThruCommand->Status, pPassThruCommand->DsmStatus);
-#else
-          NVDIMM_DBG("FW Update failed, operation failed (status - %x)\n", pPassThruCommand->Status);
-#endif
-          *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-        }
-        goto Finish;
-      }
-    } while (pPassThruCommand->Status == FW_DEVICE_BUSY && CurrentRetryCount < MAX_FW_UPDATE_RETRY_ON_DEV_BUSY);
-  }
-  else {
-#endif
-    FwUpdatePacket.PayloadTypeSelector = FW_UPDATE_SMALL_PAYLOAD_SELECTOR;
-    if (ImageBufferSize % UPDATE_FIRMWARE_DATA_PACKET_SIZE != 0) {
-      NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-    PacketsCounter = ImageBufferSize / UPDATE_FIRMWARE_DATA_PACKET_SIZE;
-    if (PacketsCounter > FW_UPDATE_SP_MAXIMUM_PACKETS || PacketsCounter < FW_UPDATE_SP_MINIMUM_PACKETS) {
-      NVDIMM_DBG("The buffer size divided by packet size gave too many packets: packet size - %d got packets - %d.\n",
-        UPDATE_FIRMWARE_DATA_PACKET_SIZE, PacketsCounter);
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    FwUpdatePacket.PacketNumber = CurrentPacket;
-    CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-    CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-    CurrentPacket++;
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-    if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-        *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-      }
-      else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      }
-      else {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      }
-      goto Finish;
-    }
-
-    while (CurrentPacket < (PacketsCounter - 1)) {
-      FwUpdatePacket.TransactionType = FW_UPDATE_CONTINUE_TRANSFER;
-      FwUpdatePacket.PacketNumber = CurrentPacket;
-      CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-      CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-      CurrentPacket++;
-
-      ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-      if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-        NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-        if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-          *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-        }
-        else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-          *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-        }
-        else {
-          *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-        }
-        goto Finish;
-      }
-#ifndef WA_UPDATE_FIRMWARE_VIA_SMALL_PAYLOAD
-    }
-#endif
-
-    FwUpdatePacket.TransactionType = FW_UPDATE_END_TRANSFER;
-    FwUpdatePacket.PacketNumber = CurrentPacket;
-    CopyMem(&FwUpdatePacket.Data, (UINT8 *)pImageBuffer + (UPDATE_FIRMWARE_DATA_PACKET_SIZE * CurrentPacket), UPDATE_FIRMWARE_DATA_PACKET_SIZE);
-    CopyMem(pPassThruCommand->InputPayload, &FwUpdatePacket, sizeof(FwUpdatePacket));
-    ReturnCode = SendUpdatePassThru(pCurrentDimm, pPassThruCommand);
-    if (EFI_ERROR(ReturnCode) || FW_ERROR(pPassThruCommand->Status)) {
-      NVDIMM_DBG("Failed on PassThru, efi_status=" FORMAT_EFI_STATUS " status=%d", ReturnCode, pPassThruCommand->Status);
-      if (pPassThruCommand->Status == FW_DEVICE_BUSY) {
-        *pNvmStatus = NVM_ERR_BUSY_DEVICE;
-      }
-      else if (pPassThruCommand->Status == FW_UPDATE_ALREADY_OCCURED) {
-        *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
-      }
-      else {
-        *pNvmStatus = NVM_ERR_OPERATION_FAILED;
-      }
-      goto Finish;
-    }
-  }
-
-  pCurrentDimm->RebootNeeded = TRUE;
-
-  *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  FREE_POOL_SAFE(pPassThruCommand);
-  FREE_POOL_SAFE(pErrorMessage);
-
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
 /*
  * Helper function for writing a spi image to a backup file.
- * Does note overwrite an existing file
+ * Does not overwrite an existing file
  */
 EFI_STATUS
 DebugWriteSpiImageToFile(
@@ -5528,17 +5162,17 @@ Finish:
 }
 
 /**
-  Recover firmware of a specified NVDIMM
+  Flash new SPI image to a specified DCPMM
 
-  @param[in] DimmPid Dimm ID of a NVDIMM on which recovery is to be performed
+  @param[in] DimmPid Dimm ID of a DCPMM on which recovery is to be performed
   @param[in] pNewSpiImageBuffer is a pointer to new SPI FW image
-  @param[in] ImageBufferSize is Image size in bytes
+  @param[in] ImageBufferSize is SPI image size in bytes
 
   @param[out] pNvmStatus NVM error code
   @param[out] pCommandStatus  command status list
 
   @retval EFI_INVALID_PARAMETER One of parameters provided is not acceptable
-  @retval EFI_NOT_FOUND there is no NVDIMM with such Pid
+  @retval EFI_NOT_FOUND there is no DCPMM with such Pid
   @retval EFI_DEVICE_ERROR Unable to communicate with Dimm SPI
   @retval EFI_OUT_OF_RESOURCES Unable to allocate memory for a data structure
   @retval EFI_ACCESS_DENIED When SPI access is not unlocked
@@ -5559,8 +5193,8 @@ RecoverDimmFw(
 #ifndef OS_BUILD
   DIMM *pCurrentDimm = NULL;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  SPI_DIRECTORY_GEN2 *pSpiDirectoryNewSpiImageBuffer;
-  SPI_DIRECTORY_GEN2 SpiDirectoryTarget;
+  NVM_SPI_DIRECTORY_GEN2 *pSpiDirectoryNewSpiImageBuffer;
+  NVM_SPI_DIRECTORY_GEN2 SpiDirectoryTarget;
   UINT8 *pFconfigRegionNewSpiImageBuffer = NULL;
   UINT8 *pFconfigRegionTemp = NULL;
   UINT16 DeviceId;
@@ -5571,7 +5205,7 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  pSpiDirectoryNewSpiImageBuffer = (SPI_DIRECTORY_GEN2 *) pNewSpiImageBuffer;
+  pSpiDirectoryNewSpiImageBuffer = (NVM_SPI_DIRECTORY_GEN2 *) pNewSpiImageBuffer;
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **) &pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
@@ -5585,10 +5219,10 @@ RecoverDimmFw(
     goto Finish;
   }
 
-  ReturnCode = SpiCheckAccess(pCurrentDimm);
+  ReturnCode = SpiFlashAccessible(pCurrentDimm);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Spi access is not enabled on DIMM 0x%x", pCurrentDimm->DeviceHandle.AsUint32);
-    *pNvmStatus = NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED;
+    *pNvmStatus = NVM_ERR_SPI_ACCESS_NOT_ENABLED;
     goto Finish;
   }
 
@@ -5648,13 +5282,28 @@ RecoverDimmFw(
   DebugWriteSpiImageToFile(pWorkingDirectory, pCurrentDimm->DeviceHandle.AsUint32, pNewSpiImageBuffer, ImageBufferSize);
   ///////////////////////////////////////////////////
 
-  CHECK_RESULT(SpiEraseChip(pCurrentDimm, pCommandStatus), Finish);
+  CHECK_RESULT_SET_NVM_STATUS(SpiEraseChip(pCurrentDimm), pNvmStatus, NVM_ERR_SPI_ACCESS_NOT_ENABLED, Finish);
 
-  CHECK_RESULT(SpiWrite(pCurrentDimm, pNewSpiImageBuffer, (UINT32)ImageBufferSize,
-      SPI_START_ADDRESS, FALSE, pCommandStatus), Finish);
+  // Only using pCommandStatus for providing progress. Setting more detailed
+  // error codes out here
+  ReturnCode = SpiWrite(pCurrentDimm, pNewSpiImageBuffer, (UINT32)ImageBufferSize,
+      SPI_START_ADDRESS, FALSE, pCommandStatus);
+  if (EFI_SUCCESS == ReturnCode) {
+    *pNvmStatus = NVM_SUCCESS_FW_RESET_REQUIRED;
+  } else if (ReturnCode == EFI_INVALID_PARAMETER) {
+    *pNvmStatus = NVM_ERR_INVALID_PARAMETER;
+  } else {
+    // pNvmStatus isn't currently an argument to SpiWrite, so just use a
+    // default error here
+    *pNvmStatus = NVM_ERR_OPERATION_FAILED;
+  }
 
 Finish:
   FREE_POOL_SAFE(pFconfigRegionTemp);
+  // If ReturnCode isn't already set with an error, use the NvmStatus error
+  if (EFI_SUCCESS == ReturnCode) {
+    MatchCliReturnCode(*pNvmStatus);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   #endif
   return ReturnCode;
@@ -5671,7 +5320,7 @@ Update firmware or training data in one or all NVDIMMs of the system
 @param[in] Examine flag enables image verification only
 @param[in] Force flag suppresses warning message in case of attempted downgrade
 @param[in] Recovery flag determine that recovery update should be performed
-@param[in] FlashSpi flag determine if the recovery update should be through the SPI
+@param[in] Reserved Set to FALSE
 
 @param[out] pFwImageInfo is a pointer to a structure containing FW image information
 need to be provided if examine flag is set
@@ -5694,8 +5343,8 @@ UpdateFw(
   IN     BOOLEAN Examine,
   IN     BOOLEAN Force,
   IN     BOOLEAN Recovery,
-  IN     BOOLEAN FlashSPI,
-  OUT FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
+  IN     BOOLEAN Reserved,
+  OUT NVM_FW_IMAGE_INFO *pFwImageInfo OPTIONAL,
   OUT COMMAND_STATUS *pCommandStatus
 )
 {
@@ -5703,7 +5352,7 @@ UpdateFw(
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
-  FW_IMAGE_HEADER *pFileHeader = NULL;
+  NVM_FW_IMAGE_HEADER *pFileHeader = NULL;
   EFI_FILE_HANDLE FileHandle = NULL;
   VOID *pImageBuffer = NULL;
   CHAR16 *pErrorMessage = NULL;
@@ -5716,6 +5365,9 @@ UpdateFw(
   UINT32 VerificationFailures = 0;
   UINT32 ForceRequiredDimms = 0;
   UINT16 SubsystemDeviceId = 0x0;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE;
+  // FlashSPI is unsupported. Will remove more completely in a future change
+  BOOLEAN FlashSPI = FALSE;
 
   EFI_STATUS LongOpStatusReturnCode = 0;
   NVM_STATUS LongOpNvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
@@ -5740,8 +5392,8 @@ UpdateFw(
     goto Finish;
   }
 
-  if (!Recovery && !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
-    pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU;
+  if (Reserved == TRUE) {
+    pCommandStatus->GeneralStatus = NVM_ERR_FLASH_SPI_NO_LONGER_SUPPORTED;
     goto Finish;
   }
 
@@ -5751,9 +5403,19 @@ UpdateFw(
   }
 
   if (Recovery && FlashSPI) {
+    // In FlashSPI scenario.
+    // For now, keep existing behavior of skipping the standard VerifyTargetDimms()
     ReturnCode = VerifyNonfunctionalTargetDimms(pDimmIds, DimmIdsCount, pDimms, &DimmsNum, pCommandStatus);
   } else {
-    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, Recovery, FALSE, pDimms, &DimmsNum, pCommandStatus);
+    if (Recovery) {
+      // Not FlashSPI.
+      // For backwards compatibility, keep "-recover" meaning
+      // "only run on non-functional DCPMMs". Reject functional DCPMMs.
+      RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NON_FUNCTIONAL;
+    }
+    // Note: By default non-functional DCPMMs are included in normal firmware
+    // update (don't require "-recover" to be passed in)
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, RequireDcpmmsBitfield, pDimms, &DimmsNum, pCommandStatus);
   }
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to verify the target dimms");
@@ -5771,7 +5433,7 @@ UpdateFw(
   FileHandle->Close(FileHandle);
   FileHandle = NULL;
 
-  // find the device id.  Must be same for all Dimmms
+  // find the device id.  Must be same for all Dimms
   if (DimmsNum > 0)
   {
     SubsystemDeviceId = pDimms[0]->SubsystemDeviceId;
@@ -5851,12 +5513,12 @@ UpdateFw(
       //spi interface over smbus
 #ifdef OS_BUILD
       // Spi check access will fail with unsupported on OS
-      SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED, TRUE);
+      SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_SPI_ACCESS_NOT_ENABLED, TRUE);
       VerificationFailures++;
 #else
-      ReturnCode = SpiCheckAccess(pDimms[Index]);
+      ReturnCode = SpiFlashAccessible(pDimms[Index]);
       if (EFI_ERROR(ReturnCode)) {
-        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_RECOVERY_ACCESS_NOT_ENABLED, TRUE);
+        SetObjStatusForDimmWithErase(pCommandStatus, pDimms[Index], NVM_ERR_SPI_ACCESS_NOT_ENABLED, TRUE);
         VerificationFailures++;
       }
       else {
@@ -5920,12 +5582,13 @@ UpdateFw(
     if (Recovery && FlashSPI) {
       ReturnCode = RecoverDimmFw(pDimms[Index]->DeviceHandle.AsUint32,
       pImageBuffer, BuffSize, pWorkingDirectory, &NvmStatus, pCommandStatus);
-    }
-    else if (Recovery) {
-      ReturnCode = UpdateSmbusDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus, pCommandStatus);
+      if (EFI_ERROR(ReturnCode))
+      {
+        NVDIMM_ERR("RecoverDimmFw returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+      }
     }
     else {
-      ReturnCode = UpdateDimmFw(pDimms[Index]->DimmID, pImageBuffer, BuffSize, Force, &NvmStatus);
+      ReturnCode = FwCmdUpdateFw(pDimms[Index], pImageBuffer, BuffSize, &NvmStatus, pCommandStatus);
     }
 
     if (ReturnCode != EFI_SUCCESS) {
@@ -6154,6 +5817,7 @@ GetActualRegionsGoalCapacities(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN IsDimmUnlocked = FALSE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -6161,7 +5825,7 @@ GetActualRegionsGoalCapacities(
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
   ZeroMem(&PcatRevision, sizeof(PcatRevision));
 
-  if (pThis == NULL || RegionGoalTemplates == NULL || pCommandStatus == NULL
+  if (pThis == NULL || pCommandStatus == NULL
     || pVolatilePercent == NULL || pConfigGoals == NULL
     || pConfigGoalsCount == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -6200,8 +5864,13 @@ GetActualRegionsGoalCapacities(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == *pVolatilePercent))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, RequireDcpmmsBitfield,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6210,7 +5879,7 @@ GetActualRegionsGoalCapacities(
     *pNumOfDimmsTargeted = DimmsNum;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6418,7 +6087,8 @@ GetActualRegionsGoalCapacities(
     /** Check if volatile memory has been requested **/
     for (Index = 0; Index < *pConfigGoalsCount; Index++) {
       if (pConfigGoals[Index].VolatileSize > 0) {
-        SetCmdStatus(pCommandStatus, NVM_WARN_2LM_MODE_OFF);
+        ReturnCode = EFI_UNSUPPORTED;
+        ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE);
         break;
       }
     }
@@ -6503,6 +6173,7 @@ CreateGoalConfig(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN SendGoalConfigWarning = FALSE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -6549,8 +6220,13 @@ CreateGoalConfig(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == VolatilePercent))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, RequireDcpmmsBitfield,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6574,11 +6250,11 @@ CreateGoalConfig(
     // goal only to have it fail to apply.
     // There are a few levels of restriction. First, we can't do anything if
     // we're restricted to BIOS mailbox only. Sometimes only DDRT is disabled,
-    // in which case we can use smbus. However, if we can't use smbus because
-    // the user specified -ddrt, then we can't do anything if there's any CAP
-    // limitation.
-    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY) ||
-        (IS_DDRT_FLAG_ENABLED(Attribs) && CapRestricted != COMMAND_ACCESS_POLICY_RESTRICTION_NONE)) {
+    // in which case we can use SMBus. However, if SMBus is not requested or
+    // enabled via -smbus flag or default configuration, then we can't do
+    // anything if there's CAP is restricted to SMBus.
+    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY)
+      || (!IS_SMBUS_FLAG_ENABLED(Attribs) && (CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY || CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY))) {
       ReturnCode = EFI_UNSUPPORTED;
       NVDIMM_WARN("Command access policy disallows Set PCD command");
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);
@@ -6631,7 +6307,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6918,7 +6594,10 @@ DeleteGoalConfig (
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -6937,7 +6616,7 @@ DeleteGoalConfig (
     }
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_VOLUME_CORRUPTED == ReturnCode) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
     goto Finish;
@@ -6999,9 +6678,7 @@ DumpGoalConfig(
   DIMM_CONFIG *pDimmConfigs = NULL;
   UINT32 DimmConfigsNum = 0;
 
-#ifdef OS_BUILD
-  MEMORY_RESOURCES_INFO MemoryResourcesInfo;
-#else
+#ifndef OS_BUILD
   UINT64 FileSize = 0;
 #endif
 
@@ -7034,7 +6711,6 @@ DumpGoalConfig(
 
 #ifdef OS_BUILD
   //triggers PCD read
-  GetMemoryResourcesInfo(pThis, &MemoryResourcesInfo);
   InitializeInterleaveSets(FALSE);
 #endif
   /** Get an array of dimms' current config **/
@@ -7177,7 +6853,11 @@ LoadGoalConfig(
   }
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
@@ -7515,7 +7195,7 @@ Finish:
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
@@ -7652,11 +7332,6 @@ Build NAMESPACE structure
   }
   pNamespace->BlockSize = BlockSize;
 
-  if (pIS == NULL) {
-    NVDIMM_DBG("No target IS for namespace");
-    FailFlag = TRUE;
-    goto Finish;
-  }
   // AppDirect namespaces initially stored with 'updating flag'.
   pNamespace->Flags.Values.Updating = TRUE;
   pNamespace->pParentIS = pIS;
@@ -8127,7 +7802,9 @@ GetErrorLog(
   }
 
   /** Verify input parameters and determine a list of DIMMs **/
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0, FALSE, FALSE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -8286,7 +7963,10 @@ SetOptionalConfigurationDataPolicy(
 
   pCommandStatus->ObjectType = ObjectTypeDimm;
 
-  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -8375,7 +8055,8 @@ RetrieveDimmRegisters(
     goto Finish;
   }
 
-  CHECK_RESULT(VerifyTargetDimms(&DimmId, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
+  CHECK_RESULT(VerifyTargetDimms(&DimmId, 1, NULL, 0,
+    REQUIRE_DCPMMS_MANAGEABLE, pDimms, &DimmsNum, pCommandStatus), Finish);
 
   ReturnCode = pThis->GetBSRAndBootStatusBitMask(pThis, pDimms[0]->DimmID, pBsr, &BootStatusBitmask);
   if (EFI_ERROR(ReturnCode)) {
@@ -8411,7 +8092,7 @@ Finish:
 EFI_STATUS
 EFIAPI
 PassThruCommand(
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
   )
 {
@@ -8429,7 +8110,7 @@ PassThruCommand(
   pDimm = GetDimmByPid(pCmd->DimmID, &gNvmDimmData->PMEMDev.Dimms);
 
   if (pDimm == NULL || !IsDimmManageable(pDimm)) {
-    NVDIMM_DBG("Could not find the specified DIMM or it's unmanageable.");
+    NVDIMM_DBG("Could not find the specified DIMM or it is unmanageable.");
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
@@ -8602,7 +8283,7 @@ FreeDimmList(
     NVDIMM_DBG("Unable to remove dimm inventory.");
   }
   if (gNvmDimmData->PMEMDev.pFitHead != NULL) {
-    FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+    FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
     gNvmDimmData->PMEMDev.pFitHead = NULL;
   }
 
@@ -8612,14 +8293,85 @@ FreeDimmList(
 }
 
 /**
+  Get Total DCPMM Volatile, AppDirect, Unconfigured, Reserved and Inaccessible capacities
+
+  @param[in]  pDimms The head of the dimm list
+  @param[out] pRawCapacity  pointer to raw capacity
+  @param[out] pVolatileCapacity  pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
+
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_LOAD_ERROR PCD CCUR table missing in one or more DIMMs
+  @retval EFI_SUCCESS Success
+**/
+EFI_STATUS
+GetTotalDcpmmCapacities(
+  IN     LIST_ENTRY *pDimms,
+  OUT UINT64 *pRawCapacity,
+  OUT UINT64 *pVolatileCapacity,
+  OUT UINT64 *pAppDirectCapacity,
+  OUT UINT64 *pUnconfiguredCapacity,
+  OUT UINT64 *pReservedCapacity,
+  OUT UINT64 *pInaccessibleCapacity
+)
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+  UINT64 RawCapacity = 0;
+  UINT64 VolatileCapacity = 0;
+  UINT64 AppDirectCapacity = 0;
+  UINT64 UnconfiguredCapacity = 0;
+  UINT64 ReservedCapacity = 0;
+  UINT64 InaccessibleCapacity = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pDimms == NULL || pRawCapacity == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL ||
+    pReservedCapacity == NULL || pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // All shall be zero to start
+  *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
+
+  LIST_FOR_EACH(pDimmNode, pDimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+
+    ReturnCode = GetDcpmmCapacities(pDimm->DimmID, &RawCapacity, &VolatileCapacity,
+      &AppDirectCapacity, &UnconfiguredCapacity, &ReservedCapacity, &InaccessibleCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Failed to retrieve capacities for DIMM: 0x%04x", pDimm->DeviceHandle.AsUint32);
+      goto Finish;
+    }
+
+    *pRawCapacity += RawCapacity;
+    *pVolatileCapacity += VolatileCapacity;
+    *pReservedCapacity += ReservedCapacity;
+    *pAppDirectCapacity += AppDirectCapacity;
+    *pInaccessibleCapacity += InaccessibleCapacity;
+    *pUnconfiguredCapacity += UnconfiguredCapacity;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
   Gather capacities from dimm
 
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pVolatileCapacity required volatile capacity
-  @param[out] pAppDirectCapacity required appdirect capacity
-  @param[out] pUnconfiguredCapacity required unconfigured capacity
-  @param[out] pReservedCapacity required reserved capacity
-  @param[out] pInaccessibleCapacity required inaccessible capacity
+  @param[out] pRawCapacity pointer to raw capacity
+  @param[out] pVolatileCapacity pointer to volatile capacity
+  @param[out] pAppDirectCapacity pointer to appdirect capacity
+  @param[out] pUnconfiguredCapacity pointer to unconfigured capacity
+  @param[out] pReservedCapacity pointer to reserved capacity
+  @param[out] pInaccessibleCapacity pointer to inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval Other errors failure of FW commands
@@ -8627,8 +8379,9 @@ FreeDimmList(
 **/
 EFI_STATUS
 EFIAPI
-GetCapacities(
+GetDcpmmCapacities(
   IN     UINT16 DimmPid,
+     OUT UINT64 *pRawCapacity,
      OUT UINT64 *pVolatileCapacity,
      OUT UINT64 *pAppDirectCapacity,
      OUT UINT64 *pUnconfiguredCapacity,
@@ -8636,70 +8389,94 @@ GetCapacities(
      OUT UINT64 *pInaccessibleCapacity
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
-  UINT64 VolatileCapacity = 0;
-  UINT64 AppDirectCapacity = 0;
-  UINT64 ReservedCapacity = 0;
   MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
   pDimm = GetDimmByPid(DimmPid, &gNvmDimmData->PMEMDev.Dimms);
 
-  if (pDimm == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL || pReservedCapacity == NULL ||
-      pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+  if (pDimm == NULL || pRawCapacity == NULL || pVolatileCapacity == NULL || pUnconfiguredCapacity == NULL ||
+      pReservedCapacity == NULL || pAppDirectCapacity == NULL || pInaccessibleCapacity == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   // All shall be zero to start
-  *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
-  ReturnCode = CurrentMemoryMode(&CurrentMode);
+  *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
 
+  *pRawCapacity = pDimm->RawCapacity;
+
+  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+    *pInaccessibleCapacity = pDimm->RawCapacity;
+    goto Finish;
+  }
+
+#ifdef OS_BUILD
+  ReturnCode = GetDimmMappedMemSize(pDimm);
+  if (EFI_DEVICE_ERROR == ReturnCode) {
+    NVDIMM_WARN("Failed to retrieve PCD data on DIMM: 04x%x", pDimm->DeviceHandle.AsUint32);
+  }
+  else if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+#endif // OS_BUILD
+
+  // PCD CCUR table missing in DIMM
+  if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to determine current memory mode");
     goto Finish;
   }
 
-  if (pDimm->Configured) {
-    VolatileCapacity = pDimm->MappedVolatileCapacity;
-    ReservedCapacity = GetReservedCapacity(pDimm);
-    AppDirectCapacity = pDimm->MappedPersistentCapacity;
-  } else {
-    if (MEMORY_MODE_2LM == CurrentMode) {
-      VolatileCapacity = ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
-      ReservedCapacity = GetReservedCapacity(pDimm);
-    }
-  }
-  // PM partition inaccessible due to alignment/rounding
-  *pInaccessibleCapacity = pDimm->PmCapacity - AppDirectCapacity - ReservedCapacity;
-  *pReservedCapacity = ReservedCapacity;
-
-  if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
-    *pVolatileCapacity += VolatileCapacity;
-  } else {
-    // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
-    *pInaccessibleCapacity += ROUNDDOWN(pDimm->VolatileCapacity, REGION_VOLATILE_SIZE_ALIGNMENT_B);
-  }
-
-  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
-    *pAppDirectCapacity = AppDirectCapacity;
-  } else {
-    *pInaccessibleCapacity += AppDirectCapacity;
-  }
-
-  if ((MEMORY_MODE_2LM != CurrentMode) && !pDimm->Configured) {
+  if (pDimm->NonFunctional || IsDimmInUnmappedPopulationViolation(pDimm)) {
+    // DIMM not mapped into SPA space
+    *pInaccessibleCapacity = pDimm->RawCapacity;
+    // No useable capacity
+    *pAppDirectCapacity = *pReservedCapacity = *pUnconfiguredCapacity = *pVolatileCapacity = 0;
+    goto Finish;
+  } else if ((MEMORY_MODE_2LM != CurrentMode) && !pDimm->Configured) {
     //DIMM is unconfigured and system is in 1LM mode
     *pUnconfiguredCapacity = pDimm->RawCapacity;
     // No useable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
+    goto Finish;
   } else {
     // Any capacity not mapped to a partition
-    *pInaccessibleCapacity += pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
-
+    *pInaccessibleCapacity = pDimm->RawCapacity - pDimm->VolatileCapacity - pDimm->PmCapacity;
   }
 
-  ReturnCode = EFI_SUCCESS;
+  // Calculate Volatile Capacity
+  if ((pDimm->SkuInformation.MemoryModeEnabled == MODE_ENABLED) && (MEMORY_MODE_2LM == CurrentMode)) {
+    *pVolatileCapacity = pDimm->MappedVolatileCapacity;
+    *pInaccessibleCapacity += pDimm->VolatileCapacity - pDimm->MappedVolatileCapacity;
+  } else {
+    // 1LM so none of the partitioned volatile is mapped. Set it as inaccessible.
+    *pInaccessibleCapacity += pDimm->VolatileCapacity;
+  }
+
+  // Calculate AppDirect Capacity
+  if (pDimm->SkuInformation.AppDirectModeEnabled == MODE_ENABLED) {
+    *pAppDirectCapacity = pDimm->MappedPersistentCapacity;
+
+    // Calculate Reserved Capacity
+    ReturnCode = GetReservedCapacity(pDimm, pReservedCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve DCPMM reserved capacity.");
+      goto Finish;
+    }
+
+    // PM partition inaccessible due to alignment/rounding
+    *pInaccessibleCapacity += pDimm->PmCapacity - pDimm->MappedPersistentCapacity - *pReservedCapacity;
+  } else {
+    *pInaccessibleCapacity += pDimm->PmCapacity;
+  }
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -8710,73 +8487,92 @@ Finish:
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
+  @param[out] pDDRInaccessibleCapacity Pointer to value of the DDR inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_DEVICE_ERROR Value gathered from cache is larger than the available memory
+  @retval EFI_DEVICE_ERROR Total mapped DCPMM Persistent & Volatile capacity is larger than total mapped memory
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
 EFIAPI
 GetDDRCapacities(
-  OUT UINT64 *pDDRRawCapacity,
-  OUT UINT64 *pDDRCacheCapacity,
-  OUT UINT64 *pDDRVolatileCapacity
+  IN     UINT16 SocketId,
+     OUT UINT64 *pDDRRawCapacity,
+     OUT UINT64 *pDDRCacheCapacity OPTIONAL,
+     OUT UINT64 *pDDRVolatileCapacity OPTIONAL,
+     OUT UINT64 *pDDRInaccessibleCapacity OPTIONAL
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT64 CacheSize = 0;
-  UINT64 PhysicalSize = 0;
-  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
+  UINT64 CurrentCachedMemorySize = 0;
+  UINT64 SocketSkuTotalMappedMemory = 0;
+  UINT64 DDRPhysicalSize = 0;
+  UINT64 DcpmmRawCapacity = 0;
+  UINT64 DcpmmVolatileCapacity = 0;
+  UINT64 DcpmmAppDirectCapacity = 0;
+  UINT64 DcpmmUnconfiguredCapacity = 0;
+  UINT64 DcpmmReservedCapacity = 0;
+  UINT64 DcpmmInaccessibleCapacity = 0;
 
   NVDIMM_ENTRY();
 
-  if (NULL == pDDRRawCapacity || NULL == pDDRCacheCapacity || NULL == pDDRVolatileCapacity) {
-    NVDIMM_DBG("A pointer is null.");
-    goto Finish;
-  }
-
-  ReturnCode = CurrentMemoryMode(&CurrentMode);
-
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to determine current memory mode.");
+  if (pDDRRawCapacity == NULL ||
+    (pDDRInaccessibleCapacity != NULL && (pDDRCacheCapacity == NULL || pDDRVolatileCapacity == NULL))) {
+    NVDIMM_DBG("Invalid parameter");
     goto Finish;
   }
 
   // Get total physical size of all non-DCPMM DIMMs through PMTT
-  ReturnCode = GetDDRPhysicalSize(&PhysicalSize);
+  ReturnCode = GetDDRPhysicalSize(SocketId, &DDRPhysicalSize);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not retrieve memory capacity.");
     goto Finish;
   }
-  *pDDRRawCapacity = PhysicalSize;
+  *pDDRRawCapacity = DDRPhysicalSize;
 
-  // Gets DDR cache size
-  if (MEMORY_MODE_2LM == CurrentMode) {
-    CacheSize = PhysicalSize;
-  }
-  else if (MEMORY_MODE_1LM == CurrentMode) {
-    CacheSize = 0;
-  }
-  else {
-    ReturnCode = EFI_UNSUPPORTED;
-    NVDIMM_DBG("Unsupported mode discovered.");
-    goto Finish;
-  }
-  *pDDRCacheCapacity = CacheSize;
-
-  // Subtract Cache from total memory size
-  if (CacheSize <= PhysicalSize) {
-    *pDDRVolatileCapacity = PhysicalSize - CacheSize;
-  }
-  else {
-    ReturnCode = EFI_DEVICE_ERROR;
-    NVDIMM_DBG("DDR cache capacity cannot be larger than DDR volatile capacity.");
-    goto Finish;
+  // Get total DDR cache size
+  if (pDDRCacheCapacity != NULL) {
+    ReturnCode = RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, &CurrentCachedMemorySize);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve Socket SKU Cached Memory");
+      goto Finish;
+    }
+    *pDDRCacheCapacity = CurrentCachedMemorySize;
   }
 
+  // Get DDR volatile capacity: Subtract mapped DCPMM Persistent & Volatile capacity from total mapped memory
+  if (pDDRVolatileCapacity != NULL) {
+    ReturnCode = RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Unable to retrieve Socket SKU Total Mapped Memory");
+      goto Finish;
+    }
+
+    ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
+      &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
+      goto Finish;
+    }
+
+    if ((DcpmmVolatileCapacity + DcpmmAppDirectCapacity) <= SocketSkuTotalMappedMemory) {
+      *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
+    }
+    else {
+      ReturnCode = EFI_DEVICE_ERROR;
+      NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
+      goto Finish;
+    }
+  }
+
+  // Get DDR inaccessible capacity
+  if (pDDRInaccessibleCapacity != NULL) {
+    *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+  }
 
   ReturnCode = EFI_SUCCESS;
 
@@ -8789,6 +8585,7 @@ Finish:
   Calculate the total size of available memory in the DIMMs
   according to the smbios and return the result.
 
+  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
   @param[out] pResult Pointer to total memory size.
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
@@ -8797,16 +8594,15 @@ Finish:
 **/
 EFI_STATUS
 GetDDRPhysicalSize(
-  OUT UINT64 *pResult
+  IN     UINT16 SocketId,
+     OUT UINT64 *pResult
 )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
+  TABLE_HEADER *pTable = NULL;
+  DIMM_INFO *pDimmInfo = NULL;
   UINT64 TotalDDRMemorySize = 0;
   UINT16 Index = 0;
-  ParsedPmttHeader *pPmttHead;
-  UINT32 DDRModulesNum;
-  PMTT_MODULE_INFO **ppDDRModules;
-  DIMM_INFO *pDimmInfo = NULL;
 
   NVDIMM_ENTRY();
 
@@ -8816,33 +8612,82 @@ GetDDRPhysicalSize(
     goto Finish;
   }
 
-  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
-  if (NULL == pPmttHead) {
-    NVDIMM_DBG("Pmtt head not found.");
-    goto Finish;
-    }
-  // Get list of DIMM modules from PMTT
-  DDRModulesNum = pPmttHead->DDRModulesNum;
-  ppDDRModules = pPmttHead->ppDDRModules;
-
-  pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
-  if (pDimmInfo == NULL) {
-    NVDIMM_WARN("Memory allocation error");
+  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to retrieve PMTT table.");
     goto Finish;
   }
-  SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
 
-  /* For every module, get its total capacity and add it to the system total capacity */
-  for (Index = 0; Index < DDRModulesNum; Index++) {
-    // Get dimm information from smbios handle
-    pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
-    ReturnCode = FillSmbiosInfo(pDimmInfo);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Smbios information could not be retrieved.");
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
+    PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
+    PMTT_COMMON_HEADER *pCommonHeader = NULL;
+    PMTT_MODULE *pModule = NULL;
+    UINT64 Offset = 0;
+    UINT16 CurrentSocketId = 0;
+
+    Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
+    //Iterate through the table and look for DDR Modules
+    while (Offset < pPMTT->Header.Length) {
+      pCommonHeader = (PMTT_COMMON_HEADER *)((UINT8 *)pPMTT + Offset);
+      if (pCommonHeader->Type == PMTT_TYPE_SOCKET) {
+        PMTT_SOCKET *pSocket = (PMTT_SOCKET *)((UINT8 *)pCommonHeader + PMTT_COMMON_HDR_LEN);
+        CurrentSocketId = pSocket->SocketId;
+        Offset += sizeof(PMTT_SOCKET) + PMTT_COMMON_HDR_LEN;
+      }
+      else if (pCommonHeader->Type == PMTT_TYPE_iMC) {
+        Offset += sizeof(PMTT_iMC) + PMTT_COMMON_HDR_LEN;
+      }
+      else if (pCommonHeader->Type == PMTT_TYPE_MODULE) {
+        pModule = (PMTT_MODULE *)(((UINT8 *)pPMTT) + Offset + PMTT_COMMON_HDR_LEN);
+        if (SocketId == SOCKET_ID_ALL || CurrentSocketId == SocketId) {
+          if (pModule->SmbiosHandle != PMTT_INVALID_SMBIOS_HANDLE) {
+            if (!(pCommonHeader->Flags & PMTT_DDR_DCPM_FLAG) && (pModule->SizeOfDimm > 0)) {
+              TotalDDRMemorySize += MIB_TO_BYTES(pModule->SizeOfDimm);
+            }
+          }
+        }
+
+        Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
+      }
+    }
+  }
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
+    ParsedPmttHeader *pPmttHead = NULL;
+    UINT32 DDRModulesNum;
+    PMTT_MODULE_INFO **ppDDRModules = NULL;
+
+    pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
+    if (NULL == pPmttHead) {
+      NVDIMM_DBG("Pmtt head not found.");
       goto Finish;
     }
-    // Get dimm capacity and add it to the total
-    TotalDDRMemorySize += pDimmInfo->CapacityFromSmbios;
+
+    // Get list of DIMM modules from PMTT
+    DDRModulesNum = pPmttHead->DDRModulesNum;
+    ppDDRModules = pPmttHead->ppDDRModules;
+
+    pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
+    if (pDimmInfo == NULL) {
+      NVDIMM_WARN("Memory allocation error");
+      goto Finish;
+    }
+    SetMem(pDimmInfo, sizeof(*pDimmInfo), 0);
+
+    /* For every module, get its total capacity and add it to the system total capacity */
+    for (Index = 0; Index < DDRModulesNum; Index++) {
+    if (SocketId != SOCKET_ID_ALL && ppDDRModules[Index]->SocketId != SocketId) {
+      continue;
+    }
+      // Get dimm information from smbios handle
+      pDimmInfo->DimmID = ppDDRModules[Index]->SmbiosHandle;
+      ReturnCode = FillSmbiosInfo(pDimmInfo);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Smbios information could not be retrieved.");
+        goto Finish;
+      }
+      // Get dimm capacity and add it to the total
+      TotalDDRMemorySize += pDimmInfo->CapacityFromSmbios;
+    }
   }
 
   // Set total to the result output
@@ -8852,6 +8697,7 @@ GetDDRPhysicalSize(
 
 Finish:
   FREE_POOL_SAFE(pDimmInfo);
+  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -8980,6 +8826,11 @@ MapSockets(
   LIST_ENTRY *pNode = NULL;
 #endif
 
+  if (NULL == pPmttInfo) {
+    NVDIMM_ERR("Invalid Parameter");
+    return;
+  }
+
   InitializeListHead(pPmttInfo);
 
   ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
@@ -9017,7 +8868,7 @@ MapSockets(
               goto Finish;
             }
             DdrEntry->PmttVersion.Revision.AsUint8 = PMTT_HEADER_REVISION_1;
-            DdrEntry->DimmID = pModule->SmbiosHandle & 0xFF;
+            DdrEntry->DimmID = pModule->SmbiosHandle & SMBIOS_HANDLE_MASK;
             DdrEntry->SocketID = pSocket->SocketId;
             DdrEntry->Signature = PMTT_INFO_SIGNATURE;
             InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
@@ -9731,6 +9582,7 @@ AutomaticCreateGoal(
   UINT32 DimmsNum = 0;
   UINT32 DimmSecurityState = 0;
   UINT32 Index = 0;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
 
@@ -9772,12 +9624,18 @@ AutomaticCreateGoal(
     goto Finish;
   }
 
-  // Check for security
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  //DCPMMs in population violation are ignored from all goal requests except in the case that the goal
+  //request is for ADx1 100%.  In this case DCPMMs in population violation can be used.
+  if (!((PM_TYPE_AD_NI == PersistentMemType) && (0 == pIntelDIMMConfig->MemorySize))) {
+    RequireDcpmmsBitfield |= REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+  }
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, RequireDcpmmsBitfield,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
+  // Check for security
   for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetDimmSecurityState(ppDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
@@ -9998,7 +9856,9 @@ CheckPCDAutoConfVars(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, FALSE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10175,12 +10035,15 @@ CheckGoalStatus(
   }
 
   // Get all DIMMs
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, FALSE, TRUE, ppDimms, &DimmsNum, pCommandStatus);
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL,
+      ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -10258,7 +10121,10 @@ InjectError(
 
     pCommandStatus->ObjectType = ObjectTypeDimm;
 
-    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0, FALSE, TRUE, pDimms, &DimmsNum, pCommandStatus);
+    ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
+      REQUIRE_DCPMMS_MANAGEABLE |
+      REQUIRE_DCPMMS_FUNCTIONAL,
+      pDimms, &DimmsNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
@@ -10505,14 +10371,14 @@ GetBSRAndBootStatusBitMask(
   }
 
   // Initialize pCommandStatus and throw away eventually because API
-  // doesn't provide it and it's required for VerifyTargetDimms()
+  // doesn't provide it and it is required for VerifyTargetDimms()
   CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
-  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, TRUE, FALSE, pDimms, &DimmsNum, pCommandStatus), Finish);
+  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, REQUIRE_DCPMMS_MANAGEABLE,
+    pDimms, &DimmsNum, pCommandStatus), Finish);
 
   CHECK_RESULT(PopulateDimmBsrAndBootStatusBitmask(pDimms[0], (DIMM_BSR *)pLocalBsr, pBootStatusBitmask), Finish);
 
-  ReturnCode = EFI_SUCCESS;
 Finish:
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -10682,25 +10548,14 @@ GetCommandEffectLog(
   PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG InputPayload;
   PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG OutPayload;
   VOID *pLargeOutputPayload = NULL;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS pAttribs;
   UINT32 CelTableSize = 0;
+  BOOLEAN LargePayloadAvailable = FALSE;
 
   ZeroMem(&InputPayload, sizeof(InputPayload));
   ZeroMem(&OutPayload, sizeof(OutPayload));
 
   if (pThis == NULL) {
     NVDIMM_DBG("One or more parameters are NULL");
-    goto Finish;
-  }
-
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &pAttribs);
-  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -10711,7 +10566,8 @@ GetCommandEffectLog(
   }
 
   // Format InputPayload for small payload entry count retrieval if necessary
-  if (!IsLargePayloadAvailable(pDimm)) {
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (!LargePayloadAvailable) {
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = EntriesCount;
     InputPayload.EntryOffset = 0;
@@ -10731,10 +10587,10 @@ GetCommandEffectLog(
   }
   *ppLogEntry = (COMMAND_EFFECT_LOG_ENTRY*)pLargeOutputPayload;
 
-  if (!IsLargePayloadAvailable(pDimm)) {
+  if (!LargePayloadAvailable) {
     UINT32 EntryCountRemaining = *pEntryCount;
     UINT8 CelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) / sizeof(COMMAND_EFFECT_LOG_ENTRY));
-
+    UINT32 OutputBytes = 0;
     InputPayload.PayloadType = SmallPayload;
     InputPayload.LogAction = CelEntries;
     InputPayload.EntryOffset = 0;
@@ -10744,10 +10600,9 @@ GetCommandEffectLog(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-
-      CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, sizeof(OutPayload), &OutPayload, sizeof(OutPayload));
-
-      EntryCountRemaining -= CelEntriesPerSmallPayload;
+      OutputBytes = EntryCountRemaining > CelEntriesPerSmallPayload ? sizeof(OutPayload) : sizeof(COMMAND_EFFECT_LOG_ENTRY) * EntryCountRemaining;
+      CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, sizeof(COMMAND_EFFECT_LOG_ENTRY) * EntryCountRemaining, &OutPayload, OutputBytes);
+      EntryCountRemaining = EntryCountRemaining > CelEntriesPerSmallPayload ? EntryCountRemaining - CelEntriesPerSmallPayload : 0;
       InputPayload.EntryOffset += CelEntriesPerSmallPayload;
     }
   }

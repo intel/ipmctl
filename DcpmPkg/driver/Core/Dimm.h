@@ -13,7 +13,30 @@
 #include <IndustryStandard/SmBios.h>
 #include <NvmDimmPassThru.h>
 #include <PlatformConfigData.h>
+
+#ifndef OS_BUILD
 #include <DcpmmTypes.h>
+#else
+
+typedef enum {
+  PlaceHolder1,
+  PlaceHolder2
+} DCPMM_FIS_INTERFACE;
+
+#pragma pack(1)
+typedef struct {
+  struct {
+    UINT32   Data;
+  } Junk;
+} DCPMM_FIS_INPUT;
+
+typedef struct {
+  struct {
+    UINT32   Data;
+  } Junk;
+} DCPMM_FIS_OUTPUT;
+#pragma pack()
+#endif
 
 #ifdef OS_BUILD
 #define FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode) \
@@ -199,8 +222,16 @@ typedef struct _DIMM {
   UINT64 PmCapacity;                       //!< DIMM Capacity (Bytes) to reserve for PM
   UINT64 InaccessibleVolatileCapacity;     //!< Capacity in bytes for use as volatile memory that has not been exposed
   UINT64 InaccessiblePersistentCapacity;   //!< Capacity in bytes for use as persistent memory that has not been exposed
+
+  /**
+    Insert only mapped/healthy DimmRegions into pDimm->pIsRegions array.
+    PCD is not updated by BIOS on non-functional DIMMS. So
+    non-functional DIMMs need to be excluded to avoid false
+    indication of being in configured state.
+  **/
   struct _DIMM_REGION *pIsRegions[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNum;
+
   struct _DIMM_REGION *pIsRegionsNfit[MAX_IS_PER_DIMM];
   UINT32 IsRegionsNfitNum;
 
@@ -224,9 +255,17 @@ typedef struct _DIMM {
   BOOLEAN Configured;                           //!< true if the DIMM is configured
   UINT64 MappedVolatileCapacity;
   UINT64 MappedPersistentCapacity;
+
+  /**
+    Insert only mapped/healthy regions into pDimm->pISs array.
+    PCD is not updated by BIOS on non-functional DIMMS. So
+    non-functional DIMMs need to be excluded to avoid false
+    indication of being in configured state.
+  **/
   struct _NVM_IS *pISs[MAX_IS_PER_DIMM];
-  UINT8 ConfigStatus;                           //!< Configuration Status code
   UINT32 ISsNum;
+
+  UINT8 ConfigStatus;                           //!< Configuration Status code
   struct _NVM_IS *pISsNfit[MAX_IS_PER_DIMM];
   UINT32 ISsNfitNum;
 
@@ -260,6 +299,17 @@ typedef struct _DIMM {
   reloaded. It should not be considered current outside of initialization.
   */
   LABEL_STORAGE_AREA *pLsa;
+
+#ifdef OS_BUILD
+  /**
+    Flag to indicate that ConfigStatus, IsNew, Configured,
+    MappedVolatileCapacity & MappedPersistentCapacity values
+    have been initialized using PCD in OS.
+  **/
+  BOOLEAN PcdMappedMemInfoRead;
+#endif
+  UINT8 FwActiveApiVersionMajor;               //!< Specifies the FW Active Api major version
+  UINT8 FwActiveApiVersionMinor;               //!< Specifies the FW Active Api minor version
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')
@@ -677,7 +727,21 @@ FwCmdGetSecurityInfo(
   IN     DIMM *pDimm,
      OUT PT_GET_SECURITY_PAYLOAD *pSecurityPayload
   );
+/**
+  Is Firmware command get security Opt-In supported
+  Get security opt-in command is supported for certain
+  fw versions with certain opt-in codes
 
+  @param[in] pDimm: The DIMM to send get security opt-in command
+  @param[in] OptInCode: Opt-In Code that is requested status for
+
+  @retval BOOLEAN: return if the command is supported for opt-in code
+
+**/
+BOOLEAN IsGetSecurityOptInSupported(
+  IN     DIMM *pDimm,
+  IN     UINT16 OptInCode
+);
 /**
   Firmware command get security Opt-In
   Execute a FW command to check the security Opt-In code of a DIMM
@@ -998,6 +1062,29 @@ FwCmdSetAlarmThresholds(
   IN     DIMM *pDimm,
   IN     PT_PAYLOAD_ALARM_THRESHOLDS *pPayloadAlarmThresholds
   );
+
+/**
+  Runs and handles errors errors for firmware update over both large and
+  small payloads.
+
+  @param[in] pDimm Pointer to DIMM
+  @param[in] pImageBuffer Pointer to fw image buffer
+  @param[in] ImageBufferSize Size in bytes of fw image buffer
+  @param[out] pNvmStatus Pointer to Nvm status variable to set on error
+  @param[out] pCommandStatus optional structure containing detailed NVM error codes
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdUpdateFw(
+  IN     DIMM *pDimm,
+  IN     CONST VOID *pImageBuffer,
+  IN     UINTN ImageBufferSize,
+     OUT NVM_STATUS *pNvmStatus,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
+);
 
 /**
   Firmware command to get SMART and Health Info
@@ -1560,15 +1647,20 @@ IsDimmSkuModeMismatch(
   );
 
 /**
-  Calculate a size of capacity lost to volatile alignment and space that is not partitioned
+  Calculate a size of capacity considered Reserved. It is the aligned PM
+  capacity less the mapped AD capacity
 
   @param[in] Dimm to retrieve reserved size for
+  @param[out] pReservedCapacity pointer to reserved capacity
 
-  @retval Amount of capacity that will be reserved
+  @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_ABORTED Failure to retrieve current memory mode
+  @retval EFI_SUCCESS Success
 **/
-UINT64
+EFI_STATUS
 GetReservedCapacity(
-  IN     DIMM *pDimm
+  IN     DIMM *pDimm,
+  OUT UINT64 *pReservedCapacity
   );
 
 /**
@@ -1751,7 +1843,23 @@ FwCmdGetExtendedAdrInfo(
 );
 
 /**
-Get manageability state for Dimm
+  Firmware command to get Latch System Shutdown State
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] pExtendedAdrInfo pointer to filled payload with Latch System Shutdown State info
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetLatchSystemShutdownStateInfo(
+  IN     DIMM *pDimm,
+  OUT PT_OUTPUT_PAYLOAD_GET_LATCH_SYSTEM_SHUTDOWN_STATE *pLastSystemShutdownStateInfo
+);
+
+/**
+Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct
 
@@ -1763,7 +1871,7 @@ IsDimmManageable(
 );
 
 /**
-Get supported configuration state for Dimm
+Check if DIMM is in supported config
 
 @param[in] pDimm the DIMM struct
 
@@ -1771,6 +1879,42 @@ Get supported configuration state for Dimm
 **/
 BOOLEAN
 IsDimmInSupportedConfig(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation
+**/
+BOOLEAN
+IsDimmInPopulationViolation(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation and fully unmapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and fully unmapped
+**/
+BOOLEAN
+IsDimmInUnmappedPopulationViolation(
+  IN  DIMM *pDimm
+);
+
+/**
+Check if DIMM is in population violation and persistent memory is still mapped
+
+@param[in] pDimm the DIMM struct
+
+@retval BOOLEAN whether or not dimm is in population violation and persistent memory is still mapped
+**/
+BOOLEAN
+IsDimmInPmMappedPopulationViolation(
   IN  DIMM *pDimm
 );
 
@@ -1867,20 +2011,22 @@ EFI_STATUS GetPcdOemDataSize(
   Check if sending a large payload command over the DDRT large payload
   mailbox is possible. Used by callers often to determine chunking behavior.
 
-  @param[in] pDimm The DCPMM to retrieve information on
+  @param[in] pDimm The DCPMM to transact with
+  @param[out] Available Whether large payload is available. Pointer to boolean variable
 
-  @retval TRUE: DDRT large payload mailbox is available
-  @retval FALSE: DDRT large payload mailbox is not available
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
 **/
-BOOLEAN
+EFI_STATUS
 IsLargePayloadAvailable(
-  IN DIMM *pDimm
+  IN DIMM *pDimm,
+  OUT BOOLEAN *Available
 );
 
 EFI_STATUS
 PassThru(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
 );
 
@@ -1907,7 +2053,7 @@ FwCmdGetBsr(
 
   @param[in] pDimm to retrieve DDRT Training status from
   @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
-  @param[out] pBootStatusBitmask Pointer to the boot status bitmask
+  @param[in, out] pBootStatusBitmask Pointer to the boot status bitmask
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -1916,8 +2062,8 @@ FwCmdGetBsr(
 EFI_STATUS
 PopulateDimmBsrAndBootStatusBitmask(
   IN     DIMM *pDimm,
-  OUT DIMM_BSR *pBsr,
-  OUT UINT16 *pBootStatusBitmask
+     OUT DIMM_BSR *pBsr,
+  IN OUT UINT16 *pBootStatusBitmask OPTIONAL
 );
 
 /**
@@ -1935,7 +2081,7 @@ PopulateDimmBsrAndBootStatusBitmask(
 EFI_STATUS
 DcpmmCmd(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT32 Timeout OPTIONAL,
   IN     DCPMM_FIS_INTERFACE DcpmmInterface
 );

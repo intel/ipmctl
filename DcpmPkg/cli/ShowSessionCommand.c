@@ -14,6 +14,9 @@
 #include "Common.h"
 #include <Utility.h>
 #include <PbrDcpmm.h>
+#ifdef OS_BUILD
+#include "os.h"
+#endif
 
 #define DS_ROOT_PATH                        L"/Session"
 #define DS_TAG_PATH                         L"/Session/Tag"
@@ -89,7 +92,7 @@ struct Command ShowSessionCommand = {
   },                                                                                            //!< options
   {{SESSION_TARGET, L"", L"", TRUE, ValueEmpty}},                                               //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},                                                      //!< properties
-  L"Show basic information about session pbr file",                                             //!< help
+  L"Show information about the current playback or record (PBR) session.",                       //!< help
   ShowSession,
   TRUE,
   TRUE //exclude from PBR
@@ -135,6 +138,9 @@ ShowSession(
   }
 
   pPrinterCtx = pCmd->pPrintCtx;
+
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
 
   ReturnCode = ReadRunTimePreferences(&DisplayPreferences, DISPLAY_CLI_INFO);
   if (EFI_ERROR(ReturnCode)) {

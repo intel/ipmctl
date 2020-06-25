@@ -97,22 +97,21 @@ DeviceLocator::
 
 SocketID::
   The processor socket identifier (i.e., NUMA node) where the DIMM is installed.
-  For DRAM DIMMs, the socket identifier is "N/A".
+
+DieID::
+  The processor die identifier where the DIMM is installed.
 
 MemControllerID::
-  The associated memory controller identifier. For DRAM DIMMs, the memory
-  controller identifier is "N/A".
+  The associated memory controller identifier.
 
 ChannelID::
   The associated channel. For DRAM DIMMs, the channel identifier is "N/A".
 
 ChannelPos::
-  The DIMM position in the channel. For DRAM DIMMs, the channel position
-  identifier is "N/A".
+  The DIMM position in the channel.
 
 NodeControllerID::
-  The node controller identifier. For DRAM DIMMs, the node controller identifier
-  is "N/A".
+  The node controller identifier.
 
 BankLabel::
   The string that identifies the physically-labeled bank where the DIMM is

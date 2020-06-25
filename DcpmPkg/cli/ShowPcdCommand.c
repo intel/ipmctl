@@ -34,8 +34,8 @@ struct Command ShowPcdCommand =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional},
     {PCD_TARGET, L"", PCD_CONFIG_TARGET_VALUE L"|" PCD_LSA_TARGET_VALUE, TRUE, ValueOptional}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show pool configuration goal stored on one or more DIMMs",        //!< help
+  {{L"", L"", L"", FALSE, ValueOptional}},                                    //!< properties
+  L"Show platform configuration data (PCD) stored on one or more " PMEM_MODULES_STR L".",    //!< help
   ShowPcd,
   TRUE
 };
@@ -259,7 +259,7 @@ ShowPcd(
     &pDimmPcdInfo, &DimmPcdInfoCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Get Platform Config Data", L" on", pCommandStatus);
+    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Get Platform Config Data", CLI_INFO_ON, pCommandStatus);
     goto Finish;
   }
 

@@ -14,6 +14,9 @@
 #include "Convert.h"
 #include "Utility.h"
 #include <PbrDcpmm.h>
+#ifdef OS_BUILD
+#include "os.h"
+#endif
 
 #define SUCCESSFULLY_LOADED_BUFFER_MSG    L"Successfully loaded %d bytes to session buffer."
 
@@ -35,7 +38,7 @@ struct Command LoadSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load Recording into memory",                                         //!< help
+  L"Load a recorded (PBR) session into memory for playback.",           //!< help
   LoadSession,
   TRUE,
   TRUE
@@ -69,6 +72,9 @@ LoadSession(
   }
 
   pPrinterCtx = pCmd->pPrintCtx;
+
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
 
   // Check -source option
   if (containsOption(pCmd, SOURCE_OPTION)) {

@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
+message("cmake version: " ${CMAKE_VERSION})
+
 project(ipmctl)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -16,12 +18,12 @@ set(LIBIPMCTL_VERSION_MINOR 0)
 set(LIBIPMCTL_VERSION_PATCH 0)
 set(LIBIPMCTL_VERSION_STRING ${LIBIPMCTL_VERSION_MAJOR}.${LIBIPMCTL_VERSION_MINOR}.${LIBIPMCTL_VERSION_PATCH})
 
-set(IPMCTL_VERSION_MAJOR 01)
+set(IPMCTL_VERSION_MAJOR 02)
 set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
 set(IPMCTL_SPEC_VERSION_MAJOR 2)
-set(IPMCTL_SPEC_VERSION_MINOR 02)
+set(IPMCTL_SPEC_VERSION_MINOR 05)
 set(IPMCTL_DRAFT "-draft")
 set(IPMCTL_SPEC_VERSION_STRING ${IPMCTL_SPEC_VERSION_MAJOR}.${IPMCTL_SPEC_VERSION_MINOR}${IPMCTL_DRAFT})
 
@@ -41,7 +43,7 @@ else()
 	endif()
 
 	if(NOT GIT_FOUND OR ${GIT_RETURN_CODE})
-		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.9999)
+		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.3777)
 	endif()
 endif()
 
@@ -70,6 +72,9 @@ endif()
 if(ESX_BUILD)
 	set(OS_TYPE esx)
 	set(FILE_PREFIX esx)
+	set(CMAKE_SKIP_BUILD_RPATH FALSE)
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+	set(CMAKE_INSTALL_RPATH "/opt/intel/bin")
 	find_package(PythonInterp REQUIRED)
 elseif(UNIX)
 	set(LNX_BUILD 1)
@@ -245,7 +250,7 @@ target_include_directories(ipmctl_os_interface PUBLIC
 	src/os/nvm_api
 	src/os/s_string
 	)
-# TODO: Remove the backup winioctl.h file when the 17650+ Windows SDK is publicly released
+
 if (MSVC)
 	string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+\\.[0-9]+" "\\1" sdk_version_major $ENV{WindowsSDKVersion})
 	string(REGEX REPLACE "[0-9]+\\.([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" sdk_version_major2 $ENV{WindowsSDKVersion})
@@ -253,10 +258,7 @@ if (MSVC)
 	if (${sdk_version_major} GREATER 9 AND ${sdk_version_minor} GREATER 17650)
 		MESSAGE("Using Windows SDK 17650+")
 	else()
-		MESSAGE("Using internal winioctl.h")
-		target_include_directories(ipmctl_os_interface PUBLIC
-			src/os/win/sdk
-		)
+		MESSAGE(FATAL_ERROR "Requires Windows SDK version 17650 or newer.")
 	endif()
 endif()
 
@@ -609,27 +611,6 @@ if(LNX_BUILD)
 endif()
 
 #----------------------------------------------------------------------------------------------------
-# Documentation
-#----------------------------------------------------------------------------------------------------
-find_package(Doxygen)
-
-if(DOXYGEN_FOUND)
-
-#----------------------------------------------------------------------------------------------------
-# Generate NVM C API documentation with Doxygen
-#----------------------------------------------------------------------------------------------------
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/os/docs/Doxyfile_api.in ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api @ONLY)
-	add_custom_target(doc-api
-		mkdir -p ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
-		COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/Documentation/nvm_management_api/nvm_management_api_latex_header.tex ${CMAKE_BINARY_DIR}/docs/nvm_api/
-		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/docs/nvm_api/Doxyfile_nvm_api
-		COMMAND make -C ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api/latex pdf
-		WORKING_DIRECTORY ${ROOT}/output/${BUILD_TYPE}/docs/nvm_api
-		COMMENT "Generating API documentation with Doxygen" VERBATIM
-		)
-endif()
-
-#----------------------------------------------------------------------------------------------------
 # Generate man pages with asciidoctor
 #----------------------------------------------------------------------------------------------------
 if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
@@ -638,18 +619,14 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 
 	set(DOCUMENTATION_INPUT_FILES
 		${ROOT}/Documentation/ipmctl/ipmctl.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-device.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-memory-resources.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-socket.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-system-capabilities.txt
-		${ROOT}/Documentation/ipmctl/DIMM_Discovery/ipmctl-show-topology.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-passphrase.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-change-device-security.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-device.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-memory-resources.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-socket.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-system-capabilities.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-topology.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-create-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-delete-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-dump-goal.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-enable-device-security.txt
-		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-erase-device-data.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-load-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-show-goal.txt
 		${ROOT}/Documentation/ipmctl/Persistent_Memory_Provisioning/ipmctl-show-region.txt
@@ -664,6 +641,7 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-debug-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-inject-error.txt
@@ -673,47 +651,34 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 #		${ROOT}/Documentation/ipmctl/Debug/ipmctl-diagnostic-events.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-error-log.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-session.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-session.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-stop-session.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-load-session.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-dump-session.txt
 		)
 
-	set(MANPAGE_OUTPUT_FILES
-		${OUTPUT_DIR}/manpage/ipmctl.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-device.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-memory-resources.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-socket.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-system-capabilities.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-topology.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-device-passphrase.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-device-security.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-create-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-delete-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-enable-device-security.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-erase-device-data.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-load-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-goal.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-region.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-sensor.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-performance.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-sensor.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-change-preferences.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-support-data.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-help.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-modify-device.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-preferences.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-update-firmware.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-version.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-delete-pcd.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-dump-debug-log.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-inject-error.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-cap.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-cel.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-start-diagnostic.1.gz
-#		${OUTPUT_DIR}/manpage/ipmctl-diagnostic-events.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-acpi.1.gz
-		${OUTPUT_DIR}/manpage/ipmctl-show-error-log.1.gz
-		)
-
+	list(LENGTH DOCUMENTATION_INPUT_FILES LEN)
+	math(EXPR INPUT_LENGTH "${LEN} -1")
+	foreach(INDEX RANGE ${INPUT_LENGTH})
+		list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
+		string(REGEX MATCH "[^/]*$" MAN_BARE_FILENAME ${MAN_INPUT})
+		set(MAN_TMP_INPUT ${OUTPUT_DIR}/manpage/${MAN_BARE_FILENAME})
+		string(REGEX REPLACE "txt$" "1.gz" MAN_OUTPUT "${MAN_TMP_INPUT}")
+		list(APPEND MANPAGE_OUTPUT_FILES ${MAN_OUTPUT})
+		if(NOT ASCIIDOCTOR_FOUND)
+			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
+			add_custom_command(OUTPUT ${MAN_OUTPUT}
+				COMMENT "Clean out link markup because they are invalid in the manpages"
+				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
+				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
+				COMMAND gzip -f ${MAN_GZ_INPUT}
+				COMMAND rm -f ${MAN_TMP_INPUT}
+				COMMENT "Generating man pages"
+				DEPENDS ${MAN_INPUT}
+			)
+		endif()
+	endforeach()
 	add_custom_target(manpage ALL
 		DEPENDS ${MANPAGE_OUTPUT_FILES} ${DOCUMENTATION_INPUT_FILES}
 		)
@@ -724,22 +689,6 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 			COMMENT "Generating man pages"
 			DEPENDS ${DOCUMENTATION_INPUT_FILES}
 			)
-	else()
-		list(LENGTH DOCUMENTATION_INPUT_FILES LEN)
-		math(EXPR INPUT_LENGTH "${LEN} -1")
-		foreach(INDEX RANGE ${INPUT_LENGTH})
-			list(GET DOCUMENTATION_INPUT_FILES ${INDEX} MAN_INPUT)
-			list(GET MANPAGE_OUTPUT_FILES ${INDEX} MAN_OUTPUT)
-			string(REGEX REPLACE "\\.[^.]*$" "" MAN_GZ_INPUT ${MAN_OUTPUT})
-			string(REGEX REPLACE "1.gz$" "tmp.txt" MAN_TMP_INPUT ${MAN_OUTPUT})
-			add_custom_command(OUTPUT ${MAN_OUTPUT}
-				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
-				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
-				COMMAND gzip -f ${MAN_GZ_INPUT}
-				COMMENT "Generating man pages"
-				DEPENDS ${MAN_INPUT}
-				)
-		endforeach()
 	endif()
 endif()
 

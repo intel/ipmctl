@@ -41,8 +41,8 @@ struct Command ShowCelCommandSyntax =
     {DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show command effect log for given DIMM",                          //!< help
-  ShowCelCommand,                                                   //!< run function
+  L"Show command effect log (CEL) for one or more " PMEM_MODULES_STR L".",           //!< help
+  ShowCelCommand,                                                     //!< run function
   TRUE
 };
 
@@ -332,6 +332,7 @@ ShowCelCommand(
       PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CE_DESCRIPTION_STR, pCommandEffectDescription);
       FREE_POOL_SAFE(pCommandEffectDescription);
     }
+    FREE_POOL_SAFE(pCelEntry);
   }
 
   //Switch text output type to display as a table

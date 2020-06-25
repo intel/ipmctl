@@ -24,7 +24,6 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define NVDIMM_CURRENT_CONFIG_SIG           SIGNATURE_32('C', 'C', 'U', 'R')
 #define NVDIMM_CONFIGURATION_INPUT_SIG      SIGNATURE_32('C', 'I', 'N', '_')
 #define NVDIMM_CONFIGURATION_OUTPUT_SIG     SIGNATURE_32('C', 'O', 'U', 'T')
-#define NVDIMM_CONFIGURATION_HEADER_REVISION 1
 #define NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION 1
 #define NVDIMM_CONFIGURATION_HEADER_OEM_ID "INTEL "
 #define NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN 6
@@ -80,6 +79,7 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define CONFIG_OUTPUT_STATUS_ERROR                           2
 #define CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED         6
 #define CONFIG_OUTPUT_STATUS_CPU_MAX_MEMORY_LIMIT_VIOLATION  7
+#define CONFIG_OUTPUT_STATUS_POPULATION_ISSUE                8
 
 #define PARTITION_SIZE_CHANGE_STATUS_UNDEFINED              0
 #define PARTITION_SIZE_CHANGE_STATUS_SUCCESS                1
@@ -154,6 +154,7 @@ typedef struct {
     12 - DCPMM persistent and volatile memory is not mapped due to a population issue
     13 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
     14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
+    15 - DCPMM persistent memory mapped, but volatile memory is not mapped due to a population issue
   **/
   UINT16 ConfigStatus;
   UINT8 Reserved[2];
@@ -425,9 +426,10 @@ typedef struct {
     0 - Undefined
     1 - Config Change applied successfully
     2 - Boot time processing complete, errors found. Refer to individual records for error details
-    6 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
-    7 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
-  **/
+    6 - Goal not applied because the NM:FM ratio is not supported
+    7 - Goal not applied due to a violation of the CPU maximum memory limit
+    8 - Goal not applied due to a population issue
+    **/
   UINT8 ValidationStatus;
   UINT8 Reserved[7];
   /**

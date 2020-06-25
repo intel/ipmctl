@@ -107,15 +107,17 @@ HealthState::
   - Healthy
   - Noncritical: Maintenance is required.
   - Critical: Features or performance are degraded due to failure.
-  - Fatal: Data loss has occurred or is imminent. In this case, the
-    firmware will disable the media and access to user data and operations
-    that require use of the media will fail.
-  - Non-functional: The DCPMM is present but is non-responsive via the DDRT
-  communication path. It may be possible to communicate with this DCPMM via SMBus
-  for a subset of commands.
+  - Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
+    AIT Failure, etc) is non-recoverable and data loss has occurred or is imminent.
+	In this case, the firmware will disable the media and access to user data and
+	operations that require use of the media will fail.
+  - Non-functional: The DCPMM is present but failed to initialize and is
+	non-responsive via the DDRT communication path. It may be possible to
+	communicate with this DCPMM via SMBus for a subset of commands.
   - Unmanageable: The DCPMM is not supported by this version of
     the software
   - Unknown: Unable to determine the DCPMM health state.
+  Refer to _HealthStateReason_ for _HealthState_ details.
 
 HealthStateReason::
   Indicates why the DCPMM is in the current Health State.
@@ -127,8 +129,10 @@ HealthStateReason::
   - Percentage Remaining is 0
   - Die Failure
   - AIT DRAM disabled
-  - CAP Self-Test fail
-  - Critical internal failure
+  - CAP Self-Test failure
+  - Critical internal state failure
+  - Performance degraded
+  - CAP Self-Test communication failure
    +
   Refer to the _Intel® Optane™ DC Persistent Memory Firmware
   Interface Specification_, document number 556488, Section 4.8
@@ -147,13 +151,12 @@ ManageabilityState::
   - Unmanageable: The DCPMM is not supported by this version of
     the software.
 
-PopulationViolationState::
-  Memory configurations are evaluated based on a new setup option to
-  allow all configs, supported configs, or supported and validated configs.
-  If supported or supported and validated is selected then some memory
-  may fall outside of the configs. One of:
-  - Is in supported configuration: The DCPMM is in supported configuration.
-  - Is in population violation: The DCPMM is not in supported configuration.
+PopulationViolation::
+  Memory populations are evaluated based on the "Enforce Population POR" setup option in UEFI Firmware.
+  If enforcement of POR populations is selected, then some DCPMM memory may be in population
+  violation. See <<DCPMMs in non-POR configuration>> for details. One of:
+  - Yes: The DCPMM is in population violation.
+  - No: The DCPMM is not in population violation.
 
 PhysicalID::
   The DCPMM physical identifier (i.e., SMBIOS Type 17 handle).
@@ -277,6 +280,34 @@ LockState::
     is required to change the security state.
   - Not Supported - Security is not supported on the DCPMM.
 
+SVNDowngrade::
+  (Default) The Opt-in value of SVN Downgrade security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - Disabled
+  - Enabled
+
+SecureErasePolicy::
+  (Default) The Opt-in value of Secure erase policy opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - No Master Passphrase
+  - Master Passphrase Enabled
+
+S3ResumeOptIn::
+  (Default) The Opt-in value of S3 Resume security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - UnsecureS3
+  - SecureS3
+
+FwActivateOptIn::
+  (Default) The Opt-in value of Fw Activate security opt-in feature for DCPMM.
+  One of :
+  - Unknown
+  - Disabled
+  - Enabled
+
 FWVersion::
   (Default) The BCD-formatted revision of the active firmware in the format
   PN.RN.SV.bbbb where:
@@ -378,7 +409,6 @@ PackageSparesAvailable::
 LatchedLastShutdownStatus::
   The status of the last shutdown of the DCPMM. One or more of:
   - Unknown: The last shutdown status cannot be determined.
-  - FW Flush Complete: FW flush completed.
   - PM ADR Command Received: Power management ADR command received.
   - PM S3 Received: Power management S3 command received.
   - PM S5 Received: Power management S5 command received.
@@ -391,16 +421,16 @@ LatchedLastShutdownStatus::
   - Surprise Clock Stop Received: Surprise clock stop received.
   - Write Data Flush Complete: Write data flush completed.
   - PM S4 Received: Power management S4 command received.
-  - PM Idle Received: Power management idle received
-  - DDRT Surprise Reset Received: Surprise reset received
+  - PM Idle Received: Power management idle received.
+  - DDRT Surprise Reset Received: Surprise reset received.
+  - Extended Flush Complete.
 
 UnlatchedLastShutdownStatus::
   The status of the last shutdown status of the DCPMM. Same fields as the
-  Latched Last Shutdown Status with the only difference that LLS details 
+  Latched Last Shutdown Status with the only difference that LLS details
   on a dirty shutdown is logged, even if the Latch System Shutdown Status
   was not enabled. One or more of:
   - Unknown: The last shutdown status cannot be determined.
-  - FW Flush Complete: FW flush completed.
   - PM ADR Command: Power management ADR command received.
   - PM S3: Power management S3 command received.
   - PM S5: Power management S5 command received.
@@ -413,8 +443,9 @@ UnlatchedLastShutdownStatus::
   - Surprise Clock Stop: Surprise clock stop received.
   - Write Data Flush Complete: Write data flush completed.
   - PM S4: Power management S4 command received.
-  - PM Idle: Power management idle received
   - DDRT Surprise Reset: Surprise reset received
+  - PM Idle Received: Power management idle received.
+  - Extended Flush Complete.
 
 ThermalThrottleLossPercent::
   The average performance loss percentage due to thermal throttling
@@ -475,7 +506,9 @@ ARSStatus::
 
 OverwriteStatus::
   The overwrite DIMM operation status for the DCPMM. One of:
-  - Unknown - The overwrite DIMM operation status cannot be determined.
+  - Unknown - The overwrite DIMM operation status cannot be determined. This may
+    occur if the status gets overwritten due to a different long operation
+    running on this DCPMM.
   - Not started - An overwrite DIMM operation was not started on the last
     boot.
   - In progress - An overwrite DIMM operation is currently in progress.
@@ -531,8 +564,29 @@ BootStatus::
   functional.*
   - FW Assert - The firmware reported an assert during initialization.
 
- BootStatusRegister::
+BootStatusRegister::
   The raw hex value of the DCPMM Boot Status Register of the DCPMM
+
+LatchSystemShutdownState::
+  Status of the latch. Specifies whether the DCPMM will latch the SMART Last Shutdown Status and SMART
+  Dirty Shutdown Count.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+
+PreviousPowerCycleLatchSystemShutdownState::
+  The status of the latch during the previous power cycle.
+  - 0: Disabled - This is the default.
+  - 1: Enabled
+
+ExtendedAdrEnabled::
+  Specifies whether extended ADR flow is enabled in the FW.
+  - 0: Disabled
+  - 1: Enabled
+
+PpcExtendedAdrEnabled::
+  Specifies whether extended ADR flow was enabled in the FW during the last power cycle.
+  - 0: Disabled
+  - 1: Enabled
 
 ErrorInjectionEnabled::
   Error injection status.

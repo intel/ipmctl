@@ -74,7 +74,9 @@ ParseNfitTable(
   IN     VOID *pTable
   )
 {
+  ParsedFitHeader **ppParsedHeader = NULL; // This pointer is needed to resolve static analysis tool errors
   ParsedFitHeader *pParsedHeader = NULL;
+  ppParsedHeader = &pParsedHeader;
   NFitHeader *pNFit = NULL;
   UINT8 *pTabPointer = NULL;
   SubTableHeader *pTableHeader = NULL;
@@ -194,7 +196,7 @@ ParseNfitTable(
   goto FinishSuccess;
 
 FinishError:
-  FreeParsedNfit(pParsedHeader);
+  FreeParsedNfit(ppParsedHeader);
   pParsedHeader = NULL;
 FinishSuccess:
   NVDIMM_EXIT();
@@ -214,7 +216,9 @@ ParsePcatTable (
   IN     VOID *pTable
   )
 {
+  ParsedPcatHeader **ppParsedPcat = NULL;               // This pointer is needed to resolve static analysis tool errors
   ParsedPcatHeader *pParsedPcat = NULL;                 //!< Output Parsed PCAT structures
+  ppParsedPcat = &pParsedPcat;
   PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPcatHeader = NULL; //!< PCAT header
   PCAT_TABLE_HEADER *pPcatSubTableHeader = NULL;        //!< PCAT subtable header
   UINT32 RemainingPcatBytes = 0;
@@ -358,7 +362,7 @@ ParsePcatTable (
   goto FinishSuccess;
 
 FinishError:
-  FreeParsedPcat(pParsedPcat);
+  FreeParsedPcat(ppParsedPcat);
   pParsedPcat = NULL;
 FinishSuccess:
   NVDIMM_EXIT();
@@ -378,7 +382,9 @@ ParsePmttTable(
   IN     VOID *pTable
   )
 {
+  ParsedPmttHeader ** ppParsedPmtt = NULL;              // This pointer is needed to resolve static analysis tool errors
   ParsedPmttHeader *pParsedPmtt = NULL;                 //!< Output Parsed PMTT structures
+  ppParsedPmtt = &pParsedPmtt;
   PMTT_TABLE2 *pPmttHeader = NULL; //!< PMTT header
   PMTT_COMMON_HEADER2 *pPmttCommonTableHeader = NULL;        //!< PMTT common header
   PMTT_MODULE_INFO *pModuleInfo = NULL;
@@ -518,8 +524,7 @@ ParsePmttTable(
       // skip if Bits [3:2] are reserved
       if ((pPmttCommonTableHeader->Flags & PMTT_TYPE_RESERVED) == PMTT_TYPE_RESERVED) {
         NVDIMM_DBG("Reserved. No indication in PMTT if this module is volatile or non-volatile memory!");
-        pPmttCommonTableHeader = (PMTT_COMMON_HEADER2 *)((UINT8 *)pPmttCommonTableHeader + Length);
-        continue;
+        break;
       }
 
       pModuleInfo = (PMTT_MODULE_INFO *)AllocateZeroPool(sizeof(*pModuleInfo));
@@ -528,13 +533,14 @@ ParsePmttTable(
         goto FinishError;
       }
       pModuleInfo->Header = pModule->Header;
-      pModuleInfo->SmbiosHandle = pModule->SmbiosHandle & 0xFF;
+      pModuleInfo->SmbiosHandle = pModule->SmbiosHandle & SMBIOS_HANDLE_MASK;
       pModuleInfo->SocketId = SocketID;
       pModuleInfo->DieId = DieID;
       pModuleInfo->CpuId = CpuID;
       pModuleInfo->MemControllerId = iMCID;
       pModuleInfo->ChannelId = ChannelID;
       pModuleInfo->SlotId = SlotID;
+
       // BIT 2 is set then DCPMM or else DDR type
       if (pPmttCommonTableHeader->Flags & PMTT_DDR_DCPM_FLAG) {
         pModuleInfo->MemoryType = MEMORYTYPE_DCPM;
@@ -572,7 +578,7 @@ ParsePmttTable(
   goto FinishSuccess;
 
   FinishError:
-    FreeParsedPmtt(pParsedPmtt);
+    FreeParsedPmtt(ppParsedPmtt);
     pParsedPmtt = NULL;
   FinishSuccess:
     NVDIMM_EXIT();
@@ -722,8 +728,6 @@ CheckIsMemoryModeAllowed(
   BOOLEAN MMCanBeConfigured = FALSE;
   BOOLEAN IsDDR = FALSE;
   BOOLEAN IsDCPM = FALSE;
-  UINT32 Index1 = 0;
-  UINT32 Index2 = 0;
 
   if (pTable == NULL) {
     goto Finish;
@@ -737,6 +741,7 @@ CheckIsMemoryModeAllowed(
     PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
     UINT64 Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
     PMTT_COMMON_HEADER *pCommonHeader = (PMTT_COMMON_HEADER *)(((UINT8 *)pPMTT) + Offset);
+
     while (Offset < pPMTT->Header.Length && pCommonHeader->Type == PMTT_TYPE_SOCKET) {
       // check if socket is enabled
       if (pCommonHeader->Flags) {
@@ -786,38 +791,36 @@ CheckIsMemoryModeAllowed(
   }
   else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
     PMTT_TABLE2 *pPMTT = NULL;
+    UINT32 Index1 = 0;
+    UINT32 Index2 = 0;
+
     if (gNvmDimmData->PMEMDev.pPmttHead == NULL
-      || gNvmDimmData->PMEMDev.pPmttHead->iMCsNum == 0 || gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum == 0) {
+      || gNvmDimmData->PMEMDev.pPmttHead->iMCsNum == 0) {
       NVDIMM_DBG("Incorrect PMTT table");
       goto Finish;
     }
 
     pPMTT = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
     if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPMTT)) {
-      for (Index1 = 0; Index1 < gNvmDimmData->PMEMDev.pPmttHead->iMCsNum; Index1++) {
+      for (Index1 = 0; Index1 < gNvmDimmData->PMEMDev.pPmttHead->DDRModulesNum; Index1++) {
         for (Index2 = 0; Index2 < gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum; Index2++) {
-          if (gNvmDimmData->PMEMDev.pPmttHead->ppiMCs[Index1]->MemControllerID == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->MemControllerId) {
+          if (gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->SocketId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->SocketId &&
+            gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->DieId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->DieId &&
+            gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index1]->MemControllerId == gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[Index2]->MemControllerId) {
             IsDCPM = TRUE;
             break;
           }
         }
-        for (Index2 = 0; Index2 < gNvmDimmData->PMEMDev.pPmttHead->DDRModulesNum; Index2++) {
-          if (gNvmDimmData->PMEMDev.pPmttHead->ppiMCs[Index1]->MemControllerID == gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[Index2]->MemControllerId) {
-            IsDDR = TRUE;
-            break;
-          }
-        }
 
-        if (IsDDR && !IsDCPM) {
+        if (!IsDCPM) {
           MMCanBeConfigured = FALSE;
           goto Finish;
         }
-        IsDDR = FALSE;
         IsDCPM = FALSE;
       }
       MMCanBeConfigured = TRUE;
     }
-  } // end of socket
+  }
 
 Finish:
   return MMCanBeConfigured;
@@ -1207,7 +1210,7 @@ RdpaToSpa(
       return ReturnCode;
     }
 
-    RotationSize = pInterleaveTable->LineSize * pInterleaveTable->NumberOfLinesDescribed;
+    RotationSize = ((UINT64) pInterleaveTable->LineSize) * pInterleaveTable->NumberOfLinesDescribed;
     RotationNum = Rdpa / RotationSize;
     LineNum = (UINT32)((Rdpa % RotationSize) / pInterleaveTable->LineSize);
 
@@ -1285,7 +1288,7 @@ Finish:
   Return the current memory mode chosen by the BIOS during boot-up. 1LM is
   the fallback option and will always be available. 2LM will only be enabled
   if the AllowedMemoryMode is 2LM, there is memory configured for 2LM, and
-  it's in a BIOS-supported configuration. We read this information from the
+  it is in a BIOS-supported configuration. We read this information from the
   PCAT table provided by BIOS.
 
   @param[out] pResult The current memory mode chosen by BIOS
@@ -1618,21 +1621,19 @@ Finish:
 }
 
 /**
-  Retrieve the PCAT Socket SKU info table for a given Socket
+  Retrieve the PCAT Socket SKU Mapped Memory Limit for a given socket
 
-  @param[in] SocketId SocketID to retrieve the table for
-  @param[out] ppSocketSkuInfoTable Sku info table referenced by socket ID
-  @param[out] PCAT Table revision
+  @param[in] SocketId SocketID
+  @param[out] pMappedMemoryLimit Pointer to Mapped Memory Limit
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
-  @retval EFI_NOT_FOUND PCAT socket sku info table not found for given socketID
+  @retval EFI_NOT_FOUND PCAT socket sku mapped memory limit not found for given socketID
 **/
 EFI_STATUS
-RetrievePcatSocketSkuInfoTable(
+RetrievePcatSocketSkuMappedMemoryLimit(
   IN     UINT32 SocketId,
-  OUT    VOID **ppSocketSkuInfoTable,
-  OUT    ACPI_REVISION *pPcatRevison
+  OUT    UINT64 *pMappedMemoryLimit
   )
 {
   EFI_STATUS ReturnCode = EFI_NOT_FOUND;
@@ -1642,7 +1643,7 @@ RetrievePcatSocketSkuInfoTable(
 
   NVDIMM_ENTRY();
 
-  if (ppSocketSkuInfoTable == NULL || pPcatRevison == NULL) {
+  if (pMappedMemoryLimit == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -1653,11 +1654,10 @@ RetrievePcatSocketSkuInfoTable(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  (*pPcatRevison).AsUint8 = pPlatformConfigAttrTable->Header.Revision.AsUint8;
   if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       if (SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
-        *ppSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE *)gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index];
+        *pMappedMemoryLimit = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->MappedMemorySizeLimit;
         ReturnCode = EFI_SUCCESS;
         break;
       }
@@ -1672,9 +1672,159 @@ RetrievePcatSocketSkuInfoTable(
         goto Finish;
       }
       if (SocketId == LogicalSocketID) {
-        *ppSocketSkuInfoTable = (DIE_SKU_INFO_TABLE *)gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index];
+        *pMappedMemoryLimit = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->MappedMemorySizeLimit;
         ReturnCode = EFI_SUCCESS;
         break;
+      }
+    }
+  }
+  else {
+    NVDIMM_DBG("Unknown PCAT table revision");
+    goto Finish;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Retrieve the PCAT Socket SKU Total Mapped Memory for a given socket
+
+  @param[in] SocketId SocketID, 0xFFFF indicates all sockets
+  @param[out] pTotalMappedMemory Pointer to Total Mapped Memory
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND PCAT socket sku total mapped memory not found for given socketID
+**/
+EFI_STATUS
+RetrievePcatSocketSkuTotalMappedMemory(
+  IN     UINT32 SocketId,
+  OUT    UINT64 *pTotalMappedMemory
+  )
+{
+  EFI_STATUS ReturnCode = EFI_NOT_FOUND;
+  PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPlatformConfigAttrTable = NULL;
+  UINT32 Index = 0;
+  UINT32 LogicalSocketID = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pTotalMappedMemory == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (gNvmDimmData->PMEMDev.pPcatHead == NULL || gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum == 0) {
+    NVDIMM_DBG("Incorrect PCAT tables");
+    goto Finish;
+  }
+
+  // Setting output parameters to 0 before initialization
+  *pTotalMappedMemory = 0;
+
+  pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+    for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
+      if (SocketId == SOCKET_ID_ALL || SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
+        *pTotalMappedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->TotalMemorySizeMappedToSpa;
+        ReturnCode = EFI_SUCCESS;
+        if (SocketId != SOCKET_ID_ALL) {
+          break;
+        }
+      }
+    }
+  }
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+    for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
+      ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
+        gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        goto Finish;
+      }
+      if (SocketId == SOCKET_ID_ALL || SocketId == LogicalSocketID) {
+        *pTotalMappedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->TotalMemorySizeMappedToSpa;
+        ReturnCode = EFI_SUCCESS;
+        if (SocketId != SOCKET_ID_ALL) {
+          break;
+        }
+      }
+    }
+  }
+  else {
+    NVDIMM_DBG("Unknown PCAT table revision");
+    goto Finish;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Retrieve the PCAT Socket SKU Cached Memory for a given socket
+
+  @param[in] SocketId SocketID, 0xFFFF indicates all sockets
+  @param[out] pCachedMemory Pointer to Cached Memory Size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND PCAT socket sku cached memory size not found for given socketID
+**/
+EFI_STATUS
+RetrievePcatSocketSkuCachedMemory(
+  IN     UINT32 SocketId,
+  OUT    UINT64 *pCachedMemory
+  )
+{
+  EFI_STATUS ReturnCode = EFI_NOT_FOUND;
+  PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPlatformConfigAttrTable = NULL;
+  UINT32 Index = 0;
+  UINT32 LogicalSocketID = 0;
+
+  NVDIMM_ENTRY();
+
+  if (pCachedMemory == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (gNvmDimmData->PMEMDev.pPcatHead == NULL || gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum == 0) {
+    NVDIMM_DBG("Incorrect PCAT tables");
+    goto Finish;
+  }
+
+  // Setting output parameters to 0 before initialization
+  *pCachedMemory = 0;
+
+  pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+    for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
+      if (SocketId == SOCKET_ID_ALL || SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
+        *pCachedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->CachingMemorySize;
+        ReturnCode = EFI_SUCCESS;
+        if (SocketId != SOCKET_ID_ALL) {
+          break;
+        }
+      }
+    }
+  }
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+    for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
+      ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
+        gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        goto Finish;
+      }
+      if (SocketId == SOCKET_ID_ALL || SocketId == LogicalSocketID) {
+        *pCachedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->CachingMemorySize;
+        ReturnCode = EFI_SUCCESS;
+        if (SocketId != SOCKET_ID_ALL) {
+          break;
+        }
       }
     }
   }

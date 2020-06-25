@@ -202,7 +202,7 @@ struct Command ShowRegionsCommand =
     { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional },
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties
-  L"Show information about one or more Regions.",         //!< help
+  L"Show information about one or more regions.",         //!< help
   ShowRegions,                                            //!< run function
   TRUE,                                                   //!< enable print control support
 };
@@ -300,7 +300,7 @@ ShowRegions(
   CHAR16 *pRegionTempStr = NULL;
   INTERLEAVE_FORMAT *pInterleaveFormat = NULL;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pCapacityStr = NULL;
   CONST CHAR16 *pHealthStateStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
@@ -378,7 +378,7 @@ ShowRegions(
   /**
     if Region IDs were passed in, read them
   **/
-  if (pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
+  if (NULL != pCmd->targets[0].pTargetValueStr && StrLen(pCmd->targets[0].pTargetValueStr) > 0) {
     pRegionsValue = GetTargetValue(pCmd, REGION_TARGET);
     ReturnCode = GetUintsFromString(pRegionsValue, &pRegionsIds, &RegionIdsNum);
 
@@ -425,7 +425,13 @@ ShowRegions(
   }
   if (0 == RegionCount) {
     ReturnCode = EFI_SUCCESS;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
+    //WA, to ensure ESX prints a message when no entries are found.
+    if (PRINTER_ESX_FORMAT_ENABLED(pPrinterCtx)) {
+      PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_INFO_NO_REGIONS);
+    }
+    else {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_REGIONS);
+    }
     goto Finish;
   }
 

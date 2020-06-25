@@ -24,7 +24,7 @@
 EFI_STATUS
 PbrGetPassThruRecord(
   IN    PbrContext *pContext,
-  OUT   FW_CMD *pCmd,
+  OUT   NVM_FW_CMD *pCmd,
   OUT   EFI_STATUS *pPassThruRc
 )
 {
@@ -146,7 +146,7 @@ Finish:
 EFI_STATUS
 PbrSetPassThruRecord(
   IN    PbrContext *pContext,
-  OUT   FW_CMD *pCmd,
+  OUT   NVM_FW_CMD *pCmd,
   EFI_STATUS PassthruReturnCode
 )
 {
@@ -157,11 +157,13 @@ PbrSetPassThruRecord(
   UINT32 DataSize = 0;
 
   if (NULL == pContext || NULL == pCmd) {
-    return EFI_INVALID_PARAMETER;
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
   }
 
   if (PBR_RECORD_MODE != pContext->PbrMode) {
-    return EFI_SUCCESS;
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
   }
 
   DataSize += sizeof(PbrPassThruReq);
@@ -171,13 +173,13 @@ PbrSetPassThruRecord(
   DataSize += pCmd->OutputPayloadSize;
   DataSize += pCmd->LargeOutputPayloadSize;
 
-  PbrSetData(
+  CHECK_RESULT(PbrSetData(
     PBR_PASS_THRU_SIG,
     NULL,
     DataSize,
     FALSE,
     &pData,
-    NULL);
+    NULL), Finish);
 
   ptReq = (PbrPassThruReq*)pData;
   ptReq->DimmId = pCmd->DimmID;
@@ -226,6 +228,7 @@ PbrSetPassThruRecord(
       pCmd->LargeOutputPayload,
       pCmd->LargeOutputPayloadSize);
   }
+Finish:
   return ReturnCode;
 }
 

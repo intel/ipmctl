@@ -1244,7 +1244,7 @@ EFI_STATUS EFIAPI PrinterSetMsg(
   VA_END(Marker);
 
   //here for backwards compatibility
-  if (NULL == pPrintCtx || !pPrintCtx->FormatTypeFlags.Flags.Buffered) {
+  if (NULL == pPrintCtx || (!pPrintCtx->FormatTypeFlags.Flags.Buffered && XML != pPrintCtx->FormatType)) {
     PrintTextWithNewLine(FullMsg);
     FREE_POOL_SAFE(FullMsg);
     return EFI_SUCCESS;
@@ -1259,8 +1259,12 @@ EFI_STATUS EFIAPI PrinterSetMsg(
     if (EFI_ERROR(Status)) {
       pPrintCtx->BufferedObjectLastError = Status;
     }
+    pPrintCtx->BufferedMsgCnt++;
   }
-  pPrintCtx->BufferedMsgCnt++;
+  else {
+    //here to handle the case where printer is unbuffered and XML == pPrintCtx->FormatType
+    FREE_POOL_SAFE(FullMsg);
+  }
   ReturnCode = EFI_SUCCESS;
 Finish:
   return ReturnCode;

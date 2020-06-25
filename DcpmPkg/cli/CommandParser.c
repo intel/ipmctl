@@ -46,8 +46,8 @@ EFI_STATUS RegisterCommand(struct Command *pCommand)
   EFI_STATUS Rc = EFI_SUCCESS;
 
   /* make sure a verb is specified */
-  if (!pCommand || !pCommand->verb || StrLen(pCommand->verb) == 0) {
-    NVDIMM_WARN("Failed to register the command because it's invalid");
+  if (NULL == pCommand || StrLen(pCommand->verb) == 0) {
+    NVDIMM_WARN("Failed to register the command because it is invalid");
     Rc = EFI_ABORTED;
   } else {
     /* allocate memory */
@@ -224,7 +224,7 @@ extern BOOLEAN HelpRequested;
  * Parsing is a two step process to first identify the tokens of the input
  * and then try to match it against the list of supported commands.
  *
- * It's the responsibility of the caller function to free the allocated
+ * It is the responsibility of the caller function to free the allocated
  * memory for target values in the Command structure.
  */
 EFI_STATUS
@@ -434,72 +434,80 @@ EFI_STATUS findOptions(UINTN *pStart, struct CommandInput *pInput, struct Comman
 
   pHelpStr = getCommandHelp(pCommand, FALSE);
 
+  if (NULL == gCommandList || 0 == gCommandCount)
+  {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
     /** loop through the input tokens **/
   while ((pInput->TokenCount - *pStart) > 0) {
     Found = FALSE;
     /** loop through the supported commands to find valid options **/
+
     for (Index = 0; Index < gCommandCount && !Found; Index++) {
-      if (gCommandList[Index].options != NULL) {
-        for (Index2 = 0; Index2 < MAX_OPTIONS && !Found; Index2++) {
-          /** check both the long and short version of each option **/
-          if ((StrICmp(pInput->ppTokens[*pStart], HELP_OPTION) == 0)
-              || (StrICmp(pInput->ppTokens[*pStart], HELP_OPTION_SHORT) == 0)) {
-            pCommand->ShowHelp = TRUE;
-            Found = TRUE;
-          } else if (StrICmp(gCommandList[Index].options[Index2].OptionNameShort,
-              pInput->ppTokens[*pStart]) == 0) {
-            // Check if option is copied already - to prevent duplicated option
-            for (Index3 = 0; Index3 < matchedOptions; Index3++) {
-              if (StrICmp(pCommand->options[Index3].OptionNameShort, pInput->ppTokens[*pStart]) == 0) {
+      for (Index2 = 0; Index2 < MAX_OPTIONS && !Found; Index2++) {
+        /** check both the long and short version of each option **/
+        if ((StrICmp(pInput->ppTokens[*pStart], HELP_OPTION) == 0)
+          || (StrICmp(pInput->ppTokens[*pStart], HELP_OPTION_SHORT) == 0)) {
+          pCommand->ShowHelp = TRUE;
+          Found = TRUE;
+        }
+        else if (StrICmp(gCommandList[Index].options[Index2].OptionNameShort,
+          pInput->ppTokens[*pStart]) == 0) {
+          // Check if option is copied already - to prevent duplicated option
+          for (Index3 = 0; Index3 < matchedOptions; Index3++) {
+            if (StrICmp(pCommand->options[Index3].OptionNameShort, pInput->ppTokens[*pStart]) == 0) {
+              pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+              SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+                CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+              Rc = EFI_INVALID_PARAMETER;
+              goto Finish;
+            }
+          }
+          StrnCpyS(pCommand->options[matchedOptions].OptionNameShort, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
+
+          Found = TRUE;
+        }
+        else if (StrICmp(gCommandList[Index].options[Index2].OptionName,
+          pInput->ppTokens[*pStart]) == 0) {
+          // Check if option is copied already - to prevent duplicated option
+          for (Index3 = 0; Index3 < matchedOptions; Index3++) {
+            if (StrICmp(pCommand->options[Index3].OptionName, pInput->ppTokens[*pStart]) == 0) {
+              pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+              SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
+                CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+              Rc = EFI_INVALID_PARAMETER;
+              goto Finish;
+            }
+          }
+          StrnCpyS(pCommand->options[matchedOptions].OptionName, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
+          Found = TRUE;
+        }
+        /** if option is found, move to the next token **/
+        if (Found) {
+          (*pStart)++;
+          /** check for an option value **/
+          if (((pInput->TokenCount - *pStart) >= 1) && (pInput->ppTokens[*pStart][0] != '-')) {
+            if (StrLen(pInput->ppTokens[*pStart]) > PARSER_OPTION_VALUE_LEN) {
+              Rc = EFI_BUFFER_TOO_SMALL;
+              break;
+            }
+            else {
+              if (pCommand->options[matchedOptions].pOptionValueStr == NULL) {
                 pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
                 SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
-                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+                  CLI_PARSER_DID_YOU_MEAN, pHelpStr));
                 Rc = EFI_INVALID_PARAMETER;
                 goto Finish;
               }
-            }
-            StrnCpyS(pCommand->options[matchedOptions].OptionNameShort, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
 
-            Found = TRUE;
-          } else if (StrICmp(gCommandList[Index].options[Index2].OptionName,
-              pInput->ppTokens[*pStart]) == 0) {
-            // Check if option is copied already - to prevent duplicated option
-            for (Index3 = 0; Index3 < matchedOptions; Index3++) {
-              if (StrICmp(pCommand->options[Index3].OptionName, pInput->ppTokens[*pStart]) == 0) {
-                pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
-                SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
-                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
-                Rc = EFI_INVALID_PARAMETER;
-                goto Finish;
-              }
+              StrnCpyS(pCommand->options[matchedOptions].pOptionValueStr, PARSER_OPTION_VALUE_LEN,
+                pInput->ppTokens[*pStart], PARSER_OPTION_VALUE_LEN - 1);
+              (*pStart)++;
             }
-            StrnCpyS(pCommand->options[matchedOptions].OptionName, OPTION_LEN, pInput->ppTokens[*pStart], OPTION_LEN - 1);
-            Found = TRUE;
           }
-          /** if option is found, move to the next token **/
-          if (Found) {
-            (*pStart)++;
-            /** check for an option value **/
-            if ( ((pInput->TokenCount - *pStart) >= 1) && (pInput->ppTokens[*pStart][0] != '-') ) {
-              if (StrLen(pInput->ppTokens[*pStart]) > PARSER_OPTION_VALUE_LEN) {
-                Rc = EFI_BUFFER_TOO_SMALL;
-                break;
-              } else {
-                if (pCommand->options[matchedOptions].pOptionValueStr == NULL) {
-                  pTmpString = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
-                  SetSyntaxError(CatSPrintClean(pTmpString, FORMAT_NL_STR FORMAT_NL_STR,
-                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
-                  Rc = EFI_INVALID_PARAMETER;
-                  goto Finish;
-                }
-
-                StrnCpyS(pCommand->options[matchedOptions].pOptionValueStr, PARSER_OPTION_VALUE_LEN,
-                  pInput->ppTokens[*pStart], PARSER_OPTION_VALUE_LEN - 1);
-                (*pStart)++;
-              }
-            }
-            matchedOptions++;
-          }
+          matchedOptions++;
         }
       }
     }
@@ -533,43 +541,48 @@ EFI_STATUS findTargets(UINTN *pStart, struct CommandInput *pInput, struct Comman
 
   pHelpStr = getCommandHelp(pCommand, FALSE);
 
+  if (NULL == gCommandList || 0 == gCommandCount)
+  {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   /* loop through the input tokens */
   while ((pInput->TokenCount - *pStart) > 0)
   {
     Found = FALSE;
     /* check input against supported targets */
     for (Index = 0; Index < gCommandCount && !Found; Index++) {
-      if (gCommandList[Index].targets != NULL) {
-        for (Index2 = 0; Index2 < MAX_TARGETS && !Found; Index2++) {
-          if (StrICmp(gCommandList[Index].targets[Index2].TargetName,
-            pInput->ppTokens[*pStart]) == 0) {
-            // Check if option is copied already - to prevent duplicated option
-            for (Index3 = 0; Index3 < matchedTargets; Index3++) {
-              if (StrICmp(pCommand->targets[Index3].TargetName, pInput->ppTokens[*pStart]) == 0) {
-                pTmpStr = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
-                SetSyntaxError(CatSPrintClean(pTmpStr, FORMAT_NL_STR FORMAT_NL_STR,
-                    CLI_PARSER_DID_YOU_MEAN, pHelpStr));
-                Rc = EFI_INVALID_PARAMETER;
-              }
+      for (Index2 = 0; Index2 < MAX_TARGETS && !Found; Index2++) {
+        if (StrICmp(gCommandList[Index].targets[Index2].TargetName,
+          pInput->ppTokens[*pStart]) == 0) {
+          // Check if option is copied already - to prevent duplicated option
+          for (Index3 = 0; Index3 < matchedTargets; Index3++) {
+            if (StrICmp(pCommand->targets[Index3].TargetName, pInput->ppTokens[*pStart]) == 0) {
+              pTmpStr = CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->ppTokens[*pStart]);
+              SetSyntaxError(CatSPrintClean(pTmpStr, FORMAT_NL_STR FORMAT_NL_STR,
+                CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+              Rc = EFI_INVALID_PARAMETER;
             }
-            StrnCpyS(pCommand->targets[matchedTargets].TargetName, TARGET_LEN, pInput->ppTokens[*pStart], TARGET_LEN - 1);
-            (*pStart)++;
-            Found = TRUE;
-
-            /* check for a target value */
-            if ( ((pInput->TokenCount - *pStart) >= 1) &&
-                (pInput->ppTokens[*pStart][0] != '-') &&
-                !ContainsCharacter('=', pInput->ppTokens[*pStart])) {
-              if (StrLen(pInput->ppTokens[*pStart]) > TARGET_VALUE_LEN) {
-                Rc = EFI_BUFFER_TOO_SMALL;
-                break;
-              } else {
-                StrnCpyS(pCommand->targets[matchedTargets].pTargetValueStr, TARGET_VALUE_LEN, pInput->ppTokens[*pStart], TARGET_VALUE_LEN - 1);
-                (*pStart)++;
-              }
-            }
-            matchedTargets++;
           }
+          StrnCpyS(pCommand->targets[matchedTargets].TargetName, TARGET_LEN, pInput->ppTokens[*pStart], TARGET_LEN - 1);
+          (*pStart)++;
+          Found = TRUE;
+
+          /* check for a target value */
+          if (((pInput->TokenCount - *pStart) >= 1) &&
+            (pInput->ppTokens[*pStart][0] != '-') &&
+            !ContainsCharacter('=', pInput->ppTokens[*pStart])) {
+            if (StrLen(pInput->ppTokens[*pStart]) > TARGET_VALUE_LEN) {
+              Rc = EFI_BUFFER_TOO_SMALL;
+              break;
+            }
+            else {
+              StrnCpyS(pCommand->targets[matchedTargets].pTargetValueStr, TARGET_VALUE_LEN, pInput->ppTokens[*pStart], TARGET_VALUE_LEN - 1);
+              (*pStart)++;
+            }
+          }
+          matchedTargets++;
         }
       }
     }
@@ -579,6 +592,7 @@ EFI_STATUS findTargets(UINTN *pStart, struct CommandInput *pInput, struct Comman
     }
   }
 
+Finish:
   FREE_POOL_SAFE(pHelpStr);
   NVDIMM_EXIT_I64(Rc);
   return Rc;
@@ -604,6 +618,13 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
   Rc = EFI_SUCCESS; /* no properties are required so default to success */
   matchedProperties = 0;
   pHelpStr = getCommandHelp(pCommand, FALSE);
+
+  if (NULL == gCommandList || 0 == gCommandCount)
+  {
+    Rc = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   /* loop through the input tokens */
   while (((pInput->TokenCount - *pStart) > 0) && (EFI_SUCCESS == Rc))
   {
@@ -634,30 +655,27 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
          */
         for (Index = 0; Index < gCommandCount && !Found; Index++)
         {
-          if (gCommandList[Index].properties != NULL)
+          for (Index2 = 0; Index2 < MAX_PROPERTIES && !Found; Index2++)
           {
-            for (Index2 = 0; Index2 < MAX_PROPERTIES && !Found; Index2++)
+            /* found a matching property */
+            if (StrICmp(gCommandList[Index].properties[Index2].PropertyName,
+              propertyName) == 0)
             {
-              /* found a matching property */
-              if (StrICmp(gCommandList[Index].properties[Index2].PropertyName,
-                propertyName) == 0)
-              {
-                StrnCpyS(pCommand->properties[matchedProperties].PropertyName, PROPERTY_KEY_LEN, propertyName, PROPERTY_KEY_LEN - 1);
-                /* value is valid */
-                if (StrLen(propertyValue) > 0) {
-                  StrnCpyS(pCommand->properties[matchedProperties].PropertyValue, PROPERTY_VALUE_LEN, propertyValue, PROPERTY_VALUE_LEN - 1);
-                }
-                Found = 1;
-                (*pStart)++;
-                matchedProperties++;
-                if (matchedProperties < MAX_PROPERTIES) {
-                  Rc = EFI_SUCCESS;
-                }
-                else {
-                  Rc = EFI_OUT_OF_RESOURCES;
-                }
-                break; /* move to the next property */
+              StrnCpyS(pCommand->properties[matchedProperties].PropertyName, PROPERTY_KEY_LEN, propertyName, PROPERTY_KEY_LEN - 1);
+              /* value is valid */
+              if (StrLen(propertyValue) > 0) {
+                StrnCpyS(pCommand->properties[matchedProperties].PropertyValue, PROPERTY_VALUE_LEN, propertyValue, PROPERTY_VALUE_LEN - 1);
               }
+              Found = 1;
+              (*pStart)++;
+              matchedProperties++;
+              if (matchedProperties < MAX_PROPERTIES) {
+                Rc = EFI_SUCCESS;
+              }
+              else {
+                Rc = EFI_OUT_OF_RESOURCES;
+              }
+              break; /* move to the next property */
             }
           }
         }
@@ -684,6 +702,7 @@ EFI_STATUS findProperties(UINTN *pStart, struct CommandInput *pInput, struct Com
     }
   }
 
+Finish:
   FREE_POOL_SAFE(pHelpStr);
   NVDIMM_EXIT_I(Rc);
   return Rc;
@@ -780,7 +799,7 @@ MatchOptions(
         }
         // check if value is optional or required
         if (pMatch->options[Index2].ValueRequirement != ValueOptional) {
-          if (pInput->options[Index].pOptionValueStr && StrLen(pInput->options[Index].pOptionValueStr) > 0) {
+          if (NULL != pInput->options[Index].pOptionValueStr && StrLen(pInput->options[Index].pOptionValueStr) > 0) {
             if (pMatch->options[Index2].ValueRequirement == ValueRequired) {
               MatchCount++;
             } else {
@@ -823,16 +842,14 @@ MatchOptions(
         goto Finish; // stop looping
       }
       // if the user passed in an invalid option
-      if (pInput->options[Index].OptionName &&
-          StrLen(pInput->options[Index].OptionName) > 0 &&
+      if (StrLen(pInput->options[Index].OptionName) > 0 &&
           !containsOption(pMatch, pInput->options[Index].OptionName)) {
         SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->options[Index].OptionName));
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish; // stop looping
       }
       // if the user passed in an invalid option abbreviation
-      if (pInput->options[Index].OptionNameShort &&
-          StrLen(pInput->options[Index].OptionNameShort) > 0 &&
+      if (StrLen(pInput->options[Index].OptionNameShort) > 0 &&
           !containsOption(pMatch, pInput->options[Index].OptionNameShort)) {
         SetSyntaxError(CatSPrint(NULL, CLI_PARSER_ERR_UNEXPECTED_TOKEN, pInput->options[Index].OptionNameShort));
         ReturnCode = EFI_INVALID_PARAMETER;
@@ -1179,8 +1196,7 @@ CHAR16
 
       /* Only show the required fields*/
       for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
-        if (gCommandList[Index].options[Index2].OptionName &&
-          StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
+        if (StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
           if (gCommandList[Index].options[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
               gCommandList[Index].options[Index2].OptionName);
@@ -1191,22 +1207,21 @@ CHAR16
         }
       }
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       /* add the targets pHelp */
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
       {
-        if (gCommandList[Index].targets[Index2].TargetName &&
-          StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
+        if (StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
           if (!gCommandList[Index].targets[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, L"[");
           }
           pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
               gCommandList[Index].targets[Index2].TargetName);
-          if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
+          if (NULL != gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
               pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
                   gCommandList[Index].targets[Index2].pHelp);
@@ -1225,8 +1240,7 @@ CHAR16
       /* only show the properties that are required */
       for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
         if(gCommandList[Index].properties[Index2].Required){
-        if (gCommandList[Index].properties[Index2].PropertyName &&
-          StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
+        if (StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
           pHelp = CatSPrintClean(pHelp, L" ");
           pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
             gCommandList[Index].properties[Index2].PropertyName,
@@ -1251,21 +1265,20 @@ CHAR16
 
       /* Source and Destination are required for load and dump commands*/
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++)
       {
-        if (gCommandList[Index].targets[Index2].TargetName &&
-          StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
+        if (StrLen(gCommandList[Index].targets[Index2].TargetName) > 0) {
           if (!gCommandList[Index].targets[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, L"[");
           }
           pHelp = CatSPrintClean(pHelp, L" "FORMAT_STR,
             gCommandList[Index].targets[Index2].TargetName);
-          if (gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
+          if (NULL != gCommandList[Index].targets[Index2].pHelp && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
               pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
                 gCommandList[Index].targets[Index2].pHelp);
@@ -1289,13 +1302,11 @@ CHAR16
       pHelp = CatSPrintClean(pHelp, L"\n\n[OPTIONS]");
       pHelp = CatSPrintClean(pHelp, L"\n   [-help|-h] : Display Help for the command");
       for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
-        if (gCommandList[Index].options[Index2].OptionName &&
-          StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
+        if (StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
           if (!gCommandList[Index].options[Index2].Required) {
             pHelp = CatSPrintClean(pHelp, L"\n   [");
           }
-          if (gCommandList[Index].options[Index2].OptionNameShort &&
-            StrLen(gCommandList[Index].options[Index2].OptionNameShort) > 0) {
+          if (StrLen(gCommandList[Index].options[Index2].OptionNameShort) > 0) {
             pHelp = CatSPrintClean(pHelp, FORMAT_STR L"|" FORMAT_STR,
               gCommandList[Index].options[Index2].OptionName,
               gCommandList[Index].options[Index2].OptionNameShort);
@@ -1319,8 +1330,7 @@ CHAR16
         pHelp = CatSPrintClean(pHelp, L"\n[PROPERTIES]");
       }
       for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
-        if (gCommandList[Index].properties[Index2].PropertyName &&
-          StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
+        if (StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
             pHelp = CatSPrintClean(pHelp, L"\n   ");
           pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
             gCommandList[Index].properties[Index2].PropertyName,
@@ -1364,8 +1374,7 @@ CHAR16
 
     /* Only show the required fields for OPTIONS*/
     for (Index2 = 0; Index2 < MAX_OPTIONS; Index2++) {
-      if (gCommandList[Index].options[Index2].OptionName &&
-        StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
+      if (StrLen(gCommandList[Index].options[Index2].OptionName) > 0) {
         if (gCommandList[Index].options[Index2].Required) {
           pHelp = CatSPrintClean(pHelp, FORMAT_STR_SPACE,
             gCommandList[Index].options[Index2].OptionName);
@@ -1378,17 +1387,16 @@ CHAR16
     /* add the Targets to pHelp */
     if (gCommandList[Index].targets > 0) {
       if (StrICmp(gCommandList[Index].verb, LOAD_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-source (File Source) ");
+        pHelp = CatSPrintClean(pHelp, L"-source (filename) ");
       }
       else if (StrICmp(gCommandList[Index].verb, DUMP_VERB) == 0) {
-        pHelp = CatSPrintClean(pHelp, L"-destination (file destination) ");
+        pHelp = CatSPrintClean(pHelp, L"-destination (filename) ");
       }
       for (Index2 = 0; Index2 < MAX_TARGETS; Index2++) {
-        if (gCommandList[Index].targets[Index2].TargetName
-          && StrLen(gCommandList[Index].targets[Index2].TargetName)> 0) {
+        if (StrLen(gCommandList[Index].targets[Index2].TargetName)> 0) {
           pHelp = CatSPrintClean(pHelp, FORMAT_STR,
             gCommandList[Index].targets[Index2].TargetName);
-          if (gCommandList[Index].targets[Index2].pHelp
+          if (NULL != gCommandList[Index].targets[Index2].pHelp
             && StrLen(gCommandList[Index].targets[Index2].pHelp) > 0) {
             if (gCommandList[Index].targets[Index2].ValueRequirement == ValueOptional) {
               pHelp = CatSPrintClean(pHelp, L"[" FORMAT_STR L"]",
@@ -1406,8 +1414,7 @@ CHAR16
     /* only show PROPERTIES that are required */
     for (Index2 = 0; Index2 < MAX_PROPERTIES; Index2++) {
       if (gCommandList[Index].properties[Index2].Required) {
-        if (gCommandList[Index].properties[Index2].PropertyName &&
-          StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
+        if (StrLen(gCommandList[Index].properties[Index2].PropertyName) > 0) {
           pHelp = CatSPrintClean(pHelp, L" ");
           pHelp = CatSPrintClean(pHelp, FORMAT_STR L"=(" FORMAT_STR L")",
             gCommandList[Index].properties[Index2].PropertyName,

@@ -15,6 +15,7 @@
 #include <PbrDcpmm.h>
 #include <Convert.h>
 #ifdef OS_BUILD
+#include "os.h"
 #include <Protocol/Driver/DriverBinding.h>
 #else
 #include <Protocol/DriverBinding.h>
@@ -57,7 +58,7 @@ struct Command StartSessionCommand =
     {PBR_MODE_TAG, L"", L"", FALSE, ValueRequired}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Starts a playback or record session",                                //!< help
+  L"Start a playback or record (PBR) session.",                          //!< help
   StartSession,
   TRUE,
   TRUE //exclude from PBR
@@ -90,6 +91,9 @@ StartSession(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
+
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
 
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
     Force = TRUE;
@@ -291,11 +295,6 @@ STATIC EFI_STATUS ExecuteCommands(PRINT_CONTEXT *pPrinterCtx, EFI_DCPMM_PBR_PROT
 
 
   for (Index = TagId; Index < TagCount; ++Index) {
-
-    //ensure whitespace between cmd output
-    if (Index % 2) {
-      Print(L"\n\n");
-    }
 
     ReturnCode = pNvmDimmPbrProtocol->PbrGetTag(Index, &Signature, &pName, &pDescription, NULL, NULL);
     if (EFI_ERROR(ReturnCode)) {

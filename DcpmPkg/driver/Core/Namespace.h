@@ -292,7 +292,7 @@ RawDataToLabelIndexArea(
 
   Function reads Platform Config Data partition 3. of a DIMM and invokes
   validation subroutine to check for data consistency. Required memory
-  will be allocated, it's caller responsibility to free it after it's
+  will be allocated, it is caller responsibility to free it after it is
   no longer needed.
 
   @param[in] DimmPid Dimm ID of DIMM from which to read the data
@@ -573,7 +573,7 @@ LabelIndexAreaToRawData(
 /**
   Check if LSA of a specified DIMM is initialized.
   If empty LSA is detected then it is initialized.
-  If non empty LSA is detected then it's validated
+  If non empty LSA is detected then it is validated
   for data correctness.
 
   @param[in] pDimm Target DIMM

@@ -1,26 +1,24 @@
-// Copyright (c) 2018, Intel Corporation.
+// Copyright (c) 2020, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
 ipmctl-show-session(1)
-========================
+======================
 endif::manpage[]
 
 NAME
 ----
-ipmctl-show-session - Displays the command
-history of a session.
+ipmctl-show-session - Displays the playback and record (PBR) command history of a session.
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl show [OPTIONS] -session
 
 DESCRIPTION
 -----------
 Displays the command history of a session.  Also displays which
 command to execute next during 'playback_manual' mode (see 'start -session').
-
 
 OPTIONS
 -------
@@ -45,7 +43,7 @@ EXAMPLES
 --------
 Show the contents of the loaded/active session.
 
-[verse]
+[listing]
 ipmctl show -session
 
 LIMITATIONS
@@ -54,13 +52,12 @@ A session must be loaded or active prior to executing this command.  A session
 may be loaded via the 'load -session' command or made active via the
 'start -session' command.
 
-RETURN DATA
------------
-
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
+--
 TagID | RC | Args
 ============================
  0x0*  | 0  | show -sensor
  0x1   | 0  | show -dimm
+--

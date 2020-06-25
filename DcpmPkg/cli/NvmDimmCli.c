@@ -84,6 +84,7 @@ extern int cov_dumpData(void);
 extern void nvm_current_cmd(struct Command Command);
 extern BOOLEAN ConfigIsDdrtProtocolDisabled();
 extern BOOLEAN ConfigIsLargePayloadDisabled();
+extern int g_fast_path;
 #else
 #include "DeletePcdCommand.h"
 EFI_GUID gNvmDimmConfigProtocolGuid = EFI_DCPMM_CONFIG2_PROTOCOL_GUID;
@@ -450,7 +451,8 @@ UefiMain(
     }
 
 #else
-  if (g_basic_commands)
+  // if help is requested Register all the commands so parsing will work later
+  if (g_basic_commands && !HelpRequested)
   {
     Rc = RegisterNonAdminUserCommands();
     if (EFI_ERROR(Rc)) {
@@ -574,7 +576,7 @@ UefiMain(
 #endif
 
 #ifdef OS_BUILD
-        if (!Command.ExcludeDriverBinding) {
+        if (!Command.ExcludeDriverBinding && !g_fast_path) {
           Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
         }
 #endif
@@ -582,7 +584,7 @@ UefiMain(
         Rc = ExecuteCmd(&Command);
 
 #ifdef OS_BUILD
-        if (!Command.ExcludeDriverBinding) {
+        if (!Command.ExcludeDriverBinding && !g_fast_path) {
           NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);
         }
 #endif
@@ -641,10 +643,7 @@ RegisterNonAdminUserCommands(
 
   NVDIMM_ENTRY();
   Rc = RegisterCommand(&VersionCommand);
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-done:
+
   NVDIMM_EXIT_I64(Rc);
   return Rc;
 }
@@ -672,28 +671,33 @@ RegisterCommands(
     goto done;
   }
 
-  /* Base Utility commands */
-
-  Rc = RegisterLoadCommand();
+  // Dimm Discovery Commands
+  Rc = RegisterShowTopologyCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterSetDimmCommand();
+  Rc = RegisterShowSocketsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterDeleteDimmCommand();
+  Rc = RegisterShowDimmsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterShowRegionsCommand();
+  Rc = RegisterShowMemoryResourcesCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
+  Rc = RegisterShowSystemCapabilitiesCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  // Provisioning Commands
   Rc = RegisterCreateGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
@@ -704,8 +708,7 @@ RegisterCommands(
     goto done;
   }
 
-
-  Rc = RegisterDeleteGoalCommand();
+  Rc = RegisterDumpGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -715,12 +718,26 @@ RegisterCommands(
     goto done;
   }
 
-  Rc = RegisterDumpGoalCommand();
+  Rc = RegisterDeleteGoalCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = RegisterSetSensorCommand();
+  // Security Commands
+  Rc = RegisterSetDimmCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+#ifndef OS_BUILD
+  Rc = RegisterDeleteDimmCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+#endif
+
+  // Persistent Memory Provisioning Commands
+  Rc = RegisterShowRegionsCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -741,100 +758,40 @@ RegisterCommands(
     goto done;
   }
 #endif
-  Rc = RegisterStartSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
 
-  Rc = RegisterStopSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterDumpSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterLoadSessionCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterDeletePcdCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-
-  Rc = RegisterShowErrorCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowCelCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterDumpDebugCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowDimmsCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowSocketsCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
+  // Instrumentation Commands
   Rc = RegisterShowSensorCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-  Rc = RegisterStartDiagnosticCommand();
+  Rc = RegisterSetSensorCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-  Rc = RegisterShowTopologyCommand();
+#ifndef __MFG__
+  // Mfg has a low latency version of this command in RegisterMfgCommands()
+  Rc = RegisterShowPerformanceCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+#endif // !__MFG__
 
-  Rc = RegisterShowMemoryResourcesCommand();
+#ifdef OS_BUILD
+#ifdef __MFG__
+  Rc = RegisterMfgCommands();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
+#endif // __MFG__
+#endif // OS_BUILD
 
-  Rc = RegisterShowSystemCapabilitiesCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
+  // Support and Maintenance Commands
   Rc = RegisterShowFirmwareCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-  Rc = registerShowAcpiCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-
-  Rc = RegisterShowPcdCommand();
+  Rc = RegisterLoadCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
@@ -849,31 +806,53 @@ RegisterCommands(
     goto done;
   }
 
+#ifdef OS_BUILD
+  Rc = RegisterDumpSupportCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+#endif // OS_BUILD
+
+  // Debug Commands
+  Rc = RegisterStartDiagnosticCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowErrorCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDumpDebugCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowAcpiCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowPcdCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDeletePcdCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
   Rc = RegisterShowCmdAccessPolicyCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
 
-#ifdef OS_BUILD
-
-  Rc = RegisterDumpSupportCommand();
+  Rc = RegisterShowCelCommand();
   if (EFI_ERROR(Rc)) {
     goto done;
   }
-
-#ifdef __MFG__
-  Rc = RegisterMfgCommands();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-#else
-  Rc = RegisterShowPerformanceCommand();
-  if (EFI_ERROR(Rc)) {
-    goto done;
-  }
-#endif // __MFG__
-
-#endif // OS_BUILD
 
 #ifndef OS_BUILD
   /* Debug Utility commands */
@@ -896,6 +875,31 @@ RegisterCommands(
   }
 #endif
 #endif
+
+  // PBR Commands
+  Rc = RegisterStartSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterDumpSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+  Rc = RegisterLoadSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterShowSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
+
+  Rc = RegisterStopSessionCommand();
+  if (EFI_ERROR(Rc)) {
+    goto done;
+  }
 
 done:
   NVDIMM_EXIT_I64(Rc);
@@ -1116,7 +1120,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_ABORTED;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine DCPMM id for DCPMM ID %d", pDimms[DimmIndex].DimmHandle);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine " PMEM_MODULE_STR L" id for " PMEM_MODULE_STR " ID %d", pDimms[DimmIndex].DimmHandle);
       goto Finish;
     }
 
@@ -1124,7 +1128,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
       (pDimms[DimmIndex].FwVer.FwApiMajor == MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR &&
         pDimms[DimmIndex].FwVer.FwApiMinor > MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR)) {
       DimmFromTheFutureCount++;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"DCPMM " FORMAT_STR L" supports FIS %d.%d\r\n",
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" supports FIS %d.%d\r\n",
         DimmStr,
         pDimms[DimmIndex].FwVer.FwApiMajor,
         pDimms[DimmIndex].FwVer.FwApiMinor);
@@ -1133,7 +1137,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   }
 
   if (DimmFromTheFutureCount > 0) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"This ipmctl software version predates the firmware interface specification version (FIS | FWAPIVersion: %d.%d) for %d DCPMM(s). It is recommended to update ipmctl.\r\n",
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"This ipmctl software version predates the firmware interface specification version (FIS | FWAPIVersion: %d.%d) for %d " PMEM_MODULE_STR L"(s). It is recommended to update ipmctl.\r\n",
       MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR,
       MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR,
       DimmFromTheFutureCount);

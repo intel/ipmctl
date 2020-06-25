@@ -40,7 +40,7 @@ struct Command ShowErrorCommandSyntax =
     {LEVEL_PROPERTY, L"", HELP_TEXT_ERROR_LOG_LEVEL_PROPERTY, FALSE, ValueRequired},
     {COUNT_PROPERTY, L"", HELP_TEXT_ERROR_LOG_COUNT_PROPERTY, FALSE, ValueRequired}
   },                                                                  //!< properties
-  L"Show error log for given DIMM",                                   //!< help
+  L"Show error log for one or more " PMEM_MODULES_STR L".",                          //!< help
   ShowErrorCommand,                                                   //!< run function
   TRUE
 };
@@ -453,11 +453,11 @@ ShowErrorCommand(
       if (pCommandStatus->GeneralStatus != NVM_SUCCESS) {
         ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
       }
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to get error logs from DIMM " FORMAT_STR L"\n", DimmStr);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to get error logs from " PMEM_MODULE_STR L" " FORMAT_STR L"\n", DimmStr);
       continue;
     }
     if (ReturnedCount == 0) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"No errors found on DIMM " FORMAT_STR L"\n", DimmStr);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"No errors found on " PMEM_MODULE_STR L" " FORMAT_STR L"\n", DimmStr);
     }
     else {
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, Index);
@@ -514,6 +514,7 @@ ShowErrorCommand(
         else {
 
           pMediaErrorInfo = (MEDIA_ERROR_LOG_INFO *)ErrorsArray[Index2].OutputData;
+          ExcludeInvalidFields = FALSE;
 
           // Error Type
           switch (pMediaErrorInfo->ErrorType) {
@@ -715,9 +716,9 @@ ShowErrorCommand(
     PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowThermalErrorDataSetAttribs);
   }
 Finish:
+  PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Show Error", CLI_INFO_ON, pCommandStatus);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
-  DisplayCommandStatus(L"Show error", L" on", pCommandStatus);
   FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);

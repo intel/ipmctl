@@ -62,12 +62,6 @@ PbrSetData(
   PbrContext *pContext = PBR_CTX();
   PbrPartitionLogicalDataItem *pDataItem = NULL;
 
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    ReturnCode = EFI_NOT_READY;
-    goto Finish;
-  }
-
   //find the partition associated input param Signature
   for (CtxIndex = 0; CtxIndex < MAX_PARTITIONS; ++CtxIndex) {
     //partition signature check
@@ -347,12 +341,6 @@ PbrSetMode(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrContext *pContext = PBR_CTX();
 
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    ReturnCode = EFI_NOT_READY;
-    goto Finish;
-  }
-
   //if playback, ensure a session has been loaded
   if (PBR_PLAYBACK_MODE == PbrMode) {
     if (NULL == pContext->PbrMainHeader) {
@@ -377,7 +365,6 @@ PbrSetMode(
     NVDIMM_DBG("Failed to set PBR mode variable!\n");
   }
 #endif
-Finish:
   return ReturnCode;
 }
 
@@ -397,10 +384,6 @@ PbrGetMode(
 )
 {
   PbrContext *pContext = PBR_CTX();
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
   if (NULL == pPbrMode) {
     return EFI_INVALID_PARAMETER;
   }
@@ -427,11 +410,6 @@ PbrSetSession(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrContext *pContext = PBR_CTX();
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
 
   NVDIMM_DBG("PbrSetSession: Addr: 0x%x, Size: %d\n", (UINTN)pBufferAddress, BufferSize);
 
@@ -495,12 +473,6 @@ PbrGetSession(
   PbrContext *pContext = PBR_CTX();
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    ReturnCode = EFI_NOT_READY;
-    goto Finish;
-  }
-
   if (NULL == ppBufferAddress || NULL == pBufferSize) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -531,10 +503,6 @@ PbrFreeSession(
 {
   UINT32 CtxIndex = 0;
   PbrContext *pContext = PBR_CTX();
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
 
   for (CtxIndex = 0; CtxIndex < MAX_PARTITIONS; ++CtxIndex) {
     if (PBR_INVALID_SIG != pContext->PartitionContexts[CtxIndex].PartitionSig) {
@@ -567,12 +535,6 @@ PbrResetSession(
   TagPartitionInfo *pTagPartitions = NULL;
   UINT32 CtxIndex = 0;
   UINT32 TagPartIndex = 0;
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    ReturnCode = EFI_NOT_READY;
-    goto Finish;
-  }
 
   //get the actual tag data item
   //this will contain offsets for all data partitions that existed when the tag was set/created
@@ -641,11 +603,6 @@ PbrSetTag(
   UINT32 PartitionCount = 0;
   UINT32 Index = 0;
   TagPartitionInfo *pTagPartitionInfo = NULL;
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
 
   if (PBR_RECORD_MODE != pContext->PbrMode) {
     return ReturnCode;
@@ -725,12 +682,6 @@ PbrGetTagCount(
 ) {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrPartitionContext *pPartition = NULL;
-  PbrContext *pContext = PBR_CTX();
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
 
   if (NULL == pCount) {
     return EFI_INVALID_PARAMETER;
@@ -775,13 +726,7 @@ PbrGetTag(
   CHAR8 *pTagStrs = NULL;
   UINT32 pTagStrsSize = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  PbrContext *pContext = PBR_CTX();
   UINT32 DataSize = 0;
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("No PBR context\n");
-    return EFI_NOT_READY;
-  }
 
   if (NULL == ppName || NULL == ppDescription) {
     return EFI_INVALID_PARAMETER;
@@ -843,11 +788,6 @@ PbrInit(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrContext *pContext = PBR_CTX();
-
-  if (NULL == pContext) {
-    NVDIMM_DBG("Failed to allocate memory for the PBR context\n");
-    return EFI_OUT_OF_RESOURCES;
-  }
 
   //initialize the context's mode property
   ReturnCode = PbrDeserializeCtx(pContext);

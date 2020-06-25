@@ -13,6 +13,7 @@
 #include <Protocol/SimpleFileSystem.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include "NvmHealth.h"
+#include "FwVersion.h"
 #include <Library/SerialPortLib.h>
 #ifdef OS_BUILD
 #include <os_efi_preferences.h>
@@ -41,9 +42,8 @@ typedef union {
   CpVersionSeparated Separated;
 } CONFIG_PROTOCOL_VERSION;
 
-/** Minimum supported version of FW API: 1.2 **/
-#define MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR   1
-#define MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR   2
+
+#define SOCKET_ID_ALL MAX_UINT16
 
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000
@@ -72,7 +72,8 @@ typedef union {
 
 #define COUNT_TO_INDEX_OFFSET 1
 #define FIRST_CHAR_INDEX 0
-#define TWOLM_NMFM_RATIO_LOWER 4
+#define TWOLM_NMFM_RATIO_LOWER 3.6
+#define TWOLM_NMFM_RATIO_LOWER_STR L"3.6"
 #define TWOLM_NMFM_RATIO_UPPER 16
 
 #define UTF_16_BOM L'\xFEFF'
@@ -89,11 +90,17 @@ typedef union {
 #define LONG_OP_POLL_EVENT_TIMEOUT 1                             //timer used for timeout event
 #define LONG_OP_POLL_EVENT_SIZE 2                                //total number of events to wait for
 
-#define LONG_OP_FW_UPDATE_TIMEOUT EFI_TIMER_PERIOD_SECONDS(10)   //Average time is 2-3 seconds
+#define FW_UPDATE_TIMEOUT_SECONDS 20
+#define LONG_OP_FW_UPDATE_TIMEOUT EFI_TIMER_PERIOD_SECONDS(FW_UPDATE_TIMEOUT_SECONDS)
 
 //Firmware update opcodes to match long operation status
 #define FW_UPDATE_OPCODE    0x09
 #define FW_UPDATE_SUBOPCODE 0x00
+
+// Product name string values
+#define PMEM_MODULE_STR             L"PMem module"
+#define PMEM_MODULES_STR            PMEM_MODULE_STR L"s"
+#define PMEM_MODULE_PASCAL_CASE_STR L"PMemModule"
 
 // Last shutdown status string values
 #define LAST_SHUTDOWN_STATUS_PM_ADR_STR               L"PM ADR Command Received"
@@ -114,6 +121,7 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
 #define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
 #define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR     L"Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR L"Extended Flush Not Complete"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"
@@ -299,6 +307,22 @@ typedef union {
   } \
 };
 
+#ifdef OS_BUILD
+#ifdef _MSC_VER
+#define CHECK_WIN_ADMIN_PERMISSIONS() { \
+if (NVM_SUCCESS != os_check_admin_permissions()) { \
+  PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_CMD_FAILED_NOT_ADMIN); \
+  ReturnCode = EFI_UNSUPPORTED; \
+  goto Finish; \
+} \
+};
+#else // MSC_VER
+#define CHECK_WIN_ADMIN_PERMISSIONS()
+#endif // MSC_VER
+#else // OS_BUILD
+#define CHECK_WIN_ADMIN_PERMISSIONS()
+#endif // OS_BUILD
+
 /**
   Persist the first error encountered.
   @param[in,out] ReturnCode
@@ -343,11 +367,12 @@ typedef union {
 #define DAYS_IN_YEAR(Year)              (IS_LEAP_YEAR(Year) ? 366 : 365)
 
 // Helper macros to streamline the reading of code
-// NVDIMM_ERR will print out the line number, so no need to be specific
+// NVDIMM_ERR will print out the line number and file, so no need to have
+// specific messages
 #define CHECK_RETURN_CODE(ReturnCode, Label)                  \
   do {                                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
       goto Label;                                             \
     }                                                         \
   } while (0)
@@ -357,9 +382,20 @@ typedef union {
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);   \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
       goto Label;                                             \
     }                                                         \
+  } while (0)
+
+// Return if failure
+#define CHECK_RESULT_SET_NVM_STATUS(Call, pNvmStatus, NvmStatusCode, Label) \
+  do {                                                                      \
+    ReturnCode = Call;                                                      \
+    if (EFI_ERROR(ReturnCode)) {                                            \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);                    \
+      *pNvmStatus = NvmStatusCode;                                          \
+      goto Label;                                                           \
+    }                                                                       \
   } while (0)
 
 // Return if success
@@ -408,6 +444,7 @@ typedef union {
       goto Label;                                                         \
     }                                                                     \
   } while (0)
+
 /**
   Get a variable from UEFI RunTime services.
 
@@ -712,7 +749,7 @@ FreeStringArray(
   If the user does not provide a handle, the function will try
   to match the driver or the controller handle based on the
   provided protocol GUID.
-  No need to call close protocol because of the way it's opened.
+  No need to call close protocol because of the way it is opened.
 
   @param[in] Guid is the EFI GUID of the protocol we want to open.
   @param[out] ppProtocol is the pointer to a pointer where the opened
@@ -1159,7 +1196,7 @@ CheckIfLanguageIsSupported(
 
   @retval - upper character
 **/
-CHAR16 ToUpper(
+CHAR16 NvmToUpper(
   IN      CHAR16 InChar
   );
 
@@ -1405,6 +1442,32 @@ SecurityStateBitmaskToString(
   IN     EFI_HANDLE HiiHandle,
   IN     UINT32 SecurityStateBitmask
 );
+/**
+  Convert dimm's SVN Downgrade Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's SVN Downgrade opt-in
+**/
+CHAR16*
+SVNDowngradeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
+/**
+  Convert dimm's Secure Erase Policy Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Secure erase policy opt-in
+**/
+CHAR16*
+SecureErasePolicyOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
 
 /**
   Convert dimm's S3 Resume Opt-In to its respective string
@@ -1416,6 +1479,19 @@ SecurityStateBitmaskToString(
 **/
 CHAR16*
 S3ResumeOptInToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT32 OptInValue
+);
+/**
+  Convert dimm's Fw Activate Opt-In to its respective string
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] SecurityOptIn, bits define dimm's security opt-in value
+
+  @retval String representation of Dimm's Fw Activate opt-in
+**/
+CHAR16*
+FwActivateOptInToString(
   IN     EFI_HANDLE HiiHandle,
   IN     UINT32 OptInValue
 );
@@ -1572,6 +1648,7 @@ UnitsToStr (
   Convert last firmware update status to string.
   The caller function is obligated to free memory of the returned string.
 
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
   @param[in] Last Firmware update status value to convert
 
   @retval output string or NULL if memory allocation failed
@@ -1582,6 +1659,34 @@ LastFwUpdateStatusToString(
   IN     UINT8 LastFwUpdateStatus
   );
 
+/**
+  Convert quiesce required value to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Quiesce required value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+QuiesceRequiredToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 QuiesceRequired
+);
+/**
+  Convert StagedFwActivatable to string.
+  The caller function is obligated to free memory of the returned string.
+
+  @param[in] HiiHandle handle to the HII database that contains i18n strings
+  @param[in] Staged Fw activatable value to convert
+
+  @retval output string or NULL if memory allocation failed
+**/
+CHAR16 *
+StagedFwActivatableToString(
+  IN     EFI_HANDLE HiiHandle,
+  IN     UINT8 StagedFwActivatable
+);
 /**
   Determines if an array, whose size is known in bytes has all elements as zero
 
@@ -1860,6 +1965,18 @@ CHAR16 * ConvertDimmInfoAttribToString(
   VOID *pAttrib,
   CHAR16* pFormatStr OPTIONAL
 );
+
+/**
+  Match driver command status to EFI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+EFI_STATUS
+MatchCliReturnCode (
+  IN     NVM_STATUS Status
+ );
 
 #ifndef OS_BUILD
 /**

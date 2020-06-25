@@ -30,23 +30,23 @@
 **/
 BOOLEAN
 ValidateImage(
-  IN     FW_IMAGE_HEADER *pImage,
+  IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
      OUT CHAR16** ppError
   )
 {
-  if (ImageSize > MAX_FIRMWARE_IMAGE_SIZE_B || ImageSize < sizeof(FW_IMAGE_HEADER)) {
+  if (ImageSize > MAX_FIRMWARE_IMAGE_SIZE_B || ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
     *ppError = CatSPrint(NULL, L"The image has wrong size! Please try another image.");
     return FALSE;
   }
 
-  if (ImageSize % UPDATE_FIRMWARE_DATA_PACKET_SIZE != 0) {
-    NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_DATA_PACKET_SIZE);
+  if (ImageSize % UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE != 0) {
+    NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE);
     return FALSE;
   }
 
   if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the DIMMs.");
+    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the PMem modules.");
     return FALSE;
   }
 
@@ -71,7 +71,7 @@ ValidateImage(
 **/
 BOOLEAN
 ValidateRecoverySpiImage(
-  IN     FW_IMAGE_HEADER *pImage,
+  IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
   IN     UINT16 SubsystemDeviceId,
      OUT CHAR16** ppError
@@ -88,12 +88,12 @@ ValidateRecoverySpiImage(
   }
 
   if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
-    *ppError = CatSPrint(NULL, L"First generation DCPMM are not supported for SPI image recovery. A 1.x release of this software is required.");
+    *ppError = CatSPrint(NULL, L"First generation " PMEM_MODULES_STR " are not supported for SPI image recovery. A 1.x release of this software is required.");
     goto Finish;
   }
 
   if (SubsystemDeviceId != SPD_DEVICE_ID_15) {
-    *ppError = CatSPrint(NULL, L"Dimm is reporting an unexpected device id.  SPI image recovery is not supported.");
+    *ppError = CatSPrint(NULL, PMEM_MODULE_STR L" is reporting an unexpected device id.  SPI image recovery is not supported.");
     goto Finish;
   }
 
@@ -103,7 +103,7 @@ ValidateRecoverySpiImage(
   }
 
   if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the DIMMs.");
+    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the " PMEM_MODULES_STR ".");
     goto Finish;
   }
   ReturnValue = TRUE;
@@ -225,13 +225,13 @@ LoadFileAndCheckHeader(
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN FlashSPI,
   IN     UINT16 SubsystemDeviceId,
-     OUT FW_IMAGE_HEADER **ppImageHeader,
+     OUT NVM_FW_IMAGE_HEADER **ppImageHeader,
      OUT CHAR16 **ppError
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_FILE_HANDLE FileHandle;
-  SPI_DIRECTORY_GEN2 SpiDirectory;
+  NVM_SPI_DIRECTORY_GEN2 SpiDirectory;
   BOOLEAN ReturnValue = TRUE;
   UINT64 BuffSize = 0;
   UINT64 FileSize = 0;
@@ -285,7 +285,7 @@ LoadFileAndCheckHeader(
     goto FinishClose;
   }
 
-  if (BuffSize < sizeof(FW_IMAGE_HEADER)) {
+  if (BuffSize < sizeof(NVM_FW_IMAGE_HEADER)) {
     NVDIMM_DBG("File size equals: %d.\n", BuffSize);
     *ppError = CatSPrint(NULL, L"Error: The file is too small.\n");
     ReturnValue = FALSE;
@@ -304,7 +304,7 @@ LoadFileAndCheckHeader(
     Here we cast from UINT64 to UINTN, because the ShellReadFile takes UINTN as the buffer size.
     Fortunately our buffer will be smaller even if UINTN is 32-bit.
   **/
-  BuffSize = sizeof(FW_IMAGE_HEADER);
+  BuffSize = sizeof(NVM_FW_IMAGE_HEADER);
   pImageBuffer = AllocatePool(BuffSize);
 
   if (pImageBuffer == NULL) {
@@ -336,7 +336,7 @@ LoadFileAndCheckHeader(
   /**
     Cast the buffer to the header pointer, so we can read the image information.
   **/
-  *ppImageHeader = (FW_IMAGE_HEADER *)pImageBuffer;
+  *ppImageHeader = (NVM_FW_IMAGE_HEADER *)pImageBuffer;
 
   /**
     If the read function returned an error OR we read less bytes that the file length equals.

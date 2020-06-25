@@ -2,7 +2,7 @@
  * Copyright (c) 2018, Intel Corporation.
  * SPDX-License-Identifier: BSD-3-Clause
  */
-
+#ifndef OS_BUILD
 #include <Uefi.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiShellLib/UefiShellLib.h>
@@ -38,7 +38,7 @@ struct Command DeleteDimmCommand =
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},         //!< targets
   {{PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional}},  //!< properties
-  L"Erase persistent data on one or more DIMMs.",                        //!< help
+  L"Erase persistent data on one or more " PMEM_MODULES_STR L".",                        //!< help
   DeleteDimm, TRUE
 };
 
@@ -99,7 +99,7 @@ DeleteDimm(
   }
 
  // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -156,20 +156,10 @@ DeleteDimm(
   }
 
   if (MasterOptionSpecified) {
-    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_SECURITY, pDimms);
-    if (EFI_ERROR(ReturnCode)) {
-      ReturnCode = EFI_ABORTED;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
+    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+      ReturnCode = EFI_INVALID_PARAMETER;
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
       goto Finish;
-    }
-
-    for (Index = 0; Index < DimmCount; Index++) {
-      if (pDimms[Index].MasterPassphraseEnabled != TRUE) {
-        ReturnCode = EFI_INVALID_PARAMETER;
-        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
-        goto Finish;
-      }
     }
   }
 
@@ -295,7 +285,7 @@ DeleteDimm(
       if (EFI_ERROR(ReturnCode)) {
         goto Finish;
       }
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Erasing DIMM " FORMAT_STR L".", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Erasing " PMEM_MODULE_STR L" " FORMAT_STR L".", DimmStr);
       ReturnCode = PromptYesNo(&Confirmation);
       if (!EFI_ERROR(ReturnCode) && Confirmation) {
         ReturnCode = pNvmDimmConfigProtocol->SetSecurityState(pNvmDimmConfigProtocol,&pDimmIds[Index], 1,
@@ -304,7 +294,7 @@ DeleteDimm(
           goto FinishCommandStatusSet;
         }
       } else {
-        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from DIMM " FORMAT_STR L"\n", DimmStr);
+        PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"Skipped erasing data from " PMEM_MODULE_STR L" " FORMAT_STR L"\n", DimmStr);
         continue;
       }
     }
@@ -353,4 +343,4 @@ RegisterDeleteDimmCommand(
   return rc;
 }
 
-
+#endif /** OS_BUILD **/

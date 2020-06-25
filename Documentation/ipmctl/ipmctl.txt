@@ -6,11 +6,11 @@ ipmctl(1)
 
 NAME
 ----
-ipmctl - Utility for managing Intel Optane DC persistent memory modules (DCPMM)
+ipmctl - Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl COMMAND [OPTIONS] [TARGETS] [PROPERTIES]
 
 OPTIONS
@@ -21,87 +21,91 @@ OPTIONS
 
 DESCRIPTION
 -----------
-Utility for managing Intel Optane DC persistent memory modules (DCPMM)
+Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
 
 Supports functionality to:
 
-- Discover DCPMMs on the platform.
+- Discover PMem modules on the platform.
 - Provision the platform memory configuration.
-- View and update the firmware on DCPMMs.
-- Configure data-at-rest security on DCPMMs.
-- Monitor DCPMM health.
-- Track performance of DCPMMs.
-- Debug and troubleshoot DCPMMs.
+- View and update the firmware on PMem modules.
+- Configure data-at-rest security on PMem modules.
+- Monitor PMem module health.
+- Track performance of PMem modules.
+- Debug and troubleshoot PMem modules.
 
 COMMANDS
 --------
 
 === DEVICE DISCOVERY
-Discover DCPMMs on the platform.
+Discover PMem modules on the platform.
 
 *ipmctl-show-device*(1)::
-  Shows information about one or more DCPMMs
+  Shows information about one or more PMem modules
 
 *ipmctl-show-memory-resources*(1)::
-  Shows the total DCPMM memory resource allocation
+  Shows memory allocation information for this platform
 
 *ipmctl-show-socket(1)*::
   Shows basic information about the physical processors
 
 *ipmctl-show-system-capabilities*(1)::
-  Shows the platform supported DCPMM capabilities
+  Shows the platform supported PMem module capabilities
 
 *ipmctl-show-topology(1)*::
   Shows the topology of the memory installed
 
 === MEMORY SUBSYSTEM PROVISIONING
 Provision the platform memory configuration and configure data-at-rest security
-on DCPMMs.
+on PMem modules.
 
+ifndef::os_build[]
 *ipmctl-change-device-passphrase*(1)::
-  Changes the security passphrase on DCPMM
+  Changes the security passphrase on PMem module
 
 *ipmctl-change-device-security*(1)::
-  Changes the DCPMM security lock state
+  Changes the PMem module security lock state
+endif::os_build[]
 
 *ipmctl-create-goal(1)*::
-  Creates a memory allocation goal on one or more DCPMM
+  Creates a memory allocation goal on one or more PMem module
 
 *ipmctl-delete-goal(1)*::
-  Deletes a memory allocation goal on one or more DCPMM
+  Deletes a memory allocation goal on one or more PMem module
 
 *ipmctl-dump-goal(1)*::
    Stores the current system configuration in a file
 
+ifndef::os_build[]
 *ipmctl-enable-device-security(1)*::
-  Enable data-at-rest security on DCPMM
+  Enable data-at-rest security on PMem module
 
 *ipmctl-erase-device-data(1)*::
-  Erases the persistent data on one or more DCPMMs
+  Erases the persistent data on one or more PMem modules
+endif::os_build[]
 
 *ipmctl-load-goal(1)*::
-  Load a memory allocation goal from a file onto DCPMMs
+  Load a memory allocation goal from a file onto PMem modules
 
 *ipmctl-show-goal(1)*::
-  Shows the memory allocation goal on one or more DCPMM
+  Shows the memory allocation goal on one or more PMem module
 
 *ipmctl-show-region(1)*::
   Retrieves a list of persistent memory regions
 
 === INSTRUMENTATION
-Monitor health and track performance of DCPMMs.
+Monitor health and track performance of PMem modules.
 
 *ipmctl-change-sensor*(1)::
-  Changes the threshold or enabled state for DCPMMs sensors
+  Changes the threshold or enabled state for PMem modules sensors
 
 *ipmctl-show-performance*(1)::
-  Shows performance metrics for one or more DCPMMs
+  Shows performance metrics for one or more PMem modules
 
 *ipmctl-show-sensor*(1)::
-  Shows health statistics for one or more DCPMMs
+  Shows health statistics for one or more PMem modules
 
 === SUPPORT AND MAINTENANCE
-View and update the firmware on DCPMMs. Other support and maintenance commands.
+View and update the firmware on PMem modules. Other support and maintenance commands.
 
 *ipmctl-change-preference*(1)::
   Modifies one or more user preferences
@@ -113,28 +117,28 @@ View and update the firmware on DCPMMs. Other support and maintenance commands.
   Shows help for the supported commands
 
 *ipmctl-modify-device*(1)::
-  Changes the configurable setting(s) on one or more DCPMMs
+  Changes the configurable settings on one or more PMem modules
 
 *ipmctl-show-firmware*(1)::
   Shows detailed information about the firmware
 
 *ipmctl-show-preferences*(1)::
-  Displays a list of the DCPMM software user preferences
+  Displays a list of the PMem module software user preferences
 
 *ipmctl-update-firmware*(1)::
-  Updates the firmware on one or more DCPMMs.
+  Updates the firmware on one or more PMem modules.
 
 *ipmctl-version*(1)::
-  Shows the DCPMM host software versions
+  Shows the PMem module host software versions
 
 === DEBUG
-Debug and troubleshoot DCPMMs.
+Debug and troubleshoot PMem modules.
 
 *ipmctl-delete-pcd*(1)
   Clears select partition data from the PCD
 
 *ipmctl-dump-debug-log*(1)::
-  Dumps encoded firmware debug logs from DCPMM
+  Dumps encoded firmware debug logs from PMem module
 
 *ipmctl-inject-error*(1)::
   Injects an error or clears a previously injected error
@@ -149,13 +153,13 @@ Debug and troubleshoot DCPMMs.
   Runs a diagnostic test
 
 *ipmctl-show-acpi*(1)::
-  Shows the system ACPI tables related to the DCPMMs
+  Shows the system ACPI tables related to the PMem modules
 
 *ipmctl-show-error-log*(1)::
-  Shows thermal or media errors on the specified DCPMMs
+  Shows thermal or media errors on the specified PMem modules
 
 *ipmctl-show-pcd*(1)::
-  Shows the platform configuration data for one or more DCPMMs
+  Shows the platform configuration data for one or more PMem modules
 
 *ipmctl-dump-session*(1)::
   Dumps the active session to a file
@@ -179,14 +183,18 @@ SEE ALSO
 *ipmctl-show-socket*(1),
 *ipmctl-show-system-capabilities*(1),
 *ipmctl-show-topology*(1),
+ifndef::os_build[]
 *ipmctl-change-device-passphrase*(1),
 *ipmctl-change-device-security*(1),
+endif::os_build[]
 *ipmctl-create-goal*(1),
 *ipmctl-create-goal*(1),
 *ipmctl-delete-goal*(1),
 *ipmctl-dump-goal*(1),
+ifndef::os_build[]
 *ipmctl-enable-device-security*(1),
 *ipmctl-erase-device-data*(1),
+endif::os_build[]
 *ipmctl-load-goal*(1),
 *ipmctl-show-goal*(1),
 *ipmctl-show-region*(1),

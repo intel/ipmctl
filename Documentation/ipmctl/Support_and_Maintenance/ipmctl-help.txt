@@ -12,7 +12,7 @@ ipmctl-help - Shows help for the supported commands
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl help [OPTIONS]
 
 DESCRIPTION
@@ -28,13 +28,13 @@ OPTIONS
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 EXAMPLES
 --------
 Lists all supported commands
-[verse]
+[listing]
 ipmctl help
 
 RETURN DATA
@@ -45,14 +45,11 @@ help option with that specific command.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 ipmctl help
 Commands:
-(name)
-(synopsis)
-(name)
-(synopsis)
-(name)
-(synopsis)
-(name)
-(synopsis)
+(command synopsis)
+(command syntax)
+\...
+(command synopsis)
+(command syntax)

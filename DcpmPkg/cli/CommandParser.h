@@ -10,6 +10,7 @@
 #include <Debug.h>
 #include <Types.h>
 #include <Printer.h>
+#include <Utility.h>
 
 #define DISP_NAME_LEN             32    //!< Display string length (used when formatting output in alternative formats)
 #define DISP_DELIMS_LEN           10    //!< Deliminter string length (used when formatting output in alternative formats)
@@ -57,12 +58,12 @@
 #define DICTIONARY_OPTION_HELP          L"file"
 #define EXAMINE_OPTION                  L"-examine"                            //!< 'examine' option name
 #define EXAMINE_OPTION_SHORT            L"-x"                                  //!< 'examine' option short form
-#define EXAMINE_OPTION_HELP             L"Verify only"                         //!< 'examine' option help text
+#define EXAMINE_OPTION_DETAILS_TEXT     L"Test the provided firmware image for compatibility"  //!< 'examine' option detailed help text
 #define FORCE_OPTION                    L"-force"                              //!< 'force' option name
 #define FORCE_OPTION_SHORT              L"-f"                                  //!< 'force' option short form
-#define FORCE_OPTION_HELP               L"Suppress confirmation"               //!< 'force' option help text
+#define FORCE_OPTION_DETAILS_TEXT       L"Suppress confirmations"              //!< 'force' option help text detail
 #define RECOVER_OPTION                  L"-recover"                            //!< 'recover' option name
-#define RECOVER_OPTION_FLASH_SPI        L"FlashSPI"                            //!< 'recover' option value to FlashSpi during update
+#define RECOVER_OPTION_DETAILS_TEXT     L"Run update on non-functional " PMEM_MODULES_STR L" only (deprecated)"  //!< 'recover' option help text
 #define UNITS_OPTION                    L"-units"                              //!< 'units' option name
 #define UNITS_OPTION_B                  L"B"                                   //!< 'units' option value for B
 #define UNITS_OPTION_MB                 L"MB"                                  //!< 'units' option value for MB
@@ -136,7 +137,7 @@
 #define PMTT_TARGET_VALUE                    L"PMTT"                     //!< 'system' target value
 #define SYSTEM_ACPI_TARGETS \
   L"NFIT|PCAT|PMTT"                                                           //!< the system acpi combined
-#define SMBIOS_TARGET_VALUES                 L"17|20"                    ///< 'smbios' target values
+#define SMBIOS_TARGET_VALUES                 L"17"                    ///< 'smbios' target values
 #define FORMAT_TARGET                        L"-format"                  //!< 'format' target value
 #define PREFERENCES_TARGET                   L"-preferences"             //!< 'preferences' target value
 #define PERFORMANCE_TARGET                   L"-performance"             //!< 'performance' target value
@@ -169,16 +170,13 @@
 #define LOCKSTATE_VALUE_DISABLED          L"Disabled"                 //!< 'LockState' property Disabled value
 #define LOCKSTATE_VALUE_UNLOCKED          L"Unlocked"                 //!< 'LockState' property Unlocked value
 #define LOCKSTATE_VALUE_FROZEN            L"Frozen"                   //!< 'LockState' property Frozen value
-#define CONFIG_STATUS_VALUE_VALID         L"Valid"                    //!< 'ConfigStatus' property Valid value
-#define CONFIG_STATUS_VALUE_NOT_CONFIG    L"Not Configured"           //!< 'ConfigStatus' property Not Configured value
-#define CONFIG_STATUS_VALUE_BAD_CONFIG \
-  L"Failed - Bad configuration"                                   //!< 'ConfigStatus' property Bad Configuration value
-#define CONFIG_STATUS_VALUE_BROKEN_INTERLEAVE \
-  L"Failed - Broken interleave"                                   //!< 'ConfigStatus' property Broken Interleave value
-#define CONFIG_STATUS_VALUE_REVERTED \
-  L"Failed - Reverted"                                            //!< 'ConfigStatus' property Reverted value
-#define CONFIG_STATUS_VALUE_UNSUPPORTED \
-  L"Failed - Unsupported"                                                  //!< 'ConfigStatus' property Unsupported value
+#define CONFIG_STATUS_VALUE_VALID               L"Valid"                        //!< 'ConfigStatus' property Valid value
+#define CONFIG_STATUS_VALUE_NOT_CONFIG          L"Not configured"               //!< 'ConfigStatus' property Not Configured value
+#define CONFIG_STATUS_VALUE_BAD_CONFIG          L"Failed - Bad configuration"   //!< 'ConfigStatus' property Bad Configuration value
+#define CONFIG_STATUS_VALUE_BROKEN_INTERLEAVE   L"Failed - Broken interleave"   //!< 'ConfigStatus' property Broken Interleave value
+#define CONFIG_STATUS_VALUE_REVERTED            L"Failed - Reverted"            //!< 'ConfigStatus' property Reverted value
+#define CONFIG_STATUS_VALUE_UNSUPPORTED         L"Failed - Unsupported"         //!< 'ConfigStatus' property Unsupported value
+#define CONFIG_STATUS_VALUE_PARTIALLY_SUPPORTED L"Failed - Partially supported" //!< 'ConfigStatus' property Partially Supported value
 #define PASSPHRASE_PROPERTY               L"Passphrase"               //!< 'Passphrase' property name
 #define NEWPASSPHRASE_PROPERTY            L"NewPassphrase"            //!< 'NewPassphrase' property name
 #define CONFIRMPASSPHRASE_PROPERTY        L"ConfirmPassphrase"        //!< 'ConfirmPassphrase' property name
@@ -263,18 +261,18 @@
 #define DCPMM_PERFORMANCE_TOTAL_WRITE_REQUESTS    L"TotalWriteRequests"
 
 /** Sensor Detail Messages **/
-#define DIMM_HEALTH_STR_DETAIL                       L"Health -  The current DCPMM health as reported in the SMART log"
-#define MEDIA_TEMPERATURE_STR_DETAIL                 L"MediaTemperature-The current DCPMM media temperature in Celsius"
-#define CONTROLLER_TEMPERATURE_STR_DETAIL            L"ControllerTemperature - The current DCPMM controller temperature in Celsius"
-#define SPARE_CAPACITY_STR_DETAIL                    L"PercentageRemaining - Remaining DCPMMs life as a percentage value of factory expected\
+#define DIMM_HEALTH_STR_DETAIL                       L"Health - The current " PMEM_MODULE_STR L" health as reported in the SMART log"
+#define MEDIA_TEMPERATURE_STR_DETAIL                 L"MediaTemperature - The current " PMEM_MODULE_STR L" media temperature in Celsius"
+#define CONTROLLER_TEMPERATURE_STR_DETAIL            L"ControllerTemperature - The current " PMEM_MODULE_STR " controller temperature in Celsius"
+#define SPARE_CAPACITY_STR_DETAIL                    L"PercentageRemaining - Remaining " PMEM_MODULES_STR L" life as a percentage value of factory expected\
  life spa"
 #define LATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL      L"LatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
- the DCPMM"
+ the " PMEM_MODULE_STR
 #define UNLATCHED_DIRTY_SHUTDOWN_COUNT_STR_DETAIL    L"UnlatchedDirtyShutdownCount - The number of shutdowns without notification over the lifetime of\
- the DCPMM."
-#define POWER_ON_TIME_STR_DETAIL                     L"PowerOnTime - The total power-on time over the lifetime of the DCPMM"
-#define UPTIME_STR_DETAIL                            L"UpTime - The total power-on time since the last power cycle of the DCPMM"
-#define POWER_CYCLES_STR_DETAIL                      L"PowerCycles - The number of power cycles over the lifetime of the DCPMM"
+ the " PMEM_MODULE_STR L"."
+#define POWER_ON_TIME_STR_DETAIL                     L"PowerOnTime - The total power-on time over the lifetime of the " PMEM_MODULE_STR
+#define UPTIME_STR_DETAIL                            L"UpTime - The total power-on time since the last power cycle of the " PMEM_MODULE_STR
+#define POWER_CYCLES_STR_DETAIL                      L"PowerCycles - The number of power cycles over the lifetime of the " PMEM_MODULE_STR
 #define FW_ERROR_COUNT_STR_DETAIL                    L"FwErrorCount - The total number of firmware error log entries"
 
 
@@ -282,7 +280,7 @@
 #define HELP_OPTIONS_DETAILS_TEXT       L"Changes the output format."
 #define HELP_VERBOSE_DETAILS_TEXT       L"Change the Debug Level Message Display"
 #define HELP_ALL_DETAILS_TEXT           L"Shows all attributes."
-#define HELP_DISPLAY_DETAILS_TEXT       L"Shows attributes specified in a comma-separatedlist"
+#define HELP_DISPLAY_DETAILS_TEXT       L"Shows attributes specified in a comma-separated list"
 #define HELP_FORCE_DETAILS_TEXT         L"Suppresses the confirmation from the User to use this operation"
 #define HELP_UNIT_DETAILS_TEXT          L"Desired Unit for display"
 #define HELP_DDRT_DETAILS_TEXT          L"Used to specify DDRT as the desired transport protocol"
@@ -316,7 +314,6 @@
                                         UNITS_OPTION_TB       L"|" \
                                         UNITS_OPTION_TIB
 #define HELP_TEXT_PERSISTENT_MEM_TYPE   L"AppDirect|AppDirectNotInterleaved"
-#define HELP_TEXT_FLASH_SPI             L"FlashSPI"
 #define HELP_DBG_LOG_LEVEL              L"log level"
 #define HELP_TEXT_PERFORMANCE_CAT       L"Performance Metrics"
 
@@ -487,7 +484,7 @@ void FreeCommandInput(struct CommandInput *pCommandInput);
 /**
   Parse the given the command line arguments to
   identify the correct command.
-  It's the responsibility of the caller function to free the allocated
+  It is the responsibility of the caller function to free the allocated
   memory for target values in the Command structure.
 
   @param[in] the command input

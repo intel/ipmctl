@@ -209,7 +209,7 @@ GetRegionById(
 /**
   Get Region List
   Retruns the pointer to the region list.
-  It's also initializing the region list if it's necessary.
+  It is also initializing the region list if it is necessary.
 
   @param[in] pRegionList Head of the list for Regions
   @param[in] UseNfit Flag to indicate usage of NFIT
@@ -275,6 +275,7 @@ InitializeDimmRegionFromNfit(
 /**
   Allocate and initialize the dimm region by using Interleave Information table from Platform Config Data
 
+  @param[in] pCurDimm the DIMM from which Interleave Information table was retrieved
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
   @param[in] pISList List of interleaveset formed so far
   @param[in] pIdentificationInfoTable Identification Information table
@@ -291,6 +292,7 @@ InitializeDimmRegionFromNfit(
 **/
 EFI_STATUS
 InitializeDimmRegion(
+  IN     DIMM *pCurDimm,
   IN     LIST_ENTRY *pDimmList,
   IN     LIST_ENTRY *pISList,
   IN     VOID *pIdentificationInfoTable,
@@ -492,8 +494,7 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt,
-  IN     BOOLEAN CheckSupportedConfigDimms
+  IN     BOOLEAN RestoreCorrupt
   );
 
 /**

@@ -99,11 +99,10 @@ struct Command ShowSocketsCommand =
   {
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, TRUE, ValueOptional}
   },
-  {{L"", L"", L"", FALSE, ValueOptional}},            //!< properties
-  L"Show basic information about the physical\
-  processors in the host server.",                  //!< help
-  ShowSockets,                                        //!< run function
-  TRUE,                                               //!< enable print control support
+  {{L"", L"", L"", FALSE, ValueOptional}},                                //!< properties
+  L"Show mapped memory limit and total mapped memory of each socket.",    //!< help
+  ShowSockets,                                                            //!< run function
+  TRUE,                                                                   //!< enable print control support
 };
 
 CHAR16 *mppAllowedShowSocketsDisplayValues[] =
@@ -160,7 +159,7 @@ ShowSockets(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   DISPLAY_PREFERENCES DisplayPreferences;
   CHAR16 *pMappedMemLimitStr = NULL;
   CHAR16 *pTotalMappedMemStr = NULL;

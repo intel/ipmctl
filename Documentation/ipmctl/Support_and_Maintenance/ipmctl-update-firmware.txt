@@ -8,20 +8,20 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-update-firmware - Updates the firmware on one or more DCPMMs
+ipmctl-update-firmware - Updates the firmware on one or more PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl load [OPTIONS] -source (path) -dimm [TARGETS]
 
 DESCRIPTION
 -----------
-Updates the firmware on one or more DCPMMs. On the next power cycle, the
+Updates the firmware on one or more PMem modules. On the next power cycle, the
 firmware will become active.
 
-NOTE: If Address Range Scrub (ARS) is in progress on any target DIMM,
-an attempt will be made to abort ARS and the proceed with the firmware update.
+NOTE: If Address Range Scrub (ARS) is in progress on any target PMem module,
+an attempt will be made to abort ARS and then proceed with the firmware update.
 
 NOTE: A power cycle reboot is required to activate the updated firmware image and is
 recommended to ensure ARS runs to completion.
@@ -30,14 +30,14 @@ OPTIONS
 -------
 -x::
 -examine::
-  Verifies the target DIMM is compatible with and ready to receive the recovery
-  firmware image specified in the source option. Return the recovery firmware
+  Verifies the target PMem modules are compatible and ready to receive the
+  firmware image specified in the source option. Returns the firmware
   image version.
 
 -f::
 -force::
   Downgrading the firmware to an older version is a potentially destructive
-  operation which requires confirmation from the user for each DCPMM. This
+  operation which requires confirmation from the user for each PMem module. This
   option suppresses the confirmation when attempting to downgrade.
 
 -h::
@@ -52,44 +52,48 @@ OPTIONS
 
 NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
 
-ifndef::os_build[]
--recover::
-  The recover option forces the firmware update to attempt using SMBus instead
-  of DDRT. This is necessary in case the DDRT link is not trained. This update
-  method will be much slower than using the DDRT interface. If this option is used
-  to downgrade the firmware then force option must be specified.
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
 
--recover FlashSPI::
-  The FlashSPI option is a modifier that forces an update of the entire SPI
-  Flash. This requires a specific flash image that is intended as full SPI flash
-  update. This update method is only possible if existing SPI firmware images
-  are all corrupt and cannot be loaded by the DIMM's ROM.
-endif::os_build[]
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
+-source::
+  Specifies the firmware image binary to upload to the PMem module.
+
+-recover::
+  *--DEPRECATED--* +
+  This flag is no longer necessary to run firmware update on PMem modules
+  where the DDRT link is not trained. These untrained PMem modules are now automatically
+  included when the command is run without the '-recover' option.. However, this
+  flag is still maintained for backwards compatibility.
 
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Updates the firmware on specific DCPMMs by supplying one or more
-  comma-separated DCPMM identifiers. However, this is not recommended as it may
+  Updates the firmware on specific PMem modules by supplying one or more
+  comma-separated PMem module identifiers. However, this is not recommended as it may
   put the system in an undesirable state. The default is to update all
-  manageable DCPMMs.
+  manageable PMem modules.
 
 EXAMPLES
 --------
-Updates the firmware on all DCPMMs in the system to the image in sourcefile.pkg on
+Updates the firmware on all PMem modules in the system to the image in sourcefile.bin on
 the next power cycle.
-[verse]
-ipmctl load -source sourcefile.pkg -dimm
+[listing]
+ipmctl load -source sourcefile.bin -dimm
 
-Checks the firmware image in c:\sourcefile.pkg and retrieve the version.
-[verse]
-ipmctl load -examine -source sourcefile.pkg -dimm
+Checks the firmware image in sourcefile.bin and retrieves the version.
+[listing]
+ipmctl load -examine -source sourcefile.bin -dimm
 
 
 LIMITATIONS
@@ -98,7 +102,7 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software.
+- The specified PMem modules must be manageable by the host software.
 
 Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
 
@@ -109,7 +113,7 @@ Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
     examine option to determine if the security revision number can be downgraded.
   - The build number (bbbb) can be upgraded or downgraded. However, if the firmware
     API version in the firmware image is lower than is supported by the host software
-    and would make the DCPMM become unmanageable, the downgrade is not supported.
+    and would make the PMem module become unmanageable, the downgrade is not supported.
 
 NOTE: Once a firmware image is staged for execution, a power cycle is required
 before another firmware image of the same type (production or debug) can be
@@ -119,33 +123,33 @@ RETURN DATA
 -----------
 When the examine option is provided, the firmware image is checked and the
 version number and firmware type is provided. The firmware will either be
-valid for the DCPMM, a downgrade or invalid meaning it cannot be used for that
-DCPMM.
+valid for the PMem module, a downgrade or invalid meaning it cannot be used for that
+PMem module.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 (file path): MM.mm.hh.bbbb
-Load FW on DIMM (DimmID): (Valid|Downgrade) [(with
+Load FW on PMem module (DimmID): (Valid|Downgrade) [(with
 confirmation or the force option)]
 
 If the firmware is being downgraded and the force option is not provided, the user will
-be prompted to confirm the downgrade for each DCPMM. Otherwise, for each DCPMM,
+be prompted to confirm the downgrade for each PMem module. Otherwise, for each PMem module,
 the CLI will indicate the status of the operation.
 
-[verse]
-Downgrade firmware on DIMM (DimmID)? (y or [n]) Downgrade firmware
-on DIMM (DimmID)? (y or [n])
+[listing]
+Downgrade firmware on PMem module (DimmID)? (y or [n]) Downgrade firmware
+on PMem module (DimmID)? (y or [n])
 
-If a failure occurs when updating multiple DCPMMs, the process will continue
-attempting to update the remaining DCPMMs requested. The firmware will not
+If a failure occurs when updating multiple PMem modules, the process will continue
+attempting to update the remaining PMem modules requested. The firmware will not
 become active until the next power cycle. Use the command Section
 <<Show Device Firmware>> to view more detailed information about the active
 and staged firmware.
 
-[verse]
-Load FW on DIMM (DimmID): Success, a power cycle is required to
+[listing]
+Load FW on PMem module (DimmID): Success, a power cycle is required to
 activate the FW.
 
-[verse]
-Load FW on DIMM (DimmID): Error (Code) - (Description)
+[listing]
+Load FW on PMem module (DimmID): Error (Code) - (Description)

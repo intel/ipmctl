@@ -10,8 +10,11 @@
 
 #define ACTIVE_FW_VERSION_STR                 L"ActiveFWVersion"
 #define STAGED_FW_VERSION_STR                 L"StagedFWVersion"
+#define STAGED_FW_ACTIVATABLE_STR             L"StagedFWActivatable"
 #define FW_UPDATE_STATUS_STR                  L"FWUpdateStatus"
 #define FW_IMAGE_MAX_SIZE_STR                 L"FWImageMaxSize"
+#define QUIESCE_REQUIRED_STR                  L"QuiesceRequired"
+#define ACTIVATION_TIME_STR                   L"ActivationTime"
 
 #define DS_ROOT_PATH                          L"/DimmFirmwareList"
 #define DS_DIMM_FW_PATH                       L"/DimmFirmwareList/DimmFirmware"
@@ -91,7 +94,7 @@ struct Command ShowFirmwareCommand =
     {FIRMWARE_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                          //!< properties
-  L"Show information about firmware on one or more DIMMs.",         //!< help
+  L"Show information about firmware on one or more " PMEM_MODULES_STR L".",        //!< help
   ShowFirmware,                                                     //!< run function
   TRUE,                                                             //!< enable print control support
 };
@@ -100,8 +103,11 @@ CHAR16 *mppAllowedShowFirmwareDisplayValues[] = {
   DIMM_ID_STR,
   ACTIVE_FW_VERSION_STR,
   STAGED_FW_VERSION_STR,
+  STAGED_FW_ACTIVATABLE_STR,
   FW_UPDATE_STATUS_STR,
   FW_IMAGE_MAX_SIZE_STR,
+  QUIESCE_REQUIRED_STR,
+  ACTIVATION_TIME_STR
 };
 
 /**
@@ -146,6 +152,8 @@ ShowFirmware(
   UINT32 DimmIdsCount = 0;
   UINT32 Index = 0;
   CHAR16 *pFwUpdateStatusString = NULL;
+  CHAR16 *pQuiesceRequiredString = NULL;
+  CHAR16 *pStagedFwActivatableString = NULL;
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
@@ -154,6 +162,7 @@ ShowFirmware(
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
   CHAR16 FwVerStr[FW_VERSION_LEN];
+  UINT8 ManageableDimmsCount = 0;
 
   NVDIMM_ENTRY();
 
@@ -192,13 +201,7 @@ ShowFirmware(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_FW_IMAGE_INFO, &pDimms, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    if(ReturnCode == EFI_NOT_FOUND) {
-        PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
-    }
-    goto Finish;
-  }
+  CHECK_RESULT(GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_FW_IMAGE_INFO, &pDimms, &DimmCount), Finish);
 
   /** Initialize status structure **/
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
@@ -222,25 +225,18 @@ ShowFirmware(
     }
   }
 
-  /** If no dimm IDs are specified get IDs from all dimms **/
-  if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol,FALSE, &DimmIdsCount, &pDimmIds);
-    if (EFI_ERROR(ReturnCode)) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      goto Finish;
-    }
-    if (DimmIdsCount == 0) {
-      ReturnCode = EFI_NOT_FOUND;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
-      goto Finish;
-    }
-  }
-
   /** Print table **/
   for (Index = 0; Index < DimmCount; Index++) {
-    if (!ContainUint(pDimmIds, DimmIdsCount, pDimms[Index].DimmID)) {
+    if (DimmIdsCount > 0) {
+      if (!ContainUint(pDimmIds, DimmIdsCount, pDimms[Index].DimmID)) {
+        continue;
+      }
+    }
+
+    if (pDimms[Index].ManageabilityState != MANAGEMENT_VALID_CONFIG) {
       continue;
     }
+    ManageableDimmsCount++;
 
     ReturnCode = GetPreferredDimmIdAsString(pDimms[Index].DimmHandle, pDimms[Index].DimmUid,
       DimmStr, MAX_DIMM_UID_LENGTH);
@@ -269,6 +265,18 @@ ShowFirmware(
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, STAGED_FW_VERSION_STR, FwVerStr);
     }
 
+    /** StagedFwActivatable **/
+    if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, STAGED_FW_ACTIVATABLE_STR))) {
+      pStagedFwActivatableString = StagedFwActivatableToString(gNvmDimmCliHiiHandle, pDimms[Index].StagedFwActivatable);
+      if (pStagedFwActivatableString == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+        goto Finish;
+      }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, STAGED_FW_ACTIVATABLE_STR, pStagedFwActivatableString);
+      FREE_POOL_SAFE(pStagedFwActivatableString);
+    }
+
     /** FwUpdateStatus **/
     if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_UPDATE_STATUS_STR))) {
       pFwUpdateStatusString = LastFwUpdateStatusToString(gNvmDimmCliHiiHandle, pDimms[Index].LastFwUpdateStatus);
@@ -285,6 +293,29 @@ ShowFirmware(
     if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FW_IMAGE_MAX_SIZE_STR))) {
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, FW_IMAGE_MAX_SIZE_STR, FORMAT_UINT32, pDimms[Index].FWImageMaxSize);
     }
+
+    /** Quiesce Required **/
+    if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, QUIESCE_REQUIRED_STR))) {
+      pQuiesceRequiredString = QuiesceRequiredToString(gNvmDimmCliHiiHandle, pDimms[Index].QuiesceRequired);
+      if (pQuiesceRequiredString == NULL) {
+        ReturnCode = EFI_OUT_OF_RESOURCES;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
+        goto Finish;
+      }
+      PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, QUIESCE_REQUIRED_STR, pQuiesceRequiredString);
+      FREE_POOL_SAFE(pQuiesceRequiredString);
+    }
+
+    /** Activation Time **/
+    if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ACTIVATION_TIME_STR))) {
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, ACTIVATION_TIME_STR, FORMAT_UINT32, pDimms[Index].ActivationTime);
+    }
+  }
+
+  if (ManageableDimmsCount == 0) {
+    ReturnCode = EFI_NOT_FOUND;
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_MANAGEABLE_DIMMS);
+    goto Finish;
   }
 
   ReturnCode = EFI_SUCCESS;

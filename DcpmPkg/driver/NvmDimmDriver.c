@@ -1110,7 +1110,7 @@ InitializeDimms()
    }
 #ifndef OS_BUILD
    ReturnCodeNonBlocking = SmbusInit();
-   if (EFI_ERROR(ReturnCode)) {
+   if (EFI_ERROR(ReturnCodeNonBlocking)) {
     NVDIMM_WARN("Failed on Smbus init, error = " FORMAT_EFI_STATUS ".", ReturnCodeNonBlocking);
    }
 #endif //!OS_BUILD
@@ -1542,7 +1542,7 @@ NvmDimmDriverDriverBindingStart(
       goto FinishSkipClose;
    }
 
-   gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelDCPersistentMemoryDriverStrings, NULL);
+   gNvmDimmData->HiiHandle = HiiAddPackages(&gNvmDimmNgnvmGuid, gNvmDimmData->DriverHandle, IntelOptanePMemDriverStrings, NULL);
    if (gNvmDimmData->HiiHandle == NULL) {
       NVDIMM_WARN("Unable to add string package to Hii");
       goto Finish;
@@ -1813,13 +1813,13 @@ NvmDimmDriverDriverBindingStop(
   }
 
   /** Free PCAT tables memory **/
-  FreeParsedPcat(gNvmDimmData->PMEMDev.pPcatHead);
+  FreeParsedPcat(&gNvmDimmData->PMEMDev.pPcatHead);
 
   /** Free NFIT tables memory **/
-  FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+  FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
 
   /** Free PMTT tables memory **/
-  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
+  FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
 
   if (gNvmDimmData->HiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmData->HiiHandle);
@@ -1839,13 +1839,13 @@ Finish:
   ReturnCode = FreeDimmList();
 
   /** Free PCAT tables memory **/
-  FreeParsedPcat(gNvmDimmData->PMEMDev.pPcatHead);
+  FreeParsedPcat(&gNvmDimmData->PMEMDev.pPcatHead);
 
   /** Free NFIT tables memory **/
-  FreeParsedNfit(gNvmDimmData->PMEMDev.pFitHead);
+  FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
 
   /** Free PMTT tables memory **/
-  FreeParsedPmtt(gNvmDimmData->PMEMDev.pPmttHead);
+  FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
 
 #endif //not OS_BUILD
 #if _BullseyeCoverage

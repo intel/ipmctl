@@ -44,7 +44,7 @@ byte swap
 #define NVM_ERROR_LEN 256 ///< Length of return code description
 #define NVM_MAX_HANDLE_LEN 11 ///< Max length of a uint32 in decimal + '\0'
 #define NVM_MAX_UID_LEN 22 ///< Max Length of Unique ID
-#define NVM_MAX_DIMMID_STR_LEN 7 ///< Max length of Dimm ID string
+#define NVM_MAX_DIMMID_STR_LEN 7 ///< Max length of PMem module ID string
 #define NVM_MANUFACTURER_LEN  2 ///< Number of bytes in the manufacturer ID
 #define NVM_MANUFACTURERSTR_LEN 256 ///< Manufacturer string length
 #define NVM_SERIAL_LEN  4 ///< Number of bytes in the serial number
@@ -61,19 +61,19 @@ byte swap
 #define NVM_NAMESPACE_PURPOSE_LEN 64 ///< Length of namespace purpose string
 #define NVM_MAX_SOCKET_DIGIT_COUNT  4 ///< Maximum number of digits in a socket count
 #define NVM_MEMORY_CONTROLLER_CHANNEL_COUNT 3 ///< expected number of channels per iMC
-#define NVM_MAX_INTERLEAVE_SETS_PER_DIMM  2 ///< Max number of App Direct interleave sets per DIMM
+#define NVM_MAX_INTERLEAVE_SETS_PER_DIMM  2 ///< Max number of App Direct interleave sets per PMem module
 #define NVM_MAX_POOLS_PER_NAMESPACE 128 ///< Maximum number of pools for a namespace
 #define NVM_PART_NUM_LEN  21 ///< Length of device part number string
 // TODO -guessing and interleave formats size. HSD-20363 should address this.
 #define NVM_INTERLEAVE_FORMATS  32 ///< Maximum number of memory interleave formats
-#define NVM_MAX_DEVICES_PER_POOL  128 ///< Maximum number of DIMMs that can be used in a pool
+#define NVM_MAX_DEVICES_PER_POOL  128 ///< Maximum number of PMem modules that can be used in a pool
 // This number of devices that can go on a socket may go up on future architectures
 // so this is something to keep an eye on. 24 should be good for a while
-#define NVM_MAX_DEVICES_PER_SOCKET  24 ///< Maximum number of dimms that can be on a socket
+#define NVM_MAX_DEVICES_PER_SOCKET  24 ///< Maximum number of PMem modules that can be on a socket
 #define NVM_LOG_MESSAGE_LEN 2048 ///< Length of log message string
 #define NVM_MAX_BLOCK_SIZES_PER_POOL  16
 #define NVM_MAX_BLOCK_SIZES 16 ///< maximum number of block sizes supported by the driver
-#define NVM_MAX_TOPO_SIZE 96 ///< Maximum number of DIMMs possible for a given memory topology
+#define NVM_MAX_TOPO_SIZE 96 ///< Maximum number of PMem modules possible for a given memory topology
 #define NVM_THRESHOLD_STR_LEN 1024 ///< Max threshold string value len
 #define NVM_VOLATILE_POOL_SOCKET_ID -1 ///< Volatile pools are system wide and not tied to a socket
 #define NVM_MAX_CONFIG_LINE_LEN 512 ///< Maximum line size for config data in a dump file
@@ -142,18 +142,18 @@ enum region_type
 };
 
 /**
- * Rolled-up health of the underlying DIMMs from which the REGION is created.
+ * Rolled-up health of the underlying PMem modules from which the REGION is created.
  */
 enum region_health
 {
-  REGION_HEALTH_NORMAL  = 1, ///< All underlying DIMM Persistent memory capacity is available.
+  REGION_HEALTH_NORMAL  = 1, ///< All underlying PMem module Persistent memory capacity is available.
   REGION_HEALTH_ERROR   = 2, ///< There is an issue with some or all of the underlying
-                             ///< DIMM capacity.
+                             ///< PMem module capacity.
   REGION_HEALTH_UNKNOWN = 3, ///< The REGION health cannot be determined.
 
   REGION_HEALTH_PENDING = 4, ///< A new memory allocation goal has been created but not applied.
 
-  REGION_HEALTH_LOCKED  = 5  ///< One or more of the underlying DIMMs are locked.
+  REGION_HEALTH_LOCKED  = 5  ///< One or more of the underlying PMem modules are locked.
 };
 
 /**
@@ -162,7 +162,7 @@ enum region_health
 enum interleave_set_health
 {
   INTERLEAVE_HEALTH_UNKNOWN  = 0,  ///< Health cannot be determined.
-  INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying DIMMs have good health.
+  INTERLEAVE_HEALTH_NORMAL   = 1,  ///< Available and underlying PMem modules have good health.
   INTERLEAVE_HEALTH_DEGRADED = 2,  ///< In danger of failure, may have degraded performance.
   INTERLEAVE_HEALTH_FAILED   = 3   ///< Interleave set has failed and is unavailable.
 };
@@ -256,7 +256,7 @@ enum acpi_event_type
  * Describes an error log.
  */
 typedef struct _ERROR_LOG {
-  NVM_UINT16 DimmID;                        ///< The DimmID
+  NVM_UINT16 DimmID;                        ///< The PMem module ID
   NVM_UINT64 SystemTimestamp;               ///< Unix epoch time of log entry
   NVM_UINT8 ErrorType;                      ///< 0: Thermal, 1: Media
   NVM_UINT8 OutputData[MAX_ERROR_LOG_SZ];   ///< Either THERMAL_ERROR_LOG or MEDIA_ERROR_LOG (see ErrorType)

@@ -41,7 +41,7 @@ struct Command LoadGoalCommand =
     {SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                              //!< properties
-  L"Load stored configuration goal for specific DIMMs",            //!< help
+  L"Create a memory allocation goal request from a file.",              //!< help
   LoadGoal,
   TRUE
 };
@@ -80,7 +80,7 @@ LoadGoal(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pUnitsStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
   UINT32 SocketIndex = 0;
@@ -140,7 +140,7 @@ LoadGoal(
     UnitsToDisplay = UnitsOption;
   }
 
-  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
+  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT) || XML == pPrinterCtx->FormatType) {
     Force = TRUE;
   }
 

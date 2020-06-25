@@ -37,7 +37,7 @@ struct Command ShowPreferencesCommand =
     {PREFERENCES_TARGET, L"", L"", TRUE, ValueEmpty},
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
-  L"Show user preferences and their current values",                  //!< help
+  L"Show user preferences.",                                           //!< help
   ShowPreferences,
   TRUE
 };

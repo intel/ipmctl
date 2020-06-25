@@ -9,10 +9,10 @@ endif::manpage[]
 NAME
 ----
 ifndef::os_build[]
-ipmctl-enable-device-security - Enable data-at-rest security on DCPMM
+ipmctl-enable-device-security - Enables data-at-rest security on PMem module
 endif::os_build[]
 ifdef::os_build[]
-ipmctl-enable-device-security - Enable data-at-rest security on DCPMM on supported OS
+ipmctl-enable-device-security - Enables data-at-rest security on PMem module on supported OS
 endif::os_build[]
 
 SYNOPSIS
@@ -23,7 +23,7 @@ ConfirmPassphrase=(string)
 
 DESCRIPTION
 -----------
-Enable data-at-rest security for the persistent memory on one or more DCPMMs
+Enable data-at-rest security for the persistent memory on one or more PMem modules
 by setting a passphrase.
 
 ifdef::os_build[]
@@ -49,13 +49,19 @@ NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used to
 
 NOTE: The file does not need to contain the ConfirmPassphrase property
 
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Set the passphrase on specific DCPMMs by supplying one or more comma
-  separated DCPMM identifiers. However, this is not recommended as it
+  Set the passphrase on specific PMem modules by supplying one or more comma
+  separated PMem module identifiers. However, this is not recommended as it
   may put the system in an undesirable state. The default is to set the
-  passphrase on all manageable DCPMMs.
+  passphrase on all manageable PMem modules.
 
 PROPERTIES
 ----------
@@ -72,11 +78,11 @@ ConfirmPassphrase::
 
 EXAMPLES
 --------
-Set a passphrase on DIMM 0x0001.
+Set a passphrase on PMem module 0x0001.
 [verse]
 ipmctl set -dimm 0x0001 NewPassphrase=123 ConfirmPassphrase=123
 
-Sets a passphrase on DCPMM 0x0001 by supplying the passphrase in the file
+Sets a passphrase on PMem module 0x0001 by supplying the passphrase in the file
 mypassphrase.file. In this example, the format of the file would be:
 
 #ascii +
@@ -91,7 +97,7 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM must have security disabled and be manageable by the host software.
+- The specified PMem module must have security disabled and be manageable by the host software.
 
 - There must not be any goal creation pending.
 
@@ -103,7 +109,7 @@ endif::os_build[]
 RETURN DATA
 -----------
 If empty strings are provided for the passphrase properties and the source option is not
-included, the user will be prompted (once for all DCPMMs) to enter the new
+included, the user will be prompted (once for all PMem modules) to enter the new
 passphrase and then again to confirm the new passphrase as described below. The
 passphrase characters will be hidden.
 
@@ -111,14 +117,14 @@ New passphrase: \\****
  +
 Confirm new passphrase: \****
 
-For each DCPMM, the CLI will indicate the status of the set passphrase
-operation. If a failure occurs when setting the passphrase on multiple DCPMMs,
-the process will exit and not continue updating the remaining DCPMMs.
+For each PMem module, the CLI will indicate the status of the set passphrase
+operation. If a failure occurs when setting the passphrase on multiple PMem modules,
+the process will exit and not continue updating the remaining PMem modules.
 
 SAMPLE OUTPUT
 ------------
 [verse]
-Set passphrase on DIMM (DimmID): Success
+Set passphrase on PMem module (DimmID): Success
 
 [verse]
-Set passphrase on DIMM (DimmID): Error (Code) - (Description)
+Set passphrase on PMem module (DimmID): Error (Code) - (Description)

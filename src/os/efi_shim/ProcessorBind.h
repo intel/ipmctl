@@ -9,7 +9,7 @@
 
 #if defined(_MSC_EXTENSIONS)
 // This include is needed for defining _ReturnAddress in Base.h on Windows builds
-// Since Base.h includes ProcessorBind.h, we don't have to modify Base.h! (it's
+// Since Base.h includes ProcessorBind.h, we don't have to modify Base.h! (it is
 // part of the UEFI base library and we'd like to not modify it)
 #include <intrin.h>
 #endif

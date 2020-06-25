@@ -79,7 +79,7 @@ EFI_STATUS
 EFIAPI
 passthru_os(
   IN     struct _DIMM *pDimm,
-  IN OUT FW_CMD *pCmd,
+  IN OUT NVM_FW_CMD *pCmd,
   IN     UINT64 Timeout
 )
 {

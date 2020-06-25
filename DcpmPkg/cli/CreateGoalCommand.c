@@ -50,7 +50,7 @@ struct Command CreateGoalCommand =
     {RESERVED_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {NS_LABEL_VERSION_PROPERTY, L"", HELP_TEXT_NS_LABEL_VERSION, FALSE, ValueRequired}
   },
-  L"Provision capacity on one or more DIMMs into regions",     //!< help
+  L"Provision capacity on one or more " PMEM_MODULES_STR L" into regions.",     //!< help
   CreateGoal,
   TRUE,                                               //!< enable print control support
 };
@@ -297,7 +297,7 @@ CheckAndConfirmAlignments(
     }
 
     if (TRUE == IsBelowLimit) {
-      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_LOWER_VIOLATION, TWOLM_NMFM_RATIO_LOWER_STR);
     }
     else if (TRUE == IsAboveLimit) {
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_NMFM_UPPER_VIOLATION, TWOLM_NMFM_RATIO_UPPER);
@@ -331,12 +331,6 @@ CheckAndConfirmAlignments(
   }
 
   MaxPmInterleaveSetsExceeded = IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
-
-  if (pCommandStatus->GeneralStatus == NVM_WARN_2LM_MODE_OFF) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_2LM_MODE_OFF);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
 
   if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
     pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
@@ -423,7 +417,7 @@ CreateGoal(
   UINT32 DimmCount = 0;
   BOOLEAN Valid = FALSE;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
-  UINT16 UnitsToDisplay = FixedPcdGet32(PcdDcpmmCliDefaultCapacityUnit);
+  UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
   CHAR16 *pUnitsStr = NULL;
   CHAR16 *pCommandStr = NULL;
   DISPLAY_PREFERENCES DisplayPreferences;
@@ -467,7 +461,7 @@ CreateGoal(
     goto Finish;
   }
 
-  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
+  if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT) || XML == pPrinterCtx->FormatType) {
     Force = TRUE;
   }
 
@@ -514,11 +508,6 @@ CreateGoal(
     if (!AllDimmsInListAreManageable(pDimms, DimmCount, pDimmIds, DimmIdsCount)){
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_UNMANAGEABLE_DIMM);
-      goto Finish;
-    }
-    if (!AllDimmsInListInSupportedConfig(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
-      ReturnCode = EFI_INVALID_PARAMETER;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_POPULATION_VIOLATION);
       goto Finish;
     }
   }
@@ -706,7 +695,9 @@ CreateGoal(
     }
 
     goto FinishSkipPrinterProcess;
-  } else {
+  }
+  else
+  {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
     PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CREATE_GOAL_COMMAND_STATUS_HEADER, CLI_INFO_ON, pCommandStatus);
   }

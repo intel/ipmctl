@@ -14,6 +14,9 @@
 #include "StopSessionCommand.h"
 #include <PbrDcpmm.h>
 #include <Convert.h>
+#ifdef OS_BUILD
+#include "os.h"
+#endif
 
 #define NO_ACTIVE_SESSION_MSG     L"No session running.\n"
 #define STOP_SESSION_MSG          L"Stopped PBR session.\n"
@@ -39,7 +42,7 @@ struct Command StopSessionCommand =
     {SESSION_TARGET, L"", L"", TRUE, ValueEmpty}
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                               //!< properties
-  L"Stops the active playback or recording session.", //!< help
+  L"Stop the active playback or record (PBR) session.",               //!< help
   StopSession,
   TRUE,
   TRUE
@@ -71,6 +74,9 @@ StopSession(
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
+
+  //If Windows, check for admin privilege needed to update registry for PBR state
+  CHECK_WIN_ADMIN_PERMISSIONS();
 
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
     Force = TRUE;

@@ -201,6 +201,9 @@ GetCCurDetailedStatusStr(
   case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
     pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION), NULL);
     break;
+  case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
+    pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION_BUT_PM_MAPPED), NULL);
+    break;
   default:
     pCCurErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_UNKNOWN), NULL);
     break;
@@ -281,7 +284,7 @@ GetCoutDetailedStatusStr(
   switch (CoutStatus) {
   case CONFIG_OUTPUT_STATUS_ERROR:
     if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_FW_ERROR) {
-      pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_DCPMM_FIRMWARE_ERROR), NULL);
+      pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_PMEM_MODULE_FIRMWARE_ERROR), NULL);
     }
     else if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_EXCEED_DRAM_DECODERS ||
             InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS ||
@@ -295,7 +298,7 @@ GetCoutDetailedStatusStr(
     else if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_DIMM_MISSING ||
              InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_DIMM_MISSING ||
              InterleaveInformationTableStatus_2 == INTERLEAVE_INFO_STATUS_DIMM_MISSING) {
-      pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_DIMM_MISSING_IN_ISET), NULL);
+      pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_PMEM_MODULE_MISSING_IN_ISET), NULL);
     }
     else if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_ISET_MISSING ||
              InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_ISET_MISSING ||
@@ -331,6 +334,9 @@ GetCoutDetailedStatusStr(
     break;
   case CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED:
     pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_NM_FM_RATIO_UNSUPPORTED), NULL);
+    break;
+  case CONFIG_OUTPUT_STATUS_POPULATION_ISSUE:
+    pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_POPULATION_VIOLATION), NULL);
     break;
   default:
     pCoutErrorMessage = HiiGetString(gNvmDimmData->HiiHandle, STRING_TOKEN(STR_CONFIG_STATUS_UNKNOWN), NULL);
@@ -730,6 +736,7 @@ CheckPlatformConfigurationData(
         PcdErrorType = PcdErrorDimmLocationIssue;
         break;
       case DIMM_CONFIG_DCPMM_POPULATION_ISSUE:
+      case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
       case DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION:
         PcdErrorType = PcdErrorCurConfig;
@@ -826,7 +833,8 @@ CheckPlatformConfigurationData(
           PcdErrorType = PcdErrorUnknown;
         }
       } else if (pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_CPU_MAX_MEMORY_LIMIT_VIOLATION ||
-        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED) {
+        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_NM_FM_RATIO_UNSUPPORTED ||
+        pPcdOutputConf->ValidationStatus == CONFIG_OUTPUT_STATUS_POPULATION_ISSUE) {
         PcdErrorType = PcdErrorGoalData;
       } else {
         PcdErrorType = PcdErrorUnknown;
@@ -1223,7 +1231,7 @@ RunConfigDiagnostics(
     goto Finish;
   }
 
-  pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"Dimm specs");
+  pResult->SubTestName[DIMMSPECS_TEST_INDEX] = CatSPrint(NULL, L"PMem module specs");
   ReturnCode = CheckUninitializedDimms(&pResult->SubTestMessage[DIMMSPECS_TEST_INDEX], &pResult->SubTestStateVal[DIMMSPECS_TEST_INDEX],DimmIdPreference);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for uninitialized dimms failed.");
@@ -1234,7 +1242,7 @@ RunConfigDiagnostics(
     }
   }
 
-  pResult->SubTestName[DUPLICATE_DIMM_TEST_INDEX] = CatSPrint(NULL, L"Duplicate Dimm");
+  pResult->SubTestName[DUPLICATE_DIMM_TEST_INDEX] = CatSPrint(NULL, L"Duplicate PMem module");
   ReturnCode = CheckDimmUIDDuplication(ppDimms, DimmCount, &pResult->SubTestMessage[DUPLICATE_DIMM_TEST_INDEX], &pResult->SubTestStateVal[1]);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("The check for duplicate UID numbers failed.");

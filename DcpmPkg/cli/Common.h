@@ -30,7 +30,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ARGS_STR                L"Args"
 #define TAG_STR                     L"Tag"
 #define DDR_STR                     L"DDR"
-#define DCPMM_STR                   L"DCPMM"
+// Find PMEM_MODULE_STR in CommandParser.h
 #define TOTAL_STR                   L"Total"
 #define MEMORY_TYPE_STR             L"MemoryType"
 
@@ -76,8 +76,8 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FAILED_TO_FIND_PROTOCOL       L"Error: DCPMM_CONFIG2_PROTOCOL not found."
 #define CLI_ERR_INVALID_REGION_ID             L"Error: The region identifier is not valid."
 #define CLI_ERR_INVALID_NAMESPACE_ID          L"Error: The namespace identifier is not valid."
-#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no DIMMs on the specified socket(s)."
-#define CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET            L"Error: None of the specified dimm(s) belong to the specified socket(s)."
+#define CLI_ERR_NO_DIMMS_ON_SOCKET            L"Error: There are no " PMEM_MODULES_STR L" on the specified socket(s)."
+#define CLI_ERR_NO_SPECIFIED_DIMMS_ON_SPECIFIED_SOCKET            L"Error: None of the specified " PMEM_MODULE_STR L"(s) belong to the specified socket(s)."
 #define CLI_ERR_INVALID_SOCKET_ID             L"Error: The socket identifier is not valid."
 #define CLI_ERR_OUT_OF_MEMORY                 L"Error: There is not enough memory to complete the requested operation."
 #define CLI_ERR_WRONG_FILE_PATH               L"Error: Wrong file path."
@@ -91,8 +91,8 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_POPULATION_VIOLATION          L"Error: The specified device is in population violation."
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
-#define CLI_ERR_OPENING_PBR_PROTOCOL            L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
-#define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%d"
+#define CLI_ERR_OPENING_PBR_PROTOCOL          L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
+#define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%ls"
 #define CLI_ERR_NMFM_UPPER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is above the recommended NM:FM limit of 1:%d"
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
@@ -155,11 +155,11 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
 
-#define CLI_INFO_NO_DIMMS                                     L"No DIMMs in the system."
-#define CLI_INFO_NO_FUNCTIONAL_DIMMS                          L"No functional DIMMs in the system."
+#define CLI_INFO_NO_DIMMS                                     L"No " PMEM_MODULES_STR L" in the system."
+#define CLI_INFO_NO_FUNCTIONAL_DIMMS                          L"No functional " PMEM_MODULES_STR L" in the system."
 #define CLI_INFO_NO_REGIONS                                   L"There are no Regions defined in the system."
-#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable DIMMs in the system."
-#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional DIMMs in the system."
+#define CLI_INFO_NO_MANAGEABLE_DIMMS                          L"No manageable " PMEM_MODULES_STR L" in the system."
+#define CLI_INFO_NO_NON_FUNCTIONAL_DIMMS                      L"No non-functional " PMEM_MODULES_STR L" in the system."
 #define CLI_INFO_SHOW_REGION                                  L"Show Region"
 #define CLI_INFO_NO_NAMESPACES_DEFINED                        L"No Namespaces defined in the system."
 #define CLI_INFO_SHOW_NAMESPACE                               L"Show Namespace"
@@ -167,10 +167,10 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DELETE_NAMESPACE                             L"Delete Namespace"
 #define CLI_INFO_DUMP_DEBUG_LOG                               L"Dump Debug Log"
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
-#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the DIMMs on the next reboot."
+#define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the " PMEM_MODULES_STR L" on the next reboot."
 #define CLI_INFO_SHOW_REGISTER                                L"Show Register"
 
-#define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified dimms."
+#define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified " PMEM_MODULES_STR L"."
 #define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."
 #define CLI_ERR_DEFAULT_OPTION_NOT_COMBINED                       L"Syntax Error: Default option should be given in combination with master option."
 #define CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER  L"Syntax Error: Passphrase property and default option cannot be used together."
@@ -178,8 +178,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
 #define CLI_ERR_INVALID_NAMESPACE_CAPACITY                        L"Error: Invalid value for namespace capacity."
-#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the DIMMs."
-#define CLI_ERR_VERSION_RETRIEVE                                  L": Unable to retrieve version from FW image."
+#define CLI_ERR_SOME_VALUES_NOT_SUPPORTED                         L"Error: One or more of the fields specified are not supported on all the " PMEM_MODULES_STR L"."
 #define CLI_ERR_PRINTING_DIAGNOSTICS_RESULTS                      L"Error: Printing of diagnostics results failed."
 #define CLI_INJECT_ERROR_FAILED                                   L"Error: Inject error command failed"
 #define CLI_ERR_NOT_UTF16                                         L"Error: The file is not in UTF16 format, BOM header missing.\n"
@@ -190,9 +189,9 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_INFO_LOAD_FW                                      L"Load FW"
 #define CLI_INFO_LOAD_RECOVER_FW                              L"Load recovery FW"
-#define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified dimm does not exist or is not in a non-functional state."
+#define CLI_INFO_LOAD_RECOVER_INVALID_DIMM                    L"The specified " PMEM_MODULE_STR L" does not exist or is not in a non-functional state."
 #define CLI_INFO_ON                                           L" on"
-#define CLI_PROGRESS_STR                                      L"\rOperation on DIMM 0x%04x Progress: %d%%"
+#define CLI_PROGRESS_STR                                      L"\rOperation on " PMEM_MODULE_STR L" 0x%04x Progress: %d%%"
 
 #define CLI_LOAD_MFG_FW                                       L"MFG Load Prod FW"
 #define CLI_INJECT_MFG                                        L"MFG Inject command"
@@ -216,7 +215,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_CREATE_GOAL_PROMPT_VOLATILE                       L"The requested goal was adjusted more than 10%% to find a valid configuration."
 #define CLI_CREATE_GOAL_PROMPT_HEADER                         L"The following configuration will be applied:"
-#define CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED              L"WARNING: Goal will not be applied unless security is disabled prior to UEFI FW provisioning!"
+#define CLI_WARN_GOAL_CREATION_SECURITY_UNLOCKED              L"WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!"
 #define CLI_ERR_CREATE_GOAL_AUTO_PROV_ENABLED                 L"Error: Automatic provisioning is enabled. Please disable to manually create goals."
 
 #define CLI_CREATE_NAMESPACE_PROMPT_ROUNDING_CAPACITY         L"The requested namespace capacity %lld B will be rounded up to %lld B to align properly."
@@ -225,14 +224,14 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define CLI_ERR_DISPLAY_PREFERENCES_RETRIEVE                  L"Unable to retrieve user display preferences."
 
-#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on DIMM " FORMAT_STR L"?"
+#define CLI_DOWNGRADE_PROMPT                                  L"Downgrade firmware on " PMEM_MODULE_STR L" " FORMAT_STR L"?"
 
-#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover dimm:"
+#define CLI_RECOVER_DIMM_PROMPT_STR                           L"Recover " PMEM_MODULE_STR L":"
 
 #define CLI_FORMAT_DIMM_REBOOT_REQUIRED_STR                   L"A power cycle is required after a device format."
-#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on DIMM "
+#define CLI_FORMAT_DIMM_PROMPT_STR                            L"This operation will take several minutes to complete and will erase all data on " PMEM_MODULE_STR L" "
 #define CLI_INFO_START_FORMAT                                 L"Format"
-#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting DIMM(s)..."
+#define CLI_FORMAT_DIMM_STARTING_FORMAT                       L"Formatting " PMEM_MODULE_STR L"(s)..."
 
 #define CLI_INFO_DUMP_SUPPORT_SUCCESS                         L"Dump support data successfully written to " FORMAT_STR L"."
 #define CLI_INFO_DUMP_CONFIG_SUCCESS                          L"Successfully dumped system configuration to file: " FORMAT_STR_NL
@@ -259,6 +258,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_FAILED_TO_READ_FILE                           L"Failed to read pbr file."
 #define CLI_ERR_FAILED_TO_SET_SESSION_BUFFER                  L"Failed to set session buffer."
 #define CLI_ERR_FAILED_TO_RESET_SESSION                       L"Failed to reset the session."
+#define CLI_ERR_CMD_FAILED_NOT_ADMIN                          L"Error: The ipmctl command you have attempted to execute requires administrator privileges."
 
 #define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
@@ -302,7 +302,7 @@ GetDimmList(
   );
 
 /**
-  Retrieve a populated array and count of all DCPMMs (initialized and uninitialized)
+  Retrieve a populated array and count of all DCPMMs (functional and non-functional)
   in the system. The caller is responsible for freeing the returned array
 
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -311,13 +311,8 @@ GetDimmList(
   @param[in] dimmInfoCategories Categories that will be populated in
              the DIMM_INFO struct.
   @param[out] ppDimms A pointer to a combined DCPMM list (initialized and
-              uninitialized) from NFIT. The initialized DIMM_INFO entries
-              occur first, then the uninitialized DIMM_INFO entries. So
-              0 to pInitializedDimmCount-1 = initialized dimms, and
-              pInitializedDimmCount to pDimmCount - 1 contain the uninitialized entries
+              uninitialized) from NFIT.
   @param[out] pDimmCount A pointer to the total number of DCPMMs found in NFIT.
-  @param[out] pInitializedDimmCount A pointer to the number of initialized DCPMMs in ppDimms
-  @param[out] pUninitializedDimmCount A pointer to the number of uninitialized DCPMMs in ppDimms.
 
   @retval EFI_SUCCESS  the dimm list was returned properly
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -330,9 +325,7 @@ GetAllDimmList(
   IN     struct Command *pCmd,
   IN     DIMM_INFO_CATEGORIES dimmInfoCategories,
   OUT DIMM_INFO **ppDimms,
-  OUT UINT32 *pDimmCount,
-  OUT UINT32 *pInitializedDimmCount,
-  OUT UINT32 *pUninitializedDimmCount
+  OUT UINT32 *pDimmCount
 );
 
 /**
@@ -533,27 +526,6 @@ CheckAllAndDisplayOptions(
 );
 
 /**
-  Display command status with specified command message.
-  Function displays per DIMM status if such exists and
-  summarizing status for whole command. Memory allocated
-  for status message and command status is freed after
-  status is displayed.
-
-  @param[in] pStatusMessage String with command information
-  @param[in] pStatusPreposition String with preposition
-  @param[in] pCommandStatus Command status data
-
-  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-DisplayCommandStatus (
-  IN     CONST CHAR16 *pStatusMessage,
-  IN     CONST CHAR16 *pStatusPreposition,
-  IN     COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Retrieve property by name and assign its value to UINT64.
 
   @param[in] pCmd Command containing the property
@@ -605,18 +577,6 @@ GetDeviceAndFilePath(
   IN OUT CHAR16 *pOutFilePath,
   IN OUT EFI_DEVICE_PATH_PROTOCOL **ppDevicePath
   );
-
-/**
-  Match driver command status to CLI return code
-
-  @param[in] Status - NVM_STATUS returned from driver
-
-  @retval - Appropriate EFI return code
-**/
-EFI_STATUS
-MatchCliReturnCode (
-  IN     NVM_STATUS Status
- );
 
 /**
   Get free space of volume from given path
@@ -818,12 +778,12 @@ GetRelativePath(
   This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.
 
-  @param[in] pDimmInfo The dimm list found in NFIT.
-  @param[in] DimmCount Size of the pDimmInfo array.
-  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
-  @param[in] pDimmIdsCount Size of the pDimmIds array.
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
 
-  @retval TRUE if all Dimms in pDimmIds list are manageable
+  @retval TRUE if all Dimms in pDimmsListToCheck array are manageable
   @retval FALSE if at least one DIMM is not manageable
 **/
 BOOLEAN
@@ -839,13 +799,13 @@ AllDimmsInListAreManageable(
   config. This helper method assumes all the dimms in the list exist.
   This helper method also assumes the parameters are non-null.
 
-  @param[in] pDimmInfo The dimm list found in NFIT.
-  @param[in] DimmCount Size of the pDimmInfo array.
-  @param[in] pDimmIds Pointer to the array of DimmIDs to check.
-  @param[in] pDimmIdsCount Size of the pDimmIds array.
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
 
-  @retval TRUE if all Dimms in pDimmIds list are manageable
-  @retval FALSE if at least one DIMM is not manageable
+  @retval TRUE if all Dimms in pDimmsListToCheck array are in supported config
+  @retval FALSE if at least one DIMM is not in supported config
 **/
 BOOLEAN
 AllDimmsInListInSupportedConfig(
@@ -854,6 +814,27 @@ AllDimmsInListInSupportedConfig(
   IN     UINT16 *pDimmsListToCheck,
   IN     UINT32 DimmsToCheckCount
 );
+
+/**
+  Check if all dimms in the specified pDimmIds list have master passphrase enabled.
+  This helper method assumes all the dimms in the list exist.
+  This helper method also assumes the parameters are non-null.
+
+  @param[in] pAllDimms The dimm list found in NFIT
+  @param[in] AllDimmCount Size of the pAllDimms array
+  @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
+  @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
+
+  @retval TRUE if all Dimms in pDimmsListToCheck array have master passphrase enabled
+  @retval FALSE if at least one DIMM does not have master passphrase enabled
+**/
+BOOLEAN
+AllDimmsInListHaveMasterPassphraseEnabled(
+  IN     DIMM_INFO *pAllDimms,
+  IN     UINT32 AllDimmCount,
+  IN     UINT16 *pDimmsListToCheck,
+  IN     UINT32 DimmsToCheckCount
+  );
 
 /**
    Get Dimm identifier preference
@@ -931,7 +912,7 @@ CONST CHAR16 *GetDimmIDStr(
   @retval Size String of user display preference
 **/
 CONST CHAR16 *GetDisplaySizeStr(
-  IN  UINT8 DisplaySizeIndex
+  IN  UINT16 DisplaySizeIndex
   );
 
 /**

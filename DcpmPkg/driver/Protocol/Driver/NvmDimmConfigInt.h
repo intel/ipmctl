@@ -60,7 +60,7 @@ INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2);
 **/
 EFI_STATUS
 ValidateImageVersion(
-  IN       FW_IMAGE_HEADER *pImage,
+  IN       NVM_FW_IMAGE_HEADER *pImage,
   IN       BOOLEAN Force,
   IN       DIMM *pDimm,
   OUT  NVM_STATUS *pNvmStatus

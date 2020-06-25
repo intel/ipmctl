@@ -5,7 +5,7 @@
 
 /**
   * @file NvmHealth.h
-  * @brief Health Types for EFI_NVMDIMMS_CONFIG_PROTOCOL to configure and manage DCPMMs.
+  * @brief Health Types for EFI_DCPMM_CONFIG2_PROTOCOL to configure and manage PMem modules.
   */
 
 #ifndef _NVMHEALTH_H_
@@ -54,7 +54,7 @@ typedef enum {
 #define SENSOR_ENABLED_STATE_DISABLED_STR   L"0"
 
 #define NOT_APPLICABLE_SHORT_STR                              L"N/A"
-
+#define EXTENDED_ADR_FLUSH_COMPLETE        0b1111
 /**
   Namespace PM Capable values
 **/
@@ -66,7 +66,7 @@ typedef enum {
 
 #define CONTROLLER_HEALTH_NORMAL 0
 
-/** Overall DIMM Health Status */
+/** Overall PMem module Health Status */
 enum HEALTH_STATUS {
   HealthStatusNoncritical = BIT0,  //!< Non-Critical (maintenance required)
   HealthStatusCritical = BIT1,     //!< Critcial (features or performance degraded due to failure)
@@ -200,7 +200,7 @@ SensorEnabledStateToString(
 /**
   Convert Health state bitmask to a defined state
 
-  @param[in] HealthMask - mask from DIMM structure
+  @param[in] HealthMask - mask from PMem module structure
   @param[out] pHealthState - pointer to output with defined Health State
 **/
 VOID
@@ -210,7 +210,7 @@ ConvertHealthBitmask(
   );
 
 /**
-  Convert dimm or sensor health state to a string. The caller is responsible for
+  Convert PMem module or sensor health state to a string. The caller is responsible for
   freeing the returned string
 
   @param[in] HiiHandle handle to the HII database that contains i18n strings

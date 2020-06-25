@@ -356,22 +356,21 @@ MapEntryIsError(
 STATIC
 INLINE
 BOOLEAN
-MapEntryIsInitial(
+MapEntryIsZero(
   IN     UINT32 MapEntry
   )
 {
-  return (MapEntry & ~BTT_MAP_ENTRY_LBA_MASK) == 0;
+  return (MapEntry & ~BTT_MAP_ENTRY_LBA_MASK) == BTT_MAP_ENTRY_ZERO;
 }
 
 STATIC
 INLINE
 BOOLEAN
-MapEntryIsZeroOrInitial(
+MapEntryIsInitial(
   IN     UINT32 MapEntry
   )
 {
-  UINT32 EntryFlags = MapEntry & ~BTT_MAP_ENTRY_LBA_MASK;
-  return ((EntryFlags == 0) || (EntryFlags == BTT_MAP_ENTRY_ZERO));
+  return (MapEntry & ~BTT_MAP_ENTRY_LBA_MASK) == BTT_MAP_ENTRY_INITIAL;
 }
 
 STATIC
@@ -1295,6 +1294,7 @@ BttRead(
   BTT_MAP_ENTRIES LatestEntry;
   UINT32 LatestMap = 0;
   UINT64 DataBlockOffset = 0;
+  UINT32 LbaOut = 0;
   EFI_STATUS RetVal = EFI_SUCCESS;
 
   SetMem(&Entry, sizeof(Entry), 0x0);
@@ -1346,7 +1346,7 @@ BttRead(
       return EFI_ABORTED;
     }
 
-    if(MapEntryIsZeroOrInitial(CurrentMap)) {
+    if(MapEntryIsZero(CurrentMap)) {
       return BttZeroBlock(pBtt, pBuffer);
     }
 
@@ -1390,9 +1390,19 @@ BttRead(
 
      Convert the offset in bytes to block offset
   */
-  DataBlockOffset = pArena->DataOffset + (UINT64)(CurrentMap & BTT_MAP_ENTRY_LBA_MASK) * pArena->InternalLbaSize;
+
+  // If map entry is in the initial state (post map lba should be zero as well),
+  // use the pre map lba
+  if (MapEntryIsInitial(CurrentMap)) {
+    // Ignore whatever is in current map variable and set to pre map lba
+    LbaOut = PreMapLba;
+  } else {
+    LbaOut = CurrentMap & BTT_MAP_ENTRY_LBA_MASK;
+  }
+
+  DataBlockOffset = pArena->DataOffset + (UINT64)(LbaOut) * pArena->InternalLbaSize;
   NVDIMM_DBG("LBA=%x->LBAbtt=%x, Offset[B]=%lx",
-      Lba, (UINT64) CurrentMap & BTT_MAP_ENTRY_LBA_MASK, DataBlockOffset);
+      Lba, (UINT64) LbaOut, DataBlockOffset);
 
   RetVal = ReadNamespaceBytes
      (pBtt->pNamespace, DataBlockOffset, pBuffer, pBtt->LbaSize);
@@ -1512,7 +1522,7 @@ BttCheckArena(
         }
         MapEntry = pMap [Index].MapEntryLba [Position];
 
-        /* for debug, dump non-zero map Entries */
+        /* for debug, dump zero map Entries */
         if((MapEntry & BTT_MAP_ENTRY_ZERO) == 0) {
           NVDIMM_VERB("map[%d]: %d%s%s", Index, MapEntry & BTT_MAP_ENTRY_LBA_MASK,
              (MapEntry & BTT_MAP_ENTRY_ERROR) ? " ERROR" : "",(MapEntry & BTT_MAP_ENTRY_ZERO) ? " ZERO" : "");

@@ -8,16 +8,16 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-dump-goal - Stores the current system configuration in a file
+ipmctl-dump-goal - Stores the current configured memory allocation settings to a file
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl dump [OPTIONS] -destination (path) -system -config
 
 DESCRIPTION
 -----------
-Store the currently configured memory allocation settings for all DCPMMs in the
+Store the currently configured memory allocation settings for all PMem modules in the
 system to a file in order to replicate the configuration elsewhere. Apply the
 stored memory allocation settings using the command Section
 <<Load Memory Allocation Goal>>.
@@ -47,13 +47,13 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 EXAMPLES
 --------
-Stores the memory allocation settings from all the DCPMMs into the file "config.txt".
-[verse]
+Stores the memory allocation settings from all the PMem modules into the file "config.txt".
+[listing]
 ipmctl dump -destination config.txt -system -config
 
 LIMITATIONS
@@ -62,68 +62,70 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- Only memory allocation settings for manageable DCPMMs that have been
-  successfully applied by the BIOS are stored in the file. Unconfigured DCPMMs are
+- Only memory allocation settings for manageable PMem modules that have been
+  successfully applied by the BIOS are stored in the file. Unconfigured PMem modules are
   not included, nor are memory allocation goals that have not been applied.
 
 RETURN DATA
 -----------
 The CLI will indicate the overall status of the operation when complete. If a
-failure occurs when dumping the memory allocation from multiple DCPMMs, the
+failure occurs when dumping the memory allocation from multiple PMem modules, the
 process will stop and the output file will be removed.
 
-The output file is formatted as an ASCII file with one row per DCPMM containing
+The output file is formatted as an ASCII file with one row per PMem module containing
 the following comma-separated values.
 
 SocketID::
-  unsigned short int Identifier for the socket the DCPMM is associated with.
+  Identifier for the socket the PMem module is associated with.
 
 DimmHandle::
-  unsigned int DCPMM device handle.
+  PMem module device handle.
 
 Capacity::
-  unsigned long long int Total capacity of the DCPMM in GiB.
+  Total capacity of the PMem module in GiB.
 
 MemorySize::
-  unsigned long long int Capacity of the DCPMM allocated as Memory Mode in GiB.
+  Capacity of the PMem module allocated as Memory Mode in GiB.
 
 AppDirect1Size::
-  unsigned long long int Capacity of the DCPMM allocated for the first App
+  Capacity of the PMem module allocated for the first App
   Direct interleave set in GiB.
 
 AppDirect1Format::
-  unsigned short int Bit mask representing the interleave format of the first
+  Bit mask representing the interleave format of the first
   App Direct interleave set.
 
 AppDirect1Mirrored::
-  unsigned char 1 if the first App Direct interleave set is mirrored, 0
-  otherwise.
+  State indicating if the first App Direct interleave set is mirrored.
+  * 0 - The first App Direct interleave set is not mirrored.
+  * 1 - The first App Direct interleave set is mirrored.
 
 AppDirect1Index::
-  unsigned short int Unique index of the first App Direct interleave set.
+  Unique index of the first App Direct interleave set.
 
 AppDirect2Size::
-  unsigned long long int Capacity of the DCPMM allocated for the second App
+  Capacity of the PMem module allocated for the second App
   Direct interleave set in GiB.
 
 AppDirect2Format::
-  unsigned short int Bit mask representing the interleave format of the second
+  Bit mask representing the interleave format of the second
   App Direct interleave set.
 
 AppDirect2Mirrored::
-  unsigned char 1 if the second App Direct interleave set is mirrored, 0
-  otherwise.
+  State indicating if the second App Direct interleave set is mirrored.
+  * 0 - The second App Direct interleave set is not mirrored.
+  * 1 - The second App Direct interleave set is mirrored.
 
 AppDirect2Index::
-  unsigned short int Unique index of the second App Direct interleave set.
+  Unique index of the second App Direct interleave set.
 
 SAMPLE OUTPUT
 -------------
-[verse]
+[listing]
 Successfully dumped system configuration to file: config.csv
 
 config.csv contents:
-[verse]
+[listing]
 #SocketID,DimmHandle,Capacity,MemorySize,AppDirect1Size,AppDirect
 1Format,AppDirect
 1Mirrored,AppDirect1Index,AppDirect2Size,AppDirect2Format,AppDire

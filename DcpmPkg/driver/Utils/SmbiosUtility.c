@@ -99,7 +99,7 @@ GetSmbiosString (
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
-  if (BufferLen == 0 && StringNumber != -1) {
+  if (BufferLen == 0 && StringNumber != SMBIOS_STRING_INVALID) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -201,7 +201,7 @@ GetFirstAndBoundSmBiosStructPointer(
     }
 
     pSmbiosRecord = (PbrSmbiosTableRecord *)AllocateZeroPool(sizeof(PbrSmbiosTableRecord) + TableSize);
-    if (NULL == PbrSetTableRecord) {
+    if (NULL == pSmbiosRecord) {
       NVDIMM_DBG("Failed to allocate memory\n");
     }
     else {
@@ -261,7 +261,7 @@ GetNextSmbiosStruct(
   /** Skip over formatted section **/
   pSmbiosStr = (CHAR8 *) (pTable->Raw + pTable->Hdr->Length);
 
-  for (Index = 1; Index <= MAX_UINT8; Index++) {
+  for (Index = 0; Index < MAX_UINT8; Index++) {
     /** Skip string **/
     for (; *pSmbiosStr != '\0'; pSmbiosStr++);
     pSmbiosStr++;

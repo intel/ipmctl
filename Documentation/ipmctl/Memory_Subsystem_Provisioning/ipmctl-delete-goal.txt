@@ -8,17 +8,23 @@ endif::manpage[]
 
 NAME
 ----
-ipmctl-delete-goal - Deletes the memory allocation goal from DCPMMs
+ipmctl-delete-goal - Deletes the memory allocation goal from PMem modules
 
 SYNOPSIS
 --------
-[verse]
+[listing]
 ipmctl delete [OPTIONS] -goal [TARGETS]
 
 DESCRIPTION
 -----------
-Deletes the memory allocation goal from one or more DCPMMs. This command only
-deletes a memory allocation goal request that has not been processed by BIOS.
+Deletes the memory allocation goal from one or more PMem modules. This command only
+deletes a memory allocation goal request that has not yet been processed by
+platform firmware (BIOS).
+
+If the PMem module target is used and the specified PMem modules do not include all PMem modules
+that are part of a memory allocation goal request the result will be PMem modules
+(those not included) that have a broken request which will be rejected by
+platform firmware (BIOS) upon the next reboot.
 
 OPTIONS
 -------
@@ -45,26 +51,26 @@ NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used tog
 ifdef::os_build[]
 -o (text|nvmxml)::
 -output (text|nvmxml)::
-    Changes the output format. One of: "text" (default) or "nvmxml".
+  Changes the output format. One of: "text" (default) or "nvmxml".
 endif::os_build[]
 
 TARGETS
 -------
 -dimm [DimmIDs]::
-  Deletes the memory allocation goal from specific DCPMMs by optionally supplying one or
-  more comma-separated DCPMM identifiers. The default is to delete the memory
-  allocation goals from all manageable DCPMMs.
+  Deletes the memory allocation goal from specific PMem modules by optionally supplying one or
+  more comma-separated PMem module identifiers. The default is to delete the memory
+  allocation goals from all manageable PMem modules.
 
 -socket [SocketIds]::
-  Deletes the memory allocation goal from the DCPMMs on specific sockets by
+  Deletes the memory allocation goal from the PMem modules on specific sockets by
   supplying the socket target and one or more comma-separated socket
   identifiers. The default is to delete the memory allocation goals from
-  manageable DCPMMs on all sockets.
+  manageable PMem modules on all sockets.
 
 EXAMPLES
 --------
-Deletes the memory allocation goal from all DCPMMs on all sockets.
-[verse]
+Deletes the memory allocation goal from all PMem modules on all sockets.
+[listing]
 ipmctl delete -goal
 
 LIMITATIONS
@@ -73,23 +79,22 @@ In order to successfully execute this command:
 
 - The caller must have the appropriate privileges.
 
-- The specified DCPMM(s) must be manageable by the host software and unlocked if
+- The specified PMem modules must be manageable by the host software and unlocked if
   security is enabled.
 
-- Given socket and all specified DCPMMs must contain a memory allocation goal.
+- Given socket and all specified PMem modules must contain a memory allocation goal.
 
 RETURN DATA
 -----------
-For each DCPMM, the CLI will indicate the status of the operation. If a failure occurs
-when deleting the memory allocation goals from multiple DCPMMs, the process will
-output a failure message for those DCPMMs that did not succeed and a success
+For each PMem module, the CLI will indicate the status of the operation. If a failure occurs
+when deleting the memory allocation goals from multiple PMem modules, the process will
+output a failure message for those PMem modules that did not succeed and a success
 message for those that did.
 
 SAMPLE OUTPUT
 -------------
-[verse]
-Delete memory allocation goal from DIMM (DimmID): Success
+[listing]
+Delete memory allocation goal from PMem module (DimmID): Success
 
-[verse]
-Delete memory allocation goal from DIMM (DimmID): Error:
-(Description)
+[listing]
+Delete memory allocation goal from PMem module (DimmID): Error (Code) - (Description)

@@ -71,6 +71,7 @@
 #define EVENT_CODE_541      541
 #define EVENT_CODE_542      542
 #define EVENT_CODE_543      543
+#define EVENT_CODE_544      544
 /* Diagnostic Config Platform Events **/
 #define EVENT_CODE_600      600
 #define EVENT_CODE_601      601

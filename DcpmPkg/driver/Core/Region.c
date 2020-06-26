@@ -1235,7 +1235,7 @@ DetermineRegionHealth(
 
   *pHealthState = RegionHealthStateNormal;
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     goto FinishAdvance;
   }
@@ -1246,6 +1246,12 @@ DetermineRegionHealth(
 
     if (!IsDimmManageable(pDimm)) {
       continue;
+    }
+
+    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    {
+      *pHealthState = RegionHealthStateError;
+      break;
     }
 
     /** Check if any of the DIMMs are locked **/
@@ -1930,6 +1936,8 @@ Finish:
   Retrieve goal configurations by using Platform Config Data
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] Restore corrupt pcd
+  @param[in] Skip Media disabled dimms
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -1938,7 +1946,8 @@ Finish:
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt
+  IN     BOOLEAN RestoreCorrupt,
+  IN     BOOLEAN MediaEnabledOnly
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -1976,6 +1985,10 @@ RetrieveGoalConfigsFromPlatformConfigData(
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
     if (!IsDimmManageable(pDimm)) {
+      continue;
+    }
+
+    if (MediaEnabledOnly && pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED) {
       continue;
     }
 

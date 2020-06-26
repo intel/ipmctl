@@ -2415,6 +2415,11 @@ InitializeNamespaces(
       continue;
     }
 
+    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    {
+      continue;
+    }
+
     TempReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
     if (TempReturnCode == EFI_NOT_FOUND) {
       /**
@@ -2445,6 +2450,12 @@ InitializeNamespaces(
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
+
+    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    {
+      continue;
+    }
+
     if (pDimm->LsaStatus == LSA_NOT_INIT || pDimm->LsaStatus == LSA_CORRUPTED) {
       continue;
     }

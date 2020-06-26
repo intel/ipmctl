@@ -486,6 +486,8 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
   Retrieve goal configurations by using Platform Config Data
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] Restore corrupt pcd
+  @param[in] Skip Media disabled dimms
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -494,7 +496,8 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt
+  IN     BOOLEAN RestoreCorrupt,
+  IN     BOOLEAN MediaEnabledOnly
   );
 
 /**

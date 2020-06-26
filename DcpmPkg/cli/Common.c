@@ -786,8 +786,8 @@ Finish:
   {
     EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
     DIMM_INFO *pDimms = NULL;
-    UINT16 Index = 0;
-    UINT16 NewListIndex = 0;
+    UINT32 Index = 0;
+    UINT32 NewListIndex = 0;
     UINT32 UninitializedDimmCount = 0;
     UINT32 InitializedDimmCount = 0;
 

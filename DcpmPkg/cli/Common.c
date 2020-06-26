@@ -762,6 +762,122 @@ Finish:
   return ReturnCode;
 }
 
+  /**
+    Gets number of Manageable (functional and non-functional) and supported Dimms and their IDs
+
+    @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+    @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                        returned dimm list. If false, skip these dimms from returned list.
+    @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
+    @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
+
+    @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+    @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
+    @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
+    @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  **/
+  EFI_STATUS
+    GetAllManageableDimmsNumberAndId(
+      IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+      IN  BOOLEAN CheckSupportedConfigDimm,
+      OUT UINT32 *pDimmIdsCount,
+      OUT UINT16 **ppDimmIds
+    )
+  {
+    EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+    DIMM_INFO *pDimms = NULL;
+    UINT16 Index = 0;
+    UINT16 NewListIndex = 0;
+    UINT32 UninitializedDimmCount = 0;
+    UINT32 InitializedDimmCount = 0;
+
+    NVDIMM_ENTRY();
+
+    if (pDimmIdsCount == NULL || ppDimmIds == NULL || pNvmDimmConfigProtocol == NULL) {
+      NVDIMM_CRIT("NULL input parameter.\n");
+      ReturnCode = EFI_INVALID_PARAMETER;
+      goto Finish;
+    }
+
+    ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &InitializedDimmCount);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Error: Communication with the device driver failed.");
+      goto Finish;
+    }
+
+    ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Error: Communication with the device driver failed.");
+      goto Finish;
+    }
+
+    if (0 == (InitializedDimmCount + UninitializedDimmCount)) {
+      ReturnCode = EFI_NOT_FOUND;
+      goto Finish;
+    }
+
+    *pDimmIdsCount = InitializedDimmCount + UninitializedDimmCount;
+    pDimms = AllocateZeroPool(sizeof(*pDimms) * (*pDimmIdsCount));
+    *ppDimmIds = AllocateZeroPool(sizeof(**ppDimmIds) * (*pDimmIdsCount));
+
+    if (pDimms == NULL || *ppDimmIds == NULL) {
+      ReturnCode = EFI_OUT_OF_RESOURCES;
+      NVDIMM_ERR("Error: Out of memory\n");
+      goto Finish;
+    }
+
+    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, *pDimmIdsCount, DIMM_INFO_CATEGORY_NONE, pDimms);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_ERR("Failed to retrieve the DIMM inventory found in NFIT");
+      goto Finish;
+    }
+
+    // Append the uninitialized dimms after the initialized dimms in the dimms array
+    ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, UninitializedDimmCount, &((pDimms)[InitializedDimmCount]));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to retrieve the uninitialized DIMM inventory");
+      goto Finish;
+    }
+
+    // Fill in the dimmInfoCategories for the uninitialized dimms
+    for (Index = InitializedDimmCount; Index < *pDimmIdsCount; Index++) {
+      ReturnCode = pNvmDimmConfigProtocol->GetDimm(pNvmDimmConfigProtocol, (pDimms)[Index].DimmID,
+        DIMM_INFO_CATEGORY_NONE, &((pDimms)[Index]));
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_WARN("Failed to populate the uninitialized DIMM inventory");
+        goto Finish;
+      }
+    }
+
+    ReturnCode = BubbleSort((VOID*)pDimms, *pDimmIdsCount, sizeof(*pDimms), CompareDimmIdInDimmInfo);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Dimms list may not be sorted");
+      goto Finish;
+    }
+
+    for (Index = 0; Index < *pDimmIdsCount; Index++) {
+      if ((!CheckSupportedConfigDimm && (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG))
+        || ((CheckSupportedConfigDimm && !pDimms[Index].IsInPopulationViolation)
+          && pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG)) {
+        (*ppDimmIds)[NewListIndex] = pDimms[Index].DimmID;
+        NewListIndex++;
+      }
+    }
+    *pDimmIdsCount = NewListIndex;
+
+    if (NewListIndex == 0) {
+      ReturnCode = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
+      goto Finish;
+    }
+
+    ReturnCode = EFI_SUCCESS;
+
+  Finish:
+    FREE_POOL_SAFE(pDimms);
+    NVDIMM_EXIT_I64(ReturnCode);
+    return ReturnCode;
+  }
+
 /**
   Checks if the provided display list string contains only the valid values.
 

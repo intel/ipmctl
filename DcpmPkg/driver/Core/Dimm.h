@@ -347,7 +347,7 @@ typedef struct _MEMMAP_RANGE {
 
 #define DISABLE_ARS_TOTAL_TIMEOUT_SEC     2
 #define POLL_ARS_LONG_OP_DELAY_US         100000  //100ms delay between calls to retrieve long op
-#define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   3
+#define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   10 // Account for ARS potentially getting restarted a few times in the background
 #define DSM_RETRY_SUGGESTED               0x5
 
 

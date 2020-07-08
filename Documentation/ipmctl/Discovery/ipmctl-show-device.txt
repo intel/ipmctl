@@ -623,7 +623,7 @@ SoftwareTriggersEnabled::
   - 0: Disabled - This is the default.
   - 1: At least one software trigger enabled.
 
-SoftwareTriggersEnabledDetail::
+SoftwareTriggersEnabledDetails::
   Comma separated list of software triggers currently enabled. One or more of:
   - None
   - Package Sparing

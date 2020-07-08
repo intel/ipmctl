@@ -181,7 +181,7 @@ ShowCmdAccessPolicy(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -206,7 +206,7 @@ ShowCmdAccessPolicy(
 
   /** If no dimm IDs are specified get IDs from all dimms **/
   if (DimmIdsCount == 0) {
-    ReturnCode = GetManageableDimmsNumberAndId(pNvmDimmConfigProtocol, FALSE, &DimmIdsCount, &pDimmIds);
+    ReturnCode = GetAllManageableDimmsNumberAndId(pNvmDimmConfigProtocol, FALSE, &DimmIdsCount, &pDimmIds);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
       goto Finish;

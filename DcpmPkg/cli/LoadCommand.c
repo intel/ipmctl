@@ -40,7 +40,8 @@ struct Command LoadCommand =
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                            //!< properties
   L"Update the firmware on one or more " PMEM_MODULES_STR L".",                       //!< help
-  Load                                                                //!< run function
+  Load,                                                               //!< run function
+  TRUE                                                                //!< Enable Printer
 };
 
 /**
@@ -115,6 +116,14 @@ Load(
   EFI_HANDLE *pHandles = NULL;
 #endif
 
+  if ((NULL != pCmd) && (NULL != pCmd->pPrintCtx)) {
+    if (pCmd->pPrintCtx->FormatType == XML) {
+      PRINTER_CONFIGURE_BUFFERING(pCmd->pPrintCtx, ON);
+    }
+    else {
+      PRINTER_CONFIGURE_BUFFERING(pCmd->pPrintCtx, OFF);
+    }
+  }
 
   NVDIMM_ENTRY();
   SetDisplayInfo(L"LoadFw", ResultsView, NULL);
@@ -128,22 +137,22 @@ Load(
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_NO_COMMAND);
+    PrinterSetMsg(NULL, ReturnCode, CLI_ERR_NO_COMMAND);
     goto FinishNoCommandStatus;
   }
 
   // initialize status structure
   ReturnCode = InitializeCommandStatus(&pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR); // if pCMD->pPrintCtx is NULL then will print to stdout
     NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto FinishNoCommandStatus;
   }
 
   ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     ReturnCode = EFI_NOT_FOUND;
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
     goto Finish;
   }
 
@@ -151,19 +160,19 @@ Load(
   pFileName = getOptionValue(pCmd, SOURCE_OPTION);
   if (pFileName == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
-    Print(FORMAT_STR_NL, CLI_ERR_WRONG_FILE_PATH);
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_WRONG_FILE_PATH);
     goto Finish;
   }
 
   if (containsOption(pCmd, EXAMINE_OPTION) && containsOption(pCmd, EXAMINE_OPTION_SHORT)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER);
     goto Finish;
   }
 
   if (containsOption(pCmd, FORCE_OPTION) && containsOption(pCmd, FORCE_OPTION_SHORT)) {
-    Print(FORMAT_STR_NL, CLI_ERR_OPTIONS_FORCE_USED_TOGETHER);
     ReturnCode = EFI_INVALID_PARAMETER;
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OPTIONS_FORCE_USED_TOGETHER);
     goto Finish;
   }
 
@@ -177,7 +186,7 @@ Load(
 
   if (DimmCount == 0) {
     ReturnCode = EFI_NOT_STARTED;
-    Print(FORMAT_STR_NL, CLI_INFO_NO_DIMMS);
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     goto Finish;
   }
 
@@ -204,7 +213,7 @@ Load(
     pDimmTargetIds = AllocateZeroPool(sizeof(*pDimmTargetIds) * DimmTargetsNum);
     if (pDimmTargets == NULL || pDimmTargetIds == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
 
@@ -224,7 +233,7 @@ Load(
     pDimmTargetIds = AllocateZeroPool(sizeof(*pDimmTargetIds) * DimmTargetsNum);
     if (pDimmTargetIds == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
-      Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
+      PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
     }
 
@@ -278,8 +287,8 @@ Load(
 
   pFwImageInfo = AllocateZeroPool(sizeof(*pFwImageInfo));
   if (pFwImageInfo == NULL) {
-    Print(FORMAT_STR_NL, CLI_ERR_OUT_OF_MEMORY);
     ReturnCode = EFI_OUT_OF_RESOURCES;
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
 
@@ -287,7 +296,7 @@ Load(
 
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
   if (!Examine) {
-    Print(L"Starting update on %d " PMEM_MODULE_STR L"(s)...\n", DimmTargetsNum);
+    PrinterSetMsg(pCmd->pPrintCtx, EFI_SUCCESS, L"Starting update on %d " PMEM_MODULE_STR L"(s)...", DimmTargetsNum);
     // Create callback that will print progress
     gBS->CreateEvent((EVT_TIMER | EVT_NOTIFY_SIGNAL), PRINT_PRIORITY, PrintProgress, pCommandStatus, &ProgressEvent);
     gBS->SetTimer(ProgressEvent, TimerPeriodic, PROGRESS_EVENT_TIMEOUT);
@@ -363,7 +372,7 @@ Load(
       pFwImageInfo->ImageVersion.RevisionNumber.Version != 0 ||
       pFwImageInfo->ImageVersion.SecurityRevisionNumber.Version != 0 ||
       pFwImageInfo->ImageVersion.BuildNumber.Build != 0) {
-      Print(FORMAT_STR L": %02d.%02d.%02d.%04d\n",
+      PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, FORMAT_STR L": %02d.%02d.%02d.%04d",
         pFileName,
         pFwImageInfo->ImageVersion.ProductNumber.Version,
         pFwImageInfo->ImageVersion.RevisionNumber.Version,
@@ -372,7 +381,6 @@ Load(
     }
   } else {
     gBS->CloseEvent(ProgressEvent);
-    Print(L"\n");
     if (StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
@@ -408,10 +416,17 @@ Load(
   }
 
 Finish:
-  PRINTER_PROMPT_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
+  if (EFI_SUCCESS !=PrinterSetCommandStatus(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus)) {
+    NVDIMM_CRIT("Failed to set command status object!");
+  }
+
   FreeCommandStatus(&pCommandStatus);
 
 FinishNoCommandStatus:
+  // if no PrintCtx then nothing can be buffered so no need to process it
+  if ((NULL != pCmd) && (NULL != pCmd->pPrintCtx)) {
+    PRINTER_PROCESS_SET_BUFFER(pCmd->pPrintCtx);
+  }
   FREE_POOL_SAFE(pFileName);
   FREE_POOL_SAFE(pFwImageInfo);
   FREE_POOL_SAFE(pDimmIds);

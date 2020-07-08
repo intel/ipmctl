@@ -489,6 +489,28 @@ GetManageableDimmsNumberAndId(
 );
 
 /**
+  Gets number of Manageable (functional and non-functional) and supported Dimms and their IDs and Handles
+
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                      returned dimm list. If false, skip these dimms from returned list.
+  @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
+  @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
+
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
+  @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
+  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+**/
+EFI_STATUS
+GetAllManageableDimmsNumberAndId(
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  BOOLEAN CheckSupportedConfigDimm,
+  OUT UINT32 *pDimmIdsCount,
+  OUT UINT16 **ppDimmIds
+);
+
+/**
   Checks if user has specified the options -a|-all and -d|-display.
   Those two flags exclude each other so the function also checks
   if the user didn't provide them both.

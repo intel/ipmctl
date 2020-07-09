@@ -6083,6 +6083,12 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
+  // Check for NM:FM ratio and set command status if not within limits
+  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
   if (AllowedMode != MEMORY_MODE_2LM) {
     /** Check if volatile memory has been requested **/
     for (Index = 0; Index < *pConfigGoalsCount; Index++) {
@@ -6459,14 +6465,14 @@ CreateGoalConfig(
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
-      ReturnCode = ReduceCapacityForSocketSKU(Socket, pDimmsOnSocket, NumDimmsOnSocket, pDimmsSymPerSocket,
-          &DimmsSymNumPerSocket, pDimmsAsymPerSocket,
-          &DimmsAsymNumPerSocket, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_DBG("ReduceCapacityForSocketSKU Error");
-          goto Finish;
-        }
 
+    ReturnCode = ReduceCapacityForSocketSKU(Socket, pDimmsOnSocket, NumDimmsOnSocket, pDimmsSymPerSocket,
+      &DimmsSymNumPerSocket, pDimmsAsymPerSocket,
+      &DimmsAsymNumPerSocket, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("ReduceCapacityForSocketSKU Error");
+      goto Finish;
+    }
 
     /**Add the symmetrical and Asymmetrical size  to the global list **/
     if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
@@ -6492,6 +6498,12 @@ CreateGoalConfig(
   // We have removed all symmetrical memory from the system, make the goal template num 0
   if (DimmsSymNum == 0) {
     RegionGoalTemplatesNum = 0;
+  }
+
+  // Check for NM:FM ratio and set command status if not within limits
+  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
   }
 
   /** Update internal driver's structures **/

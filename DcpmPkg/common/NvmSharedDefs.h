@@ -72,6 +72,9 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
 
+  NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE                   = 93,   ///< Error: The requested memory mode size is below the NM:FM limit of 1:1
+  NVM_WARN_NMFM_RATIO_LOWER_VIOLATION                   = 95,   ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:4
+  NVM_WARN_NMFM_RATIO_UPPER_VIOLATION                   = 96,   ///< Warning: The requested memory mode size is above the recommended NM:FM limit of 1:16
   NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED              = 97,   ///< Warning: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!
   NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode

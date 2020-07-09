@@ -1043,4 +1043,22 @@ CheckForExistingGoalConfigPerSocket(
   IN    DIMM *pDimms[MAX_DIMMS],
   IN    UINT32 *pDimmsNum
   );
+
+/**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
+  @param[IN] DimmsSymNum Number of items in DimmsSym
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    REGION_GOAL_DIMM *pDimmsSym,
+  IN    UINT32  DimmsSymNum,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
 #endif

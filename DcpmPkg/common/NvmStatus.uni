@@ -87,7 +87,10 @@
 #string STR_DCPMM_STATUS_ERR_INCONSISTENT_SECURITY_STATE          #language en "Inconsistent security state among PMem modules"
 
 #string STR_DCPMM_STATUS_WARN_2LM_MODE_OFF  #language en "The requested goal will result in Memory Mode capacity that is unusable with the currently selected platform BIOS volatile mode."
-#string STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED #language en "The requested goal will result in Memory Mode capacity that is unusable. An iMC has DDR4 without DPCMEM module."
+#string STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED #language en "The requested goal will result in Memory Mode capacity that is unusable. An iMC has DDR without PMem module."
+#string STR_DCPMM_STATUS_WARN_NMFM_RATIO_LOWER_VIOLATION #language en "WARNING! The requested memory mode size is below the recommended NM:FM limit of 1:%ls"
+#string STR_DCPMM_STATUS_WARN_NMFM_RATIO_UPPER_VIOLATION #language en "WARNING! The requested memory mode size is above the recommended NM:FM limit of 1:%d"
+#string STR_DCPMM_STATUS_ERR_NMFM_RATIO_GREATER_THAN_ONE #language en "The requested memory mode size is below the NM:FM limit of 1:1"
 #string STR_DCPMM_STATUS_WARN_REDUCED_CAPACITY_DUE_TO_SKU #language en "The amount of mapped memory was limited based on the SKU resulting in un-mapped capacity."
 #string STR_DCPMM_STATUS_WARN_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED #language en "The platform is limited to %d interleave sets per Die, so only %d PMem modules will have AppDirect2 regions created."
 #string STR_DCPMM_STATUS_WARN_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED #language en "The platform is limited to %d interleave sets per Die, so AppDirect capacities in %d PMem modules will be inaccessible."

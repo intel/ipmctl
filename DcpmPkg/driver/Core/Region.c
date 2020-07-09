@@ -5037,3 +5037,84 @@ Finish:
   return ReturnCode;
 }
 
+/**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
+  @param[IN] DimmsSymNum Number of items in DimmsSym
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    REGION_GOAL_DIMM *pDimmsSym,
+  IN    UINT32  DimmsSymNum,
+     OUT COMMAND_STATUS *pCommandStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT64 TwoLM_FmMinRecommended = 0;
+  UINT64 TwoLM_FmMaxRecommended = 0;
+  UINT64 TwoLM_NMTotal = 0;
+  UINT64 TwoLM_FMTotal = 0;
+  UINT32 Index = 0;
+  MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
+
+  NVDIMM_ENTRY();
+
+  if (pDimmsSym == NULL || pCommandStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  for (Index = 0; Index < DimmsSymNum; Index++)
+  {
+    TwoLM_FMTotal += pDimmsSym[Index].VolatileSize;
+  }
+
+  if (TwoLM_FMTotal == 0) {
+    //no limit check necessary - no 2LM goal in play
+    goto Finish;
+  }
+
+  ReturnCode = AllowedMemoryMode(&AllowedMode);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine allowed memory mode.");
+    goto Finish;
+  }
+
+  // Get total DDR capacity
+  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &TwoLM_NMTotal, NULL, NULL, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not determine usable DDR capacity.");
+    goto Finish;
+  }
+
+  if (TwoLM_NMTotal > TwoLM_FMTotal) {
+    NVDIMM_ERR("NM:FM ratio violated and is greater than 1.");
+    ResetCmdStatus(pCommandStatus, NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE);
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+  }
+
+  TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER);
+  TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
+
+  if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
+    SetCmdStatus(pCommandStatus, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION);
+  }
+  else if (TwoLM_FMTotal < TwoLM_FmMinRecommended) {
+    SetCmdStatus(pCommandStatus, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION);
+  }
+
+Finish:
+  if ((pCommandStatus != NULL) && EFI_ERROR(ReturnCode) &&
+    (pCommandStatus->GeneralStatus == NVM_ERR_OPERATION_NOT_STARTED)) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+  }
+  NVDIMM_EXIT();
+  return ReturnCode;
+}

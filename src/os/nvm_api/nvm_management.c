@@ -1166,7 +1166,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID    device_uid,
   FW_VER_ARR_TO_STR(fw_image_info->StagedFwRevision, p_fw_info->staged_fw_revision,
         NVM_VERSION_LEN);
 
-  p_fw_info->FWImageMaxSize = fw_image_info->FWImageMaxSize;
+  p_fw_info->FWImageMaxSize = fw_image_info->FWImageMaxSize * 4096; /* convert to bytes from blocks */
 
   p_fw_info->fw_update_status =
     firmware_update_status_to_enum(fw_image_info->LastFwUpdateStatus);

@@ -2316,7 +2316,7 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
@@ -2924,7 +2924,7 @@ SetSecurityState(
   // Prevent user from enabling security when goal is pending due to BIOS restrictions
   if (SecurityOperation == SECURITY_OPERATION_SET_PASSPHRASE) {
     // Check if input DIMMs are not part of a goal
-    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
@@ -3737,6 +3737,14 @@ ModifyPcdConfig(
 
   //iterate through all dimms
   for (Index = 0; Index < DimmsCount; Index++) {
+
+    // Reject dimms that are media inaccessible
+    // TODO: Move into VerifyTargetDimms
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
+      ReturnCode = EFI_UNSUPPORTED;
+      continue;
+    }
 
     TmpReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &SecurityState);
     if (EFI_ERROR(TmpReturnCode)) {
@@ -5748,6 +5756,30 @@ Finish:
     return ReturnCode;
   }
 
+
+EFI_STATUS
+ReturnErrorWithMediaDisabledPMemModule(
+    OUT COMMAND_STATUS *pCommandStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pDimmNode = NULL;
+  DIMM *pDimm = NULL;
+
+  // Because of the difficulties in refactoring the create goal code
+  // (specifically Region.c) to work with a media disabled PMem module,
+  // error out with a requirement that the user replace the module.
+  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+      // Want to set an error for each module
+      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
+      ReturnCode = EFI_UNSUPPORTED;
+    }
+  }
+  return ReturnCode;
+}
+
 /**
   Get actual Region goal capacities that would be used based on input values.
 
@@ -5821,6 +5853,8 @@ GetActualRegionsGoalCapacities(
 
   NVDIMM_ENTRY();
 
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
+
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
   ZeroMem(&PcatRevision, sizeof(PcatRevision));
@@ -5879,7 +5913,7 @@ GetActualRegionsGoalCapacities(
     *pNumOfDimmsTargeted = DimmsNum;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6183,6 +6217,8 @@ CreateGoalConfig(
 
   NVDIMM_ENTRY();
 
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
+
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
@@ -6313,7 +6349,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6628,7 +6664,7 @@ DeleteGoalConfig (
     }
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_VOLUME_CORRUPTED == ReturnCode) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
     goto Finish;
@@ -7207,7 +7243,7 @@ Finish:
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
@@ -8420,7 +8456,7 @@ GetDcpmmCapacities(
 
   *pRawCapacity = pDimm->RawCapacity;
 
-  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
     *pInaccessibleCapacity = pDimm->RawCapacity;
     goto Finish;
   }
@@ -10055,7 +10091,7 @@ CheckGoalStatus(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

@@ -71,6 +71,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED     = 75,   ///< Error: BIOS error injection knob is not enabled
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
+  NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE      = 91,   ///< Error: Media not accessible. Replace PMem module to continue
 
   NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE                   = 93,   ///< Error: The requested memory mode size is below the NM:FM limit of 1:1
   NVM_WARN_NMFM_RATIO_LOWER_VIOLATION                   = 95,   ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:4

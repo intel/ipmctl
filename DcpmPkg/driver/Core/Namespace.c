@@ -2411,11 +2411,7 @@ InitializeNamespaces(
       pDimm->pLsa = NULL;
     }
 
-    if (!IsDimmManageable(pDimm)) {
-      continue;
-    }
-
-    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
     {
       continue;
     }
@@ -2447,11 +2443,7 @@ InitializeNamespaces(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
-    if (!IsDimmManageable(pDimm)) {
-      continue;
-    }
-
-    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
     {
       continue;
     }

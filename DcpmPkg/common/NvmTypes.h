@@ -849,6 +849,11 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_BOOT_STATUS_DDRT_NOT_READY       BIT5
 #define DIMM_BOOT_STATUS_MAILBOX_NOT_READY    BIT6
 #define DIMM_BOOT_STATUS_REBOOT_REQUIRED      BIT7
+// Meta-flags
+#define DIMM_MEDIA_NOT_ACCESSIBLE(BootStatusBitmask)       \
+  ((BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) ||  \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) ||       \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED))      \
 
 /**
   System-wide ARS Status Bitmask

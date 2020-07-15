@@ -103,8 +103,7 @@ typedef struct {
 #define SOCKET_INDEX_TO_NFIT_SOCKET_ID(_skt)                    (_skt % NFIT_SOCKETS_PER_NODE)
 #define SOCKET_INDEX_TO_NFIT_NODE_ID(_skt)                      (_skt / NFIT_SOCKETS_PER_NODE)
 #define NFIT_NODE_SOCKET_TO_SOCKET_INDEX(_nodeId, _socketId)    ((_nodeId * NFIT_SOCKETS_PER_NODE) + (_socketId))
-// Media Disabled BSR value
-#define MEDIA_DISABLED 1
+
 typedef enum _BW_COMMAND_CODE {
   BwRead = 0,
   BwWrite = 1

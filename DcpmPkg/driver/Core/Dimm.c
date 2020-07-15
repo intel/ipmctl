@@ -7250,9 +7250,7 @@ DeterminePassThruMethod(
   if (TRUE == IsLargePayloadCommand &&
       // and if no problems found with sending large payload
       !(FisTransportSizeSmallMb == Attribs.PayloadSize ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) ||
+      (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) ||
       (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY))) {
 
     // Then allow them to do so

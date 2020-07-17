@@ -2050,7 +2050,7 @@ GetSockets(
     goto Finish;
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcat->pPlatformConfigAttr)) {
     SOCKET_SKU_INFO_TABLE *pSocketSkuInfo = NULL;
     if (SocketCount == 0 || pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable == NULL) {
       NVDIMM_DBG("Platform does not support socket SKU limits.");
@@ -2075,7 +2075,7 @@ GetSockets(
       (*ppSockets)[Index].TotalMappedMemory = pSocketSkuInfo->TotalMemorySizeMappedToSpa;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcat->pPlatformConfigAttr)) {
     DIE_SKU_INFO_TABLE *pDieSkuInfo = NULL;
     if (SocketCount == 0 || pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable == NULL) {
       NVDIMM_DBG("Platform does not support socket SKU limits.");
@@ -4876,7 +4876,7 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->PartitioningAlignment = gNvmDimmData->Alignments.RegionPartitionAlignment;
   pSysCapInfo->InterleaveSetsAlignment = gNvmDimmData->Alignments.RegionPersistentAlignment;
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {
@@ -4923,7 +4923,7 @@ GetSystemCapabilitiesInfo(
     }
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -5990,7 +5990,7 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6023,7 +6023,7 @@ GetActualRegionsGoalCapacities(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
@@ -6466,7 +6466,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6496,7 +6496,7 @@ CreateGoalConfig(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         NULL, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;

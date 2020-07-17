@@ -208,6 +208,8 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
   NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when PMem module that are different generations
   NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy PMem module
+
+  NVM_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE           = 317,  ///< Error: Platform does not support mixed memory mode
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

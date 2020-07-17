@@ -72,6 +72,8 @@ typedef enum {
   MEMORY_MODE_2LM = 1
 } MEMORY_MODE;
 
+typedef SUPPORTED_MEMORY_MODE3 MEMORY_MODE_CAPABILITIES;
+
 /**
   ACPI Related Functions
 **/
@@ -359,7 +361,6 @@ AllowedMemoryMode(
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
   @retval EFI_LOAD_ERROR PCAT tables not found
-  @retval EFI_UNSUPPORTED Config change request through management software not supported
 **/
 EFI_STATUS
 CheckIfBiosSupportsConfigChange(
@@ -369,20 +370,15 @@ CheckIfBiosSupportsConfigChange(
 /**
   Check Memory Mode Capabilties from PCAT table type 0
 
-  @param[in] pMemMode2LMSupported 2LM Mode Support
-  @param[in] pAppDirectPMSupported AppDirect PM Mode Support
-  @param[in] pMemMode1LMSupported 2LM Memory Mode Support
+  @param[out] pMemoryModeCapabilities pointer to memory mode capabilites
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
   @retval EFI_LOAD_ERROR PCAT tables not found
-  @retval EFI_UNSUPPORTED Config change request through management software not supported
 **/
 EFI_STATUS
 CheckMemModeCapabilities(
-  OUT BOOLEAN *pMemMode2LMSupported,
-  OUT BOOLEAN *pAppDirectPMSupported,
-  OUT BOOLEAN *pMemMode1LMSupported
+  OUT MEMORY_MODE_CAPABILITIES *pMemoryModeCapabilities
   );
 
 /**

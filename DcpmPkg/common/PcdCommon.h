@@ -36,11 +36,13 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1 1
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1 1
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2 2
+#define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_3 3
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_DEFAULT NVDIMM_CONFIGURATION_TABLES_REVISION_2
 
 #define IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_1) && (table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_2) && \
                                                           ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1)) && \
-                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2)))
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2)) && \
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_3)))
 
 #define LSA_NAMESPACE_INDEX_SIG_L        SIGNATURE_64('N', 'A', 'M', 'E', 'S', 'P', 'A', 'C')
 #define LSA_NAMESPACE_INDEX_SIG_H        SIGNATURE_64('E', '_', 'I', 'N', 'D', 'E', 'X', '\0')

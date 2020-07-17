@@ -411,7 +411,7 @@ PrintPcdIdentificationInformation(
 
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PCD_IDENTIFICATION_INFO_STR, L"PCD Identification Info");
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcdConfigTableRevision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcdConfigTableRevision)) {
     NVDIMM_IDENTIFICATION_INFORMATION *pIdentificationInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)pIdentificationInfoTable;
     ZeroMem(PartNumber, sizeof(PartNumber));
     AsciiStrToUnicodeStrS(pIdentificationInfo->DimmIdentification.Version1.DimmPartNumber, PartNumber, PART_NUMBER_SIZE + 1);
@@ -432,7 +432,7 @@ PrintPcdIdentificationInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PartitionOffset           ", FORMAT_UINT64_HEX_NOWIDTH, pIdentificationInfo->PartitionOffset);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PmPartitionSize           ", FORMAT_UINT64_HEX_NOWIDTH L"\n", pIdentificationInfo->PmPartitionSize);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
     NVDIMM_IDENTIFICATION_INFORMATION3 *pIdentificationInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pIdentificationInfoTable;
     pTmpDimmUid = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pIdentificationInfo->DimmIdentification.ManufacturerId),
       pIdentificationInfo->DimmIdentification.ManufacturingLocation,
@@ -470,7 +470,7 @@ PrintPcdInterleaveInformation(
   CHAR16 *pPathPcdIdentificationInfo = NULL;
 
   PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PCD_PCAT_TABLE_STR, L"PCD Interleave Info");
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcdConfigTableRevision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcdConfigTableRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pInterleaveInfoTable;
     PrintPcdPcatTableHeader(&pInterleaveInfo->Header, pPrinterCtx, pPath);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSetIndex        ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveSetIndex);
@@ -490,7 +490,7 @@ PrintPcdInterleaveInformation(
       pCurrentIdentInfo++;
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     PrintPcdPcatTableHeader(&pInterleaveInfo->Header, pPrinterCtx, pPath);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSetIndex        ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveSetIndex);

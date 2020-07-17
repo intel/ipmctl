@@ -111,6 +111,7 @@
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT #language en "Platform does not support changing configuration through management software"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MIRRORING #language en "Platform does not support App Direct Memory mirroring"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE #language en "Platform does not support Memory Mode"
+#string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE #language en "Platform does not support Mixed Mode"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MODE #language en "Platform does not support App Direct Mode"
 #string STR_DCPMM_STATUS_ERR_REGION_CURR_CONF_EXISTS #language en "PMem modules on one or more sockets already have a configured goal. Delete this existing goal before creating a new one."
 #string STR_DCPMM_STATUS_ERR_REGION_SIZE_TOO_SMALL_FOR_INT_SET_ALIGNMENT #language en "The region size is too small for platform alignment"

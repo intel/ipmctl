@@ -91,7 +91,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Deletes the PCD data on specific PMem modules by supplying one
-  or more comma-separated PMem module identifiers. The default is to delete the
+  or more comma separated PMem module identifiers. The default is to delete the
   PCD data for all manageable PMem modules.
 ifndef::os_build[]
 -pcd [Config|LSA]::

@@ -88,7 +88,7 @@ endif::os_build[]
 
 EXAMPLES
 --------
-Use DimmUID as the default PMem module identifier, and display all capacities in bytes.
+Use DimmUID as the default PMem module identifier and display all capacities in bytes.
 [listing]
 ipmctl set -preferences CLI_DEFAULT_DIMM_ID=UID CLI_DEFAULT_SIZE=B
 

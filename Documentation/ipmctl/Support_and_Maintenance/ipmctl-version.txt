@@ -39,7 +39,7 @@ ipmctl version
 
 RETURN DATA
 -----------
-By default returns the following inventory information.
+By default, returns the following inventory information.
 
 Component::
   The name of the software component. One of:

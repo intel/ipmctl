@@ -80,7 +80,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Updates the firmware on specific PMem modules by supplying one or more
-  comma-separated PMem module identifiers. However, this is not recommended as it may
+  comma separated PMem module identifiers. However, this is not recommended as it may
   put the system in an undesirable state. The default is to update all
   manageable PMem modules.
 

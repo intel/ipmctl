@@ -45,7 +45,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Restricts output to the platform configuration data on specific PMem modules by
-  supplying one or more comma-separated PMem module identifiers. The default is to
+  supplying one or more comma separated PMem module identifiers. The default is to
   display the platform configuration data for all manageable PMem modules.
 
 -pcd [Config|LSA]::

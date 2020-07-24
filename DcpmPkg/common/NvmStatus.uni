@@ -125,7 +125,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY #language en "Remaining value can be used only for one property and only on the last App Direct Size property"
 #string STR_DCPMM_STATUS_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS #language en "Unable to find a valid mapping for the requested configuration."
 #string STR_DCPMM_STATUS_ERR_CREATE_NAMESPACE_NOT_ALLOWED #language en "Pending goal request found on PMem modules that are part of this namespace request. Please reboot to apply the goal or delete the goal and try again."
-#string STR_DCPMM_STATUS_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
+#string STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
 
 #string STR_DCPMM_STATUS_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED  #language en "Open or create the file with write mode failed."
 #string STR_DCPMM_STATUS_ERR_DUMP_NO_CONFIGURED_DIMMS  #language en "There are no configured PMem modules to dump."

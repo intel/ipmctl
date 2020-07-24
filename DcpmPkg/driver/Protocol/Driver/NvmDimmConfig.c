@@ -4193,6 +4193,7 @@ GetMemoryResourcesInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -4224,6 +4225,7 @@ GetMemoryResourcesInfo(
     &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
     &pMemoryResourcesInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
+    CHECK_RESULT_SAVE_RETURNCODE(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL), Finish);
     NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
     goto Finish;
   }

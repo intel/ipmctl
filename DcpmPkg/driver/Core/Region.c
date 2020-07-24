@@ -5115,6 +5115,57 @@ Finish:
     (pCommandStatus->GeneralStatus == NVM_ERR_OPERATION_NOT_STARTED)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
   }
-  NVDIMM_EXIT();
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Checks if all DIMMs in the list are in configured state
+
+  @param[IN] pDimmList Head of the Dimm list
+  @param[IN] pDimmsUnConfigured Boolean flag to indicate if any PMem module is unconfigured
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if input parameter null
+**/
+EFI_STATUS
+CheckIfAllDimmsConfigured(
+  IN     LIST_ENTRY *pDimmList,
+     OUT BOOLEAN *pDimmsUnConfigured,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pDimmList == NULL || pDimmsUnConfigured == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  LIST_FOR_EACH(pDimmNode, pDimmList) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+      continue;
+    }
+
+    if (pDimm->ConfigStatus == DIMM_CONFIG_UNDEFINED) {
+      if (pCommandStatus != NULL) {
+        ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_CURR_CONF_MISSING);
+      }
+      *pDimmsUnConfigured = TRUE;
+      goto Finish;
+    }
+  }
+
+  *pDimmsUnConfigured = FALSE;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

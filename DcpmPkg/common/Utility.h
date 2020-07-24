@@ -388,6 +388,18 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Return if failure
+#define CHECK_RESULT_SAVE_RETURNCODE(Call, Label)             \
+  do {                                                        \
+    TempReturnCode = ReturnCode;                              \
+    ReturnCode = Call;                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      goto Label;                                             \
+    }                                                         \
+    ReturnCode = TempReturnCode;                              \
+  } while (0)
+
+// Return if failure
 #define CHECK_RESULT_SET_NVM_STATUS(Call, pNvmStatus, NvmStatusCode, Label) \
   do {                                                                      \
     ReturnCode = Call;                                                      \

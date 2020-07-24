@@ -1059,4 +1059,21 @@ CheckNmFmLimits(
   IN    UINT32  DimmsSymNum,
      OUT COMMAND_STATUS *pCommandStatus
   );
+
+/**
+  Checks if all DIMMs in the list are in configured state
+
+  @param[IN] pDimmList Head of the Dimm list
+  @param[IN] pDimmsUnConfigured Boolean flag to indicate if any PMem module is unconfigured
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if input parameter null
+**/
+EFI_STATUS
+CheckIfAllDimmsConfigured(
+  IN     LIST_ENTRY *pDimmList,
+     OUT BOOLEAN *pDimmsUnConfigured,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
+  );
 #endif

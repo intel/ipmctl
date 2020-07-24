@@ -72,6 +72,7 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
   NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE      = 91,   ///< Error: Media not accessible. Replace PMem module to continue
+  NVM_ERR_PCD_CURR_CONF_MISSING                     = 92,   ///< Error: One or more PMem modules have invalid PCD data
 
   NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE                   = 93,   ///< Error: The requested memory mode size is below the NM:FM limit of 1:1
   NVM_WARN_NMFM_RATIO_LOWER_VIOLATION                   = 95,   ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:4

@@ -8565,12 +8565,19 @@ GetDDRCapacities(
   UINT64 DcpmmUnconfiguredCapacity = 0;
   UINT64 DcpmmReservedCapacity = 0;
   UINT64 DcpmmInaccessibleCapacity = 0;
+  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
   if (pDDRRawCapacity == NULL ||
     (pDDRInaccessibleCapacity != NULL && (pDDRCacheCapacity == NULL || pDDRVolatileCapacity == NULL))) {
     NVDIMM_DBG("Invalid parameter");
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine current memory mode");
     goto Finish;
   }
 
@@ -8611,15 +8618,19 @@ GetDDRCapacities(
       *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
     }
     else {
-      ReturnCode = EFI_DEVICE_ERROR;
       NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
-      goto Finish;
+      if (CurrentMode != MEMORY_MODE_2LM) {
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+      NVDIMM_DBG("But, in Memory Mode DDR volatile capacity is always 0.");
+      *pDDRVolatileCapacity = 0;
     }
   }
 
   // Get DDR inaccessible capacity
   if (pDDRInaccessibleCapacity != NULL) {
-    *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+    *pDDRInaccessibleCapacity = *pDDRRawCapacity - *pDDRVolatileCapacity - *pDDRCacheCapacity;
   }
 
   ReturnCode = EFI_SUCCESS;

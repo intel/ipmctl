@@ -420,12 +420,13 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Ignore error code, but print it out
-#define CHECK_RESULT_CONTINUE(Call)                           \
-  do {                                                        \
-    ReturnCode = Call;                                        \
-    if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
-    }                                                         \
+#define CHECK_RESULT_CONTINUE(Call)                                 \
+  do {                                                              \
+    ReturnCode = Call;                                              \
+    if (EFI_ERROR(ReturnCode)) {                                    \
+      NVDIMM_WARN("Ignoring failure on function: %d", ReturnCode); \
+      ReturnCode = EFI_SUCCESS;                                     \
+    }                                                               \
   } while (0)
 
 #define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \

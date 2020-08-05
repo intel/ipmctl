@@ -164,12 +164,12 @@ ShowMemoryResources(
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
-  if (EFI_LOAD_ERROR == ReturnCode) {
-    pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_CURR_CONF_MISSING), NULL);
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
-    goto Finish;
-  }
-  else if (EFI_ERROR(ReturnCode)) {
+  if (EFI_ERROR(ReturnCode)) {
+    if (MemoryResourcesInfo.PcdInvalid) {
+      pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING), NULL);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
+      goto Finish;
+    }
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
     goto Finish;
   }

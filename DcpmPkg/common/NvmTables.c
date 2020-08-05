@@ -40,26 +40,26 @@ FreeParsedPcat(
   Revision = pParsedPcat->pPlatformConfigAttr->Header.Revision;
   FREE_POOL_SAFE(pParsedPcat->pPlatformConfigAttr);
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo);
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index]);
     }
@@ -76,13 +76,13 @@ FreeParsedPcat(
   }
   FREE_POOL_SAFE(pParsedPcat->ppConfigManagementAttributesInfo);
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]);
     }

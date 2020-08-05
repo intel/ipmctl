@@ -90,4 +90,4 @@ taken in Linux can be played back in Windows).
 
 RETURN DATA
 -----------
-In 'playback' mode the output will be a concatination of the output from each played back command.
+In 'playback' mode the output will be a concatenation of the output from each played back command.

@@ -388,6 +388,18 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Return if failure
+#define CHECK_RESULT_SAVE_RETURNCODE(Call, Label)             \
+  do {                                                        \
+    TempReturnCode = ReturnCode;                              \
+    ReturnCode = Call;                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      goto Label;                                             \
+    }                                                         \
+    ReturnCode = TempReturnCode;                              \
+  } while (0)
+
+// Return if failure
 #define CHECK_RESULT_SET_NVM_STATUS(Call, pNvmStatus, NvmStatusCode, Label) \
   do {                                                                      \
     ReturnCode = Call;                                                      \
@@ -408,12 +420,13 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Ignore error code, but print it out
-#define CHECK_RESULT_CONTINUE(Call)                           \
-  do {                                                        \
-    ReturnCode = Call;                                        \
-    if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
-    }                                                         \
+#define CHECK_RESULT_CONTINUE(Call)                                 \
+  do {                                                              \
+    ReturnCode = Call;                                              \
+    if (EFI_ERROR(ReturnCode)) {                                    \
+      NVDIMM_WARN("Ignoring failure on function: %d", ReturnCode); \
+      ReturnCode = EFI_SUCCESS;                                     \
+    }                                                               \
   } while (0)
 
 #define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \
@@ -540,29 +553,6 @@ CHAR16 *
 GetEnvVariable(
   IN     CHAR16 *pVarName
   );
-
-/**
-  Examines the system topology for the system DDR capacity and compares
-  it to the 2LM capacity to check for ratio violations
-
-  @param[IN]  pNvmDimmConfigProtocol the protocol
-  @param[IN]  pRegionConfigsInfo a pointer to the region list to examine
-  @param[IN]  RegionConfigsCount the number of REGION_GOAL_PER_DIMM_INFO elements in the list
-  @param[OUT] pIsAboveLimit the 2LM vs DDR value is above the upper recommended limit
-  @param[OUT] pIsBelowLimit the 2LM vs DDR value is below the lower recommended limit
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER input parameter null
-  @retval EFI_DEVICE_ERROR failed to get the system topology
-**/
-EFI_STATUS
-CheckNmFmLimits(
-  IN    EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
-  IN    REGION_GOAL_PER_DIMM_INFO *pRegionConfigsInfo,
-  IN    UINT32  RegionConfigsCount,
-  OUT   BOOLEAN *pIsAboveLimit,
-  OUT   BOOLEAN *pIsBelowLimit
-);
 
 /**
   Checks if the Config Protocol version is right.

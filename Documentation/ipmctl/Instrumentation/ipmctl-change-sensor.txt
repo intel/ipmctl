@@ -63,7 +63,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Update specified sensors on specific PMem modules by optionally supplying the PMem module
-  target and one or more comma-separated PMem module identifiers. The default is to
+  target and one or more comma separated PMem module identifiers. The default is to
   update the specified sensors for all manageable PMem modules.
 
 PROPERTIES

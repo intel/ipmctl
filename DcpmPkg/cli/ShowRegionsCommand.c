@@ -198,7 +198,12 @@ struct Command ShowRegionsCommand =
 
   },
   {                                                    //!< targets
-    {REGION_TARGET, L"", L"RegionIDs", TRUE, ValueOptional},
+#ifdef OS_BUILD
+    {REGION_TARGET, L"", L"", TRUE, ValueEmpty},
+#endif
+#ifndef OS_BUILD
+    {REGION_TARGET, L"", HELP_TEXT_REGION_IDS, TRUE, ValueOptional},
+#endif
     { SOCKET_TARGET, L"", HELP_TEXT_SOCKET_IDS, FALSE, ValueOptional },
   },
   {{L"", L"", L"", FALSE, ValueOptional}},                //!< properties

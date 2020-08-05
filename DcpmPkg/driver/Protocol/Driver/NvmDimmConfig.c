@@ -2050,7 +2050,7 @@ GetSockets(
     goto Finish;
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcat->pPlatformConfigAttr)) {
     SOCKET_SKU_INFO_TABLE *pSocketSkuInfo = NULL;
     if (SocketCount == 0 || pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable == NULL) {
       NVDIMM_DBG("Platform does not support socket SKU limits.");
@@ -2075,7 +2075,7 @@ GetSockets(
       (*ppSockets)[Index].TotalMappedMemory = pSocketSkuInfo->TotalMemorySizeMappedToSpa;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcat->pPlatformConfigAttr)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcat->pPlatformConfigAttr)) {
     DIE_SKU_INFO_TABLE *pDieSkuInfo = NULL;
     if (SocketCount == 0 || pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable == NULL) {
       NVDIMM_DBG("Platform does not support socket SKU limits.");
@@ -2316,7 +2316,7 @@ GetGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_VOLUME_CORRUPTED == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
@@ -2924,7 +2924,7 @@ SetSecurityState(
   // Prevent user from enabling security when goal is pending due to BIOS restrictions
   if (SecurityOperation == SECURITY_OPERATION_SET_PASSPHRASE) {
     // Check if input DIMMs are not part of a goal
-    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+    ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
     if (EFI_ERROR(ReturnCode)) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
       goto Finish;
@@ -3738,6 +3738,14 @@ ModifyPcdConfig(
   //iterate through all dimms
   for (Index = 0; Index < DimmsCount; Index++) {
 
+    // Reject dimms that are media inaccessible
+    // TODO: Move into VerifyTargetDimms
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
+      ReturnCode = EFI_UNSUPPORTED;
+      continue;
+    }
+
     TmpReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &SecurityState);
     if (EFI_ERROR(TmpReturnCode)) {
       KEEP_ERROR(ReturnCode, TmpReturnCode);
@@ -4185,6 +4193,7 @@ GetMemoryResourcesInfo(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
   if (pThis == NULL || pMemoryResourcesInfo == NULL) {
@@ -4216,6 +4225,7 @@ GetMemoryResourcesInfo(
     &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
     &pMemoryResourcesInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
+    CHECK_RESULT_SAVE_RETURNCODE(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL), Finish);
     NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
     goto Finish;
   }
@@ -4868,7 +4878,7 @@ GetSystemCapabilitiesInfo(
   pSysCapInfo->PartitioningAlignment = gNvmDimmData->Alignments.RegionPartitionAlignment;
   pSysCapInfo->InterleaveSetsAlignment = gNvmDimmData->Alignments.RegionPersistentAlignment;
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {
@@ -4915,7 +4925,7 @@ GetSystemCapabilitiesInfo(
     }
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -5748,6 +5758,30 @@ Finish:
     return ReturnCode;
   }
 
+
+EFI_STATUS
+ReturnErrorWithMediaDisabledPMemModule(
+    OUT COMMAND_STATUS *pCommandStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  LIST_ENTRY *pDimmNode = NULL;
+  DIMM *pDimm = NULL;
+
+  // Because of the difficulties in refactoring the create goal code
+  // (specifically Region.c) to work with a media disabled PMem module,
+  // error out with a requirement that the user replace the module.
+  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+      // Want to set an error for each module
+      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
+      ReturnCode = EFI_UNSUPPORTED;
+    }
+  }
+  return ReturnCode;
+}
+
 /**
   Get actual Region goal capacities that would be used based on input values.
 
@@ -5821,6 +5855,8 @@ GetActualRegionsGoalCapacities(
 
   NVDIMM_ENTRY();
 
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
+
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
   ZeroMem(&PcatRevision, sizeof(PcatRevision));
@@ -5879,7 +5915,7 @@ GetActualRegionsGoalCapacities(
     *pNumOfDimmsTargeted = DimmsNum;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -5956,7 +5992,7 @@ GetActualRegionsGoalCapacities(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -5989,7 +6025,7 @@ GetActualRegionsGoalCapacities(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, ActualVolatileSize, ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         &ActualVolatileSize, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
@@ -6080,6 +6116,12 @@ GetActualRegionsGoalCapacities(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to determine system memory mode");
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+    goto Finish;
+  }
+
+  // Check for NM:FM ratio and set command status if not within limits
+  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -6176,6 +6218,8 @@ CreateGoalConfig(
   REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
+
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
 
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
@@ -6307,7 +6351,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     if (EFI_NO_RESPONSE == ReturnCode) {
       ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
@@ -6424,7 +6468,7 @@ CreateGoalConfig(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -6454,19 +6498,19 @@ CreateGoalConfig(
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
         pDimmsSymPerSocket, &DimmsSymNumPerSocket, pDimmsAsymPerSocket, &DimmsAsymNumPerSocket,
-        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
+        PersistentMemType, VolatileSize , ReservedPercent, ((IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) ? &MaxPMInterleaveSets : NULL),
         NULL, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
     }
-      ReturnCode = ReduceCapacityForSocketSKU(Socket, pDimmsOnSocket, NumDimmsOnSocket, pDimmsSymPerSocket,
-          &DimmsSymNumPerSocket, pDimmsAsymPerSocket,
-          &DimmsAsymNumPerSocket, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_DBG("ReduceCapacityForSocketSKU Error");
-          goto Finish;
-        }
 
+    ReturnCode = ReduceCapacityForSocketSKU(Socket, pDimmsOnSocket, NumDimmsOnSocket, pDimmsSymPerSocket,
+      &DimmsSymNumPerSocket, pDimmsAsymPerSocket,
+      &DimmsAsymNumPerSocket, RegionGoalTemplates, &RegionGoalTemplatesNum, pCommandStatus);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("ReduceCapacityForSocketSKU Error");
+      goto Finish;
+    }
 
     /**Add the symmetrical and Asymmetrical size  to the global list **/
     if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
@@ -6492,6 +6536,12 @@ CreateGoalConfig(
   // We have removed all symmetrical memory from the system, make the goal template num 0
   if (DimmsSymNum == 0) {
     RegionGoalTemplatesNum = 0;
+  }
+
+  // Check for NM:FM ratio and set command status if not within limits
+  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
   }
 
   /** Update internal driver's structures **/
@@ -6616,7 +6666,7 @@ DeleteGoalConfig (
     }
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_VOLUME_CORRUPTED == ReturnCode) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PCD_BAD_DEVICE_CONFIG);
     goto Finish;
@@ -7195,7 +7245,7 @@ Finish:
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
     goto Finish;
@@ -8408,7 +8458,7 @@ GetDcpmmCapacities(
 
   *pRawCapacity = pDimm->RawCapacity;
 
-  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency) {
+  if (!IsDimmManageable(pDimm) || !gNvmDimmData->PMEMDev.DimmSkuConsistency || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
     *pInaccessibleCapacity = pDimm->RawCapacity;
     goto Finish;
   }
@@ -8517,12 +8567,19 @@ GetDDRCapacities(
   UINT64 DcpmmUnconfiguredCapacity = 0;
   UINT64 DcpmmReservedCapacity = 0;
   UINT64 DcpmmInaccessibleCapacity = 0;
+  MEMORY_MODE CurrentMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
   if (pDDRRawCapacity == NULL ||
     (pDDRInaccessibleCapacity != NULL && (pDDRCacheCapacity == NULL || pDDRVolatileCapacity == NULL))) {
     NVDIMM_DBG("Invalid parameter");
+    goto Finish;
+  }
+
+  ReturnCode = CurrentMemoryMode(&CurrentMode);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine current memory mode");
     goto Finish;
   }
 
@@ -8563,15 +8620,19 @@ GetDDRCapacities(
       *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
     }
     else {
-      ReturnCode = EFI_DEVICE_ERROR;
       NVDIMM_DBG("Total mapped DCPMM Persistent & Volatile capacity cannot be larger than total mapped memory.");
-      goto Finish;
+      if (CurrentMode != MEMORY_MODE_2LM) {
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
+      }
+      NVDIMM_DBG("But, in Memory Mode DDR volatile capacity is always 0.");
+      *pDDRVolatileCapacity = 0;
     }
   }
 
   // Get DDR inaccessible capacity
   if (pDDRInaccessibleCapacity != NULL) {
-    *pDDRInaccessibleCapacity = DDRPhysicalSize - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+    *pDDRInaccessibleCapacity = *pDDRRawCapacity - *pDDRVolatileCapacity - *pDDRCacheCapacity;
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -10043,7 +10104,7 @@ CheckGoalStatus(
     goto Finish;
   }
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

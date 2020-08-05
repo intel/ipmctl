@@ -3193,11 +3193,18 @@ FwCmdUpdateFw(
           ReturnCode = EFI_ABORTED;
           goto Finish;
         }
-        CHECK_RESULT_SET_NVM_STATUS(FwCmdGetARS(pDimm, &ArsStatus), pNvmStatus, NVM_ERR_OPERATION_FAILED, Finish);
+
+        // If there's an issue getting ARS information or canceling ARS
+        // we don't need to abort because of it. At least two scenarios:
+        //   * Can't cancel ARS for some reason. Retry MAX_FW_UPDATE_RETRY_ON_DEV_BUSY times, it's fine
+        //   * Cancel ARS fails because ARS just completed naturally in between
+        //     receiving IN_PROGRESS and sending disable ARS (Linux kernel can restart ARS
+        //     if cancelled). Also not an issue. Continue.
+        CHECK_RESULT_CONTINUE(FwCmdGetARS(pDimm, &ArsStatus));
 
         if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
-          NVDIMM_DBG("ARS in progress.\n");
-          CHECK_RESULT_SET_NVM_STATUS(FwCmdDisableARS(pDimm), pNvmStatus, NVM_ERR_OPERATION_FAILED, Finish);
+          NVDIMM_DBG("ARS in progress. Disabling ARS.\n");
+          CHECK_RESULT_CONTINUE(FwCmdDisableARS(pDimm));
         }
         // Retry current packet
         continue;
@@ -7243,9 +7250,7 @@ DeterminePassThruMethod(
   if (TRUE == IsLargePayloadCommand &&
       // and if no problems found with sending large payload
       !(FisTransportSizeSmallMb == Attribs.PayloadSize ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED) ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) ||
-      (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) ||
+      (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) ||
       (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY))) {
 
     // Then allow them to do so

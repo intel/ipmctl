@@ -29,7 +29,7 @@ NOTE: The all and display options are exclusive and may not be used together.
 
 -d (attributes)::
 -display (attributes)::
-  Filters the returned attributes by explicitly specifying a comma-separated
+  Filters the returned attributes by explicitly specifying a comma separated
   list of any of the attributes defined in the Return Data section.
 
 NOTE: The all and display options are exclusive and may not be used together.
@@ -62,11 +62,11 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Restricts output to specific PMem modules by supplying the PMem module target and one or
-  more comma-separated PMem module identifiers. The default is to display all PMem modules.
+  more comma separated PMem module identifiers. The default is to display all PMem modules.
 
 -socket [SocketIDs]::
   Restricts output to the PMem modules installed on specific sockets by supplying the
-  socket target and one or more comma-separated socket identifiers. The default
+  socket target and one or more comma separated socket identifiers. The default
   is to display all sockets.
 
 NOTE: If ACPI PMTT table is not present, then DDR4 memory will not be displayed
@@ -93,7 +93,7 @@ below; applying options changes the output to a more detailed format. Limited
 information (noted in the table below) is applicable if the PMem module is not
 manageable by the software as indicated by the "ManageabilityState" property.
 
-NOTE: Some data is endian-swapped for human readability.
+NOTE: Some data is endian swapped for human readability.
 
 DimmID::
   (Default) The PMem module identifier.
@@ -243,7 +243,7 @@ PartNumber::
   The part number assigned by the vendor
 
 DeviceLocator::
-  A string describing the physically-labeled socket or board position where the
+  A string describing the physically labeled socket or board position where the
   memory device is located from the SMBIOS Type 17 Memory Device table.
 
 BankLabel::
@@ -574,8 +574,8 @@ BootStatus::
   - Unknown - The boot status register cannot be read.
   - Success - No errors were reported during initialization.
    +
-  *The following statuses indicate that the media is not functional and
-  therefore access to user data and operations that require use of the media
+  *The following statuses indicate that the media is not functional and,
+   therefore, access to user data and operations that require use of the media
   will fail.*
   - Media Not Ready - The firmware did not complete media training.
   - Media Error - The firmware detected an error during media training.

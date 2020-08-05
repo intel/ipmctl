@@ -268,7 +268,7 @@ ParsePcatTable (
 
     switch(pPcatSubTableHeader->Type) {
     case PCAT_TYPE_PLATFORM_CAPABILITY_INFO_TABLE:
-      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcatHeader)) {
+      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo = (PLATFORM_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->PlatformCapabilityInfoNum);
@@ -277,7 +277,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo = (PLATFORM_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->PlatformCapabilityInfoNum);
@@ -285,11 +285,17 @@ ParsePcatTable (
           NVDIMM_DBG("Memory allocate error.");
           goto FinishError;
         }
+
+        if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_2(pPcatHeader)) {
+          // Backwards compatability. Platforms with PCAT revison < 1.3 always support mixed mode
+          pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[pParsedPcat->PlatformCapabilityInfoNum - 1]->
+            MemoryModeCapabilities.MemoryModesFlags.MixedMode = MIXED_MODE_CAPABILITY_SUPPORTED;
+        }
       }
       break;
 
     case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
-      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcatHeader)) {
+      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo = (MEMORY_INTERLEAVE_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->MemoryInterleaveCapabilityInfoNum);
@@ -298,7 +304,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo, pPcatSubTableHeader, Length,
           &pParsedPcat->MemoryInterleaveCapabilityInfoNum);
@@ -330,7 +336,7 @@ ParsePcatTable (
       break;
 
     case PCAT_TYPE_SOCKET_SKU_INFO_TABLE:
-      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPcatHeader)) {
+      if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable, pPcatSubTableHeader, Length,
           &pParsedPcat->SocketSkuInfoNum);
@@ -339,7 +345,7 @@ ParsePcatTable (
           goto FinishError;
         }
       }
-      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPcatHeader)) {
+      else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
         pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable = (DIE_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable, pPcatSubTableHeader, Length,
           &pParsedPcat->SocketSkuInfoNum);
@@ -1318,7 +1324,7 @@ CurrentMemoryMode(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO *pPlatformCapability = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1332,7 +1338,7 @@ CurrentMemoryMode(
     }
     *pResult = pPlatformCapability->CurrentMemoryMode.MemoryModeSplit.CurrentVolatileMode;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1393,7 +1399,7 @@ AllowedMemoryMode(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO *pPlatformCapability = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1407,7 +1413,7 @@ AllowedMemoryMode(
     }
     *pResult = pPlatformCapability->CurrentMemoryMode.MemoryModeSplit.AllowedVolatileMode;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1442,7 +1448,6 @@ Finish:
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
   @retval EFI_LOAD_ERROR PCAT tables not found
-  @retval EFI_UNSUPPORTED Config change request through management software not supported
 **/
 EFI_STATUS
 CheckIfBiosSupportsConfigChange(
@@ -1458,6 +1463,7 @@ CheckIfBiosSupportsConfigChange(
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
   *pConfigChangeSupported = FALSE;
 
   if (gNvmDimmData->PMEMDev.pPcatHead == NULL || gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum != 1) {
@@ -1466,7 +1472,7 @@ CheckIfBiosSupportsConfigChange(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO *pPlatformCapability = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1478,12 +1484,11 @@ CheckIfBiosSupportsConfigChange(
       goto Finish;
     }
 
-    if (!IS_BIT_SET_VAR(pPlatformCapability->MgmtSwConfigInputSupport, BIT0)) {
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
+    if (IS_BIT_SET_VAR(pPlatformCapability->MgmtSwConfigInputSupport, BIT0)) {
+      *pConfigChangeSupported = TRUE;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1495,9 +1500,8 @@ CheckIfBiosSupportsConfigChange(
       goto Finish;
     }
 
-    if (!IS_BIT_SET_VAR(pPlatformCapability3->MgmtSwConfigInputSupport, BIT0)) {
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
+    if (IS_BIT_SET_VAR(pPlatformCapability3->MgmtSwConfigInputSupport, BIT0)) {
+      *pConfigChangeSupported = TRUE;
     }
   }
   else {
@@ -1506,40 +1510,32 @@ CheckIfBiosSupportsConfigChange(
   }
 
   ReturnCode = EFI_SUCCESS;
-  *pConfigChangeSupported = TRUE;
 
 Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
 
 /**
-  Check Mmeory Mode Capabilties from PCAT table type 0
+  Check Memory Mode Capabilties from PCAT table type 0
 
-  @param[in] pMemMode2LMSupported 2LM Mode Support
-  @param[in] pAppDirectPMSupported AppDirect PM Mode Support
-  @param[in] pMemMode1LMSupported 2LM Memory Mode Support
+  @param[out] pMemoryModeCapabilities pointer to memory mode capabilites
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
   @retval EFI_LOAD_ERROR PCAT tables not found
-  @retval EFI_UNSUPPORTED Config change request through management software not supported
 **/
 EFI_STATUS
 CheckMemModeCapabilities(
-  OUT BOOLEAN *pMemMode2LMSupported,
-  OUT BOOLEAN *pAppDirectPMSupported,
-  OUT BOOLEAN *pMemMode1LMSupported
+  OUT MEMORY_MODE_CAPABILITIES *pMemoryModeCapabilities
   )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
   PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPlatformConfigAttrTable = NULL;
-  BOOLEAN MemMode2LMSupported = FALSE;
-  BOOLEAN AppDirectPMSupported = FALSE;
-  BOOLEAN MemMode1LMSupported = FALSE;
 
   NVDIMM_ENTRY();
 
-  if (pMemMode2LMSupported == NULL && pAppDirectPMSupported == NULL && pMemMode1LMSupported == NULL) {
+  if (pMemoryModeCapabilities == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -1550,7 +1546,7 @@ CheckMemModeCapabilities(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO *pPlatformCapability = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1562,11 +1558,12 @@ CheckMemModeCapabilities(
       goto Finish;
     }
 
-    MemMode2LMSupported = pPlatformCapability->MemoryModeCapabilities.MemoryModesFlags.Memory;
-    AppDirectPMSupported = pPlatformCapability->MemoryModeCapabilities.MemoryModesFlags.AppDirect;
-    MemMode1LMSupported = pPlatformCapability->MemoryModeCapabilities.MemoryModesFlags.OneLm;
+    CopyMem_S(pMemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES),
+      &pPlatformCapability->MemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES));
+    // Backwards compatability. Platforms with PCAT revison < 1.x always support mixed mode
+    pMemoryModeCapabilities->MemoryModesFlags.MixedMode = MIXED_MODE_CAPABILITY_SUPPORTED;
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     PLATFORM_CAPABILITY_INFO3 *pPlatformCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
@@ -1578,45 +1575,18 @@ CheckMemModeCapabilities(
       goto Finish;
     }
 
-    MemMode2LMSupported = pPlatformCapability3->MemoryModeCapabilities.MemoryModesFlags.Memory;
-    AppDirectPMSupported = pPlatformCapability3->MemoryModeCapabilities.MemoryModesFlags.AppDirect;
-    MemMode1LMSupported = pPlatformCapability3->MemoryModeCapabilities.MemoryModesFlags.OneLm;
+    CopyMem_S(pMemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES),
+      &pPlatformCapability3->MemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES));
   }
   else {
     NVDIMM_DBG("Unknown PCAT table revision");
     goto Finish;
   }
 
-  if (pMemMode2LMSupported != NULL) {
-    *pMemMode2LMSupported = FALSE;
-    if (!MemMode2LMSupported) {
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
-    }
-    *pMemMode2LMSupported = TRUE;
-  }
-
-  if (pAppDirectPMSupported != NULL) {
-    *pAppDirectPMSupported = FALSE;
-    if (!AppDirectPMSupported) {
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
-    }
-    *pAppDirectPMSupported = TRUE;
-  }
-
-  if (pMemMode1LMSupported != NULL) {
-    *pMemMode1LMSupported = FALSE;
-    if (!MemMode1LMSupported) {
-      ReturnCode = EFI_UNSUPPORTED;
-      goto Finish;
-    }
-    *pMemMode1LMSupported = TRUE;
-  }
-
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
 
@@ -1654,7 +1624,7 @@ RetrievePcatSocketSkuMappedMemoryLimit(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       if (SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
         *pMappedMemoryLimit = gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->MappedMemorySizeLimit;
@@ -1663,7 +1633,7 @@ RetrievePcatSocketSkuMappedMemoryLimit(
       }
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
@@ -1725,7 +1695,7 @@ RetrievePcatSocketSkuTotalMappedMemory(
   *pTotalMappedMemory = 0;
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       if (SocketId == SOCKET_ID_ALL || SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
         *pTotalMappedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->TotalMemorySizeMappedToSpa;
@@ -1736,7 +1706,7 @@ RetrievePcatSocketSkuTotalMappedMemory(
       }
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
@@ -1800,7 +1770,7 @@ RetrievePcatSocketSkuCachedMemory(
   *pCachedMemory = 0;
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       if (SocketId == SOCKET_ID_ALL || SocketId == gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->SocketId) {
         *pCachedMemory += gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]->CachingMemorySize;
@@ -1811,7 +1781,7 @@ RetrievePcatSocketSkuCachedMemory(
       }
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     for (Index = 0; Index < gNvmDimmData->PMEMDev.pPcatHead->SocketSkuInfoNum; Index++) {
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
@@ -1901,7 +1871,7 @@ RetrieveSupportediMcAndChannelInterleaveSizes(
     *pRevision = pPlatformConfigAttrTable->Header.Revision;
   }
 
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPlatformConfigAttrTable)) {
     MEMORY_INTERLEAVE_CAPABILITY_INFO *pMemoryInterleaveCapability = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
@@ -1968,7 +1938,7 @@ RetrieveSupportediMcAndChannelInterleaveSizes(
       *pInterleaveAlignmentSize = pMemoryInterleaveCapability->InterleaveAlignmentSize;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapability3 = NULL;
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
@@ -2067,7 +2037,7 @@ RetrieveInterleaveSetMap(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -2140,7 +2110,7 @@ RetrieveChannelWaysFromInterleaveSetMap(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->MemoryInterleaveCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[0] != NULL) {
@@ -2260,7 +2230,7 @@ RetrieveMaxPMInterleaveSets(
   }
 
   pPlatformConfigAttrTable = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr;
-  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(pPlatformConfigAttrTable)) {
+  if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPlatformConfigAttrTable)) {
     if (gNvmDimmData->PMEMDev.pPcatHead->PlatformCapabilityInfoNum == 1 &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo != NULL &&
       gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[0] != NULL) {

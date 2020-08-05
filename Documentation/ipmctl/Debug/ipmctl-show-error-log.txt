@@ -55,7 +55,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Filter output to specific PMem modules by optionally supplying one or more
-  comma-separated PMem module identifiers. The default is to include all manageable PMem modules.
+  comma separated PMem module identifiers. The default is to include all manageable PMem modules.
 
 PROPERTIES
 ----------

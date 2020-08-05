@@ -598,7 +598,9 @@ typedef struct _MEMORY_RESOURCES_INFO {
   UINT64 DDRCacheCapacity;          //!< Sum of the DDR capacity used for caching
   UINT64 DDRVolatileCapacity;       //!< Sum of the DDR capacity used as volatile memory
   UINT64 DDRInaccessibleCapacity;   //!< Sum of the DDR capacity that is inaccessible
-  UINT64 Reserved[6];
+  BOOLEAN PcdInvalid;               //!< Boolean flag to indicate one or more PMem modules have missing or corrupt PCD
+  UINT8 Reserved1[5];
+  UINT64 Reserved2[5];
 } MEMORY_RESOURCES_INFO;
 
 typedef struct _DIMM_PERFORMANCE_DATA {
@@ -849,6 +851,11 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_BOOT_STATUS_DDRT_NOT_READY       BIT5
 #define DIMM_BOOT_STATUS_MAILBOX_NOT_READY    BIT6
 #define DIMM_BOOT_STATUS_REBOOT_REQUIRED      BIT7
+// Meta-flags
+#define DIMM_MEDIA_NOT_ACCESSIBLE(BootStatusBitmask)       \
+  ((BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) ||  \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) ||       \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED))      \
 
 /**
   System-wide ARS Status Bitmask

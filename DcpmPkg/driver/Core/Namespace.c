@@ -227,6 +227,8 @@ InstallProtocolsOnNamespaces(
   LIST_ENTRY *pNamespaceNode = NULL;
   NAMESPACE *pNamespace = NULL;
 
+  NVDIMM_ENTRY();
+
   for (pNamespaceNode = GetFirstNode(&gNvmDimmData->PMEMDev.Namespaces);
       !IsNull(&gNvmDimmData->PMEMDev.Namespaces, pNamespaceNode);
       pNamespaceNode = GetNextNode(&gNvmDimmData->PMEMDev.Namespaces, pNamespaceNode)) {
@@ -245,6 +247,12 @@ InstallProtocolsOnNamespaces(
         ReturnCode = EFI_SUCCESS;
       }
     }
+
+    // Reconnect the protocols that are built on top of the BlockIo protocol
+    // (DiskIo, SimpleFileSystem). This is somehow not required during normal driver load
+    // but is necessary during ReenumerateNamespacesAndISs(TRUE) where everything is reloaded.
+    CHECK_RESULT_CONTINUE(gBS->ConnectController(pNamespace->BlockIoHandle, NULL, NULL, TRUE));
+
   }
 
   return ReturnCode;
@@ -2411,11 +2419,7 @@ InitializeNamespaces(
       pDimm->pLsa = NULL;
     }
 
-    if (!IsDimmManageable(pDimm)) {
-      continue;
-    }
-
-    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
     {
       continue;
     }
@@ -2447,11 +2451,7 @@ InitializeNamespaces(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
-    if (!IsDimmManageable(pDimm)) {
-      continue;
-    }
-
-    if (pDimm->Bsr.Separated_Current_FIS.MD == MEDIA_DISABLED)
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
     {
       continue;
     }

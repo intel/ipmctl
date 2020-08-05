@@ -30,7 +30,7 @@ NOTE: The all and display options are exclusive and may not be used together.
 
 -d (attributes)::
 -display (attributes)::
-  Filters the returned attributes by explicitly specifying a comma-separated
+  Filters the returned attributes by explicitly specifying a comma separated
   list of any of the attributes defined in the Return Data section.
 
 NOTE: The all and display options are exclusive and may not be used together.
@@ -138,7 +138,7 @@ TARGETS
 -------
 -dimm [DimmIDs]::
   Restricts output to the sensors on specific PMem modules by supplying the DIMM
-  target and one or more comma-separated PMem module identifiers. The default is to
+  target and one or more comma separated PMem module identifiers. The default is to
   display sensors for all manageable PMem modules.
 
 EXAMPLES

@@ -41,7 +41,7 @@ DecodePcatMemoryModeCapabilities(
     return MemoryModeCapabilities;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
     SUPPORTED_MEMORY_MODE *pPcatMemoryModeCapabilities = (SUPPORTED_MEMORY_MODE *)pPcatMemoryModeCapabilitiesField;
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.OneLm) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
@@ -61,12 +61,17 @@ DecodePcatMemoryModeCapabilities(
         L"AppDirect");
     }
 
+    // Platforms with PCAT revison < 1.x always support mixed mode
+    MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+      ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"MixedMode");
+
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         L"SubNUMA Cluster");
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     SUPPORTED_MEMORY_MODE3 *pPcatMemoryModeCapabilities = (SUPPORTED_MEMORY_MODE3 *)pPcatMemoryModeCapabilitiesField;
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.OneLm) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
@@ -84,6 +89,12 @@ DecodePcatMemoryModeCapabilities(
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         L"AppDirect");
+    }
+
+    if (pPcatMemoryModeCapabilities->MemoryModesFlags.MixedMode) {
+      MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
+        ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+        L"MixedMode");
     }
   }
 
@@ -115,7 +126,7 @@ DecodePcatCurrentMemoryMode(
     return CurrentMemoryMode;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
     CURRENT_MEMORY_MODE *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE *)pPcatCurrentMemoryModeField;
     if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
@@ -156,7 +167,7 @@ DecodePcatCurrentMemoryMode(
         L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_STR,
         L"-SubNUMA Cluster Mode ", ((pPcatCurrentMemoryMode->MemoryModeSplit.SubNumaCluster) ? L"Enabled" : L"Disabled"));
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     CURRENT_MEMORY_MODE3 *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE3 *)pPcatCurrentMemoryModeField;
     if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
       CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
@@ -230,14 +241,14 @@ DecodePcatInterleaveFormatSupported(
     return InterleaveFormatSupported;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
     INTERLEAVE_FORMAT *pPcatInterleaveFormatSupported = (INTERLEAVE_FORMAT *)pPcatInterleaveFormatSupportedField;
     ChannelInterleaveSize = pPcatInterleaveFormatSupported->InterleaveFormatSplit.ChannelInterleaveSize;
     ImcInterleaveSize = pPcatInterleaveFormatSupported->InterleaveFormatSplit.iMCInterleaveSize;
     NumberOfChannelWays = pPcatInterleaveFormatSupported->InterleaveFormatSplit.NumberOfChannelWays & MAX_UINT16;
     Recommended = pPcatInterleaveFormatSupported->InterleaveFormatSplit.Recommended;
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
     INTERLEAVE_FORMAT3 *pPcatInterleaveFormatSupported = (INTERLEAVE_FORMAT3 *)pPcatInterleaveFormatSupportedField;
     ChannelInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.ChannelInterleaveSize;
     ImcInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.iMCInterleaveSize;
@@ -407,7 +418,7 @@ PrintPcatTable(
   switch (pTable->Type) {
   case PCAT_TYPE_PLATFORM_CAPABILITY_INFO_TABLE:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"PlatformCapabilityInfoTable");
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L"Yes");
@@ -460,7 +471,7 @@ PrintPcatTable(
           pPlatformCapabilityInfoTable->PersistentMemoryRasCapability);
       }
       FREE_POOL_SAFE(PersistentMemoryRasCapability);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -503,7 +514,7 @@ PrintPcatTable(
     break;
   case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"MemoryInterleaveCapabilityTable");
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -527,7 +538,7 @@ PrintPcatTable(
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -591,13 +602,13 @@ PrintPcatTable(
     break;
   case PCAT_TYPE_SOCKET_SKU_INFO_TABLE:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pTypePath, L"TypeEquals", L"SocketSkuInfoTable");
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       SOCKET_SKU_INFO_TABLE *pSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pSocketSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", FORMAT_UINT64, pSocketSkuInfoTable->MappedMemorySizeLimit);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", FORMAT_UINT64, pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", FORMAT_UINT64 L"\n", pSocketSkuInfoTable->CachingMemorySize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       DIE_SKU_INFO_TABLE *pDieSkuInfoTable = (DIE_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->DieId);
@@ -638,14 +649,14 @@ PrintPcat(
   PrintAcpiHeader(&pPcat->pPlatformConfigAttr->Header, pPrinterCtx);
 
   for (Index = 0; Index < pPcat->PlatformCapabilityInfoNum; Index++) {
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index] == NULL) {
         return;
       }
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -654,14 +665,14 @@ PrintPcat(
   }
 
   for (Index = 0; Index < pPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index] == NULL) {
         return;
       }
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -684,14 +695,14 @@ PrintPcat(
   }
 
   for (Index = 0; Index < pPcat->SocketSkuInfoNum; Index++) {
-    if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index] == NULL) {
         return;
       }
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index] == NULL) {
         return;
       }
@@ -1023,7 +1034,7 @@ PrintPmttCommonHeader(
     return;
   }
 
-  if (!IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+  if (!IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
     NVDIMM_DBG("Unknown PMTT Revision: ", FORMAT_UINT8_HEX, Revision.AsUint8);
     return;
   }
@@ -1227,7 +1238,7 @@ PrintPmtt(
     return;
   }
 
-  if (!IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(pTable->Revision)) {
+  if (!IS_ACPI_REV_MAJ_0_MIN_VALID(pTable->Revision)) {
     NVDIMM_DBG("Unknown PMTT Revision: ", FORMAT_HEX_NOWIDTH, pTable->Revision.AsUint8);
     return;
   }

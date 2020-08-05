@@ -50,6 +50,7 @@
 #define PCAT_TYPE_SOCKET_SKU_INFO_TABLE               6
 
 #define NUMBER_OF_CHANNEL_WAYS_BITS_NUM  9
+#define MIXED_MODE_CAPABILITY_SUPPORTED  1
 
 #define PCAT_HEADER_REVISION_1 1
 #define PCAT_HEADER_REVISION_2 2
@@ -87,14 +88,19 @@
 #define ACPI_MAJOR_REVISION_1  1
 #define ACPI_MINOR_REVISION_1  1
 #define ACPI_MINOR_REVISION_2  2
+#define ACPI_MINOR_REVISION_3  3
 
-#define IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
-                                                       ((revision.Split.Minor == ACPI_MINOR_REVISION_1) || (revision.Split.Minor == ACPI_MINOR_REVISION_2)))
-#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
-                                                       ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2)))
+#define IS_ACPI_REV_MAJ_1_MIN_VALID(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                  ((revision.Split.Minor == ACPI_MINOR_REVISION_1) || (revision.Split.Minor == ACPI_MINOR_REVISION_2) || \
+                                                  (revision.Split.Minor == ACPI_MINOR_REVISION_3)))
+#define IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                  ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2) || \
+                                                  (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_3)))
+#define IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_2(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
+                                                  ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2)))
 
-#define IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
-#define IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
+#define IS_ACPI_REV_MAJ_0_MIN_VALID(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
+#define IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
 
 #define IS_ACPI_REV_MAJ_0_MIN_1(revision)     (revision.AsUint8 == ACPI_REVISION_1)
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_1(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_1)
@@ -104,10 +110,12 @@
 
 #define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
                                           ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
-                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)))
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_3)))
 #define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
                                           ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
-                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)))
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_3)))
 
 #define IS_NFIT_REVISION_INVALID(revision)   (revision.AsUint8 != ACPI_REVISION_1)
 #define IS_PCAT_REVISION_INVALID(revision)   IS_ACPI_REV_INVALID(revision)
@@ -328,7 +336,8 @@ union {
     UINT8 OneLm     : 1;
     UINT8 Memory    : 1;
     UINT8 AppDirect : 1;
-    UINT8 Reserved  : 5;
+    UINT8 MixedMode : 1;
+    UINT8 Reserved  : 4;
   } MemoryModesFlags;
 } SUPPORTED_MEMORY_MODE3;
 

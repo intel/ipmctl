@@ -112,7 +112,7 @@ Physical DDR Capacity::
   Total physical DDR capacity populated on the platform.
 
 Physical PMem module Capacity::
-  Total physical PMem module capacity populated on the plaform.
+  Total physical PMem module capacity populated on the platform.
 
 Total Physical Capacity::
   Total physical capacity populated on the platform.
@@ -156,7 +156,7 @@ PMem module Persistent Partition Capacity (PPC)::
   Persistent capacity reported by PMem module Partition Info
 
 PMem module Volatile Memory Capacity (VMC)::
-  Usable voliatile memory capacity as reported by platform FW
+  Usable volatile memory capacity as reported by platform FW
   via the _Intel PMem module Current Config->Volatile Memory Size Mapped into SPA_ field
 
 PMem module Persistent Memory Capacity (PMC) ::

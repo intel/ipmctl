@@ -97,7 +97,7 @@ GeneratePcdConfInput(
   /**
    Allocate the block of memory for PCD Config Input
  **/
-  if (IS_ACPI_REV_MAJ_0_MIN_1_OR_MIN_2(Revision)) {
+  if (IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
     ConfInputSize =
       sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
       + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
@@ -107,7 +107,7 @@ GeneratePcdConfInput(
       ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_1_OR_MIN_2(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
     ConfInputSize =
       sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
       + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
@@ -188,7 +188,7 @@ GeneratePcdConfInput(
   **/
 
   pCurrentOffset = (UINT8 *)pPartSizeChange + sizeof(NVDIMM_PARTITION_SIZE_CHANGE);
-  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_1_OR_MIN_2((*ppConfigInput))) {
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID((*ppConfigInput))) {
     for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
       NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pCurrentOffset;
 
@@ -254,7 +254,7 @@ GeneratePcdConfInput(
       LastPersistentMemoryOffset += PmPartitionSize;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_MIN_2((*ppConfigInput)))  {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID((*ppConfigInput)))  {
     for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
       NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurrentOffset;
 

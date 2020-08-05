@@ -75,6 +75,8 @@
 #string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid AlarmEnabled value"
 
 #string STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE                 #language en "The media has been disabled"
+#string STR_DCPMM_STATUS_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE   #language en "Media not accessible. Replace PMem module to continue"
+#string STR_DCPMM_STATUS_ERR_A_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE #language en "One or more PMem modules with media not accessible. Replace PMem module(s) to continue"
 #string STR_DCPMM_STATUS_ERR_AIT_DRAM_NOT_READY                   #language en "The AIT DRAM is not ready"
 #string STR_DCPMM_STATUS_ERR_MEDIA_INTERFACE_ENGINE_STALLED       #language en "Firmware has stalled the media interface engine"
 
@@ -87,7 +89,10 @@
 #string STR_DCPMM_STATUS_ERR_INCONSISTENT_SECURITY_STATE          #language en "Inconsistent security state among PMem modules"
 
 #string STR_DCPMM_STATUS_WARN_2LM_MODE_OFF  #language en "The requested goal will result in Memory Mode capacity that is unusable with the currently selected platform BIOS volatile mode."
-#string STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED #language en "The requested goal will result in Memory Mode capacity that is unusable. An iMC has DDR4 without DPCMEM module."
+#string STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED #language en "The requested goal will result in Memory Mode capacity that is unusable. An iMC has DDR without PMem module."
+#string STR_DCPMM_STATUS_WARN_NMFM_RATIO_LOWER_VIOLATION #language en "WARNING! The requested memory mode size is below the recommended NM:FM limit of 1:%ls"
+#string STR_DCPMM_STATUS_WARN_NMFM_RATIO_UPPER_VIOLATION #language en "WARNING! The requested memory mode size is above the recommended NM:FM limit of 1:%d"
+#string STR_DCPMM_STATUS_ERR_NMFM_RATIO_GREATER_THAN_ONE #language en "The requested memory mode size is below the NM:FM limit of 1:1"
 #string STR_DCPMM_STATUS_WARN_REDUCED_CAPACITY_DUE_TO_SKU #language en "The amount of mapped memory was limited based on the SKU resulting in un-mapped capacity."
 #string STR_DCPMM_STATUS_WARN_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED #language en "The platform is limited to %d interleave sets per Die, so only %d PMem modules will have AppDirect2 regions created."
 #string STR_DCPMM_STATUS_WARN_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED #language en "The platform is limited to %d interleave sets per Die, so AppDirect capacities in %d PMem modules will be inaccessible."
@@ -106,6 +111,7 @@
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT #language en "Platform does not support changing configuration through management software"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MIRRORING #language en "Platform does not support App Direct Memory mirroring"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE #language en "Platform does not support Memory Mode"
+#string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE #language en "Platform does not support Mixed Mode"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MODE #language en "Platform does not support App Direct Mode"
 #string STR_DCPMM_STATUS_ERR_REGION_CURR_CONF_EXISTS #language en "PMem modules on one or more sockets already have a configured goal. Delete this existing goal before creating a new one."
 #string STR_DCPMM_STATUS_ERR_REGION_SIZE_TOO_SMALL_FOR_INT_SET_ALIGNMENT #language en "The region size is too small for platform alignment"
@@ -119,7 +125,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY #language en "Remaining value can be used only for one property and only on the last App Direct Size property"
 #string STR_DCPMM_STATUS_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS #language en "Unable to find a valid mapping for the requested configuration."
 #string STR_DCPMM_STATUS_ERR_CREATE_NAMESPACE_NOT_ALLOWED #language en "Pending goal request found on PMem modules that are part of this namespace request. Please reboot to apply the goal or delete the goal and try again."
-#string STR_DCPMM_STATUS_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
+#string STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
 
 #string STR_DCPMM_STATUS_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED  #language en "Open or create the file with write mode failed."
 #string STR_DCPMM_STATUS_ERR_DUMP_NO_CONFIGURED_DIMMS  #language en "There are no configured PMem modules to dump."

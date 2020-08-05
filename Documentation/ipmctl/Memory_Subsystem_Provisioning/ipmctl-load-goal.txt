@@ -76,7 +76,7 @@ TARGETS
 
 -socket [SocketIds]::
   Loads the memory allocation goal onto all manageable PMem modules on specific
-  sockets by supplying the socket target and one or more comma-separated socket
+  sockets by supplying the socket target and one or more comma separated socket
   identifiers. The default is to load the memory allocation goal onto all
   manageable PMem modules on all sockets.
 

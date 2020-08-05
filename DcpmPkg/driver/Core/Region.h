@@ -487,7 +487,6 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
   @param[in] Restore corrupt pcd
-  @param[in] Skip Media disabled dimms
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -496,8 +495,7 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt,
-  IN     BOOLEAN MediaEnabledOnly
+  IN     BOOLEAN RestoreCorrupt
   );
 
 /**
@@ -1042,5 +1040,40 @@ EFI_STATUS
 CheckForExistingGoalConfigPerSocket(
   IN    DIMM *pDimms[MAX_DIMMS],
   IN    UINT32 *pDimmsNum
+  );
+
+/**
+  Examines the system topology for the system DDR capacity and compares
+  it to the 2LM capacity to check for ratio violations
+
+  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
+  @param[IN] DimmsSymNum Number of items in DimmsSym
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER input parameter null
+**/
+EFI_STATUS
+CheckNmFmLimits(
+  IN    REGION_GOAL_DIMM *pDimmsSym,
+  IN    UINT32  DimmsSymNum,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
+
+/**
+  Checks if all DIMMs in the list are in configured state
+
+  @param[IN] pDimmList Head of the Dimm list
+  @param[IN] pDimmsUnConfigured Boolean flag to indicate if any PMem module is unconfigured
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if input parameter null
+**/
+EFI_STATUS
+CheckIfAllDimmsConfigured(
+  IN     LIST_ENTRY *pDimmList,
+     OUT BOOLEAN *pDimmsUnConfigured,
+     OUT COMMAND_STATUS *pCommandStatus OPTIONAL
   );
 #endif

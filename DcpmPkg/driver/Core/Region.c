@@ -3161,6 +3161,7 @@ VerifyPlatformSupport(
   CHECK_RESULT(CheckIfBiosSupportsConfigChange(&ConfigChangeSupported), Finish);
   if (!ConfigChangeSupported) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT);
+    ReturnCode = EFI_UNSUPPORTED;
     goto Finish;
   }
 

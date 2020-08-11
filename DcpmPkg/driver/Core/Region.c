@@ -3979,6 +3979,10 @@ SendConfigInputToDimm(
     pNewConfHeader->ConfInputStartOffset = CurrentOffset;
     pNewConfHeader->ConfInputDataSize = pNewConfigInput->Header.Length;
     CurrentOffset += pNewConfHeader->ConfInputDataSize;
+
+    /** Update Configuration Header Revision **/
+    CopyMem_S(&pNewConfHeader->Header.Revision, sizeof(ACPI_REVISION),
+      &pNewConfigInput->Header.Revision, sizeof(ACPI_REVISION));
   } else {
     pNewConfHeader->ConfInputStartOffset = 0;
     pNewConfHeader->ConfInputDataSize = 0;

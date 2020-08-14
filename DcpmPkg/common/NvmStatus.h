@@ -89,6 +89,7 @@ InitErrorAndWarningNvmStatusCodes(
   @param[in] pStatusPreposition String with preposition
   @param[in] pCommandStatus Command status data
   @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
+  @param[in] DoNotPrintGeneralStatusSuccessCode
   @param[out] ppOutputMessage buffer where output will be saved
 
   Warning: ppOutputMessage - should be freed in caller.
@@ -103,6 +104,7 @@ CreateCommandStatusString(
   IN     CONST CHAR16 *pStatusPreposition,
   IN     COMMAND_STATUS *pCommandStatus,
   IN     BOOLEAN ObjectIdNumberPreferred,
+  IN     BOOLEAN DoNotPrintGeneralStatusSuccessCode,
      OUT CHAR16 **ppOutputMessage
   );
 

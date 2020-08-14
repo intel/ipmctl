@@ -452,20 +452,20 @@ UnlatchedLastShutdownStatus::
   on a dirty shutdown is logged, even if the Latch System Shutdown Status
   was not enabled. One or more of:
   - Unknown: The last shutdown status cannot be determined.
-  - PM ADR Command: Power management ADR command received.
-  - PM S3: Power management S3 command received.
-  - PM S5: Power management S5 command received.
-  - DDRT Power Fail Command: DDR power fail command received.
+  - PM ADR Command Received: Power management ADR command received.
+  - PM S3 Received: Power management S3 command received.
+  - PM S5 Received: Power management S5 command received.
+  - DDRT Power Fail Command Received: DDR power fail command received.
   - PMIC 12V/DDRT 1.2V Power Loss (PLI)
-  - PM Warm Reset: Power management warm reset received.
-  - Thermal Shutdown: Thermal shutdown triggered.
+  - PM Warm Reset Received: Power management warm reset received.
+  - Thermal Shutdown Received: Thermal shutdown triggered.
   - Controller’s FW State Flush Complete: Flush Completed.
-  - Viral Interrupt: Viral interrupt received.
-  - Surprise Clock Stop: Surprise clock stop received.
+  - Viral Interrupt Received: Viral interrupt received.
+  - Surprise Clock Stop Received: Surprise clock stop received.
   - Write Data Flush Complete: Write data flush completed.
-  - PM S4: Power management S4 command received.
-  - DDRT Surprise Reset: Surprise reset received
+  - PM S4 Received: Power management S4 command received.
   - PM Idle Received: Power management idle received.
+  - DDRT Surprise Reset Received: Surprise reset received.
   - Extended Flush Complete.
 
 ThermalThrottleLossPercent::

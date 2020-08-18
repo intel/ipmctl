@@ -444,6 +444,7 @@ LatchedLastShutdownStatus::
   - PM S4 Received: Power management S4 command received.
   - PM Idle Received: Power management idle received.
   - DDRT Surprise Reset Received: Surprise reset received.
+  - Extended Flush Not Complete.
   - Extended Flush Complete.
 
 UnlatchedLastShutdownStatus::
@@ -466,6 +467,7 @@ UnlatchedLastShutdownStatus::
   - PM S4 Received: Power management S4 command received.
   - PM Idle Received: Power management idle received.
   - DDRT Surprise Reset Received: Surprise reset received.
+  - Extended Flush Not Complete.
   - Extended Flush Complete.
 
 ThermalThrottleLossPercent::

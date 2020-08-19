@@ -1256,7 +1256,7 @@ GetDcpmmCapacities(
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
 
-  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated
+  @param[in]  SocketId Socket Id, value 0xFFFF indicates include all socket values
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
@@ -1278,10 +1278,10 @@ GetDDRCapacities(
 
 /**
   Calculate the total size of available memory in the PMem modules
-  according to the smbios and return the result.
+  according to the smbios and return the result
 
-  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
-  @param[out] pResult Pointer to total memory size.
+  @param[in]  SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[out] pResult Pointer to total memory size
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
   @retval EFI_LOAD_ERROR Failure to calculate DDR memory size

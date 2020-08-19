@@ -1046,17 +1046,19 @@ CheckForExistingGoalConfigPerSocket(
   Examines the system topology for the system DDR capacity and compares
   it to the 2LM capacity to check for ratio violations
 
-  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
-  @param[IN] DimmsSymNum Number of items in DimmsSym
-  @param[OUT] pCommandStatus Pointer to command status structure
+  @param[in] SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[in] pDimmsSym Array of Dimms for symmetrical region config
+  @param[in] DimmsSymNum Number of items in DimmsSym
+  @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER input parameter null
 **/
 EFI_STATUS
 CheckNmFmLimits(
-  IN    REGION_GOAL_DIMM *pDimmsSym,
-  IN    UINT32  DimmsSymNum,
+  IN     UINT16 SocketId,
+  IN     REGION_GOAL_DIMM *pDimmsSym,
+  IN     UINT32  DimmsSymNum,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -1080,16 +1082,18 @@ CheckIfAllDimmsConfigured(
 /**
   Calculate total far memory on PMem modules for existing goal configs
 
-  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
-  @param[IN] DimmsSymNum Number of items in DimmsSym
-  @param[OUT] pTotalFarMemorySize Pointer to total far memory capacity
-  @param[OUT] pCommandStatus Pointer to command status structure
+  @param[in] SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[in] pDimmsSym Array of Dimms for symmetrical region config
+  @param[in] DimmsSymNum Number of items in DimmsSym
+  @param[out] pTotalFarMemorySize Pointer to total far memory capacity
+  @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER if input parameter null
 **/
 EFI_STATUS
 CalculateFarMemorySizeForNewGoalConfigs(
+  IN     UINT16 SocketId,
   IN     REGION_GOAL_DIMM *pDimmsSym,
   IN     UINT32  DimmsSymNum,
      OUT UINT64 *pTotalFarMemorySize,

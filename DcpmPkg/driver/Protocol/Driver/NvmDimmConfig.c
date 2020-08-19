@@ -6061,6 +6061,12 @@ GetActualRegionsGoalCapacities(
       goto Finish;
     }
 
+    // Check for NM:FM ratio and set command status if not within limits
+    ReturnCode = CheckNmFmLimits((UINT16)Socket, pDimmsSymPerSocket, DimmsSymNumPerSocket, pCommandStatus);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
     if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsSymNumPerSocket; Index++) {
         pDimmsSym[DimmsSymNum] = pDimmsSymPerSocket[Index];
@@ -6137,12 +6143,6 @@ GetActualRegionsGoalCapacities(
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Unable to determine system memory mode");
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
-    goto Finish;
-  }
-
-  // Check for NM:FM ratio and set command status if not within limits
-  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
@@ -6533,6 +6533,12 @@ CreateGoalConfig(
       goto Finish;
     }
 
+    // Check for NM:FM ratio and set command status if not within limits
+    ReturnCode = CheckNmFmLimits((UINT16)Socket, pDimmsSymPerSocket, DimmsSymNumPerSocket, pCommandStatus);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+
     /**Add the symmetrical and Asymmetrical size  to the global list **/
     if (pDimmsSym != NULL && pDimmsSymPerSocket != NULL && (DimmsSymNum < MAX_DIMMS)) {
       for (Index = 0; Index < DimmsSymNumPerSocket; Index++) {
@@ -6557,12 +6563,6 @@ CreateGoalConfig(
   // We have removed all symmetrical memory from the system, make the goal template num 0
   if (DimmsSymNum == 0) {
     RegionGoalTemplatesNum = 0;
-  }
-
-  // Check for NM:FM ratio and set command status if not within limits
-  ReturnCode = CheckNmFmLimits(pDimmsSym, DimmsSymNum, pCommandStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
   }
 
   /** Update internal driver's structures **/
@@ -8558,14 +8558,14 @@ Finish:
 /**
   Retrieve and calculate DDR cache and memory capacity to return.
 
-  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated
+  @param[in]  SocketId Socket Id, value 0xFFFF indicates include all socket values
   @param[out] pDDRRawCapacity Pointer to value of the total cache capacity
   @param[out] pDDRCacheCapacity Pointer to value of the DDR cache capacity
   @param[out] pDDRVolatileCapacity Pointer to value of the DDR memory capacity
   @param[out] pDDRInaccessibleCapacity Pointer to value of the DDR inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_DEVICE_ERROR Total mapped DCPMM Persistent & Volatile capacity is larger than total mapped memory
+  @retval EFI_DEVICE_ERROR Total DCPMM Persistent & Volatile capacity is larger than total mapped memory
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS
@@ -8664,11 +8664,11 @@ Finish:
 }
 
 /**
-  Calculate the total size of available memory in the DIMMs
-  according to the smbios and return the result.
+  Calculate the total size of available memory in the PMem modules
+  according to the smbios and return the result
 
-  @param[in]  SocketId Socket Id for SKU limit calculations, value 0xFFFF indicate include all sockets values accumulated.
-  @param[out] pResult Pointer to total memory size.
+  @param[in]  SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[out] pResult Pointer to total memory size
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
   @retval EFI_LOAD_ERROR Failure to calculate DDR memory size

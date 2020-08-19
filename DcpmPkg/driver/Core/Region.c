@@ -5046,17 +5046,19 @@ Finish:
   Examines the system topology for the system DDR capacity and compares
   it to the 2LM capacity to check for ratio violations
 
-  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
-  @param[IN] DimmsSymNum Number of items in DimmsSym
-  @param[OUT] pCommandStatus Pointer to command status structure
+  @param[in] SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[in] pDimmsSym Array of Dimms for symmetrical region config
+  @param[in] DimmsSymNum Number of items in DimmsSym
+  @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER input parameter null
 **/
 EFI_STATUS
 CheckNmFmLimits(
-  IN    REGION_GOAL_DIMM *pDimmsSym,
-  IN    UINT32  DimmsSymNum,
+  IN     UINT16 SocketId,
+  IN     REGION_GOAL_DIMM *pDimmsSym,
+  IN     UINT32  DimmsSymNum,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -5068,13 +5070,14 @@ CheckNmFmLimits(
 
   NVDIMM_ENTRY();
 
-  if (pDimmsSym == NULL || DimmsSymNum == 0 || pCommandStatus == NULL) {
+  if (pDimmsSym == NULL || pCommandStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
   // Get total PMem module volatile capacity (Far Memory)
-  ReturnCode = CalculateFarMemorySizeForNewGoalConfigs(pDimmsSym, DimmsSymNum, &TwoLM_FMTotal, pCommandStatus);
+  ReturnCode = CalculateFarMemorySizeForNewGoalConfigs(SocketId, pDimmsSym, DimmsSymNum,
+    &TwoLM_FMTotal, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not calculate far memory capacity.");
     goto Finish;
@@ -5086,7 +5089,7 @@ CheckNmFmLimits(
   }
 
   // Get total DDR capacity (Near Memory)
-  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &TwoLM_NMTotal, NULL, NULL, NULL);
+  ReturnCode = GetDDRCapacities(SocketId, &TwoLM_NMTotal, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not determine usable DDR capacity.");
     goto Finish;
@@ -5172,16 +5175,18 @@ Finish:
 /**
   Calculate total far memory on PMem modules for existing goal configs
 
-  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
-  @param[IN] DimmsSymNum Number of items in DimmsSym
-  @param[OUT] pTotalFarMemorySize Pointer to total far memory capacity
-  @param[OUT] pCommandStatus Pointer to command status structure
+  @param[in] SocketId Socket Id, value 0xFFFF indicates include all socket values
+  @param[in] pDimmsSym Array of Dimms for symmetrical region config
+  @param[in] DimmsSymNum Number of items in DimmsSym
+  @param[out] pTotalFarMemorySize Pointer to total far memory capacity
+  @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER if input parameter null
 **/
 EFI_STATUS
 CalculateFarMemorySizeForNewGoalConfigs(
+  IN     UINT16 SocketId,
   IN     REGION_GOAL_DIMM *pDimmsSym,
   IN     UINT32  DimmsSymNum,
      OUT UINT64 *pTotalFarMemorySize,
@@ -5195,13 +5200,15 @@ CalculateFarMemorySizeForNewGoalConfigs(
   UINT32 Index1 = 0;
   UINT32 Index2 = 0;
   UINT32 NumOfUnspecifiedDimms = 0;
-  BOOLEAN UnSpecifiedDimm = FALSE;
+  UINT16 *pSocketIds = NULL;
+  UINT32 SocketsNum = 0;
+  BOOLEAN UnSpecifiedDimm = TRUE;
   REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL |
                                          REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
 
   NVDIMM_ENTRY();
 
-  if (pDimmsSym == NULL || DimmsSymNum == 0 || pTotalFarMemorySize == NULL ||
+  if (pDimmsSym == NULL || pTotalFarMemorySize == NULL ||
     pCommandStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -5212,8 +5219,15 @@ CalculateFarMemorySizeForNewGoalConfigs(
 
   for (Index1 = 0; Index1 < DimmsSymNum; Index1++)
   {
-    *pTotalFarMemorySize += ROUNDDOWN(pDimmsSym[Index1].VolatileSize,
-      gNvmDimmData->Alignments.RegionVolatileAlignment);
+    if (SocketId == SOCKET_ID_ALL || pDimmsSym[Index1].pDimm->SocketId == SocketId) {
+      *pTotalFarMemorySize += ROUNDDOWN(pDimmsSym[Index1].VolatileSize,
+        gNvmDimmData->Alignments.RegionVolatileAlignment);
+    }
+  }
+
+  if (*pTotalFarMemorySize == 0) {
+    // No 2LM goal in play
+    goto Finish;
   }
 
   ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
@@ -5222,7 +5236,16 @@ CalculateFarMemorySizeForNewGoalConfigs(
     goto Finish;
   }
 
-  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, RequireDcpmmsBitfield,
+  /**
+    Initialize socket ID array and array length input parameters for
+    VerifyTargetDimms function when a single socket ID is specified.
+  **/
+  if (SocketId != SOCKET_ID_ALL) {
+    pSocketIds = &SocketId;
+    SocketsNum = 1;
+  }
+
+  ReturnCode = VerifyTargetDimms(NULL, 0, pSocketIds, SocketsNum, RequireDcpmmsBitfield,
     ppDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
@@ -5240,8 +5263,9 @@ CalculateFarMemorySizeForNewGoalConfigs(
   **/
   for (Index1 = 0; Index1 < DimmsNum; Index1++) {
     for (Index2 = 0; Index2 < DimmsSymNum; Index2++) {
-      if (pDimmsSym[Index2].pDimm->DeviceHandle.AsUint32 != ppDimms[Index1]->DeviceHandle.AsUint32) {
-        UnSpecifiedDimm = TRUE;
+      if ((SocketId == SOCKET_ID_ALL || pDimmsSym[Index2].pDimm->SocketId == SocketId) &&
+          (pDimmsSym[Index2].pDimm->DeviceHandle.AsUint32 == ppDimms[Index1]->DeviceHandle.AsUint32)) {
+        UnSpecifiedDimm = FALSE;
         break;
       }
     }
@@ -5252,7 +5276,7 @@ CalculateFarMemorySizeForNewGoalConfigs(
         gNvmDimmData->Alignments.RegionVolatileAlignment);
     }
 
-    UnSpecifiedDimm = FALSE;
+    UnSpecifiedDimm = TRUE;
   }
 
   if ((DimmsSymNum + NumOfUnspecifiedDimms) == DimmsNum) {

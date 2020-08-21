@@ -104,6 +104,7 @@ API for development of Intel Optane DC persistent memory management utilities.
 %{_libdir}/libipmctl.so.4*
 %dir %{_datadir}/doc/ipmctl
 %doc %{_datadir}/doc/ipmctl/ipmctl_default.conf
+%doc %{_datadir}/doc/ipmctl/LICENSE
 %config(noreplace) %{_datadir}/ipmctl/ipmctl.conf
 %dir %{_localstatedir}/log/ipmctl
 %config(noreplace) %{_sysconfdir}/logrotate.d/ipmctl

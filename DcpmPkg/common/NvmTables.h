@@ -336,8 +336,9 @@ union {
     UINT8 OneLm     : 1;
     UINT8 Memory    : 1;
     UINT8 AppDirect : 1;
+    UINT8 Reserved1 : 1;
     UINT8 MixedMode : 1;
-    UINT8 Reserved  : 4;
+    UINT8 Reserved2 : 3;
   } MemoryModesFlags;
 } SUPPORTED_MEMORY_MODE3;
 

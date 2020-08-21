@@ -3551,8 +3551,7 @@ ReduceCapacityForSocketSKU(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   BOOLEAN WholeSocket = FALSE;
-   UINT64 TotalRequestedMemoryOnSocket = 0;
-  BOOLEAN CurrentConfigurationMemoryMode = FALSE;
+  UINT64 TotalRequestedMemoryOnSocket = 0;
   BOOLEAN NewConfigurationMemoryMode = FALSE;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
@@ -3601,16 +3600,6 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-  // Determine if socket has any MemoryMode mapped currently from CCUR tables
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-
-    if (Socket == pDimm->SocketId && IsDimmManageable(pDimm) && pDimm->MappedVolatileCapacity > 0) {
-      CurrentConfigurationMemoryMode = TRUE;
-      break;
-    }
-  }
-
   // MemoryMode only exists on symmetrical dimms objects
   for (Index = 0; Index < *pDimmsSymmetricalNumOnSocket; Index++) {
     if (DimmsSymmetricalOnSocket[Index].VolatileSize > 0) {
@@ -3651,10 +3640,11 @@ ReduceCapacityForSocketSKU(
     TotalRequestedMemoryOnSocket += DDRRawCapacity;
   }
 
-  // when adding a new dimm to a configuration the BIOS will configure it as MemoryMode,
-  // since this dimm is unconfigured it can be configured by itself and a corner case exists
-  // where we can go from 2LM -> 1LM by only changing a single dimm.
-  if (CurrentConfigurationMemoryMode && !NewConfigurationMemoryMode && !WholeSocket) {
+  /**
+    If adding a new dimm to a configured socket and the new configuration will be 1LM,
+    then the total amount to be mapped will be old AD + new AD.
+  **/
+  if (!NewConfigurationMemoryMode && !WholeSocket) {
 
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
@@ -3664,10 +3654,11 @@ ReduceCapacityForSocketSKU(
       }
     }
 
-    // if adding a new dimm to a configured socket and the new configuration will be MemoryMode
-    // then the total amount to be mapped will be All of the old AD + new AD + new MemoryMode + old MemoryMode
+  /**
+    If adding a new dimm to a configured socket and the new configuration will be MemoryMode,
+    then the total amount to be mapped will be All of the old AD + new AD + new MemoryMode + old MemoryMode.
+  **/
   } else if (NewConfigurationMemoryMode && !WholeSocket) {
-
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
 

@@ -3567,6 +3567,7 @@ GetPcd(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsCount = 0;
+  UINT32 AccessibleDimmsCount = 0;
   UINT32 Index = 0;
   NVDIMM_CONFIGURATION_HEADER *pPcdConfHeader = NULL;
   LABEL_STORAGE_AREA *pLabelStorageArea = NULL;
@@ -3576,7 +3577,7 @@ GetPcd(
   ZeroMem(pDimms, sizeof(pDimms));
 
   if (pThis == NULL || ppDimmPcdInfo == NULL || pDimmPcdInfoCount == NULL || pCommandStatus == NULL) {
-    goto FinishError;
+    goto Finish;
   }
 
   //Set initial value of *ppDimmPcdInfo
@@ -3586,98 +3587,118 @@ GetPcd(
     REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
-    goto FinishError;
+    goto Finish;
   }
 
-  *ppDimmPcdInfo = AllocateZeroPool(sizeof(**ppDimmPcdInfo) * DimmsCount);
+  // Don't include media disabled modules and provide an error indicating
+  // why it was not included.
+  // This will be re-done in VerifyTargetDimms in the near future
+  AccessibleDimmsCount = DimmsCount;
+  for (Index = 0; Index < DimmsCount; Index++) {
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_DISABLED);
+      AccessibleDimmsCount--;
+    }
+  }
+
+  // Only allocate space for the media accessible modules
+  *ppDimmPcdInfo = AllocateZeroPool(sizeof(**ppDimmPcdInfo) * AccessibleDimmsCount);
   if (*ppDimmPcdInfo == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishError;
+    goto Finish;
   }
 
+  // But iterate over the full module list
   for (Index = 0; Index < DimmsCount; Index++) {
+    // Skip over media inaccessible modules in the dimms list
+    // TODO: This should be unneeded when the processing is properly done in VerifyTargetDimms
+    // in the near future
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
+      continue;
+    }
+
     pPcdConfHeader = NULL;
     pLabelStorageArea = NULL;
     (*ppDimmPcdInfo)[Index].DimmId = pDimms[Index]->DeviceHandle.AsUint32;
 
     ReturnCode = GetDimmUid(pDimms[Index], (*ppDimmPcdInfo)[Index].DimmUid, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
-      goto FinishError;
+      goto Finish;
     }
-  if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
-    ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
-    if (ReturnCode == EFI_NO_MEDIA) {
-      continue;
-    }
-#ifdef MEMORY_CORRUPTION_WA
-    if (ReturnCode == EFI_DEVICE_ERROR)
-    {
+    if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_CONFIG) {
       ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
-    }
-#endif // MEMORY_CORRUPTIO_WA
-    if (EFI_ERROR(ReturnCode)) {
-      if (ReturnCode == EFI_NO_RESPONSE) {
-        ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
-        goto FinishError;
+      if (ReturnCode == EFI_NO_MEDIA) {
+        continue;
       }
-      NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
-      goto FinishError;
+  #ifdef MEMORY_CORRUPTION_WA
+      if (ReturnCode == EFI_DEVICE_ERROR)
+      {
+        ReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], FALSE, &pPcdConfHeader);
+      }
+  #endif // MEMORY_CORRUPTIO_WA
+      if (EFI_ERROR(ReturnCode)) {
+        if (ReturnCode == EFI_NO_RESPONSE) {
+          ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+          goto Finish;
+        }
+        NVDIMM_DBG("GetPlatformConfigDataOemPartition returned: " FORMAT_EFI_STATUS "", ReturnCode);
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
+        goto Finish;
+      }
+      (*ppDimmPcdInfo)[Index].pConfHeader = pPcdConfHeader;
+
     }
-    (*ppDimmPcdInfo)[Index].pConfHeader = pPcdConfHeader;
+
+    if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_NAMESPACES)
+    {
+  #ifndef OS_BUILD
+      if (pDimms[Index]->LsaStatus == LSA_NOT_INIT || pDimms[Index]->LsaStatus == LSA_COULD_NOT_READ_NAMESPACES) {
+        continue;
+      }
+  #endif // OS_BUILD
+      ReturnCode = ReadLabelStorageArea(pDimms[Index]->DimmID, &pLabelStorageArea);
+  #ifdef OS_BUILD
+      if (ReturnCode == EFI_NOT_FOUND) {
+        NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+        pDimms[Index]->LsaStatus = LSA_NOT_INIT;
+        continue;
+      }
+      else if (ReturnCode == EFI_ACCESS_DENIED) {
+        NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+        pDimms[Index]->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
+        continue;
+      }
+      else if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
+        pDimms[Index]->LsaStatus = LSA_CORRUPTED;
+        /**
+        If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
+        so we don't want to "kill" a valid configuration
+        **/
+        NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
+        NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
+        goto Finish;
+      }
+      pDimms[Index]->LsaStatus = LSA_OK;
+  #else // OS_BUILD
+      if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
+        NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
+        goto Finish;
+      }
+  #endif // OS_BUILD
+      (*ppDimmPcdInfo)[Index].pLabelStorageArea = pLabelStorageArea;
+    }
   }
 
-  if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_NAMESPACES)
-  {
-#ifndef OS_BUILD
-    if (pDimms[Index]->LsaStatus == LSA_NOT_INIT || pDimms[Index]->LsaStatus == LSA_COULD_NOT_READ_NAMESPACES) {
-      continue;
-    }
-#endif // OS_BUILD
-    ReturnCode = ReadLabelStorageArea(pDimms[Index]->DimmID, &pLabelStorageArea);
-#ifdef OS_BUILD
-    if (ReturnCode == EFI_NOT_FOUND) {
-      NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-      pDimms[Index]->LsaStatus = LSA_NOT_INIT;
-      continue;
-    }
-    else if (ReturnCode == EFI_ACCESS_DENIED) {
-      NVDIMM_DBG("LSA not found on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-      pDimms[Index]->LsaStatus = LSA_COULD_NOT_READ_NAMESPACES;
-      continue;
-    }
-    else if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
-      pDimms[Index]->LsaStatus = LSA_CORRUPTED;
-      /**
-      If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
-      so we don't want to "kill" a valid configuration
-      **/
-      NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimms[Index]->DeviceHandle.AsUint32);
-      NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
-      goto Finish;
-    }
-    pDimms[Index]->LsaStatus = LSA_OK;
-#else // OS_BUILD
-    if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_ACCESS_DENIED) {
-      NVDIMM_DBG("Error in retrieving the LSA: " FORMAT_EFI_STATUS "", ReturnCode);
-      goto Finish;
-    }
-#endif // OS_BUILD
-    (*ppDimmPcdInfo)[Index].pLabelStorageArea = pLabelStorageArea;
-  }
-  }
-
-  *pDimmPcdInfoCount = DimmsCount;
+  *pDimmPcdInfoCount = AccessibleDimmsCount;
 
   ReturnCode = EFI_SUCCESS;
-  goto Finish;
-
-FinishError:
-  if (ppDimmPcdInfo != NULL) {
-    FreeDimmPcdInfoArray(*ppDimmPcdInfo, DimmsCount);
+  pCommandStatus->GeneralStatus = NVM_SUCCESS;
+Finish:
+  if (EFI_ERROR(ReturnCode) && ppDimmPcdInfo != NULL && *ppDimmPcdInfo != NULL) {
+    FreeDimmPcdInfoArray(*ppDimmPcdInfo, AccessibleDimmsCount);
     *ppDimmPcdInfo = NULL;
   }
-Finish:
+
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

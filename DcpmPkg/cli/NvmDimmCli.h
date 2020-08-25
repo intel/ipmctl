@@ -7,7 +7,7 @@
 
 #if defined(__LINUX__) || defined(__ESX__)
 #define EXE_NAME               L"ipmctl"
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(OS_BUILD)
 #define EXE_NAME               L"ipmctl.exe"
 #else
 #define EXE_NAME               L"ipmctl.efi"

@@ -42,7 +42,6 @@ GeneratePcdConfInput(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   NVDIMM_CONFIGURATION_HEADER *pConfHeader = NULL;
-  NVDIMM_CURRENT_CONFIG *pPcdCurrentConf = NULL;
   UINT64 PmPartitionSize = 0;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigEfiVar = NULL;
   INTEL_DIMM_CONFIG *pIntelDIMMConfigIn = NULL;
@@ -68,30 +67,18 @@ GeneratePcdConfInput(
     goto Finish;
   }
 
-  if (pConfHeader->CurrentConfStartOffset == 0 || pConfHeader->CurrentConfDataSize == 0) {
-    NVDIMM_DBG("There is no Current Config table");
-
-    if (gNvmDimmData->PMEMDev.pPcatHead == NULL) {
-      NVDIMM_DBG("PCAT table not found");
-      Rc = EFI_DEVICE_ERROR;
-      goto Finish;
-    } else if (IS_ACPI_HEADER_REV_INVALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
-      NVDIMM_DBG("Incorrect PCAT table");
-      Rc = EFI_DEVICE_ERROR;
-      goto Finish;
-     } else {
-       Revision = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision;
-     }
-  } else {
-    pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pConfHeader);
-
-    if (IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
-      Revision = pPcdCurrentConf->Header.Revision;
-    } else {
-      NVDIMM_DBG("The data in Current Config table is invalid");
-      Rc = EFI_DEVICE_ERROR;
-      goto Finish;
-    }
+  if (gNvmDimmData->PMEMDev.pPcatHead == NULL) {
+    NVDIMM_DBG("PCAT table not found");
+    Rc = EFI_DEVICE_ERROR;
+    goto Finish;
+  }
+  else if (IS_ACPI_HEADER_REV_INVALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+    NVDIMM_DBG("Incorrect PCAT table");
+    Rc = EFI_DEVICE_ERROR;
+    goto Finish;
+  }
+  else {
+    Revision = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision;
   }
 
   /**

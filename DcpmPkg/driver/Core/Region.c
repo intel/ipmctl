@@ -3161,6 +3161,7 @@ VerifyPlatformSupport(
   CHECK_RESULT(CheckIfBiosSupportsConfigChange(&ConfigChangeSupported), Finish);
   if (!ConfigChangeSupported) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT);
+    ReturnCode = EFI_UNSUPPORTED;
     goto Finish;
   }
 
@@ -3979,6 +3980,10 @@ SendConfigInputToDimm(
     pNewConfHeader->ConfInputStartOffset = CurrentOffset;
     pNewConfHeader->ConfInputDataSize = pNewConfigInput->Header.Length;
     CurrentOffset += pNewConfHeader->ConfInputDataSize;
+
+    /** Update Configuration Header Revision **/
+    CopyMem_S(&pNewConfHeader->Header.Revision, sizeof(ACPI_REVISION),
+      &pNewConfigInput->Header.Revision, sizeof(ACPI_REVISION));
   } else {
     pNewConfHeader->ConfInputStartOffset = 0;
     pNewConfHeader->ConfInputDataSize = 0;
@@ -5060,19 +5065,19 @@ CheckNmFmLimits(
   UINT64 TwoLM_FmMaxRecommended = 0;
   UINT64 TwoLM_NMTotal = 0;
   UINT64 TwoLM_FMTotal = 0;
-  UINT32 Index = 0;
-  MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
-  if (pDimmsSym == NULL || pCommandStatus == NULL) {
+  if (pDimmsSym == NULL || DimmsSymNum == 0 || pCommandStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  for (Index = 0; Index < DimmsSymNum; Index++)
-  {
-    TwoLM_FMTotal += pDimmsSym[Index].VolatileSize;
+  // Get total PMem module volatile capacity (Far Memory)
+  ReturnCode = CalculateFarMemorySizeForNewGoalConfigs(pDimmsSym, DimmsSymNum, &TwoLM_FMTotal, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not calculate far memory capacity.");
+    goto Finish;
   }
 
   if (TwoLM_FMTotal == 0) {
@@ -5080,13 +5085,7 @@ CheckNmFmLimits(
     goto Finish;
   }
 
-  ReturnCode = AllowedMemoryMode(&AllowedMode);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to determine allowed memory mode.");
-    goto Finish;
-  }
-
-  // Get total DDR capacity
+  // Get total DDR capacity (Near Memory)
   ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &TwoLM_NMTotal, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("Could not determine usable DDR capacity.");
@@ -5166,6 +5165,102 @@ CheckIfAllDimmsConfigured(
   *pDimmsUnConfigured = FALSE;
 
 Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Calculate total far memory on PMem modules for existing goal configs
+
+  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
+  @param[IN] DimmsSymNum Number of items in DimmsSym
+  @param[OUT] pTotalFarMemorySize Pointer to total far memory capacity
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if input parameter null
+**/
+EFI_STATUS
+CalculateFarMemorySizeForNewGoalConfigs(
+  IN     REGION_GOAL_DIMM *pDimmsSym,
+  IN     UINT32  DimmsSymNum,
+     OUT UINT64 *pTotalFarMemorySize,
+     OUT COMMAND_STATUS *pCommandStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  DIMM **ppDimms = NULL;
+  UINT32 DimmsNum = 0;
+  UINT64 VolatileCapacityUnspecifiedDimms = 0;
+  UINT32 Index1 = 0;
+  UINT32 Index2 = 0;
+  UINT32 NumOfUnspecifiedDimms = 0;
+  BOOLEAN UnSpecifiedDimm = FALSE;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL |
+                                         REQUIRE_DCPMMS_NO_POPULATION_VIOLATION;
+
+  NVDIMM_ENTRY();
+
+  if (pDimmsSym == NULL || DimmsSymNum == 0 || pTotalFarMemorySize == NULL ||
+    pCommandStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // Set the default value to 0
+  *pTotalFarMemorySize = 0;
+
+  for (Index1 = 0; Index1 < DimmsSymNum; Index1++)
+  {
+    *pTotalFarMemorySize += ROUNDDOWN(pDimmsSym[Index1].VolatileSize,
+      gNvmDimmData->Alignments.RegionVolatileAlignment);
+  }
+
+  ppDimms = AllocateZeroPool(sizeof(*ppDimms) * MAX_DIMMS);
+  if (ppDimms == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  ReturnCode = VerifyTargetDimms(NULL, 0, NULL, 0, RequireDcpmmsBitfield,
+    ppDimms, &DimmsNum, pCommandStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  // If all usable PMem modules targeted, then skip further calculations
+  if (DimmsSymNum == DimmsNum) {
+    goto Finish;
+  }
+
+  /**
+    Targeting a subset of PMem modules for 100% MemoryMode is allowed if
+    all unspecified PMem modules are configured for 100% MemoryMode only.
+    Account for volatile partitions on unspecified PMem modules in this case.
+  **/
+  for (Index1 = 0; Index1 < DimmsNum; Index1++) {
+    for (Index2 = 0; Index2 < DimmsSymNum; Index2++) {
+      if (pDimmsSym[Index2].pDimm->DeviceHandle.AsUint32 != ppDimms[Index1]->DeviceHandle.AsUint32) {
+        UnSpecifiedDimm = TRUE;
+        break;
+      }
+    }
+
+    if (UnSpecifiedDimm && ppDimms[Index1]->VolatileCapacity > 0 && ppDimms[Index1]->ISsNfitNum == 0) {
+      NumOfUnspecifiedDimms++;
+      VolatileCapacityUnspecifiedDimms += ROUNDDOWN(ppDimms[Index1]->VolatileCapacity,
+        gNvmDimmData->Alignments.RegionVolatileAlignment);
+    }
+
+    UnSpecifiedDimm = FALSE;
+  }
+
+  if ((DimmsSymNum + NumOfUnspecifiedDimms) == DimmsNum) {
+    *pTotalFarMemorySize += VolatileCapacityUnspecifiedDimms;
+  }
+
+Finish:
+  FREE_POOL_SAFE(ppDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

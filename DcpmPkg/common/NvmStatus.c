@@ -67,6 +67,7 @@ GetObjectTypeString(
   @param[in] pStatusPreposition String with preposition
   @param[in] pCommandStatus Command status data
   @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
+  @param[in] DoNotPrintGeneralStatusSuccessCode
   @param[out] ppOutputMessage buffer where output will be saved
 
   Warning: ppOutputMessage - should be freed in caller.
@@ -81,6 +82,7 @@ CreateCommandStatusString(
   IN     CONST CHAR16 *pStatusPreposition,
   IN     COMMAND_STATUS *pCommandStatus,
   IN     BOOLEAN ObjectIdNumberPreferred,
+  IN     BOOLEAN DoNotPrintGeneralStatusSuccessCode,
   OUT CHAR16 **ppOutputMessage
 )
 {
@@ -109,11 +111,15 @@ CreateCommandStatusString(
 
   if (pCommandStatus->ObjectStatusCount == 0) {
     if (!NVM_ERROR(pCommandStatus->GeneralStatus)) {
-      pExecuteSuccessString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_EXECUTE_SUCCESS), NULL);
-      pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR_NL,
-        pStatusMessage,
-        pExecuteSuccessString);
-      FREE_POOL_SAFE(pExecuteSuccessString);
+      if (DoNotPrintGeneralStatusSuccessCode) {
+        pCurrentString = CatSPrint(pCurrentString, L"");
+      } else {
+        pExecuteSuccessString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_EXECUTE_SUCCESS), NULL);
+        pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR_NL,
+          pStatusMessage,
+          pExecuteSuccessString);
+        FREE_POOL_SAFE(pExecuteSuccessString);
+      }
     }
     else {
       pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(HiiHandle, pCommandStatus->GeneralStatus);

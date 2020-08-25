@@ -1076,4 +1076,23 @@ CheckIfAllDimmsConfigured(
      OUT BOOLEAN *pDimmsUnConfigured,
      OUT COMMAND_STATUS *pCommandStatus OPTIONAL
   );
+
+/**
+  Calculate total far memory on PMem modules for existing goal configs
+
+  @param[IN] pDimmsSym Array of Dimms for symmetrical region config
+  @param[IN] DimmsSymNum Number of items in DimmsSym
+  @param[OUT] pTotalFarMemorySize Pointer to total far memory capacity
+  @param[OUT] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if input parameter null
+**/
+EFI_STATUS
+CalculateFarMemorySizeForNewGoalConfigs(
+  IN     REGION_GOAL_DIMM *pDimmsSym,
+  IN     UINT32  DimmsSymNum,
+     OUT UINT64 *pTotalFarMemorySize,
+     OUT COMMAND_STATUS *pCommandStatus
+  );
 #endif

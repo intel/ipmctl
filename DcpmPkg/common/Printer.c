@@ -1309,7 +1309,7 @@ Finish:
 * Handle commandstatus objects
 */
 EFI_STATUS PrinterSetCommandStatus(
-  IN     PRINT_CONTEXT *pPrintCtx,
+  IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL
   IN     EFI_STATUS Status,
   IN     CHAR16 *pStatusMessage,
   IN     CHAR16 *pStatusPreposition,
@@ -1318,14 +1318,19 @@ EFI_STATUS PrinterSetCommandStatus(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 *FullMsg = NULL;
+  BOOLEAN DoNotPrintGeneralStatusSuccessCode = FALSE;
 
-  if (NULL == pCommandStatus && NULL == pPrintCtx) {
+  if (NULL == pCommandStatus) {
     NVDIMM_ERR("Invalid input parameter\n");
     goto Finish;
   }
 
+  if (pPrintCtx != NULL) {
+    DoNotPrintGeneralStatusSuccessCode = pPrintCtx->DoNotPrintGeneralStatusSuccessCode;
+  }
+
   if (EFI_SUCCESS != (ReturnCode = CreateCmdStatusMsg(&FullMsg, pStatusMessage, pStatusPreposition,
-      pPrintCtx->DoNotPrintGeneralStatusSuccessCode, pCommandStatus))) {
+      DoNotPrintGeneralStatusSuccessCode, pCommandStatus))) {
     goto Finish;
   }
 
@@ -1359,7 +1364,7 @@ static PRINT_MODE PrintMode(
 }
 
 /*
-* Process all objects int the "set buffer"
+* Process all objects in the "set buffer"
 */
 EFI_STATUS PrinterProcessSetBuffer(
   IN     PRINT_CONTEXT *pPrintCtx
@@ -1375,6 +1380,7 @@ EFI_STATUS PrinterProcessSetBuffer(
   BOOLEAN startXmlErrorPrinted = FALSE;
 
   if (NULL == pPrintCtx) {
+    NVDIMM_ERR("Invalid input parameter\n");
     return EFI_INVALID_PARAMETER;
   }
 

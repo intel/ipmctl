@@ -19,7 +19,7 @@ ipmctl refers to the following interface components:
 
 01.00.00.xxxx (master_1_0 branch) targets first generation of hardware
  
-02.00.00.xxxx  (master_2_0 branch) adds support for up coming hardware generations
+02.00.00.xxxx  (master_2_0 branch) adds support for up coming hardware generations while maintaining support for previous generations as well as other enhancements
 
 ## Packages
 

@@ -3972,9 +3972,15 @@ SendConfigInputToDimm(
     pNewConfHeader->ConfInputDataSize = pNewConfigInput->Header.Length;
     CurrentOffset += pNewConfHeader->ConfInputDataSize;
 
-    /** Update Configuration Header Revision **/
-    CopyMem_S(&pNewConfHeader->Header.Revision, sizeof(ACPI_REVISION),
-      &pNewConfigInput->Header.Revision, sizeof(ACPI_REVISION));
+    /**
+      Update Configuration Header Revision
+      Not needed for Purley platforms, as only one
+      revision (0x1) is supported.
+    **/
+    if (!IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pNewConfHeader)) {
+      CopyMem_S(&pNewConfHeader->Header.Revision, sizeof(ACPI_REVISION),
+        &pNewConfigInput->Header.Revision, sizeof(ACPI_REVISION));
+    }
   } else {
     pNewConfHeader->ConfInputStartOffset = 0;
     pNewConfHeader->ConfInputDataSize = 0;

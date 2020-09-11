@@ -5965,7 +5965,13 @@ GenerateOemPcdHeader (
 
   pPlatformConfigData->Header.Signature = NVDIMM_CONFIGURATION_HEADER_SIG;
   pPlatformConfigData->Header.Length = sizeof (*pPlatformConfigData);
-  pPlatformConfigData->Header.Revision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
+  // For Purley platforms, only one revision (0x1) for PCD Config Header is supported
+  if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+    pPlatformConfigData->Header.Revision.AsUint8 = NVDIMM_CONFIGURATION_TABLES_REVISION_1;
+  }
+  else {
+    pPlatformConfigData->Header.Revision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
+  }
   CopyMem_S(&pPlatformConfigData->Header.OemId, sizeof(pPlatformConfigData->Header.OemId), NVDIMM_CONFIGURATION_HEADER_OEM_ID, NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN);
   pPlatformConfigData->Header.OemTableId = NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID;
   pPlatformConfigData->Header.OemRevision = NVDIMM_CONFIGURATION_HEADER_OEM_REVISION;

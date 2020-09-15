@@ -35,6 +35,10 @@
                         // that is why the behavior is said to be undefined when proj_id is zero.
 #define SHM_PERM_FLG 0666 // permissions granted to the owner, group, and others.
 
+#ifndef ACCESSPERMS
+#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
+#endif
+
 /*
  * Return the base path for the language catalog
  */
@@ -130,7 +134,7 @@ void os_create_thread(unsigned long long *p_thread_id, void *(*callback)(void *)
  */
 unsigned long long os_get_thread_id()
 {
-	return pthread_self();
+	return (unsigned long long)pthread_self();
 }
 
 /*

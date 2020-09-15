@@ -10,6 +10,7 @@
 
 
 #include "lnx_common.h"
+#include <sys/time.h>
 #include <string.h>
 #include <stdlib.h>
 

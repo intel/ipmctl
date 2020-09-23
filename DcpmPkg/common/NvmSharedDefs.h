@@ -70,6 +70,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE        = 74,   ///< Error: Sensor invalid value
   NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED     = 75,   ///< Error: BIOS error injection knob is not enabled
 
+  NVM_ERR_MEDIA_NOT_ACCESSIBLE                      = 87,   ///< Error: Media not accessible
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
   NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE      = 91,   ///< Error: Media not accessible. Replace PMem module to continue
   NVM_ERR_PCD_CURR_CONF_MISSING                     = 92,   ///< Error: One or more PMem modules have invalid PCD data

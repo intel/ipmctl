@@ -3567,8 +3567,8 @@ GetPcd(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsCount = 0;
-  UINT32 AccessibleDimmsCount = 0;
   UINT32 Index = 0;
+  UINT32 IndexNew = 0;
   NVDIMM_CONFIGURATION_HEADER *pPcdConfHeader = NULL;
   LABEL_STORAGE_AREA *pLabelStorageArea = NULL;
 
@@ -3590,33 +3590,27 @@ GetPcd(
     goto Finish;
   }
 
-  // Don't include media disabled modules and provide an error indicating
-  // why it was not included.
+  // Redo the VerifyTargetDimms output to not include media inacessible modules
+  // and set the object status accordingly for these modules.
   // This will be re-done in VerifyTargetDimms in the near future
-  AccessibleDimmsCount = DimmsCount;
+  IndexNew = 0;
   for (Index = 0; Index < DimmsCount; Index++) {
     if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_DISABLED);
-      AccessibleDimmsCount--;
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_NOT_ACCESSIBLE);
+      continue;
     }
+    pDimms[IndexNew] = pDimms[Index];
+    IndexNew++;
   }
+  DimmsCount = IndexNew;
 
-  // Only allocate space for the media accessible modules
-  *ppDimmPcdInfo = AllocateZeroPool(sizeof(**ppDimmPcdInfo) * AccessibleDimmsCount);
+  *ppDimmPcdInfo = AllocateZeroPool(sizeof(**ppDimmPcdInfo) * DimmsCount);
   if (*ppDimmPcdInfo == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  // But iterate over the full module list
   for (Index = 0; Index < DimmsCount; Index++) {
-    // Skip over media inaccessible modules in the dimms list
-    // TODO: This should be unneeded when the processing is properly done in VerifyTargetDimms
-    // in the near future
-    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
-      continue;
-    }
-
     pPcdConfHeader = NULL;
     pLabelStorageArea = NULL;
     (*ppDimmPcdInfo)[Index].DimmId = pDimms[Index]->DeviceHandle.AsUint32;
@@ -3646,7 +3640,6 @@ GetPcd(
         goto Finish;
       }
       (*ppDimmPcdInfo)[Index].pConfHeader = pPcdConfHeader;
-
     }
 
     if (PcdTarget == PCD_TARGET_ALL || PcdTarget == PCD_TARGET_NAMESPACES)
@@ -3689,13 +3682,14 @@ GetPcd(
     }
   }
 
-  *pDimmPcdInfoCount = AccessibleDimmsCount;
+  *pDimmPcdInfoCount = DimmsCount;
 
   ReturnCode = EFI_SUCCESS;
   pCommandStatus->GeneralStatus = NVM_SUCCESS;
+
 Finish:
-  if (EFI_ERROR(ReturnCode) && ppDimmPcdInfo != NULL && *ppDimmPcdInfo != NULL) {
-    FreeDimmPcdInfoArray(*ppDimmPcdInfo, AccessibleDimmsCount);
+  if (EFI_ERROR(ReturnCode) && ppDimmPcdInfo != NULL && *ppDimmPcdInfo != NULL && pDimmPcdInfoCount != NULL) {
+    FreeDimmPcdInfoArray(*ppDimmPcdInfo, *pDimmPcdInfoCount);
     *ppDimmPcdInfo = NULL;
   }
 

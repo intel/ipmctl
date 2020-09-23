@@ -3729,18 +3729,6 @@ InitializeAllLabelStorageAreas(
       continue;
     }
 
-#ifndef OS_BUILD
-    if (ppDimms[Index]->LsaStatus != LSA_NOT_INIT) {
-      ReturnCode = ZeroLabelStorageArea(ppDimms[Index]->DimmID);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Unable to clear LSA data on a DIMM 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);
-        ppDimms[Index]->LsaStatus = LSA_COULD_NOT_INIT;
-        SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_ERR_FAILED_TO_INIT_NS_LABELS);
-        goto Finish;
-      }
-    }
-#endif // OS_BUILD
-
     ReturnCode = InitializeLabelStorageArea(ppDimms[Index], LabelVersionMajor, LabelVersionMinor);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Unable to initialize LSA data on a DIMM 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);

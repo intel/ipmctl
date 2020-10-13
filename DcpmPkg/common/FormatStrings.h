@@ -7,6 +7,8 @@
 #ifndef _FORMAT_STRINGS_H_
 #define _FORMAT_STRINGS_H_
 
+#define FORMAT_NULL_CHAR                        L'\0'
+
 #ifndef OS_BUILD
 #define FORMAT_NL                               L"\n"
 #define FORMAT_STR                              L"%s"

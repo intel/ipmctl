@@ -1002,10 +1002,16 @@ typedef struct _DEBUG_LOG_INFO {
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MULT_DEFAULT               0
 #define HII_AVG_PWR_REPORTING_TIME_CONSTANT_MULT_MAX_STR_LEN       3
 
-#define AVG_PWR_REPORTING_TIME_CONSTANT_MAX                        12000
+
+// These values are now hard-coded into error strings in NvmDimmHii.uni for code simplicity.
+// Update STR_DCPMM_CONFIGURE_DATA_POLICY_VALUE_TOO_BIG_AVG_PWR_REPORTING_TIME_CONSTANT and friends
+// with any updated values. Main reason for going this way as opposed to appending onto the end
+// of an error string is that I wanted a thousands comma for readability: "12000" --> "12,000"
+#define AVG_PWR_REPORTING_TIME_CONSTANT_DEFAULT                    1000
 #define AVG_PWR_REPORTING_TIME_CONSTANT_MIN                        100
 #define AVG_PWR_REPORTING_TIME_CONSTANT_STEP                       100
-#define HII_AVG_PWR_REPORTING_TIME_CONSTANT_MAX_STR_LEN            6
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MAX                        12000
+#define AVG_PWR_REPORTING_TIME_CONSTANT_MAX_STR_LEN                8 // Includes potential values of "Mixed" and "Unknown"
 
 /**
   Namespace security capabilities.

@@ -3533,6 +3533,7 @@ Finish:
   @param[in] pDimm Target DIMM
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
+  @param[in] ForceInitialization If true, always create a new LSA
 
   @retval EFI_INVALID_PARAMETER NULL pointer provided
   @retval EFI_VOLUME_CORRUPTED LSA data is broken
@@ -3542,7 +3543,8 @@ EFI_STATUS
 InitializeLabelStorageArea(
   IN     DIMM *pDimm,
   IN     UINT16 LabelVersionMajor,
-  IN     UINT16 LabelVersionMinor
+  IN     UINT16 LabelVersionMinor,
+  IN     BOOLEAN ForceInitialization
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -3567,10 +3569,12 @@ InitializeLabelStorageArea(
   }
 
 #ifndef OS_BUILD
-  ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
-  if (ReturnCode != EFI_NOT_FOUND) {
-    // Here we have a validated LSA or a corrupted LSA, just pass the result up
-    goto Finish;
+  if (!ForceInitialization) {
+    ReturnCode = ReadLabelStorageArea(pDimm->DimmID, &pLsa);
+    if (ReturnCode != EFI_NOT_FOUND) {
+      // Here we have a validated LSA or a corrupted LSA, just pass the result up
+      goto Finish;
+    }
   }
 #endif // OS_BUILD
 
@@ -3692,7 +3696,7 @@ Finish:
 }
 
 /**
-  Initialize all label storage areas
+  Clear and initialize all label storage areas
 
   @param[in] ppDimms Array of DIMMs
   @param[in] DimmsNum Number of DIMMs
@@ -3706,7 +3710,7 @@ Finish:
 **/
 
 EFI_STATUS
-InitializeAllLabelStorageAreas(
+ClearAndInitializeAllLabelStorageAreas(
   IN     DIMM **ppDimms,
   IN     UINT32 DimmsNum,
   IN     UINT16 LabelVersionMajor,
@@ -3729,7 +3733,7 @@ InitializeAllLabelStorageAreas(
       continue;
     }
 
-    ReturnCode = InitializeLabelStorageArea(ppDimms[Index], LabelVersionMajor, LabelVersionMinor);
+    ReturnCode = InitializeLabelStorageArea(ppDimms[Index], LabelVersionMajor, LabelVersionMinor, TRUE);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Unable to initialize LSA data on a DIMM 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);
       ppDimms[Index]->LsaStatus = LSA_COULD_NOT_INIT;
@@ -4016,7 +4020,7 @@ InsertNamespaceLabels(
   }
 
   if (pDimm->LsaStatus == LSA_NOT_INIT) {
-    ReturnCode = InitializeLabelStorageArea(pDimm, LabelVersionMajor, LabelVersionMinor);
+    ReturnCode = InitializeLabelStorageArea(pDimm, LabelVersionMajor, LabelVersionMinor, FALSE);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Unable to initialize LSA data on a DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
       pDimm->LsaStatus = LSA_COULD_NOT_INIT;

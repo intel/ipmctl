@@ -6584,10 +6584,10 @@ CreateGoalConfig(
       goto Finish;
     }
     /** Initialize namespace label storage area **/
-    ReturnCode = InitializeAllLabelStorageAreas(ppDimms, DimmsNum, LabelVersionMajor,
+    ReturnCode = ClearAndInitializeAllLabelStorageAreas(ppDimms, DimmsNum, LabelVersionMajor,
       LabelVersionMinor, pCommandStatus);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("InitializeAllLabelStorageAreas Error");
+      NVDIMM_DBG("ClearAndInitializeAllLabelStorageAreas Error");
       goto Finish;
     }
 

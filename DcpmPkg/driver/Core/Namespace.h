@@ -579,6 +579,7 @@ LabelIndexAreaToRawData(
   @param[in] pDimm Target DIMM
   @param[in] LabelVersionMajor Major version of label to init
   @param[in] LabelVersionMinor Minor version of label to init
+  @param[in] ForceInitialization If true, always create a new LSA
 
   @retval EFI_INVALID_PARAMETER NULL pointer provided
   @retval EFI_VOLUME_CORRUPTED LSA data is broken
@@ -588,7 +589,8 @@ EFI_STATUS
 InitializeLabelStorageArea(
   IN     DIMM *pDimm,
   IN     UINT16 LabelVersionMajor,
-  IN     UINT16 LabelVersionMinor
+  IN     UINT16 LabelVersionMinor,
+  IN     BOOLEAN ForceInitialization
   );
 
 /**
@@ -606,7 +608,7 @@ InitializeLabelStorageArea(
 **/
 
 EFI_STATUS
-InitializeAllLabelStorageAreas(
+ClearAndInitializeAllLabelStorageAreas(
   IN     DIMM **ppDimms,
   IN     UINT32 DimmsNum,
   IN     UINT16 LabelVersionMajor,

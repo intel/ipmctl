@@ -7,18 +7,34 @@
 		<center>
             <p><h1>ipmctl</h1></p>
 			</center>
-            <p>ipmctl is a utility for configuring and managing Intel Optane DC persistent memory modules (DCPMM).</p>
+            <p>ipmctl is a utility for configuring and managing Intel® Optane™ PMem modules.</p>
             <p>Find out more at the Github site <a href="https://github.com/intel/ipmctl">link</a>.</p>
 			<p><h2>Packages</h2>
 			Several Linux Distributions have ipmctl packages available.<br>
 			<ul>
-			<li>SuSE has ipmctl available. More information at <a href="https://build.opensuse.org/package/show/hardware:nvdimm/ipmctl">https://build.opensuse.org/package/show/hardware:nvdimm/ipmctl</a>.</li>
+			<li>SUSE has ipmctl available. More information at <a href="https://build.opensuse.org/package/show/hardware:nvdimm/ipmctl">https://build.opensuse.org/package/show/hardware:nvdimm/ipmctl</a>.</li>
 			<li>Red Hat's EPEL repositories contain ipmctl which can be found here <a href="https://src.fedoraproject.org/rpms/ipmctl">https://src.fedoraproject.org/rpms/ipmctl<a/>.</li>
 			<li>Ubuntu packages of ipmctl can be found at <a href="https://launchpad.net/ubuntu/+source/ipmctl">https://launchpad.net/ubuntu/+source/ipmctl<a/>.</li>
 			</ul></p>
 			<p><h2>Documentation</h2>
 			CLI Syntax for OSes (Rev. 2.03) <a href="Intel_Optane_Persistent_Memory_ipmctl_CLI_Syntax_OS_611922_Rev_2_03.html">html</a>   <a href="Intel_Optane_Persistent_Memory_ipmctl_CLI_Syntax_OS_611922_Rev_2_03.pdf">PDF</a><br>
 			CLI Syntax for OSes (Rev. 1.17) <a href="Intel_Optane_DC_Mem_SW_Inter_CLI_Syntax_OS_598517_Rev_1_17.html">html</a>   <a href="Intel_Optane_DC_Mem_SW_Inter_CLI_Syntax_OS_598517_Rev_1_17.pdf">PDF</a>
+			</p>
+			<p><h2>Workarounds</h2>
+			When using 2.0.x versions of ipmctl software to update or downgrade firmware on Intel® Optane™ PMem 100 Series modules, please use the “-lpmb” CLI option (use DDRT Large Payload transfer). Otherwise the operation may take significantly longer than it normally would.
+			</p>
+			<p><h2>Steps reported to have worked for build on SUSE Linux in home directory</h2>
+			Replace homedir with your home directory
+				<pre><code>
+$ git clone https://github.com/intel/ipmctl.git
+# zypper in libndctl-devel ruby2.5-rubygem-asciidoctor
+$ cd ipmctl
+$ mkdir output
+$ cd output
+$ cmake -DRELEASE=ON -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=ON -DCMAKE_INSTALL_PREFIX=/home/<b>homedir</b>/ipmctl/ ..
+$ make all
+				</code></pre>
+			</p>
         </div>
     </left>
 </body>

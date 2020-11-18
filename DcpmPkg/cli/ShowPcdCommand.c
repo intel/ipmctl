@@ -149,7 +149,6 @@ ShowPcd(
       &pDimmPcdInfo, &DimmPcdInfoCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    DisplayCommandStatus(L"Get Platform Config Data", L" on", pCommandStatus);
     goto Finish;
   }
 
@@ -173,6 +172,10 @@ ShowPcd(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  // Parse full command status on success and failure
+  if (pCommandStatus != NULL) {
+    DisplayCommandStatus(L"Get Platform Config Data", L" on", pCommandStatus);
+  }
   FreeCommandStatus(&pCommandStatus);
   FreeDimmPcdInfoArray(pDimmPcdInfo, DimmPcdInfoCount);
   pDimmPcdInfo = NULL;

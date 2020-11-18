@@ -1548,4 +1548,27 @@ LoadArsList(
   OUT UINT32 * pRecordCount);
 #endif
 
+/**
+GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+UEFI - Read directly from BSR register
+OS - Get BSR value from BIOS emulated command
+@param[in] pDimm DIMM to retrieve the BSR and boot status bitmask
+@param[in] UseSmbus Whether to use smbus to retrieve the bsr
+@param[out] pBsrValue - pointer to BSR register value
+@param[out] pBootStatusBitMask - pointer to bootstatusbitmask
+
+@retval EFI_INVALID_PARAMETER passed NULL argument
+@retval EFI_SUCCESS Success
+@retval Other errors failure of FW commands
+**/
+// Creating this function mostly so we can use it inside of InitializeDimm()
+// None of the fields are optional
+EFI_STATUS
+GetBSRAndBootStatusBitMaskInternal(
+  IN     DIMM *pDimm,
+  IN     BOOLEAN UseSmbus,
+     OUT UINT64 *pBsrValue,
+     OUT UINT16 *pBootStatusBitmask
+);
+
 #endif /* _NVMDIMM_CONFIG_H_ */

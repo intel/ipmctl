@@ -118,6 +118,7 @@ typedef struct _PRINT_CONTEXT {
   UINTN BufferedDataSetCnt;
   LIST_ENTRY DataSetLookup;
   LIST_ENTRY DataSetRootLookup;
+  BOOLEAN DoNotPrintGeneralStatusSuccessCode;
 }PRINT_CONTEXT;
 
 typedef struct _LIST_LEVEL_ATTRIB {
@@ -464,7 +465,7 @@ EFI_STATUS PrinterSetData(
 * Handle commandstatus objects
 */
 EFI_STATUS PrinterSetCommandStatus(
-  IN     PRINT_CONTEXT *pPrintCtx,
+  IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL
   IN     EFI_STATUS Status,
   IN     CHAR16 *pStatusMessage,
   IN     CHAR16 *pStatusPreposition,

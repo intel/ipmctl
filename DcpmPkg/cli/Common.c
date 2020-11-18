@@ -883,7 +883,7 @@ DisplayCommandStatus(
   ObjectIdNumberPreferred = DimmIdentifier == DISPLAY_DIMM_ID_HANDLE;
 
   ReturnCode = CreateCommandStatusString(gNvmDimmCliHiiHandle, pStatusMessage, pStatusPreposition, pCommandStatus,
-    ObjectIdNumberPreferred, &pOutputBuffer);
+    ObjectIdNumberPreferred, FALSE, &pOutputBuffer);
 
   Print(FORMAT_STR, pOutputBuffer);
 
@@ -1771,7 +1771,7 @@ ParseSourcePassFile(
   //If it is not a Unicode File Convert the File String
   if (*((CHAR16 *)pFileBuffer) != UTF_16_BOM) {
     pFileString = AllocateZeroPool((FileBufferSize * sizeof(CHAR16)) + sizeof(L'\0'));
-    if (pFileString == NULL) {      
+    if (pFileString == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
       goto Finish;
@@ -2702,8 +2702,8 @@ EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode)
     ReturnCode = 201;
     break;
   case (EFI_ALREADY_STARTED):
-    //this number is arbitrary, but should be distinct. 
-    //In the case of FW udpate, it indicates that all DIMMs 
+    //this number is arbitrary, but should be distinct.
+    //In the case of FW udpate, it indicates that all DIMMs
     //have a staged FW binary
     ReturnCode = 20;
     break;

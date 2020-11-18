@@ -481,7 +481,7 @@ static VOID * TextTableCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, I
         MaxCellChars = Attribs->ColumnAttribs[ColumnIndex].ColumnMaxStrLen;
         RowSizeInBytes = StrSize(CurRowText) + ((MaxCellChars + CELL_EXTRA_CHARS) * sizeof(CHAR16));
       }
-      
+
       if (NULL == (CurRowText = ReallocatePool(StrSize(CurRowText), RowSizeInBytes, CurRowText))) {
         goto Finish;
       }
@@ -983,7 +983,8 @@ static VOID PrintXmlEndSuccessTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCod
 /*
 * Helper that creates a message out of a COMMAND_STATUS object.
 */
-static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHAR16 *pStatusPreposition, COMMAND_STATUS *pCommandStatus) {
+static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHAR16 *pStatusPreposition,
+    BOOLEAN DoNotPrintGeneralStatusSuccessCode, COMMAND_STATUS *pCommandStatus) {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT8 DimmIdentifier = 0;
   BOOLEAN ObjectIdNumberPreferred = FALSE;
@@ -996,7 +997,7 @@ static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHA
   ObjectIdNumberPreferred = DimmIdentifier == DISPLAY_DIMM_ID_HANDLE;
 
   ReturnCode = CreateCommandStatusString(gNvmDimmCliHiiHandle, pStatusMessage, pStatusPreposition, pCommandStatus,
-    ObjectIdNumberPreferred, ppMsg);
+    ObjectIdNumberPreferred, DoNotPrintGeneralStatusSuccessCode, ppMsg);
 
 Finish:
   return ReturnCode;
@@ -1022,6 +1023,8 @@ EFI_STATUS PrinterCreateCtx(
   InitializeListHead(&((*ppPrintCtx)->BufferedObjectList));
   InitializeListHead(&((*ppPrintCtx)->DataSetLookup));
   InitializeListHead(&((*ppPrintCtx)->DataSetRootLookup));
+
+  (*ppPrintCtx)->DoNotPrintGeneralStatusSuccessCode = FALSE;
 Finish:
   return ReturnCode;
 }
@@ -1239,7 +1242,7 @@ Finish:
 * Handle commandstatus objects
 */
 EFI_STATUS PrinterSetCommandStatus(
-  IN     PRINT_CONTEXT *pPrintCtx,
+  IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL
   IN     EFI_STATUS Status,
   IN     CHAR16 *pStatusMessage,
   IN     CHAR16 *pStatusPreposition,
@@ -1248,13 +1251,19 @@ EFI_STATUS PrinterSetCommandStatus(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 *FullMsg = NULL;
+  BOOLEAN DoNotPrintGeneralStatusSuccessCode = FALSE;
 
-  if (NULL == pCommandStatus && NULL == pPrintCtx) {
+  if (NULL == pCommandStatus) {
     NVDIMM_ERR("Invalid input parameter\n");
     goto Finish;
   }
 
-  if (EFI_SUCCESS != (ReturnCode = CreateCmdStatusMsg(&FullMsg, pStatusMessage, pStatusPreposition, pCommandStatus))) {
+  if (pPrintCtx != NULL) {
+    DoNotPrintGeneralStatusSuccessCode = pPrintCtx->DoNotPrintGeneralStatusSuccessCode;
+  }
+
+  if (EFI_SUCCESS != (ReturnCode = CreateCmdStatusMsg(&FullMsg, pStatusMessage, pStatusPreposition,
+      DoNotPrintGeneralStatusSuccessCode, pCommandStatus))) {
     goto Finish;
   }
 
@@ -1288,7 +1297,7 @@ static PRINT_MODE PrintMode(
 }
 
 /*
-* Process all objects int the "set buffer"
+* Process all objects in the "set buffer"
 */
 EFI_STATUS PrinterProcessSetBuffer(
   IN     PRINT_CONTEXT *pPrintCtx
@@ -1302,6 +1311,7 @@ EFI_STATUS PrinterProcessSetBuffer(
   PRINT_MODE PrinterMode = PRINT_TEXT;
 
   if (NULL == pPrintCtx) {
+    NVDIMM_ERR("Invalid input parameter\n");
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1342,7 +1352,8 @@ EFI_STATUS PrinterProcessSetBuffer(
     }
     else if (BUFF_COMMAND_STATUS_TYPE == BufferedObject->Type) {
       BUFFERED_COMMAND_STATUS *pTempCs = (BUFFERED_COMMAND_STATUS *)BufferedObject->Obj;
-      CreateCmdStatusMsg(&FullMsg, pTempCs->pStatusMessage, pTempCs->pStatusPreposition, pTempCs->pCommandStatus);
+      CreateCmdStatusMsg(&FullMsg, pTempCs->pStatusMessage, pTempCs->pStatusPreposition,
+          pPrintCtx->DoNotPrintGeneralStatusSuccessCode, pTempCs->pCommandStatus);
       if (PRINT_XML != PrinterMode) {
         PrintTextWithNewLine(FullMsg);
       }
@@ -1364,7 +1375,7 @@ EFI_STATUS PrinterProcessSetBuffer(
       PrintXmlEndSuccessTag(pPrintCtx, pPrintCtx->BufferedObjectLastError);
     }
   }
-  
+
   CleanDataSetLookupItems(pPrintCtx);
   pPrintCtx->BufferedObjectLastError = EFI_SUCCESS;
   return ReturnCode;
@@ -1377,7 +1388,7 @@ EFI_STATUS SetDataSetPrinterAttribs(
   IN     PRINT_CONTEXT *pPrintCtx,
   IN     CHAR16 *pKeyPath,
   IN     PRINTER_DATA_SET_ATTRIBS *pAttribs
-) 
+)
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 **DataSetToks = NULL;

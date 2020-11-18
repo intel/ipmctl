@@ -144,6 +144,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_DUMP_DEBUG_LOG                               L"Dump Debug Log"
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
 #define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the DIMMs on the next reboot."
+#define CLI_INFO_SHOW_PCD                                     L"Show Platform Config Data"
 
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option"
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size"

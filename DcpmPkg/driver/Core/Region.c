@@ -408,7 +408,7 @@ RetrieveISsFromPlatformConfigData(
       pDimmNode = GetNextNode(pDimmList, pDimmNode)) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 
@@ -787,6 +787,13 @@ DetermineRegionHealth(
   LIST_FOR_EACH(pNode, &pRegion->DimmRegionList) {
     pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
     pDimm = pDimmRegion->pDimm;
+
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
+    {
+      *pHealthState = RegionHealthStateError;
+      break;
+    }
+
     /** Check if any of the DIMMs are locked **/
     ReturnCode = IsDimmLocked(pDimm, &IsLocked);
     if (EFI_ERROR(ReturnCode)) {
@@ -1416,7 +1423,8 @@ RetrieveGoalConfigsFromPlatformConfigData(
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    if (!IsDimmManageable(pDimm)) {
+    // Skip PMem modules we can't read from
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 

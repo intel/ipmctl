@@ -92,7 +92,7 @@ typedef struct {
 #define SECURITYCAPABILITES_LEN        18 // @todo confirm label length
 #define IFC_STRING_LEN                255
 #define MEMORY_MODES_LEN               40 // @todo confirm label length
-#define MEMORY_TYPE                    30 
+#define MEMORY_TYPE                    30
 #define BOOT_STATUS_LEN               100
 #define FW_UPDATE_STATUS_LEN           64
 #define FW_BUILD_LEN                   16
@@ -716,6 +716,11 @@ typedef struct _DEBUG_LOG_INFO {
 #define DIMM_BOOT_STATUS_DDRT_NOT_READY       BIT5
 #define DIMM_BOOT_STATUS_MAILBOX_NOT_READY    BIT6
 #define DIMM_BOOT_STATUS_REBOOT_REQUIRED      BIT7
+// Meta-flags
+#define DIMM_MEDIA_NOT_ACCESSIBLE(BootStatusBitmask)          \
+  ((BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_NOT_READY) ||  \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_ERROR) ||       \
+  (BootStatusBitmask & DIMM_BOOT_STATUS_MEDIA_DISABLED))      \
 
 /**
   System-wide ARS Status Bitmask

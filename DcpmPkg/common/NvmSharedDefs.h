@@ -64,7 +64,9 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE              = 73,   ///< Error: Capacity out of range
   NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE        = 74,   ///< Error: Sensor invalid value
 
+  NVM_ERR_MEDIA_NOT_ACCESSIBLE                      = 87,   ///< Error: Media not accessible
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
+  NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE      = 91,   ///< Error: Media not accessible. Replace DIMM to continue
 
   NVM_WARN_2LM_MODE_OFF                             = 103,  ///< Error: MemoryMode off
   NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC

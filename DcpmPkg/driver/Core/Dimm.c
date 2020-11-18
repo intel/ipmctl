@@ -5038,6 +5038,9 @@ InitializeDimm (
   ControlRegionTbl *pControlRegTbls[MAX_IFC_NUM];
   UINT32 ControlRegTblsNum = MAX_IFC_NUM;
   UINT32 PcdSize = 0;
+  BOOLEAN UseSmbus = FALSE;
+  UINT64 Bsr;
+  UINT16 BootStatusBitmask;
 
   ZeroMem(pControlRegTbls, sizeof(pControlRegTbls));
 
@@ -5186,6 +5189,21 @@ InitializeDimm (
   }
 
   if (IsDimmManageable(pNewDimm)) {
+
+    // Try to gather the BootStatusBitmask but don't block initialization if
+    // it doesn't work out
+    UseSmbus = FALSE;
+    ReturnCode = GetBSRAndBootStatusBitMaskInternal(pNewDimm, UseSmbus, &Bsr, &BootStatusBitmask);
+    if (EFI_ERROR(ReturnCode)) {
+      UseSmbus = TRUE;
+      ReturnCode = GetBSRAndBootStatusBitMaskInternal(pNewDimm, UseSmbus, &Bsr, &BootStatusBitmask);
+    }
+    if (EFI_SUCCESS == ReturnCode) {
+      pNewDimm->BootStatusBitmask = BootStatusBitmask;
+    }
+
+
+
     pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
     if (pPartitionInfoPayload == NULL) {
       ReturnCode = EFI_OUT_OF_RESOURCES;

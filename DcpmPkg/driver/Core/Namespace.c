@@ -2600,7 +2600,7 @@ InitializeNamespaces(
       pDimm->pLsa = NULL;
     }
 
-    if (!IsDimmManageable(pDimm)) {
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 
@@ -2628,6 +2628,11 @@ InitializeNamespaces(
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
     if (pDimm->LsaStatus == LSA_NOT_INIT) {
+      continue;
+    }
+
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
+    {
       continue;
     }
 
@@ -3564,6 +3569,7 @@ FindADMemmapRangeInIS(
   }
 
   if (!Found) {
+    NVDIMM_DBG("Unable to find app direct memmap range in interleave set. Media inaccessible?");
     ReturnCode = EFI_NOT_FOUND;
   } else {
     CopyMem_S(pFoundRange, sizeof(*pFoundRange), pRange, sizeof(*pFoundRange));

@@ -15,10 +15,13 @@ ipmctl refers to the following interface components:
 * libipmctl: An Application Programming Interface (API) library for managing DCPMMs.
 * ipmctl: A Command Line Interface (CLI) application for configuring and managing DCPMMs from the command line.
 
+## Workarounds
+When using 02.00.00.x versions of ipmctl software to update or downgrade firmware on Intel® Optane™ PMem 100 Series modules, please use the “-lpmb” CLI option (use DDRT Large Payload transfer). Otherwise the operation may take significantly longer than it normally would.
+
 ## Releases
 
 01.00.00.xxxx (master_1_0 branch) targets first generation of hardware
- 
+
 02.00.00.xxxx  (master_2_0 branch) adds support for up coming hardware generations while maintaining support for previous generations as well as other enhancements
 
 ## Packages
@@ -33,7 +36,7 @@ For systems that cannot reach the Internet use another system to download the fo
 
 > ipmctl.rpm, libipmctl.rpm, libsafec.rpm (only needed for 1.x releases), libndctl, json-c.rpm
 
-Run 
+Run
 
 > rpm –ivh *.rpm
 
@@ -54,15 +57,33 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 
 ## Build
 
+### Specific Instructions Reported as Working on SUSE for build in home directory
+
+Replace homedir with the actual account
+
+> git clone https://github.com/intel/ipmctl.git
+>
+> zypper in libndctl-devel ruby2.5-rubygem-asciidoctor
+>
+> cd ipmctl
+>
+> mkdir output
+>
+> cd output
+>
+> cmake -DRELEASE=ON -DSAFECLIB_SRC_DOWNLOAD_AND_STATIC_LINK=ON -DCMAKE_INSTALL_PREFIX=/home/homedir/ipmctl/ ..
+>
+> make all
+
 ### Specific Instructions Reported as Working on RHEL7.6, CentOS7.6 and Fedora 30.
- 
+
 Ipmctl has dependency on libsafec-devel (for 1.x builds only), libndctl-devel and rubygem-asciidoctor
 *	copr/jhli repo has libipmctl and its dependency, libsafec-devel.
     * cd /etc/yum.repos.d/
 >       wget https://copr.fedorainfracloud.org/coprs/jhli/ipmctl/repo/epel-7/jhli-ipmctl-epel-7.repo
 >       wget https://copr.fedorainfracloud.org/coprs/jhli/safeclib/repo/epel-7/jhli-safeclib-epel-7.repo
 > 
->       * This should bring down both libipmctl and its dependency, libsafec-devel and 
+>       * This should bring down both libipmctl and its dependency, libsafec-devel and
     
 *	epel repos has rubygem-asciidoctor
     *	get the epel repos
@@ -84,7 +105,7 @@ All other dependencies are widely available.
 
 ```
 mkdir output && cd output
-cmake -DRELEASE=ON -DCMAKE_INSTALL_PREFIX=/ ..
+cmake -DRELEASE=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 make -j all
 sudo make install
 ```
@@ -100,7 +121,7 @@ The RPMs will be in output/rpmbuild/RPMS/
 
 ### Windows
 
-Install Visual Studio 2017 (or newer). Be sure to install optional component: 
+Install Visual Studio 2017 (or newer). Be sure to install optional component:
 * Workloads -> Desktop Development with C++
 * Individual Components -> Compilers, build tools, and runtimes -> Visual C++ tools for CMake
 

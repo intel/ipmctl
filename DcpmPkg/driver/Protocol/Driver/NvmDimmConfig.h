@@ -7,7 +7,9 @@
 * @file NvmDimmConfig.h
 * @brief Implementation of the EFI_DCPMM_CONFIG2_PROTOCOL, a custom protocol
 * to configure and manage PMem modules
-*
+**/
+
+/**
 * @mainpage Intel Optane Persistent Memory Software UEFI FW Protocols
 *
 * @section Introduction

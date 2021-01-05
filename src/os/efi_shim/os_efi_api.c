@@ -455,7 +455,7 @@ static void write_system_event_to_stdout(const char* source, const char* message
   os_strcat(ascii_event_message, sizeof(ascii_event_message), message);
   os_strcat(ascii_event_message, sizeof(ascii_event_message), "\n");
   // Convert to the unicode
-  AsciiStrToUnicodeStr(ascii_event_message, w_event_message);
+  AsciiStrToUnicodeStrS(ascii_event_message, w_event_message, sizeof(w_event_message));
 
   // Send it to standard output
   Print(FORMAT_STR, w_event_message);
@@ -1136,6 +1136,7 @@ StrnCatGrow(
 {
   UINTN DestinationStartSize;
   UINTN NewSize;
+  UINTN DestMaxSize;
 
   //
   // ASSERTs
@@ -1188,9 +1189,11 @@ StrnCatGrow(
       *Destination = ReallocatePool(*CurrentSize, NewSize, *Destination);
       *CurrentSize = NewSize;
     }
+    DestMaxSize = *CurrentSize;
   }
   else {
-    *Destination = AllocateZeroPool((Count + 1) * sizeof(CHAR16));
+    DestMaxSize = ((Count + 1) * sizeof(CHAR16));
+    *Destination = AllocateZeroPool(DestMaxSize);
   }
 
   //
@@ -1199,7 +1202,8 @@ StrnCatGrow(
   if (*Destination == NULL) {
     return (NULL);
   }
-  return StrnCat(*Destination, Source, Count);
+  StrnCatS(*Destination, DestMaxSize, Source, Count);
+  return *Destination;
 }
 
 /**
@@ -1614,6 +1618,8 @@ PromptedInput(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   int PromptIndex;
   char ThrowAway;
+  VOID * ptr;
+  int bufferSize;
   BOOLEAN NoReturn = TRUE;
 
   NVDIMM_ENTRY();
@@ -1649,13 +1655,15 @@ PromptedInput(
     }
   }
 
-  VOID * ptr = AllocateZeroPool((PromptIndex * (sizeof(CHAR16))));
+  bufferSize = (PromptIndex * (sizeof(CHAR16)));
+  ptr = AllocateZeroPool(bufferSize);
   if (NULL == ptr) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  *ppReturnValue = AsciiStrToUnicodeStr(buff, ptr);
+  AsciiStrToUnicodeStrS(buff, ptr, bufferSize);
+  *ppReturnValue = ptr;
 
 Finish:
   Print(L"\n");
@@ -1892,7 +1900,7 @@ GetVendorDriverVersion(CHAR16 * pVersion, UINTN VersionStrSize)
 
   if (0 == get_vendor_driver_revision(ascii_buffer, sizeof(ascii_buffer)))
   {
-    AsciiStrToUnicodeStr(ascii_buffer, pVersion);
+    AsciiStrToUnicodeStrS(ascii_buffer, pVersion, VersionStrSize);
   }
   else
   {

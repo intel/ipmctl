@@ -336,7 +336,10 @@ NVM_API int nvm_get_sw_inventory(struct sw_inventory *p_inventory)
   ReturnCode = gNvmDimmDriverNvmDimmConfig.GetDriverApiVersion(&gNvmDimmDriverNvmDimmConfig, Version);
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
-  UnicodeStrToAsciiStr(Version, p_inventory->vendor_driver_revision);
+  ReturnCode = UnicodeStrToAsciiStrS(Version, p_inventory->vendor_driver_revision, NVM_VERSION_LEN);
+  if (EFI_ERROR(ReturnCode)) {
+    return NVM_ERR_UNKNOWN;
+  }
   p_inventory->vendor_driver_compatible = TRUE;
   return NVM_SUCCESS;
 }
@@ -1199,7 +1202,13 @@ NVM_API int nvm_update_device_fw(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to get DIMM ID %d\n", rc);
     return rc;
   }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
+  ReturnCode = AsciiStrToUnicodeStrS(path, file_name, NVM_PATH_LEN);
+  if (NVM_SUCCESS != ReturnCode) {
+    FreeCommandStatus(&p_command_status);
+    NVDIMM_ERR("Failed to convert path (%s) to Unicode. Return code %d", path, ReturnCode);
+    return NVM_ERR_UNKNOWN;
+  }
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, file_name,
                 NULL, FALSE, force, FALSE, FALSE, p_fw_image_info, p_command_status);
   if (NVM_SUCCESS != ReturnCode) {
     FreeCommandStatus(&p_command_status);
@@ -1241,7 +1250,12 @@ NVM_API int nvm_examine_device_fw(const NVM_UID device_uid,
     NVDIMM_ERR("Failed to allocate memory");
     rc = NVM_ERR_UNKNOWN;
   } else {
-    ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, AsciiStrToUnicodeStr(path, file_name),
+    ReturnCode = AsciiStrToUnicodeStrS(path, file_name, NVM_PATH_LEN);
+    if (NVM_SUCCESS != ReturnCode) {
+      NVDIMM_ERR("Failed to convert path (%s) to Unicode. Return code %d", path, ReturnCode);
+      rc = NVM_ERR_UNKNOWN;
+    }
+    ReturnCode = gNvmDimmDriverNvmDimmConfig.UpdateFw(&gNvmDimmDriverNvmDimmConfig, &dimm_id, 1, file_name,
                   NULL, TRUE, FALSE, FALSE, FALSE, p_fw_image_info, p_command_status);
     if (NVM_SUCCESS != ReturnCode) {
       NVDIMM_ERR("Failed to update the FW, file %s. Return code %d", path, ReturnCode);
@@ -1515,8 +1529,14 @@ NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
   }
 
   dimm_count = 1;
+  ReturnCode = AsciiStrToUnicodeStrS(passphrase, UnicodePassphrase, PASSPHRASE_BUFFER_SIZE);
+  if (NVM_SUCCESS != ReturnCode) {
+    FreeCommandStatus(&p_command_status);
+    NVDIMM_ERR("Failed to convert passphrase (%s) to Unicode. Return code %d", passphrase, ReturnCode);
+    return NVM_ERR_UNKNOWN;
+  }
   ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, &dimm_id,
-    dimm_count, SECURITY_OPERATION_DISABLE_PASSPHRASE, AsciiStrToUnicodeStr(passphrase, UnicodePassphrase), NULL,
+    dimm_count, SECURITY_OPERATION_DISABLE_PASSPHRASE, UnicodePassphrase, NULL,
     p_command_status);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
@@ -1884,7 +1904,7 @@ Finish:
 
 NVM_API int nvm_get_number_of_regions( NVM_UINT8 *count)
 {
-	return nvm_get_number_of_regions_ex( TRUE, count);
+  return nvm_get_number_of_regions_ex( TRUE, count);
 }
 
 NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count)
@@ -1924,7 +1944,7 @@ Finish:
 }
 
 NVM_API int nvm_get_regions( struct region *p_regions, NVM_UINT8 *count) {
-	return nvm_get_regions_ex( TRUE, p_regions, count);
+  return nvm_get_regions_ex( TRUE, p_regions, count);
 }
 
 NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
@@ -2112,7 +2132,11 @@ NVM_API int nvm_get_config_goal(NVM_UID *p_device_uids, NVM_UINT32 device_uids_c
     }
 
   for (Index = 0; Index < region_configs_count; Index++) {
-    UnicodeStrToAsciiStr(pRegionConfigsInfo[Index].DimmUid, p_goal[Index].dimm_uid);
+    efi_rc = UnicodeStrToAsciiStrS(pRegionConfigsInfo[Index].DimmUid, p_goal[Index].dimm_uid, NVM_MAX_UID_LEN);
+    if (EFI_ERROR(efi_rc)) {
+      rc = NVM_ERR_UNKNOWN;
+      goto Finish;
+    }
     p_goal[Index].socket_id = pRegionConfigsInfo[Index].SocketId;
     p_goal[Index].persistent_regions = pRegionConfigsInfo[Index].PersistentRegions;
     p_goal[Index].volatile_size = pRegionConfigsInfo[Index].VolatileSize;
@@ -2207,7 +2231,13 @@ NVM_API int nvm_dump_goal_config(const NVM_PATH file,
   ReturnCode = InitializeCommandStatus(&p_command_status);
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.DumpGoalConfig(&gNvmDimmDriverNvmDimmConfig, AsciiStrToUnicodeStr(file, file_name), NULL, p_command_status);
+  ReturnCode = AsciiStrToUnicodeStrS(file, file_name, NVM_PATH_LEN);
+  if (NVM_SUCCESS != ReturnCode) {
+    FreeCommandStatus(&p_command_status);
+    NVDIMM_ERR("Failed to get file (%s) as Unicode. Return code %d", file, ReturnCode);
+    return NVM_ERR_UNKNOWN;
+  }
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.DumpGoalConfig(&gNvmDimmDriverNvmDimmConfig, file_name, NULL, p_command_status);
   if (NVM_SUCCESS != ReturnCode) {
     NVDIMM_ERR("Failed to get the DIMMs goal configuration. Return code %d", ReturnCode);
     return NVM_ERR_DUMP_FILE_OPERATION_FAILED;
@@ -2283,7 +2313,13 @@ NVM_API int nvm_load_goal_config(const NVM_PATH file,
   }
   for (index = 0; index < socket_count; index++)
     p_socket_ids[index] = p_sockets[index].SocketId;
-  ReturnCode = ParseSourceDumpFile(AsciiStrToUnicodeStr(file, file_name), NULL, &p_file_string);
+  ReturnCode = AsciiStrToUnicodeStrS(file, file_name, NVM_PATH_LEN);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to convert file (%s) to Unicdoe. Return code %d\n", file, ReturnCode);
+    rc = NVM_ERR_UNKNOWN;
+    goto Finish;
+  }
+  ReturnCode = ParseSourceDumpFile( file_name, NULL, &p_file_string);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("Failed to dump a file %s. Return code %d\n", file, ReturnCode);
     rc = NVM_ERR_UNKNOWN;
@@ -2429,7 +2465,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
 }
 
 
-NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
+NVM_API int nvm_inject_device_error(const NVM_UID  device_uid,
             const struct device_error * p_error)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -2591,8 +2627,16 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
     return nvm_status;
   }
 
-  AsciiStrToUnicodeStr(key, KeyWide);
-  AsciiStrToUnicodeStr(value, ValueWide);
+  ReturnCode = AsciiStrToUnicodeStrS(key, KeyWide, NVM_THRESHOLD_STR_LEN);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed while converting Key to Unicode (%d)\n", ReturnCode);
+    return NVM_ERR_UNKNOWN;
+  }
+  ReturnCode = AsciiStrToUnicodeStrS(value, ValueWide, NVM_THRESHOLD_STR_LEN);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed while converting value to Unicode (%d)\n", ReturnCode);
+    return NVM_ERR_UNKNOWN;
+  }
   UnicodeSPrint(CmdLineWide, sizeof(CmdLineWide), L"set -preferences " FORMAT_STR L"=" FORMAT_STR, KeyWide, ValueWide);
   ReturnCode = execute_cli_cmd(CmdLineWide);
   if (EFI_ERROR(ReturnCode)) {
@@ -2934,7 +2978,11 @@ int get_dimm_id(const char *uid, UINT16 *dimm_id, unsigned int *dimm_handle)
     }
   }
 
-  AsciiStrToUnicodeStr(uid, uid_wide);
+  rc = AsciiStrToUnicodeStrS(uid, uid_wide, MAX_DIMM_UID_LENGTH);
+  if (EFI_ERROR(rc)) {
+    NVDIMM_ERR("Failed while converting uid (%s) to UniCode. (%d)\n", uid, rc);
+    return NVM_ERR_UNKNOWN;
+  }
   for (i = 0; i < g_dimm_cnt; ++i) {
     if (0 == StrCmp(uid_wide, g_dimms[i].DimmUid)) {
       if (dimm_id)
@@ -2978,21 +3026,21 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   }
   p_device->part_number[PART_NUMBER_LEN - 1] = '\0';
   build_revision(p_device->fw_revision, NVM_VERSION_LEN, p_dimm->FwVer.FwProduct, p_dimm->FwVer.FwRevision,
-		 p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
+     p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
   snprintf(p_device->fw_api_version, NVM_VERSION_LEN, "%02d.%02d", p_dimm->FwVer.FwApiMajor, p_dimm->FwVer.FwApiMinor);
   p_device->capacity = p_dimm->Capacity;
   CopyMem_S(p_device->interface_format_codes, sizeof(p_device->interface_format_codes), p_dimm->InterfaceFormatCode, sizeof(UINT16) * 2);
-  UnicodeStrToAsciiStr(p_dimm->DimmUid, p_device->uid);
+  UnicodeStrToAsciiStrS(p_dimm->DimmUid, p_device->uid, NVM_MAX_UID_LEN);
   p_device->lock_state = p_dimm->SecurityState;
   p_device->manageability = p_dimm->ManageabilityState;
   p_device->master_passphrase_enabled = p_dimm->MasterPassphraseEnabled;
 }
 
 int get_fw_err_log_stats(
-  const unsigned int	dimm_id,
-  const unsigned char	log_level,
-  const unsigned char	log_type,
-  LOG_INFO_DATA_RETURN *	log_info)
+  const unsigned int     dimm_id,
+  const unsigned char    log_level,
+  const unsigned char    log_type,
+  LOG_INFO_DATA_RETURN * log_info)
 {
   int rc = NVM_ERR_UNKNOWN;
   NVM_FW_CMD *cmd;

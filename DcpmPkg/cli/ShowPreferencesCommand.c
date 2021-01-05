@@ -67,6 +67,7 @@ ShowPreferences(
   CONST CHAR16 *pChannelInterleaving = NULL;
 #ifdef OS_BUILD
   CHAR16 tempStr[PROPERTY_VALUE_LEN];
+  UINTN TempStrLen = PROPERTY_VALUE_LEN;
 #endif
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
@@ -135,7 +136,7 @@ ShowPreferences(
   }
 
 #ifdef OS_BUILD
-  ReturnCode = GET_VARIABLE_STR(DBG_LOG_LEVEL, gNvmDimmConfigProtocolGuid, 0, tempStr);
+  ReturnCode = GET_VARIABLE_STR(DBG_LOG_LEVEL, gNvmDimmConfigProtocolGuid, &TempStrLen, tempStr);
   if (!EFI_ERROR(ReturnCode)) {
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath,  DBG_LOG_LEVEL, tempStr);
   }

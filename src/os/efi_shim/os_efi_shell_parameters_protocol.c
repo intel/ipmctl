@@ -121,12 +121,14 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
     if (!stripped_args)
     {
       int argvSize = (int)strlen(argv[Index]);
-      VOID * ptr = AllocateZeroPool((argvSize + 1) * sizeof(wchar_t));
+      int sizeToAllocate = (argvSize + 1) * sizeof(wchar_t);
+      VOID * ptr = AllocateZeroPool(sizeToAllocate);
       if (NULL == ptr) {
         FreePool(gOsShellParametersProtocol.Argv);
         return EFI_OUT_OF_RESOURCES;
       }
-      gOsShellParametersProtocol.Argv[new_argv_index] = AsciiStrToUnicodeStr(argv[Index], ptr);
+      AsciiStrToUnicodeStrS(argv[Index], ptr, sizeToAllocate);
+      gOsShellParametersProtocol.Argv[new_argv_index] = ptr;
       ++new_argv_index;
     }
   }

@@ -10328,6 +10328,10 @@ InjectError(
       }
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
     }
+
+    if (1 == ClearStatus && NVM_SUCCESS == pCommandStatus->GeneralStatus) {
+      SetCmdStatus(pCommandStatus, NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT);
+    }
     break;
     case ERROR_INJ_POISON:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_POISON));

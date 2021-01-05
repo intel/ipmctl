@@ -148,6 +148,7 @@
 #string STR_DCPMM_STATUS_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU #language en "Mixed PMem module SKUs detected. The command is not supported in the current context."
 
 #string STR_DCPMM_STATUS_ERR_INJECTION_BIOS_KNOB_NOT_ENABLED #language en "The BIOS error injection knob is not enabled. Please enable and try again."
+#string STR_DCPMM_STATUS_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT #language en "Warning: A system reboot is required before all changes will take effect."
 
 #string STR_DCPMM_STATUS_ERR_NONE_DIMM_FULFILLS_CRITERIA  #language en "No PMem module in the region fulfills requested properties."
 #string STR_DCPMM_STATUS_ERR_NONE_ISET_FULFILLS_CRITERIA #language en "App Direct Namespace with requested properties can't be created on the Region."

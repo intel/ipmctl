@@ -14,6 +14,7 @@
 #include <Utility.h>
 #include <NvmInterface.h>
 #include "Common.h"
+#include "NvmDimmCli.h"
 
 CONST CHAR16 *pPoisonMemoryTypeStr[POISON_MEMORY_TYPE_COUNT] = {
   L"MemoryMode",
@@ -156,6 +157,7 @@ SetDimm(
   CHAR16 *pFatalMediaError = NULL;
   CHAR16 *pDirtyShutDown = NULL;
   CHAR16 *pClearErrorInj = NULL;
+  CHAR16 *pClearErrInjMessage = NULL;
   UINT16 ErrInjectType = ERROR_INJ_TYPE_INVALID;
   UINT64 TemperatureValue = 0;
   UINT64 PoisonAddressValue = 0;
@@ -833,11 +835,15 @@ SetDimm(
     if (EFI_ERROR(ReturnCode)) {
       goto FinishCommandStatusSet;
     }
+    pClearErrInjMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT);
   }
 
 FinishCommandStatusSet:
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, pCommandStatusPreposition, pCommandStatus);
+  if (NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT == pCommandStatus->GeneralStatus) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR, pClearErrInjMessage);
+  }
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
@@ -860,6 +866,7 @@ Finish:
   FREE_POOL_SAFE(pCommandStatusPreposition);
   FREE_POOL_SAFE(pAvgPowerReportingTimeConstantMult);
   FREE_POOL_SAFE(pAvgPowerReportingTimeConstant);
+  FREE_POOL_SAFE(pClearErrInjMessage);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

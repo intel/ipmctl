@@ -199,6 +199,7 @@ InitErrorAndWarningNvmStatusCodes()
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_SMART_NONCRITICAL_HEALTH_ISSUE);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
   SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+  SetNvmStatus(&gAllWarningNvmStatuses, NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT);
 
   // Errors:
   SetNvmStatus(&gAllErrorNvmStatuses, NVM_ERR_OPERATION_NOT_STARTED);
@@ -699,6 +700,9 @@ GetSingleNvmStatusCodeMessage(
 
   case NVM_ERR_FILE_NOT_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_FILE_NOT_FOUND), NULL);
+
+  case NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT), NULL);
 
   default:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_DEFAULT), NULL);

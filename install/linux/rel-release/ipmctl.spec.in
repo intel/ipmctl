@@ -86,11 +86,20 @@ API for development of Intel Optane DC persistent memory management utilities.
     -DCMAKE_INSTALL_SYSCONFDIR=%{_sysconfdir} \
     -DRELEASE=ON \
     -DRPM_BUILD=ON
+%if 0%{?fedora} > 32
+%cmake_build
+%else
 %make_build
+%endif
+
 
 %install
 %{!?_cmake_version: cd build}
-%make_install -f Makefile
+%if 0%{?fedora} > 32
+%cmake_install
+%else
+%make_install
+%endif
 
 %post -n libipmctl -p /sbin/ldconfig
 

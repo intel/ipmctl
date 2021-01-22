@@ -249,6 +249,9 @@ target_include_directories(ipmctl_os_interface PUBLIC
 	DcpmPkg/common
 	src/os/nvm_api
 	src/os/s_string
+	MdePkg/Include
+	MdePkg/Include/Uefi
+	src/os/efi_shim
 	)
 
 if (MSVC)

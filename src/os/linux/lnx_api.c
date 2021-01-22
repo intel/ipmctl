@@ -12,11 +12,12 @@
 #include <syslog.h>
 #include <os_types.h>
 #include <unistd.h>
+#include <Uefi.h>
 
 /**
 Sleeps for a given number of microseconds.
 **/
-int bs_sleep(int microseconds) {
+EFI_STATUS bs_sleep(IN UINTN microseconds) {
   usleep(microseconds);
   return 0;
 }

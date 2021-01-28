@@ -141,6 +141,7 @@ DumpSupportCommand(
   DIMM_INFO *pDimms = NULL;
   UINT32 DimmCount = 0;
   CHAR8 *pPlatformSupportFilenameAscii = NULL;
+  UINTN pPlatformSupportFilenameAsciiLength = 0;
   UINTN pPlatformSupportFilenameAsciiSize = 0;
   FILE *hFile = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
@@ -200,7 +201,8 @@ DumpSupportCommand(
   pPlatformSupportFileName = CatSPrint(pDumpUserPath, L"_" FORMAT_STR L".txt",
     APPEND_TO_FILE_NAME);
 
-  pPlatformSupportFilenameAsciiSize = ((StrLen(pPlatformSupportFileName) + 1) * sizeof(CHAR8));
+  pPlatformSupportFilenameAsciiLength = StrLen(pPlatformSupportFileName) + 1;
+  pPlatformSupportFilenameAsciiSize = pPlatformSupportFilenameAsciiLength * sizeof(CHAR8);
   if(NULL == pPlatformSupportFileName || NULL == (pPlatformSupportFilenameAscii = AllocatePool(pPlatformSupportFilenameAsciiSize)))
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -209,7 +211,7 @@ DumpSupportCommand(
   }
 
   CHECK_RESULT(UnicodeStrToAsciiStrS(pPlatformSupportFileName, pPlatformSupportFilenameAscii,
-    pPlatformSupportFilenameAsciiSize), Finish);
+    pPlatformSupportFilenameAsciiLength), Finish);
 
   if(NULL == (hFile = fopen(pPlatformSupportFilenameAscii, "w+")))
   {

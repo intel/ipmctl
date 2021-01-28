@@ -99,6 +99,18 @@ enum
 */
 static struct debug_logger_config g_log_config = { 0 };
 
+static EFI_STATUS ConvertAsciiStrToUnicode(const CHAR8 * AsciiStr, CHAR16 * UnicodeStr, UINTN UnicodeStrMaxLength) {
+  EFI_STATUS ReturnCode;
+  if ((NULL == AsciiStr) || (NULL == UnicodeStr)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  ReturnCode = AsciiStrToUnicodeStrS(AsciiStr, UnicodeStr, UnicodeStrMaxLength);
+  if (ReturnCode != EFI_SUCCESS) {
+    Print(L"Failed to convert Ascii string to Unicode string. Return code = %d.\n", ReturnCode);
+  }
+  return ReturnCode;
+}
+
 EFI_STATUS
 EFIAPI
 DefaultPassThru(
@@ -446,6 +458,7 @@ void (*rel_assert) (void) = NULL;
 */
 static void write_system_event_to_stdout(const char* source, const char* message)
 {
+  RETURN_STATUS ReturnCode = EFI_SUCCESS;
   NVM_EVENT_MSG ascii_event_message = { 0 };
   CHAR16 w_event_message[sizeof(ascii_event_message)] = { 0 };
 
@@ -454,11 +467,15 @@ static void write_system_event_to_stdout(const char* source, const char* message
   os_strcat(ascii_event_message, sizeof(ascii_event_message), " ");
   os_strcat(ascii_event_message, sizeof(ascii_event_message), message);
   os_strcat(ascii_event_message, sizeof(ascii_event_message), "\n");
-  // Convert to the unicode
-  AsciiStrToUnicodeStrS(ascii_event_message, w_event_message, sizeof(w_event_message));
+
+  // Convert to the unicode  --  length of array is sizeof(ascii_event_message)
+  CHECK_RESULT(ConvertAsciiStrToUnicode(ascii_event_message, w_event_message, sizeof(ascii_event_message)), Finish);
 
   // Send it to standard output
   Print(FORMAT_STR, w_event_message);
+
+Finish:
+  return;
 }
 
 /**
@@ -1202,7 +1219,8 @@ StrnCatGrow(
   if (*Destination == NULL) {
     return (NULL);
   }
-  StrnCatS(*Destination, DestMaxSize, Source, Count);
+  // divide by the size of CHAR16 to convert max number of bytes to max number CHAR16s
+  StrnCatS(*Destination, (DestMaxSize/sizeof(CHAR16)), Source, Count);
   return *Destination;
 }
 
@@ -1619,7 +1637,6 @@ PromptedInput(
   int PromptIndex;
   char ThrowAway;
   VOID * ptr;
-  int bufferSize;
   BOOLEAN NoReturn = TRUE;
 
   NVDIMM_ENTRY();
@@ -1655,15 +1672,16 @@ PromptedInput(
     }
   }
 
-  bufferSize = (PromptIndex * (sizeof(CHAR16)));
-  ptr = AllocateZeroPool(bufferSize);
+  ptr = AllocateZeroPool(PromptIndex * (sizeof(CHAR16)));
   if (NULL == ptr) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  AsciiStrToUnicodeStrS(buff, ptr, bufferSize);
-  *ppReturnValue = ptr;
+  ReturnCode = ConvertAsciiStrToUnicode(buff, ptr, PromptIndex);
+  if (!EFI_ERROR(ReturnCode)) {
+    *ppReturnValue = ptr;
+  }
 
 Finish:
   Print(L"\n");
@@ -1900,7 +1918,7 @@ GetVendorDriverVersion(CHAR16 * pVersion, UINTN VersionStrSize)
 
   if (0 == get_vendor_driver_revision(ascii_buffer, sizeof(ascii_buffer)))
   {
-    AsciiStrToUnicodeStrS(ascii_buffer, pVersion, VersionStrSize);
+    ConvertAsciiStrToUnicode(ascii_buffer, pVersion, VersionStrSize);
   }
   else
   {

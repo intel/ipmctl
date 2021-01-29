@@ -319,3 +319,5 @@
 #string STR_DCPMM_RESTRICTION_INVALID #language en "<Invalid>"
 
 #string STR_DCPMM_DIMM_HEALTHY_FW_NOT_RECOVERABLE #language en "Full SPI flash recovery of FW on a healthy PMem module is not supported"
+
+#string STR_DCPMM_STATUS_ERR_INCOMPATIBLE_SOFTWARE_REVISION #language en "This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl."

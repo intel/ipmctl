@@ -2525,7 +2525,7 @@ Finish:
 }
 
 /**
-  Converts the Dimm IDs within a region to its  HII string equivalent
+  Converts the Dimm IDs within a region to its HII string equivalent
   @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] DimmIdentifier Dimm identifier preference
@@ -4763,6 +4763,42 @@ MatchCliReturnCode(
     break;
   }
   return ReturnCode;
+}
+
+/**
+  Guess an appropriate NVM_STATUS code from EFI_STATUS. For use when
+  pCommandStatus is not an argument to a lower level function.
+
+  Used currently to get specific errors relevant to the user out to
+  the CLI but not many (especially lower-level) functions have
+  pCommandStatus. Also the CLI printer doesn't use ReturnCode,
+  only pCommandStatus.
+
+  @param[in] ReturnCode - EFI_STATUS returned from function call
+  @retval - Appropriate guess at the NVM_STATUS code
+**/
+NVM_STATUS
+GuessNvmStatusFromReturnCode(
+  IN EFI_STATUS ReturnCode
+)
+{
+  NVM_STATUS NvmStatus = NVM_ERR_OPERATION_NOT_STARTED;
+  switch (ReturnCode) {
+    case EFI_DEVICE_ERROR:
+      NvmStatus = NVM_ERR_DEVICE_ERROR;
+      break;
+    case EFI_INCOMPATIBLE_VERSION:
+      NvmStatus = NVM_ERR_INCOMPATIBLE_SOFTWARE_REVISION;
+      break;
+    case EFI_VOLUME_CORRUPTED:
+      NvmStatus = NVM_ERR_DATA_TRANSFER;
+      break;
+    case EFI_NO_RESPONSE:
+      NvmStatus = NVM_ERR_BUSY_DEVICE;
+      break;
+    // Don't have a default state for now, keep default "not started" error
+  }
+  return NvmStatus;
 }
 
 

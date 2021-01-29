@@ -65,125 +65,103 @@ CopyMemoryAndAddPointerToArray(
   ParseNfitTable - Performs deserialization from binary memory block into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the NFIT binary representation.
+  @param[out] ppParsedNfit Pointer to a pointer where the allocated and parsed NFIT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed NFIT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedFitHeader *
+EFI_STATUS
 ParseNfitTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedFitHeader **ppParsedNfit
   )
 {
-  ParsedFitHeader **ppParsedHeader = NULL; // This pointer is needed to resolve static analysis tool errors
-  ParsedFitHeader *pParsedHeader = NULL;
-  ppParsedHeader = &pParsedHeader;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  ParsedFitHeader *pParsedNfit = NULL;
   NFitHeader *pNFit = NULL;
   UINT8 *pTabPointer = NULL;
   SubTableHeader *pTableHeader = NULL;
   UINT32 RemainingNFITBytes = 0;
-  //UINT32 Index = 0;
-  //UINT32 NumOfDimms = 0;
 
   NVDIMM_ENTRY();
 
-  if (pTable == NULL) {
-    NVDIMM_DBG("The NFIT pointer is NULL.");
-    goto FinishError;
-  }
+  CHECK_NULL_ARG(pTable, Finish);
+  CHECK_NULL_ARG(ppParsedNfit, Finish);
 
   pNFit = (NFitHeader *)pTable;
+
+  if (!IsChecksumValid(pNFit, pNFit->Header.Length)) {
+    NVDIMM_DBG("The checksum of the NFIT table is invalid.");
+    ReturnCode = EFI_VOLUME_CORRUPTED;
+    goto Finish;
+  }
+
+  if (IS_NFIT_REVISION_INVALID(pNFit->Header.Revision)) {
+    NVDIMM_DBG("NFIT table revision is invalid");
+    ReturnCode = EFI_INCOMPATIBLE_VERSION;
+    goto Finish;
+  }
 
   pTabPointer = (UINT8 *)pTable + sizeof(NFitHeader);
   pTableHeader = (SubTableHeader *)pTabPointer;
   RemainingNFITBytes = pNFit->Header.Length - sizeof(*pNFit);
-  pParsedHeader = (ParsedFitHeader *)AllocateZeroPool(sizeof(*pParsedHeader));
+  CHECK_RESULT_MALLOC(*ppParsedNfit, (ParsedFitHeader *)AllocateZeroPool(sizeof(**ppParsedNfit)), Finish);
+  pParsedNfit = *ppParsedNfit;
 
-  if (pParsedHeader == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
+  CHECK_RESULT_MALLOC(pParsedNfit->pFit, (NFitHeader *)AllocateZeroPool(sizeof(*(pParsedNfit->pFit))), Finish);
 
-  pParsedHeader->pFit = (NFitHeader *)AllocateZeroPool(sizeof(NFitHeader));
-
-  if (pParsedHeader->pFit == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
-
-  CopyMem_S(pParsedHeader->pFit, sizeof(NFitHeader), pNFit, sizeof(NFitHeader));
+  CopyMem_S(pParsedNfit->pFit, sizeof(*(pParsedNfit->pFit)), pNFit, sizeof(*(pParsedNfit->pFit)));
 
   while (RemainingNFITBytes > 0) {
     if (pTableHeader->Length == 0) {
       NVDIMM_DBG("Zero size entry found in nfit region.");
-      goto FinishError;
+      goto Finish;
     }
 
     RemainingNFITBytes -= pTableHeader->Length;
 
     switch(pTableHeader->Type) {
     case NVDIMM_SPA_RANGE_TYPE:
-      pParsedHeader->ppSpaRangeTbles = (SpaRangeTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppSpaRangeTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->SpaRangeTblesNum);
-      if (pParsedHeader->ppSpaRangeTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppSpaRangeTbles, (SpaRangeTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppSpaRangeTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->SpaRangeTblesNum), Finish);
       break;
     case NVDIMM_NVDIMM_REGION_TYPE:
-      pParsedHeader->ppNvDimmRegionMappingStructures = (NvDimmRegionMappingStructure **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppNvDimmRegionMappingStructures, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->NvDimmRegionMappingStructuresNum);
-      if (pParsedHeader->ppNvDimmRegionMappingStructures == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppNvDimmRegionMappingStructures, (NvDimmRegionMappingStructure **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppNvDimmRegionMappingStructures, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->NvDimmRegionMappingStructuresNum), Finish);
       break;
     case NVDIMM_INTERLEAVE_TYPE:
-      pParsedHeader->ppInterleaveTbles = (InterleaveStruct **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppInterleaveTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->InterleaveTblesNum);
-      if (pParsedHeader->ppInterleaveTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppInterleaveTbles, (InterleaveStruct **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppInterleaveTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->InterleaveTblesNum), Finish);
       break;
     case NVDIMM_SMBIOS_MGMT_INFO_TYPE:
-      pParsedHeader->ppSmbiosTbles = (SmbiosTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppSmbiosTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->SmbiosTblesNum);
-      if (pParsedHeader->ppSmbiosTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppSmbiosTbles, (SmbiosTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppSmbiosTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->SmbiosTblesNum), Finish);
       break;
     case NVDIMM_CONTROL_REGION_TYPE:
-      pParsedHeader->ppControlRegionTbles = (ControlRegionTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppControlRegionTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->ControlRegionTblesNum);
-      if (pParsedHeader->ppControlRegionTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppControlRegionTbles, (ControlRegionTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppControlRegionTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->ControlRegionTblesNum), Finish);
       break;
     case NVDIMM_BW_DATA_WINDOW_REGION_TYPE:
-      pParsedHeader->ppBWRegionTbles = (BWRegionTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppBWRegionTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->BWRegionTblesNum);
-      if (pParsedHeader->ppBWRegionTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppBWRegionTbles, (BWRegionTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppBWRegionTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->BWRegionTblesNum), Finish);
       break;
     case NVDIMM_FLUSH_HINT_TYPE:
-      pParsedHeader->ppFlushHintTbles = (FlushHintTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppFlushHintTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->FlushHintTblesNum);
-      if (pParsedHeader->ppFlushHintTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppFlushHintTbles, (FlushHintTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppFlushHintTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->FlushHintTblesNum), Finish);
       break;
     case NVDIMM_PLATFORM_CAPABILITIES_TYPE:
-      pParsedHeader->ppPlatformCapabilitiesTbles = (PlatformCapabilitiesTbl **)CopyMemoryAndAddPointerToArray(
-          (VOID **)pParsedHeader->ppPlatformCapabilitiesTbles, pTabPointer,
-          pTableHeader->Length, &pParsedHeader->PlatformCapabilitiesTblesNum);
-      if (pParsedHeader->ppPlatformCapabilitiesTbles == NULL) {
-        goto FinishError;
-      }
+      CHECK_RESULT_MALLOC(pParsedNfit->ppPlatformCapabilitiesTbles, (PlatformCapabilitiesTbl **)CopyMemoryAndAddPointerToArray(
+          (VOID **)pParsedNfit->ppPlatformCapabilitiesTbles, pTabPointer,
+          pTableHeader->Length, &pParsedNfit->PlatformCapabilitiesTblesNum), Finish);
       break;
     default:
       break;
@@ -193,32 +171,35 @@ ParseNfitTable(
     pTableHeader = (SubTableHeader *)pTabPointer;
   }
 
-  goto FinishSuccess;
+  ReturnCode = EFI_SUCCESS;
 
-FinishError:
-  FreeParsedNfit(ppParsedHeader);
-  pParsedHeader = NULL;
-FinishSuccess:
-  NVDIMM_EXIT();
-  return pParsedHeader;
+Finish:
+  if (EFI_ERROR(ReturnCode) && ppParsedNfit != NULL && *ppParsedNfit != NULL) {
+    FreeParsedNfit(ppParsedNfit);
+  }
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**
   Performs deserialization from binary memory block, containing PCAT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PCAT binary representation.
+  @param[out] ppParsedPcat Pointer to a pointer where the allocated and parsed PCAT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PCAT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPcatHeader *
+EFI_STATUS
 ParsePcatTable (
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPcatHeader **ppParsedPcat
   )
 {
-  ParsedPcatHeader **ppParsedPcat = NULL;               // This pointer is needed to resolve static analysis tool errors
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   ParsedPcatHeader *pParsedPcat = NULL;                 //!< Output Parsed PCAT structures
-  ppParsedPcat = &pParsedPcat;
   PLATFORM_CONFIG_ATTRIBUTES_TABLE *pPcatHeader = NULL; //!< PCAT header
   PCAT_TABLE_HEADER *pPcatSubTableHeader = NULL;        //!< PCAT subtable header
   UINT32 RemainingPcatBytes = 0;
@@ -226,33 +207,32 @@ ParsePcatTable (
 
   NVDIMM_ENTRY();
 
-  if (pTable == NULL) {
-    NVDIMM_DBG("The PCAT pointer is NULL.");
-    goto FinishError;
-  }
+  CHECK_NULL_ARG(pTable, Finish);
+  CHECK_NULL_ARG(ppParsedPcat, Finish);
 
   pPcatHeader = (PLATFORM_CONFIG_ATTRIBUTES_TABLE *) pTable;
 
   if (!IsChecksumValid(pPcatHeader, pPcatHeader->Header.Length)) {
     NVDIMM_DBG("The checksum of PCAT table is invalid.");
-    goto FinishError;
+    ReturnCode = EFI_VOLUME_CORRUPTED;
+    goto Finish;
+  }
+
+  if (IS_PCAT_REVISION_INVALID(pPcatHeader->Header.Revision)) {
+    NVDIMM_DBG("PCAT table revision is invalid");
+    ReturnCode = EFI_INCOMPATIBLE_VERSION;
+    goto Finish;
   }
 
   pPcatSubTableHeader = (PCAT_TABLE_HEADER *) &pPcatHeader->pPcatTables;
+
   RemainingPcatBytes = pPcatHeader->Header.Length - sizeof(*pPcatHeader);
 
-  pParsedPcat = (ParsedPcatHeader *) AllocateZeroPool(sizeof(*pParsedPcat));
-  if (pParsedPcat == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
+  CHECK_RESULT_MALLOC(*ppParsedPcat, (ParsedPcatHeader *)AllocateZeroPool(sizeof(*pParsedPcat)), Finish);
+  pParsedPcat = *ppParsedPcat;
 
-  pParsedPcat->pPlatformConfigAttr = (PLATFORM_CONFIG_ATTRIBUTES_TABLE *) AllocateZeroPool(
-    sizeof(*pParsedPcat->pPlatformConfigAttr));
-  if (pParsedPcat->pPlatformConfigAttr == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
+  CHECK_RESULT_MALLOC(pParsedPcat->pPlatformConfigAttr, (PLATFORM_CONFIG_ATTRIBUTES_TABLE *)AllocateZeroPool(
+      sizeof(*pParsedPcat->pPlatformConfigAttr)), Finish);
 
   // Copying PCAT header to parsed structure
   CopyMem_S(pParsedPcat->pPlatformConfigAttr, sizeof(*pParsedPcat->pPlatformConfigAttr), pPcatHeader, sizeof(*pParsedPcat->pPlatformConfigAttr));
@@ -263,28 +243,20 @@ ParsePcatTable (
 
     if (Length == 0) {
       NVDIMM_DBG("Length can't be 0.");
-      goto FinishError;
+      goto Finish;
     }
 
     switch(pPcatSubTableHeader->Type) {
     case PCAT_TYPE_PLATFORM_CAPABILITY_INFO_TABLE:
       if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo = (PLATFORM_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo, (PLATFORM_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo, pPcatSubTableHeader, Length,
-          &pParsedPcat->PlatformCapabilityInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->PlatformCapabilityInfoNum), Finish);
       }
       else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo = (PLATFORM_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo, (PLATFORM_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo, pPcatSubTableHeader, Length,
-          &pParsedPcat->PlatformCapabilityInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->PlatformCapabilityInfoNum), Finish);
 
         if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_2(pPcatHeader)) {
           // Backwards compatability. Platforms with PCAT revison < 1.3 always support mixed mode
@@ -296,101 +268,81 @@ ParsePcatTable (
 
     case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
       if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo = (MEMORY_INTERLEAVE_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo, (MEMORY_INTERLEAVE_CAPABILITY_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo, pPcatSubTableHeader, Length,
-          &pParsedPcat->MemoryInterleaveCapabilityInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->MemoryInterleaveCapabilityInfoNum), Finish);
       }
       else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo, (MEMORY_INTERLEAVE_CAPABILITY_INFO3 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo, pPcatSubTableHeader, Length,
-          &pParsedPcat->MemoryInterleaveCapabilityInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->MemoryInterleaveCapabilityInfoNum), Finish);
       }
       break;
 
     case PCAT_TYPE_RUNTIME_INTERFACE_TABLE:
-      pParsedPcat->ppRuntimeInterfaceValConfInput = (RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE **) CopyMemoryAndAddPointerToArray(
+      CHECK_RESULT_MALLOC(pParsedPcat->ppRuntimeInterfaceValConfInput, (RECONFIGURATION_INPUT_VALIDATION_INTERFACE_TABLE **) CopyMemoryAndAddPointerToArray(
           (VOID **) pParsedPcat->ppRuntimeInterfaceValConfInput, pPcatSubTableHeader, Length,
-          &pParsedPcat->RuntimeInterfaceValConfInputNum);
-      if (pParsedPcat->ppRuntimeInterfaceValConfInput == NULL) {
-        NVDIMM_DBG("Memory allocate error.");
-        goto FinishError;
-      }
+          &pParsedPcat->RuntimeInterfaceValConfInputNum), Finish);
       break;
 
     case PCAT_TYPE_CONFIG_MANAGEMENT_ATTRIBUTES_TABLE:
-      pParsedPcat->ppConfigManagementAttributesInfo = (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE **) CopyMemoryAndAddPointerToArray(
+      CHECK_RESULT_MALLOC(pParsedPcat->ppConfigManagementAttributesInfo, (CONFIG_MANAGEMENT_ATTRIBUTES_EXTENSION_TABLE **) CopyMemoryAndAddPointerToArray(
           (VOID **) pParsedPcat->ppConfigManagementAttributesInfo, pPcatSubTableHeader, Length,
-          &pParsedPcat->ConfigManagementAttributesInfoNum);
-      if (pParsedPcat->ppConfigManagementAttributesInfo == NULL) {
-        NVDIMM_DBG("Memory allocate error.");
-        goto FinishError;
-      }
+          &pParsedPcat->ConfigManagementAttributesInfoNum), Finish);
       break;
 
     case PCAT_TYPE_SOCKET_SKU_INFO_TABLE:
       if (IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable = (SOCKET_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable, (SOCKET_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable, pPcatSubTableHeader, Length,
-          &pParsedPcat->SocketSkuInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->SocketSkuInfoNum), Finish);
       }
       else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcatHeader)) {
-        pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable = (DIE_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable, (DIE_SKU_INFO_TABLE **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable, pPcatSubTableHeader, Length,
-          &pParsedPcat->SocketSkuInfoNum);
-        if (pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable == NULL) {
-          NVDIMM_DBG("Memory allocate error.");
-          goto FinishError;
-        }
+          &pParsedPcat->SocketSkuInfoNum), Finish);
       }
       break;
 
     default:
       NVDIMM_WARN("Unknown type of PCAT table.");
-      goto FinishError;
+      goto Finish;
     }
 
     RemainingPcatBytes -= Length;
     pPcatSubTableHeader = (PCAT_TABLE_HEADER *) ((UINT8 *)pPcatSubTableHeader + Length);
   }
 
-  goto FinishSuccess;
+  ReturnCode = EFI_SUCCESS;
 
-FinishError:
-  FreeParsedPcat(ppParsedPcat);
-  pParsedPcat = NULL;
-FinishSuccess:
-  NVDIMM_EXIT();
-  return pParsedPcat;
+Finish:
+  if (EFI_ERROR(ReturnCode) && NULL != ppParsedPcat && NULL != *ppParsedPcat) {
+    FreeParsedPcat(ppParsedPcat);
+  }
+
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**
   Performs deserialization from binary memory block, containing PMTT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PMTT binary representation.
+  @param[out] ppParsedPmtt Pointer to a pointer where the allocated and parsed PMTT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PMTT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPmttHeader *
+EFI_STATUS
 ParsePmttTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPmttHeader **ppParsedPmtt
   )
 {
-  ParsedPmttHeader ** ppParsedPmtt = NULL;              // This pointer is needed to resolve static analysis tool errors
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   ParsedPmttHeader *pParsedPmtt = NULL;                 //!< Output Parsed PMTT structures
-  ppParsedPmtt = &pParsedPmtt;
   PMTT_TABLE2 *pPmttHeader = NULL; //!< PMTT header
   PMTT_COMMON_HEADER2 *pPmttCommonTableHeader = NULL;        //!< PMTT common header
   PMTT_MODULE_INFO *pModuleInfo = NULL;
@@ -407,32 +359,44 @@ ParsePmttTable(
 
   NVDIMM_ENTRY();
 
-  if (pTable == NULL) {
-    NVDIMM_DBG("The PCAT pointer is NULL.");
-    goto FinishError;
-  }
+  CHECK_NULL_ARG(pTable, Finish);
+  CHECK_NULL_ARG(ppParsedPmtt, Finish);
+  // Prepare for error scenario first
+  *ppParsedPmtt = NULL;
 
   pPmttHeader = (PMTT_TABLE2 *)pTable;
 
   if (!IsChecksumValid(pPmttHeader, pPmttHeader->Header.Length)) {
     NVDIMM_DBG("The checksum of PMTT table is invalid.");
-    goto FinishError;
+    ReturnCode = EFI_VOLUME_CORRUPTED;
+    goto Finish;
   }
+
+  /**
+    Parse the PMTT Rev 0.2 table only
+    ACPI 6.3 requires DIMM fields to be populated using PMTT
+    if NfitDeviceHandle Bit 31 is set
+  **/
+  if (IS_PMTT_REVISION_INVALID(pPmttHeader->Header.Revision)) {
+    // PMTT != 0.1 and PMTT != 0.2
+    NVDIMM_DBG("PMTT table revision is invalid");
+    ReturnCode = EFI_INCOMPATIBLE_VERSION;
+    goto Finish;
+  } else if (IS_ACPI_REV_MAJ_0_MIN_1(pPmttHeader->Header.Revision)) {
+    NVDIMM_DBG("Choosing to not parse PMTT table right now, will parse later as needed");
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
+  // PMTT == 0.2
 
   pPmttCommonTableHeader = (PMTT_COMMON_HEADER2 *)&pPmttHeader->pPmttDevices;
   RemainingPmttBytes = pPmttHeader->Header.Length - sizeof(*pPmttHeader);
 
-  pParsedPmtt = (ParsedPmttHeader *)AllocateZeroPool(sizeof(*pParsedPmtt));
-  if (pParsedPmtt == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
+  CHECK_RESULT_MALLOC(*ppParsedPmtt, (ParsedPmttHeader *)AllocateZeroPool(sizeof(*pParsedPmtt)), Finish);
+  pParsedPmtt = *ppParsedPmtt;
 
-  pParsedPmtt->pPmtt = (PMTT_TABLE2 *)AllocateZeroPool(sizeof(*pParsedPmtt->pPmtt));
-  if (pParsedPmtt->pPmtt == NULL) {
-    NVDIMM_DBG("Could not allocate memory.");
-    goto FinishError;
-  }
+  CHECK_RESULT_MALLOC(pParsedPmtt->pPmtt, (PMTT_TABLE2 *)AllocateZeroPool(sizeof(*pParsedPmtt->pPmtt)), Finish);
 
   // Copying PMTT header to parsed structure
   CopyMem_S(pParsedPmtt->pPmtt, sizeof(*pParsedPmtt->pPmtt), pPmttHeader, sizeof(*pParsedPmtt->pPmtt));
@@ -442,7 +406,7 @@ ParsePmttTable(
     Length = pPmttCommonTableHeader->Length;
     if (Length == 0) {
       NVDIMM_DBG("Length of PMTT common header is zero.");
-      goto FinishError;
+      goto Finish;
     }
 
     if (!(pPmttCommonTableHeader->Flags & PMTT_PHYSICAL_ELEMENT_OF_TOPOLOGY)) {
@@ -455,13 +419,9 @@ ParsePmttTable(
     switch (pPmttCommonTableHeader->Type) {
     case PMTT_TYPE_SOCKET:
     {
-      pParsedPmtt->ppSockets = (PMTT_SOCKET2 **)CopyMemoryAndAddPointerToArray(
+      CHECK_RESULT_MALLOC(pParsedPmtt->ppSockets, (PMTT_SOCKET2 **)CopyMemoryAndAddPointerToArray(
         (VOID **)pParsedPmtt->ppSockets, pPmttCommonTableHeader, Length,
-        &pParsedPmtt->SocketsNum);
-      if (pParsedPmtt->ppSockets == NULL) {
-        NVDIMM_DBG("Memory allocation error.");
-        goto FinishError;
-      }
+        &pParsedPmtt->SocketsNum), Finish);
       SocketID = pParsedPmtt->ppSockets[pParsedPmtt->SocketsNum - 1]->SocketId;
       DieLevelNumOfMemoryDevices += NumOfMemoryDevices;
       NumOfMemoryDevices = pParsedPmtt->ppSockets[pParsedPmtt->SocketsNum - 1]->Header.NoOfMemoryDevices;
@@ -473,35 +433,23 @@ ParsePmttTable(
     {
       PMTT_VENDOR_SPECIFIC2 *pVendorDevice = (PMTT_VENDOR_SPECIFIC2 *)((UINT8 *)pPmttCommonTableHeader);
       if (CompareMem(&pVendorDevice->TypeUUID, &gDieTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
-        pParsedPmtt->ppDies = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPmtt->ppDies, (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppDies, pPmttCommonTableHeader, Length,
-          &pParsedPmtt->DiesNum);
-        if (pParsedPmtt->ppDies == NULL) {
-          NVDIMM_DBG("Memory allocation error.");
-          goto FinishError;
-        }
+          &pParsedPmtt->DiesNum), Finish);
         DieID = pParsedPmtt->ppDies[pParsedPmtt->DiesNum - 1]->DeviceID;
         CpuID = (DieLevelNumOfMemoryDevices & MAX_UINT16) + DieID;
       }
       else if (CompareMem(&pVendorDevice->TypeUUID, &gChannelTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
-        pParsedPmtt->ppChannels = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPmtt->ppChannels, (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppChannels, pPmttCommonTableHeader, Length,
-          &pParsedPmtt->ChannelsNum);
-        if (pParsedPmtt->ppChannels == NULL) {
-          NVDIMM_DBG("Memory allocation error.");
-          goto FinishError;
-        }
+          &pParsedPmtt->ChannelsNum), Finish);
         ChannelID = pParsedPmtt->ppChannels[pParsedPmtt->ChannelsNum - 1]->DeviceID;
         SlotID = 0;
       }
       else if (CompareMem(&pVendorDevice->TypeUUID, &gSlotTypeDeviceGuid, sizeof(pVendorDevice->TypeUUID)) == 0) {
-        pParsedPmtt->ppSlots = (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPmtt->ppSlots, (PMTT_VENDOR_SPECIFIC2 **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppSlots, pPmttCommonTableHeader, Length,
-          &pParsedPmtt->SlotsNum);
-        if (pParsedPmtt->ppSlots == NULL) {
-          NVDIMM_DBG("Memory allocation error.");
-          goto FinishError;
-        }
+          &pParsedPmtt->SlotsNum), Finish);
         SlotID = pParsedPmtt->ppSlots[pParsedPmtt->SlotsNum - 1]->DeviceID;
       }
       else {
@@ -512,13 +460,9 @@ ParsePmttTable(
     }
 
     case PMTT_TYPE_iMC:
-      pParsedPmtt->ppiMCs = (PMTT_iMC2 **)CopyMemoryAndAddPointerToArray(
+      CHECK_RESULT_MALLOC(pParsedPmtt->ppiMCs, (PMTT_iMC2 **)CopyMemoryAndAddPointerToArray(
         (VOID **)pParsedPmtt->ppiMCs, pPmttCommonTableHeader, Length,
-        &pParsedPmtt->iMCsNum);
-      if (pParsedPmtt->ppiMCs == NULL) {
-        NVDIMM_DBG("Memory allocation error.");
-        goto FinishError;
-      }
+        &pParsedPmtt->iMCsNum), Finish);
       iMCID = pParsedPmtt->ppiMCs[pParsedPmtt->iMCsNum - 1]->MemControllerID;
       ChannelID = 0;
       break;
@@ -536,7 +480,7 @@ ParsePmttTable(
       pModuleInfo = (PMTT_MODULE_INFO *)AllocateZeroPool(sizeof(*pModuleInfo));
       if (pModuleInfo == NULL) {
         NVDIMM_DBG("Memory allocation error.");
-        goto FinishError;
+        goto Finish;
       }
       pModuleInfo->Header = pModule->Header;
       pModuleInfo->SmbiosHandle = pModule->SmbiosHandle & SMBIOS_HANDLE_MASK;
@@ -550,23 +494,15 @@ ParsePmttTable(
       // BIT 2 is set then DCPMM or else DDR type
       if (pPmttCommonTableHeader->Flags & PMTT_DDR_DCPM_FLAG) {
         pModuleInfo->MemoryType = MEMORYTYPE_DCPM;
-        pParsedPmtt->ppDCPMModules = (PMTT_MODULE_INFO **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPmtt->ppDCPMModules, (PMTT_MODULE_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppDCPMModules, pModuleInfo, sizeof(*pModuleInfo),
-          &pParsedPmtt->DCPMModulesNum);
-        if (pParsedPmtt->ppDCPMModules == NULL) {
-          NVDIMM_DBG("Memory allocation error.");
-          goto FinishError;
-        }
+          &pParsedPmtt->DCPMModulesNum), Finish);
       }
       else {
         pModuleInfo->MemoryType = MEMORYTYPE_DDR4;
-        pParsedPmtt->ppDDRModules = (PMTT_MODULE_INFO **)CopyMemoryAndAddPointerToArray(
+        CHECK_RESULT_MALLOC(pParsedPmtt->ppDDRModules, (PMTT_MODULE_INFO **)CopyMemoryAndAddPointerToArray(
           (VOID **)pParsedPmtt->ppDDRModules, pModuleInfo, sizeof(*pModuleInfo),
-          &pParsedPmtt->DDRModulesNum);
-        if (pParsedPmtt->ppDDRModules == NULL) {
-          NVDIMM_DBG("Memory allocation error.");
-          goto FinishError;
-        }
+          &pParsedPmtt->DDRModulesNum), Finish);
       }
       FREE_POOL_SAFE(pModuleInfo);
       break;
@@ -574,21 +510,24 @@ ParsePmttTable(
 
     default:
       NVDIMM_WARN("Unknown type of PMTT table.");
-      goto FinishError;
+      goto Finish;
     }
+
 
     RemainingPmttBytes -= Length;
     pPmttCommonTableHeader = (PMTT_COMMON_HEADER2 *)((UINT8 *)pPmttCommonTableHeader + Length);
   }
 
-  goto FinishSuccess;
 
-  FinishError:
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  if (EFI_ERROR(ReturnCode) && NULL != ppParsedPmtt && NULL != *ppParsedPmtt) {
     FreeParsedPmtt(ppParsedPmtt);
-    pParsedPmtt = NULL;
-  FinishSuccess:
-    NVDIMM_EXIT();
-    return pParsedPmtt;
+  }
+
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**

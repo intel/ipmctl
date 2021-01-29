@@ -252,7 +252,6 @@ initAcpiTables()
   if (EFI_ERROR(ReturnCode))
   {
     NVDIMM_WARN("Failed to parse NFIT or PCAT or PMTT table.");
-    ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
 

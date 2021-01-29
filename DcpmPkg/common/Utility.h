@@ -382,7 +382,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode); \
       goto Label;                                             \
     }                                                         \
   } while (0)
@@ -393,7 +393,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
     TempReturnCode = ReturnCode;                              \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode); \
       goto Label;                                             \
     }                                                         \
     ReturnCode = TempReturnCode;                              \
@@ -404,7 +404,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                                      \
     ReturnCode = Call;                                                      \
     if (EFI_ERROR(ReturnCode)) {                                            \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);                    \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode);             \
       *pNvmStatus = NvmStatusCode;                                          \
       goto Label;                                                           \
     }                                                                       \
@@ -424,7 +424,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                              \
     ReturnCode = Call;                                              \
     if (EFI_ERROR(ReturnCode)) {                                    \
-      NVDIMM_WARN("Ignoring failure on function: %d", ReturnCode); \
+      NVDIMM_WARN("Ignoring failure with %s. RC: %d", #Call, ReturnCode); \
       ReturnCode = EFI_SUCCESS;                                     \
     }                                                               \
   } while (0)
@@ -433,7 +433,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                        \
     Pointer = Call;                                           \
     if (Pointer == NULL) {                                    \
-      NVDIMM_ERR("Failed to allocate memory");                \
+      NVDIMM_ERR("Failed to allocate memory to %s", #Pointer); \
       ReturnCode = EFI_OUT_OF_RESOURCES;                      \
       goto Label;                                             \
     }                                                         \
@@ -443,7 +443,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                                    \
     ReturnCode = Call;                                                    \
     if (EFI_ERROR(ReturnCode)) {                                          \
-      NVDIMM_ERR("Error in file operation");                              \
+      NVDIMM_ERR("Error in file operation %s", #Call);                    \
       ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED); \
       goto Label;                                                         \
     }                                                                     \
@@ -453,7 +453,16 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
 #define CHECK_NOT_TRUE(Call, Label)                                        \
   do {                                                                    \
     if (TRUE != Call) {                                                   \
-      NVDIMM_ERR("Statement is not true");                                \
+      NVDIMM_ERR("Statement %s is not true", #Call);                      \
+      goto Label;                                                         \
+    }                                                                     \
+  } while (0)
+
+#define CHECK_NULL_ARG(Argument, Label)                                   \
+  do {                                                                    \
+    if (NULL == (VOID *)Argument) {                                       \
+      NVDIMM_ERR("Argument %s is NULL. Exiting", #Argument);              \
+      ReturnCode = EFI_INVALID_PARAMETER;                                 \
       goto Label;                                                         \
     }                                                                     \
   } while (0)
@@ -1967,6 +1976,23 @@ EFI_STATUS
 MatchCliReturnCode (
   IN     NVM_STATUS Status
  );
+
+ /**
+  Guess an appropriate NVM_STATUS code from EFI_STATUS. For use when
+  pCommandStatus is not an argument to a lower level function.
+
+  Used currently to get specific errors relevant to the user out to
+  the CLI but not many (especially lower-level) functions have
+  pCommandStatus. Also the CLI printer doesn't use ReturnCode,
+  only pCommandStatus.
+
+  @param[in] ReturnCode - EFI_STATUS returned from function call
+  @retval - Appropriate guess at the NVM_STATUS code
+**/
+NVM_STATUS
+GuessNvmStatusFromReturnCode(
+  IN EFI_STATUS ReturnCode
+);
 
 #ifndef OS_BUILD
 /**

@@ -82,39 +82,51 @@ typedef SUPPORTED_MEMORY_MODE3 MEMORY_MODE_CAPABILITIES;
   ParseNfitTable - Performs deserialization from binary memory block into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the NFIT binary representation.
+  @param[out] ppParsedNfit Pointer to a pointer where the allocated and parsed NFIT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed NFIT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedFitHeader *
+EFI_STATUS
 ParseNfitTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedFitHeader **ppParsedNfit
   );
 
 /**
   Performs deserialization from binary memory block, containing PCAT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PCAT binary representation.
+  @param[out] ppParsedPcat Pointer to a pointer where the allocated and parsed PCAT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PCAT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPcatHeader *
+EFI_STATUS
 ParsePcatTable (
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPcatHeader **ppParsedPcat
   );
 
 /**
   Performs deserialization from binary memory block, containing PMTT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PMTT binary representation.
+  @param[out] ppParsedPmtt Pointer to a pointer where the allocated and parsed PMTT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PMTT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPmttHeader *
+EFI_STATUS
 ParsePmttTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPmttHeader **ppParsedPmtt
   );
 
 /**

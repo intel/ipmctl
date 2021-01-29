@@ -4378,7 +4378,6 @@ ParseAcpiTables(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  ACPI_REVISION Revision;
 
   NVDIMM_ENTRY();
 
@@ -4388,42 +4387,19 @@ ParseAcpiTables(
 
   ReturnCode = EFI_SUCCESS;
 
-  *ppFitHead = pNfit == NULL ? NULL : ParseNfitTable((VOID *)pNfit);
-  if (*ppFitHead == NULL) {
-    NVDIMM_DBG("NFIT parsing error.");
-    ReturnCode = EFI_DEVICE_ERROR;
-  }
+  CHECK_RESULT(ParseNfitTable((VOID *)pNfit, ppFitHead), Finish);
 
-  *ppPcatHead = pPcat == NULL ? NULL : ParsePcatTable((VOID *)pPcat);
-  if (*ppPcatHead == NULL) {
-    NVDIMM_DBG("PCAT parsing error.");
-    ReturnCode = EFI_DEVICE_ERROR;
-  }
+  CHECK_RESULT(ParsePcatTable((VOID *)pPcat, ppPcatHead), Finish);
 
-  /**
-    Parse the PMTT Rev 0.2 table only
-    ACPI 6.3 requires DIMM fields to be populated using PMTT
-    if NfitDeviceHandle Bit 31 is set
-  **/
-  if (pPMTT != NULL) {
-    Revision.AsUint8 = pPMTT->Revision;
-    if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
-      *ppPmttHead = ParsePmttTable((VOID *)pPMTT);
-      if (*ppPmttHead == NULL) {
-        NVDIMM_DBG("PMTT parsing error.");
-        ReturnCode = EFI_DEVICE_ERROR;
-      }
-    }
-    else {
-      *ppPmttHead = NULL;
-    }
-    *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *)pPMTT);
-  }
-  else {
-    // if PMTT table is Not available skip MM allowed check and let BIOS handle it
-    *pIsMemoryModeAllowed = TRUE;
-    *ppPmttHead = NULL;
-  }
+
+  // Assume that PMTT table is not available at first
+  // (skip MM allowed check and let BIOS handle it)
+  *pIsMemoryModeAllowed = TRUE;
+
+  CHECK_RESULT(ParsePmttTable((VOID *)pPMTT, ppPmttHead), Finish);
+  // If we didn't fail out in the ParsePmttTable call, then the raw pPMTT table
+  // is not NULL and is a valid revision. Check if memory mode is allowed.
+  *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *)pPMTT);
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);

@@ -578,11 +578,16 @@ UefiMain(
 #ifdef OS_BUILD
         if (!Command.ExcludeDriverBinding && !g_fast_path) {
           Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
+          if (EFI_ERROR(Rc)) {
+            NVDIMM_ERR("Issue with driver initialization");
+            Print(GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle,GuessNvmStatusFromReturnCode(Rc)));
+            Print(FORMAT_NL);
+          }
         }
 #endif
-
-        Rc = ExecuteCmd(&Command);
-
+        if (!EFI_ERROR(Rc)) {
+          Rc = ExecuteCmd(&Command);
+        }
 #ifdef OS_BUILD
         if (!Command.ExcludeDriverBinding && !g_fast_path) {
           NvmDimmDriverDriverBindingStop(&gNvmDimmDriverDriverBinding, FakeBindHandle, 0, NULL);

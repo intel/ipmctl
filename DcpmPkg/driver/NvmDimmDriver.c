@@ -1368,6 +1368,7 @@ NvmDimmDriverDriverBindingStart(
    ReturnCode = initAcpiTables();
    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to initialize the ACPI tables, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      goto Finish;
    }
 
    /**
@@ -1566,6 +1567,7 @@ NvmDimmDriverDriverBindingStart(
    ReturnCode = initAcpiTables();
    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to initialize the ACPI tables, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      goto Finish;
    }
 
    /**

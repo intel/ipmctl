@@ -213,6 +213,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy PMem module
 
   NVM_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE           = 317,  ///< Error: Platform does not support mixed memory mode
+  NVM_ERR_INCOMPATIBLE_SOFTWARE_REVISION            = 318,  ///< Error: This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl.
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

@@ -2381,22 +2381,29 @@ EFI_STATUS ValidatePcdOemHeader(
     return EFI_INVALID_PARAMETER;
   }
 
+  // Check for corruption first
   if (pOemHeader->Header.Signature != NVDIMM_CONFIGURATION_HEADER_SIG) {
     NVDIMM_WARN("Incorrect signature of the DIMM Configuration Header table");
     return EFI_VOLUME_CORRUPTED;
   }
-
-  if (IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(pOemHeader)) {
-    NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
-    return EFI_VOLUME_CORRUPTED;
-  }
-
   if (pOemHeader->Header.Length > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
     NVDIMM_WARN("Length of PCD header is greater than PCD OEM partition size");
     return EFI_VOLUME_CORRUPTED;
   }
-  else if (!IsChecksumValid(pOemHeader, pOemHeader->Header.Length)) {
+  if (!IsChecksumValid(pOemHeader, pOemHeader->Header.Length)) {
     NVDIMM_WARN("The DIMM Configuration table checksum is invalid.");
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  // If there's no corruption, then everything that follows should only
+  // be based on some incompatibility with BIOS
+
+  // BIOS revision too old or too new
+  if (IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(pOemHeader)) {
+    NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
+    // This should be more descriptive (like EFI_INCOMPATIBLE_VERSION) but
+    // unfortunately anything other than EFI_VOLUME_CORRUPTED prevents
+    // ipmctl delete -pcd from working. Too much headache to fix right now.
     return EFI_VOLUME_CORRUPTED;
   }
 

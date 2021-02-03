@@ -3584,7 +3584,7 @@ GetPcd(
   *ppDimmPcdInfo = NULL;
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
-    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
+    REQUIRE_DCPMMS_MANAGEABLE, pDimms, &DimmsCount,
       pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -3744,7 +3744,7 @@ ModifyPcdConfig(
   }
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, NULL, 0,
-    REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL, pDimms, &DimmsCount,
+    REQUIRE_DCPMMS_MANAGEABLE, pDimms, &DimmsCount,
     pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;

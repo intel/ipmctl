@@ -19,9 +19,9 @@ ipmctl refers to the following interface components:
 
 ## Releases
 
-01.00.00.xxxx (master_1_0 branch) targets first generation of hardware
- 
-02.00.00.xxxx  (master_2_0 branch) adds support for up coming hardware generations
+01.00.00.xxxx (master_1_0 branch) is for Intel Optane Persistent Memory 100 Series
+
+02.00.00.xxxx  (master_2_0 branch) is for Intel Optane Persistent Memory 200 Series (and is backwards compatible with 100 series) 
 
 ## Packages
 

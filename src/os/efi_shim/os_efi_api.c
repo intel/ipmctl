@@ -238,12 +238,14 @@ initAcpiTables()
   {
     NVDIMM_WARN("Encountered %d failures.", failures);
     ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   if (NULL == PtrNfitTable || NULL == PtrPcatTable)
   {
     NVDIMM_WARN("Failed to obtain NFIT or PCAT table.");
     ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   ReturnCode = ParseAcpiTables(PtrNfitTable, PtrPcatTable, PtrPMTTTable,

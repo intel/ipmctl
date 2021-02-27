@@ -4796,6 +4796,9 @@ GuessNvmStatusFromReturnCode(
     case EFI_NO_RESPONSE:
       NvmStatus = NVM_ERR_BUSY_DEVICE;
       break;
+    case EFI_NOT_FOUND:
+      NvmStatus = NVM_ERR_INIT_FAILED_NO_MODULES_FOUND;
+      break;
     // Don't have a default state for now, keep default "not started" error
   }
   return NvmStatus;

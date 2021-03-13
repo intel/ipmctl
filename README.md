@@ -12,8 +12,8 @@ It supports functionality to:
 
 ipmctl refers to the following interface components:
 
-* libipmctl: An Application Programming Interface (API) library for managing DCPMMs.
-* ipmctl: A Command Line Interface (CLI) application for configuring and managing DCPMMs from the command line.
+* libipmctl: An Application Programming Interface (API) library for managing PMems.
+* ipmctl: A Command Line Interface (CLI) application for configuring and managing PMems from the command line.
 
 ## Workarounds
 When using 02.00.00.x versions of ipmctl software to update or downgrade firmware on Intel® Optane™ PMem 100 Series modules, please use the “-lpmb” CLI option (use DDRT Large Payload transfer). Otherwise the operation may take significantly longer than it normally would.

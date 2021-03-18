@@ -259,7 +259,6 @@ ShowPcd(
     &pDimmPcdInfo, &DimmPcdInfoCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
-    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Get Platform Config Data", CLI_INFO_ON, pCommandStatus);
     goto Finish;
   }
 
@@ -291,7 +290,9 @@ ShowPcd(
 
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPcdDataSetAttribs);
   PRINTER_ENABLE_LIST_TABLE_FORMAT(pPrinterCtx);
+  pPrinterCtx->DoNotPrintGeneralStatusSuccessCode = TRUE;
 Finish:
+  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_SHOW_PCD, CLI_INFO_ON, pCommandStatus);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FreeDimmPcdInfoArray(pDimmPcdInfo, DimmPcdInfoCount);

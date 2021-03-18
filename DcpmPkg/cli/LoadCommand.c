@@ -242,6 +242,11 @@ Load(
     }
   }
 
+  if (NULL == pDimmTargets) {
+    ReturnCode = EFI_NOT_FOUND;
+    CHECK_RETURN_CODE(ReturnCode, Finish);
+  }
+
   /**
     In this case the user could have typed "FS0:\..."
     We are searching for the file on all FS so we need to remove the first chars until we have a "\"
@@ -419,15 +424,12 @@ Load(
   }
 
 Finish:
-  if (EFI_SUCCESS !=PrinterSetCommandStatus(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus)) {
-    NVDIMM_CRIT("Failed to set command status object!");
-  }
-
+  PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
   FreeCommandStatus(&pCommandStatus);
 
 FinishNoCommandStatus:
   // if no PrintCtx then nothing can be buffered so no need to process it
-  if ((NULL != pCmd) && (NULL != pCmd->pPrintCtx)) {
+  if ((NULL != pCmd)) {
     PRINTER_PROCESS_SET_BUFFER(pCmd->pPrintCtx);
   }
   FREE_POOL_SAFE(pFileName);

@@ -166,6 +166,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
 #define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the " PMEM_MODULES_STR L" on the next reboot."
 #define CLI_INFO_SHOW_REGISTER                                L"Show Register"
+#define CLI_INFO_SHOW_PCD                                     L"Show Platform Config Data"
 
 #define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified " PMEM_MODULES_STR L"."
 #define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."

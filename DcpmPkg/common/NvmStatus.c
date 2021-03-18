@@ -64,6 +64,9 @@ GetObjectTypeString(
   @param[in] pStatusPreposition String with preposition
   @param[in] pCommandStatus Command status data
   @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
+  @param[in] DoNotPrintGeneralStatusSuccessCode If true, pCommandStatus->GeneralStatus is success,
+                                                and there are no other nvm statuses set,
+                                                then don't print out a success message.
   @param[out] ppOutputMessage buffer where output will be saved
 
   Warning: ppOutputMessage - should be freed in caller.
@@ -78,6 +81,7 @@ CreateCommandStatusString(
   IN     CONST CHAR16 *pStatusPreposition,
   IN     COMMAND_STATUS *pCommandStatus,
   IN     BOOLEAN ObjectIdNumberPreferred,
+  IN     BOOLEAN DoNotPrintGeneralStatusSuccessCode,
   OUT CHAR16 **ppOutputMessage
 )
 {
@@ -105,11 +109,15 @@ CreateCommandStatusString(
 
   if (pCommandStatus->ObjectStatusCount == 0) {
     if (!NVM_ERROR(pCommandStatus->GeneralStatus)) {
-      pExecuteSuccessString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_EXECUTE_SUCCESS), NULL);
-      pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR_NL,
-        pStatusMessage,
-        pExecuteSuccessString);
-      FREE_POOL_SAFE(pExecuteSuccessString);
+      if (DoNotPrintGeneralStatusSuccessCode) {
+        pCurrentString = CatSPrint(pCurrentString, L"");
+      } else {
+        pExecuteSuccessString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_EXECUTE_SUCCESS), NULL);
+        pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_SPACE FORMAT_STR_NL,
+          pStatusMessage,
+          pExecuteSuccessString);
+        FREE_POOL_SAFE(pExecuteSuccessString);
+      }
     }
     else {
       pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(HiiHandle, pCommandStatus->GeneralStatus);
@@ -286,6 +294,8 @@ GetSingleNvmStatusCodeMessage(
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE), NULL);
   case NVM_ERR_MEDIA_DISABLED:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE), NULL);
+  case NVM_ERR_MEDIA_NOT_ACCESSIBLE:
+        return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MEDIA_NOT_ACCESSIBLE), NULL);
   case NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE:
       return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE), NULL);
   case NVM_ERR_PCD_CURR_CONF_MISSING:

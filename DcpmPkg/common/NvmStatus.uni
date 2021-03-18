@@ -74,6 +74,7 @@
 #string STR_DCPMM_STATUS_ERR_SENSOR_NOT_VALID                     #language en "Invalid sensor"
 #string STR_DCPMM_STATUS_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE   #language en "Invalid AlarmEnabled value"
 
+#string STR_DCPMM_STATUS_ERR_MEDIA_NOT_ACCESSIBLE                 #language en "Media not accessible"
 #string STR_DCPMM_STATUS_ERR_MEDIA_DISABLED_VALUE                 #language en "The media has been disabled"
 #string STR_DCPMM_STATUS_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE   #language en "Media not accessible. Replace PMem module to continue"
 #string STR_DCPMM_STATUS_ERR_A_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE #language en "One or more PMem modules with media not accessible. Replace PMem module(s) to continue"

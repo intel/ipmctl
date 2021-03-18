@@ -237,6 +237,7 @@ Parse(
   UINTN Start = 0;
   UINTN Index = 0;
   CHAR16 *pHelpStr = NULL;
+  CHAR16 *pSyntaxErrorStr = NULL;
 
   NVDIMM_ENTRY();
 
@@ -322,6 +323,14 @@ Parse(
     goto Finish;
   }
 
+  /* check if input target ordering is correct */
+  if (!InputTargetsValid(pCommand->targets, &pSyntaxErrorStr)) {
+    pCommand->ShowHelp = TRUE;
+    SetSyntaxError(CatSPrint(NULL, FORMAT_STR_NL FORMAT_STR_NL FORMAT_STR, pSyntaxErrorStr, CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   /* try to match the parsed input against a registered command */
   for (Index = 0; Index < gCommandCount; Index++) {
     ReturnCode = MatchCommand(pCommand, &gCommandList[Index]);
@@ -362,6 +371,7 @@ Parse(
   }
 
 Finish:
+  FREE_POOL_SAFE(pSyntaxErrorStr);
   FREE_POOL_SAFE(pHelpStr);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -939,6 +949,64 @@ UINT16 TargetMatchCount(struct Command *pInputCmd, struct Command *pCmdToMatch)
   return val;
 }
 
+/**
+  Validate input targets combination
+  Function compares input targets with invalid sequences
+
+  @param[in] pInputTargets is a pointer to the list of input command targets
+  @param[out] ppErrorString is a pointer to a pointer to the return error message
+
+  @retval TRUE if input command targets does not match any known invalid combination
+  @retval FALSE if all targets matches to invalid combination
+ **/
+BOOLEAN InputTargetsValid(struct target *pInputTargets, CHAR16 **ppErrorString)
+{
+  BOOLEAN ReturnValue = TRUE;
+  UINT16 IndexSeq = 0;
+  UINT16 IndexTar = 0;
+  CHAR16 *InputName = NULL;
+  CHAR16 *MatchName = NULL;
+  BOOLEAN Match = FALSE;
+
+  static const struct TargetsCombination InvalidSequences[] =
+  {
+    { {L"-socket", L"-dimm", NULL}, L"Invalid input target ordering: -socket -dimm" }
+  };
+
+  if (pInputTargets == NULL) {
+    goto Finish;
+  }
+
+  for (IndexSeq = 0; IndexSeq < ARRAY_SIZE(InvalidSequences); IndexSeq++) {
+    Match = TRUE;
+
+    for (IndexTar = 0; IndexTar < MAX_TARGETS; IndexTar++) {
+      InputName = pInputTargets[IndexTar].TargetName;
+      MatchName = InvalidSequences[IndexSeq].pTargets[IndexTar];
+
+      if (MatchName == NULL) {
+        // Input and invalid sequence match! Quit from loop.
+        break;
+      }
+
+      if (StrICmp(InputName, MatchName) != 0) {
+        // Targets are different. Quit from loop.
+        Match = FALSE;
+        break;
+      }
+    }
+
+    if (Match == TRUE) {
+      *ppErrorString = CatSPrint(NULL, FORMAT_STR, InvalidSequences[IndexSeq].pErrString);
+      ReturnValue = FALSE;
+      break;
+    }
+  }
+
+Finish:
+  return ReturnValue;
+}
+
 /*
  * Attempt to match the input based on the targets
  */
@@ -1252,7 +1320,7 @@ CHAR16
    }
     else if (gCommandList[Index].SyntaxErrorHelpNeeded) {
       /** full verb syntax with help string **/
-      if (pCommand == NULL || SingleCommand || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
+      if (NULL == pCommand || TRUE == SingleCommand || TRUE == pCommand->ShowHelp) {
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_SPACE, gCommandList[Index].verb);
       }

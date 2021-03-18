@@ -59,7 +59,6 @@ typedef struct _NVM_IS
   UINT16 InterleaveFormatChannel;
   UINT16 InterleaveFormatImc;
   UINT16 InterleaveFormatWays;
-  BOOLEAN MirrorEnable;
   LIST_ENTRY DimmRegionList;
   SpaRangeTbl *pSpaTbl;
   LIST_ENTRY AppDirectNamespaceList;
@@ -76,7 +75,6 @@ typedef struct _NVM_REGION {
   UINT16 RegionId;
   UINT16 Socket;
   UINT8 Type;
-  BOOLEAN MirrorEnable;
   DIMM *pDimmsBlockOnly[MAX_DIMMS_PER_SOCKET];
   UINT32 DimmsBlockOnlyNum;
   UINT64 BlockOnlySize;
@@ -98,7 +96,7 @@ typedef struct _REGION_GOAL_DIMM {
 typedef struct _REGION_GOAL {
   UINT32 SequenceIndex;       //!< Variable to keep an order of REGIONS on DIMMs
   UINT64 Size;                //!< Size of the pool in bytes
-  UINT8 InterleaveSetType;    //!< Type of interleave set: non-interleaved, interleaved, mirrored
+  UINT8 InterleaveSetType;    //!< Type of interleave set: non-interleaved, interleaved
   UINT8 ImcInterleaving;      //!< IMC interleaving as bit field
   UINT8 ChannelInterleaving;  //!< Channel interleaving as bit field
   UINT16 NumOfChannelWays;    //!< Number of channel ways as bit field
@@ -486,7 +484,6 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
   Retrieve goal configurations by using Platform Config Data
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
-  @param[in] Restore corrupt pcd
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -495,7 +492,8 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt
+  IN     BOOLEAN RestoreCorrupt,
+  IN     BOOLEAN CheckSupportedConfigDimms
   );
 
 /**

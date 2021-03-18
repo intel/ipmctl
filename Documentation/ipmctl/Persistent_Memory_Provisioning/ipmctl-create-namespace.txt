@@ -1,0 +1,146 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-create-namespace(1)
+==========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-create-namespace - Creates a namespace from a persistent memory region
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl create [OPTIONS] -namespace -region (RegionID) [PROPERTIES]
+--
+
+DESCRIPTION
+-----------
+Creates a new namespace from a persistent memory region of PMem module capacity.
+
+OPTIONS
+-------
+-f::
+-force::
+  If the resulting namespace capacity does not align properly, a prompt will be
+  displayed to confirm the rounded-up namespace capacity to the next aligned
+  size. This option suppresses the confirmation and proceeds with rounding up
+  the namespace capacity as necessary.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
+
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-region (RegionIDs)::
+  The region identifier on which to create the namespace
+
+PROPERTIES
+----------
+Capacity::
+  The size of the namespace. Unless otherwise specified by the units option, the capacity is measured in GiB.
+  The default is to use the maximum available capacity on the
+  specified region. Minimum capacity is 1 GiB * (number of PMem modules in target region).
+  For example:
+  * 6 GiB is minimum size for a x6 interleave set.
+  * 1 GiB is minimum size for a x1 non-interleave set.
+
+Name::
+  Optional user specified namespace name to more easily identify the namespace.
+  Up to a maximum of 63 characters.
+
+Mode::
+  The mode for the namespace after creation. One of:
+  * "None": (Default) Raw namespace without any address abstraction.
+  * "Sector": Powerfail block write atomicity is guaranteed via a Block
+    Translation Table (BTT)
+
+EXAMPLES
+--------
+Creates an App Direct memory namespace on region 0x01 using default settings.
+[listing]
+--
+ipmctl create -namespace -region 0x01
+--
+
+Creates a 32 GB App Direct namespace on region 0x01.
+[listing]
+--
+ipmctl create -units GB -namespace -region 0x01 Capacity=32
+--
+
+Creates a 32 GB App Direct sector mode namespace on region 0x01.
+[listing]
+--
+ipmctl create -units GB -namespace -region 0x01 Capacity=32 mode=Sector
+--
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* The specified PMem modules must be manageable by the host software.
+
+* The underlying PMem modules must be unlocked and the region HealthState must be "Healthy."
+
+Use the command *_Show System Capabilities_* to retrieve namespace
+limitations as reported by the driver.
+
+NOTE: For App Direct namespaces to be compatible across operating systems, it is
+recommended that a single App Direct namespace consumes the entire capacity
+(AppDirectNamespaceMaxSize) as reported by the command *_Show Persistent Memory_*.
+
+NOTE: Microsoft Windows supports and validates only a single namespace per region
+configuration.
+
+RETURN DATA
+-----------
+If the resulting namespace capacity does not align properly, a prompt will be
+displayed to confirm the rounded-up namespace capacity to the next aligned size.
+The force option can be used to override this confirmation and proceed with the
+rounded up capacity.
+
+[listing]
+--
+The requested namespace capacity [capacity] will be rounded up to [capacity] to
+align properly. Do you want to continue?
+--
+
+SAMPLE OUTPUT
+-------------
+If the namespace is created successfully, the Intel(R) CLI will display all attributes of the new
+namespace as documented in the command Section <<Show Namespace>>.
+If a failure occurs when creating the namespace, the Intel(R) CLI will display a single error
+message.
+[listing]
+--
+Create namespace failed: Error (Code)- (Description)
+--

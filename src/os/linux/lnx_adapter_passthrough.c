@@ -9,13 +9,15 @@
  */
 
 //#include "device_adapter.h"
-#include "lnx_adapter_logging.h"
+//#include "lnx_adapter_logging.h"
 #include "lnx_adapter.h"
+#include <Base.h>
 #include "lnx_adapter_passthrough.h"
 //#include <os/os_adapter.h>
 #include <string.h>
 #include <stdlib.h>
 #include <os_types.h>
+#include <NvmSharedDefs.h>
 #define DEV_SMALL_PAYLOAD_SIZE	128 /* 128B - Size for a passthrough command small payload */
 
 #define DSM_TO_NVM_ERROR(dsm_vendor_error, p_fw_cmd, rc) \

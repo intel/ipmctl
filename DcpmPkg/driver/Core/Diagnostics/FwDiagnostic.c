@@ -50,7 +50,7 @@ RunFwDiagnostics(
     goto Finish;
   }
 
-  if (DimmCount == 0 || ppDimms == NULL) {
+  if (DimmCount == 0 || ppDimms == NULL || GetManageableDimmsCount(ppDimms, DimmCount) == 0) {
     ReturnCode = EFI_SUCCESS;
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_NO_MANAGEABLE_DIMMS), EVENT_CODE_901, DIAG_STATE_MASK_OK, &pResult->Message, &pResult->StateVal);
     goto Finish;

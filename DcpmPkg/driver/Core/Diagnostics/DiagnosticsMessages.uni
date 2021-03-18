@@ -61,6 +61,7 @@
 #string STR_QUICK_BSR_REBOOT_REQUIRED                    #language en "The quick health check detected that PMem module %ls is reporting reboot required."
 #string STR_QUICK_FW_BUSY                                #language en "The quick health check detected that PMem module 0x%04x is busy."
 #string STR_QUICK_ACPI_NVDIMM_SPA_NOT_MAPPED             #language en "The quick health check detected that the platform FW did not map a region to SPA on PMem module %ls. ACPI NFIT NVDIMM State Flags Error Bit 6 Set"
+#string STR_QUICK_BSR_ROM_FAILED_INITIALIZATION          #language en "The quick health check detected that the ROM on PMem module %ls has failed to complete initialization, last known Major : Minor Checkpoint is 0x%x:0x%x."
 
 //Platform Config
 #string STR_CONFIG_STATUS_EXCEEDS_PARTITION_SIZE             #language en "EXCEEDS_PARTITION_SIZE"

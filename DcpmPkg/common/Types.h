@@ -51,6 +51,7 @@ typedef struct {
       InitializeListHead(DEV.Namespaces);
 
 #define DIMM_BSR_MAJOR_NO_POST_CODE 0x0
+#define DIMM_BSR_ROM_MAJOR_CHECKPOINT_INIT_FAILURE 0x91 // Unrecoverable error in ROM init
 #define DIMM_BSR_MAJOR_CHECKPOINT_INIT_FAILURE 0xA1 // Unrecoverable FW error
 #define DIMM_BSR_MAJOR_CHECKPOINT_CPU_EXCEPTION 0xE1 // CPU exception
 #define DIMM_BSR_MAJOR_CHECKPOINT_INIT_COMPLETE 0xF0 // FW initialization complete

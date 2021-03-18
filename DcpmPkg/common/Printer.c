@@ -1046,8 +1046,7 @@ static VOID PrintXmlEndSuccessTag(PRINT_CONTEXT *PrintCtx, EFI_STATUS CmdExitCod
 /*
 * Helper that creates a message out of a COMMAND_STATUS object.
 */
-static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHAR16 *pStatusPreposition,
-    BOOLEAN DoNotPrintGeneralStatusSuccessCode, COMMAND_STATUS *pCommandStatus) {
+static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHAR16 *pStatusPreposition, COMMAND_STATUS *pCommandStatus) {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT8 DimmIdentifier = 0;
   BOOLEAN ObjectIdNumberPreferred = FALSE;
@@ -1060,7 +1059,7 @@ static EFI_STATUS CreateCmdStatusMsg(CHAR16 **ppMsg, CHAR16 *pStatusMessage, CHA
   ObjectIdNumberPreferred = DimmIdentifier == DISPLAY_DIMM_ID_HANDLE;
 
   ReturnCode = CreateCommandStatusString(gNvmDimmCliHiiHandle, pStatusMessage, pStatusPreposition, pCommandStatus,
-    ObjectIdNumberPreferred, DoNotPrintGeneralStatusSuccessCode, ppMsg);
+    ObjectIdNumberPreferred, ppMsg);
 
 Finish:
   return ReturnCode;
@@ -1086,8 +1085,6 @@ EFI_STATUS PrinterCreateCtx(
   InitializeListHead(&((*ppPrintCtx)->BufferedObjectList));
   InitializeListHead(&((*ppPrintCtx)->DataSetLookup));
   InitializeListHead(&((*ppPrintCtx)->DataSetRootLookup));
-
-  (*ppPrintCtx)->DoNotPrintGeneralStatusSuccessCode = FALSE;
 Finish:
   return ReturnCode;
 }
@@ -1309,7 +1306,7 @@ Finish:
 * Handle commandstatus objects
 */
 EFI_STATUS PrinterSetCommandStatus(
-  IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL
+  IN     PRINT_CONTEXT *pPrintCtx,
   IN     EFI_STATUS Status,
   IN     CHAR16 *pStatusMessage,
   IN     CHAR16 *pStatusPreposition,
@@ -1318,19 +1315,13 @@ EFI_STATUS PrinterSetCommandStatus(
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   CHAR16 *FullMsg = NULL;
-  BOOLEAN DoNotPrintGeneralStatusSuccessCode = FALSE;
 
-  if (NULL == pCommandStatus) {
+  if (NULL == pCommandStatus && NULL == pPrintCtx) {
     NVDIMM_ERR("Invalid input parameter\n");
     goto Finish;
   }
 
-  if (pPrintCtx != NULL) {
-    DoNotPrintGeneralStatusSuccessCode = pPrintCtx->DoNotPrintGeneralStatusSuccessCode;
-  }
-
-  if (EFI_SUCCESS != (ReturnCode = CreateCmdStatusMsg(&FullMsg, pStatusMessage, pStatusPreposition,
-      DoNotPrintGeneralStatusSuccessCode, pCommandStatus))) {
+  if (EFI_SUCCESS != (ReturnCode = CreateCmdStatusMsg(&FullMsg, pStatusMessage, pStatusPreposition, pCommandStatus))) {
     goto Finish;
   }
 
@@ -1364,7 +1355,7 @@ static PRINT_MODE PrintMode(
 }
 
 /*
-* Process all objects in the "set buffer"
+* Process all objects int the "set buffer"
 */
 EFI_STATUS PrinterProcessSetBuffer(
   IN     PRINT_CONTEXT *pPrintCtx
@@ -1380,7 +1371,6 @@ EFI_STATUS PrinterProcessSetBuffer(
   BOOLEAN startXmlErrorPrinted = FALSE;
 
   if (NULL == pPrintCtx) {
-    NVDIMM_ERR("Invalid input parameter\n");
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1441,8 +1431,7 @@ EFI_STATUS PrinterProcessSetBuffer(
     }
     else if (BUFF_COMMAND_STATUS_TYPE == BufferedObject->Type) {
       BUFFERED_COMMAND_STATUS *pTempCs = (BUFFERED_COMMAND_STATUS *)BufferedObject->Obj;
-      CreateCmdStatusMsg(&FullMsg, pTempCs->pStatusMessage, pTempCs->pStatusPreposition,
-          pPrintCtx->DoNotPrintGeneralStatusSuccessCode, pTempCs->pCommandStatus);
+      CreateCmdStatusMsg(&FullMsg, pTempCs->pStatusMessage, pTempCs->pStatusPreposition, pTempCs->pCommandStatus);
       if (PRINT_XML != PrinterMode) {
         PrintTextWithNewLine(FullMsg);
       }

@@ -135,10 +135,10 @@ DeletePcdCmd(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     }
     goto Finish;
   }
@@ -255,7 +255,6 @@ DeletePcdCmd(
 
   PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"\n");
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
-  pCommandStatus->ObjectType = ObjectTypeDimm;
   for (Index = 0; Index < DimmIdsCount; Index++) {
     Attempts++;
     ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
@@ -277,7 +276,7 @@ DeletePcdCmd(
     }
 
     if (DimmInNamespace) {
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" is a member of a Namespace. Will not delete data from this " PMEM_MODULE_STR ".", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" is a member of a Namespace. Will not delete data from this " PMEM_MODULE_STR L".", DimmStr);
       SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
     } else {
       pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;

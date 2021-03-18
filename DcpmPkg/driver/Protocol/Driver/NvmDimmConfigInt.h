@@ -63,7 +63,8 @@ ValidateImageVersion(
   IN       NVM_FW_IMAGE_HEADER *pImage,
   IN       BOOLEAN Force,
   IN       DIMM *pDimm,
-  OUT  NVM_STATUS *pNvmStatus
+      OUT  NVM_STATUS *pNvmStatus,
+      OUT  COMMAND_STATUS *pCommandStatus
 );
 
 /**

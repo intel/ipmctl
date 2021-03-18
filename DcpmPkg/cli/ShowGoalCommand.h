@@ -15,9 +15,9 @@
 #define STATUS_STR                      L"Status"
 #define CLI_REBOOT_REQUIRED_MSG         L"A reboot is required to process new memory allocation goals.\n"
 #define CLI_NO_GOALS_MSG                L"There are no goal configs defined in the system.\nPlease use 'show -region' to display currently valid persistent memory regions.\n"
+#define CLI_NO_GOALS_ON_SOCKET_MSG      L"There are no goal configs defined on the specified socket.\nPlease use 'show -region' to display currently valid persistent memory regions.\n"
 #define CLI_GET_REGION_MSG              L"Get region configuration goal"
 #define CLI_GET_REGION_ON_MSG           L" on"
-#define MIRRORED_STR                    L" Mirrored"
 #define CLI_CREATE_SUCCESS_STATUS       L"Created following region configuration goal\n"
 
 #include <Uefi.h>

@@ -71,7 +71,7 @@ DecodePcatMemoryModeCapabilities(
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         L"SubNUMA Cluster");
     }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
     SUPPORTED_MEMORY_MODE3 *pPcatMemoryModeCapabilities = (SUPPORTED_MEMORY_MODE3 *)pPcatMemoryModeCapabilitiesField;
     if (pPcatMemoryModeCapabilities->MemoryModesFlags.OneLm) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
@@ -119,8 +119,12 @@ DecodePcatCurrentMemoryMode(
   IN     SUPPORTED_MEMORY_MODE *pPcatMemoryModeCapabilities
 )
 {
-  UINT8 mask = BIT0 | BIT1;
   CHAR16 *CurrentMemoryMode = NULL;
+  UINT8 CurrentVolatileMode = 0;
+  UINT8 PersistentMode = 0;
+  UINT8 AllowedVolatileMode = 0;
+  UINT8 SubNUMACluster = 0;
+  UINT8 mask = BIT0 | BIT1;
 
   if (pPcatCurrentMemoryModeField == NULL) {
     return CurrentMemoryMode;
@@ -128,80 +132,65 @@ DecodePcatCurrentMemoryMode(
 
   if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
     CURRENT_MEMORY_MODE *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE *)pPcatCurrentMemoryModeField;
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"1LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"2LM");
-    }
-
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Persistent Memory Mode", L"None");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Persistent Memory Mode", L"AppDirect");
-    }
-
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"1LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"2LM");
-    }
-
-    //Check if SubNUMA Cluster Mode is enabled
-    if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_STR,
-        L"-SubNUMA Cluster Mode ", ((pPcatCurrentMemoryMode->MemoryModeSplit.SubNumaCluster) ? L"Enabled" : L"Disabled"));
-    }
-  } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    CurrentVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode;
+    PersistentMode = pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode;
+    AllowedVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode;
+    SubNUMACluster = pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster;
+  } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
     CURRENT_MEMORY_MODE3 *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE3 *)pPcatCurrentMemoryModeField;
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"1LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Current Volatile Memory Mode", L"2LM");
-    }
+    CurrentVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode;
+    PersistentMode = pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode;
+    AllowedVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode;
+  }
 
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Persistent Memory Mode", L"None");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Persistent Memory Mode", L"AppDirect");
-    }
+  if ((CurrentVolatileMode & mask) == VOLATILE_MODE_1LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Current Volatile Memory Mode", L"1LM");
+  }
+  else if ((CurrentVolatileMode & mask) == VOLATILE_MODE_2LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Current Volatile Memory Mode", L"2LM");
+  }
+  else if ((CurrentVolatileMode & mask) == VOLATILE_MODE_1LM_PLUS_2LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Current Volatile Memory Mode", L"1LM+2LM");
+  }
 
-    if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == 0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"1LM");
-    }
-    else if ((pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode & mask) == BIT0) {
-      CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
-        L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
-        L"-Allowed Volatile Memory Mode", L"1LM or 2LM");
-    }
+  if ((PersistentMode & mask) == PERSISTENT_MODE_DISABLED) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Persistent Memory Mode", L"None");
+  }
+  else if ((PersistentMode & mask) == PERSISTENT_MODE_APP_DIRECT) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Persistent Memory Mode", L"AppDirect");
+  }
 
+  if ((AllowedVolatileMode & mask) == VOLATILE_MODE_1LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Volatile Memory Mode", L"1LM");
+  }
+  else if ((AllowedVolatileMode & mask) == VOLATILE_MODE_1LM_OR_2LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Volatile Memory Mode", L"1LM or 2LM");
+  }
+  else if ((AllowedVolatileMode & mask) == VOLATILE_MODE_1LM_PLUS_2LM) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+      L"-Allowed Volatile Memory Mode", L"1LM+2LM");
+  }
+
+  //Check if SubNUMA Cluster Mode is enabled
+  if (SubNUMACluster && IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
+    CurrentMemoryMode = CatSPrintClean(CurrentMemoryMode,
+      L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR FORMAT_STR,
+      L"-SubNUMA Cluster Mode ", (SubNUMACluster ? L"Enabled" : L"Disabled"));
   }
 
   if (CurrentMemoryMode == NULL) {
@@ -248,7 +237,7 @@ DecodePcatInterleaveFormatSupported(
     NumberOfChannelWays = pPcatInterleaveFormatSupported->InterleaveFormatSplit.NumberOfChannelWays & MAX_UINT16;
     Recommended = pPcatInterleaveFormatSupported->InterleaveFormatSplit.Recommended;
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
     INTERLEAVE_FORMAT3 *pPcatInterleaveFormatSupported = (INTERLEAVE_FORMAT3 *)pPcatInterleaveFormatSupportedField;
     ChannelInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.ChannelInterleaveSize;
     ImcInterleaveSize = InterleaveSizeSupported->InterleaveSizeSplit.iMCInterleaveSize;
@@ -315,6 +304,46 @@ DecodePcatInterleaveFormatSupported(
 
   FREE_POOL_SAFE(ChannelWaysSupported);
   return InterleaveFormatSupported;
+}
+
+/**
+  DecodePcatCacheCapabilities - decodes the CacheCapabilities field of PCAT structure type: PlatformCapabilityInfoTable
+
+  @param[in] pPcatCacheCapabilitiesField pointer to CacheCapabilities
+
+  @retval NULL if no interleave information is present
+  @retval string showing the interleave information
+**/
+CHAR16*
+DecodePcatCacheCapabilities(
+  IN     VOID *pPcatCacheCapabilitiesField
+)
+{
+  CHAR16 *CacheCapabilities = NULL;
+  CHAR16 *MemoryModeCacheCapabilities = NULL;
+  CACHE_CAPABILITIES *pPcatCacheCapabilities = (CACHE_CAPABILITIES *)pPcatCacheCapabilitiesField;
+
+  if (pPcatCacheCapabilitiesField == NULL) {
+    return CacheCapabilities;
+  }
+
+  if (pPcatCacheCapabilities->CacheCapabilitiesSplit.MemoryMode.InTile) {
+    MemoryModeCacheCapabilities = CatSPrintClean(MemoryModeCacheCapabilities,
+      ((MemoryModeCacheCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"In-tile");
+  }
+
+  if (pPcatCacheCapabilities->CacheCapabilitiesSplit.MemoryMode.CrossTile) {
+    MemoryModeCacheCapabilities = CatSPrintClean(MemoryModeCacheCapabilities,
+      ((MemoryModeCacheCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
+      L"Cross-tile");
+  }
+
+  CacheCapabilities = CatSPrintClean(CacheCapabilities, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_STR,
+    L"-MemoryMode", ((MemoryModeCacheCapabilities == NULL) ? L"None" : MemoryModeCacheCapabilities));
+
+  FREE_POOL_SAFE(MemoryModeCacheCapabilities);
+  return CacheCapabilities;
 }
 
 /**
@@ -400,6 +429,7 @@ PrintPcatTable(
   CHAR16 *PersistentMemoryRasCapability = NULL;
   CHAR16 *MemoryMode[] = {L"1LM", L"2LM", L"Reserved", L"AppDirect", L"Reserved"};
   CHAR16 *MaxPMInterleaveSets = NULL;
+  CHAR16 *CacheCapabilities = NULL;
 
   if (pTable == NULL) {
     NVDIMM_DBG("NULL Pointer provided");
@@ -471,7 +501,7 @@ PrintPcatTable(
           pPlatformCapabilityInfoTable->PersistentMemoryRasCapability);
       }
       FREE_POOL_SAFE(PersistentMemoryRasCapability);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -503,13 +533,22 @@ PrintPcatTable(
       MaxPMInterleaveSets = CatSPrintClean(MaxPMInterleaveSets, L"\n" SHOW_LIST_IDENT SHOW_LIST_IDENT SHOW_LIST_IDENT FORMAT_STR_COLON_SPACE_HEX,
         L"-Per PMem module", pPlatformCapabilityInfoTable->MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDcpmm);
       if (MaxPMInterleaveSets != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR L"\n",
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH FORMAT_STR ,
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16, MaxPMInterleaveSets);
       } else {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH L"\n",
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MaxPMInterleaveSets", FORMAT_HEX_NOWIDTH ,
           pPlatformCapabilityInfoTable->MaxPMInterleaveSets.AsUint16);
       }
       FREE_POOL_SAFE(MaxPMInterleaveSets);
+      if (IS_ACPI_REV_MAJ_3_MIN_VALID(PcatRevision)) {
+        CacheCapabilities = DecodePcatCacheCapabilities((VOID *)&pPlatformCapabilityInfoTable->CacheCapabilities);
+        if (CacheCapabilities != NULL) {
+          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CacheCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR ,
+            pPlatformCapabilityInfoTable->CacheCapabilities.AsUint8, CacheCapabilities);
+        }
+        FREE_POOL_SAFE(CacheCapabilities);
+      }
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DDRCacheSize", FORMAT_UINT32 L" GiB per DDR DIMM\n", pPlatformCapabilityInfoTable->DDRCacheSize);
     }
     break;
   case PCAT_TYPE_INTERLEAVE_CAPABILITY_INFO_TABLE:
@@ -538,7 +577,7 @@ PrintPcatTable(
         FREE_POOL_SAFE(InterleaveFormatSupported);
       }
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"InterleaveAlignmentSize", FORMAT_HEX_NOWIDTH L"\n", pMemoryInterleaveCapabilityInfoTable->InterleaveAlignmentSize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
@@ -608,7 +647,7 @@ PrintPcatTable(
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MappedMemorySizeLimit", FORMAT_UINT64, pSocketSkuInfoTable->MappedMemorySizeLimit);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"TotalMemorySizeMappedToSpa", FORMAT_UINT64, pSocketSkuInfoTable->TotalMemorySizeMappedToSpa);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"CachingMemorySize", FORMAT_UINT64 L"\n", pSocketSkuInfoTable->CachingMemorySize);
-    } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       DIE_SKU_INFO_TABLE *pDieSkuInfoTable = (DIE_SKU_INFO_TABLE *)pTable;
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"SocketID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->SocketId);
       PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"DieID", FORMAT_HEX_NOWIDTH, pDieSkuInfoTable->DieId);
@@ -656,7 +695,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -672,7 +711,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index] == NULL) {
         return;
       }
@@ -702,7 +741,7 @@ PrintPcat(
       PrintPcatTable((PCAT_TABLE_HEADER *)pPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index], pPrinterCtx);
     }
 
-    if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+    if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       if (pPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index] == NULL) {
         return;
       }

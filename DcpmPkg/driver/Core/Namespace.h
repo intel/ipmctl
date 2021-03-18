@@ -511,12 +511,12 @@ IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Name
 );
 /*
   Checks if Lsa status of Dimms is not initalized
-  for all manageable dimms
+  for a manageable dimm
 
-  @retval TRUE - if all manageable dimms have
+  @retval TRUE - if a manageable dimm has
                  lsaStatus set to LSA_NOT_INIT
 */
-BOOLEAN IsLSANotInitializedOnDimms();
+BOOLEAN IsLsaNotInitializedOnADimm();
 /**
   Initializes Namespaces inventory
 

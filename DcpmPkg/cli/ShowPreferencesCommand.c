@@ -14,6 +14,9 @@
 #include "Common.h"
 #include "Convert.h"
 #include <ReadRunTimePreferences.h>
+#ifdef OS_BUILD
+#include <os_efi_preferences.h>
+#endif
 
 #define DS_ROOT_PATH                      L"/Preferences"
 

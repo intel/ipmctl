@@ -94,7 +94,7 @@ GeneratePcdConfInput(
       ConfInputSize += pDimm->pRegionsGoal[Index]->DimmsNum * sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     ConfInputSize =
       sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
       + sizeof(NVDIMM_PARTITION_SIZE_CHANGE)
@@ -193,7 +193,6 @@ GeneratePcdConfInput(
       pInterleaveInfo->InterleaveFormatImc = pDimm->pRegionsGoal[Index]->ImcInterleaving;
 
       pInterleaveInfo->InterleaveFormatWays = pDimm->pRegionsGoal[Index]->NumOfChannelWays;
-      pInterleaveInfo->MirrorEnable = pDimm->pRegionsGoal[Index]->InterleaveSetType == MIRRORED ? 1 : 0;
       pInterleaveInfo->InterleaveChangeStatus = 0; // Used by Config Output, 0 for Config Input
 
       pCurrentOffset = (UINT8 *)pCurrentOffset + sizeof(NVDIMM_INTERLEAVE_INFORMATION);
@@ -241,7 +240,7 @@ GeneratePcdConfInput(
       LastPersistentMemoryOffset += PmPartitionSize;
     }
   }
-  else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID((*ppConfigInput)))  {
+  else if (IS_ACPI_HEADER_REV_MAJ_1_OR_MAJ_3((*ppConfigInput)))  {
     for (Index = 0; Index < pDimm->RegionsGoalNum; Index++) {
       NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurrentOffset;
 
@@ -392,6 +391,7 @@ GenerateChecksum(
 
   @param[in] pData Table that will validate the checksum for
   @param[in] Length Size of the pData
+  @param[in] Checksum of pData
 
   @retval TRUE The table and the checksum sum to 0
   @retval FALSE The table and the checksum not sum to 0
@@ -399,7 +399,8 @@ GenerateChecksum(
 BOOLEAN
 IsChecksumValid(
   IN     VOID *pData,
-  IN     UINT32 Length
+  IN     UINT32 Length,
+  IN     UINT8 Checksum
   )
 {
   UINT8 Sum = 0;
@@ -416,7 +417,7 @@ IsChecksumValid(
   }
 
   if (Sum != 0) {
-    NVDIMM_DBG("Checksum(%d) missed by %d", pByteData[PCAT_TABLE_HEADER_CHECKSUM_OFFSET], Sum);
+    NVDIMM_DBG("Checksum(%d) missed by %d", Checksum, Sum);
   }
 
   return (Sum == 0) ? TRUE : FALSE;
@@ -640,7 +641,7 @@ BOOLEAN IsPcdConfInputHeaderValid(NVDIMM_PLATFORM_CONFIG_INPUT *pPcdConfInput, U
   else if (pPcdConfInput->Header.Length > PcdOemPartitionSize) {
     NVDIMM_DBG("Length of PCD Config Input header is greater than max PCD OEM partition size");
   }
-  else if (!IsChecksumValid(pPcdConfInput, pPcdConfInput->Header.Length)) {
+  else if (!IsChecksumValid(pPcdConfInput, pPcdConfInput->Header.Length, pPcdConfInput->Header.Checksum)) {
     NVDIMM_DBG("The checksum of Config Input table is invalid.");
   }
   else if (IS_ACPI_HEADER_REV_INVALID(pPcdConfInput)) {
@@ -674,7 +675,7 @@ BOOLEAN IsPcdConfOutputHeaderValid(NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput
   else if (pPcdConfOutput->Header.Length > PcdOemPartitionSize) {
     NVDIMM_DBG("Length of PCD Config Output header is greater than max PCD OEM partition size");
   }
-  else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length)) {
+  else if (!IsChecksumValid(pPcdConfOutput, pPcdConfOutput->Header.Length, pPcdConfOutput->Header.Checksum)) {
     NVDIMM_DBG("The checksum of Config Output table is invalid.");
   }
   else if (IS_ACPI_HEADER_REV_INVALID(pPcdConfOutput)) {
@@ -711,7 +712,7 @@ BOOLEAN IsPcdCurrentConfHeaderValid(NVDIMM_CURRENT_CONFIG *pPcdCurrentConf, UINT
   else if (IS_ACPI_HEADER_REV_INVALID(pPcdCurrentConf)) {
     NVDIMM_DBG("Revision of PCD Current Config table is invalid");
   }
-  else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length)) {
+  else if (!IsChecksumValid(pPcdCurrentConf, pPcdCurrentConf->Header.Length, pPcdCurrentConf->Header.Checksum)) {
     NVDIMM_DBG("The Current Config table checksum is invalid.");
   }
   else {

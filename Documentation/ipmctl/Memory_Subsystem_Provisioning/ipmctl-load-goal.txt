@@ -13,7 +13,9 @@ ipmctl-load-goal - Creates a memory allocation goal request from a file
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl load [OPTIONS] -source (path) -goal [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -23,7 +25,7 @@ NOTE: Deleting the PCD can be used as a way to prepare individual PMem modules f
 See the delete -pcd command.
 
 include::../ipmctl-command-data-loss-warning.txt[]
-include::../ipmctl-change-goal-config-note.txt[]
+include::../ipmctl-set-goal-config-note.txt[]
 
 OPTIONS
 -------
@@ -86,35 +88,41 @@ Loads the configuration settings stored in "config.txt" onto all the PMem module
 the system as a memory allocation goal to be applied by the BIOS on the next
 reboot.
 [listing]
+--
 ipmctl load -source config.txt -goal
+--
 
 Loads the configuration settings stored in "config.txt" onto a specified set of
 PMem modules as a memory allocation goal to be applied by the BIOS on the next reboot.
 [listing]
+--
 ipmctl load -source config.txt -goal -dimm 1,2,3
+--
 
 Loads the configuration settings stored in "config.txt" onto all manageable
 PMem modules on sockets 1 and 2 as a memory allocation goal to be applied by the BIOS
 on the next reboot.
 [listing]
+--
 ipmctl load -source config.txt -goal -socket 1,2
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software and
+* The specified PMem modules must be manageable by the host software and
   must all have the same SKU.
 
-- SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
+* SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
 
-- Existing memory allocation goals that have not been applied and any namespaces
+* Existing memory allocation goals that have not been applied and any namespaces
   associated with the requested PMem modules must be deleted before running
   this command.
 
-- Goal requests may not be applied by platform firmware (BIOS) if the PMem module is in
+* Goal requests may not be applied by platform firmware (BIOS) if the PMem module is in
 security enabled, locked state.
 
 NOTE: It is recommended to disable security prior to reboot if requesting a new goal.
@@ -124,7 +132,7 @@ NOTE: A goal request may be initiated even if a target PMem module is in securit
   platform firmware (BIOS) provisioning flow following a reboot. In addition, a warning will be presented to the
   user: 'WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!'
 
-- Changing the memory configuration is a destructive operation which results in loss of
+* Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to
   other storage before executing this command.
   Targets may be limited to individual PMem modules or sockets, but all PMem modules
@@ -133,7 +141,7 @@ NOTE: A goal request may be initiated even if a target PMem module is in securit
   Refer to *_Show System Capabilities_* for a list of BIOS
   supported modes.
 
-- Some requests are dependent on BIOS and/or platform configuration. For details, refer
+* Some requests are dependent on BIOS and/or platform configuration. For details, refer
   to the _Intel(R) Optane(TM) Persistent Memory Software Memory Allocation Rules_,
   document number 564194. For example:
  - Provisioning PMem modules for Memory Mode while BIOS is configured for 1LM only

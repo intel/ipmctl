@@ -7,24 +7,27 @@ message("cmake version: " ${CMAKE_VERSION})
 
 project(ipmctl)
 
+# Enable tests that may be contained in the below subdirectories
+enable_testing()
+
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 get_filename_component(ROOT ./ ABSOLUTE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake/Find")
 
-set(LIBIPMCTL_VERSION_MAJOR 4)
-set(LIBIPMCTL_VERSION_MINOR 0)
+set(LIBIPMCTL_VERSION_MAJOR 5)
+set(LIBIPMCTL_VERSION_MINOR 2)
 set(LIBIPMCTL_VERSION_PATCH 0)
 set(LIBIPMCTL_VERSION_STRING ${LIBIPMCTL_VERSION_MAJOR}.${LIBIPMCTL_VERSION_MINOR}.${LIBIPMCTL_VERSION_PATCH})
 
-set(IPMCTL_VERSION_MAJOR 02)
+set(IPMCTL_VERSION_MAJOR 03)
 set(IPMCTL_VERSION_MINOR 00)
 set(IPMCTL_VERSION_PATCH 00)
 
-set(IPMCTL_SPEC_VERSION_MAJOR 2)
-set(IPMCTL_SPEC_VERSION_MINOR 05)
-set(IPMCTL_DRAFT "-draft")
+set(IPMCTL_SPEC_VERSION_MAJOR 3)
+set(IPMCTL_SPEC_VERSION_MINOR 00)
+set(IPMCTL_DRAFT "")
 set(IPMCTL_SPEC_VERSION_STRING ${IPMCTL_SPEC_VERSION_MAJOR}.${IPMCTL_SPEC_VERSION_MINOR}${IPMCTL_DRAFT})
 
 if(BUILDNUM)
@@ -43,25 +46,25 @@ else()
 	endif()
 
 	if(NOT GIT_FOUND OR ${GIT_RETURN_CODE})
-		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.3844)
+		set(IPMCTL_VERSION_STRING ${IPMCTL_VERSION_MAJOR}.${IPMCTL_VERSION_MINOR}.${IPMCTL_VERSION_PATCH}.9999)
 	endif()
 endif()
 
 message(VERSION: ${IPMCTL_VERSION_STRING})
 
-if(RELEASE)
+if(RELEASE OR CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(BUILD_TYPE release)
 	set(CMAKE_BUILD_TYPE Release)
 	SET(CMAKE_SKIP_BUILD_RPATH TRUE)
 else()
-	set(BUILD_TYPE debug)
+  set(BUILD_TYPE debug)
 	set(CMAKE_BUILD_TYPE Debug)
 	add_definitions(
 		-DDEBUG_BUILD
-		)
+  )
 endif()
 
-message(BUILD_TYPE: ${CMAKE_BUILD_TYPE})
+message(CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE})
 
 if(BUILD_STATIC)
 	set(LIB_TYPE STATIC)
@@ -247,6 +250,7 @@ target_include_directories(ipmctl_os_interface PUBLIC
 	src/os
 	src/os/${OS_TYPE}
 	DcpmPkg/common
+	DcpmPkg/cli
 	src/os/nvm_api
 	src/os/s_string
 	MdePkg/Include
@@ -270,7 +274,9 @@ endif()
 #----------------------------------------------------------------------------------------------------
 file(GLOB LIBIPMCTL_SOURCE_FILES
 	src/os/efi_shim/AutoGen.c
+	src/os/efi_shim/AutoGenIo.c
 	src/os/efi_shim/os_efi_api.c
+	src/os/efi_shim/os_efi_api_io.c
 	src/os/efi_shim/os_efi_preferences.c
 	src/os/efi_shim/os_efi_shell_parameters_protocol.c
 	src/os/efi_shim/os_efi_simple_file_protocol.c
@@ -322,6 +328,7 @@ file(GLOB LIBIPMCTL_SOURCE_FILES
 	DcpmPkg/cli/DumpSessionCommand.c
 	DcpmPkg/common/FwUtility.c
 	DcpmPkg/common/Utility.c
+	DcpmPkg/common/UtilityIo.c
 	DcpmPkg/common/NvmTables.c
 	DcpmPkg/common/ShowAcpi.c
 	DcpmPkg/common/NvmStatus.c
@@ -506,6 +513,7 @@ set(STRING_DEFS_INPUT_FILES
 	${ROOT}/DcpmPkg/common/NvmStatus.uni
 	${ROOT}/DcpmPkg/driver/Core/Diagnostics/DiagnosticsMessages.uni
 	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings.py
+	${ROOT}/src/os/efi_shim/os_efi_hii_auto_gen_strings_ordered_dict.py
 	)
 
 set(STRING_DEFS_OUTPUT_FILES
@@ -553,8 +561,10 @@ FILE(GLOB NVM_HEADERS
 	DcpmPkg/common/NvmSharedDefs.h
 	)
 
-FILE(COPY LICENSE
+FILE(COPY opensource/opensource_LICENSE
 	DESTINATION ${OUTPUT_DIR})
+
+FILE(RENAME ${OUTPUT_DIR}/opensource_LICENSE ${OUTPUT_DIR}/LICENSE)
 
 FILE(COPY ${NVM_HEADERS}
 	DESTINATION ${OUTPUT_DIR})
@@ -629,7 +639,7 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 
 	set(DOCUMENTATION_INPUT_FILES
 		${ROOT}/Documentation/ipmctl/ipmctl.txt
-		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-device.txt
+		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-dimm.txt
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-memory-resources.txt
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-socket.txt
 		${ROOT}/Documentation/ipmctl/Discovery/ipmctl-show-system-capabilities.txt
@@ -640,16 +650,16 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-load-goal.txt
 		${ROOT}/Documentation/ipmctl/Memory_Subsystem_Provisioning/ipmctl-show-goal.txt
 		${ROOT}/Documentation/ipmctl/Persistent_Memory_Provisioning/ipmctl-show-region.txt
-		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-change-sensor.txt
+		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-set-sensor.txt
 		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-performance.txt
 		${ROOT}/Documentation/ipmctl/Instrumentation/ipmctl-show-sensor.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-change-preferences.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-set-preferences.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-dump-support-data.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-help.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-modify-device.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-set-dimm.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-firmware.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-show-preferences.txt
-		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-update-firmware.txt
+		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-load-dimm.txt
 		${ROOT}/Documentation/ipmctl/Support_and_Maintenance/ipmctl-version.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-pcd.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-delete-pcd.txt
@@ -659,7 +669,7 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-cel.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-diagnostic.txt
 #		${ROOT}/Documentation/ipmctl/Debug/ipmctl-diagnostic-events.txt
-		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-acpi.txt
+		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-system.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-error-log.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-show-session.txt
 		${ROOT}/Documentation/ipmctl/Debug/ipmctl-start-session.txt
@@ -681,7 +691,7 @@ if((ASCIIDOCTOR_FOUND OR A2X_FOUND) AND LNX_BUILD)
 			add_custom_command(OUTPUT ${MAN_OUTPUT}
 				COMMENT "Clean out link markup because they are invalid in the manpages"
 				COMMAND sed -e 's/<</\\[/g' -e 's/>>/]/g' ${MAN_INPUT} > ${MAN_TMP_INPUT}
-				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT} 
+				COMMAND ${A2X_BINARIES} -f manpage -a mansource=ipmctl -a manmanual="ipmctl" -a ipmctl_version=${IPMCTL_VERSION_STRING} -a os_build=1 -a manpage=1 -D ${OUTPUT_DIR}/manpage ${MAN_TMP_INPUT}
 				COMMAND gzip -f ${MAN_GZ_INPUT}
 				COMMAND rm -f ${MAN_TMP_INPUT}
 				COMMENT "Generating man pages"
@@ -705,6 +715,17 @@ endif()
 # --------------------------------------------------------------------------------------------------
 # Additional includes
 # --------------------------------------------------------------------------------------------------
+# CppUTest unit tests
+# Ideally we want official builds to not include unit test executables and
+# have it easy to build unit tests as an individual target from development
+# environments. However, after some attempts of modifying linux_build.sh, I
+# still haven't found a solution. So if you want to run unit tests, just
+# uncomment this UNIT_TEST flag or define it using the build scripts for now.
+#set(UNIT_TEST on)
+if (UNIT_TEST)
+	add_subdirectory("./tests/cpputest" "./cpputest_out")
+endif()
+
 if(LNX_BUILD AND UNIT_TEST)
 	include(CMake/unit_test.cmake)
 endif()

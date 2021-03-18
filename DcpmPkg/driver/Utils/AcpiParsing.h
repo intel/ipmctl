@@ -69,10 +69,13 @@ extern GUID gSpaRangeMailboxCustomGuid;
 
 typedef enum {
   MEMORY_MODE_1LM = 0,
-  MEMORY_MODE_2LM = 1
+  MEMORY_MODE_2LM = 1,
+  MEMORY_MODE_1LM_PLUS_2LM = 2
 } MEMORY_MODE;
 
 typedef SUPPORTED_MEMORY_MODE3 MEMORY_MODE_CAPABILITIES;
+
+#define IS_BIOS_VOLATILE_MEMORY_MODE_2LM(VolatileMemoryMode) ((MEMORY_MODE_2LM == VolatileMemoryMode) || (MEMORY_MODE_1LM_PLUS_2LM == VolatileMemoryMode))
 
 /**
   ACPI Related Functions
@@ -82,39 +85,51 @@ typedef SUPPORTED_MEMORY_MODE3 MEMORY_MODE_CAPABILITIES;
   ParseNfitTable - Performs deserialization from binary memory block into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the NFIT binary representation.
+  @param[out] ppParsedNfit Pointer to a pointer where the allocated and parsed NFIT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed NFIT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedFitHeader *
+EFI_STATUS
 ParseNfitTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedFitHeader **ppParsedNfit
   );
 
 /**
   Performs deserialization from binary memory block, containing PCAT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PCAT binary representation.
+  @param[out] ppParsedPcat Pointer to a pointer where the allocated and parsed PCAT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PCAT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPcatHeader *
+EFI_STATUS
 ParsePcatTable (
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPcatHeader **ppParsedPcat
   );
 
 /**
   Performs deserialization from binary memory block, containing PMTT tables, into parsed structure of pointers.
 
   @param[in] pTable pointer to the memory containing the PMTT binary representation.
+  @param[out] ppParsedPmtt Pointer to a pointer where the allocated and parsed PMTT table will be stored
 
-  @retval NULL if there was an error while parsing the memory.
-  @retval pointer to the allocated header with parsed PMTT.
+  @retval EFI_INVALID_PARAMETER One of the provided parameters is invalid
+  @retval EFI_VOLUME_CORRUPTED If the table checksum is invalid
+  @retval EFI_INCOMPATIBLE_VERSION If the table is not compatible with this ipmctl version
+  @retval EFI_SUCCESS
 **/
-ParsedPmttHeader *
+EFI_STATUS
 ParsePmttTable(
-  IN     VOID *pTable
+  IN     VOID *pTable,
+     OUT ParsedPmttHeader **ppParsedPmtt
   );
 
 /**
@@ -149,6 +164,38 @@ GetLogicalSocketIdFromPmtt(
   IN     UINT32 SocketId,
   IN     UINT32 DieId,
   OUT    UINT32 *pLogicalSocketId
+  );
+
+/**
+  Check if the current population is a special non-por config supported when cross-tiling is enabled
+
+  @param[out] pNonPorCrossTileSupportedConfig pointer to non-por config supported boolean flag
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pNonPorCrossTileSupportedConfig is NULL
+  @retval EFI_NOT_FOUND Parsed PMTT table is NULL
+**/
+EFI_STATUS
+CheckIsNonPorCrossTileSupportedConfig(
+  OUT  BOOLEAN *pNonPorCrossTileSupportedConfig
+  );
+
+/**
+  Retrieve the platform topology information (iMCs per die, Channels per iMc)
+
+  @param[out] piMCsNumPerDie Pointer to number of iMCs per die
+  @param[out] pChannelsNumPeriMC Pointer to number of channels per iMC
+  @param[out] pTopologyCanBeDetermined Pointer to flag indicating if topology can be determined
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND Parsed PMTT table pointer is NULL
+**/
+EFI_STATUS
+RetrievePlatformTopologyFromPmtt(
+  OUT UINT32 *piMCsNumPerDie,
+  OUT UINT32 *pChannelsNumPeriMC,
+  OUT BOOLEAN *pTopologyCanBeDetermined
   );
 
 /**
@@ -515,5 +562,33 @@ CheckIsMemoryModeAllowed(
 EFI_STATUS
 RetrieveMaxPMInterleaveSets(
   OUT  MAX_PMINTERLEAVE_SETS *pMaxPMInterleaveSets
+  );
+
+/**
+  Retrieve PCAT DDR Cache Size per channel in bytes from PCAT PlatformCapabilityInfo table
+
+  @param[out] pDDRCacheSize pointer to DDR Cache Size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pDDRCacheSize is NULL
+  @retval EFI_NOT_FOUND DDRCacheSize not found
+**/
+EFI_STATUS
+RetrievePcatDDRCacheSize(
+  OUT  UINT64 *pDDRCacheSize
+  );
+
+/**
+  Check PCAT Cache Capabilities to see if cross-tile caching is supported
+
+  @param[out] pCrossTileCachingSupported pointer to cross-tile supported boolean flag
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pCrossTileCachingSupported is NULL
+  @retval EFI_NOT_FOUND CrossTileCachingSupport not found
+**/
+EFI_STATUS
+CheckIsCrossTileCachingSupported(
+  OUT  BOOLEAN *pCrossTileCachingSupported
   );
 #endif

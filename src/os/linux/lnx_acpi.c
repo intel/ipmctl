@@ -8,6 +8,7 @@
  */
 
 #include "lnx_acpi.h"
+#include <Base.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>

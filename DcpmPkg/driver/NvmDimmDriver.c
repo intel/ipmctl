@@ -254,11 +254,6 @@ ReenumerateNamespacesAndISs(
 #ifndef OS_BUILD
   NVDIMM_ENTRY();
 
-  // TODO: Look into using ReinstallProtocolInterface() for the DoDriverCleanup
-  // flow instead of manually for a simpler implementation.
-  // Documentation is in the UEFI EDK2 Driver Writer's Guide.
-  // Include runtime PCD corruption detection and device state
-  // (i.e. goes down) in test cases.
   if (DoDriverCleanup == TRUE) {
     ReturnCode = CleanNamespacesAndISs();
     if (EFI_ERROR(ReturnCode)) {
@@ -1107,11 +1102,6 @@ InitializeDimms()
    EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
 #endif
    /**
-    Init container keeping operation statuses with wanring, error and info level messages.
-   **/
-   InitErrorAndWarningNvmStatusCodes();
-
-   /**
     enumerate DCPMMs
    **/
 
@@ -1352,11 +1342,6 @@ NvmDimmDriverDriverBindingStart(
    NVDIMM_ENTRY();
 
    /**
-   Init container keeping operation statuses with wanring, error and info level messages.
-   **/
-   InitErrorAndWarningNvmStatusCodes();
-
-   /**
    Remember the Controller handle that we were started with.
    **/
    gNvmDimmData->ControllerHandle = ControllerHandle;
@@ -1368,6 +1353,7 @@ NvmDimmDriverDriverBindingStart(
    ReturnCode = initAcpiTables();
    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to initialize the ACPI tables, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      goto Finish;
    }
 
    /**
@@ -1566,6 +1552,7 @@ NvmDimmDriverDriverBindingStart(
    ReturnCode = initAcpiTables();
    if (EFI_ERROR(ReturnCode)) {
       NVDIMM_WARN("Failed to initialize the ACPI tables, error = " FORMAT_EFI_STATUS ".", ReturnCode);
+      goto Finish;
    }
 
    /**

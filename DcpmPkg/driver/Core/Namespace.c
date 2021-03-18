@@ -62,7 +62,7 @@ VENDOR_DEVICE_PATH gVenHwNamespaceDevicePathNode = {
 NVDIMM_NAMESPACE_DEVICE_PATH gNvdimmNamespaceDevicePathNode = {
   {
     MESSAGING_DEVICE_PATH,
-    MSG_NVDIMM_NAMESPACE_DP, {
+    NVDIMM_NAMESPACE_DP, {
       (UINT8)(sizeof(NVDIMM_NAMESPACE_DEVICE_PATH)),
       (UINT8)((sizeof(NVDIMM_NAMESPACE_DEVICE_PATH)) >> 8)
     }
@@ -227,8 +227,6 @@ InstallProtocolsOnNamespaces(
   LIST_ENTRY *pNamespaceNode = NULL;
   NAMESPACE *pNamespace = NULL;
 
-  NVDIMM_ENTRY();
-
   for (pNamespaceNode = GetFirstNode(&gNvmDimmData->PMEMDev.Namespaces);
       !IsNull(&gNvmDimmData->PMEMDev.Namespaces, pNamespaceNode);
       pNamespaceNode = GetNextNode(&gNvmDimmData->PMEMDev.Namespaces, pNamespaceNode)) {
@@ -247,12 +245,6 @@ InstallProtocolsOnNamespaces(
         ReturnCode = EFI_SUCCESS;
       }
     }
-
-    // Reconnect the protocols that are built on top of the BlockIo protocol
-    // (DiskIo, SimpleFileSystem). This is somehow not required during normal driver load
-    // but is necessary during ReenumerateNamespacesAndISs(TRUE) where everything is reloaded.
-    CHECK_RESULT_CONTINUE(gBS->ConnectController(pNamespace->BlockIoHandle, NULL, NULL, TRUE));
-
   }
 
   return ReturnCode;
@@ -360,13 +352,13 @@ InstallNamespaceProtocols(
     }
 
     pNvdimmNamespaceDevicePath->Header.Type = MESSAGING_DEVICE_PATH;
-    pNvdimmNamespaceDevicePath->Header.SubType = MSG_NVDIMM_NAMESPACE_DP;
+    pNvdimmNamespaceDevicePath->Header.SubType = NVDIMM_NAMESPACE_DP;
 
     pNvdimmNamespaceDevicePath->Header.Length[0] = (UINT8)(sizeof(NVDIMM_NAMESPACE_DEVICE_PATH));
     pNvdimmNamespaceDevicePath->Header.Length[1] = (UINT8)((sizeof(NVDIMM_NAMESPACE_DEVICE_PATH)) >> 8);
 
-    CopyMem_S(&pNvdimmNamespaceDevicePath->Guid, sizeof(pNvdimmNamespaceDevicePath->Guid), pNamespace->NamespaceGuid,
-      sizeof(pNvdimmNamespaceDevicePath->Guid));
+    CopyMem_S(&pNvdimmNamespaceDevicePath->Uuid, sizeof(pNvdimmNamespaceDevicePath->Uuid), pNamespace->NamespaceGuid,
+      sizeof(pNvdimmNamespaceDevicePath->Uuid));
 
     pNamespace->pBlockDevicePath = AppendDevicePathNode(
       NULL,
@@ -1326,6 +1318,9 @@ ReadLabelStorageArea(
             Offset = (UINT32)(LabelIndexSize + (PageSize * (AlignPageIndex + Index)));
             // Read data
             ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, PageSize, &pRawData);
+            if (EFI_ERROR(ReturnCode)) {
+              goto FinishError;
+            }
             // Copy data to the LSA struct
             pFrom = pRawData + Offset;
             pTo = ((UINT8 *)(*ppLsa)->pLabels) + (sizeof(NAMESPACE_LABEL) * (AlignPageIndex + Index));
@@ -2229,12 +2224,7 @@ RetrieveNamespacesFromLsa(
           switch (pNamespace->pParentIS->State) {
           case IS_STATE_INIT_FAILURE:
           case IS_STATE_DIMM_MISSING:
-            if (pNamespace->pParentIS->MirrorEnable) {
-              pNamespace->HealthState = NAMESPACE_HEALTH_WARNING;
-            }
-            else {
-              pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
-            }
+            pNamespace->HealthState = NAMESPACE_HEALTH_CRITICAL;
             break;
           case IS_STATE_CONFIG_INACTIVE:
           case IS_STATE_SPA_MISSING:
@@ -2365,23 +2355,23 @@ IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Name
 }
 /*
   Checks if Lsa status of Dimms is not initalized
-  for all manageable dimms
+  for a manageable dimm
 
-  @retval TRUE - if all manageable dimms have
+  @retval TRUE - if a manageable dimm has
                  lsaStatus set to LSA_NOT_INIT
 */
-BOOLEAN IsLSANotInitializedOnDimms()
+BOOLEAN IsLsaNotInitializedOnADimm()
 {
   LIST_ENTRY *pNode = NULL;
   DIMM *pDimm = NULL;
-  BOOLEAN returncode = TRUE;
+  BOOLEAN returncode = FALSE;
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
 
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
-    returncode &= (LSA_NOT_INIT == pDimm->LsaStatus);
+    returncode |= (LSA_NOT_INIT == pDimm->LsaStatus);
   }
   return returncode;
 }
@@ -2419,8 +2409,7 @@ InitializeNamespaces(
       pDimm->pLsa = NULL;
     }
 
-    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
-    {
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 
@@ -2451,11 +2440,9 @@ InitializeNamespaces(
 
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
-    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
-    {
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
-
     if (pDimm->LsaStatus == LSA_NOT_INIT || pDimm->LsaStatus == LSA_CORRUPTED) {
       continue;
     }
@@ -3102,8 +3089,6 @@ CalculateAppDirectNamespaceBaseSpa(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 Index = 0;
   NvDimmRegionMappingStructure *pDimmRegionTable = NULL;
-  InterleaveStruct *pInterleaveTable = NULL;
-  UINT64 NamespaceRdpa = 0;
 
   NVDIMM_ENTRY();
 
@@ -3128,40 +3113,15 @@ CalculateAppDirectNamespaceBaseSpa(
     // First Dimm in the interleave set
     if (pDimmRegionTable->RegionOffset == 0) {
 
-      // Interleave tables only exist for interleaved dimms
-      if (pDimmRegionTable->InterleaveStructureIndex != 0) {
-        ReturnCode = GetInterleaveTable(
-          gNvmDimmData->PMEMDev.pFitHead,
-          pDimmRegionTable->InterleaveStructureIndex,
-          &pInterleaveTable);
-
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_DBG("Unable to locate Interleave table in NFIT for dimm");
-          goto Finish;
-        }
-      } else {
-        pInterleaveTable = NULL;
-      }
-
       if (pNamespace->Range[Index].Dpa < pDimmRegionTable->NvDimmPhysicalAddressRegionBase) {
         NVDIMM_DBG("DPA exists before RegionBase");
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
 
-      NamespaceRdpa = pNamespace->Range[Index].Dpa - pDimmRegionTable->NvDimmPhysicalAddressRegionBase;
+      pNamespace->SpaNamespaceBase = pIS->pSpaTbl->SystemPhysicalAddressRangeBase +
+        ((pNamespace->Range[Index].Dpa - pDimmRegionTable->NvDimmPhysicalAddressRegionBase) * pNamespace->RangesCount);
 
-      ReturnCode = RdpaToSpa(
-        NamespaceRdpa,
-        pDimmRegionTable,
-        pIS->pSpaTbl,
-        pInterleaveTable,
-        &pNamespace->SpaNamespaceBase);
-
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Unable to calculate SPA base for namespace from RDPA");
-        goto Finish;
-      }
       break;
     }
   }

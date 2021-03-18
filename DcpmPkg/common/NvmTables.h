@@ -86,9 +86,17 @@
 #define ACPI_REVISION_1        1
 #define ACPI_REVISION_2        2
 #define ACPI_MAJOR_REVISION_1  1
+#define ACPI_MAJOR_REVISION_3  3
 #define ACPI_MINOR_REVISION_1  1
 #define ACPI_MINOR_REVISION_2  2
 #define ACPI_MINOR_REVISION_3  3
+
+#define IS_ACPI_REV_MAJ_3_MIN_1(revision)         ((revision.Split.Major == ACPI_MAJOR_REVISION_3) && (revision.Split.Minor == ACPI_MINOR_REVISION_1))
+#define IS_ACPI_REV_MAJ_3_MIN_2(revision)         ((revision.Split.Major == ACPI_MAJOR_REVISION_3) && (revision.Split.Minor == ACPI_MINOR_REVISION_2))
+#define IS_ACPI_HEADER_REV_MAJ_3_MIN_1(table)     ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_3) && (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1))
+#define IS_ACPI_HEADER_REV_MAJ_3_MIN_2(table)     ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_3) && (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2))
+#define IS_ACPI_REV_MAJ_3_MIN_VALID(revision)     (IS_ACPI_REV_MAJ_3_MIN_1(revision) || IS_ACPI_REV_MAJ_3_MIN_2(revision))
+#define IS_ACPI_HEADER_REV_MAJ_3_MIN_VALID(table) (IS_ACPI_HEADER_REV_MAJ_3_MIN_1(table) || IS_ACPI_HEADER_REV_MAJ_3_MIN_2(table))
 
 #define IS_ACPI_REV_MAJ_1_MIN_VALID(revision)     ((revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
                                                   ((revision.Split.Minor == ACPI_MINOR_REVISION_1) || (revision.Split.Minor == ACPI_MINOR_REVISION_2) || \
@@ -99,6 +107,9 @@
 #define IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_2(table) ((table->Header.Revision.Split.Major == ACPI_MAJOR_REVISION_1) && \
                                                   ((table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_1) || (table->Header.Revision.Split.Minor == ACPI_MINOR_REVISION_2)))
 
+#define IS_ACPI_REV_MAJ_1_OR_MAJ_3(revision)     (IS_ACPI_REV_MAJ_1_MIN_VALID(revision) || IS_ACPI_REV_MAJ_3_MIN_VALID(revision))
+#define IS_ACPI_HEADER_REV_MAJ_1_OR_MAJ_3(table) (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(table) || IS_ACPI_HEADER_REV_MAJ_3_MIN_VALID(table))
+
 #define IS_ACPI_REV_MAJ_0_MIN_VALID(revision)     ((revision.AsUint8 == ACPI_REVISION_1) || (revision.AsUint8 == ACPI_REVISION_2))
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(table) ((table->Header.Revision.AsUint8 == ACPI_REVISION_1) || (table->Header.Revision.AsUint8 == ACPI_REVISION_2))
 
@@ -108,18 +119,32 @@
 #define IS_ACPI_REV_MAJ_0_MIN_2(revision)     (revision.AsUint8 == ACPI_REVISION_2)
 #define IS_ACPI_HEADER_REV_MAJ_0_MIN_2(table) (table->Header.Revision.AsUint8 == ACPI_REVISION_2)
 
-#define IS_ACPI_REV_INVALID(revision)     ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2) && \
+#define IS_ACPI_REV_INVALID(revision)     (((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2)) && \
                                           ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
                                           ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)) && \
-                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_3)))
-#define IS_ACPI_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_1) || (revision.Split.Minor != ACPI_MINOR_REVISION_3)) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_3) || (revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((revision.Split.Major != ACPI_MAJOR_REVISION_3) || (revision.Split.Minor != ACPI_MINOR_REVISION_2)))
+#define IS_ACPI_HEADER_REV_INVALID(table) (((table->Header.Revision.AsUint8 != ACPI_REVISION_1) && (table->Header.Revision.AsUint8 != ACPI_REVISION_2)) && \
                                           ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
                                           ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)) && \
-                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_3)))
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_3)) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_3) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_1)) && \
+                                          ((table->Header.Revision.Split.Major != ACPI_MAJOR_REVISION_3) || (table->Header.Revision.Split.Minor != ACPI_MINOR_REVISION_2)))
 
 #define IS_NFIT_REVISION_INVALID(revision)   (revision.AsUint8 != ACPI_REVISION_1)
 #define IS_PCAT_REVISION_INVALID(revision)   IS_ACPI_REV_INVALID(revision)
 #define IS_PMTT_REVISION_INVALID(revision)   ((revision.AsUint8 != ACPI_REVISION_1) && (revision.AsUint8 != ACPI_REVISION_2))
+
+/**
+  Current Memory Modes definitions as for the PCD/PCAT spec
+**/
+#define VOLATILE_MODE_1LM           0x00 // 00b - 1LM Mode
+#define VOLATILE_MODE_2LM           0x01 // 01b - Current Memory Mode (2LM)
+#define VOLATILE_MODE_1LM_OR_2LM    0X01 // 01b - Allowed Memory Mode (1LM or 2LM)
+#define VOLATILE_MODE_1LM_PLUS_2LM  0x02 // 10b - 1LM+2LM Mode
+#define PERSISTENT_MODE_DISABLED    0x00 // 00b - Disabled
+#define PERSISTENT_MODE_APP_DIRECT  0x01 // 01b - AppDirect PM Mode
 
 /** NFIT Tables structures **/
 #pragma pack(push)
@@ -349,8 +374,7 @@ union {
     UINT8 OneLm           :1;
     UINT8 Memory          :1;
     UINT8 AppDirect       :1;
-    UINT8 AppDirectCached :1;
-    UINT8 Reserved1       :1;
+    UINT8 Reserved1       :2;
     UINT8 SubNUMAClster   :1;
     UINT8 Reserved        :2;
   } MemoryModesFlags;
@@ -382,6 +406,22 @@ union {
   UINT8 MemoryMode;
   _MEMORY_MODE_SPLIT MemoryModeSplit;
 } CURRENT_MEMORY_MODE;
+
+typedef
+struct {
+  UINT8 InTile    : 1;
+  UINT8 CrossTile : 1;
+  UINT8 Reserved  : 2;
+} MEM_MODE_CACHE_CAPABILITIES;
+
+typedef
+union {
+  UINT8 AsUint8;
+  struct {
+    MEM_MODE_CACHE_CAPABILITIES MemoryMode;
+    UINT8 Reserved : 4;
+  } CacheCapabilitiesSplit;
+} CACHE_CAPABILITIES;
 
 typedef struct {
   /**
@@ -431,12 +471,32 @@ typedef struct {
   CURRENT_MEMORY_MODE3 CurrentMemoryMode;
   /**
     Bits[3-0]: per CPU Die
-    Bits[7-4]: per Controller
+    Bits[7-4]: per module
     Bits[15-8]: Reserved
     0 means there is no limit defined.
   **/
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
-  UINT8 Reserved[7];
+  /**
+    Added as part of 3.01 F-S specification
+
+    Capacity in GiB per DDR DIMM for use as near
+    memory cache if 2LM is enabled. The remaining
+    DDR capacity will be used as 1LM.
+  **/
+  UINT32 DDRCacheSize;
+  /**
+    Added as part of 3.01 F-S specification
+
+    Cache Capabilities supported
+    Bits[3-0] - MemoryMode Cache Capabilities
+    Bit0: Set if In-tile supported
+    Bit1: Set if Cross-tile supported
+    Bits[3:2]: Reserved
+
+    Bits[7:4] - Reserved
+  **/
+  CACHE_CAPABILITIES CacheCapabilities;
+  UINT8 Reserved2[2];
 } PLATFORM_CAPABILITY_INFO3;
 
 typedef struct {
@@ -461,22 +521,21 @@ typedef struct {
     Bit0: Set if 1LM Mode supported
     Bit1: Set if 2LM Mode supported
     Bit2: Set if PM-Direct Mode supported
-    Bit3: Set if PM-Cached Mode supported
-    Bit4: Set if Block Mode supported
+    Bit5: Set if SubNUMA Cluster supported
   **/
   SUPPORTED_MEMORY_MODE MemoryModeCapabilities;
   /**
     Memory Mode selected in the BIOS setup
-    1 - 1LM mode
-    2 - 2LM + PM-Direct Mode
-    3 - 2LM + PM-Cached Mode
-    4 - Auto (2LM if DDR4+PMM with volatile mode present, 1LM otherwise)
+    0 - 1LM mode
+    1 - 2LM mode
+    2 - Auto (2LM if DDR+PMM with volatile mode present, 1LM otherwise)
     Note: no direct control is given to the management software to switch the mode
   **/
   CURRENT_MEMORY_MODE CurrentMemoryMode;
   /**
     Bit0: If set Persistent Memory region mirroring is supported
-    If mirror is supported, management software can select interleave sets for mirror.
+    Bit1: DimmSpareSupported
+    Bit2: AppDirectMigrationSupported
   **/
   UINT8 PersistentMemoryRasCapability;
   UINT8 Reserved[8];
@@ -533,10 +592,7 @@ typedef struct {
   **/
   /**
     Value defines memory mode
-    0 - 1LM
-    1 - 2LM
     3 - App Direct PM
-    4 - App Direct Cached PM
   **/
   UINT8 MemoryMode;
   UINT8 Reserved[3];
@@ -559,9 +615,10 @@ typedef struct {
   **/
   INTERLEAVE_SIZE InterleaveSize;
   /**
-    Bit0[3-0] - 4KB
-    Bit1[7-4] - 256B
-    Bits[15-8] - Reserved
+    Bits[3-0]: per CPU Die
+    Bits[7-4]: per module
+    Bits[15-8]: Reserved
+    0 means there is no limit defined.
   **/
   MAX_INTERLEAVE_SETS_PER_MEMTYPE MaxInterleaveSetsPerMemType;
   /**
@@ -611,7 +668,6 @@ typedef struct {
     0 - 1LM
     1 - 2LM
     3 - App Direct PM
-    4 - App Direct Cached PM
   **/
   UINT8 MemoryMode;
   UINT8 Reserved[3];
@@ -868,21 +924,28 @@ typedef struct {
   UINT16 SlotId;
 } PMTT_MODULE_INFO;
 
-/** PMTT Rev 0x11 ACPI data */
+/**
+  PMTT Rev 0x11 ACPI data
+  Enabled in ParsedPmttHeader means there is
+  at least one PMem module or DDR under iMC,
+  channel or slot type devices.
+**/
 typedef struct {
   PMTT_TABLE2 *pPmtt;                     ///< PMTT Header
+  UINT32 iMCsNumPerDie;                   ///< Count of iMCs per Die
+  UINT32 ChannelsNumPeriMC;               ///< Count of Channels per iMC
   UINT32 SocketsNum;                      ///< Count of Socket Devices
   PMTT_SOCKET2 **ppSockets;               ///< Socket Type Data Tables
   UINT32 DiesNum;                         ///< Count of Die Devices
   PMTT_VENDOR_SPECIFIC2 **ppDies;         ///< Die Type Data Tables
-  UINT32 iMCsNum;                         ///< Count of Memroy Controller Devices
+  UINT32 iMCsNum;                         ///< Count of enabled Memory Controller Devices
   PMTT_iMC2 **ppiMCs;                     ///< iMC Type Data Tables
-  UINT32 ChannelsNum;                     ///< Count of Channel Devices
+  UINT32 ChannelsNum;                     ///< Count of enabled Channel Devices
   PMTT_VENDOR_SPECIFIC2 **ppChannels;     ///< Channel Type Data Tables
-  UINT32 SlotsNum;                        ///< Count of Slot Devices
+  UINT32 SlotsNum;                        ///< Count of enabled Slot Devices
   PMTT_VENDOR_SPECIFIC2 **ppSlots;        ///< Slot Type Data Tables
-  UINT32 DDRModulesNum;                   ///< Count of DDR4 Devices
-  PMTT_MODULE_INFO **ppDDRModules;        ///< DDR4 Module Type Data Tables
+  UINT32 DDRModulesNum;                   ///< Count of DDR Devices
+  PMTT_MODULE_INFO **ppDDRModules;        ///< DDR Module Type Data Tables
   UINT32 DCPMModulesNum;                  ///< Count of PMem module Devices
   PMTT_MODULE_INFO **ppDCPMModules;       ///< PMem module Type Data Tables
 } ParsedPmttHeader;

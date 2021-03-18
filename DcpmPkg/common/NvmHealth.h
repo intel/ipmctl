@@ -55,6 +55,8 @@ typedef enum {
 
 #define NOT_APPLICABLE_SHORT_STR                              L"N/A"
 #define EXTENDED_ADR_FLUSH_COMPLETE        0b1111
+#define SX_EXTENDED_FLUSH_COMPLETE         0b1111
+
 /**
   Namespace PM Capable values
 **/
@@ -105,6 +107,7 @@ typedef union {
     UINT16 PMIdle                      : 1; //!< PM Idle received
     UINT16 DdrtSurpriseReset           : 1; //!< Surprise Reset received
     UINT16 EnhancedAdrFlushStatus      : 4; //!< eADR Flush Status
+    UINT16 SxExtendedFlushStatus       : 4; //!< Sx Extended Flush Status
   } Separated;
 } LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED;
 

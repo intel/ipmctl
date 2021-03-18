@@ -21,6 +21,9 @@
 /** Return code status values as identified by #NvmStatusCode */
 typedef INT16 NVM_STATUS;
 
+/** Return code status values identified by #DataStatusCode */
+typedef INT16 DATA_STATUS;
+
 /** Structures for CLI command status output **/
 
 /** Object type used by #COMMAND_STATUS **/
@@ -37,8 +40,10 @@ typedef enum {
 /** #OBJECT_STATUS Signature */
 #define OBJECT_STATUS_SIGNATURE      SIGNATURE_64('O', 'B', 'J', 'S', 'T', 'A', 'T', 'S')
 
+
 /* Helper function to get #OBJECT_STATUS from a node */
 #define OBJECT_STATUS_FROM_NODE(a)   CR(a, OBJECT_STATUS, ObjectStatusNode, OBJECT_STATUS_SIGNATURE)
+
 
 /** Status bit field for #OBJECT_STATUS */
 typedef struct _NVM_STATUS_BIT_FIELD {
@@ -47,6 +52,7 @@ typedef struct _NVM_STATUS_BIT_FIELD {
 
 /** Max length of the ObjectIdStr string */
 #define MAX_OBJECT_ID_STR_LEN  30
+#define MAX_STATUS_DETAILS_STR_LEN 64
 
 /** Object status list structure **/
 typedef struct {
@@ -57,6 +63,7 @@ typedef struct {
   CHAR16 ObjectIdStr[MAX_OBJECT_ID_STR_LEN];  ///< String representation of Object ID
   NVM_STATUS_BIT_FIELD StatusBitField;        ///< Bitfield for NVM Status
   UINT8 Progress;                             ///< Progress
+  OBJECT_TYPE ObjectType;                     ///< Type of object
 } OBJECT_STATUS;
 
 /**
@@ -64,18 +71,11 @@ typedef struct {
   status codes for every Object (SOCKET, DIMM, NAMESPACE) which were involved in this operation
 **/
 typedef struct {
-  NVM_STATUS GeneralStatus;     ///< General return status
-  OBJECT_TYPE ObjectType;       ///< Type of object
-  LIST_ENTRY ObjectStatusList;  ///< List of #OBJECT_STATUS objects
-  UINT16 ObjectStatusCount;     ///< Count of object on #ObjectStatusList
+  NVM_STATUS GeneralStatus;                           ///< General return status
+  LIST_ENTRY ObjectStatusList;                        ///< List of #OBJECT_STATUS objects
+  UINT16 ObjectStatusCount;                           ///< Count of object on #ObjectStatusList
+  CHAR16 StatusDetails[MAX_STATUS_DETAILS_STR_LEN];   ///< Detailed return status, informs about data incorrectness
 } COMMAND_STATUS;
-
-/**
-  Fill global variables containing all Error/Warning NVM Statuses
-**/
-VOID
-InitErrorAndWarningNvmStatusCodes(
-  );
 
 /**
   Create command status as with specified command message.
@@ -89,7 +89,6 @@ InitErrorAndWarningNvmStatusCodes(
   @param[in] pStatusPreposition String with preposition
   @param[in] pCommandStatus Command status data
   @param[in] ObjectIdNumberPreferred Use Object ID number if true, use Object ID string otherwise
-  @param[in] DoNotPrintGeneralStatusSuccessCode
   @param[out] ppOutputMessage buffer where output will be saved
 
   Warning: ppOutputMessage - should be freed in caller.
@@ -104,7 +103,6 @@ CreateCommandStatusString(
   IN     CONST CHAR16 *pStatusPreposition,
   IN     COMMAND_STATUS *pCommandStatus,
   IN     BOOLEAN ObjectIdNumberPreferred,
-  IN     BOOLEAN DoNotPrintGeneralStatusSuccessCode,
      OUT CHAR16 **ppOutputMessage
   );
 
@@ -187,6 +185,7 @@ GetObjectStatus(
   @param[in] pObjectIdStr - Id for specified object as string representation, OPTIONAL
   @param[in] ObjectIdStrLength - Max length of pObjectIdStr, OPTIONAL
   @param[in] Status - status for update/set
+  @param[in] ObjectType - type for specified object
 **/
 VOID
 SetObjStatus(
@@ -194,7 +193,8 @@ SetObjStatus(
   IN     UINT32 ObjectId,
   IN     CHAR16 *pObjectIdStr OPTIONAL,
   IN     UINT32 ObjectIdStrLength OPTIONAL,
-  IN     NVM_STATUS Status
+  IN     NVM_STATUS Status,
+  IN     OBJECT_TYPE ObjectType
   );
 
 /**
@@ -363,24 +363,6 @@ FreeCommandStatus(
   IN     COMMAND_STATUS **ppCommandStatus
   );
 
-/**
-  Iterate all lit NVM status codes and count warnings and errors
-
-  @param[in] pCommandStatus pointer to address of the structure
-  @param[out] pNumberOfWarnings - output address to keep no warnings
-  @param[out] pNumberOfErrors - output address to keep no errors
-
-  @retval EFI_SUCCESS All Ok
-  @retval EFI_INVALID_PARAMETER if the parameter is a NULL.
-**/
-EFI_STATUS
-CountNumberOfErrorsAndWarnings(
-  IN     COMMAND_STATUS *pCommandStatus,
-     OUT UINT64 *pNumberOfWarnings,
-     OUT UINT64 *pNumberOfErrors
-  );
-
-
 
 /**
 Erase all Nvm status codes
@@ -399,13 +381,15 @@ Erase status for specified ID in command status list (or create a new one with n
 @param[in] ObjectId - Id for specified object
 @param[in] pObjectIdStr - Id for specified object as string representation, OPTIONAL
 @param[in] ObjectIdStrLength - Max length of pObjectIdStr, OPTIONAL
+@param[in] ObjectType - type for specified object
 **/
 VOID
 EraseObjStatus(
   IN OUT COMMAND_STATUS *pCommandStatus,
   IN     UINT32 ObjectId,
   IN     CHAR16 *pObjectIdStr OPTIONAL,
-  IN     UINT32 ObjectIdStrLength OPTIONAL
+  IN     UINT32 ObjectIdStrLength OPTIONAL,
+  IN     OBJECT_TYPE ObjectType
 );
 
 #endif /** _NVM_STATUS_H_ **/

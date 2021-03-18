@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#ifdef OS_BUILD
+#include <os_efi_preferences.h>
+#endif
 #include <Library/UefiBootServicesTableLib.h>
 #include <Guid/SmBios.h>
 #include <IndustryStandard/SmBios.h>
@@ -429,9 +432,6 @@ PrintDimmMemmap(
     case MEMMAP_RANGE_IS:
       NVDIMM_DBG("INTERLEAVE SET\n");
       break;
-    case MEMMAP_RANGE_IS_MIRROR:
-      NVDIMM_DBG("MIRRORED INTERLEAVE SET\n");
-      break;
     case MEMMAP_RANGE_IS_NOT_INTERLEAVED:
       NVDIMM_DBG("IS_NOT_INTERLEAVED\n");
       break;
@@ -655,9 +655,7 @@ GetDimmMemmap(
       }
       Offset = pDimm->PmStart + pDimmRegion->PartitionOffset;
 
-      if (pIS->MirrorEnable) {
-        Type = MEMMAP_RANGE_IS_MIRROR;
-      } else if (ISetInterleaved) {
+      if (ISetInterleaved) {
         Type = MEMMAP_RANGE_IS;
       } else {
         Type = MEMMAP_RANGE_IS_NOT_INTERLEAVED;
@@ -769,12 +767,6 @@ GetDimmFreemap(
         AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
             pMemmapRange->RangeType);
       }
-    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS_MIRROR) {
-      if (FreeCapacityTypeArg == FreeCapacityForMirrorRegion ||
-          FreeCapacityTypeArg == FreeCapacityForADMode) {
-        AddMemmapRange(pUsableRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
-            pMemmapRange->RangeType);
-      }
     } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS ||
                pMemmapRange->RangeType == MEMMAP_RANGE_IS_NOT_INTERLEAVED) {
       if (FreeCapacityTypeArg == FreeCapacityForADMode) {
@@ -787,11 +779,6 @@ GetDimmFreemap(
     if (pMemmapRange->RangeType == MEMMAP_RANGE_APPDIRECT_NAMESPACE) {
       AddMemmapRange(pOccupiedRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
           pMemmapRange->RangeType);
-    } else if (pMemmapRange->RangeType == MEMMAP_RANGE_IS_MIRROR) {
-      if (FreeCapacityTypeArg == FreeCapacityForPersistentRegion) {
-        AddMemmapRange(pOccupiedRanges, pMemmapRange->pDimm, pMemmapRange->RangeStartDpa, pMemmapRange->RangeLength,
-            pMemmapRange->RangeType);
-      }
     }
   }
   /** Get non-overlapped free ranges **/
@@ -1114,7 +1101,7 @@ InitializeDimmFieldsFromAcpiTables(
 
   if (pNvDimmRegionTbl != NULL) {
     /**
-      ACPI 6.3, if BIT 31 of NfitDeviceHandle is set initialize DIMM fields from PMTT
+      ACPI 6.4, if BIT 31 of NfitDeviceHandle is set initialize DIMM fields from PMTT
       Previous versions of ACPI use NFIT only considering BIT 31 is zero
     **/
     if (!(pNvDimmRegionTbl->DeviceHandle.AsUint32 & BIT31) || pPmttHead == NULL) {
@@ -1487,8 +1474,8 @@ BOOLEAN IsGetSecurityOptInSupported(
 {
   BOOLEAN FIS_GT_2_1 = FALSE;
   BOOLEAN FIS_GTE_2_3 = FALSE;
-  FIS_GT_2_1 = (2 <= pDimm->FwVer.FwApiMajor && 1 < pDimm->FwVer.FwApiMinor);
-  FIS_GTE_2_3 = (2 <= pDimm->FwVer.FwApiMajor && 3 <= pDimm->FwVer.FwApiMinor);
+  FIS_GT_2_1 = ((2 <= pDimm->FwVer.FwApiMajor && 1 < pDimm->FwVer.FwApiMinor) || (3 <= pDimm->FwVer.FwApiMajor));
+  FIS_GTE_2_3 = ((2 <= pDimm->FwVer.FwApiMajor && 3 <= pDimm->FwVer.FwApiMinor) || (3 <= pDimm->FwVer.FwApiMajor));
 
   //If Fis is not greater than 2.1 get security opt in is not supported
   if (!FIS_GT_2_1)
@@ -1651,8 +1638,6 @@ FwCmdGetARS(
      OUT UINT8 *pDimmARSStatus
   )
 {
-  NVM_FW_CMD *pFwCmd = NULL;
-  PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1662,77 +1647,12 @@ FwCmdGetARS(
     goto Finish;
   }
 
-  *pDimmARSStatus = ARS_STATUS_UNKNOWN;
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
+  *pDimmARSStatus = LONG_OP_STATUS_IDLE;
 
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtGetFeatures;
-  pFwCmd->SubOpcode = SubopAddressRangeScrub;
-  pFwCmd->OutputPayloadSize = sizeof(*pARSPayload);
-
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  ReturnCode = GetLongOpDimmInfoStatus(pDimm, PtSetFeatures, SubopAddressRangeScrub, pDimmARSStatus);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Firmware Get AddressRangeScrub command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
-    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    NVDIMM_DBG("GetLongOpDimmInfoStatus failed!");
     goto Finish;
-  }
-  pARSPayload = (PT_PAYLOAD_ADDRESS_RANGE_SCRUB *) pFwCmd->OutPayload;
-
-  ReturnCode = GetDimmARSStatusFromARSPayload(pARSPayload, pDimmARSStatus);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when retrieving ARSStatus from ARS Payload");
-    goto Finish;
-  }
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  This helper function is used to determine the ARS status for the
-  particular DIMM by inspecting the firmware ARS return payload.
-
-  @param[in] pARSPayload Pointer to the ARS return payload
-  @param[out] pDimmARSStatus Pointer to the individual DIMM ARS status
-
-  @retval EFI_SUCCESS           Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-**/
-EFI_STATUS
-GetDimmARSStatusFromARSPayload(
-  IN     PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload,
-     OUT UINT8 *pDimmARSStatus
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  NVDIMM_ENTRY();
-
-  if (pARSPayload == NULL || pDimmARSStatus == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  *pDimmARSStatus = ARS_STATUS_UNKNOWN;
-
-  if ((pARSPayload->DPACurrentAddress == pARSPayload->DPAEndAddress) && !(pARSPayload->Enable)) {
-    *pDimmARSStatus = ARS_STATUS_COMPLETED;
-  }  else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) &&
-             (pARSPayload->DPACurrentAddress < pARSPayload->DPAEndAddress) &&
-             !(pARSPayload->Enable)) {
-    *pDimmARSStatus = ARS_STATUS_ABORTED;
-  } else if ((pARSPayload->DPACurrentAddress == 0x00) || (pARSPayload->DPACurrentAddress == pARSPayload->DPAStartAddress)) {
-    *pDimmARSStatus = ARS_STATUS_NOT_STARTED;
-  } else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) && (pARSPayload->Enable)) {
-    *pDimmARSStatus = ARS_STATUS_IN_PROGRESS;
-  } else {
-    *pDimmARSStatus = ARS_STATUS_UNKNOWN;
   }
 
 Finish:
@@ -2381,22 +2301,29 @@ EFI_STATUS ValidatePcdOemHeader(
     return EFI_INVALID_PARAMETER;
   }
 
+  // Check for corruption first
   if (pOemHeader->Header.Signature != NVDIMM_CONFIGURATION_HEADER_SIG) {
     NVDIMM_WARN("Incorrect signature of the DIMM Configuration Header table");
     return EFI_VOLUME_CORRUPTED;
   }
-
-  if (IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(pOemHeader)) {
-    NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
-    return EFI_VOLUME_CORRUPTED;
-  }
-
   if (pOemHeader->Header.Length > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE) {
     NVDIMM_WARN("Length of PCD header is greater than PCD OEM partition size");
     return EFI_VOLUME_CORRUPTED;
   }
-  else if (!IsChecksumValid(pOemHeader, pOemHeader->Header.Length)) {
+  else if (!IsChecksumValid(pOemHeader, pOemHeader->Header.Length, pOemHeader->Header.Checksum)) {
     NVDIMM_WARN("The DIMM Configuration table checksum is invalid.");
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  // If there's no corruption, then everything that follows should only
+  // be based on some incompatibility with BIOS
+
+  // BIOS revision too old or too new
+  if (IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(pOemHeader)) {
+    NVDIMM_WARN("Unsupported revision of the DIMM Configuration Header table");
+    // This should be more descriptive (like EFI_INCOMPATIBLE_VERSION) but
+    // unfortunately anything other than EFI_VOLUME_CORRUPTED prevents
+    // ipmctl delete -pcd from working. Too much headache to fix right now.
     return EFI_VOLUME_CORRUPTED;
   }
 
@@ -3202,7 +3129,7 @@ FwCmdUpdateFw(
         //     if cancelled). Also not an issue. Continue.
         CHECK_RESULT_CONTINUE(FwCmdGetARS(pDimm, &ArsStatus));
 
-        if (ARS_STATUS_IN_PROGRESS == ArsStatus) {
+        if (LONG_OP_STATUS_IN_PROGRESS == ArsStatus) {
           NVDIMM_DBG("ARS in progress. Disabling ARS.\n");
           CHECK_RESULT_CONTINUE(FwCmdDisableARS(pDimm));
         }
@@ -3510,16 +3437,74 @@ Finish:
 }
 
 /**
-  Firmware command to get Command Effect Log Entries
-
-  Large payload is optional, small payload is required.
+  Firmware command to get number of Command Effect Log Entries
 
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] pInputPayload - filled input payload
-  @param[out] pOutputPayload - small payload result data of get command effect log operation
-  @param[in] OutputPayloadSize - size of small payload
-  @param[out] pLargeOutputPayload - large payload result data of command effect log operation
-  @param[in] LargeOutputPayloadSize - size of large payload
+  @param[out] pCount number of command effect log entries
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdGetCommandEffectLogCount(
+  IN      DIMM  *pDimm,
+     OUT  UINT32 *pCount
+)
+{
+
+  NVM_FW_CMD *pFwCmd = NULL;
+  PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG InputPayload;
+  PT_OUTPUT_PAYLOAD_GET_CEL_COUNT OutputPayload;
+  ZeroMem(&InputPayload, sizeof(InputPayload));
+  ZeroMem(&OutputPayload, sizeof(OutputPayload));
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pCount == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
+
+  // Get number of CEL entries
+  InputPayload.PayloadType = SmallPayload;
+  InputPayload.LogAction = EntriesCount;
+  InputPayload.EntryOffset = 0;
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetLog;
+  pFwCmd->SubOpcode = SubopCommandEffectLog;
+  pFwCmd->InputPayloadSize = sizeof(InputPayload);
+  pFwCmd->OutputPayloadSize = sizeof(OutputPayload);
+  pFwCmd->LargeOutputPayloadSize = 0;
+
+  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, sizeof(InputPayload));
+
+  // TODO: Standardize and clean this up
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when sending Command Effect Log size command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  *pCount = ((PT_OUTPUT_PAYLOAD_GET_CEL_COUNT *)(pFwCmd->OutPayload))->LogEntryCount;
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Firmware command to get Command Effect Log Entries
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] ppLogEntry A pointer to the CEL entry table for a given PMem module.
+  @param[out] pEntryCount The number of CEL entries
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
@@ -3527,57 +3512,92 @@ Finish:
 **/
 EFI_STATUS
 FwCmdGetCommandEffectLog(
-  IN      DIMM  *pDimm,
-  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
-      OUT VOID *pOutputPayload,
-  IN      UINT32 OutputPayloadSize,
-      OUT VOID *pLargeOutputPayload OPTIONAL,
-  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+  IN     DIMM  *pDimm,
+     OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+     OUT UINT32 *pEntryCount
 )
 {
   NVM_FW_CMD *pFwCmd = NULL;
+  VOID * pBuffer = NULL;
+  BOOLEAN LargePayloadAvailable = FALSE;
+  PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG InputPayload;
+  PT_OUTPUT_PAYLOAD_GET_CEL_ENTRIES OutputPayload;
+  ZeroMem(&InputPayload, sizeof(InputPayload));
+  ZeroMem(&OutputPayload, sizeof(OutputPayload));
+  const UINT8 MaxCelEntriesPerSmallPayload = (sizeof(PT_OUTPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG) /
+                                              sizeof(COMMAND_EFFECT_LOG_ENTRY));
+  UINT8 CelEntriesToCopy = 0;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pInputPayload == NULL || pOutputPayload == NULL || (pLargeOutputPayload == NULL && LargeOutputPayloadSize > 0)) {
+  if (pDimm == NULL || ppLogEntry == NULL || pEntryCount == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
+  CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
+
+  // Get command effect log count. Not necessary for large payload, but keeping
+  // for easy code and it's a cheap call
+  CHECK_RESULT(FwCmdGetCommandEffectLogCount(pDimm, pEntryCount), Finish);
+
+  // Allocate final command effect log array
+  CHECK_RESULT_MALLOC(*ppLogEntry, AllocateZeroPool((*pEntryCount)*sizeof(COMMAND_EFFECT_LOG_ENTRY)), Finish);
+
+  // Set up input payload
+  InputPayload.LogAction = CelEntries;
+  InputPayload.EntryOffset = 0;
+  CHECK_RESULT(IsLargePayloadAvailable(pDimm, &LargePayloadAvailable), Finish);
+  if (LargePayloadAvailable) {
+    InputPayload.PayloadType = LargePayload;
+  } else {
+    InputPayload.PayloadType = SmallPayload;
   }
 
+  // Set up pFwCmd struct
   pFwCmd->DimmID = pDimm->DimmID;
   pFwCmd->Opcode = PtGetLog;
   pFwCmd->SubOpcode = SubopCommandEffectLog;
-  pFwCmd->InputPayloadSize = sizeof(*pInputPayload);
-  pFwCmd->OutputPayloadSize = OutputPayloadSize;
-  pFwCmd->LargeOutputPayloadSize = LargeOutputPayloadSize;
-  CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInputPayload, pFwCmd->InputPayloadSize);
-
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Command Effect Log command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
-    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto Finish;
+  pFwCmd->InputPayloadSize = sizeof(InputPayload);
+  pFwCmd->OutputPayloadSize = sizeof(OutputPayload);
+  if (LargePayloadAvailable) {
+    pFwCmd->LargeOutputPayloadSize = (UINT32)((*pEntryCount)*sizeof(COMMAND_EFFECT_LOG_ENTRY));
+  } else {
+    pFwCmd->LargeOutputPayloadSize = 0;
   }
 
-  if (pOutputPayload != NULL && OutputPayloadSize > 0) {
-    CopyMem_S(pOutputPayload, OutputPayloadSize, &pFwCmd->OutPayload, OutputPayloadSize);
+  while (InputPayload.EntryOffset < *pEntryCount) {
+    // Copy updated InputPayload into pFwCmd
+    CopyMem_S(&pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, sizeof(InputPayload));
+
+    // TODO: Standardize and clean this up along with other fw commands
+    ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Error detected when sending Command Effect Log command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
+      FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+      goto Finish;
+    }
+
+    if (LargePayloadAvailable) {
+      CelEntriesToCopy = (UINT8)*pEntryCount;
+      pBuffer = pFwCmd->LargeOutputPayload;
+    } else {
+      CelEntriesToCopy = MIN((UINT8)*pEntryCount - InputPayload.EntryOffset, MaxCelEntriesPerSmallPayload);
+      pBuffer = pFwCmd->OutPayload;
+    }
+    CopyMem_S((*ppLogEntry) + InputPayload.EntryOffset, CelEntriesToCopy * sizeof(COMMAND_EFFECT_LOG_ENTRY),
+        pBuffer, CelEntriesToCopy * sizeof(COMMAND_EFFECT_LOG_ENTRY));
+
+    InputPayload.EntryOffset += CelEntriesToCopy;
   }
 
-  if (pLargeOutputPayload != NULL && LargeOutputPayloadSize > 0) {
-    CopyMem_S(pLargeOutputPayload, LargeOutputPayloadSize, &pFwCmd->LargeOutputPayload, LargeOutputPayloadSize);
-  }
 
-  ReturnCode = EFI_SUCCESS;
-  goto Finish;
 
 Finish:
+  if (EFI_ERROR(ReturnCode) && ppLogEntry != NULL && *ppLogEntry != NULL) {
+    FREE_POOL_SAFE(*ppLogEntry);
+  }
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -5110,25 +5130,25 @@ InitializeDimm (
   )
 {
   EFI_STATUS ReturnCode = EFI_OUT_OF_RESOURCES;
-  EFI_STATUS ReturnCodeInterfaceSelection = EFI_OUT_OF_RESOURCES;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
   UINT32 Index = 0;
   InterleaveStruct *pMbITbl = NULL;
   InterleaveStruct *pBwITbl = NULL;
   ControlRegionTbl *pControlRegTbl = NULL;
   FlushHintTbl *pFlushHintTable = NULL;
-  PT_ID_DIMM_PAYLOAD *pThrowawayPayload = NULL;
   PT_ID_DIMM_PAYLOAD *pPayload = NULL;
   PT_DIMM_PARTITION_INFO_PAYLOAD *pPartitionInfoPayload = NULL;
   PT_GET_SECURITY_PAYLOAD *pDimmSecurityPayload = NULL;
   ControlRegionTbl *pControlRegTbls[MAX_IFC_NUM];
   UINT32 ControlRegTblsNum = MAX_IFC_NUM;
   UINT32 PcdSize = 0;
+
   ZeroMem(pControlRegTbls, sizeof(pControlRegTbls));
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsOrig;
-  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsTemp;
-  UINT16 TempBootStatusBitmask = DIMM_BOOT_STATUS_NORMAL;
+
   NVDIMM_ENTRY();
+
+  // Initialize boot status bitmask
+  pNewDimm->BootStatusBitmask = DIMM_BOOT_STATUS_UNKNOWN;
 
   // We don't need a mailbox to talk to the dimm
   CHECK_RESULT(GetNvDimmRegionMappingStructureForPid(pFitHead, Pid, NULL, FALSE,
@@ -5198,226 +5218,163 @@ InitializeDimm (
     }
   }
 
-  if ((SPD_INTEL_VENDOR_ID == pNewDimm->SubsystemVendorId) &&
-    IsSubsystemDeviceIdSupported(pNewDimm)) {
-    CHECK_RESULT_MALLOC(pThrowawayPayload, AllocateZeroPool(sizeof(*pThrowawayPayload)), Finish);
+  // Populate boot status bitmask based on DDRT/SMBUS interface status
+  CHECK_RESULT(PopulateDimmBootStatusBitmaskInterfaceBits(pNewDimm, &pNewDimm->BootStatusBitmask), Finish);
 
-    // Initialize boot status bitmask
-    pNewDimm->BootStatusBitmask = DIMM_BOOT_STATUS_UNKNOWN;
-
-    // ************
-    // *Determine what interfaces are accessible*
-    //
-    // The main reliable way to determine if DDRT/smbus are accessible or not is
-    // to try a command over that interface. The only way currently to force the
-    // interface is to use the global "-ddrt"/"-smbus" flags. Since the user
-    // setting these flags on the CLI conflict with this operation, save off
-    // the previous state of these flags so we can force which interface to use
-    // and then restore the original interface flags afterwards.
-    // This does mean that the flags are not honored for 1-2 commands, but
-    // it is a lot simpler than other methods.
-    // Note: DDRT large payload accessibility (DIMM_BOOT_STATUS_MEDIA_*)
-    // is determined the normal way by reading the BSR directly in
-    // PopulateDimmBsrAndBootStatusBitmask() (2nd half of this code).
-
-    // Save off previous state to AttribsOrig
-    CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
-    CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &AttribsOrig), Finish);
-
-    // Set "-ddrt" and "-spmb" flags
-    AttribsTemp.Protocol = FisTransportDdrt;
-    AttribsTemp.PayloadSize = FisTransportSizeSmallMb;
-    CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsTemp), RestoreAttribs);
-    // Send identify dimm over ddrt small payload
-    ReturnCode = FwCmdIdDimm(pNewDimm, pThrowawayPayload);
-
-    if (EFI_ERROR(ReturnCode)) {
-      // If we get an error running over DDRT, then set
-      // DDRT_NOT_READY.
-      pNewDimm->BootStatusBitmask = DIMM_BOOT_STATUS_DDRT_NOT_READY;
-
-      // We try checking the smbus interface only if DDRT fails.
-      // Big performance penalty in OS currently if we use smbus.
-
-      // Set "-smbus" and "-spmb" flags
-      AttribsTemp.Protocol = FisTransportSmbus;
-      AttribsTemp.PayloadSize = FisTransportSizeSmallMb;
-      CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsTemp), RestoreAttribs);
-      // Try identify dimm over smbus small payload
-      ReturnCode = FwCmdIdDimm(pNewDimm, pThrowawayPayload);
-      if (EFI_ERROR(ReturnCode)) {
-        // If we fail the call over smbus, then the DCPMM is unresponsive
-        // and we don't need to do any more initialization.
-        // Also set a bit to indicate to PassThru() that we can't send any
-        // commands to the DCPMM firmware
-        pNewDimm->BootStatusBitmask |= DIMM_BOOT_STATUS_MAILBOX_NOT_READY;
-        goto RestoreAttribs;
-      }
-    }
-RestoreAttribs:
-    // Save off return code from above section
-    ReturnCodeInterfaceSelection = ReturnCode;
-
-    // Restore the previous state of the CLI interface flags
-    // Go to Finish if error
-    CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsOrig), Finish);
-
-    // Populate some more boot status bitmask bits.
-    // Ignore return code, as this is an optional step
-    CHECK_RESULT_CONTINUE(PopulateDimmBsrAndBootStatusBitmask(pNewDimm,
-      &pNewDimm->Bsr, &TempBootStatusBitmask));
-    // If we're successful in getting BSR and BootStatusBitmask, OR in the
-    // findings into previous findings for BootStatusBitmask bits
-    if (EFI_SUCCESS == ReturnCode) {
-      pNewDimm->BootStatusBitmask |= TempBootStatusBitmask;
-    }
-
-    // Since a BSR bit can affect MAILBOX_NOT_READY, run this after
-    // PopulateDimmBsrAndBootStatusBitmask()
-    if (pNewDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY ||
-      pNewDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MAILBOX_NOT_READY) {
-      // Setting as non-functional is not appropriate for only DDRT down, but
-      // needed temporarily to not create new defects until future changes
-      // are integrated. (lots of commands currently rely on this field for
-      // filtering proper/improper dimms. We'll change this going forward and
-      // hopefully remove the NonFunctional field!)
-      pNewDimm->NonFunctional = TRUE;
-    }
-
-    // If there was an unhandled error in running interface selection, abort initialization
-    ReturnCode = ReturnCodeInterfaceSelection;
-    CHECK_RETURN_CODE(ReturnCode, Finish);
-
-    // ************
-
-    // Run identify dimm with user specified -ddrt/-smbus options if applicable
-    CHECK_RESULT_MALLOC(pPayload, AllocateZeroPool(sizeof(*pPayload)), Finish);
-    ReturnCode = FwCmdIdDimm(pNewDimm, pPayload);
-    NVDIMM_DBG("IdentifyDimm data:\n");
-    NVDIMM_DBG("Raw Capacity (4k multiply): %d\n", pPayload->Rc);
-    pNewDimm->FlushRequired = (pPayload->Fswr & BIT0) != 0;
-    pNewDimm->ControlWindowLatch = (pPayload->Fswr & BIT1) != 0;
-
-    /** pPayload->ReturnCode in 4KiB multiples **/
-    pNewDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
-    pNewDimm->Manufacturer = pPayload->Mf;
-    pNewDimm->SkuInformation = *((SKU_INFORMATION *)&pPayload->DimmSku);
-    CopyMem_S(pNewDimm->PartNumber, sizeof(pNewDimm->PartNumber), pPayload->Pn, sizeof(pPayload->Pn));
-    pNewDimm->PartNumber[PART_NUMBER_LEN - 1] = '\0';
-
-    NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
-    pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
-    ParseFwApiVersion(pNewDimm, pPayload);
-
-    pNewDimm->ControllerRid = pPayload->Rid;
+  if (pNewDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY) {
+    /**
+      Setting as non-functional is not appropriate for only DDRT down, but
+      needed temporarily to not create new defects until future changes
+      are integrated. (lots of commands currently rely on this field for
+      filtering proper/improper dimms. We'll change this going forward and
+      hopefully remove the NonFunctional field!)
+    **/
+    pNewDimm->NonFunctional = TRUE;
   }
 
-  if (IsDimmManageable(pNewDimm) && IsDimmInSupportedConfig(pNewDimm)) {
-    pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
-    if (pPartitionInfoPayload == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
+  /**
+    Populate some more boot status bitmask bits from BSR
+    Retrieving BSR is optional since we do not want to skip further initialization
+  **/
+  TempReturnCode = FwCmdGetBsr(pNewDimm, &pNewDimm->Bsr.AsUint64);
+  if (TempReturnCode == EFI_SUCCESS) {
+    PopulateDimmBootStatusBitmaskBsrBits(pNewDimm, &pNewDimm->Bsr, &pNewDimm->BootStatusBitmask);
+  }
+
+  CHECK_RESULT_MALLOC(pPayload, AllocateZeroPool(sizeof(*pPayload)), Finish);
+  CHECK_RESULT(FwCmdIdDimm(pNewDimm, pPayload), Finish);
+  NVDIMM_DBG("IdentifyDimm data:\n");
+  NVDIMM_DBG("Raw Capacity (4k multiply): %d\n", pPayload->Rc);
+  pNewDimm->FlushRequired = (pPayload->Fswr & BIT0) != 0;
+  pNewDimm->ControlWindowLatch = (pPayload->Fswr & BIT1) != 0;
+
+  /** pPayload->ReturnCode in 4KiB multiples **/
+  pNewDimm->RawCapacity = (UINT64)pPayload->Rc * (4 * 1024);
+  pNewDimm->Manufacturer = pPayload->Mf;
+  pNewDimm->SkuInformation = *((SKU_INFORMATION *)&pPayload->DimmSku);
+  CopyMem_S(pNewDimm->PartNumber, sizeof(pNewDimm->PartNumber), pPayload->Pn, sizeof(pPayload->Pn));
+  pNewDimm->PartNumber[PART_NUMBER_LEN - 1] = '\0';
+
+  NVDIMM_DBG("String length is %d", AsciiStrLen(pPayload->Pn));
+  pNewDimm->FwVer = ParseFwVersion(pPayload->Fwr);
+  ParseFwApiVersion(pNewDimm, pPayload);
+
+  pNewDimm->ControllerRid = pPayload->Rid;
+
+  // Skip initialization if PMem module is unmanageable
+  if (!IsDimmManageable(pNewDimm)) {
+    ReturnCode = RETURN_DEVICE_ERROR;
+    NVDIMM_DBG("PMem module: 0x%04x is unmanageable. Skip initialization.", pNewDimm->DeviceHandle.AsUint32);
+    goto Finish;
+  }
+
+  pPartitionInfoPayload = AllocateZeroPool(sizeof(*pPartitionInfoPayload));
+  if (pPartitionInfoPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  ReturnCode = FwCmdGetDimmPartitionInfo(pNewDimm, pPartitionInfoPayload);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
+    if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
+      /** Return success if error from FW is Media Disabled **/
+      ReturnCode = EFI_SUCCESS;
+    }
+    else {
       goto Finish;
     }
+  }
 
-    ReturnCode = FwCmdGetDimmPartitionInfo(pNewDimm, pPartitionInfoPayload);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
-        /** Return success if error from FW is Media Disabled **/
-        ReturnCode = EFI_SUCCESS;
-      } else {
-        goto Finish;
-      }
-    }
+  if (pPartitionInfoPayload != NULL) {
+    /** Capacity from Partition Info Payload in 4KiB multiples**/
+      pNewDimm->VolatileCapacity = (UINT64) pPartitionInfoPayload->VolatileCapacity * BLOCKSIZE_4K;
+    pNewDimm->VolatileStart = (UINT64)pPartitionInfoPayload->VolatileStart;
+      pNewDimm->PmCapacity = (UINT64) pPartitionInfoPayload->PersistentCapacity * BLOCKSIZE_4K;
+    pNewDimm->PmStart = pPartitionInfoPayload->PersistentStart;
+  }
 
-    if (pPartitionInfoPayload != NULL) {
-      /** Capacity from Partition Info Payload in 4KiB multiples**/
-      pNewDimm->VolatileCapacity = (UINT64) pPartitionInfoPayload->VolatileCapacity * 4096;
-      pNewDimm->VolatileStart = (UINT64) pPartitionInfoPayload->VolatileStart;
-      pNewDimm->PmCapacity = (UINT64) pPartitionInfoPayload->PersistentCapacity * 4096;
-      pNewDimm->PmStart = pPartitionInfoPayload->PersistentStart;
-    }
-
-    ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pNewDimm->DimmID,
-      &gSpaRangeBlockDataWindowRegionGuid, FALSE, 0, &pNewDimm->pBlockDataRegionMappingStructure);
-    if (EFI_ERROR(ReturnCode) || pNewDimm->pBlockDataRegionMappingStructure == NULL) {
-      NVDIMM_WARN("No NVDIMM region table found for block window on dimm: 0x%x.", pNewDimm->DeviceHandle.AsUint32);
-      ReturnCode = EFI_SUCCESS;
-    } else {
-      if (pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex != 0) {
-        ReturnCode = GetSpaRangeTable(pFitHead,
-            pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex, &pNewDimm->pBlockDataSpaTbl);
-
-        if (EFI_ERROR(ReturnCode)) {
-          NVDIMM_WARN("No spa range table found for block aperture but the index exists.");
-          ReturnCode = EFI_DEVICE_ERROR;
-          goto Finish;
-        }
-      }
-    }
-
-    ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_OEM_PARTITION_ID, &PcdSize);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
-        /** Return success if error from FW is Media Disabled **/
-        ReturnCode = EFI_SUCCESS;
-      } else {
-        goto Finish;
-      }
-    }
-    pNewDimm->PcdOemPartitionSize = PcdSize;
-    PcdSize = 0;
-
-    ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_LSA_PARTITION_ID, &PcdSize);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
-      if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
-        /** Return success if error from FW is Media Disabled **/
-        ReturnCode = EFI_SUCCESS;
-      } else {
-        goto Finish;
-      }
-    }
-    pNewDimm->PcdLsaPartitionSize = PcdSize;
-
-    pNewDimm->InaccessibleVolatileCapacity = 0;
-    pNewDimm->InaccessiblePersistentCapacity = 0;
-
-    pNewDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
-
-    pDimmSecurityPayload = AllocateZeroPool(sizeof(*pDimmSecurityPayload));
-    if (pDimmSecurityPayload == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      goto Finish;
-    }
-    ReturnCode = FwCmdGetSecurityInfo(pNewDimm, pDimmSecurityPayload);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to get the security state for dimm: 0x%x.", pNewDimm->DeviceHandle.AsUint32);
-      /**
-        If we can't get the security state, we are still trying to manage the DIMM,
-        We assume that the security is disabled and hopefully all of the features will work.
-        Otherwise we will get more errors on each feature that we will try to use.
-      **/
-      ReturnCode = EFI_SUCCESS;
-      pDimmSecurityPayload->SecurityStatus.AsUint32 = 0;
-    }
-
-    pNewDimm->EncryptionEnabled = (BOOLEAN) pDimmSecurityPayload->SecurityStatus.Separated.SecurityEnabled;
-
-    if (pNewDimm->pBlockDataRegionMappingStructure != NULL && pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex != 0) {
-      ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex, &pBwITbl);
+  ReturnCode = GetNvDimmRegionMappingStructureForPid(pFitHead, pNewDimm->DimmID,
+    &gSpaRangeBlockDataWindowRegionGuid, FALSE, 0, &pNewDimm->pBlockDataRegionMappingStructure);
+  if (EFI_ERROR(ReturnCode) || pNewDimm->pBlockDataRegionMappingStructure == NULL) {
+    NVDIMM_WARN("No NVDIMM region table found for block window on dimm: 0x%x.", pNewDimm->DeviceHandle.AsUint32);
+    ReturnCode = EFI_SUCCESS;
+  }
+  else {
+    if (pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex != 0) {
+      ReturnCode = GetSpaRangeTable(pFitHead,
+        pNewDimm->pBlockDataRegionMappingStructure->SpaRangeDescriptionTableIndex, &pNewDimm->pBlockDataSpaTbl);
 
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("No Interleave Table found for block window but the index exists.");
+        NVDIMM_WARN("No spa range table found for block aperture but the index exists.");
         ReturnCode = EFI_DEVICE_ERROR;
         goto Finish;
       }
     }
   }
 
+  ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_OEM_PARTITION_ID, &PcdSize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
+    if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
+      /** Return success if error from FW is Media Disabled **/
+      ReturnCode = EFI_SUCCESS;
+    }
+    else {
+      goto Finish;
+    }
+  }
+  pNewDimm->PcdOemPartitionSize = PcdSize;
+  PcdSize = 0;
+
+  ReturnCode = FwCmdGetPlatformConfigDataSize(pNewDimm, PCD_LSA_PARTITION_ID, &PcdSize);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("FW CMD Error: %d", ReturnCode);
+    if (ReturnCode == EFI_NO_MEDIA || ReturnCode == EFI_NO_RESPONSE) {
+      /** Return success if error from FW is Media Disabled **/
+      ReturnCode = EFI_SUCCESS;
+    }
+    else {
+      goto Finish;
+    }
+  }
+  pNewDimm->PcdLsaPartitionSize = PcdSize;
+
+  pNewDimm->InaccessibleVolatileCapacity = 0;
+  pNewDimm->InaccessiblePersistentCapacity = 0;
+
+  pNewDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
+
+  pDimmSecurityPayload = AllocateZeroPool(sizeof(*pDimmSecurityPayload));
+  if (pDimmSecurityPayload == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+  ReturnCode = FwCmdGetSecurityInfo(pNewDimm, pDimmSecurityPayload);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to get the security state for dimm: 0x%x.", pNewDimm->DeviceHandle.AsUint32);
+    /**
+      If we can't get the security state, we are still trying to manage the DIMM,
+      We assume that the security is disabled and hopefully all of the features will work.
+      Otherwise we will get more errors on each feature that we will try to use.
+    **/
+    ReturnCode = EFI_SUCCESS;
+    pDimmSecurityPayload->SecurityStatus.AsUint32 = 0;
+  }
+
+  pNewDimm->EncryptionEnabled = (BOOLEAN)pDimmSecurityPayload->SecurityStatus.Separated.SecurityEnabled;
+
+  if (pNewDimm->pBlockDataRegionMappingStructure != NULL && pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex != 0) {
+    ReturnCode = GetInterleaveTable(pFitHead, pNewDimm->pBlockDataRegionMappingStructure->InterleaveStructureIndex, &pBwITbl);
+
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("No Interleave Table found for block window but the index exists.");
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
+    }
+  }
+
 Finish:
-  FREE_POOL_SAFE(pThrowawayPayload);
   FREE_POOL_SAFE(pPayload);
   FREE_POOL_SAFE(pPartitionInfoPayload);
   FREE_POOL_SAFE(pDimmSecurityPayload);
@@ -5455,7 +5412,34 @@ IsDimmIdManageable(
 
   return Manageable;
 }
+/**
+Get number of manageable dimms
 
+@param[in] ppDimms the Dimms array
+@param[in] DimmCount the number of Dimms in ppDimms array
+
+@retval UINT16 the count of manageable dimms
+**/
+UINT16
+GetManageableDimmsCount(
+  IN  DIMM **ppDimms,
+  IN  CONST UINT16 DimmCount
+)
+{
+  UINT16 Index = 0;
+  UINT16 ManageableDimmsNum = 0;
+
+  //Count manageable dimms
+  for (Index = 0; Index < DimmCount; Index++) {
+    if (ppDimms[Index] != NULL) {
+        if (IsDimmManageable(ppDimms[Index])) {
+            ManageableDimmsNum++;
+        }
+    }
+  }
+
+  return ManageableDimmsNum;
+}
 /**
   Free dimm
   Free the memory resources associated with a DIMM
@@ -6280,7 +6264,7 @@ GetReservedCapacity(
     goto Finish;
   }
 
-  if (pDimm->Configured || (MEMORY_MODE_2LM == CurrentMode)) {
+  if (pDimm->Configured || IS_BIOS_VOLATILE_MEMORY_MODE_2LM(CurrentMode)) {
     *pReservedCapacity =  ROUNDDOWN(pDimm->PmCapacity, REGION_PERSISTENT_SIZE_ALIGNMENT_B) - pDimm->MappedPersistentCapacity;
   }
   else {
@@ -6419,7 +6403,7 @@ SetObjStatusForDimmNotFound(
   }
   else
   {
-    SetObjStatus(pCommandStatus, DimmId, NULL, 0, NVM_ERR_DIMM_NOT_FOUND);
+    SetObjStatus(pCommandStatus, DimmId, NULL, 0, NVM_ERR_DIMM_NOT_FOUND, ObjectTypeDimm);
   }
 }
 
@@ -6470,11 +6454,10 @@ SetObjStatusForDimmWithErase(
   }
 
   if (EraseFirst) {
-    EraseObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH);
+    EraseObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH, ObjectTypeDimm);
   }
 
-  pCommandStatus->ObjectType = ObjectTypeDimm;
-  SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH, Status);
+  SetObjStatus(pCommandStatus, pDimm->DeviceHandle.AsUint32, DimmUid, MAX_DIMM_UID_LENGTH, Status, ObjectTypeDimm);
 }
 
 /**
@@ -6492,7 +6475,47 @@ GetOverwriteDimmStatus(
      OUT UINT8 *pOverwriteDimmStatus
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pOverwriteDimmStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  *pOverwriteDimmStatus = LONG_OP_STATUS_IDLE;
+
+  ReturnCode = GetLongOpDimmInfoStatus(pDimm, PtSetSecInfo, SubopOverwriteDimm, pOverwriteDimmStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("GetLongOpDimmInfoStatus failed!");
+    goto Finish;
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Get DIMM Info LongOp status based on FW LongOp status code
+  @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
+  @param[in] pOpcode Opcode of long op command
+  @param[in] pOpcode Subopcode of long op command
+  @parma[out] pLongOpDimmInfoStatus Long Op status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetLongOpDimmInfoStatus(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+     OUT UINT8 *pLongOpDimmInfoStatus
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT8 FwStatus = FW_SUCCESS;
   PT_OUTPUT_PAYLOAD_FW_LONG_OP_STATUS LongOpStatus;
 
@@ -6500,38 +6523,51 @@ GetOverwriteDimmStatus(
 
   ZeroMem(&LongOpStatus, sizeof(LongOpStatus));
 
-  if (pDimm == NULL || pOverwriteDimmStatus == NULL) {
+  if (pDimm == NULL || pLongOpDimmInfoStatus == NULL ||
+    !((Opcode == PtSetFeatures && SubOpcode == SubopAddressRangeScrub) ||
+    (Opcode == PtUpdateFw && SubOpcode == SubopUpdateFw) ||
+    (Opcode == PtSetSecInfo && SubOpcode == SubopOverwriteDimm))) {
+    ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
+  *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
 
   ReturnCode = FwCmdGetLongOperationStatus(pDimm, &FwStatus, &LongOpStatus);
   if (EFI_ERROR(ReturnCode)) {
     if ((pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4 && FwStatus == FW_INTERNAL_DEVICE_ERROR) ||
       FwStatus == FW_DATA_NOT_SET) {
       /** It is valid case when there is no long operation status **/
-      *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
       ReturnCode = EFI_SUCCESS;
     }
     else {
-      *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_UNKNOWN;
-      goto Finish;
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_UNKNOWN;
     }
+    goto Finish;
   }
 
-  if (LongOpStatus.CmdOpcode == PtSetSecInfo && LongOpStatus.CmdSubcode == SubopOverwriteDimm) {
+  if (LongOpStatus.CmdOpcode == Opcode && LongOpStatus.CmdSubcode == SubOpcode) {
     switch (LongOpStatus.Status) {
-      case FW_DEVICE_BUSY:
-        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_IN_PROGRESS;
-        break;
-      case FW_DATA_NOT_SET:
-        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_NOT_STARTED;
-        break;
-      default:
-        *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_COMPLETED;
-        break;
+    case FW_SUCCESS:
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_COMPLETED;
+      break;
+    case FW_DEVICE_BUSY:
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_IN_PROGRESS;
+      break;
+    case FW_DATA_NOT_SET:
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
+      break;
+    case FW_ABORTED:
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_ABORTED;
+      break;
+    default:
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_ERROR;
+      break;
     }
-  } else {
-    *pOverwriteDimmStatus = OVERWRITE_DIMM_STATUS_UNKNOWN;
+  }
+  else {
+    *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -7100,6 +7136,77 @@ IsDimmInPmMappedPopulationViolation(
 }
 
 /**
+  Check if PMem module is accessible through small payload based on the specified transport protocol
+
+  @param[in] pDimm the DIMM struct
+  @param[in] Protocol transport protocol to be used
+  @param[out] pIsInterfaceReady whether or not specified dimm interface is ready
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetDimmInterfaceStatus(
+  IN     DIMM *pDimm,
+  IN     TRANSPORT_PROTOCOL Protocol,
+     OUT BOOLEAN *pIsInterfaceReady
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS TempReturnCode = EFI_SUCCESS;
+  PT_ID_DIMM_PAYLOAD *pPayload = NULL;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsOrig;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS AttribsTemp;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pIsInterfaceReady == NULL ||
+    (Protocol != FisTransportDdrt && Protocol != FisTransportSmbus)) {
+    NVDIMM_DBG("Invalid parameter.");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  ZeroMem(&AttribsOrig, sizeof(AttribsOrig));
+  ZeroMem(&AttribsTemp, sizeof(AttribsTemp));
+
+  *pIsInterfaceReady = FALSE;
+
+  /**
+    The main reliable way to determine if ddrt/smbus is accessible or not is
+    to try a command over that interface. The only way currently to force the
+    interface is to use the global "-ddrt"/"-smbus" flags. Since the user
+    setting these flags on the CLI conflict with this operation, save off
+    the previous state of these flags so we can force which interface to use
+    and then restore the original interface flags afterwards.
+  **/
+  CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetFisTransportAttributes(pNvmDimmConfigProtocol, &AttribsOrig), Finish);
+
+  // Set the specified transport protocol and "-spmb" flags
+  AttribsTemp.Protocol = Protocol;
+  AttribsTemp.PayloadSize = FisTransportSizeSmallMb;
+  CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsTemp), Finish);
+
+  CHECK_RESULT_MALLOC(pPayload, AllocateZeroPool(sizeof(*pPayload)), Finish);
+
+  // Send identify dimm command to determine the interface status
+  TempReturnCode = FwCmdIdDimm(pDimm, pPayload);
+  if (!EFI_ERROR(TempReturnCode)) {
+    *pIsInterfaceReady = TRUE;
+  }
+
+  // Restore AttribsOrig
+  CHECK_RESULT(pNvmDimmConfigProtocol->SetFisTransportAttributes(pNvmDimmConfigProtocol, AttribsOrig), Finish);
+
+Finish:
+  FREE_POOL_SAFE(pPayload);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
 Check if the dimm interface code of this DIMM is supported
 
 @param[in] pDimm the DIMM struct
@@ -7192,6 +7299,10 @@ EFI_STATUS ClearPcdCacheOnDimmList(VOID)
   Return what passthru method will be used to send the command.
 
   @param[in] pDimm The DCPMM to transact with
+  @param[in] Opcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
+  @param[in] SubOpcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
   @param[in] IsLargePayloadCommand Need to know if large payload interface is
                                    even desired. If not, then it makes no sense
                                    to write to the large payload mailbox unless
@@ -7202,16 +7313,24 @@ EFI_STATUS ClearPcdCacheOnDimmList(VOID)
 **/
 EFI_STATUS
 DeterminePassThruMethod(
-  IN DIMM *pDimm,
-  IN BOOLEAN IsLargePayloadCommand,
-  OUT DIMM_PASSTHRU_METHOD *Method
-)
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     BOOLEAN IsLargePayloadCommand,
+     OUT DIMM_PASSTHRU_METHOD *pMethod
+  )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
   EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
+
+  if (pDimm == NULL || pMethod == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   // Initialize incoming variable to a good default, just in case
-  *Method = DimmPassthruSmbusSmallPayload;
+  *pMethod = DimmPassthruSmbusSmallPayload;
 
   CHECK_RESULT(OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL), Finish);
 
@@ -7226,16 +7345,16 @@ DeterminePassThruMethod(
     // User only specified "-ddrt"
     if (IS_DDRT_FLAG_ENABLED(Attribs) && Attribs.PayloadSize == FisTransportSizeAuto) {
       if (IsLargePayloadCommand) {
-        *Method = DimmPassthruDdrtLargePayload;
+        *pMethod = DimmPassthruDdrtLargePayload;
       } else {
-        *Method = DimmPassthruDdrtSmallPayload;
+        *pMethod = DimmPassthruDdrtSmallPayload;
       }
     } else if (IS_DDRT_FLAG_ENABLED(Attribs) && IS_LARGE_PAYLOAD_FLAG_ENABLED(Attribs)) {
-      *Method = DimmPassthruDdrtLargePayload;
+      *pMethod = DimmPassthruDdrtLargePayload;
     } else if (IS_DDRT_FLAG_ENABLED(Attribs) && IS_SMALL_PAYLOAD_FLAG_ENABLED(Attribs)) {
-      *Method = DimmPassthruDdrtSmallPayload;
+      *pMethod = DimmPassthruDdrtSmallPayload;
     } else if (IS_SMBUS_FLAG_ENABLED(Attribs)) {
-      *Method = DimmPassthruSmbusSmallPayload;
+      *pMethod = DimmPassthruSmbusSmallPayload;
     } else {
       NVDIMM_ERR("Invalid Attribs state of %d, %d detected. Exiting", Attribs.Protocol, Attribs.PayloadSize);
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -7244,15 +7363,15 @@ DeterminePassThruMethod(
     goto Finish;
   }
 
-  if (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_MAILBOX_NOT_READY) {
-    // We did not succeed in calling IdentifyDimm over any interface in
-    // InitializeDimm(). Seems like a dead DCPMM. Don't bother sending anything more.
+  // Check if one of DDRT or SMBUS interfaces is ready
+  if (DIMM_DDRT_AND_SMBUS_INTERFACES_DOWN(pDimm->BootStatusBitmask) &&
+    !FW_CMD_INTERFACE_INDEPENDENT(Opcode, SubOpcode)) {
     ReturnCode = EFI_DEVICE_ERROR;
-    NVDIMM_ERR("DCPMM mailbox is not ready. Cancelling PassThru()");
+    NVDIMM_ERR("PMem module ddrt and smbus interfaces not available. Cancelling PassThru()");
     goto Finish;
   }
 
-    // If caller wants to send a large payload command
+  // If caller wants to send a large payload command
   if (TRUE == IsLargePayloadCommand &&
       // and if no problems found with sending large payload
       !(FisTransportSizeSmallMb == Attribs.PayloadSize ||
@@ -7260,14 +7379,14 @@ DeterminePassThruMethod(
       (pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY))) {
 
     // Then allow them to do so
-    *Method = DimmPassthruDdrtLargePayload;
+    *pMethod = DimmPassthruDdrtLargePayload;
 
   // Otherwise prefer small payload DDRT
-  } else if (!((pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY))) {
-    *Method = DimmPassthruDdrtSmallPayload;
+  } else if (!(pDimm->BootStatusBitmask & DIMM_BOOT_STATUS_DDRT_NOT_READY)) {
+    *pMethod = DimmPassthruDdrtSmallPayload;
   } else {
     // Otherwise last resort is small payload smbus
-    *Method = DimmPassthruSmbusSmallPayload;
+    *pMethod = DimmPassthruSmbusSmallPayload;
   }
 
 Finish:
@@ -7279,24 +7398,29 @@ Finish:
   mailbox is possible. Used by callers often to determine chunking behavior.
 
   @param[in] pDimm The DCPMM to transact with
-  @param[out] Available Whether large payload is available. Pointer to boolean variable
+  @param[out] pAvailable Whether large payload is available. Pointer to boolean variable
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
 **/
 EFI_STATUS
 IsLargePayloadAvailable(
-  IN DIMM *pDimm,
-  OUT BOOLEAN *Available
-)
+  IN     DIMM *pDimm,
+     OUT BOOLEAN *pAvailable
+  )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM_PASSTHRU_METHOD Method = DimmPassthruDdrtLargePayload;
 
+  if (pDimm == NULL || pAvailable == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   // TRUE -> We are attempting to send a large payload command
   // Only return true if DDRT large payload is allowed
-  CHECK_RESULT(DeterminePassThruMethod(pDimm, TRUE, &Method), Finish);
-  *Available = DimmPassthruDdrtLargePayload == Method;
+  CHECK_RESULT(DeterminePassThruMethod(pDimm, 0, 0, TRUE, &Method), Finish);
+  *pAvailable = DimmPassthruDdrtLargePayload == Method;
 
 Finish:
   return ReturnCode;
@@ -7318,8 +7442,13 @@ PassThru(
   NVM_INPUT_PAYLOAD_SMBUS_OS_PASSTHRU *pInputPayloadSOP = NULL;
 #endif
 
-  IsLargePayloadCommand = pCmd->LargeInputPayloadSize > 0;
-  CHECK_RESULT(DeterminePassThruMethod(pDimm, IsLargePayloadCommand, &Method), Finish);
+  if (pDimm == NULL || pCmd == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  IsLargePayloadCommand = pCmd->LargeInputPayloadSize > 0 || pCmd->LargeOutputPayloadSize > 0;
+  CHECK_RESULT(DeterminePassThruMethod(pDimm, pCmd->Opcode, pCmd->SubOpcode, IsLargePayloadCommand, &Method), Finish);
 
   // Obviously not ideal implementation, but ran into issues getting %s working
   // on Linux with NVDIMM_* prints. Need something working now though.
@@ -7414,7 +7543,6 @@ FwCmdGetBsr(
     goto Finish;
   }
 
-
   CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
 
   pFwCmd->DimmID = pDimm->DimmID;
@@ -7431,6 +7559,11 @@ FwCmdGetBsr(
   CopyMem_S(pBsrValue, sizeof(*pBsrValue), pFwCmd->OutPayload, sizeof(UINT64));
   NVDIMM_ERR("Bsr received is 0x%x", *pBsrValue);
 
+  if ((*pBsrValue == MAX_UINT64_VALUE) || (*pBsrValue == 0)) {
+    // Invalid values returned in BSR. Return failure
+    CHECK_RESULT(EFI_NO_RESPONSE, Finish);
+  }
+
 Finish:
   FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
@@ -7438,57 +7571,88 @@ Finish:
 }
 
 /**
-  Gather boot status register value and populate the boot status bitmask
+  Populate interface bits in boot status bitmask based on PMem module
+  DDRT(and optionally SMBUS) interface status
 
-  @param[in] pDimm to retrieve DDRT Training status from
-  @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
-  @param[in, out] pBootStatusBitmask Pointer to the boot status bitmask
+  @param[in] pDimm Pointer to PMem module
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
-
 EFI_STATUS
-PopulateDimmBsrAndBootStatusBitmask(
+PopulateDimmBootStatusBitmaskInterfaceBits(
   IN     DIMM *pDimm,
-     OUT DIMM_BSR *pBsr,
-     OUT UINT16 *pBootStatusBitmask OPTIONAL
-)
+     OUT UINT16 *pBootStatusBitmask
+  )
+{
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  BOOLEAN IsDdrtReady = FALSE;
+  BOOLEAN IsSmbusReady = FALSE;
+
+  NVDIMM_ENTRY();
+
+  if (pDimm == NULL || pBootStatusBitmask == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // Clear interface bits from boot status bitmask
+  RESET_DIMM_BOOT_STATUS_INTERFACE_BITS(*pBootStatusBitmask);
+
+  // Check DDRT/SMBUS interface status
+  // Check ddrt small payload access
+  CHECK_RESULT(GetDimmInterfaceStatus(pDimm, FisTransportDdrt, &IsDdrtReady), Finish);
+  if (!IsDdrtReady) {
+    /**
+      We try checking the smbus interface only if DDRT fails.
+      Big performance penalty in OS currently if we use smbus.
+    **/
+    *pBootStatusBitmask = DIMM_BOOT_STATUS_DDRT_NOT_READY;
+    // Check smbus small payload access
+    CHECK_RESULT(GetDimmInterfaceStatus(pDimm, FisTransportSmbus, &IsSmbusReady), Finish);
+    if (!IsSmbusReady) {
+      *pBootStatusBitmask |= DIMM_BOOT_STATUS_SMBUS_NOT_READY;
+      goto Finish;
+    }
+  }
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Populate BSR bits in PMem module boot status bitmask based on
+  boot status register value
+
+  @param[in] pDimm Pointer to PMem module
+  @param[in] pBsr Pointer to Boot Status Register(BSR)
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+**/
+EFI_STATUS
+PopulateDimmBootStatusBitmaskBsrBits(
+  IN     DIMM *pDimm,
+  IN     DIMM_BSR *pBsr,
+     OUT UINT16 *pBootStatusBitmask
+  )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
 
-  // Some values are optional to limit fw calls
-  // However to populate BootStatusBitmask correctly we need
-  // to populate Bsr. So make that a requirement
-  if (NULL == pBsr) {
+  if (pDimm == NULL || pBsr == NULL || pBootStatusBitmask == NULL ||
+    (pBsr->AsUint64 == MAX_UINT64_VALUE) || (pBsr->AsUint64 == 0)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  ZeroMem(pBsr, sizeof(DIMM_BSR));
+  // Clear BSR bits from boot status bitmask
+  RESET_DIMM_BOOT_STATUS_BSR_BITS(*pBootStatusBitmask);
 
-  CHECK_RESULT(FwCmdGetBsr(pDimm, &(pBsr->AsUint64)), Finish);
-
-  if ((pBsr->AsUint64 == MAX_UINT64_VALUE) || (pBsr->AsUint64 == 0)) {
-    // Invalid values returned in BSR. Return failure
-    ReturnCode = EFI_NO_RESPONSE;
-    goto Finish;
-  }
-
-  // If pBootStatusBitmask is unspecified, we should only populate BSR
-  if (NULL == pBootStatusBitmask) {
-    goto Finish;
-  }
-
-  // Clear caller's value before use
-  *pBootStatusBitmask = DIMM_BOOT_STATUS_NORMAL;
-
-  // This section is notably missing the DIMM_BOOT_STATUS_DDRT_NOT_READY
-  // bit. We use this to determine if DDRT is accessible to us, and if only
-  // the BSR is used, it's not the full picture. It's more accurate
-  // to test the interface directly, so it's done in InitializeDimm() currently.
   if (pBsr->Separated_Current_FIS.MR == DIMM_BSR_MEDIA_NOT_TRAINED) {
     *pBootStatusBitmask |= DIMM_BOOT_STATUS_MEDIA_NOT_READY;
   }
@@ -7507,7 +7671,46 @@ PopulateDimmBsrAndBootStatusBitmask(
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 
+/**
+  Helper function for setting appropriate command status
+  and return code when checking for mixed SKU condition
+
+  @param[out] pCommandStatus Pointer to command status variable
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
+  @retval EFI_UNSUPPORTED Mixed SKU condition occurred
+**/
+EFI_STATUS
+BlockMixedSku(
+     OUT COMMAND_STATUS* pCommandStatus
+)
+{
+  DIMM* pDimm = NULL;
+  LIST_ENTRY* pNode = NULL;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (pCommandStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  if (gNvmDimmData->PMEMDev.DimmSkuConsistency == FALSE) {
+    ReturnCode = EFI_UNSUPPORTED;
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);
+
+    LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
+      pDimm = DIMM_FROM_NODE(pNode);
+      if (pDimm->MixedSKUOffender) {
+        SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_INCOMPATIBLE_SKU_ON_MODULE);
+      }
+    }
+  }
+
+Finish:
   return ReturnCode;
 }
 

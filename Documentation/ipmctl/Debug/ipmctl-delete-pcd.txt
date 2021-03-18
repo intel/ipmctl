@@ -13,12 +13,9 @@ ipmctl-delete-pcd - Clears select partition data from the PCD
 SYNOPSIS
 --------
 [listing]
-ifndef::os_build[]
+--
 ipmctl delete [OPTIONS] -pcd [TARGETS]
-endif::os_build[]
-ifdef::os_build[]
-ipmctl delete [OPTIONS] -pcd [TARGETS]
-endif::os_build[]
+--
 
 DESCRIPTION
 -----------
@@ -98,8 +95,8 @@ ifndef::os_build[]
   Restricts clearing select partition data in the platform
   configuration data area.
   The default is to clear both. One of:
-  - Config - Configuration management information
-  - LSA - Namespace label storage area
+  * Config - Configuration management information
+  * LSA - Namespace label storage area
 endif::os_build[]
 ifdef::os_build[]
 -pcd [Config]::
@@ -111,12 +108,16 @@ EXAMPLES
 ifndef::os_build[]
 Clears the namespace label storage area from all manageable PMem modules
 [listing]
+--
 delete -dimm -pcd LSA
+--
 endif::os_build[]
 
 Clears the Cin, Cout, Ccur tables from all manageable PMem modules
 [listing]
+--
 delete -dimm -pcd Config
+--
 
 LIMITATIONS
 -----------

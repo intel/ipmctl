@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <Base.h>
 #include "os_str.h"
 
 #ifdef __cplusplus

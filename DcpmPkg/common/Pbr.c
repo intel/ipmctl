@@ -13,6 +13,8 @@
 #ifdef OS_BUILD
 #include "PbrOs.h"
 #else
+extern EFI_RUNTIME_SERVICES  *gRT;
+
 STATIC EFI_STATUS PbrSerializeCtx(PbrContext *ctx, BOOLEAN Force);
 STATIC EFI_STATUS PbrDeserializeCtx(PbrContext * ctx);
 #endif

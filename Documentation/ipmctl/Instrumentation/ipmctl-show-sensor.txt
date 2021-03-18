@@ -13,7 +13,9 @@ ipmctl-show-sensor - Shows sensor data for one or more PMem modules
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -sensor [SENSORS] [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -57,82 +59,82 @@ SENSORS
 -------
 Health::
   (Default) The current PMem module health as reported in the SMART log. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 MediaTemperature::
   (Default) The current PMem module media temperature in Celsius. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
-  - AlarmThreshold
-  - AlarmEnabled
-  - ThrottlingStopThreshold
-  - ThrottlingStartThreshold
-  - ShutdownThreshold
-  - MaxTemperature
+  * DimmID
+  * Type
+  * CurrentValue
+  * AlarmThreshold
+  * AlarmEnabled
+  * ThrottlingStopThreshold
+  * ThrottlingStartThreshold
+  * ShutdownThreshold
+  * MaxTemperature
 
 ControllerTemperature::
   (Default) The current PMem module controller temperature in Celsius. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
-  - AlarmThreshold
-  - AlarmEnabled
-  - ThrottlingStopThreshold
-  - ThrottlingStartThreshold
-  - ShutdownThreshold
-  - MaxTemperature
+  * DimmID
+  * Type
+  * CurrentValue
+  * AlarmThreshold
+  * AlarmEnabled
+  * ThrottlingStopThreshold
+  * ThrottlingStartThreshold
+  * ShutdownThreshold
+  * MaxTemperature
 
 PercentageRemaining::
   (Default) Remaining PMem module’s life as a percentage value of factory expected
   life span. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
-  - AlarmThreshold
-  - AlarmEnabled
+  * DimmID
+  * Type
+  * CurrentValue
+  * AlarmThreshold
+  * AlarmEnabled
 
 LatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
   the PMem module. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 UnlatchedDirtyShutdownCount::
   (Default) The number of shutdowns without notification over the lifetime of
   the PMem module. This counter is the same as LatchedDirtyShutdownCount except it will
   always be incremented on a dirty shutdown, even if Latch System Shutdown Status
   was not enabled. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 PowerOnTime::
   (Default) The total power-on time over the lifetime of the PMem module. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 UpTime::
   (Default) The total power-on time since the last power cycle of the PMem module. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 PowerCycles::
   (Default) The number of power cycles over the lifetime of the PMem module. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 FwErrorCount::
   (Default) The total number of firmware error log entries. Attributes include:
-  - DimmID
-  - Type
-  - CurrentValue
+  * DimmID
+  * Type
+  * CurrentValue
 
 TARGETS
 -------
@@ -145,19 +147,23 @@ EXAMPLES
 --------
 Gets all sensor information for all PMem modules.
 [listing]
+--
 ipmctl show -sensor
+--
 
 Shows the media temperature sensor for the specified PMem module.
 [listing]
+--
 ipmctl show -sensor MediaTemperature -dimm 0x0001
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -183,9 +189,9 @@ AlarmThreshold::
 AlarmEnabled::
   Current state of the alarm threshold, where applicable.
   One of:
-  - 0: Disabled
-  - 1: Enabled
-  - N/A
+  * 0: Disabled
+  * 1: Enabled
+  * N/A
 
 ThrottlingStopThreshold::
   The threshold value at which firmware will stop throttling to reduce overall thermals and keep the PMem module within safe operating temperatures.

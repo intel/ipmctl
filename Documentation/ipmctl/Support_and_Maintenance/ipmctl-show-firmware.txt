@@ -13,7 +13,9 @@ ipmctl-show-firmware - Shows detailed information about the firmware
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -firmware [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -69,9 +71,9 @@ LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -84,30 +86,30 @@ DimmID::
 ActiveFWVersion::
   (Default) The BCD-formatted revision of the active firmware in the format
   PN.RN.SV.bbbb where:
-  - PN = 2-digit product number
-  - RN = 2-digit revision number
-  - SV = 2-digit security version number
-  - bbbb = 4-digit build version
+  * PN = 2-digit product number
+  * RN = 2-digit revision number
+  * SV = 2-digit security version number
+  * bbbb = 4-digit build version
 
 StagedFWVersion::
   (Default) The BCD-formatted revision of the firmware staged for execution on
   the next power cycle in the format PN.RN.SV.bbbb where:
-  - PN = 2-digit product number
-  - RN = 2-digit revision number
-  - SV = 2-digit security version number
-  - bbbb = 4-digit build version
+  * PN = 2-digit product number
+  * RN = 2-digit revision number
+  * SV = 2-digit security version number
+  * bbbb = 4-digit build version
 
 StagedFWActivatable::
   The state of whether the staged firmware is activatable or not, where:
-  - 0 = Not activatable, reboot is required
-  - 1 = Activatable
+  * 0 = Not activatable, reboot is required
+  * 1 = Activatable
 
 FWUpdateStatus::
   The status of the last firmware update operation. One of:
-  - Unknown
-  - Staged successfully
-  - Update loaded successfully
-  - Update failed to load, fell back to previous firmware
+  * Unknown
+  * Staged successfully
+  * Update loaded successfully
+  * Update failed to load, fell back to previous firmware
 
 FWImageMaxSize::
   The maximum size of a firmware image.
@@ -115,8 +117,8 @@ FWImageMaxSize::
 QuiesceRequired::
   The state of whether activating the firmware requires the host
   to quiesce traffic prior to calling the command.
-  - 0 = No traffic quiesce required prior to activate
-  - 1 = Traffic quiesce required prior to activate
+  * 0 = No traffic quiesce required prior to activate
+  * 1 = Traffic quiesce required prior to activate
 
 ActivationTime::
   The estimated activation time, in ms, required for activating the firmware.

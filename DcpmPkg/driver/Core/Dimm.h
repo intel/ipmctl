@@ -310,6 +310,8 @@ typedef struct _DIMM {
 #endif
   UINT8 FwActiveApiVersionMajor;               //!< Specifies the FW Active Api major version
   UINT8 FwActiveApiVersionMinor;               //!< Specifies the FW Active Api minor version
+
+  BOOLEAN MixedSKUOffender;
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')
@@ -321,14 +323,12 @@ typedef struct _DIMM {
 #define MEMMAP_RANGE_PERSISTENT              4
 #define MEMMAP_RANGE_IS                      5
 #define MEMMAP_RANGE_IS_NOT_INTERLEAVED      6
-#define MEMMAP_RANGE_IS_MIRROR               7
 #define MEMMAP_RANGE_APPDIRECT_NAMESPACE    10
 #define MEMMAP_RANGE_FREE                   11
 #define MEMMAP_RANGE_LAST_USABLE_DPA        12
 
 typedef enum {
   FreeCapacityForPersistentRegion         = 0,
-  FreeCapacityForMirrorRegion             = 1,
   FreeCapacityForADMode                 = 6
 } FreeCapacityType;
 
@@ -794,22 +794,6 @@ FwCmdDisableARS(
 );
 
 /**
-  This helper function is used to determine the ARS status for the
-  particular DIMM by inspecting the firmware ARS return payload.
-
-  @param[in] pARSPayload Pointer to the ARS return payload
-  @param[out] pDimmARSStatus Pointer to the individual DIMM ARS status
-
-  @retval EFI_SUCCESS           Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-**/
-EFI_STATUS
-GetDimmARSStatusFromARSPayload(
-  IN     PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload,
-     OUT UINT8 *pDimmARSStatus
-);
-
-/**
   Firmware command to get Error logs
 
   Small and large payloads are optional, but at least one has to be provided.
@@ -838,18 +822,19 @@ FwCmdGetErrorLog (
 /**
   Firmware command to get Command Effect Log Entries
 
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] ppLogEntry A pointer to the CEL entry table for a given PMem module.
+  @param[out] pEntryCount The number of CEL entries
+
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
 FwCmdGetCommandEffectLog(
-  IN      DIMM  *pDimm,
-  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
-  OUT VOID *pOutputPayload OPTIONAL,
-  IN      UINT32 OutputPayloadSize OPTIONAL,
-  OUT VOID *pLargeOutputPayload OPTIONAL,
-  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+  IN     DIMM  *pDimm,
+     OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+     OUT UINT32 *pEntryCount
 );
 
 /**
@@ -1737,6 +1722,24 @@ GetOverwriteDimmStatus(
   );
 
 /**
+  Get DIMM Info LongOp status based on FW LongOp status code
+  @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
+  @param[in] pOpcode Opcode of long op command
+  @param[in] pOpcode Subopcode of long op command
+  @parma[out] pLongOpDimmInfoStatus Long Op status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetLongOpDimmInfoStatus(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+     OUT UINT8 *pLongOpDimmInfoStatus
+  );
+
+/**
   Customer Format Dimm
   Send a customer format command through the smbus
 
@@ -1869,7 +1872,19 @@ BOOLEAN
 IsDimmManageable(
   IN  DIMM *pDimm
 );
+/**
+Get number of manageable dimms
 
+@param[in] ppDimms the Dimms array
+@param[in] DimmCount the number of Dimms in ppDimms array
+
+@retval UINT16 the count of manageable dimms
+**/
+UINT16
+GetManageableDimmsCount(
+  IN  DIMM **ppDimms,
+  IN  CONST UINT16 DimmCount
+);
 /**
 Check if DIMM is in supported config
 
@@ -1917,6 +1932,23 @@ BOOLEAN
 IsDimmInPmMappedPopulationViolation(
   IN  DIMM *pDimm
 );
+
+/**
+  Check if PMem module is accessible through small payload based on the specified transport protocol
+
+  @param[in] pDimm the DIMM struct
+  @param[in] Protocol transport protocol to be used
+  @param[out] pIsInterfaceReady whether or not specified dimm interface is ready
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetDimmInterfaceStatus(
+  IN     DIMM *pDimm,
+  IN     TRANSPORT_PROTOCOL Protocol,
+     OUT BOOLEAN *pIsInterfaceReady
+  );
 
 /**
 Check if the dimm interface code of this DIMM is supported
@@ -2012,16 +2044,16 @@ EFI_STATUS GetPcdOemDataSize(
   mailbox is possible. Used by callers often to determine chunking behavior.
 
   @param[in] pDimm The DCPMM to transact with
-  @param[out] Available Whether large payload is available. Pointer to boolean variable
+  @param[out] pAvailable Whether large payload is available. Pointer to boolean variable
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
 **/
 EFI_STATUS
 IsLargePayloadAvailable(
-  IN DIMM *pDimm,
-  OUT BOOLEAN *Available
-);
+  IN     DIMM *pDimm,
+     OUT BOOLEAN *pAvailable
+  );
 
 EFI_STATUS
 PassThru(
@@ -2049,22 +2081,38 @@ FwCmdGetBsr(
 );
 
 /**
-  Gather boot status register value and populate the boot status bitmask
+  Populate interface bits in boot status bitmask based on PMem module
+  DDRT(and optionally SMBUS) interface status
 
-  @param[in] pDimm to retrieve DDRT Training status from
-  @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
-  @param[in, out] pBootStatusBitmask Pointer to the boot status bitmask
+  @param[in] pDimm Pointer to PMem module
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
-
 EFI_STATUS
-PopulateDimmBsrAndBootStatusBitmask(
+PopulateDimmBootStatusBitmaskInterfaceBits(
   IN     DIMM *pDimm,
-     OUT DIMM_BSR *pBsr,
-  IN OUT UINT16 *pBootStatusBitmask OPTIONAL
-);
+     OUT UINT16 *pBootStatusBitmask
+  );
+
+/**
+  Populate BSR bits in PMem module boot status bitmask based on
+  boot status register value
+
+  @param[in] pDimm Pointer to PMem module
+  @param[in] pBsr Pointer to Boot Status Register(BSR)
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+**/
+EFI_STATUS
+PopulateDimmBootStatusBitmaskBsrBits(
+  IN     DIMM *pDimm,
+  IN     DIMM_BSR *pBsr,
+     OUT UINT16 *pBootStatusBitmask
+  );
 
 /**
   Passthrough FIS command by Dcpmm BIOS protocol.
@@ -2158,5 +2206,20 @@ DcpmmLargePayloadRead(
   IN     DCPMM_FIS_INTERFACE DcpmmInterface,
   IN OUT UINT8 *pOutput,
      OUT UINT8 *pStatus
+);
+
+/**
+  Helper function for setting appropriate command status
+  and return code when checking for mixed SKU condition
+
+  @param[out] pCommandStatus Pointer to command status variable
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
+  @retval EFI_UNSUPPORTED Mixed SKU condition occurred
+**/
+EFI_STATUS
+BlockMixedSku(
+     OUT COMMAND_STATUS* pCommandStatus
 );
 #endif

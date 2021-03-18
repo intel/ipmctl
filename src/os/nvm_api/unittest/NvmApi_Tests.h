@@ -109,6 +109,46 @@ TEST_F(NvmApi_Tests, GetDimmIdPassThru)
   nvm_send_device_passthrough_cmd(p_devices->uid, &get_dimm_id_pt);
 }
 
+TEST_F(NvmApi_Tests, GetCommandEffectLog)
+{
+    unsigned int dimm_cnt = 0;
+    NVM_UINT32 cel_entries_cnt = 0;
+    command_effect_log *p_cel = NULL;
+
+    nvm_get_number_of_devices(&dimm_cnt);
+    device_discovery *p_devices = (device_discovery*)malloc(sizeof(device_discovery) * dimm_cnt);
+    nvm_get_devices(p_devices, dimm_cnt);
+
+    EXPECT_EQ(nvm_get_number_of_command_effect_log_entries(p_devices[0].uid, &cel_entries_cnt), NVM_SUCCESS);
+
+    p_cel = (command_effect_log*)malloc(sizeof(command_effect_log) * cel_entries_cnt);
+
+    EXPECT_EQ(nvm_get_command_effect_log(p_devices[0].uid, p_cel, cel_entries_cnt), NVM_SUCCESS);
+
+    free(p_devices);
+    free(p_cel);
+}
+
+TEST_F(NvmApi_Tests, GetCommandAccessPolicy)
+{
+  struct device_pt_cmd get_dimm_id_pt;
+  unsigned int dimm_cnt = 0;
+  NVM_UINT32 cap_entries_cnt = 0;
+
+  nvm_get_number_of_devices(&dimm_cnt);
+  device_discovery *p_devices = (device_discovery*)malloc(sizeof(device_discovery) * dimm_cnt);
+
+  nvm_get_devices(p_devices, dimm_cnt);
+
+  nvm_get_number_of_cap_entries(p_devices->uid, &cap_entries_cnt);
+  command_access_policy *p_cap = (command_access_policy*)malloc(sizeof(command_access_policy) * cap_entries_cnt);
+
+  EXPECT_EQ(nvm_get_command_access_policy(p_devices->uid, &cap_entries_cnt, p_cap), NVM_SUCCESS);
+
+  free(p_devices);
+  free(p_cap);
+}
+
 TEST_F(NvmApi_Tests, GetRegions)
 {
   NVM_UINT8 count;

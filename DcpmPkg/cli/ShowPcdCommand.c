@@ -221,10 +221,10 @@ ShowPcd(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
-      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
+      PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_DIMMS);
     }
     goto Finish;
   }
@@ -259,6 +259,7 @@ ShowPcd(
     &pDimmPcdInfo, &DimmPcdInfoCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
+    PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, L"Get Platform Config Data", CLI_INFO_ON, pCommandStatus);
     goto Finish;
   }
 
@@ -290,9 +291,7 @@ ShowPcd(
 
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPcdDataSetAttribs);
   PRINTER_ENABLE_LIST_TABLE_FORMAT(pPrinterCtx);
-  pPrinterCtx->DoNotPrintGeneralStatusSuccessCode = TRUE;
 Finish:
-  PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, CLI_INFO_SHOW_PCD, CLI_INFO_ON, pCommandStatus);
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FreeCommandStatus(&pCommandStatus);
   FreeDimmPcdInfoArray(pDimmPcdInfo, DimmPcdInfoCount);
@@ -433,7 +432,7 @@ PrintPcdIdentificationInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PartitionOffset           ", FORMAT_UINT64_HEX_NOWIDTH, pIdentificationInfo->PartitionOffset);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PmPartitionSize           ", FORMAT_UINT64_HEX_NOWIDTH L"\n", pIdentificationInfo->PmPartitionSize);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfigTableRevision)) {
     NVDIMM_IDENTIFICATION_INFORMATION3 *pIdentificationInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pIdentificationInfoTable;
     pTmpDimmUid = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pIdentificationInfo->DimmIdentification.ManufacturerId),
       pIdentificationInfo->DimmIdentification.ManufacturingLocation,
@@ -480,7 +479,6 @@ PrintPcdInterleaveInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatChannel   ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatChannel);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatImc       ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatImc);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatWays      ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatWays);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"MirrorEnable              ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->MirrorEnable);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH L"\n", pInterleaveInfo->InterleaveChangeStatus);
 
     NVDIMM_IDENTIFICATION_INFORMATION *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)&pInterleaveInfo->pIdentificationInfoList;
@@ -491,7 +489,7 @@ PrintPcdInterleaveInformation(
       pCurrentIdentInfo++;
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfigTableRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     PrintPcdPcatTableHeader(&pInterleaveInfo->Header, pPrinterCtx, pPath);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSetIndex        ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveSetIndex);
@@ -499,7 +497,7 @@ PrintPcdInterleaveInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveMemoryType      ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveMemoryType);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSizeChannel     ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatChannel);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSizeImc         ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatImc);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH L"\n", pInterleaveInfo->InterleaveChangeStatus);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH , pInterleaveInfo->InterleaveChangeStatus);
 
     NVDIMM_IDENTIFICATION_INFORMATION3 *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)&pInterleaveInfo->pIdentificationInfoList;
     for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {

@@ -314,7 +314,8 @@ enum GetLogSubop
 enum UpdateFwSubop
 {
   SubopUpdateFw = 0x00,       //!< Updates the FW Images
-  SubopExecuteFw = 0x01       //!< Executes a new updated FW Image. (without a restart)
+  SubopExecuteFw = 0x01,      //!< Executes a new updated FW Image. (without a restart)
+  SubopFwActivate = 0x03      //!< Used to update a successfully downloaded and staged FW without reboot.
 };
 
 /**
@@ -443,18 +444,6 @@ typedef struct {
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
   UINT16 MaxAveragePowerLimit;
-  UINT16 MaxTurboModePowerConsumption;
-  UINT8 Reserved[112];
-} PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0;
-
-typedef struct {
-  TEMPERATURE ControllerShutdownThreshold;
-  TEMPERATURE MediaShutdownThreshold;
-  TEMPERATURE MediaThrottlingStartThreshold;
-  TEMPERATURE MediaThrottlingStopThreshold;
-  TEMPERATURE ControllerThrottlingStartThreshold;
-  TEMPERATURE ControllerThrottlingStopThreshold;
-  UINT16 MaxAveragePowerLimit;
   UINT16 MaxMemoryBandwidthBoostMaxPowerLimit;
   UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;
   UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep;
@@ -468,7 +457,6 @@ typedef struct {
   UINT8 FisMinor;
   union {
     PT_DEVICE_CHARACTERISTICS_PAYLOAD       Fis_1_15;
-    PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0   Fis_2_00;
     PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
@@ -574,17 +562,6 @@ typedef struct {
   UINT8 Reserved2[32];                             //!< 127:96 Reserved
 } PT_SET_SECURITY_PAYLOAD;
 
-/**
-  Passthrough Payload:
-    Opcode:    0x04h (Get Features)
-    Sub-Opcode:  0x06h (Optional Configuration Data Policy)
-**/
-typedef struct {
-  UINT8 Reserved1[3];                                  //!< 2:0 Reserved
-  UINT8 AveragePowerReportingTimeConstantMultiplier;   //!< 3 Average Power Reporting Time Constant Multiplier
-  UINT8 Reserved2[124];                                //!< 127:4 Reserved
-} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0;
-
 typedef struct {
   UINT8 Reserved1[4];                                  //!< 3:0 Reserved
   UINT32 AveragePowerReportingTimeConstant;            //!< 7:4 Average Power Reporting Time Constant
@@ -595,7 +572,6 @@ typedef struct {
   UINT8 FisMajor;
   UINT8 FisMinor;
   union {
-    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0   Fis_2_00;
     PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
@@ -670,40 +646,15 @@ typedef struct {
     Valid range for power limit 10000 - 18000 mW.
   **/
   UINT16 AveragePowerLimit;
-  /**
-    The value used as a base time window for power usage measurements [ms].
-  **/
-  UINT8 AveragePowerTimeConstant;
-  /**
-    Returns if the Turbo Mode is currently enabled or not.
-  **/
-  UINT8 TurboModeState;
-  /**
-    Power limit [mW] used for limiting the Turbo Mode power consumption.
-    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
-    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
-  **/
-  UINT16 TurboPowerLimit;
-
-  UINT8 Reserved2[119];
-} PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0;
-
-typedef struct {
-  UINT8 Reserved1[3];
-  /**
-    Power limit in mW used for averaged power.
-    Valid range for power limit 10000 - 18000 mW.
-  **/
-  UINT16 AveragePowerLimit;
 
   UINT8 Reserved2;
   /**
-    Returns if the Turbo Mode is currently enabled or not.
+    Returns if the Memory Bandwidth Boost Mode is currently enabled or not.
   **/
   UINT8 MemoryBandwidthBoostFeature;
   /**
-    Power limit [mW] used for limiting the Turbo Mode power consumption.
-    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
+    Power limit [mW] used for limiting the Memory Bandwidth Boost Mode power consumption.
+    Valid range for Memory Bandwidth Boost Power Limit starts from 15000 - X mW, where X represents
     the value returned from Get Device Characteristics command's Max Memory Bandwidth Boost Max Power Limit field.
   **/
   UINT16 MemoryBandwidthBoostMaxPowerLimit;
@@ -720,7 +671,6 @@ typedef struct {
   UINT8 FisMinor;
   union {
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY       Fis_1_15;
-    PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0   Fis_2_00;
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;

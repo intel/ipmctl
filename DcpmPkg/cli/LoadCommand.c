@@ -242,11 +242,6 @@ Load(
     }
   }
 
-  if (NULL == pDimmTargets) {
-    ReturnCode = EFI_NOT_FOUND;
-    CHECK_RETURN_CODE(ReturnCode, Finish);
-  }
-
   /**
     In this case the user could have typed "FS0:\..."
     We are searching for the file on all FS so we need to remove the first chars until we have a "\"
@@ -297,7 +292,6 @@ Load(
     goto Finish;
   }
 
-  pCommandStatus->ObjectType = ObjectTypeDimm;
 
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
   if (!Examine) {
@@ -386,13 +380,17 @@ Load(
     }
   } else {
     gBS->CloseEvent(ProgressEvent);
+
+    // move to next line after progress events have ended
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, FORMAT_NL);
+
     if (StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
       Loop until they all report a staged version
       */
       TempReturnCode = BlockForFwStage(pCmd, pCommandStatus, pNvmDimmConfigProtocol,
-        &ReturnCodes[0], &NvmCodes[0], &pDimmTargets[0], DimmTargetsNum);
+        &ReturnCodes[0], &NvmCodes[0], pDimmTargets, DimmTargetsNum);
       if (EFI_ERROR(TempReturnCode)) {
         ReturnCode = TempReturnCode;
         goto Finish;
@@ -421,12 +419,15 @@ Load(
   }
 
 Finish:
-  PRINTER_SET_COMMAND_STATUS(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus);
+  if (EFI_SUCCESS !=PrinterSetCommandStatus(pCmd->pPrintCtx, ReturnCode, CLI_INFO_LOAD_FW, CLI_INFO_ON, pCommandStatus)) {
+    NVDIMM_CRIT("Failed to set command status object!");
+  }
+
   FreeCommandStatus(&pCommandStatus);
 
 FinishNoCommandStatus:
   // if no PrintCtx then nothing can be buffered so no need to process it
-  if ((NULL != pCmd)) {
+  if ((NULL != pCmd) && (NULL != pCmd->pPrintCtx)) {
     PRINTER_PROCESS_SET_BUFFER(pCmd->pPrintCtx);
   }
   FREE_POOL_SAFE(pFileName);

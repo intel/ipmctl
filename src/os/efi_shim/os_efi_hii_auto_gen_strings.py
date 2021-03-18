@@ -104,6 +104,8 @@ if __name__ == '__main__':
 			# Can use no numbering ({} and {}) for 2.7+
 			file.write('#define {0} {1}\n'.format(key, i))
 		file.write('\n')
+		file.write('#define STR_DCPMM_MAX_STRING_ID {0}\n'.format(i+1))
+		file.write('\n')
 		# Write out footer
 		file.write('#endif //// _AUTO_HII_STRING_DEFS_OS_BUILD')
 

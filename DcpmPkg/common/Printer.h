@@ -31,7 +31,7 @@
 #define SENSOR_VALUE_MAX_STR_WIDTH          20
 #define SENSOR_STATE_MAX_STR_WIDTH          15
 #define SOCKET_MAX_STR_WIDTH                9
-#define MAPPED_MEMORY_LIMIT_MAX_STR_WIDTH   18
+#define MAPPED_MEMORY_LIMIT_MAX_STR_WIDTH   23 //worst-case - "18446744073709551615 B" or "17592186044415.999 MiB" (UINT64 max value)
 #define TOTAL_MAPPED_MEMORY_MAX_STR_WIDTH   18
 #define ISET_ID_MAX_STR_WIDTH               20
 #define REGION_ID_MAX_STR_WIDTH             8
@@ -43,6 +43,7 @@
 #define DDR_MAX_STR_WIDTH                   25
 #define PMEM_MODULE_MAX_STR_WIDTH           25
 #define TOTAL_STR_WIDTH                     25
+#define CAP_MB_RESTRICTION_MAX_STR_WIDTH    32 //worst-case - "Management, BIOS and SMBus only"
 
 
 #define ON  1
@@ -127,7 +128,6 @@ typedef struct _PRINT_CONTEXT {
   UINTN BufferedDataSetCnt;
   LIST_ENTRY DataSetLookup;
   LIST_ENTRY DataSetRootLookup;
-  BOOLEAN DoNotPrintGeneralStatusSuccessCode;
 }PRINT_CONTEXT;
 
 typedef struct _LIST_LEVEL_ATTRIB {
@@ -252,7 +252,7 @@ do { \
 do { \
   EFI_STATUS rc; \
   PRINTER_CONFIGURE_BUFFERING(ctx, OFF); \
-  if(EFI_SUCCESS != (rc = PrinterSetCommandStatus(ctx, efi_status, status_msg, status_preposition, command_status))) { \
+  if( EFI_SUCCESS != (rc = PrinterSetCommandStatus(ctx, efi_status, status_msg, status_preposition, command_status))) { \
     NVDIMM_CRIT("Failed to prompt a command status object! (" FORMAT_EFI_STATUS ")", rc); \
   } \
 } while(0)
@@ -265,7 +265,7 @@ do { \
 do { \
   EFI_STATUS rc; \
   PRINTER_CONFIGURE_BUFFERING(ctx, ON); \
-  if(EFI_SUCCESS != (rc = PrinterSetCommandStatus(ctx, efi_status, status_msg, status_preposition, command_status))) { \
+  if( EFI_SUCCESS != (rc = PrinterSetCommandStatus(ctx, efi_status, status_msg, status_preposition, command_status))) { \
     NVDIMM_CRIT("Failed to buffer a command status object! (" FORMAT_EFI_STATUS ")", rc); \
   } \
 } while(0)
@@ -274,7 +274,7 @@ do { \
 #define PRINTER_PROCESS_SET_BUFFER(ctx) \
 do { \
   EFI_STATUS rc; \
-  if(EFI_SUCCESS != (rc = PrinterProcessSetBuffer(ctx))) { \
+  if( EFI_SUCCESS != (rc = PrinterProcessSetBuffer(ctx))) { \
     NVDIMM_CRIT("Failed to process printer objects! (" FORMAT_EFI_STATUS ")", rc); \
   } \
 } while (0)
@@ -491,7 +491,7 @@ EFI_STATUS PrinterSetData(
 * Handle commandstatus objects
 */
 EFI_STATUS PrinterSetCommandStatus(
-  IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL
+  IN     PRINT_CONTEXT *pPrintCtx,
   IN     EFI_STATUS Status,
   IN     CHAR16 *pStatusMessage,
   IN     CHAR16 *pStatusPreposition,

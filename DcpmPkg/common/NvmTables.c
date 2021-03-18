@@ -46,7 +46,7 @@ FreeParsedPcat(
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index]);
     }
@@ -59,7 +59,7 @@ FreeParsedPcat(
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index]);
     }
@@ -82,7 +82,7 @@ FreeParsedPcat(
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]);
     }

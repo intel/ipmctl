@@ -5,12 +5,12 @@ Name:           ipmctl
 Version:        %{build_version}
 Release:        1%{?dist}
 Summary:        Utility for managing Intel Optane DC persistent memory modules
-License:        BSD
+License:        BSD-3-Clause
 URL:            https://github.com/intel/ipmctl
 Source:         https://github.com/intel/ipmctl/archive/v%{version}/%{name}-%{version}.tar.gz
 ExclusiveArch:  x86_64
 
-Requires:       libipmctl%{?_isa} = %{version}-%{release}
+Requires:       libipmctl5%{?_isa} = %{version}-%{release}
 BuildRequires:  pkgconfig(libndctl)
 BuildRequires:  cmake
 
@@ -51,7 +51,7 @@ Debug and troubleshoot DCPMMs.
 %prep
 %setup -q -n %{name}-%{version}
 
-%package -n libipmctl
+%package -n libipmctl5
 Summary:        Library for Intel DCPMM management
 Obsoletes:      ixpdimm_sw < 01.00.00.3000
 Obsoletes:      libixpdimm-common < 01.00.00.3000
@@ -60,18 +60,19 @@ Obsoletes:      libixpdimm-cli < 01.00.00.3000
 Obsoletes:      libixpdimm-cim < 01.00.00.3000
 Obsoletes:      libixpdimm < 01.00.00.3000
 Obsoletes:      ixpdimm-data < 01.00.00.3000
+Obsoletes:      libipmctl < 03.00.00.0090
 
-%description -n libipmctl
+%description -n libipmctl5
 An Application Programming Interface (API) library for managing Intel Optane DC
 persistent memory modules.
 
-%package -n libipmctl-devel
-Summary:        Development packages for libipmctl
-Requires:       libipmctl%{?_isa} = %{version}-%{release}
+%package -n libipmctl5-devel
+Summary:        Development packages for libipmctl5
+Requires:       libipmctl5%{?_isa} = %{version}-%{release}
 Obsoletes:      ixpdimm-devel < 01.00.00.3000
 Obsoletes:      ixpdimm_sw-devel < 01.00.00.3000
 
-%description -n libipmctl-devel
+%description -n libipmctl5-devel
 API for development of Intel Optane DC persistent memory management utilities.
 
 %build
@@ -101,24 +102,25 @@ API for development of Intel Optane DC persistent memory management utilities.
 %make_install
 %endif
 
-%post -n libipmctl -p /sbin/ldconfig
+%post -n libipmctl5 -p /sbin/ldconfig
 
-%postun -n libipmctl -p /sbin/ldconfig
+%postun -n libipmctl5 -p /sbin/ldconfig
 
 %files -n ipmctl
 %{_bindir}/ipmctl
 %{_mandir}/man1/ipmctl*
 
-%files -n libipmctl
-%{_libdir}/libipmctl.so.4*
+%files -n libipmctl5
+%{_libdir}/libipmctl.so.5*
 %dir %{_datadir}/doc/ipmctl
 %doc %{_datadir}/doc/ipmctl/ipmctl_default.conf
 %doc %{_datadir}/doc/ipmctl/LICENSE
+%dir %{_datadir}/ipmctl
 %config(noreplace) %{_datadir}/ipmctl/ipmctl.conf
 %dir %{_localstatedir}/log/ipmctl
 %config(noreplace) %{_sysconfdir}/logrotate.d/ipmctl
 
-%files -n libipmctl-devel
+%files -n libipmctl5-devel
 %{_libdir}/libipmctl.so
 %{_includedir}/nvm_types.h
 %{_includedir}/nvm_management.h
@@ -127,6 +129,18 @@ API for development of Intel Optane DC persistent memory management utilities.
 %{_libdir}/pkgconfig/libipmctl.pc
 
 %changelog
+* Mon Mar 8 2021 Nolan Hergert <nolan.hergert@intel.com> - 03.00.00.295-1
+- Rev nvm api lib minor version for backwards compatibility changes
+
+* Tue Sep 15 2020 Jan Drachal <jan.drachal@intel.com> - 03.00.00.227-1
+- Update nvm api lib minor version
+
+* Wed May 6 2020 Steven Pontsler <steven.pontsler@intel.com> - 03.00.00.91-1
+- change package names to include lib version
+
+* Wed Jan 29 2020 Pawel Nass <pawel.nass@intel.com> - 03.00.00.36-1
+- Change the reference to the share libraries
+
 * Thu Oct 10 2019 Amy Wang <Amy2.Wang@intel.com> - 02.00.00.3613-1
 - Change the reference to the share libraries
 

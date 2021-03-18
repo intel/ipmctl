@@ -6,19 +6,10 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-#include <Version.h>
-#include <Types.h>
 #include <NvmTypes.h>
 #include <Uefi.h>
-#include <Protocol/SimpleFileSystem.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
+#include "NvmInterface.h"
 #include "NvmHealth.h"
-#include "FwVersion.h"
-#include <Library/SerialPortLib.h>
-#ifdef OS_BUILD
-#include <os_efi_preferences.h>
-#include <os_str.h>
-#endif
 
 #ifdef _MSC_VER
 int _fltused();
@@ -45,10 +36,13 @@ typedef union {
 
 #define SOCKET_ID_ALL MAX_UINT16
 
+#define BLOCKSIZE_4K 4096
+
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000
 #define SPD_DEVICE_ID_10 0x097A
 #define SPD_DEVICE_ID_15 0x097B
+#define SPD_DEVICE_ID_20 0x097C
 
 #define CONTROLLER_REVISION_BASE_STEP_MASK 0x30
 #define CONTROLLER_REVISION_METAL_STEP_MASK 0x03
@@ -67,14 +61,15 @@ typedef union {
 
 #define MAX_CONFIG_DUMP_FILE_SIZE OUT_MB_SIZE
 
+// Picking a theoretical max string length so we don't run out of
+// memory and kill something that is continuously running (our driver).
+// Also it's good development practice.
 #define MAX_LINE_CHAR_LENGTH 400
 #define MAX_LINE_BYTE_LENGTH (MAX_LINE_CHAR_LENGTH * sizeof(CHAR8))
+#define MAX_STRING_LENGTH (16384)
 
 #define COUNT_TO_INDEX_OFFSET 1
 #define FIRST_CHAR_INDEX 0
-#define TWOLM_NMFM_RATIO_LOWER 3.6
-#define TWOLM_NMFM_RATIO_LOWER_STR L"3.6"
-#define TWOLM_NMFM_RATIO_UPPER 16
 
 #define UTF_16_BOM L'\xFEFF'
 
@@ -114,14 +109,16 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_UNKNOWN_STR              L"Unknown"
 
 // Last shutdown status extended string values
-#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                 L"Viral Interrupt Received"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR   L"Surprise Clock Stop Received"
-#define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR       L"Write Data Flush Complete"
-#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4 Received"
-#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
-#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR     L"Extended Flush Complete"
-#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR L"Extended Flush Not Complete"
+#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                           L"Viral Interrupt Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR             L"Surprise Clock Stop Received"
+#define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR                 L"Write Data Flush Complete"
+#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                            L"PM S4 Received"
+#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                                   L"PM Idle Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                            L"DDRT Surprise Reset Received"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR               L"Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR           L"Extended Flush Not Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_SX_EXTENDED_FLUSH_COMPLETE_STR       L"Sx Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_SX_EXTENDED_FLUSH_NOT_COMPLETE_STR   L"Sx Extended Flush Not Complete"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"
@@ -141,21 +138,26 @@ typedef union {
 #define SECURITY_CAPABILITIES_NONE        L"None"
 
 // ARS status string values
+#define ARS_STATUS_NOT_SUPPORTED_STR L"Not supported in Memory Mode"
 #define ARS_STATUS_UNKNOWN_STR       L"Unknown"
-#define ARS_STATUS_NOT_STARTED_STR   L"Not started"
+#define ARS_STATUS_IDLE_STR          L"Idle"
 #define ARS_STATUS_IN_PROGRESS_STR   L"In progress"
 #define ARS_STATUS_COMPLETED_STR     L"Completed"
 #define ARS_STATUS_ABORTED_STR       L"Aborted"
+#define ARS_STATUS_ERROR_STR         L"Error"
 
 // Overwrite DIMM status string values
 #define OVERWRITE_DIMM_STATUS_UNKNOWN_STR      L"Unknown"
-#define OVERWRITE_DIMM_STATUS_NOT_STARTED_STR  L"Not started"
+#define OVERWRITE_DIMM_STATUS_IDLE_STR         L"Idle"
 #define OVERWRITE_DIMM_STATUS_IN_PROGRESS_STR  L"In progress"
 #define OVERWRITE_DIMM_STATUS_COMPLETED_STR    L"Completed"
+#define OVERWRITE_DIMM_STATUS_ABORTED_STR      L"Aborted"
+#define OVERWRITE_DIMM_STATUS_ERROR_STR        L"Error"
 
 // Memory type string values
 #define MEMORY_TYPE_DCPM_STR     L"Logical Non-Volatile Device"
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
+#define MEMORY_TYPE_DDR5_STR     L"DDR5"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 
 //Units string vaules
@@ -382,7 +384,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                        \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode); \
       goto Label;                                             \
     }                                                         \
   } while (0)
@@ -393,7 +395,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
     TempReturnCode = ReturnCode;                              \
     ReturnCode = Call;                                        \
     if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);      \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode); \
       goto Label;                                             \
     }                                                         \
     ReturnCode = TempReturnCode;                              \
@@ -404,7 +406,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                                      \
     ReturnCode = Call;                                                      \
     if (EFI_ERROR(ReturnCode)) {                                            \
-      NVDIMM_ERR("Failure on function: %d", ReturnCode);                    \
+      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode);             \
       *pNvmStatus = NvmStatusCode;                                          \
       goto Label;                                                           \
     }                                                                       \
@@ -420,20 +422,20 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Ignore error code, but print it out
-#define CHECK_RESULT_CONTINUE(Call)                                 \
-  do {                                                              \
-    ReturnCode = Call;                                              \
-    if (EFI_ERROR(ReturnCode)) {                                    \
-      NVDIMM_WARN("Ignoring failure on function: %d", ReturnCode); \
-      ReturnCode = EFI_SUCCESS;                                     \
-    }                                                               \
+#define CHECK_RESULT_CONTINUE(Call)                           \
+  do {                                                        \
+    ReturnCode = Call;                                        \
+    if (EFI_ERROR(ReturnCode)) {                              \
+      NVDIMM_WARN("Ignoring failure with %s. RC: %d", #Call, ReturnCode); \
+      ReturnCode = EFI_SUCCESS;                               \
+    }                                                         \
   } while (0)
 
 #define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \
   do {                                                        \
     Pointer = Call;                                           \
     if (Pointer == NULL) {                                    \
-      NVDIMM_ERR("Failed to allocate memory");                \
+      NVDIMM_ERR("Failed to allocate memory to %s", #Pointer); \
       ReturnCode = EFI_OUT_OF_RESOURCES;                      \
       goto Label;                                             \
     }                                                         \
@@ -443,7 +445,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   do {                                                                    \
     ReturnCode = Call;                                                    \
     if (EFI_ERROR(ReturnCode)) {                                          \
-      NVDIMM_ERR("Error in file operation");                              \
+      NVDIMM_ERR("Error in file operation %s", #Call);                    \
       ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED); \
       goto Label;                                                         \
     }                                                                     \
@@ -452,11 +454,21 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
 // Go to Label if not true
 #define CHECK_NOT_TRUE(Call, Label)                                        \
   do {                                                                    \
-    if (TRUE != Call) {                                                   \
-      NVDIMM_ERR("Statement is not true");                                \
+    if (TRUE != (Call)) {                                                   \
+      NVDIMM_ERR("Statement %s is not true", #Call);                      \
       goto Label;                                                         \
     }                                                                     \
   } while (0)
+
+#define CHECK_NULL_ARG(Argument, Label)                                   \
+  do {                                                                    \
+    if (NULL == (VOID *)Argument) {                                       \
+      NVDIMM_ERR("Argument %s is NULL. Exiting", #Argument);              \
+      ReturnCode = EFI_INVALID_PARAMETER;                                 \
+      goto Label;                                                         \
+    }                                                                     \
+  } while (0)
+
 
 /**
   Get a variable from UEFI RunTime services.
@@ -1046,6 +1058,36 @@ CatSPrintClean(
   );
 
 /**
+  Appends a formatted Unicode string to a Null-terminated Unicode string
+  and copies it to destination pointer.
+
+  This function appends a formatted Unicode string to the Null-terminated
+  Unicode string specified by String.   String is optional and may be NULL.
+  Storage for the formatted Unicode string returned is allocated using
+  AllocatePool().  The pointer to the appended string is copied to the
+  destination pointer.
+  The caller is responsible for freeing destination pointer.
+
+  If String is not NULL and not aligned on a 16-bit boundary, then ASSERT().
+  If FormatString is NULL, then ASSERT().
+  If FormatString is not aligned on a 16-bit boundary, then ASSERT().
+
+  @param[in] DestString     A Null-terminated Unicode string.
+  @param[in] FormatString   A Null-terminated Unicode format string.
+  @param[in] ...            The variable argument list whose contents are
+                            accessed based on the format string specified by
+                            FormatString.
+
+**/
+VOID
+EFIAPI
+CatSPrintNCopy(
+  IN OUT CHAR16 *DestString,
+  IN  CONST CHAR16 *FormatString,
+  ...
+);
+
+/**
   Function that allows for nicely formatted HEX & ASCII debug output.
   It can be used to inspect memory objects without a need for debugger
 
@@ -1085,27 +1127,6 @@ INTN
 StrICmp(
   IN CONST CHAR16 *pFirstString,
   IN CONST CHAR16 *pSecondString
-  );
-
-/**
-  Checks if all of the DIMMS are healthy.
-
-  @param[out] pDimmsHeathy is the pointer to a BOOLEAN value,
-    where the result status will be stored.
-    If at least one DIMM status differs from healthy this
-    will equal FALSE.
-
-  @retval EFI_SUCCESS if there were no problems
-  @retval EFI_INVALID_PARAMETER if pDimmStatus is NULL
-
-  Other return values from functions:
-    HealthProtocol->GetHealthStatus
-    OpenNvmDimmProtocol
-    getControllerHandle
-**/
-EFI_STATUS
-CheckDimmsHealth(
-     OUT BOOLEAN *pDimmsStatus
   );
 
 /**
@@ -1490,12 +1511,14 @@ FwActivateOptInToString(
   Convert ARS status value to its respective string
 
   @param[in] ARS status value
+  @param[in] AppDirect Capacity value (sum across all PMems)
 
   @retval CLI string representation of ARS status
 **/
 CHAR16*
 ARSStatusToStr(
-  IN     UINT8 ARSStatus
+  IN     UINT8 ARSStatus,
+  IN     UINT64 AppDirectCapacity
   );
 
 /**
@@ -1957,17 +1980,52 @@ CHAR16 * ConvertDimmInfoAttribToString(
 );
 
 /**
-  Match driver command status to EFI return code
+  Create a duplicate of a string without parsing any format strings.
+  Caller is responsible for freeing the returned string.
+  Max string length is MAX_STRING_LENGTH
 
-  @param[in] Status - NVM_STATUS returned from driver
-
-  @retval - Appropriate EFI return code
+  @param[in] StringToDuplicate - String to duplicate
+  @param[out] pDuplicateString - Allocated copy of StringToDuplicate
 **/
 EFI_STATUS
-MatchCliReturnCode (
-  IN     NVM_STATUS Status
- );
+DuplicateString(
+  IN     CHAR16 *StringToDuplicate,
+     OUT CHAR16 **pDuplicateString
+);
 
+/**
+  Wrap the string (add \n) at the specified WrapPos by replacing a space character (' ')
+  with a newline character. Used for the HII popup window.
+  Make a copy of the MessageString so we can modify it if needed.
+
+  @param[in] WrapPos - Line length limit (inclusive). Does not include "\n" or "\0"
+  @param[in] MessageString - Original message string, is not modified
+  @param[out] pWrappedString - Allocated copy of MessageString that is wrapped with "\n"
+**/
+EFI_STATUS
+WrapString(
+  IN     UINT8 WrapPos,
+  IN     CHAR16 *MessageString,
+     OUT CHAR16 **pWrappedString
+  );
+
+
+ /**
+  Guess an appropriate NVM_STATUS code from EFI_STATUS. For use when
+  pCommandStatus is not an argument to a lower level function.
+
+  Used currently to get specific errors relevant to the user out to
+  the CLI but not many (especially lower-level) functions have
+  pCommandStatus. Also the CLI printer doesn't use ReturnCode,
+  only pCommandStatus.
+
+  @param[in] ReturnCode - EFI_STATUS returned from function call
+  @retval - Appropriate guess at the NVM_STATUS code
+**/
+NVM_STATUS
+GuessNvmStatusFromReturnCode(
+  IN EFI_STATUS ReturnCode
+);
 #ifndef OS_BUILD
 /**
   Find serial attributes from SerialProtocol and set on

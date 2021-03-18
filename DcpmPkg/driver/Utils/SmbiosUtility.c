@@ -142,27 +142,27 @@ Finish:
   @param[out] pSmBiosStruct - pointer for first SmBios entry
   @param[out] pLastSmBiosStruct - pointer for last SmBios entry
 **/
-#ifndef OS_BUILD
-VOID
+#ifndef OS_BUILD // use the one defined in os_efi_api_io.c
+EFI_STATUS
 GetFirstAndBoundSmBiosStructPointer(
      OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
      OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
      OUT SMBIOS_VERSION *pSmbiosVersion
   )
 {
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   SMBIOS_TABLE_ENTRY_POINT   *pTableEntry = NULL;
   SMBIOS_TABLE_ENTRY_POINT   *pTempTableEntry = NULL;
   SMBIOS_TABLE_ENTRY_POINT_3 *pTableEntry3 = NULL;
   UINT32 Index = 0;
   UINT8 MinorVersion = 0;
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
   PbrContext *pContext = PBR_CTX();
   PbrSmbiosTableRecord *pSmbiosRecord = NULL;
   UINT32 TableSize = 0;
 
-  if (pSmBiosStruct == NULL || pLastSmBiosStruct == NULL || pSmbiosVersion == NULL) {
-    return;
-  }
+  CHECK_NULL_ARG(pSmBiosStruct, Finish);
+  CHECK_NULL_ARG(pLastSmBiosStruct, Finish);
+  CHECK_NULL_ARG(pSmbiosVersion, Finish);
 
   if (PBR_PLAYBACK_MODE != PBR_GET_MODE(pContext)) {
     /**
@@ -200,39 +200,36 @@ GetFirstAndBoundSmBiosStructPointer(
       TableSize = pTableEntry->TableLength;
     }
 
-    pSmbiosRecord = (PbrSmbiosTableRecord *)AllocateZeroPool(sizeof(PbrSmbiosTableRecord) + TableSize);
-    if (NULL == pSmbiosRecord) {
-      NVDIMM_DBG("Failed to allocate memory\n");
-    }
-    else {
-      pSmbiosRecord->Size = TableSize;
-      pSmbiosRecord->Minor = pSmbiosVersion->Minor;
-      pSmbiosRecord->Major = pSmbiosVersion->Major;
-      pSmbiosRecord->Minor = pSmbiosVersion->Minor;
-      CopyMem_S(pSmbiosRecord->Table, TableSize, pSmBiosStruct->Raw, TableSize);
-      ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, pSmbiosRecord, sizeof(PbrSmbiosTableRecord) + TableSize);
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Failed to record SMBIOS2");
-      }
-      else {
-        NVDIMM_DBG("Max smbios size %x\n", pTableEntry->TableLength);
-      }
-      //need to free?
-    }
+    CHECK_RESULT_MALLOC(pSmbiosRecord, (PbrSmbiosTableRecord *)AllocateZeroPool(sizeof(PbrSmbiosTableRecord) + TableSize), Finish);
+
+    pSmbiosRecord->Size = TableSize;
+    pSmbiosRecord->Minor = pSmbiosVersion->Minor;
+    pSmbiosRecord->Major = pSmbiosVersion->Major;
+    pSmbiosRecord->Minor = pSmbiosVersion->Minor;
+    CopyMem_S(pSmbiosRecord->Table, TableSize, pSmBiosStruct->Raw, TableSize);
+    CHECK_RESULT(PbrSetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, pSmbiosRecord, sizeof(PbrSmbiosTableRecord) + TableSize), Finish);
+
+    NVDIMM_DBG("Max smbios size %x\n", pTableEntry->TableLength);
+
+  } else {
+    // Playback mode
+    CHECK_RESULT(PbrGetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, (VOID**)&pSmbiosRecord, &TableSize), Finish);
+
+    NVDIMM_DBG("Successfully retrieved SMBIOS record, Max smbios size %x\n", TableSize);
+    pSmBiosStruct->Raw = pSmbiosRecord->Table;
+    pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pSmbiosRecord->Size;
+    pSmbiosVersion->Major = pSmbiosRecord->Major;
+    pSmbiosVersion->Minor = pSmbiosRecord->Minor;
   }
-  else {
-    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, (VOID**)&pSmbiosRecord, &TableSize);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to retrieve SMBIOS record");
-    }
-    else {
-      NVDIMM_DBG("Successfully retrieved SMBIOS record, Max smbios size %x\n", TableSize);
-      pSmBiosStruct->Raw = pSmbiosRecord->Table;
-      pLastSmBiosStruct->Raw = pSmBiosStruct->Raw + pSmbiosRecord->Size;
-      pSmbiosVersion->Major = pSmbiosRecord->Major;
-      pSmbiosVersion->Minor = pSmbiosRecord->Minor;
-    }
-  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  FREE_POOL_SAFE(pSmbiosRecord);
+
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+
 }
 #endif
 /**

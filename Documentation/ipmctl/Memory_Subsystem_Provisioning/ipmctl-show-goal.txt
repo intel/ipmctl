@@ -13,7 +13,9 @@ ipmctl-show-goal - Shows the memory allocation goal on one or more PMem modules
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -goal [TARGETS] [PROPERTIES]
+--
 
 DESCRIPTION
 -----------
@@ -78,19 +80,23 @@ EXAMPLES
 --------
 Shows the default memory allocation goal attributes for each PMem module.
 [listing]
+--
 ipmctl show -goal
+--
 
 Shows all the memory allocation goal attributes for the PMem modules on socket 1.
 [listing]
+--
 ipmctl show -a -goal -socket 1
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -112,8 +118,8 @@ AppDirect1Size::
 
 AppDirect1Index::
   Unique identifier of the first App Direct interleave set.
-  - N/A: If no App Direct interleave set
-  - Numeric value if App Direct interleave set is present.
+  * N/A: If no App Direct interleave set
+  * Numeric value if App Direct interleave set is present.
 
 AppDirect1Settings::
   The settings for the first App Direct interleave set in the format: x(Way)
@@ -125,8 +131,8 @@ AppDirect2Size::
 
 AppDirect2Index::
   Unique identifier of the second App Direct interleave set.
-  - N/A: If no App Direct interleave set
-  - Numeric value if App Direct interleave set is present.
+  * N/A: If no App Direct interleave set
+  * Numeric value if App Direct interleave set is present.
 
 AppDirect2Settings::
   The settings for the second App Direct interleave set in the format: x(Way)
@@ -134,16 +140,16 @@ AppDirect2Settings::
 
 Status::
 The status of the memory allocation goal. One of:
-  - Unknown: The status cannot be determined.
-  - New: A reboot is required for the memory allocation goal to be processed by
+  * Unknown: The status cannot be determined.
+  * New: A reboot is required for the memory allocation goal to be processed by
     the BIOS.
-  - Failed - Bad request: The BIOS failed to process the memory allocation goal
+  * Failed - Bad request: The BIOS failed to process the memory allocation goal
     because it was invalid.
-  - Failed - Not enough resources: There were not enough resources for the BIOS
+  * Failed - Not enough resources: There were not enough resources for the BIOS
     to process the memory allocation goal.
-  - Failed - Firmware error: The BIOS failed to process the memory allocation
+  * Failed - Firmware error: The BIOS failed to process the memory allocation
     goal due to a firmware error.
-  - Failed - Unknown: The BIOS failed to process the memory allocation goal due
+  * Failed - Unknown: The BIOS failed to process the memory allocation goal due
     to an unknown error.
 
 SAMPLE OUTPUT
@@ -151,4 +157,6 @@ SAMPLE OUTPUT
 If a new memory allocation goal has been created, a prompt to reboot will be
 presented.
 [listing]
+--
 A reboot is required to process new memory allocation goals.
+--

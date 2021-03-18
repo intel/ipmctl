@@ -13,7 +13,9 @@ ipmctl-show-pcd - Shows the platform configuration data for one or more PMem mod
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -pcd [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -59,12 +61,16 @@ EXAMPLES
 Shows the configuration information from the platform configuration data for all
 manageable PMem modules.
 [listing]
+--
 ipmctl show -dimm -pcd
+--
 
 Shows the configuration information from the platform configuration data for
 PMem module 0x1.
 [listing]
+--
 ipmctl show -dimm -pcd Config
+--
 
 LIMITATIONS
 -----------

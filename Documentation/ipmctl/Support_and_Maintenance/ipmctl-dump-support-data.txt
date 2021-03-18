@@ -13,7 +13,9 @@ ipmctl-dump-support-data - Dumps a support snapshot to a file
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl dump [OPTIONS] -destination (file_prefix) [-dict (filename)] -support
+--
 
 DESCRIPTION
 -----------
@@ -40,6 +42,7 @@ Commands executed per PMem module:
 * show -pcd -dimm
 * show -error media -dimm
 * show -error thermal -dimm
+* dump -destination -debug
 
 OPTIONS
 -------
@@ -84,15 +87,17 @@ related files that start with the file name dumpfile_*. Refer to
 *_Dump Debug Log_* for more info on the output files.
 
 [listing]
+--
 ipmctl dump -destination filename -dict nlog_dict.1.1.0.0000.txt -support
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -102,4 +107,6 @@ SAMPLE OUTPUT
 -------------
 On success:
 [listing]
+--
 Dump support data successfully written to filename_platform_support_info.txt.
+--

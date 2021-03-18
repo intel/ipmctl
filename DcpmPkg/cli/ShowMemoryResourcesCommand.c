@@ -26,7 +26,7 @@
  *  PRINTER TABLE ATTRIBUTES (5 columns)
  *                |     DDR    |   PMemModule  |    Total   |
  *   ===================================================
- *   Volatile     | Volatile DDR Mem  | Volatile DCPMM Mem  | Volatile Mem     |
+ *   Volatile     | Volatile DDR Mem  | Volatile PMem       | Volatile Mem     |
  *   AppDirect    | N/A               | AppDirect Mem       | AppDirect Mem    |
  *   Cache        | DDR Cache Mem     | N/A                 | Cache Mem        |
  *   Inaccessible | N/A               | Inaccessible Mem    | Inaccessible Mem |

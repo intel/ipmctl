@@ -39,7 +39,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define DASH_STR                    L"-"
 
 #define MAX_FILE_PATH_LEN           512
-#define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
+#define MAX_FILE_SYSTEM_STRUCT_SIZE BLOCKSIZE_4K
 #define MAX_SHELL_PROTOCOL_HANDLES  2
 
 #define PROGRESS_EVENT_TIMEOUT    EFI_TIMER_PERIOD_SECONDS(1)
@@ -92,8 +92,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
 #define CLI_ERR_OPENING_PBR_PROTOCOL          L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
-#define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%ls"
-#define CLI_ERR_NMFM_UPPER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is above the recommended NM:FM limit of 1:%d"
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
 
@@ -128,7 +126,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType."
-#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstantMultiplier."
 #define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT      L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstant."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
@@ -169,12 +166,12 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_INFO_LOAD_GOAL                                    L"Load Goal"
 #define CLI_INFO_LOAD_GOAL_CONFIRM_PROMPT                     L"Load the configuration goal from '" FORMAT_STR L"' which will delete existing data and provision the capacity of the " PMEM_MODULES_STR L" on the next reboot."
 #define CLI_INFO_SHOW_REGISTER                                L"Show Register"
-#define CLI_INFO_SHOW_PCD                                     L"Show Platform Config Data"
 
 #define CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED                     L"Master Passphrase not enabled on specified " PMEM_MODULES_STR L"."
 #define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."
 #define CLI_ERR_DEFAULT_OPTION_NOT_COMBINED                       L"Syntax Error: Default option should be given in combination with master option."
 #define CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER  L"Syntax Error: Passphrase property and default option cannot be used together."
+#define CLI_ERR_DEFAULT_NOT_SUPPORTED_FIRMWARE_REV                L"Default option for Master Passphrase is only supported for setting Master Passphrase on at least one of the " PMEM_MODULES_STR "."
 
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
@@ -263,7 +260,10 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
-
+/**
+  This prevents use of strlen on NULL string. StrLen fn in MdePkg has an assert if it is null.
+**/
+#define StrLen(Str) (((void *)(Str)==NULL)?(0):(StrLen(Str)))
 /**
   sizeof returns the number of bytes that the array uses.
   We need to divide it by the length of a single pointer to get the number of elements.
@@ -602,6 +602,18 @@ GetDeviceAndFilePath(
   );
 
 /**
+  Match driver command status to CLI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+EFI_STATUS
+MatchCliReturnCode (
+  IN     NVM_STATUS Status
+ );
+
+/**
   Get free space of volume from given path
 
   @param[in] pFileHandle - file handle protocol
@@ -752,20 +764,6 @@ ConsoleInput(
   IN     BOOLEAN OnlyAlphanumeric,
   IN OUT CHAR16 **ppReturnValue,
   IN OUT UINTN *pBufferSize OPTIONAL
-  );
-
-/**
-  Check all dimms if SKU conflict occurred.
-
-  @param[out] pSkuMixedMode is a pointer to a BOOLEAN value that will
-    represent the presence of SKU mixed mode
-
-  @retval EFI_INVALID_PARAMETER Input parameter was NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-IsSkuMixed(
-     OUT BOOLEAN *pSkuMixedMode
   );
 
 /**
@@ -1063,5 +1061,16 @@ EFI_STATUS AddElement(
   IN OUT UINT32 *pElementCount,
   IN UINT16 newElement,
   IN UINT32 maxElements);
+
+/**
+  Checks whether the FW on the dimm restricts executing commands
+  with the default Master Passphrase
+
+  @param[in]     DimmInfo is the information about the dimm to check
+
+  @retval whether default is restricted by the FW's API version
+**/
+BOOLEAN IsDefaultMasterPassphraseRestricted(
+  IN DIMM_INFO DimmInfo);
 
 #endif /** _COMMON_H_ **/

@@ -65,7 +65,6 @@ InitializeISFromNfit(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   InterleaveStruct *pInterleaveTbl = NULL;
-  PlatformCapabilitiesTbl *pPlatformCapabilitiesTbl = NULL;
 
   NVDIMM_ENTRY();
 
@@ -88,8 +87,6 @@ InitializeISFromNfit(
     }
   }
 
-  pPlatformCapabilitiesTbl = pFitHead->ppPlatformCapabilitiesTbles[0];
-
   InitializeListHead(&((*ppIS)->DimmRegionList));
   InitializeListHead(&((*ppIS)->AppDirectNamespaceList));
 
@@ -104,7 +101,6 @@ InitializeISFromNfit(
     (*ppIS)->InterleaveFormatImc = pInterleaveTbl->LineSize & MAX_UINT16;
   }
   (*ppIS)->InterleaveFormatWays = pNvDimmRegionTbl->InterleaveWays;
-  (*ppIS)->MirrorEnable = (pPlatformCapabilitiesTbl->Capabilities & CAPABILITY_MEMORY_MIRROR) ? TRUE : FALSE;
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
@@ -150,9 +146,8 @@ InitializeIS(
     (*ppIS)->InterleaveFormatChannel = pInterleaveInfo->InterleaveFormatChannel;
     (*ppIS)->InterleaveFormatImc = pInterleaveInfo->InterleaveFormatImc;
     (*ppIS)->InterleaveFormatWays = pInterleaveInfo->InterleaveFormatWays;
-    (*ppIS)->MirrorEnable = pInterleaveInfo->MirrorEnable != 0 ? TRUE : FALSE;
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     (*ppIS)->Signature = IS_SIGNATURE;
     (*ppIS)->Size = 0;
@@ -162,7 +157,6 @@ InitializeIS(
     (*ppIS)->InterleaveFormatChannel = pInterleaveInfo->InterleaveFormatChannel;
     (*ppIS)->InterleaveFormatImc = pInterleaveInfo->InterleaveFormatImc;
     GetBitFieldForNumOfChannelWays(pInterleaveInfo->NumOfDimmsInInterleaveSet, &(*ppIS)->InterleaveFormatWays);
-    (*ppIS)->MirrorEnable = FALSE;
   }
 
   return Rc;
@@ -592,7 +586,7 @@ InitializeDimmRegion(
 		PartitionOffset = pIdentificationInfo->PartitionOffset;
 		PartitionSize = pIdentificationInfo->PmPartitionSize;
 	}
-	else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfRevision)) {
+	else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfRevision)) {
 		NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
 		NVDIMM_IDENTIFICATION_INFORMATION3 *pIdentificationInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pIdentificationInfoTable;
     CopyMem_S(&DimmUidInPcd, sizeof(DimmUidInPcd), &pIdentificationInfo->DimmIdentification, sizeof(DIMM_UNIQUE_IDENTIFIER));
@@ -947,7 +941,7 @@ RetrieveISsFromPlatformConfigData(
             pISList);
 
           pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pInterleaveInfo->Header.Length);
-        } else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pPcdCurrentConf)) {
+        } else if (IS_ACPI_HEADER_REV_MAJ_1_OR_MAJ_3(pPcdCurrentConf)) {
           NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurPcatTable;
           RetrieveISFromInterleaveInformationTable(pFitHead, pDimmList, pInterleaveInfo,
             pPcdCurrentConf->Header.Revision, pDimm, &RegionId,
@@ -1025,7 +1019,7 @@ RetrieveISFromInterleaveInformationTable(
     NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pInterleaveInfoTable;
     pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *) &pInterleaveInfo->pIdentificationInfoList;
     NumOfDimmsInInterleaveSet = pInterleaveInfo->NumOfDimmsInInterleaveSet;
-  } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdCurrentConfRevision)) {
+  } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdCurrentConfRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *) &pInterleaveInfo->pIdentificationInfoList;
     NumOfDimmsInInterleaveSet = pInterleaveInfo->NumOfDimmsInInterleaveSet;
@@ -1069,7 +1063,7 @@ RetrieveISFromInterleaveInformationTable(
       }
       if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcdCurrentConfRevision)) {
         pCurrentIdentInfo = (UINT8 *)pCurrentIdentInfo + sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
-      } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdCurrentConfRevision)) {
+      } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdCurrentConfRevision)) {
         pCurrentIdentInfo = (UINT8 *)pCurrentIdentInfo + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
       }
     }
@@ -1235,7 +1229,7 @@ DetermineRegionHealth(
 
   *pHealthState = RegionHealthStateNormal;
 
-  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE);
+  ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms, FALSE, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     goto FinishAdvance;
   }
@@ -1244,10 +1238,8 @@ DetermineRegionHealth(
     pDimmRegion = DIMM_REGION_FROM_NODE(pNode);
     pDimm = pDimmRegion->pDimm;
 
-    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask))
-    {
-      *pHealthState = RegionHealthStateError;
-      break;
+    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+      continue;
     }
 
     /** Check if any of the DIMMs are locked **/
@@ -1644,7 +1636,7 @@ MapRequestToActualRegionGoalTemplates(
             if (*pDimmsSymmetricalNum >= pMaxPMInterleaveSets->MaxInterleaveSetsSplit.PerDie) {
               DimmsSymmetrical[Index].RegionSize = 0;
               DimmsSymmetrical[Index].VolatileSize = VolatileSizeActualOnDimm;
-              SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
+              SetCmdStatus(pCommandStatus, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
             }
             else {
               DimmsSymmetrical[Index].RegionSize = AvailablePersistentSize;
@@ -1671,7 +1663,7 @@ MapRequestToActualRegionGoalTemplates(
                 (*pDimmsAsymmetricalNum)++;
               }
               else {
-                SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
+                SetCmdStatus(pCommandStatus, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
               }
             }
           }
@@ -1775,11 +1767,18 @@ MapRequestToActualRegionGoalTemplates(
   }
 
   /** Check if platform allows volatile mode  */
-  if (VolatileSize > 0 && !gNvmDimmData->PMEMDev.IsMemModeAllowedByBios) {
-    // set objectId to 0, there should be at leat one object in here
-    SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
-
+  if (VolatileSize > 0) {
+    if (!gNvmDimmData->PMEMDev.IsMemModeAllowedByBios) {
+      SetCmdStatus(pCommandStatus, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+    } else {
+      ReturnCode = SetObjStatusForPMemNotPairedWithDdr(pDimms, DimmsNum, pCommandStatus);
+      if (EFI_ERROR(ReturnCode)) {
+        NVDIMM_DBG("SetObjStatusForPMemNotPairedWithDdr failed.");
+        goto Finish;
+      }
+    }
   }
+
 
   if (pVolatileSizeActual != NULL) {
     *pVolatileSizeActual = VolatileSizeActual;
@@ -1932,7 +1931,6 @@ Finish:
   Retrieve goal configurations by using Platform Config Data
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
-  @param[in] Restore corrupt pcd
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL
@@ -1941,7 +1939,8 @@ Finish:
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt
+  IN     BOOLEAN RestoreCorrupt,
+  IN     BOOLEAN CheckSupportedConfigDimms
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -1978,8 +1977,9 @@ RetrieveGoalConfigsFromPlatformConfigData(
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    // Skip PMem modules that we can't read from
-    if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+    if (!IsDimmManageable(pDimm)
+    || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)
+    || (CheckSupportedConfigDimms && !IsDimmInSupportedConfig(pDimm))) {
       continue;
     }
 
@@ -2068,7 +2068,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
             PcdCinRev,
             &pNewRegionGoal,
             &New);
-        } else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdCinRev)) {
+        } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdCinRev)) {
           NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pPcatTable;
           ReturnCode = RetrieveRegionGoalFromInterleaveInformationTable(pRegionGoals,
             RegionGoalsNum,
@@ -2190,7 +2190,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
           NVDIMM_INTERLEAVE_INFORMATION *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION *)pPcatTable;
           InterleaveChangeStatus = pInterleaveInfo->InterleaveChangeStatus;
         }
-        else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdCinRev)) {
+        else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdCinRev)) {
           NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pPcatTable;
           InterleaveChangeStatus = pInterleaveInfo->InterleaveChangeStatus;
         }
@@ -2210,7 +2210,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
 
         case INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS:
         case INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE:
-        case INTERLEAVE_INFO_STATUS_MIRROR_FAILED:
           pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NOT_ENOUGH_RESOURCES;
           break;
 
@@ -2330,10 +2329,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
       pRegionGoal->NumOfChannelWays = pInterleaveInfo->InterleaveFormatWays;
       pRegionGoal->DimmsNum = pInterleaveInfo->NumOfDimmsInInterleaveSet;
 
-      if (pInterleaveInfo->MirrorEnable) {
-        pRegionGoal->InterleaveSetType = MIRRORED;
-      }
-      else if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_WAYS_X1) {
+      if (pInterleaveInfo->NumOfDimmsInInterleaveSet == INTERLEAVE_WAYS_X1) {
         pRegionGoal->InterleaveSetType = NON_INTERLEAVED;
       }
       else {
@@ -2389,7 +2385,7 @@ RetrieveRegionGoalFromInterleaveInformationTable(
       *pNew = FALSE;
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdCinRev)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdCinRev)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     NVDIMM_IDENTIFICATION_INFORMATION3 *pCurrentIdentInfo = NULL;
     /**
@@ -2578,7 +2574,7 @@ MapRegionsGoal(
     PcatRevision.AsUint8 = gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr->Header.Revision.AsUint8;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision)) {
+  if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
     ReturnCode = RetrieveMaxPMInterleaveSets(&MaxPMInterleaveSets);
     if (EFI_ERROR(ReturnCode)) {
       goto Finish;
@@ -2692,7 +2688,7 @@ MapRegionsGoal(
 
     /** Create goal interleave sets and validate them **/
 
-    /** Interleaved and mirrored **/
+    /** Interleaved **/
     for (Index = 0, NewRegionsGoalNum = 0; Index < RegionGoalTemplatesNum; Index++) {
       if (RegionGoalTemplates[Index].InterleaveSetType == NON_INTERLEAVED) {
         continue;
@@ -2747,7 +2743,7 @@ MapRegionsGoal(
           AD Interleaved mode with all asymmetric DIMMs (different capacities)
           Instead of having one AD interleaved region we can have more */
           if (NewRegionsGoalNum == MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie) {
-            SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED);
+            SetCmdStatus(pCommandStatus, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED);
             break;
           }
 
@@ -2818,7 +2814,7 @@ MapRegionsGoal(
           }
         }
 
-        if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcatRevision) &&
+        if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision) &&
           ((ExistingRegionsNumOnSocket + NewRegionsGoalNum) > MaxPMInterleaveSets.MaxInterleaveSetsSplit.PerDie)) {
           ResetCmdStatus(pCommandStatus, NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
           ReturnCode = EFI_ABORTED;
@@ -3173,7 +3169,7 @@ VerifyPlatformSupport(
     goto Finish;
   }
 
-  /** Check if the platform supports PM-Direct or PM-Cached Mode **/
+  /** Check if the platform supports PM-Direct Mode **/
   AppDirect = PersistentMemType == PM_TYPE_AD || PersistentMemType == PM_TYPE_AD_NI;
   if (AppDirect && !MemModeCapabilities.MemoryModesFlags.AppDirect) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_PLATFORM_NOT_SUPPORT_PM_MODE);
@@ -3559,6 +3555,8 @@ ReduceCapacityForSocketSKU(
   UINT64 ReduceCapacity = 0;
   UINT64 MappedMemorySizeLimit = 0;
   UINT64 DDRRawCapacity = 0;
+  UINT64 DDRCacheUsableCapacity = 0;
+  MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
 
   NVDIMM_ENTRY();
 
@@ -3570,10 +3568,14 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-
-  pCommandStatus->ObjectType = ObjectTypeSocket;
-
   TotalRequestedMemoryOnSocket = 0;
+
+  ReturnCode = AllowedMemoryMode(&AllowedMode);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Unable to determine allowed memory mode.");
+    ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
+    goto Finish;
+  }
 
   ReturnCode = IsConfigureWholeSocket(NumDimmsOnSocket, Socket, &WholeSocket);
 
@@ -3635,9 +3637,17 @@ ReduceCapacityForSocketSKU(
     TotalRequestedMemoryOnSocket += DimmsAsymmetricalOnSocket[Index].RegionSize;
   }
 
-  // Adding full DDR4 capacity only if new config will contain 1LM
+  // Adding DDR capacity only if new config will contain 1LM
   if (!NewConfigurationMemoryMode) {
     TotalRequestedMemoryOnSocket += DDRRawCapacity;
+  } else if (MEMORY_MODE_1LM_PLUS_2LM == AllowedMode) {
+    // Get total DDR Cache Size
+    ReturnCode = GetTotalUsableDDRCacheSize((UINT16)Socket, AllowedMode, &DDRCacheUsableCapacity);
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_DBG("Could not determine usable DDR Cache capacity.");
+      goto Finish;
+    }
+    TotalRequestedMemoryOnSocket += DDRRawCapacity - DDRCacheUsableCapacity;
   }
 
   /**
@@ -3672,7 +3682,7 @@ ReduceCapacityForSocketSKU(
   // Reduce capacity on socket if larger than the amount we can map.
   if (TotalRequestedMemoryOnSocket > MappedMemorySizeLimit) {
 
-    SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
+    SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU, ObjectTypeSocket);
 
     ReduceCapacity = TotalRequestedMemoryOnSocket - MappedMemorySizeLimit;
 
@@ -4380,7 +4390,7 @@ VerifyInterleaveSetsPlatformSupport(
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     ReturnCode = RetrieveChannelWaysFromInterleaveSetMap(&pChannelWays, &InterleaveMapListLength);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Unable to retrieve number of channel ways supported from Interleave Map");
@@ -4418,7 +4428,7 @@ VerifyInterleaveSetsPlatformSupport(
         continue;
       }
 
-      if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+      if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
         iMCIntSize = (UINT8)piMCInterleaveSize[0];
         ChannelIntSize = (UINT8)pChannelInterleaveSize[0];
       } else {
@@ -5064,6 +5074,11 @@ CheckNmFmLimits(
   UINT64 TwoLM_FmMaxRecommended = 0;
   UINT64 TwoLM_NMTotal = 0;
   UINT64 TwoLM_FMTotal = 0;
+  MEMORY_MODE AllowedMode = MEMORY_MODE_1LM;
+  UINT32 Index;
+  NvmStatusCode LowerRatioViolation;
+  NvmStatusCode UpperRatioViolation;
+  UINT16 SubsystemDeviceId;
 
   NVDIMM_ENTRY();
 
@@ -5085,10 +5100,16 @@ CheckNmFmLimits(
     goto Finish;
   }
 
-  // Get total DDR capacity (Near Memory)
-  ReturnCode = GetDDRCapacities(SocketId, &TwoLM_NMTotal, NULL, NULL, NULL);
+  ReturnCode = AllowedMemoryMode(&AllowedMode);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not determine usable DDR capacity.");
+    NVDIMM_DBG("Unable to determine allowed memory mode.");
+    goto Finish;
+  }
+
+  // Get total usable DDR Cache Size
+  ReturnCode = GetTotalUsableDDRCacheSize(SocketId, AllowedMode, &TwoLM_NMTotal);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Could not determine usable DDR Cache capacity.");
     goto Finish;
   }
 
@@ -5099,14 +5120,36 @@ CheckNmFmLimits(
     goto Finish;
   }
 
-  TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER);
-  TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER;
+  SubsystemDeviceId = SPD_DEVICE_ID_20; // default to latest
+  for (Index = 0; Index < DimmsSymNum; ++Index)
+  {
+    if (SocketId == pDimmsSym[Index].pDimm->SocketId) {
+      SubsystemDeviceId = pDimmsSym[Index].pDimm->SubsystemDeviceId;
+      break;
+    }
+  }
+
+  // For older devices use the ratio values that they were originally designed for
+  if ((SPD_DEVICE_ID_10 == SubsystemDeviceId) || (SPD_DEVICE_ID_15 == SubsystemDeviceId))
+  {
+    TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER_3_6);
+    TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER_16;
+    LowerRatioViolation = NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to3_6;
+    UpperRatioViolation = NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to16;
+  }
+  else
+  {
+    TwoLM_FmMinRecommended = (UINT64)(TwoLM_NMTotal * TWOLM_NMFM_RATIO_LOWER_2);
+    TwoLM_FmMaxRecommended = TwoLM_NMTotal * TWOLM_NMFM_RATIO_UPPER_8;
+    LowerRatioViolation = NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to2;
+    UpperRatioViolation = NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to8;
+  }
 
   if (TwoLM_FMTotal > TwoLM_FmMaxRecommended) {
-    SetCmdStatus(pCommandStatus, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION);
+    SetCmdStatus(pCommandStatus, UpperRatioViolation);
   }
   else if (TwoLM_FMTotal < TwoLM_FmMinRecommended) {
-    SetCmdStatus(pCommandStatus, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION);
+    SetCmdStatus(pCommandStatus, LowerRatioViolation);
   }
 
 Finish:

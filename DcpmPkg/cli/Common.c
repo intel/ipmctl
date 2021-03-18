@@ -762,121 +762,121 @@ Finish:
   return ReturnCode;
 }
 
-  /**
-    Gets number of Manageable (functional and non-functional) and supported Dimms and their IDs
+/**
+  Gets number of Manageable (functional and non-functional) and supported Dimms and their IDs
 
-    @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-    @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
-                                        returned dimm list. If false, skip these dimms from returned list.
-    @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
-    @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
+  @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+  @param[in] CheckSupportedConfigDimm If true, include dimms in unmapped set of dimms (non-POR) in
+                                      returned dimm list. If false, skip these dimms from returned list.
+  @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
+  @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-    @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
-    @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
-    @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-    @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
-  **/
-  EFI_STATUS
-    GetAllManageableDimmsNumberAndId(
-      IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
-      IN  BOOLEAN CheckSupportedConfigDimm,
-      OUT UINT32 *pDimmIdsCount,
-      OUT UINT16 **ppDimmIds
-    )
-  {
-    EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-    DIMM_INFO *pDimms = NULL;
-    UINT32 Index = 0;
-    UINT32 NewListIndex = 0;
-    UINT32 UninitializedDimmCount = 0;
-    UINT32 InitializedDimmCount = 0;
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
+  @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
+  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+**/
+EFI_STATUS
+GetAllManageableDimmsNumberAndId(
+  IN  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
+  IN  BOOLEAN CheckSupportedConfigDimm,
+  OUT UINT32 *pDimmIdsCount,
+  OUT UINT16 **ppDimmIds
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM_INFO *pDimms = NULL;
+  UINT32 Index = 0;
+  UINT32 NewListIndex = 0;
+  UINT32 UninitializedDimmCount = 0;
+  UINT32 InitializedDimmCount = 0;
 
-    NVDIMM_ENTRY();
+  NVDIMM_ENTRY();
 
-    if (pDimmIdsCount == NULL || ppDimmIds == NULL || pNvmDimmConfigProtocol == NULL) {
-      NVDIMM_CRIT("NULL input parameter.\n");
-      ReturnCode = EFI_INVALID_PARAMETER;
-      goto Finish;
-    }
-
-    ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &InitializedDimmCount);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_ERR("Error: Communication with the device driver failed.");
-      goto Finish;
-    }
-
-    ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_ERR("Error: Communication with the device driver failed.");
-      goto Finish;
-    }
-
-    if (0 == (InitializedDimmCount + UninitializedDimmCount)) {
-      ReturnCode = EFI_NOT_FOUND;
-      goto Finish;
-    }
-
-    *pDimmIdsCount = InitializedDimmCount + UninitializedDimmCount;
-    pDimms = AllocateZeroPool(sizeof(*pDimms) * (*pDimmIdsCount));
-    *ppDimmIds = AllocateZeroPool(sizeof(**ppDimmIds) * (*pDimmIdsCount));
-
-    if (pDimms == NULL || *ppDimmIds == NULL) {
-      ReturnCode = EFI_OUT_OF_RESOURCES;
-      NVDIMM_ERR("Error: Out of memory\n");
-      goto Finish;
-    }
-
-    ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, *pDimmIdsCount, DIMM_INFO_CATEGORY_NONE, pDimms);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_ERR("Failed to retrieve the DIMM inventory found in NFIT");
-      goto Finish;
-    }
-
-    // Append the uninitialized dimms after the initialized dimms in the dimms array
-    ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, UninitializedDimmCount, &((pDimms)[InitializedDimmCount]));
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_WARN("Failed to retrieve the uninitialized DIMM inventory");
-      goto Finish;
-    }
-
-    // Fill in the dimmInfoCategories for the uninitialized dimms
-    for (Index = InitializedDimmCount; Index < *pDimmIdsCount; Index++) {
-      ReturnCode = pNvmDimmConfigProtocol->GetDimm(pNvmDimmConfigProtocol, (pDimms)[Index].DimmID,
-        DIMM_INFO_CATEGORY_NONE, &((pDimms)[Index]));
-      if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_WARN("Failed to populate the uninitialized DIMM inventory");
-        goto Finish;
-      }
-    }
-
-    ReturnCode = BubbleSort((VOID*)pDimms, *pDimmIdsCount, sizeof(*pDimms), CompareDimmIdInDimmInfo);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Dimms list may not be sorted");
-      goto Finish;
-    }
-
-    for (Index = 0; Index < *pDimmIdsCount; Index++) {
-      if ((!CheckSupportedConfigDimm && (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG))
-        || ((CheckSupportedConfigDimm && !pDimms[Index].IsInPopulationViolation)
-          && pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG)) {
-        (*ppDimmIds)[NewListIndex] = pDimms[Index].DimmID;
-        NewListIndex++;
-      }
-    }
-    *pDimmIdsCount = NewListIndex;
-
-    if (NewListIndex == 0) {
-      ReturnCode = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
-      goto Finish;
-    }
-
-    ReturnCode = EFI_SUCCESS;
-
-  Finish:
-    FREE_POOL_SAFE(pDimms);
-    NVDIMM_EXIT_I64(ReturnCode);
-    return ReturnCode;
+  if (pDimmIdsCount == NULL || ppDimmIds == NULL || pNvmDimmConfigProtocol == NULL) {
+    NVDIMM_CRIT("NULL input parameter.\n");
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
   }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &InitializedDimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Error: Communication with the device driver failed.");
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimmCount(pNvmDimmConfigProtocol, &UninitializedDimmCount);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Error: Communication with the device driver failed.");
+    goto Finish;
+  }
+
+  if (0 == (InitializedDimmCount + UninitializedDimmCount)) {
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
+
+  *pDimmIdsCount = InitializedDimmCount + UninitializedDimmCount;
+  pDimms = AllocateZeroPool(sizeof(*pDimms) * (*pDimmIdsCount));
+  *ppDimmIds = AllocateZeroPool(sizeof(**ppDimmIds) * (*pDimmIdsCount));
+
+  if (pDimms == NULL || *ppDimmIds == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    NVDIMM_ERR("Error: Out of memory\n");
+    goto Finish;
+  }
+
+  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, *pDimmIdsCount, DIMM_INFO_CATEGORY_NONE, pDimms);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("Failed to retrieve the DIMM inventory found in NFIT");
+    goto Finish;
+  }
+
+  // Append the uninitialized dimms after the initialized dimms in the dimms array
+  ReturnCode = pNvmDimmConfigProtocol->GetUninitializedDimms(pNvmDimmConfigProtocol, UninitializedDimmCount, &((pDimms)[InitializedDimmCount]));
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Failed to retrieve the uninitialized DIMM inventory");
+    goto Finish;
+  }
+
+  // Fill in the dimmInfoCategories for the uninitialized dimms
+  for (Index = InitializedDimmCount; Index < *pDimmIdsCount; Index++) {
+    ReturnCode = pNvmDimmConfigProtocol->GetDimm(pNvmDimmConfigProtocol, (pDimms)[Index].DimmID,
+      DIMM_INFO_CATEGORY_NONE, &((pDimms)[Index]));
+    if (EFI_ERROR(ReturnCode)) {
+      NVDIMM_WARN("Failed to populate the uninitialized DIMM inventory");
+      goto Finish;
+    }
+  }
+
+  ReturnCode = BubbleSort((VOID*)pDimms, *pDimmIdsCount, sizeof(*pDimms), CompareDimmIdInDimmInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Dimms list may not be sorted");
+    goto Finish;
+  }
+
+  for (Index = 0; Index < *pDimmIdsCount; Index++) {
+    if ((!CheckSupportedConfigDimm && (pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG))
+      || ((CheckSupportedConfigDimm && !pDimms[Index].IsInPopulationViolation)
+        && pDimms[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG)) {
+      (*ppDimmIds)[NewListIndex] = pDimms[Index].DimmID;
+      NewListIndex++;
+    }
+  }
+  *pDimmIdsCount = NewListIndex;
+
+  if (NewListIndex == 0) {
+    ReturnCode = NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND;
+    goto Finish;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  FREE_POOL_SAFE(pDimms);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
 
 /**
   Checks if the provided display list string contains only the valid values.
@@ -1230,6 +1230,147 @@ Finish:
     FreePool(pTmpWorkingDir);
   }
   NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
+  Match driver command status to CLI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+EFI_STATUS
+MatchCliReturnCode(
+  IN     NVM_STATUS Status
+)
+{
+  EFI_STATUS ReturnCode = EFI_ABORTED;
+  switch (Status) {
+  case NVM_SUCCESS:
+  case NVM_SUCCESS_IMAGE_EXAMINE_OK:
+  case NVM_SUCCESS_FW_RESET_REQUIRED:
+  case NVM_WARN_BLOCK_MODE_DISABLED:
+  case NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU:
+  case NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED:
+  case NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED:
+  case NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED:
+  case NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to3_6:
+  case NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to16:
+  case NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to2:
+  case NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to8:
+  case NVM_WARN_PMEM_MODULE_NOT_PAIRED_FOR_2LM:
+    ReturnCode = EFI_SUCCESS;
+    break;
+
+  case NVM_ERR_PASSPHRASE_TOO_LONG:
+  case NVM_ERR_NEW_PASSPHRASE_NOT_PROVIDED:
+  case NVM_ERR_PASSPHRASE_NOT_PROVIDED:
+  case NVM_ERR_PASSPHRASES_DO_NOT_MATCH:
+  case NVM_ERR_IMAGE_FILE_NOT_VALID:
+  case NVM_ERR_SENSOR_NOT_VALID:
+  case NVM_ERR_SENSOR_CONTROLLER_TEMP_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_MEDIA_TEMP_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE:
+  case NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE:
+  case NVM_ERR_UNSUPPORTED_BLOCK_SIZE:
+  case NVM_ERR_NONE_DIMM_FULFILLS_CRITERIA:
+  case NVM_ERR_INVALID_NAMESPACE_CAPACITY:
+  case NVM_ERR_NAMESPACE_TOO_SMALL_FOR_BTT:
+  case NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE:
+  case NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS:
+  case NVM_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS:
+  case NVM_ERR_INVALID_PARAMETER:
+    ReturnCode = EFI_INVALID_PARAMETER;
+    break;
+
+  case NVM_ERR_NOT_ENOUGH_FREE_SPACE:
+  case NVM_ERR_NOT_ENOUGH_FREE_SPACE_BTT:
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    break;
+
+  case NVM_ERR_DIMM_NOT_FOUND:
+  case NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND:
+  case NVM_ERR_DIMM_EXCLUDED:
+  case NVM_ERR_NO_USABLE_DIMMS:
+  case NVM_ERR_SOCKET_ID_NOT_VALID:
+  case NVM_ERR_REGION_NOT_FOUND:
+  case NVM_ERR_NAMESPACE_DOES_NOT_EXIST:
+  case NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM:
+    ReturnCode = EFI_NOT_FOUND;
+    break;
+
+  case NVM_ERR_ENABLE_SECURITY_NOT_ALLOWED:
+  case NVM_ERR_CREATE_GOAL_NOT_ALLOWED:
+  case NVM_ERR_INVALID_SECURITY_STATE:
+  case NVM_ERR_INVALID_PASSPHRASE:
+  case NVM_ERR_SPI_ACCESS_NOT_ENABLED:
+    ReturnCode = EFI_ACCESS_DENIED;
+    break;
+
+  case NVM_ERR_OPERATION_NOT_STARTED:
+  case NVM_ERR_FORCE_REQUIRED:
+  case NVM_ERR_OPERATION_FAILED:
+  case NVM_ERR_DIMM_ID_DUPLICATED:
+  case NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID:
+  case NVM_ERR_SOCKET_ID_DUPLICATED:
+  case NVM_ERR_UNABLE_TO_GET_SECURITY_STATE:
+  case NVM_ERR_INCONSISTENT_SECURITY_STATE:
+  case NVM_ERR_SECURITY_USER_PP_COUNT_EXPIRED:
+  case NVM_ERR_SECURITY_MASTER_PP_COUNT_EXPIRED:
+  case NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_CURR_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_GOAL_CURR_CONF_AFFECTS_UNSPEC_DIMM:
+  case NVM_ERR_REGION_CONF_APPLYING_FAILED:
+  case NVM_ERR_REGION_CONF_UNSUPPORTED_CONFIG:
+  case NVM_ERR_DUMP_FILE_OPERATION_FAILED:
+  case NVM_ERR_LOAD_VERSION:
+  case NVM_ERR_LOAD_INVALID_DATA_IN_FILE:
+  case NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE:
+  case NVM_ERR_LOAD_DIMM_COUNT_MISMATCH:
+  case NVM_ERR_NAMESPACE_CONFIGURATION_BROKEN:
+  case NVM_ERR_INVALID_SECURITY_OPERATION:
+  case NVM_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED:
+  case NVM_ERR_DUMP_NO_CONFIGURED_DIMMS:
+  case NVM_ERR_REGION_NOT_HEALTHY:
+  case NVM_ERR_FAILED_TO_GET_DIMM_REGISTERS:
+  case NVM_ERR_FAILED_TO_UPDATE_BTT:
+  case NVM_ERR_SMBIOS_DIMM_ENTRY_NOT_FOUND_IN_NFIT:
+  case NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING:
+  case NVM_ERR_IMAGE_EXAMINE_INVALID:
+  case NVM_ERR_FIRMWARE_API_NOT_VALID:
+  case NVM_ERR_FIRMWARE_VERSION_NOT_VALID:
+  case NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS:
+  case NVM_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY:
+  case NVM_ERR_ARS_IN_PROGRESS:
+  case NVM_ERR_FWUPDATE_IN_PROGRESS:
+  case NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS:
+  case NVM_ERR_UNKNOWN_LONG_OP_IN_PROGRESS:
+  case NVM_ERR_APPDIRECT_IN_SYSTEM:
+  case NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU:
+  case NVM_ERR_SECURE_ERASE_NAMESPACE_EXISTS:
+  case NVM_ERR_CREATE_NAMESPACE_NOT_ALLOWED:
+    ReturnCode = EFI_ABORTED;
+    break;
+
+  case NVM_ERR_OPERATION_NOT_SUPPORTED:
+  case NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED:
+  case NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE:
+    ReturnCode = EFI_UNSUPPORTED;
+    break;
+
+  case NVM_ERR_FIRMWARE_ALREADY_LOADED:
+    ReturnCode = EFI_ALREADY_STARTED;
+    break;
+
+  case NVM_ERR_MASTER_PASSPHRASE_NOT_SET:
+    ReturnCode = EFI_NOT_STARTED;
+    break;
+
+  default:
+    ReturnCode = EFI_ABORTED;
+    break;
+  }
   return ReturnCode;
 }
 
@@ -1824,7 +1965,7 @@ ParseSourcePassFile(
     StringLength = StrLen(pCurrentLine);
     // Ignore comment line that starts with '#' or
     // If the only content in line is new line chars
-    if ((NULL != StrStr(ppLinesBuffer[Index], L"#"))
+    if ( ((NULL == pCurrentLine) || (L'#' == pCurrentLine[0]))
       || (1 == StringLength && (L'\n' == pCurrentLine[0] || L'\r' == pCurrentLine[0]))
       || (2 == StringLength && L'\r' == pCurrentLine[0] && L'\n' == pCurrentLine[1])) {
       continue;
@@ -2068,83 +2209,6 @@ ConsoleInput(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
-/**
-  Check all DIMMs if SKU conflict occurred.
-
-  @param[out] pSkuMixedMode is a pointer to a BOOLEAN value that will
-    represent the presence of SKU mixed mode
-
-  @retval EFI_INVALID_PARAMETER Input parameter was NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-IsSkuMixed(
-  OUT BOOLEAN *pSkuMixedMode
-)
-{
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT32 DimmCount = 0;
-  UINT32 Index = 0;
-  DIMM_INFO *pDimmsInformation = NULL;
-  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  DIMM_INFO *pFirstManageableDimmInfo = NULL;
-
-  NVDIMM_ENTRY();
-
-  if (pSkuMixedMode == NULL) {
-    goto Finish;
-  }
-  *pSkuMixedMode = FALSE;
-
-  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID**)&pNvmDimmConfigProtocol, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  pDimmsInformation = AllocateZeroPool(DimmCount * sizeof(*pDimmsInformation));
-  if (pDimmsInformation == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_NONE, pDimmsInformation);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
-
-  for (Index = 0; Index < DimmCount; Index++) {
-    if (pDimmsInformation[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
-      pFirstManageableDimmInfo = &(pDimmsInformation[Index]);
-      break;
-    }
-  }
-
-  while (++Index < DimmCount) {
-    if (pDimmsInformation[Index].ManageabilityState == MANAGEMENT_VALID_CONFIG) {
-      ReturnCode = IsSkuModeMismatch(pFirstManageableDimmInfo, &(pDimmsInformation[Index]), pSkuMixedMode);
-      if (EFI_ERROR(ReturnCode)) {
-        goto Finish;
-      }
-
-      if (*pSkuMixedMode == TRUE) {
-        break;
-      }
-    }
-  }
-
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  FREE_POOL_SAFE(pDimmsInformation);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -2986,4 +3050,25 @@ EFI_STATUS AddElement(
   pElementList[x] = newElement;
 
   return EFI_SUCCESS;
+}
+
+/**
+  Checks whether the FW on the dimm restricts executing commands
+  with the default Master Passphrase. The restriction is implemented
+  in API version 3.2.
+
+  @param[in]     DimmInfo is the information about the dimm to check
+
+  @retval whether default is restricted by the FW's API version
+**/
+BOOLEAN IsDefaultMasterPassphraseRestricted(
+  IN DIMM_INFO DimmInfo)
+{
+  if (((3 == DimmInfo.FwVer.FwApiMajor) && (2 <= DimmInfo.FwVer.FwApiMinor)) ||
+    (4 <= DimmInfo.FwVer.FwApiMajor)) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }

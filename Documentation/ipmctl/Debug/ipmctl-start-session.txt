@@ -13,7 +13,9 @@ ipmctl-start-session - Starts a recording or playback session.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl start [OPTIONS] -session -mode (record|playback|playback_manual) [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -71,15 +73,21 @@ EXAMPLES
 --------
 Start a recording session.
 [listing]
+--
 ipmctl start -session -mode record
+--
 
 Automatically execute commands in a session.
 [listing]
+--
 ipmctl start -session -mode playback
+--
 
 Allow for manual execution of commands in playback mode
 [listing]
+--
 ipmctl start -session -mode playback_manual
+--
 
 LIMITATIONS
 -----------

@@ -56,6 +56,7 @@ GenerateChecksum(
 
   @param[in] pData Table that will validate the checksum for
   @param[in] Length Size of the pData
+  @param[in] Checksum of pData
 
   @retval TRUE The table and the checksum sum to 0
   @retval FALSE The table and the checksum not sum to 0
@@ -63,7 +64,8 @@ GenerateChecksum(
 BOOLEAN
 IsChecksumValid(
   IN     VOID *pData,
-  IN     UINT32 Length
+  IN     UINT32 Length,
+  IN     UINT8 Checksum
   );
 
 /**

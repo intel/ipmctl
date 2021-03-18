@@ -5,6 +5,7 @@
 
 #include <Uefi.h>
 #include <Library/ShellLib.h>
+#include <Library/HiiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include "ShowDimmsCommand.h"
 #include <Debug.h>
@@ -132,6 +133,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   SOCKET_ID_STR,
   FW_VER_STR,
   FW_API_VER_STR,
+  FW_ACTIVE_API_VER_STR,
   INTERFACE_FORMAT_CODE_STR,
   CAPACITY_STR,
   MANAGEABILITY_STR,
@@ -171,7 +173,6 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   IS_NEW_STR,
   BANK_LABEL_STR,
   MEMORY_TYPE_STR,
-  AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY,
   AVG_PWR_REPORTING_TIME_CONSTANT,
   MANUFACTURER_STR,
   CHANNEL_ID_STR,
@@ -180,9 +181,7 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_LIMIT_STR,
   AVG_POWER_TIME_CONSTANT_STR,
-  TURBO_MODE_STATE_STR,
   MEMORY_BANDWIDTH_BOOST_FEATURE_STR,
-  TURBO_POWER_LIMIT_STR,
   MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR,
   MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR,
   MAX_AVG_POWER_LIMIT_STR,
@@ -254,16 +253,13 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   PACKAGE_SPARING_ENABLED_STR,
   PACKAGE_SPARES_AVAILABLE_STR,
   IS_NEW_STR,
-  AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY,
   AVG_PWR_REPORTING_TIME_CONSTANT,
   VIRAL_POLICY_STR,
   VIRAL_STATE_STR,
   PEAK_POWER_BUDGET_STR,
   AVG_POWER_LIMIT_STR,
   AVG_POWER_TIME_CONSTANT_STR,
-  TURBO_MODE_STATE_STR,
   MEMORY_BANDWIDTH_BOOST_FEATURE_STR,
-  TURBO_POWER_LIMIT_STR,
   MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR,
   MEMORY_BANDWIDTH_BOOST_AVERAGE_POWER_TIME_CONSTANT_STR,
   MAX_AVG_POWER_LIMIT_STR,
@@ -470,9 +466,10 @@ ShowDimms(
   BOOLEAN volatile DimmIsOkToDisplay[MAX_DIMMS];
   BOOLEAN IsMixedSku;
   BOOLEAN IsSkuViolation;
-  BOOLEAN SkuMixedMode = FALSE;
   DIMM_INFO_CATEGORIES DimmCategories = DIMM_INFO_CATEGORY_NONE;
   BOOLEAN FIS_2_0 = FALSE;
+  MEMORY_RESOURCES_INFO MemoryResourcesInfo;
+  CHAR16 *pPcdMissingStr = NULL;
 
   NVDIMM_ENTRY();
   gNullValuesEncounteredForDisplay = 0;
@@ -481,6 +478,7 @@ ShowDimms(
   ZeroMem(DimmStr, sizeof(DimmStr));
   ZeroMem(&LatchedLastShutdownStatusDetails, sizeof(LatchedLastShutdownStatusDetails));
   ZeroMem(&UnlatchedLastShutdownStatusDetails, sizeof(UnlatchedLastShutdownStatusDetails));
+  SetMem(&MemoryResourcesInfo, sizeof(MemoryResourcesInfo), 0x0);
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -574,16 +572,23 @@ ShowDimms(
     goto Finish;
   }
 
-  ReturnCode = IsSkuMixed(&SkuMixedMode);
-
+  ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
   if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_ABORTED;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Could not check if SKU is mixed.");
+    if (MemoryResourcesInfo.PcdInvalid) {
+      pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING), NULL);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
+      goto Finish;
+    }
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
     goto Finish;
   }
 
-  if (SkuMixedMode) {
+  ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  if (IsMixedSku) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, WARNING_DIMMS_SKU_MIXED);
     NVDIMM_WARN("Mixed SKU detected. Driver functionalities limited.");
   }
@@ -703,12 +708,6 @@ ShowDimms(
       gDisplayNulls = TRUE;
       pOriginalNullVal = gNullValueToDisplay;
       gNullValueToDisplay = L"Unsupported Field";
-    }
-
-    // Get whether the system is has a mixed Sku and/or Sku violation
-    ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
-    if (EFI_ERROR(ReturnCode)) {
-      goto Finish;
     }
 
     /** show dimms from Initialized list **/
@@ -1143,11 +1142,6 @@ ShowDimms(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, IS_NEW_STR, FORMAT_INT32, pDimms[DimmIndex].IsNew);
         }
 
-        /** AveragePowerReportingTimeConstantMultiplier (FIS 2.0 Only) **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT_MULT_PROPERTY, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerReportingTimeConstantMultiplier, FORMAT_HEX_NOWIDTH));
-        }
-
         /** AveragePowerReportingTimeConstant (FIS 2.1 and higher) **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_PWR_REPORTING_TIME_CONSTANT))) {
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_PWR_REPORTING_TIME_CONSTANT, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerReportingTimeConstant, FORMAT_UINT64 L" " TIME_MSR_MS));
@@ -1186,32 +1180,17 @@ ShowDimms(
           PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AvgPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
         }
 
-        /** AvgPowerTimeConstant **/
-        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, AVG_POWER_TIME_CONSTANT_STR))) {
-          PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, AVG_POWER_TIME_CONSTANT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].AveragePowerTimeConstant, FORMAT_UINT64 L" " TIME_MSR_MS));
-        }
-
-        /** 2.1/2.0: MemoryBandwidthBoostFeature/TurboModeState **/
-        if (ShowAll
-          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TURBO_MODE_STATE_STR))
-          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_BANDWIDTH_BOOST_FEATURE_STR))) {
-          if (2 == pDimms[DimmIndex].FwVer.FwApiMajor && 0 == pDimms[DimmIndex].FwVer.FwApiMinor) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, TURBO_MODE_STATE_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MemoryBandwidthBoostFeature, FORMAT_HEX_NOWIDTH));
-          }
-          else if ((2 == pDimms[DimmIndex].FwVer.FwApiMajor && 1 <= pDimms[DimmIndex].FwVer.FwApiMinor)
+        /** 2.1+: MemoryBandwidthBoostFeature **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_BANDWIDTH_BOOST_FEATURE_STR))) {
+          if ((2 == pDimms[DimmIndex].FwVer.FwApiMajor && 1 <= pDimms[DimmIndex].FwVer.FwApiMinor)
             || 3 <= pDimms[DimmIndex].FwVer.FwApiMajor) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_BANDWIDTH_BOOST_FEATURE_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MemoryBandwidthBoostFeature, FORMAT_HEX_NOWIDTH));
           }
         }
 
-        /** 2.1/2.0: MemoryBandwidthBoostMaxPowerLimit/TurboPowerLimit **/
-        if (ShowAll
-          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, TURBO_POWER_LIMIT_STR))
-          || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR))) {
-          if (2 == pDimms[DimmIndex].FwVer.FwApiMajor && 0 == pDimms[DimmIndex].FwVer.FwApiMinor) {
-            PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, TURBO_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MemoryBandwidthBoostMaxPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
-          }
-          else if ((2 == pDimms[DimmIndex].FwVer.FwApiMajor && 1 <= pDimms[DimmIndex].FwVer.FwApiMinor)
+        /** 2.1+: MemoryBandwidthBoostMaxPowerLimit **/
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR))) {
+          if ((2 == pDimms[DimmIndex].FwVer.FwApiMajor && 1 <= pDimms[DimmIndex].FwVer.FwApiMinor)
             || 3 <= pDimms[DimmIndex].FwVer.FwApiMajor) {
             PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, MEMORY_BANDWIDTH_BOOST_MAX_POWER_LIMIT_STR, ConvertDimmInfoAttribToString((VOID*)&pDimms[DimmIndex].MemoryBandwidthBoostMaxPowerLimit, FORMAT_INT32 L" " MILI_WATT_STR));
           }
@@ -1353,7 +1332,7 @@ ShowDimms(
 
         /** ARSStatus **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ARS_STATUS_STR))) {
-          pAttributeStr = ARSStatusToStr(pDimms[DimmIndex].ARSStatus);
+          pAttributeStr = ARSStatusToStr(pDimms[DimmIndex].ARSStatus, MemoryResourcesInfo.AppDirectCapacity);
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ARS_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
@@ -1385,13 +1364,8 @@ ShowDimms(
           (ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR) ||
             ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_REGISTER_STR)))) {
 
-          ReturnCode = pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &BootStatusRegister, &BootStatusBitMask);
-          if (EFI_ERROR(ReturnCode)) {
-            pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-          }
-          else {
-            pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
-          }
+          pNvmDimmConfigProtocol->GetBSRAndBootStatusBitMask(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &BootStatusRegister, &BootStatusBitMask);
+          pAttributeStr = BootStatusBitmaskToStr(gNvmDimmCliHiiHandle, BootStatusBitMask);
 
           if (ShowAll || (pDispOptions->DisplayOptionSet &&
             ContainsValue(pDispOptions->pDisplayValues, BOOT_STATUS_STR))) {
@@ -1592,6 +1566,7 @@ Finish:
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pAllDimms);
   FREE_POOL_SAFE(pDimmIds);
+  FREE_POOL_SAFE(pPcdMissingStr);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -1644,10 +1619,10 @@ FormFactorToString(
 {
   CHAR16 *pFormFactorStr = NULL;
   switch (FormFactor) {
-  case FORM_FACTOR_DIMM:
+  case MemoryFormFactorDimm:
     pFormFactorStr = CatSPrint(NULL, FORMAT_STR, L"DIMM");
     break;
-  case FORM_FACTOR_SODIMM:
+  case MemoryFormFactorSodimm:
     pFormFactorStr = CatSPrint(NULL, FORMAT_STR, L"SODIMM");
     break;
   default:
@@ -1671,18 +1646,24 @@ OverwriteDimmStatusToStr(
   NVDIMM_ENTRY();
 
   switch (OverwriteDimmStatus) {
-  case OVERWRITE_DIMM_STATUS_COMPLETED:
+  case LONG_OP_STATUS_COMPLETED:
     pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_COMPLETED_STR);
     break;
-  case OVERWRITE_DIMM_STATUS_IN_PROGRESS:
+  case LONG_OP_STATUS_IN_PROGRESS:
     pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_IN_PROGRESS_STR);
     break;
-  case OVERWRITE_DIMM_STATUS_NOT_STARTED:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_NOT_STARTED_STR);
+  case LONG_OP_STATUS_IDLE:
+    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_IDLE_STR);
     break;
-  case OVERWRITE_DIMM_STATUS_UNKNOWN:
-  default:
+  case LONG_OP_STATUS_UNKNOWN:
     pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_UNKNOWN_STR);
+    break;
+  case LONG_OP_STATUS_ABORTED:
+    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_ABORTED_STR);
+    break;
+  case LONG_OP_STATUS_ERROR:
+  default:
+    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_ERROR_STR);
     break;
   }
 

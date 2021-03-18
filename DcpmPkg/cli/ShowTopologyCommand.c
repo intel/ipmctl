@@ -192,6 +192,7 @@ ShowTopology(
   UINT32 DimmCount = 0;
   UINT16 Index = 0;
   UINT16 Index2 = 0;
+  UINT16 IndexPmem = 0;
   UINT16 TopologyDimmsNumber = 0;
   UINT16 UnitsOption = DISPLAY_SIZE_UNIT_UNKNOWN;
   UINT16 UnitsToDisplay = FixedPcdGet16(PcdDcpmmCliDefaultCapacityUnit);
@@ -349,17 +350,18 @@ ShowTopology(
   Revision.AsUint8 = pTopologyDimms[Index].PmttVersion;
   /** display a summary table of all dimms **/
   if (!AllOptionSet) {
-    //Print topology for DDR4 entries if no dimm target specified
+    //Print topology for DDR entries if no dimm target specified
     for (Index = 0; Index < TopologyDimmsNumber; Index++) {
       if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
         continue;
       }
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[IndexPmem].DimmID)) {
+        IndexPmem++;
         continue;
       }
 
-      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
-        break;
+      if (pTopologyDimms[Index].MemoryType != MEMORYTYPE_DCPM && ContainTarget(pCmd, DIMM_TARGET)) {
+        continue;
       }
       pMemoryType = MemoryTypeToStr(pTopologyDimms[Index].MemoryType);
       TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pTopologyDimms[Index].VolatileCapacity,
@@ -368,12 +370,13 @@ ShowTopology(
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
       if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
-        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[IndexPmem].DimmUid,
           DimmStr, MAX_DIMM_UID_LENGTH);
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+        IndexPmem++;
       }
       else {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
@@ -392,29 +395,31 @@ ShowTopology(
   else if (IS_ACPI_REV_MAJ_0_MIN_1(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
-    //Print detailed topology for DDR4 entries if no dimm target specified
+    //Print detailed topology for DDR entries if no dimm target specified
     for (Index = 0; Index < TopologyDimmsNumber; Index++) {
       if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
         continue;
       }
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[IndexPmem].DimmID)) {
+        IndexPmem++;
         continue;
       }
 
-      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
-        break;
+      if (pTopologyDimms[Index].MemoryType != MEMORYTYPE_DCPM && ContainTarget(pCmd, DIMM_TARGET)) {
+        continue;
       }
 
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_TOPOLOGY_INDEX_PATH, TopoCnt);
 
       /** Always Print DimmIDs **/
       if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
-        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[IndexPmem].DimmUid,
           DimmStr, MAX_DIMM_UID_LENGTH);
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+        IndexPmem++;
       }
       else {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);
@@ -465,17 +470,18 @@ ShowTopology(
   else if (IS_ACPI_REV_MAJ_0_MIN_2(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
-    //Print detailed topology for DDR4 entries if no dimm target specified
+    //Print detailed topology for DDR entries if no dimm target specified
     for (Index = 0; Index < TopologyDimmsNumber; Index++) {
       if (SocketsNum > 0 && !ContainUint(pSockets, SocketsNum, pTopologyDimms[Index].SocketID)) {
         continue;
       }
-      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[Index].DimmID)) {
+      if (DimmIdsNum > 0 && !ContainUint(pDimmIds, DimmIdsNum, pDimms[IndexPmem].DimmID)) {
+        IndexPmem++;
         continue;
       }
 
-      if (pTopologyDimms[Index].MemoryType != 2 && ContainTarget(pCmd, DIMM_TARGET)) {
-        break;
+      if (pTopologyDimms[Index].MemoryType != MEMORYTYPE_DCPM && ContainTarget(pCmd, DIMM_TARGET)) {
+        continue;
       }
 
       /** SocketID **/
@@ -506,12 +512,13 @@ ShowTopology(
       PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_DIMM_INDEX_PATH, SocketID, DieID, MemControllerID, ChannelID, SlotID, TopoCnt);
       /** Always Print DimmIDs **/
       if (pTopologyDimms[Index].MemoryType == MEMORYTYPE_DCPM) {
-        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[Index].DimmUid,
+        ReturnCode = GetPreferredDimmIdAsString(pTopologyDimms[Index].DimmHandle, pDimms[IndexPmem].DimmUid,
           DimmStr, MAX_DIMM_UID_LENGTH);
         if (EFI_ERROR(ReturnCode)) {
           goto Finish;
         }
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
+        IndexPmem++;
       }
       else {
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, NOT_APPLICABLE_SHORT_STR);

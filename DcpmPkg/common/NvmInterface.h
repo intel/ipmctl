@@ -688,29 +688,6 @@ EFI_STATUS
   );
 
 /**
-  Get PMem module package sparing policy
-
-  @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in]  DimmPid The ID of the PMem module
-  @param[out] pEnable Reflects whether the package sparing policy is enabled or disabled (0x00 = Disabled)
-  @param[out] pAggressiveness How aggressive to be on package sparing (0...255)
-  @param[out] pSupported Designates whether or not each rank of the PMem module still supports package sparing
-
-  @retval EFI_INVALID_PARAMETER if no PMem module found for DimmPid
-  @retval EFI_DEVICE_ERROR if device error detected
-  @retval EFI_SUCCESS
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_GET_PACKAGE_SPARING_POLICY) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 DimmPid,
-     OUT BOOLEAN *pEnable OPTIONAL,
-     OUT UINT8 *pAggressiveness OPTIONAL,
-     OUT UINT8 *pSupported OPTIONAL
-);
-
-/**
   Get actual Region goal capacities that would be used based on input values.
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -1104,52 +1081,28 @@ EFI_STATUS
   );
 
 /**
-  Get Optional Configuration Data Policy using FW command
-
-  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] pDimmIds - pointer to array of UINT16 PMem module ids to get data for
-  @param[in] DimmIdsCount - number of elements in pDimmIds
-
-  @param[out] pAvgPwrReportingTimeConstantMultiplier - output buffer of
-              Average Power Reporting Time Constant Multiplier values.
-              Caller must provide buffer of correct size
-  @param[out] pCommandStatus Structure containing detailed NVM error codes.
-
-  @retval EFI_INVALID_PARAMETER One or more parameters are invalid
-  @retval EFI_SUCCESS All ok
-**/
-typedef
-EFI_STATUS
-(EFIAPI *EFI_DCPMM_CONFIG_GET_OPTIONAL_DATA_POLICY) (
-  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds,
-  IN     UINT32 DimmIdsCount,
-     OUT UINT8 *pAvgPwrReportingTimeConstantMultiplier,
-     OUT COMMAND_STATUS *pCommandStatus
-  );
-
-/**
   Set Optional Configuration Data Policy using FW command
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in] pDimmIds - pointer to array of UINT16 PMem module ids to set
   @param[in] DimmIdsCount - number of elements in pDimmIds
-  @param[in] AveragePowerReportingTimeConstantMultiplier - AveragePowerReportingTimeConstantMultiplier value to set
+  @param[in] Reserved
+  @param[in] AveragePowerReportingTimeConstant - (FIS 2.1 and greater) AveragePowerReportingTimeConstant value to set
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
-  @retval EFI_UNSUPPORTED Mixed Sku of PMem modules has been detected in the system
+  @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_SUCCESS All ok
-  @retval EFI_NO_RESPONSE FW busy for one or more PMem modules
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 typedef
 EFI_STATUS
 (EFIAPI *EFI_DCPMM_CONFIG_SET_OPTIONAL_DATA_POLICY) (
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  IN     UINT16 *pDimmIds,
+  IN     UINT16 *pDimmIds OPTIONAL,
   IN     UINT32 DimmIdsCount,
-  IN     UINT8 *AveragePowerReportingTimeConstantMultiplier,
-  IN     UINT32 *AveragePowerReportingTimeConstant,
+  IN     UINT8 *Reserved,
+  IN     UINT32 *pAveragePowerReportingTimeConstant,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -1181,8 +1134,8 @@ EFI_STATUS
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
 
-  @param[out] ppTopologyDimm Structure containing information about DDR4 entries from SMBIOS.
-  @param[out] pTopologyDimmsNumber Number of DDR4 entries found in SMBIOS.
+  @param[out] ppTopologyDimm Structure containing information about DDR entries from SMBIOS.
+  @param[out] pTopologyDimmsNumber Number of DDR entries found in SMBIOS.
 
   @retval EFI_SUCCESS All ok.
   @retval EFI_DEVICE_ERROR Unable to find SMBIOS table in system configuration tables.
@@ -1358,11 +1311,12 @@ EFI_STATUS
   UEFI - Read directly from BSR register
   OS - Get BSR value from BIOS emulated command
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] DimmID -  PMem module handle of the PMem module
-  @param[out] pBsrValue - pointer to  BSR register value OPTIONAL
-  @param[out] pBootStatusBitMask  - pointer to bootstatusbitmask OPTIONAL
+  @param[in] DimmID PMem module handle of the PMem module
+  @param[out] pBsrValue pointer to BSR register value OPTIONAL
+  @param[out] pBootStatusBitMask pointer to BootStatusBitmask OPTIONAL
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
+  @retval EFI_NO_RESPONSE BSR value returned by FW is invalid
   @retval EFI_SUCCESS Success
   @retval Other errors failure of FW commands
 **/
@@ -1683,6 +1637,42 @@ EFI_STATUS
   OUT    UINT32 *pTagPartitionCnt
 );
 
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+/**
+  Gets value of PcdDebugPrintErrorLevel for the pmem driver
+
+  @param[in] pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[out] ErrorLevel A pointer used to store the value of debug print error level
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid ErrorLevel Parameter.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_PBR_GET_DRIVER_DEBUG_PRINT_ERROR_LEVEL) (
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+     OUT UINT32 *ErrorLevel
+  );
+
+/**
+  Sets value of PcdDebugPrintErrorLevel for the pmem driver
+
+  @param[in] pThis A pointer to EFI DCPMM CONFIG PROTOCOL structure
+  @param[in] ErrorLevel The new value to assign to debug print error level
+
+  @retval EFI_SUCCESS
+  @retval EFI_INVALID_PARAMETER Invalid ErrorLevel Parameter.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_PBR_SET_DRIVER_DEBUG_PRINT_ERROR_LEVEL) (
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT32 ErrorLevel
+);
+#endif //MDEPKG_NDEBUG
+#endif //OS_BUILD
+
 /**
   Configuration and management of PMem modules Protocol Interface
 **/
@@ -1745,6 +1735,12 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_SET_FIS_TRANSPORT_ATTRIBS SetFisTransportAttributes;
   EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY GetCommandAccessPolicy;
   EFI_DCPMM_CONFIG_GET_COMMAND_EFFECT_LOG GetCommandEffectLog;
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+  EFI_DCPMM_PBR_GET_DRIVER_DEBUG_PRINT_ERROR_LEVEL GetDriverDebugPrintErrorLevel;
+  EFI_DCPMM_PBR_SET_DRIVER_DEBUG_PRINT_ERROR_LEVEL SetDriverDebugPrintErrorLevel;
+#endif //MDEPKG_NDEBUG
+#endif //OS_BUILD
 };
 
 /**

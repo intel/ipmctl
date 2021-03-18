@@ -1,0 +1,167 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-load-dimm(1)
+===================
+endif::manpage[]
+
+NAME
+----
+ipmctl-load-dimm - Updates the firmware on one or more PMem modules
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl load [OPTIONS] -source (path) -dimm [TARGETS]
+--
+
+DESCRIPTION
+-----------
+Updates the firmware on one or more PMem modules. On the next power cycle, the
+firmware will become active.
+
+NOTE: If Address Range Scrub (ARS) is in progress on any target PMem module,
+an attempt will be made to abort ARS and then proceed with the firmware update.
+
+NOTE: A power cycle reboot is required to activate the updated firmware image and is
+recommended to ensure ARS runs to completion.
+
+OPTIONS
+-------
+-x::
+-examine::
+  Verifies the target PMem modules are compatible and ready to receive the
+  firmware image specified in the source option. Returns the firmware
+  image version.
+
+-f::
+-force::
+  Downgrading the firmware to an older version is a potentially destructive
+  operation which requires confirmation from the user for each PMem module. This
+  option suppresses the confirmation when attempting to downgrade.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
+
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
+-source::
+  Specifies the firmware image binary to upload to the PMem module.
+
+-recover::
+  *--DEPRECATED--* +
+  This flag is no longer necessary to run firmware update on PMem modules
+  where the DDRT link is not trained. These untrained PMem modules are now automatically
+  included when the command is run without the '-recover' option.. However, this
+  flag is still maintained for backwards compatibility.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Updates the firmware on specific PMem modules by supplying one or more
+  comma separated PMem module identifiers. However, this is not recommended as it may
+  put the system in an undesirable state. The default is to update all
+  manageable PMem modules.
+
+EXAMPLES
+--------
+Updates the firmware on all PMem modules in the system to the image in sourcefile.bin on
+the next power cycle.
+[listing]
+--
+ipmctl load -source sourcefile.bin -dimm
+--
+
+Checks the firmware image in sourcefile.bin and retrieves the version.
+[listing]
+--
+ipmctl load -examine -source sourcefile.bin -dimm
+--
+
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* The specified PMem modules must be manageable by the host software.
+
+Firmware version (PN.RN.SV.bbbb) updates are supported as follows:
+
+  * The product number (PN) cannot be changed.
+  * The revision number (RN) can be upgraded when PN is the same.
+  * The security revision number (SV) can be upgraded when PN.RN is the same. In
+    some configurations it can also be downgraded when PN.RN is the same; use the
+    examine option to determine if the security revision number can be downgraded.
+  * The build number (bbbb) can be upgraded or downgraded. However, if the firmware
+    API version in the firmware image is lower than is supported by the host software
+    and would make the PMem module become unmanageable, the downgrade is not supported.
+
+NOTE: Once a firmware image is staged for execution, a power cycle is required
+before another firmware image of the same type (production or debug) can be
+staged for execution using this command.
+
+RETURN DATA
+-----------
+When the examine option is provided, the firmware image is checked and the
+version number and firmware type is provided. The firmware will either be
+valid for the PMem module, a downgrade or invalid meaning it cannot be used for that
+PMem module.
+
+SAMPLE OUTPUT
+-------------
+[listing]
+(file path): MM.mm.hh.bbbb
+Load FW on PMem module (DimmID): (Valid|Downgrade) [(with
+confirmation or the force option)]
+
+If the firmware is being downgraded and the force option is not provided, the user will
+be prompted to confirm the downgrade for each PMem module. Otherwise, for each PMem module,
+the Interl(R) CLI will indicate the status of the operation.
+
+[listing]
+--
+Downgrade firmware on PMem module (DimmID)? (y or [n]) Downgrade firmware
+on PMem module (DimmID)? (y or [n])
+--
+
+If a failure occurs when updating multiple PMem modules, the process will continue
+attempting to update the remaining PMem modules requested. The firmware will not
+become active until the next power cycle. Use the command Section
+<<Show Dimm Firmware>> to view more detailed information about the active
+and staged firmware.
+
+[listing]
+--
+Load FW on PMem module (DimmID): Success, a power cycle is required to
+activate the FW.
+--
+
+[listing]
+--
+Load FW on PMem module (DimmID): Error (Code) - (Description)
+--

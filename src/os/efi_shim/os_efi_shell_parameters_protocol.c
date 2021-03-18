@@ -42,7 +42,8 @@ EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 EFI_SHELL_PARAMETERS_PROTOCOL *gEfiShellParametersProtocol = &gOsShellParametersProtocol;
 
 int g_fast_path = 0;
-int g_file_io = 0;
+
+static BOOLEAN g_ESX_output_requested = FALSE;
 
 static BOOLEAN g_verbose_debug_print_enabled = FALSE;
 
@@ -95,12 +96,10 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 
       while (tok)
       {
-        if (0 == s_strncmpi(tok, STR_NVMXML, strlen(STR_NVMXML) + 1) ||
-          0 == s_strncmpi(tok, STR_ESXXML, strlen(STR_ESXXML) + 1) ||
-          0 == s_strncmpi(tok, STR_ESXTABLE, strlen(STR_ESXTABLE) + 1))
+        if ((0 == s_strncmpi(tok, STR_ESXXML, strlen(STR_ESXXML) + 1)) ||
+            (0 == s_strncmpi(tok, STR_ESXTABLE, strlen(STR_ESXTABLE) + 1)))
         {
-          g_file_io = 1;
-          gOsShellParametersProtocol.StdOut = fopen("output.tmp", "w+");
+          g_ESX_output_requested = TRUE;
         }
 
         tok = os_strtok(NULL, ",", &p_tok_context);
@@ -127,7 +126,8 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
         FreePool(gOsShellParametersProtocol.Argv);
         return EFI_OUT_OF_RESOURCES;
       }
-      AsciiStrToUnicodeStrS(argv[Index], ptr, sizeToAllocate);
+      // divide by size of wide char to convert size in bytes to number of wide chars
+      AsciiStrToUnicodeStrS(argv[Index], ptr, (sizeToAllocate/sizeof(wchar_t)));
       gOsShellParametersProtocol.Argv[new_argv_index] = ptr;
       ++new_argv_index;
     }
@@ -139,8 +139,6 @@ EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[])
 int uninit_protocol_shell_parameters_protocol()
 {
   int Index = 0;
-  if (g_file_io)
-    fclose(gOsShellParametersProtocol.StdOut);
 
   for (Index = 0; Index < gOsShellParametersProtocol.Argc; ++Index)
   {
@@ -160,4 +158,9 @@ int uninit_protocol_shell_parameters_protocol()
 BOOLEAN is_verbose_debug_print_enabled()
 {
   return g_verbose_debug_print_enabled;
+}
+
+BOOLEAN is_ESX_output_requested()
+{
+  return g_ESX_output_requested;
 }

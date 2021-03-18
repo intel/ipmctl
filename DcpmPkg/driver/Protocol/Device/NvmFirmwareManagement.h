@@ -20,11 +20,6 @@ extern EFI_GUID mNvmDimmFirmwareImageTypeGuid;
 
 #define PACKAGE_VERSION_DEFINED_BY_PACKAGE_NAME 0xFFFFFFFE
 
-// For HII, the max string length is 255 characters + null char
-// Just in case this needs to be cross platform, make it a sizeof(CHAR16)
-#define HII_STRING_MAX_STR_LEN  255
-#define HII_MAX_STRING_BUFFER_LENGTH  (HII_STRING_MAX_STR_LEN + 1) * sizeof(CHAR16)
-
 #define NVDIMM_IMAGE_ID_NAME L"Intel persistent memory"
 #define NVDIMM_IMAGE_ID_NAME_LEN 24 // including null char
 

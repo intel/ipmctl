@@ -24,10 +24,11 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <string.h>
-#include <nvm_management.h>
-#include <os.h>
+#include <Base.h>
 #include <lnx_adapter.h>
+#include <string.h>
+#include <os.h>
+#include <nvm_management.h>
 
 #define	LOCALE_DIR	"/usr/share/locale"
 #define FTOK_PROJ_ID 'R' // Today proj_id is an int, but still only 8 bits are used. 

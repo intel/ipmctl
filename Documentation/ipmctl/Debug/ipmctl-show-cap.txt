@@ -3,7 +3,7 @@
 
 ifdef::manpage[]
 ipmctl-show-cap(1)
-===================
+==================
 endif::manpage[]
 
 NAME
@@ -13,7 +13,9 @@ ipmctl-show-cap - Shows the current Command Access Policy restrictions.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -cap [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -49,19 +51,23 @@ EXAMPLES
 --------
 Lists restrictions for all PMem modules installed in the system
 [listing]
+--
 ipmctl show -cap
+--
 
 Lists restrictions for PMem module 0x1001
 [listing]
+--
 ipmctl show -dimm 0x1001 -cap
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -69,8 +75,8 @@ The default behavior is to return a table which indicates the restrictions enfor
 
 DimmID::
   The default display of PMem module identifiers. One of:
-  - UID: Use the DimmUID attribute as defined in the command Show Device.
-  - HANDLE: Use the DimmHandle attribute as defined in the command Show Device.
+  * UID: Use the DimmUID attribute as defined in the command Show Dimm.
+  * HANDLE: Use the DimmHandle attribute as defined in the command Show Dimm.
     This is the default.
 
 Opcode::
@@ -81,8 +87,8 @@ SubOpcode::
 
 Restriction::
   Text describing which mailboxes are restricted for Opcode:SubOcode combination. One of:
-  - None
-  - BIOS only
-  - SMBus only
-  - BIOS and SMBus only
-  - Unsupported
+  * None
+  * BIOS only
+  * SMBus only
+  * BIOS and SMBus only
+  * Unsupported

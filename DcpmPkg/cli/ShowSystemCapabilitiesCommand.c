@@ -89,9 +89,11 @@ PrintAllowedVolatileMode(
   case VOLATILE_MODE_1LM:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_STR);
     break;
-  case VOLATILE_MODE_2LM:
-    // Memory Mode is the volatile implementation of 2LM
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, MEMORY_STR);
+  case VOLATILE_MODE_1LM_OR_2LM:
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_OR_TWO_LM_STR);
+    break;
+  case VOLATILE_MODE_1LM_PLUS_2LM:
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_ALLOWED_STR, UNKNOWN_STR);
@@ -117,8 +119,10 @@ PrintCurrentVolatileMode(
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, ONE_LM_STR);
     break;
   case VOLATILE_MODE_2LM:
-    // Memory Mode is the volatile implementation of 2LM
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, MEMORY_STR);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, TWO_LM_STR);
+    break;
+  case VOLATILE_MODE_1LM_PLUS_2LM:
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, ONE_LM_PLUS_TWO_LM_STR);
     break;
   default:
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, VOLATILE_MODE_CURRENT_STR, UNKNOWN_STR);
@@ -178,7 +182,7 @@ PrintSupportedMemoryModes(
     } else {
       Val = CatSPrintClean(Val, L", ");
     }
-    Val = CatSPrintClean(Val, MEMORY_STR);
+    Val = CatSPrintClean(Val, TWO_LM_STR);
   }
   if (MemoryModes.MemoryModesFlags.AppDirect) {
     if (First) {

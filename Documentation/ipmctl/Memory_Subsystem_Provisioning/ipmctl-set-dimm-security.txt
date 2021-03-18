@@ -123,7 +123,7 @@ New passphrase: \\****
  +
 Confirm new passphrase: \****
 
-For each PMem module, the Interl(R) CLI will indicate the status of the set passphrase
+For each PMem module, the CLI will indicate the status of the set passphrase
 operation. If a failure occurs when setting the passphrase on multiple PMem modules,
 the process will exit and not continue updating the remaining PMem modules.
 

@@ -86,7 +86,7 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-For each namespace, the Intel(R) CLI will indicate the status of the operation. If a
+For each namespace, the CLI will indicate the status of the operation. If a
 failure occurs when deleting multiple namespaces, the process will continue
 deleting the remaining namespaces.
 

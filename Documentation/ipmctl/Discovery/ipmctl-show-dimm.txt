@@ -281,7 +281,7 @@ FormFactor::
 
 LockState::
   The current security state of the persistent memory on the PMem module.
-  One ore more of:
+  One or more of:
   * Unknown - The security state cannot be determined (e.g., when the
     PMem module is not manageable by the software).
   * Disabled - Security is not enabled.
@@ -295,7 +295,7 @@ LockState::
   * Not Supported - Security is not supported on the PMem module.
 
 SVNDowngrade::
-  The Opt-in value of SVN Downgrade security opt-in feature for PMem module.
+  The Opt-in value of Security Version Number (SVN) Downgrade security opt-in feature for PMem module.
   One of :
   * Unknown
   * Disabled

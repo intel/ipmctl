@@ -72,7 +72,7 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-The Interl(R) CLI will indicate the overall status of the operation when complete. If a
+The CLI will indicate the overall status of the operation when complete. If a
 failure occurs when dumping the memory allocation from multiple PMem modules, the
 process will stop and the output file will be removed.
 

@@ -141,7 +141,7 @@ confirmation or the force option)]
 
 If the firmware is being downgraded and the force option is not provided, the user will
 be prompted to confirm the downgrade for each PMem module. Otherwise, for each PMem module,
-the Interl(R) CLI will indicate the status of the operation.
+the CLI will indicate the status of the operation.
 
 [listing]
 --
@@ -152,7 +152,7 @@ on PMem module (DimmID)? (y or [n])
 If a failure occurs when updating multiple PMem modules, the process will continue
 attempting to update the remaining PMem modules requested. The firmware will not
 become active until the next power cycle. Use the command Section
-<<Show Dimm Firmware>> to view more detailed information about the active
+<<Show Firmware>> to view more detailed information about the active
 and staged firmware.
 
 [listing]

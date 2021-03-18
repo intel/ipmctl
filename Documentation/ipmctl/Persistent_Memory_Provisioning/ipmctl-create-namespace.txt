@@ -118,7 +118,7 @@ NOTE: For App Direct namespaces to be compatible across operating systems, it is
 recommended that a single App Direct namespace consumes the entire capacity
 (AppDirectNamespaceMaxSize) as reported by the command *_Show Persistent Memory_*.
 
-NOTE: Microsoft Windows supports and validates only a single namespace per region
+NOTE: Microsoft* Windows* supports and validates only a single namespace per region
 configuration.
 
 RETURN DATA
@@ -136,9 +136,9 @@ align properly. Do you want to continue?
 
 SAMPLE OUTPUT
 -------------
-If the namespace is created successfully, the Intel(R) CLI will display all attributes of the new
+If the namespace is created successfully, the CLI will display all attributes of the new
 namespace as documented in the command Section <<Show Namespace>>.
-If a failure occurs when creating the namespace, the Intel(R) CLI will display a single error
+If a failure occurs when creating the namespace, the CLI will display a single error
 message.
 [listing]
 --

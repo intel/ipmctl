@@ -1568,7 +1568,7 @@ VerifyTargetDimms (
 
   If PMem module Ids were provided then check if those PMem modules exist in a SPI flashable
   state and return list of verified PMem modules.
-  If specified PMem modules count is 0 then return all PMem moduleS that are in SPI
+  If specified PMem modules count is 0 then return all PMem modules that are in SPI
   Flashable state.
   Update CommandStatus structure at the end.
 

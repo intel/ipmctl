@@ -1,35 +1,26 @@
 # Copyright (c) 2018, Intel Corporation.
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Try to find asciidoctor 
+# Try to find asciidoctor
 # Once done this will define
 # ASCIIDOCTOR_FOUND - asciidoctor found
 
 find_program(ASCIIDOCTOR_BINARY NAMES asciidoctor
 	HINTS ${ASCIIDOCTOR_BINARY_PATH})
 
-find_program(ASCIIDOCTOR_PDF_BINARY NAMES asciidoctor-pdf
-	HINTS ${ASCIIDOCTOR_PDF_BINARY_PATH})
+# Get the version of asciidoctor
+execute_process( COMMAND ${ASCIIDOCTOR_BINARY} --version OUTPUT_VARIABLE stdout_str )
+separate_arguments(stdout_str)
+if (NOT "" STREQUAL "${stdout_str}")
+  # Only parse stdout_str if found
+  # Example output: "Asciidoctor 2.0.10 [https://asciidoctor.org]"
+  # The argument at position 1 is the version
+  list(GET stdout_str 1 ASCIIDOCTOR_VERSION)
+endif()
 
-include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set ASCIIDOCTOR_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(asciidoctor DEFAULT_MSG
-                                  ASCIIDOCTOR_BINARY)
-
-find_package_handle_standard_args(asciidoctor-pdf DEFAULT_MSG
-                                  ASCIIDOCTOR_PDF_BINARY)
+find_package_handle_standard_args(asciidoctor
+                                  REQUIRED_VARS ASCIIDOCTOR_BINARY
+                                  VERSION_VAR ASCIIDOCTOR_VERSION
+                                  )
 
 mark_as_advanced(ASCIIDOCTOR_BINARY)
-mark_as_advanced(ASCIIDOCTOR_PDF_BINARY)
-
-set(ASCIIDOCTOR_BINARIES ${ASCIIDOCTOR_BINARY})
-set(ASCIIDOCTOR_PDF_BINARIES ${ASCIIDOCTOR_PDF_BINARY})
-
-if(NOT ASCIIDOCTOR_FOUND)
-	MESSAGE("Fallback to asciidoc")
-endif()
-
-if(NOT ASCIIDOCTOR-PDF_FOUND)
-	MESSAGE("asciidoctor-pdf not found")
-endif()

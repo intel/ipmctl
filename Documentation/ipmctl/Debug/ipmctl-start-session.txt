@@ -94,7 +94,7 @@ LIMITATIONS
 Recordings should be played back on the same IPMCTL version that created the recording.
 Recordings taken in UEFI should be played back in the UEFI environment (simulated or real).
 Recordings taken in an OS are binary compatible with other OS versions of IPMCTL (i.e., recording
-taken in Linux can be played back in Windows).
+taken in Linux* can be played back in Windows*).
 
 RETURN DATA
 -----------

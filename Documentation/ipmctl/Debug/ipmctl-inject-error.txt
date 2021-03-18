@@ -123,8 +123,8 @@ NOTE: When media fatal error is injected, BSR Media Disabled status
   cleared using disable trigger input parameter to clear this injected
   fatal error.
 
-NOTE: Injecting a Fatal Media error is unsupported on Windows.
-Contact Microsoft for assistance in performing this action.
+NOTE: Injecting a Fatal Media error is unsupported on Windows*.
+Contact Microsoft* for assistance in performing this action.
 
 DirtyShutdown::
   * "1": Injects an ADR failure resulting in dirty shutdown upon reboot.

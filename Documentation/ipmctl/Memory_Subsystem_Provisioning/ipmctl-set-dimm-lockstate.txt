@@ -119,7 +119,7 @@ passphrase. The passphrase characters are hidden.
 
 Current passphrase: ****
 
-For each PMem module, the Interl(R) CLI will indicate the status of the security state change.
+For each PMem module, the CLI will indicate the status of the security state change.
 If a failure occurs when changing multiple PMem modules, the process will exit and
 not continue updating the remaining PMem modules.
 

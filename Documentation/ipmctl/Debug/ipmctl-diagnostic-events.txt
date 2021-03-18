@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 Events are generated as a result of invoking the Start Diagnostics command in order to
-analyze the Intel(R) Optane(TM) Persistent Memory Module (PMem module) for potential issues.
+analyze the Intel(R) Optane(TM) PMem module for potential issues.
 
 Diagnostic events may fall into the following categories:
 
@@ -18,14 +18,14 @@ Each event includes the following pieces of information:
 ** Warning (Warning)
 ** Error (Failed)
 ** Aborted (Aborted)
-* A unique ID of the item (PMem module UUID, DimmID, NamespaceId, RegionId, etc.) the event refers to.
+* A unique ID of the item (PMem module UUID, DimmID, NamespaceID, RegionID, etc.) the event refers to.
 * A detailed description of the event in English.
 
 The following sections list each of the possible events grouped by category of the event.
 
 == Quick Health Check Events
 
-The quick health check diagnostic verifies that the Intel(R) Optane(TM) persistent memory modules
+The quick health check diagnostic verifies that the Intel(R) Optane(TM) PMem module's
 host mailboxes are accessible and that basic health indicators can be read and are currently
 reporting acceptable values.
 
@@ -237,8 +237,8 @@ endif::backend-pdf[]
 
 
 == Security Check Events
-The security check diagnostic test group verifies that all Intel(R) Optane(TM) persistent
-memory modules have a consistent security state.
+The security check diagnostic test group verifies that all Intel(R) Optane(TM) PMem modules
+have a consistent security state.
 
 .Table Security Check Events
 ////

@@ -118,7 +118,7 @@ In order to successfully execute this command:
 
 RETURN DATA
 -----------
-For each PMem module, the Intel(R) CLI will indicate the status of the operation. If a failure occurs
+For each PMem module, the CLI will indicate the status of the operation. If a failure occurs
 when modifying multiple PMem modules, the process will exit and not continue modifying the
 remaining PMem modules.
 

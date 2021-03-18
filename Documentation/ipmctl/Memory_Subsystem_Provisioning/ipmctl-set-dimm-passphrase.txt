@@ -95,7 +95,7 @@ ipmctl set -dimm Passphrase=mypassphrase NewPassphrase=mynewpassphrase
  ConfirmPassphrase=mynewpassphrase
 --
 
-Changes the passphrase on all PMem modules by having the Intel(R) CLI prompt for the
+Changes the passphrase on all PMem modules by having the CLI prompt for the
 current and new passphrases.
 [listing]
 --
@@ -156,7 +156,7 @@ hidden.
 
 Current passphrase: \****
 
-For each PMem module, the Intel(R) CLI will indicate the status of the passphrase change
+For each PMem module, the CLI will indicate the status of the passphrase change
 operation. If a failure occurs when updating the passphrase on multiple PMem modules,
 the process will exit and not continue updating the remaining PMem modules.
 

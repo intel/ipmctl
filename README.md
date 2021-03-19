@@ -24,6 +24,8 @@ When using 02.00.00.x versions of ipmctl software to update or downgrade firmwar
 
 02.00.00.xxxx  (master_2_0 branch) is for Intel Optane Persistent Memory 200 Series (and is backwards compatible with 100 series) 
 
+The development branch contains what will likely become the 03.00.00.xxxx branch.
+
 ## Packages
 
 Some distributions include ipmctl allowing installation via their package manager.

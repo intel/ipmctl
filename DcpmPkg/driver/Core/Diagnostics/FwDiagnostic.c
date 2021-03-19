@@ -87,6 +87,11 @@ RunFwDiagnostics(
       goto Finish;
     }
 
+    if (!IsDimmManageable(ppDimms[Index]))
+    {
+      continue;
+    }
+
     ReturnCode = ThresholdsCheck(ppDimms[Index], &pResult->SubTestMessage[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The check for firmware threshold settings failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);

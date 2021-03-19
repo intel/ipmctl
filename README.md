@@ -7,6 +7,12 @@ main branch (likely as 3.0 version)
 
 * ndctl
 * asciidoc or asciidoctor  (if building documentation)
+* gcc
+* gcc-c++
+* cmake
+* python (version 2 or 3 make work depending on your distribution)
+* rpm-build (to use the rpmbuild script)
+* files from edk2 (see building instructions below)
 
 ## Building
 

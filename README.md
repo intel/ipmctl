@@ -18,7 +18,7 @@ main branch (likely as 3.0 version)
 
 1. clone the ipmctl and edk2 repositories:
 
-`git clone https://github.com/intel/ipmctl.git`
+`git clone -b development https://github.com/intel/ipmctl.git`
 
 `git clone https://github.com/tianocore/edk2.git`
 

@@ -111,12 +111,12 @@ In order to successfully execute this command:
 
 * The underlying PMem modules must be unlocked and the region HealthState must be "Healthy."
 
-Use the command *_Show System Capabilities_* to retrieve namespace
+Use the command <<Show System Capabilities>> to retrieve namespace
 limitations as reported by the driver.
 
 NOTE: For App Direct namespaces to be compatible across operating systems, it is
 recommended that a single App Direct namespace consumes the entire capacity
-(AppDirectNamespaceMaxSize) as reported by the command *_Show Persistent Memory_*.
+(AppDirectNamespaceMaxSize) as reported by the command <<Show Persistent Memory>>.
 
 NOTE: Microsoft* Windows* supports and validates only a single namespace per region
 configuration.

@@ -46,9 +46,9 @@ PROPERTIES
 CLI_DEFAULT_DIMM_ID::
   The default display of PMem module identifiers. One of:
   - "UID": Use the DimmUID attribute as defined in the section
-    *_Show Dimm_*.
+    <<Show Dimm>>.
   - "HANDLE": Use the DimmHandle attribute as defined in section
-    *_Show Dimm_*. This is the default
+    <<Show Dimm>>. This is the default
 
 CLI_DEFAULT_SIZE::
   The default display of capacities in the CLI. One of:
@@ -67,7 +67,7 @@ CLI_DEFAULT_SIZE::
 APPDIRECT_SETTINGS::
   The interleave settings to use when creating App Direct capacity in the
   format: [underline]#(IMCSize_ChannelSize)#. Must be one of the BIOS supported
-  App Direct settings returned by the command *_Show System Capabilities_*.
+  App Direct settings returned by the command <<Show System Capabilities>>.
 
 NOTE: ByOne is not a valid setting for this preference. The default is
 "RECOMMENDED" which uses the BIOS recommended App Direct settings.

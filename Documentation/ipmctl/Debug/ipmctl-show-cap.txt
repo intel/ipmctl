@@ -75,8 +75,8 @@ The default behavior is to return a table which indicates the restrictions enfor
 
 DimmID::
   The default display of PMem module identifiers. One of:
-  * UID: Use the DimmUID attribute as defined in the command Show Dimm.
-  * HANDLE: Use the DimmHandle attribute as defined in the command Show Dimm.
+  * UID: Use the DimmUID attribute as defined in the command <<Show Dimm>>.
+  * HANDLE: Use the DimmHandle attribute as defined in the command <<Show Dimm>>.
     This is the default.
 
 Opcode::

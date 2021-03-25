@@ -51,8 +51,8 @@ RETURN DATA
 -----------
 CLI_DEFAULT_DIMM_ID::
   The default display of PMem module identifiers. One of:
-  * UID: Use the DimmUID attribute as defined in the command Show Dimm.
-  * HANDLE: Use the DimmHandle attribute as defined in the command Show Dimm.
+  * UID: Use the DimmUID attribute as defined in the command <<Show Dimm>>.
+  * HANDLE: Use the DimmHandle attribute as defined in the command <<Show Dimm>>.
     This is the default.
 
 CLI_DEFAULT_SIZE::
@@ -72,8 +72,8 @@ CLI_DEFAULT_SIZE::
 APPDIRECT_SETTINGS::
   The interleave settings to use when creating App Direct capacity in the
   format: (IMCSize_ChannelSize). The default is "RECOMMENDED" which uses the
-  BIOS recommended App Direct settings returned by the command Show System
-  Capabilities.
+  BIOS recommended App Direct settings returned by the command
+  <<Show System Capabilities>>.
 
 ifdef::os_build[]
 DBG_LOG_LEVEL::

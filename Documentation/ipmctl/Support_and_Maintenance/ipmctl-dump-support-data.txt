@@ -71,7 +71,7 @@ TARGET
   This command creates a text file with a name starting with the given
   filename option and dumps the platform support information into it.
   In addition, this command also outputs the debug log information in
-  separate files. Refer to *_Dump Debug Log_* for more details.
+  separate files. Refer to <<Dump Debug Log>> for more details.
 
 -dict (filename)::
   Optional file path to the dictionary file. If supplied, the command will
@@ -83,8 +83,8 @@ EXAMPLES
 --------
 Creates a text file named dumpfile_platform_support_info.txt and stores the
 platform supported data in that file. Also, dumps the debug log info in the
-related files that start with the file name dumpfile_*. Refer to
-*_Dump Debug Log_* for more info on the output files.
+related files that start with the file name dumpfile. Refer to
+<<Dump Debug Log>> for more info on the output files.
 
 [listing]
 --

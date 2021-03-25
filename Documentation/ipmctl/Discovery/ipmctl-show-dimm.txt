@@ -400,7 +400,7 @@ MemoryBandwidthBoostMaxPowerLimit::
   The power limit used for limiting the Intel(R) Memory Bandwidth Boost Feature's power consumption [mW].
 
 MemoryBandwidthBoostAveragePowerTimeConstant::
-  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Intel(R) Memory Bandwidth Boost Average Time Constant and Average Power Time Constant Step from the Get Device Characteristics command.
+  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Intel(R) Memory Bandwidth Boost Average Time Constant and Average Power Time Constant Step from the <<Show Dimm>> command.
   * Default: 15000 ms
 
 MaxAveragePowerLimit::
@@ -410,26 +410,26 @@ MaxMemoryBandwidthBoostMaxPowerLimit::
    Maximum Intel(R) Memory Bandwidth Boost Power value [mW] that can be set for the PMem module. Will return 0 if unsupported by current FIS.
 
 MaxMemoryBandwidthBoostAveragePowerTimeConstant::
-   This field returns the maximum supported value of the Intel(R) Memory Bandwidth Boost Average Power Time Constant [ms] that can be set via the Set Power Management Policy command.
+   This field returns the maximum supported value of the Intel(R) Memory Bandwidth Boost Average Power Time Constant [ms].
 
 MemoryBandwidthBoostAveragePowerTimeConstantStep::
-   This field returns the increments in milliseconds allowed by the firmware when setting the Intel(R) Memory Bandwidth Boost Average Power Time Constant using the Set Power Management Policy command.
+   This field returns the increments in milliseconds allowed by the firmware when setting the Intel(R) Memory Bandwidth Boost Average Power Time Constant.
 
 MaxAveragePowerReportingTimeConstant::
-   This field returns the maximum supported value of the Reporting Average Power Time Constant in milliseconds that can be set in the Optional Configuration Data Policy command.
+   This field returns the maximum supported value of the Reporting Average Power Time Constant in milliseconds that can be set in the <<Set Dimm>> command.
 
 AveragePowerReportingTimeConstantStep::
-   This field returns the increments in milliseconds allowed by the firmware when setting the Average Power Reporting Time Constant using the Optional Configuration Data Policy command.
+   This field returns the increments in milliseconds allowed by the firmware when setting the Average Power Reporting Time Constant using the <<Set Dimm>> command.
 
 AveragePower::
-   This field returns the average power in milliwatts that each PMem module consumes over the Average Power Reporting Time constant.
+   This field returns the average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
 
 Average12vPower::
-   This field returns the 12V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time constant.
+   This field returns the 12V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
    Available for FW API versions < 3.0
 
 Average1_2vPower::
-   This field returns the 1.2V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time constant.
+   This field returns the 1.2V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
    Available for FW API versions < 3.0
 
 PackageSparingCapable::
@@ -501,7 +501,7 @@ LastShutdownTime::
 
 ModesSupported::
   A list of the modes supported by the PMem module. Refer to the command
-  Show System Capabilities to determine the modes supported by the
+  <<Show System Capabilities>> to determine the modes supported by the
   platform. One or more of:
   * Memory Mode: PMem modules act as system memory under the control of the operating
     system. In Memory Mode, any DDR in the platform will act as a cache working

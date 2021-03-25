@@ -78,7 +78,7 @@ PlatformConfigSupported::
   (Default) Whether the platform level configuration of PMem modules can be modified
   with the host software. One of:
   * 0: Changes must be made in the BIOS.
-  * 1: The command *_Create Memory Allocation Goal_* is supported.
+  * 1: The command <<Create Memory Allocation Goal>> is supported.
 
 Alignment::
   (Default) Capacity alignment requirement for all memory types as reported by the BIOS.
@@ -109,7 +109,7 @@ AllowedAppDirectMode::
 
 ModesSupported::
   A list of PMem module modes supported by the BIOS. Refer to the command
-  *_Show Dimm_* to determine the modes supported by the individual
+  <<Show Dimm>> to determine the modes supported by the individual
   PMem modules. At least one of:
   * 1LM: One-level volatile mode. All configured PMem module resources
     on the platform assigned for memory usage are not in use.
@@ -123,13 +123,13 @@ ModesSupported::
 SupportedAppDirectSettings::
   The BIOS supported list of App Direct interleave settings in the format:
   * x[Way] - [(IMCSize) iMC x (ChannelSize) Channel] followed by the input
-    format for the command *_Set Preferences_*:
+    format for the command <<Set Preferences>>:
     (ByOne|(IMCSize)_(ChannelSize)).
 
 RecommendedAppDirectSettings::
   The BIOS recommended list of App Direct interleave settings in the format:
   * x[Way] - [(IMCSize) iMC x (ChannelSize) Channel] followed by the input format for
-  the command *_Set Preferences_*:
+  the command <<Set Preferences>>:
   (ByOne|(IMCSize)_(ChannelSize)).
 
 MinNamespaceSize::

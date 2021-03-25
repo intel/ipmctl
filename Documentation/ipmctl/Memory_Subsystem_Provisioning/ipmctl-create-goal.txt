@@ -117,8 +117,8 @@ NamespaceLabelVersion::
 Reserved::
     Reserve a percentage [underline]#(0-100)# of the requested PMem module App Direct capacity
     that will not be mapped into the system physical address space and will be
-    presented as Reserved Capacity with Show Dimm and Show Memory Resources
-    Commands.
+    presented as Reserved Capacity with <<Show Dimm>> and <<Show Memory Resources>>
+    commands.
 
 EXAMPLES
 --------
@@ -187,7 +187,7 @@ NOTE: A goal request may be initiated even if a target PMem module is in securit
   Targets may be limited to individual PMem modules or sockets, but all PMem modules
   on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
-  Refer to *_Show System Capabilities_* for a list of BIOS
+  Refer to <<Show System Capabilities>> for a list of BIOS
   supported modes.
 
 * Some requests are dependent on BIOS and/or platform configuration. For details, refer

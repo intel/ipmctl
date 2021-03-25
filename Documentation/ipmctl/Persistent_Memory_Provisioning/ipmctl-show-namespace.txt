@@ -88,7 +88,7 @@ In order to successfully execute this command:
 * The specified PMem modules must be manageable by the host software and unlocked if
   security is enabled.
 
-Use the command *_Show System Capabilities_* to retrieve namespace
+Use the command <<Show System Capabilities>> to retrieve namespace
 limitations as reported by the driver.
 
 RETURN DATA
@@ -144,8 +144,8 @@ Mode::
 NOTE: If the namespace is disabled, mode may be reported as "None".
 
 LabelVersion::
-  Indicates the Namespace index version that can be set with Create Memory
-  Allocation Goal. One of:
+  Indicates the Namespace index version that can be set with
+  <<Create Memory Allocation Goal>>. One of:
   * 1.1
   * 1.2
 

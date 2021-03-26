@@ -498,8 +498,6 @@ InitializeNfitDimmInfoFieldsFromDimm(
      OUT DIMM_INFO *pDimmInfo
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-
   //pDimm->Signature = DIMM_SIGNATURE;
   pDimmInfo->Configured = pDimm->Configured;
   //pDimm->ISsNum = 0;

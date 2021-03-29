@@ -1398,8 +1398,6 @@ NvmDimmDriverDriverBindingStart(
                   NVDIMM_DBG("Ignoring same NVDIMM UIDs among dimms");
                } else {
 #endif
-                  NvmDimmDriverDriverBindingStop(pThis, ControllerHandle, 0, NULL);
-                  NVDIMM_DBG("Stopping driver");
                   ReturnCode = EFI_DEVICE_ERROR;
                   goto Finish;
 #if defined(DYNAMIC_WA_ENABLE)
@@ -1438,6 +1436,15 @@ NvmDimmDriverDriverBindingStart(
    }
 
  Finish:
+   if (EFI_ERROR(ReturnCode)) {
+       // UEFI doesn't call DriverBindingStop if we return an error on
+       // DriverBindingStart (this function). So to tear down properly
+       // let's just call DriverBindingStop().
+       // NOTE: Not sure if this is needed for OS, but it seems reasonable to do.
+       NVDIMM_DBG("Error during DriverBindingStart(). Calling DriverBindingStop() to teardown");
+       CHECK_RESULT_CONTINUE(NvmDimmDriverDriverBindingStop(pThis, ControllerHandle, 0, NULL));
+   }
+
    NVDIMM_DBG("Exiting DriverBindingStart, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
    NVDIMM_EXIT_I64(ReturnCode);
    return ReturnCode;
@@ -1610,6 +1617,13 @@ NvmDimmDriverDriverBindingStart(
   }
 
 Finish:
+  if (EFI_ERROR(ReturnCode)) {
+    // UEFI doesn't call DriverBindingStop if we return an error on
+    // DriverBindingStart (this function). So to tear down properly
+    // let's just call DriverBindingStop().
+    NVDIMM_DBG("Error during DriverBindingStart(). Calling DriverBindingStop() to teardown");
+    CHECK_RESULT_CONTINUE(NvmDimmDriverDriverBindingStop(pThis, ControllerHandle, 0, NULL));
+  }
 
   FREE_POOL_SAFE(pIntelDIMMConfig);
   if (EFI_ERROR(ReturnCode)) {

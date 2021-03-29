@@ -422,13 +422,12 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Ignore error code, but print it out
-#define CHECK_RESULT_CONTINUE(Call)                           \
-  do {                                                        \
-    ReturnCode = Call;                                        \
-    if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_WARN("Ignoring failure with %s. RC: %d", #Call, ReturnCode); \
-      ReturnCode = EFI_SUCCESS;                               \
-    }                                                         \
+#define CHECK_RESULT_CONTINUE(Call)                                           \
+  do {                                                                        \
+    EFI_STATUS ReturnCodeTemp = Call;                                         \
+    if (EFI_ERROR(ReturnCodeTemp)) {                                          \
+      NVDIMM_WARN("Ignoring failure with %s. RC: %d", #Call, ReturnCodeTemp); \
+    }                                                                         \
   } while (0)
 
 #define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \

@@ -357,22 +357,26 @@ GetSecurityState(
   );
 
 /**
-  Set NVM device security state.
+  Set security state on multiple PMem modules.
 
-  Function sets security state on a set of PMem modules. If there is a failure on
-  one of PMem modules function continues with setting state on following PMem modules
-  but exits with error.
+  If there is a failure on one of the PMem modules, the function does not
+  continue onto the remaining modules but exits with an error.
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
-  @param[in] pDimmIds Pointer to an array of PMem module IDs - if NULL, execute operation on all PMem modules
-  @param[in] DimmIdsCount Number of items in array of PMem module IDs
+  @param[in] pDimmIds Pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
+  @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[in] SecurityOperation Security Operation code
-  @param[in] pPassphrase a pointer to string with current passphrase
+  @param[in] pPassphrase a pointer to string with current passphrase. For default Master Passphrase (0's) use a zero length, null terminated string.
   @param[in] pNewPassphrase a pointer to string with new passphrase
   @param[out] pCommandStatus Structure containing detailed NVM error codes
 
-  @retval EFI_SUCCESS Success
-  @retval ERROR any non-zero value is an error (more details in Base.h)
+  @retval EFI_INVALID_PARAMETER when pLockState is NULL
+  @retval EFI_OUT_OF_RESOURCES couldn't allocate memory for a structure
+  @retval EFI_UNSUPPORTED LockState to be set is not recognized, or mixed sku of DCPMMs detected
+  @retval EFI_DEVICE_ERROR setting state for a DIMM failed
+  @retval EFI_NOT_FOUND a DIMM was not found
+  @retval EFI_NO_RESPONSE FW busy for one or more dimms
+  @retval EFI_SUCCESS security state correctly set
 **/
 EFI_STATUS
 EFIAPI

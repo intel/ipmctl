@@ -2817,11 +2817,10 @@ Finish:
 }
 
 /**
-  Set NVM device security state.
+  Set security state on multiple PMem modules.
 
-  Function sets security state on a set of DIMMs. If there is a failure on
-  one of DIMMs function continues with setting state on following DIMMs
-  but exits with error.
+  If there is a failure on one of the PMem modules, the function does not
+  continue onto the remaining modules but exits with an error.
 
   @param[in] pThis a pointer to EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] pDimmIds Pointer to an array of DIMM IDs - if NULL, execute operation on all dimms
@@ -3132,10 +3131,10 @@ SetSecurityState(
 
       if (!(DimmSecurityState & SECURITY_MASK_FROZEN)) {
         SubOpcode = SubopSecEraseUnit;
-  pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
+        pSecurityPayload->PassphraseType = SECURITY_USER_PASSPHRASE;
 #ifndef OS_BUILD
         /** Need to call WBINVD before secure erase **/
-  AsmWbinvd();
+        AsmWbinvd();
 #endif
       } else {
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_INVALID_SECURITY_STATE);
@@ -3218,7 +3217,7 @@ SetSecurityState(
         }
 
         SubOpcode = SubopSecEraseUnit;
-  pSecurityPayload->PassphraseType = SECURITY_MASTER_PASSPHRASE;
+        pSecurityPayload->PassphraseType = SECURITY_MASTER_PASSPHRASE;
 #ifndef OS_BUILD
         /** Need to call WBINVD before secure erase **/
         AsmWbinvd();
@@ -3256,7 +3255,7 @@ SetSecurityState(
     /** Need to call WBINVD after unlock or secure erase **/
     if (SecurityOperation == SECURITY_OPERATION_ERASE_DEVICE ||
         SecurityOperation == SECURITY_OPERATION_UNLOCK_DEVICE) {
-  AsmWbinvd();
+      AsmWbinvd();
     }
 #endif
     /** @todo(check on real HW)

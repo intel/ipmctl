@@ -330,7 +330,7 @@ EFI_STATUS
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param{in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
+  @param{in] PcdTarget Target PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of PMem module IDs
   @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
@@ -672,7 +672,7 @@ EFI_STATUS
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in]  DimmPid The ID of the PMem module
-  @param[out] pHealthInfo - pointer to structure containing all Health and Smarth variables
+  @param[out] pHealthInfo - pointer to structure containing all Health and Smart variables
 
   @retval EFI_INVALID_PARAMETER if no PMem module found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
@@ -1307,7 +1307,7 @@ EFI_STATUS
  );
 
 /**
-  GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+  GetBsr value and return bsr or boot status bitmask depending on the requested options
   UEFI - Read directly from BSR register
   OS - Get BSR value from BIOS emulated command
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
@@ -1569,7 +1569,7 @@ EFI_STATUS
       is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
-      Data previously set will be overriden with this data object.
+      Data previously set will be overridden with this data object.
    @param[out] - ppData - May be NULL, otherwise will contain a pointer
       to the memory allocated in the recording buffer for this data object.
       Warning, this pointer is only guaranteed to be valid until the next

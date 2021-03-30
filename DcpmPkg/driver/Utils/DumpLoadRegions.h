@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _DUMPLOADPOOLS_H_
-#define _DUMPLOADPOOLS_H_
+#ifndef _DUMP_LOAD_REGIONS_H_
+#define _DUMP_LOAD_REGIONS_H_
 
 #include "Uefi.h"
 #include <Protocol/SimpleFileSystem.h>
@@ -162,4 +162,4 @@ ValidateAndPrepareLoadConfig(
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-#endif /** _DUMPLOADPOOLS_H_ **/
+#endif /** _DUMP_LOAD_REGIONS_H_ **/

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _FWUTILITY_H_
-#define _FWUTILITY_H_
+#ifndef _FW_UTILITY_H_
+#define _FW_UTILITY_H_
 
 #include "NvmTypes.h"
 #include "NvmStatus.h"
@@ -173,7 +173,7 @@ typedef struct _NVM_FW_VERSION {
   FW Image header: Intel CSS Header (128 bytes)
 **/
 typedef struct {
-  UINT32 ModuleType;         //!< moduleType = LT_MODULETYPE_CSS
+  UINT32 ModuleType;         //!< moduleType = LT_MODULE_TYPE_CSS
   UINT32 HeaderLen;          //!< headerLen == dword_sizeof(fixedHeader) + (modulusSize * 2) + exponentSize
   UINT32 HeaderVersion;      //!< bits [31:16] are major version, bits [15:0] are minor version
   UINT32 ModuleID;           //!< if bit 31 == 1 this is a debug module
@@ -194,7 +194,7 @@ typedef struct {
   UINT16 VendorId;           //!< Specifies vendor. Intel (0x8086)
   UINT16 DeviceId;           //!< Specifies root arch type (ekv, bwv, cwv, etc .).
   UINT16 RevisionId;         //!< Specifies base and metal steppings of arch (A0, A1 , S0, S1, B0, B2, etc.).
-  UINT8 NumberofStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
+  UINT8 NumberOfStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
   UINT8 Reserved[56];
 } NVM_FW_IMAGE_HEADER;
 
@@ -219,7 +219,7 @@ typedef struct {
   @return TRUE if relevant fields are all 0.
 
 **/
-#define FW_VERSION_UNDEFINED_BYVERS(FwProduct, FwRevision, FwSecurityVersion, FwBuild) (FwProduct == 0 && \
+#define FW_VERSION_UNDEFINED_BY_VERSION(FwProduct, FwRevision, FwSecurityVersion, FwBuild) (FwProduct == 0 && \
                                               FwRevision == 0 && \
                                               FwSecurityVersion == 0 && \
                                               FwBuild == 0)
@@ -227,16 +227,16 @@ typedef struct {
 /**
   Tests a FW version to see if it is an undefined version
 
-  @param  FirmareVersionStruct           a FIRMWARE_VERSION struct
+  @param  FirmwareVersionStruct           a FIRMWARE_VERSION struct
 
   @return TRUE if relevant fields are all 0.
 
 **/
-#define FW_VERSION_UNDEFINED(FirmareVersionStruct) FW_VERSION_UNDEFINED_BYVERS(\
-                                               FirmareVersionStruct.FwProduct, \
-                                               FirmareVersionStruct.FwRevision, \
-                                               FirmareVersionStruct.FwSecurityVersion, \
-                                               FirmareVersionStruct.FwBuild)
+#define FW_VERSION_UNDEFINED(FirmwareVersionStruct) FW_VERSION_UNDEFINED_BY_VERSION(\
+                                               FirmwareVersionStruct.FwProduct, \
+                                               FirmwareVersionStruct.FwRevision, \
+                                               FirmwareVersionStruct.FwSecurityVersion, \
+                                               FirmwareVersionStruct.FwBuild)
 
 typedef struct {
   UINT16 DirectoryVersion;
@@ -311,7 +311,7 @@ typedef struct {
 /**
   The persistent memory module type code (taken from FW image)
 **/
-#define LT_MODULETYPE_CSS 0x6
+#define LT_MODULE_TYPE_CSS 0x6
 
 /**
   Checks if the firmware image is valid for an update.
@@ -346,7 +346,7 @@ ValidateImage(
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
   @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
-  @param[in] SubsystemDeviceId is the identifer of the Dimm revision
+  @param[in] SubsystemDeviceId is the identifier of the Dimm revision
 
   @retval TRUE if the Image is valid for the update.
   @retval FALSE if the Image is not valid.
@@ -377,7 +377,7 @@ ValidateRecoverySpiImage(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] Recovery flag indicates if this is standard or recovery image
-  @param[in] SubsystemDeviceId identifer for dimm generation
+  @param[in] SubsystemDeviceId identifier for dimm generation
   @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.
@@ -449,4 +449,4 @@ UINT32 RunningChecksum(
   IN UINT32 Csum
   );
 
-#endif /** _FWUTILITY_H_ **/
+#endif /** _FW_UTILITY_H_ **/

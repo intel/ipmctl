@@ -670,7 +670,7 @@ BOOLEAN IsPcdConfOutputHeaderValid(NVDIMM_PLATFORM_CONFIG_OUTPUT *pPcdConfOutput
     NVDIMM_DBG("DIMM Config Output table is NULL");
   }
   else if (pPcdConfOutput->Header.Signature != NVDIMM_CONFIGURATION_OUTPUT_SIG) {
-    NVDIMM_DBG("Icorrect signature of the DIMM Config Output table");
+    NVDIMM_DBG("Incorrect signature of the DIMM Config Output table");
   }
   else if (pPcdConfOutput->Header.Length > PcdOemPartitionSize) {
     NVDIMM_DBG("Length of PCD Config Output header is greater than max PCD OEM partition size");

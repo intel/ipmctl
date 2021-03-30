@@ -31,7 +31,7 @@ reporting acceptable values.
 
 .Table Quick Health Check Events
 ////
-asciidoctor-pdf only renders as expected with .autowidth.strech is used
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
 asciidoc does not recognize .autowidth and reports an error
 ////
 ifndef::backend-pdf[]
@@ -153,7 +153,7 @@ installed hardware and the platform configuration conforms to best known practic
 
 .Table Platform Configuration Check Events
 ////
-asciidoctor-pdf only renders as expected with .autowidth.strech is used
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
 asciidoc does not recognize .autowidth and reports an error
 ////
 ifndef::backend-pdf[]
@@ -242,7 +242,7 @@ have a consistent security state.
 
 .Table Security Check Events
 ////
-asciidoctor-pdf only renders as expected with .autowidth.strech is used
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
 asciidoc does not recognize .autowidth and reports an error
 ////
 ifndef::backend-pdf[]
@@ -272,7 +272,7 @@ device ID have consistent FW installed and other FW modifiable attributes are se
 
 .Table Firmware Consistency and Settings Check Events
 ////
-asciidoctor-pdf only renders as expected with .autowidth.strech is used
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
 asciidoc does not recognize .autowidth and reports an error
 ////
 ifndef::backend-pdf[]

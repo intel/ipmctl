@@ -51,7 +51,7 @@ ValidateImage(
     return FALSE;
   }
 
-  if (pImage->ModuleType != LT_MODULETYPE_CSS) {
+  if (pImage->ModuleType != LT_MODULE_TYPE_CSS) {
     CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_MODULE_TYPE_NOT_COMPATIBLE);
     return FALSE;
   }
@@ -68,7 +68,7 @@ ValidateImage(
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
   @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
-  @param[in] SubsystemDeviceId is the identifer of the revision of Dimm (AEP vs BPS)
+  @param[in] SubsystemDeviceId is the identifier of the revision of Dimm (AEP vs BPS)
 
   @retval TRUE if the Image is valid for the update.
   @retval FALSE if the Image is not valid.
@@ -113,7 +113,7 @@ ValidateRecoverySpiImage(
     goto Finish;
   }
 
-  if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
+  if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULE_TYPE_CSS) {
     NVDIMM_ERR("The firmware is not compatible with the PMem module.");
     goto Finish;
   }
@@ -167,7 +167,7 @@ ConvertFwVersion(
 
   NVDIMM_ENTRY();
 
-  if (FW_VERSION_UNDEFINED_BYVERS(Product, Revision, SecurityVersion, Build)) {
+  if (FW_VERSION_UNDEFINED_BY_VERSION(Product, Revision, SecurityVersion, Build)) {
     tmp = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
   } else {
     tmp = CatSPrint(NULL, L"%02d.%02d.%02d.%04d", Product, Revision, SecurityVersion, Build);
@@ -221,7 +221,7 @@ IsFwStaged(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] FlashSPI flag indicates if this is standard or SPI image
-  @param[in] SubsystemDeviceId identifer for dimm generation
+  @param[in] SubsystemDeviceId identifier for dimm generation
   @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _SMBIOSUTILITY_H_
-#define _SMBIOSUTILITY_H_
+#ifndef _SMBIOS_UTILITY_H_
+#define _SMBIOS_UTILITY_H_
 
 #include <IndustryStandard/SmBios.h>
 #include <Guid/SmBios.h>
@@ -17,7 +17,7 @@ typedef struct {
   UINT8   EntryPointLength;
   UINT8   MajorVersion;
   UINT8   MinorVersion;
-  UINT8   Docrev;
+  UINT8   DocRev;
   UINT8   EntryPointRevision;
   UINT8   Reserved;
   UINT32  TableMaxSize;
@@ -99,4 +99,4 @@ GetFirstAndBoundSmBiosStructPointer(
 );
 
 
-#endif /* _SMBIOSUTILITY_H_ */
+#endif /* _SMBIOS_UTILITY_H_ */

@@ -114,7 +114,7 @@ RegisterShowRegisterCommand(
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failurepPmCapableString
+  @retval EFI_ABORTED Failure invoking CONFIG_PROTOCOL function
 **/
 EFI_STATUS
 ShowRegister(

@@ -9,14 +9,14 @@
  * Namespaces.
  */
 
-#ifndef _NVM_DIMM_BLOCKIO_H_
-#define _NVM_DIMM_BLOCKIO_H_
+#ifndef _NVM_DIMM_BLOCK_IO_H_
+#define _NVM_DIMM_BLOCK_IO_H_
 
 #include "NvmDimmDriver.h"
 #include "NvmTypes.h"
 #include "Namespace.h"
 
-#define GET_NAMESPACE_INSANCE(InstanceAddress) BASE_CR(InstanceAddress, NAMESPACE, BlockIoInstance)
+#define GET_NAMESPACE_INSTANCE(InstanceAddress) BASE_CR(InstanceAddress, NAMESPACE, BlockIoInstance)
 
 /**
   Read BufferSize bytes from Lba into Buffer.
@@ -112,4 +112,4 @@ NvmDimmDriverBlockIoReset(
 
 extern EFI_GUID gNvmDimmBlockIoProtocolGuid;
 
-#endif /** _NVM_DIMM_BLOCKIO_H_ **/
+#endif /** _NVM_DIMM_BLOCK_IO_H_ **/

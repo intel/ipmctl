@@ -89,7 +89,7 @@ CHAR16 *mppAllowedShowPerformanceDisplayValues[] =
 #define PERFORMANCE_DATA_FORMAT    L"0x"FORMAT_UINT64_HEX FORMAT_UINT64_HEX
 
 
-EFI_STATUS GetDimmIdorDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
+EFI_STATUS GetDimmIdOrDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
     UINT32 DimmCount, UINT32 *HandleToPrint)
 {
   UINT32 Index = 0;

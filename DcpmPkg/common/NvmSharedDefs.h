@@ -22,14 +22,14 @@ typedef enum _NvmStatusCode {
   NVM_ERR_OPERATION_FAILED                          = 3,    ///< Error: Operation failed
   NVM_ERR_FORCE_REQUIRED                            = 4,    ///< Error: Force parameter required
   NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid parameter
-  NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Commnand not supported by this SKU
+  NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Command not supported by this SKU
 
   NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: PMem module not found
   NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: PMem module ID duplicated
   NVM_ERR_SOCKET_ID_NOT_VALID                       = 13,   ///< Error: Socket ID not valid
   NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with PMem module ID
   NVM_ERR_SOCKET_ID_DUPLICATED                      = 15,   ///< Error: Socket ID duplicated
-  NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
+  NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supported by current SKU
   NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable PMem module not found
   NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable PMem modules due to all PMem modules being unmanageable, non-functional, or having a population issue
   NVM_ERR_DIMM_EXCLUDED                             = 19,   ///< Error: PMem module excluded as it is unmanageable, non-functional, or has a population issue.
@@ -83,7 +83,7 @@ typedef enum _NvmStatusCode {
   NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode
   NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED = 100,  ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Non-Interleaved mode
-  NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interlaeved mode request when MaxPMInterleaveSetsPerDie limit exceeeded
+  NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interleaved mode request when MaxPMInterleaveSetsPerDie limit exceeded
   NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED        = 102,  ///< Error: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation (error if existing regions + new region goals for specific PMem modules greater then MaxPMInterleaveSetsPerDie limit)
   NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config
@@ -102,7 +102,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PLATFORM_NOT_SUPPORT_SPECIFIED_INT_SIZES  = 117,   ///< Error: Platform does not support specified interleave sizes
   NVM_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES    = 118,   ///< Error: Platform does not support default interleave sizes
   NVM_ERR_REGION_NOT_HEALTHY                          = 119, ///< Error: Region not healthy
-  NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namesapce
+  NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namespace
   NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on PMem module
   NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve PMem module requires at least 2 PMem modules
   NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS                = 124, ///< Error: Namespace exists

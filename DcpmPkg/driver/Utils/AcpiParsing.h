@@ -343,7 +343,7 @@ GetInterleaveTable(
 
   @param[in] Rdpa Device Region Physical Address to convert
   @param[in] pNvDimmRegionTable The NVDIMM region that helps describe this region of memory
-  @param[in] pInterleaveTable Interleave table referenced by the mdsparng_tbl
+  @param[in] pInterleaveTable Interleave table referenced by the MemDevToSpaRangeTable
   @param[out] SpaAddr output for SPA address
 
   A memory device could have multiple regions. As such we cannot convert
@@ -415,9 +415,9 @@ CheckIfBiosSupportsConfigChange(
   );
 
 /**
-  Check Memory Mode Capabilties from PCAT table type 0
+  Check Memory Mode Capabilities from PCAT table type 0
 
-  @param[out] pMemoryModeCapabilities pointer to memory mode capabilites
+  @param[out] pMemoryModeCapabilities pointer to memory mode capabilities
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL

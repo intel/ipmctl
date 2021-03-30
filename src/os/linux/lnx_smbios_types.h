@@ -51,7 +51,7 @@ struct smbios_3_entry_point
 	UINT8 entry_point_length;
 	UINT8 smbios_major_version;
 	UINT8 smbios_minor_version;
-	UINT8 smbios_docrev;
+	UINT8 smbios_doc_rev;
 	UINT8 entry_point_revision;
 	UINT8 reserved;
 	UINT32 structure_table_max_length;

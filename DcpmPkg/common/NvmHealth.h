@@ -71,7 +71,7 @@ typedef enum {
 /** Overall PMem module Health Status */
 enum HEALTH_STATUS {
   HealthStatusNoncritical = BIT0,  //!< Non-Critical (maintenance required)
-  HealthStatusCritical = BIT1,     //!< Critcial (features or performance degraded due to failure)
+  HealthStatusCritical = BIT1,     //!< Critical (features or performance degraded due to failure)
   HealthStatusFatal = BIT2         //!< Fatal (data loss has occurred or is imminent)
 };
 

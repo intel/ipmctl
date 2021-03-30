@@ -469,7 +469,7 @@ ShowGoal(
       ContainsValue(pDisplayValues, APPDIRECT_INDEX_PROPERTY)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Values used together");
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_INDICES_USED_TOGETHER);
     goto Finish;
   }
 

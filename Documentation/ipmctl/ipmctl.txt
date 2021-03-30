@@ -211,7 +211,7 @@ endif::os_build[]
 *ipmctl-show-preferences*(1),
 *ipmctl-load-dimm*(1),
 *ipmctl-version*(1),
-*impctl-delete-pcd*(1),
+*ipmctl-delete-pcd*(1),
 *ipmctl-dump-debug-log*(1),
 *ipmctl-inject-error*(1),
 *ipmctl-show-cap*(1),

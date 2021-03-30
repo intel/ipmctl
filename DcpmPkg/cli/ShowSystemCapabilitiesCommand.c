@@ -52,7 +52,7 @@ CHAR16 *mppAllowedShowSystemCapabilitiesDisplayValues[] = {
   APPDIRECT_MODE_ALLOWED_STR,
   OPERATING_MODE_SUPPORT_STR,
   APPDIRECT_SETTINGS_SUPPORTED_STR,
-  APPDIRECT_SETTINGS_RECCOMENDED_STR,
+  APPDIRECT_SETTINGS_RECOMMENDED_STR,
   MIN_NAMESPACE_SIZE_STR,
   APPDIRECT_MIRROR_SUPPORTED_STR,
   DIMM_SPARE_SUPPORTED_STR,
@@ -204,7 +204,7 @@ PrintSupportedMemoryModes(
 
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
-  @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+  @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
 **/
 EFI_STATUS
 ShowSystemCapabilities(
@@ -308,7 +308,7 @@ ShowSystemCapabilities(
   /** Values shown by default **/
   if (FilterOutput == ContainsValue(pDisplayValues, PLATFORM_CONFIG_SUPPORT_STR)) {
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, PLATFORM_CONFIG_SUPPORT_STR, FORMAT_INT32,
-        BIT_GET(SystemCapabilitiesInfo.PlatformConfigSupported, PLATFROM_CONFIG_SUPPORTED_BIT));
+        BIT_GET(SystemCapabilitiesInfo.PlatformConfigSupported, PLATFORM_CONFIG_SUPPORTED_BIT));
   }
   if (FilterOutput == ContainsValue(pDisplayValues, MEMORY_ALIGNMENT_STR)) {
     TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, Pow(2, SystemCapabilitiesInfo.InterleaveAlignmentSize),
@@ -421,13 +421,13 @@ ShowSystemCapabilities(
     FREE_POOL_SAFE(TempAppDirSettings);
   }
 
-  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECCOMENDED_STR)) {
+  if (ShowAll || ContainsValue(pDisplayValues, APPDIRECT_SETTINGS_RECOMMENDED_STR)) {
     TempAppDirSettings = PrintAppDirectSettings(
       (VOID *)SystemCapabilitiesInfo.PtrInterleaveFormatsSupported,
       SystemCapabilitiesInfo.InterleaveFormatsSupportedNum,
       (INTERLEAVE_SIZE *)SystemCapabilitiesInfo.PtrInterleaveSize,
       TRUE, PRINT_SETTINGS_FORMAT_FOR_SHOW_SYS_CAP_CMD);
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_RECCOMENDED_STR, TempAppDirSettings);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, APPDIRECT_SETTINGS_RECOMMENDED_STR, TempAppDirSettings);
     FREE_POOL_SAFE(TempAppDirSettings);
   }
 

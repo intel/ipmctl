@@ -86,7 +86,7 @@ SubOpcode::
   The SubOpcode for a command.
 
 Restriction::
-  Text describing which mailboxes are restricted for Opcode:SubOcode combination. One of:
+  Text describing which mailboxes are restricted for Opcode:SubOpcode combination. One of:
   * None
   * BIOS only
   * SMBus only

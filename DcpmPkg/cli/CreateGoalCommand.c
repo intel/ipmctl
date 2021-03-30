@@ -292,7 +292,7 @@ CheckAndConfirmAlignments(
   }
 
   PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_CREATE_GOAL_PROMPT_HEADER  L"\n");
-  
+
   PRINTER_ENABLE_TEXT_TABLE_FORMAT(pCmd->pPrintCtx);
   ReturnCode = ShowGoalPrintTableView(pCmd, RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, FALSE);
 
@@ -651,7 +651,7 @@ CreateGoal(
     LabelVersionMajor, LabelVersionMinor, &MaxPMInterleaveSetsPerDie, pCommandStatus);
 
   if (!EFI_ERROR(ReturnCode)) {
-    
+
     ReturnCode = CreateCmdLineOutputStr(pCmd, &pShowGoalOutputArgs);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);

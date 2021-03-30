@@ -34,15 +34,15 @@
 * - EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
 *  - Provides standardized PMem module security functionality
 * - EFI_BLOCK_IO_PROTOCOL
-*  - Provides BLOCK IO access to the specificed PMem module Namespaces
+*  - Provides BLOCK IO access to the specified PMem module namespaces
 * - EFI_NVDIMM_LABEL_PROTOCOL
-*  - Provides standardized access to the specified PMem module Labels
+*  - Provides standardized access to the specified PMem module labels
 * - Automated Provisioning flow using an EFI_VARIABLE
 *
-* @section autoprovisioning Automated Provisioning
+* @section AutoProvisioning Automated Provisioning
 * Automated Provisioning provides a mechanism to provision both persistent
 * memory regions and namespaces on the next boot by accessing an exposed
-* EFI_VARIABLE. This mechansim may be particularly useful to initiate provisioning
+* EFI_VARIABLE. This mechanism may be particularly useful to initiate provisioning
 * via an out-of-band (OOB) path, like a Baseboard Management Controller (BMC).
 *
 * The UEFI driver will determine if mode provisioning is required by first checking
@@ -429,7 +429,7 @@ GetAcpiPcat (
   Retrieve the PMTT ACPI table
 
   @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[out] ppPMTTtbl output buffer with PMTT tables. This buffer must be freed by caller.
+  @param[out] ppPMTT output buffer with PMTT tables. This buffer must be freed by caller.
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -438,7 +438,7 @@ EFI_STATUS
 EFIAPI
 GetAcpiPMTT(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  OUT VOID **ppPMTTtbl
+  OUT VOID **ppPMTT
 );
 
 /**
@@ -447,7 +447,7 @@ GetAcpiPMTT(
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param[in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
+  @param[in] PcdTarget Target PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of PMem module IDs
   @param[in] DimmIdsCount Number of items in array of PMem module IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
@@ -745,7 +745,7 @@ SetAlarmThresholds (
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in]  DimmPid The ID of the PMem module
-  @param[out] pHealthInfo pointer to structure containing all Health and Smarth variables
+  @param[out] pHealthInfo pointer to structure containing all Health and Smart variables
 
   @retval EFI_SUCCESS Success
   @retval ERROR any non-zero value is an error (more details in Base.h)
@@ -1071,7 +1071,7 @@ DeleteNamespace(
   @param[in] SequenceNumber - sequence number of error to fetch in queue
   @param[in] HighLevel - high level if true, low level otherwise
   @param[in, out] pErrorLogCount - IN: element count of pErrorLogs. OUT: Count of error entries in pErrorLogs
-  @param[out] pErrorLogs - output array of errors. Allocated to elmeent count indicated by pErrorLogCount
+  @param[out] pErrorLogs - output array of errors. Allocated to element count indicated by pErrorLogCount
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_SUCCESS Success
@@ -1506,7 +1506,7 @@ InjectError(
 );
 
 /**
-  GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+  GetBsr value and return bsr or boot status bitmask depending on the requested options
   UEFI - Read directly from BSR register
   OS - Get BSR value from BIOS emulated command
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.

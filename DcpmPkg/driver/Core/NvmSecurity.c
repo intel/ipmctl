@@ -113,7 +113,7 @@ SetDimmSecurityState(
     goto Finish;
   }
 
-  //Only SetSecurity Opode supported
+  //Only SetSecurity Opcode supported
   if(Opcode != PtSetSecInfo) {
     goto Finish;
   }

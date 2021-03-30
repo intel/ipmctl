@@ -9,7 +9,7 @@
 
 #define MAX_SOCKETS           16
 #define MAX_IMCS_PER_SOCKET   4
-#define MAX_CHANNELS_PER_IMC  3 // 3 is for backwards compatabilty
+#define MAX_CHANNELS_PER_IMC  3 // 3 is for backwards compatibility
 #define MAX_DIMMS_PER_CHANNEL 2
 #define MAX_DIMMS_PER_IMC     (MAX_CHANNELS_PER_IMC * MAX_DIMMS_PER_CHANNEL) // 2 * 3 = 6
 #define MAX_DIMMS_PER_SOCKET  (MAX_DIMMS_PER_IMC * MAX_IMCS_PER_SOCKET) // 4 * 4 = 16

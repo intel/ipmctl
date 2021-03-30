@@ -41,7 +41,7 @@ UINT32 INTERLEAVE_SETS_2_3[] =
 /**
   Get the topology and InterleaveSetMap Info based on the processor type
   @param[out] piMCNum Number of iMCs per CPU.
-  @param[out] pChannelNum Number of channles per iMC
+  @param[out] pChannelNum Number of channels per iMC
   @param[out] ppInterleaveMap Pointer to InterleaveSetMap based on the processor type
 
   @retval EFI_SUCCESS Ok
@@ -102,7 +102,7 @@ GetTopologyAndInterleaveSetMapInfo(
       goto Finish;
     }
 
-    // Append the x1 bitmaps to the interleave fromat list received from BIOS
+    // Append the x1 bitmaps to the interleave format list received from BIOS
     *ppInterleaveMap = ReallocatePool(sizeof(**ppInterleaveMap) * InterleaveMapListLength,
       sizeof(**ppInterleaveMap) * (InterleaveMapListLength + (NumOfiMCsPerCPU * NumOfChannelsPeriMC) + 1), *ppInterleaveMap);
     if (*ppInterleaveMap == NULL) {
@@ -112,7 +112,7 @@ GetTopologyAndInterleaveSetMapInfo(
     }
 
     for (Index = 0; Index < (NumOfiMCsPerCPU * NumOfChannelsPeriMC); Index++) {
-      (*ppInterleaveMap)[Index + InterleaveMapListLength] = INTERLEAVE_BYONE_BITMAP_IMC0_CH0 << Index;
+      (*ppInterleaveMap)[Index + InterleaveMapListLength] = INTERLEAVE_BY_ONE_BITMAP_IMC0_CH0 << Index;
     }
     (*ppInterleaveMap)[Index + InterleaveMapListLength] = END_OF_INTERLEAVE_SETS;
   }

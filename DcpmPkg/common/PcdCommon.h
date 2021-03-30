@@ -242,7 +242,7 @@ typedef struct {
   /**
     Byte0 - Channel Interleave Size
     Byte1 - iMC Interleave Size
-    One of the supported values from PCAT Mmeory Interleave Capability Info Table
+    One of the supported values from PCAT Memory Interleave Capability Info Table
   **/
   UINT8 InterleaveFormatChannel;
   UINT8 InterleaveFormatImc;
@@ -264,9 +264,9 @@ typedef struct {
     8  - Partitioning request failed
     9  - Matching modules found, but CIN missing in a module in the interleave set
     10 - Channel interleave does not match between the MCs being interleaved
-    11 - Partition Offset or Size is not a multiple of Interleave Aligment Size in Memory Interleave
+    11 - Partition Offset or Size is not a multiple of Interleave Alignment Size in Memory Interleave
          Capability Information sub-table of PCAT
-    12 - Request unsuppported
+    12 - Request unsupported
   **/
   UINT8 InterleaveChangeStatus;
   UINT8 Reserved3[10];

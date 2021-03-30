@@ -61,12 +61,12 @@ DecodePcatMemoryModeCapabilities(
         L"AppDirect");
     }
 
-    // Platforms with PCAT revison < 1.x always support mixed mode
+    // Platforms with PCAT revision < 1.x always support mixed mode
     MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
       ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
       L"MixedMode");
 
-    if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster) {
+    if (pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMACluster) {
       MemoryModeCapabilities = CatSPrintClean(MemoryModeCapabilities,
         ((MemoryModeCapabilities == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
         L"SubNUMA Cluster");
@@ -135,7 +135,7 @@ DecodePcatCurrentMemoryMode(
     CurrentVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode;
     PersistentMode = pPcatCurrentMemoryMode->MemoryModeSplit.PersistentMode;
     AllowedVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.AllowedVolatileMode;
-    SubNUMACluster = pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMAClster;
+    SubNUMACluster = pPcatMemoryModeCapabilities->MemoryModesFlags.SubNUMACluster;
   } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
     CURRENT_MEMORY_MODE3 *pPcatCurrentMemoryMode = (CURRENT_MEMORY_MODE3 *)pPcatCurrentMemoryModeField;
     CurrentVolatileMode = pPcatCurrentMemoryMode->MemoryModeSplit.CurrentVolatileMode;
@@ -459,7 +459,7 @@ PrintPcatTable(
         DcpmmMgmtSWConfigInputSupport = CatSPrintClean(DcpmmMgmtSWConfigInputSupport, FORMAT_STR, L" & Runtime Interface for config validation");
       }
       if (DcpmmMgmtSWConfigInputSupport != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, DcpmmMgmtSWConfigInputSupport);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH,
@@ -468,7 +468,7 @@ PrintPcatTable(
       FREE_POOL_SAFE(DcpmmMgmtSWConfigInputSupport);
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
       if (MemoryModeCapabilities != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes, MemoryModeCapabilities);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
@@ -494,7 +494,7 @@ PrintPcatTable(
         PersistentMemoryRasCapability = CatSPrintClean(PersistentMemoryRasCapability, ((PersistentMemoryRasCapability == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), L"Migration");
       }
       if (PersistentMemoryRasCapability != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS L"\n",
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS L"\n",
           pPlatformCapabilityInfoTable->PersistentMemoryRasCapability, PersistentMemoryRasCapability);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PersistentMemoryRASCapability", FORMAT_HEX_NOWIDTH L"\n",
@@ -504,15 +504,15 @@ PrintPcatTable(
     } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       PLATFORM_CAPABILITY_INFO3 *pPlatformCapabilityInfoTable = (PLATFORM_CAPABILITY_INFO3 *)pTable;
       if (pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport & BIOS_SUPPORTS_CHANGING_CONFIG) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"Yes");
       } else {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"PMemModuleMgmtSWConfigInputSupport", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pPlatformCapabilityInfoTable->MgmtSwConfigInputSupport, L"No");
       }
       MemoryModeCapabilities = DecodePcatMemoryModeCapabilities((VOID *)&pPlatformCapabilityInfoTable->MemoryModeCapabilities);
       if (MemoryModeCapabilities != NULL) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pPlatformCapabilityInfoTable->MemoryModeCapabilities.MemoryModes, MemoryModeCapabilities);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryModeCapabilities", FORMAT_HEX_NOWIDTH,
@@ -556,7 +556,7 @@ PrintPcatTable(
     if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH,
@@ -580,7 +580,7 @@ PrintPcatTable(
     } else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcatRevision)) {
       MEMORY_INTERLEAVE_CAPABILITY_INFO3 *pMemoryInterleaveCapabilityInfoTable = (MEMORY_INTERLEAVE_CAPABILITY_INFO3 *)pTable;
       if (pMemoryInterleaveCapabilityInfoTable->MemoryMode <= 4) {
-        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARANTHESIS,
+        PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH FORMAT_STR_WITH_PARENTHESIS,
           pMemoryInterleaveCapabilityInfoTable->MemoryMode, MemoryMode[pMemoryInterleaveCapabilityInfoTable->MemoryMode]);
       } else {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pTypePath, L"MemoryMode", FORMAT_HEX_NOWIDTH,
@@ -1056,7 +1056,7 @@ PrintNFit(
 
   @param[in] pPmttCommonHeader pointer to the PMTT Common Header
   @param[in] pPrinterCtx pointer to command's printer context
-  @param[in] Revision PMMT table revision
+  @param[in] Revision PMTT table revision
 **/
 VOID
 PrintPmttCommonHeader(

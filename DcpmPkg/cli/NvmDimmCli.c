@@ -462,7 +462,7 @@ UefiMain(
     /* with shell support level 3 */
     if (PcdGet8(PcdShellSupportLevel) < 3) {
       Rc = EFI_UNSUPPORTED;
-      NVDIMM_WARN("shellsupport level %d too low", PcdGet8(PcdShellSupportLevel));
+      NVDIMM_WARN("ShellSupport level %d too low", PcdGet8(PcdShellSupportLevel));
       Print(L"Error: EFI Shell support level 3 is required to run this application\n");
       goto Finish;
     }
@@ -615,7 +615,7 @@ UefiMain(
           //CLI is responsible for tracking the tagid.
           //The id is saved to a non-persistent volatile store, and is incremented
           //after each CLI cmd invocation.  Given we have the tagid that should
-          //be executed next, explicitely reset the pbr session to that id before
+          //be executed next, explicitly reset the pbr session to that id before
           //running the cmd.
           PbrDcpmmDeserializeTagId(&NextId, 0);
           ResetPbrSession(NextId);

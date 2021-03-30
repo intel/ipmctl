@@ -105,7 +105,7 @@ typedef struct {
   UINT32 Slot;                                 //!< Slot of this label in label area
   UINT8 Alignment;                             //!< Advertise the preferred alignment of the data
   UINT8 Reserved[3];                           //!< Zero
-  GUID TypeGuid;                               //!< Describe the acccess mechanism for the DPA range
+  GUID TypeGuid;                               //!< Describe the access mechanism for the DPA range
   GUID AddressAbstractionGuid;                 //!< Identifies the address abstraction mechanism for this namespace
   UINT8 Reserved1[88];                         //!< Zero
   UINT64 Checksum;                             //!< Fletcher64

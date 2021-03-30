@@ -98,8 +98,8 @@ OUT CHAR16 *Destination
 
   @param[in] Char The character to check against.
 
-  @retval TRUE  If the Char is a hexadecmial character.
-  @retval FALSE If the Char is not a hexadecmial character.
+  @retval TRUE  If the Char is a hexadecimal character.
+  @retval FALSE If the Char is not a hexadecimal character.
 **/
 BOOLEAN
 EFIAPI
@@ -136,8 +136,8 @@ CrCharToUpper (
 
   @param[in] Char The character to check against.
 
-  @retval TRUE  If the Char is a hexadecmial character.
-  @retval FALSE If the Char is not a hexadecmial character.
+  @retval TRUE  If the Char is a hexadecimal character.
+  @retval FALSE If the Char is not a hexadecimal character.
 **/
 BOOLEAN
 EFIAPI
@@ -232,7 +232,7 @@ CrStrDecimalToUint64 (
   Convert a Unicode character to numerical value.
 
   This internal function only deal with Unicode character
-  which maps to a valid hexadecimal ASII character, i.e.
+  which maps to a valid hexadecimal ASCII character, i.e.
   L'0' to L'9', L'a' to L'f' or L'A' to L'F'. For other
   Unicode character, the value returned does not make sense.
 
@@ -474,8 +474,8 @@ numeric value.
 @param[in] pString The character to check against.
 @param[in] StopAtSpace  TRUE to halt upon finding a space, FALSE to keep going.
 
-@retval TRUE  If the pString is a hexadecmial number.
-@retval FALSE If the pString is not a hexadecmial number.
+@retval TRUE  If the pString is a hexadecimal number.
+@retval FALSE If the pString is not a hexadecimal number.
 **/
 BOOLEAN
 EFIAPI

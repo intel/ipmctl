@@ -135,7 +135,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property AlarmThreshold."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CCONFIG              L"Syntax Error: Incorrect value for property Config."
 #define CLI_ERR_INCORRECT_VALUE_TARGET_TOKEN_ID               L"Syntax Error: Incorrect value for target -tokens."
 #define CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS                 L"Syntax Error: Poison type property should be followed by poison address."
 #define CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED                 L"Syntax Error: Clear property should be given in combination with other error injection properties."
@@ -147,7 +146,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER                 L"Syntax Error: Options -x and -examine can not be used together."
 #define CLI_ERR_OPTIONS_FORCE_USED_TOGETHER                   L"Syntax Error: Options -f and -force can not be used together."
 #define CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER           L"Syntax Error: Option values AppDirectSize and AppDirect1Size can not be used together."
-#define CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together."
+#define CLI_ERR_VALUES_APPDIRECT_INDICES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together."
 #define CLI_ERR_PROPERTIES_CAPACITY_BLOCKCOUNT_USED_TOGETHER  L"Syntax Error: Properties Capacity and BlockCount can not be used together."
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
@@ -477,10 +476,10 @@ CheckDisplayList(
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
@@ -499,10 +498,10 @@ GetManageableDimmsNumberAndId(
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetAllManageableDimmsNumberAndId(
@@ -861,7 +860,7 @@ AllDimmsInListHaveMasterPassphraseEnabled(
 /**
    Get Dimm identifier preference
 
-   @param[out] pDimmIdentifier Variable to store Dimm identerfier preference
+   @param[out] pDimmIdentifier Variable to store Dimm identifier preference
 
    @retval EFI_SUCCESS Success
    @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -875,7 +874,7 @@ GetDimmIdentifierPreference(
   Get Dimm identifier as string based on user preference
 
   @param[in] DimmId Dimm ID as number
-  @param[in] pDimmUid Dimmm UID as string
+  @param[in] pDimmUid Dimm UID as string
   @param[out] pResultString String representation of preferred value
   @param[in] ResultStringLen Length of pResultString
 

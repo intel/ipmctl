@@ -1174,7 +1174,7 @@ PopulateSmbusFields(
       (UINT8)(pNewDimm->DeviceHandle.NfitDeviceHandle.MemChannel * MAX_DIMMS_PER_CHANNEL +
       pNewDimm->DeviceHandle.NfitDeviceHandle.DimmNumber);
 
-  //fill in fields provided by SMbus.
+  //fill in fields provided by smbus.
   pNewDimm->Signature = DIMM_SIGNATURE;
 
   ReturnCode = EFI_SUCCESS;
@@ -1579,7 +1579,7 @@ FwCmdDisableARS(
 )
 {
   NVM_FW_CMD *pFwCmd = NULL;
-  PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB *pARSInpugPayload = NULL;
+  PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB *pARSInputPayload = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
@@ -1599,8 +1599,8 @@ FwCmdDisableARS(
   pFwCmd->Opcode = PtSetFeatures;
   pFwCmd->SubOpcode = SubopAddressRangeScrub;
 
-  pARSInpugPayload = (PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB*)pFwCmd->InputPayload;
-  pARSInpugPayload->Enable = 0;
+  pARSInputPayload = (PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB*)pFwCmd->InputPayload;
+  pARSInputPayload->Enable = 0;
 
   pFwCmd->InputPayloadSize = sizeof(PT_PAYLOAD_SET_ADDRESS_RANGE_SCRUB);
 
@@ -2081,7 +2081,7 @@ FwCmdGetPlatformConfigData(
   * PcdSize was retrieved at driver load time so it is possible that since load time there
   * was a fatal media error that this would not catch. We would then be returning cached data
   * from a media disabled DIMM instead of erroring out.
-  * It could also be possbile that FW was busy during driver load time, so disable the cache.
+  * It could also be possible that FW was busy during driver load time, so disable the cache.
   */
   if (PcdSize == 0) {
     gPCDCacheEnabled = 0;
@@ -2441,7 +2441,7 @@ FwCmdGetPcdSmallPayload(
   * PcdSize was retrieved at driver load time so it is possible that since load time there
   * was a fatal media error that this would not catch. We would then be returning cached data
   * from a media disabled DIMM instead of erroring out.
-  * It could also be possbile that FW was busy during driver load time, so disable the cache.
+  * It could also be possible that FW was busy during driver load time, so disable the cache.
   */
   if (gPCDCacheEnabled && pDimm->PcdOemPartitionSize == 0) {
     gPCDCacheEnabled = 0;
@@ -2902,7 +2902,7 @@ Finish:
     The caller is responsible to free the allocated memory with the FreePool function.
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadAtarmThresholds is NULL
+  @retval EFI_INVALID_PARAMETER pDimm or ppPayloadAlarmThresholds is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
  **/
 EFI_STATUS
@@ -3098,7 +3098,7 @@ FwCmdUpdateFw(
       pInputPayload->TransactionType = FW_UPDATE_END_TRANSFER;
     }
 
-    // The chunksize won't change for small payload (fw image size was already
+    // The chunk size won't change for small payload (fw image size was already
     // enforced to be a multiple of 64 bytes), but it potentially could for
     // large payload at some point.
     BytesToCopy = MIN(ImageBufferSize - BytesWrittenTotal, ChunkSize);
@@ -3136,8 +3136,8 @@ FwCmdUpdateFw(
         // Retry current packet
         continue;
       }
-      else if (pFwCmd->Status == FW_UPDATE_ALREADY_OCCURED) {
-        NVDIMM_DBG("FW Update failed, FW already occured\n");
+      else if (pFwCmd->Status == FW_UPDATE_ALREADY_OCCURRED) {
+        NVDIMM_DBG("FW Update failed, FW already occurred\n");
         *pNvmStatus = NVM_ERR_FIRMWARE_ALREADY_LOADED;
         goto Finish;
       }
@@ -4041,7 +4041,7 @@ Finish:
   @param[out] pLongOpStatus Filled payload with data
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more pamaters are NULL
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -4292,8 +4292,8 @@ Finish:
 
   @param[in, out] pDimm: DIMM to create the Bw for
   @param[in] PFitHead: Parsed Fit Head
-  @parma[in] pMbITbl: the interleave table for mailbox
-  @parma[in] pBwITbl: the interleave table for block window
+  @param[in] pMbITbl: the interleave table for mailbox
+  @param[in] pBwITbl: the interleave table for block window
 
   @retval EFI_SUCCESS
   @retval EFI_OUT_OF_RESOURCES in case of allocate memory error
@@ -4576,7 +4576,7 @@ GetBwCommandStatus (
   }
 
   /** DPA Address specified in the BW Address Register is not a valid address for the NVDIMM **/
-  if (Status & BW_INVALID_ADRESS_MASK) {
+  if (Status & BW_INVALID_ADDRESS_MASK) {
     NVDIMM_WARN("DPA Address specified in the BW Address Register is not a valid address for the NVDIMM");
     ReturnCode = EFI_DEVICE_ERROR;
     goto Finish;
@@ -4786,10 +4786,10 @@ GetAndParseFwErrorLogForDimm(
         pMediaErrorInfo->Pda = pMediaLogEntry->Pda;
         pMediaErrorInfo->Range = pMediaLogEntry->Range;
         pMediaErrorInfo->ErrorType = pMediaLogEntry->ErrorType;
-        pMediaErrorInfo->PdaValid = pMediaLogEntry->ErrorFlags.Spearated.PdaValid;
-        pMediaErrorInfo->DpaValid = pMediaLogEntry->ErrorFlags.Spearated.DpaValid;
-        pMediaErrorInfo->Interrupt = pMediaLogEntry->ErrorFlags.Spearated.Interrupt;
-        pMediaErrorInfo->Viral = pMediaLogEntry->ErrorFlags.Spearated.Viral;
+        pMediaErrorInfo->PdaValid = pMediaLogEntry->ErrorFlags.Separated.PdaValid;
+        pMediaErrorInfo->DpaValid = pMediaLogEntry->ErrorFlags.Separated.DpaValid;
+        pMediaErrorInfo->Interrupt = pMediaLogEntry->ErrorFlags.Separated.Interrupt;
+        pMediaErrorInfo->Viral = pMediaLogEntry->ErrorFlags.Separated.Viral;
         pMediaErrorInfo->TransactionType = pMediaLogEntry->TransactionType;
         pMediaErrorInfo->SequenceNum = pMediaLogEntry->SequenceNum;
 
@@ -5535,7 +5535,7 @@ DimmWPQFlush(
   Both buffers have to be equal or greater than NumOfBytes.
 
   @param[out] pRegularBuffer output regular buffer
-  @param[in] RegularBufferSz size of the RegualrBuffer
+  @param[in] RegularBufferSz size of the RegularBuffer
   @param[in] ppInterleavedBuffer input interleaved buffer
   @param[in] LineSize line size of interleaved buffer
   @param[in] NumOfBytes number of bytes to copy
@@ -5978,7 +5978,7 @@ Finish:
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
   @param[in] pDimm The Intel NVM Dimm to retrieve PCD from
-  @param[in] RetoreCorrupt If true will generate a default PCD when a corrupt header is found
+  @param[in] RestoreCorrupt If true will generate a default PCD when a corrupt header is found
   @param[out] ppPlatformConfigData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS Success
@@ -6143,7 +6143,7 @@ MatchFwReturnCode (
     ReturnCode = EFI_NOT_STARTED;
     break;
 
-  case FW_TIMEOUT_OCCURED:
+  case FW_TIMEOUT_OCCURRED:
     ReturnCode = EFI_TIMEOUT;
     break;
 
@@ -6152,7 +6152,7 @@ MatchFwReturnCode (
   case FW_REVISION_FAILURE:
   case FW_INCOMPATIBLE_DIMM_TYPE:
   case FW_ABORTED:
-  case FW_UPDATE_ALREADY_OCCURED:
+  case FW_UPDATE_ALREADY_OCCURRED:
     ReturnCode = EFI_ABORTED;
     break;
 
@@ -6464,7 +6464,7 @@ SetObjStatusForDimmWithErase(
   Get overwrite DIMM operation status for DIMM
 
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
-  @parma[out] pOverwriteDimmStatus Retrieved status
+  @param[out] pOverwriteDimmStatus Retrieved status
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -6502,7 +6502,7 @@ Finish:
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
   @param[in] pOpcode Opcode of long op command
   @param[in] pOpcode Subopcode of long op command
-  @parma[out] pLongOpDimmInfoStatus Long Op status
+  @param[out] pLongOpDimmInfoStatus Long Op status
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
@@ -6547,7 +6547,7 @@ GetLongOpDimmInfoStatus(
     goto Finish;
   }
 
-  if (LongOpStatus.CmdOpcode == Opcode && LongOpStatus.CmdSubcode == SubOpcode) {
+  if (LongOpStatus.CmdOpcode == Opcode && LongOpStatus.CmdSubOpcode == SubOpcode) {
     switch (LongOpStatus.Status) {
     case FW_SUCCESS:
       *pLongOpDimmInfoStatus = LONG_OP_STATUS_COMPLETED;
@@ -6581,12 +6581,12 @@ Finish:
   Poll while ARS long operation status reports DEVICE BUSY
 
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
-  @parma[in] TimeoutSecs - Poll timeout in seconds
+  @param[in] TimeoutSecs - Poll timeout in seconds
 
   @retval EFI_SUCCESS Success
   @retval EFI_TIMEOUT Timeout expired and did not receive something other than FW_DEVICE_BUSY
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-  @retval EFI_DEVICE_ERROR Retrieved an unexpeced opcode/subopcode when requesting long op status
+  @retval EFI_DEVICE_ERROR Retrieved an unexpected opcode/subopcode when requesting long op status
 **/
 
 EFI_STATUS
@@ -6618,7 +6618,7 @@ PollOnArsDeviceBusy(
         break;
     }
 
-    if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
+    if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubOpcode == SubopAddressRangeScrub) {
       if (FW_DEVICE_BUSY != LongOpStatus.Status) {
         ReturnCode = EFI_SUCCESS;
         goto Finish;
@@ -6812,7 +6812,7 @@ Finish:
 Inject Temperature error payload
 @param[IN] pDimm Target DIMM structure pointer
 @param[IN] subopcode for error injection command
-@param[OUT] pinjectInputPayload - input payload to be sent
+@param[OUT] pInjectInputPayload - input payload to be sent
 @param[OUT] pFwStatus FW status returned by dimm
 
 @retval EFI_SUCCESS Success
@@ -6824,7 +6824,7 @@ EFI_STATUS
 FwCmdInjectError(
   IN  DIMM *pDimm,
   IN  UINT8 SubOpCode,
-  OUT VOID *pinjectInputPayload,
+  OUT VOID *pInjectInputPayload,
   OUT UINT8 *pFwStatus
 )
 {
@@ -6833,7 +6833,7 @@ FwCmdInjectError(
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pinjectInputPayload == NULL || pFwStatus == NULL) {
+  if (pDimm == NULL || pInjectInputPayload == NULL || pFwStatus == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -6850,7 +6850,7 @@ FwCmdInjectError(
   pFwCmd->SubOpcode = SubOpCode;
   pFwCmd->InputPayloadSize = SMALL_PAYLOAD_SIZE;
   pFwCmd->OutputPayloadSize = 0;
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pinjectInputPayload, pFwCmd->InputPayloadSize);
+  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), pInjectInputPayload, pFwCmd->InputPayloadSize);
 
   ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   *pFwStatus = pFwCmd->Status;
@@ -6883,7 +6883,7 @@ Finish:
 EFI_STATUS
 FwCmdGetSystemTime(
   IN     DIMM *pDimm,
-  OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
+  OUT PT_SYSTEM_TIME_PAYLOAD *pSystemTimePayload
 )
 {
   NVM_FW_CMD *pFwCmd = NULL;

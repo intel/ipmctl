@@ -155,7 +155,7 @@ CoreStartDiagnostics(
   is responsible for freeing the returned string.
 
   @param[in] StringId  ID of string
-  @param[in] NumOfArgs Number of agruments passed
+  @param[in] NumOfArgs Number of arguments passed
   @param[in] ...       The variable argument list
 
   @retval NULL    There was not enough available memory.

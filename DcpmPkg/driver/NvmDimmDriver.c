@@ -234,7 +234,7 @@ Finish:
 
 /**
   Function that allows to "refresh" the existing DIMMs.
-  If a DIMM is unaccessible, all of the ISs and namespaces
+  If a DIMM is inaccessible, all of the ISs and namespaces
   that it was a part of will be removed.
 
   @param[in] DoDriverCleanup, if the caller wants namespaces cleaned up including unloading protocols
@@ -449,7 +449,7 @@ NvmDimmDriverUnload(
 /**
   Finds a driver handle for the given driver name keywords.
 
-  The driver is identified by the ConponentNameProtocol->GetDriverName, so it is required that the requested
+  The driver is identified by the ComponentNameProtocol->GetDriverName, so it is required that the requested
   driver implements this protocol.
 
   The input driver name should be a comma separated list of the words that exist in the name. The function assumes
@@ -1477,7 +1477,7 @@ NvmDimmDriverDriverBindingStart(
   else if (PBR_PLAYBACK_MODE == PBR_GET_MODE(ctx)) {
     //The id is saved to a non-persistent volatile store, and is incremented
     //after each CLI cmd and drive load invocation.  Given we have the tagid that should
-    //be executed next, explicitely reset the pbr session to that id before
+    //be executed next, explicitly reset the pbr session to that id before
     //running the cmd.
     PbrDcpmmDeserializeTagId(&NextId, 0);
     PbrResetSession(NextId);

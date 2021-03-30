@@ -872,7 +872,7 @@ ShowDimms(
         FREE_POOL_SAFE(pManageabilityStr);
       }
 
-      /** PopulatonViolation **/
+      /** PopulationViolation **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, POPULATION_VIOLATION_STR))) {
         pPopulationViolationStr = PopulationViolationToString(pDimms[DimmIndex].IsInPopulationViolation);
         PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, POPULATION_VIOLATION_STR, pPopulationViolationStr);
@@ -945,17 +945,17 @@ ShowDimms(
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, REVISION_ID_STR, FORMAT_HEX, pDimms[DimmIndex].Rid);
       }
 
-      /** SubsytemVendorId **/
+      /** SubsystemVendorId **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_VENDOR_ID_STR))) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_VENDOR_ID_STR, FORMAT_HEX, EndianSwapUint16(pDimms[DimmIndex].SubsystemVendorId));
       }
 
-      /** SubsytemDeviceId **/
+      /** SubsystemDeviceId **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_DEVICE_ID_STR))) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_DEVICE_ID_STR, FORMAT_HEX, pDimms[DimmIndex].SubsystemDeviceId);
       }
 
-      /** SubsytemRevisionId **/
+      /** SubsystemRevisionId **/
       if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, SUBSYSTEM_REVISION_ID_STR))) {
         PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, SUBSYSTEM_REVISION_ID_STR, FORMAT_HEX, pDimms[DimmIndex].SubsystemRid);
       }

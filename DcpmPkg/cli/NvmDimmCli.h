@@ -20,7 +20,7 @@ extern        EFI_HANDLE                        gNvmDimmCliHiiHandle;
 //
 // This is the generated String package data for all .UNI files.
 // This data array is ready to be used as input of HiiAddPackages() to
-// create a packagelist (which contains Form packages, String packages, etc).
+// create a package list (which contains Form packages, String packages, etc).
 //
 extern unsigned char ipmctlStrings[];
 extern int g_basic_commands;

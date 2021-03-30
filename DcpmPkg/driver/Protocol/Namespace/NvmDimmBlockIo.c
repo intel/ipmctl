@@ -126,7 +126,7 @@ NvmDimmDriverBlockIoReadBlocks(
     goto Finish;
   }
 
-  pNamespace = GET_NAMESPACE_INSANCE(pThis);
+  pNamespace = GET_NAMESPACE_INSTANCE(pThis);
 
   if (pNamespace == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -217,7 +217,7 @@ NvmDimmDriverBlockIoWriteBlocks(
     goto Finish;
   }
 
-  pNamespace = GET_NAMESPACE_INSANCE(pThis);
+  pNamespace = GET_NAMESPACE_INSTANCE(pThis);
 
   if (pNamespace == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -245,7 +245,7 @@ Finish:
   @param  pThis              Indicates a pointer to the calling context.
 
   @retval EFI_SUCCESS       All outstanding data was written to the device
-  @retval EFI_DEVICE_ERROR  The device reported an error while writting back the data
+  @retval EFI_DEVICE_ERROR  The device reported an error while writing back the data
   @retval EFI_NO_MEDIA      There is no media in the device.
   @retval EFI_UNSUPPORTED   Not supported
 **/

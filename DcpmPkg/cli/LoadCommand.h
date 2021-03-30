@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _LOADCOMMAND_H_
-#define _LOADCOMMAND_H_
+#ifndef _LOAD_COMMAND_H_
+#define _LOAD_COMMAND_H_
 
 #include <Uefi.h>
 #include "CommandParser.h"
@@ -92,4 +92,4 @@ FwHasBeenStaged(
   IN   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol,
   IN   UINT16 DimmID
 );
-#endif /** _LOADCOMMAND_H_ **/
+#endif /** _LOAD_COMMAND_H_ **/

@@ -500,7 +500,7 @@ UpdateBrokenInterleaveSets(
               CurrentDimmLocation.Split.SlotId = pPmttModuleInfo->SlotId;
             }
           }
-          //Compare the Identification Info DIMM location with the current DIMM location in NFIT if PMMT not present
+          //Compare the Identification Info DIMM location with the current DIMM location in NFIT if PMTT not present
           else {
             if ((DimmLocation.Split.SocketId != pDimm->SocketId) ||
               (DimmLocation.Split.DieId != MAX_DIEID_SINGLE_DIE_SOCKET) ||

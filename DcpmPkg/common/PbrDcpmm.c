@@ -252,13 +252,13 @@ PbrGetTableRecord(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Signature = PBR_INVALID_SIG;
 
-  NVDIMM_DBG("GetTablerecord...\n");
+  NVDIMM_DBG("GetTableRecord...\n");
 
   if (PBR_PLAYBACK_MODE != pContext->PbrMode) {
     return ReturnCode;
   }
 
-  NVDIMM_DBG("GetTablerecord type: %d\n", TableType);
+  NVDIMM_DBG("GetTableRecord type: %d\n", TableType);
 
   //todo check signatures
   switch (TableType) {
@@ -291,7 +291,7 @@ PbrGetTableRecord(
     Print(L"Failed to GET smbios\n");
   }
   else {
-    NVDIMM_DBG("GetTablerecord type: %d, size: %d bytes\n", TableType, *pTableSize);
+    NVDIMM_DBG("GetTableRecord type: %d, size: %d bytes\n", TableType, *pTableSize);
   }
 
 Finish:
@@ -317,12 +317,12 @@ PbrSetTableRecord(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   UINT32 Signature = PBR_INVALID_SIG;
 
-  NVDIMM_DBG("SetTablerecord...\n");
+  NVDIMM_DBG("SetTableRecord...\n");
   if (PBR_RECORD_MODE != pContext->PbrMode) {
     return ReturnCode;
   }
 
-  NVDIMM_DBG("SetTablerecord type: %d\n", TableType);
+  NVDIMM_DBG("SetTableRecord type: %d\n", TableType);
   switch (TableType) {
   case PBR_RECORD_TYPE_SMBIOS:
     NVDIMM_DBG("Set Table Record: SMBIOS: Table size: %d\n", TableSize);

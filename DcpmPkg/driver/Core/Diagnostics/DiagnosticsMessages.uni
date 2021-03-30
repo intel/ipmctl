@@ -32,9 +32,9 @@
 
 //Quick
 #string STR_QUICK_SUCCESS                                #language en "The quick health check succeeded."
-#string STR_QUICK_UNMANAGEBALE_DIMM_SUBSYSTEM_VENDOR_ID  #language en "The quick health check detected that PMem module %ls is not manageable because subsystem vendor ID 0x%04x is not supported."
-#string STR_QUICK_UNMANAGEBALE_DIMM_SUBSYSTEM_DEVICE_ID  #language en "The quick health check detected that PMem module %ls is not manageable because subsystem device ID 0x%04x is not supported."
-#string STR_QUICK_UNMANAGEBALE_DIMM_FW_API_VERSION       #language en "The quick health check detected that PMem module %ls is not manageable because firmware API version %ls is not supported."
+#string STR_QUICK_UNMANAGEABLE_DIMM_SUBSYSTEM_VENDOR_ID  #language en "The quick health check detected that PMem module %ls is not manageable because subsystem vendor ID 0x%04x is not supported."
+#string STR_QUICK_UNMANAGEABLE_DIMM_SUBSYSTEM_DEVICE_ID  #language en "The quick health check detected that PMem module %ls is not manageable because subsystem device ID 0x%04x is not supported."
+#string STR_QUICK_UNMANAGEABLE_DIMM_FW_API_VERSION       #language en "The quick health check detected that PMem module %ls is not manageable because firmware API version %ls is not supported."
 #string STR_QUICK_BAD_HEALTH_STATE                       #language en "The quick health check detected that PMem module %ls is reporting a bad health state %ls."
 #string STR_QUICK_MEDIA_TEMP_EXCEEDS_ALARM_THR           #language en "The quick health check detected that PMem module %ls is reporting a media temperature of %d C which is above the alarm threshold %d C."
 #string STR_QUICK_SPARE_CAPACITY_BELOW_ALARM_THR         #language en "The quick health check detected that PMem module %ls is reporting percentage remaining at %d%% which is less than the alarm threshold %d%%."

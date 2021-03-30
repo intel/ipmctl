@@ -385,7 +385,7 @@ enum health_status {
   HEALTH_STATUS_NON_CRITICAL_FAILURE=  2,    ///< Non-Critical (maintenance required)
   HEALTH_STATUS_CRITICAL_FAILURE    =  3,    ///< Critical (feature or performance degraded due to failure)
   HEALTH_STATUS_FATAL_FAILURE       =  4,    ///< Fatal (data loss has occurred or is imminent)
-  HEALTH_STATUS_UNMANAGEABLE        =  5,    ///< PMem module is unmanagable
+  HEALTH_STATUS_UNMANAGEABLE        =  5,    ///< PMem module is unmanageable
   HEALTH_STATUS_NON_FUNCTIONAL      =  6
 };
 /**
@@ -797,7 +797,7 @@ struct device_capacities {
   NVM_UINT64  app_direct_capacity;            ///< The total PMem module capacity in bytes for app direct mode.
   NVM_UINT64  reserved1;                      ///< reserved
   NVM_UINT64  unconfigured_capacity;          ///< Unconfigured PMem module capacity. Can be used as storage.
-  NVM_UINT64  inaccessible_capacity;          ///< PMem module capacity that is not acccessible.
+  NVM_UINT64  inaccessible_capacity;          ///< PMem module capacity that is not accessible.
   NVM_UINT64  reserved_capacity;              ///< PMem module app direct capacity reserved and unmapped to SPA.
   NVM_UINT8   reserved[64];                   ///< reserved
 };

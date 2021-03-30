@@ -489,7 +489,7 @@ EFI_STATUS PrinterSetData(
 );
 
 /*
-* Handle commandstatus objects
+* Handle command status objects
 */
 EFI_STATUS PrinterSetCommandStatus(
   IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL

@@ -280,7 +280,7 @@ GetRegionById(
 
 /**
   Get Region List
-  Retruns the pointer to the region list.
+  Returns the pointer to the region list.
   It is also initializing the region list if it is necessary.
 
   @param[in] pRegionList Head of the list for Regions
@@ -408,7 +408,7 @@ Finish:
 
   @param[in] pFitHead Fully populated NVM Firmware Interface Table
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] pISList List of interleaveset formed so far
+  @param[in] pISList List of interleave sets formed so far
   @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
   @param[out] pRegionId The next consecutive region id
   @param[out] ppNewIS Interleave Set parent for new dimm region
@@ -513,7 +513,7 @@ Finish:
 
   @param[in] pCurDimm the DIMM from which Interleave Information table was retrieved
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
-  @param[in] pISList List of interleaveset formed so far
+  @param[in] pISList List of interleave sets formed so far
   @param[in] pIdentificationInfoTable Identification Information table
   @param[in] pInterleaveInfoTable Interleave information for the particular dimm
   @param[in] PcdConfRevision Revision of the PCD Config tables
@@ -624,7 +624,7 @@ InitializeDimmRegion(
 			LIST_FOR_EACH(pDimmRegionNode, &pExistingIS->DimmRegionList) {
 				pDimmRegion = DIMM_REGION_FROM_NODE(pDimmRegionNode);
 				/**
-				  Addressing the corner case where a dimm is moved from another system and has the same interleaveset index
+				  Addressing the corner case where a dimm is moved from another system and has the same interleave set index
 				**/
 				if (pDimm->SerialNumber == pDimmRegion->pDimm->SerialNumber) {
 					*pISAlreadyExists = TRUE;
@@ -635,7 +635,7 @@ InitializeDimmRegion(
 	}
 	if (!(*pISAlreadyExists)) {
 		/* As this method is called inside the for loop for each dimm Interleave Information table,
-		  it could be that ppNewIS is initialized the first time. Ignore it if it is already intialized and added to the list. Avoiding duplicates.*/
+		  it could be that ppNewIS is initialized the first time. Ignore it if it is already initialized and added to the list. Avoiding duplicates.*/
 		if (*ppNewIS == NULL) {
 			Rc = InitializeIS(pInterleaveInfoTable, *pRegionId, PcdConfRevision, ppNewIS);
 			if (EFI_ERROR(Rc) || *ppNewIS == NULL) {
@@ -1591,7 +1591,7 @@ MapRequestToActualRegionGoalTemplates(
       goto Finish;
     }
 
-    // Asymetrical dimm configuration, find the partition alignment
+    // Asymmetrical dimm configuration, find the partition alignment
     // point such that some amount of persistence exists on every dimm
     if (VolatileSizeActualOnDimm * DimmsNum >= SymmetricalSize) {
 
@@ -1684,7 +1684,7 @@ MapRequestToActualRegionGoalTemplates(
         goto Finish;
       }
 
-      //If VolatileCapcity is zero there will be some unallocated PM capacity already due to AppDirect alignments
+      //If VolatileCapacity is zero there will be some unallocated PM capacity already due to AppDirect alignments
       //Remove this from ReservedSize as it is already reserved and does not need to be removed from AppDirect
       if (VolatileSize == 0) {
         for (Index = 0; Index < DimmsNum; Index++) {
@@ -3401,7 +3401,7 @@ ReduceVolatileCapacityPerReservedCapacity(
   UINT32 Index = 0;
   UINT32 Index2 = 0;
   UINT64 ReduceBy = 0;
-  UINT64 CurrentLargestDimmm = 0;
+  UINT64 CurrentLargestDimm = 0;
   UINT64 SecondLargestDimm = 0;
   UINT32 NumOfLargestDimms = 0;
   UINT64 MaxReducePerDIMM = 0;
@@ -3437,28 +3437,28 @@ ReduceVolatileCapacityPerReservedCapacity(
     // When reducing capacity we don't want to stop unless we have consumed all the goals or
     // we have reduced the requested amount. Reduce by consuming the asymmetrical size segments first.
     for (Index2 = 0; Index2 < *pRegionGoalDimmsNum; Index2++) {
-      CurrentLargestDimmm = 0;
+      CurrentLargestDimm = 0;
       SecondLargestDimm = 0;
       NumOfLargestDimms = 0;
       MaxReducePerDIMM = 0;
 
       for (Index = 0; Index < *pRegionGoalDimmsNum; Index++) {
-        CurrentLargestDimmm =
-          (RegionGoalDimms[Index].VolatileSize > CurrentLargestDimmm) ?
-            RegionGoalDimms[Index].VolatileSize : CurrentLargestDimmm;
+        CurrentLargestDimm =
+          (RegionGoalDimms[Index].VolatileSize > CurrentLargestDimm) ?
+            RegionGoalDimms[Index].VolatileSize : CurrentLargestDimm;
       }
 
       for (Index = 0; Index < *pRegionGoalDimmsNum; Index++) {
         SecondLargestDimm =
-          (RegionGoalDimms[Index].VolatileSize != CurrentLargestDimmm
+          (RegionGoalDimms[Index].VolatileSize != CurrentLargestDimm
             && RegionGoalDimms[Index].VolatileSize > SecondLargestDimm) ?
             RegionGoalDimms[Index].VolatileSize : SecondLargestDimm;
       }
 
-      MaxReducePerDIMM = CurrentLargestDimmm - SecondLargestDimm;
+      MaxReducePerDIMM = CurrentLargestDimm - SecondLargestDimm;
 
       for (Index = 0; Index < *pRegionGoalDimmsNum; Index++) {
-        if (RegionGoalDimms[Index].VolatileSize == CurrentLargestDimmm) {
+        if (RegionGoalDimms[Index].VolatileSize == CurrentLargestDimm) {
           NumOfLargestDimms++;
         }
       }
@@ -3476,7 +3476,7 @@ ReduceVolatileCapacityPerReservedCapacity(
 
       for (Index = 0; Index < *pRegionGoalDimmsNum; Index++) {
 
-        if (RegionGoalDimms[Index].VolatileSize != CurrentLargestDimmm) {
+        if (RegionGoalDimms[Index].VolatileSize != CurrentLargestDimm) {
           continue;
         }
 

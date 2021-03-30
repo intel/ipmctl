@@ -207,7 +207,7 @@ decode_nlog_binary(
       record->KernelTime = bytes_to_u32(&nlogbytes[x]);
 
       /*
-      Gather the arument U32s according to the discovered count
+      Gather the argument U32s according to the discovered count
       */
       if (record->DictEntry->Args > 0)
       {

@@ -284,7 +284,7 @@ ChecksumOperations(
     the RightValue
   @retval 0 when the provided values are the same
   @retval 1 when the LeftValue is bigger than
-    the RithValue
+    the RightValue
 **/
 INT8
 CompareUint128(
@@ -1016,7 +1016,7 @@ CheckIfLanguageIsSupported(
 
   while (pSupportedLanguageTmp[0] != '\0') {
     if (Rfc4646Language) {
-      /** Languages are splited by ';' **/
+      /** Languages are separated by ';' **/
       for (Index = 0; pSupportedLanguageTmp[Index] != 0 && pSupportedLanguageTmp[Index] != ';'; Index++);
 
       if ((AsciiStrnCmp(pSupportedLanguageTmp, pLanguage, Index) == 0) && (pLanguage[Index] == '\0')) {
@@ -1168,7 +1168,7 @@ CleanUnicodeStringMemory(
   Get linked list size
 
   @param[in] pListHead   List head
-  @parma[out] pListSize  Counted number of items in the list
+  @param[out] pListSize  Counted number of items in the list
 
   @retval EFI_SUCCESS           Success
   @retval EFI_INVALID_PARAMETER At least one of the input parameters equals NULL
@@ -1355,7 +1355,7 @@ Finish:
 
   @param[in] LatchedLastShutdownStatus structure
 
-  @retval CLI string representation of latched last shudown status
+  @retval CLI string representation of latched last shutdown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
@@ -1586,7 +1586,7 @@ Finish:
 
 /**
   Converts the Dimm IDs within a region to its HII string equivalent
-  @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pRegionInfo The Region info with DimmID and DimmCount its HII string
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
@@ -2752,7 +2752,7 @@ EndianSwapUint16(
 
 /**
   Converts EPOCH time in number of seconds into a human readable time string
-  @param[in] TimeInSesconds Number of seconds (EPOCH time)
+  @param[in] TimeInSeconds Number of seconds (EPOCH time)
 
   @retval Human readable time string
 **/
@@ -2762,7 +2762,7 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds, BOOLEAN verbose )
       TimeMinutes = 0,
       TimeHours = 0,
       TimeMonth = 0,
-      TimeMonthday = 0,
+      TimeMonthDay = 0,
       TimeYear = 0,
       TimeWeekday = 0;
 
@@ -2825,7 +2825,7 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds, BOOLEAN verbose )
     TimeMonth++;
   }
 
-  TimeMonthday = NumberOfFullDays + 1;
+  TimeMonthDay = NumberOfFullDays + 1;
 
   switch (verbose) {
   case TRUE:
@@ -2833,7 +2833,7 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds, BOOLEAN verbose )
       FORMAT_STR_SPACE FORMAT_STR L" %02d %02d:%02d:%02d UTC %d",
       DayOfWeek[TimeWeekday],
       Month[TimeMonth],
-      TimeMonthday,
+      TimeMonthDay,
       TimeHours,
       TimeMinutes,
       TimeSeconds,
@@ -2844,7 +2844,7 @@ CHAR16 *GetTimeFormatString (UINT64 TimeInSeconds, BOOLEAN verbose )
     pTimeFormatString = CatSPrintClean(pTimeFormatString,
       L"%02d/%02d/%d %02d:%02d:%02d",
       ++TimeMonth,
-      TimeMonthday,
+      TimeMonthDay,
       TimeYear + CENTURY_MARKER,
       TimeHours,
       TimeMinutes,
@@ -3126,20 +3126,20 @@ ControllerRidToStr(
   MetalStep = ControllerRid & CONTROLLER_REVISION_METAL_STEP_MASK;
 
   switch (BaseStep) {
-    case CONTROLLER_REVISON_A_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_A_STEP_STR, MetalStep,
+    case CONTROLLER_REVISION_A_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_A_STEP_STR, MetalStep,
         ControllerRid);
       break;
-    case CONTROLLER_REVISON_S_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_S_STEP_STR, MetalStep,
+    case CONTROLLER_REVISION_S_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_S_STEP_STR, MetalStep,
         ControllerRid);
       break;
-    case CONTROLLER_REVISON_B_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_B_STEP_STR, MetalStep,
+    case CONTROLLER_REVISION_B_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_B_STEP_STR, MetalStep,
         ControllerRid);
       break;
-    case CONTROLLER_REVISON_C_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISON_C_STEP_STR, MetalStep,
+    case CONTROLLER_REVISION_C_STEP:
+      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_C_STEP_STR, MetalStep,
         ControllerRid);
       break;
     default:

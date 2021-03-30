@@ -14,10 +14,6 @@
 #include "SetDimmCommand.h"
 #include "Common.h"
 
-#define MULTI_OVERWRITE_PASSCOUNT     3
-#define DEFAULT_OVERWRITE_PASSCOUNT   1
-#define DEFAULT_INVERT_PATTERN        1
-
 /**
   Command syntax definition
 **/

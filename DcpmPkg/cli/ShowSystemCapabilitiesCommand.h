@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _SRC_CLI_SHOWSYSTEMCAPABILITIESCOMMAND_H_
-#define _SRC_CLI_SHOWSYSTEMCAPABILITIESCOMMAND_H_
+#ifndef _SRC_CLI_SHOW_SYSTEM_CAPABILITIES_COMMAND_H_
+#define _SRC_CLI_SHOW_SYSTEM_CAPABILITIES_COMMAND_H_
 
 #include "CommandParser.h"
 #include <NvmTables.h>
@@ -17,7 +17,7 @@
 #define APPDIRECT_MODE_ALLOWED_STR               L"AllowedAppDirectMode"
 #define OPERATING_MODE_SUPPORT_STR               L"ModesSupported"
 #define APPDIRECT_SETTINGS_SUPPORTED_STR         L"SupportedAppDirectSettings"
-#define APPDIRECT_SETTINGS_RECCOMENDED_STR       L"RecommendedAppDirectSettings"
+#define APPDIRECT_SETTINGS_RECOMMENDED_STR       L"RecommendedAppDirectSettings"
 #define MIN_NAMESPACE_SIZE_STR                   L"MinNamespaceSize"
 #define APPDIRECT_MIRROR_SUPPORTED_STR           L"AppDirectMirrorSupported"
 #define DIMM_SPARE_SUPPORTED_STR                 L"DimmSpareSupported"
@@ -53,4 +53,4 @@ EFI_STATUS
 RegisterShowSystemCapabilitiesCommand(
   );
 
-#endif /* _SRC_CLI_SHOWSYSTEMCAPABILITIESCOMMAND_H_ */
+#endif /* _SRC_CLI_SHOW_SYSTEM_CAPABILITIES_COMMAND_H_ */

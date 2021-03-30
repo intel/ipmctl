@@ -951,19 +951,19 @@ int os_get_os_type()
 int os_mkdir(OS_PATH path)
 {
   char* p;
-  char seperator = '/';
+  char separator = '/';
   if (NULL == strchr(path + 1, '/') && NULL != strchr(path + 1, '\\'))
   {
-    seperator = '\\';
+    separator = '\\';
   }
 
-  for (p = strchr(path + 1, seperator); p; p = strchr(p + 1, seperator))
+  for (p = strchr(path + 1, separator); p; p = strchr(p + 1, separator))
   {
     *p = '\0';
     if (_mkdir(path) == -1) {
-      if (errno != EEXIST) { *p = seperator; return -1; }
+      if (errno != EEXIST) { *p = separator; return -1; }
     }
-    *p = seperator;
+    *p = separator;
   }
 
   return 0;

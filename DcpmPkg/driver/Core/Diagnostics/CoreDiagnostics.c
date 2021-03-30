@@ -12,11 +12,11 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 /**
-  Append to the results string for a paricular diagnostic test, and modify
+  Append to the results string for a particular diagnostic test, and modify
   the test state as per the message being appended.
 
   @param[in] pStrToAppend Pointer to the message string to be appended
-  @param[in] DiagStateMask State corresonding to the string that is being appended
+  @param[in] DiagStateMask State corresponding to the string that is being appended
   @param[in out] ppResult Pointer to the result string of the particular test-suite's messages
   @param[in out] pDiagState Pointer to the particular test state
 
@@ -57,7 +57,7 @@ Finish:
 
   @param[in] DiagState The result-state of the test
 
-  @retval NULL if the passed reuslt-state was invalid
+  @retval NULL if the passed result-state was invalid
   @return String form of the diagnostic test's result-state
 **/
 STATIC
@@ -206,9 +206,9 @@ Finish:
 
 /**
   The fundamental core diagnostics function that is used by both
-  the NvmDimmConfig protocol and the DriverDiagnostic protoocls.
+  the NvmDimmConfig protocol and the DriverDiagnostic protocols.
 
-  It runs the specified diagnotsics tests on the list of specified dimms,
+  It runs the specified diagnostics tests on the list of specified dimms,
   and returns a single combined test result message
 
   @param[in] ppDimms The platform DIMM pointers list

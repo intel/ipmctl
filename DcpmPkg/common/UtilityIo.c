@@ -568,7 +568,7 @@ Finish:
 
 
 /**
-  Checks if the user-inputed desired ARS status matches with the
+  Checks if the user-inputted desired ARS status matches with the
   current system-wide ARS status.
 
   @param[in] DesiredARSStatus Desired value of the ARS status to match against
@@ -784,7 +784,7 @@ FileRead(
     goto FinishFreeBuffer;
   }
 
-  // Evrything went fine, do not free buffer
+  // Everything went fine, do not free buffer
   goto Finish;
 
 FinishFreeBuffer:
@@ -975,7 +975,7 @@ Finish:
 
 
 /**
-  Retrives Intel Dimm Config EFI vars
+  Retrieves Intel Dimm Config EFI vars
 
   User is responsible for freeing ppIntelDIMMConfig
 

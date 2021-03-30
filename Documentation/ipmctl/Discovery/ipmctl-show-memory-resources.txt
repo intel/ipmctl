@@ -126,7 +126,7 @@ DETAILS
 PMem modules are partitioned into Memory and Persistent partitions. Memory partitions are aligned
 on a 1 GiB boundary by ipmctl with the Persistent partition consuming the remaining capacity.
 Any capacity that falls outside the Memory and Persistent partitions
-is InaccessibleCapacity and is not useable. If the PMem module is configured for 100% Memory Mode,
+is InaccessibleCapacity and is not usable. If the PMem module is configured for 100% Memory Mode,
 then the Memory partition consumes all of the capacity and the Persistent partition has none.
 
 The mode determines how the DDR capacities are allocated. In 1LM and AppDirect, all DDR capacity

@@ -224,7 +224,7 @@ IoNamespaceBlock(
 
 /**
   Performs a read or write to the AppDirect Namespace.
-  The data is read/written from/to Interlave Set mapped in system memory.
+  The data is read/written from/to Interleave Set mapped in system memory.
 
   @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
   @param[in] Offset Offset of AppDirect Namespace
@@ -510,7 +510,7 @@ BOOLEAN
 IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Namespace1_1
 );
 /*
-  Checks if Lsa status of Dimms is not initalized
+  Checks if Lsa status of Dimms is not initialized
   for a manageable dimm
 
   @retval TRUE - if a manageable dimm has
@@ -557,7 +557,7 @@ AlignLabelStorageArea(
 
   @param[in] pLsa The Label Storage Area
   @param[in] LabelIndex The index of the LSA
-  @param[out] pRawData Pointer to the contigous memory region
+  @param[out] pRawData Pointer to the contiguous memory region
 
   @retval EFI_INVALID_PARAMETER NULL pointer provided
   @retval EFI_OUT_OF_RESOURCES could not allocate memory
@@ -1018,7 +1018,7 @@ RetrieveAppDirectMappingFromNfit(
   );
 
 /**
-  Get block size of block device for Namesapce
+  Get block size of block device for Namespace
 
   @param[in] pNamespace Namespace that block size of block device will be retrieved for
 

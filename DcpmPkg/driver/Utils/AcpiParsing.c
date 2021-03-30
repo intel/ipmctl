@@ -258,7 +258,7 @@ ParsePcatTable (
           &pParsedPcat->PlatformCapabilityInfoNum), Finish);
 
         if (IS_ACPI_HEADER_REV_MAJ_1_MIN_1_OR_2(pPcatHeader) || IS_ACPI_HEADER_REV_MAJ_3_MIN_1(pPcatHeader)) {
-          // Backwards compatability. Platforms with PCAT revisons 1.1, 1.2 & 3.1 always support mixed mode
+          // Backwards compatibility. Platforms with PCAT revisions 1.1, 1.2 & 3.1 always support mixed mode
           pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[pParsedPcat->PlatformCapabilityInfoNum - 1]->
             MemoryModeCapabilities.MemoryModesFlags.MixedMode = MIXED_MODE_CAPABILITY_SUPPORTED;
         }
@@ -429,7 +429,7 @@ ParsePmttTable(
       TotalChannelsNum++;
     }
 
-    // Skip the devices which are not part of the phyiscal topology or are disabled
+    // Skip the devices which are not part of the physical topology or are disabled
     if (!(pPmttCommonTableHeader->Flags & PMTT_PHYSICAL_ELEMENT_OF_TOPOLOGY)) {
       NVDIMM_DBG("Not a physical element of the topology!");
       RemainingPmttBytes -= Length;
@@ -742,7 +742,7 @@ CheckIsNonPorCrossTileSupportedConfig(
   }
 
   /**
-    Cross-tile caching is not supported on Purley platfomrs (PMTT Rev: 0x1)
+    Cross-tile caching is not supported on Purley platforms (PMTT Rev: 0x1)
     pPmttHead is NULL for older PMTT revisions
   **/
   if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
@@ -1327,7 +1327,7 @@ Finish:
 
   @param[in] Rdpa Device Region Physical Address to convert
   @param[in] pNvDimmRegionTable The NVDIMM region that helps describe this region of memory
-  @param[in] pInterleaveTable Interleave table referenced by the mdsparng_tbl
+  @param[in] pInterleaveTable Interleave table referenced by the MemDevToSpaRangeTable
   @param[out] SpaAddr output for SPA address
 
   A memory device could have multiple regions. As such we cannot convert
@@ -1667,9 +1667,9 @@ Finish:
 }
 
 /**
-  Check Memory Mode Capabilties from PCAT table type 0
+  Check Memory Mode Capabilities from PCAT table type 0
 
-  @param[out] pMemoryModeCapabilities pointer to memory mode capabilites
+  @param[out] pMemoryModeCapabilities pointer to memory mode capabilities
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -1710,7 +1710,7 @@ CheckMemModeCapabilities(
 
     CopyMem_S(pMemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES),
       &pPlatformCapability->MemoryModeCapabilities, sizeof(MEMORY_MODE_CAPABILITIES));
-    // Backwards compatability. Platforms with PCAT revison < 1.x always support mixed mode
+    // Backwards compatibility. Platforms with PCAT revision < 1.x always support mixed mode
     pMemoryModeCapabilities->MemoryModesFlags.MixedMode = MIXED_MODE_CAPABILITY_SUPPORTED;
   }
   else if (IS_ACPI_HEADER_REV_MAJ_1_OR_MAJ_3(pPlatformConfigAttrTable)) {
@@ -1788,7 +1788,7 @@ RetrievePcatSocketSkuMappedMemoryLimit(
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        NVDIMM_DBG("Unable to retrieve logical socket ID");
         goto Finish;
       }
       if (SocketId == LogicalSocketID) {
@@ -1861,7 +1861,7 @@ RetrievePcatSocketSkuTotalMappedMemory(
       ReturnCode = GetLogicalSocketIdFromPmtt(gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->SocketId,
         gNvmDimmData->PMEMDev.pPcatHead->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]->DieId, &LogicalSocketID);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        NVDIMM_DBG("Unable to retrieve logical socket ID");
         goto Finish;
       }
       if (SocketId == SOCKET_ID_ALL || SocketId == LogicalSocketID) {

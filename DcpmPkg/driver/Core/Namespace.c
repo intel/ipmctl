@@ -338,7 +338,7 @@ InstallNamespaceProtocols(
 
   pParentDevicePath = gNvmDimmData->pControllerDevicePathInstance;
 
-  // Use standarized path if namespace is bootable
+  // Use standardized path if namespace is bootable
   if ((pNamespace->IsBttEnabled == TRUE ) ||
       (pNamespace->IsPfnEnabled == TRUE) ||
       (pNamespace->IsRawNamespace == TRUE)) {
@@ -567,7 +567,7 @@ UninstallNamespaceProtocols(
 
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Failed to uninstall the block device protocols. Error = " FORMAT_EFI_STATUS "\n.", ReturnCode);
-    NVDIMM_WARN("The device may be still visible in the system and accessing it may cause unpredicted behaviour.");
+    NVDIMM_WARN("The device may be still visible in the system and accessing it may cause unpredicted behavior.");
   } else {
     // Free the instance only if the protocol was uninstalled successfully.
     FREE_POOL_SAFE(pBlockDevicePath);
@@ -670,7 +670,7 @@ RandomizeBuffer(
   Generate a NamespaceId value
   Namespace Id is a 16bit value and consists of the InterleaveSetIndex/RegionId
   (upper 8bits) and slot index (lower 8 bits).
-  Neigher InterleaveSetIndex nor slot index can equal zero. The lowest namespace
+  Neither InterleaveSetIndex nor slot index can equal zero. The lowest namespace
   Id value is 0x0101.
 
   @retval The generated ID
@@ -946,7 +946,7 @@ Finish:
   @retval EFI_INVALID_PARAMETER Provided structure is NULL or contains errors
   @retval EFI_OUT_OF_RESOURCES If a memory allocation operation failed.
   @retval EFI_VOLUME_CORRUPTED There are no valid indexes in the LSA buffer
-  @retval EFI_NOT_FOUND The LSA buffer is empty (filled with zeroes)
+  @retval EFI_NOT_FOUND The LSA buffer is empty (filled with zeros)
   @retval EFI_SUCCESS Provided structure contains valid data
 **/
 EFI_STATUS
@@ -1237,7 +1237,7 @@ ReadLabelStorageArea(
     IndexSize = sizeof((*ppLsa)->Index);
     ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
     if (EFI_SUCCESS == ReturnCode) {
-      // Read the IndexSize again plus 2 times siez of the Free Mask starting at the end of the previoues read
+      // Read the IndexSize again plus 2 times size of the Free Mask starting at the end of the previous read
       Offset = IndexSize;
       IndexSize += 2 * LABELS_TO_FREE_BYTES(ROUNDUP(((LABEL_STORAGE_AREA *)pRawData)->Index[0].NumberOfLabels, NSINDEX_FREE_ALIGN));
       ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, IndexSize, &pRawData);
@@ -1314,7 +1314,7 @@ ReadLabelStorageArea(
           (Index < NSINDEX_FREE_ALIGN) && ((AlignPageIndex + Index) < (*ppLsa)->Index[CurrentIndex].NumberOfLabels);
           PageIndexMask >>= 1, Index++) {
           if (BIT0 != (PageIndexMask & BIT0)) {
-            // Calculate the offest to read, one label per read only
+            // Calculate the offset to read, one label per read only
             Offset = (UINT32)(LabelIndexSize + (PageSize * (AlignPageIndex + Index)));
             // Read data
             ReturnCode = FwGetPCDFromOffsetSmallPayload(pDimm, PCD_LSA_PARTITION_ID, Offset, PageSize, &pRawData);
@@ -1815,7 +1815,7 @@ Finish:
   Recover a partially updated namespace label set
   Clear the updating bit and use the name from label in pos 0
 
-  @param[in] pUuid of the label to perfrom recovery on
+  @param[in] pUuid of the label to perform recovery on
   @param[in out] pNamespace - namespace struct that needs to be updated after recovery
   @param[in out] pNamespaceLabelStale - namespace label struct that needs to be updated after recovery
 **/
@@ -2171,7 +2171,7 @@ RetrieveNamespacesFromLsa(
         }
 
         if (!Use_Namespace1_1) {
-          NVDIMM_DBG("Check Abstaction GUID: %g", pNamespaceLabel2->AddressAbstractionGuid);
+          NVDIMM_DBG("Check Abstraction GUID: %g", pNamespaceLabel2->AddressAbstractionGuid);
           if (CompareGuid(&gBttAbstractionGuid, &pNamespaceLabel2->AddressAbstractionGuid)) {
             pNamespace->IsBttEnabled = TRUE;
           } else if (CompareGuid(&gPfnAbstractionGuid, &pNamespaceLabel2->AddressAbstractionGuid)) {
@@ -2354,7 +2354,7 @@ IsNameSpaceTypeAppDirect(IN NAMESPACE_LABEL *pNamespaceLabel, IN BOOLEAN Is_Name
     return !(pNamespaceLabel->Flags.Values.Local & 0x01);
 }
 /*
-  Checks if Lsa status of Dimms is not initalized
+  Checks if Lsa status of Dimms is not initialized
   for a manageable dimm
 
   @retval TRUE - if a manageable dimm has
@@ -2364,16 +2364,16 @@ BOOLEAN IsLsaNotInitializedOnADimm()
 {
   LIST_ENTRY *pNode = NULL;
   DIMM *pDimm = NULL;
-  BOOLEAN returncode = FALSE;
+  BOOLEAN ReturnCode = FALSE;
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);
 
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
-    returncode |= (LSA_NOT_INIT == pDimm->LsaStatus);
+    ReturnCode |= (LSA_NOT_INIT == pDimm->LsaStatus);
   }
-  return returncode;
+  return ReturnCode;
 }
 
 /**
@@ -2428,7 +2428,7 @@ InitializeNamespaces(
       ReturnCode = TempReturnCode;
       pDimm->LsaStatus = LSA_CORRUPTED;
       /**
-        If the LSA is corrupted, we do nothing - it may be a driver mismach between UEFI and the OS,
+        If the LSA is corrupted, we do nothing - it may be a driver mismatch between UEFI and the OS,
         so we don't want to "kill" a valid configuration
       **/
       NVDIMM_DBG("LSA corrupted on DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
@@ -2607,7 +2607,7 @@ IoNamespaceBlock(
 
 /**
   Performs a read or write to the AppDirect Namespace.
-  The data is read/written from/to Interlave Set mapped in system memory.
+  The data is read/written from/to Interleave Set mapped in system memory.
 
   @param[in] pNamespace Intel NVM Dimm Namespace to perform the IO operation.
   @param[in] Offset Offset of AppDirect Namespace
@@ -2999,7 +2999,7 @@ FindADMemmapRangeInIS(
             }
           }
 
-          /** Unable to find region on more than one dimm, invalid canidate range, try next canidate range **/
+          /** Unable to find region on more than one dimm, invalid candidate range, try next candidate range **/
           if (!Found) {
             break;
           }
@@ -3038,7 +3038,7 @@ FindADMemmapRangeInIS(
             }
           }
 
-          /** Unable to find region on more than one dimm, invalid canidate range, try next canidate range **/
+          /** Unable to find region on more than one dimm, invalid candidate range, try next candidate range **/
           if (!Found) {
             break;
           }
@@ -3403,7 +3403,7 @@ Finish:
   @param[in] pLsa The Label Storage Area
   @param[in] LabelIndex The index of the LSA
 
-  @param[out] pRawData Pointer to the contigous memory region
+  @param[out] pRawData Pointer to the contiguous memory region
 
   @retval EFI_INVALID_PARAMETER NULL pointer provided
   @retval EFI_OUT_OF_RESOURCES could not allocate memory
@@ -5038,7 +5038,7 @@ Finish:
 }
 
 /**
-  Get block size of block device for Namesapce
+  Get block size of block device for Namespace
 
   @param[in] pNamespace Namespace that block size of block device will be retrieved for
 
@@ -5203,7 +5203,7 @@ IsAddressRangeInArsList(
       NVDIMM_DBG("Checking address 0x%llx, len 0x%llx against bad ARS address 0x%llx, len 0x%llx", Address, Length, gArsBadRecords[Index].SpaOfErrLoc, gArsBadRecords[Index].Length);
 
       if ((CheckBlockStart >= BadBlockStart   && CheckBlockStart <= BadBlockEnd)   || //the request starts at an address in the bad range
-          (CheckBlockStart >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd)   || //the request fits entirly in a bad range
+          (CheckBlockStart >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd)   || //the request fits entirely in a bad range
           (BadBlockStart   >= CheckBlockStart && BadBlockEnd     <= CheckBlockEnd) || //the bad range fits entirely in the check range
           (CheckBlockEnd   >= BadBlockStart   && CheckBlockEnd   <= BadBlockEnd))     //the request ends at an address in the bad range
       {

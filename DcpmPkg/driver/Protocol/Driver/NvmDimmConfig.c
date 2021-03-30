@@ -313,7 +313,7 @@ IsDimmSkuSupported(
     break;
 
   case SkuSoftProgrammableSku:
-    if (pDimm->SkuInformation.SoftProgramableSku == MODE_ENABLED) {
+    if (pDimm->SkuInformation.SoftProgrammableSku == MODE_ENABLED) {
       ReturnValue = TRUE;
     }
     break;
@@ -1769,7 +1769,7 @@ SetObjStatusForPMemNotPairedWithDdr(
   }
 
   /**
-    This warning message is disabled on Purley platfomrs (PMTT Rev: 0x1)
+    This warning message is disabled on Purley platforms (PMTT Rev: 0x1)
     pPmttHead is NULL for older PMTT revisions
   **/
   if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
@@ -2218,7 +2218,7 @@ GetSockets(
 
       ReturnCode = GetLogicalSocketIdFromPmtt(pDieSkuInfo->SocketId, pDieSkuInfo->DieId, &LogicalSocketID);
       if (EFI_ERROR(ReturnCode)) {
-        NVDIMM_DBG("Uanble to retrieve logical socket ID");
+        NVDIMM_DBG("Unable to retrieve logical socket ID");
         goto Finish;
       }
 
@@ -2496,14 +2496,14 @@ GetGoalConfigs(
 
     pCurrentGoal->PersistentRegions = pCurrentDimm->RegionsGoalNum;
 
-    NVDIMM_DBG("dimm idx %d", Index1);
-    NVDIMM_DBG("dimm sockid %x", pCurrentDimm->SocketId);
-    NVDIMM_DBG("dimm vsize %x", pCurrentDimm->VolatileSizeGoal);
+    NVDIMM_DBG("dimm index %d", Index1);
+    NVDIMM_DBG("dimm socket id %x", pCurrentDimm->SocketId);
+    NVDIMM_DBG("dimm volatile size %x", pCurrentDimm->VolatileSizeGoal);
     NVDIMM_DBG("dimm goal %x", pCurrentDimm->RegionsGoalNum);
 
     for (Index2 = 0; Index2 < pCurrentDimm->RegionsGoalNum; ++Index2) {
       SequenceIndex = pCurrentDimm->pRegionsGoal[Index2]->SequenceIndex;
-    NVDIMM_DBG("region loop %d, region goal size %x, dimmsnum %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
+    NVDIMM_DBG("region loop %d, region goal size %x, dimms num %x", Index2, pCurrentDimm->pRegionsGoal[Index2]->Size, pCurrentDimm->pRegionsGoal[Index2]->DimmsNum);
       pCurrentGoal->NumberOfInterleavedDimms[SequenceIndex] = (UINT8)pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
       pCurrentGoal->AppDirectSize[SequenceIndex] =
           pCurrentDimm->pRegionsGoal[Index2]->Size / pCurrentDimm->pRegionsGoal[Index2]->DimmsNum;
@@ -2816,7 +2816,7 @@ Finish:
 
   @param[in]  pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pHealthInfo - pointer to structure containing all Health and Smarth variables
+  @param[out] pHealthInfo - pointer to structure containing all Health and Smart variables
 
   @retval EFI_INVALID_PARAMETER if no DIMM found for DimmPid.
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
@@ -3593,7 +3593,7 @@ Finish:
 Retrieve the PMTT ACPI table
 
 @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-@param[out] ppPMTTtbl output buffer with PMTT tables. This buffer must be freed by caller.
+@param[out] ppPMTT output buffer with PMTT tables. This buffer must be freed by caller.
 
 @retval EFI_SUCCESS Ok
 @retval EFI_OUT_OF_RESOURCES Problem with allocating memory
@@ -3603,7 +3603,7 @@ EFI_STATUS
 EFIAPI
 GetAcpiPMTT(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
-  OUT VOID **ppPMTTtbl
+  OUT VOID **ppPMTT
 )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
@@ -3611,41 +3611,41 @@ GetAcpiPMTT(
   UINT32 Size = 0;
   PbrContext *pContext = PBR_CTX();
 #endif
-  if (ppPMTTtbl == NULL) {
+  if (ppPMTT == NULL) {
     goto Finish;
   }
 
 #ifdef OS_BUILD
   if (PBR_PLAYBACK_MODE == PBR_GET_MODE(pContext)) {
-    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, ppPMTTtbl, &Size);
+    ReturnCode = PbrGetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, ppPMTT, &Size);
   }
   else {
-    ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTTtbl, &Size);
+    ReturnCode = get_pmtt_table((EFI_ACPI_DESCRIPTION_HEADER**)ppPMTT, &Size);
   }
-  if (EFI_ERROR(ReturnCode) || NULL == *ppPMTTtbl) {
+  if (EFI_ERROR(ReturnCode) || NULL == *ppPMTT) {
     NVDIMM_DBG("Failed to retrieve PMTT table.");
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
 #else
-  EFI_ACPI_DESCRIPTION_HEADER *pTempPMTTtbl = NULL;
+  EFI_ACPI_DESCRIPTION_HEADER *pTempPMTT = NULL;
   UINT32 PmttTableLength = 0;
-  ReturnCode = GetAcpiTables(gST, NULL, NULL, &pTempPMTTtbl);
-  if (EFI_ERROR(ReturnCode) || NULL == pTempPMTTtbl) {
+  ReturnCode = GetAcpiTables(gST, NULL, NULL, &pTempPMTT);
+  if (EFI_ERROR(ReturnCode) || NULL == pTempPMTT) {
     NVDIMM_DBG("Failed to retrieve PMTT table.");
     ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
 
   // Allocate and copy the buffer to be consistent with OS call
-  PmttTableLength = pTempPMTTtbl->Length;
-  *ppPMTTtbl = AllocatePool(PmttTableLength);
-  if (NULL == *ppPMTTtbl) {
+  PmttTableLength = pTempPMTT->Length;
+  *ppPMTT = AllocatePool(PmttTableLength);
+  if (NULL == *ppPMTT) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  CopyMem_S(*ppPMTTtbl, PmttTableLength, pTempPMTTtbl, PmttTableLength);
+  CopyMem_S(*ppPMTT, PmttTableLength, pTempPMTT, PmttTableLength);
 
 #endif
 
@@ -3659,7 +3659,7 @@ Finish:
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param{in] PcdTarget Taget PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
+  @param{in] PcdTarget Target PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
@@ -3914,7 +3914,7 @@ ModifyPcdConfig(
     if (ConfigIdMask & (DELETE_PCD_CONFIG_CIN_MASK | DELETE_PCD_CONFIG_COUT_MASK | DELETE_PCD_CONFIG_CCUR_MASK)) {
 
       FREE_POOL_SAFE(pConfigHeader);
-      //read partion 1 where CCUR/CIN/COUT resides
+      //read partition 1 where CCUR/CIN/COUT resides
       //we are only going to modify the DATA SIZE and START OFFSET values in the header before writing it back out
       TmpReturnCode = GetPlatformConfigDataOemPartition(pDimms[Index], TRUE, &pConfigHeader);
       if (EFI_ERROR(TmpReturnCode)) {
@@ -3924,7 +3924,7 @@ ModifyPcdConfig(
         continue;
       }
 
-      //determine the size of the PCD partition, which will be used at the end to write the partion back to PCD
+      //determine the size of the PCD partition, which will be used at the end to write the partition back to PCD
       TmpReturnCode = GetPcdOemDataSize(pConfigHeader, &ConfigSize);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
@@ -4108,16 +4108,16 @@ Finish:
   @param[in out] pRegion1 A pointer to the Regions.
   @param[in out] pRegion2 A pointer to the copy of Regions.
 
-  @retval int retruns 0,-1, 0
+  @retval int returns 0,-1, 0
 **/
 INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2)
 {
-  REGION_INFO *pRegiona = (REGION_INFO *)pRegion1;
-  REGION_INFO *pRegionb = (REGION_INFO *)pRegion2;
+  REGION_INFO *pRegionA = (REGION_INFO *)pRegion1;
+  REGION_INFO *pRegionB = (REGION_INFO *)pRegion2;
 
-  if (pRegiona->RegionId == pRegionb->RegionId) {
+  if (pRegionA->RegionId == pRegionB->RegionId) {
     return 0;
-  } else if (pRegiona->RegionId < pRegionb->RegionId) {
+  } else if (pRegionA->RegionId < pRegionB->RegionId) {
     return -1;
   } else {
     return 1;
@@ -4130,7 +4130,7 @@ INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2)
   @param[in out] pDimmId1 A pointer to the pDimmId list.
   @param[in out] pDimmId2 A pointer to the copy of pDimmId list.
 
-  @retval int retruns 0,-1, 0
+  @retval int returns 0,-1, 0
 **/
 INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2)
 {
@@ -4347,7 +4347,7 @@ GetMemoryResourcesInfo(
     &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
     &pMemoryResourcesInfo->InaccessibleCapacity);
   if (EFI_ERROR(ReturnCode)) {
-    CHECK_RESULT_SAVE_RETURNCODE(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL), Finish);
+    CHECK_RESULT_SAVE_RETURN_CODE(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL), Finish);
     NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
     goto Finish;
   }
@@ -4735,7 +4735,7 @@ Finish:
 
   @retval EFI_SUCCESS   on success
   @retval EFI_OUT_OF_RESOURCES for a failed allocation
-  @retval EFI_BAD_BUFFER_SIZE if the nfit spa memory is more than the one in memmmap
+  @retval EFI_BAD_BUFFER_SIZE if the nfit spa memory is more than the one in memmap
 **/
 EFI_STATUS
 CheckMemoryMap(
@@ -5793,13 +5793,13 @@ CheckForLongOpStatusInProgress(
     goto Finish;
   }
 
-  if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubcode == SubopAddressRangeScrub) {
+  if (LongOpStatus.CmdOpcode == PtSetFeatures && LongOpStatus.CmdSubOpcode == SubopAddressRangeScrub) {
     *pNvmStatus = NVM_ERR_ARS_IN_PROGRESS;
   }
-  else if (LongOpStatus.CmdOpcode == PtUpdateFw && LongOpStatus.CmdSubcode == SubopUpdateFw) {
+  else if (LongOpStatus.CmdOpcode == PtUpdateFw && LongOpStatus.CmdSubOpcode == SubopUpdateFw) {
     *pNvmStatus = NVM_ERR_FWUPDATE_IN_PROGRESS;
   }
-  else if (LongOpStatus.CmdOpcode == PtSetSecInfo && LongOpStatus.CmdSubcode == SubopOverwriteDimm) {
+  else if (LongOpStatus.CmdOpcode == PtSetSecInfo && LongOpStatus.CmdSubOpcode == SubopOverwriteDimm) {
     *pNvmStatus = NVM_ERR_OVERWRITE_DIMM_IN_PROGRESS;
   }
   else {
@@ -6113,7 +6113,7 @@ GetActualRegionsGoalCapacities(
         goto Finish;
       }
 
-    /* caclulate the  total requested volatile size */
+    /* calculate the total requested volatile size */
     TotalInputVolatileSize += ActualVolatileSize;
 
     ReturnCode = MapRequestToActualRegionGoalTemplates(pDimmsOnSocket, NumDimmsOnSocket,
@@ -7866,7 +7866,7 @@ Finish:
   @param[in] ThermalError - is thermal error (if not it is media error)
   @param[in] SequenceNumber - sequence number of error to fetch in queue
   @param[in] HighLevel - high level if true, low level otherwise
-  @param[in, out] pCount - Innumber of error entries in output array
+  @param[in, out] pCount - number of error entries in output array
   @param[out] pErrorLogs - output array of errors
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
@@ -8514,13 +8514,13 @@ GetDcpmmCapacities(
   if (pDimm->NonFunctional || IsDimmInUnmappedPopulationViolation(pDimm)) {
     // DIMM not mapped into SPA space
     *pInaccessibleCapacity = pDimm->RawCapacity;
-    // No useable capacity
+    // No usable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pUnconfiguredCapacity = *pVolatileCapacity = 0;
     goto Finish;
   } else if (!IS_BIOS_VOLATILE_MEMORY_MODE_2LM(CurrentMode) && !pDimm->Configured) {
     //DIMM is unconfigured and system is in 1LM mode
     *pUnconfiguredCapacity = pDimm->RawCapacity;
-    // No useable capacity
+    // No usable capacity
     *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
     goto Finish;
   } else {
@@ -9129,8 +9129,8 @@ Finish:
   of type 17/20 for the specified Dimm Pid
 
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pDmiPhysicalDev Pointer to smbios table strcture of type 17
-  @param[out] pDmiDeviceMappedAddr Pointer to smbios table strcture of type 20
+  @param[out] pDmiPhysicalDev Pointer to smbios table structure of type 17
+  @param[out] pDmiDeviceMappedAddr Pointer to smbios table structure of type 20
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval EFI_DEVICE_ERROR Failure to retrieve SMBIOS tables from gST
@@ -9346,7 +9346,7 @@ Finish:
   @param[in out] pMemType1 A pointer to the pDimmId list.
   @param[in out] pMemType2 A pointer to the copy of pDimmId list.
 
-  @retval int retruns 0,-1, 0
+  @retval int returns 0,-1, 0
 **/
 INT32 SortDimmTopologyByMemType(VOID *ppTopologyDimm1, VOID *ppTopologyDimm2)
 {
@@ -9802,7 +9802,7 @@ GetLongOpStatus(
   }
 
   if (pSubOpcode != NULL) {
-    *pSubOpcode = LongOpStatus.CmdSubcode;
+    *pSubOpcode = LongOpStatus.CmdSubOpcode;
   }
 
   if (pPercentComplete != NULL) {
@@ -10186,7 +10186,7 @@ AutomaticCreateNamespace(
     // Check if Region is empty
     if (pRegions[Index].Capacity != pRegions[Index].FreeCapacity) {
       NVDIMM_DBG("Region %d is not empty. Skip automatic namespace provision", pRegions[Index].RegionId);
-      // No isets to provision is success
+      // No interleave sets to provision is success
       ReturnCode = EFI_SUCCESS;
       continue;
     }
@@ -10503,7 +10503,7 @@ Finish:
   @param[IN] pInjectTemperatureValue - Pointer to inject temperature
   @param[IN] pInjectPoisonAddress - Pointer to inject poison address
   @param[IN] pPoisonType - Pointer to poison type
-  @param[IN] pPercentageremaining - Pointer to percentage remaining
+  @param[IN] pPercentageRemaining - Pointer to percentage remaining
   @param[out] pCommandStatus Structure containing detailed NVM error codes.
 
   @retval EFI_UNSUPPORTED Mixed Sku of DCPMMs has been detected in the system
@@ -10767,7 +10767,7 @@ Finish:
 }
 
 /**
-  GetBsr value and return bsr or bootstatusbitmask depending on the requested options
+  GetBsr value and return bsr or boot status bitmask depending on the requested options
   UEFI - Read directly from BSR register
   OS - Get BSR value from BIOS emulated command
   @param[in] pThis A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.

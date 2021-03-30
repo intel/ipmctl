@@ -8,7 +8,7 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #define ENCRYPTION_TEST_INDEX 0
-#define INCONSISTANCY_TEST_INDEX 1
+#define INCONSISTENCY_TEST_INDEX 1
 
 /**
   Run security diagnostics for the list of DIMMs, and appropriately
@@ -55,7 +55,7 @@ RunSecurityDiagnostics(
   }
 
   pResult->SubTestName[ENCRYPTION_TEST_INDEX] = CatSPrint(NULL, L"Encryption status");
-  pResult->SubTestName[INCONSISTANCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistency");
+  pResult->SubTestName[INCONSISTENCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistency");
   for (Index = 0; Index < DimmCount; ++Index) {
     if (ppDimms[Index] == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -76,7 +76,7 @@ RunSecurityDiagnostics(
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmSecurityState of DIMM ID 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_ABORTED_INTERNAL_ERROR), EVENT_CODE_805, DIAG_STATE_MASK_ABORTED,
-        &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX]);
+        &pResult->SubTestMessage[INCONSISTENCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTENCY_TEST_INDEX]);
       goto Finish;
     }
     ConvertSecurityBitmask(SecurityFlag, &DimmSecurityState);
@@ -97,7 +97,7 @@ RunSecurityDiagnostics(
 
   if (InconsistencyFlag) {
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING,
-      &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX], pInconsistentSecurityStatesStr);
+      &pResult->SubTestMessage[INCONSISTENCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTENCY_TEST_INDEX], pInconsistentSecurityStatesStr);
   }
 
   ReturnCode = EFI_SUCCESS;

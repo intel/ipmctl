@@ -286,7 +286,7 @@ static VOID * TextListCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, IN
     LevelAttribs = TextListFindAttrib(GetDataSetName(DataSetCtx), Attribs);
     //if a header attribute is specified
     if (LevelAttribs && LevelAttribs->LevelHeader) {
-      //overriden header may contain key/val "macros" in the form of L"---DimmId=$(DimmId)---"
+      //overridden header may contain key/val "macros" in the form of L"---DimmId=$(DimmId)---"
       //where $(DimmId) is the name of a key within a particular data set.
       //TextListExpandStr will replace macros with associated key value.
       if (NULL != (Header = TextListExpandStr(DataSetCtx, LevelAttribs->LevelHeader))) {
@@ -322,7 +322,7 @@ static VOID * TextListCb(IN DATA_SET_CONTEXT *DataSetCtx, IN CHAR16 *CurPath, IN
         TextListPrintIdent(IdentCount);
       }
 
-      //default is to dislay key/val pair as Key=Value unless overriden
+      //default is to display key/val pair as Key=Value unless overridden
       if (LevelAttribs && LevelAttribs->LevelKeyValFormatStr && StrLen(LevelAttribs->LevelKeyValFormatStr) > 0) {
         Print(LevelAttribs->LevelKeyValFormatStr, KvInfo->Key, Val);
       }
@@ -405,7 +405,7 @@ static const CHAR16 *TextTableFindKeyInPath(IN const CHAR16 *Path) {
 }
 
 /**
-Helper to dermine how many columns to print in a table.
+Helper to determine how many columns to print in a table.
 
 @param[in] Attribs: list of table attributes, each representing a column
 
@@ -687,7 +687,7 @@ VOID PrintDataSetAsTextTable(DATA_SET_CONTEXT *DataSetCtx, PRINTER_TABLE_ATTRIB 
   FreePool(TableHeaderStart);
   Print(TEXT_NEW_LINE);
 
-  //Print the header/body seperator
+  //Print the header/body separator
   for (Index = 0; Index < RowSizeInChars; ++Index) {
     Print(TEXT_TABLE_HEADER_SEP);
   }
@@ -1306,7 +1306,7 @@ Finish:
 }
 
 /*
-* Handle commandstatus objects
+* Handle command status objects
 */
 EFI_STATUS PrinterSetCommandStatus(
   IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL

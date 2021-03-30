@@ -693,10 +693,10 @@ Finish:
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
@@ -771,10 +771,10 @@ Finish:
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetAllManageableDimmsNumberAndId(
@@ -2196,7 +2196,7 @@ ConsoleInput(
       if (!OnlyAlphanumeric || IsUnicodeAlnumCharacter(Key.UnicodeChar)) {
         StrnCatGrow(&pBuffer, &SizeInBytes, &Key.UnicodeChar, 1);
         if (NULL == pBuffer) {
-          Print(L"Failure inputing characters.\n");
+          Print(L"Failure inputting characters.\n");
           break;
         }
         if (ShowInput) {
@@ -2561,7 +2561,7 @@ CreateCmdLineOutputStr(
 /**
    Get Dimm identifier preference
 
-   @param[out] pDimmIdentifier Variable to store Dimm identerfier preference
+   @param[out] pDimmIdentifier Variable to store Dimm identifier preference
 
    @retval EFI_SUCCESS Success
    @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -2600,7 +2600,7 @@ Finish:
   Get Dimm identifier as string based on user preference
 
   @param[in] DimmId Dimm ID as number
-  @param[in] pDimmUid Dimmm UID as string
+  @param[in] pDimmUid Dimm UID as string
   @param[out] pResultString String representation of preferred value
   @param[in] ResultStringLen Length of pResultString
 
@@ -2823,7 +2823,7 @@ EFI_STATUS UefiToOsReturnCode(EFI_STATUS UefiReturnCode)
     break;
   case (EFI_ALREADY_STARTED):
     //this number is arbitrary, but should be distinct.
-    //In the case of FW udpate, it indicates that all DIMMs
+    //In the case of FW update, it indicates that all DIMMs
     //have a staged FW binary
     ReturnCode = 20;
     break;

@@ -47,15 +47,15 @@ typedef union {
 #define CONTROLLER_REVISION_BASE_STEP_MASK 0x30
 #define CONTROLLER_REVISION_METAL_STEP_MASK 0x03
 
-#define CONTROLLER_REVISON_A_STEP 0x00
-#define CONTROLLER_REVISON_S_STEP 0x10
-#define CONTROLLER_REVISON_B_STEP 0x20
-#define CONTROLLER_REVISON_C_STEP 0x30
+#define CONTROLLER_REVISION_A_STEP 0x00
+#define CONTROLLER_REVISION_S_STEP 0x10
+#define CONTROLLER_REVISION_B_STEP 0x20
+#define CONTROLLER_REVISION_C_STEP 0x30
 
-#define CONTROLLER_REVISON_A_STEP_STR L"A"
-#define CONTROLLER_REVISON_S_STEP_STR L"S"
-#define CONTROLLER_REVISON_B_STEP_STR L"B"
-#define CONTROLLER_REVISON_C_STEP_STR L"C"
+#define CONTROLLER_REVISION_A_STEP_STR L"A"
+#define CONTROLLER_REVISION_S_STEP_STR L"S"
+#define CONTROLLER_REVISION_B_STEP_STR L"B"
+#define CONTROLLER_REVISION_C_STEP_STR L"C"
 
 #define CONTROLLER_STEPPING_UNKNOWN_STR L"Unknown stepping"
 
@@ -160,7 +160,7 @@ typedef union {
 #define MEMORY_TYPE_DDR5_STR     L"DDR5"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 
-//Units string vaules
+//Units string values
 #define UNITS_B_STR  L"B"
 #define UNITS_GB_STR  L"GB"
 #define UNITS_GIB_STR L"GiB"
@@ -174,7 +174,7 @@ typedef union {
 #define TWO_DIGITS_AFTER_POINT   2
 #define THREE_DIGITS_AFTER_POINT 3
 
-//Namespace healthstates
+//Namespace health states
 #define HEALTHSTATE_OK             L"Healthy"
 #define HEALTHSTATE_WARNING        L"Warning"
 #define HEALTHSTATE_CRITICAL       L"Critical"
@@ -390,7 +390,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Return if failure
-#define CHECK_RESULT_SAVE_RETURNCODE(Call, Label)             \
+#define CHECK_RESULT_SAVE_RETURN_CODE(Call, Label)             \
   do {                                                        \
     TempReturnCode = ReturnCode;                              \
     ReturnCode = Call;                                        \
@@ -654,7 +654,7 @@ ChecksumOperations(
     the RightValue
   @retval 0 when the provided values are the same
   @retval 1 when the LeftValue is bigger than
-    the RithValue
+    the RightValue
 **/
 INT8
 CompareUint128(
@@ -915,7 +915,7 @@ GetDimmInfoByHandle(
 
 /**
   Converts the Dimm IDs within a region to its  HII string equivalent
-  @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pRegionInfo The Region info with DimmID and DimmCount its HII string
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
@@ -1296,7 +1296,7 @@ CleanUnicodeStringMemory(
   Get linked list size
 
   @param[in] pListHead   List head
-  @parma[out] pListSize  Counted number of items in the list
+  @param[out] pListSize  Counted number of items in the list
 
   @retval EFI_SUCCESS           Success
   @retval EFI_INVALID_PARAMETER At least one of the input parameters equals NULL
@@ -1359,7 +1359,7 @@ RemoveWhiteSpaces(
 
   @param[in] LastShutdownStatus structure
 
-  @retval CLI string representation of last shudown status
+  @retval CLI string representation of last shutdown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
@@ -1741,7 +1741,7 @@ EndianSwapUint16(
 
 /**
   Converts EPOCH time in number of seconds into a human readable time string
-  @param[in] TimeInSesconds Number of seconds (EPOCH time)
+  @param[in] TimeInSeconds Number of seconds (EPOCH time)
 
   @retval Human readable time string
 **/
@@ -1825,7 +1825,7 @@ CopyMem_S(
 );
 
 /**
-  Retrives Intel Dimm Config EFI vars
+  Retrieves Intel Dimm Config EFI vars
 
   User is responsible for freeing ppIntelDIMMConfig
 

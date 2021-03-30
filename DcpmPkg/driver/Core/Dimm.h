@@ -77,14 +77,14 @@ typedef struct {
 #define BW_DPA_MASK           0x1FFFFFFFFF
 #define BW_DPA_RIGHT_SHIFT    6
 
-#define BW_LENGHT_MASK        0xff
+#define BW_LENGTH_MASK        0xff
 #define BW_LENGTH_POSITION    37
 
 #define BW_OPERATION_MASK     0x1
 #define BW_OPERATION_POSITION 45
 
 #define BW_PENDING_MASK        0x80000000
-#define BW_INVALID_ADRESS_MASK 1          // 0b1
+#define BW_INVALID_ADDRESS_MASK 1          // 0b1
 #define BW_ACCESS_ERROR        (1 << 1)   // 0b10
 #define BW_PM_ACCESS_ERROR     (1 << 4)   // 0b10000
 #define BW_REGION_ACCESS_ERROR (1 << 5)   // 0b100000
@@ -246,7 +246,7 @@ typedef struct _DIMM {
   NvDimmRegionMappingStructure *pBlockDataRegionMappingStructure;      //!< ptr to the table used to configure the block windows
   SpaRangeTbl *pBlockDataSpaTbl;       //!< ptr to the spa range table associated with the block windows table
   UINT64 *pFlushAddress;          //!< address to which data needs to be written to perform a WPQ flush
-  BOOLEAN FlushRequired;          //!< The boolean value indicating when the Aperature needs to be flushed before IO
+  BOOLEAN FlushRequired;          //!< The boolean value indicating when the aperture needs to be flushed before IO
   BOOLEAN ControlWindowLatch;
   BOOLEAN EncryptionEnabled;      //!< True if the DIMMs security is enabled
   UINT16 NvDimmStateFlags;
@@ -295,7 +295,7 @@ typedef struct _DIMM {
 
   /*
   A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
-  is only used during namespace initialzation so it doesn't need to be repeatedly
+  is only used during namespace initialization so it doesn't need to be repeatedly
   reloaded. It should not be considered current outside of initialization.
   */
   LABEL_STORAGE_AREA *pLsa;
@@ -1113,7 +1113,7 @@ FwCmdGetMemoryInfoPage (
   Firmware command to get Firmware Image Info
 
   @param[in] pDimm Dimm to retrieve Firmware Image Info for
-  @param[out] ppPayloadFwImage Area to place FIrmware Image Info data
+  @param[out] ppPayloadFwImage Area to place Firmware Image Info data
     The caller is responsible to free the allocated memory with the FreePool function.
 
   @retval EFI_SUCCESS Success
@@ -1204,7 +1204,7 @@ FwCmdGetPackageSparingPolicy(
   @param[out] pLongOpStatus Filled payload with data
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more pamaters are NULL
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -1239,8 +1239,8 @@ FwCmdGetDimmPartitionInfo(
 
   @param[in, out] pDimm: DIMM to create the Bw for
   @param[in] PFitHead: Parsed Fit Head
-  @parma[in] pMbITbl: the interleave table for mailbox
-  @parma[in] pBwITbl: the interleave table for block window
+  @param[in] pMbITbl: the interleave table for mailbox
+  @param[in] pBwITbl: the interleave table for block window
 
   @retval EFI_SUCCESS
   @retval EFI_OUT_OF_RESOURCES in case of allocate memory error
@@ -1372,7 +1372,7 @@ ApertureWrite(
   Both buffers have to be equal or greater than NumOfBytes.
 
   @param[out] pRegularBuffer output regular buffer
-  @param[in] RegularBufferSz size of the RegualrBuffer
+  @param[in] RegularBufferSz size of the RegularBuffer
   @param[in] ppInterleavedBuffer input interleaved buffer
   @param[in] LineSize line size of interleaved buffer
   @param[in] NumOfBytes number of bytes to copy
@@ -1456,7 +1456,7 @@ ClearInterleavedBuffer(
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
   @param[in] pDimm The Intel NVM Dimm to retrieve PCD from
-  @param[in] RetoreCorrupt If true will generate a default PCD when a corrupt header is found
+  @param[in] RestoreCorrupt If true will generate a default PCD when a corrupt header is found
   @param[out] ppPlatformConfigData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS Success
@@ -1710,7 +1710,7 @@ SetObjStatusForDimm(
   Get overwrite DIMM operation status for DIMM
 
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
-  @parma[out] pOverwriteDimmStatus Retrieved status
+  @param[out] pOverwriteDimmStatus Retrieved status
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -1726,7 +1726,7 @@ GetOverwriteDimmStatus(
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
   @param[in] pOpcode Opcode of long op command
   @param[in] pOpcode Subopcode of long op command
-  @parma[out] pLongOpDimmInfoStatus Long Op status
+  @param[out] pLongOpDimmInfoStatus Long Op status
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
@@ -1794,7 +1794,7 @@ FwCmdGetCommandAccessPolicy(
   Inject Temperature error payload
   @param[IN] pDimm Target DIMM structure pointer
   @param[IN] subopcode for error injection command
-  @param[OUT] pinjectInputPayload - input payload to be sent
+  @param[OUT] pInjectInputPayload - input payload to be sent
   @param[OUT] pFwStatus FW status returned by dimm
 
   @retval EFI_SUCCESS Success
@@ -1806,7 +1806,7 @@ EFI_STATUS
 FwCmdInjectError(
   IN     DIMM *pDimm,
   IN     UINT8 SubOpcode,
-  OUT void *pinjectInputPayload,
+  OUT void *pInjectInputPayload,
   OUT UINT8 *pFwStatus
 );
 
@@ -1824,7 +1824,7 @@ FwCmdInjectError(
 EFI_STATUS
 FwCmdGetSystemTime(
   IN     DIMM *pDimm,
-  OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
+  OUT PT_SYSTEM_TIME_PAYLOAD *pSystemTimePayload
 );
 
 /**

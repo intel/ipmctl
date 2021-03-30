@@ -336,9 +336,9 @@ SetCmdStatus(
 #define FW_CONFIG_LOCKED              0x0F
 #define FW_INVALID_ALIGNMENT          0x10
 #define FW_INCOMPATIBLE_DIMM_TYPE     0x11
-#define FW_TIMEOUT_OCCURED            0X12
+#define FW_TIMEOUT_OCCURRED           0X12
 #define FW_MEDIA_DISABLED             0x14
-#define FW_UPDATE_ALREADY_OCCURED     0x15
+#define FW_UPDATE_ALREADY_OCCURRED    0x15
 #define FW_NO_RESOURCES               0x16
 
 #define FW_ERROR(A)                   (A != FW_SUCCESS)

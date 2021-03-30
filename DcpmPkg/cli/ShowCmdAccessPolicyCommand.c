@@ -242,7 +242,7 @@ ShowCmdAccessPolicy(
       goto Finish;
     }
     /*
-      Retrieve DimmHandle and DimmIdindex for given DimmId
+      Retrieve DimmHandle and DimmIdIndex for given DimmId
     */
     ReturnCode = GetDimmHandleByPid(pDimmIds[DimmIndex], pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
     if (EFI_ERROR(ReturnCode)) {

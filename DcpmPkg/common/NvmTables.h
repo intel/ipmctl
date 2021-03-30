@@ -8,8 +8,8 @@
  * @brief ACPI Data Types for EFI_DCPMM_CONFIG2_PROTOCOL.
  */
 
-#ifndef _NVMTABLES_H_
-#define _NVMTABLES_H_
+#ifndef _NVM_TABLES_H_
+#define _NVM_TABLES_H_
 
 #include <Types.h>
 
@@ -250,12 +250,12 @@ typedef struct {
   UINT16 ControlRegionDescriptorTableIndex;               ///< Control Region Descriptor Table index
   UINT16 VendorId;                                        ///< Vendor ID
   UINT16 DeviceId;                                        ///< Device ID
-  UINT16 Rid;                                             ///< Revsion ID
+  UINT16 Rid;                                             ///< Revision ID
   UINT16 SubsystemVendorId;                               ///< Subsystem Vendor ID
   UINT16 SubsystemDeviceId;                               ///< Subsystem Device ID
   UINT16 SubsystemRid;                                    ///< Subsystem Revision ID
   UINT8 ValidFields;                                      ///< Valid Fields
-  UINT8 ManufacturingLocation;                            ///< Manfacturing Location
+  UINT8 ManufacturingLocation;                            ///< Manufacturing Location
   UINT16 ManufacturingDate;                               ///< Manufacturing Date
   UINT8 Reserved[2];                                      ///< Reserved
   UINT32 SerialNumber;                                    ///< Serial Number
@@ -375,7 +375,7 @@ union {
     UINT8 Memory          :1;
     UINT8 AppDirect       :1;
     UINT8 Reserved1       :2;
-    UINT8 SubNUMAClster   :1;
+    UINT8 SubNUMACluster  :1;
     UINT8 Reserved        :2;
   } MemoryModesFlags;
 } SUPPORTED_MEMORY_MODE;
@@ -1079,4 +1079,4 @@ FreeParsedNfit(
 #pragma warning( pop )
 #endif
 
-#endif /** _NVMTABLES_H_ **/
+#endif /** _NVM_TABLES_H_ **/

@@ -48,7 +48,7 @@ struct Command SetDimmCommand =
     {POISON_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_TYPE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired},
     {PACKAGE_SPARING_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired },
-    {PERCENTAGE_REAMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
+    {PERCENTAGE_REMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
 #ifndef OS_BUILD
@@ -311,7 +311,7 @@ SetDimm(
         }
     }
 
-    if (!EFI_ERROR(ContainsProperty(pCmd, PERCENTAGE_REAMAINING_INJ_PROPERTY))) {
+    if (!EFI_ERROR(ContainsProperty(pCmd, PERCENTAGE_REMAINING_INJ_PROPERTY))) {
         if (ActionSpecified) {
             /** We already found a specified action, more are not allowed **/
             ReturnCode = EFI_INVALID_PARAMETER;
@@ -343,7 +343,7 @@ SetDimm(
             ErrorInjectionTypeSet = 1;
         }
     }
-    /*Clear error injection requires exacly one error injection type being set*/
+    /*Clear error injection requires exactly one error injection type being set*/
     if (!EFI_ERROR(ContainsProperty(pCmd, CLEAR_ERROR_INJ_PROPERTY))) {
         if ((ActionSpecified && !ErrorInjectionTypeSet) || !ActionSpecified) {
           ReturnCode = EFI_INVALID_PARAMETER;
@@ -649,7 +649,7 @@ SetDimm(
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
   GetPropertyValue(pCmd, POISON_TYPE_INJ_PROPERTY, &pPoisonType);
   GetPropertyValue(pCmd, PACKAGE_SPARING_INJ_PROPERTY, &pPackageSparing);
-  GetPropertyValue(pCmd, PERCENTAGE_REAMAINING_INJ_PROPERTY, &pPercentageRemaining);
+  GetPropertyValue(pCmd, PERCENTAGE_REMAINING_INJ_PROPERTY, &pPercentageRemaining);
   GetPropertyValue(pCmd, FATAL_MEDIA_ERROR_INJ_PROPERTY, &pFatalMediaError);
   GetPropertyValue(pCmd, DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, &pDirtyShutDown);
   GetPropertyValue(pCmd, CLEAR_ERROR_INJ_PROPERTY, &pClearErrorInj);

@@ -36,19 +36,19 @@
   Those defines describe the amount of bits and digits
   for the internal loops in UINT128 to string functions.
 **/
-#define UINT32_DEC_MB_STRING_SIZE  12 //!< Length of string with decimal UINT32 value with "MB" suffix
-#define UINT8_HEX_STRING_SIZE      6
-#define UINT16_HEX_STRING_SIZE     14
-#define UINT32_HEX_STRING_SIZE     26
-#define UINT128_DIGITS             39
-#define HII_CAPACITY_STRING_SIZE   19
-#define HII_SENSOR_VALUE_STRING_SIZE   19
-#define HII_HEALTH_REASON_STRNG_SIZE   110
-#define HII_ISET_ID_STRNG_SIZE   64
-#define HII_DIMM_ID_STRNG_SIZE   255
-#define HII_APPDIRECT_PREFERENCE_OPTION_SIZE 30
+#define UINT32_DEC_MB_STRING_SIZE             12 //!< Length of string with decimal UINT32 value with "MB" suffix
+#define UINT8_HEX_STRING_SIZE                 6
+#define UINT16_HEX_STRING_SIZE                14
+#define UINT32_HEX_STRING_SIZE                26
+#define UINT128_DIGITS                        39
+#define HII_CAPACITY_STRING_SIZE              19
+#define HII_SENSOR_VALUE_STRING_SIZE          19
+#define HII_HEALTH_REASON_STRING_SIZE         110
+#define HII_ISET_ID_STRING_SIZE               64
+#define HII_DIMM_ID_STRING_SIZE               255
+#define HII_APPDIRECT_PREFERENCE_OPTION_SIZE  30
 
-/** UINT128_DIGITS + 1; it has to be a number because of Vfr compilator requirements **/
+/** UINT128_DIGITS + 1; it has to be a number because of Vfr compiler requirements **/
 #define UINT128_STRING_SIZE        40
 #define UINT64_BITS                64
 
@@ -77,7 +77,7 @@ typedef struct {
 #define FW_BCD_VERSION_LEN              5
 #define FW_VERSION_LEN                 19
 #ifdef OS_BUILD
-#define FW_API_VERSION_LEN              20
+#define FW_API_VERSION_LEN             20
 #else
 #define FW_API_VERSION_LEN              6
 #endif
@@ -88,7 +88,7 @@ typedef struct {
 #define DEVICE_LOCATOR_LEN            128
 #define BANKLABEL_LEN                  32 // @todo confirm label length
 #define SHUTDOWN_STATUS_LEN           255 // @todo confirm label length
-#define SECURITYCAPABILITES_LEN        18 // @todo confirm label length
+#define SECURITY_CAPABILITIES_LEN      18 // @todo confirm label length
 #define IFC_STRING_LEN                255
 #define MEMORY_MODES_LEN               40 // @todo confirm label length
 #define MEMORY_TYPE                    30
@@ -287,7 +287,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define DIMM_INFO_CATEGORY_OPTIONAL_CONFIG_DATA_POLICY  (1 << 6)    ///< Optional config data policy fields will be populated: AvgPowerReportingTimeConstant
 #define DIMM_INFO_CATEGORY_OVERWRITE_DIMM_STATUS        (1 << 7)    ///< Overwrite PMem module status field will be populated: OverwriteDimmStatus.
 #define DIMM_INFO_CATEGORY_FW_IMAGE_INFO                (1 << 8)    ///< Firmware Image info fields will be populated: LastFwUpdateStatus, StagedFwVersion, FWImageMaxSize.
-#define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCouner, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
+#define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_3              (1 << 9)    ///< Memory info page 3 fields will be populated: ErrorInjectionEnabled, MediaTemperatureInjectionEnabled, SoftwareTriggersEnabled, PoisonErrorInjectionsCounter, PoisonErrorClearCounter, MediaTemperatureInjectionsCounter, SoftwareTriggersCounter, SoftwareTriggersEnabledDetails.
 #define DIMM_INFO_CATEGORY_VIRAL_POLICY                 (1 << 10)   ///< Viral policy fields will be populated: ViralPolicyEnable, ViralStatus.
 #define DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS       (1 << 11)   ///< Device Characteristics fields will be populated: CTST, MTST, MTSTT, MTSPT, CTSTT, CTSPT, MaxAveragePowerLimit, MaxMemoryBandwidthBoostMaxPowerLimit, MaxAveragePowerReportingTimeConstant, AveragePowerReportingTimeConstantStep.
 #define DIMM_INFO_CATEGORY_MEM_INFO_PAGE_4              (1 << 12)   ///< Memory info page 4 fields will be populated
@@ -409,7 +409,7 @@ typedef struct _DIMM_INFO {
   UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
   UINT8 AitDramEnabled;                     //!< Whether or not the PMem module AIT DRAM is enabled
   UINT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  UINT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
+  UINT16 MaxControllerTemperature; //!< The highest controller temperature reported in degrees Celsius.
 
   //DIMM_INFO_CATEGORY_POWER_MGMT_POLICY
   DIMM_INFO_ATTRIB_UINT16 PeakPowerBudget;                              //!< The power budget in mW used for instantaneous power (10000-20000 mW). The default is 20000 mW.
@@ -434,7 +434,7 @@ typedef struct _DIMM_INFO {
   UINT64 InaccessibleCapacity;              //!< Capacity in bytes for use that has not been exposed
 
   //DIMM_INFO_CATEGORY_FW_IMAGE_INFO
-  FIRMWARE_VERSION StagedFwVersion;         //!< The current staged firmare version
+  FIRMWARE_VERSION StagedFwVersion;         //!< The current staged firmware version
   UINT32 FWImageMaxSize;                    //!< The maximum size of the Firmware
   UINT8 LastFwUpdateStatus;                 //!< Status of the last FW update
 
@@ -455,7 +455,7 @@ typedef struct _DIMM_INFO {
   UINT32 SkuInformation;                    //!< Information about SKU modes
   UINT16 VendorId;                          //!< vendor id
   UINT16 DeviceId;                          //!< device id
-  UINT16 SubsystemVendorId;                 //!< Vendor id of the subsytem memory controller
+  UINT16 SubsystemVendorId;                 //!< Vendor id of the subsystem memory controller
   UINT16 SubsystemDeviceId;                 //!< Device id of the subsystem memory controller
   UINT16 Rid;                               //!< revision id
   UINT16 SubsystemRid;                      //!< Revision id of the subsystem memory controller from NFIT
@@ -539,7 +539,7 @@ typedef struct _TOPOLOGY_DIMM_INFO {
 } TOPOLOGY_DIMM_INFO;
 
 typedef struct _SOCKET_INFO {
-  UINT16 SocketId;                   //!< Zero indexed processor identifer
+  UINT16 SocketId;                   //!< Zero indexed processor identifier
   UINT64 MappedMemoryLimit;          //!< Maximum amount of physical memory in bytes allowed to be mapped into SPA based on the SKU of the processor
   UINT64 TotalMappedMemory;          //!< Total amount of physical memory in bytes currently mapped into the SPA for the processor
 } SOCKET_INFO;
@@ -560,7 +560,7 @@ typedef struct _SYSTEM_CAPABILITIES_INFO {
   UINT8 CurrentOperatingMode;                       //!< Memory modes (volatile and persistent) currently selected by BIOS
   UINT16 InterleaveFormatsSupportedNum;             //!< Number of elements in list
   HII_POINTER PtrInterleaveFormatsSupported;        //!< List of supported interleave set formats
-  HII_POINTER PtrInterleaveSize;                    //!< PCAT 3.0 iMc & Channel intereleave size
+  HII_POINTER PtrInterleaveSize;                    //!< PCAT 3.0 iMc & Channel interleave size
   UINT64 MinNsSize;                                 //!< Minimum namespace size in bytes
   UINT64 NsBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT]; //!< Supported namespace block sizes in bytes
   UINT8 AppDirectMirrorSupported;
@@ -706,7 +706,7 @@ typedef struct _REGION_INFO {
   UINT16 DimmId[12];                ///< PMem module IDs associated with this region
   UINT16 DimmIdCount;               ///< Number of PMem modules found in DimmId
   UINT64 CookieId;                  ///< Interleave set ID
-  HII_POINTER PtrInterlaveFormats;  ///< Pointer to array of Interleave Formats
+  HII_POINTER PtrInterleaveFormats;  ///< Pointer to array of Interleave Formats
   UINT32 InterleaveFormatsNum;      ///< Number of Interleave Formats
 } REGION_INFO;
 
@@ -771,7 +771,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define HEALTH_NON_CRITICAL_FAILURE  2    ///< Non-Critical (maintenance required)
 #define HEALTH_CRITICAL_FAILURE      3    ///< Critical (feature or performance degraded due to failure)
 #define HEALTH_FATAL_FAILURE         4    ///< Fatal (data loss has occurred or is imminent)
-#define HEALTH_UNMANAGEABLE          5    ///< PMem module is unmanagable
+#define HEALTH_UNMANAGEABLE          5    ///< PMem module is unmanageable
 #define HEALTH_NON_FUNCTIONAL        6    ///< PMem module is non-functional
 
 /**
@@ -825,7 +825,7 @@ typedef struct _DEBUG_LOG_INFO {
 #define SECURITY_USER_PASSPHRASE    0x0
 #define SECURITY_MASTER_PASSPHRASE  0x1
 
-/** Long opertaion status **/
+/** Long operation status **/
 #define LONG_OP_STATUS_UNKNOWN      0
 #define LONG_OP_STATUS_IDLE         1
 #define LONG_OP_STATUS_IN_PROGRESS  2
@@ -911,10 +911,10 @@ do {                                                                            
 /**
   Form Factor
 **/
-#define FORMFACTOR_EMPTY     0
-#define FORMFACTOR_UNKNOWN   2
-#define FORMFACTOR_NVMDIMM   9
-#define FORMFACTOR_SODIMM    13
+#define FORM_FACTOR_EMPTY     0
+#define FORM_FACTOR_UNKNOWN   2
+#define FORM_FACTOR_NVMDIMM   9
+#define FORM_FACTOR_SODIMM    13
 
 /**
   Supported memory modes by PCAT table 0
@@ -937,7 +937,7 @@ do {                                                                            
 /**
   Platform config with management software supported by PCAT table 0
 **/
-#define PLATFROM_CONFIG_SUPPORTED_BIT      0
+#define PLATFORM_CONFIG_SUPPORTED_BIT      0
 #define RUNTIME_CHANGE_REQUEST_SUPPORT_BIT 1
 
 /**
@@ -1053,7 +1053,7 @@ do {                                                                            
 #define ERROR_LOG_MAX_COUNT                255
 #define ERROR_LOG_DEFAULT_COUNT            1
 
-/** dump FW debuglog **/
+/** dump FW debug log **/
 #define MAX_LOG_PAGE_OFFSET       0xFFFFFFFF
 
 /**
@@ -1226,7 +1226,7 @@ typedef struct {
 
 
   /**
-     GUID for PBR tagids
+     GUID for PBR tag ids
     **/
 #define INTEL_DIMM_PBR_TAGID_VARIABLE_GUID \
   { 0x543f9bc3, 0x9b50, 0x425b, {0xa4, 0xce, 0x1e, 0x73, 0x30, 0xc4, 0xcf, 0x74}}

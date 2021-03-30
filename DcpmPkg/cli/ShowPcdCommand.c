@@ -949,10 +949,10 @@ PrintLabelStorageArea(
   UINT16 CurrentIndex = 0;
   UINT16 SlotStatus = SLOT_UNKNOWN;
   BOOLEAN First = FALSE;
-  PRINT_CONTEXT *pPrinterCtxNsLable = NULL;
-  CHAR16 *pPathNsLable = NULL;
+  PRINT_CONTEXT *pPrinterCtxNsLabel = NULL;
+  CHAR16 *pPathNsLabel = NULL;
 
-  pPrinterCtxNsLable = pPrinterCtx;
+  pPrinterCtxNsLabel = pPrinterCtx;
   if (pLba == NULL) {
     return;
   }
@@ -977,11 +977,11 @@ PrintLabelStorageArea(
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Labels", L"Label Storage Area ");
       First = FALSE;
     }
-    PRINTER_BUILD_KEY_PATH(pPathNsLable, DS_TABLE_INDEX_PATH, gDimmIndex, 0, Index);
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtxNsLable, pPathNsLable, PCD_TABLE_STR, L"Namespace Label Info");
-    PrintNamespaceLabel(&pLba->pLabels[Index], pPrinterCtxNsLable, pPathNsLable);
+    PRINTER_BUILD_KEY_PATH(pPathNsLabel, DS_TABLE_INDEX_PATH, gDimmIndex, 0, Index);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtxNsLabel, pPathNsLabel, PCD_TABLE_STR, L"Namespace Label Info");
+    PrintNamespaceLabel(&pLba->pLabels[Index], pPrinterCtxNsLabel, pPathNsLabel);
   }
-  FREE_POOL_SAFE(pPathNsLable);
+  FREE_POOL_SAFE(pPathNsLabel);
 }
 
 /**

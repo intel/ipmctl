@@ -596,7 +596,7 @@ ValidateAndPrepareLoadConfig(
   UINT64 VolatileCapacity = 0;
   UINT64 ReservedCapacity = 0;
   BOOLEAN Reserved = TRUE;
-  BOOLEAN AppDirectInterlaved = FALSE;
+  BOOLEAN AppDirectInterleaved = FALSE;
   UINT16 TempMajor = 0;
   UINT16 TempMinor = 0;
   BOOLEAN UseDefaultLabel = FALSE;
@@ -649,14 +649,14 @@ ValidateAndPrepareLoadConfig(
         Reserved = FALSE;
       }
 
-      for (Index2 = 0; Index2 < SpecifiedDimmsOnSocketNum && !AppDirectInterlaved; Index2++) {
+      for (Index2 = 0; Index2 < SpecifiedDimmsOnSocketNum && !AppDirectInterleaved; Index2++) {
         if (Index == Index2) {
           continue;
         }
 
         if (pDimmsConfigOnSocket[Index]->Persistent[0].PersistentIndex ==
             pDimmsConfigOnSocket[Index2]->Persistent[0].PersistentIndex) {
-          AppDirectInterlaved = TRUE;
+          AppDirectInterleaved = TRUE;
         }
       }
     }
@@ -675,7 +675,7 @@ ValidateAndPrepareLoadConfig(
 
     if (Reserved) {
       *pPersistentMemType = PM_TYPE_RESERVED;
-    } else if (AppDirectInterlaved) {
+    } else if (AppDirectInterleaved) {
       *pPersistentMemType = PM_TYPE_AD;
     } else {
       *pPersistentMemType = PM_TYPE_AD_NI;

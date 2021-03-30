@@ -2133,7 +2133,7 @@ NVM_API int nvm_get_build_number()
 }
 
 
-EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
+EFI_STATUS execute_cli_cmd(wchar_t * CmdLine)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   struct CommandInput Input;
@@ -2143,7 +2143,7 @@ EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
 
-  FillCommandInput(cmdline, &Input);
+  FillCommandInput(CmdLine, &Input);
   ReturnCode = Parse(&Input, &Command);
   if (!EFI_ERROR(ReturnCode))
   {
@@ -2479,13 +2479,13 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
         p_jobs[i].status = NVM_JOB_STATUS_COMPLETE;
       }
 
-      if ((pLongOpStatus->CmdOpcode == PtSetSecInfo) && (pLongOpStatus->CmdSubcode == SubopOverwriteDimm)) {
+      if ((pLongOpStatus->CmdOpcode == PtSetSecInfo) && (pLongOpStatus->CmdSubOpcode == SubopOverwriteDimm)) {
         p_jobs[i].type = NVM_JOB_TYPE_SANITIZE;
       }
-      else if ((pLongOpStatus->CmdOpcode == PtSetFeatures) && (pLongOpStatus->CmdSubcode == SubopAddressRangeScrub)) {
+      else if ((pLongOpStatus->CmdOpcode == PtSetFeatures) && (pLongOpStatus->CmdSubOpcode == SubopAddressRangeScrub)) {
         p_jobs[i].type = NVM_JOB_TYPE_ARS;
       }
-      else if ((pLongOpStatus->CmdOpcode == PtUpdateFw) && (pLongOpStatus->CmdSubcode == SubopUpdateFw)) {
+      else if ((pLongOpStatus->CmdOpcode == PtUpdateFw) && (pLongOpStatus->CmdSubOpcode == SubopUpdateFw)) {
         p_jobs[i].type = NVM_JOB_TYPE_FW_UPDATE;
       }
       else {

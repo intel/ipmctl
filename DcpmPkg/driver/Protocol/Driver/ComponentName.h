@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _COMPONENTNAME_H_
-#define _COMPONENTNAME_H_
+#ifndef _COMPONENT_NAME_H_
+#define _COMPONENT_NAME_H_
 
 /**
   Retrieves a Unicode string that is the user-readable name of the EFI Driver.
@@ -82,4 +82,4 @@ NvmDimmDriverComponentNameGetControllerName (
   OUT CHAR16 **ppControllerName
 );
 
-#endif /* _COMPONENTNAME_H_ */
+#endif /* _COMPONENT_NAME_H_ */

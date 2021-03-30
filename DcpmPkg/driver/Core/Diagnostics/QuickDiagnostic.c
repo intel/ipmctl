@@ -9,7 +9,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #define MANAGEABILITY_TEST_INDEX 0
 #define BOOTSTATUS_TEST_INDEX 1
-#define SMARTHEALTH_TEST_INDEX 2
+#define SMART_HEALTH_TEST_INDEX 2
 
 /**
   Run quick diagnostics for list of DIMMs, and appropriately
@@ -93,13 +93,13 @@ RunQuickDiagnostics(
       continue;
     }
 
-    pResult->SubTestName[SMARTHEALTH_TEST_INDEX] = CatSPrint(NULL, L"Health");
-    ReturnCode = SmartAndHealthCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX]);
+    pResult->SubTestName[SMART_HEALTH_TEST_INDEX] = CatSPrint(NULL, L"Health");
+    ReturnCode = SmartAndHealthCheck(ppDimms[Index], DimmStr, &pResult->SubTestMessage[SMART_HEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMART_HEALTH_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The smart and health check for DIMM ID 0x%x failed.", ppDimms[Index]->DeviceHandle.AsUint32);
       if ((TmpDiagState & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(ppDimms[Index], STRING_TOKEN(STR_QUICK_ABORTED_DIMM_INTERNAL_ERROR), EVENT_CODE_540, DIAG_STATE_MASK_ABORTED,
-          &pResult->SubTestMessage[SMARTHEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMARTHEALTH_TEST_INDEX], DimmStr);
+          &pResult->SubTestMessage[SMART_HEALTH_TEST_INDEX], &pResult->SubTestStateVal[SMART_HEALTH_TEST_INDEX], DimmStr);
       }
       continue;
     }
@@ -148,18 +148,18 @@ DiagnosticsManageabilityCheck(
 
   if (!IsDimmManageable(pDimm)) {
     if (SPD_INTEL_VENDOR_ID != pDimm->SubsystemVendorId) {
-      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEBALE_DIMM_SUBSYSTEM_VENDOR_ID), EVENT_CODE_501, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEABLE_DIMM_SUBSYSTEM_VENDOR_ID), EVENT_CODE_501, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
         pDimmStr, EndianSwapUint16(pDimm->SubsystemVendorId));
     }
 
     if (!IsSubsystemDeviceIdSupported(pDimm)) {
-      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEBALE_DIMM_SUBSYSTEM_DEVICE_ID), EVENT_CODE_502, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEABLE_DIMM_SUBSYSTEM_DEVICE_ID), EVENT_CODE_502, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
         pDimmStr, EndianSwapUint16(pDimm->SubsystemDeviceId));
     }
 
     if (!IsFwApiVersionSupported(pDimm)) {
       ConvertFwApiVersion(TmpFwApiVerStr, pDimm->FwVer.FwApiMajor, pDimm->FwVer.FwApiMinor);
-      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEBALE_DIMM_FW_API_VERSION), EVENT_CODE_503, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
+      APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_UNMANAGEABLE_DIMM_FW_API_VERSION), EVENT_CODE_503, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
         pDimmStr, TmpFwApiVerStr);
     }
   }
@@ -254,7 +254,7 @@ SmartAndHealthCheck(
         goto Finish;
       }
 
-      pActualHealthStr = CatSPrintClean(pActualHealthStr, FORMAT_STR_WITH_PARANTHESIS, pActualHealthReasonStr);
+      pActualHealthStr = CatSPrintClean(pActualHealthStr, FORMAT_STR_WITH_PARENTHESIS, pActualHealthReasonStr);
     }
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_BAD_HEALTH_STATE), EVENT_CODE_504, DIAG_STATE_MASK_WARNING, ppResultStr, pDiagState,
       pDimmStr, pActualHealthStr);
@@ -264,7 +264,7 @@ SmartAndHealthCheck(
 
   }
   else if ((pDimm->NvDimmStateFlags & BIT6) == BIT6) {
-    // If BIT6 is set FW did not map a region to SPA on DIMM
+    // If BIT6 is set FW did not map a region to SPA on DIMM
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_ACPI_NVDIMM_SPA_NOT_MAPPED), EVENT_CODE_542, DIAG_STATE_MASK_OK, ppResultStr, pDiagState, pDimmStr);
   }
 
@@ -349,7 +349,7 @@ SmartAndHealthCheck(
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_VIRAL_STATE), EVENT_CODE_523, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
   }
 
-  //AIT DRAM disbaled check
+  //AIT DRAM disabled check
   if (HealthInfo.AitDramEnabled == AIT_DRAM_DISABLED) {
     APPEND_RESULT_TO_THE_LOG(pDimm, STRING_TOKEN(STR_QUICK_AIT_DISABLED), EVENT_CODE_535, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState, pDimmStr);
   }

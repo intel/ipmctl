@@ -66,8 +66,8 @@ typedef struct {
 #define DIMM_BSR_DDRT_IO_INIT_NOT_STARTED 0x0
 
 // FIS >= 1.5
-#define DIMM_BSR_AIT_DRAM_NOTTRAINED 0x0
-#define DIMM_BSR_AIT_DRAM_TRAINED_NOTLOADED 0x1
+#define DIMM_BSR_AIT_DRAM_NOT_TRAINED 0x0
+#define DIMM_BSR_AIT_DRAM_TRAINED_NOT_LOADED 0x1
 #define DIMM_BSR_AIT_DRAM_ERROR 0x2
 #define DIMM_BSR_AIT_DRAM_TRAINED_LOADED_READY 0x3
 
@@ -161,7 +161,7 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT8 AitDramEnabled;
   UINT8 ThermalThrottlePerformanceLossPrct;
   INT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  INT16 MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
+  INT16 MaxControllerTemperature; //!< The highest controller temperature reported in degrees Celsius.
  } SMART_AND_HEALTH_INFO;
 
 /**

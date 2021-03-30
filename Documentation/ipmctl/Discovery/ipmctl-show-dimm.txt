@@ -468,9 +468,9 @@ LatchedLastShutdownStatus::
   * Sx Extended Flush Complete.
 
 UnlatchedLastShutdownStatus::
-  The status of the last shutdown status of the PMem module. Same fields as the
-  Latched Last Shutdown Status with the only difference that LLS details
-  on a dirty shutdown is logged, even if the Latch System Shutdown Status
+  The status of the last shutdown status of the PMem module. It contains the
+  same fields as the Latched Last Shutdown Status, with the only difference that
+  the LSS details on a dirty shutdown are logged, even if the Latch System Shutdown Status
   was not enabled. One or more of:
   * Unknown: The last shutdown status cannot be determined.
   * PM ADR Command Received: Power management ADR command received.

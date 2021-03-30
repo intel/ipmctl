@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _SHOWSENSORCOMMAND_H_
-#define _SHOWSENSORCOMMAND_H_
+#ifndef _SHOW_SENSOR_COMMAND_H_
+#define _SHOW_SENSOR_COMMAND_H_
 
 #include <Uefi.h>
 #include "CommandParser.h"
@@ -35,4 +35,4 @@ ShowSensor(
   IN     struct Command *pCmd
   );
 
-#endif /** _SHOWSENSORCOMMAND_H_ **/
+#endif /** _SHOW_SENSOR_COMMAND_H_ **/

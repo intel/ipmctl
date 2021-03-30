@@ -41,7 +41,7 @@ extern EFI_GUID gIntelDimmPbrTagIdVariableguid;
       is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
-      Data previously set will be overriden with this data object.
+      Data previously set will be overridden with this data object.
    @param[out] - ppData - May be NULL, otherwise will contain a pointer
       to the memory allocated in the recording buffer for this data object.
       Warning, this pointer is only guaranteed to be valid until the next
@@ -434,7 +434,7 @@ PbrSetSession(
     //unravels PBR image and updates the context
     ReturnCode = PbrDecomposeSession(pContext, pBufferAddress, BufferSize);
     if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Failed to unstich img!");
+      NVDIMM_DBG("Failed to unstitch img!");
       goto Finish;
     }
   }
@@ -1072,7 +1072,7 @@ Finish:
 }
 
 /**
-  Helper that provdies the number of active data partitions
+  Helper that provides the number of active data partitions
 **/
 STATIC
 UINT32

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _FIRMWAREMANAGEMENT_H_
-#define _FIRMWAREMANAGEMENT_H_
+#ifndef _NVM_FIRMWARE_MANAGEMENT_H_
+#define _NVM_FIRMWARE_MANAGEMENT_H_
 
 #include <Uefi.h>
 #include <Protocol/FirmwareManagement.h>
@@ -38,4 +38,4 @@ typedef union {
   UINT32 AsUint32;
 } FW_VERSION_UNION;
 
-#endif /** _FIRMWAREMANAGEMENT_H_ **/
+#endif /** _NVM_FIRMWARE_MANAGEMENT_H_ **/

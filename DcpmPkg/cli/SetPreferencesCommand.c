@@ -88,7 +88,7 @@ GetBitFieldForInterleaveChannelSize(
 
 STATIC
 UINT8
-GetBitFieldForInterleaveiMCSize(
+GetBitFieldForInterleaveImcSize(
   IN     CHAR16 *pStringValue
   )
 {
@@ -141,7 +141,7 @@ GetAppDirectSettingsBitFields(
     goto Finish;
   }
 
-  *pImcBitField = GetBitFieldForInterleaveiMCSize(ppSplitSettings[0]);
+  *pImcBitField = GetBitFieldForInterleaveImcSize(ppSplitSettings[0]);
   *pChannelBitField = GetBitFieldForInterleaveChannelSize(ppSplitSettings[1]);
 
   if (*pImcBitField == IMC_INTERLEAVE_SIZE_INVALID ||
@@ -264,7 +264,7 @@ SetPreferences(
     goto Finish;
   }
 
-  //verify we have atleast one preference to set.
+  //verify we have at least one preference to set.
   ReturnCode = GetPropertyCount(pCmd, &PropertyCnt);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;

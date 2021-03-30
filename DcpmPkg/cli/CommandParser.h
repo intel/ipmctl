@@ -13,7 +13,7 @@
 #include <Utility.h>
 
 #define DISP_NAME_LEN             32    //!< Display string length (used when formatting output in alternative formats)
-#define DISP_DELIMS_LEN           10    //!< Deliminter string length (used when formatting output in alternative formats)
+#define DISP_DELIMS_LEN           10    //!< Delimiter string length (used when formatting output in alternative formats)
 #define VERB_LEN                  16    //!< Verb string length
 #define TARGET_LEN                32    //!< Target name string length
 #define TARGET_VALUE_LEN          4096  //!< Target value string length for maximum-possible DIMM IDs
@@ -154,7 +154,7 @@
 /** command properties **/
 #define TYPE_PROPERTY                     L"Type"                     //!< 'Type' property name
 #define TYPE_VALUE_FW                     L"Fw"                       //!< 'Type' property FW value
-#define TYPE_VALUE_TRAINGING              L"Training"                 //!< 'Type' property Training value
+#define TYPE_VALUE_TRAINING              L"Training"                 //!< 'Type' property Training value
 #define UPDATE_PROPERTY                   L"Update"                   //!< 'Update' property name
 #define EXEC_PROPERTY                     L"Execute"                  //!< 'Exec' property name
 #define TEMPERATURE_INJ_PROPERTY          L"Temperature"              //!<  Inject error 'Temperature' property name
@@ -162,7 +162,7 @@
 #define POISON_TYPE_INJ_PROPERTY          L"PoisonType"               //!< Inject error 'PoisonType' property
 #define CLEAR_ERROR_INJ_PROPERTY          L"Clear"                    //!< Clear error injection property
 #define PACKAGE_SPARING_INJ_PROPERTY      L"PackageSparing"           //!< PackageSparing error injection property
-#define PERCENTAGE_REAMAINING_INJ_PROPERTY       L"PercentageRemaining"      //!< PercentageRemaining error injection property
+#define PERCENTAGE_REMAINING_INJ_PROPERTY       L"PercentageRemaining"      //!< PercentageRemaining error injection property
 #define FATAL_MEDIA_ERROR_INJ_PROPERTY    L"FatalMediaError"          //!< FatalMediaError error injection property
 #define DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY L"DirtyShutdown"            //!< DirtyShutdown error injection property
 #define LOCKSTATE_PROPERTY                L"LockState"                //!< 'LockState' property name
@@ -676,7 +676,7 @@ GetUnitsOption(
 Sets a display information needed when outputting alternative formats like XML.
 @param[in] pName is a CHAR16 string that represents the output message.
 @param[in] Type represents the type of output being displayed.
-@param[in] pDelims is a CHAR16 string that represents deliminters to use when parsing text output
+@param[in] pDelims is a CHAR16 string that represents delimiters to use when parsing text output
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
@@ -692,7 +692,7 @@ Get display information needed when outputting alternative formats like XML.
 @param[out] pName is a CHAR16 string that represents the output message.
 @param[int] NameSize is the size of pName in bytes
 @param[out] pType represents the type of output being displayed.
-@param[out] pDelims represents the deliminters to use when parsing text output.
+@param[out] pDelims represents the delimiters to use when parsing text output.
 @param[int] DelimsSize is the size of pDelims in bytes
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
@@ -703,7 +703,7 @@ GetDisplayInfo(
   IN     CONST UINT32 NameSize,
   OUT    UINT8 *pType,
   OUT    CHAR16 *pDelims,
-  IN     CONST UINT32 DelimnsSize
+  IN     CONST UINT32 DelimsSize
 );
 
 /**

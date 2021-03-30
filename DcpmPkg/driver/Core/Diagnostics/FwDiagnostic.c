@@ -14,7 +14,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #define FW_CONSIST_TEST_INDEX 0
 #define VIRAL_POLICY_CONSIST_TEST_INDEX 1
-#define THRESHHOLD_TEST_INDEX 2
+#define THRESHOLD_TEST_INDEX 2
 #define SYS_TIME_TEST_INDEX 3
 
 /**
@@ -78,12 +78,12 @@ RunFwDiagnostics(
     }
   }
 
-  pResult->SubTestName[THRESHHOLD_TEST_INDEX] = CatSPrint(NULL, L"Threshold check");
+  pResult->SubTestName[THRESHOLD_TEST_INDEX] = CatSPrint(NULL, L"Threshold check");
   pResult->SubTestName[SYS_TIME_TEST_INDEX] = CatSPrint(NULL, L"System Time");
   for (Index = 0; Index < DimmCount; Index++) {
     if (ppDimms[Index] == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
-      pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX] |= DIAG_STATE_MASK_ABORTED;
+      pResult->SubTestStateVal[THRESHOLD_TEST_INDEX] |= DIAG_STATE_MASK_ABORTED;
       goto Finish;
     }
 
@@ -92,12 +92,12 @@ RunFwDiagnostics(
       continue;
     }
 
-    ReturnCode = ThresholdsCheck(ppDimms[Index], &pResult->SubTestMessage[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
+    ReturnCode = ThresholdsCheck(ppDimms[Index], &pResult->SubTestMessage[THRESHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHOLD_TEST_INDEX]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("The check for firmware threshold settings failed. Dimm handle 0x%04x.", ppDimms[Index]->DeviceHandle.AsUint32);
-      if ((pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
+      if ((pResult->SubTestStateVal[THRESHOLD_TEST_INDEX] & DIAG_STATE_MASK_ABORTED) != 0) {
         APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_FW_ABORTED_INTERNAL_ERROR), EVENT_CODE_910, DIAG_STATE_MASK_ABORTED,
-          &pResult->SubTestMessage[THRESHHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHHOLD_TEST_INDEX]);
+          &pResult->SubTestMessage[THRESHOLD_TEST_INDEX], &pResult->SubTestStateVal[THRESHOLD_TEST_INDEX]);
         goto Finish;
       }
     }
@@ -112,13 +112,13 @@ Finish:
 }
 
 /**
-  Populate the list of unique subsytem device IDs across all
+  Populate the list of unique subsystem device IDs across all
   the specified DIMMs
 
   @param[in] ppDimms The DIMM pointers list
   @param[in] DimmCount DIMMs count
-  @param[out] SubsystemDeviceIdList Array of the unique subsytem device IDs
-  @param[out] pSubsystemDeviceIdListCount Pointer to the count of unique subsytem device IDs
+  @param[out] SubsystemDeviceIdList Array of the unique subsystem device IDs
+  @param[out] pSubsystemDeviceIdListCount Pointer to the count of unique subsystem device IDs
   @param[out] pDiagState Pointer to the fw diagnostics test state
 
   @retval EFI_SUCCESS Test executed correctly
@@ -315,7 +315,7 @@ CheckFwConsistency(
 
   ReturnCode = PopulateSubsystemDeviceIdList(ppDimms, DimmCount, SubsystemDeviceIdList, &SubsystemDeviceIdListCount, pDiagState);
   if (EFI_ERROR(ReturnCode) || (SubsystemDeviceIdListCount == 0)) {
-    NVDIMM_DBG("The functioanlity to populate subsystem device Id list failed.");
+    NVDIMM_DBG("The functionality to populate subsystem device Id list failed.");
     goto Finish;
   }
 

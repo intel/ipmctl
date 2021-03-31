@@ -3005,7 +3005,7 @@ Finish:
   LIST_FOR_EACH_SAFE(pTmpListNode, pTmpListNextNode, &NamespaceListHead) {
     FreePool(NAMESPACE_INFO_FROM_NODE(pTmpListNode));
   }
-  FREE_POOL_SAFE(pCommandStatus);
+  FreeCommandStatus(&pCommandStatus);
   return ReturnCode;
 }
 

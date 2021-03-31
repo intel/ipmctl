@@ -833,11 +833,7 @@ InitializeCommandStatus(
     goto Finish;
   }
 
-  pCommandStatus = (COMMAND_STATUS *)AllocateZeroPool(sizeof(*pCommandStatus));
-  if (pCommandStatus == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
+  CHECK_RESULT_MALLOC(pCommandStatus,(COMMAND_STATUS *)AllocateZeroPool(sizeof(*pCommandStatus)), Finish);
 
   pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;
   pCommandStatus->ObjectStatusCount = 0;

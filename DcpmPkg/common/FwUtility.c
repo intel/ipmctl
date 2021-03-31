@@ -36,23 +36,27 @@ ValidateImage(
   )
 {
   if (ImageSize > FWImageMaxSize || ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_WRONG_IMAGE_SIZE);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_WRONG_IMAGE_SIZE);
     return FALSE;
   }
 
   if (ImageSize % UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE != 0) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_IMAGE_NOT_ALIGNED);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_IMAGE_NOT_ALIGNED);
     NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE);
     return FALSE;
   }
 
   if (pImage->ModuleVendor != VENDOR_ID) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_VENDOR_NOT_COMPATIBLE);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_VENDOR_NOT_COMPATIBLE);
     return FALSE;
   }
 
   if (pImage->ModuleType != LT_MODULE_TYPE_CSS) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_MODULE_TYPE_NOT_COMPATIBLE);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_MODULE_TYPE_NOT_COMPATIBLE);
     return FALSE;
   }
 
@@ -252,6 +256,8 @@ LoadFileAndCheckHeader(
   BOOLEAN VerifyNormalImage = FALSE;
   VOID *pImageBuffer = NULL;
 
+  NVDIMM_ENTRY();
+
   ZeroMem(&FileHandle, sizeof(FileHandle));
   ZeroMem(&SpiDirectory, sizeof(SpiDirectory));
 
@@ -259,7 +265,8 @@ LoadFileAndCheckHeader(
 
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_NOT_VALID);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_NOT_VALID);
     ReturnValue = FALSE;
     goto Finish;
   }
@@ -269,7 +276,8 @@ LoadFileAndCheckHeader(
 
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("GetFileSize returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_IMG_INFO_NOT_ACCESSIBLE);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_IMG_INFO_NOT_ACCESSIBLE);
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -278,7 +286,8 @@ LoadFileAndCheckHeader(
     if ((!FlashSPI && BuffSize > FWImageMaxSize) ||
       (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN1_SIZE_B)) {
       NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_TOO_LARGE);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
       ReturnValue = FALSE;
       goto FinishClose;
     }
@@ -286,27 +295,31 @@ LoadFileAndCheckHeader(
     if ((!FlashSPI && BuffSize > FWImageMaxSize) ||
       (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN2_SIZE_B)) {
       NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_TOO_LARGE);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
       ReturnValue = FALSE;
       goto FinishClose;
     }
   } else if (SubsystemDeviceId == SPD_DEVICE_ID_20) {
     if ((!FlashSPI && BuffSize > FWImageMaxSize)) {
       NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_TOO_LARGE);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
       ReturnValue = FALSE;
       goto FinishClose;
     }
   } else {
     NVDIMM_ERR("Unknown Subsystem Device Id received: %d.\n", SubsystemDeviceId);
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_UNKNOWN_SUBSYSTEM_DEVICE);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_UNKNOWN_SUBSYSTEM_DEVICE);
     ReturnValue = FALSE;
     goto FinishClose;
   }
 
   if (BuffSize < sizeof(NVM_FW_IMAGE_HEADER)) {
     NVDIMM_ERR("File size is too small. It equals: %d.\n", BuffSize);
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_TOO_SMALL);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_TOO_SMALL);
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -327,7 +340,8 @@ LoadFileAndCheckHeader(
   pImageBuffer = AllocatePool(BuffSize);
 
   if (pImageBuffer == NULL) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_MEM_ALLOCATION_ERROR_FW_IMG);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_MEM_ALLOCATION_ERROR_FW_IMG);
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -337,14 +351,16 @@ LoadFileAndCheckHeader(
   if (FlashSPI && !VerifyNormalImage) {
     ReturnCode = FileHandle->Read(FileHandle, &BuffSpiSize, &SpiDirectory);
     if (EFI_ERROR(ReturnCode) || BuffSpiSize != sizeof(SpiDirectory)) {
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_READ_ERROR);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_READ_ERROR);
       ReturnValue = FALSE;
       goto FinishClose;
     }
 
     ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageStage1Offset);
     if (EFI_ERROR(ReturnCode)) {
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_READ_ERROR);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_READ_ERROR);
       ReturnValue = FALSE;
       goto FinishClose;
     }
@@ -361,7 +377,8 @@ LoadFileAndCheckHeader(
     If the read function returned an error OR we read less bytes that the file length equals.
   **/
   if (EFI_ERROR(ReturnCode) || BuffSize != BuffSizeTemp) {
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_FILE_READ_ERROR);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_READ_ERROR);
     ReturnValue = FALSE;
     goto FinishClose;
 
@@ -375,6 +392,7 @@ LoadFileAndCheckHeader(
 FinishClose:
   FileHandle->Close(FileHandle);
 Finish:
+  NVDIMM_EXIT_I64(ReturnValue);
   return ReturnValue;
 }
 

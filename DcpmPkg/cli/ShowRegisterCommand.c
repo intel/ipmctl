@@ -202,7 +202,7 @@ ShowRegister(
     goto Finish;
   }
 
-  InitializeCommandStatus(&pCommandStatus);
+  CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
   /** check that the register parameters are correct if provided**/
   if (!ShowAllRegisters) {

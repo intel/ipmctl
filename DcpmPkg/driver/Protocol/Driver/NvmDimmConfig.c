@@ -5161,14 +5161,16 @@ ValidateImageVersion(
 
   if (pDimm->FwVer.FwProduct != pImage->ImageVersion.ProductNumber.Version) {
     *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_PRODUCT_NUMBER_MISMATCH);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_PRODUCT_NUMBER_MISMATCH);
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
 
   if (!Force && pDimm->FwVer.FwRevision > pImage->ImageVersion.RevisionNumber.Version) {
     *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_REVISION_NUMBER_MISMATCH);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_REVISION_NUMBER_MISMATCH);
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }
@@ -5183,7 +5185,8 @@ ValidateImageVersion(
     }
     if (Bsr.Separated_Current_FIS.SVNDE != DIMM_BSR_SVNDE_ENABLED) {
       *pNvmStatus = NVM_ERR_FIRMWARE_VERSION_NOT_VALID;
-      CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_SVNDE_NOT_ENABLED);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_SVNDE_NOT_ENABLED);
       ReturnCode = EFI_ABORTED;
       goto Finish;
     }
@@ -5218,7 +5221,8 @@ ValidateImageVersion(
     *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING;
     pDimmSteppingStr = ControllerRidToStr(pDimm->ControllerRid);
     pImgSteppingStr = ControllerRidToStr(pImage->RevisionId);
-    CatSPrintNCopy(pCommandStatus->StatusDetails, DETAILS_CANT_USE_IMAGE, pImgSteppingStr, pDimmSteppingStr);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_CANT_USE_IMAGE, pImgSteppingStr, pDimmSteppingStr);
     ReturnCode = EFI_ABORTED;
     goto Finish;
   }

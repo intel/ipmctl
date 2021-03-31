@@ -855,61 +855,45 @@ CatSPrintClean(
 }
 
 /**
-  Appends a formatted Unicode string to a Null-terminated Unicode string
-  and copies it to destination pointer.
+  Appends a formatted Unicode string with arguments to a pre-allocated
+  null-terminated Unicode string provided by the caller with length of
+  DestStringMaxLength.
 
-  This function appends a formatted Unicode string to the Null-terminated
-  Unicode string specified by String.   String is optional and may be NULL.
-  Storage for the formatted Unicode string returned is allocated using
-  AllocatePool().  The pointer to the appended string is copied to the
-  destination pointer.
-  The caller is responsible for freeing destination pointer.
-
-  If String is not NULL and not aligned on a 16-bit boundary, then ASSERT().
-  If FormatString is NULL, then ASSERT().
-  If FormatString is not aligned on a 16-bit boundary, then ASSERT().
-
-  @param[in] DestString     A Null-terminated Unicode string.
-  @param[in] FormatString   A Null-terminated Unicode format string.
-  @param[in] ...            The variable argument list whose contents are
-                            accessed based on the format string specified by
-                            FormatString.
-
+  @param[in] DestString          A Null-terminated Unicode string of size
+                                 DestStringMaxLength
+  @param[in] DestStringMaxLength The maximum number of CHAR16 characters
+                                 that will fit into DestString
+  @param[in] FormatString        A Null-terminated Unicode format string.
+  @param[in] ...                 The variable argument list whose contents are
+                                 accessed based on the format string specified by
+                                 FormatString.
 **/
-VOID
-EFIAPI
+EFI_STATUS
 CatSPrintNCopy(
   IN OUT CHAR16 *pDestString,
-  IN  CONST CHAR16 *pFormatString,
+  IN     UINT16 DestStringMaxLength,
+  IN     CONST CHAR16 *pFormatString,
   ...
 )
 {
   VA_LIST   Marker;
-  CHAR16 *pNewString;
-  UINTN StringSize = 0;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  CHAR16 *pNewString = NULL;
 
-  if (pDestString == NULL || pFormatString == NULL) {
-    NVDIMM_DBG("NULL parameter provided");
-    return;
-  }
+  CHECK_NULL_ARG(pDestString, Finish);
+  CHECK_NULL_ARG(pFormatString, Finish);
 
   VA_START(Marker, pFormatString);
-  pNewString = CatVSPrint(L"", pFormatString, Marker);
+  CHECK_RESULT_MALLOC(pNewString, CatVSPrint(L"", pFormatString, Marker), Finish);
   VA_END(Marker);
 
-  if (StrLen(pDestString) > StrLen(pNewString)) {
-    StringSize = sizeof(CHAR16) * StrLen(pDestString);
-  } else {
-    StringSize = sizeof(CHAR16) * StrLen(pNewString);
-  }
+  // Don't care about the length of the source new string, as we are freeing it
+  CHECK_RESULT(StrCatS(pDestString, DestStringMaxLength, pNewString), Finish);
 
-  CopyMem_S(
-    pDestString,
-    StringSize,
-    pNewString,
-    StringSize
-  );
+Finish:
   FREE_POOL_SAFE(pNewString);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
 }
 
 /**

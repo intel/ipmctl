@@ -1056,33 +1056,26 @@ CatSPrintClean(
   ...
   );
 
+
 /**
-  Appends a formatted Unicode string to a Null-terminated Unicode string
-  and copies it to destination pointer.
+  Appends a formatted Unicode string with arguments to a pre-allocated
+  null-terminated Unicode string provided by the caller with length of
+  DestStringMaxLength.
 
-  This function appends a formatted Unicode string to the Null-terminated
-  Unicode string specified by String.   String is optional and may be NULL.
-  Storage for the formatted Unicode string returned is allocated using
-  AllocatePool().  The pointer to the appended string is copied to the
-  destination pointer.
-  The caller is responsible for freeing destination pointer.
-
-  If String is not NULL and not aligned on a 16-bit boundary, then ASSERT().
-  If FormatString is NULL, then ASSERT().
-  If FormatString is not aligned on a 16-bit boundary, then ASSERT().
-
-  @param[in] DestString     A Null-terminated Unicode string.
-  @param[in] FormatString   A Null-terminated Unicode format string.
-  @param[in] ...            The variable argument list whose contents are
-                            accessed based on the format string specified by
-                            FormatString.
-
+  @param[in] DestString          A Null-terminated Unicode string of size
+                                 DestStringMaxLength
+  @param[in] DestStringMaxLength The maximum number of CHAR16 characters
+                                 that will fit into DestString
+  @param[in] FormatString        A Null-terminated Unicode format string.
+  @param[in] ...                 The variable argument list whose contents are
+                                 accessed based on the format string specified by
+                                 FormatString.
 **/
-VOID
-EFIAPI
+EFI_STATUS
 CatSPrintNCopy(
-  IN OUT CHAR16 *DestString,
-  IN  CONST CHAR16 *FormatString,
+  IN OUT CHAR16 *pDestString,
+  IN     UINT16 DestStringMaxLength,
+  IN     CONST CHAR16 *pFormatString,
   ...
 );
 

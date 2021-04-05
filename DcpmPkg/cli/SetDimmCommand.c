@@ -166,8 +166,6 @@ SetDimm(
   UINT64 PackageSparing = 0;
   UINT64 DirtyShutDown = 0;
 
-  DIMM_INFO DimmInfo;
-
   NVDIMM_ENTRY();
 
   ZeroMem(DimmStr, sizeof(DimmStr));
@@ -374,7 +372,8 @@ SetDimm(
   GetPropertyValue(pCmd, CONFIRMPASSPHRASE_PROPERTY, &pConfirmPassphraseStatic);
 
   if (MasterOptionSpecified) {
-    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+    // DefaultOptionSpecified = Ignore Master Passphrase enabled check only when changing the master passphrase from the default on FIS >= 3.2 PMem modules
+    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount, DefaultOptionSpecified)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
       goto Finish;
@@ -472,18 +471,6 @@ SetDimm(
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INCOMPLETE_SYNTAX);
       goto Finish;
-    }
-
-    if ((SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE != SecurityOperation) &&
-      (DefaultOptionSpecified)) {
-      for (Index = 0; Index < DimmIdsCount; Index++) {
-        CHECK_RESULT((pNvmDimmConfigProtocol->GetDimm(pNvmDimmConfigProtocol, pDimmIds[Index], DIMM_INFO_CATEGORY_NONE, &DimmInfo)), Finish);
-        if (IsDefaultMasterPassphraseRestricted(DimmInfo)) {
-          ReturnCode = EFI_INVALID_PARAMETER;
-          PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DEFAULT_NOT_SUPPORTED_FIRMWARE_REV);
-          goto Finish;
-        }
-      }
     }
 
     OneOfPassphrasesIsEmpty = ((pPassphraseStatic != NULL && StrCmp(pPassphraseStatic, L"") == 0) ||

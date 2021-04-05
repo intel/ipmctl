@@ -983,8 +983,7 @@ CheckAllAndDisplayOptions(
 
   NVDIMM_ENTRY();
 
-  if (pDispOptions == NULL || ppAllowedDisplayValues == NULL || pCommand == NULL
-    || pCommand == NULL) {
+  if (pDispOptions == NULL || ppAllowedDisplayValues == NULL || pCommand == NULL) {
     NVDIMM_CRIT("NULL input parameter.\n");
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
@@ -2393,6 +2392,7 @@ AllDimmsInListInSupportedConfig(
   @param[in] AllDimmCount Size of the pAllDimms array
   @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
   @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
+  @param[in] SkipFIS32Dimms indicates that Dimms with FIS 3.2 or above should always pass
 
   @retval TRUE if all Dimms in pDimmsListToCheck array have master passphrase enabled
   @retval FALSE if at least one DIMM does not have master passphrase enabled
@@ -2402,7 +2402,8 @@ AllDimmsInListHaveMasterPassphraseEnabled(
   IN     DIMM_INFO *pAllDimms,
   IN     UINT32 AllDimmCount,
   IN     UINT16 *pDimmsListToCheck,
-  IN     UINT32 DimmsToCheckCount
+  IN     UINT32 DimmsToCheckCount,
+  IN     BOOLEAN SkipFIS32Dimms
   )
 {
   BOOLEAN MasterPassphraseEnabled = FALSE;
@@ -2425,7 +2426,16 @@ AllDimmsInListHaveMasterPassphraseEnabled(
       if (pAllDimms[AllDimmListIndex].DimmID == pDimmsListToCheck[DimmsToCheckIndex]) {
         DimmFound = TRUE;
         if (pAllDimms[AllDimmListIndex].MasterPassphraseEnabled == FALSE) {
-          goto Finish;
+          // starting in FIS 3.2, MasterPassphraseEnabled shows as false until the passphrase is changed from the default
+          if (SkipFIS32Dimms) {
+            if (((3 == pAllDimms[AllDimmListIndex].FwVer.FwApiMajor) && (2 > pAllDimms[AllDimmListIndex].FwVer.FwApiMinor)) ||
+              (2 >= pAllDimms[AllDimmListIndex].FwVer.FwApiMajor)) {
+              goto Finish;
+            }
+          }
+          else {
+            goto Finish;
+          }
         }
       }
     }

@@ -845,6 +845,7 @@ AllDimmsInListInSupportedConfig(
   @param[in] AllDimmCount Size of the pAllDimms array
   @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
   @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
+  @param[in] SkipFIS32Dimms indicates that Dimms with FIS 3.2 or above should always pass
 
   @retval TRUE if all Dimms in pDimmsListToCheck array have master passphrase enabled
   @retval FALSE if at least one DIMM does not have master passphrase enabled
@@ -854,7 +855,8 @@ AllDimmsInListHaveMasterPassphraseEnabled(
   IN     DIMM_INFO *pAllDimms,
   IN     UINT32 AllDimmCount,
   IN     UINT16 *pDimmsListToCheck,
-  IN     UINT32 DimmsToCheckCount
+  IN     UINT32 DimmsToCheckCount,
+  IN     BOOLEAN SkipFIS32Dimms
   );
 
 /**

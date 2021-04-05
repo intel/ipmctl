@@ -165,7 +165,8 @@ DeleteDimm(
   }
 
   if (MasterOptionSpecified) {
-    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+    // FALSE = Master passphrase must be enabled for FIS >= 3.2 PMem modules as well
+    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount, FALSE)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
       goto Finish;

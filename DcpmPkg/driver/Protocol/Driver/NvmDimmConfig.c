@@ -3277,9 +3277,15 @@ SetSecurityState(
         Master Passphrase count expired via NVM_ERR
       **/
       if (!(DimmSecurityState & SECURITY_MASK_MASTER_ENABLED)) {
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
-        ReturnCode = EFI_UNSUPPORTED;
-        goto Finish;
+        // starting with FIS 3.2 the enabled bit for master passphrase is not enabled until
+        // the master passphrase is changed from default so skip this check because this might
+        // be initial setting of the passphrase
+        if ( ! (((3 == pDimms[Index]->FwVer.FwApiMajor) && (2 <= pDimms[Index]->FwVer.FwApiMinor)) ||
+          (3 < pDimms[Index]->FwVer.FwApiMajor))) {
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
+          ReturnCode = EFI_UNSUPPORTED;
+          goto Finish;
+        }
       }
 
       if ((DimmSecurityState & SECURITY_MASK_MASTER_COUNTEXPIRED)) {

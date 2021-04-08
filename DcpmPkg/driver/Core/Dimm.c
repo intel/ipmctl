@@ -7046,17 +7046,26 @@ IsDimmManageable(
   IN  DIMM *pDimm
 )
 {
+  BOOLEAN DimmManageable = FALSE;
   if (pDimm == NULL)
   {
     return FALSE;
   }
 
-  return IsDimmManageableByValues(pDimm->SubsystemVendorId,
+  DimmManageable = IsDimmManageableByValues(pDimm->SubsystemVendorId,
     pDimm->FmtInterfaceCodeNum,
     pDimm->FmtInterfaceCode,
     pDimm->SubsystemDeviceId,
     pDimm->FwVer.FwApiMajor,
     pDimm->FwVer.FwApiMinor);
+
+  if (!DimmManageable) {
+    NVDIMM_ERR("Dimm 0x%x unmanageable! 0x%x, Num:0x%x, #0:0x%x, 0x%x, FIS %x.%x", pDimm->DeviceHandle, pDimm->SubsystemVendorId,
+      pDimm->FmtInterfaceCodeNum, pDimm->FmtInterfaceCode[0], pDimm->SubsystemDeviceId,
+      pDimm->FwVer.FwApiMajor, pDimm->FwVer.FwApiMinor);
+  }
+
+  return DimmManageable;
 }
 
 /**
@@ -7557,7 +7566,7 @@ FwCmdGetBsr(
   }
 
   CopyMem_S(pBsrValue, sizeof(*pBsrValue), pFwCmd->OutPayload, sizeof(UINT64));
-  NVDIMM_ERR("Bsr received is 0x%x", *pBsrValue);
+  NVDIMM_DBG("Bsr received is 0x%x", *pBsrValue);
 
   if ((*pBsrValue == MAX_UINT64_VALUE) || (*pBsrValue == 0)) {
     // Invalid values returned in BSR. Return failure

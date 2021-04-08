@@ -3035,6 +3035,9 @@ IsDimmInterfaceCodeSupportedByValues(
         break;
       }
     }
+    if (!Supported) {
+      NVDIMM_ERR("Supported Interface Format Code not found!");
+    }
   }
 
   return Supported;

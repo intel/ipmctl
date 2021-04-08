@@ -1,0 +1,33 @@
+#include <winver.h>
+
+ VS_VERSION_INFO VERSIONINFO
+  FILEVERSION @IPMCTL_VERSION_COMMA_STRING@
+  PRODUCTVERSION @IPMCTL_VERSION_COMMA_STRING@
+  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ #ifndef NDEBUG
+  FILEFLAGS 0
+ #else
+  FILEFLAGS VER_DEBUG
+ #endif
+  FILEOS VOS_NT_WINDOWS32
+  FILETYPE @VFT_TYPE@
+  FILESUBTYPE VFT2_UNKNOWN
+  BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+      BLOCK "04090000"
+      BEGIN
+        VALUE "FileDescription", "@NAME_RC@"
+        VALUE "FileVersion", "@IPMCTL_VERSION_STRING@"
+        VALUE "InternalName", "@NAME_RC@"
+        VALUE "LegalCopyright", "Copyright (C) 2021, Intel Corporation."
+        VALUE "OriginalFilename", "@NAME_RC_EXT@"
+        VALUE "ProductName", "@NAME_RC@"
+        VALUE "ProductVersion", "@IPMCTL_VERSION_STRING@"
+      END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+      VALUE "Translation", 0x409, 1200
+    END
+  END

@@ -49,7 +49,7 @@
 #define FORMAT_SHOW_ISET_ID                     L"0x%016llx"
 #define FORMAT_16STR                            L"%16s"
 #define FORMAT_INT64                            L"%ld"
-#define FORMAT_UINT64                           L"%ld"
+#define FORMAT_UINT64                           L"%llu"
 #define FORMAT_UINT64_HEX                       L"%016lx"
 #define FORMAT_UINT64_HEX_NOWIDTH               L"0x%llx"
 #define FORMAT_INT64                            L"%ld"

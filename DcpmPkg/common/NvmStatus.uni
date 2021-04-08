@@ -185,7 +185,7 @@
 
 #string STR_DCPMM_STATUS_ERR_GET_PCD_FAILED  #language en "Get Platform Config Data failed"
 
-#string STR_DCPMM_STATUS_ERR_ARS_IN_PROGRESS  #language en "An address range scrub operation is currently in progress"
+#string STR_DCPMM_STATUS_ERR_ARS_IN_PROGRESS  #language en "An address range scrub operation is currently in progress. Please try again after a few minutes."
 #string STR_DCPMM_STATUS_ERR_FWUPDATE_IN_PROGRESS  #language en "A firmware update operation is currently in progress"
 #string STR_DCPMM_STATUS_ERR_OVERWRITE_DIMM_IN_PROGRESS  #language en "An overwrite PMem module operation is currently in progress"
 #string STR_DCPMM_STATUS_ERR_UNKNOWN_LONG_OP_IN_PROGRESS  #language en "An unknown long operation is currently in progress"

@@ -2988,6 +2988,7 @@ SetSecurityState(
   DIMM *pCurrentDimm = NULL;
   LIST_ENTRY *pCurrentDimmNode = NULL;
   LIST_ENTRY *pDimmList = NULL;
+  UINT8 DimmARSStatus = 0;
 
   NVDIMM_ENTRY();
 
@@ -3232,6 +3233,14 @@ SetSecurityState(
           ReturnCode = EFI_INVALID_PARAMETER;
           goto Finish;
         }
+      }
+
+      ReturnCode = FwCmdGetARS(pDimms[Index], &DimmARSStatus);
+      if (LONG_OP_STATUS_IN_PROGRESS == DimmARSStatus) {
+        NVDIMM_ERR("ARS in progress.\n");
+        ResetCmdStatus(pCommandStatus, NVM_ERR_ARS_IN_PROGRESS);
+        ReturnCode = EFI_DEVICE_ERROR;
+        goto Finish;
       }
 
       ReturnCode = IsNamespaceOnDimms(&pDimms[Index], 1, &NamespaceFound);
@@ -8047,6 +8056,7 @@ SetOptionalConfigurationDataPolicy(
   DIMM *pDimms[MAX_DIMMS];
   UINT32 DimmsNum = 0;
   UINT32 Index = 0;
+  UINT8 DimmARSStatus = 0;
 
   SetMem(pDimms, sizeof(pDimms), 0x0);
   ZeroMem(&OptionalDataPolicyPayload, sizeof(OptionalDataPolicyPayload));
@@ -8082,6 +8092,15 @@ SetOptionalConfigurationDataPolicy(
     else {
       SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_NOT_SUPPORTED);
       continue;
+    }
+
+    ReturnCode = FwCmdGetARS(pDimms[Index], &DimmARSStatus);
+    if (LONG_OP_STATUS_IN_PROGRESS == DimmARSStatus) {
+      NVDIMM_ERR("ARS in progress.\n");
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ARS_IN_PROGRESS);
+      pCommandStatus->GeneralStatus = NVM_ERR_ARS_IN_PROGRESS;
+      ReturnCode = EFI_DEVICE_ERROR;
+      goto Finish;
     }
 
     ReturnCode = FwCmdSetOptionalConfigurationDataPolicy(pDimms[Index], &OptionalDataPolicyPayload);
@@ -10542,6 +10561,7 @@ InjectError(
     UINT32 SecurityState = 0;
     PT_PAYLOAD_GET_PACKAGE_SPARING_POLICY *pPayloadPackageSparingPolicy = NULL;
     UINT8 FwStatus = FW_SUCCESS;
+    UINT8 DimmARSStatus = 0;
 
     SetMem(pDimms, sizeof(pDimms), 0x0);
 
@@ -10719,6 +10739,13 @@ InjectError(
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_UNABLE_TO_GET_SECURITY_STATE);
           ReturnCode = EFI_INVALID_PARAMETER;
           continue;
+        }
+        ReturnCode = FwCmdGetARS(pDimms[Index], &DimmARSStatus);
+        if (LONG_OP_STATUS_IN_PROGRESS == DimmARSStatus) {
+          NVDIMM_ERR("ARS in progress.\n");
+          SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_ARS_IN_PROGRESS);
+          ReturnCode = EFI_DEVICE_ERROR;
+          goto Finish;
         }
         ReturnCode = FwCmdInjectError(pDimms[Index], SubopErrorPoison, (VOID *) pInputPayload, &FwStatus);
         if (EFI_ERROR(ReturnCode)) {

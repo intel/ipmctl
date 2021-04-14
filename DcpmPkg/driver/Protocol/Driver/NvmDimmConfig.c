@@ -6884,6 +6884,8 @@ LoadGoalConfig(
     goto Finish;
   }
 
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
+
   if (!gNvmDimmData->PMEMDev.DimmSkuConsistency) {
     ReturnCode = EFI_UNSUPPORTED;
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU);

@@ -6988,6 +6988,8 @@ LoadGoalConfig(
   }
 
   CHECK_RESULT(BlockMixedSku(pCommandStatus), Finish);
+  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
+
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
       REQUIRE_DCPMMS_MANAGEABLE |

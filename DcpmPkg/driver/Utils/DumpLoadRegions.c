@@ -666,11 +666,8 @@ ValidateAndPrepareLoadConfig(
       ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE);
       goto FinishClean;
     } else {
-      // This step rounds up the percentage to the ceiling. Example: if the percent says 26.3, we will convert
-      // that to 27 before giving it to driver as the driver will adjust the capacity later rounding it down.
-      *pVolatilePercent = (UINT32) ((ROUNDUP((VolatileCapacity * 100), DimmsCapacity)) / DimmsCapacity);
-
-      *pReservedPercent = (UINT32) ((ROUNDDOWN((ReservedCapacity * 100), DimmsCapacity)) / DimmsCapacity);
+      *pVolatilePercent = (UINT32) (ROUND_CLOSEST((VolatileCapacity * 100), DimmsCapacity));
+      *pReservedPercent = (UINT32) (ROUND_CLOSEST((ReservedCapacity * 100), DimmsCapacity));
     }
 
     if (Reserved) {

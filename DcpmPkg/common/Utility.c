@@ -1922,12 +1922,12 @@ SecureErasePolicyOptInToString(
   CHAR16 *pOptIntString = NULL;
   CHAR16 *pTempStr = NULL;
   switch (OptInValue) {
-  case SECURE_ERASE_NO_MASTER_PASSPHRASE:
+  case SECURE_ERASE_NOT_OPTED_IN:
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_NO_MASTER_PASSPHRASE), NULL);
     pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);
     break;
-  case SECURE_ERASE_MASTER_PASSPHRASE_ENABLED:
+  case SECURE_ERASE_OPTED_IN:
     pTempStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_SEC_OPTIN_SECURE_ERASE_MASTER_PASSPHRASE_ENABLED), NULL);
     pOptIntString = CatSPrintClean(pOptIntString, FORMAT_STR, pTempStr);
     FREE_POOL_SAFE(pTempStr);

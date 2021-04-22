@@ -902,8 +902,8 @@ do {                                                                            
 #define S3_RESUME_UNSECURE_S3 0x1
 #define SVN_DOWNGRADE_DISABLE 0x0
 #define SVN_DOWNGRADE_ENABLE 0x1
-#define SECURE_ERASE_NO_MASTER_PASSPHRASE      0x0
-#define SECURE_ERASE_MASTER_PASSPHRASE_ENABLED 0x1
+#define SECURE_ERASE_NOT_OPTED_IN 0x0
+#define SECURE_ERASE_OPTED_IN 0x1
 #define FW_ACTIVATE_DISABLED 0x0
 #define FW_ACTIVATE_ENABLED 0x1
 

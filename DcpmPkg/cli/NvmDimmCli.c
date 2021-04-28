@@ -986,6 +986,10 @@ EFI_STATUS showHelp(struct Command *pCmd)
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 *pHelp = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
+#ifdef OS_BUILD
+  UINT8 Index = 0;
+  BOOLEAN FormatAsESXErrorMsg = FALSE;
+#endif
 
   NVDIMM_ENTRY();
 
@@ -1006,7 +1010,40 @@ EFI_STATUS showHelp(struct Command *pCmd)
 
   if (pHelp != NULL) {
 
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pHelp);
+#ifdef OS_BUILD
+    if (pPrinterCtx != NULL) {
+#endif
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pHelp);
+#ifdef OS_BUILD
+    }
+    else {
+      // if Printer is not setup then may need to do special handling for ESX
+      if ((pPrinterCtx == NULL) &&
+        (pCmd != NULL) &&
+        (pCmd->options != NULL)) {
+        for (Index = 0; Index < MAX_OPTIONS; Index++) {
+
+          if ((StrICmp(pCmd->options[Index].OptionName, OUTPUT_OPTION) == 0) ||
+            (StrICmp(pCmd->options[Index].OptionNameShort, OUTPUT_OPTION_SHORT) == 0)) {
+
+            if ((StrICmp(pCmd->options[Index].pOptionValueStr, OUTPUT_OPTION_ESX_XML) == 0) ||
+              (StrICmp(pCmd->options[Index].pOptionValueStr, OUTPUT_OPTION_ESX_TABLE_XML) == 0)) {
+              FormatAsESXErrorMsg = TRUE;
+              break;
+            }
+          }
+        }
+      }
+      // Only do alternative output if for ESX to be sure not to change output for others
+      if (FormatAsESXErrorMsg) {
+        PrintErrorMsg(pHelp, FormatAsESXErrorMsg);
+      }
+      else
+      {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pHelp);
+      }
+    }
+#endif
     FreePool(pHelp);
   }
 

@@ -1740,7 +1740,6 @@ FillSmbiosInfo(
 );
 
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
 /**
   Gets value of PcdDebugPrintErrorLevel for the pmem driver
 
@@ -1772,7 +1771,6 @@ SetDriverDebugPrintErrorLevel(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT32 ErrorLevel
 );
-#endif //MDEPKG_NDEBUG
 #endif //OS_BUILD
 
 #endif /* _NVMDIMM_CONFIG_H_ */

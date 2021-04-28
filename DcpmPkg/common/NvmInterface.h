@@ -1638,7 +1638,6 @@ EFI_STATUS
 );
 
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
 /**
   Gets value of PcdDebugPrintErrorLevel for the pmem driver
 
@@ -1670,7 +1669,6 @@ EFI_STATUS
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
   IN     UINT32 ErrorLevel
 );
-#endif //MDEPKG_NDEBUG
 #endif //OS_BUILD
 
 /**
@@ -1736,10 +1734,8 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_CONFIG_GET_COMMAND_ACCESS_POLICY GetCommandAccessPolicy;
   EFI_DCPMM_CONFIG_GET_COMMAND_EFFECT_LOG GetCommandEffectLog;
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
   EFI_DCPMM_PBR_GET_DRIVER_DEBUG_PRINT_ERROR_LEVEL GetDriverDebugPrintErrorLevel;
   EFI_DCPMM_PBR_SET_DRIVER_DEBUG_PRINT_ERROR_LEVEL SetDriverDebugPrintErrorLevel;
-#endif //MDEPKG_NDEBUG
 #endif //OS_BUILD
 };
 

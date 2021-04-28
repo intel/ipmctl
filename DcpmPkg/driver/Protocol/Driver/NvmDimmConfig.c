@@ -96,9 +96,7 @@ EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS gTransportAttribs = { FisTransportAuto, FisTr
 #ifndef OS_BUILD
 DCPMM_ARS_ERROR_RECORD * gArsBadRecords = NULL;
 INT32 gArsBadRecordsCount = ARS_LIST_NOT_INITIALIZED;
-#ifndef MDEPKG_NDEBUG
 extern volatile   UINT32  _gPcd_BinaryPatch_PcdDebugPrintErrorLevel;
-#endif //MDEPKG_NDEBUG
 #endif
 
 /**
@@ -165,10 +163,8 @@ EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetCommandAccessPolicy,
   GetCommandEffectLog,
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
   GetDriverDebugPrintErrorLevel,
-  SetDriverDebugPrintErrorLevel
-#endif //MDEPKG_NDEBUG
+  SetDriverDebugPrintErrorLevel,
 #endif //OS_BUILD
 };
 
@@ -11299,7 +11295,6 @@ Finish:
 }
 
 #ifndef OS_BUILD
-#ifndef MDEPKG_NDEBUG
 /**
   Gets value of PcdDebugPrintErrorLevel for the pmem driver
 
@@ -11367,5 +11362,4 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-#endif //MDEPKG_NDEBUG
 #endif //OS_BUILD

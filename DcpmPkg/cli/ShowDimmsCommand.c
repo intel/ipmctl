@@ -579,7 +579,12 @@ ShowDimms(
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
       goto Finish;
     }
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
+    if (ReturnCode != EFI_NO_RESPONSE) {
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
+    } else {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+      PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Show dimm", L" on", pCommandStatus);
+    }
     goto Finish;
   }
 

@@ -310,7 +310,9 @@ SetCmdStatus(
   IN     NVM_STATUS Status
   );
 
-#define NVM_ERROR(a)   ((a) != NVM_SUCCESS && (a) != NVM_SUCCESS_FW_RESET_REQUIRED)
+#define NVM_ERROR(a)   ((a) != NVM_SUCCESS &&                                   \
+                        (a) != NVM_SUCCESS_FW_RESET_REQUIRED &&                 \
+                        (a) != NVM_SUCCESS_REQUIRES_POWER_CYCLE)
 
 #define THRESHOLD_UNDEFINED     0x7FFF                    // INT16 max positive value is treated as undefined value
 #define ENABLED_STATE_UNDEFINED 0xFFUL                    // UINT8 max value is treated as undefined value

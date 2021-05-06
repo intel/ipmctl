@@ -149,6 +149,7 @@
 #string STR_DCPMM_STATUS_ERR_INCOMPATIBLE_SKU_ON_MODULE #language en "This module's SKU is incompatible with the SKU(s) of other installed module(s)."
 
 #string STR_DCPMM_STATUS_ERR_INJECTION_BIOS_KNOB_NOT_ENABLED #language en "The BIOS error injection knob is not enabled. Please enable and try again."
+#string STR_DCPMM_STATUS_SUCCESS_REQUIRES_POWER_CYCLE #language en "Success. A power cycle is required for all changes to take effect."
 
 #string STR_DCPMM_STATUS_ERR_NONE_DIMM_FULFILLS_CRITERIA  #language en "No PMem module in the region fulfills requested properties."
 #string STR_DCPMM_STATUS_ERR_NONE_ISET_FULFILLS_CRITERIA #language en "App Direct Namespace with requested properties can't be created on the Region."

@@ -596,6 +596,9 @@ GetSingleNvmStatusCodeMessage(
   case NVM_ERR_FILE_NOT_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_FILE_NOT_FOUND), NULL);
 
+  case NVM_SUCCESS_REQUIRES_POWER_CYCLE:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_SUCCESS_REQUIRES_POWER_CYCLE), NULL);
+
   case NVM_ERR_MASTER_PASSPHRASE_NOT_SET:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_MASTER_PASSPHRASE_NOT_SET), NULL);
 
@@ -645,10 +648,13 @@ GetAllNvmStatusCodeMessages(
       if (Index == NVM_SUCCESS || Index == NVM_SUCCESS_FW_RESET_REQUIRED ||
         Index == NVM_ERR_IMAGE_EXAMINE_INVALID || Index == NVM_SUCCESS_IMAGE_EXAMINE_OK ||
         Index == NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION ||
-        Index == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
+        Index == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED ||
+        Index == NVM_SUCCESS_REQUIRES_POWER_CYCLE) {
+        // Don't print an "Error" string prefix
         pStatusStr = CatSPrintClean(pStatusStr, L"" FORMAT_STR L"" FORMAT_STR_NL, pPrefixString, pSingleStatusStr);
       }
       else {
+        // Do print an "Error" string prefix
         pErrorLevelStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERROR), NULL);
         pStatusStr = CatSPrintClean(pStatusStr, L"" FORMAT_STR L"" FORMAT_STR L" %d - " FORMAT_STR_NL,
           pPrefixString,

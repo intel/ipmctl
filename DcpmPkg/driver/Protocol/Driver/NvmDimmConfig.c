@@ -10701,8 +10701,13 @@ InjectError(
         ReturnCode = EFI_DEVICE_ERROR;
         continue;
       }
-      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+      if (ClearStatus == 1) {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS_REQUIRES_POWER_CYCLE);
+      } else {
+        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
+      }
     }
+
     break;
     case ERROR_INJ_POISON:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_POISON));

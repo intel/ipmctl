@@ -802,9 +802,6 @@ SetDimm(
     ReturnCode = pNvmDimmConfigProtocol->InjectError(pNvmDimmConfigProtocol, pDimmIds, DimmIdsCount,
     (UINT8)ErrInjectType, (UINT8)ClearStatus, &TemperatureValue,
     &PoisonAddressValue, (UINT8 *)&PoisonTypeValue, (UINT8 *)&PercentageRemainingValue, pCommandStatus);
-    if (EFI_ERROR(ReturnCode)) {
-      goto FinishCommandStatusSet;
-    }
   }
 
 FinishCommandStatusSet:

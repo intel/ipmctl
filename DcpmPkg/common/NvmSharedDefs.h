@@ -69,6 +69,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE              = 73,   ///< Error: Capacity out of range
   NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE        = 74,   ///< Error: Sensor invalid value
   NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED     = 75,   ///< Error: BIOS error injection knob is not enabled
+  NVM_SUCCESS_REQUIRES_POWER_CYCLE                  = 76,   ///< Success. A power cycle is required for all changes to take effect.
 
   NVM_ERR_MEDIA_NOT_ACCESSIBLE                      = 87,   ///< Error: Media not accessible
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled

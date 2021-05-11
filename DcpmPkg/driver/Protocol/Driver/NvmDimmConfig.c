@@ -7315,11 +7315,17 @@ Finish:
 
   ReturnCode = ADNamespaceMinAndMaxAvailableSizeOnIS(pIS, &MinSize, &MaxSize);
   if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode == EFI_NO_RESPONSE) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
     goto Finish;
   }
 
   ReturnCode = GetRegion(pThis, RegionId, &Region, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
+    if (ReturnCode == EFI_NO_RESPONSE) {
+      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+    }
     goto Finish;
   }
 
@@ -7379,6 +7385,9 @@ Finish:
     /** Find the free capacity**/
     ReturnCode = FindADMemmapRangeInIS(pIS, MAX_UINT64_VALUE, &AppDirectRange);
     if (EFI_ERROR(ReturnCode) && ReturnCode != EFI_NOT_FOUND) {
+      if (ReturnCode == EFI_NO_RESPONSE) {
+        ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
+      }
       goto Finish;
     }
     ReturnCode = EFI_SUCCESS;

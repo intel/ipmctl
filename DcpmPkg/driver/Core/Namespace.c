@@ -1246,7 +1246,7 @@ ReadLabelStorageArea(
   else {
     ReturnCode = FwCmdGetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID, &pRawData);
   }
-  if (ReturnCode == EFI_NO_MEDIA) {
+  if ((ReturnCode == EFI_NO_MEDIA) || (ReturnCode == EFI_NO_RESPONSE)) {
     goto Finish;
   }
 
@@ -2424,6 +2424,11 @@ InitializeNamespaces(
       pDimm->LsaStatus = LSA_NOT_INIT;
       continue;
     }
+    else if (TempReturnCode == EFI_NO_RESPONSE) {
+      ReturnCode = TempReturnCode;
+      NVDIMM_DBG("DIMM 0x%x did not respond to attempt to read LSA", pDimm->DeviceHandle.AsUint32);
+      goto Finish;
+    }
     else if (EFI_ERROR(TempReturnCode)) {
       ReturnCode = TempReturnCode;
       pDimm->LsaStatus = LSA_CORRUPTED;
@@ -2459,6 +2464,7 @@ InitializeNamespaces(
     pDimm->LsaStatus = LSA_OK;
   }
 
+Finish:
   //cleanup cache
   LIST_FOR_EACH(pNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pNode);

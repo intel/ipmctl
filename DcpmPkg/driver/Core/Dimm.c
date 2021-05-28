@@ -3045,6 +3045,7 @@ FwCmdUpdateFw(
   UINT8 ArsStatus = 0;
   UINT8 Percent = 0;
   BOOLEAN LargePayloadAvailable = FALSE;
+  BOOLEAN RetryDueToARS = FALSE;
 
   if (NULL == pDimm || NULL == pImageBuffer || NULL == pNvmStatus) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -3112,9 +3113,14 @@ FwCmdUpdateFw(
     if (EFI_ERROR(ReturnCode)) {
       // Try to cancel Address Range Scrub (ARS) if it is in progress
       // on the DCPMM (and is returning FW_DEVICE_BUSY as a result).
-      // There's no other reason that we should retry a current packet at
-      // this layer (there's no noisy channel that we need to account for)
-      if (pFwCmd->Status == FW_DEVICE_BUSY) {
+      // However for Purley BIOS, it can intercept a failed fw update command
+      // due to ARS, so it will return DSM_RETRY_SUGGESTED. We should honor
+      // that as well and retry after cancelling ARS.
+      RetryDueToARS = pFwCmd->Status == FW_DEVICE_BUSY;
+#ifdef OS_BUILD
+      RetryDueToARS |= pFwCmd->DsmStatus == DSM_RETRY_SUGGESTED;
+#endif
+      if (RetryDueToARS) {
         if (++CurrentRetryCount >= MAX_FW_UPDATE_RETRY_ON_DEV_BUSY) {
           *pNvmStatus = NVM_ERR_BUSY_DEVICE;
           ReturnCode = EFI_ABORTED;

@@ -185,7 +185,6 @@ CheckIsNonPorCrossTileSupportedConfig(
 
   @param[out] piMCsNumPerDie Pointer to number of iMCs per die
   @param[out] pChannelsNumPeriMC Pointer to number of channels per iMC
-  @param[out] pTopologyCanBeDetermined Pointer to flag indicating if topology can be determined
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -194,8 +193,7 @@ CheckIsNonPorCrossTileSupportedConfig(
 EFI_STATUS
 RetrievePlatformTopologyFromPmtt(
   OUT UINT32 *piMCsNumPerDie,
-  OUT UINT32 *pChannelsNumPeriMC,
-  OUT BOOLEAN *pTopologyCanBeDetermined
+  OUT UINT32 *pChannelsNumPeriMC
   );
 
 /**

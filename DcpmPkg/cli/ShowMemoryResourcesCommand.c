@@ -24,8 +24,8 @@
 
  /*
  *  PRINTER TABLE ATTRIBUTES (5 columns)
- *                |     DDR    |   PMemModule  |    Total   |
- *   ===================================================
+ *                | DDR               | PMemModule          | Total            |
+ *   ===========================================================================
  *   Volatile     | Volatile DDR Mem  | Volatile PMem       | Volatile Mem     |
  *   AppDirect    | N/A               | AppDirect Mem       | AppDirect Mem    |
  *   Cache        | DDR Cache Mem     | N/A                 | Cache Mem        |
@@ -163,15 +163,15 @@ ShowMemoryResources(
     goto Finish;
   }
 
+  // Ignore errors from this! Always print what we can
   ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
   if (EFI_ERROR(ReturnCode)) {
     if (MemoryResourcesInfo.PcdInvalid) {
       pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING), NULL);
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
-      goto Finish;
     }
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
-    goto Finish;
+    // Ignore errors. Always print what we can
+    ReturnCode = EFI_SUCCESS;
   }
 
   /* Print Volatile Capacities */
@@ -190,7 +190,12 @@ ShowMemoryResources(
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PMEM_MODULE_PASCAL_CASE_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
   // Print Total Volatile Capacity
-  TotalCapacity = MemoryResourcesInfo.DDRVolatileCapacity + MemoryResourcesInfo.VolatileCapacity;
+  if (MemoryResourcesInfo.DDRVolatileCapacity == ACPI_TABLE_VALUE_UNKNOWN ||
+      MemoryResourcesInfo.VolatileCapacity == ACPI_TABLE_VALUE_UNKNOWN) {
+    TotalCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  } else {
+    TotalCapacity = MemoryResourcesInfo.DDRVolatileCapacity + MemoryResourcesInfo.VolatileCapacity;
+  }
   TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
@@ -236,13 +241,25 @@ ShowMemoryResources(
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DDR_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
   // Print PMem module Inaccessible Capacity
-  DcpmmInaccessibleCapacity = MemoryResourcesInfo.InaccessibleCapacity + MemoryResourcesInfo.ReservedCapacity + MemoryResourcesInfo.UnconfiguredCapacity;
+  if (MemoryResourcesInfo.InaccessibleCapacity == ACPI_TABLE_VALUE_UNKNOWN ||
+      MemoryResourcesInfo.ReservedCapacity == ACPI_TABLE_VALUE_UNKNOWN ||
+      MemoryResourcesInfo.UnconfiguredCapacity == ACPI_TABLE_VALUE_UNKNOWN) {
+    DcpmmInaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  } else {
+    DcpmmInaccessibleCapacity = MemoryResourcesInfo.InaccessibleCapacity + MemoryResourcesInfo.ReservedCapacity + MemoryResourcesInfo.UnconfiguredCapacity;
+  }
   TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, DcpmmInaccessibleCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PMEM_MODULE_PASCAL_CASE_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
   // Print Total Inaccessible Capacity
-  TotalCapacity = MemoryResourcesInfo.DDRInaccessibleCapacity + DcpmmInaccessibleCapacity;
+  // If one of the elements is unknown, then the total should be unknown too
+  if (MemoryResourcesInfo.DDRInaccessibleCapacity == ACPI_TABLE_VALUE_UNKNOWN ||
+     DcpmmInaccessibleCapacity == ACPI_TABLE_VALUE_UNKNOWN) {
+    TotalCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  } else {
+    TotalCapacity = MemoryResourcesInfo.DDRInaccessibleCapacity + DcpmmInaccessibleCapacity;
+  }
   TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);
@@ -264,7 +281,13 @@ ShowMemoryResources(
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, PMEM_MODULE_PASCAL_CASE_STR, pCapacityStr);
   FREE_POOL_SAFE(pCapacityStr);
   // Print Total Physical Capacity
-  TotalCapacity = MemoryResourcesInfo.DDRRawCapacity + MemoryResourcesInfo.RawCapacity;
+  // If one of the elements is unknown, then the total should be unknown too
+  if (MemoryResourcesInfo.DDRRawCapacity == ACPI_TABLE_VALUE_UNKNOWN ||
+      MemoryResourcesInfo.RawCapacity == ACPI_TABLE_VALUE_UNKNOWN) {
+    TotalCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  } else {
+    TotalCapacity = MemoryResourcesInfo.DDRRawCapacity + MemoryResourcesInfo.RawCapacity;
+  }
   ReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, TotalCapacity, UnitsToDisplay, TRUE, &pCapacityStr);
   KEEP_ERROR(ReturnCode, TempReturnCode);
   PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, TOTAL_STR, pCapacityStr);

@@ -54,7 +54,7 @@ GetObjectTypeString(
 
 /**
   Create command status as with specified command message.
-  Function displays per DIMM status if such exists and
+  Function displays per PMem module status if such exists and
   summarizing status for whole command. Memory allocated
   for status message and command status is freed after
   status is displayed.
@@ -608,6 +608,9 @@ GetSingleNvmStatusCodeMessage(
   case NVM_ERR_INIT_FAILED_NO_MODULES_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_INITIALIZATION_FAILED_NO_MODULES), NULL);
 
+  case NVM_WARN_PMTT_TABLE_NOT_FOUND:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_PMTT_TABLE_NOT_FOUND), NULL);
+
   default:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_DEFAULT), NULL);
   }
@@ -649,6 +652,7 @@ GetAllNvmStatusCodeMessages(
         Index == NVM_ERR_IMAGE_EXAMINE_INVALID || Index == NVM_SUCCESS_IMAGE_EXAMINE_OK ||
         Index == NVM_ERR_IMAGE_EXAMINE_LOWER_VERSION ||
         Index == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED ||
+        Index == NVM_WARN_PMTT_TABLE_NOT_FOUND ||
         Index == NVM_SUCCESS_REQUIRES_POWER_CYCLE) {
         // Don't print an "Error" string prefix
         pStatusStr = CatSPrintClean(pStatusStr, L"" FORMAT_STR L"" FORMAT_STR_NL, pPrefixString, pSingleStatusStr);

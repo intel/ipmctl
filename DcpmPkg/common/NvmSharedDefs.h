@@ -222,6 +222,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_MASTER_PASSPHRASE_NOT_SET                 = 320,  ///< Error: Master Passphrase is enabled but not set.
   NVM_ERR_INCOMPATIBLE_SOFTWARE_REVISION            = 321,  ///< Error: This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl.
   NVM_ERR_INIT_FAILED_NO_MODULES_FOUND              = 322,  ///< Error: Initialization failed. No PMem modules in the system.
+  NVM_WARN_PMTT_TABLE_NOT_FOUND                     = 323,  ///< PMTT table is not found. BIOS might reject goal request upon reboot for SKU limit or NM:FM violation
   NVM_LAST_STATUS_VALUE
 } NvmStatusCode;
 

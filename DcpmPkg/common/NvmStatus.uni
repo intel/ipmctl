@@ -332,3 +332,5 @@
 #string STR_DCPMM_STATUS_ERR_INCOMPATIBLE_SOFTWARE_REVISION #language en "This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl."
 
 #string STR_DCPMM_STATUS_ERR_INITIALIZATION_FAILED_NO_MODULES #language en "Initialization failed. No PMem modules in the system."
+
+#string STR_DCPMM_STATUS_WARN_PMTT_TABLE_NOT_FOUND #language en "PMTT table is not found. BIOS might reject goal request upon reboot for SKU limit or NM:FM violation"

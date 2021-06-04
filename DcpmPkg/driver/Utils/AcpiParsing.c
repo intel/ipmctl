@@ -13,6 +13,11 @@
 #include <ShowAcpi.h>
 #include <NvmDimmDriver.h>
 
+
+// 2 iMC and 3 channels each - Purley
+#define IMCS_PER_DIE_2_3                2
+#define CHANNELS_PER_IMC_2_3            3
+
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 GUID gSpaRangeVolatileRegionGuid = SPA_RANGE_VOLATILE_REGION_GUID;
@@ -96,7 +101,6 @@ ParseNfitTable(
     NVDIMM_DBG("The checksum of NFIT table is invalid.");
     goto Finish;
   }
-
 
   if (IS_NFIT_REVISION_INVALID(pNFit->Header.Revision)) {
     NVDIMM_DBG("NFIT table revision is invalid");
@@ -629,6 +633,7 @@ GetLogicalSocketIdFromPmtt(
   UINT32 Index = 0;
   UINT32 NoOfMemoryDevices = 0;
   BOOLEAN Found = FALSE;
+  ParsedPmttHeader *pPmttHead = NULL;
 
   NVDIMM_ENTRY();
 
@@ -637,56 +642,46 @@ GetLogicalSocketIdFromPmtt(
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
+  // Only PMTT >= 0.2 are parsed. Anything else is NULL
+  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
 
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT Table");
+  if (pPmttHead == NULL) {
+    // If the parsed PMTT table is missing, we are on a Purley platform and the logical
+    // socket is the same as a physical socket. No changes needed
+    *pLogicalSocketId = SocketId;
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
-    //If not a Multi-die socket, Logical Socket will be same as Socket ID
-    *pLogicalSocketId = SocketId;
+  for (Index = 0; Index < pPmttHead->SocketsNum; Index++) {
+    if (SocketId == pPmttHead->ppSockets[Index]->SocketId) {
+      Found = TRUE;
+      break;
+    }
+    NoOfMemoryDevices += pPmttHead->ppSockets[Index]->Header.NoOfMemoryDevices;
   }
-  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    if (gNvmDimmData->PMEMDev.pPmttHead == NULL || gNvmDimmData->PMEMDev.pPmttHead->SocketsNum == 0) {
-      NVDIMM_DBG("Incorrect PMTT table");
-      goto Finish;
-    }
-    PMTT_TABLE2 *pPmtt = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
-    if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPmtt)) {
-      for (Index = 0; Index < gNvmDimmData->PMEMDev.pPmttHead->SocketsNum; Index++) {
-        if (SocketId == gNvmDimmData->PMEMDev.pPmttHead->ppSockets[Index]->SocketId) {
-          Found = TRUE;
-          break;
-        }
-        NoOfMemoryDevices += gNvmDimmData->PMEMDev.pPmttHead->ppSockets[Index]->Header.NoOfMemoryDevices;
-      }
 
-      if (Found) {
-        Found = FALSE;
-        for (Index = 0; Index < gNvmDimmData->PMEMDev.pPmttHead->DiesNum; Index++) {
-          if (DieId == gNvmDimmData->PMEMDev.pPmttHead->ppDies[Index]->DeviceID) {
-            *pLogicalSocketId = NoOfMemoryDevices + DieId;
-            Found = TRUE;
-            break;
-          }
-        }
-      }
-      else {
-        NVDIMM_DBG("Socket ID not found");
-        goto Finish;
-      }
-    }
-    else {
-      NVDIMM_DBG("Unexpected PMTT table revision");
-      goto Finish;
-    }
+  if (!Found) {
+    NVDIMM_DBG("Socket ID not found");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
 
-    if (!Found) {
-      NVDIMM_DBG("Die ID not found");
-      goto Finish;
+  // Searching for matching Die ID
+  // Reset Found to FALSE again (from TRUE)
+  Found = FALSE;
+  for (Index = 0; Index < pPmttHead->DiesNum; Index++) {
+    if (DieId == pPmttHead->ppDies[Index]->DeviceID) {
+      *pLogicalSocketId = NoOfMemoryDevices + DieId;
+      Found = TRUE;
+      break;
     }
+  }
+
+  if (!Found) {
+    NVDIMM_DBG("Die ID not found");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   ReturnCode = EFI_SUCCESS;
@@ -711,8 +706,7 @@ CheckIsNonPorCrossTileSupportedConfig(
   OUT  BOOLEAN *pNonPorCrossTileSupportedConfig
 )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  TABLE_HEADER *pTable = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   ParsedPmttHeader *pPmttHead = NULL;
   BOOLEAN CrossTileCachingSupported = FALSE;
 
@@ -723,6 +717,7 @@ CheckIsNonPorCrossTileSupportedConfig(
     goto Finish;
   }
 
+  // Default value is false, this feature isn't supported
   *pNonPorCrossTileSupportedConfig = FALSE;
 
   ReturnCode = CheckIsCrossTileCachingSupported(&CrossTileCachingSupported);
@@ -735,24 +730,12 @@ CheckIsNonPorCrossTileSupportedConfig(
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT Table");
-    goto Finish;
-  }
-
-  /**
-    Cross-tile caching is not supported on Purley platforms (PMTT Rev: 0x1)
-    pPmttHead is NULL for older PMTT revisions
-  **/
-  if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    goto Finish;
-  }
-
   pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
   if (NULL == pPmttHead) {
-    ReturnCode = EFI_NOT_FOUND;
     NVDIMM_DBG("Pmtt head not found.");
+    // This feature is not supported on older platforms (NULL PMTT or 0.1 PMTT)
+    // Leave the supported field as false and return success
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
@@ -760,13 +743,12 @@ CheckIsNonPorCrossTileSupportedConfig(
     Manufacturing 1+1 internal only non-por config
     BIOS allows this config only when BIOS knob for Enforce Population POR is disabled and cross-tiling caching is supported
   **/
-  if ((gNvmDimmData->PMEMDev.pPmttHead->DDRModulesNum == 1) && (gNvmDimmData->PMEMDev.pPmttHead->DCPMModulesNum == 1) &&
-    (gNvmDimmData->PMEMDev.pPmttHead->ppDDRModules[0]->MemControllerId != gNvmDimmData->PMEMDev.pPmttHead->ppDCPMModules[0]->MemControllerId)) {
+  if ((pPmttHead->DDRModulesNum == 1) && (pPmttHead->DCPMModulesNum == 1) &&
+    (pPmttHead->ppDDRModules[0]->MemControllerId != pPmttHead->ppDCPMModules[0]->MemControllerId)) {
     *pNonPorCrossTileSupportedConfig = TRUE;
   }
 
 Finish:
-  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -776,7 +758,6 @@ Finish:
 
   @param[out] piMCsNumPerDie Pointer to number of iMCs per die
   @param[out] pChannelsNumPeriMC Pointer to number of channels per iMC
-  @param[out] pTopologyCanBeDetermined Pointer to flag indicating if topology can be determined
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -785,50 +766,34 @@ Finish:
 EFI_STATUS
 RetrievePlatformTopologyFromPmtt(
   OUT UINT32 *piMCsNumPerDie,
-  OUT UINT32 *pChannelsNumPeriMC,
-  OUT BOOLEAN *pTopologyCanBeDetermined
+  OUT UINT32 *pChannelsNumPeriMC
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-  TABLE_HEADER *pTable = NULL;
   ParsedPmttHeader *pPmttHead = NULL;
 
   NVDIMM_ENTRY();
 
-  if (piMCsNumPerDie == NULL || pChannelsNumPeriMC == NULL ||
-    pTopologyCanBeDetermined == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
+  CHECK_NULL_ARG(piMCsNumPerDie, Finish);
+  CHECK_NULL_ARG(pChannelsNumPeriMC, Finish);
 
-  *pTopologyCanBeDetermined = FALSE;
-  *piMCsNumPerDie = 0;
-  *pChannelsNumPeriMC = 0;
+  // Default to Purley configuration
+  *piMCsNumPerDie = IMCS_PER_DIE_2_3;
+  *pChannelsNumPeriMC = CHANNELS_PER_IMC_2_3;
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT Table");
-    goto Finish;
-  }
-
-  if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    NVDIMM_DBG("Exact topology cannot be determined from PMTT.");
-    goto Finish;
-  }
-
+  // Use the pre-parsed PMTT table (0.2 only, from driver init) for determining the true value
+  // since we don't need to parse everything again
   pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
   if (NULL == pPmttHead) {
-    ReturnCode = EFI_NOT_FOUND;
-    NVDIMM_DBG("Pmtt head not found.");
+    ReturnCode = EFI_SUCCESS;
+    NVDIMM_DBG("On Purley platform w/ either valid or missing PMTT, using Purley topology");
     goto Finish;
   }
 
-  *pTopologyCanBeDetermined = TRUE;
   *piMCsNumPerDie = pPmttHead->iMCsNumPerDie;
   *pChannelsNumPeriMC = pPmttHead->ChannelsNumPeriMC;
 
 Finish:
-  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

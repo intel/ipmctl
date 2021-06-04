@@ -14,10 +14,6 @@
 #define DIMMS_PER_CHANNEL                 2
 #define INTERLEAVE_BY_ONE_BITMAP_IMC0_CH0  1
 
-// 2 iMC and 3 channels each - purley
-#define IMCS_PER_CPU_2_3                2
-#define CHANNELS_PER_IMC_2_3            3
-
 
 /**
   Get the topology and InterleaveSetMap Info based on the processor type

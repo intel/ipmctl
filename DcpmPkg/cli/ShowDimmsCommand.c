@@ -577,15 +577,11 @@ ShowDimms(
     if (MemoryResourcesInfo.PcdInvalid) {
       pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING), NULL);
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
-      goto Finish;
     }
-    if (ReturnCode != EFI_NO_RESPONSE) {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Error: GetMemoryResourcesInfo Failed\n");
-    } else {
-      ResetCmdStatus(pCommandStatus, NVM_ERR_BUSY_DEVICE);
-      PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, L"Show dimm", L" on", pCommandStatus);
-    }
-    goto Finish;
+    // Don't block show -dimm output from being unable to get a CCUR table on
+    // one PMem module. Only the AppDirect capacity is used, and only for working
+    // around ARSStatus not getting overwritten on reboot. It's fine here.
+    ReturnCode = EFI_SUCCESS;
   }
 
   ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);

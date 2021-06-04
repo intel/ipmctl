@@ -60,21 +60,11 @@ GetTopologyAndInterleaveSetMapInfo(
   UINT32 NumOfChannelsPeriMC = 0;
   UINT32 InterleaveMapListLength = 0;
   UINT32 Index = 0;
-  BOOLEAN TopologyCanBeDetermined = FALSE;
 
   NVDIMM_ENTRY();
 
-  ReturnCode = RetrievePlatformTopologyFromPmtt(&NumOfiMCsPerCPU, &NumOfChannelsPeriMC, &TopologyCanBeDetermined);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("RetrievePlatformTopologyFromPmtt failed.");
-    goto Finish;
-  }
-
-  // Fallback to the default topology if it cannot be determined using PMTT
-  if (!TopologyCanBeDetermined) {
-    NumOfiMCsPerCPU = IMCS_PER_CPU_2_3;
-    NumOfChannelsPeriMC = CHANNELS_PER_IMC_2_3;
-  }
+  // If topology cannot be determined, then we return an error
+  CHECK_RESULT(RetrievePlatformTopologyFromPmtt(&NumOfiMCsPerCPU, &NumOfChannelsPeriMC), Finish);
 
   if (ppInterleaveMap != NULL) {
     ReturnCode = RetrieveInterleaveSetMap(ppInterleaveMap, &InterleaveMapListLength);
@@ -85,7 +75,7 @@ GetTopologyAndInterleaveSetMapInfo(
       In both cases, fallback to the default list for 2 iMcsPerCPU
       & 3 ChannelsPeriMC topology.
     **/
-    if (ReturnCode == EFI_NOT_FOUND || !TopologyCanBeDetermined) {
+    if (ReturnCode == EFI_NOT_FOUND) {
       FREE_POOL_SAFE(*ppInterleaveMap);
       *ppInterleaveMap = AllocateZeroPool(sizeof(INTERLEAVE_SETS_2_3));
       if (*ppInterleaveMap == NULL) {

@@ -1727,7 +1727,6 @@ SetObjStatusForPMemNotPairedWithDdr(
   )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
-  TABLE_HEADER *pTable = NULL;
   DIMM *pDimm = NULL;
   UINT32 Index1 = 0, Index2 = 0;
   BOOLEAN IsDcpmmPairedWithDdr = FALSE;
@@ -1758,24 +1757,14 @@ SetObjStatusForPMemNotPairedWithDdr(
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT table.");
-    goto Finish;
-  }
-
-  /**
-    This warning message is disabled on Purley platforms (PMTT Rev: 0x1)
-    pPmttHead is NULL for older PMTT revisions
-  **/
-  if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    ReturnCode = EFI_SUCCESS;
-    goto Finish;
-  }
-
   pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
   if (NULL == pPmttHead) {
     NVDIMM_DBG("Pmtt head not found.");
+    /**
+    This warning message is disabled on Purley platforms (PMTT Rev: 0x1)
+    pPmttHead is NULL for older PMTT revisions
+    **/
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
@@ -1815,7 +1804,6 @@ SetObjStatusForPMemNotPairedWithDdr(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
-  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -3640,12 +3628,7 @@ GetAcpiPMTT(
 #else
   EFI_ACPI_DESCRIPTION_HEADER *pTempPMTT = NULL;
   UINT32 PmttTableLength = 0;
-  ReturnCode = GetAcpiTables(gST, NULL, NULL, &pTempPMTT);
-  if (EFI_ERROR(ReturnCode) || NULL == pTempPMTT) {
-    NVDIMM_DBG("Failed to retrieve PMTT table.");
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
+  CHECK_RESULT(GetAcpiTables(gST, NULL, NULL, &pTempPMTT), Finish);
 
   // Allocate and copy the buffer to be consistent with OS call
   PmttTableLength = pTempPMTT->Length;
@@ -3669,7 +3652,7 @@ Finish:
   The caller is responsible for freeing ppDimmPcdInfo by using FreeDimmPcdInfoArray.
 
   @param[in] pThis Pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
-  @param{in] PcdTarget Target PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
+  @param[in] PcdTarget Target PCD partition: ALL=0, CONFIG=1, NAMESPACES=2
   @param[in] pDimmIds Pointer to an array of DIMM IDs
   @param[in] DimmIdsCount Number of items in array of DIMM IDs
   @param[out] ppDimmPcdInfo Pointer to output array of PCDs
@@ -4324,15 +4307,14 @@ GetMemoryResourcesInfo(
      OUT MEMORY_RESOURCES_INFO *pMemoryResourcesInfo
   )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  EFI_STATUS TempReturnCode = EFI_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS PreservedReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
-  if (pThis == NULL || pMemoryResourcesInfo == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-  /** Make sure we start with zero values **/
+  CHECK_NULL_ARG(pThis, Finish);
+  CHECK_NULL_ARG(pMemoryResourcesInfo, Finish);
+
+  // Make sure we start with 00 values
   ZeroMem(pMemoryResourcesInfo, sizeof(*pMemoryResourcesInfo));
 
   ReturnCode = ReenumerateNamespacesAndISs(TRUE);
@@ -4351,25 +4333,24 @@ GetMemoryResourcesInfo(
     }
 #endif
   }
+  // Don't fail out *immediately* if one of them fails. Fail out at the end
 
   // Get DCPMM Sizes
-  ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->RawCapacity, &pMemoryResourcesInfo->VolatileCapacity,
+  CHECK_RESULT_CONTINUE_PRESERVE_ERROR(GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->RawCapacity, &pMemoryResourcesInfo->VolatileCapacity,
     &pMemoryResourcesInfo->AppDirectCapacity, &pMemoryResourcesInfo->UnconfiguredCapacity, &pMemoryResourcesInfo->ReservedCapacity,
-    &pMemoryResourcesInfo->InaccessibleCapacity);
+    &pMemoryResourcesInfo->InaccessibleCapacity));
   if (EFI_ERROR(ReturnCode)) {
-    CHECK_RESULT_SAVE_RETURN_CODE(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL), Finish);
-    NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
-    goto Finish;
+    CHECK_RESULT_CONTINUE_PRESERVE_ERROR(CheckIfAllDimmsConfigured(&gNvmDimmData->PMEMDev.Dimms, &pMemoryResourcesInfo->PcdInvalid, NULL));
   }
 
   // Get DDR Sizes
-  ReturnCode = GetDDRCapacities(SOCKET_ID_ALL, &pMemoryResourcesInfo->DDRRawCapacity, &pMemoryResourcesInfo->DDRCacheCapacity,
-    &pMemoryResourcesInfo->DDRVolatileCapacity, &pMemoryResourcesInfo->DDRInaccessibleCapacity);
-  if (EFI_ERROR(ReturnCode)) {
-    goto Finish;
-  }
+  CHECK_RESULT_CONTINUE_PRESERVE_ERROR(GetDDRCapacities(SOCKET_ID_ALL, &pMemoryResourcesInfo->DDRRawCapacity, &pMemoryResourcesInfo->DDRCacheCapacity,
+    &pMemoryResourcesInfo->DDRVolatileCapacity, &pMemoryResourcesInfo->DDRInaccessibleCapacity));
 
 Finish:
+  if (EFI_ERROR(PreservedReturnCode) && !EFI_ERROR(ReturnCode)) {
+    ReturnCode = PreservedReturnCode;
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -4497,30 +4478,37 @@ ParseAcpiTables(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
 
   NVDIMM_ENTRY();
-
-  if (ppFitHead == NULL || ppPcatHead == NULL || ppPmttHead == NULL) {
-    goto Finish;
-  }
-
-  ReturnCode = EFI_SUCCESS;
+  CHECK_NULL_ARG(pNfit, Finish);
+  CHECK_NULL_ARG(pPcat, Finish);
+  // PMTT is optional in some situations, check further down
+  CHECK_NULL_ARG(ppFitHead, Finish);
+  CHECK_NULL_ARG(ppPcatHead, Finish);
+  CHECK_NULL_ARG(ppPmttHead, Finish);
+  CHECK_NULL_ARG(pIsMemoryModeAllowed, Finish);
 
   CHECK_RESULT(ParseNfitTable((VOID *)pNfit, ppFitHead), Finish);
 
   CHECK_RESULT(ParsePcatTable((VOID *)pPcat, ppPcatHead), Finish);
 
-
   // Assume that PMTT table is not available at first
   // (skip MM allowed check and let BIOS handle it)
   *pIsMemoryModeAllowed = TRUE;
 
-  CHECK_RESULT(ParsePmttTable((VOID *)pPMTT, ppPmttHead), Finish);
-  // If we didn't fail out in the ParsePmttTable call, then the raw pPMTT table
-  // is not NULL and is a valid revision. Check if memory mode is allowed.
-  *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *)pPMTT);
+  // If not Purley, a PMTT table is required! Error out
+  if (!IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID((*ppPcatHead)->pPlatformConfigAttr)) {
+    CHECK_NULL_ARG(pPMTT, Finish);
+  }
+
+  // Only parse a non-NULL PMTT table
+  if (pPMTT != NULL) {
+    CHECK_RESULT(ParsePmttTable((VOID *)pPMTT, ppPmttHead), Finish);
+    // If we didn't fail out in the ParsePmttTable call, then the raw pPMTT table
+    // is not NULL and is a valid revision. Check if memory mode is allowed.
+    *pIsMemoryModeAllowed = CheckIsMemoryModeAllowed((TABLE_HEADER *)pPMTT);
+  }
 
 Finish:
   NVDIMM_EXIT_I64(ReturnCode);
-
   return ReturnCode;
 }
 
@@ -4853,12 +4841,9 @@ initAcpiTables(
     /**
       Find the Differentiated System Description Table (DSDT) from EFI_SYSTEM_TABLE
     **/
-    ReturnCode = GetAcpiTables(gST, &pNfit, &pPcat, &pPMTT);
-    // The PMTT is optional, in that case the pointer stays NULL, it is not an ERROR condition
-    if (((EFI_LOAD_ERROR != ReturnCode) && (EFI_SUCCESS != ReturnCode)) ||
-      ((EFI_LOAD_ERROR == ReturnCode) && (NULL != pPMTT))) {
-      NVDIMM_WARN("Failed to get NFIT or PCAT table.");
-    }
+    // Ignore errors in retrieving the tables for now. We'll handle them properly
+    // in ParseAcpiTables
+    CHECK_RESULT_CONTINUE(GetAcpiTables(gST, &pNfit, &pPcat, &pPMTT));
   }
 
   if (PBR_RECORD_MODE == PBR_GET_MODE(pContext)) {
@@ -4915,12 +4900,9 @@ initAcpiTables(
   /**
     Find the NVDIMM FW Interface Table (NFIT) & PCAT
   **/
-  ReturnCode = ParseAcpiTables(pNfit, pPcat, pPMTT, &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead,
-    &gNvmDimmData->PMEMDev.pPmttHead, &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to parse NFIT or PCAT table.");
-    goto Finish;
-  }
+  CHECK_RESULT(ParseAcpiTables(pNfit, pPcat, pPMTT, &gNvmDimmData->PMEMDev.pFitHead, &gNvmDimmData->PMEMDev.pPcatHead,
+    &gNvmDimmData->PMEMDev.pPmttHead, &gNvmDimmData->PMEMDev.IsMemModeAllowedByBios), Finish);
+
   /** Set the Base address **/
   PcdStatus = PcdSet64S(PcdPciExpressBaseAddress, PciBaseAddress);
   if (RETURN_ERROR(PcdStatus)) {
@@ -6242,6 +6224,8 @@ GetActualRegionsGoalCapacities(
       }
     }
   }
+
+  SetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
 Finish:
   FREE_POOL_SAFE(ppDimms);
@@ -8438,6 +8422,7 @@ GetTotalDcpmmCapacities(
   UINT64 UnconfiguredCapacity = 0;
   UINT64 ReservedCapacity = 0;
   UINT64 InaccessibleCapacity = 0;
+  BOOLEAN ArgumentsNotNull = FALSE;
 
   NVDIMM_ENTRY();
 
@@ -8446,6 +8431,7 @@ GetTotalDcpmmCapacities(
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+  ArgumentsNotNull = TRUE;
 
   // All shall be zero to start
   *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = 0;
@@ -8469,6 +8455,10 @@ GetTotalDcpmmCapacities(
   }
 
 Finish:
+  if (EFI_ERROR(ReturnCode) && ArgumentsNotNull == TRUE) {
+    // Data is invalid, set to unknown
+    *pRawCapacity = *pUnconfiguredCapacity = *pAppDirectCapacity = *pReservedCapacity = *pInaccessibleCapacity = *pVolatileCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -8611,7 +8601,6 @@ GetChannelCountWithUsableDDRCache(
   )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
-  TABLE_HEADER *pTable = NULL;
   DIMM *pDimm = NULL;
   UINT32 ChannelCount = 0;
   UINT32 Socket = MAX_UINT32_VALUE;
@@ -8620,6 +8609,7 @@ GetChannelCountWithUsableDDRCache(
   UINT32 Channel = MAX_UINT32_VALUE;
   UINT32 Index1 = 0, Index2 = 0;
   BOOLEAN CrossTileCachingSupported = FALSE;
+  ParsedPmttHeader *pPmttHead = NULL;
 
   NVDIMM_ENTRY();
 
@@ -8635,71 +8625,58 @@ GetChannelCountWithUsableDDRCache(
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT table.");
+  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead; // Only 0.2 is parsed and placed here
+  if (NULL == pPmttHead) {
+    NVDIMM_DBG("Pmtt head not found.");
+    ReturnCode = EFI_NOT_FOUND;
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    ParsedPmttHeader *pPmttHead = NULL;
-
-    pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
-    if (NULL == pPmttHead) {
-      NVDIMM_DBG("Pmtt head not found.");
-      goto Finish;
+  // Enlist all channels having at least one DDR paired with a DCPMM on an iMC
+  for (Index1 = 0; Index1 < pPmttHead->DDRModulesNum; Index1++) {
+    if (SocketId != SOCKET_ID_ALL && pPmttHead->ppDDRModules[Index1]->SocketId != SocketId) {
+      continue;
     }
 
-    // Enlist all channels having at least one DDR paired with a DCPMM on an iMC
-    for (Index1 = 0; Index1 < pPmttHead->DDRModulesNum; Index1++) {
-      if (SocketId != SOCKET_ID_ALL && pPmttHead->ppDDRModules[Index1]->SocketId != SocketId) {
-        continue;
-      }
+    // Check for only 1 DDR per Channel
+    if ((Socket == pPmttHead->ppDDRModules[Index1]->SocketId) &&
+      (Die == pPmttHead->ppDDRModules[Index1]->DieId) &&
+      (MemController == pPmttHead->ppDDRModules[Index1]->MemControllerId) &&
+      (Channel == pPmttHead->ppDDRModules[Index1]->ChannelId)) {
+      continue;
+    }
 
-      // Check for only 1 DDR per Channel
-      if ((Socket == pPmttHead->ppDDRModules[Index1]->SocketId) &&
-        (Die == pPmttHead->ppDDRModules[Index1]->DieId) &&
-        (MemController == pPmttHead->ppDDRModules[Index1]->MemControllerId) &&
-        (Channel == pPmttHead->ppDDRModules[Index1]->ChannelId)) {
-        continue;
-      }
+    // Taking advantage of the fact that DDRs are stored in the array in the consecutive order of socket, die, iMc, channel & slot
+    Channel = pPmttHead->ppDDRModules[Index1]->ChannelId;
+    MemController = pPmttHead->ppDDRModules[Index1]->MemControllerId;
+    Die = pPmttHead->ppDDRModules[Index1]->DieId;
+    Socket = pPmttHead->ppDDRModules[Index1]->SocketId;
 
-      // Taking advantage of the fact that DDRs are stored in the array in the consecutive order of socket, die, iMc, channel & slot
-      Channel = pPmttHead->ppDDRModules[Index1]->ChannelId;
-      MemController = pPmttHead->ppDDRModules[Index1]->MemControllerId;
-      Die = pPmttHead->ppDDRModules[Index1]->DieId;
-      Socket = pPmttHead->ppDDRModules[Index1]->SocketId;
+    if (CrossTileCachingSupported) {
+      ChannelCount++;
+    }
+    else {
+      // Check to see if this DDR is paired with a DCPMM on the iMc
+      for (Index2 = 0; Index2 < pPmttHead->DCPMModulesNum; Index2++) {
+        pDimm = GetDimmByPid(pPmttHead->ppDCPMModules[Index2]->SmbiosHandle, &gNvmDimmData->PMEMDev.Dimms);
+        if (pDimm == NULL) {
+          NVDIMM_DBG("Failed to retrieve the DCPMM pid %x", pPmttHead->ppDCPMModules[Index2]->SmbiosHandle);
+          goto Finish;
+        }
 
-      if (CrossTileCachingSupported) {
-        ChannelCount++;
-      }
-      else {
-        // Check to see if this DDR is paired with a DCPMM on the iMc
-        for (Index2 = 0; Index2 < pPmttHead->DCPMModulesNum; Index2++) {
-          pDimm = GetDimmByPid(pPmttHead->ppDCPMModules[Index2]->SmbiosHandle, &gNvmDimmData->PMEMDev.Dimms);
-          if (pDimm == NULL) {
-            NVDIMM_DBG("Failed to retrieve the DCPMM pid %x", pPmttHead->ppDCPMModules[Index2]->SmbiosHandle);
-            goto Finish;
-          }
+        // Unmanageable, non-functional and population violation DCPMMs excluded for Memory Mode
+        if (!IsDimmManageable(pDimm) || pDimm->NonFunctional || IsDimmInPopulationViolation(pDimm)) {
+          continue;
+        }
 
-          // Unmanageable, non-functional and population violation DCPMMs excluded for Memory Mode
-          if (!IsDimmManageable(pDimm) || pDimm->NonFunctional || IsDimmInPopulationViolation(pDimm)) {
-            continue;
-          }
-
-          if ((Socket == pPmttHead->ppDCPMModules[Index2]->SocketId) &&
-            (Die == pPmttHead->ppDCPMModules[Index2]->DieId) &&
-            (MemController == pPmttHead->ppDCPMModules[Index2]->MemControllerId)) {
-            ChannelCount++;
-            break;
-          }
+        if ((Socket == pPmttHead->ppDCPMModules[Index2]->SocketId) &&
+          (Die == pPmttHead->ppDCPMModules[Index2]->DieId) &&
+          (MemController == pPmttHead->ppDCPMModules[Index2]->MemControllerId)) {
+          ChannelCount++;
+          break;
         }
       }
     }
-  }
-  else {
-    NVDIMM_DBG("Unexpected PMTT table revision");
-    goto Finish;
   }
 
   *pChannelCount = ChannelCount;
@@ -8707,7 +8684,6 @@ GetChannelCountWithUsableDDRCache(
   ReturnCode = EFI_SUCCESS;
 
 Finish:
-  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -8729,7 +8705,6 @@ GetUnusableDDRCacheSizeFor2LM(
   )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
-  TABLE_HEADER *pTable = NULL;
   DIMM *pDimm = NULL;
   DIMM_INFO *pDimmInfo = NULL;
   UINT32 Index1 = 0, Index2 = 0;
@@ -8749,21 +8724,6 @@ GetUnusableDDRCacheSizeFor2LM(
   }
 
   *pTotalUnusableDDRCacheSize = 0;
-
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT table.");
-    goto Finish;
-  }
-
-  /**
-    Assuming all DDRs can be used as cache on Purley platforms (PMTT Rev: 0x1)
-    pPmttHead is NULL for older PMTT revisions
-  **/
-  if (!IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    ReturnCode = EFI_SUCCESS;
-    goto Finish;
-  }
 
   pDimmInfo = (DIMM_INFO *)AllocateZeroPool(sizeof(*pDimmInfo));
   if (pDimmInfo == NULL) {
@@ -8788,6 +8748,9 @@ GetUnusableDDRCacheSizeFor2LM(
   pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
   if (NULL == pPmttHead) {
     NVDIMM_DBG("Pmtt head not found.");
+    // Assuming all DDRs can be used as cache on Purley platforms (PMTT Rev: 0x1)
+    // pPmttHead is NULL for older PMTT revisions
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
@@ -8849,7 +8812,6 @@ GetUnusableDDRCacheSizeFor2LM(
 
 Finish:
   FREE_POOL_SAFE(pDimmInfo);
-  FREE_POOL_SAFE(pTable);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -8959,9 +8921,8 @@ GetDDRCapacities(
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
-  UINT64 CurrentCachedMemorySize = 0;
+  EFI_STATUS PreservedReturnCode = EFI_SUCCESS;
   UINT64 SocketSkuTotalMappedMemory = 0;
-  UINT64 DDRPhysicalSize = 0;
   UINT64 DcpmmRawCapacity = 0;
   UINT64 DcpmmVolatileCapacity = 0;
   UINT64 DcpmmAppDirectCapacity = 0;
@@ -8985,37 +8946,28 @@ GetDDRCapacities(
   }
 
   // Get total physical size of all non-DCPMM DIMMs through PMTT
-  ReturnCode = GetDDRPhysicalSize(SocketId, &DDRPhysicalSize);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not retrieve memory capacity.");
-    goto Finish;
-  }
-  *pDDRRawCapacity = DDRPhysicalSize;
+  // Semi-ignoring error since we expect the PMTT table to be missing
+  // in Purley
+  // Initialize to unknown
+  *pDDRRawCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  CHECK_RESULT_CONTINUE_PRESERVE_ERROR(GetDDRPhysicalSize(SocketId, pDDRRawCapacity));
 
   // Get total DDR cache size
   if (pDDRCacheCapacity != NULL) {
-    ReturnCode = RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, &CurrentCachedMemorySize);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Unable to retrieve Socket SKU Cached Memory");
-      goto Finish;
-    }
-    *pDDRCacheCapacity = CurrentCachedMemorySize;
+    // Initialize to unknown
+    *pDDRCacheCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+    CHECK_RESULT(RetrievePcatSocketSkuCachedMemory(SOCKET_ID_ALL, pDDRCacheCapacity), Finish);
   }
 
   // Get DDR volatile capacity: Subtract mapped DCPMM Persistent & Volatile capacity from total mapped memory
   if (pDDRVolatileCapacity != NULL) {
-    ReturnCode = RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("Unable to retrieve Socket SKU Total Mapped Memory");
-      goto Finish;
-    }
+    // Initialize to unknown
+    *pDDRVolatileCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+    CHECK_RESULT(RetrievePcatSocketSkuTotalMappedMemory(SOCKET_ID_ALL, &SocketSkuTotalMappedMemory), Finish);
 
-    ReturnCode = GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
-      &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity);
-    if (EFI_ERROR(ReturnCode)) {
-      NVDIMM_DBG("GetTotalDcpmmCapacities failed.");
-      goto Finish;
-    }
+    CHECK_RESULT(GetTotalDcpmmCapacities(&gNvmDimmData->PMEMDev.Dimms, &DcpmmRawCapacity, &DcpmmVolatileCapacity,
+      &DcpmmAppDirectCapacity, &DcpmmUnconfiguredCapacity, &DcpmmReservedCapacity, &DcpmmInaccessibleCapacity), Finish);
+
 
     if ((DcpmmVolatileCapacity + DcpmmAppDirectCapacity) <= SocketSkuTotalMappedMemory) {
       *pDDRVolatileCapacity = SocketSkuTotalMappedMemory - DcpmmVolatileCapacity - DcpmmAppDirectCapacity;
@@ -9026,7 +8978,7 @@ GetDDRCapacities(
         ReturnCode = EFI_DEVICE_ERROR;
         goto Finish;
       }
-      NVDIMM_DBG("But, in Memory Mode DDR volatile capacity is always 0.");
+      NVDIMM_DBG("But, in Memory Mode DDR volatile capacity is always 0 (it is used as cache)");
       // Added to make ipmctl 3.x backwards compatible with Purley BIOS
       *pDDRVolatileCapacity = 0;
     }
@@ -9034,12 +8986,20 @@ GetDDRCapacities(
 
   // Get DDR inaccessible capacity
   if (pDDRInaccessibleCapacity != NULL) {
-    *pDDRInaccessibleCapacity = *pDDRRawCapacity - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+    // Allow for the PMTT table to be missing. Just set the derived value to unknown
+    if (*pDDRRawCapacity == ACPI_TABLE_VALUE_UNKNOWN) {
+      *pDDRInaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+    } else {
+      *pDDRInaccessibleCapacity = *pDDRRawCapacity - *pDDRVolatileCapacity - *pDDRCacheCapacity;
+    }
   }
 
   ReturnCode = EFI_SUCCESS;
 
 Finish:
+  if (EFI_ERROR(PreservedReturnCode) && !EFI_ERROR(ReturnCode)) {
+    ReturnCode = PreservedReturnCode;
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -9049,7 +9009,7 @@ Finish:
   according to the smbios and return the result
 
   @param[in]  SocketId Socket Id, value 0xFFFF indicates include all socket values
-  @param[out] pResult Pointer to total memory size
+  @param[out] pDDRPhysicalSize Pointer to total memory size
 
   @retval EFI_INVALID_PARAMETER Passed NULL argument
   @retval EFI_LOAD_ERROR Failure to calculate DDR memory size
@@ -9058,31 +9018,30 @@ Finish:
 EFI_STATUS
 GetDDRPhysicalSize(
   IN     UINT16 SocketId,
-     OUT UINT64 *pResult
+     OUT UINT64 *pDDRPhysicalSize
 )
 {
   EFI_STATUS ReturnCode = EFI_LOAD_ERROR;
-  TABLE_HEADER *pTable = NULL;
+  TABLE_HEADER *pPmttRaw = NULL;
   DIMM_INFO *pDimmInfo = NULL;
   UINT64 TotalDDRMemorySize = 0;
   UINT16 Index = 0;
 
   NVDIMM_ENTRY();
 
-  if (NULL == pResult) {
+  if (NULL == pDDRPhysicalSize) {
     NVDIMM_DBG("Null pointer passed.");
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT table.");
-    goto Finish;
-  }
+  // If PMTT table is NULL here, that's ok, let the caller handle whether to
+  // ignore this error or not
+  CHECK_RESULT(GetAcpiPMTT(NULL, (VOID *)&pPmttRaw), Finish);
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
-    PMTT_TABLE *pPMTT = (PMTT_TABLE *)pTable;
+  // Get and parse raw PMTT table for 0.1 table
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pPmttRaw->Revision)) {
+    PMTT_TABLE *pPMTT = (PMTT_TABLE *)pPmttRaw;
     PMTT_COMMON_HEADER *pCommonHeader = NULL;
     PMTT_MODULE *pModule = NULL;
     UINT64 Offset = 0;
@@ -9108,7 +9067,8 @@ GetDDRPhysicalSize(
       }
     }
   }
-  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
+  else if (IS_ACPI_REV_MAJ_0_MIN_2(pPmttRaw->Revision)) {
+    // Use our pre-parsed global struct derived from the raw PMTT table
     ParsedPmttHeader *pPmttHead = NULL;
     UINT32 DDRModulesNum;
     PMTT_MODULE_INFO **ppDDRModules = NULL;
@@ -9116,6 +9076,7 @@ GetDDRPhysicalSize(
     pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
     if (NULL == pPmttHead) {
       NVDIMM_DBG("Pmtt head not found.");
+      ReturnCode = EFI_NOT_FOUND;
       goto Finish;
     }
 
@@ -9148,13 +9109,13 @@ GetDDRPhysicalSize(
   }
 
   // Set total to the result output
-  *pResult = TotalDDRMemorySize;
+  *pDDRPhysicalSize = TotalDDRMemorySize;
 
   ReturnCode = EFI_SUCCESS;
 
 Finish:
   FREE_POOL_SAFE(pDimmInfo);
-  FREE_POOL_SAFE(pTable);
+  FREE_POOL_SAFE(pPmttRaw);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -9267,7 +9228,7 @@ MapSockets(
 )
 {
   EFI_STATUS ReturnCode;
-  TABLE_HEADER *pTable = NULL;
+  TABLE_HEADER *pPmttRaw = NULL;
   PMTT_TABLE *pPMTT = NULL;
   PMTT_INFO  *DdrEntry = NULL;
   PMTT_COMMON_HEADER *pCommonHeader = NULL;
@@ -9290,7 +9251,7 @@ MapSockets(
 
   InitializeListHead(pPmttInfo);
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
+  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pPmttRaw);
 
   if (EFI_ERROR(ReturnCode)) {
     //error getting PMTT. Nothing to map
@@ -9298,10 +9259,8 @@ MapSockets(
     return;
   }
 
-  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
-
-  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
-    pPMTT = (PMTT_TABLE *)pTable;
+  if (IS_ACPI_REV_MAJ_0_MIN_1(pPmttRaw->Revision)) {
+    pPMTT = (PMTT_TABLE *)pPmttRaw;
     PmttLen = pPMTT->Header.Length;
     Offset = sizeof(pPMTT->Header) + sizeof(pPMTT->Reserved);
 
@@ -9334,7 +9293,14 @@ MapSockets(
         Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
       }
     }
-  } else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision) && pPmttHead != NULL) {
+  } else if (IS_ACPI_REV_MAJ_0_MIN_2(pPmttRaw->Revision)) {
+    // Use our pre-parsed 0.2-only global struct derived from the raw PMTT table
+    pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
+    if (pPmttHead == NULL) {
+      ReturnCode = EFI_NOT_FOUND;
+      NVDIMM_ERR("Can't find global pPmtt struct. Exiting");
+      goto Finish;
+    }
     ppAllMemModules[0] = pPmttHead->ppDDRModules;
     ppAllMemModules[1] = pPmttHead->ppDCPMModules;
     NumOfMemModules[0] = pPmttHead->DDRModulesNum;
@@ -9371,7 +9337,7 @@ MapSockets(
 #endif
 
 Finish:
-  FREE_POOL_SAFE(pTable);
+  FREE_POOL_SAFE(pPmttRaw);
   return;
 }
 

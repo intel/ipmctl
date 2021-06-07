@@ -543,13 +543,13 @@ initAcpiTables()
         failures++;
       }
     }
-/*
+
     if (EFI_ERROR(get_pmtt_table(&PtrPMTTTable, &Size)))
     {
       NVDIMM_WARN("Failed to get the PMTT table.\n");
-      //failures++; //table allowed to be empty. Not a failure
+      //failures++; //table allowed to be empty here. Will do more checks in ParseAcpiTables
     }
-*/
+
     if (PBR_RECORD_MODE == PBR_GET_MODE(pContext))
     {
       ReturnCode = PbrSetTableRecord(pContext, PBR_RECORD_TYPE_PMTT, PtrPMTTTable, Size);

@@ -948,12 +948,10 @@ int os_get_os_type()
 /*
 * Recursive mkdir, return 0 on success, -1 on error
 */
-int os_mkdir(char *path, unsigned int path_len)
+int os_mkdir(char *path)
 {
   char* p;
   char separator = '/';
-  if (path_len > OS_PATH_LEN)
-    return -1;
   if (NULL == strchr(path + 1, '/') && NULL != strchr(path + 1, '\\'))
   {
     separator = '\\';

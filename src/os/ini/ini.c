@@ -459,7 +459,7 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
   if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
     if (force_file_update) {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH);
-      os_mkdir(ini_path_filename, sizeof(ini_path_filename));
+      os_mkdir(ini_path_filename);
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
       h_file = fopen(ini_path_filename, "w");
     }

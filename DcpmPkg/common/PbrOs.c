@@ -134,7 +134,7 @@ EFI_STATUS PbrSerializeCtx(
 
   //create temp directory (buffers serialized into files that reside here)
   AsciiSPrint(pbr_dir, sizeof(pbr_dir), PBR_TMP_DIR);
-  os_mkdir(pbr_dir, sizeof(pbr_dir));
+  os_mkdir(pbr_dir);
 
   SerializePbrMode(ctx->PbrMode);
 
@@ -186,7 +186,7 @@ EFI_STATUS PbrDeserializeCtx(
 
   //create temp directory (buffers serialized into files that reside here)
   AsciiSPrint(pbr_dir, sizeof(pbr_dir), PBR_TMP_DIR);
-  os_mkdir(pbr_dir, sizeof(pbr_dir));
+  os_mkdir(pbr_dir);
 
   DeserializePbrMode(&PbrMode, PBR_NORMAL_MODE);
 

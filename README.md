@@ -16,7 +16,20 @@ ipmctl refers to the following interface components:
 * ipmctl: A Command Line Interface (CLI) application for configuring and managing PMems from the command line.
 
 ## Workarounds
+
+### Slow Firmware Updates
 When using 02.00.00.x versions of ipmctl software to update or downgrade firmware on Intel® Optane™ PMem 100 Series modules, please use the “-lpmb” CLI option (use DDRT Large Payload transfer). Otherwise the operation may take significantly longer than it normally would.
+
+### Commands Fail on Older Platforms
+Some platforms that targeted the Gen 100 modules do not generate a ACPI PMTT table which causes ipmctl (version v02.00.00.xxxx) commands to fail. Particularly
+* create -goal 
+* show -topology
+* show -memoryresources
+* show -dimm
+
+If these commands are ran with -v option they present a message about failing to get the PMTT table.
+
+A corrected version is being developed and will hopefully be available soon. Until that is available the best option is to use ipmctl v01.00.00.xxxx or go through the BIOS menus.
 
 ## Releases
 

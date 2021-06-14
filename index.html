@@ -21,8 +21,19 @@
 			CLI Syntax for OSes (Rev. 2.03) <a href="Intel_Optane_Persistent_Memory_ipmctl_CLI_Syntax_OS_611922_Rev_2_03.html">html</a>   <a href="Intel_Optane_Persistent_Memory_ipmctl_CLI_Syntax_OS_611922_Rev_2_03.pdf">PDF</a><br>
 			CLI Syntax for OSes (Rev. 1.17) <a href="Intel_Optane_DC_Mem_SW_Inter_CLI_Syntax_OS_598517_Rev_1_17.html">html</a>   <a href="Intel_Optane_DC_Mem_SW_Inter_CLI_Syntax_OS_598517_Rev_1_17.pdf">PDF</a>
 			</p>
-			<p><h2>Workarounds</h2>
+			<p><h2>Workarounds</h2><h3>Slow Firmware Updates</h3>
 			When using 2.0.x versions of ipmctl software to update or downgrade firmware on Intel® Optane™ PMem 100 Series modules, please use the “-lpmb” CLI option (use DDRT Large Payload transfer). Otherwise the operation may take significantly longer than it normally would.
+			<h3>Commands Fail on Older Platforms</h3>
+			Some platforms that targeted the Gen 100 modules do not generate a ACPI PMTT table which causes ipmctl (version v02.00.00.xxxx) commands to fail. Particularly<br>
+			<ul>
+            <li><code>create -goal</code></li>
+            <li><code>show -topology</code></li>
+            <li><code>show -memoryresources</code></li>
+            <li><code>show -dimm</code></li>
+			</ul>
+            If these commands are ran with <code>-v</code> option they present a message about failing to get the PMTT table.<br>
+			<br>
+             A corrected version is being developed and will hopefully be available soon. Until that is available the best option is to use ipmctl v01.00.00.xxxx or go through the BIOS menus.
 			</p>
 			<p><h2>Steps reported to have worked for build on SUSE Linux in home directory</h2>
 			Replace homedir with your home directory

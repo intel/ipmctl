@@ -112,6 +112,7 @@ typedef struct _PMEM_DEV {
 
   ParsedFitHeader *pFitHead;
   ParsedPcatHeader *pPcatHead;
+  // Note: Only the PMTT 0.2 table is parsed and placed here!
   ParsedPmttHeader *pPmttHead;
 } PMEM_DEV;
 

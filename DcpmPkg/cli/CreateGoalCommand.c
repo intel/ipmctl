@@ -287,17 +287,6 @@ CheckAndConfirmAlignments(
     goto Finish;
   }
 
-  if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_LOWER_VIOLATION) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_LOWER_STR);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
-  else if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_UPPER_VIOLATION) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
-
   if (VolatilePercent >= VolatilePercentAligned) {
     PercentDiff = VolatilePercent - VolatilePercentAligned;
   } else {
@@ -305,7 +294,7 @@ CheckAndConfirmAlignments(
   }
 
   PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, CLI_CREATE_GOAL_PROMPT_HEADER  L"\n");
-  
+
   PRINTER_ENABLE_TEXT_TABLE_FORMAT(pCmd->pPrintCtx);
   ReturnCode = ShowGoalPrintTableView(pCmd, RegionConfigsInfo, UnitsToDisplay, RegionConfigsCount, FALSE);
 
@@ -317,6 +306,30 @@ CheckAndConfirmAlignments(
     PRINTER_PROCESS_SET_BUFFER_FORCE_TEXT_TABLE_MODE(pCmd->pPrintCtx);
   }
 
+  // Process through the general status codes returned from GetActualRegionsGoalCapacities
+  // *after* we do the table printout.
+  //
+  // The first two are "required" to be done this way because the messages have arguments.
+  // However, they are static so they could be put into the string itself.
+  if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_LOWER_VIOLATION) {
+    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION);
+    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_LOWER_STR);
+    FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  } else if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_UPPER_VIOLATION) {
+    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION);
+    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER);
+    FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  } else if (pCommandStatus->GeneralStatus == NVM_WARN_PMTT_TABLE_NOT_FOUND) {
+    // Not a great solution, but it ensures that only this status is changing. We aren't going to change other outputs
+    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_PMTT_TABLE_NOT_FOUND);
+    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+    FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  } else if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
+    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+    FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  }
+
   for (Index = 0; Index < pCommandStatus->ObjectStatusCount; Index++) {
     CapacityReducedForSKU = IsSetNvmStatusForObject(pCommandStatus, Index, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
     if (CapacityReducedForSKU) {
@@ -325,12 +338,6 @@ CheckAndConfirmAlignments(
   }
 
   MaxPmInterleaveSetsExceeded = IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
-
-  if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
 
   if (PercentDiff > PROMPT_ALIGN_PERCENTAGE) {
      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" CLI_CREATE_GOAL_PROMPT_VOLATILE L"\n");
@@ -649,7 +656,7 @@ CreateGoal(
     LabelVersionMajor, LabelVersionMinor, &MaxPMInterleaveSetsPerDie, pCommandStatus);
 
   if (!EFI_ERROR(ReturnCode)) {
-    
+
     ReturnCode = CreateCmdLineOutputStr(pCmd, &pShowGoalOutputArgs);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);

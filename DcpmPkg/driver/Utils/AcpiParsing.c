@@ -589,6 +589,7 @@ GetLogicalSocketIdFromPmtt(
   UINT32 Index = 0;
   UINT32 NoOfMemoryDevices = 0;
   BOOLEAN Found = FALSE;
+  ParsedPmttHeader *pPmttHead = NULL;
 
   NVDIMM_ENTRY();
 
@@ -597,56 +598,46 @@ GetLogicalSocketIdFromPmtt(
     goto Finish;
   }
 
-  ReturnCode = GetAcpiPMTT(NULL, (VOID *)&pTable);
+  // Only PMTT >= 0.2 are parsed. Anything else is NULL
+  pPmttHead = gNvmDimmData->PMEMDev.pPmttHead;
 
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Unable to retrieve PMTT Table");
+  if (pPmttHead == NULL) {
+    // If the parsed PMTT table is missing, we are on a Purley platform and the logical
+    // socket is the same as a physical socket. No changes needed
+    *pLogicalSocketId = SocketId;
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
-  if (IS_ACPI_REV_MAJ_0_MIN_1(pTable->Revision)) {
-    //If not a Multi-die socket, Logical Socket will be same as Socket ID
-    *pLogicalSocketId = SocketId;
+  for (Index = 0; Index < pPmttHead->SocketsNum; Index++) {
+    if (SocketId == pPmttHead->ppSockets[Index]->SocketId) {
+      Found = TRUE;
+      break;
+    }
+    NoOfMemoryDevices += pPmttHead->ppSockets[Index]->Header.NoOfMemoryDevices;
   }
-  else if (IS_ACPI_REV_MAJ_0_MIN_2(pTable->Revision)) {
-    if (gNvmDimmData->PMEMDev.pPmttHead == NULL || gNvmDimmData->PMEMDev.pPmttHead->SocketsNum == 0) {
-      NVDIMM_DBG("Incorrect PMTT table");
-      goto Finish;
-    }
-    PMTT_TABLE2 *pPmtt = gNvmDimmData->PMEMDev.pPmttHead->pPmtt;
-    if (IS_ACPI_HEADER_REV_MAJ_0_MIN_2(pPmtt)) {
-      for (Index = 0; Index < gNvmDimmData->PMEMDev.pPmttHead->SocketsNum; Index++) {
-        if (SocketId == gNvmDimmData->PMEMDev.pPmttHead->ppSockets[Index]->SocketId) {
-          Found = TRUE;
-          break;
-        }
-        NoOfMemoryDevices += gNvmDimmData->PMEMDev.pPmttHead->ppSockets[Index]->Header.NoOfMemoryDevices;
-      }
 
-      if (Found) {
-        Found = FALSE;
-        for (Index = 0; Index < gNvmDimmData->PMEMDev.pPmttHead->DiesNum; Index++) {
-          if (DieId == gNvmDimmData->PMEMDev.pPmttHead->ppDies[Index]->DeviceID) {
-            *pLogicalSocketId = NoOfMemoryDevices + DieId;
-            Found = TRUE;
-            break;
-          }
-        }
-      }
-      else {
-        NVDIMM_DBG("Socket ID not found");
-        goto Finish;
-      }
-    }
-    else {
-      NVDIMM_DBG("Unexpected PCAT table revision");
-      goto Finish;
-    }
+  if (!Found) {
+    NVDIMM_DBG("Socket ID not found");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
 
-    if (!Found) {
-      NVDIMM_DBG("Die ID not found");
-      goto Finish;
+  // Searching for matching Die ID
+  // Reset Found to FALSE again (from TRUE)
+  Found = FALSE;
+  for (Index = 0; Index < pPmttHead->DiesNum; Index++) {
+    if (DieId == pPmttHead->ppDies[Index]->DeviceID) {
+      *pLogicalSocketId = NoOfMemoryDevices + DieId;
+      Found = TRUE;
+      break;
     }
+  }
+
+  if (!Found) {
+    NVDIMM_DBG("Die ID not found");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
   }
 
   ReturnCode = EFI_SUCCESS;

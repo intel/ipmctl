@@ -17,6 +17,7 @@
 #include <Guid/FileInfo.h>
 #include <Protocol/DriverHealth.h>
 #include <Library/DevicePathLib.h>
+#include <Library/SerialPortLib.h>
 #include <Debug.h>
 #include <NvmTypes.h>
 #include <NvmInterface.h>

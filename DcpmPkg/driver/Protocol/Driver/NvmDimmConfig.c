@@ -6225,7 +6225,10 @@ GetActualRegionsGoalCapacities(
     }
   }
 
-  SetCmdStatus(pCommandStatus, NVM_SUCCESS);
+  // Only overwrite the general status if we had nothing else to say
+  if (pCommandStatus->GeneralStatus == NVM_ERR_OPERATION_NOT_STARTED) {
+    SetCmdStatus(pCommandStatus, NVM_SUCCESS);
+  }
 
 Finish:
   FREE_POOL_SAFE(ppDimms);

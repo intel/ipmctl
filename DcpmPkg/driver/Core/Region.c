@@ -908,6 +908,8 @@ RetrieveISsFromPlatformConfigData(
     switch (pPcdCurrentConf->ConfigStatus) {
       case DIMM_CONFIG_SUCCESS:
       case DIMM_CONFIG_OLD_CONFIG_USED:
+      // 2LM is not mapped because of NM:FM violation, but 1LM is mapped/healthy
+      case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
       case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
         pDimm->Configured = TRUE;
         break;

@@ -474,6 +474,8 @@ GetDimmMappedMemSize(
   switch (pPcdCurrentConf->ConfigStatus) {
     case DIMM_CONFIG_SUCCESS:
     case DIMM_CONFIG_OLD_CONFIG_USED:
+    // 2LM is not mapped because of NM:FM violation, but 1LM is mapped/healthy
+    case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
     case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       pDimm->Configured = TRUE;
       break;
@@ -793,6 +795,8 @@ GetDimmInfo (
         pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_UNSUPPORTED;
       }
       break;
+    // 2LM is not mapped because of NM:FM violation, but 1LM is mapped/healthy
+    case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
     case DIMM_CONFIG_PM_MAPPED_VM_POPULATION_ISSUE:
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_PARTIALLY_SUPPORTED;
       break;
@@ -801,7 +805,6 @@ GetDimmInfo (
     case DIMM_CONFIG_CURR_CHECKSUM_NOT_VALID:
     case DIMM_CONFIG_PM_NOT_MAPPED:
     case DIMM_CONFIG_CPU_MAX_MEMORY_LIMIT_VIOLATION:
-    case DIMM_CONFIG_DCPMM_NM_FM_RATIO_UNSUPPORTED:
       pDimmInfo->ConfigStatus = DIMM_INFO_CONFIG_BAD_CONFIG;
       break;
     default:

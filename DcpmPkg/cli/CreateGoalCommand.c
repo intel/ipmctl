@@ -338,6 +338,13 @@ CheckAndConfirmAlignments(
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER_8);
       FREE_POOL_SAFE(pSingleStatusCodeMessage);
       break;
+
+    case NVM_WARN_PMTT_TABLE_NOT_FOUND:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_PMTT_TABLE_NOT_FOUND);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
   }
 
   if (PercentDiff > PROMPT_ALIGN_PERCENTAGE) {

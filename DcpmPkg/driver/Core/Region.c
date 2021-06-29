@@ -3614,7 +3614,7 @@ ReduceCapacityForSocketSKU(
       // check and show a warning.
       NVDIMM_ERR("Getting out early with warning");
       ReturnCode = EFI_SUCCESS;
-      SetObjStatus(pCommandStatus, Socket, NULL, 0, NVM_WARN_PMTT_TABLE_NOT_FOUND, ObjectTypeSocket);
+      SetCmdStatus(pCommandStatus, NVM_WARN_PMTT_TABLE_NOT_FOUND);
       goto Finish;
     }
 
@@ -5141,7 +5141,7 @@ CheckNmFmLimits(
     // table is missing. Since this is an allowed condition at this point, show a
     // a warning to the user and return success.
     ReturnCode = EFI_SUCCESS;
-    SetObjStatus(pCommandStatus, SocketId, NULL, 0, NVM_WARN_PMTT_TABLE_NOT_FOUND, ObjectTypeSocket);
+    SetCmdStatus(pCommandStatus, NVM_WARN_PMTT_TABLE_NOT_FOUND);
     goto Finish;
   }
 

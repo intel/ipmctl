@@ -5214,8 +5214,8 @@ ValidateImageVersion(
 
   if ((pDimm->ControllerRid != pImage->RevisionId)) {
     *pNvmStatus = NVM_ERR_IMAGE_FILE_NOT_COMPATIBLE_TO_CTLR_STEPPING;
-    pDimmSteppingStr = ControllerRidToStr(pDimm->ControllerRid);
-    pImgSteppingStr = ControllerRidToStr(pImage->RevisionId);
+    pDimmSteppingStr = ControllerRidToStr(pDimm->ControllerRid, pDimm->SubsystemDeviceId);
+    pImgSteppingStr = ControllerRidToStr(pImage->RevisionId, pImage->DeviceId);
     CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
         DETAILS_CANT_USE_IMAGE, pImgSteppingStr, pDimmSteppingStr);
     ReturnCode = EFI_ABORTED;

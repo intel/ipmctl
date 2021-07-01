@@ -1035,7 +1035,7 @@ ShowDimms(
 
         /** ControllerRevisionId **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, CONTROLLER_REVISION_ID_STR))) {
-          pSteppingStr = ControllerRidToStr(pDimms[DimmIndex].ControllerRid);
+          pSteppingStr = ControllerRidToStr(pDimms[DimmIndex].ControllerRid, pDimms[DimmIndex].SubsystemDeviceId);
           if (pSteppingStr != NULL) {
             PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, CONTROLLER_REVISION_ID_STR, pSteppingStr);
             FREE_POOL_SAFE(pSteppingStr);

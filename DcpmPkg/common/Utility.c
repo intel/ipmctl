@@ -3095,43 +3095,34 @@ IsFwApiVersionSupportedByValues(
   Convert controller revision id to string
 
   @param[in] Controller revision id
+  @param[in] Subsystem Device Id for determining HW Gen
 
   @retval CLI string representation of the controller revision id
 **/
 CHAR16*
 ControllerRidToStr(
-  IN     UINT16 ControllerRid
-  )
+  IN     UINT16 ControllerRid,
+  IN     UINT16 SubsystemDeviceId
+)
 {
-  CHAR16 *pSteppingStr = NULL;
+  CHAR16* BaseStepArrayGen100_Gen200[] = { CONTROLLER_REVISION_A_STEP_STR, CONTROLLER_REVISION_S_STEP_STR, CONTROLLER_REVISION_B_STEP_STR, CONTROLLER_REVISION_C_STEP_STR };
+  CHAR16* BaseStepArrayGen300[] = { CONTROLLER_REVISION_A_STEP_STR, CONTROLLER_REVISION_B_STEP_STR, CONTROLLER_REVISION_C_STEP_STR, CONTROLLER_REVISION_D_STEP_STR };
+  CHAR16* pSteppingStr = NULL;
   UINT8 BaseStep = 0;
   UINT8 MetalStep = 0;
 
   NVDIMM_ENTRY();
 
-  BaseStep = ControllerRid & CONTROLLER_REVISION_BASE_STEP_MASK;
+  BaseStep = (ControllerRid & CONTROLLER_REVISION_BASE_STEP_MASK) >> 4; /* mask and shift to get BaseStep as 0-3 */
   MetalStep = ControllerRid & CONTROLLER_REVISION_METAL_STEP_MASK;
 
-  switch (BaseStep) {
-    case CONTROLLER_REVISION_A_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_A_STEP_STR, MetalStep,
-        ControllerRid);
-      break;
-    case CONTROLLER_REVISION_S_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_S_STEP_STR, MetalStep,
-        ControllerRid);
-      break;
-    case CONTROLLER_REVISION_B_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_B_STEP_STR, MetalStep,
-        ControllerRid);
-      break;
-    case CONTROLLER_REVISION_C_STEP:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, CONTROLLER_REVISION_C_STEP_STR, MetalStep,
-        ControllerRid);
-      break;
-    default:
-      pSteppingStr = CatSPrintClean(NULL, FORMAT_STR, CONTROLLER_STEPPING_UNKNOWN_STR);
-      break;
+  if (SubsystemDeviceId >= SPD_DEVICE_ID_20) {
+    pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, BaseStepArrayGen300[BaseStep], MetalStep,
+      ControllerRid);
+  }
+  else {
+    pSteppingStr = CatSPrintClean(NULL, FORMAT_STEPPING, BaseStepArrayGen100_Gen200[BaseStep], MetalStep,
+      ControllerRid);
   }
 
   NVDIMM_EXIT();

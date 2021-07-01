@@ -47,15 +47,11 @@ typedef union {
 #define CONTROLLER_REVISION_BASE_STEP_MASK 0x30
 #define CONTROLLER_REVISION_METAL_STEP_MASK 0x03
 
-#define CONTROLLER_REVISION_A_STEP 0x00
-#define CONTROLLER_REVISION_S_STEP 0x10
-#define CONTROLLER_REVISION_B_STEP 0x20
-#define CONTROLLER_REVISION_C_STEP 0x30
-
 #define CONTROLLER_REVISION_A_STEP_STR L"A"
 #define CONTROLLER_REVISION_S_STEP_STR L"S"
 #define CONTROLLER_REVISION_B_STEP_STR L"B"
 #define CONTROLLER_REVISION_C_STEP_STR L"C"
+#define CONTROLLER_REVISION_D_STEP_STR L"D"
 
 #define CONTROLLER_STEPPING_UNKNOWN_STR L"Unknown stepping"
 
@@ -1905,13 +1901,15 @@ IsFwApiVersionSupportedByValues(
   Convert controller revision id to string
 
   @param[in] Controller revision id
+  @param[in] Subsystem Device Id for determining HW Gen
 
   @retval CLI string representation of the controller revision id
 **/
 CHAR16*
 ControllerRidToStr(
-  IN     UINT16 ControllerRid
-  );
+  IN     UINT16 ControllerRid,
+  IN     UINT16 SubsystemDeviceId
+);
 
 /**
 Set object status for DIMM_INFO

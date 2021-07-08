@@ -209,7 +209,6 @@ GetFirstAndBoundSmBiosStructPointer(
     CopyMem_S(pSmbiosRecord->Table, TableSize, pSmBiosStruct->Raw, TableSize);
     CHECK_RESULT(PbrSetTableRecord(pContext, PBR_RECORD_TYPE_SMBIOS, pSmbiosRecord, sizeof(PbrSmbiosTableRecord) + TableSize), Finish);
 
-    NVDIMM_DBG("Max smbios size %x\n", pTableEntry->TableLength);
 
   } else {
     // Playback mode

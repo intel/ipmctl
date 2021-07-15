@@ -9512,7 +9512,7 @@ GetARSStatus(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
-  UINT8 DimmARSStatus = LONG_OP_STATUS_IDLE;
+  UINT8 DimmARSStatus = LONG_OP_STATUS_NOT_STARTED;
   UINT8 ARSStatusBitmask = 0;
 
   NVDIMM_ENTRY();
@@ -9521,7 +9521,7 @@ GetARSStatus(
     goto Finish;
   }
 
-  *pARSStatus = LONG_OP_STATUS_IDLE;
+  *pARSStatus = LONG_OP_STATUS_NOT_STARTED;
 
   LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
@@ -9536,38 +9536,29 @@ GetARSStatus(
         NVDIMM_DBG("FwCmdGetARS failed with error " FORMAT_EFI_STATUS " for DIMM 0x%x", ReturnCode, pDimm->DeviceHandle.AsUint32);
       }
 
-      switch(DimmARSStatus) {
-        case LONG_OP_STATUS_IN_PROGRESS:
-          *pARSStatus = LONG_OP_STATUS_IN_PROGRESS;
-          goto Finish;
-          break;
-        case LONG_OP_STATUS_UNKNOWN:
-          ARSStatusBitmask |= ARS_STATUS_MASK_UNKNOWN;
-          break;
-        case LONG_OP_STATUS_COMPLETED:
-          ARSStatusBitmask |= ARS_STATUS_MASK_COMPLETED;
-          break;
-        case LONG_OP_STATUS_IDLE:
-          ARSStatusBitmask |= ARS_STATUS_MASK_IDLE;
-          break;
-        case LONG_OP_STATUS_ABORTED:
-          ARSStatusBitmask |= ARS_STATUS_MASK_ABORTED;
-          break;
-        case LONG_OP_STATUS_ERROR:
-        default:
-          ARSStatusBitmask |= ARS_STATUS_MASK_ERROR;
-          break;
+
+      if (DimmARSStatus == LONG_OP_STATUS_IN_PROGRESS) {
+        *pARSStatus = LONG_OP_STATUS_IN_PROGRESS;
+        goto Finish;
+        break;
+      } else {
+        // OR into the bitmask for each PMem module so we can collectively
+        // present the worst error at the end
+        // Do a quick bounds check, just in case
+        CHECK_NOT_TRUE(DimmARSStatus <= 7, Finish);
+        ARSStatusBitmask |= 1 << DimmARSStatus;
       }
     }
   }
 
-  if (ARSStatusBitmask & ARS_STATUS_MASK_UNKNOWN) {
+  // Show only the worst error in this <ranked> order
+  if (ARSStatusBitmask & (1 << LONG_OP_STATUS_UNKNOWN)) {
     *pARSStatus = LONG_OP_STATUS_UNKNOWN;
-  } else if (ARSStatusBitmask & ARS_STATUS_MASK_ERROR) {
+  } else if (ARSStatusBitmask & (1 << LONG_OP_STATUS_ERROR)) {
     *pARSStatus = LONG_OP_STATUS_ERROR;
-  } else if (ARSStatusBitmask & ARS_STATUS_MASK_ABORTED) {
+  } else if (ARSStatusBitmask & (1 << LONG_OP_STATUS_ABORTED)) {
     *pARSStatus = LONG_OP_STATUS_ABORTED;
-  } else if (ARSStatusBitmask & ARS_STATUS_MASK_COMPLETED) {
+  } else if (ARSStatusBitmask & (1 << LONG_OP_STATUS_COMPLETED)) {
     *pARSStatus = LONG_OP_STATUS_COMPLETED;
   }
 

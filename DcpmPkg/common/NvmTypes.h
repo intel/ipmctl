@@ -831,7 +831,7 @@ typedef struct _DEBUG_LOG_INFO {
 
 /** Long operation status **/
 #define LONG_OP_STATUS_UNKNOWN      0
-#define LONG_OP_STATUS_IDLE         1
+#define LONG_OP_STATUS_NOT_STARTED  1
 #define LONG_OP_STATUS_IN_PROGRESS  2
 #define LONG_OP_STATUS_COMPLETED    3
 #define LONG_OP_STATUS_ABORTED      4
@@ -877,16 +877,6 @@ do {                                                                            
                          DIMM_BOOT_STATUS_MEDIA_DISABLED | DIMM_BOOT_STATUS_MAILBOX_NOT_READY |                              \
                          DIMM_BOOT_STATUS_REBOOT_REQUIRED | DIMM_BOOT_STATUS_BSR_UNKNOWN));                                  \
 } while (0)
-
-/**
-  System-wide ARS Status Bitmask
- **/
-#define ARS_STATUS_MASK_UNKNOWN        BIT0
-#define ARS_STATUS_MASK_IDLE           BIT1
-#define ARS_STATUS_MASK_IN_PROGRESS    BIT2
-#define ARS_STATUS_MASK_COMPLETED      BIT3
-#define ARS_STATUS_MASK_ABORTED        BIT4
-#define ARS_STATUS_MASK_ERROR          BIT5
 
 /**
   Security states bitmask

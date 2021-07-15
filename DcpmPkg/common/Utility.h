@@ -133,23 +133,6 @@ typedef union {
 #define SECURITY_CAPABILITIES_ERASE       L"Erase"
 #define SECURITY_CAPABILITIES_NONE        L"None"
 
-// ARS status string values
-#define ARS_STATUS_NOT_SUPPORTED_STR L"Not supported in Memory Mode"
-#define ARS_STATUS_UNKNOWN_STR       L"Unknown"
-#define ARS_STATUS_IDLE_STR          L"Idle"
-#define ARS_STATUS_IN_PROGRESS_STR   L"In progress"
-#define ARS_STATUS_COMPLETED_STR     L"Completed"
-#define ARS_STATUS_ABORTED_STR       L"Aborted"
-#define ARS_STATUS_ERROR_STR         L"Error"
-
-// Overwrite DIMM status string values
-#define OVERWRITE_DIMM_STATUS_UNKNOWN_STR      L"Unknown"
-#define OVERWRITE_DIMM_STATUS_IDLE_STR         L"Idle"
-#define OVERWRITE_DIMM_STATUS_IN_PROGRESS_STR  L"In progress"
-#define OVERWRITE_DIMM_STATUS_COMPLETED_STR    L"Completed"
-#define OVERWRITE_DIMM_STATUS_ABORTED_STR      L"Aborted"
-#define OVERWRITE_DIMM_STATUS_ERROR_STR        L"Error"
-
 // Memory type string values
 #define MEMORY_TYPE_DCPM_STR     L"Logical Non-Volatile Device"
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
@@ -1500,17 +1483,17 @@ FwActivateOptInToString(
 );
 
 /**
-  Convert ARS status value to its respective string
+  Convert long op status value to its respective string
 
-  @param[in] ARS status value
-  @param[in] AppDirect Capacity value (sum across all PMems)
+  @param[in] HiiHandle Pointer to HII handle
+  @param[in] LongOpStatus status value
 
-  @retval CLI string representation of ARS status
+  @retval CLI string representation of long op status
 **/
 CHAR16*
-ARSStatusToStr(
-  IN     UINT8 ARSStatus,
-  IN     UINT64 AppDirectCapacity
+LongOpStatusToStr(
+  IN EFI_HANDLE HiiHandle,
+  IN     UINT8 LongOpStatus
   );
 
 /**

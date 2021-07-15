@@ -543,11 +543,8 @@ ARSStatus::
   The address range scrub (ARS) operation status for the PMem module. The status is a
   reflection of the last requested ARS, but not necessarily within the current
   platform power cycle. One of:
-  * Not supported in Memory Mode - PMem modules are configured as Memory Mode (100%)
-    and ARS operation status is not supported.
-  * Unknown - FIS command to determine long operation status failed.
-  * Idle - No long operation has been run or the status is overwritten
-    due to a different long operation running on this PMem module.
+  * Unknown - The ARS operation status cannot be determined.
+  * Not started - An ARS operation has not started.
   * In progress - An ARS operation is currently in progress.
   * Completed - The last ARS operation has completed.
   * Aborted - The last ARS operation was aborted.
@@ -555,9 +552,11 @@ ARSStatus::
 
 OverwriteStatus::
   The overwrite PMem module operation status for the PMem module. One of:
-  * Unknown - FIS command to determine long operation status failed.
-  * Idle - No long operation has been run or the status is overwritten
-    due to a different long operation running on this PMem module.
+  * Unknown - The overwrite PMem module operation status cannot be determined. This may
+    occur if the status gets overwritten due to a different long operation
+    running on this PMem module.
+  * Not started - An overwrite PMem module operation was not started on the last
+    boot.
   * In progress - An overwrite PMem module operation is currently in progress.
   * Completed - An overwrite PMem module operation completed and a reboot is
     required to use the PMem module.

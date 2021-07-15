@@ -586,13 +586,13 @@ MatchCurrentARSStatus(
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
-  UINT8 CurrentARSStatus = LONG_OP_STATUS_IDLE;
+  UINT8 CurrentARSStatus = LONG_OP_STATUS_NOT_STARTED;
 
   NVDIMM_ENTRY();
 
   if ((pARSStatusMatched == NULL)||
       ((DesiredARSStatus != LONG_OP_STATUS_UNKNOWN) &&
-       (DesiredARSStatus != LONG_OP_STATUS_IDLE) &&
+       (DesiredARSStatus != LONG_OP_STATUS_NOT_STARTED) &&
        (DesiredARSStatus != LONG_OP_STATUS_IN_PROGRESS) &&
        (DesiredARSStatus != LONG_OP_STATUS_COMPLETED) &&
        (DesiredARSStatus != LONG_OP_STATUS_ABORTED) &&

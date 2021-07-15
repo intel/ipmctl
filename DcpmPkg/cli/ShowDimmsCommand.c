@@ -305,7 +305,6 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
 STATIC CHAR16 *PopulationViolationToString(UINT8 ManageabilityState);
 STATIC CHAR16 *FormFactorToString(UINT8 FormFactor);
-STATIC CHAR16 *OverwriteDimmStatusToStr(UINT8 OverwriteDimmStatus);
 
 /*
  * Register the show dimms command
@@ -468,7 +467,6 @@ ShowDimms(
   BOOLEAN IsSkuViolation;
   DIMM_INFO_CATEGORIES DimmCategories = DIMM_INFO_CATEGORY_NONE;
   BOOLEAN FIS_2_0 = FALSE;
-  MEMORY_RESOURCES_INFO MemoryResourcesInfo;
   CHAR16 *pPcdMissingStr = NULL;
 
   NVDIMM_ENTRY();
@@ -478,7 +476,6 @@ ShowDimms(
   ZeroMem(DimmStr, sizeof(DimmStr));
   ZeroMem(&LatchedLastShutdownStatusDetails, sizeof(LatchedLastShutdownStatusDetails));
   ZeroMem(&UnlatchedLastShutdownStatusDetails, sizeof(UnlatchedLastShutdownStatusDetails));
-  SetMem(&MemoryResourcesInfo, sizeof(MemoryResourcesInfo), 0x0);
 
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -570,18 +567,6 @@ ShowDimms(
   if (EFI_ERROR(ReturnCode) || (pDimms == NULL)) {
     NVDIMM_WARN("Failed to populate the list of DIMM_INFO structures");
     goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetMemoryResourcesInfo(pNvmDimmConfigProtocol, &MemoryResourcesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    if (MemoryResourcesInfo.PcdInvalid) {
-      pPcdMissingStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING), NULL);
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pPcdMissingStr);
-    }
-    // Don't block show -dimm output from being unable to get a CCUR table on
-    // one PMem module. Only the AppDirect capacity is used, and only for working
-    // around ARSStatus not getting overwritten on reboot. It's fine here.
-    ReturnCode = EFI_SUCCESS;
   }
 
   ReturnCode = IsDimmsMixedSkuCfg(pPrinterCtx, pNvmDimmConfigProtocol, &IsMixedSku, &IsSkuViolation);
@@ -1333,7 +1318,7 @@ ShowDimms(
 
         /** ARSStatus **/
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ARS_STATUS_STR))) {
-          pAttributeStr = ARSStatusToStr(pDimms[DimmIndex].ARSStatus, MemoryResourcesInfo.AppDirectCapacity);
+          pAttributeStr = LongOpStatusToStr(gNvmDimmCliHiiHandle, pDimms[DimmIndex].ARSStatus);
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ARS_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
         }
@@ -1344,7 +1329,7 @@ ShowDimms(
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           }
           else {
-            pAttributeStr = OverwriteDimmStatusToStr(pDimms[DimmIndex].OverwriteDimmStatus);
+            pAttributeStr = LongOpStatusToStr(gNvmDimmCliHiiHandle, pDimms[DimmIndex].OverwriteDimmStatus);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, OVERWRITE_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
@@ -1631,43 +1616,4 @@ FormFactorToString(
     break;
   }
   return pFormFactorStr;
-}
-
-/**
-  Convert overwrite DIMM status value to string
-**/
-STATIC
-CHAR16 *
-OverwriteDimmStatusToStr(
-  IN     UINT8 OverwriteDimmStatus
-)
-{
-  CHAR16 *pOverwriteDimmStatusStr = NULL;
-
-  NVDIMM_ENTRY();
-
-  switch (OverwriteDimmStatus) {
-  case LONG_OP_STATUS_COMPLETED:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_COMPLETED_STR);
-    break;
-  case LONG_OP_STATUS_IN_PROGRESS:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_IN_PROGRESS_STR);
-    break;
-  case LONG_OP_STATUS_IDLE:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_IDLE_STR);
-    break;
-  case LONG_OP_STATUS_UNKNOWN:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_UNKNOWN_STR);
-    break;
-  case LONG_OP_STATUS_ABORTED:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_ABORTED_STR);
-    break;
-  case LONG_OP_STATUS_ERROR:
-  default:
-    pOverwriteDimmStatusStr = CatSPrintClean(NULL, FORMAT_STR, OVERWRITE_DIMM_STATUS_ERROR_STR);
-    break;
-  }
-
-  NVDIMM_EXIT();
-  return pOverwriteDimmStatusStr;
 }

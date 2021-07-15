@@ -233,6 +233,15 @@
 #string STR_DCPMM_BOOT_STATUS_MAILBOX_NOT_READY #language en "Mailbox Not Ready"
 #string STR_DCPMM_BOOT_STATUS_RR #language en "Reboot Required"
 
+#string STR_DCPMM_VIEW_PMM_FORM_ARSSTATUS                 #language en  "ARS status"
+#string STR_DCPMM_VIEW_PMM_FORM_OVERWRITE_DIMM_STATUS     #language en  "Overwrite PMem module status"
+#string STR_DCPMM_LONG_OP_STATUS_UNKNOWN     #language en  "Unknown"
+#string STR_DCPMM_LONG_OP_STATUS_NOT_STARTED #language en  "Not started"
+#string STR_DCPMM_LONG_OP_STATUS_IN_PROGRESS #language en  "In progress"
+#string STR_DCPMM_LONG_OP_STATUS_COMPLETED   #language en  "Completed"
+#string STR_DCPMM_LONG_OP_STATUS_ABORTED     #language en  "Aborted"
+#string STR_DCPMM_LONG_OP_STATUS_ERROR       #language en  "Error"
+
 #string STR_DCPMM_FW_UPDATE_STATUS_STAGED     #language en "Staged successfully"
 #string STR_DCPMM_FW_UPDATE_STATUS_SUCCESS    #language en "Update loaded successfully"
 #string STR_DCPMM_FW_UPDATE_STATUS_FAIL       #language en "Update failed to load, fell back to previous firmware"

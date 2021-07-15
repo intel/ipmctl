@@ -2013,55 +2013,49 @@ FwActivateOptInToString(
 
   return pOptIntString;
 }
+
 /**
-  Convert ARS status value to its respective string
+  Convert long op status value to its respective string
 
-  @param[in] ARS status value
-  @param[in] AppDirect Capacity value (sum across all PMems)
+  @param[in] HiiHandle Pointer to HII handle
+  @param[in] LongOpStatus status value
 
-  @retval CLI string representation of ARS status
+  @retval CLI string representation of long op status
 **/
 CHAR16*
-ARSStatusToStr(
-  IN     UINT8 ARSStatus,
-  IN     UINT64 AppDirectCapacity
+LongOpStatusToStr(
+  IN EFI_HANDLE HiiHandle,
+  IN UINT8 LongOpStatus
   )
 {
-  CHAR16 *pARSStatusStr = NULL;
+  CHAR16 *pLongOpStatusStr = NULL;
 
   NVDIMM_ENTRY();
 
-  //this implies MemoryMode=100% so ARS state is not valid/supported
-  if (0 == AppDirectCapacity) {
-    pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_NOT_SUPPORTED_STR);
-    goto Finish;
-  }
-
-  switch (ARSStatus) {
-    case LONG_OP_STATUS_IDLE:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_IDLE_STR);
+  switch (LongOpStatus) {
+    case LONG_OP_STATUS_NOT_STARTED:
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_NOT_STARTED), NULL);
       break;
     case LONG_OP_STATUS_IN_PROGRESS:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_IN_PROGRESS_STR);
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_IN_PROGRESS), NULL);
       break;
     case LONG_OP_STATUS_COMPLETED:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_COMPLETED_STR);
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_COMPLETED), NULL);
       break;
     case LONG_OP_STATUS_ABORTED:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_ABORTED_STR);
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_ABORTED), NULL);
       break;
     case LONG_OP_STATUS_UNKNOWN:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_UNKNOWN_STR);
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_UNKNOWN), NULL);
       break;
     case LONG_OP_STATUS_ERROR:
     default:
-      pARSStatusStr = CatSPrintClean(pARSStatusStr, FORMAT_STR, ARS_STATUS_ERROR_STR);
+      pLongOpStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_LONG_OP_STATUS_ERROR), NULL);
       break;
   }
 
-Finish:
   NVDIMM_EXIT();
-  return pARSStatusStr;
+  return pLongOpStatusStr;
 }
 
 /**

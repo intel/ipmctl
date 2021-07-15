@@ -1621,6 +1621,56 @@ Finish:
   return ReturnCode;
 }
 
+
+/**
+  This helper function is used to determine the ARS status for the
+  particular DIMM by inspecting the firmware ARS return payload.
+
+  @param[in] pARSPayload Pointer to the ARS return payload
+  @param[out] pDimmARSStatus Pointer to the individual DIMM ARS status
+
+  @retval EFI_SUCCESS           Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+**/
+EFI_STATUS
+GetDimmARSStatusFromARSPayload(
+  IN     PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload,
+     OUT UINT8 *pDimmARSStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+
+  NVDIMM_ENTRY();
+
+  if (pARSPayload == NULL || pDimmARSStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    NVDIMM_DBG("GetLongOpDimmInfoStatus failed!");
+    goto Finish;
+  }
+
+  *pDimmARSStatus = LONG_OP_STATUS_UNKNOWN;
+
+  if ((pARSPayload->DPACurrentAddress == pARSPayload->DPAEndAddress) && !(pARSPayload->Enable)) {
+    *pDimmARSStatus = LONG_OP_STATUS_COMPLETED;
+  }  else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) &&
+             (pARSPayload->DPACurrentAddress < pARSPayload->DPAEndAddress) &&
+             !(pARSPayload->Enable)) {
+    *pDimmARSStatus = LONG_OP_STATUS_ABORTED;
+  } else if ((pARSPayload->DPACurrentAddress == 0x00) || (pARSPayload->DPACurrentAddress == pARSPayload->DPAStartAddress)) {
+    *pDimmARSStatus = LONG_OP_STATUS_NOT_STARTED;
+  } else if ((pARSPayload->DPACurrentAddress > pARSPayload->DPAStartAddress) && (pARSPayload->Enable)) {
+    *pDimmARSStatus = LONG_OP_STATUS_IN_PROGRESS;
+  } else {
+    *pDimmARSStatus = LONG_OP_STATUS_UNKNOWN;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
 /**
   Firmware command to retrieve the ARS status of a particular DIMM.
 
@@ -1638,27 +1688,48 @@ FwCmdGetARS(
      OUT UINT8 *pDimmARSStatus
   )
 {
+  NVM_FW_CMD *pFwCmd = NULL;
+  PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload = NULL;
   EFI_STATUS ReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();
 
-  if (pDimm == NULL || pDimmARSStatus == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
+  CHECK_NULL_ARG(pDimm, Finish);
+  CHECK_NULL_ARG(pDimmARSStatus, Finish);
+
+  *pDimmARSStatus = LONG_OP_STATUS_UNKNOWN;
+
+  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
+  if (pFwCmd == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  *pDimmARSStatus = LONG_OP_STATUS_IDLE;
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = PtGetFeatures;
+  pFwCmd->SubOpcode = SubopAddressRangeScrub;
+  pFwCmd->OutputPayloadSize = sizeof(*pARSPayload);
 
-  ReturnCode = GetLongOpDimmInfoStatus(pDimm, PtSetFeatures, SubopAddressRangeScrub, pDimmARSStatus);
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("GetLongOpDimmInfoStatus failed!");
+    NVDIMM_DBG("Error detected when sending Firmware Get AddressRangeScrub command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+  pARSPayload = (PT_PAYLOAD_ADDRESS_RANGE_SCRUB *) pFwCmd->OutPayload;
+
+  ReturnCode = GetDimmARSStatusFromARSPayload(pARSPayload, pDimmARSStatus);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_DBG("Error detected when retrieving ARSStatus from ARS Payload");
     goto Finish;
   }
 
 Finish:
+  FREE_POOL_SAFE(pFwCmd);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
 
 /**
   Firmware command Identify DIMM.
@@ -6490,7 +6561,7 @@ GetOverwriteDimmStatus(
     goto Finish;
   }
 
-  *pOverwriteDimmStatus = LONG_OP_STATUS_IDLE;
+  *pOverwriteDimmStatus = LONG_OP_STATUS_NOT_STARTED;
 
   ReturnCode = GetLongOpDimmInfoStatus(pDimm, PtSetSecInfo, SubopOverwriteDimm, pOverwriteDimmStatus);
   if (EFI_ERROR(ReturnCode)) {
@@ -6537,14 +6608,14 @@ GetLongOpDimmInfoStatus(
     goto Finish;
   }
 
-  *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
+  *pLongOpDimmInfoStatus = LONG_OP_STATUS_NOT_STARTED;
 
   ReturnCode = FwCmdGetLongOperationStatus(pDimm, &FwStatus, &LongOpStatus);
   if (EFI_ERROR(ReturnCode)) {
     if ((pDimm->FwVer.FwApiMajor == 1 && pDimm->FwVer.FwApiMinor <= 4 && FwStatus == FW_INTERNAL_DEVICE_ERROR) ||
       FwStatus == FW_DATA_NOT_SET) {
       /** It is valid case when there is no long operation status **/
-      *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_NOT_STARTED;
       ReturnCode = EFI_SUCCESS;
     }
     else {
@@ -6562,7 +6633,7 @@ GetLongOpDimmInfoStatus(
       *pLongOpDimmInfoStatus = LONG_OP_STATUS_IN_PROGRESS;
       break;
     case FW_DATA_NOT_SET:
-      *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
+      *pLongOpDimmInfoStatus = LONG_OP_STATUS_NOT_STARTED;
       break;
     case FW_ABORTED:
       *pLongOpDimmInfoStatus = LONG_OP_STATUS_ABORTED;
@@ -6573,7 +6644,7 @@ GetLongOpDimmInfoStatus(
     }
   }
   else {
-    *pLongOpDimmInfoStatus = LONG_OP_STATUS_IDLE;
+    *pLongOpDimmInfoStatus = LONG_OP_STATUS_UNKNOWN;
   }
 
   ReturnCode = EFI_SUCCESS;

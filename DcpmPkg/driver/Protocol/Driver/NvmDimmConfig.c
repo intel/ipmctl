@@ -3951,7 +3951,7 @@ ModifyPcdConfig(
       GenerateChecksum(pConfigHeader, pConfigHeader->Header.Length, PCAT_TABLE_HEADER_CHECKSUM_OFFSET);
 
       //write full partition 1 back to PCD with updated values
-      TmpReturnCode = SetPlatformConfigDataOemPartition(pDimms[Index], pConfigHeader, ConfigSize);
+      TmpReturnCode = FwCmdSetPlatformConfigData(pDimms[Index], PCD_OEM_PARTITION_ID, (UINT8 *)pConfigHeader, ConfigSize);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);

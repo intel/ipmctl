@@ -2017,84 +2017,7 @@ Finish:
   FREE_POOL_SAFE(pFwCmd);
   return ReturnCode;
 }
-/**
-  Firmware command to get Partition Data using large payload.
-  Execute a FW command to get information about DIMM regions and REGIONs configuration.
 
-  The caller is responsible for a memory deallocation of the ppPlatformConfigData
-
-  @param[in] pDimm The Intel NVM Dimm to retrieve identity info on
-  @param[in] PartitionId Partition number to get data from
-  @param[out] ppRawData Pointer to a new buffer pointer for storing retrieved data
-
-  @retval EFI_SUCCESS: Success
-  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
-**/
-EFI_STATUS
-FwCmdGetPcdLargePayload(
-  IN     DIMM *pDimm,
-  IN     UINT8 PartitionId,
-  OUT UINT8 **ppRawData
-)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  NVM_FW_CMD *pFwCmd = NULL;
-  PT_INPUT_PAYLOAD_GET_PLATFORM_CONFIG_DATA InputPayload;
-  NVDIMM_ENTRY();
-
-  SetMem(&InputPayload, sizeof(InputPayload), 0x0);
-
-  if (pDimm == NULL || ppRawData == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  *ppRawData = AllocateZeroPool(PCD_PARTITION_SIZE);
-  if (*ppRawData == NULL) {
-    NVDIMM_WARN("Can't allocate memory for Platform Config Data (%u bytes)", PCD_PARTITION_SIZE);
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-  if (pFwCmd == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  /**
-    Retrieve the OEM PCD data
-  **/
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtGetAdminFeatures;
-  pFwCmd->SubOpcode = SubopPlatformDataInfo;
-  InputPayload.PartitionId = PartitionId;
-  InputPayload.CmdOptions.RetrieveOption = PCD_CMD_OPT_PARTITION_DATA;
-  pFwCmd->InputPayloadSize = sizeof(InputPayload);
-
-  /** Get PCD by large payload in single call **/
-  pFwCmd->LargeOutputPayloadSize = PCD_PARTITION_SIZE;
-  InputPayload.Offset = 0;
-  InputPayload.CmdOptions.PayloadType = PCD_CMD_OPT_LARGE_PAYLOAD;
-
-  CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InputPayload, pFwCmd->InputPayloadSize);
-#ifdef OS_BUILD
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
-#else
-  ReturnCode = PassThruWithRetryOnFwAborted(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
-#endif
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending Platform Config Data (Get Data) command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
-    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto Finish;
-  }
-  CopyMem_S(*ppRawData, PCD_PARTITION_SIZE, pFwCmd->LargeOutputPayload, PCD_PARTITION_SIZE);
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
 /**
   Firmware command get Platform Config Data.
   Execute a FW command to get information about DIMM regions and REGIONs configuration.
@@ -2925,7 +2848,7 @@ FwCmdSetPlatformConfigData (
     // partition, copy over OEM Data and write
     // back entire partition
     if (PartitionId == PCD_OEM_PARTITION_ID) {
-      CHECK_RESULT(FwCmdGetPcdLargePayload(pDimm, PCD_OEM_PARTITION_ID, &pOEMPartitionData), Finish);
+      CHECK_RESULT(FwCmdGetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, &pOEMPartitionData), Finish);
       CopyMem_S(pFwCmd->LargeInputPayload + PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
                  sizeof(pFwCmd->LargeInputPayload)- PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
                  pOEMPartitionData + PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE,
@@ -6106,63 +6029,6 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
-
-/**
-  Set Platform Config Data OEM Partition Intel config region.
-  We only write to the first 64KiB of Intel FW/SW config metadata. The latter
-  64KiB is reserved for OEM use.
-
-  @param[in] pDimm The Intel NVM Dimm to set PCD
-  @param[in] pNewConf Pointer to new config data to write
-  @param[in] NewConfSize Size of pNewConf
-
-  @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER NULL inputs or bad size
-  @retval Other return codes from FwCmdSetPlatformConfigData
-**/
-EFI_STATUS
-SetPlatformConfigDataOemPartition(
-  IN     DIMM *pDimm,
-  IN     NVDIMM_CONFIGURATION_HEADER *pNewConf,
-  IN     UINT32 NewConfSize
-  )
-{
-  UINT8 *pOemPartition = NULL;
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  NVDIMM_ENTRY();
-
-  if ((pDimm == NULL) || (pNewConf == NULL)) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  if ((NewConfSize == 0) || (NewConfSize > PCD_OEM_PARTITION_INTEL_CFG_REGION_SIZE)) {
-    NVDIMM_DBG("Bad NewConfSize");
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  /* Previous algorithm assumed read and write via large payload MB transactions, so
-     required reading / writing entire PCD region. Switched to using SMALL MB, which allows
-     writing only the relevant data, and preventing any writes > 64kb. This technique is faster
-     given current size of PCD Data.
-   */
-
-  // Write the PCD data via small payload MB. This call internally enforces using small payload MB
-  // for any OEM Partition writes.
-  ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, (UINT8*)pNewConf, NewConfSize);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Failed to set Platform Config Data");
-    goto Finish;
-  }
-
-Finish:
-  FREE_POOL_SAFE(pOemPartition);
-  NVDIMM_EXIT_I64(ReturnCode);
-  return ReturnCode;
-}
-
 
 /**
   Matches FW return code to one of available EFI_STATUS EFI base types

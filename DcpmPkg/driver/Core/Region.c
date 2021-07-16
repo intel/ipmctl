@@ -3926,8 +3926,7 @@ Finish:
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pDimm is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval other error codes from called functions:
-          GetPlatformConfigDataOemPartition, SetPlatformConfigDataOemPartition
+  @retval other error codes from called functions
 **/
 EFI_STATUS
 SendConfigInputToDimm(
@@ -4027,7 +4026,7 @@ SendConfigInputToDimm(
   GenerateChecksum(pNewConfHeader, pNewConfHeader->Header.Length, PCAT_TABLE_HEADER_CHECKSUM_OFFSET);
 
   /** Send new Platform Config Data back to dimm **/
-  Rc = SetPlatformConfigDataOemPartition(pDimm, pNewConfHeader, PcdLength);
+  Rc = FwCmdSetPlatformConfigData(pDimm, PCD_OEM_PARTITION_ID, (UINT8 *)pNewConfHeader, PcdLength);
   if (EFI_ERROR(Rc)) {
     NVDIMM_DBG("Failed to set Platform Config Data");
     goto Finish;

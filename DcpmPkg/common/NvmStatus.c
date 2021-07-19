@@ -810,12 +810,14 @@ IsSetNvmStatus(
   CONST UINT64 Bit = (UINT64)1 << Mod;
   BOOLEAN IsSet = FALSE;
 
+  NVDIMM_ENTRY();
   if (pObjectStatus == NULL) {
     goto Finish;
   }
 
   IsSet = (pObjectStatus->StatusBitField.BitField[Index] & Bit) != 0;
 Finish:
+  NVDIMM_EXIT();
   return IsSet;
 }
 

@@ -398,7 +398,8 @@ ApplyGoalConfigsToDimms(
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pDimm is NULL
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval other error codes from called functions
+  @retval other error codes from called functions:
+          FwCmdGetPlatformConfigData, FwCmdSetPlatformConfigData
 **/
 EFI_STATUS
 SendConfigInputToDimm(

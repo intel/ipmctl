@@ -8342,6 +8342,12 @@ FillDimmList(
     ReturnCode = TmpReturnCode;
     goto Finish;
   }
+  if (ListSize == 0) {
+    // Can't do much with 0 PMem modules!
+    NVDIMM_DBG("Found 0 DCPMMs");
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
 
   gNvmDimmData->PMEMDev.DimmSkuConsistency = TRUE;
   pFirstDimm = DIMM_FROM_NODE(GetFirstNode(&gNvmDimmData->PMEMDev.Dimms));

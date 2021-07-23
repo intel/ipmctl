@@ -392,7 +392,9 @@ ShowTopology(
     }
   }
   /** display detailed view for PMTT 0.1 **/
-  else if (IS_ACPI_REV_MAJ_0_MIN_1(Revision)) {
+  // If we are here with an invalid PMTT, we are able to derive the topology from the SMBIOS table successfully.
+  // Print in the style of a PMTT 0.1 table
+  else if (IS_ACPI_REV_MAJ_0_MIN_1(Revision) || IS_PMTT_REVISION_INVALID(Revision)) {
     SetDisplayInfo(L"DimmTopology", ListView, NULL);
 
     //Print detailed topology for DDR entries if no dimm target specified

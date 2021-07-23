@@ -9234,7 +9234,7 @@ Finish:
 
   @param[in] pPmttInfo - pointer to generic list head
 **/
-STATIC VOID
+STATIC EFI_STATUS
 MapSockets(
    LIST_ENTRY * pPmttInfo
 )
@@ -9252,13 +9252,12 @@ MapSockets(
   UINT64 PmttLen = 0;
   UINT64 Offset = 0;
   UINT32 Index1 = 0, Index2 = 0;
-#ifndef MDEPKG_NDEBUG
+  UINT32 InvalidHandleCount = 0;
   LIST_ENTRY *pNode = NULL;
-#endif
 
   if (NULL == pPmttInfo) {
     NVDIMM_ERR("Invalid Parameter");
-    return;
+    return EFI_INVALID_PARAMETER;
   }
 
   InitializeListHead(pPmttInfo);
@@ -9268,7 +9267,7 @@ MapSockets(
   if (EFI_ERROR(ReturnCode)) {
     //error getting PMTT. Nothing to map
     //to see ddr4 topology in this case, do not use -socket
-    return;
+    goto Finish;
   }
 
   if (IS_ACPI_REV_MAJ_0_MIN_1(pPmttRaw->Revision)) {
@@ -9293,6 +9292,7 @@ MapSockets(
             DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
             if (DdrEntry == NULL) {
               NVDIMM_ERR("Out of memory");
+              ReturnCode = EFI_OUT_OF_RESOURCES;
               goto Finish;
             }
             DdrEntry->PmttVersion.Revision.AsUint8 = PMTT_HEADER_REVISION_1;
@@ -9300,6 +9300,9 @@ MapSockets(
             DdrEntry->SocketID = pSocket->SocketId;
             DdrEntry->Signature = PMTT_INFO_SIGNATURE;
             InsertTailList(pPmttInfo, &DdrEntry->PmttNode);
+          }
+          else {
+            InvalidHandleCount++;
           }
         }
         Offset += sizeof(PMTT_MODULE) + PMTT_COMMON_HDR_LEN;
@@ -9323,6 +9326,7 @@ MapSockets(
         DdrEntry = AllocateZeroPool(sizeof(*DdrEntry));
         if (DdrEntry == NULL) {
           NVDIMM_ERR("Out of memory");
+          ReturnCode = EFI_OUT_OF_RESOURCES;
           goto Finish;
         }
 
@@ -9340,6 +9344,10 @@ MapSockets(
       }
     }
   }
+  else {
+    ReturnCode = EFI_UNSUPPORTED;
+    goto Finish;
+  }
 
 #ifndef MDEPKG_NDEBUG
   LIST_FOR_EACH(pNode, pPmttInfo) {
@@ -9348,9 +9356,25 @@ MapSockets(
   }
 #endif
 
+  // if a module was seen with an invalid handle and no modules with a valid handle were
+  // seen then indicate a likely problem by returning EFI_NOT_FOUND
+  if (InvalidHandleCount > 0) {
+    // get count of items in list. Reuse Index1 to hold count
+    Index1 = 0;
+    LIST_COUNT(pNode, pPmttInfo, Index1);
+
+    if (Index1 == 0) {
+      ReturnCode = EFI_NOT_FOUND;
+      goto Finish;
+    }
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
 Finish:
   FREE_POOL_SAFE(pPmttRaw);
-  return;
+
+  return ReturnCode;
 }
 
 /**
@@ -9389,6 +9413,130 @@ INT32 SortDimmTopologyByMemType(VOID *ppTopologyDimm1, VOID *ppTopologyDimm2)
   @retval EFI_OUT_OF_RESOURCES Problem with allocating memory
 **/
 EFI_STATUS
+GetSystemTopologyFromSmbios(
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL* pThis,
+  OUT TOPOLOGY_DIMM_INFO** ppTopologyDimm,
+  OUT UINT16* pTopologyDimmsNumber
+)
+{
+  EFI_STATUS ReturnCode = EFI_DEVICE_ERROR;
+
+  SMBIOS_STRUCTURE_POINTER SmBiosStruct;
+  SMBIOS_STRUCTURE_POINTER BoundSmBiosStruct;
+  SMBIOS_VERSION SmbiosVersion;
+  UINT8 CorrectedMemoryType;
+  UINT16 Index = 0;
+  UINT64 Capacity = 0;
+  DIMM* pDimm = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (pThis == NULL || ppTopologyDimm == NULL || pTopologyDimmsNumber == NULL) {
+    goto Finish;
+  }
+
+  *ppTopologyDimm = AllocateZeroPool(sizeof(**ppTopologyDimm) * MAX_DIMMS);
+  if (*ppTopologyDimm == NULL) {
+    ReturnCode = EFI_OUT_OF_RESOURCES;
+    goto Finish;
+  }
+
+  ZeroMem(&SmBiosStruct, sizeof(SmBiosStruct));
+  ZeroMem(&BoundSmBiosStruct, sizeof(BoundSmBiosStruct));
+  ZeroMem(&SmbiosVersion, sizeof(SmbiosVersion));
+
+  GetFirstAndBoundSmBiosStructPointer(&SmBiosStruct, &BoundSmBiosStruct, &SmbiosVersion);
+  if (SmBiosStruct.Raw == NULL || BoundSmBiosStruct.Raw == NULL) {
+    goto Finish;
+  }
+
+  while (SmBiosStruct.Raw < BoundSmBiosStruct.Raw) {
+    if ((SmBiosStruct.Hdr != NULL) &&
+        (SmBiosStruct.Hdr->Type == SMBIOS_TYPE_MEM_DEV) &&
+        ((SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) ||
+         (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE) ||
+         (SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DCPM))) {
+        (*ppTopologyDimm)[Index].DimmID = SmBiosStruct.Hdr->Handle;
+
+        ReturnCode = GetSmbiosCapacity(SmBiosStruct.Type17->Size, SmBiosStruct.Type17->ExtendedSize, SmbiosVersion,
+          &Capacity);
+        (*ppTopologyDimm)[Index].VolatileCapacity = Capacity;
+        ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER*)&SmBiosStruct.Type17,
+          SmBiosStruct.Type17->DeviceLocator, (*ppTopologyDimm)[Index].DeviceLocator,
+          sizeof((*ppTopologyDimm)[Index].DeviceLocator));
+        if (EFI_ERROR(ReturnCode)) {
+          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->DeviceLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
+        }
+        ReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER*)&SmBiosStruct.Type17,
+          SmBiosStruct.Type17->BankLocator, (*ppTopologyDimm)[Index].BankLabel,
+          sizeof((*ppTopologyDimm)[Index].BankLabel));
+        if (EFI_ERROR(ReturnCode)) {
+          NVDIMM_WARN("Failed to retrieve attribute pDmiPhysicalDev->Type17->BankLocator (" FORMAT_EFI_STATUS ")", ReturnCode);
+        }
+        // override types to keep consistency with dimm_info values
+        CorrectedMemoryType = SmBiosStruct.Type17->MemoryType;
+        if ((SmBiosStruct.Type17->MemoryType == SMBIOS_MEMORY_TYPE_DDR4) && (SmBiosStruct.Type17->TypeDetail.Nonvolatile)) {
+          CorrectedMemoryType = SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE;
+        }
+        else {
+          CorrectedMemoryType = SmBiosStruct.Type17->MemoryType;
+        }
+        switch (CorrectedMemoryType) {
+          case SMBIOS_MEMORY_TYPE_DDR4:
+            (*ppTopologyDimm)[Index].SocketID = INVALID_SOCKET_ID; // need PMTT to get this value
+            (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DDR4;
+            break;
+          case SMBIOS_MEMORY_TYPE_DCPM: // fall through as both types are considered DCPM
+          case SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE:
+            pDimm = GetDimmByPid(SmBiosStruct.Hdr->Handle, &gNvmDimmData->PMEMDev.Dimms);
+            if (pDimm == NULL) {
+              NVDIMM_WARN("Dimm ID: 0x%04x not found!", SmBiosStruct.Hdr->Handle);
+              goto Finish;
+            }
+            (*ppTopologyDimm)[Index].SocketID = pDimm->SocketId;
+            (*ppTopologyDimm)[Index].DimmHandle = pDimm->DeviceHandle.AsUint32;
+            (*ppTopologyDimm)[Index].ChannelID = pDimm->ChannelId;
+            (*ppTopologyDimm)[Index].SlotID = pDimm->ChannelPos;
+            (*ppTopologyDimm)[Index].MemControllerID = pDimm->ImcId;
+            (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_DCPM;
+            break;
+          default:
+            (*ppTopologyDimm)[Index].SocketID = INVALID_SOCKET_ID; // need PMTT to get this value
+            (*ppTopologyDimm)[Index].MemoryType = MEMORYTYPE_UNKNOWN;
+            break;
+        }
+        Index++;
+        (*pTopologyDimmsNumber) = Index;
+    }
+
+    ReturnCode = GetNextSmbiosStruct(&SmBiosStruct);
+    if (EFI_ERROR(ReturnCode)) {
+      goto Finish;
+    }
+  }
+
+  ReturnCode = BubbleSort(*ppTopologyDimm, *pTopologyDimmsNumber, sizeof(**ppTopologyDimm), SortDimmTopologyByMemType);
+
+Finish:
+
+  NVDIMM_EXIT_I64(ReturnCode);
+
+  return ReturnCode;
+}
+
+/**
+  Get system topology from PMTT table and if that fails try SMBIOS table
+
+  @param[in] pThis is a pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance.
+
+  @param[out] ppTopologyDimm Structure containing information about DDR4 entries from SMBIOS.
+  @param[out] pTopologyDimmsNumber Number of DDR4 entries found in SMBIOS.
+
+  @retval EFI_SUCCESS All ok.
+  @retval EFI_DEVICE_ERROR Unable to find SMBIOS table in system configuration tables.
+  @retval EFI_OUT_OF_RESOURCES Problem with allocating memory
+**/
+EFI_STATUS
 EFIAPI
 GetSystemTopology(
   IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
@@ -9419,10 +9567,10 @@ GetSystemTopology(
     goto Finish;
   }
 
-  MapSockets(&PmttInfo);
-
-  if (NULL == (&PmttInfo)->ForwardLink) {
-    NVDIMM_WARN("Error in getting PMTT Info for topology information");
+  ReturnCode = MapSockets(&PmttInfo);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_WARN("Problem detected with PMTT table. Attempting to retrieve information from SMBIOS.");
+    ReturnCode = GetSystemTopologyFromSmbios(pThis, ppTopologyDimm, pTopologyDimmsNumber);
     goto Finish;
   }
 

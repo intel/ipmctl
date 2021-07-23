@@ -943,6 +943,13 @@ do {                                                                            
 #define MEMORYTYPE_DDR5     3
 
 /**
+  DIMM type
+**/
+#define SMBIOS_MEMORY_TYPE_DDR4                   0x1A
+#define SMBIOS_MEMORY_TYPE_DCPM                   0x18 // kept for backward compatibility
+#define SMBIOS_MEMORY_TYPE_LOGICAL_NON_VOLATILE   0x1F
+
+/**
   SMBIOS Macros
 **/
 #define SMBIOS_STR_UNKNOWN  L"Unknown"

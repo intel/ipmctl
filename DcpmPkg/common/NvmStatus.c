@@ -176,7 +176,7 @@ CreateCommandStatusString(
     }
   }
 
-  pCurrentString = CatSPrint(pCurrentString, FORMAT_STR_NL, pCommandStatus->StatusDetails);
+  pCurrentString = CatSPrintClean(pCurrentString, FORMAT_STR_NL, pCommandStatus->StatusDetails);
 
   *ppOutputMessage = pCurrentString;
   ReturnCode = EFI_SUCCESS;

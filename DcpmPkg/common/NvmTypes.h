@@ -42,7 +42,7 @@
 #define UINT32_HEX_STRING_SIZE                26
 #define UINT128_DIGITS                        39
 #define HII_CAPACITY_STRING_SIZE              19
-#define HII_SENSOR_VALUE_STRING_SIZE          19
+#define HII_SENSOR_VALUE_STRING_SIZE          30 // only 22 are needed, but might as well be generous
 #define HII_HEALTH_REASON_STRING_SIZE         110
 #define HII_ISET_ID_STRING_SIZE               64
 #define HII_DIMM_ID_STRING_SIZE               255

@@ -601,9 +601,9 @@ typedef struct _MEMORY_RESOURCES_INFO {
   UINT64 Reserved2[5];
 } MEMORY_RESOURCES_INFO;
 
-// Hard to accidentally get 0xFFFFFFFF in practice, so it's a reasonable
-// unknown value indicator
-#define ACPI_TABLE_VALUE_UNKNOWN MAX_UINT64_VALUE
+// Hard to accidentally get 0xFFFFFFFE in practice (not 0xFFFFFFFF since BIOS is using
+// it for indicating no socket sku limit), so it's a reasonable unknown value indicator
+#define ACPI_TABLE_VALUE_UNKNOWN (MAX_UINT64_VALUE-1)
 
 typedef struct _DIMM_PERFORMANCE_DATA {
   UINT16  DimmId;             //!< SMBIOS Type 17 handle corresponding to this memory device

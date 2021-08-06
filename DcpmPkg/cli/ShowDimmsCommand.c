@@ -228,7 +228,8 @@ CHAR16 *mppAllowedShowDimmsDisplayValues[] =
   PPC_EXTENDED_ADR_ENABLED_STR,
   LATCH_SYSTEM_SHUTDOWN_STATE_STR,
   PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR,
-  MIXED_SKU_STR
+  MIXED_SKU_STR,
+  FIPS_MODE_STATUS_STR
 };
 
 CHAR16 *mppAllowedShowDimmsConfigStatuses[] = {
@@ -299,7 +300,8 @@ CHAR16 *pOnlyManageableAllowedDisplayValues[] = {
   PPC_EXTENDED_ADR_ENABLED_STR,
   LATCH_SYSTEM_SHUTDOWN_STATE_STR,
   PREV_PWR_CYCLE_LATCH_SYSTEM_SHUTDOWN_STATE_STR,
-  MIXED_SKU_STR
+  MIXED_SKU_STR,
+  FIPS_MODE_STATUS_STR
 };
 /* local functions */
 STATIC CHAR16 *ManageabilityToString(UINT8 ManageabilityState);
@@ -320,6 +322,56 @@ RegisterShowDimmsCommand(
   NVDIMM_EXIT_I64(Rc);
   return Rc;
 }
+
+
+/**
+  Convert type to string
+**/
+STATIC
+CHAR16*
+ConvertFIPSModeToString(
+  IN FIPS_MODE FIPSMode,
+  IN FIRMWARE_VERSION FwVer,
+  IN EFI_STATUS ReturnCodeGetFIPSMode
+)
+{
+  CHAR16 *pFIPSModeStatusStr = NULL;
+
+  if((FwVer.FwApiMajor < 3 ) ||
+     (FwVer.FwApiMajor == 3 && FwVer.FwApiMinor < 5)) {
+    // FIPS is only supported with >= 3.5. Return N/A
+    pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+    goto Finish;
+  }
+
+  if (EFI_ERROR(ReturnCodeGetFIPSMode)) {
+    // If for some reason the FIPS call failed on a newer firmware, let's put unknown
+    // instead of N/A
+    pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+  }
+
+  switch (FIPSMode.Status) {
+    case FIPSModeStatusNonFIPSMode:
+      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE), NULL);
+      break;
+    case FIPSModeStatusNonFIPSModeUntilNextBoot:
+      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT), NULL);
+      break;
+    case FIPSModeStatusInitializationNotDone:
+      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_NOT_DONE), NULL);
+      break;
+    case FIPSModeStatusInitializationDone:
+      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_DONE), NULL);
+      break;
+    default:
+      pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
+      break;
+  }
+
+Finish:
+  return pFIPSModeStatusStr;
+}
+
 
 /**
 Get manageability state for Dimm
@@ -467,7 +519,8 @@ ShowDimms(
   BOOLEAN IsSkuViolation;
   DIMM_INFO_CATEGORIES DimmCategories = DIMM_INFO_CATEGORY_NONE;
   BOOLEAN FIS_2_0 = FALSE;
-  CHAR16 *pPcdMissingStr = NULL;
+  CHAR16 *pStatusStr = NULL;
+  FIPS_MODE FIPSMode;
 
   NVDIMM_ENTRY();
   gNullValuesEncounteredForDisplay = 0;
@@ -1519,6 +1572,17 @@ ShowDimms(
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, MIXED_SKU_STR))) {
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, MIXED_SKU_STR, (IsMixedSku == TRUE) ? L"1" : L"0");
         }
+
+        // Pass FIS version into determine FIPS string (print N/A for older versions)
+        if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIPS_MODE_STATUS_STR))) {
+          // Get FIPS status
+          ReturnCode = pNvmDimmConfigProtocol->GetFIPSMode(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &FIPSMode, pCommandStatus);
+          pStatusStr = ConvertFIPSModeToString(FIPSMode, pDimms[DimmIndex].FwVer, ReturnCode);
+          // Overwrite ReturnCode since we don't care if it failed
+          ReturnCode = EFI_SUCCESS;
+          PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FIPS_MODE_STATUS_STR, pStatusStr);
+          FREE_POOL_SAFE(pStatusStr);
+        }
       }
       else {
         // Set certain fields to N/A if NVDIMM is unmanageable
@@ -1552,7 +1616,6 @@ Finish:
   FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pAllDimms);
   FREE_POOL_SAFE(pDimmIds);
-  FREE_POOL_SAFE(pPcdMissingStr);
   FreeCommandStatus(&pCommandStatus);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -1594,6 +1657,7 @@ PopulationViolationToString(
   pPopulationViolationString = CatSPrint(NULL, FORMAT_STR, IsInPopulationViolation ? L"Yes" : L"No");
   return pPopulationViolationString;
 }
+
 /**
   Convert type to string
 **/

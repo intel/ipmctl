@@ -686,3 +686,13 @@ MixedSKU::
   * 0: False
   * 1: True - In this case, the host software operates in a read-only mode and
   does not allow changes to the PMem modules and their associated capacity.
+
+FIPSModeStatus::
+  The FIPS mode status of the PMem module. One of:
+  * Non-FIPS mode: The default mode from Intel manufacturing
+  * Non-FIPS mode, but will transition to FIPS mode on next boot: The PM regions
+    will be inaccessible in this state. Some command restrictions apply.
+  * FIPS mode, one-time initialization not done: The PM regions
+    will be inaccessible in this state. Some command restrictions apply.
+  * FIPS mode, one-time initialization done: After successful Initialize
+    FIPS Mode firmware command invocation

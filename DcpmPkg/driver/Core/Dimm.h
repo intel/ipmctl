@@ -1862,6 +1862,32 @@ FwCmdGetLatchSystemShutdownStateInfo(
 );
 
 /**
+  Helper function to run a simple small payload command.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Opcode Firmware command opcode to use
+  @param[in] SubOpcode Firmware command sub-opcode to use
+  @param[in] InputPayload Input payload buffer
+  @param[in] InputPayloadSize Input payload buffer size
+  @param[in] OutputPayload Output payload buffer
+  @param[in] OutputPayloadSize Output payload buffer size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdSmallPayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     UINT8 *InputPayload OPTIONAL,
+  IN     UINT8 InputPayloadSize,
+     OUT UINT8 *OutputPayload OPTIONAL,
+  IN     UINT8 OutputPayloadSize
+);
+
+/**
 Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct

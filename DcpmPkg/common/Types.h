@@ -239,6 +239,24 @@ typedef struct {
   } EffectName;
 } COMMAND_EFFECT_LOG_ENTRY;
 
+///
+/// FIPS Mode Status
+///
+typedef enum {
+  FIPSModeStatusNonFIPSMode                = 0x00,
+  FIPSModeStatusNonFIPSModeUntilNextBoot   = 0x01,
+  FIPSModeStatusInitializationNotDone      = 0x02,
+  FIPSModeStatusInitializationDone         = 0x03
+} FIPS_MODE_STATUS;
+
+/**
+  Get FIPS Mode struct
+**/
+typedef struct {
+  UINT8   Status; //!< FIPS mode status, see above
+  UINT8   Reserved[3];
+} FIPS_MODE;
+
 /**
 * @defgroup ERROR_LOG_TYPES Error Log Types
   * @{

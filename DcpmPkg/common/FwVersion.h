@@ -8,8 +8,8 @@
 /** Minimum supported version of FW API: 1.2 **/
 #define MIN_FIS_SUPPORTED_BY_THIS_SW_MAJOR   1
 #define MIN_FIS_SUPPORTED_BY_THIS_SW_MINOR   2
-/** Maximum supported version of FW API: 3.4 **/
+/** Maximum supported version of FW API: 3.5 **/
 #define MAX_FIS_SUPPORTED_BY_THIS_SW_MAJOR    3
-#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    4
+#define MAX_FIS_SUPPORTED_BY_THIS_SW_MINOR    5
 
 #endif /** _FWVERSION_H_ **/

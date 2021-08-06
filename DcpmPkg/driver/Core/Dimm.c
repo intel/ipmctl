@@ -1730,61 +1730,6 @@ Finish:
   return ReturnCode;
 }
 
-
-/**
-  Firmware command Identify DIMM.
-  Execute a FW command to get information about DIMM.
-
-  @param[in] pDimm The Intel NVM Dimm to retrieve identify info on
-  @param[out] pPayload Area to place the identity info returned from FW
-
-  @retval EFI_SUCCESS: Success
-  @retval EFI_OUT_OF_RESOURCES: memory allocation failure
-**/
-EFI_STATUS
-FwCmdIdDimm (
-  IN     DIMM *pDimm,
-     OUT PT_ID_DIMM_PAYLOAD *pPayload
-  )
-{
-  NVM_FW_CMD *pFwCmd = NULL;
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-
-  NVDIMM_ENTRY();
-
-  if (pDimm == NULL || pPayload == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
-
-  pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
-
-  if (!pFwCmd) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
-
-  pFwCmd->DimmID = pDimm->DimmID;
-  pFwCmd->Opcode = PtIdentifyDimm;
-  pFwCmd->SubOpcode = SubopIdentify;
-  pFwCmd->OutputPayloadSize = OUT_PAYLOAD_SIZE;
-
-  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
-
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Error detected when sending PtIdentifyDimm command (RC = " FORMAT_EFI_STATUS ")", ReturnCode);
-    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto Finish;
-  }
-  CopyMem_S(pPayload, sizeof(*pPayload), pFwCmd->OutPayload, sizeof(*pPayload));
-
-Finish:
-  FREE_POOL_SAFE(pFwCmd);
-  NVDIMM_EXIT_I64(ReturnCode);
-
-  return ReturnCode;
-}
-
 /**
   Firmware command Device Characteristics
 
@@ -4336,7 +4281,7 @@ RefreshDimm(
     goto Finish;
   }
 
-  ReturnCode = FwCmdIdDimm(pDimm, pPayload);
+  ReturnCode = FwCmdSmallPayload(pDimm, PtIdentifyDimm, SubopIdentify, NULL, 0, (UINT8 *)pPayload, sizeof(*pPayload));
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("FW CMD Error: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
@@ -5319,7 +5264,7 @@ InitializeDimm (
   }
 
   CHECK_RESULT_MALLOC(pPayload, AllocateZeroPool(sizeof(*pPayload)), Finish);
-  CHECK_RESULT(FwCmdIdDimm(pNewDimm, pPayload), Finish);
+  CHECK_RESULT(FwCmdSmallPayload(pNewDimm, PtIdentifyDimm, SubopIdentify, NULL, 0, (UINT8 *)pPayload, sizeof(*pPayload)), Finish);
   NVDIMM_DBG("IdentifyDimm data:\n");
   NVDIMM_DBG("Raw Capacity (4k multiply): %d\n", pPayload->Rc);
   pNewDimm->FlushRequired = (pPayload->Fswr & BIT0) != 0;
@@ -7112,6 +7057,67 @@ Finish:
 }
 
 /**
+  Helper function to run a simple small payload command.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Opcode Firmware command opcode to use
+  @param[in] SubOpcode Firmware command sub-opcode to use
+  @param[in] InputPayload Input payload buffer
+  @param[in] InputPayloadSize Input payload buffer size
+  @param[in] OutputPayload Output payload buffer
+  @param[in] OutputPayloadSize Output payload buffer size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdSmallPayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     UINT8 *InputPayload OPTIONAL,
+  IN     UINT8 InputPayloadSize,
+     OUT UINT8 *OutputPayload OPTIONAL,
+  IN     UINT8 OutputPayloadSize
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  NVM_FW_CMD *pFwCmd = NULL;
+
+  NVDIMM_ENTRY();
+
+  CHECK_NULL_ARG(pDimm, Finish);
+
+  CHECK_RESULT_MALLOC(pFwCmd, AllocateZeroPool(sizeof(*pFwCmd)), Finish);
+
+  pFwCmd->DimmID = pDimm->DimmID;
+  pFwCmd->Opcode = Opcode;
+  pFwCmd->SubOpcode = SubOpcode;
+  pFwCmd->InputPayloadSize = InputPayloadSize;
+  if (InputPayloadSize > 0 && InputPayload != NULL) {
+    CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), InputPayload, InputPayloadSize);
+  }
+  pFwCmd->OutputPayloadSize = OutputPayloadSize;
+
+  ReturnCode = PassThru(pDimm, pFwCmd, PT_TIMEOUT_INTERVAL);
+  if (EFI_ERROR(ReturnCode)) {
+    // This macros is also responsible for printing out useful error messages
+    FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
+    goto Finish;
+  }
+
+  if (OutputPayloadSize > 0 && OutputPayload != NULL) {
+    CopyMem_S(OutputPayload, OutputPayloadSize, pFwCmd->OutPayload, sizeof(pFwCmd->OutPayload));
+  }
+
+Finish:
+  FREE_POOL_SAFE(pFwCmd);
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+/**
 Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct
@@ -7278,7 +7284,7 @@ GetDimmInterfaceStatus(
   CHECK_RESULT_MALLOC(pPayload, AllocateZeroPool(sizeof(*pPayload)), Finish);
 
   // Send identify dimm command to determine the interface status
-  TempReturnCode = FwCmdIdDimm(pDimm, pPayload);
+  TempReturnCode = FwCmdSmallPayload(pDimm, PtIdentifyDimm, SubopIdentify, NULL, 0, (UINT8 *)pPayload, sizeof(*pPayload));
   if (!EFI_ERROR(TempReturnCode)) {
     *pIsInterfaceReady = TRUE;
   }

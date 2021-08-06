@@ -343,3 +343,8 @@
 #string STR_DCPMM_STATUS_ERR_INITIALIZATION_FAILED_NO_MODULES #language en "Initialization failed. No PMem modules in the system."
 
 #string STR_DCPMM_STATUS_WARN_PMTT_TABLE_NOT_FOUND #language en "PMTT table is not found. BIOS might reject goal request upon reboot for SKU limit or NM:FM violation"
+
+#string STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE                    #language en "Non-FIPS mode"
+#string STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT    #language en "Non-FIPS mode, but will transition to FIPS mode on next boot"
+#string STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_NOT_DONE          #language en "FIPS mode, one-time initialization not done"
+#string STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_DONE              #language en "FIPS mode, one-time initialization done"

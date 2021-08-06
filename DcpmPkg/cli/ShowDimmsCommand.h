@@ -124,6 +124,7 @@
 #define MILI_WATT_STR               L"mW"
 #define MEGA_TRANSFERS_PER_SEC_STR  L"MT/s"
 #define BYTE_STR                    L"b"
+#define FIPS_MODE_STATUS_STR        L"FIPSModeStatus"
 /*
  * Register the show dimms command
  */

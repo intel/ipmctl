@@ -246,7 +246,8 @@ enum IdentifyDimmSubop {
 **/
 enum GetSecInfoSubop {
   SubopGetSecState = 0x00,          //!< Returns the DIMM security state
-  SubOpGetSecOptIn = 0x02           //!< Returns the DIMM security Opt-In
+  SubOpGetSecOptIn = 0x02,          //!< Returns the DIMM security Opt-In
+  SubOpGetFIPSMode = 0x03           //!< Returns the FIPS Mode
 };
 
 /**

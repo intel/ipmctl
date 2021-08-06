@@ -166,6 +166,7 @@ EFI_DCPMM_CONFIG2_PROTOCOL gNvmDimmDriverNvmDimmConfig =
   GetDriverDebugPrintErrorLevel,
   SetDriverDebugPrintErrorLevel,
 #endif //OS_BUILD
+  GetFIPSMode,
 };
 
 
@@ -11494,3 +11495,38 @@ Finish:
   return ReturnCode;
 }
 #endif //OS_BUILD
+
+/**
+  Get FIPS Mode retrieves the current FIPS Mode for the DimmID provided.
+
+  @param[in] pThis - A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] DimmID - Handle of the PMem module
+  @param[out] pFIPSMode - A pointer to a FIPS_MODE struct to fill in
+  @param[out] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+EFI_STATUS
+EFIAPI
+GetFIPSMode(
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT16 DimmID,
+     OUT FIPS_MODE *pFIPSMode,
+     OUT COMMAND_STATUS *pCommandStatus
+)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  DIMM *pDimms[MAX_DIMMS];
+  UINT32 DimmsNum = 0;
+
+  CHECK_RESULT(VerifyTargetDimms(&DimmID, 1, NULL, 0, REQUIRE_DCPMMS_MANAGEABLE, pDimms,
+      &DimmsNum, pCommandStatus), Finish);
+
+  CHECK_RESULT(FwCmdSmallPayload(pDimms[0], PtGetSecInfo, SubOpGetFIPSMode, NULL, 0,
+      (UINT8 *)pFIPSMode, sizeof(*pFIPSMode)), Finish);
+
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}

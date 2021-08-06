@@ -1672,6 +1672,26 @@ EFI_STATUS
 #endif //OS_BUILD
 
 /**
+  Get FIPS Mode retrieves the current FIPS Mode for the DimmID provided.
+
+  @param[in] pThis - A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
+  @param[in] DimmID - Handle of the PMem module
+  @param[out] pFIPSMode - A pointer to a FIPS_MODE struct to fill in
+  @param[out] pCommandStatus Pointer to command status structure
+
+  @retval EFI_SUCCESS Success
+  @retval ERROR any non-zero value is an error (more details in Base.h)
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DCPMM_GET_FIPS_MODE) (
+  IN     EFI_DCPMM_CONFIG2_PROTOCOL *pThis,
+  IN     UINT16 DimmID,
+     OUT FIPS_MODE *pFIPSMode,
+     OUT COMMAND_STATUS *pCommandStatus
+);
+
+/**
   Configuration and management of PMem modules Protocol Interface
 **/
 struct _EFI_DCPMM_CONFIG2_PROTOCOL {
@@ -1737,6 +1757,8 @@ struct _EFI_DCPMM_CONFIG2_PROTOCOL {
   EFI_DCPMM_PBR_GET_DRIVER_DEBUG_PRINT_ERROR_LEVEL GetDriverDebugPrintErrorLevel;
   EFI_DCPMM_PBR_SET_DRIVER_DEBUG_PRINT_ERROR_LEVEL SetDriverDebugPrintErrorLevel;
 #endif //OS_BUILD
+  EFI_DCPMM_GET_FIPS_MODE GetFIPSMode;
+
 };
 
 /**

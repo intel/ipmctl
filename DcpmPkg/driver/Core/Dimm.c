@@ -4023,6 +4023,18 @@ FwCmdGetPackageSparingPolicy (
     goto Finish;
   }
 
+  CHECK_RESULT_MALLOC(*ppPayloadPackageSparingPolicy, AllocateZeroPool(sizeof(**ppPayloadPackageSparingPolicy)), Finish);
+
+  // Package sparing is disabled for Intel Optane 300 series, so exit
+  // out beforehand because it's been dropped from the firmware interface
+  // entirely (and will return an error)
+  if (pDimm->FwVer.FwApiMajor == 3) {
+    (*ppPayloadPackageSparingPolicy)->Enable = FALSE;
+    (*ppPayloadPackageSparingPolicy)->Supported = FALSE;
+    ReturnCode = EFI_SUCCESS;
+    goto Finish;
+  }
+
   pFwCmd = AllocateZeroPool(sizeof(*pFwCmd));
   if (pFwCmd == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
@@ -4038,19 +4050,13 @@ FwCmdGetPackageSparingPolicy (
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_WARN("Error detected when sending GetPackageSparingPolicy command (RC = " FORMAT_EFI_STATUS ", Status = %d)", ReturnCode, pFwCmd->Status);
     FW_CMD_ERROR_TO_EFI_STATUS(pFwCmd, ReturnCode);
-    goto FinishAfterFwCmdAlloc;
+    goto Finish;
   }
 
-  *ppPayloadPackageSparingPolicy = AllocateZeroPool(sizeof(**ppPayloadPackageSparingPolicy));
-  if (*ppPayloadPackageSparingPolicy == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto FinishAfterFwCmdAlloc;
-  }
   CopyMem_S(*ppPayloadPackageSparingPolicy, sizeof(**ppPayloadPackageSparingPolicy), pFwCmd->OutPayload, sizeof(**ppPayloadPackageSparingPolicy));
 
-FinishAfterFwCmdAlloc:
-  FreePool(pFwCmd);
 Finish:
+  FREE_POOL_SAFE(pFwCmd)
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

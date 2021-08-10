@@ -52,13 +52,6 @@ CONST UINT64 gSupportedBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT] = {
 extern EFI_GUID gDcpmmProtocolGuid;
 #endif
 
-// All possible combinations of transport and mailbox size
-typedef enum _DIMM_PASSTHRU_METHOD {
-  DimmPassthruDdrtLargePayload = 0,
-  DimmPassthruDdrtSmallPayload = 1,
-  DimmPassthruSmbusSmallPayload = 2
-} DIMM_PASSTHRU_METHOD;
-
 #ifdef OS_BUILD
 /*
 * Function get the ini configuration only on the first call

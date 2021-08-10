@@ -6313,6 +6313,10 @@ CreateGoalConfig(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN SendGoalConfigWarning = FALSE;
+  BOOLEAN OnlyUnrelatedMailboxesOnList = FALSE;
+  BOOLEAN SmbusMailboxOnList = FALSE;
+  BOOLEAN SmbusWillNotBeUsed = FALSE;
+  DIMM_PASSTHRU_METHOD Method = DimmPassthruDdrtLargePayload;
   REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
 
   NVDIMM_ENTRY();
@@ -6383,14 +6387,27 @@ CreateGoalConfig(
 
     // We're doing this pre-check (can we run Set PCD?) so the user
     // doesn't have to go through the process of creating and confirming a
-    // goal only to have it fail to apply.
-    // There are a few levels of restriction. First, we can't do anything if
-    // we're restricted to BIOS mailbox only. Sometimes only DDRT is disabled,
-    // in which case we can use SMBus. However, if SMBus is not requested or
-    // enabled via -smbus flag or default configuration, then we can't do
-    // anything if there's CAP is restricted to SMBus.
-    if ((CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY)
-      || (!IS_SMBUS_FLAG_ENABLED(Attribs) && (CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY || CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY))) {
+    // goal only to have it fail to apply. We can only run Set PCD if there is
+    // no restriction (OS mailbox using DDRT) or if we use SMBus and either there
+    // is no restriction or SMBus is in the restriction list (it's allowed).
+    // (Using SMBus for create -goal is nonsensical in practice, but we'll leave
+    // it in) In all other cases, we want to pre-emptively say that create -goal
+    // is unsupported, which is the logic below.
+    // First, we can't do anything if we're restricted to BIOS and/or management
+    // (BMC/ME) mailbox only.
+    OnlyUnrelatedMailboxesOnList =  (CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY ||
+                                      CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_MGMTONLY ||
+                                      CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_MGMTBIOSONLY);
+    // If the restriction list includes SMBus but SMBus will not be used,
+    // then we can't do anything.
+    SmbusMailboxOnList =  (CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY ||
+                                CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY ||
+                                CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_MGMTSMBUSONLY ||
+                                CapRestricted == COMMAND_ACCESS_POLICY_RESTRICTION_MGMTBIOSSMBUSONLY);
+    CHECK_RESULT(DeterminePassThruMethod(ppDimms[Index], PtSetAdminFeatures, SubopPlatformDataInfo, TRUE, &Method), Finish);
+    SmbusWillNotBeUsed = (Method != DimmPassthruSmbusSmallPayload);
+    // The final logic should be readable now
+    if (OnlyUnrelatedMailboxesOnList || (SmbusMailboxOnList && SmbusWillNotBeUsed)) {
       ReturnCode = EFI_UNSUPPORTED;
       NVDIMM_WARN("Command access policy disallows Set PCD command");
       ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_SUPPORTED);

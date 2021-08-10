@@ -349,6 +349,12 @@ typedef struct _MEMMAP_RANGE {
 #define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   10 // Account for ARS potentially getting restarted a few times in the background
 #define DSM_RETRY_SUGGESTED               0x5
 
+// All possible combinations of transport and mailbox size
+typedef enum _DIMM_PASSTHRU_METHOD {
+  DimmPassthruDdrtLargePayload = 0,
+  DimmPassthruDdrtSmallPayload = 1,
+  DimmPassthruSmbusSmallPayload = 2
+} DIMM_PASSTHRU_METHOD;
 
 #ifdef OS_BUILD
 #define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
@@ -2018,6 +2024,32 @@ Clears the PCD Cache on each DIMM in the global DIMM list
 @retval EFI_SUCCESS Success
 **/
 EFI_STATUS ClearPcdCacheOnDimmList(VOID);
+
+
+/**
+  Return what passthru method will be used to send the command.
+
+  @param[in] pDimm The DCPMM to transact with
+  @param[in] Opcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
+  @param[in] SubOpcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
+  @param[in] IsLargePayloadCommand Need to know if large payload interface is
+                                   even desired. If not, then it makes no sense
+                                   to write to the large payload mailbox unless
+                                   the user specifies it.
+  @param[out] Method Pointer to passthru method variable to modify
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
+**/
+EFI_STATUS
+DeterminePassThruMethod(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     BOOLEAN IsLargePayloadCommand,
+     OUT DIMM_PASSTHRU_METHOD *pMethod
+);
 
 /**
   Set Obj Status when DIMM is not found using Id expected by end user

@@ -39,6 +39,8 @@ A corrected version is being developed and will hopefully be available soon. Unt
 
 The development branch contains what will likely become the 03.00.00.xxxx branch.
 
+**Note**: Branches may differ fundamentally. Please pay close attention to README.md of the respective branch.
+
 ## Packages
 
 Some distributions include ipmctl allowing installation via their package manager.
@@ -71,6 +73,8 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 
 
 ## Build
+
+**Note**: Each branch may require different building procedures. Please follow README.md of the respective branch.
 
 ### Specific Instructions Reported as Working on SUSE for build in home directory
 

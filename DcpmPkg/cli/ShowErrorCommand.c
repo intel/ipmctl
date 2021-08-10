@@ -498,13 +498,13 @@ ShowErrorCommand(
           // Temperature Type
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
             if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_MEDIA_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_MEDIA_STR);
             }
             else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CONTROLLER) {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_CONTROLLER_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_CONTROLLER_STR);
             }
             else {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_UNKNOWN_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_UNKNOWN_STR);
             }
           }
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {

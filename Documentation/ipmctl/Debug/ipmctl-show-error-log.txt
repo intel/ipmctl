@@ -118,13 +118,25 @@ Show error executed successfully
 
 [listing]
 --
-Media Error occurred on Dimm (DimmID):
-System Timestamp : 1527266471
-DPA : 0x000014c0
-PDA : 0x00000600
-Range : 4B
-Error Type : 4 - Locked/Illegal Access
-Error Flags : DPA Valid
-Transaction Type : 11 - CSR Write
-Sequence Number : 2
+---DimmID=0x0001---
+   ---Error=Thermal
+      System Timestamp=08/09/2021 05:12:27
+      Temperature=84
+      Reported=High
+      Temperature Type=Media Temperature
+      Sequence Number=1
+--
+
+[listing]
+--
+---DimmID=0x0001---
+   ---Error=Media
+      System Timestamp=01/01/1970 00:00:22
+      Error Type=0x04 - Locked/Illegal Access
+      Transaction Type=0x0B - CSR Write
+      Error Flags=0x02 - DPA Valid
+      DPA=0x0000000000020A40
+      PDA=N/A
+      Range=4B
+      Sequence Number=1
 --

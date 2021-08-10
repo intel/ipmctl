@@ -233,7 +233,7 @@ typedef struct _PMON_REGISTERS {
   - 0x0 - No Smart Data DDRT or Media.
   - 0x1 - DDRT Data only to be returned.
   - 0x2 - Media Data only to be returned.
-  - 0x3 - DDRT & Media Data to be returned.
+  - 0x3 - DDRT and Media Data to be returned.
   - All other values reserved.
   **/
   unsigned char       SmartDataMask;
@@ -270,11 +270,11 @@ typedef struct _PMON_REGISTERS {
   **/
   unsigned long long  MEWR;
   /**
-  Current Media temp
+  Current Media temperature
   **/
   unsigned short      MTP;
   /**
-  Current Controller temp
+  Current Controller temperature
   **/
   unsigned short      CTP;
   unsigned char       Reserved[20];

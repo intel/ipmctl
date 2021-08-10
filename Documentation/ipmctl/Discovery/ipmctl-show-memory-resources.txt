@@ -143,12 +143,12 @@ are determined.
 *Definitions:*
 
 Intel PMem module Current Config::
-  See the _Intel(R) Optane(TM) Persistent Memory Software-Firmware Interface Specification_
-  for details.
+  See the _Intel(R) Optane(TM) Persistent Memory Software-Firmware Interface Specification_,
+  document number 556488, for details.
 
 PMem module Partition Info::
-  PMem module partition information provided by PMem module firmware. See the _Intel(R) Optane(TM)
-  Persistent Memory Module Firmware Interface Specification_ for details.
+  PMem module partition information provided by PMem module firmware. See the _Intel(R)
+  Optane(TM) Firmware Interface Specification_, document number 626912, for details.
 
 PMem module Physical Capacity (PC)::
   Total usable capacity reported by PMem module Partition Info

@@ -80,7 +80,7 @@ typedef struct {
 /**
   Create command status as with specified command message.
   Function displays per PMem module status if such exists and
-  summarizing status for whole command. Memory allocated
+  summarizes status for the whole command. Memory allocated
   for status message and command status is freed after
   status is displayed.
 
@@ -182,7 +182,7 @@ GetObjectStatus(
   );
 
 /**
-  Add (or update!) status for specified ID in command status list
+  Add (or update) status for specified ID in command status list
 
   @param[in, out] pCommandStatus - command status
   @param[in] ObjectId - Id for specified object

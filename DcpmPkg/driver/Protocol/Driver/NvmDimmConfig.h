@@ -545,7 +545,7 @@ RecoverDimmFw(
   @remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
   an attempt will be made to abort ARS and the proceed with the firmware update.
 
-  @remarks A reboot is required to activate the updated firmware image and is
+  @remarks A reboot is required to activate the updated firmware image, and it is
   recommended to ensure ARS runs to completion.
 
   @retval EFI_SUCCESS Success
@@ -1329,7 +1329,7 @@ GetTotalUsableDDRCacheSize(
   @param[out] pDDRInaccessibleCapacity Pointer to value of the DDR inaccessible capacity
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
-  @retval EFI_DEVICE_ERROR Total DCPMM Persistent & Volatile capacity is larger than total mapped memory
+  @retval EFI_DEVICE_ERROR Total Intel(R) Optane(TM) persistent memory Persistent and Volatile capacity is larger than total mapped memory
   @retval EFI_SUCCESS Success
 **/
 EFI_STATUS

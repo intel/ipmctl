@@ -281,11 +281,11 @@ typedef struct _MEDIA_ERROR_LOG_PER_DIMM {
   NVM_UINT8   ErrorType;          ///< Indicates what kind of error was logged.
   NVM_UINT8   PdaValid;           ///< Indicates the PDA address is valid.
   NVM_UINT8   DpaValid;           ///< Indicates the DPA address is valid.
-  NVM_UINT8   Interrupt;          ///< Indicates this error generated an interrupt packet
-  NVM_UINT8   Viral;              ///< Indicates Viral was signaled for this error
-  NVM_UINT8   TransactionType;    ///< Transaction tpye
-  NVM_UINT16  SequenceNum;        ///< Sequence number
-  NVM_UINT8   Reserved[2];        ///< Reserved
+  NVM_UINT8   Interrupt;          ///< Indicates this error generated an interrupt packet.
+  NVM_UINT8   Viral;              ///< Indicates Viral was signaled for this error.
+  NVM_UINT8   TransactionType;    ///< Transaction type.
+  NVM_UINT16  SequenceNum;        ///< Sequence number.
+  NVM_UINT8   Reserved[2];        ///< Reserved.
 } MEDIA_ERROR_LOG;
 
 

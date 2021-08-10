@@ -15,7 +15,7 @@
 /**
   Init sensors array with default values
 
-  @param[in,out] DimmSensorsSet sensors array to fill with default values
+  @param[in,out] DimmSensorsSet Sensors array to fill with default values
 **/
 VOID
 InitSensorsSet(
@@ -120,7 +120,7 @@ Finish:
   The string buffer is static and the returned string is const so the
   caller should not make changes to the returned buffer.
 
-  @param[in] SensorType the enum sensor type.
+  @param[in] SensorType The enum sensor type.
     The SensorTypeAll will result in an "Unknown" return as this value
     is not translatable.
 **/
@@ -159,7 +159,7 @@ SensorTypeToString(
 /**
   Assign unit of measure for each SensorType.
 
-  @param[in] SensorType the enum sensor type.
+  @param[in] SensorType The enum sensor type.
     Default case provides scalar.
 **/
 CONST
@@ -277,7 +277,7 @@ ConvertHealthBitmask(
   @param[in] Health State - Numeric Value of the Health State.
       Defined in NvmTypes.h
 
-  @retval String representation of the health state
+  @retval String Representation of the health state
 **/
 EFI_STRING
 HealthToString(

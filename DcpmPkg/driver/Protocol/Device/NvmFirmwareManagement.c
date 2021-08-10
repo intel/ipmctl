@@ -205,8 +205,8 @@ Finish:
 /**
 Updates the firmware image of the PMem module.
 
-@remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
-an attempt will be made to abort ARS and the proceed with the firmware update.
+@remarks If ARS is in progress on any target PMem module,
+an attempt will be made to abort ARS and to proceed with the firmware update.
 
 @remarks A reboot is required to activate the updated firmware image and is
 recommended to ensure ARS runs to completion.

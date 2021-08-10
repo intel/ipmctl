@@ -146,7 +146,7 @@ HealthStateReason::
   * Performance degraded
   * CAP Self-Test communication failure
    +
-  Refer to the _Intel(R) Optane(TM) Persistent Memory Firmware
+  See the _Intel(R) Optane(TM) DC Persistent Memory Module Firmware
   Interface Specification_, document number 556488, Section 4.8
   SMART and Health.
 
@@ -497,7 +497,7 @@ ThermalThrottleLossPercent::
   in current boot of the PMem module.
 
 LastShutdownTime::
-  The time the system was last shutdown.
+  The time the system was last shut down.
 
 ModesSupported::
   A list of the modes supported by the PMem module. Refer to the command

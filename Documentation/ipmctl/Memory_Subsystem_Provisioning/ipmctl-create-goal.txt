@@ -190,9 +190,9 @@ NOTE: A goal request may be initiated even if a target PMem module is in securit
   Refer to <<Show System Capabilities>> for a list of BIOS
   supported modes.
 
-* Some requests are dependent on BIOS and/or platform configuration. For details, refer
-  to the _Intel(R) Optane(TM) Persistent Memory Software Memory Allocation Rules_,
-  document number 564194. For example:
+* Some requests are dependent on BIOS and/or platform configuration. For details, see
+  the _Intel(R) Optane(TM) DC Persistent Memory Software Memory Allocation Rules for Windows, 
+  Linux and UEFI_, document number 564194. For example:
  - Provisioning PMem modules for Memory Mode while BIOS is configured for 1LM only
    will result in unused capacity.
  - Provisioning PMem modules for Memory Mode while not all iMCs have at least one PMem module

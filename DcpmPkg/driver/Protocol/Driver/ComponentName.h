@@ -11,7 +11,7 @@
 
   @param  pThis       A pointer to the EFI_COMPONENT_NAME_PROTOCOL2 instance.
   @param  pLanguage     A pointer to an ASCII string containing the ISO 639-2 or the
-   RFC 4646 language code. This is the language of the driver name that that the caller
+   RFC 4646 language code. This is the language of the driver name that the caller
    is requesting, and it must match one of the languages specified
    in SupportedLanguages.  The number of languages supported by a
    driver is up to the driver writer.
@@ -44,8 +44,8 @@ NvmDimmDriverComponentNameGetDriverName (
   @param  ControllerHandle The handle of a controller that the driver specified by
    This is managing.  This handle specifies the controller
    whose name is to be returned.
-  @param  ChildHandle      The handle of the child controller to retrieve the name
-   of.  This is an optional parameter that may be NULL.  It
+  @param  ChildHandle      The handle of the child controller to retrieve the name for.
+  This is an optional parameter that may be NULL.  It
    will be NULL for device drivers.  It will also be NULL
    for a bus drivers that wish to retrieve the name of the
    bus controller.  It will not be NULL for a bus driver

@@ -72,7 +72,7 @@
 #pragma warning ( disable : 4100 )
 
 //
-// Disable slightly different base types warning as CHAR8 * can not be set
+// Disable slightly different base types warning as CHAR8 * cannot be set
 // to a constant string.
 //
 #pragma warning ( disable : 4057 )
@@ -275,12 +275,12 @@ typedef INT64   INTN;
   ///
   /// Define the standard calling convention reguardless of optimization level.
   /// The GCC support assumes a GCC compiler that supports the EFI ABI. The EFI
-  /// ABI is much closer to the x64 Microsoft* ABI than standard x64 (x86-64) 
-  /// GCC ABI. Thus a standard x64 (x86-64) GCC compiler can not be used for 
-  /// x64. Warning the assembly code in the MDE x64 does not follow the correct 
+  /// ABI is much closer to the x64 Microsoft* ABI than standard x64 (x86-64)
+  /// GCC ABI. Thus a standard x64 (x86-64) GCC compiler cannot be used for
+  /// x64. Warning the assembly code in the MDE x64 does not follow the correct
   /// ABI for the standard x64 (x86-64) GCC.
   ///
-  #define EFIAPI 
+  #define EFIAPI
 #else
   ///
   /// The default for a non Microsoft* or GCC compiler is to assume the EFI ABI

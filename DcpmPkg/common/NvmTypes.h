@@ -25,9 +25,9 @@
 #define MAX_UINT64_VALUE 0xFFFFFFFFFFFFFFFFULL
 
 /**
-  Needed for hii form.
-  There is an error that the HII form is always displaying the value as signed, so we must skip the highest bit,
-  so that we will always stay at the positive numbers.
+  Needed for HII form.
+  There is an error that the HII form is always displaying the value as signed, so skip the highest bit,
+  so that it will always stay at positive numbers.
 **/
 #define MAX_UINT31_VALUE 0x7FFFFFFF
 #define MAX_UINT63_VALUE 0x7FFFFFFFFFFFFFFF
@@ -48,7 +48,7 @@
 #define HII_DIMM_ID_STRING_SIZE               255
 #define HII_APPDIRECT_PREFERENCE_OPTION_SIZE  30
 
-/** UINT128_DIGITS + 1; it has to be a number because of Vfr compiler requirements **/
+/** UINT128_DIGITS + 1; it has to be a number because of VFR compiler requirements **/
 #define UINT128_STRING_SIZE        40
 #define UINT64_BITS                64
 
@@ -61,7 +61,7 @@
 #define NLABEL_NAME_LEN_WITH_TERMINATOR  64 //!< Namespace name length + null terminator
 #define NSGUID_LEN                       16 //!< Length of GUID in bytes
 #define GUID_STR_LEN                     36 //!< Length of GUID string representation (in characters)
-#define LIST_ENTRY_SIZE                  16 //!< Size of list entry field (2 pointers)
+#define LIST_ENTRY_SIZE                  16 //!< Size of list entry field (two pointers)
 #define SENSOR_HEALTH_STR_SIZE           19
 #define LABEL_VERSION_STR_SIZE           4
 #define HEALTH_STR_SIZE            19
@@ -179,7 +179,7 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 /**
   Persistent memory types
 
-  VFR compiler supports only basic #defines, that's why bare values are used
+  VFR compiler supports only basic #defines, that is why bare values are used
 **/
 #define PM_TYPE_AD           0x1 // BIT0
 #define PM_TYPE_AD_NI        0x2 // BIT1
@@ -194,10 +194,10 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define NS_LABEL_VERSION_1_2     2
 
 /**
- * @defgroup GOAL_CONFIG_STATUS Goal configuration status
+ * @defgroup GOAL_CONFIG_STATUS Goal Configuration Status
  * @{
  */
-#define GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS     0   ///< No Goal or goal applied successfully
+#define GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS     0   ///< No goal or goal applied successfully
 #define GOAL_CONFIG_STATUS_UNKNOWN                1   ///< Unknown status
 #define GOAL_CONFIG_STATUS_NEW                    2   ///< Goal is new, not yet applied. Reboot required to apply.
 #define GOAL_CONFIG_STATUS_BAD_REQUEST            3   ///< Goal request is invalid
@@ -206,8 +206,8 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define GOAL_CONFIG_STATUS_FAILED_UNKNOWN         6   ///< Unable to apply goal. Internal error
 
  /**
-   Goal Config data type has 2 elements
-   AppDirect1 & AppDirect2 regions
+   Goal Config data type has two elements
+   AppDirect1 and AppDirect2 regions.
  **/
 #define APPDIRECT_1_INDEX   0
 #define APPDIRECT_2_INDEX   1
@@ -221,17 +221,17 @@ typedef wchar_t NVM_EVENT_MSG_W[NVM_EVENT_MSG_LEN]; // Event message string
 #define FW_TYPE_DEBUG       31
 
 /**
-  In UDK2010.SR1.UP1 Hii parser does not understand '*' symbol and so pointers cannot be used
   in structures visible to VFR form. One solution is to use 64-bit integer as a pointer and
+  In UDK2010.SR1.UP1 HII parser does not understand '*' symbol, so pointers cannot be used
   cast whenever necessary.
 **/
 #define HII_POINTER UINT64
 #define SUPPORTED_BLOCK_SIZES_COUNT 8
 
 /**
-  Intel NVM Dimm format interface code
-  The current code should be 0x301 for AppDirect mode
-  We should use the values that are reported by BIOS
+  Intel's NVM DIMM format interface code.
+  The current code should be 0x301 for AppDirect mode.
+  Use the values that are reported by BIOS
 **/
 #define DCPMM_FMT_CODE_APP_DIRECT  0x301
 
@@ -274,7 +274,7 @@ typedef struct _SMBUS_DIMM_ADDR {
 /* VFR compiler doesn't support typedef, that's why we use defines **/
 #define DIMM_INFO_CATEGORIES        UINT16                          ///< @ref DIMM_INFO_CATEGORY_TYPES
 /**
- * @defgroup DIMM_INFO_CATEGORY_TYPES PMem module Info Category Types
+ * @defgroup DIMM_INFO_CATEGORY_TYPES PMem Module Info Category Types
  * @{
  */
 #define DIMM_INFO_CATEGORY_NONE                         (0)         ///< No DIMM_INFO fields will be populated
@@ -401,13 +401,13 @@ typedef struct _DIMM_INFO {
   UINT8 ARSStatus;                          //!< Address Range Scrub (ARS) operation status for the PMem module
 
   //DIMM_INFO_CATEGORY_SMART_AND_HEALTH
-  UINT8 HealthState;                        //!< overall health state
+  UINT8 HealthState;                        //!< Overall health state
   UINT16 HealthStatusReason;                //!< Health state reason(s)
   UINT32 LatchedLastShutdownStatusDetails;  //!< The detailed status of the last shutdown of the PMem module.
   UINT32 UnlatchedLastShutdownStatusDetails; //!< The detailed status of the last shutdown of the PMem module.
-  UINT8 ThermalThrottlePerformanceLossPrct; //!< the average percentage loss (0..100) due to thermal throttling since last read in current boot
-  UINT64 LastShutdownTime;                  //!< The time the system was last shutdown.
-  UINT8 AitDramEnabled;                     //!< Whether or not the PMem module AIT DRAM is enabled
+  UINT8 ThermalThrottlePerformanceLossPrct; //!< The average percentage loss (0..100) due to thermal throttling since last read in current boot.
+  UINT64 LastShutdownTime;                  //!< The time the system was last shut down.
+  UINT8 AitDramEnabled;                     //!< Whether or not the PMem module AIT DRAM is enabled.
   UINT16 MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
   UINT16 MaxControllerTemperature; //!< The highest controller temperature reported in degrees Celsius.
 
@@ -424,14 +424,14 @@ typedef struct _DIMM_INFO {
   DIMM_INFO_ATTRIB_UINT32 AvgPowerReportingTimeConstant;            //!< The value [ms] used to determine the time constant for reporting average power consumption.
 
   //DIMM_INFO_CATEGORY_VIRAL_POLICY
-  BOOLEAN ViralPolicyEnable;                //!< true if viral policy is enabled
-  BOOLEAN ViralStatus;                      //!< true if the status is viral
+  BOOLEAN ViralPolicyEnable;                //!< True if viral policy is enabled
+  BOOLEAN ViralStatus;                      //!< True if the status is viral
 
   // From global dimm struct
-  UINT64 AppDirectCapacity;                 //!< Capacity in bytes mapped as persistent memory
+  UINT64 AppDirectCapacity;                 //!< Capacity in bytes mapped as persistent memory.
   UINT64 UnconfiguredCapacity;              //!< Total PMem module capacity in bytes that needs further configuration.
   UINT64 ReservedCapacity;                  //!< Total PMem module capacity in bytes that is reserved for metadata.
-  UINT64 InaccessibleCapacity;              //!< Capacity in bytes for use that has not been exposed
+  UINT64 InaccessibleCapacity;              //!< Capacity in bytes for use that has not been exposed.
 
   //DIMM_INFO_CATEGORY_FW_IMAGE_INFO
   FIRMWARE_VERSION StagedFwVersion;         //!< The current staged firmware version
@@ -446,39 +446,39 @@ typedef struct _DIMM_INFO {
   UINT32 PoisonErrorClearCounter;           //!< This counter will be incremented each time the clear poison error is successfully executed
   UINT32 MediaTemperatureInjectionsCounter; //!< This counter will be incremented each time the media temperature is injected
   UINT32 SoftwareTriggersCounter;           //!< This counter is incremented each time a software trigger is enabled
-  UINT64 SoftwareTriggersEnabledDetails;    //!< For each bit set, the corresponding trigger is currently enabled.
+  UINT64 SoftwareTriggersEnabledDetails;    //!< For each bit set, the corresponding trigger is currently enabled
 
   // From global dimm struct
-  UINT8 ManageabilityState;                 //!< if the PMem module is manageable by this SW
-  UINT8 IsNew;                              //!< if is incorporated with the rest of the PMem modules in the system
+  UINT8 ManageabilityState;                 //!< If the PMem module is manageable by this SW
+  UINT8 IsNew;                              //!< If is incorporated with the rest of the PMem modules in the system
   UINT8 RebootNeeded;                       //!< Whether or not reboot is required to reconfigure PMem module
   UINT32 SkuInformation;                    //!< Information about SKU modes
-  UINT16 VendorId;                          //!< vendor id
-  UINT16 DeviceId;                          //!< device id
-  UINT16 SubsystemVendorId;                 //!< Vendor id of the subsystem memory controller
-  UINT16 SubsystemDeviceId;                 //!< Device id of the subsystem memory controller
-  UINT16 Rid;                               //!< revision id
-  UINT16 SubsystemRid;                      //!< Revision id of the subsystem memory controller from NFIT
-  UINT16 ImcId;                             //!< memory controller id
-  UINT16 ChannelId;                         //!< memory channel within an imc
-  UINT16 ChannelPos;                        //!< position in the channel within an imc
+  UINT16 VendorId;                          //!< Vendor ID
+  UINT16 DeviceId;                          //!< Device ID
+  UINT16 SubsystemVendorId;                 //!< Vendor ID of the subsystem memory controller
+  UINT16 SubsystemDeviceId;                 //!< Device ID of the subsystem memory controller
+  UINT16 Rid;                               //!< Revision ID
+  UINT16 SubsystemRid;                      //!< Revision ID of the subsystem memory controller from NFIT
+  UINT16 ImcId;                             //!< Memory controller ID
+  UINT16 ChannelId;                         //!< Memory channel within an iMC
+  UINT16 ChannelPos;                        //!< Position in the channel within an iMC
   UINT16 NodeControllerID;                  //!< The node controller identifier
-  UINT8 MemoryType;                         //!< memory type
+  UINT8 MemoryType;                         //!< Memory type
   UINT8 ConfigStatus;                       //!< ConfigurationStatus code
   UINT8 ModesSupported;                     //!< A list of the modes supported by the PMem module
   BOOLEAN SecurityCapabilities;             //!< The security features supported by the PMem module
   BOOLEAN SKUViolation;                     //!< The configuration of the PMem module is unsupported due to a license issue
   BOOLEAN IsInPopulationViolation;          //!< The PMem module population falls outside of the supported config option
   UINT8 OverwriteDimmStatus;                //!< Overwrite PMem module operation status
-  BOOLEAN Configured;                       //!< true if the PMem module is configured
-  CHAR16 ManufacturerStr[MANUFACTURER_LEN]; //!< Manufacturer string matched from manufacturer string number.
+  BOOLEAN Configured;                       //!< True if the PMem module is configured
+  CHAR16 ManufacturerStr[MANUFACTURER_LEN]; //!< Manufacturer string matched from manufacturer string number
 
   UINT32 DimmHandle;                        //!< The PMem module handle
   SMBUS_DIMM_ADDR SmbusAddress;             //!< SMBUS address
-  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM id (in hexadecimal format representation)
+  CHAR16 DimmUid[MAX_DIMM_UID_LENGTH];      //!< Globally unique NVDIMM ID (in hexadecimal format representation)
   UINT32 ErrorMask;                         //!< Bit mask representing which FW functions failed, see DIMM_INFO_ERROR types
 
-  UINT16 ControllerRid;                     //!< Revision id of the subsystem memory controller from FIS
+  UINT16 ControllerRid;                     //!< Revision ID of the subsystem memory controller from FIS
 
   //DIMM_INFO_CATEGORY_DEVICE_CHARACTERISTICS
   DIMM_INFO_ATTRIB_UINT16 MaxAveragePowerLimit;                             //!< Maximum average power limit in increments of 250 [mW], if supported by the module. Else, 0x0.
@@ -560,7 +560,7 @@ typedef struct _SYSTEM_CAPABILITIES_INFO {
   UINT8 CurrentOperatingMode;                       //!< Memory modes (volatile and persistent) currently selected by BIOS
   UINT16 InterleaveFormatsSupportedNum;             //!< Number of elements in list
   HII_POINTER PtrInterleaveFormatsSupported;        //!< List of supported interleave set formats
-  HII_POINTER PtrInterleaveSize;                    //!< PCAT 3.0 iMc & Channel interleave size
+  HII_POINTER PtrInterleaveSize;                    //!< PCAT 3.0 iMC and Channel interleave size
   UINT64 MinNsSize;                                 //!< Minimum namespace size in bytes
   UINT64 NsBlockSizes[SUPPORTED_BLOCK_SIZES_COUNT]; //!< Supported namespace block sizes in bytes
   UINT8 AppDirectMirrorSupported;
@@ -607,12 +607,12 @@ typedef struct _MEMORY_RESOURCES_INFO {
 
 typedef struct _DIMM_PERFORMANCE_DATA {
   UINT16  DimmId;             //!< SMBIOS Type 17 handle corresponding to this memory device
-  UINT128 MediaReads;         //!< Number of 64 byte reads from media on the PMem module since last AC cycle
-  UINT128 MediaWrites;        //!< Number of 64 byte writes to media on the PMem module since last AC cycle
+  UINT128 MediaReads;         //!< Number of 64-byte reads from media on the PMem module since last AC cycle
+  UINT128 MediaWrites;        //!< Number of 64-byte writes to media on the PMem module since last AC cycle
   UINT128 ReadRequests;       //!< Number of DDRT read transactions the PMem module has serviced since last AC cycle
   UINT128 WriteRequests;      //!< Number of DDRT write transactions the PMem module has serviced since last AC cycle
-  UINT128 TotalMediaReads;    //!< Lifetime number of 64 byte reads from media on the PMem module
-  UINT128 TotalMediaWrites;   //!< Lifetime number of 64 byte writes to media on the PMem module
+  UINT128 TotalMediaReads;    //!< Lifetime number of 64-byte reads from media on the PMem module
+  UINT128 TotalMediaWrites;   //!< Lifetime number of 64-byte writes to media on the PMem module
   UINT128 TotalReadRequests;  //!< Lifetime number of DDRT read transactions the PMem module has serviced
   UINT128 TotalWriteRequests; //!< Lifetime number of DDRT write transactions the PMem module has serviced
   // These are deprecated in the FIS, but leaving these in to preserve functionality
@@ -730,7 +730,7 @@ typedef struct _REGION_GOAL_PER_DIMM_INFO {
   UINT8 NumberOfInterleavedDimms[MAX_IS_PER_DIMM];  //!< Count of PMem modules that are part of related Interleaved AppDirect regions
   UINT64 AppDirectSize[MAX_IS_PER_DIMM];            //!< AppDirect capacity
   UINT8 InterleaveSetType[MAX_IS_PER_DIMM];         //!< Type of interleave set: non-interleaved, interleaved
-  UINT8 ImcInterleaving[MAX_IS_PER_DIMM];           //!< IMC interleaving as bit field
+  UINT8 ImcInterleaving[MAX_IS_PER_DIMM];           //!< iMC interleaving as bit field
   UINT8 ChannelInterleaving[MAX_IS_PER_DIMM];       //!< Channel interleaving as bit field
   UINT8 AppDirectIndex[MAX_IS_PER_DIMM];            //!< AppDirect Index
   UINT8 Status;                                     //!< Goal config status. See @ref GOAL_CONFIG_STATUS.
@@ -996,7 +996,7 @@ do {                                                                            
 #define MANAGEMENT_VALID_CONFIG   1
 
 /**
-  Fw Logging Level
+  FW Logging Level
 **/
 #define FW_LOG_LEVEL_DISABLED 0
 #define FW_LOG_LEVEL_ERROR    1
@@ -1028,25 +1028,25 @@ do {                                                                            
  * Sensor IDs for the various sensor types
  * @{
  */
-#define SENSOR_TYPE_DIMM_HEALTH                     0                ///< PMem module Health Sensor ID
-#define SENSOR_TYPE_MEDIA_TEMPERATURE               1                ///< Media Temperature Sensor ID
-#define SENSOR_TYPE_CONTROLLER_TEMPERATURE          2                ///< Controller Temperature Sensor ID
-#define SENSOR_TYPE_PERCENTAGE_REMAINING            3                ///< Percentage Remaining Sensor ID
-#define SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWN_COUNT    4                ///< Latched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_POWER_ON_TIME                   5                ///< Power On Time Sensor ID
-#define SENSOR_TYPE_UP_TIME                         6                ///< Up-Time Sensor ID
-#define SENSOR_TYPE_POWER_CYCLES                    7                ///< Power Cycles Sensor ID
-#define SENSOR_TYPE_FW_ERROR_COUNT                  8                ///< Firmware Error Count Sensor ID
-#define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT  9                ///< Unlatched Dirty Shutdowns Count Sensor ID
-#define SENSOR_TYPE_ALL                             10               ///< All Sensor IDs
+#define SENSOR_TYPE_DIMM_HEALTH                     0                ///< PMem module health sensor ID
+#define SENSOR_TYPE_MEDIA_TEMPERATURE               1                ///< Media temperature sensor ID
+#define SENSOR_TYPE_CONTROLLER_TEMPERATURE          2                ///< Controller temperature sensor ID
+#define SENSOR_TYPE_PERCENTAGE_REMAINING            3                ///< Percentage remaining sensor ID
+#define SENSOR_TYPE_LATCHED_DIRTY_SHUTDOWN_COUNT    4                ///< Latched dirty shutdowns count sensor ID
+#define SENSOR_TYPE_POWER_ON_TIME                   5                ///< Power on time sensor ID
+#define SENSOR_TYPE_UP_TIME                         6                ///< Up-time sensor ID
+#define SENSOR_TYPE_POWER_CYCLES                    7                ///< Power cycles sensor ID
+#define SENSOR_TYPE_FW_ERROR_COUNT                  8                ///< Firmware error count sensor ID
+#define SENSOR_TYPE_UNLATCHED_DIRTY_SHUTDOWN_COUNT  9                ///< Unlatched dirty shutdowns count sensor ID
+#define SENSOR_TYPE_ALL                             10               ///< All sensor IDs
 #define SENSOR_TYPE_COUNT                           SENSOR_TYPE_ALL  ///< Total count of all supported sensor types
-#define ALARM_COUNT                                 3                ///< Number of Alarm Threshold sensors
+#define ALARM_COUNT                                 3                ///< Number of alarm threshold sensors
 /** @} */
 
 /** Sensor enabled/disabled **/
 #define SENSOR_DISABLED     0           ///< Sensor type disabled
 #define SENSOR_ENABLED      1           ///< Sensor type enabled
-#define SENSOR_NA_ENABLED   2           ///< Sensor type can't be disabled/enabled
+#define SENSOR_NA_ENABLED   2           ///< Sensor type cannot be disabled/enabled
 
 /** show error **/
 #define ERROR_LOG_DEFAULT_SEQUENCE_NUMBER  0
@@ -1083,22 +1083,22 @@ do {                                                                            
   00 - Undefined
   01 - PMem module is configured successfully
   02 - Reserved
-  03 - All the PMem modules in the interleave set not found. Volatile memory is mapped to the SPA if possible
-  04 - Persistent Memory not mapped due to matching Interleave set not found. Volatile memory is mapped to the SPA if possible
-  05 - PMem module added to the system or moved within the system or PMem module is not yet configured
-       Volatile memory is mapped to the SPA if possible. Current configuration present in the PMem module is not modified (Reserved)
+  03 - All the PMem modules in the interleave set not found. Volatile memory is mapped to the SPA if possible.
+  04 - Persistent Memory not mapped due to matching Interleave set not found. Volatile memory is mapped to the SPA if possible.
+  05 - PMem module added to the system or moved within the system or PMem module is not yet configured.
+       Volatile memory is mapped to the SPA if possible. Current configuration present in the PMem module is not modified (Reserved).
   06 - New configuration input structures have errors, old configuration used. Refer to the config output structures
-       for additional errors
+       for additional errors.
   07 - New configuration input structures have errors. Volatile memory is mapped to the SPA if possible
-       Refer to the config output structures for addition errors
-  08 - Configuration Input Checksum not valid
-  09 - Configuration Input data Revision is not supported
-  10 - Current Configuration Checksum not valid
-  11 - PMem module is not mapped to SPA due to a health issue or configuration change
-  12 - PMem module persistent and volatile memory is not mapped due to a population issue
-  13 - PMem module volatile memory is not mapped since NM:FM ratio is not supported
-  14 - PMem module is not mapped due to a violation of the CPU maximum memory limit
-  15 - PMem module persistent memory mapped, but volatile memory is not mapped due to a population issue
+       Refer to the config output structures for addition errors.
+  08 - Configuration Input Checksum not valid.
+  09 - Configuration Input data Revision is not supported.
+  10 - Current Configuration Checksum not valid.
+  11 - PMem module is not mapped to SPA due to a health issue or configuration change.
+  12 - PMem module persistent and volatile memory is not mapped due to a population issue.
+  13 - PMem module volatile memory is not mapped since NM:FM ratio is not supported.
+  14 - PMem module is not mapped due to a violation of the CPU maximum memory limit.
+  15 - PMem module persistent memory mapped, but volatile memory is not mapped due to a population issue.
 
   Other values reserved
 **/

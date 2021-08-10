@@ -23,7 +23,7 @@
  * @{
 **/
 
-#define NVDIMM_SPA_RANGE_TYPE                 0   ///< SPA Range table
+#define NVDIMM_SPA_RANGE_TYPE                 0   ///< System Physical Address (SPA) range table
 #define NVDIMM_NVDIMM_REGION_TYPE             1   ///< NVDIMM Region type table
 #define NVDIMM_INTERLEAVE_TYPE                2   ///< Interleave type table
 #define NVDIMM_SMBIOS_MGMT_INFO_TYPE          3   ///< SMBIOS MGMT Info type table
@@ -82,7 +82,7 @@
 #define PMTT_TYPE_SLOT_GUID \
   { 0xFDCB2a68, 0xC203, 0x4312, {0xB2, 0x91, 0xB8, 0xE8, 0x62, 0x86, 0xC2, 0xC1} }
 
-/** Macros for Intel ACPI Revisions **/
+/** Macros for ACPI Revisions **/
 #define ACPI_REVISION_1        1
 #define ACPI_REVISION_2        2
 #define ACPI_MAJOR_REVISION_1  1
@@ -622,20 +622,20 @@ typedef struct {
   **/
   MAX_INTERLEAVE_SETS_PER_MEMTYPE MaxInterleaveSetsPerMemType;
   /**
-    Number of interleave formats supported by BIOS for the above memory mode. The variable body of this structure
+    Number of interleave formats supported by BIOS for the previously mentioned memory mode. The variable body of this structure
     contains m number of interleave formats.
   **/
   UINT16 NumOfFormatsSupported;
   /**
-    This field will have a list of 4byte values that provide information about BIOS supported interleave formats and
+    This field will have a list of 4-byte values that provide information about BIOS supported interleave formats and
     the recommended interleave informations.
-    BIOS populates the list based on CPU platform & BIOS settings.
+    BIOS populates the list based on CPU platform and BIOS settings.
    (x1 way) IMC0       IMC1
    CH0 | 0b000001 | 0b000010 |
    CH1 | 0b000100 | 0b001000 |
    CH2 | 0b010000 | 0b100000 |
-    Byte[0-1] - Interleave Bitmap based on physical PMem module population
-    For ex: Purley Platform
+    Byte[0-1] - Interleave Bitmap based on physical PMem module population.
+    For example: Purley Platform
     0b001111 x4
     0b111100 x4
     0b110011 x4
@@ -678,12 +678,12 @@ typedef struct {
   **/
   UINT16 InterleaveAlignmentSize;
   /**
-    Number of interleave formats supported by BIOS for the above memory mode. The variable body of this structure
+    Number of interleave formats supported by BIOS for the previously mentioned memory mode. The variable body of this structure
     contains m number of interleave formats.
   **/
   UINT16 NumOfFormatsSupported;
   /**
-    This field will have a list of 4byte values that provide information about BIOS supported interleave formats and
+    This field will have a list of 4-byte values that provide information about BIOS supported interleave formats and
     the recommended interleave informations.
 
     Byte0 - Channel interleave size

@@ -5,7 +5,7 @@
 
 /**
  * @file Types.h
- * @brief Types for EFI_DCPMM_CONFIG2_PROTOCOL to configure and manage PMem modules. These types don't compile with VFR compiler and are kept separate.
+ * @brief Types for EFI_DCPMM_CONFIG2_PROTOCOL to configure and manage PMem modules. These types do not compile with VFR compiler and are kept separate.
  */
 
 #ifndef _TYPES_H_
@@ -135,8 +135,8 @@ typedef struct _SMART_AND_HEALTH_INFO {
   BOOLEAN MediaTemperatureTrip;         ///< Indicates if Media Temperature alarm threshold has tripped
   BOOLEAN ControllerTemperatureTrip;    ///< Indicates if Controller Temperature alarm threshold has tripped
   BOOLEAN PercentageRemainingTrip;      ///< Indicates if Percentage Remaining alarm threshold has tripped
-  INT16 MediaTemperature;               ///< Current Media Temperature in C
-  INT16 ControllerTemperature;          ///< Current Controller Temperature in C
+  INT16 MediaTemperature;               ///< Current Media Temperature in degrees Celsius
+  INT16 ControllerTemperature;          ///< Current Controller Temperature in degrees Celsius
   UINT8 PercentageRemaining;            ///< Remaining module's life as a percentage value of factory expected life span (0-100)
   UINT32 LatchedDirtyShutdownCount;     ///< Latched Dirty Shutdowns count
   UINT8 LatchedLastShutdownStatus;      ///< Latched Last Shutdown Status. See FIS field LSS for additional details
@@ -148,12 +148,12 @@ typedef struct _SMART_AND_HEALTH_INFO {
   UINT16 HealthStatusReason;            ///< Indicates why the module is in the current HealthStatus as specified by @ref HEALTH_STATUS_REASONS. See FIS field HSR for additional details.
   UINT32 MediaErrorCount;               ///< Total count of media errors found in Error Log
   UINT32 ThermalErrorCount;             ///< Total count of thermal errors found in Error Log
-  INT16 ContrTempShutdownThresh;        ///< Controller temperature shutdown threshold in C
-  INT16 MediaTempShutdownThresh;        ///< Media temperature shutdown threshold in C
-  INT16 MediaThrottlingStartThresh;     ///< Media throttling start temperature threshold in C
-  INT16 MediaThrottlingStopThresh;      ///< Media throttling stop temperature threshold in C
-  INT16 ControllerThrottlingStartThresh;///< Controller throttling stop temperature threshold in C
-  INT16 ControllerThrottlingStopThresh; ///< Controller throttling stop temperature threshold in C
+  INT16 ContrTempShutdownThresh;        ///< Controller temperature shutdown threshold in degrees Celsius
+  INT16 MediaTempShutdownThresh;        ///< Media temperature shutdown threshold in degrees Celsius
+  INT16 MediaThrottlingStartThresh;     ///< Media throttling start temperature threshold in degrees Celsius
+  INT16 MediaThrottlingStopThresh;      ///< Media throttling stop temperature threshold in degrees Celsius
+  INT16 ControllerThrottlingStartThresh;///< Controller throttling stop temperature threshold in degrees Celsius
+  INT16 ControllerThrottlingStopThresh; ///< Controller throttling stop temperature threshold in degrees Celsius
   UINT32 UnlatchedDirtyShutdownCount;   ///< Unlatched Dirty Shutdowns count
   UINT32 LatchedLastShutdownStatusDetails;
   UINT32 UnlatchedLastShutdownStatusDetails;
@@ -185,7 +185,7 @@ typedef struct {
   Thermal error log info struct
 **/
 typedef struct _THERMAL_ERROR_LOG_PER_DIMM_INFO {
-  INT16   Temperature;        //!< In celsius
+  INT16   Temperature;        //!< In degrees Celsius
   UINT8   Reported;           //!< Temperature being reported
   UINT8   Type;               //!< Which device the temperature is for
   UINT16  SequenceNum;        //!< Log entry sequence number
@@ -202,10 +202,10 @@ typedef struct _MEDIA_ERROR_LOG_PER_DIMM_INFO {
   UINT8   ErrorType;          //!< Indicates what kind of error was logged. See @ref ERROR_LOG_TYPES.
   UINT8   PdaValid;           //!< Indicates the PDA address is valid.
   UINT8   DpaValid;           //!< Indicates the DPA address is valid.
-  UINT8   Interrupt;          //!< Indicates this error generated an interrupt packet
-  UINT8   Viral;              //!< Indicates Viral was signaled for this error
-  UINT8   TransactionType;    //!< Transaction type
-  UINT16  SequenceNum;        //!< Log entry sequence number
+  UINT8   Interrupt;          //!< Indicates this error generated an interrupt packet.
+  UINT8   Viral;              //!< Indicates Viral was signaled for this error.
+  UINT8   TransactionType;    //!< Transaction type.
+  UINT16  SequenceNum;        //!< Log entry sequence number.
   UINT8   Reserved[2];
 } MEDIA_ERROR_LOG_INFO;
 

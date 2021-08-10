@@ -174,7 +174,7 @@ extern "C"
  * The operating system type.
  */
 enum os_type {
-  OS_TYPE_UNKNOWN = 0,    ///< The OS type can not be determined
+  OS_TYPE_UNKNOWN = 0,    ///< The OS type cannot be determined
   OS_TYPE_WINDOWS = 1,    ///< Windows
   OS_TYPE_LINUX	= 2,    ///< Linux
   OS_TYPE_ESX	= 3     ///< ESX
@@ -194,7 +194,7 @@ enum manageability_state {
  * Security and Sanitize state of the PMem module.
  */
 enum lock_state {
-  LOCK_STATE_UNKNOWN		= 0,    ///< Device lock state can not be determined.
+  LOCK_STATE_UNKNOWN		= 0,    ///< Device lock state cannot be determined.
   LOCK_STATE_DISABLED		= 1,    ///< Security is not enabled on the device.
   LOCK_STATE_UNLOCKED		= 2,    ///< Security is enabled and unlocked and un-frozen.
   LOCK_STATE_LOCKED		= 3,    ///< Security is enabled and locked and un-frozen.
@@ -715,21 +715,21 @@ struct device_status {
   NVM_BOOL			is_configured;                          ///< only the values 1(Success) and 6 (old config used) from CCUR are considered configured
   NVM_BOOL			is_missing;                             ///< If the device is missing.
   NVM_UINT8			package_spares_available;               ///< Number of package spares on the PMem module that are available.
-  NVM_UINT32		last_shutdown_status_details;           ///< Extended fields as per Firmware Interface Specification (FIS) 1.6 (Latched LSS Details/Extended Details)
+  NVM_UINT32		last_shutdown_status_details;           ///< Extended fields as per FIS 1.6 (Latched Last Shutdown State [LSS] Details/Extended Details).
   enum config_status		config_status;                  ///< Status of last configuration request.
-  NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970
+  NVM_UINT64			last_shutdown_time;                   ///< Time of the last shutdown - seconds since 1 January 1970.
   NVM_BOOL			mixed_sku;                              ///< One or more PMem modules have different SKUs.
   NVM_BOOL			sku_violation;                          ///< The PMem module configuration is unsupported due to a license issue.
   NVM_BOOL			viral_state;                            ///< Current viral status of PMem module.
-  enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the PMem module
-  enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite PMem module operation status for the PMem module
+  enum device_ars_status		ars_status;                 ///< Address range scrub operation status for the PMem module.
+  enum device_overwritedimm_status	overwritedimm_status;         ///< Overwrite PMem module operation status for the PMem module.
   NVM_BOOL			ait_dram_enabled;                       ///< Whether or not the AIT DRAM is enabled.
-  NVM_UINT64			boot_status;                            ///< The status of the PMem module as reported by the firmware in the BSR
-  NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on PMem module
-  NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on PMem module
-  NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per Firmware Interface Specification (FIS) 1.13+ (Unlatched LSS Details/Extended Details)
-  NVM_UINT8     thermal_throttle_performance_loss_pcnt;   ///< the average percentage loss (0..100) due to thermal throttling since last read in current boot (Firmware Interface Specification (FIS) 2.1+)
-  NVM_UINT8                             reserved[64];                   ///< reserved
+  NVM_UINT64			boot_status;                            ///< The status of the PMem module as reported by the firmware in the Boot Status Register (BSR).
+  NVM_UINT32			injected_media_errors;                  ///< The number of injected media errors on PMem module.
+  NVM_UINT32			injected_non_media_errors;              ///< The number of injected non-media errors on PMem module.
+  NVM_UINT32    unlatched_last_shutdown_status_details;   ///< Extended fields valid per FIS 1.13+ (Unlatched LSS Details/Extended Details)
+  NVM_UINT8     thermal_throttle_performance_loss_pcnt;   ///< The average percentage loss (0..100) due to thermal throttling since last read in current boot (FIS 2.1+)
+  NVM_UINT8                             reserved[64];                   ///< Reserved
 };
 
 /**
@@ -795,7 +795,7 @@ struct device_capacities {
   NVM_UINT64  capacity;                       ///< The total PMem module capacity in bytes.
   NVM_UINT64  memory_capacity;                ///< The total PMem module capacity in bytes for memory mode.
   NVM_UINT64  app_direct_capacity;            ///< The total PMem module capacity in bytes for app direct mode.
-  NVM_UINT64  reserved1;                      ///< reserved
+  NVM_UINT64  reserved1;                      ///< Reserved
   NVM_UINT64  unconfigured_capacity;          ///< Unconfigured PMem module capacity. Can be used as storage.
   NVM_UINT64  inaccessible_capacity;          ///< PMem module capacity that is not accessible.
   NVM_UINT64  reserved_capacity;              ///< PMem module app direct capacity reserved and unmapped to SPA.
@@ -983,7 +983,7 @@ struct region {
   NVM_UINT64		free_capacity;  ///< Available size of the region in bytes.
   NVM_INT16		socket_id;        ///< socket ID
   NVM_UINT16		dimm_count;     ///< The number of PMem modules in this region.
-  NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique ID's of underlying PMem modules.
+  NVM_UINT16		dimms[NVM_MAX_DEVICES_PER_SOCKET]; ///< Unique IDs of underlying PMem modules.
   enum region_health	health; ///< Rolled up health of the underlying PMem modules.
   NVM_UINT8		reserved[40];		///< reserved
 };
@@ -1530,7 +1530,7 @@ NVM_API int nvm_get_device_fw_image_info(const NVM_UID device_uid, struct device
  * @brief Push a new firmware image to the device specified.
  *
  * @remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
- * an attempt will be made to abort ARS and the proceed with the firmware update.
+ * an attempt will be made to abort ARS and then proceed with the firmware update.
  *
  * @remarks A reboot is required to activate the updated firmware image and is
  * recommended to ensure ARS runs to completion.
@@ -2143,7 +2143,7 @@ NVM_API int nvm_create_context();
 NVM_API int nvm_free_context(const NVM_BOOL force);
 
 /**
- * A device pass-through command. Refer to the Firmware Interface Specification (FIS)
+ * A device pass-through command. See the Firmware Interface Specification (FIS)
  * for specific details about the individual fields.
  */
 struct device_pt_cmd {

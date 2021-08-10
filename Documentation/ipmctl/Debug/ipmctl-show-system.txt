@@ -44,7 +44,7 @@ TARGETS
   * "PCAT" - The Platform Capabilities Table
   * "PMTT" - The Platform Memory Topology Table
 
-Refer to the ACPI specification for detailed information about the ACPI tables.
+See the ACPI specification for detailed information about the ACPI tables.
 
 EXAMPLES
 --------

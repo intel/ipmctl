@@ -254,7 +254,7 @@ typedef enum {
 **/
 typedef struct {
   UINT8   Status; //!< FIPS mode status, see above
-  UINT8   Reserved[3];
+  UINT8   Reserved[127];
 } FIPS_MODE;
 
 /**

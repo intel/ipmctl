@@ -91,4 +91,8 @@ Restriction::
   * BIOS only
   * SMBus only
   * BIOS and SMBus only
+  * Management only
+  * Management and BIOS only
+  * Management and SMBus only
+  * Management, BIOS and SMBus only
   * Unsupported

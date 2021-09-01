@@ -263,11 +263,7 @@ SetImage (
     goto Finish;
   }
 
-  pCommandStatus = AllocateZeroPool(sizeof(COMMAND_STATUS));
-  if (pCommandStatus == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    goto Finish;
-  }
+  CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
   if (ImageSize > MAX_FIRMWARE_IMAGE_SIZE_B) {
     *AbortReason = AllocateCopyPool(sizeof(pImageSizeError), pImageSizeError);

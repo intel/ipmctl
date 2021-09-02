@@ -3123,6 +3123,64 @@ ControllerRidToStr(
   return pSteppingStr;
 }
 
+
+/**
+  Convert FIPS mode status to string
+
+  @param[in] HiiHandle HII handle to access string dictionary
+  @param[in] FIPSMode Response from GetFIPSMode firmware command
+  @param[in] FwVer Firmware revision
+  @param[in] ReturnCodeGetFIPSMode ReturnCode from GetFIPSMode API call,
+                                   used to provide clearer error message
+
+  @retval String representation of the FIPS mode status
+**/
+CHAR16 *
+ConvertFIPSModeToString(
+  IN EFI_HANDLE HiiHandle,
+  IN FIPS_MODE FIPSMode,
+  IN FIRMWARE_VERSION FwVer,
+  IN EFI_STATUS ReturnCodeGetFIPSMode
+)
+{
+  CHAR16 *pFIPSModeStatusStr = NULL;
+
+  if((FwVer.FwApiMajor < 3 ) ||
+     (FwVer.FwApiMajor == 3 && FwVer.FwApiMinor < 5)) {
+    // FIPS is only supported with >= 3.5. Return N/A
+    pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
+    goto Finish;
+  }
+
+  if (EFI_ERROR(ReturnCodeGetFIPSMode)) {
+    // If for some reason the FIPS call failed on a newer firmware, let's put unknown
+    // instead of N/A
+    pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_UNKNOWN), NULL);
+  }
+
+  switch (FIPSMode.Status) {
+    case FIPSModeStatusNonFIPSMode:
+      pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE), NULL);
+      break;
+    case FIPSModeStatusNonFIPSModeUntilNextBoot:
+      pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT), NULL);
+      break;
+    case FIPSModeStatusInitializationNotDone:
+      pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_NOT_DONE), NULL);
+      break;
+    case FIPSModeStatusInitializationDone:
+      pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_DONE), NULL);
+      break;
+    default:
+      pFIPSModeStatusStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_UNKNOWN), NULL);
+      break;
+  }
+
+Finish:
+  return pFIPSModeStatusStr;
+}
+
+
 /**
 Set object status for DIMM_INFO
 

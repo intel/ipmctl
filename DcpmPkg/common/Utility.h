@@ -1895,6 +1895,25 @@ ControllerRidToStr(
 );
 
 /**
+  Convert FIPS mode status to string
+
+  @param[in] HiiHandle HII handle to access string dictionary
+  @param[in] FIPSMode Response from GetFIPSMode firmware command
+  @param[in] FwVer Firmware revision
+  @param[in] ReturnCodeGetFIPSMode ReturnCode from GetFIPSMode API call,
+                                   used to provide clearer error message
+
+  @retval String representation of the FIPS mode status
+**/
+CHAR16 *
+ConvertFIPSModeToString(
+  IN EFI_HANDLE HiiHandle,
+  IN FIPS_MODE FIPSMode,
+  IN FIRMWARE_VERSION FwVer,
+  IN EFI_STATUS ReturnCodeGetFIPSMode
+);
+
+/**
 Set object status for DIMM_INFO
 
 @param[out] pCommandStatus Pointer to command status structure

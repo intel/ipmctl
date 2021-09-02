@@ -108,6 +108,7 @@ typedef struct {
 #define S3_RESUME_STR_LEN              30
 #define SECURE_ERASE_POLICY_STR_LEN    30
 #define FW_ACTIVATE_STR_LEN            30
+#define FIPS_MODE_STATUS_MAX_STR_LEN   65 // STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT
 
 /** PMem module UID length, including null terminator **/
 #define MAX_DIMM_UID_LENGTH      22   //!< PMem module UID hexadecimal-format representation length, including manufacturing fields

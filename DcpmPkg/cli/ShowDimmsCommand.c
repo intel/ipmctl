@@ -323,56 +323,6 @@ RegisterShowDimmsCommand(
   return Rc;
 }
 
-
-/**
-  Convert type to string
-**/
-STATIC
-CHAR16*
-ConvertFIPSModeToString(
-  IN FIPS_MODE FIPSMode,
-  IN FIRMWARE_VERSION FwVer,
-  IN EFI_STATUS ReturnCodeGetFIPSMode
-)
-{
-  CHAR16 *pFIPSModeStatusStr = NULL;
-
-  if((FwVer.FwApiMajor < 3 ) ||
-     (FwVer.FwApiMajor == 3 && FwVer.FwApiMinor < 5)) {
-    // FIPS is only supported with >= 3.5. Return N/A
-    pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
-    goto Finish;
-  }
-
-  if (EFI_ERROR(ReturnCodeGetFIPSMode)) {
-    // If for some reason the FIPS call failed on a newer firmware, let's put unknown
-    // instead of N/A
-    pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-  }
-
-  switch (FIPSMode.Status) {
-    case FIPSModeStatusNonFIPSMode:
-      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE), NULL);
-      break;
-    case FIPSModeStatusNonFIPSModeUntilNextBoot:
-      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT), NULL);
-      break;
-    case FIPSModeStatusInitializationNotDone:
-      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_NOT_DONE), NULL);
-      break;
-    case FIPSModeStatusInitializationDone:
-      pFIPSModeStatusStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_DONE), NULL);
-      break;
-    default:
-      pFIPSModeStatusStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
-      break;
-  }
-
-Finish:
-  return pFIPSModeStatusStr;
-}
-
-
 /**
 Get manageability state for Dimm
 
@@ -1577,7 +1527,7 @@ ShowDimms(
         if (ShowAll || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, FIPS_MODE_STATUS_STR))) {
           // Get FIPS status
           ReturnCode = pNvmDimmConfigProtocol->GetFIPSMode(pNvmDimmConfigProtocol, pDimms[DimmIndex].DimmID, &FIPSMode, pCommandStatus);
-          pStatusStr = ConvertFIPSModeToString(FIPSMode, pDimms[DimmIndex].FwVer, ReturnCode);
+          pStatusStr = ConvertFIPSModeToString(gNvmDimmCliHiiHandle, FIPSMode, pDimms[DimmIndex].FwVer, ReturnCode);
           // Overwrite ReturnCode since we don't care if it failed
           ReturnCode = EFI_SUCCESS;
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, FIPS_MODE_STATUS_STR, pStatusStr);

@@ -4318,8 +4318,19 @@ GetMemoryResourcesInfo(
   CHECK_NULL_ARG(pThis, Finish);
   CHECK_NULL_ARG(pMemoryResourcesInfo, Finish);
 
-  // Make sure we start with 00 values
+  // Make sure we start with unknown values
   ZeroMem(pMemoryResourcesInfo, sizeof(*pMemoryResourcesInfo));
+  pMemoryResourcesInfo->RawCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->VolatileCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->AppDirectCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->UnconfiguredCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->InaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->ReservedCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->DDRRawCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->DDRCacheCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->DDRVolatileCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->DDRInaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
+  pMemoryResourcesInfo->PcdInvalid = TRUE;
 
   ReturnCode = ReenumerateNamespacesAndISs(TRUE);
   if (EFI_ERROR(ReturnCode)) {

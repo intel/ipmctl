@@ -7950,7 +7950,7 @@ GetErrorLog(
 
   /** Verify input parameters and determine a list of DIMMs **/
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmsCount, NULL, 0,
-      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      REQUIRE_DCPMMS_MANAGEABLE,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;

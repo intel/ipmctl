@@ -1245,7 +1245,7 @@ ShowDimms(
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           }
           else {
-            pAttributeStr = LastShutdownStatusToStr(LatchedLastShutdownStatusDetails);
+            pAttributeStr = LastShutdownStatusToStr(LatchedLastShutdownStatusDetails, pDimms[DimmIndex].FwVer);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, LATCHED_LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);
@@ -1258,7 +1258,7 @@ ShowDimms(
             pAttributeStr = CatSPrint(NULL, FORMAT_STR, UNKNOWN_ATTRIB_VAL);
           }
           else {
-            pAttributeStr = LastShutdownStatusToStr(UnlatchedLastShutdownStatusDetails);
+            pAttributeStr = LastShutdownStatusToStr(UnlatchedLastShutdownStatusDetails, pDimms[DimmIndex].FwVer);
           }
           PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, UNLATCHED_LAST_SHUTDOWN_STATUS_STR, pAttributeStr);
           FREE_POOL_SAFE(pAttributeStr);

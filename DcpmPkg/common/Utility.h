@@ -1334,12 +1334,14 @@ RemoveWhiteSpaces(
   Convert Last Shutdown Status to string
 
   @param[in] LastShutdownStatus structure
+  @param[in] FwVer Struct representing firmware version
 
   @retval CLI string representation of last shutdown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
-  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus
+  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus,
+  IN     FIRMWARE_VERSION FwVer
   );
 
 /**

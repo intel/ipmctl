@@ -1335,15 +1335,17 @@ Finish:
 }
 
 /**
-  Convert Latched Last Shutdown Status to string
+  Convert Last Shutdown Status to string
 
-  @param[in] LatchedLastShutdownStatus structure
+  @param[in] LastShutdownStatus structure
+  @param[in] FwVer Struct representing firmware version
 
-  @retval CLI string representation of latched last shutdown status
+  @retval CLI string representation of last shutdown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
-  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus
+  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus,
+  IN     FIRMWARE_VERSION FwVer
   )
 {
   CHAR16 *pStatusStr = NULL;
@@ -1378,7 +1380,7 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_THERMAL_SHUTDOWN_STR);
   }
-  if (LastShutdownStatus.Combined.LastShutdownStatus.Separated.FwFlushComplete) {
+  if (FwVer.FwApiMajor < 3 && LastShutdownStatus.Combined.LastShutdownStatus.Separated.FwFlushComplete) {
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_FW_FLUSH_COMPLETE_STR);
   }

@@ -221,28 +221,8 @@ StartDiagnosticCmd(
     goto Finish;
   }
 
-  ReturnCode = pNvmDimmConfigProtocol->GetDimmCount(pNvmDimmConfigProtocol, &DimmCount);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_NOT_FOUND;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    goto Finish;
-  }
-
-  pDimms = AllocateZeroPool(sizeof(*pDimms) * DimmCount);
-
-  if (pDimms == NULL) {
-    ReturnCode = EFI_OUT_OF_RESOURCES;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
-    goto Finish;
-  }
-
-  ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount, DIMM_INFO_CATEGORY_NONE, pDimms);
-  if (EFI_ERROR(ReturnCode)) {
-    ReturnCode = EFI_ABORTED;
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_WARN("Failed to retrieve the DIMM inventory found in NFIT");
-    goto Finish;
-  }
+  // Retrieve basic information for *all* dimms on platform
+  CHECK_RESULT(GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount), Finish);
 
   // check targets
   if (ContainTarget(pCmd, DIMM_TARGET)) {

@@ -138,8 +138,14 @@ In order to successfully execute this command:
 
 * The caller must have the appropriate privileges.
 
-* The specified PMem module must be manageable by the host software, have
-  security enabled and not be in the "Frozen" or "Exceeded" lock states.
+* The specified PMem module must be manageable by the host software and
+  be in the "Disabled" lock state.
+
+* To change the passphrase, the specified PMem module must not be in the
+ "Frozen" or "Exceeded" lock states.
+
+* To change the master passphrase, the specified PMem module must not
+  be in "MP Exceeded" lock state.
 
 ifdef::os_build[]
 Command is subject to OS Vendor (OSV) support. If OSV does not provide support,

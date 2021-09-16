@@ -600,6 +600,12 @@ FILE(COPY opensource/opensource_LICENSE
 
 FILE(RENAME ${OUTPUT_DIR}/opensource_LICENSE ${OUTPUT_DIR}/LICENSE)
 
+FILE(COPY opensource/edk2_License.txt
+  DESTINATION ${OUTPUT_DIR})
+
+FILE(COPY opensource/thirdpartynotice.txt
+  DESTINATION ${OUTPUT_DIR})
+
 FILE(COPY ${NVM_HEADERS}
   DESTINATION ${OUTPUT_DIR})
 
@@ -626,6 +632,14 @@ if(LNX_BUILD)
   endif()
 
   install(FILES ${OUTPUT_DIR}/LICENSE
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
+    )
+
+  install(FILES ${OUTPUT_DIR}/thirdpartynotice.txt
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
+    )
+
+  install(FILES ${OUTPUT_DIR}/edk2_License.txt
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
     )
 

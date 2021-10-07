@@ -393,11 +393,6 @@ SetDimm(
       pConfirmPassphraseStatic != NULL ||
       containsOption(pCmd, SOURCE_OPTION)) {
 
-    NVDIMM_DBG("pPropertyValue=%p", pLockStatePropertyValue);
-    NVDIMM_DBG("pPassphrase=%p", pPassphraseStatic);
-    NVDIMM_DBG("pNewPassphrase=%p", pNewPassphraseStatic);
-    NVDIMM_DBG("pConfirmPassphrase=%p", pConfirmPassphraseStatic);
-
     LockStateFrozen = (pLockStatePropertyValue != NULL &&
         (StrICmp(pLockStatePropertyValue, LOCKSTATE_VALUE_FROZEN) == 0));
 

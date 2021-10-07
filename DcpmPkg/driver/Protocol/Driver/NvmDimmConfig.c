@@ -3428,6 +3428,8 @@ Finish:
   }
 
   CleanStringMemory(AsciiPassword);
+  CleanStringMemory((CHAR8 *)(pSecurityPayload->PassphraseCurrent));
+  CleanStringMemory((CHAR8 *)(pSecurityPayload->PassphraseNew));
   FREE_POOL_SAFE(pSecurityPayload);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

@@ -261,7 +261,7 @@ LoadFileAndCheckHeader(
   ZeroMem(&FileHandle, sizeof(FileHandle));
   ZeroMem(&SpiDirectory, sizeof(SpiDirectory));
 
-  ReturnCode = OpenFile(pFilePath, &FileHandle, pWorkingDirectory, FALSE);
+  ReturnCode = OpenFileBinary(pFilePath, &FileHandle, pWorkingDirectory, FALSE);
 
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_ERR("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);

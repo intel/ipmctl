@@ -5263,7 +5263,7 @@ DebugWriteSpiImageToFile(
   FileNameFconfig = CatSPrint(NULL, L"new_spi_w_merged_fconfig_0x%04x.bin", DimmHandle);
 
   // Do not overwrite if file exists
-  ReturnCode = OpenFile(FileNameFconfig, &FileHandle, pWorkingDirectory, FALSE);
+  ReturnCode = OpenFileBinary(FileNameFconfig, &FileHandle, pWorkingDirectory, FALSE);
   if (ReturnCode != EFI_NOT_FOUND) {
     ReturnCode = EFI_WRITE_PROTECTED;
     NVDIMM_ERR("Found existing file when trying to write backup file %s", FileNameFconfig);
@@ -5275,7 +5275,7 @@ DebugWriteSpiImageToFile(
     FileHandle->Close(FileHandle);
   }
 
-  ReturnCode = OpenFile(FileNameFconfig, &FileHandle, pWorkingDirectory, TRUE);
+  ReturnCode = OpenFileBinary(FileNameFconfig, &FileHandle, pWorkingDirectory, TRUE);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -6915,7 +6915,7 @@ DumpGoalConfig(
     }
   }
 #else
-  ReturnCode = OpenFile(pFilePath, &pFileHandle, NULL, 1);
+  ReturnCode = OpenFileText(pFilePath, &pFileHandle, NULL, 1);
   if (EFI_ERROR(ReturnCode)) {
      NVDIMM_WARN("Failed on open dump file header info. (" FORMAT_EFI_STATUS ")", ReturnCode);
      ResetCmdStatus(pCommandStatus, NVM_ERR_DUMP_FILE_OPERATION_FAILED);

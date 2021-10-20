@@ -1440,7 +1440,7 @@ FileExists(
 
 #ifdef OS_BUILD
   pFileHandle = NULL;
-  ReturnCode = OpenFile(pDumpUserPath, &pFileHandle, NULL, FALSE);
+  ReturnCode = OpenFileText(pDumpUserPath, &pFileHandle, NULL, FALSE);
   if (EFI_NOT_FOUND == ReturnCode)
   {
     *pExists = FALSE;
@@ -1919,7 +1919,7 @@ ParseSourcePassFile(
     goto Finish;
   }
 
-  ReturnCode = FileRead(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, &FileBufferSize, (VOID **)&pFileBuffer);
+  ReturnCode = FileRead(pFilePath, pDevicePath, MAX_CONFIG_DUMP_FILE_SIZE, FALSE, &FileBufferSize, (VOID **)&pFileBuffer);
   if (EFI_ERROR(ReturnCode) || pFileBuffer == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_WRONG_FILE_PATH);

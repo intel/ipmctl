@@ -108,7 +108,7 @@ LoadSession(
     goto Finish;
   }
 
-  ReturnCode = FileRead(pLoadFilePath, pDevicePathProtocol, 0, &FileBufferSize, (VOID **)&pFileBuffer);
+  ReturnCode = FileRead(pLoadFilePath, pDevicePathProtocol, 0, TRUE, &FileBufferSize, (VOID **)&pFileBuffer);
   if (EFI_ERROR(ReturnCode) || pFileBuffer == NULL) {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_FAILED_TO_READ_FILE);
     goto Finish;

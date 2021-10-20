@@ -771,7 +771,7 @@ GetDriverHandle(
   );
 
 /**
-  Open file or create new file.
+  Open file or create new file in text mode.
 
   @param[in] pArgFilePath path to a file that will be opened
   @param[out] pFileHandle output handler
@@ -785,7 +785,7 @@ GetDriverHandle(
   @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
 **/
 EFI_STATUS
-OpenFile(
+OpenFileText(
   IN     CHAR16 *pArgFilePath,
      OUT EFI_FILE_HANDLE *pFileHandle,
   IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
@@ -1209,8 +1209,9 @@ Pow(
   @param[in] pDevicePath - handle to obtain generic path/location information concerning the physical device
                           or logical device. The device path describes the location of the device the handle is for.
   @param[in] MaxFileSize - if file is bigger skip read and return error
+  @param[in] AsBinary - To open file as a binary file or not. (Windows will replace \r\n with \n if not binary file)
   @param[out] pFileSize - number of bytes written to buffer
-  @param[out] ppFileBuffer - output buffer
+  @param[out] ppFileBuffer - output buffer  * WARNING * caller is responsible for freeing
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_NOT_STARTED Test was not executed
@@ -1222,6 +1223,7 @@ FileRead(
   IN      CHAR16 *pFilePath,
   IN      EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
   IN      CONST UINT64  MaxFileSize,
+  IN      BOOLEAN AsBinary,
      OUT  UINT64 *pFileSize,
      OUT  VOID **ppFileBuffer
   );

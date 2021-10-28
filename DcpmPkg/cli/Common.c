@@ -1158,7 +1158,7 @@ GetDeviceAndFilePath(
     pCurDirPath = CatSPrint(NULL, L".\\" FORMAT_STR, pUserFilePath);
   }
   else {
-    pCurDirPath = CatSPrint(NULL, pUserFilePath);
+    pCurDirPath = CatSPrint(NULL, FORMAT_STR, pUserFilePath);
   }
   if (pCurDirPath == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;

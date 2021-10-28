@@ -1219,7 +1219,7 @@ static EFI_STATUS CreateDataSetLookupItem(DATA_SET_LOOKUP_ITEM **ppDataSetLookup
     return EFI_OUT_OF_RESOURCES;
   }
   (*ppDataSetLookupItem)->pDataSet = pDataSetCtx;
-  (*ppDataSetLookupItem)->DsPath = CatSPrint(NULL, pPath);
+  (*ppDataSetLookupItem)->DsPath = CatSPrint(NULL, FORMAT_STR, pPath);
   return EFI_SUCCESS;
 }
 

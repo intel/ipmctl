@@ -461,6 +461,7 @@ LatchedLastShutdownStatus::
   * Write Data Flush Complete: Write data flush completed.
   * PM S4 Received: Power management S4 command received.
   * PM Idle Received: Power management idle received.
+  * SRE Clock Stop Received: Self-Refresh Entry clock stop received.
   * DDRT Surprise Reset Received: Surprise reset received.
   * Extended Flush Not Complete.
   * Extended Flush Complete.
@@ -486,6 +487,7 @@ UnlatchedLastShutdownStatus::
   * Write Data Flush Complete: Write data flush completed.
   * PM S4 Received: Power management S4 command received.
   * PM Idle Received: Power management idle received.
+  * SRE Clock Stop Received: Self-Refresh Entry clock stop received.
   * DDRT Surprise Reset Received: Surprise reset received.
   * Extended Flush Not Complete.
   * Extended Flush Complete.

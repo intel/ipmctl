@@ -1400,9 +1400,10 @@ LastShutdownStatusToStr(
     pStatusStr = CatSPrintClean(pStatusStr,
         FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR);
   }
+  // Output SRE Clock Stop Received at the same time as PM Idle Received for backwards compatibility
   if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.PMIdle) {
     pStatusStr = CatSPrintClean(pStatusStr,
-        FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PM_IDLE_STR);
+        FORMAT_STR FORMAT_STR FORMAT_STR FORMAT_STR, pStatusStr == NULL ? L"" : L", ", LAST_SHUTDOWN_STATUS_PM_IDLE_STR, L", ", LAST_SHUTDOWN_STATUS_SRE_CLOCK_STOP_STR);
   }
   if (LastShutdownStatus.Combined.LastShutdownStatusExtended.Separated.DdrtSurpriseReset) {
     pStatusStr = CatSPrintClean(pStatusStr,

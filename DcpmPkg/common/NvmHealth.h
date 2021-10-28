@@ -104,7 +104,7 @@ typedef union {
     UINT16 SurpriseClockStopInterrupt  : 1; //!< Surprise clock stop interrupt received
     UINT16 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
     UINT16 S4PowerState                : 1; //!< S4 Power State received
-    UINT16 PMIdle                      : 1; //!< PM Idle received
+    UINT16 PMIdle                      : 1; //!< PM Idle or SRE Clock Stop received
     UINT16 DdrtSurpriseReset           : 1; //!< Surprise Reset received
     UINT16 EnhancedAdrFlushStatus      : 4; //!< eADR Flush Status
     UINT16 SxExtendedFlushStatus       : 4; //!< Sx Extended Flush Status

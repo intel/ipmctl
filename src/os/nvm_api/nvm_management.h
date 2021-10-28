@@ -474,13 +474,12 @@ enum shutdown_status {
 /**
  * Extended detailed status of last PMem module shutdown
  */
-
 enum shutdown_status_extended {
   SHUTDOWN_STATUS_VIRAL_INT_RCVD              = 1 << 0,   ///< Virtal interrupt received
   SHUTDOWN_STATUS_SURPRISE_CLK_STOP_INT_RCVD  = 1 << 1,   ///< Surprise clock stop interrupt received
   SHUTDOWN_STATUS_WR_DATA_FLUSH_RCVD          = 1 << 2,   ///< Write Data Flush Complete
   SHUTDOWN_STATUS_S4_PWR_STATE_RCVD           = 1 << 3,   ///< S4 Power State received
-  SHUTDOWN_STATUS_PM_IDLE_RCVD                = 1 << 4,   ///< PM Idle Power State received
+  SHUTDOWN_STATUS_PM_IDLE_RCVD                = 1 << 4,   ///< PM Idle Power State or SRE Clock Stop received
   SHUTDOWN_STATUS_SURPRISE_RESET_RCVD         = 1 << 5,   ///< Surprise Reset received
 };
 

@@ -869,7 +869,7 @@ typedef struct {
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
     Bit 3: S4 Power State (0 - Not Received, 1 - Received)
-    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle or SRE Clock Stop (0 - Not Received, 1 - Received)
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/
@@ -896,7 +896,7 @@ typedef struct {
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
     Bit 3: S4 Power State (0 - Not Received, 1 - Received)
-    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle or SRE Clock Stop (0 - Not Received, 1 - Received)
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/

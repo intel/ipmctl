@@ -109,6 +109,14 @@ PoisonType::
 NOTE: If the address to poison is not currently allocated as the specified
 memory type, an error is returned.
 
+PackageSparing::
+  - "1": Triggers an artificial package sparing. If package sparing is enabled
+  and the PMem module still has spares remaining, this will cause the firmware to
+  report that there are no spares remaining.
+
+NOTE: Injecting package sparing is not supported on Intel(R) Optane(TM) Persistent Memory 300
+series modules.
+
 PercentageRemaining::
   Injects an artificial percentage remaining value into the PMem module. This
   will cause the firmware to take appropriate action based on the value and if
@@ -159,6 +167,10 @@ Clears the injected poison of address 0x10000200 on PMem module 1234.
 ipmctl set -dimm 1234 Poison=0x10000200 Clear=1
 --
 
+Triggers an artificial package sparing on all manageable PMem modules.
+[listing]
+ipmctl set -dimm PackageSparing=1
+
 Sets the life remaining percentage on all manageable PMem modules to 10%.
 [listing]
 --
@@ -208,6 +220,11 @@ Poison address (Address) on PMem module (DimmID): Success|Error
 Clear injected poison of address (Address) on PMem module
 (DimmID): Success|Error (Code) - (Description)
 --
+[listing]
+Trigger package sparing on PMem module (DimmID): Success|Error
+(Code) - (Description)
+Clear injected package sparing on PMem module (DimmID):
+Success|Error (Code) - (Description)
 
 [listing]
 --

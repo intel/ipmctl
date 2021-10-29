@@ -167,7 +167,11 @@ GeneratePcdConfInput(
     being under aligned right now, but they might change this in the future.
     If they do we will have to align this value properly.
   **/
-  pPartSizeChange->PmPartitionSize = pDimm->RawCapacity - pDimm->VolatileSizeGoal;
+  if (pDimm->FwVer.FwApiMajor < 3 ) {
+    pPartSizeChange->PmPartitionSize = pDimm->RawCapacity - pDimm->VolatileSizeGoal;
+  }
+  // Set PmPartitionSize for FW API >= 3 further below based on LastPersistentMemoryOffset
+
   pPartSizeChange->PartitionSizeChangeStatus = NVDIMM_CONF_INPUT_PART_SIZE_CHANGE_STATUS;
 
   /**
@@ -314,6 +318,12 @@ GeneratePcdConfInput(
 
       LastPersistentMemoryOffset += PmPartitionSize;
     }
+  }
+
+  if (pDimm->FwVer.FwApiMajor >= 3 ) {
+    // Match persistent memory partition size change request to the size of requested
+    // persistent memory for this PMem module, instead of using the raw PMem module size
+    pPartSizeChange->PmPartitionSize = LastPersistentMemoryOffset;
   }
 
   /**

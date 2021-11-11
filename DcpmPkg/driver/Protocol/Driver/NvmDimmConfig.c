@@ -1401,6 +1401,15 @@ BOOLEAN IsDimmAllowed(
     Allowed = FALSE;
   }
 
+  // Verify the mutually exclusive REQUIRE_DCPMMS_MEDIA_ACCESSIBLE and REQUIRE_DCPMMS_MEDIA_NOT_ACCESSIBLE flags are not both set
+  ASSERT(!((REQUIRE_DCPMMS_MEDIA_ACCESSIBLE & RequireDcpmmsBitfield) && (REQUIRE_DCPMMS_MEDIA_NOT_ACCESSIBLE & RequireDcpmmsBitfield)));
+  if ((REQUIRE_DCPMMS_MEDIA_ACCESSIBLE & RequireDcpmmsBitfield) && DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+    Allowed = FALSE;
+  }
+  if ((REQUIRE_DCPMMS_MEDIA_NOT_ACCESSIBLE & RequireDcpmmsBitfield) && !DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
+    Allowed = FALSE;
+  }
+
   return Allowed;
 }
 
@@ -2438,7 +2447,7 @@ GetGoalConfigs(
   //Try to calculate appdirect index for all regional goals for all dimms in advance
   PopulateAppDirectIndex(NumberedGoals, &NumberedGoalsNum, &AppDirectIndex);
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
-      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL,
+      REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL | REQUIRE_DCPMMS_MEDIA_ACCESSIBLE,
       pDimms, &DimmsCount, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     if (ReturnCode == EFI_NOT_FOUND && pCommandStatus->GeneralStatus == NVM_ERR_NO_USABLE_DIMMS) {
@@ -5871,30 +5880,6 @@ Finish:
     return ReturnCode;
   }
 
-
-EFI_STATUS
-ReturnErrorWithMediaDisabledPMemModule(
-    OUT COMMAND_STATUS *pCommandStatus
-  )
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  LIST_ENTRY *pDimmNode = NULL;
-  DIMM *pDimm = NULL;
-
-  // Because of the difficulties in refactoring the create goal code
-  // (specifically Region.c) to work with a media disabled PMem module,
-  // error out with a requirement that the user replace the module.
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
-      // Want to set an error for each module
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
-      ReturnCode = EFI_UNSUPPORTED;
-    }
-  }
-  return ReturnCode;
-}
-
 /**
   Get actual Region goal capacities that would be used based on input values.
 
@@ -5964,11 +5949,9 @@ GetActualRegionsGoalCapacities(
   MAX_PMINTERLEAVE_SETS MaxPMInterleaveSets;
   ACPI_REVISION PcatRevision;
   BOOLEAN IsDimmUnlocked = FALSE;
-  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL | REQUIRE_DCPMMS_MEDIA_ACCESSIBLE;
 
   NVDIMM_ENTRY();
-
-  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
 
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&MaxPMInterleaveSets, sizeof(MaxPMInterleaveSets));
@@ -6330,11 +6313,9 @@ CreateGoalConfig(
   BOOLEAN SmbusMailboxOnList = FALSE;
   BOOLEAN SmbusWillNotBeUsed = FALSE;
   DIMM_PASSTHRU_METHOD Method = DimmPassthruDdrtLargePayload;
-  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL;
+  REQUIRE_DCPMMS RequireDcpmmsBitfield = REQUIRE_DCPMMS_MANAGEABLE | REQUIRE_DCPMMS_FUNCTIONAL | REQUIRE_DCPMMS_MEDIA_ACCESSIBLE;
 
   NVDIMM_ENTRY();
-
-  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
 
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
@@ -6684,7 +6665,7 @@ CreateGoalConfig(
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   } else {
     /** Send Platform Config Data to DIMMs **/
-    ReturnCode = ApplyGoalConfigsToDimms(&gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+    ReturnCode = ApplyGoalConfigsToDimms(ppDimms, DimmsNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("ApplyGoalConfigsToDimms Error");
@@ -6762,7 +6743,8 @@ DeleteGoalConfig (
   /** Verify input parameters and determine a list of DIMMs **/
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL,
+      REQUIRE_DCPMMS_FUNCTIONAL |
+      REQUIRE_DCPMMS_MEDIA_ACCESSIBLE,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
@@ -6805,7 +6787,7 @@ DeleteGoalConfig (
   }
 
   /** Send Platform Config Data to DIMMs **/
-  ReturnCode = ApplyGoalConfigsToDimms(&gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+  ReturnCode = ApplyGoalConfigsToDimms(pDimms, DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -7005,13 +6987,12 @@ LoadGoalConfig(
   }
 
   CHECK_RESULT(BlockMixedSku(pCommandStatus), Finish);
-  CHECK_RESULT(ReturnErrorWithMediaDisabledPMemModule(pCommandStatus), Finish);
 
 
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
       REQUIRE_DCPMMS_MANAGEABLE |
       REQUIRE_DCPMMS_FUNCTIONAL |
-      REQUIRE_DCPMMS_NO_POPULATION_VIOLATION,
+      REQUIRE_DCPMMS_MEDIA_ACCESSIBLE,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;

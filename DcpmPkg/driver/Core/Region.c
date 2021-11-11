@@ -1848,8 +1848,8 @@ VerifyCreatingSupportedRegionConfigs(
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId) {
-        // Unmanageable and non-functional DCPMMs are not included in goal requests
-        if (!IsDimmManageable(pDimm) || pDimm->NonFunctional) {
+        // Unmanageable, non-functional, and media inaccessible DCPMMs are not included in goal requests
+        if (!IsDimmManageable(pDimm) || pDimm->NonFunctional || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
           continue;
         }
         // Population Violation DCPMMs are not included in goal requests except ADx1 100%
@@ -3816,27 +3816,26 @@ Finish:
 **/
 EFI_STATUS
 ApplyGoalConfigsToDimms(
-  IN     LIST_ENTRY *pDimmList,
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
-  LIST_ENTRY *pDimmNode = NULL;
   NVDIMM_PLATFORM_CONFIG_INPUT *pNewConfigInput = NULL;
+  UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
-  if (pDimmList == NULL) {
-    ReturnCode = EFI_INVALID_PARAMETER;
-    goto Finish;
-  }
+  CHECK_NULL_ARG(ppDimms, Finish);
 
   /**
     Clear previous regions goal configs
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+  for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
@@ -3855,8 +3854,9 @@ ApplyGoalConfigsToDimms(
   /**
     Send new regions goal configs to dimms
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+  for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm) || !pDimm->RegionsGoalConfig) {
       continue;
     }
@@ -3881,8 +3881,9 @@ ApplyGoalConfigsToDimms(
   /**
     If all data has been sent to dimms successfully, then we are synchronized
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+  for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
@@ -3897,8 +3898,9 @@ ApplyGoalConfigsToDimms(
 Finish:
   if (EFI_ERROR(ReturnCode) && (EFI_INVALID_PARAMETER != ReturnCode)) {
     // Create Goal ERROR! Try to remove Configuration Input table from Platform Config Data
-    LIST_FOR_EACH(pDimmNode, pDimmList) {
-      pDimm = DIMM_FROM_NODE(pDimmNode);
+    for (Index = 0; Index < DimmsNum; Index++) {
+      pDimm = ppDimms[Index];
+
       if (!IsDimmManageable(pDimm)) {
         continue;
       }

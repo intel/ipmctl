@@ -271,6 +271,8 @@ typedef struct _SMBUS_DIMM_ADDR {
 #define REQUIRE_DCPMMS_POPULATION_VIOLATION             (1 << 4)      // See IsDimmInPopulationViolation() for definition
 #define REQUIRE_DCPMMS_NO_POPULATION_VIOLATION          (1 << 5)      // See IsDimmInPopulationViolation() for definition
 #define REQUIRE_DCPMMS_NO_UNMAPPED_POPULATION_VIOLATION (1 << 6)      // See IsDimmInUnmappedPopulationViolation() for definition
+#define REQUIRE_DCPMMS_MEDIA_ACCESSIBLE                 (1 << 7)      // Select PMem modules where the media is accessible
+#define REQUIRE_DCPMMS_MEDIA_NOT_ACCESSIBLE             (1 << 8)      // Select PMem modules where the media is not accessible
 
 /* VFR compiler doesn't support typedef, that's why we use defines **/
 #define DIMM_INFO_CATEGORIES        UINT16                          ///< @ref DIMM_INFO_CATEGORY_TYPES

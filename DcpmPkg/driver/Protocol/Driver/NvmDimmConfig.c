@@ -599,21 +599,21 @@ FillSmbiosInfo(
 
     TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->DeviceLocator,
-      pDimmInfo->DeviceLocator, sizeof(pDimmInfo->DeviceLocator));
+      pDimmInfo->DeviceLocator, DEVICE_LOCATOR_LEN);
     if (EFI_ERROR(TempReturnCode)) {
       StrnCpyS(pDimmInfo->DeviceLocator, DEVICE_LOCATOR_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the device locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
     TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->BankLocator,
-      pDimmInfo->BankLabel, sizeof(pDimmInfo->BankLabel));
+      pDimmInfo->BankLabel, BANKLABEL_LEN);
     if (EFI_ERROR(TempReturnCode)) {
       StrnCpyS(pDimmInfo->BankLabel, BANKLABEL_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the bank locator from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);
     }
     TempReturnCode = GetSmbiosString((SMBIOS_STRUCTURE_POINTER *) &(DmiPhysicalDev.Type17),
       DmiPhysicalDev.Type17->Manufacturer,
-      pDimmInfo->ManufacturerStr, sizeof(pDimmInfo->ManufacturerStr));
+      pDimmInfo->ManufacturerStr, MANUFACTURER_LEN);
     if (EFI_ERROR(TempReturnCode)) {
       StrnCpyS(pDimmInfo->ManufacturerStr, MANUFACTURER_LEN, SMBIOS_STR_UNKNOWN, StrLen(SMBIOS_STR_UNKNOWN));
       NVDIMM_WARN("Failed to retrieve the manufacturer string from SMBIOS table (" FORMAT_EFI_STATUS ")", ReturnCode);

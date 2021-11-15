@@ -75,7 +75,7 @@ Finish:
   @param[in]  pSmbios         Pointer to SMBIOS structure.
   @param[in]  StringNumber    String number to return.
   @param[out] pSmbiosString   Pointer to a char buffer to where SMBIOS string will be copied.
-  @param[in]  BufferLen       pSmbiosString buffer length
+  @param[in]  BufferStrLen    pSmbiosString buffer string length (number of characters)
 
   @retval EFI_SUCCESS String retrieved successfully
   @retval EFI_INVALID_PARAMETER
@@ -86,7 +86,7 @@ GetSmbiosString (
   IN     SMBIOS_STRUCTURE_POINTER *pSmbios,
   IN     UINT16                    StringNumber,
      OUT CHAR16                    *pSmbiosString,
-  IN     UINT16                    BufferLen
+  IN     UINT16                    BufferStrLen
   )
 {
   UINT16  Index;
@@ -99,7 +99,7 @@ GetSmbiosString (
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
-  if (BufferLen == 0 && StringNumber != SMBIOS_STRING_INVALID) {
+  if (BufferStrLen == 0 && StringNumber != SMBIOS_STRING_INVALID) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -110,11 +110,11 @@ GetSmbiosString (
   /** Look through unformatted section **/
   for (Index = 1; Index <= StringNumber; Index++) {
     if (StringNumber == Index) {
-      if (AsciiStrLen(pString) > (BufferLen * sizeof(CHAR16))) {
+      if (AsciiStrLen(pString) > (BufferStrLen * sizeof(CHAR16))) {
         ReturnCode = EFI_INVALID_PARAMETER;
         goto Finish;
       }
-      AsciiStrToUnicodeStrS(pString, pSmbiosString, BufferLen);
+      AsciiStrToUnicodeStrS(pString, pSmbiosString, BufferStrLen);
       ReturnCode = EFI_SUCCESS;
       goto Finish;
     }

@@ -10793,6 +10793,7 @@ InjectError(
           SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_SUCCESS);
           FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
       }
+      FREE_POOL_SAFE(pPayloadPackageSparingPolicy);
       break;
     case ERROR_INJ_DIRTY_SHUTDOWN:
       pInputPayload = AllocateZeroPool(sizeof(PT_INPUT_PAYLOAD_INJECT_SW_TRIGGERS));

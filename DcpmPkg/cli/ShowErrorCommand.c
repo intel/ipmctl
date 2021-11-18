@@ -249,6 +249,13 @@ ShowErrorCommand(
   ZeroMem(ErrorsArray, sizeof(ErrorsArray));
   ZeroMem(DimmStr, sizeof(DimmStr));
 
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
+  }
+
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_DBG("pCmd parameter is NULL.\n");
@@ -300,13 +307,6 @@ ShowErrorCommand(
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_OPENING_CONFIG_PROTOCOL);
-    goto Finish;
-  }
-
-  ReturnCode = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_DBG("Failed on InitializeCommandStatus");
     goto Finish;
   }
 

@@ -9390,12 +9390,13 @@ Finish:
 }
 
 /**
-  Sorts the Dimm topology list by Memory Type
+  Sorts the Dimm topology list by Memory Type. Promote PMem modules (type 2)
+  over DDR4 and DDR5 memory.
 
   @param[in out] pMemType1 A pointer to the pDimmId list.
   @param[in out] pMemType2 A pointer to the copy of pDimmId list.
 
-  @retval int returns 0,-1, 0
+  @retval int returns 1,-1, 0
 **/
 INT32 SortDimmTopologyByMemType(VOID *ppTopologyDimm1, VOID *ppTopologyDimm2)
 {
@@ -9403,6 +9404,13 @@ INT32 SortDimmTopologyByMemType(VOID *ppTopologyDimm1, VOID *ppTopologyDimm2)
   TOPOLOGY_DIMM_INFO *ppTopologyDimmb = (TOPOLOGY_DIMM_INFO *)ppTopologyDimm2;
   if (ppTopologyDimma->MemoryType == ppTopologyDimmb->MemoryType) {
     return 0;
+  }
+  // Promote PMem modules (2) over DDR4 (1) and DDR5 (3)
+  else if (ppTopologyDimmb->MemoryType == MEMORYTYPE_DCPM) {
+    return 1;
+  }
+  else if (ppTopologyDimma->MemoryType == MEMORYTYPE_DCPM) {
+    return -1;
   }
   else if (ppTopologyDimma->MemoryType < ppTopologyDimmb->MemoryType) {
     return 1;

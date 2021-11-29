@@ -214,9 +214,6 @@ GetFirstAndBoundSmBiosStructPointer(
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("Failed to record SMBIOS2");
       }
-      else {
-        NVDIMM_DBG("Max smbios size %x\n", pTableEntry->TableLength);
-      }
       //need to free?
     }
   }

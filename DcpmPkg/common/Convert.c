@@ -6,6 +6,7 @@
 #include <Convert.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PrintLib.h>
+#include <Library/HiiLib.h>
 
 /**
   Convert GUID structure to string
@@ -900,6 +901,12 @@ MakeCapacityString (
 
   if (ppCapacityStr == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
+  // Check if field is unknown (PMTT table is missing). If so, use "Unknown" instead
+  if (Capacity == ACPI_TABLE_VALUE_UNKNOWN) {
+    *ppCapacityStr = HiiGetString(HiiHandle, STRING_TOKEN(STR_UNKNOWN), NULL);
     goto Finish;
   }
 

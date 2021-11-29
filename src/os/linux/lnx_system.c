@@ -486,7 +486,7 @@ int os_check_admin_permissions()
 /*
 * Recursive mkdir, return 0 on success, -1 on error
 */
-int os_mkdir(OS_PATH path)
+int os_mkdir(char *path)
 {
   char* p;
   for (p = strchr(path + 1, '/'); p; p = strchr(p + 1, '/'))

@@ -388,18 +388,6 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
   } while (0)
 
 // Return if failure
-#define CHECK_RESULT_SAVE_RETURNCODE(Call, Label)             \
-  do {                                                        \
-    TempReturnCode = ReturnCode;                              \
-    ReturnCode = Call;                                        \
-    if (EFI_ERROR(ReturnCode)) {                              \
-      NVDIMM_ERR("Failure with %s. RC: %d", #Call, ReturnCode); \
-      goto Label;                                             \
-    }                                                         \
-    ReturnCode = TempReturnCode;                              \
-  } while (0)
-
-// Return if failure
 #define CHECK_RESULT_SET_NVM_STATUS(Call, pNvmStatus, NvmStatusCode, Label) \
   do {                                                                      \
     ReturnCode = Call;                                                      \
@@ -426,6 +414,22 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
     if (EFI_ERROR(ReturnCodeTemp)) {                                          \
       NVDIMM_WARN("Ignoring failure with %s. RC: %d", #Call, ReturnCodeTemp); \
     }                                                                         \
+  } while (0)
+
+// Make a non-terminating function call, but if EFI_SUCCESS is returned
+// don't overwrite any previous error in ReturnCode. If a failure is returned
+// then it's ok to overwrite the previous ReturnCode.
+// This is useful for executing all possible <independent> function calls before exiting
+// with any error that is received from any function call.
+// Note: Requires definition of PreservedReturnCode and overwriting the ReturnCode
+//       at the end of the function if required.
+#define CHECK_RESULT_CONTINUE_PRESERVE_ERROR(Call)  \
+  do {                                                          \
+    EFI_STATUS ReturnCodeTemp = Call;                           \
+    if (EFI_ERROR(ReturnCodeTemp)) {                            \
+      NVDIMM_ERR("Ignoring but preserving failure with %s. RC: %d", #Call, ReturnCodeTemp); \
+      PreservedReturnCode = ReturnCodeTemp;                     \
+    }                                                           \
   } while (0)
 
 #define CHECK_RESULT_MALLOC(Pointer, Call, Label)             \

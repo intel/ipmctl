@@ -285,7 +285,9 @@ UefiMain(
   UINTN Argc = 0;
   CHAR16 **ppArgv = NULL;
   UINT32 NextId = 0;
-#ifndef OS_BUILD
+#ifdef OS_BUILD
+  BOOLEAN IsVersionCommand = FALSE;
+#else
   SHELL_FILE_HANDLE StdIn = NULL;
 #endif
 
@@ -576,16 +578,22 @@ UefiMain(
 #endif
 
 #ifdef OS_BUILD
+        // different handling of returncodes for version command so it works for regular users
+        IsVersionCommand = (StrnCmp(Command.verb, VERSION_VERB, VERB_LEN) == 0);
+
         if (!Command.ExcludeDriverBinding && !g_fast_path) {
           Rc = NvmDimmDriverDriverBindingStart(&gNvmDimmDriverDriverBinding, FakeBindHandle, NULL);
-          if (EFI_ERROR(Rc)) {
+          if (EFI_ERROR(Rc) && !IsVersionCommand) {
             NVDIMM_ERR("Issue with driver initialization");
             Print(GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle,GuessNvmStatusFromReturnCode(Rc)));
             Print(FORMAT_NL);
           }
         }
-#endif
+
+        if (!EFI_ERROR(Rc) || IsVersionCommand) {
+#else
         if (!EFI_ERROR(Rc)) {
+#endif
           Rc = ExecuteCmd(&Command);
         }
 #ifdef OS_BUILD

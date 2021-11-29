@@ -57,7 +57,7 @@ GetObjectTypeString(
 
 /**
   Create command status as with specified command message.
-  Function displays per DIMM status if such exists and
+  Function displays per PMem module status if such exists and
   summarizing status for whole command. Memory allocated
   for status message and command status is freed after
   status is displayed.
@@ -709,6 +709,9 @@ GetSingleNvmStatusCodeMessage(
 
   case NVM_ERR_INIT_FAILED_NO_MODULES_FOUND:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_ERR_INITIALIZATION_FAILED_NO_MODULES), NULL);
+
+  case NVM_WARN_PMTT_TABLE_NOT_FOUND:
+    return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_WARN_PMTT_TABLE_NOT_FOUND), NULL);
 
   default:
     return HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_STATUS_DEFAULT), NULL);

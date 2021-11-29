@@ -948,7 +948,7 @@ int os_get_os_type()
 /*
 * Recursive mkdir, return 0 on success, -1 on error
 */
-int os_mkdir(OS_PATH path)
+int os_mkdir(char *path)
 {
   char* p;
   char seperator = '/';

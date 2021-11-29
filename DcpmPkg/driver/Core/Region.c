@@ -3594,12 +3594,6 @@ ReduceCapacityForSocketSKU(
     goto Finish;
   }
 
-  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, NULL, NULL, NULL);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not retrieve DDR capacities");
-    goto Finish;
-  }
-
   // MemoryMode only exists on symmetrical dimms objects
   for (Index = 0; Index < *pDimmsSymmetricalNumOnSocket; Index++) {
     if (DimmsSymmetricalOnSocket[Index].VolatileSize > 0) {
@@ -3622,6 +3616,32 @@ ReduceCapacityForSocketSKU(
         break;
       }
     }
+  }
+
+  ReturnCode = GetDDRCapacities((UINT16)Socket, &DDRRawCapacity, NULL, NULL, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    // If not Purley, this is an error. On Purley we expect the PMTT table
+    // to be missing on some platforms, workarounds are further below
+    if (!IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+      // Preserve return code and error out
+      NVDIMM_DBG("Could not retrieve DDR raw capacity");
+      goto Finish;
+    }
+    if (!NewConfigurationMemoryMode) {
+      // None of the DDR is used as cache, it's fully volatile, so we need to
+      // know the value to correctly calculate if we're violating the sku
+      // limit. However, since we're on Purley and are probably missing the
+      // PMTT table, for backwards compatibility we want to skip this ReduceCapacityForSocketSku
+      // check and show a warning.
+      ReturnCode = EFI_SUCCESS;
+      SetCmdStatus(pCommandStatus, NVM_WARN_PMTT_TABLE_NOT_FOUND);
+      goto Finish;
+    }
+
+    // All of the DDR is used as cache, so we don't need to know the current
+    // DDR raw capacity, continue on without a warning
+    DDRRawCapacity = 0;
+    ReturnCode = EFI_SUCCESS;
   }
 
   for (Index = 0; Index < *pDimmsSymmetricalNumOnSocket; Index++) {
@@ -5082,13 +5102,25 @@ CheckNmFmLimits(
 
   if (TwoLM_FMTotal == 0) {
     //no limit check necessary - no 2LM goal in play
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
   // Get total DDR capacity (Near Memory)
   ReturnCode = GetDDRCapacities(SocketId, &TwoLM_NMTotal, NULL, NULL, NULL);
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("Could not determine usable DDR capacity.");
+    // If not Purley, this is an error. On Purley we expect the PMTT table
+    // to be missing on some platforms, workarounds are further below
+    if (!IS_ACPI_HEADER_REV_MAJ_0_MIN_VALID(gNvmDimmData->PMEMDev.pPcatHead->pPlatformConfigAttr)) {
+      // Preserve return code and error out
+      NVDIMM_DBG("Could not retrieve usable DDR cache size");
+      goto Finish;
+    }
+    // We can't determine the cache size (and it's non-zero), likely because the PMTT
+    // table is missing. Since this is an allowed condition at this point, show
+    // a warning to the user and return success.
+    ReturnCode = EFI_SUCCESS;
+    SetCmdStatus(pCommandStatus, NVM_WARN_PMTT_TABLE_NOT_FOUND);
     goto Finish;
   }
 
@@ -5114,6 +5146,7 @@ Finish:
     (pCommandStatus->GeneralStatus == NVM_ERR_OPERATION_NOT_STARTED)) {
     ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_FAILED);
   }
+
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

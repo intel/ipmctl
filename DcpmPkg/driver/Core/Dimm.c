@@ -7373,12 +7373,15 @@ EFI_STATUS ClearPcdCacheOnDimmList(VOID)
 
   if (NULL != gNvmDimmData) {
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-      if (NULL != pDimmNode) {
-        pDimm = DIMM_FROM_NODE(pDimmNode);
-        if (NULL != pDimm) {
-          // Free memory and set to NULL so won't be used by Get PCD calls
-          FREE_POOL_SAFE(pDimm->pPcdOem);
-        }
+      if (pDimmNode == NULL) {
+        // Not supposed to get a NULL pDimmNode, but just in case
+        // exit out so we can't dereference it
+        break;
+      }
+      pDimm = DIMM_FROM_NODE(pDimmNode);
+      if (NULL != pDimm) {
+        // Free memory and set to NULL so won't be used by Get PCD calls
+        FREE_POOL_SAFE(pDimm->pPcdOem);
       }
     }
   }

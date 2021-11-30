@@ -11,6 +11,9 @@
 #include <win_scm2_passthrough.h>
 #include <NvmDimmDriver.h>
 
+#define SIZE_16MB   0x01000000
+#define MAX_FILE_SIZE_WINDOWS SIZE_16MB
+
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 extern UINT32 win_scm2_ioctl_get_system_table(
@@ -144,6 +147,10 @@ get_table(
   if (buf_size == 0)
   {
     return EFI_END_OF_FILE;
+  }
+  else if (buf_size > MAX_FILE_SIZE_WINDOWS)
+  {
+    return EFI_BAD_BUFFER_SIZE;
   }
 
   *table = AllocatePool(buf_size);

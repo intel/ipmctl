@@ -19,6 +19,8 @@
 #define	SYSFS_ACPI_PATH	"/sys/firmware/acpi/tables/"
 int g_count = 0;
 
+#define MAX_FILE_SIZE_LINUX SIZE_16MB
+
 /*!
 * 8 bit unsigned integer as a boolean
 */
@@ -109,7 +111,8 @@ int get_acpi_table(
 		size_t header_size = sizeof (header);
 
 		ssize_t hdr_bytes_read = read(fd, &header, header_size);
-		if (hdr_bytes_read != header_size)
+		// Check total_table_size
+		if (hdr_bytes_read != header_size || header.length > MAX_FILE_SIZE_LINUX)
 		{
 			rc = ACPI_ERR_BADTABLE;
 		}

@@ -31,8 +31,8 @@
 #include <nvm_management.h>
 
 #define	LOCALE_DIR	"/usr/share/locale"
-#define FTOK_PROJ_ID 'R' // Today proj_id is an int, but still only 8 bits are used. 
-                        // Typical usage has an ASCII character proj_id, 
+#define FTOK_PROJ_ID 'R' // Today proj_id is an int, but still only 8 bits are used.
+                        // Typical usage has an ASCII character proj_id,
                         // that is why the behavior is said to be undefined when proj_id is zero.
 #define SHM_PERM_FLG 0666 // permissions granted to the owner, group, and others.
 
@@ -69,73 +69,6 @@ int os_get_filesize(const char *filename, size_t *filesize)
 
     *filesize = file_stat.st_size;
     return 0;
-}
-
-/*
- * Blocks for the specified number of msecs.
- */
-void os_sleep(unsigned long time)
-{
-	unsigned long time_msec = time % 1000;
-	struct timespec ts;
-	ts.tv_sec = (time_t)((time - time_msec)/1000);
-	ts.tv_nsec = (long)(time_msec * 1000000);
-	nanosleep(&ts, NULL);
-}
-
-
-/*
- * Start a process
- */
-int os_start_process(const char *process_name, unsigned int *p_process_id)
-{
-	int rc = -1;
-
-	pid_t new_process = fork();
-	if (new_process == 0)
-	{
-		// By normal conventions arg0 should point to the program being executed.
-		execl(process_name, process_name, NULL);
-	}
-	else if (new_process > 0)
-	{
-		rc = 0;
-		*p_process_id = new_process;
-	}
-	return rc;
-}
-
-/*
- * Stop a process
- */
-int os_stop_process(unsigned int process_id)
-{
-	int rc = -1;
-	if (kill(process_id, SIGKILL) == 0)
-	{
-		rc = 0;
-	}
-	return rc;
-}
-
-/*
- * Create a thread on the current process
- */
-void os_create_thread(unsigned long long *p_thread_id, void *(*callback)(void *), void *callback_arg)
-{
-	pthread_create(
-			(pthread_t *)p_thread_id,
-			NULL, // default attributes
-			callback,
-			callback_arg);
-}
-
-/*
- * Retrieve the id of the current thread
- */
-unsigned long long os_get_thread_id()
-{
-	return (unsigned long long)pthread_self();
 }
 
 /*

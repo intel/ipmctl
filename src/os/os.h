@@ -73,12 +73,6 @@ extern void os_get_locale_dir(OS_PATH locale_dir);
 extern char * os_get_cwd(OS_PATH buffer, size_t size);
 extern int os_mkdir(char *path);
 
-extern int os_start_process(const char *process_name, unsigned int *p_process_id);
-extern int os_stop_process(unsigned int process_id);
-extern void os_sleep(unsigned long time);
-extern void os_create_thread(unsigned long long *p_thread_id, void *(*callback)(void *), void *callback_arg);
-extern unsigned long long os_get_thread_id();
-
 extern OS_MUTEX *os_mutex_init(const char *name);
 extern int os_mutex_lock(OS_MUTEX *p_mutex);
 extern int os_mutex_unlock(OS_MUTEX *p_mutex);

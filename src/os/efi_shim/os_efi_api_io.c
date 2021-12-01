@@ -415,8 +415,9 @@ PromptYesNo(
     goto Finish;
   }
 
-  ValidInput = readSize == 2 &&
-    (buf[0] == 'y' || buf[0] == 'n');
+  ValidInput =
+      ( (buf[0] == 'y' && (buf[1] == '\0' || buf[1] == '\n')) ||
+        (buf[0] == 'n' && (buf[1] == '\0' || buf[1] == '\n')) );
   if (!ValidInput) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;

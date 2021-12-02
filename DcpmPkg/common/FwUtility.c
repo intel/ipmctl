@@ -254,9 +254,11 @@ LoadFileAndCheckHeader(
   UINT64 BuffSizeTemp = 0;
   UINT64 BuffSpiSize = sizeof(SpiDirectory);
   BOOLEAN VerifyNormalImage = FALSE;
-  VOID *pImageBuffer = NULL;
-
   NVDIMM_ENTRY();
+
+  CHECK_NULL_ARG(pFilePath, Finish);
+  CHECK_NULL_ARG(ppImageHeader, Finish);
+  CHECK_NULL_ARG(pCommandStatus, Finish);
 
   ZeroMem(&FileHandle, sizeof(FileHandle));
   ZeroMem(&SpiDirectory, sizeof(SpiDirectory));
@@ -337,9 +339,8 @@ LoadFileAndCheckHeader(
     Fortunately our buffer will be smaller even if UINTN is 32-bit.
   **/
   BuffSize = sizeof(NVM_FW_IMAGE_HEADER);
-  pImageBuffer = AllocatePool(BuffSize);
-
-  if (pImageBuffer == NULL) {
+  *ppImageHeader = AllocatePool(BuffSize);
+  if (*ppImageHeader == NULL) {
     CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
         DETAILS_MEM_ALLOCATION_ERROR_FW_IMG);
     ReturnValue = FALSE;
@@ -366,12 +367,7 @@ LoadFileAndCheckHeader(
     }
   }
 
-  ReturnCode = FileHandle->Read(FileHandle, &BuffSize, pImageBuffer);
-
-  /**
-    Cast the buffer to the header pointer, so we can read the image information.
-  **/
-  *ppImageHeader = (NVM_FW_IMAGE_HEADER *)pImageBuffer;
+  ReturnCode = FileHandle->Read(FileHandle, &BuffSize, *ppImageHeader);
 
   /**
     If the read function returned an error OR we read less bytes that the file length equals.

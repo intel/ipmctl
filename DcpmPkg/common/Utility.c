@@ -611,7 +611,7 @@ AsciiStrSplit(
 
   /** Error path **/
 FinishCleanMemory:
-  FreeStringArray((CHAR16**)ppArray, *pArraySize);
+  FreeStringArrayAscii(ppArray, *pArraySize);
   ppArray = NULL;
   *pArraySize = 0;
 
@@ -630,6 +630,31 @@ Finish:
 VOID
 FreeStringArray(
   IN OUT CHAR16 **ppStringArray,
+  IN     UINT32 ArraySize
+  )
+{
+  UINT32 Index = 0;
+
+  if (ppStringArray == NULL) {
+    return;
+  }
+
+  for (Index = 0; Index < ArraySize; Index++) {
+    FREE_POOL_SAFE(ppStringArray[Index]);
+  }
+
+  FreePool(ppStringArray);
+}
+
+/**
+  Copy of FreeStringArray, used for avoiding static code analysis complaint
+
+  @param[in,out] ppStringArray array of strings
+  @param[in] ArraySize number of strings
+**/
+VOID
+FreeStringArrayAscii(
+  IN OUT CHAR8 **ppStringArray,
   IN     UINT32 ArraySize
   )
 {

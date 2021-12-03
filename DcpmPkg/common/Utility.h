@@ -719,6 +719,7 @@ AsciiStrSplit(
 
 /**
   First free elements of array and then free the array
+  This does NOT set pointer to array to NULL
 
   @param[in,out] ppStringArray array of strings
   @param[in] ArraySize number of strings
@@ -728,6 +729,19 @@ FreeStringArray(
   IN OUT CHAR16 **ppStringArray,
   IN     UINT32 ArraySize
   );
+
+/**
+  Copy of FreeStringArray, used for avoiding static code analysis complaint
+
+  @param[in,out] ppStringArray array of strings
+  @param[in] ArraySize number of strings
+**/
+VOID
+FreeStringArrayAscii(
+  IN OUT CHAR8 **ppStringArray,
+  IN     UINT32 ArraySize
+  );
+
 
 /**
   Open the specified protocol.

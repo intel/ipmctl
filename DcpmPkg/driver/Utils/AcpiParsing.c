@@ -1381,6 +1381,8 @@ CopyMemoryAndAddPointerToArray(
   pData = AllocatePool(DataSize);
 
   if (ppNewTable == NULL || pData == NULL) {
+    FREE_POOL_SAFE(ppNewTable);
+    FREE_POOL_SAFE(pData);
     NVDIMM_DBG("Could not allocate the memory.");
     goto Finish;
   }
@@ -1398,9 +1400,11 @@ CopyMemoryAndAddPointerToArray(
 
   (*pNewPointerIndex)++; // Increment the array index
 
-Finish:
+  // Only free caller's original table (ppTable) if we succeed
+  // If we don't succeed, we'll return NULL below
   FREE_POOL_SAFE(ppTable);
 
+Finish:
   return ppNewTable;
 }
 

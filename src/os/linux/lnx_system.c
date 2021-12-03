@@ -76,6 +76,7 @@ int os_get_filesize(const char *filename, size_t *filesize)
  */
 OS_MUTEX * os_mutex_init(const char *name)
 {
+	int rc = 0;
 	pthread_mutex_t *mutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
 	if (mutex)
 	{
@@ -102,17 +103,15 @@ OS_MUTEX * os_mutex_init(const char *name)
 		}
 
 		// failure when pthread_mutex_init(..) != 0
-		if (0 == pthread_mutex_init((pthread_mutex_t *)mutex, &attr))
-		{
-			return mutex;
+		rc = pthread_mutex_init((pthread_mutex_t *)mutex, &attr);
+		if (rc != 0) {
+			free(mutex);
+			mutex = NULL;
 		}
-    else
-    {
-      pthread_mutexattr_destroy(&attr);
-      free(mutex);
-    }
+		// No longer need attr in success and failure case
+		pthread_mutexattr_destroy(&attr);
 	}
-	return NULL;
+	return mutex;
 }
 
 /*

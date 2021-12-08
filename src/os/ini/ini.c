@@ -52,7 +52,7 @@ const char p_g_ini_file[] = {
 means we have either token only or end of line or nothing.
 An extra byte is for terminating zero purpose.
 */
-#define NVM_INI_CALLOC(size) (size > 0) ? (char *) calloc(1, size+1) : NULL 
+#define NVM_INI_CALLOC(size) (size > 0) ? (char *) calloc(1, size+1) : NULL
 
 /**
 @brief Allocate memory and initialize it to zero; if the size is 1 or less
@@ -452,11 +452,19 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
     return 0;
   }
 
-  // Open and truncated the file
-  // Try to open the file
   snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
-  h_file = fopen(ini_path_filename, "r");
-  if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
+  // Delete any symbolic link that might exist first
+  // so we don't overwrite an important admin-only file
+  // that might be linked maliciously.
+  // Don't need to do it for AppData as it's a protected directory.
+#if defined(__LINUX__) || defined(__ESX__)
+  unlink(ini_path_filename);
+#else
+  _unlink(ini_path_filename);
+#endif
+  // Open and truncate the existing file
+  h_file = fopen(ini_path_filename, "w");
+  if ((NULL == h_file)) {
     if (force_file_update) {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH);
       os_mkdir(ini_path_filename);
@@ -465,9 +473,9 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
     }
     else {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
-      h_file = fopen(ini_path_filename, "r");
+      h_file = fopen(ini_path_filename, "w");
     }
-    if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
+    if ((NULL == h_file)) {
       // Hardcoded data used, nothing to save
       return -1;
     }

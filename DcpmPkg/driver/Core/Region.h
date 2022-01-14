@@ -493,8 +493,7 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
 EFI_STATUS
 RetrieveGoalConfigsFromPlatformConfigData(
   IN OUT LIST_ENTRY *pDimmList,
-  IN     BOOLEAN RestoreCorrupt,
-  IN     BOOLEAN CheckSupportedConfigDimms
+  IN     BOOLEAN RestoreCorrupt
   );
 
 /**

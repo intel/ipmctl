@@ -22,6 +22,7 @@ struct _DIMM;
   The caller is responsible to free the allocated memory of PCD Config Input
 
   @param[in] pDimm the dimm that PCD Config Input is destined for
+  @param[in] ReservedSizeIsZero Indicate whether the reserved size is zero
   @param[out] ppConfigInput new generated PCD Config Input
 
   @retval EFI_SUCCESS success
@@ -31,6 +32,7 @@ struct _DIMM;
 EFI_STATUS
 GeneratePcdConfInput(
   IN     struct _DIMM *pDimm,
+  IN     BOOLEAN ReservedSizeIsZero,
      OUT NVDIMM_PLATFORM_CONFIG_INPUT **ppConfigInput
   );
 

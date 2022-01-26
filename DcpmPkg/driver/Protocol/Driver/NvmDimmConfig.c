@@ -6664,7 +6664,7 @@ CreateGoalConfig(
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   } else {
     /** Send Platform Config Data to DIMMs **/
-    ReturnCode = ApplyGoalConfigsToDimms(ppDimms, DimmsNum, pCommandStatus);
+    ReturnCode = ApplyGoalConfigsToDimms(ppDimms, DimmsNum, (ReservedSize == 0), pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("ApplyGoalConfigsToDimms Error");
@@ -6786,7 +6786,9 @@ DeleteGoalConfig (
   }
 
   /** Send Platform Config Data to DIMMs **/
-  ReturnCode = ApplyGoalConfigsToDimms(pDimms, DimmsNum, pCommandStatus);
+  // ReservedSizeIsZero (the TRUE) isn't really relevant here (we are deleting goals)
+  // but using TRUE for backwards compatible behavior internally just in case
+  ReturnCode = ApplyGoalConfigsToDimms(pDimms, DimmsNum, TRUE, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

@@ -3805,6 +3805,8 @@ Finish:
   3. Set information about synchronization with dimms
 
   @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] DimmsNum Number of dimms in pDimmList
+  @param[in] ReservedSizeIsZero Indicate whether the reserved size is zero
   @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS success
@@ -3815,6 +3817,7 @@ EFI_STATUS
 ApplyGoalConfigsToDimms(
   IN     DIMM **ppDimms,
   IN     UINT32 DimmsNum,
+  IN     BOOLEAN ReservedSizeIsZero,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
@@ -3861,7 +3864,7 @@ ApplyGoalConfigsToDimms(
       continue;
     }
 
-    ReturnCode = GeneratePcdConfInput(pDimm, &pNewConfigInput);
+    ReturnCode = GeneratePcdConfInput(pDimm, ReservedSizeIsZero, &pNewConfigInput);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Generating Platform Config Data Configuration Input failed.");
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_REGION_CONF_APPLYING_FAILED);

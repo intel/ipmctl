@@ -20,6 +20,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
   The caller is responsible to free the allocated memory of PCD Config Input
 
   @param[in] pDimm the dimm that PCD Config Input is destined for
+  @param[in] ReservedSizeIsZero Indicate whether the reserved size is zero
   @param[out] ppConfigInput new generated PCD Config Input
 
   @retval EFI_SUCCESS success
@@ -29,6 +30,7 @@ extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 EFI_STATUS
 GeneratePcdConfInput(
   IN     struct _DIMM *pDimm,
+  IN     BOOLEAN ReservedSizeIsZero,
      OUT NVDIMM_PLATFORM_CONFIG_INPUT **ppConfigInput
   )
 {
@@ -166,8 +168,14 @@ GeneratePcdConfInput(
     (cause the DIMM Raw capacity has them subtracted). The BIOS team has no problems with this value
     being under aligned right now, but they might change this in the future.
     If they do we will have to align this value properly.
+
+    For FW version 3, attempt to match persistent memory partition size change request to the
+    size of requested persistent memory for this PMem module, instead of using the raw PMem
+    module size. That is done further below. However, this algorithm doesn't work that well
+    if the user requested to keep some PMem memory unused ("reserved"). So use the old algorithm
+    if this is the case, done here.
   **/
-  if (pDimm->FwVer.FwApiMajor < 3 ) {
+  if (pDimm->FwVer.FwApiMajor < 3 || !ReservedSizeIsZero) {
     pPartSizeChange->PmPartitionSize = pDimm->RawCapacity - pDimm->VolatileSizeGoal;
   }
   // Set PmPartitionSize for FW API >= 3 further below based on LastPersistentMemoryOffset
@@ -320,7 +328,7 @@ GeneratePcdConfInput(
     }
   }
 
-  if (pDimm->FwVer.FwApiMajor >= 3 ) {
+  if (pDimm->FwVer.FwApiMajor >= 3 && ReservedSizeIsZero) {
     // Match persistent memory partition size change request to the size of requested
     // persistent memory for this PMem module, instead of using the raw PMem module size
     pPartSizeChange->PmPartitionSize = LastPersistentMemoryOffset;

@@ -643,7 +643,7 @@ FreeStringArray(
     FREE_POOL_SAFE(ppStringArray[Index]);
   }
 
-  FreePool(ppStringArray);
+  FREE_POOL_SAFE(ppStringArray);
 }
 
 /**
@@ -668,7 +668,7 @@ FreeStringArrayAscii(
     FREE_POOL_SAFE(ppStringArray[Index]);
   }
 
-  FreePool(ppStringArray);
+  FREE_POOL_SAFE(ppStringArray);
 }
 
 
@@ -1478,6 +1478,7 @@ ConvertHealthStateReasonToHiiStr(
 
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT16 mask = BIT0;
+  CHAR16 *NextSubString = NULL;
   NVDIMM_ENTRY();
 
   if (ppHealthStatusReasonStr == NULL) {
@@ -1487,55 +1488,43 @@ ConvertHealthStateReasonToHiiStr(
   while (mask <= BIT9) {
     switch (HealthStatusReason & mask) {
     case HEALTH_REASON_PERCENTAGE_REMAINING_LOW:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERCENTAGE_REMAINING), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERCENTAGE_REMAINING), NULL);
       break;
     case HEALTH_REASON_PACKAGE_SPARING_HAS_HAPPENED:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_PACKAGE_SPARING_HAPPENED), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_PACKAGE_SPARING_HAPPENED), NULL);
       break;
     case HEALTH_REASON_CAP_SELF_TEST_WARNING:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_WARNING), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_WARNING), NULL);
       break;
     case HEALTH_REASON_PERC_REMAINING_EQUALS_ZERO:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERCENTAGE_REMAINING_ZERO), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERCENTAGE_REMAINING_ZERO), NULL);
       break;
     case HEALTH_REASON_DIE_FAILURE:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_DIE_FAILURE), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_DIE_FAILURE), NULL);
       break;
     case HEALTH_REASON_AIT_DRAM_DISABLED:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_AIT_DRAM_DISABLED), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_AIT_DRAM_DISABLED), NULL);
       break;
     case HEALTH_REASON_CAP_SELF_TEST_FAILURE:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_FAIL), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_FAIL), NULL);
       break;
     case HEALTH_REASON_CRITICAL_INTERNAL_STATE_FAILURE:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CRITICAL_INTERNAL_FAILURE), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CRITICAL_INTERNAL_FAILURE), NULL);
       break;
     case HEALTH_REASON_PERFORMANCE_DEGRADED:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERFORMANCE_DEGRADED), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_PERFORMANCE_DEGRADED), NULL);
       break;
     case HEALTH_REASON_CAP_SELF_TEST_COMM_FAILURE:
-      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
-        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA),
-        HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_COMM_FAILURE), NULL));
+      NextSubString = HiiGetString(HiiHandle, STRING_TOKEN(STR_DCPMM_VIEW_DCPMM_FORM_CAP_SELF_TEST_COMM_FAILURE), NULL);
+      break;
     }
+
+    if (HealthStatusReason & mask) {
+      *ppHealthStatusReasonStr = CatSPrintClean(*ppHealthStatusReasonStr,
+        ((*ppHealthStatusReasonStr == NULL) ? FORMAT_STR : FORMAT_STR_WITH_COMMA), NextSubString);
+      FREE_POOL_SAFE(NextSubString);
+    }
+
     mask = mask << 1;
   }
 

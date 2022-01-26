@@ -929,6 +929,7 @@ MakeCapacityString (
 
 Finish:
   FREE_POOL_SAFE(pUnitsStr);
+  FREE_POOL_SAFE(pUnitsStr2);
   FREE_POOL_SAFE(pFormattedSizeString);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

@@ -1037,6 +1037,14 @@ FindFreeRanges(
   }
 
 Finish:
+  if (pUsableRangesListMerged != NULL) {
+    FreeMemmapItems(pUsableRangesListMerged);
+    FREE_POOL_SAFE(pUsableRangesListMerged);
+  }
+  if (pOccupiedRangesListMerged != NULL) {
+    FreeMemmapItems(pOccupiedRangesListMerged);
+    FREE_POOL_SAFE(pOccupiedRangesListMerged);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -2844,7 +2852,7 @@ FwCmdSetPlatformConfigData (
 
     for (Offset = 0; Offset < PcdSize; Offset += PCD_SET_SMALL_PAYLOAD_DATA_SIZE) {
       InPayloadSetData.Offset = Offset;
-      CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pPartition + Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE);
+      CopyMem_S(InPayloadSetData.Data, sizeof(InPayloadSetData.Data), pPartition + Offset, MIN(PcdSize - Offset, PCD_SET_SMALL_PAYLOAD_DATA_SIZE));
       CopyMem_S(pFwCmd->InputPayload, sizeof(pFwCmd->InputPayload), &InPayloadSetData, pFwCmd->InputPayloadSize);
       pFwCmd->OutputPayloadSize = 0;
       ReturnCode = PassThru(pDimm, pFwCmd, PT_LONG_TIMEOUT_INTERVAL);
@@ -5477,6 +5485,7 @@ FreeDimm(
     return;
   }
   FreeBlockWindow(pDimm->pBw);
+  FREE_POOL_SAFE(pDimm->pPcdOem);
   FREE_POOL_SAFE(pDimm);
   NVDIMM_EXIT();
 }

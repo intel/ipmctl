@@ -1292,7 +1292,6 @@ ReadLabelStorageArea(
 
   (*ppLsa)->pLabels = AllocateZeroPool(LabelSize);
   if ((*ppLsa)->pLabels == NULL) {
-    FREE_POOL_SAFE(*ppLsa);
     goto FinishError;
   }
 
@@ -3068,6 +3067,7 @@ Finish:
   if (ppFreemapList != NULL) {
     for(Index = 0; Index < DimmNum; Index++) {
       FreeMemmapItems(ppFreemapList[Index]);
+      FREE_POOL_SAFE(ppFreemapList[Index]);
     }
     FREE_POOL_SAFE(ppFreemapList);
   }
@@ -3715,13 +3715,14 @@ ClearAndInitializeAllLabelStorageAreas(
       SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_ERR_FAILED_TO_INIT_NS_LABELS);
       goto Finish;
     }
-    FREE_POOL_SAFE(pLsa);
+    FreeLsaSafe(&pLsa);
     ppDimms[Index]->LsaStatus = LSA_OK;
     SetObjStatusForDimm(pCommandStatus, ppDimms[Index], NVM_SUCCESS);
   }
   SetCmdStatus(pCommandStatus, NVM_SUCCESS);
 
 Finish:
+  FreeLsaSafe(&pLsa);
   return ReturnCode;
 }
 
@@ -4000,7 +4001,7 @@ InsertNamespaceLabels(
       NVDIMM_DBG("LSA corrupted after initialization on DIMM 0x%x", pDimm->DeviceHandle.AsUint32);
       goto Finish;
     }
-    FREE_POOL_SAFE(pLsa);
+    FreeLsaSafe(&pLsa);
     pDimm->LsaStatus = LSA_OK;
   }
 
@@ -4782,6 +4783,7 @@ FindAndAssignISForNamespace(
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_DBG("Failed to get free memory range");
         FreeMemmapItems(pFreemapList);
+        FREE_POOL_SAFE(pFreemapList);
         goto Finish;
       }
 
@@ -4800,6 +4802,7 @@ FindAndAssignISForNamespace(
       }
 
       FreeMemmapItems(pFreemapList);
+      FREE_POOL_SAFE(pFreemapList);
 
       if (!RegionFound) {
         ISetFound = FALSE;

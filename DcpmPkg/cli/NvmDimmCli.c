@@ -1276,6 +1276,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
+  FREE_POOL_SAFE(pDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

@@ -315,6 +315,7 @@ ShowPerformance(
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPerformanceDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimmsPerformanceData);
   NVDIMM_EXIT_I64(ReturnCode);

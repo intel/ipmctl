@@ -3876,6 +3876,7 @@ ApplyGoalConfigsToDimms(
       SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_REGION_CONF_APPLYING_FAILED);
       goto Finish;
     }
+    FREE_POOL_SAFE(pNewConfigInput);
   }
 
   /**

@@ -297,8 +297,8 @@ ShowCmdAccessPolicy(
         break;
       }
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
+      FREE_POOL_SAFE(RestrictionStr);
     }
-    FREE_POOL_SAFE(RestrictionStr);
   }
 
   //Switch text output type to display as a table
@@ -310,6 +310,7 @@ Finish:
   FREE_POOL_SAFE(RestrictionStr);
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);
+  FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pCapEntries);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

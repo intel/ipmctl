@@ -453,20 +453,21 @@ GetDimmMappedMemSize(
 
   ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
   if (EFI_ERROR(ReturnCode)) {
-    return EFI_DEVICE_ERROR;
+    ReturnCode = EFI_DEVICE_ERROR;
+    goto Finish;
   }
 
   if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
     NVDIMM_DBG("There is no Current Config table");
-    FreePool(pPcdConfHeader);
-    return EFI_LOAD_ERROR;
+    ReturnCode = EFI_LOAD_ERROR;
+    goto Finish;
   }
 
   pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
   if (!IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
-    FreePool(pPcdConfHeader);
-    return EFI_VOLUME_CORRUPTED;
+    ReturnCode = EFI_VOLUME_CORRUPTED;
+    goto Finish;
   }
 
   pDimm->ConfigStatus = (UINT8)pPcdCurrentConf->ConfigStatus;
@@ -490,8 +491,11 @@ GetDimmMappedMemSize(
 
   pDimm->PcdMappedMemInfoRead = TRUE;
 
-  FreePool(pPcdConfHeader);
-  return EFI_SUCCESS;
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
+  FREE_POOL_SAFE(pPcdConfHeader);
+  return ReturnCode;
 }
 
 #endif // OS_BUILD

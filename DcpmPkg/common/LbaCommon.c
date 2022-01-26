@@ -133,12 +133,14 @@ VOID FreeLsaSafe(
   IN    LABEL_STORAGE_AREA **ppLabelStorageArea
   )
 {
+  UINT32 IndexIdx = 0;
+  NAMESPACE_INDEX *pNamespaceIndex = NULL;
 
-  UINT32 Index = 0;
-  if (*ppLabelStorageArea != NULL) {
-    for (Index = 0; Index < NAMESPACE_INDEXES; Index++) {
-      FREE_POOL_SAFE(((*ppLabelStorageArea)->Index)->pFree);
-      FREE_POOL_SAFE(((*ppLabelStorageArea)->Index)->pReserved);
+  if (ppLabelStorageArea != NULL && *ppLabelStorageArea != NULL) {
+    for (IndexIdx = 0; IndexIdx < NAMESPACE_INDEXES; IndexIdx++) {
+      pNamespaceIndex = &(((*ppLabelStorageArea)->Index)[IndexIdx]);
+      FREE_POOL_SAFE(pNamespaceIndex->pFree);
+      FREE_POOL_SAFE(pNamespaceIndex->pReserved);
     }
     FREE_POOL_SAFE((*ppLabelStorageArea)->pLabels);
     FREE_POOL_SAFE(*ppLabelStorageArea);

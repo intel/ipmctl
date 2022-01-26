@@ -1508,7 +1508,7 @@ EFI_STATUS SetDataSetPrinterAttribs(
     }
   }
 Finish:
-  FREE_POOL_SAFE(DataSetToks);
+  FreeStringArray(DataSetToks, NumDataSetToks);
   return ReturnCode;
 }
 

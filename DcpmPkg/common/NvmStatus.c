@@ -173,6 +173,10 @@ CreateCommandStatusString(
 
       pAllStatusCodeMessages = GetAllNvmStatusCodeMessages(HiiHandle, pObjectStatus, pPrefixString);
       pCurrentString = CatSPrintClean(pCurrentString, FORMAT_STR, pAllStatusCodeMessages);
+
+      FREE_POOL_SAFE(pObjectTypeString);
+      FREE_POOL_SAFE(pPrefixString);
+      FREE_POOL_SAFE(pAllStatusCodeMessages);
     }
   }
 

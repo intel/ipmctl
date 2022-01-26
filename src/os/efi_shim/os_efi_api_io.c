@@ -594,15 +594,6 @@ Finish:
 }
 
 EFI_STATUS
-uninitAcpiTables(
-)
-{
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pFitHead);
-  FREE_POOL_SAFE(gNvmDimmData->PMEMDev.pPcatHead);
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS
 GetFirstAndBoundSmBiosStructPointer(
   OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
   OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,

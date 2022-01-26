@@ -437,6 +437,7 @@ FinishNoCommandStatus:
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pOptionsValue);
   FREE_POOL_SAFE(pDimmTargetIds);
+  FREE_POOL_SAFE(pDimms);
 
   if (TargetsIsNewList) {
     FREE_POOL_SAFE(pDimmTargets);

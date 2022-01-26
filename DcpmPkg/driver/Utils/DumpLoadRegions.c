@@ -54,6 +54,7 @@ WriteDumpFileHeader(
   }
 
 Finish:
+  FREE_POOL_SAFE(pHeaderBuffer);
   return ReturnCode;
 }
 

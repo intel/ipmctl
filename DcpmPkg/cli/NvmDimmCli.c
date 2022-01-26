@@ -1234,7 +1234,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-    DIMM_INFO_CATEGORY_ALL, pDimms);
+    DIMM_INFO_CATEGORY_NONE, pDimms);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);

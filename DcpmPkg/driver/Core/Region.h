@@ -383,7 +383,8 @@ RetrieveISFromInterleaveInformationTable(
 **/
 EFI_STATUS
 ApplyGoalConfigsToDimms(
-  IN     LIST_ENTRY *pDimmList,
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

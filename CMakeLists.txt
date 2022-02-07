@@ -472,7 +472,7 @@ if(MSVC)
   SET_SOURCE_FILES_PROPERTIES(src/os/cli_cmds/DumpSupportCommand.c PROPERTIES COMPILE_FLAGS -D_CRT_SECURE_NO_WARNINGS)
 else()
   target_compile_options(ipmctl PRIVATE
-    -include AutoGen.h
+    -include AutoGen.h -D__NVM_DLL__
   )
 endif()
 
@@ -495,6 +495,10 @@ set_target_properties(ipmctl PROPERTIES
   VERSION ${LIBIPMCTL_VERSION_STRING}
   SOVERSION ${LIBIPMCTL_VERSION_MAJOR}
   )
+if(UNIX)
+  set_target_properties(ipmctl_os_interface PROPERTIES COMPILE_FLAGS -fvisibility=hidden)
+  set_target_properties(ipmctl PROPERTIES COMPILE_FLAGS -fvisibility=hidden)
+endif()
 
 #---------------------------------------------------------------------------------------------------
 # ipmctl executable

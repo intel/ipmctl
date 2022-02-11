@@ -446,14 +446,6 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 		COMMON_LOG_ERROR("Invalid parameter, cmd struct is null");
 		rc = NVM_ERR_UNKNOWN;
 	}
-	else if ((p_fw_cmd->InputPayloadSize > 0 && p_fw_cmd->InputPayload == NULL) ||
-			(p_fw_cmd->OutputPayloadSize > 0 && p_fw_cmd->OutPayload == NULL) ||
-			(p_fw_cmd->LargeInputPayloadSize > 0 && p_fw_cmd->LargeInputPayload == NULL) ||
-			(p_fw_cmd->LargeOutputPayloadSize > 0 && p_fw_cmd->LargeOutputPayload == NULL))
-	{
-		COMMON_LOG_ERROR("Invalid input or output payloads specified");
-		rc = NVM_ERR_UNKNOWN;
-	}
 #if __LARGE_PAYLOAD_NOT_SUPPORTED__
 	else if ((p_fw_cmd->Opcode == 0x08 && p_fw_cmd->SubOpcode == 0x02) || // get fw debug log
 				(p_fw_cmd->Opcode == 0x0A)) // inject error

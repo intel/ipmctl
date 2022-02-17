@@ -294,13 +294,14 @@ RetrieveISFromInterleaveInformationTable(
   );
 
 /**
-  Clear previous pools goal configs and - if pools goal configs is specified - replace them with new one.
+  Clear previous regions goal configs and - if regions goal configs is specified - replace them with new one.
 
-  1. Clear previous pools goal configs on all affected dimms
-  2. [OPTIONAL] Send new pools goal configs to dimms
+  1. Clear previous regions goal configs on all affected dimms
+  2. [OPTIONAL] Send new regions goal configs to dimms
   3. Set information about synchronization with dimms
 
-  @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] ppDimms List of PMem modules to apply the goal to
+  @param[in] DimmsNum Number of PMem modules in ppDimms list
   @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS success
@@ -309,7 +310,8 @@ RetrieveISFromInterleaveInformationTable(
 **/
 EFI_STATUS
 ApplyGoalConfigsToDimms(
-  IN     LIST_ENTRY *pDimmList,
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
   );
 

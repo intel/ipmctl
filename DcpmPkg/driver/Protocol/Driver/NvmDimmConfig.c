@@ -5731,25 +5731,47 @@ Finish:
   }
 
 EFI_STATUS
-ReturnErrorWithMediaInaccessiblePMemModule(
-    OUT COMMAND_STATUS *pCommandStatus
+SkipMediaInaccessiblePMemModules(
+  IN OUT DIMM *pDimms[MAX_DIMMS],
+  IN OUT UINT32 *pDimmsNum,
+     OUT COMMAND_STATUS *pCommandStatus
   )
 {
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  LIST_ENTRY *pDimmNode = NULL;
-  DIMM *pDimm = NULL;
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  UINT32 Index = 0;
+  UINT32 IndexNew = 0;
 
-  // Because of the difficulties in refactoring the create goal code
-  // (specifically Region.c) to work with a media disabled PMem module,
-  // error out with a requirement that the user replace the module.
-  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
-    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
-      // Want to set an error for each module
-      SetObjStatusForDimm(pCommandStatus, pDimm, NVM_ERR_MEDIA_NOT_ACCESSIBLE_CANNOT_CONTINUE);
-      ReturnCode = EFI_UNSUPPORTED;
-    }
+  if (pDimms == NULL || pDimmsNum == NULL || pCommandStatus == NULL) {
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
   }
+
+  // Redo the VerifyTargetDimms output to not include media inacessible modules
+  // and set the object status accordingly for these modules.
+  IndexNew = 0;
+  for (Index = 0; Index < *pDimmsNum; Index++) {
+    if (DIMM_MEDIA_NOT_ACCESSIBLE(pDimms[Index]->BootStatusBitmask)) {
+      SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_MEDIA_NOT_ACCESSIBLE);
+      continue;
+    }
+    // Copy pointer for dimm from previous position to the new position
+    pDimms[IndexNew] = pDimms[Index];
+    IndexNew++;
+  }
+
+  ZeroMem(&(pDimms[Index]), *pDimmsNum - Index);
+
+  *pDimmsNum = IndexNew;
+
+  if (*pDimmsNum == 0) {
+    ResetCmdStatus(pCommandStatus, NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND);
+    ReturnCode = EFI_NOT_FOUND;
+    goto Finish;
+  }
+
+  ReturnCode = EFI_SUCCESS;
+
+Finish:
   return ReturnCode;
 }
 
@@ -5819,8 +5841,6 @@ GetActualRegionsGoalCapacities(
 
   NVDIMM_ENTRY();
 
-  CHECK_RESULT(ReturnErrorWithMediaInaccessiblePMemModule(pCommandStatus), Finish);
-
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
 
   if (pThis == NULL || RegionGoalTemplates == NULL || pCommandStatus == NULL
@@ -5863,6 +5883,8 @@ GetActualRegionsGoalCapacities(
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
+
+  CHECK_RESULT(SkipMediaInaccessiblePMemModules(ppDimms, &DimmsNum, pCommandStatus), Finish);
 
   ReturnCode = RetrieveGoalConfigsFromPlatformConfigData(&gNvmDimmData->PMEMDev.Dimms);
   if (EFI_ERROR(ReturnCode)) {
@@ -6137,8 +6159,6 @@ CreateGoalConfig(
 
   NVDIMM_ENTRY();
 
-  CHECK_RESULT(ReturnErrorWithMediaInaccessiblePMemModule(pCommandStatus), Finish);
-
   ZeroMem(RegionGoalTemplates, sizeof(RegionGoalTemplates));
   ZeroMem(&DriverPreferences, sizeof(DriverPreferences));
 
@@ -6181,6 +6201,8 @@ CreateGoalConfig(
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
+
+  CHECK_RESULT(SkipMediaInaccessiblePMemModules(ppDimms, &DimmsNum, pCommandStatus), Finish);
 
 #ifdef OS_BUILD
   if (!gNvmDimmData->PMEMDev.RegionsAndNsInitialized) {
@@ -6423,7 +6445,7 @@ CreateGoalConfig(
     SetCmdStatus(pCommandStatus, NVM_SUCCESS);
   } else {
     /** Send Platform Config Data to DIMMs **/
-    ReturnCode = ApplyGoalConfigsToDimms(&gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+    ReturnCode = ApplyGoalConfigsToDimms(ppDimms, DimmsNum, pCommandStatus);
 
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("ApplyGoalConfigsToDimms Error");
@@ -6516,6 +6538,8 @@ DeleteGoalConfig (
     goto Finish;
   }
 
+  CHECK_RESULT(SkipMediaInaccessiblePMemModules(pDimms, &DimmsNum, pCommandStatus), Finish);
+
   for (Index = 0; Index < DimmsNum; Index++) {
     ReturnCode = GetDimmSecurityState(pDimms[Index], PT_TIMEOUT_INTERVAL, &DimmSecurityState);
     if (EFI_ERROR(ReturnCode)) {
@@ -6550,7 +6574,7 @@ DeleteGoalConfig (
   }
 
   /** Send Platform Config Data to DIMMs **/
-  ReturnCode = ApplyGoalConfigsToDimms(&gNvmDimmData->PMEMDev.Dimms, pCommandStatus);
+  ReturnCode = ApplyGoalConfigsToDimms(pDimms, DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
@@ -6782,6 +6806,8 @@ LoadGoalConfig(
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {
     goto Finish;
   }
+
+  CHECK_RESULT(SkipMediaInaccessiblePMemModules(pDimms, &DimmsNum, pCommandStatus), Finish);
 
   pCommandStatus->ObjectType = ObjectTypeSocket;
 

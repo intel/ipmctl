@@ -1324,7 +1324,8 @@ VerifyCreatingSupportedRegionConfigs(
       pDimm = DIMM_FROM_NODE(pDimmNode);
 
       if (Socket == pDimm->SocketId) {
-        if (!IsDimmManageable(pDimm)) {
+        // Unmanageable and media inaccessible DCPMMs are not included in goal requests
+        if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
           continue;
         }
 
@@ -3097,7 +3098,8 @@ Finish:
   2. [OPTIONAL] Send new regions goal configs to dimms
   3. Set information about synchronization with dimms
 
-  @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] ppDimms List of PMem modules to apply the goal to
+  @param[in] DimmsNum Number of PMem modules in ppDimms list
   @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS success
@@ -3106,18 +3108,19 @@ Finish:
 **/
 EFI_STATUS
 ApplyGoalConfigsToDimms(
-  IN     LIST_ENTRY *pDimmList,
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
      OUT COMMAND_STATUS *pCommandStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
-  LIST_ENTRY *pDimmNode = NULL;
   NVDIMM_PLATFORM_CONFIG_INPUT *pNewConfigInput = NULL;
+  UINT32 Index = 0;
 
   NVDIMM_ENTRY();
 
-  if (pDimmList == NULL) {
+  if (ppDimms == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
@@ -3125,8 +3128,9 @@ ApplyGoalConfigsToDimms(
   /**
     Clear previous regions goal configs
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+ for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
@@ -3145,8 +3149,9 @@ ApplyGoalConfigsToDimms(
   /**
     Send new regions goal configs to dimms
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+ for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm)) {
       continue;
     }
@@ -3171,8 +3176,9 @@ ApplyGoalConfigsToDimms(
   /**
     If all data has been sent to dimms successfully, then we are synchronized
   **/
-  LIST_FOR_EACH(pDimmNode, pDimmList) {
-    pDimm = DIMM_FROM_NODE(pDimmNode);
+ for (Index = 0; Index < DimmsNum; Index++) {
+    pDimm = ppDimms[Index];
+
     if (!IsDimmManageable(pDimm)) {
       continue;
     }

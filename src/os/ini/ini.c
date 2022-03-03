@@ -452,6 +452,8 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
     return 0;
   }
 
+  // First check the local directory for a preferences file, since that is the
+  // existing behavior we've had for a while.
   snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
   // Delete any symbolic link that might exist first
   // so we don't overwrite an important admin-only file
@@ -462,9 +464,10 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
 #else
   _unlink(ini_path_filename);
 #endif
-  // Open and truncate the existing file
-  h_file = fopen(ini_path_filename, "w");
-  if ((NULL == h_file)) {
+  // Check if preferences file exists in local directory first
+  h_file = fopen(ini_path_filename, "r");
+  // If no, then use the AppData location. If yes, then open it for writing.
+  if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
     if (force_file_update) {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH);
       os_mkdir(ini_path_filename);
@@ -475,7 +478,7 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
       h_file = fopen(ini_path_filename, "w");
     }
-    if ((NULL == h_file)) {
+    if (NULL == h_file) {
       // Hardcoded data used, nothing to save
       return -1;
     }

@@ -2,6 +2,10 @@
 
 ipmctl is a utility for configuring and managing Intel&#174; Optane&#8482; Persistent Memory modules (PMem).
 
+<a href="https://repology.org/project/ipmctl/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/ipmctl.svg" alt="Packaging status" align="right">
+</a>
+
 It supports functionality to:
 * Discover PMems on the platform.
 * Provision the platform memory configuration.

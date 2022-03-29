@@ -2794,7 +2794,6 @@ FwCmdSetPlatformConfigData (
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
-    PcdSize = RawDataSize;
   } else if (PartitionId == PCD_LSA_PARTITION_ID) {
     if (gPCDCacheEnabled) {
       if (NULL == pDimm->pPcdLsa) {
@@ -2803,8 +2802,10 @@ FwCmdSetPlatformConfigData (
       pTempCache = pDimm->pPcdLsa;
       pTempCacheSz = pDimm->PcdLsaPartitionSize;
     }
-    PcdSize = pDimm->PcdLsaPartitionSize;
   }
+
+  PcdSize = RawDataSize;
+
   if (PcdSize == 0) {
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;

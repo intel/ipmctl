@@ -89,6 +89,7 @@ NVM_API int nvm_init()
 static int nvm_internal_init(BOOLEAN binding_start)
 {
   int rc = NVM_SUCCESS;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
   if (g_nvm_initialized) {
 
@@ -108,6 +109,13 @@ static int nvm_internal_init(BOOLEAN binding_start)
   if (gOsShellParametersProtocol.StdIn == 0) {
     gOsShellParametersProtocol.StdIn = stdin;
   }
+
+  // Set protocol defaults to be like OS CLI, as the NVM API is only built
+  // for OS
+  Attribs.Protocol = FisTransportAuto;
+  Attribs.PayloadSize = FisTransportSizeSmallMb;
+
+  gNvmDimmDriverNvmDimmConfig.SetFisTransportAttributes(&gNvmDimmDriverNvmDimmConfig, Attribs);
 
   NVDIMM_DBG("Nvm Init");
 
@@ -1635,7 +1643,7 @@ Finish:
 
 NVM_API int nvm_get_number_of_regions( NVM_UINT8 *count)
 {
-	return nvm_get_number_of_regions_ex( TRUE, count);
+	return nvm_get_number_of_regions_ex(FALSE, count);
 }
 
 NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count)
@@ -1675,7 +1683,7 @@ Finish:
 }
 
 NVM_API int nvm_get_regions( struct region *p_regions, NVM_UINT8 *count) {
-	return nvm_get_regions_ex( TRUE, p_regions, count);
+	return nvm_get_regions_ex(FALSE, p_regions, count);
 }
 
 NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)

@@ -19,6 +19,8 @@ ipmctl refers to the following interface components:
 * libipmctl: An Application Programming Interface (API) library for managing PMems.
 * ipmctl: A Command Line Interface (CLI) application for configuring and managing PMems from the command line.
 
+Also, metrics exporter for [Prometheus](https://prometheus.io/docs/introduction/overview/) based on libipmctl was provided. For more details take a look [here](https://github.com/intel/ipmctl-exporter)
+
 ## Workarounds
 
 ### Slow Firmware Updates

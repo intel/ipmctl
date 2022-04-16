@@ -234,5 +234,5 @@ get_smbios_table(
 UINT32
 get_first_arg_from_va_list(VA_LIST args)
 {
-  return *((UINT32 *)(args[0].reg_save_area + args[0].gp_offset));
+  return VA_ARG(args, UINT32);
 }

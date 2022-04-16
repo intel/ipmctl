@@ -20,7 +20,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <libgen.h>
-#include <cpuid.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -37,6 +36,10 @@
 
 #ifndef ACCESSPERMS
 #define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
+#endif
+
+#ifdef __x86_64__
+#include <cpuid.h>
 #endif
 
 /*
@@ -509,6 +512,10 @@ int getCPUID(unsigned int *regs, int registerCount, int inputRequestType) {
   if (registerCount < 4) {
     return rc;
   }
+#ifdef __x86_64__
   __get_cpuid(inputRequestType, &(regs[0]), &(regs[1]), &(regs[2]), &(regs[3]));
+#else
+  memset(regs, 0, registerCount * sizeof(unsigned int));
+#endif
   return NVM_SUCCESS;
 }

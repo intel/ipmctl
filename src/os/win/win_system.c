@@ -17,6 +17,7 @@
 #include <tchar.h> // todo: remove this header and replace associated functions
 #include <direct.h> // for _getcwd
 #include <s_str.h>
+#include <stdbool.h>
 
 #pragma comment(lib,"Version.lib")
 #pragma comment(lib, "Ws2_32.lib")
@@ -895,4 +896,12 @@ int getCPUID(unsigned int *regs, int registerCount, int inputRequestType) {
   }
   __cpuid((int *)regs, inputRequestType);
   return NVM_SUCCESS;
+}
+
+bool is_shortcut(const char *path) {
+  long long int result = GetFileAttributesA(path);
+  // See https://docs.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
+  // for documentation on the return values from the above command.
+  // FILE_ATTRIBUTE_REPARSE_POINT is the bit used to indicate a shortcut.
+  return (result != 0xFFFFFFFF) && (result & FILE_ATTRIBUTE_REPARSE_POINT);
 }

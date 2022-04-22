@@ -4,7 +4,10 @@
  */
 
 #ifndef OS_H_
-#define	OS_H_
+#define OS_H_
+
+#include <stdbool.h>
+
 #ifdef	_MSC_VER
 #include <stdlib.h>
 #include <limits.h>
@@ -99,5 +102,7 @@ extern int os_check_admin_permissions();
 extern int getCPUID(unsigned int *regs, int registerCount, int inputRequestType);
 
 int wait_for_sec(unsigned int seconds);
+
+bool is_shortcut(const char *path);
 
 #endif

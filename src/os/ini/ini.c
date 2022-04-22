@@ -455,15 +455,16 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
   // First check the local directory for a preferences file, since that is the
   // existing behavior we've had for a while.
   snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
-  // Delete any symbolic link that might exist first
-  // so we don't overwrite an important admin-only file
-  // that might be linked maliciously.
-  // Don't need to do it for AppData as it's a protected directory.
-#if defined(__LINUX__) || defined(__ESX__)
-  unlink(ini_path_filename);
-#else
-  _unlink(ini_path_filename);
-#endif
+  // Delete any local symbolic link with the same name as the
+  // preferences file so we don't overwrite any important
+  // admin-only file that might be linked maliciously.
+  // This is only needed if the administrator executes ipmctl
+  // in a non-protected directory. Don't need to check files in
+  // AppData as it's known to be a protected directory.
+  if (is_shortcut(ini_path_filename)) {
+    // Delete shortcut
+    remove(ini_path_filename);
+  }
   // Check if preferences file exists in local directory first
   h_file = fopen(ini_path_filename, "r");
   // If no, then use the AppData location. If yes, then open it for writing.

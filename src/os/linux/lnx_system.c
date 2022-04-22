@@ -29,6 +29,8 @@
 #include <string.h>
 #include <os.h>
 #include <nvm_management.h>
+#include <sys/stat.h>
+#include <stdbool.h>
 
 #define	LOCALE_DIR	"/usr/share/locale"
 #define FTOK_PROJ_ID 'R' // Today proj_id is an int, but still only 8 bits are used.
@@ -444,4 +446,15 @@ int getCPUID(unsigned int *regs, int registerCount, int inputRequestType) {
   }
   __get_cpuid(inputRequestType, &(regs[0]), &(regs[1]), &(regs[2]), &(regs[3]));
   return NVM_SUCCESS;
+}
+
+bool is_shortcut(const char *path) {
+  struct stat buf;
+  int err;
+  err = lstat (path, &buf);
+  if (err) {
+    return false;
+  } else {
+    return S_ISLNK(buf.st_mode);
+  }
 }

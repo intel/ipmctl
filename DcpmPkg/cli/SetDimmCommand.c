@@ -30,13 +30,10 @@ struct Command SetDimmCommand =
   {                                                                   //!< options
     {FORCE_OPTION_SHORT, FORCE_OPTION, L"", L"", FALSE, ValueEmpty},
     {L"", SOURCE_OPTION, L"", SOURCE_OPTION_HELP, FALSE, ValueRequired}
-#ifdef OS_BUILD
     ,{ OUTPUT_OPTION_SHORT, OUTPUT_OPTION, L"", OUTPUT_OPTION_HELP, FALSE, ValueRequired }
-#endif
   },
   {{DIMM_TARGET, L"", HELP_TEXT_DIMM_IDS, TRUE, ValueOptional}},      //!< targets
   {
-#ifdef OS_BUILD
     {CLEAR_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {TEMPERATURE_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
     {POISON_INJ_PROPERTY, L"", HELP_TEXT_VALUE, FALSE, ValueRequired },
@@ -45,7 +42,6 @@ struct Command SetDimmCommand =
     {PERCENTAGE_REAMAINING_INJ_PROPERTY, L"", HELP_TEXT_PERCENT, FALSE, ValueRequired},
     {FATAL_MEDIA_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
     {DIRTY_SHUTDOWN_ERROR_INJ_PROPERTY, L"", PROPERTY_VALUE_1, FALSE, ValueRequired},
-#endif
     {LOCKSTATE_PROPERTY, L"", LOCKSTATE_VALUE_DISABLED L"|" LOCKSTATE_VALUE_UNLOCKED L"|" LOCKSTATE_VALUE_FROZEN, FALSE, ValueRequired},
     {PASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
     {NEWPASSPHRASE_PROPERTY, L"", HELP_TEXT_STRING, FALSE, ValueOptional},
@@ -121,7 +117,6 @@ SetDimm(
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   PRINT_CONTEXT *pPrinterCtx = NULL;
 
-#ifdef OS_BUILD
   /*Inject error*/
   CHAR16 *pTemperature = NULL;
   CHAR16 *pPoisonAddress = NULL;
@@ -144,7 +139,6 @@ SetDimm(
   UINT64 FatalMediaError = 0;
   UINT64 PackageSparing = 0;
   UINT64 DirtyShutDown = 0;
-#endif //OS_BUILD
   NVDIMM_ENTRY();
 
   ZeroMem(DimmStr, sizeof(DimmStr));
@@ -230,7 +224,7 @@ SetDimm(
             ActionSpecified = TRUE;
         }
     }
-#ifdef OS_BUILD
+
     if (!EFI_ERROR(ContainsProperty(pCmd, TEMPERATURE_INJ_PROPERTY))) {
         if (ActionSpecified) {
             /** We already found a specified action, more are not allowed **/
@@ -313,7 +307,6 @@ SetDimm(
           goto Finish;
         }
     }
-#endif //OS_BUILD
   /** Syntax error - mixed properties from different set -dimm commands **/
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -514,7 +507,6 @@ SetDimm(
     goto FinishCommandStatusSet;
   }
 
-#ifdef OS_BUILD
   GetPropertyValue(pCmd, TEMPERATURE_INJ_PROPERTY, &pTemperature);
   GetPropertyValue(pCmd, POISON_INJ_PROPERTY, &pPoisonAddress);
   GetPropertyValue(pCmd, POISON_TYPE_INJ_PROPERTY, &pPoisonType);
@@ -629,6 +621,7 @@ SetDimm(
   **/
   if (pFatalMediaError != NULL) {
 #ifdef _MSC_VER // Windows
+#ifdef OS_BUILD
     // We can't recover from an injected fatal media error in Windows
     // because nvmdimm.sys requires GetCommandEffectLog to work and that
     // command requires the media to be up because it uses the large payload. Therefore
@@ -637,6 +630,7 @@ SetDimm(
     Print(CLI_ERR_INJECT_FATAL_ERROR_UNSUPPORTED_ON_OS);
     ReturnCode = EFI_UNSUPPORTED;
     goto Finish;
+#endif // OS_BUILD
 #endif // _MSC_VER
     pCommandStatusMessage = CatSPrint(NULL, CLI_INFO_FATAL_MEDIA_ERROR_INJECT_ERROR);
     pCommandStatusPreposition = CatSPrint(NULL, CLI_INFO_ON);
@@ -689,7 +683,8 @@ SetDimm(
       goto FinishCommandStatusSet;
     }
   }
-#endif
+
+
 FinishCommandStatusSet:
   ReturnCode = MatchCliReturnCode(pCommandStatus->GeneralStatus);
   PRINTER_SET_COMMAND_STATUS(pPrinterCtx, ReturnCode, pCommandStatusMessage, pCommandStatusPreposition, pCommandStatus);

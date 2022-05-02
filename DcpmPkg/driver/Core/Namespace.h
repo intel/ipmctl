@@ -330,7 +330,7 @@ WriteLabelStorageArea(
   );
 
 /**
-  Zero the Label Storage Area on the specified DIMM.
+  Zero the Label Storage Area Header on the specified DIMM.
 
   @param[in] DimmPid Dimm ID of DIMM on which to write LSA
 
@@ -339,7 +339,7 @@ WriteLabelStorageArea(
   @retval EFI_SUCCESS LSA written correctly
 **/
 EFI_STATUS
-ZeroLabelStorageArea(
+ZeroLabelStorageAreaHeader(
   IN     UINT16 DimmPid
   );
 

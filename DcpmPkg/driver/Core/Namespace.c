@@ -1526,7 +1526,7 @@ Finish:
 }
 
 /**
-  Zero the Label Storage Area on the specified DIMM.
+  Zero the Label Storage Area Header on the specified DIMM.
 
   @param[in] DimmPid Dimm ID of DIMM on which to write LSA
 
@@ -1535,13 +1535,16 @@ Finish:
   @retval EFI_SUCCESS LSA written correctly
 **/
 EFI_STATUS
-ZeroLabelStorageArea(
+ZeroLabelStorageAreaHeader(
   IN     UINT16 DimmPid
   )
 {
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   DIMM *pDimm = NULL;
-  UINT8 *pZeroRawLsa = NULL;
+  UINT8 *pZeroRawLsaHeader = NULL;
+  // 2 LSA header index blocks corresponding to 256KB partitions. We only
+  // have 128KB partitions in PMem (256B index blocks), but rounding up just in case.
+  CONST UINT16 BytesToZero = 2 * 512;
 
   NVDIMM_ENTRY();
 
@@ -1550,22 +1553,22 @@ ZeroLabelStorageArea(
     goto Finish;
   }
 
-  pZeroRawLsa = AllocateZeroPool(pDimm->PcdLsaPartitionSize);
-  if (pZeroRawLsa == NULL) {
+  pZeroRawLsaHeader = AllocateZeroPool(BytesToZero);
+  if (pZeroRawLsaHeader == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;
   }
 
-  NVDIMM_DBG("Zero-ing the LSA on DIMM 0x%x ...", pDimm->DeviceHandle.AsUint32);
+  NVDIMM_DBG("Zero-ing the LSA header on DIMM 0x%x ...", pDimm->DeviceHandle.AsUint32);
   ReturnCode = FwCmdSetPlatformConfigData(pDimm, PCD_LSA_PARTITION_ID,
-    pZeroRawLsa, pDimm->PcdLsaPartitionSize);
+    pZeroRawLsaHeader, BytesToZero);
   if (EFI_ERROR(ReturnCode)) {
     NVDIMM_DBG("FwCmdSetPlatformConfigData returned: " FORMAT_EFI_STATUS "", ReturnCode);
     goto Finish;
   }
 
 Finish:
-  FREE_POOL_SAFE(pZeroRawLsa);
+  FREE_POOL_SAFE(pZeroRawLsaHeader);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }

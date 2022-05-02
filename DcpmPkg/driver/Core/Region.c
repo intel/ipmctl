@@ -860,51 +860,46 @@ RetrieveISsFromPlatformConfigData(
     return EFI_INVALID_PARAMETER;
   }
 
-  for (pDimmNode = GetFirstNode(pDimmList);
-      !IsNull(pDimmList, pDimmNode);
-      pDimmNode = GetNextNode(pDimmList, pDimmNode)) {
+  LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
+
+    // Set default values
+    pDimm->ConfigStatus = DIMM_CONFIG_UNDEFINED;
+    pDimm->IsNew = 0;
+    pDimm->Configured = FALSE;
 
     if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 
+    // Free previous use of pcd header if needed
+    FREE_POOL_SAFE(pPcdConfHeader);
     ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
-      if (ReturnCode == EFI_DEVICE_ERROR) {
-        ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
-      }
+    if (ReturnCode == EFI_DEVICE_ERROR) {
+      ReturnCode = GetPlatformConfigDataOemPartition(pDimm, FALSE, &pPcdConfHeader);
+    }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
+      // Ignore all errors except for PMem module busy with sanitize operation
       if (EFI_NO_RESPONSE == ReturnCode) {
         /* Save the return code here and continue with the execution for rest of the dimms.
           This is done to make the UEFI initialization succeed. During UEFI init,
           return code will be ignored but we have to error out when the actual command is executed. */
         IReturnCode = ReturnCode;
       }
-      /* set these values like they were never set */
-      pDimm->ConfigStatus = DIMM_CONFIG_UNDEFINED;
-      pDimm->IsNew = 0;
-      pDimm->Configured = FALSE;
+      ReturnCode = EFI_SUCCESS;
       continue;
     }
 
     if (pPcdConfHeader->CurrentConfStartOffset == 0 || pPcdConfHeader->CurrentConfDataSize == 0) {
       NVDIMM_DBG("There is no Current Config table");
-      FreePool(pPcdConfHeader);
-      pPcdConfHeader = NULL;
-      /* set these values like they were never set */
-      pDimm->ConfigStatus = DIMM_CONFIG_UNDEFINED;
-      pDimm->IsNew = 0;
-      pDimm->Configured = FALSE;
       continue;
     }
 
     pPcdCurrentConf = GET_NVDIMM_CURRENT_CONFIG(pPcdConfHeader);
 
     if (!IsPcdCurrentConfHeaderValid(pPcdCurrentConf, pDimm->PcdOemPartitionSize)) {
-      FreePool(pPcdConfHeader);
-      pPcdConfHeader = NULL;
       continue;
     }
 
@@ -1945,6 +1940,7 @@ RetrieveGoalConfigsFromPlatformConfigData(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
+  EFI_STATUS IReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
   NVDIMM_CONFIGURATION_HEADER *pPcdConfHeader = NULL;
@@ -1957,7 +1953,6 @@ RetrieveGoalConfigsFromPlatformConfigData(
   UINT32 RegionGoalsNum = 0;
   REGION_GOAL *pNewRegionGoal = NULL;
   BOOLEAN New = FALSE;
-  BOOLEAN ValidConfigGoal = TRUE;
   UINT32 SequenceIndex = 0;
   ACPI_REVISION PcdCinRev;
   UINT8 InterleaveChangeStatus = 0;
@@ -1978,19 +1973,33 @@ RetrieveGoalConfigsFromPlatformConfigData(
   LIST_FOR_EACH(pDimmNode, pDimmList) {
     pDimm = DIMM_FROM_NODE(pDimmNode);
 
-    // Skip PMem modules that we can't read from
+    // Set default values
+    pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
+    pDimm->RegionsGoalConfig = FALSE;
+    pDimm->PcdSynced = TRUE;
+
     if (!IsDimmManageable(pDimm) || DIMM_MEDIA_NOT_ACCESSIBLE(pDimm->BootStatusBitmask)) {
       continue;
     }
 
+    // Free previous use of pcd header if needed
+    FREE_POOL_SAFE(pPcdConfHeader);
     ReturnCode = GetPlatformConfigDataOemPartition(pDimm, RestoreCorrupt, &pPcdConfHeader);
 #ifdef MEMORY_CORRUPTION_WA
-  if (ReturnCode == EFI_DEVICE_ERROR) {
-    ReturnCode = GetPlatformConfigDataOemPartition(pDimm, RestoreCorrupt, &pPcdConfHeader);
-  }
+    if (ReturnCode == EFI_DEVICE_ERROR) {
+      ReturnCode = GetPlatformConfigDataOemPartition(pDimm, RestoreCorrupt, &pPcdConfHeader);
+    }
 #endif // MEMORY_CORRUPTIO_WA
     if (EFI_ERROR(ReturnCode)) {
-      goto FinishError;
+      // Ignore all errors except for PMem module busy with sanitize operation
+      if (EFI_NO_RESPONSE == ReturnCode) {
+        /* Save the return code here and continue with the execution for rest of the dimms.
+          This is done to make the UEFI initialization succeed. During UEFI init,
+          return code will be ignored but we have to error out when the actual command is executed. */
+        IReturnCode = ReturnCode;
+      }
+      ReturnCode = EFI_SUCCESS;
+      continue;
     }
 
     if (NULL != pPcdConfHeader) {
@@ -1998,36 +2007,27 @@ RetrieveGoalConfigsFromPlatformConfigData(
       pPcdConfOutput = GET_NVDIMM_PLATFORM_CONFIG_OUTPUT(pPcdConfHeader);
     }
 
-    ValidConfigGoal = TRUE;
-
     // If no PCD Header, CIN record then no goal
     if ((NULL == pPcdConfHeader) || (pPcdConfHeader->ConfInputStartOffset == 0) || (pPcdConfHeader->ConfInputDataSize == 0)) {
       NVDIMM_DBG("There is no Config Input table");
-      ValidConfigGoal = FALSE;
+      continue;
     }
     // CIN is corrupt
     else if (!IsPcdConfInputHeaderValid(pPcdConfInput, pDimm->PcdOemPartitionSize)) {
       pPcdConfHeader->ConfInputStartOffset = 0;
       pPcdConfHeader->ConfInputDataSize = 0;
       NVDIMM_DBG("The Config Input table is corrupted, Ignoring it");
-      ValidConfigGoal = FALSE;
+      continue;
     }
     // If CIN and COUT sequence are the same, then goal attempted to be applied already
     else if ((pPcdConfHeader->ConfOutputStartOffset != 0) && (pPcdConfHeader->ConfOutputDataSize != 0) &&
       IsPcdConfOutputHeaderValid(pPcdConfOutput, pDimm->PcdOemPartitionSize) &&
       (pPcdConfInput->SequenceNumber == pPcdConfOutput->SequenceNumber)) {
       NVDIMM_DBG("The config goal is already applied");
-      ValidConfigGoal = FALSE;
-    }
-
-    if (!ValidConfigGoal) {
-      pDimm->GoalConfigStatus = GOAL_CONFIG_STATUS_NO_GOAL_OR_SUCCESS;
-      pDimm->RegionsGoalConfig = FALSE;
-      pDimm->PcdSynced = TRUE;
-      FREE_POOL_SAFE(pPcdConfHeader);
       continue;
     }
 
+    // We have a valid goal after this point
     PcdCinRev = pPcdConfInput->Header.Revision;
 
     pDimm->PcdSynced = FALSE;
@@ -2252,6 +2252,8 @@ FinishError:
   ClearInternalGoalConfigsInfo(pDimmList);
 Finish:
   FREE_POOL_SAFE(pPcdConfHeader);
+
+  ReturnCode = (IReturnCode != EFI_SUCCESS) ? IReturnCode : ReturnCode;
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -5043,8 +5045,7 @@ CheckForExistingGoalConfigPerSocket(
     }
     LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
       pDimm = DIMM_FROM_NODE(pDimmNode);
-
-      if (!IsDimmManageable(pDimm) || (Socket != pDimm->SocketId)) {
+      if (!IsDimmManageable(pDimm) || pDimm->NonFunctional || (Socket != pDimm->SocketId)) {
         continue;
       }
 

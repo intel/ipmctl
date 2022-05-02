@@ -3729,7 +3729,10 @@ ModifyPcdConfig(
   UINT32 Index = 0;
   UINT32 SecurityState = 0;
   NVDIMM_CONFIGURATION_HEADER *pConfigHeader = NULL;
-  UINT32 ConfigSize = 0;
+  // Only need to zero out headers, not the whole 64K partition.
+  // Adding 256 bytes just to make sure
+  UINT32 ConfigSize = sizeof(NVDIMM_CONFIGURATION_HEADER) + sizeof(NVDIMM_PLATFORM_CONFIG_INPUT)
+                      + sizeof(NVDIMM_CURRENT_CONFIG) + sizeof(NVDIMM_PLATFORM_CONFIG_OUTPUT) + 256;
 
   NVDIMM_ENTRY();
 
@@ -3780,7 +3783,7 @@ ModifyPcdConfig(
 
     //zero LSA
     if (ConfigIdMask & DELETE_PCD_CONFIG_LSA_MASK) {
-      TmpReturnCode = ZeroLabelStorageArea(pDimms[Index]->DimmID);
+      TmpReturnCode = ZeroLabelStorageAreaHeader(pDimms[Index]->DimmID);
       if (EFI_ERROR(TmpReturnCode)) {
         KEEP_ERROR(ReturnCode, TmpReturnCode);
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
@@ -3803,15 +3806,6 @@ ModifyPcdConfig(
         KEEP_ERROR(ReturnCode, TmpReturnCode);
         SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_GET_PCD_FAILED);
         NVDIMM_DBG("Failed to get PCD");
-        continue;
-      }
-
-      //determine the size of the PCD partition, which will be used at the end to write the partion back to PCD
-      TmpReturnCode = GetPcdOemDataSize(pConfigHeader, &ConfigSize);
-      if (EFI_ERROR(TmpReturnCode)) {
-        KEEP_ERROR(ReturnCode, TmpReturnCode);
-        SetObjStatusForDimm(pCommandStatus, pDimms[Index], NVM_ERR_OPERATION_FAILED);
-        NVDIMM_DBG("Failed to get PCD size");
         continue;
       }
 
@@ -6615,7 +6609,6 @@ DeleteGoalConfig (
   /** Verify input parameters and determine a list of DIMMs **/
   ReturnCode = VerifyTargetDimms(pDimmIds, DimmIdsCount, pSocketIds, SocketIdsCount,
       REQUIRE_DCPMMS_MANAGEABLE |
-      REQUIRE_DCPMMS_FUNCTIONAL |
       REQUIRE_DCPMMS_MEDIA_ACCESSIBLE,
       pDimms, &DimmsNum, pCommandStatus);
   if (EFI_ERROR(ReturnCode) || pCommandStatus->GeneralStatus != NVM_ERR_OPERATION_NOT_STARTED) {

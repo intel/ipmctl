@@ -315,61 +315,6 @@ int os_get_os_type()
 	return OS_TYPE_LINUX;
 }
 
-int get_supported_block_sizes(struct nvm_driver_capabilities *p_capabilities)
-{
-	int rc = NVM_SUCCESS;
-	int found = 0;
-	struct ndctl_ctx *ctx;
-
-	p_capabilities->num_block_sizes = 0;
-
-	if ((rc = ndctl_new(&ctx)) >= 0)
-	{
-		struct ndctl_bus *bus;
-		ndctl_bus_foreach(ctx, bus)
-		{
-			struct ndctl_region *region;
-			ndctl_region_foreach(bus, region)
-			{
-				int nstype = ndctl_region_get_nstype(region);
-				if (ndctl_region_is_enabled(region) &&
-					(nstype == ND_DEVICE_NAMESPACE_BLK))
-				{
-					struct ndctl_namespace *namespace;
-					ndctl_namespace_foreach(region, namespace)
-					{
-						p_capabilities->num_block_sizes =
-							ndctl_namespace_get_num_sector_sizes(namespace);
-
-						for (int i = 0; i < p_capabilities->num_block_sizes; i++)
-						{
-							p_capabilities->block_sizes[i] =
-								ndctl_namespace_get_supported_sector_size(namespace, i);
-						}
-						found = 1;
-						break;
-					}
-				}
-				if (found)
-				{
-					break;
-				}
-			}
-			if (found)
-			{
-				break;
-			}
-		}
-		ndctl_unref(ctx);
-	}
-	else
-	{
-		rc = linux_err_to_nvm_lib_err(rc);
-	}
-
-	return rc;
-}
-
 int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 {
 	p_capabilities->features.get_platform_capabilities = 1;
@@ -399,7 +344,6 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	p_capabilities->features.app_direct_mode = 1;
 
 	p_capabilities->min_namespace_size = ndctl_min_namespace_size();
-	get_supported_block_sizes(p_capabilities);
 	p_capabilities->namespace_memory_page_allocation_capable = 1;
 	return 0;
 }

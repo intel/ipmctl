@@ -66,8 +66,6 @@ struct driver_feature_flags
 
 struct nvm_driver_capabilities
 {
-	unsigned int block_sizes[MAX_NUMBER_OF_BLOCK_SIZES]; // in bytes
-	unsigned int num_block_sizes;
 	unsigned long long min_namespace_size; // in bytes
 	unsigned int namespace_memory_page_allocation_capable;
 	struct driver_feature_flags features;

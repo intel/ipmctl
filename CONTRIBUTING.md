@@ -24,10 +24,12 @@ For larger changes, please file an issue to discuss making larger enhancements.
 
 When submitting a pull request:
 
-1. Rebase to the testing branch
-2. Sign off on the commit
+1. Pick the target branch
+    - `master` - the latest stable release
+    - `master_N_0` - the stable branch of the respective 0N.00.00.xxxx release
+    - `development` - the development branch of the future release
+2. Rebase to the target branch
+3. Sign off on the commit
 
-Accepted pull requests will not be directly merged via GitHub. They will be
-be merged internally for further review before being pushed to the testing
-branch. Commits may be subject to minor changes. After a validation cycle, it
+Commits may be subject to minor changes. After a validation cycle, it
 will merged into master under a tagged release.

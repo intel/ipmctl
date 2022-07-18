@@ -830,8 +830,6 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	memset(p_capabilities, 0, sizeof(struct nvm_driver_capabilities));
 
 	p_capabilities->min_namespace_size = BYTES_PER_GIB;
-	p_capabilities->num_block_sizes = 1;
-	p_capabilities->block_sizes[0] = 1;
 
 	p_capabilities->namespace_memory_page_allocation_capable = 0;
 	p_capabilities->features.get_platform_capabilities = 1;

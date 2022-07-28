@@ -4340,22 +4340,6 @@ GetMemoryResourcesInfo(
   pMemoryResourcesInfo->DDRInaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
   pMemoryResourcesInfo->PcdInvalid = TRUE;
 
-  ReturnCode = ReenumerateNamespacesAndISs(TRUE);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_WARN("Failed to refresh Namespaces and Interleave Sets information");
-#ifdef OS_BUILD
-    goto Finish;
-#else
-    if ((ReturnCode == EFI_NOT_FOUND && IsLsaNotInitializedOnADimm()))
-    {
-      NVDIMM_WARN("Failure to refresh Namespaces is because LSA not initialized");
-    }
-    else
-    {
-      goto Finish;
-    }
-#endif
-  }
   // Don't fail out *immediately* if one of them fails. Fail out at the end
 
   // Get DCPMM Sizes

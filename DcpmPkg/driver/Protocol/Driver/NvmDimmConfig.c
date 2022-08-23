@@ -4319,7 +4319,7 @@ GetMemoryResourcesInfo(
      OUT MEMORY_RESOURCES_INFO *pMemoryResourcesInfo
   )
 {
-  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
   EFI_STATUS PreservedReturnCode = EFI_SUCCESS;
 
   NVDIMM_ENTRY();

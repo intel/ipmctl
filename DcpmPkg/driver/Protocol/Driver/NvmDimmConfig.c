@@ -4338,7 +4338,7 @@ GetMemoryResourcesInfo(
   pMemoryResourcesInfo->DDRCacheCapacity = ACPI_TABLE_VALUE_UNKNOWN;
   pMemoryResourcesInfo->DDRVolatileCapacity = ACPI_TABLE_VALUE_UNKNOWN;
   pMemoryResourcesInfo->DDRInaccessibleCapacity = ACPI_TABLE_VALUE_UNKNOWN;
-  pMemoryResourcesInfo->PcdInvalid = TRUE;
+  pMemoryResourcesInfo->PcdInvalid = FALSE;
 
   // Don't fail out *immediately* if one of them fails. Fail out at the end
 

@@ -51,7 +51,7 @@ BttReadFlogs(
 /**
     Writes out an updated Flog entry
 
-    The Flog Entries are not Checksummed.  Instead, increasing Sequence
+    The Flog Entries are not checksummed.  Instead, increasing Sequence
     numbers are used to atomically switch the active Flog entry between
     the first and second struct btt_Flog in each slot.  In order for this
     to work, the Sequence number must be updated only after all the other
@@ -133,7 +133,7 @@ BttReadArenas(
     Loads up layout Info from btt namespace
 
     Called once when the btt namespace is opened for use.
-    Sets Bttp->Laidout to 0 if no valid layout is found, 1 otherwise.
+    Sets pBtt->Laidout to 0 if no valid layout is found, 1 otherwise.
 
     Any recovery actions required (as indicated by the Flog state) are
     performed by this routine.
@@ -213,7 +213,7 @@ BttCheckArena(
     This function is used at the top of the entry points where an external
     LBA is provided, like this:
 
-    if (!NT_SUCCESS (IsLbaValid(Bttp, Lba)))\n
+    if (!NT_SUCCESS (IsLbaValid(pBtt, Lba)))\n
         return STATUS_UNSUCCESSFUL;
 
     @retval EFI_SUCCESS if the routine succeeds
@@ -396,7 +396,7 @@ BttReadFlogPair(
   SetMem(pFlogPair, sizeof(BTT_FLOG_PAIR), 0x0);
   SetMem(&Entry, sizeof(Entry), 0x0);
 
-  NVDIMM_VERB("pBttp=%p pArena=%p FlogOffset=%x pFlogRuntime=%p FlogNum=%d",
+  NVDIMM_VERB("pBtt=%p pArena=%p FlogOffset=%x pFlogRuntime=%p FlogNum=%d",
     pBtt, pArena, FlogOffset, pFlogRuntime, FlogNum);
 
   if(!pBtt || !pFlogRuntime) {
@@ -568,7 +568,7 @@ BttFlogUpdate(
   EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
   UINT64 NextFlogOffset = 0;
 
-  NVDIMM_DBG("pBttp=%p pArena=%p ", pBtt, pArena);
+  NVDIMM_DBG("pBtt=%p pArena=%p ", pBtt, pArena);
   NVDIMM_DBG("LBA=%x OldMap=%d NewMap=%d", Lba, OldMap, NewMap);
 
   if(!pBtt || !pArena) {
@@ -707,7 +707,7 @@ BttReadArena(
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   BTT_INFO *pBttInfo = NULL;
 
-  NVDIMM_VERB("pBttp=%p pArena=%p ArenaOffset=%lld", pBtt, pArena, ArenaOffset);
+  NVDIMM_VERB("pBtt=%p pArena=%p ArenaOffset=%lld", pBtt, pArena, ArenaOffset);
 
   if (pBtt == NULL || pArena == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -1095,7 +1095,7 @@ BttReadLayout(
   UINT64 ArenaOffset = 0;
   BTT_INFO *pBttInfo = NULL;
 
-  NVDIMM_DBG("pBttp=%p", pBtt);
+  NVDIMM_DBG("pBtt=%p", pBtt);
 
   if (pBtt == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
@@ -1151,7 +1151,7 @@ BttReadLayout(
 
     if(pBttInfo->ExternalLbaSize != pBtt->LbaSize) {
       /* can't read it assuming the wrong block size */
-      NVDIMM_DBG("inconsistent lbasize, ns: %d btt:%d", pBttInfo->ExternalLbaSize, pBtt->LbaSize);
+      NVDIMM_DBG("inconsistent LbaSize, ns: %d btt:%d", pBttInfo->ExternalLbaSize, pBtt->LbaSize);
       ReturnCode = EFI_INVALID_PARAMETER;
       goto Finish;
     }
@@ -1401,7 +1401,7 @@ BttRead(
   }
 
   DataBlockOffset = pArena->DataOffset + (UINT64)(LbaOut) * pArena->InternalLbaSize;
-  NVDIMM_DBG("LBA=%x->LBAbtt=%x, Offset[B]=%lx",
+  NVDIMM_DBG("LBA=%x->LBABtt=%x, Offset[B]=%lx",
       Lba, (UINT64) LbaOut, DataBlockOffset);
 
   RetVal = ReadNamespaceBytes
@@ -1469,7 +1469,7 @@ BttCheckArena(
   UINT8 CurrentFlogIndex = 0;
   UINT32 Entry = 0;
 
-  NVDIMM_DBG("Bttp %p pArena %p", pBtt, pArena);
+  NVDIMM_DBG("pBtt %p pArena %p", pBtt, pArena);
 
   if (pBtt == NULL || pArena == NULL) {
     goto Finish;
@@ -1630,7 +1630,7 @@ BttMapLock(
     return ReadResult;
   }
 
-  /* if map entry is in its initial state return premap_lba */
+  /* if map entry is in its initial state return pre_map_lba */
   if (MapEntryIsInitial(Entry->MapEntryLba[MapPosition])) {
     Entry->MapEntryLba[MapPosition] = PreMapLba | BTT_MAP_ENTRY_NORMAL;
   }
@@ -1654,7 +1654,7 @@ BttMapUnlock(
   UINT64 MapEntryOffset = 0;
   UINT32 BttMapLockNum = 0;
 
-  NVDIMM_VERB("Bttp %p pArena %p Entry %p PreMapLba %u", pBtt, pArena, Entry, PreMapLba);
+  NVDIMM_VERB("pBtt %p pArena %p Entry %p PreMapLba %u", pBtt, pArena, Entry, PreMapLba);
 
   if(!pBtt || !pArena) {
     return EFI_INVALID_PARAMETER;
@@ -1757,7 +1757,7 @@ BttWrite(
 
   // it is now safe to perform write to the free block
   DataBlockOffset = pArena->DataOffset + (UINT64)(FreeMap & BTT_MAP_ENTRY_LBA_MASK) * pArena->InternalLbaSize;
-  NVDIMM_DBG("LBA=%x->LBAbtt=%x Offset[B]=%lx",
+  NVDIMM_DBG("LBA=%x->LBABtt=%x Offset[B]=%lx",
       Lba, (UINT64) FreeMap & BTT_MAP_ENTRY_LBA_MASK, DataBlockOffset);
   RetVal = WriteNamespaceBytes
      (pBtt->pNamespace,
@@ -1777,7 +1777,7 @@ BttWrite(
   OldMap = MapEntry.MapEntryLba[PosInEntry];
   RetVal = BttFlogUpdate(pBtt, pArena, PreMapLba, OldMap, FreeMap);
   if(EFI_ERROR(RetVal)) {
-    NVDIMM_DBG("Could not update the BTT Flog!\nBttp %p pArena %p PreMapLba %u", pBtt, pArena, PreMapLba);
+    NVDIMM_DBG("Could not update the BTT Flog!\npBtt %p pArena %p PreMapLba %u", pBtt, pArena, PreMapLba);
     return RetVal;
   }
 
@@ -1867,7 +1867,7 @@ BttRelease(
   )
 {
   UINT8 Index = 0;
-  NVDIMM_DBG("Bttp %p", pBtt);
+  NVDIMM_DBG("pBtt %p", pBtt);
   ASSERT(pBtt != NULL);
 
   if(pBtt) {

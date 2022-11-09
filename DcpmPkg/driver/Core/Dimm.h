@@ -77,14 +77,14 @@ typedef struct {
 #define BW_DPA_MASK           0x1FFFFFFFFF
 #define BW_DPA_RIGHT_SHIFT    6
 
-#define BW_LENGHT_MASK        0xff
+#define BW_LENGTH_MASK        0xff
 #define BW_LENGTH_POSITION    37
 
 #define BW_OPERATION_MASK     0x1
 #define BW_OPERATION_POSITION 45
 
 #define BW_PENDING_MASK        0x80000000
-#define BW_INVALID_ADRESS_MASK 1          // 0b1
+#define BW_INVALID_ADDRESS_MASK 1          // 0b1
 #define BW_ACCESS_ERROR        (1 << 1)   // 0b10
 #define BW_PM_ACCESS_ERROR     (1 << 4)   // 0b10000
 #define BW_REGION_ACCESS_ERROR (1 << 5)   // 0b100000
@@ -246,7 +246,7 @@ typedef struct _DIMM {
   NvDimmRegionMappingStructure *pBlockDataRegionMappingStructure;      //!< ptr to the table used to configure the block windows
   SpaRangeTbl *pBlockDataSpaTbl;       //!< ptr to the spa range table associated with the block windows table
   UINT64 *pFlushAddress;          //!< address to which data needs to be written to perform a WPQ flush
-  BOOLEAN FlushRequired;          //!< The boolean value indicating when the Aperature needs to be flushed before IO
+  BOOLEAN FlushRequired;          //!< The boolean value indicating when the aperture needs to be flushed before IO
   BOOLEAN ControlWindowLatch;
   BOOLEAN EncryptionEnabled;      //!< True if the DIMMs security is enabled
   UINT16 NvDimmStateFlags;
@@ -295,7 +295,7 @@ typedef struct _DIMM {
 
   /*
   A pointer to a cached copy of the LABEL_STORAGE_AREA for this DIMM. This
-  is only used during namespace initialzation so it doesn't need to be repeatedly
+  is only used during namespace initialization so it doesn't need to be repeatedly
   reloaded. It should not be considered current outside of initialization.
   */
   LABEL_STORAGE_AREA *pLsa;
@@ -310,6 +310,8 @@ typedef struct _DIMM {
 #endif
   UINT8 FwActiveApiVersionMajor;               //!< Specifies the FW Active Api major version
   UINT8 FwActiveApiVersionMinor;               //!< Specifies the FW Active Api minor version
+
+  BOOLEAN MixedSKUOffender;
 } DIMM;
 
 #define DIMM_SIGNATURE     SIGNATURE_64('\0', '\0', '\0', '\0', 'D', 'I', 'M', 'M')
@@ -321,14 +323,12 @@ typedef struct _DIMM {
 #define MEMMAP_RANGE_PERSISTENT              4
 #define MEMMAP_RANGE_IS                      5
 #define MEMMAP_RANGE_IS_NOT_INTERLEAVED      6
-#define MEMMAP_RANGE_IS_MIRROR               7
 #define MEMMAP_RANGE_APPDIRECT_NAMESPACE    10
 #define MEMMAP_RANGE_FREE                   11
 #define MEMMAP_RANGE_LAST_USABLE_DPA        12
 
 typedef enum {
   FreeCapacityForPersistentRegion         = 0,
-  FreeCapacityForMirrorRegion             = 1,
   FreeCapacityForADMode                 = 6
 } FreeCapacityType;
 
@@ -349,6 +349,12 @@ typedef struct _MEMMAP_RANGE {
 #define MAX_FW_UPDATE_RETRY_ON_DEV_BUSY   10 // Account for ARS potentially getting restarted a few times in the background
 #define DSM_RETRY_SUGGESTED               0x5
 
+// All possible combinations of transport and mailbox size
+typedef enum _DIMM_PASSTHRU_METHOD {
+  DimmPassthruDdrtLargePayload = 0,
+  DimmPassthruDdrtSmallPayload = 1,
+  DimmPassthruSmbusSmallPayload = 2
+} DIMM_PASSTHRU_METHOD;
 
 #ifdef OS_BUILD
 #define INI_PREFERENCES_LARGE_PAYLOAD_DISABLED L"LARGE_PAYLOAD_DISABLED"
@@ -794,22 +800,6 @@ FwCmdDisableARS(
 );
 
 /**
-  This helper function is used to determine the ARS status for the
-  particular DIMM by inspecting the firmware ARS return payload.
-
-  @param[in] pARSPayload Pointer to the ARS return payload
-  @param[out] pDimmARSStatus Pointer to the individual DIMM ARS status
-
-  @retval EFI_SUCCESS           Success
-  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
-**/
-EFI_STATUS
-GetDimmARSStatusFromARSPayload(
-  IN     PT_PAYLOAD_ADDRESS_RANGE_SCRUB *pARSPayload,
-     OUT UINT8 *pDimmARSStatus
-);
-
-/**
   Firmware command to get Error logs
 
   Small and large payloads are optional, but at least one has to be provided.
@@ -838,18 +828,19 @@ FwCmdGetErrorLog (
 /**
   Firmware command to get Command Effect Log Entries
 
+  @param[in] pDimm Target DIMM structure pointer
+  @param[out] ppLogEntry A pointer to the CEL entry table for a given PMem module.
+  @param[out] pEntryCount The number of CEL entries
+
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if failed to open PassThru protocol
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
 **/
 EFI_STATUS
 FwCmdGetCommandEffectLog(
-  IN      DIMM  *pDimm,
-  IN      PT_INPUT_PAYLOAD_GET_COMMAND_EFFECT_LOG *pInputPayload,
-  OUT VOID *pOutputPayload OPTIONAL,
-  IN      UINT32 OutputPayloadSize OPTIONAL,
-  OUT VOID *pLargeOutputPayload OPTIONAL,
-  IN      UINT32 LargeOutputPayloadSize OPTIONAL
+  IN     DIMM  *pDimm,
+     OUT COMMAND_EFFECT_LOG_ENTRY **ppLogEntry,
+     OUT UINT32 *pEntryCount
 );
 
 /**
@@ -1128,7 +1119,7 @@ FwCmdGetMemoryInfoPage (
   Firmware command to get Firmware Image Info
 
   @param[in] pDimm Dimm to retrieve Firmware Image Info for
-  @param[out] ppPayloadFwImage Area to place FIrmware Image Info data
+  @param[out] ppPayloadFwImage Area to place Firmware Image Info data
     The caller is responsible to free the allocated memory with the FreePool function.
 
   @retval EFI_SUCCESS Success
@@ -1219,7 +1210,7 @@ FwCmdGetPackageSparingPolicy(
   @param[out] pLongOpStatus Filled payload with data
 
   @retval EFI_SUCCESS Success
-  @retval EFI_INVALID_PARAMETER One or more pamaters are NULL
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
   @retval EFI_OUT_OF_RESOURCES Memory allocation failure
 **/
 EFI_STATUS
@@ -1254,8 +1245,8 @@ FwCmdGetDimmPartitionInfo(
 
   @param[in, out] pDimm: DIMM to create the Bw for
   @param[in] PFitHead: Parsed Fit Head
-  @parma[in] pMbITbl: the interleave table for mailbox
-  @parma[in] pBwITbl: the interleave table for block window
+  @param[in] pMbITbl: the interleave table for mailbox
+  @param[in] pBwITbl: the interleave table for block window
 
   @retval EFI_SUCCESS
   @retval EFI_OUT_OF_RESOURCES in case of allocate memory error
@@ -1387,7 +1378,7 @@ ApertureWrite(
   Both buffers have to be equal or greater than NumOfBytes.
 
   @param[out] pRegularBuffer output regular buffer
-  @param[in] RegularBufferSz size of the RegualrBuffer
+  @param[in] RegularBufferSz size of the RegularBuffer
   @param[in] ppInterleavedBuffer input interleaved buffer
   @param[in] LineSize line size of interleaved buffer
   @param[in] NumOfBytes number of bytes to copy
@@ -1471,7 +1462,7 @@ ClearInterleavedBuffer(
   The caller is responsible for a memory deallocation of the ppPlatformConfigData
 
   @param[in] pDimm The Intel NVM Dimm to retrieve PCD from
-  @param[in] RetoreCorrupt If true will generate a default PCD when a corrupt header is found
+  @param[in] RestoreCorrupt If true will generate a default PCD when a corrupt header is found
   @param[out] ppPlatformConfigData Pointer to a new buffer pointer for storing retrieved data
 
   @retval EFI_SUCCESS Success
@@ -1725,7 +1716,7 @@ SetObjStatusForDimm(
   Get overwrite DIMM operation status for DIMM
 
   @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
-  @parma[out] pOverwriteDimmStatus Retrieved status
+  @param[out] pOverwriteDimmStatus Retrieved status
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
@@ -1734,6 +1725,24 @@ EFI_STATUS
 GetOverwriteDimmStatus(
   IN     DIMM *pDimm,
      OUT UINT8 *pOverwriteDimmStatus
+  );
+
+/**
+  Get DIMM Info LongOp status based on FW LongOp status code
+  @param[in] pDimm DIMM to retrieve overwrite DIMM operation status from
+  @param[in] pOpcode Opcode of long op command
+  @param[in] pOpcode Subopcode of long op command
+  @param[out] pLongOpDimmInfoStatus Long Op status
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetLongOpDimmInfoStatus(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+     OUT UINT8 *pLongOpDimmInfoStatus
   );
 
 /**
@@ -1791,7 +1800,7 @@ FwCmdGetCommandAccessPolicy(
   Inject Temperature error payload
   @param[IN] pDimm Target DIMM structure pointer
   @param[IN] subopcode for error injection command
-  @param[OUT] pinjectInputPayload - input payload to be sent
+  @param[OUT] pInjectInputPayload - input payload to be sent
   @param[OUT] pFwStatus FW status returned by dimm
 
   @retval EFI_SUCCESS Success
@@ -1803,7 +1812,7 @@ EFI_STATUS
 FwCmdInjectError(
   IN     DIMM *pDimm,
   IN     UINT8 SubOpcode,
-  OUT void *pinjectInputPayload,
+  OUT void *pInjectInputPayload,
   OUT UINT8 *pFwStatus
 );
 
@@ -1821,7 +1830,7 @@ FwCmdInjectError(
 EFI_STATUS
 FwCmdGetSystemTime(
   IN     DIMM *pDimm,
-  OUT PT_SYTEM_TIME_PAYLOAD *pSystemTimePayload
+  OUT PT_SYSTEM_TIME_PAYLOAD *pSystemTimePayload
 );
 
 /**
@@ -1859,6 +1868,32 @@ FwCmdGetLatchSystemShutdownStateInfo(
 );
 
 /**
+  Helper function to run a simple small payload command.
+
+  @param[in] pDimm Target DIMM structure pointer
+  @param[in] Opcode Firmware command opcode to use
+  @param[in] SubOpcode Firmware command sub-opcode to use
+  @param[in] InputPayload Input payload buffer
+  @param[in] InputPayloadSize Input payload buffer size
+  @param[in] OutputPayload Output payload buffer
+  @param[in] OutputPayloadSize Output payload buffer size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER if parameter provided is invalid
+  @retval EFI_OUT_OF_RESOURCES memory allocation failure
+**/
+EFI_STATUS
+FwCmdSmallPayload(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     UINT8 *InputPayload OPTIONAL,
+  IN     UINT8 InputPayloadSize,
+     OUT UINT8 *OutputPayload OPTIONAL,
+  IN     UINT8 OutputPayloadSize
+);
+
+/**
 Check if DIMM is manageable
 
 @param[in] pDimm the DIMM struct
@@ -1869,7 +1904,19 @@ BOOLEAN
 IsDimmManageable(
   IN  DIMM *pDimm
 );
+/**
+Get number of manageable dimms
 
+@param[in] ppDimms the Dimms array
+@param[in] DimmCount the number of Dimms in ppDimms array
+
+@retval UINT16 the count of manageable dimms
+**/
+UINT16
+GetManageableDimmsCount(
+  IN  DIMM **ppDimms,
+  IN  CONST UINT16 DimmCount
+);
 /**
 Check if DIMM is in supported config
 
@@ -1919,6 +1966,23 @@ IsDimmInPmMappedPopulationViolation(
 );
 
 /**
+  Check if PMem module is accessible through small payload based on the specified transport protocol
+
+  @param[in] pDimm the DIMM struct
+  @param[in] Protocol transport protocol to be used
+  @param[out] pIsInterfaceReady whether or not specified dimm interface is ready
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL or invalid
+**/
+EFI_STATUS
+GetDimmInterfaceStatus(
+  IN     DIMM *pDimm,
+  IN     TRANSPORT_PROTOCOL Protocol,
+     OUT BOOLEAN *pIsInterfaceReady
+  );
+
+/**
 Check if the dimm interface code of this DIMM is supported
 
 @param[in] pDimm the DIMM struct
@@ -1960,6 +2024,32 @@ Clears the PCD Cache on each DIMM in the global DIMM list
 @retval EFI_SUCCESS Success
 **/
 EFI_STATUS ClearPcdCacheOnDimmList(VOID);
+
+
+/**
+  Return what passthru method will be used to send the command.
+
+  @param[in] pDimm The DCPMM to transact with
+  @param[in] Opcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
+  @param[in] SubOpcode of the FW command. Used to determine if command
+             is dependent on DDRT/SMBUS interface status.
+  @param[in] IsLargePayloadCommand Need to know if large payload interface is
+                                   even desired. If not, then it makes no sense
+                                   to write to the large payload mailbox unless
+                                   the user specifies it.
+  @param[out] Method Pointer to passthru method variable to modify
+  @retval EFI_SUCCESS Success
+  @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
+**/
+EFI_STATUS
+DeterminePassThruMethod(
+  IN     DIMM *pDimm,
+  IN     UINT8 Opcode,
+  IN     UINT8 SubOpcode,
+  IN     BOOLEAN IsLargePayloadCommand,
+     OUT DIMM_PASSTHRU_METHOD *pMethod
+);
 
 /**
   Set Obj Status when DIMM is not found using Id expected by end user
@@ -2012,16 +2102,16 @@ EFI_STATUS GetPcdOemDataSize(
   mailbox is possible. Used by callers often to determine chunking behavior.
 
   @param[in] pDimm The DCPMM to transact with
-  @param[out] Available Whether large payload is available. Pointer to boolean variable
+  @param[out] pAvailable Whether large payload is available. Pointer to boolean variable
 
   @retval EFI_SUCCESS Success
   @retval EFI_DEVICE_ERROR if we failed to do basic communication with the DCPMM
 **/
 EFI_STATUS
 IsLargePayloadAvailable(
-  IN DIMM *pDimm,
-  OUT BOOLEAN *Available
-);
+  IN     DIMM *pDimm,
+     OUT BOOLEAN *pAvailable
+  );
 
 EFI_STATUS
 PassThru(
@@ -2049,22 +2139,38 @@ FwCmdGetBsr(
 );
 
 /**
-  Gather boot status register value and populate the boot status bitmask
+  Populate interface bits in boot status bitmask based on PMem module
+  DDRT(and optionally SMBUS) interface status
 
-  @param[in] pDimm to retrieve DDRT Training status from
-  @param[out] pBsr BSR Boot Status Register to retrieve and convert to bitmask
-  @param[in, out] pBootStatusBitmask Pointer to the boot status bitmask
+  @param[in] pDimm Pointer to PMem module
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER One or more parameters are NULL
 **/
-
 EFI_STATUS
-PopulateDimmBsrAndBootStatusBitmask(
+PopulateDimmBootStatusBitmaskInterfaceBits(
   IN     DIMM *pDimm,
-     OUT DIMM_BSR *pBsr,
-  IN OUT UINT16 *pBootStatusBitmask OPTIONAL
-);
+     OUT UINT16 *pBootStatusBitmask
+  );
+
+/**
+  Populate BSR bits in PMem module boot status bitmask based on
+  boot status register value
+
+  @param[in] pDimm Pointer to PMem module
+  @param[in] pBsr Pointer to Boot Status Register(BSR)
+  @param[out] pBootStatusBitmask Pointer to boot status bitmask
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER One or more parameters are NULL
+**/
+EFI_STATUS
+PopulateDimmBootStatusBitmaskBsrBits(
+  IN     DIMM *pDimm,
+  IN     DIMM_BSR *pBsr,
+     OUT UINT16 *pBootStatusBitmask
+  );
 
 /**
   Passthrough FIS command by Dcpmm BIOS protocol.
@@ -2158,5 +2264,20 @@ DcpmmLargePayloadRead(
   IN     DCPMM_FIS_INTERFACE DcpmmInterface,
   IN OUT UINT8 *pOutput,
      OUT UINT8 *pStatus
+);
+
+/**
+  Helper function for setting appropriate command status
+  and return code when checking for mixed SKU condition
+
+  @param[out] pCommandStatus Pointer to command status variable
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pCommandStatus is NULL
+  @retval EFI_UNSUPPORTED Mixed SKU condition occurred
+**/
+EFI_STATUS
+BlockMixedSku(
+     OUT COMMAND_STATUS* pCommandStatus
 );
 #endif

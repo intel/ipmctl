@@ -53,7 +53,7 @@ enum mb_error {
    /* The media on the dimm has been disabled due to critical or other failure */
    MB_MEDIA_DISABLED = 0x14,
    /* After a successful FW Update, another FW update is being made */
-   MB_FW_UPDATE_ALREADY_OCCURED = 0x15,
+   MB_FW_UPDATE_ALREADY_OCCURRED = 0x15,
    /* The FW could not acquire resources required for the particular command */
    MB_NO_RESOURCES_AVAILABLE = 0x16,
 };
@@ -125,7 +125,7 @@ int fw_mb_err_to_nvm_lib_err(int status)
 	case MB_MEDIA_DISABLED:
 		ret = NVM_ERR_GENERAL_DEV_FAILURE;
 		break;
-	case MB_FW_UPDATE_ALREADY_OCCURED:
+	case MB_FW_UPDATE_ALREADY_OCCURRED:
 		ret = NVM_ERR_FIRMWARE_ALREADY_LOADED;
 		break;
 	case MB_NO_RESOURCES_AVAILABLE:

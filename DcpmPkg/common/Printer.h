@@ -31,7 +31,7 @@
 #define SENSOR_VALUE_MAX_STR_WIDTH          20
 #define SENSOR_STATE_MAX_STR_WIDTH          15
 #define SOCKET_MAX_STR_WIDTH                9
-#define MAPPED_MEMORY_LIMIT_MAX_STR_WIDTH   18
+#define MAPPED_MEMORY_LIMIT_MAX_STR_WIDTH   23 //worst-case - "18446744073709551615 B" or "17592186044415.999 MiB" (UINT64 max value)
 #define TOTAL_MAPPED_MEMORY_MAX_STR_WIDTH   18
 #define ISET_ID_MAX_STR_WIDTH               20
 #define REGION_ID_MAX_STR_WIDTH             8
@@ -43,6 +43,7 @@
 #define DDR_MAX_STR_WIDTH                   25
 #define PMEM_MODULE_MAX_STR_WIDTH           25
 #define TOTAL_STR_WIDTH                     25
+#define CAP_MB_RESTRICTION_MAX_STR_WIDTH    32 //worst-case - "Management, BIOS and SMBus only"
 
 
 #define ON  1
@@ -488,7 +489,7 @@ EFI_STATUS PrinterSetData(
 );
 
 /*
-* Handle commandstatus objects
+* Handle command status objects
 */
 EFI_STATUS PrinterSetCommandStatus(
   IN     PRINT_CONTEXT *pPrintCtx, OPTIONAL

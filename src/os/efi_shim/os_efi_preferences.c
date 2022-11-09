@@ -7,7 +7,6 @@
 #include <UefiBaseType.h>
 #include <BaseLib.h>
 #include <ini.h>
-#include <Debug.h>
 
 #if defined(__LINUX__) || defined(__ESX__)
 #define INI_FILENAME		"ipmctl.conf"
@@ -53,32 +52,32 @@ EFI_STATUS preferences_flush_the_file(void)
 }
 
 EFI_STATUS preferences_get_var_ascii(IN CONST char    *name,
-  IN CONST EFI_GUID  guid,
-  OUT VOID           *value,
-  OUT UINTN          *size OPTIONAL)
+	IN CONST EFI_GUID  guid,
+	OUT VOID           *value,
+	OUT UINTN          *size OPTIONAL)
 {
-  int val = nvm_ini_get_int_value(gIni, name, -1);
-  if (-1 == val)
-  {
-    return EFI_NOT_FOUND;
-  }
-  if (1 == *size)
-  {
-    *(unsigned char*)value = (unsigned char)val;
-  }
-  else if (2 == *size)
-  {
-    *(unsigned short*)value = (unsigned short)val;
-  }
-  else if (4 == *size)
-  {
-    *(unsigned int*)value = (unsigned int)val;
-  }
-  else
-  {
-    return EFI_NOT_FOUND;
-  }
-  return EFI_SUCCESS;
+	int val = nvm_ini_get_int_value(gIni, name, -1);
+	if (-1 == val)
+	{
+		return EFI_NOT_FOUND;
+	}
+	if (1 == *size)
+	{
+		*(unsigned char*)value = (unsigned char)val;
+	}
+	else if (2 == *size)
+	{
+		*(unsigned short*)value = (unsigned short)val;
+	}
+	else if (4 == *size)
+	{
+		*(unsigned int*)value = (unsigned int)val;
+	}
+	else
+	{
+		return EFI_NOT_FOUND;
+	}
+	return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_get_string_ascii(IN CONST char    *name,
@@ -106,9 +105,9 @@ EFI_STATUS preferences_get_var(IN CONST CHAR16    *name,
   OUT VOID           *value,
   OUT UINTN          *size OPTIONAL)
 {
-  char tmp[256];
-  UnicodeStrToAsciiStrS(name, tmp, sizeof(tmp));
-  return preferences_get_var_ascii(tmp, guid, value, size);
+	char tmp[256];
+	UnicodeStrToAsciiStrS(name, tmp, sizeof(tmp));
+	return preferences_get_var_ascii(tmp, guid, value, size);
 }
 
 EFI_STATUS preferences_get_var_string_wide(IN CONST CHAR16    *name,
@@ -125,94 +124,92 @@ EFI_STATUS preferences_get_var_string_wide(IN CONST CHAR16    *name,
     return EFI_INVALID_PARAMETER;
   }
 
-  CHECK_RESULT( UnicodeStrToAsciiStrS(name, key, sizeof(key)), Finish);
-
+  ReturnCode = UnicodeStrToAsciiStrS(name, key, sizeof(key));
+  if (EFI_ERROR(ReturnCode)) {
+    return ReturnCode;
+  }
   if (NULL == (ascii_str = nvm_ini_get_string(gIni, (const char *)key)))
   {
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
+    return EFI_NOT_FOUND;
   }
-
-  CHECK_RESULT(AsciiStrToUnicodeStrS(ascii_str, value, *size), Finish);
-
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  return ReturnCode;
+  ReturnCode = AsciiStrToUnicodeStrS(ascii_str, value, *size);
+  if (EFI_ERROR(ReturnCode)) {
+    return ReturnCode;
+  }
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_set_var(IN CONST CHAR16 *name,
-  IN CONST EFI_GUID guid, OUT VOID *value, OUT UINTN size)
+	IN CONST EFI_GUID guid, OUT VOID *value, OUT UINTN size)
 {
-  char key[256];
-  char val[256];
-  EFI_STATUS ReturnCode;
+	char key[256];
+	char val[256];
+	EFI_STATUS ReturnCode;
 
-  CHECK_RESULT(UnicodeStrToAsciiStrS(name, key, sizeof(key)), Finish);
+	ReturnCode = UnicodeStrToAsciiStrS(name, key, sizeof(key));
+	if (EFI_ERROR(ReturnCode)) {
+		return ReturnCode;
+	}
 
-  if (1 == size)
-  {
-    snprintf(val, sizeof(val), "%d", *(unsigned char*)value);
-  }
-  else if (2 == size)
-  {
-    snprintf(val, sizeof(val), "%d", *(unsigned short*)value);
-  }
-  else if (4 == size)
-  {
-    snprintf(val, sizeof(val), "%d", *(unsigned int*)value);
-  }
-  else
-  {
-    ReturnCode = EFI_NOT_FOUND;
-    goto Finish;
-  }
+	if (1 == size)
+	{
+		snprintf(val, sizeof(val), "%d", *(unsigned char*)value);
+	}
+	else if (2 == size)
+	{
+		snprintf(val, sizeof(val), "%d", *(unsigned short*)value);
+	}
+	else if (4 == size)
+	{
+		snprintf(val, sizeof(val), "%d", *(unsigned int*)value);
+	}
+	else
+	{
+		return EFI_NOT_FOUND;
+	}
 
-  int ret = nvm_ini_set_value(gIni, key, val);
-  if(0 != ret)
-  {
-    ReturnCode = EFI_LOAD_ERROR;
-    goto Finish;
-  }
+	int ret = nvm_ini_set_value(gIni, key, val);
+	if(0 != ret)
+	{
+		return EFI_LOAD_ERROR;
+	}
 
-  ReturnCode = EFI_SUCCESS;
-
-Finish:
-  return ReturnCode;
+	return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_set_var_string_wide(IN CONST CHAR16 *name,
-  IN CONST EFI_GUID guid, IN CHAR16 *value)
+	IN CONST EFI_GUID guid, IN CHAR16 *value)
 {
-  char key[256];
-  char val[256];
-  EFI_STATUS ReturnCode;
+	char key[256];
+	char val[256];
+	EFI_STATUS ReturnCode;
 
-  CHECK_RESULT(UnicodeStrToAsciiStrS(name, key, sizeof(key)), Finish);
-
-  CHECK_RESULT(UnicodeStrToAsciiStrS(value, val, sizeof(val)), Finish);
+	ReturnCode = UnicodeStrToAsciiStrS(name, key, sizeof(key));
+	if (EFI_ERROR(ReturnCode)) {
+		return ReturnCode;
+	}
+	ReturnCode = UnicodeStrToAsciiStrS(value, val, sizeof(val));
+	if (EFI_ERROR(ReturnCode)) {
+		return ReturnCode;
+	}
 
   int ret = nvm_ini_set_value(gIni, key, val);
-  if (0 != ret)
-  {
-    ReturnCode = EFI_LOAD_ERROR;
-    goto Finish;
-  }
+	if (0 != ret)
+	{
+		return EFI_LOAD_ERROR;
+	}
 
-  return EFI_SUCCESS;
-
-Finish:
-  return ReturnCode;
+	return EFI_SUCCESS;
 }
 
 EFI_STATUS preferences_set_var_string_ascii(IN CONST char *name,
-  IN CONST EFI_GUID guid, IN const char *value)
+	IN CONST EFI_GUID guid, IN const char *value)
 {
-  int ret = nvm_ini_set_value(gIni, name, value);
-  if (0 != ret)
-  {
-    return EFI_LOAD_ERROR;
-  }
+	int ret = nvm_ini_set_value(gIni, name, value);
+	if (0 != ret)
+	{
+		return EFI_LOAD_ERROR;
+	}
 
   return EFI_SUCCESS;
 }

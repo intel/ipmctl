@@ -1,0 +1,178 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-set-dimm-passphrase(1)
+=============================
+endif::manpage[]
+
+NAME
+----
+ifndef::os_build[]
+ipmctl-set-dimm-passphrase - Changes the security passphrase on PMem module
+endif::os_build[]
+ifdef::os_build[]
+ipmctl-set-dimm-passphrase - Changes the security passphrase on PMem module on supported OS
+endif::os_build[]
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl set [OPTIONS] -dimm [TARGETS] Passphrase=(string) NewPassphrase=(string)
+ConfirmPassphrase=(string)
+--
+
+DESCRIPTION
+-----------
+Changes the security passphrase on one or more PMem modules.
+
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-master::
+  Changes the master passphrase. Valid only if master passphrase is enabled on specified
+  PMem modules (see MasterPassphraseEnabled attribute in section <<Show Dimm>>).
+
+-default::
+  Use this option when the current master passphrase is set to the default value. Valid
+  only if used along with the '-master' option. May not be combined with the Passphrase
+  property.
+
+-source (path)::
+  File path to a local file containing the new passphrase (1-32 characters).
+
+NOTE: The file does not need to contain the ConfirmPassphrase property.
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Changes the passphrase on specific PMem modules by supplying one or more
+  comma separated PMem module identifiers. However, this is not recommended as
+  it may put the system in an undesirable state. The default is to change the
+  passphrase on all manageable PMem modules.
+
+PROPERTIES
+----------
+Passphrase::
+The current passphrase (1-32 characters). For better passphrase protection, specify an
+empty string (e.g., Passphrase="") to be prompted for the current passphrase or to use
+a file containing the passphrases with the source option.
+
+NewPassphrase::
+  The new passphrase (1-32 characters). For better passphrase protection,
+  specify an empty string (e.g., NewPassphrase="") to be prompted for the
+  passphrase or to use a file containing the passphrase with the source option.
+
+ConfirmPassphrase::
+  Confirmation of the new passphrase (1-32 character and must match
+  NewPassphrase). For better passphrase protection, specify an empty string
+  (e.g., ConfirmPassphrase="") to be prompted for the passphrase or to use a
+  file containing the passphrase with the source option.
+
+EXAMPLES
+--------
+Changes the passphrase from mypassphrase to mynewpassphrase on all PMem modules.
+
+[listing]
+--
+ipmctl set -dimm Passphrase=mypassphrase NewPassphrase=mynewpassphrase
+ ConfirmPassphrase=mynewpassphrase
+--
+
+Changes the passphrase on all PMem modules by having the CLI prompt for the
+current and new passphrases.
+[listing]
+--
+ipmctl set -dimm Passphrase="" NewPassphrase="" ConfirmPassphrase=""
+--
+
+Changes the passphrase on all PMem modules by supplying the current and new
+passphrases from the specified file. In this example, the format of the file
+would be:
+
+#ascii +
+Passphrase=myOldPassphrase +
+NewPassphrase=myNewPassphrase
+[listing]
+--
+ipmctl set -source passphrase.file -dimm Passphrase="" NewPassphrase=""
+ConfirmPassphrase=""
+--
+
+Changes the default master passphrase to masterpassphrase on all PMem modules.
+
+[listing]
+--
+ipmctl set -master -default -dimm NewPassphrase=masterpassphrase ConfirmPassphrase=
+masterpassphrase
+--
+
+Changes the master passphrase from masterpassphrase to newmasterpassphrase on
+all PMem modules.
+
+[listing]
+--
+ipmctl set -master -dimm Passphrase=masterpassphrase NewPassphrase=newmasterpassphrase
+ConfirmPassphrase=newmasterpassphrase
+--
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* The specified PMem module must be manageable by the host software.
+
+* To change the passphrase, the specified PMem module must be "Unlocked" and
+ not be in the "Frozen" or "Exceeded" lock states.
+
+* To change the master passphrase, the specified PMem module must be in the
+ "Disabled" lock state and not be in "MP Exceeded" lock state.
+
+ifdef::os_build[]
+Command is subject to OS Vendor (OSV) support. If OSV does not provide support,
+command will return "Not Supported."
+endif::os_build[]
+
+RETURN DATA
+-----------
+If empty strings are provided for the passphrase properties and the source
+option is not included, the user will be prompted (once for all PMem module) to enter
+the current passphrase, then again for the new passphrase and then again to
+confirm the new passphrase as described below. The passphrase characters are
+hidden.
+
+Current passphrase: \****
+
+For each PMem module, the CLI will indicate the status of the passphrase change
+operation. If a failure occurs when updating the passphrase on multiple PMem modules,
+the process will exit and not continue updating the remaining PMem modules.
+
+SAMPLE OUTPUT
+-------------
+[listing]
+--
+Change passphrase on DIMM (DimmID): Success
+--
+
+[listing]
+--
+Change passphrase on DIMM (DimmID): Error (Code)-(Description)
+--

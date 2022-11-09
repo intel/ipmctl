@@ -13,7 +13,9 @@ ipmctl-show-performance - Shows performance metrics for one or more PMem modules
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -performance [METRICS] [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -44,14 +46,14 @@ METRICS
 Restricts output to a specific performance metric by supplying the metric name.
 See RETURN DATA for more information. One of:
 
-  - MediaReads
-  - MediaWrites
-  - ReadRequests
-  - WriteRequests
-  - TotalMediaReads
-  - TotalMediaWrites
-  - TotalReadRequests
-  - TotalWriteRequests
+  * MediaReads
+  * MediaWrites
+  * ReadRequests
+  * WriteRequests
+  * TotalMediaReads
+  * TotalMediaWrites
+  * TotalReadRequests
+  * TotalWriteRequests
 
 The default is to display all performance metrics.
 
@@ -67,20 +69,24 @@ EXAMPLES
 --------
 Shows all performance metrics for all PMem modules in the server.
 [listing]
+--
 ipmctl show -dimm -performance
+--
 
 Shows the number of 64 byte reads since last AC cycle for all PMem modules in the
 server.
 [listing]
+--
 ipmctl show -dimm -performance MediaReads
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------

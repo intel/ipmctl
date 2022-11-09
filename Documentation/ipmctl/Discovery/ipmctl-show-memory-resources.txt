@@ -13,7 +13,9 @@ ipmctl-show-memory-resources - Shows PMem module and DDR memory allocation
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -memoryresources
+--
 
 DESCRIPTION
 -----------
@@ -50,15 +52,17 @@ EXAMPLES
 Shows the PMem module and DDR memory allocation.
 
 [listing]
+--
 ipmctl show -memoryresources
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -93,16 +97,16 @@ Inaccessible DDR Capacity::
 
 Inaccessible PMem module Capacity::
   Total PMem module capacity that is inaccessible due to any of:
-    - Platform configuration prevents accessing this capacity. For example, MemoryCapacity is
+    * Platform configuration prevents accessing this capacity. For example, MemoryCapacity is
       configured but MemoryMode is not enabled by platform FW (current Memory Mode is 1LM).
-    - Capacity is inaccessible because it is not mapped into the System Physical
+    * Capacity is inaccessible because it is not mapped into the System Physical
       Address space (SPA). This is usually due to platform firmware memory alignment requirements.
-    - Persistent capacity that is reserved. This capacity is the persistent memory partition capacity
+    * Persistent capacity that is reserved. This capacity is the persistent memory partition capacity
       (rounded down for alignment) less any App Direct capacity. Reserved capacity typically results from
       a Memory Allocation Goal request that specified the Reserved property. This
       capacity is not mapped to System Physical Address space (SPA).
-    - Capacity that is unusable because it has not been configured.
-    - PMem module configured capacity but SKU prevents usage. For example, AppDirectCapacity but
+    * Capacity that is unusable because it has not been configured.
+    * PMem module configured capacity but SKU prevents usage. For example, AppDirectCapacity but
       PMem module SKU is MemoryMode only.
 
 Total Inaccessible Capacity::
@@ -122,7 +126,7 @@ DETAILS
 PMem modules are partitioned into Memory and Persistent partitions. Memory partitions are aligned
 on a 1 GiB boundary by ipmctl with the Persistent partition consuming the remaining capacity.
 Any capacity that falls outside the Memory and Persistent partitions
-is InaccessibleCapacity and is not useable. If the PMem module is configured for 100% Memory Mode,
+is InaccessibleCapacity and is not usable. If the PMem module is configured for 100% Memory Mode,
 then the Memory partition consumes all of the capacity and the Persistent partition has none.
 
 The mode determines how the DDR capacities are allocated. In 1LM and AppDirect, all DDR capacity
@@ -139,15 +143,15 @@ are determined.
 *Definitions:*
 
 Intel PMem module Current Config::
-  See the _Intel(R) Optane(TM) Persistent Memory Software-Firmware Interface Specification_
-  for details.
+  See the _Intel(R) Optane(TM) Persistent Memory Software-Firmware Interface Specification_,
+  document number 556488, for details.
 
 PMem module Partition Info::
-  PMem module partition information provided by PMem module firmware. See the _Intel(R) Optane(TM)
-  Persistent Memory Module Firmware Interface Specification_ for details.
+  PMem module partition information provided by PMem module firmware. See the _Intel(R)
+  Optane(TM) Firmware Interface Specification_, document number 626912, for details.
 
 PMem module Physical Capacity (PC)::
-  Raw capacity (total usable) reported by PMem module Partition Info
+  Total usable capacity reported by PMem module Partition Info
 
 PMem module Memory Partition Capacity (MPC)::
   Volatile capacity reported by PMem module Partition Info
@@ -157,11 +161,11 @@ PMem module Persistent Partition Capacity (PPC)::
 
 PMem module Volatile Memory Capacity (VMC)::
   Usable volatile memory capacity as reported by platform FW
-  via the _Intel PMem module Current Config->Volatile Memory Size Mapped into SPA_ field
+  via the _Intel(R) PMem module Current Config->Volatile Memory Size Mapped into SPA_ field
 
 PMem module Persistent Memory Capacity (PMC) ::
   Usable persistent memory capacity as reported by platform FW via the
-  _Intel PMem module Current Config->Persistent Memory Size Mapped into SPA_ field
+  _Intel(R) PMem module Current Config->Persistent Memory Size Mapped into SPA_ field
 
 DDR Total Capacity (DDRTC)::
   Total amount of memory available for use on the populated DDRs
@@ -169,17 +173,23 @@ DDR Total Capacity (DDRTC)::
 *Calculations:*
 
 [listing]
+--
 if (CurrentMode == 1LM) then
   DDRCacheCapacity = 0
   DDRVolatileCapacity = DDRTC
 else if (CurrentMode == 2LM) then
   DDRCacheCapacity = DDRTC
   DDRVolatileCapacity = 0
+--
 
 [listing]
+--
 TotalVolatileCapacity = VMC + DDRVolatileCapacity
+--
 
 [listing]
+--
 InaccessibleCapacity = PC - PMC
  if (CurrentMode != 1LM) then
   InaccessibleCapacity -= VMC (rounded down for alignment)
+--

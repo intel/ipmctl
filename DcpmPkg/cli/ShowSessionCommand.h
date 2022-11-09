@@ -17,7 +17,7 @@ Execute the show host server command
 @retval EFI_SUCCESS success
 @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
 @retval EFI_OUT_OF_RESOURCES memory allocation failure
-@retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+@retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
 **/
 EFI_STATUS
 ShowSession(

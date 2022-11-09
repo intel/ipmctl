@@ -275,8 +275,7 @@ ShowGoalPrintDetailedView(
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_1_SIZE_PROPERTY))) {
       TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[0], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY,
-                                         pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_1_SIZE_PROPERTY, FORMAT_STR, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect1Index **/
@@ -298,8 +297,7 @@ ShowGoalPrintDetailedView(
     if (AllOptionSet || (DisplayOptionSet && ContainsValue(pDisplayValues, APPDIRECT_2_SIZE_PROPERTY))) {
       TempReturnCode = MakeCapacityString(gNvmDimmCliHiiHandle, pCurrentGoal->AppDirectSize[1], CurrentUnits, TRUE, &pCapacityStr);
       KEEP_ERROR(ReturnCode, TempReturnCode);
-      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_SIZE_PROPERTY,
-        pCurrentGoal->InterleaveSetType[0] == MIRRORED ? FORMAT_STR MIRRORED_STR : FORMAT_STR, pCapacityStr);
+      PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pCmd->pPrintCtx, pPath, APPDIRECT_2_SIZE_PROPERTY, FORMAT_STR, pCapacityStr);
       FREE_POOL_SAFE(pCapacityStr);
     }
     /** AppDirect2Index **/
@@ -471,7 +469,7 @@ ShowGoal(
       ContainsValue(pDisplayValues, APPDIRECT_INDEX_PROPERTY)) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_WARN("Values used together");
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_VALUES_APPDIRECT_INDICES_USED_TOGETHER);
     goto Finish;
   }
 
@@ -507,10 +505,17 @@ ShowGoal(
   if (RegionConfigsCount == 0) {
     //WA, to ensure ESX prints a message when no entries are found.
     if (PRINTER_ESX_FORMAT_ENABLED(pPrinterCtx)) {
-      PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_NO_GOALS_MSG);
-    }
-    else {
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_NO_GOALS_MSG);
+      if (SocketIdsCount > 0) {
+        PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_NO_GOALS_ON_SOCKET_MSG);
+      } else {
+        PRINTER_SET_MSG(pPrinterCtx, EFI_NOT_FOUND, CLI_NO_GOALS_MSG);
+      }
+    } else {
+      if (SocketIdsCount > 0) {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_NO_GOALS_ON_SOCKET_MSG);
+      } else {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_NO_GOALS_MSG);
+      }
     }
     goto Finish;
   }

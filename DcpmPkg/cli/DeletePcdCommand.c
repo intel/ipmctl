@@ -255,7 +255,6 @@ DeletePcdCmd(
 
   PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, L"\n");
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
-  pCommandStatus->ObjectType = ObjectTypeDimm;
   for (Index = 0; Index < DimmIdsCount; Index++) {
     Attempts++;
     ReturnCode = GetDimmHandleByPid(pDimmIds[Index], pDimms, DimmCount, &DimmHandle, &DimmIndex);
@@ -277,7 +276,7 @@ DeletePcdCmd(
     }
 
     if (DimmInNamespace) {
-      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" is a member of a Namespace. Will not delete data from this " PMEM_MODULE_STR ".", DimmStr);
+      PRINTER_PROMPT_MSG(pPrinterCtx, ReturnCode, PMEM_MODULE_STR L" " FORMAT_STR L" is a member of a Namespace. Will not delete data from this " PMEM_MODULE_STR L".", DimmStr);
       SetObjStatusForDimmInfoWithErase(pCommandStatus, pDimm, NVM_ERR_PCD_DELETE_DENIED, TRUE);
     } else {
       pCommandStatus->GeneralStatus = NVM_ERR_OPERATION_NOT_STARTED;

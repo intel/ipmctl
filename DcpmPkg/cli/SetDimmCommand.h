@@ -41,7 +41,7 @@ SetDimm(
   );
 
 /**
-  Print detailed information on root casuse of failure
+  Print detailed information on root cause of failure
 
   @param[in] FwReturnCode is a FW status code returned by PassThru protocol
   **/

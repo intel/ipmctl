@@ -31,7 +31,7 @@ ReadRunTimeDriverPreferences(
   @param[in out] pRegion1 A pointer to the Regions.
   @param[in out] pRegion2 A pointer to the copy of Regions.
 
-  @retval int retruns 0,-1, 0
+  @retval int returns 0,-1, 0
 **/
 INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2);
 
@@ -41,7 +41,7 @@ INT32 SortRegionInfoById(VOID *pRegion1, VOID *pRegion2);
   @param[in out] pDimmId1 A pointer to the pDimmId list.
   @param[in out] pDimmId2 A pointer to the copy of pDimmId list.
 
-  @retval int retruns 0,-1, 0
+  @retval int returns 0,-1, 0
 **/
 INT32 SortRegionDimmId(VOID *pDimmId1, VOID *pDimmId2);
 
@@ -63,7 +63,8 @@ ValidateImageVersion(
   IN       NVM_FW_IMAGE_HEADER *pImage,
   IN       BOOLEAN Force,
   IN       DIMM *pDimm,
-  OUT  NVM_STATUS *pNvmStatus
+      OUT  NVM_STATUS *pNvmStatus,
+      OUT  COMMAND_STATUS *pCommandStatus
 );
 
 /**
@@ -131,7 +132,7 @@ GetPciBaseAddress(
 
   @retval EFI_SUCCESS   on success
   @retval EFI_OUT_OF_RESOURCES for a failed allocation
-  @retval EFI_BAD_BUFFER_SIZE if the nfit spa memory is more than the one in memmmap
+  @retval EFI_BAD_BUFFER_SIZE if the nfit spa memory is more than the one in memmap
 **/
 EFI_STATUS
 CheckMemoryMap(
@@ -206,8 +207,8 @@ FreeDimmList(
   of type 17/20 for the specified Dimm Pid
 
   @param[in]  DimmPid The ID of the DIMM
-  @param[out] pDmiPhysicalDev Pointer to smbios table strcture of type 17
-  @param[out] pDmiDeviceMappedAddr Pointer to smbios table strcture of type 20
+  @param[out] pDmiPhysicalDev Pointer to smbios table structure of type 17
+  @param[out] pDmiDeviceMappedAddr Pointer to smbios table structure of type 20
 
   @retval EFI_INVALID_PARAMETER passed NULL argument
   @retval EFI_DEVICE_ERROR Failure to retrieve SMBIOS tables from gST
@@ -282,7 +283,7 @@ AutomaticCreateNamespace(
 );
 
 /**
-  Retrives Intel Dimm Config EFI vars
+  Retrieves Intel Dimm Config EFI vars
 
   User is responsible for freeing ppIntelDIMMConfig
 

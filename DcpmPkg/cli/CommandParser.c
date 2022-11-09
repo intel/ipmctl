@@ -188,7 +188,7 @@ void FreeCommandInput(struct CommandInput *pCommandInput)
 }
 
 /*
-* Ensure cmdline args don't include '%'
+* Ensure cmd line args don't include '%'
 */
 EFI_STATUS
 InvalidTokenScreen(
@@ -237,6 +237,7 @@ Parse(
   UINTN Start = 0;
   UINTN Index = 0;
   CHAR16 *pHelpStr = NULL;
+  CHAR16 *pSyntaxErrorStr = NULL;
 
   NVDIMM_ENTRY();
 
@@ -322,6 +323,14 @@ Parse(
     goto Finish;
   }
 
+  /* check if input target ordering is correct */
+  if (!InputTargetsValid(pCommand->targets, &pSyntaxErrorStr)) {
+    pCommand->ShowHelp = TRUE;
+    SetSyntaxError(CatSPrint(NULL, FORMAT_STR_NL FORMAT_STR_NL FORMAT_STR, pSyntaxErrorStr, CLI_PARSER_DID_YOU_MEAN, pHelpStr));
+    ReturnCode = EFI_INVALID_PARAMETER;
+    goto Finish;
+  }
+
   /* try to match the parsed input against a registered command */
   for (Index = 0; Index < gCommandCount; Index++) {
     ReturnCode = MatchCommand(pCommand, &gCommandList[Index]);
@@ -362,6 +371,7 @@ Parse(
   }
 
 Finish:
+  FREE_POOL_SAFE(pSyntaxErrorStr);
   FREE_POOL_SAFE(pHelpStr);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -398,7 +408,7 @@ EFI_STATUS findVerb(UINTN *pStart, struct CommandInput *pInput, struct Command *
   {
 #ifdef OS_BUILD
     if (g_basic_commands) {
-      // This should be updated when there are other comamnds a non-root user can run
+      // This should be updated when there are other commands a non-root user can run
 #ifdef _MSC_VER
       Print(L"Sorry, the ipmctl command you have attempted to execute requires admin privileges.\n");
 #else //_MSC_VER
@@ -939,6 +949,64 @@ UINT16 TargetMatchCount(struct Command *pInputCmd, struct Command *pCmdToMatch)
   return val;
 }
 
+/**
+  Validate input targets combination
+  Function compares input targets with invalid sequences
+
+  @param[in] pInputTargets is a pointer to the list of input command targets
+  @param[out] ppErrorString is a pointer to a pointer to the return error message
+
+  @retval TRUE if input command targets does not match any known invalid combination
+  @retval FALSE if all targets matches to invalid combination
+ **/
+BOOLEAN InputTargetsValid(struct target *pInputTargets, CHAR16 **ppErrorString)
+{
+  BOOLEAN ReturnValue = TRUE;
+  UINT16 IndexSeq = 0;
+  UINT16 IndexTar = 0;
+  CHAR16 *InputName = NULL;
+  CHAR16 *MatchName = NULL;
+  BOOLEAN Match = FALSE;
+
+  static const struct TargetsCombination InvalidSequences[] =
+  {
+    { {L"-socket", L"-dimm", NULL}, L"Invalid input target ordering: -socket -dimm" }
+  };
+
+  if (pInputTargets == NULL) {
+    goto Finish;
+  }
+
+  for (IndexSeq = 0; IndexSeq < ARRAY_SIZE(InvalidSequences); IndexSeq++) {
+    Match = TRUE;
+
+    for (IndexTar = 0; IndexTar < MAX_TARGETS; IndexTar++) {
+      InputName = pInputTargets[IndexTar].TargetName;
+      MatchName = InvalidSequences[IndexSeq].pTargets[IndexTar];
+
+      if (MatchName == NULL) {
+        // Input and invalid sequence match! Quit from loop.
+        break;
+      }
+
+      if (StrICmp(InputName, MatchName) != 0) {
+        // Targets are different. Quit from loop.
+        Match = FALSE;
+        break;
+      }
+    }
+
+    if (Match == TRUE) {
+      *ppErrorString = CatSPrint(NULL, FORMAT_STR, InvalidSequences[IndexSeq].pErrString);
+      ReturnValue = FALSE;
+      break;
+    }
+  }
+
+Finish:
+  return ReturnValue;
+}
+
 /*
  * Attempt to match the input based on the targets
  */
@@ -1252,7 +1320,7 @@ CHAR16
    }
     else if (gCommandList[Index].SyntaxErrorHelpNeeded) {
       /** full verb syntax with help string **/
-      if (pCommand == NULL || SingleCommand || (pCommand != NULL && pCommand->ShowHelp == TRUE)) {
+      if (NULL == pCommand || TRUE == SingleCommand || TRUE == pCommand->ShowHelp) {
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_NL, gCommandList[Index].pHelp);
         pHelp = CatSPrintClean(pHelp, L"    " FORMAT_STR_SPACE, gCommandList[Index].verb);
       }
@@ -1783,7 +1851,7 @@ GetUnitsOption(
 Sets a display information needed when outputting alternative formats like XML.
 @param[in] pName is a CHAR16 string that represents the output message.
 @param[in] Type represents the type of output being displayed.
-@param[in] pDelims is a CHAR16 string that represents deliminters to use when parsing text output
+@param[in] pDelims is a CHAR16 string that represents delimiters to use when parsing text output
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
 **/
@@ -1813,7 +1881,7 @@ Get display information needed when outputting alternative formats like XML.
 @param[out] pName is a CHAR16 string that represents the output message.
 @param[int] NameSize is the size of pName in bytes
 @param[out] pType represents the type of output being displayed.
-@param[out] pDelims represents the deliminters to use when parsing text output.
+@param[out] pDelims represents the delimiters to use when parsing text output.
 @param[int] DelimsSize is the size of pDelims in bytes
 @retval EFI_SUCCESS if the name was copied correctly.
 @retval EFI_INVALID_PARAMETER if any of the parameters is a NULL.
@@ -1824,14 +1892,14 @@ GetDisplayInfo(
    IN     CONST UINT32 NameSize,
    OUT    UINT8 *pType,
    OUT    CHAR16 *pDelims,
-   IN     CONST UINT32 DelimnsSize
+   IN     CONST UINT32 DelimsSize
 )
 {
    if (NULL == pName || NULL == pType || NULL == pDelims){
       return EFI_INVALID_PARAMETER;
    }
    UnicodeSPrint(pName, NameSize, FORMAT_STR, gDisplayInfo.Name);
-   UnicodeSPrint(pDelims, DelimnsSize, FORMAT_STR, gDisplayInfo.Delims);
+   UnicodeSPrint(pDelims, DelimsSize, FORMAT_STR, gDisplayInfo.Delims);
    *pType = gDisplayInfo.Type;
    return EFI_SUCCESS;
 }

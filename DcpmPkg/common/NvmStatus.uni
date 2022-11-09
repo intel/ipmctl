@@ -91,6 +91,7 @@
 
 #string STR_DCPMM_STATUS_WARN_2LM_MODE_OFF  #language en "The requested goal will result in Memory Mode capacity that is unusable with the currently selected platform BIOS volatile mode."
 #string STR_DCPMM_STATUS_WARN_MM_PMM_DDR_NOT_PAIRED #language en "The requested goal will result in Memory Mode capacity that is unusable. An iMC has DDR without PMem module."
+#string STR_DCPMM_STATUS_WARN_PMEM_MODULE_NOT_PAIRED_FOR_2LM #language en "PMem module unusable for 2LM since it is not paired with a DDR on the iMC"
 #string STR_DCPMM_STATUS_WARN_NMFM_RATIO_LOWER_VIOLATION #language en "WARNING! The requested memory mode size is below the recommended NM:FM limit of 1:%ls"
 #string STR_DCPMM_STATUS_WARN_NMFM_RATIO_UPPER_VIOLATION #language en "WARNING! The requested memory mode size is above the recommended NM:FM limit of 1:%d"
 #string STR_DCPMM_STATUS_ERR_NMFM_RATIO_GREATER_THAN_ONE #language en "The requested memory mode size is below the NM:FM limit of 1:1"
@@ -110,7 +111,6 @@
 #string STR_DCPMM_STATUS_ERR_REGION_CONF_UNSUPPORTED_CONFIG #language en "Requests using -dimm must conform to ONE of:\n- Target all PMem modules on a given socket\n- Target all unconfigured PMem modules\n- Target PMem modules for 100%% MemoryMode with all unspecified PMem modules configured for MemoryMode only\n- Target PMem modules for AppDirect Not-Interleaved with all unspecified PMem modules configured for AppDirect Not-Interleaved only"
 #string STR_DCPMM_STATUS_ERR_REGION_NOT_FOUND #language en "Region not found"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MANAGEMENT_SOFT #language en "Platform does not support changing configuration through management software"
-#string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MIRRORING #language en "Platform does not support App Direct Memory mirroring"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_2LM_MODE #language en "Platform does not support Memory Mode"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE #language en "Platform does not support Mixed Mode"
 #string STR_DCPMM_STATUS_ERR_PLATFORM_NOT_SUPPORT_PM_MODE #language en "Platform does not support App Direct Mode"
@@ -126,7 +126,7 @@
 #string STR_DCPMM_STATUS_ERR_REGION_REMAINING_SIZE_NOT_IN_LAST_PROPERTY #language en "Remaining value can be used only for one property and only on the last App Direct Size property"
 #string STR_DCPMM_STATUS_ERR_PERS_MEM_MUST_BE_APPLIED_TO_ALL_DIMMS #language en "Unable to find a valid mapping for the requested configuration."
 #string STR_DCPMM_STATUS_ERR_CREATE_NAMESPACE_NOT_ALLOWED #language en "Pending goal request found on PMem modules that are part of this namespace request. Please reboot to apply the goal or delete the goal and try again."
-#string STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A platform reboot is recommended to restore valid PCD data, then try again."
+#string STR_DCPMM_STATUS_ERR_PCD_CURR_CONF_MISSING #language en "One or more PMem modules have invalid PCD data. A new goal (create -f -goal) is recommended to restore valid PCD data, then try again."
 
 #string STR_DCPMM_STATUS_ERR_OPEN_FILE_WITH_WRITE_MODE_FAILED  #language en "Open or create the file with write mode failed."
 #string STR_DCPMM_STATUS_ERR_DUMP_NO_CONFIGURED_DIMMS  #language en "There are no configured PMem modules to dump."
@@ -146,9 +146,10 @@
 #string STR_DCPMM_STATUS_ERR_DIMM_SKU_SECURITY_MISMATCH #language en "Inconsistent Security capabilities of the PMem modules"
 
 #string STR_DCPMM_STATUS_ERR_OPERATION_NOT_SUPPORTED_BY_MIXED_SKU #language en "Mixed PMem module SKUs detected. The command is not supported in the current context."
+#string STR_DCPMM_STATUS_ERR_INCOMPATIBLE_SKU_ON_MODULE #language en "This module's SKU is incompatible with the SKU(s) of other installed module(s)."
 
 #string STR_DCPMM_STATUS_ERR_INJECTION_BIOS_KNOB_NOT_ENABLED #language en "The BIOS error injection knob is not enabled. Please enable and try again."
-#string STR_DCPMM_STATUS_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT #language en "Warning: A system reboot is required before all changes will take effect."
+#string STR_DCPMM_STATUS_SUCCESS_REQUIRES_POWER_CYCLE #language en "Success. A power cycle is required for all changes to take effect."
 
 #string STR_DCPMM_STATUS_ERR_NONE_DIMM_FULFILLS_CRITERIA  #language en "No PMem module in the region fulfills requested properties."
 #string STR_DCPMM_STATUS_ERR_NONE_ISET_FULFILLS_CRITERIA #language en "App Direct Namespace with requested properties can't be created on the Region."
@@ -185,7 +186,7 @@
 
 #string STR_DCPMM_STATUS_ERR_GET_PCD_FAILED  #language en "Get Platform Config Data failed"
 
-#string STR_DCPMM_STATUS_ERR_ARS_IN_PROGRESS  #language en "An address range scrub operation is currently in progress"
+#string STR_DCPMM_STATUS_ERR_ARS_IN_PROGRESS  #language en "An address range scrub operation is currently in progress. Please try again after a few minutes."
 #string STR_DCPMM_STATUS_ERR_FWUPDATE_IN_PROGRESS  #language en "A firmware update operation is currently in progress"
 #string STR_DCPMM_STATUS_ERR_OVERWRITE_DIMM_IN_PROGRESS  #language en "An overwrite PMem module operation is currently in progress"
 #string STR_DCPMM_STATUS_ERR_UNKNOWN_LONG_OP_IN_PROGRESS  #language en "An unknown long operation is currently in progress"
@@ -195,7 +196,7 @@
 #string STR_DCPMM_STATUS_ERR_UNSUPPORTED_COMMAND  #language en "Unsupported command"
 #string STR_DCPMM_STATUS_ERR_DEVICE_ERROR  #language en "Device error"
 #string STR_DCPMM_STATUS_ERR_TRANSFER_ERROR  #language en "Data transfer error"
-#string STR_DCPMM_STATUS_ERR_UNABLE_TO_STAGE_NO_LONGOP  #language en "FW failed to stage and the long operation complete code is not available"
+#string STR_DCPMM_STATUS_ERR_UNABLE_TO_STAGE_NO_LONGOP  #language en "FW image rejected during staging. Rerun FW update for rejection reason"
 #string STR_DCPMM_STATUS_ERR_LONG_OP_UNKNOWN  #language en "The long operation complete code is unknown"
 
 #string STR_DCPMM_STATUS_ERR_APPDIRECT_IN_SYSTEM  #language en "AppDirect settings apply system-wide and capacity already exists"
@@ -221,14 +222,25 @@
 #string STR_DCPMM_SEC_OPTIN_FW_ACTIVATE_ENABLED     #language en  "Enabled"
 #string STR_DCPMM_SEC_OPTIN_UNKNOWN         #language en  "Unknown"
 
-#string STR_DCPMM_BOOT_STATUS_UNKNOWN #language en "Unknown"
+#string STR_DCPMM_BOOT_STATUS_INTERFACE_UNKNOWN #language en "DDRT/SMBUS Status Unknown"
+#string STR_DCPMM_BOOT_STATUS_BSR_UNKNOWN #language en "BSR Unknown"
 #string STR_DCPMM_BOOT_STATUS_SUCCESS #language en "Success"
 #string STR_DCPMM_BOOT_STATUS_MEDIA_NOT_READY #language en "Media Not Ready"
 #string STR_DCPMM_BOOT_STATUS_MEDIA_ERROR #language en "Media Error"
 #string STR_DCPMM_BOOT_STATUS_MEDIA_DISABLED #language en "Media Disabled"
 #string STR_DCPMM_BOOT_STATUS_DDRT_NOT_READY #language en "DDRT Not Ready"
+#string STR_DCPMM_BOOT_STATUS_SMBUS_NOT_READY #language en "SMBUS Not Ready"
 #string STR_DCPMM_BOOT_STATUS_MAILBOX_NOT_READY #language en "Mailbox Not Ready"
 #string STR_DCPMM_BOOT_STATUS_RR #language en "Reboot Required"
+
+#string STR_DCPMM_VIEW_PMM_FORM_ARSSTATUS                 #language en  "ARS status"
+#string STR_DCPMM_VIEW_PMM_FORM_OVERWRITE_DIMM_STATUS     #language en  "Overwrite PMem module status"
+#string STR_DCPMM_LONG_OP_STATUS_UNKNOWN     #language en  "Unknown"
+#string STR_DCPMM_LONG_OP_STATUS_NOT_STARTED #language en  "Not started"
+#string STR_DCPMM_LONG_OP_STATUS_IN_PROGRESS #language en  "In progress"
+#string STR_DCPMM_LONG_OP_STATUS_COMPLETED   #language en  "Completed"
+#string STR_DCPMM_LONG_OP_STATUS_ABORTED     #language en  "Aborted"
+#string STR_DCPMM_LONG_OP_STATUS_ERROR       #language en  "Error"
 
 #string STR_DCPMM_FW_UPDATE_STATUS_STAGED     #language en "Staged successfully"
 #string STR_DCPMM_FW_UPDATE_STATUS_SUCCESS    #language en "Update loaded successfully"
@@ -315,13 +327,24 @@
 #string STR_DCPMM_RESTRICTION_BIOS_ONLY #language en "BIOS only"
 #string STR_DCPMM_RESTRICTION_SMBUS_ONLY #language en "SMBus only"
 #string STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY #language en "BIOS and SMBus only"
+#string STR_DCPMM_RESTRICTION_MGMT_ONLY #language en "Management only"
+#string STR_DCPMM_RESTRICTION_MGMT_BIOS_ONLY #language en "Management and BIOS only"
+#string STR_DCPMM_RESTRICTION_MGMT_SMBUS_ONLY #language en "Management and SMBus only"
+#string STR_DCPMM_RESTRICTION_MGMT_BIOS_SMBUS_ONLY #language en "Management, BIOS and SMBus only"
 #string STR_DCPMM_RESTRICTION_UNSUPPORTED #language en "Unsupported"
 #string STR_DCPMM_RESTRICTION_INVALID #language en "<Invalid>"
 
 #string STR_DCPMM_DIMM_HEALTHY_FW_NOT_RECOVERABLE #language en "Full SPI flash recovery of FW on a healthy PMem module is not supported"
+
+#string STR_DCPMM_STATUS_ERR_MASTER_PASSPHRASE_NOT_SET  #language en "Master Passphrase is enabled but not set."
 
 #string STR_DCPMM_STATUS_ERR_INCOMPATIBLE_SOFTWARE_REVISION #language en "This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl."
 
 #string STR_DCPMM_STATUS_ERR_INITIALIZATION_FAILED_NO_MODULES #language en "Initialization failed. No PMem modules in the system."
 
 #string STR_DCPMM_STATUS_WARN_PMTT_TABLE_NOT_FOUND #language en "PMTT table is not found. BIOS might reject goal request upon reboot for SKU limit or NM:FM violation"
+
+#string STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE                    #language en "Non-FIPS mode"
+#string STR_DCPMM_FIPS_MODE_STATUS_NON_FIPS_MODE_UNTIL_NEXT_BOOT    #language en "Non-FIPS mode, but will transition to FIPS mode on next boot"
+#string STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_NOT_DONE          #language en "FIPS mode, one-time initialization not done"
+#string STR_DCPMM_FIPS_MODE_STATUS_INITIALIZATION_DONE              #language en "FIPS mode, one-time initialization done"

@@ -5,7 +5,7 @@
 
 /**
  * @file nvm_types.h
- * @brief This file defines standard types used in the Native Management API.
+ * @brief Definition of standard types used in the Native Management API.
  */
 
 #ifndef NVM_TYPES_H_
@@ -108,7 +108,7 @@ typedef char NVM_UID[NVM_MAX_UID_LEN]; ///< Unique ID
 typedef char NVM_PASSPHRASE[NVM_PASSPHRASE_LEN]; ///< Security passphrase
 typedef char NVM_EVENT_MSG[NVM_EVENT_MSG_LEN]; ///< Event message string
 typedef char NVM_EVENT_ARG[NVM_EVENT_ARG_LEN]; ///< Event argument string
-typedef char NVM_PATH[NVM_PATH_LEN]; ///< TFile or directory path
+typedef char NVM_PATH[NVM_PATH_LEN]; ///< File or directory path
 typedef unsigned char NVM_MANUFACTURER[NVM_MANUFACTURER_LEN]; ///< Manufacturer identifier
 typedef unsigned char NVM_SERIAL_NUMBER[NVM_SERIAL_LEN]; ///< Serial Number
 typedef char NVM_NAMESPACE_NAME[NVM_NAMESPACE_NAME_LEN]; ///< Namespace name
@@ -136,9 +136,8 @@ typedef union
 enum region_type
 {
   REGION_TYPE_UNKNOWN = 0,
-  REGION_TYPE_PERSISTENT = 1, ///< REGION type is non-mirrored App Direct.
-  REGION_TYPE_VOLATILE = 2, ///< Volatile.
-  REGION_TYPE_PERSISTENT_MIRROR = 3, ///< Persistent.
+  REGION_TYPE_PERSISTENT = 1, ///< REGION type is App Direct.
+  REGION_TYPE_VOLATILE = 2    ///< Volatile.
 };
 
 /**
@@ -218,8 +217,7 @@ enum interleave_type
 {
   INTERLEAVE_TYPE_DEFAULT = 0,
   INTERLEAVE_TYPE_INTERLEAVED = 1,
-  INTERLEAVE_TYPE_NOT_INTERLEAVED = 2,
-  INTERLEAVE_TYPE_MIRRORED  = 3
+  INTERLEAVE_TYPE_NOT_INTERLEAVED = 2
 };
 
 struct interleave_format
@@ -283,11 +281,11 @@ typedef struct _MEDIA_ERROR_LOG_PER_DIMM {
   NVM_UINT8   ErrorType;          ///< Indicates what kind of error was logged.
   NVM_UINT8   PdaValid;           ///< Indicates the PDA address is valid.
   NVM_UINT8   DpaValid;           ///< Indicates the DPA address is valid.
-  NVM_UINT8   Interrupt;          ///< Indicates this error generated an interrupt packet
-  NVM_UINT8   Viral;              ///< Indicates Viral was signaled for this error
-  NVM_UINT8   TransactionType;    ///< Transaction tpye
-  NVM_UINT16  SequenceNum;        ///< Sequence number
-  NVM_UINT8   Reserved[2];        ///< Reserved
+  NVM_UINT8   Interrupt;          ///< Indicates this error generated an interrupt packet.
+  NVM_UINT8   Viral;              ///< Indicates Viral was signaled for this error.
+  NVM_UINT8   TransactionType;    ///< Transaction type.
+  NVM_UINT16  SequenceNum;        ///< Sequence number.
+  NVM_UINT8   Reserved[2];        ///< Reserved.
 } MEDIA_ERROR_LOG;
 
 

@@ -1,9 +1,9 @@
-// Copyright (c) 2020, Intel Corporation.
+// Copyright (c) 2021, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
 ipmctl-show-cel(1)
-===================
+==================
 endif::manpage[]
 
 NAME
@@ -13,7 +13,9 @@ ipmctl-show-cel - Shows the current PMem module firmware Command Effect Log.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -cel [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -58,19 +60,23 @@ EXAMPLES
 --------
 Lists command effects for all PMem modules installed in the system
 [listing]
+--
 ipmctl show -cel
+--
 
 Lists command effects for PMem module 0x1001
 [listing]
+--
 ipmctl show -dimm 0x1001 -cel
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software.
+* The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
 -----------
@@ -78,8 +84,8 @@ The default behavior is to return a table which lists the command effects per Op
 
 DimmID::
   The default display of PMem module identifiers. One of:
-  - UID: Use the DimmUID attribute as defined in the command Show Device.
-  - HANDLE: Use the DimmHandle attribute as defined in the command Show Device.
+  * UID: Use the DimmUID attribute as defined in the command <<Show Dimm>>.
+  * HANDLE: Use the DimmHandle attribute as defined in the command <<Show Dimm>>.
     This is the default.
 
 Opcode::
@@ -90,12 +96,12 @@ SubOpcode::
 
 CE Description::
   A comma separated list that includes one or more of:
-  - NE:   No Effect
-  - SSC:  Security State Change
-  - DCC:  DIMM Configuration Change after reboot
-  - IDCC: Immediate DIMM Configuration Change
-  - QIO:  Quiesce All IO
-  - IDDC: Immediate DIMM Data Change
-  - TM:   Test Mode
-  - DM:   Debug Mode
-  - IDPC: Immediate DIMM Policy Change
+  * NE:   No Effect
+  * SSC:  Security State Change
+  * DCC:  DIMM Configuration Change after reboot
+  * IDCC: Immediate DIMM Configuration Change
+  * QIO:  Quiesce All IO
+  * IDDC: Immediate DIMM Data Change
+  * TM:   Test Mode
+  * DM:   Debug Mode
+  * IDPC: Immediate DIMM Policy Change

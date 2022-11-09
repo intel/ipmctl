@@ -215,10 +215,12 @@ DumpSupportCommand(
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_OUT_OF_MEMORY);
     goto Finish;
   }
-
-  CHECK_RESULT(UnicodeStrToAsciiStrS(pPlatformSupportFileName, pPlatformSupportFilenameAscii,
-    pPlatformSupportFilenameAsciiLength), Finish);
-
+  ReturnCode = UnicodeStrToAsciiStrS(pPlatformSupportFileName, pPlatformSupportFilenameAscii,
+    pPlatformSupportFilenameAsciiLength);
+  if (EFI_ERROR(ReturnCode))
+  {
+    goto Finish;
+  }
   if(NULL == (hFile = fopen(pPlatformSupportFilenameAscii, "w+")))
   {
     ReturnCode = EFI_OUT_OF_RESOURCES;

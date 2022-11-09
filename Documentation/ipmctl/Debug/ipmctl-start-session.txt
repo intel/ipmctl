@@ -13,7 +13,9 @@ ipmctl-start-session - Starts a recording or playback session.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl start [OPTIONS] -session -mode (record|playback|playback_manual) [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -71,22 +73,28 @@ EXAMPLES
 --------
 Start a recording session.
 [listing]
+--
 ipmctl start -session -mode record
+--
 
 Automatically execute commands in a session.
 [listing]
+--
 ipmctl start -session -mode playback
+--
 
 Allow for manual execution of commands in playback mode
 [listing]
+--
 ipmctl start -session -mode playback_manual
+--
 
 LIMITATIONS
 -----------
 Recordings should be played back on the same IPMCTL version that created the recording.
 Recordings taken in UEFI should be played back in the UEFI environment (simulated or real).
 Recordings taken in an OS are binary compatible with other OS versions of IPMCTL (i.e., recording
-taken in Linux can be played back in Windows).
+taken in Linux* can be played back in Windows*).
 
 RETURN DATA
 -----------

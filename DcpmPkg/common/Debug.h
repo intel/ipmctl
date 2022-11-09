@@ -45,7 +45,7 @@ extern UINTN EFIAPI PrintNoBuffer(CHAR16* fmt, ...);
 #define SUB_DIR_CHAR '/'
 #endif // MSVC
 #ifdef OS_BUILD
-static INLINE CHAR8 *FileFromPath(CHAR8 *path)
+static INLINE CONST CHAR8 *FileFromPath(CONST CHAR8 *path)
 {
     int i = 0;
     int index = 0;
@@ -59,8 +59,8 @@ static INLINE CHAR8 *FileFromPath(CHAR8 *path)
     }
     return path + index + 1;
 }
-#else // OS_BUILD
-static INLINE CHAR16 *FileFromPath(CHAR16 *path)
+#else // !OS_BUILD
+static INLINE CONST CHAR16 *FileFromPath(CONST CHAR16 *path)
 {
   int i = 0;
   int index = 0;
@@ -322,7 +322,7 @@ OutputCheckpoint(
   IN    UINT8 MinorCode
   )
 {
-  /** In release this function will be cut by compilator **/
+  /** In release this function will be cut by compiler **/
 }
 #endif /** MDEPKG_NDEBUG **/
 

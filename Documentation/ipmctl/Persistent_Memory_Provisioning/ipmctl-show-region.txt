@@ -13,7 +13,9 @@ ipmctl-show-region - Retrieves a list of persistent memory regions.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -region [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -87,21 +89,25 @@ EXAMPLES
 --------
 Shows all attributes of all persistent memory regions in the server.
 [listing]
+--
 ipmctl show -a -region
+--
 
 ifndef::os_build[]
 Shows all attributes for the specified persistent memory region.
 [listing]
+--
 ipmctl show -a -region 1
+--
 endif::os_build[]
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- All the underlying PMem modules should be unlocked to accurately reflect the available
+* All the underlying PMem modules should be unlocked to accurately reflect the available
   capacities. The specified PMem modules must be manageable by the host software.
 
 RETURN DATA
@@ -122,9 +128,9 @@ endif::os_build[]
 PersistentMemoryType::
   (Default) A comma separated list of the underlying types of persistent
   memory capacity in the region. One or more of:
-  - AppDirect: App Direct capacity interleaved across two or more PMem modules that is
+  * AppDirect: App Direct capacity interleaved across two or more PMem modules that is
     fully mapped into the system physical address space.
-  - AppDirectNotInterleaved: App Direct capacity wholly contained on a single
+  * AppDirectNotInterleaved: App Direct capacity wholly contained on a single
     PMem modules that is fully mapped into the system physical address space.
 
 Capacity::
@@ -138,18 +144,18 @@ SocketID::
 
 HealthState::
   The rolled up health of the underlying PMem modules. One of:
-  - Unknown: The region health cannot be determined.
-  - Healthy: All underlying PMem module persistent memory capacity is available.
-  - Pending: A new memory allocation goal has been created but not applied.
+  * Unknown: The region health cannot be determined.
+  * Healthy: All underlying PMem module persistent memory capacity is available.
+  * Pending: A new memory allocation goal has been created but not applied.
     Reboot or delete any existing memory allocation goals before creating
     namespaces on the region.
-  - Error: There is an issue with some or all of the underlying PMem module capacity
+  * Error: There is an issue with some or all of the underlying PMem module capacity
     because the interleave set has failed. One of:
-    + PMem module missing (serial number of PMem module from the Platform Config Data not found in the PMem module list)
-    + PMem module not configured
-    + Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing)
-    + Interleave set or PMem module region initialization failure (out of memory)
-    + Locked: One or more of the of the underlying Pmem modules are locked.
+    - PMem module missing (serial number of PMem module from the Platform Config Data not found in the PMem module list)
+    - PMem module not configured
+    - Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing)
+    - Interleave set or PMem module region initialization failure (out of memory)
+  * Locked: One or more of the of the underlying PMem modules are locked.
 
 ifndef::os_build[]
 ISetID::

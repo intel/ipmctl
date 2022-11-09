@@ -16,6 +16,7 @@ extern EFI_SHELL_PARAMETERS_PROTOCOL gOsShellParametersProtocol;
 EFI_STATUS init_protocol_shell_parameters_protocol(int argc, char *argv[]);
 int uninit_protocol_shell_parameters_protocol();
 BOOLEAN is_verbose_debug_print_enabled();
+BOOLEAN is_ESX_output_requested();
 
 
 #endif //_OS_SHELL_PARAM_PROTOCOL_H_

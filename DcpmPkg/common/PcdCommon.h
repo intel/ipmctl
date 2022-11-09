@@ -27,13 +27,14 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define NVDIMM_CONFIGURATION_HEADER_LOWEST_COMPATIBLE_REVISION 1
 #define NVDIMM_CONFIGURATION_HEADER_OEM_ID "INTEL "
 #define NVDIMM_CONFIGURATION_HEADER_OEM_ID_LEN 6
-#define NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID SIGNATURE_64('P', 'U', 'R', 'L', 'E', 'Y', ' ', ' ')
+#define NVDIMM_CONFIGURATION_HEADER_OEM_TABLE_ID SIGNATURE_64('I', 'P', 'M', 'C', 'T', 'L', ' ', ' ')
 #define NVDIMM_CONFIGURATION_HEADER_OEM_REVISION 2
 #define NVDIMM_CONFIGURATION_HEADER_CREATOR_ID SIGNATURE_32('I', 'N', 'T', 'L')
 #define NVDIMM_CONFIGURATION_HEADER_CREATOR_REVISION 0
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_1       1
 #define NVDIMM_CONFIGURATION_TABLES_REVISION_2       2
 #define NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1 1
+#define NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_3 3
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1 1
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2 2
 #define NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_3 3
@@ -42,7 +43,9 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define IS_NVDIMM_CONFIGURATION_HEADER_REV_INVALID(table) ((table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_1) && (table->Header.Revision.AsUint8 != NVDIMM_CONFIGURATION_TABLES_REVISION_2) && \
                                                           ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1)) && \
                                                           ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2)) && \
-                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_3)))
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_1) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_3)) && \
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_3) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_1)) && \
+                                                          ((table->Header.Revision.Split.Major != NVDIMM_CONFIGURATION_TABLES_MAJOR_REVISION_3) || (table->Header.Revision.Split.Minor != NVDIMM_CONFIGURATION_TABLES_MINOR_REVISION_2)))
 
 #define LSA_NAMESPACE_INDEX_SIG_L        SIGNATURE_64('N', 'A', 'M', 'E', 'S', 'P', 'A', 'C')
 #define LSA_NAMESPACE_INDEX_SIG_H        SIGNATURE_64('E', '_', 'I', 'N', 'D', 'E', 'X', '\0')
@@ -93,19 +96,18 @@ extern EFI_GUID gIntelDimmConfigVariableGuid;
 #define PARTITION_SIZE_CHANGE_STATUS_EXCEED_DRAM_DECODERS   7
 #define PARTITION_SIZE_CHANGE_STATUS_UNSUPPORTED_ALIGNMENT  8
 
-#define INTERLEAVE_INFO_STATUS_UNDEFINED              0
-#define INTERLEAVE_INFO_STATUS_SUCCESS                1
-#define INTERLEAVE_INFO_STATUS_NOT_PROCESSED          2
-#define INTERLEAVE_INFO_STATUS_DIMM_MISSING           3
-#define INTERLEAVE_INFO_STATUS_ISET_MISSING           4
-#define INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS   5
-#define INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE   6
-#define INTERLEAVE_INFO_STATUS_MIRROR_FAILED          7
-#define INTERLEAVE_INFO_STATUS_PARTITIONING_FAILED    8
-#define INTERLEAVE_INFO_STATUS_CIN_MISSING            9
-#define INTERLEAVE_INFO_STATUS_CHANNEL_NOT_MATCH      10
-#define INTERLEAVE_INFO_STATUS_UNSUPPORTED_ALIGNMENT  11
-#define INTERLEAVE_INFO_STATUS_REQUEST_UNSUPPORTED    12
+#define INTERLEAVE_INFO_STATUS_UNDEFINED               0
+#define INTERLEAVE_INFO_STATUS_SUCCESS                 1
+#define INTERLEAVE_INFO_STATUS_NOT_PROCESSED           2
+#define INTERLEAVE_INFO_STATUS_DIMM_MISSING            3
+#define INTERLEAVE_INFO_STATUS_ISET_MISSING            4
+#define INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS    5
+#define INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE    6
+#define INTERLEAVE_INFO_STATUS_PARTITIONING_FAILED     8
+#define INTERLEAVE_INFO_STATUS_CIN_MISSING             9
+#define INTERLEAVE_INFO_STATUS_CHANNEL_NOT_MATCH       10
+#define INTERLEAVE_INFO_STATUS_UNSUPPORTED_ALIGNMENT   11
+#define INTERLEAVE_INFO_STATUS_REQUEST_UNSUPPORTED     12
 
 #define MAX_PCD_TABLE_STATUS_LENGTH 12
 
@@ -141,7 +143,7 @@ typedef struct {
     00 - Undefined
     01 - DIMM is configured successfully
     02 - Reserved
-    03 - All the DIMMs in the interleave set not found. Volatile memory is mapped to the SPA if possible
+    03 - All the modules in the interleave set not found. Volatile memory is mapped to the SPA if possible
     04 - Persistent Memory not mapped due to matching Interleave set not found. Volatile memory is mapped to the SPA if possible
     05 - DIMM added to the system or moved within the system or DIMM is not yet configured
          Volatile memory is mapped to the SPA if possible. Current configuration present in the DIMM is not modified (Reserved)
@@ -151,17 +153,17 @@ typedef struct {
          Refer to the config output structures for addition errors
     08 - Configuration Input Checksum not valid
     09 - Configuration Input data Revision is not supported
-    10 - Current Configuration Checksum not valid
-    11 - DCPMM is not mapped to SPA due to a health issue or configuration change
-    12 - DCPMM persistent and volatile memory is not mapped due to a population issue
-    13 - DCPMM volatile memory is not mapped since NM:FM ratio is not supported
-    14 - DCPMM is not mapped due to a violation of the CPU maximum memory limit
-    15 - DCPMM persistent memory mapped, but volatile memory is not mapped due to a population issue
+    10 - PCD Partition #0 Current Configuration Checksum not valid
+    11 - Module is not mapped to SPA due to a health issue or configuration change
+    12 - Module is not mapped due to a population issue
+    13 - Module volatile memory is not mapped since NM:FM ratio is not supported
+    14 - Module is not mapped due to a violation of the CPU maximum memory limit
+    15 - Module persistent memory mapped, but volatile memory if any is not mapped due to a population issue
   **/
   UINT16 ConfigStatus;
   UINT8 Reserved[2];
-  UINT64 VolatileMemSizeIntoSpa;   //!< Total amount of 2LM size from the DIMM mapped into the SPA
-  UINT64 PersistentMemSizeIntoSpa; //!< Total amount of PM size from DIMM mapped into the SPA
+  UINT64 VolatileMemSizeIntoSpa;   //!< Total amount of 2LM size from the module mapped into the SPA
+  UINT64 PersistentMemSizeIntoSpa; //!< Total amount of PM size from the module mapped into the SPA
   /**
     A list of PCAT table structures
   **/
@@ -194,11 +196,11 @@ typedef struct {
       0 - Undefined
       1 - Success
       2 - Reserved
-      3 - All the DIMMs in the interleave set not found
-      4 - Matching Interleave set not found (Matching DIMMs found)
+      3 - All the modules in the interleave set not found
+      4 - Matching Interleave set not found (Matching modules found)
       5 - Total partition size defined in the interleave set exceeds the partition size input
-      6 - DIMM FW returned error
-      7 - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
+      6 - Module FW returned error
+      7 - Insufficient silicon resources available to map all the modules in the interleave set.
           Repartition not performed.
       8 - Persistent memory partition size is not aligned to the Interleave Alignment Size specified
           in the Interface Capability Information Table
@@ -227,8 +229,8 @@ typedef struct {
   **/
   UINT16 InterleaveSetIndex; //!< Logical index number, it should same for all the DIMMs in the interleave set
   /**
-    Total number of DIMMs participating in this interleave set. DIMM Info structure at the end of this structure
-    is repeated for each DIMM in the interleave set
+    Total number of modules participating in this interleave set. DIMM Info structure at the end of this structure
+    is repeated for each module in the interleave set
   **/
   UINT8 NumOfDimmsInInterleaveSet;
   /**
@@ -240,7 +242,7 @@ typedef struct {
   /**
     Byte0 - Channel Interleave Size
     Byte1 - iMC Interleave Size
-    One of the supported values from PCAT Mmeory Interleave Capability Info Table
+    One of the supported values from PCAT Memory Interleave Capability Info Table
   **/
   UINT8 InterleaveFormatChannel;
   UINT8 InterleaveFormatImc;
@@ -253,21 +255,21 @@ typedef struct {
     0  - Information not processed
     1  - Successfully interleaved the request
     2  - Information not processed due to an error
-    3  - Unable to find matching DIMMs in the interleave set
-    4  - Matching DIMMs found, but interleave information does not match
-    5  - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
+    3  - Unable to find matching modules in the interleave set
+    4  - Matching modules found, but interleave information does not match
+    5  - Insufficient silicon resources available to map all the modules in the interleave set.
          This interleave set may not be mapped to system address space
     6  - Memory mapping failed due to unavailable system address space
     7  - Reserved
     8  - Partitioning request failed
-    9  - Matching DIMMs found, but CIN missing in a DIMM in the interleave set
+    9  - Matching modules found, but CIN missing in a module in the interleave set
     10 - Channel interleave does not match between the MCs being interleaved
-    11 - Partition Offset or Size is not a multiple of Interleave Aligment Size in Memory Interleave
+    11 - Partition Offset or Size is not a multiple of Interleave Alignment Size in Memory Interleave
          Capability Information sub-table of PCAT
-    12 - Request unsuppported
+    12 - Request unsupported
   **/
   UINT8 InterleaveChangeStatus;
-  UINT8 Reserved2[10];
+  UINT8 Reserved3[10];
   VOID *pIdentificationInfoList[0];  //!< DIMM interleave set information
 } NVDIMM_INTERLEAVE_INFORMATION3;
 
@@ -300,16 +302,7 @@ typedef struct {
   UINT8 InterleaveFormatChannel;
   UINT8 InterleaveFormatImc;
   UINT16 InterleaveFormatWays;
-  /**
-    Config Input:
-    0 - Disable Mirror for this interleave set
-    1 - Enable Mirror for this interleave set
-
-    Config Output:
-    0 - Mirror Disabled for this interleave set
-    1 - Mirror Enabled for this interleave set
-  **/
-  UINT8 MirrorEnable;
+  UINT8 Reserved1;
   /**
     Config Input:
     Reserved zero
@@ -322,7 +315,6 @@ typedef struct {
     4 - Insufficient number of DRAM Decoders available to map all the DIMMs in the interleave set.
         This interleave set may not be mapped to system address space
     5 - Memory mapping failed due to unavailable system address space
-    6 - Mirror mapping failed due to unavailable resources
   **/
   UINT8 InterleaveChangeStatus;
   UINT8 MemorySpare;
@@ -366,7 +358,7 @@ typedef struct {
     DPA = FW returned DPA for partition + offset
   **/
   UINT64 PartitionOffset;
-  UINT64 PmPartitionSize;         //!< Size in bytes contributed by this DIMM for this interleave set
+  UINT64 PmPartitionSize;         //!< Size in bytes contributed by this module for this interleave set
 } NVDIMM_IDENTIFICATION_INFORMATION3;
 
 typedef struct {

@@ -4,7 +4,10 @@
  */
 
 #ifndef OS_H_
-#define	OS_H_
+#define OS_H_
+
+#include <stdbool.h>
+
 #ifdef	_MSC_VER
 #include <stdlib.h>
 #include <limits.h>
@@ -63,8 +66,6 @@ struct driver_feature_flags
 
 struct nvm_driver_capabilities
 {
-	unsigned int block_sizes[MAX_NUMBER_OF_BLOCK_SIZES]; // in bytes
-	unsigned int num_block_sizes;
 	unsigned long long min_namespace_size; // in bytes
 	unsigned int namespace_memory_page_allocation_capable;
 	struct driver_feature_flags features;
@@ -72,12 +73,6 @@ struct nvm_driver_capabilities
 extern void os_get_locale_dir(OS_PATH locale_dir);
 extern char * os_get_cwd(OS_PATH buffer, size_t size);
 extern int os_mkdir(char *path);
-
-extern int os_start_process(const char *process_name, unsigned int *p_process_id);
-extern int os_stop_process(unsigned int process_id);
-extern void os_sleep(unsigned long time);
-extern void os_create_thread(unsigned long long *p_thread_id, void *(*callback)(void *), void *callback_arg);
-extern unsigned long long os_get_thread_id();
 
 extern OS_MUTEX *os_mutex_init(const char *name);
 extern int os_mutex_lock(OS_MUTEX *p_mutex);
@@ -105,5 +100,7 @@ extern int os_check_admin_permissions();
 extern int getCPUID(unsigned int *regs, int registerCount, int inputRequestType);
 
 int wait_for_sec(unsigned int seconds);
+
+bool is_shortcut(const char *path);
 
 #endif

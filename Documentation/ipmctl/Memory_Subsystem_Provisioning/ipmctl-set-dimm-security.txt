@@ -1,0 +1,140 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-set-dimm-security(1)
+===========================
+endif::manpage[]
+
+NAME
+----
+ifndef::os_build[]
+ipmctl-set-dimm-security - Enables data-at-rest security on PMem module
+endif::os_build[]
+ifdef::os_build[]
+ipmctl-set-dimm-security - Enables data-at-rest security on PMem module on supported OS
+endif::os_build[]
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl set [OPTIONS] -dimm [TARGETS] NewPassphrase=(string)
+ConfirmPassphrase=(string)
+--
+
+DESCRIPTION
+-----------
+Enable data-at-rest security for the persistent memory on one or more PMem modules
+by setting a passphrase.
+
+ifdef::os_build[]
+NOTE: This command is subject to OS Vendor (OSV) support. It will return "Not Supported."
+endif::os_build[]
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-source (path)::
+  File path to a local file containing the new passphrase (1-32 characters).
+
+NOTE: The file does not need to contain the ConfirmPassphrase property.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Set the passphrase on specific PMem modules by supplying one or more comma
+  separated PMem module identifiers. However, this is not recommended as it
+  may put the system in an undesirable state. The default is to set the
+  passphrase on all manageable PMem modules.
+
+PROPERTIES
+----------
+NewPassphrase::
+  The new passphrase (1-32 characters). For better passphrase protection,
+  specify an empty string (e.g., NewPassphrase="") to be prompted for the
+  passphrase or to use a file containing the passphrase with the source option.
+
+ConfirmPassphrase::
+  Confirmation of the new passphrase (1-32 character and must match
+  NewPassphrase). For better passphrase protection, specify an empty string
+  (e.g., ConfirmPassphrase="") to be prompted for the passphrase or to use a
+  file containing the passphrase with the source option.
+
+EXAMPLES
+--------
+Set a passphrase on PMem module 0x0001.
+[listing]
+--
+ipmctl set -dimm 0x0001 NewPassphrase=123 ConfirmPassphrase=123
+--
+
+Sets a passphrase on PMem module 0x0001 by supplying the passphrase in the file
+mypassphrase.file. In this example, the format of the file would be:
+
+#ascii +
+NewPassphrase=myNewPassphrase
+
+[listing]
+--
+ipmctl set -source mypassphrase.file -dimm 0x0001 NewPassphrase="" ConfirmPassphrase=""
+--
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* The specified PMem module must have security disabled and be manageable by the host software.
+
+* There must not be any goal creation pending.
+
+ifdef::os_build[]
+Command is subject to OS Vendor (OSV) support. If OSV does not provide support,
+command will return "Not Supported."
+endif::os_build[]
+
+RETURN DATA
+-----------
+If empty strings are provided for the passphrase properties and the source option is not
+included, the user will be prompted (once for all PMem modules) to enter the new
+passphrase and then again to confirm the new passphrase as described below. The
+passphrase characters will be hidden.
+
+New passphrase: \\****
+ +
+Confirm new passphrase: \****
+
+For each PMem module, the CLI will indicate the status of the set passphrase
+operation. If a failure occurs when setting the passphrase on multiple PMem modules,
+the process will exit and not continue updating the remaining PMem modules.
+
+SAMPLE OUTPUT
+------------
+[listing]
+--
+Set passphrase on PMem module (DimmID): Success
+--
+
+[listing]
+--
+Set passphrase on PMem module (DimmID): Error (Code) - (Description)
+--

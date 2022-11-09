@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _FWUTILITY_H_
-#define _FWUTILITY_H_
+#ifndef _FW_UTILITY_H_
+#define _FW_UTILITY_H_
 
 #include "NvmTypes.h"
+#include "NvmStatus.h"
 
 #define MAX_FIRMWARE_IMAGE_SIZE_KB 788
 #define FIRMWARE_RECOVERY_IMAGE_SPI_GEN1_SIZE_KB 1024
@@ -59,6 +60,23 @@
 #define MB_COMPLETE 0x1
 #define STATUS_MASK 0xFF
 
+#define DETAILS_STR                            L"Details: "
+#define DETAILS_CANT_USE_IMAGE                 DETAILS_STR L"Can't use " FORMAT_STR L"on " FORMAT_STR
+#define DETAILS_SVNDE_NOT_ENABLED              DETAILS_STR L"SVNDE is not enabled"
+#define DETAILS_REVISION_NUMBER_MISMATCH       DETAILS_STR L"Revision number mismatch"
+#define DETAILS_PRODUCT_NUMBER_MISMATCH        DETAILS_STR L"Product number mismatch"
+#define DETAILS_FILE_READ_ERROR                DETAILS_STR L"Could not read the file"
+#define DETAILS_MEM_ALLOCATION_ERROR_FW_IMG    DETAILS_STR L"Could not allocate memory for the firmware image"
+#define DETAILS_FILE_TOO_SMALL                 DETAILS_STR L"The file is too small"
+#define DETAILS_FILE_TOO_LARGE                 DETAILS_STR L"The file is too large"
+#define DETAILS_UNKNOWN_SUBSYSTEM_DEVICE       DETAILS_STR L"Subsystem Device Id is unknown"
+#define DETAILS_FILE_IMG_INFO_NOT_ACCESSIBLE   DETAILS_STR L"Could not get the file information"
+#define DETAILS_FILE_NOT_VALID                 DETAILS_STR L"The specified source file is not valid"
+#define DETAILS_WRONG_IMAGE_SIZE               DETAILS_STR L"Wrong image size"
+#define DETAILS_IMAGE_NOT_ALIGNED              DETAILS_STR L"Wrong data size - buffer not aligned"
+#define DETAILS_MODULE_TYPE_NOT_COMPATIBLE     DETAILS_STR L"Module type not compatible"
+#define DETAILS_VENDOR_NOT_COMPATIBLE          DETAILS_STR L"Vendor not compatible"
+
 #pragma pack(push)
 #pragma pack(1)
 typedef struct {
@@ -97,6 +115,9 @@ typedef struct {
 } NVM_FW_CMD;
 
 #pragma pack(pop)
+
+// FW commands that are supposed to work even if the module firmware is unresponsive
+#define FW_CMD_INTERFACE_INDEPENDENT(Opcode, SubOpcode) (Opcode == PtEmulatedBiosCommands && SubOpcode == SubopGetBSR)
 
 /**
   Version struct definition
@@ -152,7 +173,7 @@ typedef struct _NVM_FW_VERSION {
   FW Image header: Intel CSS Header (128 bytes)
 **/
 typedef struct {
-  UINT32 ModuleType;         //!< moduleType = LT_MODULETYPE_CSS
+  UINT32 ModuleType;         //!< moduleType = LT_MODULE_TYPE_CSS
   UINT32 HeaderLen;          //!< headerLen == dword_sizeof(fixedHeader) + (modulusSize * 2) + exponentSize
   UINT32 HeaderVersion;      //!< bits [31:16] are major version, bits [15:0] are minor version
   UINT32 ModuleID;           //!< if bit 31 == 1 this is a debug module
@@ -173,7 +194,7 @@ typedef struct {
   UINT16 VendorId;           //!< Specifies vendor. Intel (0x8086)
   UINT16 DeviceId;           //!< Specifies root arch type (ekv, bwv, cwv, etc .).
   UINT16 RevisionId;         //!< Specifies base and metal steppings of arch (A0, A1 , S0, S1, B0, B2, etc.).
-  UINT8 NumberofStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
+  UINT8 NumberOfStages;      //!< Specifies the number of expected stages to load. 1 - one stage to load , 2 - two stages to load
   UINT8 Reserved[56];
 } NVM_FW_IMAGE_HEADER;
 
@@ -198,7 +219,7 @@ typedef struct {
   @return TRUE if relevant fields are all 0.
 
 **/
-#define FW_VERSION_UNDEFINED_BYVERS(FwProduct, FwRevision, FwSecurityVersion, FwBuild) (FwProduct == 0 && \
+#define FW_VERSION_UNDEFINED_BY_VERSION(FwProduct, FwRevision, FwSecurityVersion, FwBuild) (FwProduct == 0 && \
                                               FwRevision == 0 && \
                                               FwSecurityVersion == 0 && \
                                               FwBuild == 0)
@@ -206,16 +227,16 @@ typedef struct {
 /**
   Tests a FW version to see if it is an undefined version
 
-  @param  FirmareVersionStruct           a FIRMWARE_VERSION struct
+  @param  FirmwareVersionStruct           a FIRMWARE_VERSION struct
 
   @return TRUE if relevant fields are all 0.
 
 **/
-#define FW_VERSION_UNDEFINED(FirmareVersionStruct) FW_VERSION_UNDEFINED_BYVERS(\
-                                               FirmareVersionStruct.FwProduct, \
-                                               FirmareVersionStruct.FwRevision, \
-                                               FirmareVersionStruct.FwSecurityVersion, \
-                                               FirmareVersionStruct.FwBuild)
+#define FW_VERSION_UNDEFINED(FirmwareVersionStruct) FW_VERSION_UNDEFINED_BY_VERSION(\
+                                               FirmwareVersionStruct.FwProduct, \
+                                               FirmwareVersionStruct.FwRevision, \
+                                               FirmwareVersionStruct.FwSecurityVersion, \
+                                               FirmwareVersionStruct.FwBuild)
 
 typedef struct {
   UINT16 DirectoryVersion;
@@ -290,7 +311,7 @@ typedef struct {
 /**
   The persistent memory module type code (taken from FW image)
 **/
-#define LT_MODULETYPE_CSS 0x6
+#define LT_MODULE_TYPE_CSS 0x6
 
 /**
   Checks if the firmware image is valid for an update.
@@ -300,6 +321,7 @@ typedef struct {
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
   @param[out] ppError is the pointer to a Unicode string that will contain
     the details about the failure. The caller is responsible to free the allocated
     memory with the FreePool function.
@@ -311,7 +333,8 @@ BOOLEAN
 ValidateImage(
   IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
-     OUT CHAR16 **ppError
+  IN     UINT64 FWImageMaxSize,
+     OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**
@@ -322,10 +345,8 @@ ValidateImage(
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
-  @param[in] SubsystemDeviceId is the identifer of the Dimm revision
-  @param[out] ppError is the pointer to a Unicode string that will contain
-    the details about the failure. The caller is responsible to free the allocated
-    memory with the FreePool function.
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
+  @param[in] SubsystemDeviceId is the identifier of the Dimm revision
 
   @retval TRUE if the Image is valid for the update.
   @retval FALSE if the Image is not valid.
@@ -334,8 +355,8 @@ BOOLEAN
 ValidateRecoverySpiImage(
   IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
-  IN     UINT16 SubsystemDeviceId,
-     OUT CHAR16 **ppError
+  IN     UINT64 FWImageMaxSize,
+  IN     UINT16 SubsystemDeviceId
   );
 
 /**
@@ -356,11 +377,11 @@ ValidateRecoverySpiImage(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] Recovery flag indicates if this is standard or recovery image
-  @param[in] SubsystemDeviceId identifer for dimm generation
+  @param[in] SubsystemDeviceId identifier for dimm generation
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.
-  @param[out] ppError the pointer to the pointer of the Unicode string that will contain
-    the result error message.
+  @param[out] pCommandStatus structure containing detailed NVM error codes
 
   @retval TRUE if the file is valid for the update.
   @retval FALSE if the file is not valid.
@@ -371,8 +392,9 @@ LoadFileAndCheckHeader(
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN Recovery,
   IN     UINT16 SubsystemDeviceId,
+  IN     UINT64 FWImageMaxSize,
      OUT NVM_FW_IMAGE_HEADER **ppImageHeader,
-     OUT CHAR16 **ppError
+     OUT COMMAND_STATUS *pCommandStatus
   );
 
 /**
@@ -427,4 +449,4 @@ UINT32 RunningChecksum(
   IN UINT32 Csum
   );
 
-#endif /** _FWUTILITY_H_ **/
+#endif /** _FW_UTILITY_H_ **/

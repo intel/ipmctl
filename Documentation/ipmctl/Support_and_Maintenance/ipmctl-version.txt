@@ -13,7 +13,9 @@ ipmctl-version - Shows the PMem module host software versions
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl version [OPTIONS]
+--
 
 DESCRIPTION
 -----------
@@ -35,7 +37,9 @@ EXAMPLES
 --------
 Displays the available version information for the PMem module software components.
 [listing]
+--
 ipmctl version
+--
 
 RETURN DATA
 -----------
@@ -43,9 +47,9 @@ By default, returns the following inventory information.
 
 Component::
   The name of the software component. One of:
-  - [Product Name] Software Version: The PMem module management software version
+  * [Product Name] Software Version: The PMem module management software version
 ifndef::os_build[]
-  - [Product Name] Driver Version: The vendor specific PMem module driver version
+  * [Product Name] Driver Version: The vendor specific PMem module driver version
 endif::os_build[]
 
 Version::

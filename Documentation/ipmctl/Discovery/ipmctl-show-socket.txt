@@ -13,7 +13,9 @@ ipmctl-show-socket - Shows basic information about the physical processors
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -socket [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -67,15 +69,21 @@ EXAMPLES
 --------
 Displays information about all the processors.
 [listing]
+--
 ipmctl show -socket
+--
 
 Lists all properties for socket 1.
 [listing]
+--
 ipmctl show -socket 1
+--
 
 Retrieves specific properties for each processor.
 [listing]
+--
 ipmctl show -d MappedMemoryLimit -socket
+--
 
 RETURN DATA
 -----------

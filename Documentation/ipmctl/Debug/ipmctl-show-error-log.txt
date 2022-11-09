@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Intel Corporation.
+// Copyright (c) 2021, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -13,7 +13,9 @@ ipmctl-show-error-log - Shows thermal or media errors on the specified PMem modu
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -error (Thermal|Media) [TARGETS] [PROPERTIES]
+--
 
 DESCRIPTION
 -----------
@@ -67,8 +69,8 @@ SequenceNumber::
 
 Level::
   Severity level of errors to be fetched. One of:
-  - "High": High severity errors (Default)
-  - "Low": Low severity errors
+  * "High": High severity errors (Default)
+  * "Low": Low severity errors
 
 Count::
   Max number of error entries to be fetched and printed.
@@ -78,11 +80,15 @@ EXAMPLES
 --------
 Show all high thermal error log entries
 [listing]
+--
 ipmctl show -error Thermal Level=High
+--
 
 Show all low media error log entries
 [listing]
+--
 ipmctl show -error Media Level=Low
+--
 
 LIMITATIONS
 -----------
@@ -95,7 +101,9 @@ RETURN DATA
 Prints errors of the specified type for the specified PMem modules. If no errors are found, the
 following message will be printed:
 [listing]
+--
 No errors found on PMem module (DimmID)
+--
 
 SAMPLE OUTPUT
 -------------
@@ -110,13 +118,25 @@ Show error executed successfully
 
 [listing]
 --
-Media Error occurred on Dimm (DimmID):
-System Timestamp : 1527266471
-DPA : 0x000014c0
-PDA : 0x00000600
-Range : 4B
-Error Type : 4 - Locked/Illegal Access
-Error Flags : DPA Valid
-Transaction Type : 11 - CSR Write
-Sequence Number : 2
+---DimmID=0x0001---
+   ---Error=Thermal
+      System Timestamp=08/09/2021 05:12:27
+      Temperature=84
+      Reported=High
+      Temperature Type=Media Temperature
+      Sequence Number=1
+--
+
+[listing]
+--
+---DimmID=0x0001---
+   ---Error=Media
+      System Timestamp=01/01/1970 00:00:22
+      Error Type=0x04 - Locked/Illegal Access
+      Transaction Type=0x0B - CSR Write
+      Error Flags=0x02 - DPA Valid
+      DPA=0x0000000000020A40
+      PDA=N/A
+      Range=4B
+      Sequence Number=1
 --

@@ -13,7 +13,9 @@ ipmctl-create-goal - Creates a memory allocation goal on one or more PMem module
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl create [OPTIONS] -goal [TARGETS] [PROPERTIES]
+--
 
 DESCRIPTION
 -----------
@@ -30,7 +32,7 @@ NOTE: Deleting the PCD can be used as a way to prepare individual PMem modules f
 See the delete -pcd command.
 
 include::../ipmctl-command-data-loss-warning.txt[]
-include::../ipmctl-change-goal-config-note.txt[]
+include::../ipmctl-set-goal-config-note.txt[]
 
 OPTIONS
 -------
@@ -75,10 +77,10 @@ TARGETS
     . Target all PMem modules on a given socket.
       * For example, all PMem modules located within a single socket may be specified together using the
         dimm target.
-    . Target all unconfigured PMem modules.
+    . Target all unconfigured PMem modules
       * For example, when PMem modules have had their PCD deleted, then these PMem modules may all be specified
         together using the dimm target.
-    . Target PMem modules for 100% MemoryMode with all unspecified PMem modules configured for MemoryMode only.
+    . Target PMem modules for 100% MemoryMode with all unspecified PMem modules configured for MemoryMode only
       * For example, when existing PMem modules are 100% MM, then any newly added PMem modules may all be specified
         together using the dimm target and configured as 100% MM to match the existing configuration.
     . Target PMem modules for App Direct Not Interleaved with all unspecified PMem modules configured for App Direct Not Interleaved only
@@ -88,7 +90,7 @@ TARGETS
 +
 NOTE: If the dimm target is not specified, the default is to configure all manageable PMem modules on all sockets.
 
--socket [SocketIds]::
+-socket [SocketIDs]::
     Loads the memory allocation goal onto all manageable PMem modules on specific
     sockets by supplying the socket target and one or more comma separated socket
     identifiers. The default is to load the memory allocation goal onto all
@@ -102,44 +104,52 @@ MemoryMode::
 
 PersistentMemoryType::
     If MemoryMode is not 100%, the type of persistent memory to create.
-    - "AppDirect": (Default) Create App Direct capacity utilizing hardware interleaving across the
+    * "AppDirect": (Default) Create App Direct capacity utilizing hardware interleaving across the
     requested PMem modules if applicable given the specified target.
-    - "AppDirectNotInterleaved": Create App Direct capacity that is not interleaved any
+    * "AppDirectNotInterleaved": Create App Direct capacity that is not interleaved any
     other PMem modules.
 
 NamespaceLabelVersion::
     The version of the namespace label storage area (LSA) index block
-    - "1.2": (Default) Defined in UEFI 2.7a - sections 13.19
-    - "1.1": Legacy 1.1 namespace label support
+    * "1.2": (Default) Defined in UEFI 2.7a - sections 13.19
+    * "1.1": Legacy 1.1 namespace label support
 
 Reserved::
     Reserve a percentage [underline]#(0-100)# of the requested PMem module App Direct capacity
     that will not be mapped into the system physical address space and will be
-    presented as Reserved Capacity with Show Device and Show Memory Resources
-    Commands.
+    presented as Reserved Capacity with <<Show Dimm>> and <<Show Memory Resources>>
+    commands.
 
 EXAMPLES
 --------
 Configures all the PMem module capacity in Memory Mode.
 [listing]
+--
 ipmctl create -goal MemoryMode=100
+--
 
 Configures all the PMem module capacity as App Direct.
 [listing]
+--
 ipmctl create -goal PersistentMemoryType=AppDirect
+--
 
 Configures the capacity on each PMem module with 20% of the capacity in Memory
 Mode and the remaining as App Direct capacity that does not use hardware
 interleaving.
 [listing]
+--
 ipmctl create -goal MemoryMode=20 PersistentMemoryType=AppDirectNotInterleaved
+--
 
 Configures the PMem module capacity across the entire system with 25% of the
 capacity in Memory Mode, 25% reserved and the remaining 50% as App Direct.
 Configures the PMem module capacity across the entire system with 25% of the
 capacity in Memory Mode and the remaining 75% as App Direct.
 [listing]
+--
 ipmctl create -goal MemoryMode=25 PersistentMemoryType=AppDirect Reserved=25
+--
 
 LIMITATIONS
 -----------
@@ -150,7 +160,7 @@ In order to successfully execute this command:
 * The specified PMem modules must be manageable by the host software and
   must all have the same SKU.
 
-* SKU based maximum total mapped memory is enforced. See section <<Maximum Mapped Memory Limiting>>.
+* SKU based maximum total mapped memory is enforced. See section <<CPU Maximum Mapped Memory Limiting>>.
 
 * If no PMem modules are specified, all PMem modules in a non-functional or unmanageable state
   will not be included in the goal's creation.
@@ -171,24 +181,24 @@ NOTE: A goal request may be initiated even if a target PMem module is in securit
   platform firmware (BIOS) provisioning flow following a reboot. In addition, a warning will be presented to the
   user: 'WARNING: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!'
 
-- Changing the memory configuration is a destructive operation which results in loss of
+* Changing the memory configuration is a destructive operation which results in loss of
   data stored in the persistent memory region. Therefore, data should be backed up to
   other storage before executing this command.
   Targets may be limited to individual PMem modules or sockets, but all PMem modules
   on affected sockets must be configured when the command finishes. If the
   selected targets make this impossible, the command will be rejected.
-  Refer to *_Show System Capabilities_* for a list of BIOS
+  Refer to <<Show System Capabilities>> for a list of BIOS
   supported modes.
 
-- Some requests are dependent on BIOS and/or platform configuration. For details, refer
-  to the _Intel(R) Optane(TM) Persistent Memory Software Memory Allocation Rules_,
-  document number 564194. For example:
+* Some requests are dependent on BIOS and/or platform configuration. For details, see
+  the _Intel(R) Optane(TM) DC Persistent Memory Software Memory Allocation Rules for Windows, 
+  Linux and UEFI_, document number 564194. For example:
  - Provisioning PMem modules for Memory Mode while BIOS is configured for 1LM only
    will result in unused capacity.
  - Provisioning PMem modules for Memory Mode while not all iMCs have at least one PMem module
    will result in unused capacity.
 
-- PMem modules in population violation can be targeted for goal creation only if PersistentMemoryType=AppDirectNotInterleaved
+* PMem modules in population violation can be targeted for goal creation only if PersistentMemoryType=AppDirectNotInterleaved
   and no volatile memory is requested (100% ADx1).
 
 RETURN DATA
@@ -234,8 +244,10 @@ documented in the command Section <<Show Memory Allocation Goal>>, along
 with any additional confirmation messages. The force option can be used to
 override this confirmation and proceed directly with creating the goals.
 [listing]
+--
 The following configuration will be applied:
 SocketID DimmID MemorySize AppDirect1Size AppDirect2Size (Refer to
 the command Section <<Show Memory Allocation Goal>>)
 [Additional Confirmation Messages (see above)] Do you want to
 continue?
+--

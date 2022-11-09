@@ -18,7 +18,9 @@ endif::manpage[]
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl start [OPTIONS] -diagnostic [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -57,16 +59,16 @@ TARGETS
 -diagnostic [Quick|Config|Security|FW]::
   Start a specific test by supplying its name. All tests are run by default.
   One of:
-  - "Quick" - This test verifies that the PMem module host mailbox is accessible and
+  * "Quick" - This test verifies that the PMem module host mailbox is accessible and
     that basic health indicators can be read and are currently reporting
     acceptable values.
-  - "Config" - This test verifies that the BIOS platform configuration matches
+  * "Config" - This test verifies that the BIOS platform configuration matches
     the installed hardware and the platform configuration conform to best known
     practices.
-  - "Security" - This test verifies that all PMem modules have a consistent security
+  * "Security" - This test verifies that all PMem modules have a consistent security
     state. It is a best practice to enable security on all PMem modules rather than
     just some.
-  - "FW" - This test verifies that all PMem modules of a given model have consistent
+  * "FW" - This test verifies that all PMem modules of a given model have consistent
     FW installed and other FW modifiable attributes are set in accordance with
     best practices. +
     Note that the test does not have a means of verifying that
@@ -82,11 +84,15 @@ EXAMPLES
 --------
 Starts all diagnostics.
 [listing]
+--
 ipmctl start -diagnostic
+--
 
 Starts the quick check diagnostic on PMem module 0x0001.
 [listing]
+--
 ipmctl start -diagnostic Quick -dimm 0x0001
+--
 
 LIMITATIONS
 -----------
@@ -102,22 +108,22 @@ the relevant details. Each log contains the following information.
 
 Test::
   The test name along with overall execution result. One of:
-  - "Quick"
-  - "Config"
-  - "Security"
-  - "FW"
+  * "Quick"
+  * "Config"
+  * "Security"
+  * "FW"
 
 State::
   The collective result state for each test. One of:
-  - "Ok"
-  - "Warning"
-  - "Failed"
-  - "Aborted"
+  * "Ok"
+  * "Warning"
+  * "Failed"
+  * "Aborted"
 
 Message::
   The message indicates the status of the test. One of:
-  - "Ok"
-  - "Failed"
+  * "Ok"
+  * "Failed"
 
 SubTestName::
   The subtest name for given Test.

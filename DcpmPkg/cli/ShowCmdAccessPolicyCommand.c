@@ -86,7 +86,7 @@ PRINTER_TABLE_ATTRIB ShowCapTableAttributes =
     },
     {
       RESTRICTION_STR,                                                       //COLUMN HEADER
-      TABLE_MIN_HEADER_LENGTH(RESTRICTION_STR),                              //COLUMN MAX STR WIDTH
+      CAP_MB_RESTRICTION_MAX_STR_WIDTH,                                      //COLUMN MAX STR WIDTH
       DS_OPCODE_PATH PATH_KEY_DELIM RESTRICTION_STR                          //COLUMN DATA PATH
     }
   }
@@ -146,18 +146,13 @@ ShowCmdAccessPolicy(
   UINT16 *pDimmIds = NULL;
   UINT32 DimmIdsCount = 0;
   COMMAND_ACCESS_POLICY_ENTRY *pCapEntries = NULL;
+  COMMAND_ACCESS_POLICY_ENTRY *pCapEntry = NULL;
   PRINT_CONTEXT *pPrinterCtx = NULL;
   CHAR16 *pPath = NULL;
   UINT32 DimmHandle = 0;
   UINT32 DimmIdIndex = 0;
   CHAR16 DimmStr[MAX_DIMM_UID_LENGTH];
   CHAR16 *RestrictionStr = NULL;
-  CHAR16 *pNone = NULL;
-  CHAR16 *pBiosOnly = NULL;
-  CHAR16 *pSMBusOnly = NULL;
-  CHAR16 *pBiosSMBusOnly = NULL;
-  CHAR16 *pInvalid = NULL;
-  CHAR16* pUnsupported = NULL;
   UINT32 CapCount = 0;
 
   NVDIMM_ENTRY();
@@ -239,7 +234,7 @@ ShowCmdAccessPolicy(
     /**
       Retrieve all CAP for each DIMM
     **/
-    ReturnCode = pNvmDimmConfigProtocol->GetCommandAccessPolicy(pNvmDimmConfigProtocol, pDimmIds[DimmIndex], &CapCount, &pCapEntries[DimmIndex]);
+    ReturnCode = pNvmDimmConfigProtocol->GetCommandAccessPolicy(pNvmDimmConfigProtocol, pDimmIds[DimmIndex], &CapCount, &pCapEntries[DimmIndex*CapCount]);
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed to get the access policy for pDimmIds[%d] - ReturnCode=0x%x",
         DimmIndex, ReturnCode);
@@ -247,7 +242,7 @@ ShowCmdAccessPolicy(
       goto Finish;
     }
     /*
-      Retrieve DimmHandle and DimmIdindex for given DimmId
+      Retrieve DimmHandle and DimmIdIndex for given DimmId
     */
     ReturnCode = GetDimmHandleByPid(pDimmIds[DimmIndex], pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
     if (EFI_ERROR(ReturnCode)) {
@@ -264,46 +259,46 @@ ShowCmdAccessPolicy(
     }
     PRINTER_BUILD_KEY_PATH(pPath, DS_DIMM_INDEX_PATH, DimmIndex);
     PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, DIMM_ID_STR, DimmStr);
-    pNone = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_NONE), NULL);
-    pBiosOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_ONLY), NULL);
-    pSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_SMBUS_ONLY), NULL);
-    pBiosSMBusOnly = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY), NULL);
-    pUnsupported = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_UNSUPPORTED), NULL);
-    pInvalid = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_INVALID), NULL);
-    // set max column width based on longest output string.  Should always be less than 80 (required param)
-    ShowCapTableAttributes.ColumnAttribs[3].ColumnMaxStrLen = (UINT32)StrnSizeS(pBiosSMBusOnly,80);
     for (OpCodeIndex = 0; OpCodeIndex < CapCount; OpCodeIndex++) {
       PRINTER_BUILD_KEY_PATH(pPath, DS_OPCODE_INDEX_PATH, DimmIndex, OpCodeIndex);
-      PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, OPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].Opcode, HEX);
-      PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, SUBOPCODE_STR, (pCapEntries + DimmIndex)[OpCodeIndex].SubOpcode, HEX);
-      switch ((pCapEntries + DimmIndex)[OpCodeIndex].Restriction) {
+      pCapEntry = &(pCapEntries[DimmIndex * CapCount + OpCodeIndex]);
+      PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, OPCODE_STR, pCapEntry->Opcode, HEX);
+      PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, SUBOPCODE_STR, pCapEntry->SubOpcode, HEX);
+      switch (pCapEntry->Restriction) {
       case COMMAND_ACCESS_POLICY_RESTRICTION_NONE:
-        RestrictionStr = pNone;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_NONE), NULL);
         break;
       case COMMAND_ACCESS_POLICY_RESTRICTION_BIOSONLY:
-        RestrictionStr = pBiosOnly;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_ONLY), NULL);
         break;
       case COMMAND_ACCESS_POLICY_RESTRICTION_SMBUSONLY:
-        RestrictionStr = pSMBusOnly;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_SMBUS_ONLY), NULL);
         break;
       case COMMAND_ACCESS_POLICY_RESTRICTION_BIOSSMBUSONLY:
-        RestrictionStr = pBiosSMBusOnly;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_BIOS_SMBUS_ONLY), NULL);
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_MGMTONLY:
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_MGMT_ONLY), NULL);
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_MGMTBIOSONLY:
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_MGMT_BIOS_ONLY), NULL);
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_MGMTSMBUSONLY:
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_MGMT_SMBUS_ONLY), NULL);
+        break;
+      case COMMAND_ACCESS_POLICY_RESTRICTION_MGMTBIOSSMBUSONLY:
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_MGMT_BIOS_SMBUS_ONLY), NULL);
         break;
       case COMMAND_ACCESS_POLICY_RESTRICTION_UNSUPPORTED:
-        RestrictionStr = pUnsupported;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_UNSUPPORTED), NULL);;
         break;
       default:
-        RestrictionStr = pInvalid;
+        RestrictionStr = HiiGetString(gNvmDimmCliHiiHandle, STRING_TOKEN(STR_DCPMM_RESTRICTION_INVALID), NULL);
         break;
       }
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, RESTRICTION_STR, RestrictionStr);
+      FREE_POOL_SAFE(RestrictionStr);
     }
-    FREE_POOL_SAFE(pNone);
-    FREE_POOL_SAFE(pBiosOnly);
-    FREE_POOL_SAFE(pSMBusOnly);
-    FREE_POOL_SAFE(pBiosSMBusOnly);
-    FREE_POOL_SAFE(pUnsupported);
-    FREE_POOL_SAFE(pInvalid);
   }
 
   //Switch text output type to display as a table
@@ -312,14 +307,10 @@ ShowCmdAccessPolicy(
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowCmdAccessPolicyDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
-  FREE_POOL_SAFE(pNone);
-  FREE_POOL_SAFE(pBiosOnly);
-  FREE_POOL_SAFE(pSMBusOnly);
-  FREE_POOL_SAFE(pBiosSMBusOnly);
-  FREE_POOL_SAFE(pUnsupported);
-  FREE_POOL_SAFE(pInvalid);
+  FREE_POOL_SAFE(RestrictionStr);
   FREE_POOL_SAFE(pPath);
   FREE_POOL_SAFE(pDimmIds);
+  FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pCapEntries);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

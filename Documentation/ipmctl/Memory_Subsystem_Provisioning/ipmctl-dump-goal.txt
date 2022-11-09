@@ -13,7 +13,9 @@ ipmctl-dump-goal - Stores the current configured memory allocation settings to a
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl dump [OPTIONS] -destination (path) -system -config
+--
 
 DESCRIPTION
 -----------
@@ -54,15 +56,17 @@ EXAMPLES
 --------
 Stores the memory allocation settings from all the PMem modules into the file "config.txt".
 [listing]
+--
 ipmctl dump -destination config.txt -system -config
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- Only memory allocation settings for manageable PMem modules that have been
+* Only memory allocation settings for manageable PMem modules that have been
   successfully applied by the BIOS are stored in the file. Unconfigured PMem modules are
   not included, nor are memory allocation goals that have not been applied.
 
@@ -95,11 +99,6 @@ AppDirect1Format::
   Bit mask representing the interleave format of the first
   App Direct interleave set.
 
-AppDirect1Mirrored::
-  State indicating if the first App Direct interleave set is mirrored.
-  * 0 - The first App Direct interleave set is not mirrored.
-  * 1 - The first App Direct interleave set is mirrored.
-
 AppDirect1Index::
   Unique index of the first App Direct interleave set.
 
@@ -111,27 +110,24 @@ AppDirect2Format::
   Bit mask representing the interleave format of the second
   App Direct interleave set.
 
-AppDirect2Mirrored::
-  State indicating if the second App Direct interleave set is mirrored.
-  * 0 - The second App Direct interleave set is not mirrored.
-  * 1 - The second App Direct interleave set is mirrored.
-
 AppDirect2Index::
   Unique index of the second App Direct interleave set.
 
 SAMPLE OUTPUT
 -------------
 [listing]
+--
 Successfully dumped system configuration to file: config.csv
+--
 
 config.csv contents:
 [listing]
+--
 #SocketID,DimmHandle,Capacity,MemorySize,AppDirect1Size,AppDirect
-1Format,AppDirect
-1Mirrored,AppDirect1Index,AppDirect2Size,AppDirect2Format,AppDire
-ct2Mirrored,AppDirect2Index
-1,4385,64,64,0,0,0,0,0,0,0,0
-1,4401,64,64,0,0,0,0,0,0,0,0
-1,4417,64,64,0,0,0,0,0,0,0,0
-1,4433,64,64,0,0,0,0,0,0,0,0
-1,4449,64,64,0,0,0,0,0,0,0,0
+1Format,AppDirect1Index,AppDirect2Size,AppDirect2Format,AppDirect2Index
+1,4385,64,64,0,0,0,0,0,0
+1,4401,64,64,0,0,0,0,0,0
+1,4417,64,64,0,0,0,0,0,0
+1,4433,64,64,0,0,0,0,0,0
+1,4449,64,64,0,0,0,0,0,0
+--

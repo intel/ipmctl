@@ -433,7 +433,7 @@ PrintPcdIdentificationInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PartitionOffset           ", FORMAT_UINT64_HEX_NOWIDTH, pIdentificationInfo->PartitionOffset);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"PmPartitionSize           ", FORMAT_UINT64_HEX_NOWIDTH L"\n", pIdentificationInfo->PmPartitionSize);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfigTableRevision)) {
     NVDIMM_IDENTIFICATION_INFORMATION3 *pIdentificationInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pIdentificationInfoTable;
     pTmpDimmUid = CatSPrint(NULL, L"%04x-%02x-%04x-%08x", EndianSwapUint16(pIdentificationInfo->DimmIdentification.ManufacturerId),
       pIdentificationInfo->DimmIdentification.ManufacturingLocation,
@@ -480,7 +480,6 @@ PrintPcdInterleaveInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatChannel   ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatChannel);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatImc       ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatImc);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveFormatWays      ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatWays);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"MirrorEnable              ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->MirrorEnable);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH L"\n", pInterleaveInfo->InterleaveChangeStatus);
 
     NVDIMM_IDENTIFICATION_INFORMATION *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION *)&pInterleaveInfo->pIdentificationInfoList;
@@ -491,7 +490,7 @@ PrintPcdInterleaveInformation(
       pCurrentIdentInfo++;
     }
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdConfigTableRevision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdConfigTableRevision)) {
     NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pInterleaveInfoTable;
     PrintPcdPcatTableHeader(&pInterleaveInfo->Header, pPrinterCtx, pPath);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSetIndex        ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveSetIndex);
@@ -499,7 +498,7 @@ PrintPcdInterleaveInformation(
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveMemoryType      ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveMemoryType);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSizeChannel     ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatChannel);
     PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveSizeImc         ", FORMAT_HEX_NOWIDTH, pInterleaveInfo->InterleaveFormatImc);
-    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH L"\n", pInterleaveInfo->InterleaveChangeStatus);
+    PRINTER_SET_KEY_VAL_WIDE_STR_FORMAT(pPrinterCtx, pPath, L"InterleaveChangeStatus    ", FORMAT_HEX_NOWIDTH , pInterleaveInfo->InterleaveChangeStatus);
 
     NVDIMM_IDENTIFICATION_INFORMATION3 *pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)&pInterleaveInfo->pIdentificationInfoList;
     for (Index = 0; Index < pInterleaveInfo->NumOfDimmsInInterleaveSet; Index++) {
@@ -950,10 +949,10 @@ PrintLabelStorageArea(
   UINT16 CurrentIndex = 0;
   UINT16 SlotStatus = SLOT_UNKNOWN;
   BOOLEAN First = FALSE;
-  PRINT_CONTEXT *pPrinterCtxNsLable = NULL;
-  CHAR16 *pPathNsLable = NULL;
+  PRINT_CONTEXT *pPrinterCtxNsLabel = NULL;
+  CHAR16 *pPathNsLabel = NULL;
 
-  pPrinterCtxNsLable = pPrinterCtx;
+  pPrinterCtxNsLabel = pPrinterCtx;
   if (pLba == NULL) {
     return;
   }
@@ -978,11 +977,11 @@ PrintLabelStorageArea(
       PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, L"Labels", L"Label Storage Area ");
       First = FALSE;
     }
-    PRINTER_BUILD_KEY_PATH(pPathNsLable, DS_TABLE_INDEX_PATH, gDimmIndex, 0, Index);
-    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtxNsLable, pPathNsLable, PCD_TABLE_STR, L"Namespace Label Info");
-    PrintNamespaceLabel(&pLba->pLabels[Index], pPrinterCtxNsLable, pPathNsLable);
+    PRINTER_BUILD_KEY_PATH(pPathNsLabel, DS_TABLE_INDEX_PATH, gDimmIndex, 0, Index);
+    PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtxNsLabel, pPathNsLabel, PCD_TABLE_STR, L"Namespace Label Info");
+    PrintNamespaceLabel(&pLba->pLabels[Index], pPrinterCtxNsLabel, pPathNsLabel);
   }
-  FREE_POOL_SAFE(pPathNsLable);
+  FREE_POOL_SAFE(pPathNsLabel);
 }
 
 /**

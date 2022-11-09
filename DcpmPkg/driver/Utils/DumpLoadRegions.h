@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _DUMPLOADPOOLS_H_
-#define _DUMPLOADPOOLS_H_
+#ifndef _DUMP_LOAD_REGIONS_H_
+#define _DUMP_LOAD_REGIONS_H_
 
 #include "Uefi.h"
 #include <Protocol/SimpleFileSystem.h>
 #include <Dimm.h>
 #include <Region.h>
 
-#define NUMBER_OF_TOKENS_IN_DUMP_CONFIG_LINE_V1 12
-#define NUMBER_OF_TOKENS_IN_DUMP_CONFIG_LINE_V2 14
+#define NUMBER_OF_TOKENS_IN_DUMP_CONFIG_LINE_V1 10
+#define NUMBER_OF_TOKENS_IN_DUMP_CONFIG_LINE_V2 12
 
 enum DumpFilePrintCodes {
   DumpFileBom,
@@ -26,7 +26,6 @@ enum DumpFilePrintCodes {
 typedef struct _PERSISTENT_ENTRY {
   UINT64 PersistentSize;
   INTERLEAVE_FORMAT InterleaveFormat;
-  BOOLEAN Mirror;
   UINT16 PersistentIndex;
 } PERSISTENT_ENTRY;
 
@@ -163,4 +162,4 @@ ValidateAndPrepareLoadConfig(
      OUT COMMAND_STATUS *pCommandStatus
   );
 
-#endif /** _DUMPLOADPOOLS_H_ **/
+#endif /** _DUMP_LOAD_REGIONS_H_ **/

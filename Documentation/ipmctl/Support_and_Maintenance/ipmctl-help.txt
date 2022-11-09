@@ -13,7 +13,9 @@ ipmctl-help - Shows help for the supported commands
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl help [OPTIONS]
+--
 
 DESCRIPTION
 -----------
@@ -35,7 +37,9 @@ EXAMPLES
 --------
 Lists all supported commands
 [listing]
+--
 ipmctl help
+--
 
 RETURN DATA
 -----------
@@ -46,7 +50,9 @@ help option with that specific command.
 SAMPLE OUTPUT
 -------------
 [listing]
+--
 ipmctl help
+--
 Commands:
 (command synopsis)
 (command syntax)

@@ -31,7 +31,7 @@ FreeDimmPcdInfoArray(
 
   for (Index = 0; Index < DimmPcdInfoCount; Index++) {
     FREE_POOL_SAFE(pDimmPcdInfo[Index].pConfHeader);
-    FREE_POOL_SAFE(pDimmPcdInfo[Index].pLabelStorageArea);
+    FreeLsaSafe(&pDimmPcdInfo[Index].pLabelStorageArea);
   }
 
   FREE_POOL_SAFE(pDimmPcdInfo);

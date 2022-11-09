@@ -50,6 +50,10 @@ EFI_GUID gIntelDimmPbrTagIdVariableguid = INTEL_DIMM_PBR_TAGID_VARIABLE_GUID;
 EFI_GUID gDcpmmProtocolGuid = EFI_DCPMM_GUID;
 #endif // !OS_BUILD
 
+#ifdef OS_BUILD
+extern UINT8* gSmbiosTable;
+#endif // OS_BUILD
+
 /**
   Array of dimms UEFI-related data structures.
 **/
@@ -210,13 +214,20 @@ CleanNamespacesAndISs(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef OS_BUILD
+  DIMM *pDimm = NULL;
+  LIST_ENTRY *pDimmNode = NULL;
+
   ReturnCode = CleanNamespaces();
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }
 
   CleanNamespacesList(&gNvmDimmData->PMEMDev.Namespaces);
+
+  LIST_FOR_EACH(pDimmNode, &gNvmDimmData->PMEMDev.Dimms) {
+    pDimm = DIMM_FROM_NODE(pDimmNode);
+    FreeLsaSafe(&pDimm->pLsa);
+  }
 
   /**
     Remove Interleave Sets
@@ -228,13 +239,12 @@ CleanNamespacesAndISs(
   gNvmDimmData->PMEMDev.RegionsNfitInitialized = FALSE;
 
 Finish:
-#endif
   return ReturnCode;
 }
 
 /**
   Function that allows to "refresh" the existing DIMMs.
-  If a DIMM is unaccessible, all of the ISs and namespaces
+  If a DIMM is inaccessible, all of the ISs and namespaces
   that it was a part of will be removed.
 
   @param[in] DoDriverCleanup, if the caller wants namespaces cleaned up including unloading protocols
@@ -421,10 +431,6 @@ NvmDimmDriverUnload(
   }
 
 
-  /**
-    clean up data struct
-  **/
-  FREE_POOL_SAFE(gNvmDimmData);
 
   if (EFI_ERROR(ReturnCode) && DriverAlreadyUnloaded) {
     NVDIMM_WARN("The driver was not properly initialized or was unloaded before, error = " FORMAT_EFI_STATUS ".", TempReturnCode);
@@ -432,6 +438,13 @@ NvmDimmDriverUnload(
     ReturnCode = EFI_SUCCESS;
   }
 #endif
+
+
+  /**
+    clean up data struct
+  **/
+  FREE_POOL_SAFE(gNvmDimmData);
+
   NVDIMM_DBG("Exiting DriverUnload, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
@@ -454,7 +467,7 @@ NvmDimmDriverUnload(
 /**
   Finds a driver handle for the given driver name keywords.
 
-  The driver is identified by the ConponentNameProtocol->GetDriverName, so it is required that the requested
+  The driver is identified by the ComponentNameProtocol->GetDriverName, so it is required that the requested
   driver implements this protocol.
 
   The input driver name should be a comma separated list of the words that exist in the name. The function assumes
@@ -1107,11 +1120,6 @@ InitializeDimms()
    EFI_DEVICE_PATH_PROTOCOL *pTempDevicePathInterface = NULL;
 #endif
    /**
-    Init container keeping operation statuses with wanring, error and info level messages.
-   **/
-   InitErrorAndWarningNvmStatusCodes();
-
-   /**
     enumerate DCPMMs
    **/
 
@@ -1352,11 +1360,6 @@ NvmDimmDriverDriverBindingStart(
    NVDIMM_ENTRY();
 
    /**
-   Init container keeping operation statuses with wanring, error and info level messages.
-   **/
-   InitErrorAndWarningNvmStatusCodes();
-
-   /**
    Remember the Controller handle that we were started with.
    **/
    gNvmDimmData->ControllerHandle = ControllerHandle;
@@ -1448,6 +1451,7 @@ NvmDimmDriverDriverBindingStart(
          ReturnCode = EFI_OUT_OF_RESOURCES;
          goto Finish;
       }
+      Index++;
    }
 
  Finish:
@@ -1492,7 +1496,7 @@ NvmDimmDriverDriverBindingStart(
   else if (PBR_PLAYBACK_MODE == PBR_GET_MODE(ctx)) {
     //The id is saved to a non-persistent volatile store, and is incremented
     //after each CLI cmd and drive load invocation.  Given we have the tagid that should
-    //be executed next, explicitely reset the pbr session to that id before
+    //be executed next, explicitly reset the pbr session to that id before
     //running the cmd.
     PbrDcpmmDeserializeTagId(&NextId, 0);
     PbrResetSession(NextId);
@@ -1673,7 +1677,7 @@ NvmDimmDriverDriverBindingStop(
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
-#ifndef OS_BUILD
+
   EFI_STATUS TempReturnCode = EFI_SUCCESS;
   DIMM *pDimm = NULL;
   LIST_ENTRY *pDimmNode = NULL;
@@ -1724,6 +1728,8 @@ NvmDimmDriverDriverBindingStop(
       called more than once.
     **/
     if (gDimmsUefiData[Index].DeviceHandle != NULL) {
+
+#ifndef OS_BUILD
       ReturnCode = gBS->CloseProtocol(
         ControllerHandle,
         &gEfiDevicePathProtocolGuid,
@@ -1747,8 +1753,10 @@ NvmDimmDriverDriverBindingStop(
       if (EFI_ERROR(ReturnCode)) {
         NVDIMM_WARN("Failed to uninstall the child device device path protocol, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
       }
+#endif
 
       if (IsDimmManageable(pDimm)) {
+#ifndef OS_BUILD
         ReturnCode = gBS->UninstallMultipleProtocolInterfaces(
           gDimmsUefiData[Index].DeviceHandle,
           &gNvmDimmFirmwareManagementProtocolGuid, &gDimmsUefiData[Index].FirmwareManagementInstance,
@@ -1778,22 +1786,26 @@ NvmDimmDriverDriverBindingStop(
         if (EFI_ERROR(ReturnCode)) {
           NVDIMM_WARN("Failed to uninstall the child device NVDIMM label protocol, error = " FORMAT_EFI_STATUS ".\n", ReturnCode);
         }
+#endif
       }
       gDimmsUefiData[Index].DeviceHandle = NULL;
 
-      if (gDimmsUefiData[Index].pDevicePath != NULL) {
-        gBS->FreePool(gDimmsUefiData[Index].pDevicePath);
-        gDimmsUefiData[Index].pDevicePath = NULL;
-      }
+    }
 
-      if (gDimmsUefiData[Index].pDimmName != NULL) {
-        FreeUnicodeStringTable(gDimmsUefiData[Index].pDimmName);
-        gDimmsUefiData[Index].pDimmName = NULL;
-      }
+    if (gDimmsUefiData[Index].pDevicePath != NULL) {
+      FreePool(gDimmsUefiData[Index].pDevicePath);
+      gDimmsUefiData[Index].pDevicePath = NULL;
+    }
+
+    if (gDimmsUefiData[Index].pDimmName != NULL) {
+      FreeUnicodeStringTable(gDimmsUefiData[Index].pDimmName);
+      gDimmsUefiData[Index].pDimmName = NULL;
     }
     Index++;
   }
 
+
+#ifndef OS_BUILD
   ReturnCode = gBS->CloseProtocol(
     ControllerHandle,
     &gEfiDevicePathProtocolGuid,
@@ -1832,6 +1844,8 @@ NvmDimmDriverDriverBindingStop(
   if (EFI_ERROR(TempReturnCode)) {
     NVDIMM_DBG("Failed to Smbus deinit, error = " FORMAT_EFI_STATUS ".\n", TempReturnCode);
   }
+#endif
+
   /**
     Remove the DIMM from memory
   **/
@@ -1849,6 +1863,11 @@ NvmDimmDriverDriverBindingStop(
   /** Free PMTT tables memory **/
   FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
 
+#ifdef OS_BUILD
+  // Free an OS-only reference to the smbios table too
+  FREE_POOL_SAFE(gSmbiosTable);
+#endif
+
   if (gNvmDimmData->HiiHandle != NULL) {
     HiiRemovePackages(gNvmDimmData->HiiHandle);
     gNvmDimmData->HiiHandle = NULL;
@@ -1858,24 +1877,7 @@ NvmDimmDriverDriverBindingStop(
   gNvmDimmData->ControllerHandle = NULL;
 
 Finish:
-#else //not OS_BUILD
 
-
-  /**
-   Remove the DIMM from memory
- **/
-  ReturnCode = FreeDimmList();
-
-  /** Free PCAT tables memory **/
-  FreeParsedPcat(&gNvmDimmData->PMEMDev.pPcatHead);
-
-  /** Free NFIT tables memory **/
-  FreeParsedNfit(&gNvmDimmData->PMEMDev.pFitHead);
-
-  /** Free PMTT tables memory **/
-  FreeParsedPmtt(&gNvmDimmData->PMEMDev.pPmttHead);
-
-#endif //not OS_BUILD
 #if _BullseyeCoverage
 #ifndef OS_BUILD
   cov_dumpData();

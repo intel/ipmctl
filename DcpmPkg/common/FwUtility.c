@@ -21,9 +21,8 @@
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
-  @param[out] ppError is the pointer to a Unicode string that will contain
-    the details about the failure. The caller is responsible to free the allocated
-    memory with the FreePool function.
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
+  @param[out] pCommandStatus structure containing detailed NVM error codes
 
   @retval TRUE if the Image is valid for the update.
   @retval FALSE if the Image is not valid.
@@ -32,21 +31,32 @@ BOOLEAN
 ValidateImage(
   IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
-     OUT CHAR16** ppError
+  IN     UINT64 FWImageMaxSize,
+     OUT COMMAND_STATUS *pCommandStatus
   )
 {
-  if (ImageSize > MAX_FIRMWARE_IMAGE_SIZE_B || ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
-    *ppError = CatSPrint(NULL, L"The image has wrong size! Please try another image.");
+  if (ImageSize > FWImageMaxSize || ImageSize < sizeof(NVM_FW_IMAGE_HEADER)) {
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_WRONG_IMAGE_SIZE);
     return FALSE;
   }
 
   if (ImageSize % UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE != 0) {
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_IMAGE_NOT_ALIGNED);
     NVDIMM_DBG("The buffer size is not aligned to %d bytes.\n", UPDATE_FIRMWARE_SMALL_PAYLOAD_DATA_PACKET_SIZE);
     return FALSE;
   }
 
-  if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the PMem modules.");
+  if (pImage->ModuleVendor != VENDOR_ID) {
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_VENDOR_NOT_COMPATIBLE);
+    return FALSE;
+  }
+
+  if (pImage->ModuleType != LT_MODULE_TYPE_CSS) {
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_MODULE_TYPE_NOT_COMPATIBLE);
     return FALSE;
   }
 
@@ -61,10 +71,8 @@ ValidateImage(
   @param[in] pImage is the buffer that contains the image we want to validate.
   @param[in] ImageSize is the size in bytes of the valid image data in the buffer.
     The buffer must be bigger or equal to the ImageSize.
-  @param[in] SubsystemDeviceId is the identifer of the revision of Dimm (AEP vs BPS)
-  @param[out] ppError is the pointer to a Unicode string that will contain
-    the details about the failure. The caller is responsible to free the allocated
-    memory with the FreePool function.
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
+  @param[in] SubsystemDeviceId is the identifier of the revision of Dimm (AEP vs BPS)
 
   @retval TRUE if the Image is valid for the update.
   @retval FALSE if the Image is not valid.
@@ -73,43 +81,50 @@ BOOLEAN
 ValidateRecoverySpiImage(
   IN     NVM_FW_IMAGE_HEADER *pImage,
   IN     UINT64 ImageSize,
-  IN     UINT16 SubsystemDeviceId,
-     OUT CHAR16** ppError
+  IN     UINT64 FWImageMaxSize,
+  IN     UINT16 SubsystemDeviceId
   )
 {
-  CHAR16 *pTmpError = NULL;
   BOOLEAN ReturnValue = FALSE;
+  COMMAND_STATUS *pTmpCmdStatus = NULL;
 
-  ReturnValue = ValidateImage(pImage, ImageSize, &pTmpError);
+  pTmpCmdStatus = AllocateZeroPool(sizeof(COMMAND_STATUS));
+  if (pTmpCmdStatus == NULL) {
+    NVDIMM_ERR("Out of memory");
+    ReturnValue = FALSE;
+    goto Finish;
+  }
+
+  ReturnValue = ValidateImage(pImage, ImageSize, FWImageMaxSize, pTmpCmdStatus);
   if (ReturnValue) {
-    *ppError = CatSPrint(NULL, L"This is standard firmware image. Please provide recovery image");
+    NVDIMM_ERR("This is standard firmware image. Please provide recovery image");
     ReturnValue = FALSE;
     goto Finish;
   }
 
   if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
-    *ppError = CatSPrint(NULL, L"First generation " PMEM_MODULES_STR " are not supported for SPI image recovery. A 1.x release of this software is required.");
+    NVDIMM_ERR("First generation PMem modules are not supported for SPI image recovery. A 1.x release of this software is required.");
     goto Finish;
   }
 
   if (SubsystemDeviceId != SPD_DEVICE_ID_15) {
-    *ppError = CatSPrint(NULL, PMEM_MODULE_STR L" is reporting an unexpected device id.  SPI image recovery is not supported.");
+    NVDIMM_ERR("A PMem module is reporting an unexpected device id. SPI image recovery is not supported.");
     goto Finish;
   }
 
   if (ImageSize != FIRMWARE_SPI_IMAGE_GEN2_SIZE_B) {
-    *ppError = CatSPrint(NULL, L"The image has wrong size! Please try another image.");
+    NVDIMM_ERR("The image has wrong size! Please try another image.");
     goto Finish;
   }
 
-  if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULETYPE_CSS) {
-    *ppError = CatSPrint(NULL, L"The firmware is not compatible with the " PMEM_MODULES_STR ".");
+  if (pImage->ModuleVendor != VENDOR_ID || pImage->ModuleType != LT_MODULE_TYPE_CSS) {
+    NVDIMM_ERR("The firmware is not compatible with the PMem module.");
     goto Finish;
   }
   ReturnValue = TRUE;
 
 Finish:
-  FREE_POOL_SAFE(pTmpError);
+  FREE_POOL_SAFE(pTmpCmdStatus);
   return ReturnValue;
 }
 
@@ -156,7 +171,7 @@ ConvertFwVersion(
 
   NVDIMM_ENTRY();
 
-  if (FW_VERSION_UNDEFINED_BYVERS(Product, Revision, SecurityVersion, Build)) {
+  if (FW_VERSION_UNDEFINED_BY_VERSION(Product, Revision, SecurityVersion, Build)) {
     tmp = CatSPrint(NULL, FORMAT_STR, NOT_APPLICABLE_SHORT_STR);
   } else {
     tmp = CatSPrint(NULL, L"%02d.%02d.%02d.%04d", Product, Revision, SecurityVersion, Build);
@@ -210,11 +225,11 @@ IsFwStaged(
     relative to the devices root directory. The file path is simply appended to the
     working directory path.
   @param[in] FlashSPI flag indicates if this is standard or SPI image
-  @param[in] SubsystemDeviceId identifer for dimm generation
+  @param[in] SubsystemDeviceId identifier for dimm generation
+  @param[in] FWImageMaxSize is the maximum allowed size in bytes of the image.
   @param[out] ppImageHeader the pointer to the pointer of the Image Header that has been
     read from the file. It takes NULL value if there was a reading error.
-  @param[out] ppError the pointer to the pointer of the Unicode string that will contain
-    the result error message.
+  @param[out] pCommandStatus structure containing detailed NVM error codes
 
   @retval TRUE if the file is valid for the update.
   @retval FALSE if the file is not valid.
@@ -225,8 +240,9 @@ LoadFileAndCheckHeader(
   IN     CONST CHAR16 *pWorkingDirectory OPTIONAL,
   IN     BOOLEAN FlashSPI,
   IN     UINT16 SubsystemDeviceId,
+  IN     UINT64 FWImageMaxSize,
      OUT NVM_FW_IMAGE_HEADER **ppImageHeader,
-     OUT CHAR16 **ppError
+     OUT COMMAND_STATUS *pCommandStatus
   )
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -238,16 +254,21 @@ LoadFileAndCheckHeader(
   UINT64 BuffSizeTemp = 0;
   UINT64 BuffSpiSize = sizeof(SpiDirectory);
   BOOLEAN VerifyNormalImage = FALSE;
-  VOID *pImageBuffer = NULL;
+  NVDIMM_ENTRY();
+
+  CHECK_NULL_ARG(pFilePath, Finish);
+  CHECK_NULL_ARG(ppImageHeader, Finish);
+  CHECK_NULL_ARG(pCommandStatus, Finish);
 
   ZeroMem(&FileHandle, sizeof(FileHandle));
   ZeroMem(&SpiDirectory, sizeof(SpiDirectory));
 
-  ReturnCode = OpenFile(pFilePath, &FileHandle, pWorkingDirectory, FALSE);
+  ReturnCode = OpenFileBinary(pFilePath, &FileHandle, pWorkingDirectory, FALSE);
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
-    *ppError = CatSPrint(NULL, L"Error: The specified source file is not valid.\n");
+    NVDIMM_ERR("OpenFile returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_NOT_VALID);
     ReturnValue = FALSE;
     goto Finish;
   }
@@ -256,38 +277,51 @@ LoadFileAndCheckHeader(
   BuffSize = FileSize;
 
   if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_DBG("GetFileSize returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
-    *ppError = CatSPrint(NULL, L"Error: Could not get the file information.\n");
+    NVDIMM_ERR("GetFileSize returned: " FORMAT_EFI_STATUS ".\n", ReturnCode);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_IMG_INFO_NOT_ACCESSIBLE);
     ReturnValue = FALSE;
     goto FinishClose;
   }
 
   if (SubsystemDeviceId == SPD_DEVICE_ID_10) {
-    if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
+    if ((!FlashSPI && BuffSize > FWImageMaxSize) ||
       (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN1_SIZE_B)) {
-      NVDIMM_DBG("File size equals: %d.\n", BuffSize);
-      *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
+      NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
       ReturnValue = FALSE;
       goto FinishClose;
     }
   } else if (SubsystemDeviceId == SPD_DEVICE_ID_15) {
-    if ((!FlashSPI && BuffSize > MAX_FIRMWARE_IMAGE_SIZE_B) ||
+    if ((!FlashSPI && BuffSize > FWImageMaxSize) ||
       (FlashSPI && BuffSize > FIRMWARE_SPI_IMAGE_GEN2_SIZE_B)) {
-      NVDIMM_DBG("File size equals: %d.\n", BuffSize);
-      *ppError = CatSPrint(NULL, L"Error: The file is too large.\n");
+      NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
+      ReturnValue = FALSE;
+      goto FinishClose;
+    }
+  } else if (SubsystemDeviceId == SPD_DEVICE_ID_20) {
+    if ((!FlashSPI && BuffSize > FWImageMaxSize)) {
+      NVDIMM_ERR("File size is too large. It equals: %d.\n", BuffSize);
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_TOO_LARGE);
       ReturnValue = FALSE;
       goto FinishClose;
     }
   } else {
-    NVDIMM_DBG("Unknown Subsystem Device Id received: %d.\n", SubsystemDeviceId);
-    *ppError = CatSPrint(NULL, L"Error: Subsystem Device Id is unknown. Cannot determine what file size should be.\n");
+    NVDIMM_ERR("Unknown Subsystem Device Id received: %d.\n", SubsystemDeviceId);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_UNKNOWN_SUBSYSTEM_DEVICE);
     ReturnValue = FALSE;
     goto FinishClose;
   }
 
   if (BuffSize < sizeof(NVM_FW_IMAGE_HEADER)) {
-    NVDIMM_DBG("File size equals: %d.\n", BuffSize);
-    *ppError = CatSPrint(NULL, L"Error: The file is too small.\n");
+    NVDIMM_ERR("File size is too small. It equals: %d.\n", BuffSize);
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_TOO_SMALL);
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -296,7 +330,7 @@ LoadFileAndCheckHeader(
     In this case it is possible that user provided valid, standard FW image
     instead of FlashSPI one. We have to verify and inform about such case
    **/
-  if (FlashSPI && BuffSize <= MAX_FIRMWARE_IMAGE_SIZE_B) {
+  if (FlashSPI && BuffSize <= FWImageMaxSize) {
     VerifyNormalImage = TRUE;
   }
 
@@ -305,10 +339,10 @@ LoadFileAndCheckHeader(
     Fortunately our buffer will be smaller even if UINTN is 32-bit.
   **/
   BuffSize = sizeof(NVM_FW_IMAGE_HEADER);
-  pImageBuffer = AllocatePool(BuffSize);
-
-  if (pImageBuffer == NULL) {
-    *ppError = CatSPrint(NULL, L"Error: Could not allocate memory for the firmware image.\n");
+  *ppImageHeader = AllocatePool(BuffSize);
+  if (*ppImageHeader == NULL) {
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_MEM_ALLOCATION_ERROR_FW_IMG);
     ReturnValue = FALSE;
     goto FinishClose;
   }
@@ -318,44 +352,43 @@ LoadFileAndCheckHeader(
   if (FlashSPI && !VerifyNormalImage) {
     ReturnCode = FileHandle->Read(FileHandle, &BuffSpiSize, &SpiDirectory);
     if (EFI_ERROR(ReturnCode) || BuffSpiSize != sizeof(SpiDirectory)) {
-      *ppError = CatSPrint(NULL, L"Error: Could not read the file.\n");
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_READ_ERROR);
       ReturnValue = FALSE;
       goto FinishClose;
     }
 
     ReturnCode = FileHandle->SetPosition(FileHandle, SpiDirectory.FwImageStage1Offset);
     if (EFI_ERROR(ReturnCode)) {
-      *ppError = CatSPrint(NULL, L"Error: Could not read the file.\n");
+      CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+          DETAILS_FILE_READ_ERROR);
       ReturnValue = FALSE;
       goto FinishClose;
     }
   }
 
-  ReturnCode = FileHandle->Read(FileHandle, &BuffSize, pImageBuffer);
-
-  /**
-    Cast the buffer to the header pointer, so we can read the image information.
-  **/
-  *ppImageHeader = (NVM_FW_IMAGE_HEADER *)pImageBuffer;
+  ReturnCode = FileHandle->Read(FileHandle, &BuffSize, *ppImageHeader);
 
   /**
     If the read function returned an error OR we read less bytes that the file length equals.
   **/
   if (EFI_ERROR(ReturnCode) || BuffSize != BuffSizeTemp) {
-    *ppError = CatSPrint(NULL, L"Error: Could not read the file.\n");
+    CatSPrintNCopy(pCommandStatus->StatusDetails, MAX_STATUS_DETAILS_STR_LEN,
+        DETAILS_FILE_READ_ERROR);
     ReturnValue = FALSE;
     goto FinishClose;
 
   }
   if (FlashSPI) {
-    ReturnValue = ValidateRecoverySpiImage(*ppImageHeader, FileSize, SubsystemDeviceId, ppError);
+    ReturnValue = ValidateRecoverySpiImage(*ppImageHeader, FileSize, FWImageMaxSize, SubsystemDeviceId);
   } else {
-    ReturnValue = ValidateImage(*ppImageHeader, FileSize, ppError);
+    ReturnValue = ValidateImage(*ppImageHeader, FileSize, FWImageMaxSize, pCommandStatus);
   }
 
 FinishClose:
   FileHandle->Close(FileHandle);
 Finish:
+  NVDIMM_EXIT_I64(ReturnValue);
   return ReturnValue;
 }
 

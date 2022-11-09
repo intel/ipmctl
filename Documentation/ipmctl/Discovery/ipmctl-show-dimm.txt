@@ -1,0 +1,700 @@
+﻿// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-dimm(1)
+===================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-dimm - Shows information about one or more PMem modules
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl show [OPTIONS] -dimm [TARGETS]
+--
+
+DESCRIPTION
+-----------
+Shows information about one or more PMem modules.
+
+OPTIONS
+-------
+-a::
+-all::
+  Shows all attributes.
+
+NOTE: The all and display options are exclusive and may not be used together.
+
+-d (attributes)::
+-display (attributes)::
+  Filters the returned attributes by explicitly specifying a comma separated
+  list of any of the attributes defined in the Return Data section.
+
+NOTE: The all and display options are exclusive and may not be used together.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+ifdef::os_build[]
+-o (text|nvmxml)::
+-output (text|nvmxml)::
+  Changes the output format. One of: "text" (default) or "nvmxml".
+endif::os_build[]
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-dimm [DimmIDs]::
+  Restricts output to specific PMem modules by supplying the PMem module target and one or
+  more comma separated PMem module identifiers. The default is to display all PMem modules.
+
+-socket [SocketIDs]::
+  Restricts output to the PMem modules installed on specific sockets by supplying the
+  socket target and one or more comma separated socket identifiers. The default
+  is to display all sockets.
+
+NOTE: If ACPI PMTT table is not present, then DDR memory will not be displayed
+in the filtered socket list.
+
+EXAMPLES
+--------
+Lists a few key fields for each PMem module.
+[listing]
+--
+ipmctl show -dimm
+--
+
+Lists all properties for PMem module 0x0001.
+[listing]
+--
+ipmctl show -a -dimm 0x0001
+--
+
+Retrieves specific properties for each PMem module.
+[listing]
+--
+ipmctl show -d HealthState,LockState -dimm
+--
+
+RETURN DATA
+-----------
+The default behavior is to display a table with the default attributes listed
+below; applying options changes the output to a more detailed format. Limited
+information (noted in the table below) is applicable if the PMem module is not
+manageable by the software as indicated by the "ManageabilityState" property.
+
+NOTE: Some data is endian swapped for human readability.
+
+DimmID::
+  (Default) The PMem module identifier.
+
+Capacity::
+  (Default) The usable capacity of the PMem module as reported by the
+  firmware.
+
+HealthState::
+  (Default) Overall PMem module health. One of:
+  * Healthy
+  * Noncritical: Maintenance may be required.
+  * Critical: Features or performance are degraded due to failure.
+  * Fatal: Critical internal state failure (DPA Failure, Internal Buffer Failure,
+    AIT Failure, etc.) is non-recoverable and data loss has occurred or is imminent.
+    In this case, the firmware will disable the media and access to user data and
+    operations that require use of the media will fail.
+  * Non-functional: The PMem module is detected and manageable, though some
+    commands and capabilities may be limited. The PMem module has limited
+    communication or another error preventing complete functionality. Common
+    causes include:
+    - DDRT memory interface training failure
+    - Expected region mapping to SPA range unable to be found
+  * Unmanageable: The PMem module has an incompatible firmware API version or
+    hardware revision or is unresponsive (possibly due to a communication
+    interface failure or a firmware/hardware error).
+  * Unknown: Unable to determine the PMem module health state.
+  Refer to _HealthStateReason_ for _HealthState_ details.
+
+HealthStateReason::
+  Indicates why the PMem module is in the current Health State.
+  One or more of:
+  * None
+  * Percentage Remaining less than 1%
+  * Package Sparing occurred
+  * CAP Self-Test warning
+  * Percentage Remaining is 0
+  * Die Failure
+  * AIT DRAM disabled
+  * CAP Self-Test failure
+  * Critical internal state failure
+  * Performance degraded
+  * CAP Self-Test communication failure
+   +
+  See the _Intel(R) Optane(TM) DC Persistent Memory Module Firmware
+  Interface Specification_, document number 556488, Section 4.8
+  SMART and Health.
+
+InterfaceFormatCode::
+  A comma-delimited list of the JEDEC standard format
+  interface codes for the PMem module where each code is formatted as: code
+  (JEDEC Description or "Unknown").
+
+ManageabilityState::
+  Ability of the PMem module host software to manage the PMem module.
+  Manageability is determined by the interface format code, the vendor
+  identifier, device identifier and the firmware API version. One of:
+  * Manageable: The PMem module is manageable by the software.
+  * Unmanageable: The PMem module is not supported by this version of
+    the software.
+
+PopulationViolation::
+  Memory populations are evaluated based on the "Enforce Population POR" setup option in UEFI Firmware.
+  If enforcement of POR populations is selected, then some PMem module memory may be in population
+  violation. See <<PMem modules in non-POR configuration>> for details. One of:
+  * Yes: The PMem module is in population violation.
+  * No: The PMem module is not in population violation.
+
+PhysicalID::
+  The PMem module physical identifier (i.e., SMBIOS Type 17 handle).
+
+DimmHandle::
+  The PMem module handle formatted as 0xABCD.
+  * A = Socket
+  * B = Memory Controller
+  * C = Channel
+  * D = Slot
+
+DimmUID::
+  The unique identifier of the PMem module formatted as VVVV-ML-MMYYSNSNSNSN or
+  VVVV-SNSNSNSN (if the manufacturing information is not available) where:
+  * VVVV = VendorID
+  * ML = ManufacturingLocation
+  * MMYY = ManufacturingDate
+  * SNSNSNSN = SerialNumber
+
+SocketID::
+  The processor socket identifier (i.e., NUMA node) where the PMem module is
+  installed.
+
+MemControllerID::
+  The associated memory controller identifier.
+
+ChannelID::
+  The associated channel.
+
+ChannelPos::
+  The PMem module position in the channel.
+
+MemoryType::
+  The memory type. One of:
+  * Unknown
+  * Logical Non-Volatile Device
+
+Manufacturer::
+  The manufacturer name of the PMem module.
+
+VendorID::
+  The vendor identifier of the PMem module.
+  This value is presented in big endian format.
+
+DeviceID::
+  The device identifier of the PMem module.
+  This value is presented in big endian format.
+
+RevisionID::
+  The revision identifier of the PMem module.
+
+SubsystemVendorID::
+  The vendor identifier of the non-volatile memory subsystem controller.
+  This value is presented in big endian format.
+
+SubsystemDeviceID::
+  The device identifier of the non-volatile memory subsystem controller.
+
+SubsystemRevisionID::
+  The revision identifier of the non-volatile memory subsystem controller
+  retrieved from NFIT. This field uses a different encoding than
+  ControllerRevisionID.
+
+ManufacturingInfoValid::
+  If the manufacturing location and date are valid. One of:
+  * 0: Not valid
+  * 1: Valid
+
+ManufacturingLocation::
+  The manufacturing location assigned by the vendor or "N/A" if ManufacturingInfoValid
+  is 0.
+
+ManufacturingDate::
+  The manufacturing date assigned by the vendor or "N/A" if ManufacturingInfoValid
+  is 0.
+
+SerialNumber::
+  The serial number assigned by the vendor.
+  This value is presented in big endian format.
+
+PartNumber::
+  The part number assigned by the vendor
+
+DeviceLocator::
+  A string describing the physically labeled socket or board position where the
+  memory device is located from the SMBIOS Type 17 Memory Device table.
+
+BankLabel::
+  A string that identifies the physically labeled bank where the memory device
+  is located from the SMBIOS Type 17 Memory Device table.
+
+DataWidth::
+  The width in bits used to store user data from the SMBIOS Type 17 Memory
+  Device table.
+
+TotalWidth::
+  The width in bits for data and error correction and/or data redundancy from
+  the SMBIOS Type 17 Memory Device table.
+
+Speed::
+  The maximum capable speed of the device in megatransfers per second (MT/s)
+  from the SMBIOS Type 17 Memory Device table.
+
+FormFactor::
+  The PMem module form factor (i.e., SMBIOS Type 17 Memory Device Form Factor). One
+  of:
+  * Unknown
+  * DIMM
+  * SODIMM
+
+LockState::
+  The current security state of the persistent memory on the PMem module.
+  One or more of:
+  * Unknown - The security state cannot be determined (e.g., when the
+    PMem module is not manageable by the software).
+  * Disabled - Security is not enabled.
+  * Unlocked - Security is enabled and unlocked.
+  * Locked - Security is enabled and locked.
+  * Frozen - A reboot is required to change the security state.
+  * Exceeded - The passphrase limit has been reached. A power cycle is
+    required to change the security state.
+  * MP Exceeded - The master passphrase limit has been reached. A power cycle
+    is required to change the security state.
+  * Not Supported - Security is not supported on the PMem module.
+
+SVNDowngrade::
+  The Opt-in value of Security Version Number (SVN) Downgrade security opt-in feature for PMem module.
+  One of :
+  * Unknown
+  * Disabled
+  * Enabled
+
+SecureErasePolicy::
+  The Opt-in value of Secure erase policy opt-in feature for PMem module.
+  One of :
+  * Unknown
+  * No Master Passphrase
+  * Master Passphrase Enabled
+
+S3ResumeOptIn::
+  The Opt-in value of S3 Resume security opt-in feature for PMem module.
+  One of :
+  * Unknown
+  * UnsecureS3
+  * SecureS3
+
+FwActivateOptIn::
+  The Opt-in value of Fw Activate security opt-in feature for PMem module.
+  One of :
+  * Unknown
+  * Disabled
+  * Enabled
+
+FWVersion::
+  (Default) The BCD-formatted revision of the active firmware in the format
+  PN.RN.SV.bbbb where:
+  * PN = 2-digit product number
+  * RN = 2-digit revision number
+  * SN = 2-digit security revision number
+  * bbbb = 4-digit build version
+
+  Value may be N/A if the PMem module is not manageable by the software.
+
+FWAPIVersion::
+  The firmware supported interface revision in the format aa.bb where:
+  * aa = 2-digit major version
+  * bb = 2-digit minor version
+   +
+  The firmware interface is intended to be backwards compatible. Therefore,
+  the host software allows management of PMem modules where this version is less than
+  or equal to the version stored in the host software. Value may be N/A if the
+  PMem module is not manageable by the software.
+
+*The following information is only applicable when the PMem module is manageable by the
+software as indicated by the "ManageabilityState".*
+
+FWActiveAPIVersion::
+  The firmware interface revision locked in the BIOS API handshake in the format
+  aa.bb where:
+  * aa = 2-digit major version
+  * bb = 2-digit minor version
+   +
+  Value may be N/A if the PMem module is not manageable by the software.
+
+ManufacturerID::
+  The manufacturer identifier of the PMem module.
+  This value is presented in big endian format.
+
+ControllerRevisionID::
+  The controller stepping and revision ID retrieved from the controller FW. This
+  field uses a different encoding than SubsystemRevisionID.
+
+IsNew::
+  Whether or not the PMem module is incorporated with the rest of the PMem module in the
+  system. One of:
+  * 0: Configured
+  * 1: The PMem module requires configuration.
+
+MemoryCapacity::
+  Usable PMem module Memory Mode capacity.
+
+AppDirectCapacity::
+  Usable PMem module App Direct capacity.
+
+UnconfiguredCapacity::
+  PMem module capacity that is inaccessible because it is not mapped into the system
+  physical address space.
+
+InaccessibleCapacity::
+  PMem module capacity that is inaccessible due to:
+  * Licensing issue
+  * Platform configuration prevents accessing this capacity. For example,
+  MemoryCapacity is configured and available on a PMem module but MemoryMode is not
+  enabled by BIOS.
+
+ReservedCapacity::
+  PMem module capacity reserved for proper alignment.
+
+AvgPowerLimit::
+  If the PMem module firmware power management policy is enabled, the power limit in
+  mW used for average power. Refer to FIS for allowable range and default value.
+
+MemoryBandwidthBoostFeature::
+  Returns if the Intel(R) Memory Bandwidth Boost Feature is currently enabled or not. One of:
+  * 0x0: Disabled
+  * 0x1: Enabled
+
+MemoryBandwidthBoostMaxPowerLimit::
+  The power limit used for limiting the Intel(R) Memory Bandwidth Boost Feature's power consumption [mW].
+
+MemoryBandwidthBoostAveragePowerTimeConstant::
+  The value used as a base time window for average power throttle [ms]. This range can be checked in the Max Intel(R) Memory Bandwidth Boost Average Time Constant and Average Power Time Constant Step from the <<Show Dimm>> command.
+  * Default: 15000 ms
+
+MaxAveragePowerLimit::
+   Maximum average power limit [mW] supported by the PMem module.
+
+MaxMemoryBandwidthBoostMaxPowerLimit::
+   Maximum Intel(R) Memory Bandwidth Boost Power value [mW] that can be set for the PMem module. Will return 0 if unsupported by current FIS.
+
+MaxMemoryBandwidthBoostAveragePowerTimeConstant::
+   This field returns the maximum supported value of the Intel(R) Memory Bandwidth Boost Average Power Time Constant [ms].
+
+MemoryBandwidthBoostAveragePowerTimeConstantStep::
+   This field returns the increments in milliseconds allowed by the firmware when setting the Intel(R) Memory Bandwidth Boost Average Power Time Constant.
+
+MaxAveragePowerReportingTimeConstant::
+   This field returns the maximum supported value of the Reporting Average Power Time Constant in milliseconds that can be set in the <<Set Dimm>> command.
+
+AveragePowerReportingTimeConstantStep::
+   This field returns the increments in milliseconds allowed by the firmware when setting the Average Power Reporting Time Constant using the <<Set Dimm>> command.
+
+AveragePower::
+   This field returns the average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
+
+Average12vPower::
+   This field returns the 12V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
+   Available for FW API versions < 3.0
+
+Average1_2vPower::
+   This field returns the 1.2V average power in milliwatts that each PMem module consumes over the Average Power Reporting Time Constant.
+   Available for FW API versions < 3.0
+
+PackageSparingCapable::
+  Whether or not the PMem module supports package sparing. One of:
+  * 0: False
+  * 1: True
+
+PackageSparingEnabled::
+  Whether or not the PMem module package sparing policy is enabled. One of:
+  * 0: Disabled
+  * 1: Enabled
+
+PackageSparesAvailable::
+  The number of spare devices available for package sparing.
+
+LatchedLastShutdownStatus::
+  The status of the last shutdown of the PMem module. One or more of:
+  * Unknown: The last shutdown status cannot be determined.
+  * PM ADR Command Received: Power management ADR command received.
+  * PM S3 Received: Power management S3 command received.
+  * PM S5 Received: Power management S5 command received.
+  * DDRT Power Fail Command Received: DDR power fail command received.
+  * PMIC 12V/DDRT 1.2V Power Loss (PLI)
+  * PM Warm Reset Received: Power management warm reset received.
+  * Thermal Shutdown Received: Thermal shutdown triggered.
+  * Controller’s FW State Flush Complete: Flush Completed.
+  * Viral Interrupt Received: Viral interrupt received.
+  * Surprise Clock Stop Received: Surprise clock stop received.
+  * Write Data Flush Complete: Write data flush completed.
+  * PM S4 Received: Power management S4 command received.
+  * PM Idle Received: Power management idle received.
+  * SRE Clock Stop Received: Self-Refresh Entry clock stop received.
+  * DDRT Surprise Reset Received: Surprise reset received.
+  * Extended Flush Not Complete.
+  * Extended Flush Complete.
+  * Sx Extended Flush Not Complete.
+  * Sx Extended Flush Complete.
+
+UnlatchedLastShutdownStatus::
+  The status of the last shutdown status of the PMem module. It contains the
+  same fields as the Latched Last Shutdown Status, with the only difference that
+  the LSS details on a dirty shutdown are logged, even if the Latch System Shutdown Status
+  was not enabled. One or more of:
+  * Unknown: The last shutdown status cannot be determined.
+  * PM ADR Command Received: Power management ADR command received.
+  * PM S3 Received: Power management S3 command received.
+  * PM S5 Received: Power management S5 command received.
+  * DDRT Power Fail Command Received: DDR power fail command received.
+  * PMIC 12V/DDRT 1.2V Power Loss (PLI)
+  * PM Warm Reset Received: Power management warm reset received.
+  * Thermal Shutdown Received: Thermal shutdown triggered.
+  * Controller’s FW State Flush Complete: Flush Completed.
+  * Viral Interrupt Received: Viral interrupt received.
+  * Surprise Clock Stop Received: Surprise clock stop received.
+  * Write Data Flush Complete: Write data flush completed.
+  * PM S4 Received: Power management S4 command received.
+  * PM Idle Received: Power management idle received.
+  * SRE Clock Stop Received: Self-Refresh Entry clock stop received.
+  * DDRT Surprise Reset Received: Surprise reset received.
+  * Extended Flush Not Complete.
+  * Extended Flush Complete.
+  * Sx Extended Flush Not Complete.
+  * Sx Extended Flush Complete.
+
+ThermalThrottleLossPercent::
+  The average performance loss percentage due to thermal throttling
+  in current boot of the PMem module.
+
+LastShutdownTime::
+  The time the system was last shut down.
+
+ModesSupported::
+  A list of the modes supported by the PMem module. Refer to the command
+  <<Show System Capabilities>> to determine the modes supported by the
+  platform. One or more of:
+  * Memory Mode: PMem modules act as system memory under the control of the operating
+    system. In Memory Mode, any DDR in the platform will act as a cache working
+    in conjunction with the PMem module.
+  * App Direct: PMem modules and DDR act as independent memory resources under direct
+    load/store control of the application.
+
+SecurityCapabilities::
+  The security features supported by the PMem module. Zero or more of:
+  * Encryption: The PMem module supports persistent memory encryption by
+    setting a passphrase.
+  * Erase: The PMem module is erasable.
+
+MasterPassphraseEnabled::
+  This property indicates if master passphrase is enabled. If it is disabled,
+  then it cannot be enabled. One of:
+  * 0: Disabled - Cannot be enabled.
+  * 1: Enabled - Master passphrase can be changed. Cannot be disabled.
+
+ConfigurationStatus::
+  The status of the PMem module memory configuration. One of:
+  * Valid: The configuration is valid.
+  * Not Configured: The PMem module has not been configured.
+  * Failed - Bad configuration: The configuration is corrupt.
+  * Failed - Broken interleave: This PMem module is part of an interleave
+    set that is not complete.
+  * Failed - Reverted: The configuration failed and was reverted to the last
+    known good configuration.
+  * Failed - Unsupported: The configuration is not compatible with the
+    installed BIOS.
+  * Unknown: The configuration cannot be determined.
+
+SKUViolation::
+  The configuration of the PMem module is unsupported due to a license issue. One of:
+  * 0: False
+  * 1: True
+
+ARSStatus::
+  The address range scrub (ARS) operation status for the PMem module. The status is a
+  reflection of the last requested ARS, but not necessarily within the current
+  platform power cycle. One of:
+  * Unknown - The ARS operation status cannot be determined.
+  * Not started - An ARS operation has not started.
+  * In progress - An ARS operation is currently in progress.
+  * Completed - The last ARS operation has completed.
+  * Aborted - The last ARS operation was aborted.
+  * Error - An ARS operation failed due to some error.
+
+OverwriteStatus::
+  The overwrite PMem module operation status for the PMem module. One of:
+  * Unknown - The overwrite PMem module operation status cannot be determined. This may
+    occur if the status gets overwritten due to a different long operation
+    running on this PMem module.
+  * Not started - An overwrite PMem module operation was not started on the last
+    boot.
+  * In progress - An overwrite PMem module operation is currently in progress.
+  * Completed - An overwrite PMem module operation completed and a reboot is
+    required to use the PMem module.
+  * Aborted - The last overwrite PMem module operation was aborted.
+  * Error - An overwrite PMem module operation failed due to some error.
+
+AveragePowerReportingTimeConstant::
+  The value, in milliseconds, used to determine the time constant for reporting
+  the average power consumption measurements. Can be set to a value between 100
+  and 12000, by increments of 100. The default value is 1000.
+
+ViralPolicy::
+  Whether viral policies are enabled on the PMem module. One of:
+  * 0: Disabled - This is the default.
+  * 1: Enabled - The persistent memory on the PMem module will be put into read-only
+    mode if the host operating system software detects an uncorrectable error
+    situation and indicates a viral state in order to prevent the spread of
+    damage.
+
+ViralState::
+  Whether the PMem module is currently viral. One of:
+  * 0: Not Viral
+  * 1: Viral - The viral policies of the PMem module have switched the
+    persistent memory to read-only mode due to the host operating system
+    software detecting an uncorrectable error situation and indicating a viral
+    state.
+
+AitDramEnabled::
+  If the PMem module AIT DRAM is enabled. One of:
+  * 0: Disabled - The device will suffer performance degradation if the AIT
+    DRAM becomes disabled.
+  * 1: Enabled
+
+BootStatus::
+  The initialization status of the PMem module as reported by the firmware in the boot
+  status register. One or more of:
+  * DDRT/SMBUS Status Unknown - PMem module DDRT and SMBUS interface status unknown.
+  * BSR Unknown - The boot status register cannot be read.
+  * Success - No errors were reported during initialization.
+  * Reboot Required - PMem module's internal state requires a platform power cycle.
+   +
+  *The following statuses indicate the status of DDRT and SMBUS interfaces.
+   Access to PMem module will fail when both interfaces are not available.*
+  * DDRT Not Ready - DDRT interface not ready.
+  * SMBUS Not Ready - SMBUS interface not ready.
+   +
+  *The following statuses indicate that the media is not functional and,
+   therefore, access to user data and operations that require use of the media
+  will fail.*
+  * Media Not Ready - The firmware did not complete media training.
+  * Media Error - The firmware detected an error during media training.
+  * Media Disabled - The firmware disabled the media due to a critical issue.
+   +
+  *The following statuses indicate that communication with the firmware is not
+  functional.*
+  * Mailbox Not Ready - Mailbox interface not ready.
+
+BootStatusRegister::
+  The raw hex value of the PMem module Boot Status Register of the PMem module
+
+LatchSystemShutdownState::
+  Status of the latch. Specifies whether the PMem module will latch the SMART Last Shutdown Status and SMART
+  Dirty Shutdown Count.
+  * 0: Disabled - This is the default.
+  * 1: Enabled
+
+PreviousPowerCycleLatchSystemShutdownState::
+  The status of the latch during the previous power cycle.
+  * 0: Disabled - This is the default.
+  * 1: Enabled
+
+ExtendedAdrEnabled::
+  Specifies whether extended ADR flow is enabled in the FW.
+  * 0: Disabled
+  * 1: Enabled
+
+PpcExtendedAdrEnabled::
+  Specifies whether extended ADR flow was enabled in the FW during the last power cycle.
+  * 0: Disabled
+  * 1: Enabled
+
+ErrorInjectionEnabled::
+  Error injection status.
+  * 0: Disabled - This is the default.
+  * 1: Enabled
+MediaTemperatureInjectionEnabled::
+  Media temperature injection status.
+  * 0: Disabled - This is the default.
+  * 1: Enabled
+
+SoftwareTriggersEnabled::
+  Software trigger status.
+  * 0: Disabled - This is the default.
+  * 1: At least one software trigger enabled.
+
+SoftwareTriggersEnabledDetails::
+  Comma separated list of software triggers currently enabled. One or more of:
+  * None
+  * Package Sparing
+  * Fatal Error
+  * Percentage Remaining
+  * Dirty Shutdown
+
+PoisonErrorInjectionsCounter::
+  This counter is incremented each time the set poison error is successfully
+  executed.
+
+PoisonErrorClearCounter::
+  This counter is incremented each time the clear poison error is successfully
+  executed.
+MediaTemperatureInjectionsCounter::
+  This counter is incremented each time the media temperature is injected.
+
+SoftwareTriggersCounter::
+  This counter is incremented each time a software trigger is enabled.
+
+MaxMediaTemperature::
+  The highest die temperature reported in degrees Celsius.
+  This value is persistent through Power Loss as well as not effected by Overwrite PMem module or Media Temperature Error Injection.
+
+MaxControllerTemperature::
+  The highest controller temperature reported in degrees Celsius.
+  This value is persistent through Power Loss as well as not effected by Overwrite PMem module.
+
+MixedSKU::
+  One or more PMem modules in the system have different SKUs. One of:
+  * 0: False
+  * 1: True - In this case, the host software operates in a read-only mode and
+  does not allow changes to the PMem modules and their associated capacity.
+
+FIPSModeStatus::
+  The FIPS mode status of the PMem module. One of:
+  * Non-FIPS mode: The default mode from Intel manufacturing
+  * Non-FIPS mode, but will transition to FIPS mode on next boot: The PM regions
+    will be inaccessible in this state. Some command restrictions apply.
+  * FIPS mode, one-time initialization not done: The PM regions
+    will be inaccessible in this state. Some command restrictions apply.
+  * FIPS mode, one-time initialization done: After successful Initialize
+    FIPS Mode firmware command invocation

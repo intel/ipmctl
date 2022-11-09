@@ -207,7 +207,7 @@ decode_nlog_binary(
       record->KernelTime = bytes_to_u32(&nlogbytes[x]);
 
       /*
-      Gather the arument U32s according to the discovered count
+      Gather the argument U32s according to the discovered count
       */
       if (record->DictEntry->Args > 0)
       {
@@ -543,7 +543,7 @@ LoadBinaryFile(
     goto Finish;
   }
 
-  status = FileRead(pDictPath, pDevicePathProtocol, 0x1FFFFFFF, bytes_read, (VOID **)&buffer);
+  status = FileRead(pDictPath, pDevicePathProtocol, 0x1FFFFFFF, TRUE, bytes_read, (VOID **)&buffer);
   if (EFI_ERROR(status) || NULL == buffer)
   {
     Print(L"FileRead Failed\n");
@@ -598,7 +598,7 @@ load_nlog_dict(
     goto Finish;
   }
 
-  status = FileRead(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, &bytes_read, (VOID **)&file_buffer);
+  status = FileRead(pDictPath, pDevicePathProtocol, MAX_CONFIG_DUMP_FILE_SIZE, FALSE, &bytes_read, (VOID **)&file_buffer);
   if (EFI_ERROR(status) || NULL == file_buffer)
   {
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to open or read the file: " FORMAT_STR L" %lu\n", pLoadUserPath, status);

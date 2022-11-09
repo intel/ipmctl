@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _NVMDIMMPASSTHRU_H_
-#define _NVMDIMMPASSTHRU_H_
+#ifndef _NVMDIMM_PASS_THRU_H_
+#define _NVMDIMM_PASS_THRU_H_
 
 #include <Types.h>
 #include <NvmDimmDriverData.h>
@@ -246,7 +246,8 @@ enum IdentifyDimmSubop {
 **/
 enum GetSecInfoSubop {
   SubopGetSecState = 0x00,          //!< Returns the DIMM security state
-  SubOpGetSecOptIn = 0x02           //!< Returns the DIMM security Opt-In
+  SubOpGetSecOptIn = 0x02,          //!< Returns the DIMM security Opt-In
+  SubOpGetFIPSMode = 0x03           //!< Returns the FIPS Mode
 };
 
 /**
@@ -314,7 +315,8 @@ enum GetLogSubop
 enum UpdateFwSubop
 {
   SubopUpdateFw = 0x00,       //!< Updates the FW Images
-  SubopExecuteFw = 0x01       //!< Executes a new updated FW Image. (without a restart)
+  SubopExecuteFw = 0x01,      //!< Executes a new updated FW Image. (without a restart)
+  SubopFwActivate = 0x03      //!< Used to update a successfully downloaded and staged FW without reboot.
 };
 
 /**
@@ -390,7 +392,7 @@ enum GetTransportInterface {
 
 
 /**
-  MemInfo page 3 Errror Inject status bits
+  MemInfo page 3 Error Inject status bits
  **/
 #define ERR_INJECTION_ENABLED_BIT 0x0
 #define ERR_INJECTION_ENABLED_BIT_MASK 0x1
@@ -443,18 +445,6 @@ typedef struct {
   TEMPERATURE ControllerThrottlingStartThreshold;
   TEMPERATURE ControllerThrottlingStopThreshold;
   UINT16 MaxAveragePowerLimit;
-  UINT16 MaxTurboModePowerConsumption;
-  UINT8 Reserved[112];
-} PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0;
-
-typedef struct {
-  TEMPERATURE ControllerShutdownThreshold;
-  TEMPERATURE MediaShutdownThreshold;
-  TEMPERATURE MediaThrottlingStartThreshold;
-  TEMPERATURE MediaThrottlingStopThreshold;
-  TEMPERATURE ControllerThrottlingStartThreshold;
-  TEMPERATURE ControllerThrottlingStopThreshold;
-  UINT16 MaxAveragePowerLimit;
   UINT16 MaxMemoryBandwidthBoostMaxPowerLimit;
   UINT32 MaxMemoryBandwidthBoostAveragePowerTimeConstant;
   UINT32 MemoryBandwidthBoostAveragePowerTimeConstantStep;
@@ -468,7 +458,6 @@ typedef struct {
   UINT8 FisMinor;
   union {
     PT_DEVICE_CHARACTERISTICS_PAYLOAD       Fis_1_15;
-    PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_0   Fis_2_00;
     PT_DEVICE_CHARACTERISTICS_PAYLOAD_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
@@ -481,13 +470,13 @@ typedef struct {
 **/
 typedef struct {
   UINT32 VolatileCapacity;
-  UINT32 Resrvd;
+  UINT32 Reserved;
   UINT64 VolatileStart;
   UINT32 PersistentCapacity;
-  UINT32 Resrvd2;
+  UINT32 Reserved2;
   UINT64 PersistentStart;
   UINT32 RawCapacity;
-  UINT8 Resrvd3[92];
+  UINT8 Reserved3[92];
 } PT_DIMM_PARTITION_INFO_PAYLOAD;
 
 /**
@@ -498,7 +487,7 @@ typedef struct {
 typedef struct {
   // Bit 0: Partition Enabled, Bit 1: Viral Policy Enabled
   UINT8 State;
-  UINT8 Resrvd[127];
+  UINT8 Reserved[127];
 } PT_DIMM_PARTITION_STATE_PAYLOAD;
 
 /**
@@ -574,17 +563,6 @@ typedef struct {
   UINT8 Reserved2[32];                             //!< 127:96 Reserved
 } PT_SET_SECURITY_PAYLOAD;
 
-/**
-  Passthrough Payload:
-    Opcode:    0x04h (Get Features)
-    Sub-Opcode:  0x06h (Optional Configuration Data Policy)
-**/
-typedef struct {
-  UINT8 Reserved1[3];                                  //!< 2:0 Reserved
-  UINT8 AveragePowerReportingTimeConstantMultiplier;   //!< 3 Average Power Reporting Time Constant Multiplier
-  UINT8 Reserved2[124];                                //!< 127:4 Reserved
-} PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0;
-
 typedef struct {
   UINT8 Reserved1[4];                                  //!< 3:0 Reserved
   UINT32 AveragePowerReportingTimeConstant;            //!< 7:4 Average Power Reporting Time Constant
@@ -595,7 +573,6 @@ typedef struct {
   UINT8 FisMajor;
   UINT8 FisMinor;
   union {
-    PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_0   Fis_2_00;
     PT_OPTIONAL_DATA_POLICY_PAYLOAD_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
@@ -670,40 +647,15 @@ typedef struct {
     Valid range for power limit 10000 - 18000 mW.
   **/
   UINT16 AveragePowerLimit;
-  /**
-    The value used as a base time window for power usage measurements [ms].
-  **/
-  UINT8 AveragePowerTimeConstant;
-  /**
-    Returns if the Turbo Mode is currently enabled or not.
-  **/
-  UINT8 TurboModeState;
-  /**
-    Power limit [mW] used for limiting the Turbo Mode power consumption.
-    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
-    the value returned from Get Device Characteristics command's Max Turbo Mode Power Consumption field.
-  **/
-  UINT16 TurboPowerLimit;
-
-  UINT8 Reserved2[119];
-} PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0;
-
-typedef struct {
-  UINT8 Reserved1[3];
-  /**
-    Power limit in mW used for averaged power.
-    Valid range for power limit 10000 - 18000 mW.
-  **/
-  UINT16 AveragePowerLimit;
 
   UINT8 Reserved2;
   /**
-    Returns if the Turbo Mode is currently enabled or not.
+    Returns if the Memory Bandwidth Boost Mode is currently enabled or not.
   **/
   UINT8 MemoryBandwidthBoostFeature;
   /**
-    Power limit [mW] used for limiting the Turbo Mode power consumption.
-    Valid range for Turbo Power Limit starts from 15000 - X mW, where X represents
+    Power limit [mW] used for limiting the Memory Bandwidth Boost Mode power consumption.
+    Valid range for Memory Bandwidth Boost Power Limit starts from 15000 - X mW, where X represents
     the value returned from Get Device Characteristics command's Max Memory Bandwidth Boost Max Power Limit field.
   **/
   UINT16 MemoryBandwidthBoostMaxPowerLimit;
@@ -720,7 +672,6 @@ typedef struct {
   UINT8 FisMinor;
   union {
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY       Fis_1_15;
-    PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_0   Fis_2_00;
     PT_PAYLOAD_POWER_MANAGEMENT_POLICY_2_1   Fis_2_01;
     UINT8 Data[0];
   }Payload;
@@ -788,7 +739,7 @@ typedef struct _SKU_INFORMATION {
   UINT32 AppDirectModeEnabled           : 1;
   UINT32 PackageSparingCapable          : 1;
   UINT32                                : 12;  //!< Reserved
-  UINT32 SoftProgramableSku             : 1;
+  UINT32 SoftProgrammableSku             : 1;
   UINT32 EncryptionEnabled              : 1;
   UINT32                                : 14;  //!< Reserved
 } SKU_INFORMATION;
@@ -918,7 +869,7 @@ typedef struct {
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
     Bit 3: S4 Power State (0 - Not Received, 1 - Received)
-    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle or SRE Clock Stop (0 - Not Received, 1 - Received)
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/
@@ -945,14 +896,14 @@ typedef struct {
     Bit 1: Surprise Clock Stop Interrupt (0 - Not Received, 1 - Received)
     Bit 2: Write Data Flush Complete (0 - Not Completed, 1 - Completed)
     Bit 3: S4 Power State (0 - Not Received, 1 - Received)
-    Bit 4: PM Idle (0 - Not Received, 1 - Received)
+    Bit 4: PM Idle or SRE Clock Stop (0 - Not Received, 1 - Received)
     Bit 5: Surprise Reset (0 - Not Received, 1 - Received)
     Bit 6-23: Reserved
   **/
   LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED UnlatchedLastShutdownExtendedDetails;
 
   TEMPERATURE MaxMediaTemperature;      //!< The highest die temperature reported in degrees Celsius.
-  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature repored in degrees Celsius.
+  TEMPERATURE MaxControllerTemperature; //!< The highest controller temperature reported in degrees Celsius.
 
   UINT8 ThermalThrottlePerformanceLossPercent; //!< The average loss % due to thermal throttling since last read in current boot
   UINT8 Reserved1[41];
@@ -997,8 +948,8 @@ typedef struct {
     } Separated;
   } AlarmTrips;
 
-  TEMPERATURE MediaTemperature;      //!< Current temperature in Celcius. This is the highest die temperature reported.
-  TEMPERATURE ControllerTemperature; //!< Current temperature in Celcius. This is the temperature of the controller.
+  TEMPERATURE MediaTemperature;      //!< Current temperature in Celsius. This is the highest die temperature reported.
+  TEMPERATURE ControllerTemperature; //!< Current temperature in Celsius. This is the temperature of the controller.
 
   UINT32 LatchedDirtyShutdownCount;     //!< Number of times the DIMM Last Shutdown State (LSS) was non-zero.
   UINT8 AITDRAMStatus;            //!< The current state of the AIT DRAM (0 - failure occurred, 1 - loaded)
@@ -1139,7 +1090,7 @@ typedef struct {
 **/
 typedef struct {
   UINT8  CmdOpcode;
-  UINT8  CmdSubcode;
+  UINT8  CmdSubOpcode;
   UINT16 Percent;
   UINT32 EstimatedTimeLeft;
   UINT8  Status;
@@ -1172,7 +1123,7 @@ enum GetErrorLogPayloadReturn {
 /**
   Transaction type that caused error. Limited to 64 transaction types
 **/
-enum GetErrorTransacitonType {
+enum GetErrorTransactionType {
   ErrorTransaction2LMRead        = 0x00,
   ErrorTransaction2LMWrite       = 0x01,
   ErrorTransactionPMRead         = 0x02,
@@ -1266,7 +1217,7 @@ typedef struct {
       UINT8           : 1;    //!< Reserved
       UINT8 Viral     : 1;    //!< Indicates Viral was signaled for this error
       UINT8           : 3;    //!< Reserved
-    } Spearated;
+    } Separated;
   } ErrorFlags;
   UINT8  TransactionType;     //!< Indicates what transaction caused the error
   UINT16 SequenceNum;
@@ -1378,13 +1329,13 @@ typedef struct {
         Bit 4: VDDQ (0 - 1.2V (default), 1 - reserved for low voltage)
         Bit 5: Write Preamble (0 - 1 nCk (default), 1 - 2 nCk)
         Bit 6: Read Preamble (0 - 1 nCk (default), 1 - 2 nCk)
-        Bit 7: Gate PLL (0 - PLL's Un-Gated, 1 - PLL's Gated)
+        Bit 7: Gate PLL (0 - PLLs Un-Gated, 1 - PLLs Gated)
       **/
       UINT8 OperatingFrequency : 4; //!< Valid values above.
       UINT8 Vddq               : 1; //!< Encoding for DDRT voltage
       UINT8 WritePreamble      : 1; //!< DDRT Mode Register for Write Preamble.
       UINT8 ReadPreamble       : 1; //!< DDRT Mode Register for Read Preamble.
-      UINT8 GatePll            : 1; //!< This denotes wheter the FW is gating ppl's for programming.
+      UINT8 GatePll            : 1; //!< This denotes whether the FW is gating PLLs for programming.
     } Separated;
   } DdrtIoInfo;
   /**
@@ -1559,7 +1510,7 @@ Sub-Opcode:  0x00h (System Time)
 typedef struct {
   UINT64 UnixTime;     //!< The number of seconds since 1 January 1970
   UINT8 Reserved[120];
-} PT_SYTEM_TIME_PAYLOAD;
+} PT_SYSTEM_TIME_PAYLOAD;
 
 /**
   Passthrough Output Payload:
@@ -1589,4 +1540,4 @@ typedef struct {
 }
 #endif
 
-#endif /* _NVMDIMMPASSTHRU_H_ */
+#endif /* _NVMDIMM_PASS_THRU_H_ */

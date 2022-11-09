@@ -626,7 +626,7 @@ EFI_STATUS SetKeyValueWideStr(DATA_SET_CONTEXT *DataSetCtx, const CHAR16 *Key, c
     }
     KeyVal->KeyValInfo.Key = CatSPrint(NULL, Key);
   }
-  //found the key, now free previous values (tostring and actual value)
+  //found the key, now free previous values (string and actual value)
   else {
     if ((KeyVal->ValueToString) && (KeyVal->ValueToString != KeyVal->Value)) {
       FreePool(KeyVal->ValueToString);

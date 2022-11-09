@@ -172,7 +172,7 @@ PfnValidateInfo(
     goto Finish;
   }
 
-  if (CompareMem(pInfo->Sig, PfnSig, PFNINFO_SIG_LEN) != 0) {
+  if (CompareMem(pInfo->Sig, PfnSig, PFN_INFO_SIG_LEN) != 0) {
     NVDIMM_DBG("Invalid PFN signature ");
     ReturnCode = EFI_ABORTED;
     goto Finish;

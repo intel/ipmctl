@@ -308,7 +308,7 @@ ShowCelCommand(
       goto Finish;
     }
 
-    // Retrieve DimmHandle and DimmIdindex for given DimmId
+    // Retrieve DimmHandle and DimmIdIndex for given DimmId
     ReturnCode = GetDimmHandleByPid(pDimms[DimmIndex].DimmID, pDimms, DimmCount, &DimmHandle, &DimmIdIndex);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);

@@ -43,7 +43,7 @@ EFI_STATUS preferences_set_var_string_wide(IN CONST CHAR16 *name,
 EFI_STATUS preferences_get_var_string_wide(IN CONST CHAR16    *name,
 	IN CONST EFI_GUID  guid,
 	OUT CHAR16         *value,
-	IN UINTN           *size );
+	IN UINTN          *size );
 
 EFI_STATUS preferences_set_var_string_ascii(IN CONST char *name,
 	IN CONST EFI_GUID guid, IN const char *value);

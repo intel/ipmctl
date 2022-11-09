@@ -1,29 +1,41 @@
 // Copyright (c) 2018, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
+ifdef::manpage[]
+PBR Overview(7)
+===============
+
+NAME
+----
+ipmctl-pbr-overview - Describes concepts used in the PBR functionality of ipmctl
+
+DESCRIPTION
+-----------
+endif::manpage[]
+
 Playback and Record (PBR) is a capability included to enable efficient reproduction and debug
 of issues a user may encounter. The capability is designed to capture the current state of
-the platform as it relates to DCPMMs, and all interactions with the DCPMM firmware. This data
+the platform as it relates to PMem modules, and all interactions with the PMem module firmware. This data
 can then be stored in a file and sent to the development team for rapid reproduction and debug.
 
 The PBR file contains the following:
 
-- ACPI tables: NFIT, PCAT and PMTT
-- SMBIOS tables
-- Raw firmware command response data
+* ACPI tables: NFIT, PCAT and PMTT
+* SMBIOS tables
+* Raw firmware command response data
 
-[.lead]
+[role="lead"]
 *Theory of operation: Recording*
 
-. Start a recording session (start -session)
+. Start a recording session (start -session).
 ifndef::os_build[]
-. Manually unload the Intel DC Persistent Memory Driver
-. Manually load the Intel DC Persistent Memory Driver
+. Manually unload the Intel(R) Optane(TM) Persistent Memory Driver.
+. Manually load the Intel(R) Optane(TM) Persistent Memory Driver.
 endif::os_build[]
-. Execute all commands to be included in session
-. Save the recording to a file (dump -session)
-. Stop the recording session (stop -session)
-. Send PBR file(s) to support personnel for analysis
+. Execute all commands to be included in session.
+. Save the recording to a file (dump -session).
+. Stop the recording session (stop -session).
+. Send PBR files to support personnel for analysis.
 
 ifndef::os_build[]
 NOTE: PBR functionality has some differences in the UEFI shell environment. General
@@ -31,20 +43,22 @@ usage remains the same as OS shell usage, but the additional steps to unload and
 driver are required to capture driver initialization.
 endif::os_build[]
 
-[.lead]
+[role="lead"]
 *Example Recording Sequence*
 
 To record CLI commands you begin by starting a recording session.
 
-```
+[listing]
+--
 # ipmctl start -session -mode record
 
 Setting to record mode.
-```
+--
 
 All commands executed from this point forward will be added to the recording session.
 
-```
+[listing]
+--
 # ipmctl show -dimm 1
 Warning - Executing in recording mode!
 
@@ -77,23 +91,26 @@ Warning - Executing in recording mode!
  0x0001 | PowerCycles                 | 46
  0x0001 | FwErrorCount                | 2
  0x0001 | UnlatchedDirtyShutdownCount | 26
-```
+--
 
 To preserve the session for later playback, dump the session to a file.
 
-```
+[listing]
+--
 # ipmctl dump -destination myrecording.pbr -session
 
 Warning - Executing in recording mode!
 
 Successfully dumped 101405 bytes to file.
-```
+--
+Remember to stop the session when you are done recording.
+
+NOTE: Stopping a session frees all recording data saved, which is why there is a verify prompt. To skip this verify prompt, use the -force option.
 
 NOTE: Session related commands are ignored by the recording/playback mechanism.
 
-Don't forget to stop the session when you're done recording. Note, stopping a session frees all recording data saved, thus the prompt to verify (use -force option to skip check).
-
-```
+[listing]
+--
 # ipmctl stop -session
 
 Warning - Executing in recording mode!
@@ -103,42 +120,45 @@ Stopping a session will free all recording content.
 Do you want to continue? [y/n] y
 
 Stopped PBR session.
-```
+--
 
-[.lead]
+[role="lead"]
 *Theory of operation: Playback*
 
-. Load the recorded session (load -session)
-. Start playback to execute commands all at once or individually (start -session)
-. Debug as necessary
-. Stop the playback session (stop -session)
+. Load the recorded session (load -session).
+. Start playback to execute commands all at once or individually (start -session).
+. Debug as necessary.
+. Stop the playback session (stop -session).
 
-[.lead]
+[role="lead"]
 *Example Playback Sequence*
 
 Load the existing PBR file.
 
-```
-# ipmctl load -source myrecording.pbr -session
+[listing]
+--
+# ipmctl load -listing myrecording.pbr -session
 Successfully loaded 35175 bytes to session buffer.
-```
+--
 
 To examine the recorded command sequence, show the session.
 
-```
+[listing]
+--
 # ipmctl show -session
  TagID | Args
 =======================================
  0x0*  | show -dimm 1
  0x1   | show -dimm -firmware
  0x2   | show -dimm 1 -sensor
-```
+--
 
 During playback, all the commands can be run at once or individually.
 
 To run all the commands at once, use playback mode.
 
-```
+[listing]
+--
 # ipmctl start -session -mode playback
  DimmID | Capacity    | LockState | HealthState | FWVersion
 ===============================================================
@@ -164,7 +184,7 @@ To run all the commands at once, use playback mode.
  0x0001 | PowerCycles                 | 46
  0x0001 | FwErrorCount                | 2
  0x0001 | UnlatchedDirtyShutdownCount | 26
-```
+--
 
 To run the commands individually (one at a time), use playback_manual mode.
 
@@ -175,7 +195,8 @@ that will be executed next.
 To set the next command to be executed, use the -tag option. In this example,
 the command associated with tag 1 will be set as next.
 
-```
+[listing]
+--
 # ipmctl start -session -mode playback_manual -tag 1
 Warning - Executing in playback mode!
 
@@ -189,12 +210,13 @@ Warning - Executing in playback mode!
  0x0   | show -dimm 1
  0x1*  | show -dimm -firmware
  0x2   | show -dimm 1 -sensor
-```
+--
 
 Now the command 'show -dimm -firmware' can be run and the next command to be executed
 will advance to tag 2.
 
-```
+[listing]
+--
 # ipmctl show -dimm -firmware
 Warning - Executing in playback mode!
 
@@ -213,16 +235,18 @@ Warning - Executing in playback mode!
  0x0   | show -dimm 1
  0x1   | show -dimm -firmware
  0x2*  | show -dimm 1 -sensor
-```
+--
 
 When done with the playback session, use 'stop -session' to disable the
 playback mode and resume normal operation.
 
-```
+[listing]
+--
 # ipmctl stop -session
 Warning - Executing in playback mode!
 
 Stopping a session will free all recording content.
 Do you want to continue? [y/n] y
 Stopped PBR session.
-```
+--
+

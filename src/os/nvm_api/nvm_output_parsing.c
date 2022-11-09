@@ -643,6 +643,7 @@ int process_output(
       {
          output_to_esx_xml_results(fd);
       }
+      free(dictionaries);
       return 0;
    }
    else if (DiagView == type)
@@ -681,7 +682,7 @@ TestName:
             cur_dict = &dictionaries[num_dictionaries];
             ++num_dictionaries;
          }
-        
+
          state = NULL;
          tok = os_wcstok(trimmed_line, KEY_VALUE_TOK_DELIM, &state);
          if (tok == NULL)

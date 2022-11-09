@@ -249,6 +249,13 @@ ShowErrorCommand(
   ZeroMem(ErrorsArray, sizeof(ErrorsArray));
   ZeroMem(DimmStr, sizeof(DimmStr));
 
+  ReturnCode = InitializeCommandStatus(&pCommandStatus);
+  if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
+    NVDIMM_DBG("Failed on InitializeCommandStatus");
+    goto Finish;
+  }
+
   if (pCmd == NULL) {
     ReturnCode = EFI_INVALID_PARAMETER;
     NVDIMM_DBG("pCmd parameter is NULL.\n");
@@ -303,15 +310,8 @@ ShowErrorCommand(
     goto Finish;
   }
 
-  ReturnCode = InitializeCommandStatus(&pCommandStatus);
-  if (EFI_ERROR(ReturnCode) || pCommandStatus == NULL) {
-    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    NVDIMM_DBG("Failed on InitializeCommandStatus");
-    goto Finish;
-  }
-
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if (ReturnCode == EFI_NOT_FOUND) {
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -498,13 +498,13 @@ ShowErrorCommand(
           // Temperature Type
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
             if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_MEDIA) {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_MEDIA_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_MEDIA_STR);
             }
             else if (pThermalErrorInfo->Type == ERROR_THERMAL_TYPE_CONTROLLER) {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_CONTROLLER_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_CONTROLLER_STR);
             }
             else {
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_REPORTED_STR, ERROR_THERMAL_TYPE_UNKNOWN_STR);
+              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_THERMAL_TYPE_STR, ERROR_THERMAL_TYPE_UNKNOWN_STR);
             }
           }
           if (pDispOptions->AllOptionSet || (pDispOptions->DisplayOptionSet && ContainsValue(pDispOptions->pDisplayValues, ERROR_SEQUENCE_NUMBER))) {
@@ -607,7 +607,7 @@ ShowErrorCommand(
             case TRANSACTION_TYPE_PATROL_SCRUB:
               PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PATROL_SCRUB, HEX);
               PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, ERROR_MSG_EXTRA_SPACE);
-              PRINTER_SET_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PATROL_SCRUB_STR);
+              PRINTER_APPEND_KEY_VAL_WIDE_STR(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_PATROL_SCRUB_STR);
               break;
             case TRANSACTION_TYPE_CSR_READ:
               PRINTER_SET_KEY_VAL_UINT8(pPrinterCtx, pPath, ERROR_MEDIA_TRANSACTION_TYPE_STR, TRANSACTION_TYPE_CSR_READ, HEX);
@@ -720,6 +720,7 @@ Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
   FreeCommandStatus(&pCommandStatus);
+  FREE_CMD_DISPLAY_OPTIONS_SAFE(pDispOptions);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimms);
   NVDIMM_EXIT_I64(ReturnCode);

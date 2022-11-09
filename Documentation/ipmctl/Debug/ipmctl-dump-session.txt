@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Intel Corporation.
+// Copyright (c) 2021, Intel Corporation.
 // SPDX-License-Identifier: BSD-3-Clause
 
 ifdef::manpage[]
@@ -13,7 +13,9 @@ ipmctl-dump-session - Dumps content captured during a recording session.
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl dump [OPTIONS] -destination (path) -session
+--
 
 DESCRIPTION
 -----------
@@ -53,7 +55,9 @@ EXAMPLES
 Dump the contents associated with the current active recording session to
 /tmp/session.pbr.
 [listing]
+--
 ipmctl dump -destination /tmp/session.pbr -session
+--
 
 LIMITATIONS
 -----------
@@ -68,4 +72,6 @@ over the mailbox interface.
 SAMPLE OUTPUT
 -------------
 [listing]
+--
 Successfully dumped 1060619 bytes to file.
+--

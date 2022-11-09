@@ -39,12 +39,12 @@ WriteDumpFileHeader(
 #ifdef _MSC_VER
   // file is open in binary mode so have to include carriage return in Windows version
   AsciiSPrint(pHeaderBuffer, MAX_LINE_BYTE_LENGTH, "#SocketID,DimmHandle,Capacity,MemorySize,"
-                                  "AppDirect1Size,AppDirect1Format,AppDirect1Mirrored,AppDirect1Index,"
-                                  "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index\r\n");
+                                  "AppDirect1Size,AppDirect1Format,AppDirect1Index,"
+                                  "AppDirect2Size,AppDirect2Format,AppDirect2Index\r\n");
 #else
   AsciiSPrint(pHeaderBuffer, MAX_LINE_BYTE_LENGTH, "#SocketID,DimmHandle,Capacity,MemorySize,"
-                                  "AppDirect1Size,AppDirect1Format,AppDirect1Mirrored,AppDirect1Index,"
-                                  "AppDirect2Size,AppDirect2Format,AppDirect2Mirrored,AppDirect2Index\n");
+                                  "AppDirect1Size,AppDirect1Format,AppDirect1Index,"
+                                  "AppDirect2Size,AppDirect2Format,AppDirect2Index\n");
 #endif
 
   ReturnCode = WriteAsciiLine(FileHandle, pHeaderBuffer);
@@ -54,6 +54,7 @@ WriteDumpFileHeader(
   }
 
 Finish:
+  FREE_POOL_SAFE(pHeaderBuffer);
   return ReturnCode;
 }
 
@@ -118,9 +119,9 @@ DumpConfigToFile(
     /** Prepare a line to save to file **/
 #ifdef _MSC_VER
 // file is open in binary mode so have to include carriage return in Windows version
-    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d\r\n",
+    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%lu,%d,%lld,%lu,%d\r\n",
 #else
-    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%ld,%d,%d,%lld,%ld,%d,%d\n",
+    AsciiSPrint(pLineBuffer, MAX_LINE_BYTE_LENGTH, "%d,%d,%lld,%lld,%lld,%u,%d,%lld,%u,%d\n",
 #endif
         pDimmConfig->Socket,
         pDimmConfig->DeviceHandle,
@@ -128,11 +129,9 @@ DumpConfigToFile(
         BYTES_TO_GIB(pDimmConfig->VolatileSize),
         BYTES_TO_GIB(pDimmConfig->Persistent[0].PersistentSize),
         pDimmConfig->Persistent[FIRST_POOL_GOAL].InterleaveFormat.AsUint32,
-        (pDimmConfig->Persistent[FIRST_POOL_GOAL].Mirror) ? 1 : 0,
         pDimmConfig->Persistent[FIRST_POOL_GOAL].PersistentIndex,
         BYTES_TO_GIB(pDimmConfig->Persistent[SECOND_POOL_GOAL].PersistentSize),
         pDimmConfig->Persistent[SECOND_POOL_GOAL].InterleaveFormat.AsUint32,
-        (pDimmConfig->Persistent[SECOND_POOL_GOAL].Mirror) ? 1 : 0,
         pDimmConfig->Persistent[SECOND_POOL_GOAL].PersistentIndex);
 
     /** Save the line to file **/
@@ -334,28 +333,22 @@ GetLoadDimmConfigData(
       case 5:// Persistent1Format
         pDimmConfigData->Persistent[0].InterleaveFormat.AsUint32 = (UINT32) TmpValue;
         break;
-      case 6:// Persistent1Mirrored
-        pDimmConfigData->Persistent[0].Mirror = (TmpValue == 1) ? TRUE : FALSE;
-        break;
-      case 7:// Persistent1Index
+      case 6:// Persistent1Index
         pDimmConfigData->Persistent[0].PersistentIndex = (UINT16) TmpValue;
         break;
-      case 8:// Persistent2Size
+      case 7:// Persistent2Size
         pDimmConfigData->Persistent[1].PersistentSize = (UINT64) TmpValue;
         break;
-      case 9:// Persistent2Format
+      case 8:// Persistent2Format
         pDimmConfigData->Persistent[1].InterleaveFormat.AsUint32 = (UINT32) TmpValue;
         break;
-      case 10:// Persistent2Mirrored
-        pDimmConfigData->Persistent[1].Mirror = (TmpValue == 1) ? TRUE : FALSE;
-        break;
-      case 11:// Persistent2Index
+      case 9:// Persistent2Index
         pDimmConfigData->Persistent[1].PersistentIndex = (UINT16) TmpValue;
         break;
-      case 12:// LabelVersionMajor
+      case 10:// LabelVersionMajor
         pDimmConfigData->LabelVersionMajor = (UINT16) TmpValue;
         break;
-      case 13:// LabelVersionMinor
+      case 11:// LabelVersionMinor
         pDimmConfigData->LabelVersionMinor = (UINT16) TmpValue;
         break;
       default:
@@ -504,7 +497,6 @@ GetDimmsCurrentConfig(
           pIS->InterleaveFormatChannel;
       pDimmConfigs[Index].Persistent[Index2].InterleaveFormat.InterleaveFormatSplit.NumberOfChannelWays =
           pIS->InterleaveFormatWays;
-      pDimmConfigs[Index].Persistent[Index2].Mirror = pIS->MirrorEnable;
 
       /** Index of interleave sets assigning **/
       AssignedAlready = FALSE;
@@ -605,7 +597,7 @@ ValidateAndPrepareLoadConfig(
   UINT64 VolatileCapacity = 0;
   UINT64 ReservedCapacity = 0;
   BOOLEAN Reserved = TRUE;
-  BOOLEAN AppDirectInterlaved = FALSE;
+  BOOLEAN AppDirectInterleaved = FALSE;
   UINT16 TempMajor = 0;
   UINT16 TempMinor = 0;
   BOOLEAN UseDefaultLabel = FALSE;
@@ -658,14 +650,14 @@ ValidateAndPrepareLoadConfig(
         Reserved = FALSE;
       }
 
-      for (Index2 = 0; Index2 < SpecifiedDimmsOnSocketNum && !AppDirectInterlaved; Index2++) {
+      for (Index2 = 0; Index2 < SpecifiedDimmsOnSocketNum && !AppDirectInterleaved; Index2++) {
         if (Index == Index2) {
           continue;
         }
 
         if (pDimmsConfigOnSocket[Index]->Persistent[0].PersistentIndex ==
             pDimmsConfigOnSocket[Index2]->Persistent[0].PersistentIndex) {
-          AppDirectInterlaved = TRUE;
+          AppDirectInterleaved = TRUE;
         }
       }
     }
@@ -675,16 +667,13 @@ ValidateAndPrepareLoadConfig(
       ResetCmdStatus(pCommandStatus, NVM_ERR_LOAD_IMPROPER_CONFIG_IN_FILE);
       goto FinishClean;
     } else {
-      // This step rounds up the percentage to the ceiling. Example: if the percent says 26.3, we will convert
-      // that to 27 before giving it to driver as the driver will adjust the capacity later rounding it down.
-      *pVolatilePercent = (UINT32) ((ROUNDUP((VolatileCapacity * 100), DimmsCapacity)) / DimmsCapacity);
-
-      *pReservedPercent = (UINT32) ((ROUNDDOWN((ReservedCapacity * 100), DimmsCapacity)) / DimmsCapacity);
+      *pVolatilePercent = (UINT32) (ROUND_CLOSEST((VolatileCapacity * 100), DimmsCapacity));
+      *pReservedPercent = (UINT32) (ROUND_CLOSEST((ReservedCapacity * 100), DimmsCapacity));
     }
 
     if (Reserved) {
       *pPersistentMemType = PM_TYPE_RESERVED;
-    } else if (AppDirectInterlaved) {
+    } else if (AppDirectInterleaved) {
       *pPersistentMemType = PM_TYPE_AD;
     } else {
       *pPersistentMemType = PM_TYPE_AD_NI;

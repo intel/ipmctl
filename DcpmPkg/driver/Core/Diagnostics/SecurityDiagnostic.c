@@ -8,7 +8,7 @@
 extern NVMDIMMDRIVER_DATA *gNvmDimmData;
 
 #define ENCRYPTION_TEST_INDEX 0
-#define INCONSISTANCY_TEST_INDEX 1
+#define INCONSISTENCY_TEST_INDEX 1
 
 /**
   Run security diagnostics for the list of DIMMs, and appropriately
@@ -37,7 +37,6 @@ RunSecurityDiagnostics(
   UINT8 SecurityStateCount[SECURITY_STATES_COUNT];
   BOOLEAN InconsistencyFlag = FALSE;
   UINT8 Index = 0;
-
   NVDIMM_ENTRY();
 
   ZeroMem(SecurityStateCount, sizeof(SecurityStateCount));
@@ -48,7 +47,7 @@ RunSecurityDiagnostics(
     goto Finish;
   }
 
-  if (DimmCount == 0 || ppDimms == NULL) {
+  if (DimmCount == 0 || ppDimms == NULL || GetManageableDimmsCount(ppDimms, DimmCount) == 0) {
     ReturnCode = EFI_SUCCESS;
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_NO_MANAGEABLE_DIMMS), EVENT_CODE_801, DIAG_STATE_MASK_OK,
       &pResult->Message, &pResult->StateVal);
@@ -56,7 +55,7 @@ RunSecurityDiagnostics(
   }
 
   pResult->SubTestName[ENCRYPTION_TEST_INDEX] = CatSPrint(NULL, L"Encryption status");
-  pResult->SubTestName[INCONSISTANCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistency");
+  pResult->SubTestName[INCONSISTENCY_TEST_INDEX] = CatSPrint(NULL, L"Inconsistency");
   for (Index = 0; Index < DimmCount; ++Index) {
     if (ppDimms[Index] == NULL) {
       ReturnCode = EFI_INVALID_PARAMETER;
@@ -77,7 +76,7 @@ RunSecurityDiagnostics(
     if (EFI_ERROR(ReturnCode)) {
       NVDIMM_DBG("Failed on GetDimmSecurityState of DIMM ID 0x%x", ppDimms[Index]->DeviceHandle.AsUint32);
       APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_ABORTED_INTERNAL_ERROR), EVENT_CODE_805, DIAG_STATE_MASK_ABORTED,
-        &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX]);
+        &pResult->SubTestMessage[INCONSISTENCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTENCY_TEST_INDEX]);
       goto Finish;
     }
     ConvertSecurityBitmask(SecurityFlag, &DimmSecurityState);
@@ -98,7 +97,7 @@ RunSecurityDiagnostics(
 
   if (InconsistencyFlag) {
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_SECURITY_INCONSISTENT), EVENT_CODE_802, DIAG_STATE_MASK_WARNING,
-      &pResult->SubTestMessage[INCONSISTANCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTANCY_TEST_INDEX], pInconsistentSecurityStatesStr);
+      &pResult->SubTestMessage[INCONSISTENCY_TEST_INDEX], &pResult->SubTestStateVal[INCONSISTENCY_TEST_INDEX], pInconsistentSecurityStatesStr);
   }
 
   ReturnCode = EFI_SUCCESS;

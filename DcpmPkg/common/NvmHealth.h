@@ -55,6 +55,8 @@ typedef enum {
 
 #define NOT_APPLICABLE_SHORT_STR                              L"N/A"
 #define EXTENDED_ADR_FLUSH_COMPLETE        0b1111
+#define SX_EXTENDED_FLUSH_COMPLETE         0b1111
+
 /**
   Namespace PM Capable values
 **/
@@ -69,7 +71,7 @@ typedef enum {
 /** Overall PMem module Health Status */
 enum HEALTH_STATUS {
   HealthStatusNoncritical = BIT0,  //!< Non-Critical (maintenance required)
-  HealthStatusCritical = BIT1,     //!< Critcial (features or performance degraded due to failure)
+  HealthStatusCritical = BIT1,     //!< Critical (features or performance degraded due to failure)
   HealthStatusFatal = BIT2         //!< Fatal (data loss has occurred or is imminent)
 };
 
@@ -102,9 +104,10 @@ typedef union {
     UINT16 SurpriseClockStopInterrupt  : 1; //!< Surprise clock stop interrupt received
     UINT16 WriteDataFlushComplete      : 1; //!< Write Data Flush Complete
     UINT16 S4PowerState                : 1; //!< S4 Power State received
-    UINT16 PMIdle                      : 1; //!< PM Idle received
+    UINT16 PMIdle                      : 1; //!< PM Idle or SRE Clock Stop received
     UINT16 DdrtSurpriseReset           : 1; //!< Surprise Reset received
     UINT16 EnhancedAdrFlushStatus      : 4; //!< eADR Flush Status
+    UINT16 SxExtendedFlushStatus       : 4; //!< Sx Extended Flush Status
   } Separated;
 } LAST_SHUTDOWN_STATUS_DETAILS_EXTENDED;
 
@@ -136,7 +139,7 @@ typedef union {
 /**
   Init sensors array with default values
 
-  @param[in,out] DimmSensorsSet sensors array to fill with default values
+  @param[in,out] DimmSensorsSet Sensors array to fill with default values
 **/
 VOID
 InitSensorsSet(
@@ -155,7 +158,7 @@ GetSensorsInfo(
   The string buffer is static and the returned string is const so the
   caller should not make changes to the returned buffer.
 
-  @param[in] SensorType the enum sensor type.
+  @param[in] SensorType The enum sensor type.
     The SensorTypeAll will result in an "Unknown" return as this value
     is not translatable.
 **/
@@ -168,7 +171,7 @@ SensorTypeToString(
 /**
   Assign unit of measure for each SensorType.
 
-  @param[in] SensorType the enum sensor type.
+  @param[in] SensorType The enum sensor type.
     Default case provides scalar.
 **/
 CONST
@@ -217,7 +220,7 @@ ConvertHealthBitmask(
   @param[in] HealthState - Numeric Value of the Health State.
       Defined in NvmTypes.h
 
-  @retval String representation of the health state
+  @retval String Representation of the health state
 **/
 EFI_STRING
 HealthToString(

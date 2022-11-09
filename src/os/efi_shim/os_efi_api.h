@@ -45,6 +45,8 @@ typedef struct _pass_thru_record_resp
   UINT8 Output[];
 }pass_thru_record_resp;
 
+EFI_STATUS ConvertAsciiStrToUnicode(const CHAR8 * AsciiStr, CHAR16 * UnicodeStr, UINTN UnicodeStrMaxLength);
+
 /**
 Gets the current timestamp in terms of milliseconds
 **/
@@ -259,19 +261,5 @@ UnicodeSPrint(
 UINT32
 get_first_arg_from_va_list(VA_LIST args);
 
-
-/**
-  Fill SmBios structures for first and bound entry
-
-  @param[out] pSmBiosStruct - pointer for first SmBios entry
-  @param[out] pBoundSmBiosStruct - pointer for nonexistent (one after last) SmBios entry
-  @param[out] pSmbiosVersion - pointer to the version of SMBIOS tables retrieved
-**/
-EFI_STATUS
-GetFirstAndBoundSmBiosStructPointer(
-  OUT SMBIOS_STRUCTURE_POINTER *pSmBiosStruct,
-  OUT SMBIOS_STRUCTURE_POINTER *pLastSmBiosStruct,
-  OUT SMBIOS_VERSION *pSmbiosVersion
-);
 
 #endif //OS_EFI_API_H_

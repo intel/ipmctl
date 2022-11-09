@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _DRIVERHEALTH_H_
-#define _DRIVERHEALTH_H_
+#ifndef _DRIVER_HEALTH_H_
+#define _DRIVER_HEALTH_H_
 
 #include <Uefi.h>
 #include <Protocol/DriverHealth.h>
@@ -27,4 +27,4 @@ GetDimmHealthStatus (
 
 extern EFI_GUID gNvmDimmDriverHealthGuid;
 
-#endif /** _DRIVERHEALTH_H_ **/
+#endif /** _DRIVER_HEALTH_H_ **/

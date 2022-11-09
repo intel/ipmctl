@@ -16,6 +16,7 @@
 #ifdef OS_BUILD
 #include <os.h>
 #endif
+#include <Version.h>
 #define SUCCESSFULLY_DUMPED_BUFFER_MSG    L"Successfully dumped %d bytes to file."
 
 /**

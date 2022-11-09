@@ -13,12 +13,14 @@ ipmctl-show-topology - Shows the topology of the memory installed
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl show [OPTIONS] -topology [TARGETS]
+--
 
 DESCRIPTION
 -----------
 Shows the topology of the memory installed in the host server. Use the command
-ipmctl-show-device to view more detailed information about a PMem module.
+ipmctl-show-dimm to view more detailed information about a PMem module.
 
 OPTIONS
 -------
@@ -61,25 +63,28 @@ TARGETS
   socket target and one or more comma separated socket identifiers. The default
   is to display all sockets.
 
-NOTE: If ACPI PMTT table is not present, then DDR4 memory will not be
+NOTE: If ACPI PMTT table is not present, then DDR memory will not be
 displayed in the filtered socket list.
 
 EXAMPLES
 --------
 Displays the system memory topology.
 [listing]
+--
 ipmctl show -topology
+--
 
 RETURN DATA
 -----------
-Displays a table with the attributes listed below for each memory PMem module installed
+Displays a table with the attributes listed below for each memory module installed
 in the host server.
 
 MemoryType::
   (Default) The DIMM type. One of:
-  - Unknown
-  - DDR4
-  - Logical Non-volatile Device
+  * Unknown
+  * DDR4
+  * DDR5
+  * Logical Non-volatile Device
 
 Capacity::
   (Default) The raw capacity of the PMem module as reported in the SMBIOS Type 17

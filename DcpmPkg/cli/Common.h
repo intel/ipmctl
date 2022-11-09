@@ -39,7 +39,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define DASH_STR                    L"-"
 
 #define MAX_FILE_PATH_LEN           512
-#define MAX_FILE_SYSTEM_STRUCT_SIZE 4096
+#define MAX_FILE_SYSTEM_STRUCT_SIZE BLOCKSIZE_4K
 #define MAX_SHELL_PROTOCOL_HANDLES  2
 
 #define PROGRESS_EVENT_TIMEOUT    EFI_TIMER_PERIOD_SECONDS(1)
@@ -92,8 +92,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_REGION_TO_SOCKET_MAPPING      L"The specified region id might not exist on the specified Socket(s).\n"
 #define CLI_ERR_PCD_CORRUPTED                 L"Error: Unable to complete operation due to existing PCD Configuration partition corruption. Use create -f -goal to override current PCD and create goal."
 #define CLI_ERR_OPENING_PBR_PROTOCOL          L"Error: Communication with the device driver failed.  Failed to obtain PBR protocol."
-#define CLI_ERR_NMFM_LOWER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is below the recommended NM:FM limit of 1:%ls"
-#define CLI_ERR_NMFM_UPPER_VIOLATION          L"WARNING! The requested memory mode size for 2LM goal is above the recommended NM:FM limit of 1:%d"
 
 #define CLI_WARNING_CLI_DRIVER_VERSION_MISMATCH               L"Warning: There is a CLI and Driver version mismatch. Behavior is undefined."
 
@@ -128,7 +126,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_PROPERTY_VALUE_MODE                 L"Syntax Error: Incorrect value for property Mode."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_RAW_CAPACITY         L"Syntax Error: Incorrect value for property Size."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ERASE_TYPE           L"Syntax Error: Incorrect value for property EraseType."
-#define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT_MULT L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstantMultiplier."
 #define CLI_ERR_INCORRECT_VALUE_FOR_PROPERTY_AVG_PWR_REPORTING_TIME_CONSTANT      L"Syntax Error: Incorrect value for property AveragePowerReportingTimeConstant."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_LEVEL                L"Syntax Error: Incorrect value for property Level."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_COUNT                L"Syntax Error: Incorrect value for property Count."
@@ -138,7 +135,6 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_ENABLED_STATE        L"Syntax Error: Incorrect value for property AlarmThreshold."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_NS_LABEL_VERSION     L"Syntax Error: Incorrect value for property NamespaceLabelVersion."
 #define CLI_ERR_INCORRECT_VALUE_PROPERTY_CONFIG               L"Syntax Error: Incorrect value for property Config."
-#define CLI_ERR_INCORRECT_VALUE_PROPERTY_CCONFIG              L"Syntax Error: Incorrect value for property Config."
 #define CLI_ERR_INCORRECT_VALUE_TARGET_TOKEN_ID               L"Syntax Error: Incorrect value for target -tokens."
 #define CLI_ERROR_POISON_TYPE_WITHOUT_ADDRESS                 L"Syntax Error: Poison type property should be followed by poison address."
 #define CLI_ERROR_CLEAR_PROPERTY_NOT_COMBINED                 L"Syntax Error: Clear property should be given in combination with other error injection properties."
@@ -150,7 +146,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_OPTIONS_EXAMINE_USED_TOGETHER                 L"Syntax Error: Options -x and -examine can not be used together."
 #define CLI_ERR_OPTIONS_FORCE_USED_TOGETHER                   L"Syntax Error: Options -f and -force can not be used together."
 #define CLI_ERR_VALUES_APPDIRECT_SIZE_USED_TOGETHER           L"Syntax Error: Option values AppDirectSize and AppDirect1Size can not be used together."
-#define CLI_ERR_VALUES_APPDIRECT_INDECES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together."
+#define CLI_ERR_VALUES_APPDIRECT_INDICES_USED_TOGETHER        L"Syntax Error: Option values AppDirectIndex and AppDirect1Index can not be used together."
 #define CLI_ERR_PROPERTIES_CAPACITY_BLOCKCOUNT_USED_TOGETHER  L"Syntax Error: Properties Capacity and BlockCount can not be used together."
 
 #define CLI_ERR_PROPERTIES_MEMORYMODE_RESERVED_TOO_LARGE      L"Syntax Error: Properties MemoryMode and Reserved cannot sum greater than 100%%%%" //%%%% because format string is processed twice
@@ -175,6 +171,7 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 #define CLI_ERR_MISSING_PASSPHRASE_PROPERTY                       L"Syntax Error: Passphrase property not provided."
 #define CLI_ERR_DEFAULT_OPTION_NOT_COMBINED                       L"Syntax Error: Default option should be given in combination with master option."
 #define CLI_ERR_DEFAULT_OPTION_PASSPHRASE_PROPERTY_USED_TOGETHER  L"Syntax Error: Passphrase property and default option cannot be used together."
+#define CLI_ERR_DEFAULT_NOT_SUPPORTED_FIRMWARE_REV                L"Default option for Master Passphrase is only supported for setting Master Passphrase on at least one of the " PMEM_MODULES_STR "."
 
 #define CLI_ERR_FORCE_REQUIRED                                    L"Error: This command requires force option."
 #define CLI_ERR_INVALID_BLOCKSIZE_FOR_CAPACITY                    L"Error: Capacity property can only be used with 512 or 4096 bytes block size."
@@ -263,7 +260,10 @@ typedef struct _CMD_DISPLAY_OPTIONS {
 
 #define ERROR_CHECKING_MIXED_SKU    L"Error: Could not check if SKU is mixed."
 #define WARNING_DIMMS_SKU_MIXED     L"Warning: Mixed SKU detected. Driver functionalities limited.\n"
-
+/**
+  This prevents use of strlen on NULL string. StrLen fn in MdePkg has an assert if it is null.
+**/
+#define StrLen(Str) (((void *)(Str)==NULL)?(0):(StrLen(Str)))
 /**
   sizeof returns the number of bytes that the array uses.
   We need to divide it by the length of a single pointer to get the number of elements.
@@ -476,10 +476,10 @@ CheckDisplayList(
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetManageableDimmsNumberAndId(
@@ -498,10 +498,10 @@ GetManageableDimmsNumberAndId(
   @param[out] DimmIdsCount  is the pointer to variable, where number of dimms will be stored.
   @param[out] ppDimmIds is the pointer to variable, where IDs of dimms will be stored.
 
-  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be estabilished
+  @retval EFI_NOT_FOUND if the connection with NvmDimmProtocol can't be established
   @retval EFI_OUT_OF_RESOURCES if the memory allocation fails.
   @retval EFI_INVALID_PARAMETER if number of dimms or dimm IDs have not been assigned properly.
-  @retval EFI_SUCCESS if succefully assigned number of dimms and IDs to variables.
+  @retval EFI_SUCCESS if successfully assigned number of dimms and IDs to variables.
 **/
 EFI_STATUS
 GetAllManageableDimmsNumberAndId(
@@ -600,6 +600,18 @@ GetDeviceAndFilePath(
   IN OUT CHAR16 *pOutFilePath,
   IN OUT EFI_DEVICE_PATH_PROTOCOL **ppDevicePath
   );
+
+/**
+  Match driver command status to CLI return code
+
+  @param[in] Status - NVM_STATUS returned from driver
+
+  @retval - Appropriate EFI return code
+**/
+EFI_STATUS
+MatchCliReturnCode (
+  IN     NVM_STATUS Status
+ );
 
 /**
   Get free space of volume from given path
@@ -755,20 +767,6 @@ ConsoleInput(
   );
 
 /**
-  Check all dimms if SKU conflict occurred.
-
-  @param[out] pSkuMixedMode is a pointer to a BOOLEAN value that will
-    represent the presence of SKU mixed mode
-
-  @retval EFI_INVALID_PARAMETER Input parameter was NULL
-  @retval EFI_SUCCESS All Ok
-**/
-EFI_STATUS
-IsSkuMixed(
-     OUT BOOLEAN *pSkuMixedMode
-  );
-
-/**
   Print Load Firmware progress for all DIMMs
 
   @param[in] ProgressEvent EFI Event
@@ -847,6 +845,7 @@ AllDimmsInListInSupportedConfig(
   @param[in] AllDimmCount Size of the pAllDimms array
   @param[in] pDimmsListToCheck Pointer to the array of DimmIDs to check
   @param[in] DimmsToCheckCount Size of the pDimmsListToCheck array
+  @param[in] SkipFIS32Dimms indicates that Dimms with FIS 3.2 or above should always pass
 
   @retval TRUE if all Dimms in pDimmsListToCheck array have master passphrase enabled
   @retval FALSE if at least one DIMM does not have master passphrase enabled
@@ -856,13 +855,14 @@ AllDimmsInListHaveMasterPassphraseEnabled(
   IN     DIMM_INFO *pAllDimms,
   IN     UINT32 AllDimmCount,
   IN     UINT16 *pDimmsListToCheck,
-  IN     UINT32 DimmsToCheckCount
+  IN     UINT32 DimmsToCheckCount,
+  IN     BOOLEAN SkipFIS32Dimms
   );
 
 /**
    Get Dimm identifier preference
 
-   @param[out] pDimmIdentifier Variable to store Dimm identerfier preference
+   @param[out] pDimmIdentifier Variable to store Dimm identifier preference
 
    @retval EFI_SUCCESS Success
    @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -876,7 +876,7 @@ GetDimmIdentifierPreference(
   Get Dimm identifier as string based on user preference
 
   @param[in] DimmId Dimm ID as number
-  @param[in] pDimmUid Dimmm UID as string
+  @param[in] pDimmUid Dimm UID as string
   @param[out] pResultString String representation of preferred value
   @param[in] ResultStringLen Length of pResultString
 
@@ -1063,5 +1063,16 @@ EFI_STATUS AddElement(
   IN OUT UINT32 *pElementCount,
   IN UINT16 newElement,
   IN UINT32 maxElements);
+
+/**
+  Checks whether the FW on the dimm restricts executing commands
+  with the default Master Passphrase
+
+  @param[in]     DimmInfo is the information about the dimm to check
+
+  @retval whether default is restricted by the FW's API version
+**/
+BOOLEAN IsDefaultMasterPassphraseRestricted(
+  IN DIMM_INFO DimmInfo);
 
 #endif /** _COMMON_H_ **/

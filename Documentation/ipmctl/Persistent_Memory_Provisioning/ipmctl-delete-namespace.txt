@@ -1,0 +1,104 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-delete-namespace(1)
+==========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-delete-namespace - Deletes one or more existing namespaces
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl delete [OPTIONS] -namespace [TARGETS]
+--
+
+DESCRIPTION
+-----------
+Deletes one or more existing namespaces. All data on the deleted namespaces
+becomes inaccessible.
+
+NOTE: Changing the namespace configuration is a destructive operation which may
+result in loss of data stored in the associated namespace. Therefore, data
+should be backed up to other storage before executing this command.
+
+NOTE: Deleting a namespace removes the logical OS mapping to the persistent
+memory data, but does not explicitly delete or modify user data found in
+persistent memory.
+
+
+OPTIONS
+-------
+-f::
+-force::
+  Deleting namespaces is a destructive operation which requires confirmation
+  from the user for each namespace. This option suppresses the confirmation.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-lpmb::
+  Used to specify large transport payload size for the current invocation of ipmctl.
+
+-spmb::
+  Used to specify small transport payload size for the current invocation of ipmctl.
+
+NOTE: The -lpmb and -spmb options are mutually exclusive and may not be used together.
+
+TARGETS
+-------
+-namespace [NamespaceIDs]::
+  Deletes specific namespaces by providing a comma separated list of one or more
+  namespace identifiers. The default is to delete all namespaces. Namespace
+  identifiers are limited to 64 characters.
+
+EXAMPLES
+--------
+Deletes namespace 0x02.
+[listing]
+--
+ipmctl delete -namespace 0x2
+--
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* Any associated file systems must be un-mounted.
+
+* The specified PMem modules must be manageable by the host software and unlocked if
+  security is enabled.
+
+RETURN DATA
+-----------
+For each namespace, the CLI will indicate the status of the operation. If a
+failure occurs when deleting multiple namespaces, the process will continue
+deleting the remaining namespaces.
+
+SAMPLE OUTPUT
+-------------
+[listing]
+--
+Delete namespace (NamespaceID): Success
+--
+
+[listing]
+--
+Delete namespace (NamespaceID Error (Code) -
+(Description) Delete namespace (NamespaceID): Success
+--

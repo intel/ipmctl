@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _DRIVERBINDING_H_
-#define _DRIVERBINDING_H_
+#ifndef _DRIVER_BINDING_H_
+#define _DRIVER_BINDING_H_
 
 /**
   Tests to see if this driver supports a given controller. If a child device is provided,
@@ -128,4 +128,4 @@ NvmDimmDriverDriverBindingStop(
   IN EFI_HANDLE *pChildHandleBuffer OPTIONAL
 );
 
-#endif /* _DRIVERBINDING_H_ */
+#endif /* _DRIVER_BINDING_H_ */

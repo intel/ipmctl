@@ -13,7 +13,9 @@ ipmctl-delete-goal - Deletes the memory allocation goal from PMem modules
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl delete [OPTIONS] -goal [TARGETS]
+--
 
 DESCRIPTION
 -----------
@@ -61,7 +63,7 @@ TARGETS
   more comma separated PMem module identifiers. The default is to delete the memory
   allocation goals from all manageable PMem modules.
 
--socket [SocketIds]::
+-socket [SocketIDs]::
   Deletes the memory allocation goal from the PMem modules on specific sockets by
   supplying the socket target and one or more comma separated socket
   identifiers. The default is to delete the memory allocation goals from
@@ -71,18 +73,20 @@ EXAMPLES
 --------
 Deletes the memory allocation goal from all PMem modules on all sockets.
 [listing]
+--
 ipmctl delete -goal
+--
 
 LIMITATIONS
 -----------
 In order to successfully execute this command:
 
-- The caller must have the appropriate privileges.
+* The caller must have the appropriate privileges.
 
-- The specified PMem modules must be manageable by the host software and unlocked if
+* The specified PMem modules must be manageable by the host software and unlocked if
   security is enabled.
 
-- Given socket and all specified PMem modules must contain a memory allocation goal.
+* Given socket and all specified PMem modules must contain a memory allocation goal.
 
 RETURN DATA
 -----------
@@ -94,7 +98,11 @@ message for those that succeeded.
 SAMPLE OUTPUT
 -------------
 [listing]
+--
 Delete memory allocation goal from PMem module (DimmID): Success
+--
 
 [listing]
+--
 Delete memory allocation goal from PMem module (DimmID): Error (Code) - (Description)
+--

@@ -22,17 +22,16 @@
 #define BETA_RELEASE                2
 #define TEST_RELEASE                3
 
-#define NVMDIMM_MAJOR_VERSION       1
+#define NVMDIMM_MAJOR_VERSION       3
 #define NVMDIMM_MINOR_VERSION       0
 #define NVMDIMM_MAJOR_API_VERSION   1
-#define NVMDIMM_MINOR_API_VERSION   0
+#define NVMDIMM_MINOR_API_VERSION   1
 
-#define NVMDIMM_RELEASE_TYPE        TEST_RELEASE
-#define NVMDIMM_RELEASE_NUMBER      0
-
-#define NVMDIMM_VERSION NVMDIMM_MAJOR_VERSION<<16 | \
-  NVMDIMM_MINOR_VERSION<<8 | NVMDIMM_RELEASE_TYPE<<4 | \
-  NVMDIMM_RELEASE_NUMBER
+#ifdef OS_BUILD
+#include <Version_OS_build.h>
+#else
+#include <Version_UEFI_build.h>
+#endif
 
 #define STRING_TO_WIDE(A, B) A##B
 #define WIDEN_UP_STRING(A) STRING_TO_WIDE(L,#A)
@@ -41,37 +40,6 @@
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
 
-#ifndef OS_BUILD
-#define NVMDIMM_VERSION_STRING \
-  DEFINE_TO_STRING(NVMDIMM_MAJOR_VERSION) L"." \
-  DEFINE_TO_STRING(NVMDIMM_MINOR_VERSION) L"." \
-  DEFINE_TO_STRING(NVMDIMM_RELEASE_TYPE) L"." \
-  DEFINE_TO_STRING(NVMDIMM_RELEASE_NUMBER)
-#else
-#define NVMDIMM_VERSION_STRING DEFINE_TO_STRING(__VERSION_NUMBER__)
-#define NVMDIMM_VERSION_STRING_A STRINGIZE(__VERSION_NUMBER__)
-#endif
-/**
-  Version number is BCD with format:
-  MMmmRr
-  M = Major version number
-  m = Minor version number
-  R = Release type (Alpha, Beta, Test, etc)
-  r = Release version
-**/
-#define NVMDIMM_CONFIG_MAJOR_VERSION  2
-#define NVMDIMM_CONFIG_MINOR_VERSION  0
-
-/**
-  Setting the proper release type based on the DEBUG/RELEASE build type.
-**/
-#define NVMDIMM_CONFIG_NORMAL_RELEASE 0
-#define NVMDIMM_CONFIG_DEBUG_RELEASE   1
-#ifndef MDEPKG_NDEBUG // If this is the debug build
-#define NVMDIMM_CONFIG_RELEASE_TYPE   NVMDIMM_CONFIG_DEBUG_RELEASE
-#else // Otherwise we have a release build
-#define NVMDIMM_CONFIG_RELEASE_TYPE   NVMDIMM_CONFIG_NORMAL_RELEASE
-#endif /**MDEPKG_NDEBUG **/
 
 #define NVMD_CONFIG_PROTOCOL_VERSION (UINT32)(((NVMDIMM_RELEASE_TYPE == TEST_RELEASE ? 1 : 0) << 31 | \
   (NVMDIMM_MINOR_VERSION & 0x7FFF) << 16 | (NVMDIMM_MAJOR_VERSION & 0xFFFF)))

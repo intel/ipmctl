@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#apply patches for linux builds
+./patch_OS.sh
+
 if [ "$#" -le 0 ]; then
 	echo "./rpmbuild.sh xx.xx.xx.xxxx purley | whitley"
 	exit 3

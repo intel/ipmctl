@@ -42,7 +42,7 @@ PbrGetData(
       is allocated.  Useful, when used with ppData.
    @param[in] Size: Byte size of pData
    @param[in] Singleton: Only one data object associated with Signature.
-      Data previously set will be overriden with this data object.
+      Data previously set will be overridden with this data object.
    @param[out] - ppData - May be NULL, otherwise will contain a pointer
       to the memory allocated in the recording buffer for this data object.
       Warning, this pointer is only guaranteed to be valid until the next

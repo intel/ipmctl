@@ -1,0 +1,64 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-smbios(1)
+=====================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-smbios - Shows the system SMBIOS tables related to the PMem modules.
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl show [OPTIONS] -smbios [TARGETS]
+--
+
+DESCRIPTION
+-----------
+Shows the system SMBIOS tables related to the PMem modules in the system.
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+TARGETS
+-------
+-smbios [17]::
+  The SMBIOS table to display. Limit to a specific table by supplying the table
+  type (from the SMBIOS specification). One of:
+  - 17 - Memory Device (Type 17)
+
+-dimm [DimmIDs]::
+  Restricts output to specific PMem modules by supplying the PMem module target and one or
+  more comma separated PMem module identifiers. The default is to display all PMem modules.
+
+EXAMPLES
+--------
+Show the type 17 SMBIOS table for all PMem module
+[listing]
+--
+ipmctl show -smbios 17
+--
+
+LIMITATIONS
+-----------
+None
+
+RETURN DATA
+-----------
+Dumps the contents of the SMBIOS tables for each PMem module. Refer to the SMBIOS
+specification Memory Device (Type 17) section for more information.

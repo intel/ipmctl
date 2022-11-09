@@ -6,7 +6,7 @@
 
 /**
  * @file NvmSharedDefs.h
- * @brief Definition of the NVM status codes
+ * @brief Definition of the Non-Volatile Memory (NVM) status codes.
  */
 
 #ifndef _NVM_SHARED_DEFS_H_
@@ -17,19 +17,19 @@
  */
 typedef enum _NvmStatusCode {
   NVM_SUCCESS                                       = 0,    ///< Success
-  NVM_SUCCESS_FW_RESET_REQUIRED                     = 1,    ///< Success, a power cycle is required to activate the FW.
+  NVM_SUCCESS_FW_RESET_REQUIRED                     = 1,    ///< Success, but FW reset required
   NVM_ERR_OPERATION_NOT_STARTED                     = 2,    ///< Error: Operation not started
   NVM_ERR_OPERATION_FAILED                          = 3,    ///< Error: Operation failed
   NVM_ERR_FORCE_REQUIRED                            = 4,    ///< Error: Force parameter required
   NVM_ERR_INVALID_PARAMETER                         = 5,    ///< Error: Invalid parameter
-  NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Commnand not supported by this SKU
+  NVM_ERR_COMMAND_NOT_SUPPORTED_BY_THIS_SKU         = 9,    ///< Error: Command not supported by this SKU
 
   NVM_ERR_DIMM_NOT_FOUND                            = 11,   ///< Error: PMem module not found
   NVM_ERR_DIMM_ID_DUPLICATED                        = 12,   ///< Error: PMem module ID duplicated
   NVM_ERR_SOCKET_ID_NOT_VALID                       = 13,   ///< Error: Socket ID not valid
   NVM_ERR_SOCKET_ID_INCOMPATIBLE_W_DIMM_ID          = 14,   ///< Error: Socket ID incompatible with PMem module ID
   NVM_ERR_SOCKET_ID_DUPLICATED                      = 15,   ///< Error: Socket ID duplicated
-  NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supproted by current SKU
+  NVM_ERR_CONFIG_NOT_SUPPORTED_BY_CURRENT_SKU       = 16,   ///< Error: Config Not supported by current SKU
   NVM_ERR_MANAGEABLE_DIMM_NOT_FOUND                 = 17,   ///< Error: Manageable PMem module not found
   NVM_ERR_NO_USABLE_DIMMS                           = 18,   ///< Error: No usable PMem modules due to all PMem modules being unmanageable, non-functional, or having a population issue
   NVM_ERR_DIMM_EXCLUDED                             = 19,   ///< Error: PMem module excluded as it is unmanageable, non-functional, or has a population issue.
@@ -69,7 +69,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SENSOR_CAPACITY_OUT_OF_RANGE              = 73,   ///< Error: Capacity out of range
   NVM_ERR_SENSOR_ENABLED_STATE_INVALID_VALUE        = 74,   ///< Error: Sensor invalid value
   NVM_ERR_ERROR_INJECTION_BIOS_KNOB_NOT_ENABLED     = 75,   ///< Error: BIOS error injection knob is not enabled
-  NVM_WARN_CLEARED_ERR_INJ_REQUIRES_REBOOT          = 76,   ///< Error: Reboot required for error inj clearing to take effect
+  NVM_SUCCESS_REQUIRES_POWER_CYCLE                  = 76,   ///< Success. A power cycle is required for all changes to take effect.
 
   NVM_ERR_MEDIA_NOT_ACCESSIBLE                      = 87,   ///< Error: Media not accessible
   NVM_ERR_MEDIA_DISABLED                            = 90,   ///< Error: Media disabled
@@ -77,15 +77,15 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PCD_CURR_CONF_MISSING                     = 92,   ///< Error: One or more PMem modules have invalid PCD data
 
   NVM_ERR_NMFM_RATIO_GREATER_THAN_ONE                   = 93,   ///< Error: The requested memory mode size is below the NM:FM limit of 1:1
-  NVM_WARN_NMFM_RATIO_LOWER_VIOLATION                   = 95,   ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:4
-  NVM_WARN_NMFM_RATIO_UPPER_VIOLATION                   = 96,   ///< Warning: The requested memory mode size is above the recommended NM:FM limit of 1:16
+  NVM_WARN_PMEM_MODULE_NOT_PAIRED_FOR_2LM               = 94,   ///< Warning: PMem module unusable for 2LM since it is not paired with a DDR on the iMc
+  NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to3_6            = 95,   ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:3.6
+  NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to16             = 96,   ///< Warning: The requested memory mode size is above the recommended NM:FM limit of 1:16
   NVM_WARN_GOAL_CREATION_SECURITY_UNLOCKED              = 97,   ///< Warning: Goal will not be applied unless security is disabled prior to platform firmware (BIOS) provisioning!
   NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED       = 98,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation
   NVM_WARN_REGION_MAX_AD_PM_INTERLEAVE_SETS_EXCEEDED    = 99,   ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Interleaved mode
   NVM_WARN_REGION_MAX_AD_NI_PM_INTERLEAVE_SETS_EXCEEDED = 100,  ///< Warning: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation for AD Non-Interleaved mode
-  NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interlaeved mode request when MaxPMInterleaveSetsPerDie limit exceeeded
+  NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED      = 101,  ///< Warning: Reducing the number of AppDirect2 (AD non-interleaved) regions created in AD interleaved mode request when MaxPMInterleaveSetsPerDie limit exceeded
   NVM_ERR_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED        = 102,  ///< Error: Interleave Sets cannot exceed MaxPMInterleaveSetsPerDie per Socket due to platform limitation (error if existing regions + new region goals for specific PMem modules greater then MaxPMInterleaveSetsPerDie limit)
-
   NVM_WARN_IMC_DDR_PMM_NOT_PAIRED                   = 104,  ///< Error: PMM and DDR4 missing on iMC
   NVM_ERR_PCD_BAD_DEVICE_CONFIG                     = 105,  ///< Error: Bad PCD config
   NVM_ERR_REGION_GOAL_CONF_AFFECTS_UNSPEC_DIMM      = 106,  ///< Error: Goal config affects unspecified PMem module
@@ -103,7 +103,7 @@ typedef enum _NvmStatusCode {
   NVM_ERR_PLATFORM_NOT_SUPPORT_SPECIFIED_INT_SIZES  = 117,   ///< Error: Platform does not support specified interleave sizes
   NVM_ERR_PLATFORM_NOT_SUPPORT_DEFAULT_INT_SIZES    = 118,   ///< Error: Platform does not support default interleave sizes
   NVM_ERR_REGION_NOT_HEALTHY                          = 119, ///< Error: Region not healthy
-  NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namesapce
+  NVM_ERR_REGION_NOT_ENOUGH_SPACE_FOR_PM_NAMESPACE    = 121, ///< Error: Not enough space for persistent namespace
   NVM_ERR_REGION_NO_GOAL_EXISTS_ON_DIMM               = 122, ///< Error: Goal does not exist on PMem module
   NVM_ERR_RESERVE_DIMM_REQUIRES_AT_LEAST_TWO_DIMMS  = 123,   ///< Error: Reserve PMem module requires at least 2 PMem modules
   NVM_ERR_REGION_GOAL_NAMESPACE_EXISTS                = 124, ///< Error: Namespace exists
@@ -149,6 +149,8 @@ typedef enum _NvmStatusCode {
 
   NVM_ERR_FAILED_TO_FETCH_ERROR_LOG                 = 200,  ///< Error: Failed to fetch error log
   NVM_SUCCESS_NO_ERROR_LOG_ENTRY                    = 201,  ///< Info: Request to retrieve entry was successful, however log was empty
+  NVM_SUCCESS_NO_COMMAND_ACCESS_POLICY_ENTRY        = 202,  ///< Info: Request to retrieve entry was successful, however no entries found
+  NVM_SUCCESS_NO_COMMAND_EFFECT_LOG_ENTRY           = 203,  ///< Info: Request to retrieve entry was successful, however log was empty
   NVM_ERR_SMART_FAILED_TO_GET_SMART_INFO            = 220,  ///< Error: Failed to get smart info
   NVM_WARN_SMART_NONCRITICAL_HEALTH_ISSUE           = 221,  ///< Warning: Non-critical health issue
   NVM_ERR_SMART_CRITICAL_HEALTH_ISSUE               = 222,  ///< Error: Critical health issue
@@ -165,6 +167,8 @@ typedef enum _NvmStatusCode {
   NVM_ERR_SMBIOS_DIMM_ENTRY_NOT_FOUND_IN_NFIT       = 241,  ///< Error:  SMBIOS entry not found in NFIT
 
   NVM_OPERATION_IN_PROGRESS                         = 250,  ///< Error: Operation in progress
+
+  NVM_ERR_INCOMPATIBLE_SKU_ON_MODULE                = 251,  ///< Error: This module's SKU is incompatible with the SKU(s) of other installed module(s).
 
   NVM_ERR_GET_PCD_FAILED                            = 260,  ///< Error: Get PCD failed
 
@@ -206,14 +210,17 @@ typedef enum _NvmStatusCode {
   NVM_ERR_UNSUPPORTED_COMMAND                       = 309,  ///< Error: unsupported command
   NVM_ERR_DEVICE_ERROR                              = 310,  ///< Error: device error
   NVM_ERR_TRANSFER_ERROR                            = 311,  ///< Error: transfer error
-  NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: the FW was unable to stage and no long op code was recoverable
+  NVM_ERR_UNABLE_TO_STAGE_NO_LONGOP                 = 312,  ///< Error: FW image rejected during staging. Rerun FW update for rejection reason
   NVM_ERR_LONG_OP_UNKNOWN                           = 313,  ///< Error: a long operation code is unknown
   NVM_ERR_PCD_DELETE_DENIED                         = 314,  ///< Error: API not supported
   NVM_ERR_MIXED_GENERATIONS_NOT_SUPPORTED           = 315,  ///< Error: Operation does not work when PMem module that are different generations
   NVM_ERR_DIMM_HEALTHY_FW_NOT_RECOVERABLE           = 316,  ///< Error: An attempt to recover FW on a healthy PMem module
 
   NVM_ERR_PLATFORM_NOT_SUPPORT_MIXED_MODE           = 317,  ///< Error: Platform does not support mixed memory mode
-  NVM_ERR_INCOMPATIBLE_SOFTWARE_REVISION            = 318,  ///< Error: This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl.
+  NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to2          = 318,  ///< Warning: The requested memory mode size is below the recommended NM:FM limit of 1:2
+  NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to8          = 319,  ///< Warning: The requested memory mode size is above the recommended NM:FM limit of 1:8
+  NVM_ERR_MASTER_PASSPHRASE_NOT_SET                 = 320,  ///< Error: Master Passphrase is enabled but not set.
+  NVM_ERR_INCOMPATIBLE_SOFTWARE_REVISION            = 321,  ///< Error: This version of ipmctl is incompatible with the UEFI platform firmware. Please upgrade to a newer version of ipmctl.
   NVM_ERR_INIT_FAILED_NO_MODULES_FOUND              = 322,  ///< Error: Initialization failed. No PMem modules in the system.
   NVM_WARN_PMTT_TABLE_NOT_FOUND                     = 323,  ///< PMTT table is not found. BIOS might reject goal request upon reboot for SKU limit or NM:FM violation
   NVM_LAST_STATUS_VALUE
@@ -226,7 +233,7 @@ typedef struct _PMON_REGISTERS {
   - 0x0 - No Smart Data DDRT or Media.
   - 0x1 - DDRT Data only to be returned.
   - 0x2 - Media Data only to be returned.
-  - 0x3 - DDRT & Media Data to be returned.
+  - 0x3 - DDRT and Media Data to be returned.
   - All other values reserved.
   **/
   unsigned char       SmartDataMask;
@@ -247,11 +254,11 @@ typedef struct _PMON_REGISTERS {
   unsigned int        PMON14Counter;
   unsigned char       Reserved5[4];
   /**
-  DDRT Reads for current power cycle
+  DDR-T Reads for current power cycle
   **/
   unsigned long long  DDRTRD;
   /**
-  DDRT Writes for current power cycle
+  DDR-T Writes for current power cycle
   **/
   unsigned long long  DDRTWR;
   /**
@@ -263,11 +270,11 @@ typedef struct _PMON_REGISTERS {
   **/
   unsigned long long  MEWR;
   /**
-  Current Media temp
+  Current Media temperature
   **/
   unsigned short      MTP;
   /**
-  Current Controller temp
+  Current Controller temperature
   **/
   unsigned short      CTP;
   unsigned char       Reserved[20];

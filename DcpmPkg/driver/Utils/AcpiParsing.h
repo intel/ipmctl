@@ -69,10 +69,13 @@ extern GUID gSpaRangeMailboxCustomGuid;
 
 typedef enum {
   MEMORY_MODE_1LM = 0,
-  MEMORY_MODE_2LM = 1
+  MEMORY_MODE_2LM = 1,
+  MEMORY_MODE_1LM_PLUS_2LM = 2
 } MEMORY_MODE;
 
 typedef SUPPORTED_MEMORY_MODE3 MEMORY_MODE_CAPABILITIES;
+
+#define IS_BIOS_VOLATILE_MEMORY_MODE_2LM(VolatileMemoryMode) ((MEMORY_MODE_2LM == VolatileMemoryMode) || (MEMORY_MODE_1LM_PLUS_2LM == VolatileMemoryMode))
 
 /**
   ACPI Related Functions
@@ -161,6 +164,36 @@ GetLogicalSocketIdFromPmtt(
   IN     UINT32 SocketId,
   IN     UINT32 DieId,
   OUT    UINT32 *pLogicalSocketId
+  );
+
+/**
+  Check if the current population is a special non-por config supported when cross-tiling is enabled
+
+  @param[out] pNonPorCrossTileSupportedConfig pointer to non-por config supported boolean flag
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pNonPorCrossTileSupportedConfig is NULL
+  @retval EFI_NOT_FOUND Parsed PMTT table is NULL
+**/
+EFI_STATUS
+CheckIsNonPorCrossTileSupportedConfig(
+  OUT  BOOLEAN *pNonPorCrossTileSupportedConfig
+  );
+
+/**
+  Retrieve the platform topology information (iMCs per die, Channels per iMc)
+
+  @param[out] piMCsNumPerDie Pointer to number of iMCs per die
+  @param[out] pChannelsNumPeriMC Pointer to number of channels per iMC
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER Input parameter is NULL
+  @retval EFI_NOT_FOUND Parsed PMTT table pointer is NULL
+**/
+EFI_STATUS
+RetrievePlatformTopologyFromPmtt(
+  OUT UINT32 *piMCsNumPerDie,
+  OUT UINT32 *pChannelsNumPeriMC
   );
 
 /**
@@ -308,7 +341,7 @@ GetInterleaveTable(
 
   @param[in] Rdpa Device Region Physical Address to convert
   @param[in] pNvDimmRegionTable The NVDIMM region that helps describe this region of memory
-  @param[in] pInterleaveTable Interleave table referenced by the mdsparng_tbl
+  @param[in] pInterleaveTable Interleave table referenced by the MemDevToSpaRangeTable
   @param[out] SpaAddr output for SPA address
 
   A memory device could have multiple regions. As such we cannot convert
@@ -380,9 +413,9 @@ CheckIfBiosSupportsConfigChange(
   );
 
 /**
-  Check Memory Mode Capabilties from PCAT table type 0
+  Check Memory Mode Capabilities from PCAT table type 0
 
-  @param[out] pMemoryModeCapabilities pointer to memory mode capabilites
+  @param[out] pMemoryModeCapabilities pointer to memory mode capabilities
 
   @retval EFI_SUCCESS Success
   @retval EFI_INVALID_PARAMETER Input parameter is NULL
@@ -527,5 +560,33 @@ CheckIsMemoryModeAllowed(
 EFI_STATUS
 RetrieveMaxPMInterleaveSets(
   OUT  MAX_PMINTERLEAVE_SETS *pMaxPMInterleaveSets
+  );
+
+/**
+  Retrieve PCAT DDR Cache Size per channel in bytes from PCAT PlatformCapabilityInfo table
+
+  @param[out] pDDRCacheSize pointer to DDR Cache Size
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pDDRCacheSize is NULL
+  @retval EFI_NOT_FOUND DDRCacheSize not found
+**/
+EFI_STATUS
+RetrievePcatDDRCacheSize(
+  OUT  UINT64 *pDDRCacheSize
+  );
+
+/**
+  Check PCAT Cache Capabilities to see if cross-tile caching is supported
+
+  @param[out] pCrossTileCachingSupported pointer to cross-tile supported boolean flag
+
+  @retval EFI_SUCCESS Success
+  @retval EFI_INVALID_PARAMETER pCrossTileCachingSupported is NULL
+  @retval EFI_NOT_FOUND CrossTileCachingSupport not found
+**/
+EFI_STATUS
+CheckIsCrossTileCachingSupported(
+  OUT  BOOLEAN *pCrossTileCachingSupported
   );
 #endif

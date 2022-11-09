@@ -48,8 +48,8 @@ typedef struct _NVM_IS
   UINT64 Signature;
   UINT16 SocketId;                  //!< Identifies the processor socket containing the DCPMM
   UINT16 InterleaveSetIndex;
-  UINT16 RegionId;                 //!< Used to uniquely identify regions as InterleavesetIndex is not unique enough
-  UINT64 Size;                      //!< Current total capacity of the Interleave Setqq
+  UINT16 RegionId;                 //!< Used to uniquely identify regions as InterleaveSetIndex is not unique enough
+  UINT64 Size;                      //!< Current total capacity of the Interleave Set
   /**
     bit0 set - IS_STATE_INIT_FAILURE - Interleave Set or dimm region (one or more) initialization failure
     bit1 set - IS_STATE_DIMM_MISSING - dimm missing (serial number of dimm from the Platform Config Data not found
@@ -59,7 +59,6 @@ typedef struct _NVM_IS
   UINT16 InterleaveFormatChannel;
   UINT16 InterleaveFormatImc;
   UINT16 InterleaveFormatWays;
-  BOOLEAN MirrorEnable;
   LIST_ENTRY DimmRegionList;
   SpaRangeTbl *pSpaTbl;
   LIST_ENTRY AppDirectNamespaceList;
@@ -76,7 +75,6 @@ typedef struct _NVM_REGION {
   UINT16 RegionId;
   UINT16 Socket;
   UINT8 Type;
-  BOOLEAN MirrorEnable;
   DIMM *pDimmsBlockOnly[MAX_DIMMS_PER_SOCKET];
   UINT32 DimmsBlockOnlyNum;
   UINT64 BlockOnlySize;
@@ -98,7 +96,7 @@ typedef struct _REGION_GOAL_DIMM {
 typedef struct _REGION_GOAL {
   UINT32 SequenceIndex;       //!< Variable to keep an order of REGIONS on DIMMs
   UINT64 Size;                //!< Size of the pool in bytes
-  UINT8 InterleaveSetType;    //!< Type of interleave set: non-interleaved, interleaved, mirrored
+  UINT8 InterleaveSetType;    //!< Type of interleave set: non-interleaved, interleaved
   UINT8 ImcInterleaving;      //!< IMC interleaving as bit field
   UINT8 ChannelInterleaving;  //!< Channel interleaving as bit field
   UINT16 NumOfChannelWays;    //!< Number of channel ways as bit field
@@ -208,7 +206,7 @@ GetRegionById(
 
 /**
   Get Region List
-  Retruns the pointer to the region list.
+  Returns the pointer to the region list.
   It is also initializing the region list if it is necessary.
 
   @param[in] pRegionList Head of the list for Regions
@@ -249,7 +247,7 @@ FreeISResources(
 
   @param[in] pFitHead Fully populated NVM Firmware Interface Table
   @param[in] pDimm Target DIMM structure pointer
-  @param[in] pISList List of interleaveset formed so far
+  @param[in] pISList List of interleave sets formed so far
   @param[in] pNvDimmRegionMappingStructure The NVDIMM region that helps describe this region of memory
   @param[out] pRegionId The next consecutive region id
   @param[out] ppNewIS Interleave Set parent for new dimm region
@@ -277,7 +275,7 @@ InitializeDimmRegionFromNfit(
 
   @param[in] pCurDimm the DIMM from which Interleave Information table was retrieved
   @param[in] pDimmList Head of the list of all Intel NVM Dimm in the system
-  @param[in] pISList List of interleaveset formed so far
+  @param[in] pISList List of interleave sets formed so far
   @param[in] pIdentificationInfoTable Identification Information table
   @param[in] pInterleaveInfoTable Interleave information for the particular dimm
   @param[in] PcdConfRevision Revision of the PCD Config tables
@@ -368,13 +366,15 @@ RetrieveISFromInterleaveInformationTable(
   );
 
 /**
-  Clear previous pools goal configs and - if pools goal configs is specified - replace them with new one.
+  Clear previous regions goal configs and - if regions goal configs is specified - replace them with new one.
 
-  1. Clear previous pools goal configs on all affected dimms
-  2. [OPTIONAL] Send new pools goal configs to dimms
+  1. Clear previous regions goal configs on all affected dimms
+  2. [OPTIONAL] Send new regions goal configs to dimms
   3. Set information about synchronization with dimms
 
   @param[in] pDimmList Head of the list of all NVM DIMMs in the system
+  @param[in] DimmsNum Number of dimms in pDimmList
+  @param[in] ReservedSizeIsZero Indicate whether the reserved size is zero
   @param[out] pCommandStatus Pointer to command status structure
 
   @retval EFI_SUCCESS success
@@ -383,7 +383,9 @@ RetrieveISFromInterleaveInformationTable(
 **/
 EFI_STATUS
 ApplyGoalConfigsToDimms(
-  IN     LIST_ENTRY *pDimmList,
+  IN     DIMM **ppDimms,
+  IN     UINT32 DimmsNum,
+  IN     BOOLEAN ReservedSizeIsZero,
      OUT COMMAND_STATUS *pCommandStatus
   );
 
@@ -486,7 +488,6 @@ ADNamespaceMinAndMaxAvailableSizeOnIS(
   Retrieve goal configurations by using Platform Config Data
 
   @param[in, out] pDimmList Head of the list of all NVM DIMMs in the system
-  @param[in] Restore corrupt pcd
 
   @retval EFI_SUCCESS
   @retval EFI_INVALID_PARAMETER one or more parameters are NULL

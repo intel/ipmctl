@@ -39,11 +39,11 @@ A corrected version is being developed and will hopefully be available soon. Unt
 
 ## Releases
 
-01.00.00.xxxx (master_1_0 branch) is for Intel Optane Persistent Memory 100 Series
+01.00.00.xxxx  (master_1_0 branch) is for Intel Optane Persistent Memory 100 Series
 
 02.00.00.xxxx  (master_2_0 branch) is for Intel Optane Persistent Memory 200 Series (and is backwards compatible with 100 series) 
 
-The development branch contains what will likely become the 03.00.00.xxxx branch.
+03.00.00.xxxx  (master_3_0 branch) is for Intel Optane Persistent Memory 300 Series (and is backwards compatible with both the 100 and 200 series
 
 **Note**: Branches may differ fundamentally. Please pay close attention to README.md of the respective branch.
 
@@ -82,7 +82,40 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 
 **Note**: Each branch may require different building procedures. Please follow README.md of the respective branch.
 
-### Specific Instructions Reported as Working on SUSE for build in home directory
+### building latest (03.00.00.xxxx) on Linux
+1. clone the ipmctl and edk2 repositories:
+
+`git clone -b development https://github.com/intel/ipmctl.git`
+
+`git clone https://github.com/tianocore/edk2.git`
+
+`cd ipmctl`
+
+2. Give execution permissions to the .sh files:
+
+`chmod +x *.sh`
+
+4. Run updateedk.sh, this will copy relevant folders from edk2 into ipmctl
+
+`./updateedk.sh`
+
+5. Build the ipmctl rpms specifying the version number to use
+
+`./rpmbuild.sh 03.00.00.1234`
+
+### building latest (03.00.00.xxxx) on Windows
+
+Install Visual Studio 2017 (or newer). Be sure to install optional component:
+* Workloads -> Desktop Development with C++
+* Individual Components -> Compilers, build tools, and runtimes -> Visual C++ tools for CMake
+
+clone the ipmctl project
+
+Clone the edk2 repository and copy the directories BaseTools, MdeModulePkg, MdePkg and ShellPkg into the clone of the ipmctl project
+
+Open CMakeLists.txt as a CMake project in Visual Studio. See: https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio
+
+### Specific Instructions Reported as Working for 02.00.00.xxxx versions on SUSE for build in home directory
 
 Replace homedir with the actual account
 
@@ -100,7 +133,7 @@ Replace homedir with the actual account
 >
 > make all
 
-### Specific Instructions Reported as Working on RHEL7.6, CentOS7.6 and Fedora 30.
+### Specific Instructions Reported as Working for 02.00.00.xxxx versions on RHEL7.6, CentOS7.6 and Fedora 30.
 
 Ipmctl has dependency on libsafec-devel (for 1.x builds only), libndctl-devel and rubygem-asciidoctor
 *	copr/jhli repo has libipmctl and its dependency, libsafec-devel.
@@ -120,35 +153,5 @@ Ipmctl has dependency on libsafec-devel (for 1.x builds only), libndctl-devel an
 >	sudo yum install ndctl ndctl-libs ndctl-devel libsafec rubygem-asciidoctor
 *	Either Follow ipmctl make, rpmbuild instructions, or install the ipmctl package
 
-### Linux
 
-The latest stable Linux kernel version available is recommended.
-
-libndctl-devel package is required.
-
-All other dependencies are widely available.
-
-```
-mkdir output && cd output
-cmake -DRELEASE=ON -DCMAKE_INSTALL_PREFIX=/usr ..
-make -j all
-sudo make install
-```
-build artifacts can be found in output/release
-
-To build RPMs:
-
-```
-./rpmbuild.sh xx.xx.xx.xxxx
-```
-
-The RPMs will be in output/rpmbuild/RPMS/
-
-### Windows
-
-Install Visual Studio 2017 (or newer). Be sure to install optional component:
-* Workloads -> Desktop Development with C++
-* Individual Components -> Compilers, build tools, and runtimes -> Visual C++ tools for CMake
-
-Open as a CMake project. See: https://docs.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio
 

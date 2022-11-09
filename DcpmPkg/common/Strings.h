@@ -136,7 +136,7 @@ nlog_format command
 
 @param[in] format - the string to base a format on (processes %X, %x and %d only)
 @param[in] values - the values to add to the format str
-@param[in] values_length - the length of the valeus array
+@param[in] values_length - the length of the values array
 
 @retval returns the formatted string
 */

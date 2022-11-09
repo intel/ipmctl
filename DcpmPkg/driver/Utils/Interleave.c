@@ -196,7 +196,7 @@ FindBestInterleavingForDimms(
     goto Finish;
   }
 
-  ReturnCode = GetTopologyAndInterleaveSetMapInfoBasedOnProcessorType(&NumOfiMCsPerCPU, &NumOfChannelsPeriMC, NULL, &pInterleaveSet);
+  ReturnCode = GetTopologyAndInterleaveSetMapInfo(&NumOfiMCsPerCPU, &NumOfChannelsPeriMC, &pInterleaveSet);
   if (EFI_ERROR(ReturnCode)) {
     goto Finish;
   }

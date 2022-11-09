@@ -235,8 +235,6 @@ CheckAndConfirmAlignments(
   REGION_GOAL_PER_DIMM_INFO RegionConfigsInfo[MAX_DIMMS];
   UINT32 RegionConfigsCount = 0;
   UINT32 Index = 0;
-  BOOLEAN CapacityReducedForSKU = FALSE;
-  BOOLEAN MaxPmInterleaveSetsExceeded = FALSE;
   CHAR16 *pSingleStatusCodeMessage = NULL;
   UINT32 AppDirect1Regions = 0;
   UINT32 AppDirect2Regions = 0;
@@ -306,50 +304,54 @@ CheckAndConfirmAlignments(
     PRINTER_PROCESS_SET_BUFFER_FORCE_TEXT_TABLE_MODE(pCmd->pPrintCtx);
   }
 
-  // Process through the general status codes returned from GetActualRegionsGoalCapacities
-  // *after* we do the table printout.
-  //
-  // The first two are "required" to be done this way because the messages have arguments.
-  // However, they are static so they could be put into the string itself.
-  if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_LOWER_VIOLATION) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_LOWER_STR);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  } else if (pCommandStatus->GeneralStatus == NVM_WARN_NMFM_RATIO_UPPER_VIOLATION) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  } else if (pCommandStatus->GeneralStatus == NVM_WARN_PMTT_TABLE_NOT_FOUND) {
-    // Not a great solution, but it ensures that only this status is changing. We aren't going to change other outputs
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_PMTT_TABLE_NOT_FOUND);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  } else if (pCommandStatus->GeneralStatus == NVM_WARN_IMC_DDR_PMM_NOT_PAIRED) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
+  if (pCommandStatus->ObjectStatusCount > 0) {
+    PRINTER_PROMPT_COMMAND_STATUS(pCmd->pPrintCtx, EFI_SUCCESS, L"", L"", pCommandStatus);
   }
 
-  for (Index = 0; Index < pCommandStatus->ObjectStatusCount; Index++) {
-    CapacityReducedForSKU = IsSetNvmStatusForObject(pCommandStatus, Index, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
-    if (CapacityReducedForSKU) {
+  switch (pCommandStatus->GeneralStatus) {
+    case NVM_WARN_IMC_DDR_PMM_NOT_PAIRED:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_IMC_DDR_PMM_NOT_PAIRED);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
       break;
-    }
-  }
 
-  MaxPmInterleaveSetsExceeded = IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED);
+    case NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to3_6:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to3_6);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_LOWER_3_6_STR);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
+    case NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to2:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_LOWER_VIOLATION_1to2);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_LOWER_2_STR);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
+    case NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to16:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to16);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER_16);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
+    case NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to8:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_NMFM_RATIO_UPPER_VIOLATION_1to8);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage, TWOLM_NMFM_RATIO_UPPER_8);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
+    case NVM_WARN_PMTT_TABLE_NOT_FOUND:
+      pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_PMTT_TABLE_NOT_FOUND);
+      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);
+      FREE_POOL_SAFE(pSingleStatusCodeMessage);
+      break;
+
+  }
 
   if (PercentDiff > PROMPT_ALIGN_PERCENTAGE) {
      PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" CLI_CREATE_GOAL_PROMPT_VOLATILE L"\n");
   }
 
-  if (CapacityReducedForSKU) {
-    pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_MAPPED_MEM_REDUCED_DUE_TO_CPU_SKU);
-    PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, L"\n" FORMAT_STR_NL, pSingleStatusCodeMessage);
-    FREE_POOL_SAFE(pSingleStatusCodeMessage);
-  }
-
-  if (MaxPmInterleaveSetsExceeded && RegionConfigsCount > 0) {
+  if ((pCommandStatus->GeneralStatus == NVM_WARN_REGION_MAX_PM_INTERLEAVE_SETS_EXCEEDED) && RegionConfigsCount > 0) {
     for (Index = 0; Index < RegionConfigsCount; ++Index) {
       if (RegionConfigsInfo[Index].AppDirectSize[APPDIRECT_1_INDEX] > 0) {
         AppDirect1Regions++;
@@ -454,7 +456,7 @@ CreateGoal(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_SECURITY, &pDimms, &DimmCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -688,7 +690,7 @@ CreateGoal(
     ExecuteCmd(&ShowGoalCmd);
     FREE_POOL_SAFE(pCommandStr);
 
-    if (IsSetNvmStatusForObject(pCommandStatus, 0, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED)) {
+    if (pCommandStatus->GeneralStatus == NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED) {
       pSingleStatusCodeMessage = GetSingleNvmStatusCodeMessage(gNvmDimmCliHiiHandle, NVM_WARN_REGION_AD_NI_PM_INTERLEAVE_SETS_REDUCED);
       pSingleStatusCodeMessage = CatSPrintClean(NULL, pSingleStatusCodeMessage, MaxPMInterleaveSetsPerDie);
       PRINTER_PROMPT_MSG(pCmd->pPrintCtx, ReturnCode, pSingleStatusCodeMessage);

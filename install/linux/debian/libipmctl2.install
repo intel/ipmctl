@@ -1,4 +1,0 @@
-usr/lib/*/libipmctl.so.*
-usr/share/ipmctl/ipmctl.conf
-usr/share/doc/ipmctl/ipmctl_default.conf
-var/log/ipmctl

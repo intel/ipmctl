@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _SETSENSORCOMMAND_H_
-#define _SETSENSORCOMMAND_H_
+#ifndef _SET_SENSOR_COMMAND_H_
+#define _SET_SENSOR_COMMAND_H_
 
 #include <Uefi.h>
 #include "CommandParser.h"
@@ -33,4 +33,4 @@ SetSensor(
   IN     struct Command *pCmd
   );
 
-#endif /** _SETSENSORCOMMAND_H_ **/
+#endif /** _SET_SENSOR_COMMAND_H_ **/

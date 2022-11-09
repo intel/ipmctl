@@ -52,7 +52,7 @@ const char p_g_ini_file[] = {
 means we have either token only or end of line or nothing.
 An extra byte is for terminating zero purpose.
 */
-#define NVM_INI_CALLOC(size) (size > 0) ? (char *) calloc(1, size+1) : NULL 
+#define NVM_INI_CALLOC(size) (size > 0) ? (char *) calloc(1, size+1) : NULL
 
 /**
 @brief Allocate memory and initialize it to zero; if the size is 1 or less
@@ -452,10 +452,22 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
     return 0;
   }
 
-  // Open and truncated the file
-  // Try to open the file
+  // First check the local directory for a preferences file, since that is the
+  // existing behavior we've had for a while.
   snprintf(ini_path_filename, sizeof(ini_path_filename), "%s", p_ini_file_name);
+  // Delete any local symbolic link with the same name as the
+  // preferences file so we don't overwrite any important
+  // admin-only file that might be linked maliciously.
+  // This is only needed if the administrator executes ipmctl
+  // in a non-protected directory. Don't need to check files in
+  // AppData as it's known to be a protected directory.
+  if (is_shortcut(ini_path_filename)) {
+    // Delete shortcut
+    remove(ini_path_filename);
+  }
+  // Check if preferences file exists in local directory first
   h_file = fopen(ini_path_filename, "r");
+  // If no, then use the AppData location. If yes, then open it for writing.
   if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
     if (force_file_update) {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH);
@@ -465,9 +477,9 @@ int nvm_ini_dump_to_file(dictionary *p_dictionary, const char *p_ini_file_name, 
     }
     else {
       snprintf(ini_path_filename, sizeof(ini_path_filename), "%s%s%s", APP_DATA_FILE_PATH, INI_INSTALL_FILEPATH, p_ini_file_name);
-      h_file = fopen(ini_path_filename, "r");
+      h_file = fopen(ini_path_filename, "w");
     }
-    if ((NULL == h_file) || (NULL == (h_file = freopen(ini_path_filename, "w", h_file)))) {
+    if (NULL == h_file) {
       // Hardcoded data used, nothing to save
       return -1;
     }

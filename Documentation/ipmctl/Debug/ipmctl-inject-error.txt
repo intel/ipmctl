@@ -13,7 +13,9 @@ ipmctl-inject-error - Injects an error or clears a previously injected error
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl set [OPTIONS] -dimm [TARGETS] [PROPERTIES]
+--
 
 DESCRIPTION
 -----------
@@ -52,7 +54,7 @@ PROPERTIES
 This command only supports setting or clearing one type of error at a time.
 
 Clear::
-  - "1": Clears a previously injected error. This property must be combined with
+  * "1": Clears a previously injected error. This property must be combined with
   one of the other properties indicating the previously injected error to clear.
 
 Temperature::
@@ -96,12 +98,12 @@ NOTE: The address must be 256 byte aligned (e.g., 0x10000000, 0x10000100, 0x1000
 
 PoisonType::
   The type of memory to poison. One of:
-  - "PatrolScrub": Injects a poison error at the specified address simulating an
+  * "PatrolScrub": Injects a poison error at the specified address simulating an
     error found during a patrol scrub operation indifferent to how the memory is
     currently allocated. This is the default.
-  - "MemoryMode": Injects a poison error at the specified address currently
+  * "MemoryMode": Injects a poison error at the specified address currently
     allocated in Memory Mode.
-  - "AppDirect": Injects a poison error at the specified address currently
+  * "AppDirect": Injects a poison error at the specified address currently
     allocated as App Direct. +
 
 NOTE: If the address to poison is not currently allocated as the specified
@@ -112,13 +114,16 @@ PackageSparing::
   and the PMem module still has spares remaining, this will cause the firmware to
   report that there are no spares remaining.
 
+NOTE: Injecting package sparing is not supported on Intel(R) Optane(TM) Persistent Memory 300
+series modules.
+
 PercentageRemaining::
   Injects an artificial percentage remaining value into the PMem module. This
   will cause the firmware to take appropriate action based on the value and if
   necessary generate an error log, an alert, and update the health status.
 
 FatalMediaError::
-  - "1": Injects a fake media fatal error which will cause the firmware to
+  * "1": Injects a fake media fatal error which will cause the firmware to
   generate an error log and an alert.
 
 NOTE: When media fatal error is injected, BSR Media Disabled status
@@ -126,30 +131,41 @@ NOTE: When media fatal error is injected, BSR Media Disabled status
   cleared using disable trigger input parameter to clear this injected
   fatal error.
 
-NOTE: Injecting a Fatal Media error is unsupported on Windows.
-Contact Microsoft for assistance in performing this action.
+NOTE: Injecting a Fatal Media error is unsupported on Windows*.
+Contact Microsoft* for assistance in performing this action.
+
+NOTE: When a fatal media error is cleared, A power cycle is needed for
+this operation to take effect.
 
 DirtyShutdown::
-  - "1": Injects an ADR failure resulting in dirty shutdown upon reboot.
+  * "1": Injects an ADR failure resulting in dirty shutdown upon reboot.
 
 EXAMPLES
 --------
 Sets the media temperature on all manageable PMem modules to 50 degrees
 Celsius.
 [listing]
+--
 ipmctl set -dimm Temperature=50
+--
 
 Clears the injected media temperature on all manageable PMem modules.
 [listing]
+--
 ipmctl set -dimm Clear=1 Temperature=1
+--
 
 Poison address 0x10000200 on PMem module 1234.
 [listing]
+--
 ipmctl set -dimm 1234 Poison=0x10000200
+--
 
 Clears the injected poison of address 0x10000200 on PMem module 1234.
 [listing]
+--
 ipmctl set -dimm 1234 Poison=0x10000200 Clear=1
+--
 
 Triggers an artificial package sparing on all manageable PMem modules.
 [listing]
@@ -157,17 +173,23 @@ ipmctl set -dimm PackageSparing=1
 
 Sets the life remaining percentage on all manageable PMem modules to 10%.
 [listing]
+--
 ipmctl set -dimm PercentageRemaining=10
+--
 
 Clears the injected remaining life percentage on all manageable PMem modules. The
 value of PercentageRemaining is irrelevant.
 [listing]
+--
 ipmctl set -dimm PercentageRemaining=10 Clear=1
+--
 
 Triggers an artificial ADR failure on all manageable PMem modules resulting in a dirty
 shutdown on each PMem module on the next reboot.
 [listing]
+--
 ipmctl set -dimm DirtyShutdown=1
+--
 
 LIMITATIONS
 -----------
@@ -184,17 +206,20 @@ with the remaining PMem modules.
 SAMPLE OUTPUT
 -------------
 [listing]
+--
 Set temperature on PMem module (DimmID): Success|Error (Code) -
 (Description)
 Clear injected temperature on PMem module (DimmID): Success|Error
 (Code) - (Description)
+--
 
 [listing]
+--
 Poison address (Address) on PMem module (DimmID): Success|Error
 (Code) - (Description)
 Clear injected poison of address (Address) on PMem module
 (DimmID): Success|Error (Code) - (Description)
-
+--
 [listing]
 Trigger package sparing on PMem module (DimmID): Success|Error
 (Code) - (Description)
@@ -202,13 +227,17 @@ Clear injected package sparing on PMem module (DimmID):
 Success|Error (Code) - (Description)
 
 [listing]
+--
 Trigger a spare capacity alarm on PMem module (DimmID):
 Success|Error (Code) - (Description)
 Clear injected spare capacity alarm on PMem module (DimmID):
 Success|Error (Code) - (Description)
+--
 
 [listing]
+--
 Create a media fatal error on PMem module (DimmID): Success|Error
 (Code) - (Description)
 Clear injected media fatal error on PMem module (DimmID):
 Success|Error (Code) - (Description)
+--

@@ -6,12 +6,14 @@ ipmctl(1)
 
 NAME
 ----
-ipmctl - Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
+ipmctl - Utility for managing Intel(R) Optane(TM) Persistent Memory Modules (PMem module)
 
 SYNOPSIS
 --------
 [listing]
+--
 ipmctl COMMAND [OPTIONS] [TARGETS] [PROPERTIES]
+--
 
 OPTIONS
 -------
@@ -21,17 +23,17 @@ OPTIONS
 
 DESCRIPTION
 -----------
-Utility for managing Intel(R) Optane(TM) persistent memory modules (PMem module)
+Utility for managing Intel(R) Optane(TM) PMem modules
 
 Supports functionality to:
 
-- Discover PMem modules on the platform.
-- Provision the platform memory configuration.
-- View and update the firmware on PMem modules.
-- Configure data-at-rest security on PMem modules.
-- Monitor PMem module health.
-- Track performance of PMem modules.
-- Debug and troubleshoot PMem modules.
+* Discover PMem modules on the platform.
+* Provision the platform memory configuration.
+* View and update the firmware on PMem modules.
+* Configure data-at-rest security on PMem modules.
+* Monitor PMem module health.
+* Track performance of PMem modules.
+* Debug and troubleshoot PMem modules.
 
 COMMANDS
 --------
@@ -39,7 +41,7 @@ COMMANDS
 === DEVICE DISCOVERY
 Discover PMem modules on the platform.
 
-*ipmctl-show-device*(1)::
+*ipmctl-show-dimm*(1)::
   Shows information about one or more PMem modules
 
 *ipmctl-show-memory-resources*(1)::
@@ -59,10 +61,10 @@ Provision the platform memory configuration and configure data-at-rest security
 on PMem modules.
 
 ifndef::os_build[]
-*ipmctl-change-device-passphrase*(1)::
+*ipmctl-set-dimm-passphrase*(1)::
   Changes the security passphrase on PMem module
 
-*ipmctl-change-device-security*(1)::
+*ipmctl-set-dimm-lockstate*(1)::
   Changes the PMem module security lock state
 endif::os_build[]
 
@@ -76,10 +78,10 @@ endif::os_build[]
    Stores the current system configuration in a file
 
 ifndef::os_build[]
-*ipmctl-enable-device-security(1)*::
+*ipmctl-set-dimm-security(1)*::
   Enable data-at-rest security on PMem module
 
-*ipmctl-erase-device-data(1)*::
+*ipmctl-delete-dimm(1)*::
   Erases the persistent data on one or more PMem modules
 endif::os_build[]
 
@@ -95,8 +97,8 @@ endif::os_build[]
 === INSTRUMENTATION
 Monitor health and track performance of PMem modules.
 
-*ipmctl-change-sensor*(1)::
-  Changes the threshold or enabled state for PMem modules sensors
+*ipmctl-set-sensor*(1)::
+  Sets the threshold or enabled state for PMem modules sensors
 
 *ipmctl-show-performance*(1)::
   Shows performance metrics for one or more PMem modules
@@ -107,7 +109,7 @@ Monitor health and track performance of PMem modules.
 === SUPPORT AND MAINTENANCE
 View and update the firmware on PMem modules. Other support and maintenance commands.
 
-*ipmctl-change-preference*(1)::
+*ipmctl-set-preferences*(1)::
   Modifies one or more user preferences
 
 *ipmctl-dump-support*(1)::
@@ -116,7 +118,7 @@ View and update the firmware on PMem modules. Other support and maintenance comm
 *ipmctl-help*(1)::
   Shows help for the supported commands
 
-*ipmctl-modify-device*(1)::
+*ipmctl-set-dimm*(1)::
   Changes the configurable settings on one or more PMem modules
 
 *ipmctl-show-firmware*(1)::
@@ -125,7 +127,7 @@ View and update the firmware on PMem modules. Other support and maintenance comm
 *ipmctl-show-preferences*(1)::
   Displays a list of the PMem module software user preferences
 
-*ipmctl-update-firmware*(1)::
+*ipmctl-load-dimm*(1)::
   Updates the firmware on one or more PMem modules.
 
 *ipmctl-version*(1)::
@@ -152,7 +154,7 @@ Debug and troubleshoot PMem modules.
 *ipmctl-start-diagnostic*(1)::
   Runs a diagnostic test
 
-*ipmctl-show-acpi*(1)::
+*ipmctl-show-system*(1)::
   Shows the system ACPI tables related to the PMem modules
 
 *ipmctl-show-error-log*(1)::
@@ -178,44 +180,44 @@ Debug and troubleshoot PMem modules.
 
 SEE ALSO
 --------
-*ipmctl-show-device*(1),
+*ipmctl-show-dimm*(1),
 *ipmctl-show-memory-resources*(1),
 *ipmctl-show-socket*(1),
 *ipmctl-show-system-capabilities*(1),
 *ipmctl-show-topology*(1),
 ifndef::os_build[]
-*ipmctl-change-device-passphrase*(1),
-*ipmctl-change-device-security*(1),
+*ipmctl-set-dimm-passphrase*(1),
+*ipmctl-set-dimm-lockstate*(1),
 endif::os_build[]
 *ipmctl-create-goal*(1),
 *ipmctl-create-goal*(1),
 *ipmctl-delete-goal*(1),
 *ipmctl-dump-goal*(1),
 ifndef::os_build[]
-*ipmctl-enable-device-security*(1),
-*ipmctl-erase-device-data*(1),
+*ipmctl-set-dimm-security*(1),
+*ipmctl-delete-dimm*(1),
 endif::os_build[]
 *ipmctl-load-goal*(1),
 *ipmctl-show-goal*(1),
 *ipmctl-show-region*(1),
-*ipmctl-change-sensor*(1),
+*ipmctl-set-sensor*(1),
 *ipmctl-show-performance*(1),
 *ipmctl-show-sensor*(1),
-*ipmctl-change-preference*(1),
+*ipmctl-set-preferences*(1),
 *ipmctl-dump-support*(1),
 *ipmctl-help*(1),
-*ipmctl-modify-device*(1),
+*ipmctl-set-dimm*(1),
 *ipmctl-show-firmware*(1),
 *ipmctl-show-preferences*(1),
-*ipmctl-update-firmware*(1),
+*ipmctl-load-dimm*(1),
 *ipmctl-version*(1),
-*impctl-delete-pcd*(1),
+*ipmctl-delete-pcd*(1),
 *ipmctl-dump-debug-log*(1),
 *ipmctl-inject-error*(1),
 *ipmctl-show-cap*(1),
 *ipmctl-show-cel*(1),
 *ipmctl-start-diagnostic*(1),
-*ipmctl-show-acpi*(1),
+*ipmctl-show-system*(1),
 *ipmctl-show-error-log*(1),
 *ipmctl-show-pcd*(1)
 *ipmctl-dump-session*(1)

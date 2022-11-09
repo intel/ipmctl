@@ -17,6 +17,7 @@
 #include <tchar.h> // todo: remove this header and replace associated functions
 #include <direct.h> // for _getcwd
 #include <s_str.h>
+#include <stdbool.h>
 
 #pragma comment(lib,"Version.lib")
 #pragma comment(lib, "Ws2_32.lib")
@@ -73,91 +74,6 @@ int utf8_to_wchar(wchar_t *dst, size_t dst_wchars, const char *src, int src_byte
 	}
 
 	return ret;
-}
-
-/*
- * Start a process and get its PID
- */
-int os_start_process(const char *process_name, unsigned int *p_process_id)
-{
-	int rc = -1;
-
-	OS_WPATH w_process_name;
-	utf8_to_wchar(w_process_name, (size_t)OS_PATH_LEN, process_name, (int)OS_PATH_LEN);
-
-	STARTUPINFOW start_up_info;
-	memset(&start_up_info, 0, sizeof (STARTUPINFOW));
-	start_up_info.cb = sizeof (STARTUPINFOW);
-
-	PROCESS_INFORMATION process_info;
-	memset(&process_info, 0, sizeof (PROCESS_INFORMATION));
-
-	int success = CreateProcessW(w_process_name, NULL, NULL, NULL, FALSE, 0, NULL, NULL,
-			&start_up_info, &process_info);
-	if (success)
-	{
-		*p_process_id = process_info.dwProcessId;
-		rc = 0;
-		// close handles
-		CloseHandle(process_info.hProcess);
-		CloseHandle(process_info.hThread);
-	}
-
-	return rc;
-}
-
-/*
- * Stop a process given the process handle
- */
-int os_stop_process(unsigned int process_id)
-{
-	int rc = -1;
-
-	// get the process handle from the process id
-	unsigned long access = PROCESS_TERMINATE;
-	HANDLE process_handle = OpenProcess(access, 0, process_id);
-	if (process_handle != NULL)
-	{
-		unsigned int exitCode = 0;
-		int success = TerminateProcess(process_handle, exitCode);
-		if (success)
-		{
-			rc = 0;
-		}
-		CloseHandle(process_handle);
-	}
-
-	return rc;
-}
-
-/*
- * Blocks for the specified number of msecs.
- */
-void os_sleep(unsigned long time)
-{
-	Sleep(time);
-}
-
-/*
- * Create a thread on the current process
- */
-void os_create_thread(unsigned long long *p_thread_id, void *(*callback)(void *), void * callback_arg)
-{
-	CreateThread(
-			NULL, // default security
-			0,  // default stack size
-			(LPTHREAD_START_ROUTINE)callback,
-			(LPVOID)callback_arg,
-			0, // Immediately run thread
-			(LPDWORD)p_thread_id);
-}
-
-/*
- * Retrieve the id of the current thread
- */
-unsigned long long os_get_thread_id()
-{
-	return GetCurrentThreadId();
 }
 
 /*
@@ -914,8 +830,6 @@ int os_get_driver_capabilities(struct nvm_driver_capabilities *p_capabilities)
 	memset(p_capabilities, 0, sizeof(struct nvm_driver_capabilities));
 
 	p_capabilities->min_namespace_size = BYTES_PER_GIB;
-	p_capabilities->num_block_sizes = 1;
-	p_capabilities->block_sizes[0] = 1;
 
 	p_capabilities->namespace_memory_page_allocation_capable = 0;
 	p_capabilities->features.get_platform_capabilities = 1;
@@ -951,19 +865,19 @@ int os_get_os_type()
 int os_mkdir(char *path)
 {
   char* p;
-  char seperator = '/';
+  char separator = '/';
   if (NULL == strchr(path + 1, '/') && NULL != strchr(path + 1, '\\'))
   {
-    seperator = '\\';
+    separator = '\\';
   }
 
-  for (p = strchr(path + 1, seperator); p; p = strchr(p + 1, seperator))
+  for (p = strchr(path + 1, separator); p; p = strchr(p + 1, separator))
   {
     *p = '\0';
     if (_mkdir(path) == -1) {
-      if (errno != EEXIST) { *p = seperator; return -1; }
+      if (errno != EEXIST) { *p = separator; return -1; }
     }
-    *p = seperator;
+    *p = separator;
   }
 
   return 0;
@@ -980,4 +894,12 @@ int getCPUID(unsigned int *regs, int registerCount, int inputRequestType) {
   }
   __cpuid((int *)regs, inputRequestType);
   return NVM_SUCCESS;
+}
+
+bool is_shortcut(const char *path) {
+  long long int result = GetFileAttributesA(path);
+  // See https://docs.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
+  // for documentation on the return values from the above command.
+  // FILE_ATTRIBUTE_REPARSE_POINT is the bit used to indicate a shortcut.
+  return (result != 0xFFFFFFFF) && (result & FILE_ATTRIBUTE_REPARSE_POINT);
 }

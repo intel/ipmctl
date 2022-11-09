@@ -89,7 +89,7 @@ CHAR16 *mppAllowedShowPerformanceDisplayValues[] =
 #define PERFORMANCE_DATA_FORMAT    L"0x"FORMAT_UINT64_HEX FORMAT_UINT64_HEX
 
 
-EFI_STATUS GetDimmIdorDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
+EFI_STATUS GetDimmIdOrDimmHandleToPrint(UINT16 DimmId, DIMM_INFO *AllDimmInfos,
     UINT32 DimmCount, UINT32 *HandleToPrint)
 {
   UINT32 Index = 0;
@@ -259,7 +259,7 @@ ShowPerformance(
   }
 
   // Populate the list of DIMM_INFO structures with relevant information
-  ReturnCode = GetDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
+  ReturnCode = GetAllDimmList(pNvmDimmConfigProtocol, pCmd, DIMM_INFO_CATEGORY_NONE, &pDimms, &DimmsCount);
   if (EFI_ERROR(ReturnCode)) {
     if(ReturnCode == EFI_NOT_FOUND) {
         PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_INFO_NO_FUNCTIONAL_DIMMS);
@@ -315,6 +315,7 @@ ShowPerformance(
   PRINTER_CONFIGURE_DATA_ATTRIBUTES(pPrinterCtx, DS_ROOT_PATH, &ShowPerformanceDataSetAttribs);
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  FREE_POOL_SAFE(pDimms);
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pDimmsPerformanceData);
   NVDIMM_EXIT_I64(ReturnCode);

@@ -14,6 +14,11 @@
 #include "Convert.h"
 #include "Utility.h"
 #include <ReadRunTimePreferences.h>
+#ifdef OS_BUILD
+#include <os_efi_preferences.h>
+#else
+extern EFI_RUNTIME_SERVICES  *gRT;
+#endif
 
  /**
  Local definitions
@@ -83,7 +88,7 @@ GetBitFieldForInterleaveChannelSize(
 
 STATIC
 UINT8
-GetBitFieldForInterleaveiMCSize(
+GetBitFieldForInterleaveImcSize(
   IN     CHAR16 *pStringValue
   )
 {
@@ -136,7 +141,7 @@ GetAppDirectSettingsBitFields(
     goto Finish;
   }
 
-  *pImcBitField = GetBitFieldForInterleaveiMCSize(ppSplitSettings[0]);
+  *pImcBitField = GetBitFieldForInterleaveImcSize(ppSplitSettings[0]);
   *pChannelBitField = GetBitFieldForInterleaveChannelSize(ppSplitSettings[1]);
 
   if (*pImcBitField == IMC_INTERLEAVE_SIZE_INVALID ||
@@ -179,30 +184,30 @@ EFI_STATUS SetPreferenceStr(IN struct Command *pCmd, IN CONST CHAR16 * pName, IN
   if ((ReturnCode = ContainsProperty(pCmd, pName)) != EFI_NOT_FOUND) {
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED, ObjectTypeUnknown);
       goto Finish;
     }
 
     ReturnCode = GetPropertyValue(pCmd, pName, &pTypeValue);
     if (EFI_ERROR(ReturnCode)) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
-      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED, ObjectTypeUnknown);
       goto Finish;
     }
     ReturnCode = ValidateAndConvertInput(pTypeValue, MinVal, MaxValue, &IntegerValue);
     if (EFI_ERROR(ReturnCode) || ((StrCmp(pName, DBG_LOG_LEVEL) == 0) && IntegerValue > 4)) {
       PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, pName, pTypeValue, ReturnCode, PROPERTY_ERROR_INVALID_OUT_OF_RANGE);
-      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER);
+      SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_INVALID_PARAMETER, ObjectTypeUnknown);
       goto Finish;
     } else {
       if (ReturnCode == EFI_SUCCESS) {
         ReturnCode = SET_STR_VARIABLE_NV(pName, gNvmDimmVariableGuid, pTypeValue);
         if (!EFI_ERROR(ReturnCode)) {
           PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_SUCCESS, pName, pTypeValue);
-          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS);
+          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_SUCCESS, ObjectTypeUnknown);
         } else {
           PRINTER_SET_MSG(pCmd->pPrintCtx, ReturnCode, CLI_SET_PREFERENCE_ERROR, pName, pTypeValue, ReturnCode, PROPERTY_ERROR_SET_FAILED_UNKNOWN);
-          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED);
+          SetObjStatus(pCommandStatus, 0, NULL, 0, NVM_ERR_OPERATION_FAILED, ObjectTypeUnknown);
         }
       }
     }
@@ -259,7 +264,7 @@ SetPreferences(
     goto Finish;
   }
 
-  //verify we have atleast one preference to set.
+  //verify we have at least one preference to set.
   ReturnCode = GetPropertyCount(pCmd, &PropertyCnt);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_NOT_FOUND;

@@ -46,7 +46,7 @@ FreeParsedPcat(
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppPlatformCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
     for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppPlatformCapabilityInfo[Index]);
     }
@@ -59,8 +59,8 @@ FreeParsedPcat(
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppMemoryInterleaveCapabilityInfo);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
-    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
+    for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppMemoryInterleaveCapabilityInfo);
@@ -77,13 +77,13 @@ FreeParsedPcat(
   FREE_POOL_SAFE(pParsedPcat->ppConfigManagementAttributesInfo);
 
   if (IS_ACPI_REV_MAJ_0_MIN_VALID(Revision)) {
-    for (Index = 0; Index < pParsedPcat->MemoryInterleaveCapabilityInfoNum; Index++) {
+    for (Index = 0; Index < pParsedPcat->SocketSkuInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat2Tables.ppSocketSkuInfoTable);
   }
-  else if (IS_ACPI_REV_MAJ_1_MIN_VALID(Revision)) {
-    for (Index = 0; Index < pParsedPcat->PlatformCapabilityInfoNum; Index++) {
+  else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(Revision)) {
+    for (Index = 0; Index < pParsedPcat->SocketSkuInfoNum; Index++) {
       FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable[Index]);
     }
     FREE_POOL_SAFE(pParsedPcat->pPcatVersion.Pcat3Tables.ppDieSkuInfoTable);
@@ -207,6 +207,12 @@ FreeNfitSubTables(
   }
   FREE_POOL_SAFE(ParsedNfit->ppSpaRangeTbles);
   ParsedNfit->SpaRangeTblesNum = 0;
+
+  for (Index = 0; Index < ParsedNfit->PlatformCapabilitiesTblesNum; Index++) {
+    FREE_POOL_SAFE(ParsedNfit->ppPlatformCapabilitiesTbles[Index]);
+  }
+  FREE_POOL_SAFE(ParsedNfit->ppPlatformCapabilitiesTbles);
+  ParsedNfit->PlatformCapabilitiesTblesNum = 0;
 }
 
 /**

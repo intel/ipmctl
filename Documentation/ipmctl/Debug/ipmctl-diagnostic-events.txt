@@ -1,0 +1,315 @@
+// Copyright (C) 2019, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+Events are generated as a result of invoking the Start Diagnostics command in order to
+analyze the Intel(R) Optane(TM) PMem module for potential issues.
+
+Diagnostic events may fall into the following categories:
+
+* Quick health diagnostic test event
+* Platform configuration diagnostic test event
+* Security diagnostic test event
+* Firmware consistency and settings diagnostic test event
+
+Each event includes the following pieces of information:
+
+* The severity of the event that occurred. One of:
+** Informational (Info)
+** Warning (Warning)
+** Error (Failed)
+** Aborted (Aborted)
+* A unique ID of the item (PMem module UUID, DimmID, NamespaceID, RegionID, etc.) the event refers to.
+* A detailed description of the event in English.
+
+The following sections list each of the possible events grouped by category of the event.
+
+== Quick Health Check Events
+
+The quick health check diagnostic verifies that the Intel(R) Optane(TM) PMem module's
+host mailboxes are accessible and that basic health indicators can be read and are currently
+reporting acceptable values.
+
+.Table Quick Health Check Events
+////
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
+asciidoc does not recognize .autowidth and reports an error
+////
+ifndef::backend-pdf[]
+[options="autowidth"]
+[role="stretch"]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+ifdef::backend-pdf[]
+[.autowidth.stretch]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+|===
+|Code |Severity |Message |Arguments
+
+|500 |Info |The quick health check succeeded. |
+|501 |Warning |The quick health check detected that PMem module [1] is not manageable because subsystem vendor ID [2] is not supported. UID: [3] a|[.text-left]
+. PMem module Handle
+. Subsystem Vendor ID
+. PMem module UID
+|502 |Warning |The quick health check detected that PMem module [1] is not manageable because subsystem device ID [2] is not supported. UID: [3] a|[.text-left]
+. PMem module Handle
+. Subsystem Device ID
+. PMem module UID
+|503 |Warning |The quick health check detected that PMem module [1] is not manageable because firmware API version [2] is not supported. UID: [3] a|[.text-left]
+. PMem module Handle
+. FW API version
+. PMem module UID
+|504 |Warning |The quick health check detected that PMem module [1] is reporting a bad health state [2]. UID: [3] a|[.text-left]
+. PMem module Handle
+. Actual Health State
+. PMem module UID
+|505 |Warning |The quick health check detected that PMem module [1] is reporting a media temperature of [2] C which is above the alarm threshold [3] C. UID: [4] a|[.text-left]
+. PMem module Handle
+. Actual Media Temperature
+. Media Temperature Threshold
+. PMem module UID
+|506 |Warning |The quick health check detected that PMem module [1] is reporting percentage remaining at [2]% which is less than the alarm threshold [3]%. UID: [4] a|[.text-left]
+. PMem module Handle
+. Actual Percentage Remaining
+. Percentage Remaining Threshold
+. PMem module UID
+|507 |Warning |The quick health check detected that PMem module [1] is reporting reboot required. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|511 |Warning |The quick health check detected that PMem module [1] is reporting a controller temperature of [2] C which is above the alarm threshold [3] C. UID: [4] a|[.text-left]
+. PMem module Handle
+. Actual Controller Temperature
+. Controller Temperature Threshold
+. PMem module UID
+|513 |Error |The quick health check detected that the boot status register of PMem module [1] is not readable. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|514 |Error |The quick health check detected that the firmware on PMem module [1] is reporting that the media is not ready. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|515 |Error |The quick health check detected that the firmware on PMem module [1] is reporting an error in the media. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|519 |Error |The quick health check detected that PMem module [1] failed to initialize BIOS POST testing. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|520 |Error |The quick health check detected that the firmware on PMem module [1] has not initialized successfully. The last known Major:Minor Checkpoint is [2]. UID: [3] a|[.text-left]
+. PMem module Handle
+. Major checkpoint : Minor checkpoint in Boot Status Register
+. PMem module UID
+|523 |Error |The quick health check detected that PMem module [1] is reporting a viral state. The PMem module is now read-only. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|529 |Warning |The quick health check detected that PMem module [1] is reporting that it has no package spares available. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|530 |Info |The quick health check detected that the firmware on PMem module [1] experienced an unsafe shutdown before its latest restart. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|533 |Error |The quick health check detected that the firmware on PMem module [1] is reporting that the AIT DRAM is not ready. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|534 |Error |The quick health check detected that the firmware on PMem module [1] is reporting that the media is disabled. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|535 |Error |The quick health check detected that the firmware on PMem module [1] is reporting that the AIT DRAM is disabled. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|536 |Error |The quick health check detected that the firmware on PMem module [1] failed to load successfully. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|538 |Error |PMem module [1] is reporting that the DDRT IO Init is not complete. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|539 |Error |PMem module [1] is reporting that the mailbox interface is not ready. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|540 |Error |An internal error caused the quick health check to abort on PMem module [1]. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|541 |Error |The quick health check detected that PMem module [1] is busy. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|542 |Error |The quick health check detected that the platform FW did not map a region to SPA on PMem module [1]. ACPI NFIT NVPMem module State Flags Error Bit 6 Set. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|543 |Error |The quick health check detected that PMem module [1] DDRT Training is not complete/failed. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|544 |Error |PMem module [1] is reporting that the DDRT IO Init is not started. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|545 |Error |The quick health check detected that the ROM on PMem module [1] has failed to complete initialization, last known Major:Minor Checkpoint is [2]. a|
+. PMem module Handle
+. Major checkpoint : Minor checkpoint in Boot Status Register
+. PMem module UID
+|===
+
+
+== Platform Configuration Check Events
+
+This diagnostic test group verifies that the BIOS platform configuration matches the
+installed hardware and the platform configuration conforms to best known practices.
+
+.Table Platform Configuration Check Events
+////
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
+asciidoc does not recognize .autowidth and reports an error
+////
+ifndef::backend-pdf[]
+[options="autowidth"]
+[role="stretch"]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+ifdef::backend-pdf[]
+[.autowidth.stretch]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+|===
+|Code |Severity |Message |Arguments
+
+|600 |Info |The platform configuration check succeeded. |
+|601 |Info |The platform configuration check detected that there are no manageable PMem modules. |
+|606 |Info |The platform configuration check detected that PMem module [1] is not configured. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|608 |Error |The platform configuration check detected [1] PMem modules installed on the platform with the same serial number [2]. a|[.text-left]
+. Number of PMem modules with duplicate serial numbers.
+. The duplicate serial number
+|609 |Info |The platform configuration check detected that PMem module [1] has a goal configuration that has not yet been applied. A system reboot is required for the new configuration to take effect. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|618 |Error |The platform configuration check detected that a PMem module with physical ID [1] is present in the system but failed to initialize. UID: [2] a|[.text-left]
+. PMem module handle in the SMBIOS table
+. PMem module UID
+|621 |Error |The platform configuration check detected PCD contains invalid data on PMem module [1]. UID: [2] a|[.text-left]
+. PMem module Handle
+. PMem module UID
+|622 |Error |The platform configuration check was unable to retrieve the namespace information. |
+|623 |Warning |The platform configuration check detected that the BIOS settings do not currently allow memory provisioning from this software. |
+|624 |Error |The platform configuration check detected that the BIOS could not apply the configuration goal on PMem module [1] because of errors in the goal data. The detailed status is COUT table status: [2] [3], Partition change table status: [4], Interleave change table 1 status: [5], Interleave change table 2 status: [6]. a|[.text-left]
+. PMem module Handle
+. Validation Status
+. Text error code corresponding to the status code
+. Partition Size Change Status
+. Interleave Change Status
+. Interleave Change Status
+|625 |Error |The platform configuration check detected that the BIOS could not apply the configuration goal on PMem module [1] because the system has insufficient resources. The detailed status is COUT table status: [2] [3], Partition change table status: [4], Interleave change table 1 status: [5], Interleave change table 2 status: [6]. a|[.text-left]
+. PMem module Handle
+. Validation Status
+. Text error code corresponding to the status code
+. Partition Size Change Status
+. Interleave Change Status
+. Interleave Change Status
+|626 |Error |The platform configuration check detected that the BIOS could not apply the configuration goal on PMem module [1] because of a firmware error. The detailed status is COUT table status: [2] [3], Partition change table status: [4], Interleave change table 1 status: [5], Interleave change table 2 status: [6]. a|[.text-left]
+. PMem module Handle
+. Validation Status
+. Text error code corresponding to the status code
+. Partition Size Change Status
+. Interleave Change Status
+. Interleave Change Status
+|627 |Error |The platform configuration check detected that the BIOS could not apply the configuration goal on PMem module [1] for an unknown reason. The detailed status is COUT table status: [2] [3], Partition change table status: [4], Interleave change table 1 status: [5], Interleave change table 2 status: [6]. a|[.text-left]
+. PMem module Handle
+. Validation Status
+. Text error code corresponding to the status code
+. Partition Size Change Status
+. Interleave Change Status
+. Interleave Change Status
+|628 |Error |The platform configuration check detected that interleave set [1] is broken because the PMem modules were moved [2]. a|[.text-left]
+. Interleave set index ID
+. List of moved PMem modules.
+|629 |Error |The platform configuration check detected that the platform does not support ADR and therefore data integrity is not guaranteed on the PMem modules. |
+|630 |Error |An internal error caused the platform configuration check to abort. |
+|631 |Error |The platform configuration check detected that interleave set [1] is broken because the PMem module with UID: [2] is missing from location (Socket-Die-iMC-Channel-Slot) [3]. a|[.text-left]
+. Interleave set index ID
+. PMem module UID
+. Location ID
+|632 |Error |The platform configuration check detected that interleave set [1] is broken because the PMem module with UID: [2] is misplaced. It is currently in location (Socket-Die-iMC-Channel-Slot) [3] and should be moved to (Socket-Die-iMC-Channel-Slot) [4]. a|[.text-left]
+. Interleave set index ID
+. PMem module UID
+. Location ID
+. Location ID
+|633 |Error |The platform configuration check detected that the BIOS could not fully map memory on PMem module [1] because of an error in current configuration. The detailed status is CCUR table status: [2] [3]. a|[.text-left]
+. PMem module Handle
+. Current Configuration Status
+. Text error code corresponding to the status code
+|===
+
+
+== Security Check Events
+The security check diagnostic test group verifies that all Intel(R) Optane(TM) PMem modules
+have a consistent security state.
+
+.Table Security Check Events
+////
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
+asciidoc does not recognize .autowidth and reports an error
+////
+ifndef::backend-pdf[]
+[options="autowidth"]
+[role="stretch"]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+ifdef::backend-pdf[]
+[.autowidth.stretch]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+|===
+|Code |Severity |Message |Arguments
+
+|800 |Info |The security check succeeded. |
+|801 |Info |The security check detected that there are no manageable PMem modules. |
+|802 |Warning |The security check detected that security settings are inconsistent [1]. a|[.text-left]
+. A comma separated list of the number of PMem modules in each security state
+|804 |Info |The security check detected that security is not supported on all PMem modules. |
+|805 |Error |An internal error caused the security check to abort. |
+|===
+
+== Firmware Consistency and Settings Check Events
+
+This test group verifies that all PMem modules of a given subsystem
+device ID have consistent FW installed and other FW modifiable attributes are set in accordance with best practices.
+
+.Table Firmware Consistency and Settings Check Events
+////
+asciidoctor-pdf only renders as expected with .autowidth.stretch is used
+asciidoc does not recognize .autowidth and reports an error
+////
+ifndef::backend-pdf[]
+[options="autowidth"]
+[role="stretch"]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+ifdef::backend-pdf[]
+[.autowidth.stretch]
+[cols="8,12,50,30"]
+endif::backend-pdf[]
+|===
+|Code |Severity |Message |Arguments
+
+|900 |Info |The firmware consistency and settings check succeeded. |
+|901 |Info |The firmware consistency and settings check detected that there are no manageable PMem modules. |
+|902 |Warning |The firmware consistency and settings check detected that firmware version on PMem modules [1] with subsystem device ID [2] is non-optimal, preferred version is [3]. a|[.text-left]
+. Comma separated list of PMem module UIDs
+. Subsystem device ID
+. Preferred firmware version
+|903 |Warning |The firmware consistency and settings check detected that PMem module [1] is reporting a non-critical media temperature threshold of [2] C which is above the fatal threshold [3] C. UID: [4] a|[.text-left]
+. PMem module Handle
+. Current media temperature threshold
+. Fatal media temperature threshold
+. PMem module UID
+|904 |Warning |The firmware consistency and settings check detected that PMem module [1] is reporting a non-critical controller temperature threshold of [2] C which is above the fatal threshold [3] C. UID: [4] a|[.text-left]
+. PMem module Handle
+. Current controller temperature threshold
+. Fatal controller temperature threshold
+. PMem module UID
+|905 |Warning |The firmware consistency and settings check detected that PMem module [1] is reporting a percentage remaining of [2]% which is below the recommended threshold [3]%. UID: [4] a|[.text-left]
+. PMem module Handle
+. Current percentage remaining threshold
+. Recommended percentage remaining threshold
+. PMem module UID
+|906 |Warning |The firmware consistency and settings check detected that PMem modules have inconsistent viral policy settings. |
+|910 |Error |An internal error caused the firmware consistency and settings check to abort. |
+|911 |Warning |The firmware consistency and settings check detected that PMem modules have inconsistent first fast refresh settings. |
+|===
+

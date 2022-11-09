@@ -64,10 +64,12 @@
 #include "ShowSessionCommand.h"
 #include "LoadSessionCommand.h"
 #ifdef OS_BUILD
+#include "os_efi_shell_parameters_protocol.h"
 #include <Protocol/Driver/DriverBinding.h>
 #else
 #include <Protocol/DriverBinding.h>
 #endif
+#include <FwVersion.h>
 
 #if _BullseyeCoverage
 #ifndef OS_BUILD
@@ -118,6 +120,12 @@ static EFI_STATUS GetPbrMode(UINT32 *Mode);
 static EFI_STATUS SetPbrTag(CHAR16 *pName, CHAR16 *pDescription);
 static EFI_STATUS ResetPbrSession(UINT32 TagId);
 static EFI_STATUS SetDefaultProtocolAndPayloadSizeOptions();
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+static EFI_STATUS GetDriverDebugPrintVerbosity(UINT32 *pErrorLevel);
+static EFI_STATUS SetDriverDebugPrintVerbosity(UINT32 ErrorLevel);
+#endif
+#endif
 
 /**
   Supported commands
@@ -136,7 +144,8 @@ struct Command HelpCommand =
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< properties
   L"Display the CLI help.",                   //!< help
-  showHelp                                    //!< run function
+  showHelp,                                    //!< run function
+  TRUE
 };
 
 /**
@@ -155,9 +164,10 @@ struct Command VersionCommand =
   }, //!< options
   {{L"", L"", L"", FALSE, ValueOptional}},      //!< targets
   {{L"", L"", L"", FALSE}},                     //!< properties
-  L"Display the CLI version.",                //!< help
-  showVersion,                                 //!< run function
-  TRUE
+  L"Display the CLI version.",                  //!< help
+  showVersion,                                  //!< run function
+  TRUE,                                         //!< support printer
+  TRUE                                          //!< skip initialization
 };
 
 BOOLEAN HelpRequested = FALSE;
@@ -259,6 +269,52 @@ VOID FixHelp(CHAR16** ppTokens, UINT32* pCount){
   *pCount = Index;
 }
 
+VOID
+PrintErrorMsg(CHAR16 *ErrorMsg, BOOLEAN ForESX) {
+  CHAR16 *pSubString = NULL;
+  CHAR16 *pSubStringEnd = NULL;
+  CHAR16 *pStringWalker = NULL;
+
+  if (ForESX) {
+    pSubString = AllocateZeroPool(200 *sizeof(CHAR16));
+    if (NULL == pSubString) {
+      goto StandardPrint;
+    }
+    pStringWalker = ErrorMsg;
+    //pSubStringBegin = pSubString;
+    pSubStringEnd = pSubString;
+    while (L'\0' != *pStringWalker) {
+      while ((L'\n' != *pStringWalker) && (L'\0' != *pStringWalker))
+      {
+        *pSubStringEnd = *pStringWalker;
+        ++pSubStringEnd;
+        ++pStringWalker;
+      }
+      if (pSubString != pSubStringEnd) {
+        *pSubStringEnd = L'\n';
+        ++pSubStringEnd;
+        *pSubStringEnd = L'\0'; // make sure string is NULL terminated
+
+        Print(L"ERROR: ");
+        LongPrint(pSubString);
+      }
+      ++pStringWalker;
+      if (L'\n' == *pStringWalker) {
+        Print(L"ERROR:\n");
+      }
+      pSubStringEnd = pSubString;
+    }
+    goto finish;
+  }
+
+StandardPrint:
+  LongPrint(ErrorMsg);
+  Print(L"\n");
+
+finish:
+  FREE_POOL_SAFE(pSubString);
+}
+
 /*                                          ./
  * The entry point for the application.
  *
@@ -289,6 +345,11 @@ UefiMain(
   BOOLEAN IsVersionCommand = FALSE;
 #else
   SHELL_FILE_HANDLE StdIn = NULL;
+#ifndef MDEPKG_NDEBUG
+  UINT32 DefaultErrorLevel = 0;
+  GetDriverDebugPrintVerbosity(&DefaultErrorLevel);
+  UINT32 UpdatedErrorLevel = DefaultErrorLevel;
+#endif
 #endif
 
   NVDIMM_ENTRY();
@@ -297,8 +358,6 @@ UefiMain(
   ZeroMem(&Command, sizeof(Command));
 
 #ifndef OS_BUILD
-  InitErrorAndWarningNvmStatusCodes();
-
   /* only support EFI shell 2.0 */
   Rc = ShellInitialize();
   if (EFI_ERROR(Rc)) {
@@ -334,6 +393,8 @@ UefiMain(
     if (0 == StrICmp(ppArgv[Index], VERBOSE_OPTION)
       || 0 == StrICmp(ppArgv[Index], VERBOSE_OPTION_SHORT)) {
       PatchPcdSet32(PcdDebugPrintErrorLevel, DEBUG_VERBOSE);
+      UpdatedErrorLevel = DefaultErrorLevel | DEBUG_VERBOSE;
+      SetDriverDebugPrintVerbosity(UpdatedErrorLevel);
     }
 #endif
 #endif
@@ -403,7 +464,7 @@ UefiMain(
     /* with shell support level 3 */
     if (PcdGet8(PcdShellSupportLevel) < 3) {
       Rc = EFI_UNSUPPORTED;
-      NVDIMM_WARN("shellsupport level %d too low", PcdGet8(PcdShellSupportLevel));
+      NVDIMM_WARN("ShellSupport level %d too low", PcdGet8(PcdShellSupportLevel));
       Print(L"Error: EFI Shell support level 3 is required to run this application\n");
       goto Finish;
     }
@@ -556,7 +617,7 @@ UefiMain(
           //CLI is responsible for tracking the tagid.
           //The id is saved to a non-persistent volatile store, and is incremented
           //after each CLI cmd invocation.  Given we have the tagid that should
-          //be executed next, explicitely reset the pbr session to that id before
+          //be executed next, explicitly reset the pbr session to that id before
           //running the cmd.
           PbrDcpmmDeserializeTagId(&NextId, 0);
           ResetPbrSession(NextId);
@@ -571,11 +632,6 @@ UefiMain(
         showHelp(&Command);
         HelpShown = TRUE;
       } else {
-#ifdef OS_BUILD //WA, remove after all CMDs convert to "unified printing" mechanism
-        if (Command.PrinterCtrlSupported) {
-          gOsShellParametersProtocol.StdOut = stdout;
-        }
-#endif
 
 #ifdef OS_BUILD
         // different handling of returncodes for version command so it works for regular users
@@ -605,11 +661,13 @@ UefiMain(
       if (EFI_ERROR(Rc)) {
         MoreInput = FALSE; /* stop on failures */
       }
-    } else { /* syntax error */
-
-      /* print the error */
-      LongPrint(getSyntaxError());
-      Print(L"\n");
+    }
+    else { /* syntax error */
+#ifdef OS_BUILD
+      PrintErrorMsg(getSyntaxError(), is_ESX_output_requested());
+#else
+      PrintErrorMsg(getSyntaxError(), FALSE);
+#endif
       MoreInput = FALSE; /* stop on failures */
     }
 #ifdef OS_BUILD
@@ -638,6 +696,15 @@ Finish:
   if (TRUE == HelpShown && FALSE == HelpRequested && FALSE == FullHelpRequested && EFI_SUCCESS == Rc) {
     Rc = EFI_INVALID_PARAMETER;
   }
+
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+  //Reset driver debug print error level to original default value, otherwise will persist across cli invocations
+  if (DefaultErrorLevel != UpdatedErrorLevel) {
+    SetDriverDebugPrintVerbosity(DefaultErrorLevel);
+  }
+#endif
+#endif
 
   NVDIMM_EXIT_I64(Rc);
   return Rc;
@@ -926,25 +993,71 @@ EFI_STATUS showHelp(struct Command *pCmd)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   CHAR16 *pHelp = NULL;
+  PRINT_CONTEXT *pPrinterCtx = NULL;
+#ifdef OS_BUILD
+  UINT8 Index = 0;
+  BOOLEAN FormatAsESXErrorMsg = FALSE;
+#endif
 
   NVDIMM_ENTRY();
+
+  if (NULL != pCmd) {
+    pPrinterCtx = pCmd->pPrintCtx;
+  }
 
   if ((pCmd == NULL) || (StrCmp(pCmd->verb, HELP_VERB) == 0 && pCmd->ShowHelp == FALSE)) {
 #ifndef OS_BUILD
     //Page break option only for UEFI
     ShellSetPageBreakMode(TRUE);
 #endif
-    Print(FORMAT_STR_SPACE FORMAT_STR_NL_NL L"    Usage: " FORMAT_STR L" <verb>[<options>][<targets>][<properties>]\n\nCommands:\n", PRODUCT_NAME, APP_DESCRIPTION, EXE_NAME);
+    PRINTER_SET_MSG(pPrinterCtx, ReturnCode, FORMAT_STR_SPACE FORMAT_STR_NL_NL L"    Usage: " FORMAT_STR L" <verb>[<options>][<targets>][<properties>]\n\nCommands:\n", PRODUCT_NAME, APP_DESCRIPTION, EXE_NAME);
     pHelp = getOverallCommandHelp();
   } else {
     pHelp = getCommandHelp(pCmd, TRUE);
   }
 
   if (pHelp != NULL) {
-    LongPrint(pHelp);
+
+#ifdef OS_BUILD
+    if (pPrinterCtx != NULL) {
+#endif
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pHelp);
+#ifdef OS_BUILD
+    }
+    else {
+      // if Printer is not setup then may need to do special handling for ESX
+      if ((pPrinterCtx == NULL) &&
+        (pCmd != NULL) &&
+        (pCmd->options != NULL)) {
+        for (Index = 0; Index < MAX_OPTIONS; Index++) {
+
+          if ((StrICmp(pCmd->options[Index].OptionName, OUTPUT_OPTION) == 0) ||
+            (StrICmp(pCmd->options[Index].OptionNameShort, OUTPUT_OPTION_SHORT) == 0)) {
+
+            if ((StrICmp(pCmd->options[Index].pOptionValueStr, OUTPUT_OPTION_ESX_XML) == 0) ||
+              (StrICmp(pCmd->options[Index].pOptionValueStr, OUTPUT_OPTION_ESX_TABLE_XML) == 0)) {
+              FormatAsESXErrorMsg = TRUE;
+              break;
+            }
+          }
+        }
+      }
+      // Only do alternative output if for ESX to be sure not to change output for others
+      if (FormatAsESXErrorMsg) {
+        PrintErrorMsg(pHelp, FormatAsESXErrorMsg);
+      }
+      else
+      {
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, pHelp);
+      }
+    }
+#endif
     FreePool(pHelp);
   }
 
+  if (NULL != pPrinterCtx) {
+    PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
+  }
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -1121,7 +1234,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
   }
 
   ReturnCode = pNvmDimmConfigProtocol->GetDimms(pNvmDimmConfigProtocol, DimmCount,
-    DIMM_INFO_CATEGORY_ALL, pDimms);
+    DIMM_INFO_CATEGORY_NONE, pDimms);
   if (EFI_ERROR(ReturnCode)) {
     ReturnCode = EFI_ABORTED;
     PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_INTERNAL_ERROR);
@@ -1133,7 +1246,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
     ReturnCode = GetPreferredDimmIdAsString(pDimms[DimmIndex].DimmHandle, pDimms[DimmIndex].DimmUid, DimmStr, MAX_DIMM_UID_LENGTH);
     if (EFI_ERROR(ReturnCode)) {
       ReturnCode = EFI_ABORTED;
-      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine " PMEM_MODULE_STR L" id for " PMEM_MODULE_STR " ID %d", pDimms[DimmIndex].DimmHandle);
+      PRINTER_SET_MSG(pPrinterCtx, ReturnCode, L"Failed to determine DimmId for " PMEM_MODULE_STR L"%d", pDimms[DimmIndex].DimmHandle);
       goto Finish;
     }
 
@@ -1163,6 +1276,7 @@ EFI_STATUS showVersion(struct Command *pCmd)
 Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   FREE_POOL_SAFE(pPath);
+  FREE_POOL_SAFE(pDimms);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
@@ -1205,3 +1319,48 @@ Finish:
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;
 }
+
+#ifndef OS_BUILD
+#ifndef MDEPKG_NDEBUG
+EFI_STATUS GetDriverDebugPrintVerbosity(UINT32 *pErrorLevel)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+
+  NVDIMM_ENTRY();
+
+  if (NULL == pErrorLevel) {
+    NVDIMM_DBG("Input parameter is NULL");
+    goto Finish;
+  }
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  CHECK_RESULT(pNvmDimmConfigProtocol->GetDriverDebugPrintErrorLevel(pNvmDimmConfigProtocol, pErrorLevel), Finish);
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+
+EFI_STATUS SetDriverDebugPrintVerbosity(UINT32 ErrorLevel)
+{
+  EFI_STATUS ReturnCode = EFI_INVALID_PARAMETER;
+  EFI_DCPMM_CONFIG2_PROTOCOL *pNvmDimmConfigProtocol = NULL;
+
+  NVDIMM_ENTRY();
+
+  ReturnCode = OpenNvmDimmProtocol(gNvmDimmConfigProtocolGuid, (VOID **)&pNvmDimmConfigProtocol, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    goto Finish;
+  }
+
+  CHECK_RESULT(pNvmDimmConfigProtocol->SetDriverDebugPrintErrorLevel(pNvmDimmConfigProtocol, ErrorLevel), Finish);
+Finish:
+  NVDIMM_EXIT_I64(ReturnCode);
+  return ReturnCode;
+}
+#endif //MDEPKG_NDEBUG
+#endif //OS_BUILD

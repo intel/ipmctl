@@ -149,7 +149,7 @@ GetPlatformConfigOutputPCATStatus(
         }
 
         pCurPcatTable = GET_VOID_PTR_OFFSET(pCurPcatTable, pInterleaveInfo->Header.Length);
-      } else if (IS_ACPI_HEADER_REV_MAJ_1_MIN_VALID(pConfigOutput)) {
+      } else if (IS_ACPI_HEADER_REV_MAJ_1_OR_MAJ_3(pConfigOutput)) {
         NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurPcatTable;
 
         if (InterleaveTableNumber == 1) {
@@ -417,7 +417,7 @@ UpdateBrokenInterleaveSets(
   PcdRevision.AsUint8 = pCurrentConfig->Header.Revision.AsUint8;
 
   // For DIMM misplaced or re-ordering issue use DIMM location data in CCUR (PCD Rev 1.1) for validation
-  if (!MissingDimm && !IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+  if (!MissingDimm && !IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
     NVDIMM_DBG("DIMM Location details of any interleave set in CCUR table not available.");
     goto Finish;
   }
@@ -443,7 +443,7 @@ UpdateBrokenInterleaveSets(
         InterleaveSetIndex = pInterleaveInfo->InterleaveSetIndex;
         InterleaveInfoHeaderLength = pInterleaveInfo->Header.Length;
       }
-      else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+      else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
         NVDIMM_INTERLEAVE_INFORMATION3 *pInterleaveInfo = (NVDIMM_INTERLEAVE_INFORMATION3 *)pCurPcatTable;
         pCurrentIdentInfo = (NVDIMM_IDENTIFICATION_INFORMATION3 *)&pInterleaveInfo->pIdentificationInfoList;
         NumOfDimmsInInterleaveSet = pInterleaveInfo->NumOfDimmsInInterleaveSet;
@@ -458,7 +458,7 @@ UpdateBrokenInterleaveSets(
           TmpDimmSerialNumber = pCurrentIdentInfoTemp->DimmIdentification.Version1.DimmSerialNumber;
           CopyMem_S(&TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER), &(pCurrentIdentInfoTemp->DimmIdentification.Version2.Uid), sizeof(DIMM_UNIQUE_IDENTIFIER));
         }
-        else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+        else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
           NVDIMM_IDENTIFICATION_INFORMATION3 *pCurrentIdentInfoTemp = (NVDIMM_IDENTIFICATION_INFORMATION3 *)pCurrentIdentInfo;
           CopyMem_S(&TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER), &(pCurrentIdentInfoTemp->DimmIdentification), sizeof(DIMM_UNIQUE_IDENTIFIER));
           CopyMem_S(&DimmLocation, sizeof(DIMM_LOCATION), &(pCurrentIdentInfoTemp->DimmLocation), sizeof(DIMM_LOCATION));
@@ -500,7 +500,7 @@ UpdateBrokenInterleaveSets(
               CurrentDimmLocation.Split.SlotId = pPmttModuleInfo->SlotId;
             }
           }
-          //Compare the Identification Info DIMM location with the current DIMM location in NFIT if PMMT not present
+          //Compare the Identification Info DIMM location with the current DIMM location in NFIT if PMTT not present
           else {
             if ((DimmLocation.Split.SocketId != pDimm->SocketId) ||
               (DimmLocation.Split.DieId != MAX_DIEID_SINGLE_DIE_SOCKET) ||
@@ -549,7 +549,7 @@ UpdateBrokenInterleaveSets(
                 CopyMem_S(&pBrokenISs[BrokenISArrayIndex].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
                   &TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER));
               }
-              if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+              if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
                 CopyMem_S(&pBrokenISs[BrokenISArrayIndex].MisplacedDimmLocations[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_LOCATION),
                   &DimmLocation, sizeof(DIMM_LOCATION));
                 if (!MissingDimm) {
@@ -570,7 +570,7 @@ UpdateBrokenInterleaveSets(
               CopyMem_S(&pBrokenISs[*pBrokenISCount].MissingDimmIdentifier[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_UNIQUE_IDENTIFIER),
                 &TmpDimmUid, sizeof(DIMM_UNIQUE_IDENTIFIER));
             }
-            if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+            if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
               CopyMem_S(&pBrokenISs[*pBrokenISCount].MisplacedDimmLocations[pBrokenISs[BrokenISArrayIndex].MissingDimmCount], sizeof(DIMM_LOCATION),
                 &DimmLocation, sizeof(DIMM_LOCATION));
               if (!MissingDimm) {
@@ -586,7 +586,7 @@ UpdateBrokenInterleaveSets(
         if (IS_ACPI_REV_MAJ_0_MIN_VALID(PcdRevision)) {
           pCurrentIdentInfo = (UINT8 *)pCurrentIdentInfo + sizeof(NVDIMM_IDENTIFICATION_INFORMATION);
         }
-        else if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+        else if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
           pCurrentIdentInfo = (UINT8 *)pCurrentIdentInfo + sizeof(NVDIMM_IDENTIFICATION_INFORMATION3);
         }
       }
@@ -807,10 +807,8 @@ CheckPlatformConfigurationData(
         } else if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_EXCEED_DRAM_DECODERS ||
           InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS ||
           InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE ||
-          InterleaveInformationTableStatus_1 == INTERLEAVE_INFO_STATUS_MIRROR_FAILED ||
           InterleaveInformationTableStatus_2 == INTERLEAVE_INFO_STATUS_EXCEED_DRAM_DECODERS ||
-          InterleaveInformationTableStatus_2 == INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE ||
-          InterleaveInformationTableStatus_2 == INTERLEAVE_INFO_STATUS_MIRROR_FAILED) {
+          InterleaveInformationTableStatus_2 == INTERLEAVE_INFO_STATUS_EXCEED_MAX_SPA_SPACE) {
           PcdErrorType = PcdErrorInsufficientResources;
         } else if (PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_DIMM_MISSING ||
           PartitionSizeChangeTableStatus == PARTITION_SIZE_CHANGE_STATUS_ISET_MISSING ||
@@ -918,7 +916,7 @@ CheckPlatformConfigurationData(
         }
 
         if (PcdErrorType == PcdErrorMissingDimm) {
-          if (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision)) {
+          if (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision)) {
             APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_IS_BROKEN_DIMMS_MISSING_LOCATION), EVENT_CODE_631, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
               pBrokenISs[Index].InterleaveSetIndex, pTmpDimmIdStr, pBrokenISs[Index].MisplacedDimmLocations[Index2].Split.SocketId,
               pBrokenISs[Index].MisplacedDimmLocations[Index2].Split.DieId, pBrokenISs[Index].MisplacedDimmLocations[Index2].Split.MemControllerId,
@@ -930,7 +928,7 @@ CheckPlatformConfigurationData(
           }
         }
 
-        if (PcdErrorType == PcdErrorDimmLocationIssue && (IS_ACPI_REV_MAJ_1_MIN_VALID(PcdRevision))) {
+        if (PcdErrorType == PcdErrorDimmLocationIssue && (IS_ACPI_REV_MAJ_1_OR_MAJ_3(PcdRevision))) {
           APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_IS_BROKEN_DIMMS_MISPLACED_LOCATION), EVENT_CODE_632, DIAG_STATE_MASK_FAILED, ppResultStr, pDiagState,
             pBrokenISs[Index].InterleaveSetIndex, pTmpDimmIdStr, pBrokenISs[Index].CurrentDimmLocations[Index2].Split.SocketId,
             pBrokenISs[Index].CurrentDimmLocations[Index2].Split.DieId, pBrokenISs[Index].CurrentDimmLocations[Index2].Split.MemControllerId,
@@ -1224,7 +1222,7 @@ RunConfigDiagnostics(
     goto Finish;
   }
 
-  if (DimmCount == 0 || ppDimms == NULL) {
+  if (DimmCount == 0 || ppDimms == NULL || GetManageableDimmsCount(ppDimms, DimmCount) == 0) {
     ReturnCode = EFI_SUCCESS;
     APPEND_RESULT_TO_THE_LOG(NULL, STRING_TOKEN(STR_CONFIG_NO_MANAGEABLE_DIMMS), EVENT_CODE_601, DIAG_STATE_MASK_OK,
       &pResult->Message, &pResult->StateVal);

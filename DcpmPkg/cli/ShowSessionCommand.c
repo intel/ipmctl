@@ -26,7 +26,7 @@
 #define TAG_ID_SELECTED_FORMAT              L"0x%x*"
 
 EFI_STATUS
-MapTagtoCurrentSessionState(
+MapTagToCurrentSessionState(
   IN  EFI_DCPMM_PBR_PROTOCOL *pNvmDimmPbrProtocol,
   OUT UINT32 *pTag
 );
@@ -107,7 +107,7 @@ struct Command ShowSessionCommand = {
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+  @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
 **/
 EFI_STATUS
 ShowSession(

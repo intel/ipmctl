@@ -9,13 +9,15 @@
  */
 
 //#include "device_adapter.h"
-#include "lnx_adapter_logging.h"
+//#include "lnx_adapter_logging.h"
 #include "lnx_adapter.h"
+#include <Base.h>
 #include "lnx_adapter_passthrough.h"
 //#include <os/os_adapter.h>
 #include <string.h>
 #include <stdlib.h>
 #include <os_types.h>
+#include <NvmSharedDefs.h>
 #define DEV_SMALL_PAYLOAD_SIZE	128 /* 128B - Size for a passthrough command small payload */
 
 #define DSM_TO_NVM_ERROR(dsm_vendor_error, p_fw_cmd, rc) \
@@ -442,14 +444,6 @@ int ioctl_passthrough_fw_cmd(struct fw_cmd *p_fw_cmd)
 	if (p_fw_cmd == NULL)
 	{
 		COMMON_LOG_ERROR("Invalid parameter, cmd struct is null");
-		rc = NVM_ERR_UNKNOWN;
-	}
-	else if ((p_fw_cmd->InputPayloadSize > 0 && p_fw_cmd->InputPayload == NULL) ||
-			(p_fw_cmd->OutputPayloadSize > 0 && p_fw_cmd->OutPayload == NULL) ||
-			(p_fw_cmd->LargeInputPayloadSize > 0 && p_fw_cmd->LargeInputPayload == NULL) ||
-			(p_fw_cmd->LargeOutputPayloadSize > 0 && p_fw_cmd->LargeOutputPayload == NULL))
-	{
-		COMMON_LOG_ERROR("Invalid input or output payloads specified");
 		rc = NVM_ERR_UNKNOWN;
 	}
 #if __LARGE_PAYLOAD_NOT_SUPPORTED__

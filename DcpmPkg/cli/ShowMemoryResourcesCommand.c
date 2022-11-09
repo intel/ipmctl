@@ -26,7 +26,7 @@
  *  PRINTER TABLE ATTRIBUTES (5 columns)
  *                | DDR               | PMemModule          | Total            |
  *   ===========================================================================
- *   Volatile     | Volatile DDR Mem  | Volatile DCPMM Mem  | Volatile Mem     |
+ *   Volatile     | Volatile DDR Mem  | Volatile PMem       | Volatile Mem     |
  *   AppDirect    | N/A               | AppDirect Mem       | AppDirect Mem    |
  *   Cache        | DDR Cache Mem     | N/A                 | Cache Mem        |
  *   Inaccessible | N/A               | Inaccessible Mem    | Inaccessible Mem |
@@ -99,7 +99,7 @@ PRINTER_DATA_SET_ATTRIBS ShowMemResourcesDataSetAttribs =
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+  @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
 **/
 EFI_STATUS
 ShowMemoryResources(

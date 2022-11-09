@@ -3,8 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
 #include "ReadRunTimePreferences.h"
+#ifdef OS_BUILD
+#include <os_efi_preferences.h>
+#else
+extern EFI_RUNTIME_SERVICES  *gRT;
+#endif
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
 #include <Debug.h>

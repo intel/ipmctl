@@ -281,7 +281,7 @@ RegionHealthToString(
   @retval EFI_SUCCESS success
   @retval EFI_INVALID_PARAMETER pCmd is NULL or invalid command line parameters
   @retval EFI_OUT_OF_RESOURCES memory allocation failure
-  @retval EFI_ABORTED invoking CONFIG_PROTOGOL function failure
+  @retval EFI_ABORTED invoking CONFIG_PROTOCOL function failure
   @retval EFI_NO_RESPONSE FW busy for one or more dimms
 **/
 EFI_STATUS
@@ -605,7 +605,7 @@ Finish:
   PRINTER_PROCESS_SET_BUFFER(pPrinterCtx);
   if (pRegions != NULL) {
     for (RegionIndex = 0; RegionIndex < RegionCount; RegionIndex++) {
-      pInterleaveFormat = (INTERLEAVE_FORMAT *) pRegions[RegionIndex].PtrInterlaveFormats;
+      pInterleaveFormat = (INTERLEAVE_FORMAT *) pRegions[RegionIndex].PtrInterleaveFormats;
       FREE_POOL_SAFE(pInterleaveFormat);
     }
   }

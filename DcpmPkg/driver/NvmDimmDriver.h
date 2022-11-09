@@ -27,14 +27,14 @@
 /**
   This is the generated IFR binary data for each formset defined in VFR.
   This data array is ready to be used as input of HiiAddPackages() to
-  create a packagelist (which contains Form packages, String packages, etc).
+  create a package list (which contains Form packages, String packages, etc).
 **/
 extern UINT8  NvmDimmDriverFormsBin[];
 
 /**
   This is the generated String package data for all .UNI files.
   This data array is ready to be used as input of HiiAddPackages() to
-  create a packagelist (which contains Form packages, String packages, etc).
+  create a package list (which contains Form packages, String packages, etc).
 **/
 extern UINT8  IntelOptanePMemDriverStrings[];
 
@@ -198,8 +198,6 @@ typedef struct {
 #endif /** DYNAMIC_WA_ENABLE **/
 } NVMDIMMDRIVER_DATA;
 
-#define NVMDIMDRIVER_DATA_FROM_THIS(a)  CR(a, NVMDIMMDRIVER_DATA, ConfigAccess, NVMDIMM_DATA_SIGNATURE)
-
 /**
   Structure to store EFI-related dimms data
 **/
@@ -279,7 +277,7 @@ AddStringToUnicodeTable(
 
 /**
   Function that allows to "refresh" the existing DIMMs.
-  If a DIMM is unaccessible, all of the ISs and namespaces
+  If a DIMM is inaccessible, all of the ISs and namespaces
   that it was a part of will be removed.
 
   @param[in] DoDriverCleanup, if the caller wants namespaces cleaned up including unloading protocols

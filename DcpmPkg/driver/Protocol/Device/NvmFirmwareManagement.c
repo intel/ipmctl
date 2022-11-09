@@ -33,13 +33,17 @@ EFI_GUID mNvmDimmFirmwareImageTypeGuid = EFI_DCPMM_FIRMWARE_IMAGE_TYPE_GUID;
 // EFI_FIRMWARE_IMAGE_DESCRIPTOR struct
 #define NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET   sizeof(EFI_FIRMWARE_IMAGE_DESCRIPTOR)
 
+// This value is specific to this file
+#define NVDIMM_IMAGE_DESCRIPTOR_MAX_STRING_LEN  255
+#define NVDIMM_IMAGE_DESCRIPTOR_MAX_STRING_BUFFER_LENGTH  (NVDIMM_IMAGE_DESCRIPTOR_MAX_STRING_LEN + 1) * sizeof(CHAR16)
+
 // Assume maximum size of strings appended to the end of the
 // struct and allocate the whole struct as one piece. The HII spec doesn't
 // specify where these strings should reside, so this is one of several possible
 // implementations. The caller should free the entire struct, which will free
 // the strings as well.
-#define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
-#define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + HII_MAX_STRING_BUFFER_LENGTH
+#define NVDIMM_VERSION_NAME_BYTE_OFFSET    NVDIMM_IMAGE_ID_NAME_BYTE_OFFSET + NVDIMM_IMAGE_DESCRIPTOR_MAX_STRING_BUFFER_LENGTH
+#define NVDIMM_IMAGE_DESCRIPTOR_SIZE  NVDIMM_VERSION_NAME_BYTE_OFFSET + NVDIMM_IMAGE_DESCRIPTOR_MAX_STRING_BUFFER_LENGTH
 
 typedef struct _SET_IMAGE_ATTRIBUTES{
   BOOLEAN Force;
@@ -112,7 +116,16 @@ GetImageInfo (
 
   SetMem(&Uint32Version, sizeof(Uint32Version), 0x0);
 
-  if (NULL == pImageInfoSize || NULL == pImageInfo || NULL == This) {
+  if (NULL == pImageInfoSize || NULL == This
+    || (NULL == pImageInfo && *pImageInfoSize >= NVDIMM_IMAGE_DESCRIPTOR_SIZE)) {
+    goto Finish;
+  }
+
+  //per UEFI spec, NULL pImageInfo with 0 pImageInfoSize is used to obtain size
+  if (NULL == pImageInfo && 0 == *pImageInfoSize)
+  {
+    *pImageInfoSize = NVDIMM_IMAGE_DESCRIPTOR_SIZE;
+    ReturnCode = EFI_SUCCESS;
     goto Finish;
   }
 
@@ -192,8 +205,8 @@ Finish:
 /**
 Updates the firmware image of the PMem module.
 
-@remarks If Address Range Scrub (ARS) is in progress on any target PMem module,
-an attempt will be made to abort ARS and the proceed with the firmware update.
+@remarks If ARS is in progress on any target PMem module,
+an attempt will be made to abort ARS and to proceed with the firmware update.
 
 @remarks A reboot is required to activate the updated firmware image and is
 recommended to ensure ARS runs to completion.
@@ -238,6 +251,7 @@ SetImage (
   NVM_STATUS Status = NVM_ERR_OPERATION_NOT_STARTED;
   CONST CHAR16 *pSingleStatusCodeMessage = NULL;
   SET_IMAGE_ATTRIBUTES *SetImageAttributes = (SET_IMAGE_ATTRIBUTES *)VendorCode;
+  COMMAND_STATUS *pCommandStatus = NULL;
 
   BOOLEAN Force = FALSE;
 
@@ -248,6 +262,8 @@ SetImage (
     ReturnCode = EFI_INVALID_PARAMETER;
     goto Finish;
   }
+
+  CHECK_RESULT(InitializeCommandStatus(&pCommandStatus), Finish);
 
   if (ImageSize > MAX_FIRMWARE_IMAGE_SIZE_B) {
     *AbortReason = AllocateCopyPool(sizeof(pImageSizeError), pImageSizeError);
@@ -272,7 +288,7 @@ SetImage (
     Force = SetImageAttributes->Force;
   }
 
-  ReturnCode = ValidateImageVersion((NVM_FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status);
+  ReturnCode = ValidateImageVersion((NVM_FW_IMAGE_HEADER *)Image, Force, GET_DIMM_FROM_INSTANCE(This)->pDimm, &Status, pCommandStatus);
   if (EFI_ERROR(ReturnCode)) {
     if (Status == NVM_ERR_FIRMWARE_TOO_LOW_FORCE_REQUIRED) {
       *AbortReason = AllocateCopyPool (StrSize(pImageVersionError), pImageVersionError);
@@ -293,6 +309,7 @@ SetImage (
   }
 
 Finish:
+  FreeCommandStatus(&pCommandStatus);
   FREE_POOL_SAFE(pSingleStatusCodeMessage);
   NVDIMM_EXIT_I64(ReturnCode);
   return ReturnCode;

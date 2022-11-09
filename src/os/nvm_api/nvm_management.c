@@ -89,6 +89,7 @@ NVM_API int nvm_init()
 static int nvm_internal_init(BOOLEAN binding_start)
 {
   int rc = NVM_SUCCESS;
+  EFI_DCPMM_CONFIG_TRANSPORT_ATTRIBS Attribs;
 
   if (g_nvm_initialized) {
 
@@ -108,6 +109,13 @@ static int nvm_internal_init(BOOLEAN binding_start)
   if (gOsShellParametersProtocol.StdIn == 0) {
     gOsShellParametersProtocol.StdIn = stdin;
   }
+
+  // Set protocol defaults to be like OS CLI, as the NVM API is only built
+  // for OS
+  Attribs.Protocol = FisTransportAuto;
+  Attribs.PayloadSize = FisTransportSizeSmallMb;
+
+  gNvmDimmDriverNvmDimmConfig.SetFisTransportAttributes(&gNvmDimmDriverNvmDimmConfig, Attribs);
 
   NVDIMM_DBG("Nvm Init");
 
@@ -254,17 +262,6 @@ NVM_API int nvm_run_cli(int argc, char *argv[])
   }
   rc = UefiToOsReturnCode(UefiMain(0, NULL));
 
-  //gOsShellParametersProtocol.StdOut will be overriden when
-  //-o xml is used (temp hack)
-  if (gOsShellParametersProtocol.StdOut != stdout) {
-    enum DisplayType dt;
-    UINT8 d;
-    wchar_t disp_name[DISP_NAME_LEN];
-    wchar_t disp_delims[DISP_DELIMS_LEN];
-    GetDisplayInfo(disp_name, DISP_NAME_LEN*sizeof(wchar_t), &d, disp_delims, DISP_DELIMS_LEN * sizeof(wchar_t));
-    dt = (enum DisplayType)d;
-    process_output(dt, disp_name, disp_delims, (int)rc, gOsShellParametersProtocol.StdOut, argc, argv);
-  }
   nvm_internal_uninit(FALSE);
   return (int)rc;
 }
@@ -542,7 +539,7 @@ NVM_API int nvm_get_memory_topology(struct memory_topology *  p_devices,
   //loop through all ddr's and add them to the return list
   for (unsigned int ddr_index = 0; ddr_index < ddr_cnt; ddr_index++) {
     p_devices[ddr_index].physical_id = p_dimm_topology[ddr_index].DimmID; // Memory device's physical identifier (SMBIOS handle)
-    p_devices[ddr_index].memory_type = MEMORY_TYPE_DDR4;  // Type of memory device
+    p_devices[ddr_index].memory_type = p_dimm_topology[ddr_index].MemoryType;  // Type of memory device
     os_memcpy(p_devices[ddr_index].device_locator, NVM_DEVICE_LOCATOR_LEN, p_dimm_topology[ddr_index].DeviceLocator, NVM_DEVICE_LOCATOR_LEN);  // Physically-labeled socket of device location
     os_memcpy(p_devices[ddr_index].bank_label, NVM_BANK_LABEL_LEN, p_dimm_topology[ddr_index].BankLabel, BANKLABEL_LEN); // Physically-labeled bank of device location
   }
@@ -919,9 +916,11 @@ NVM_API int nvm_get_device_details(const NVM_UID    device_uid,
     return NVM_ERR_UNKNOWN;
   }
 
-  p_details->discovery.security_capabilities.erase_crypto_capable = SystemCapabilitiesInfo.EraseDeviceDataSupported;
-  p_details->discovery.security_capabilities.passphrase_capable = SystemCapabilitiesInfo.ChangeDevicePassphraseSupported;
-  p_details->discovery.security_capabilities.unlock_device_capable = SystemCapabilitiesInfo.UnlockDeviceSecuritySupported;
+  // Unsupported
+  p_details->discovery.security_capabilities.passphrase_capable = 0;
+  p_details->discovery.security_capabilities.unlock_device_capable = 0;
+  p_details->discovery.security_capabilities.erase_crypto_capable = 0;
+  p_details->discovery.security_capabilities.master_passphrase_capable = 0;
 
   // Basic device identifying information.
   rc = nvm_get_device_discovery(device_uid, &(p_details->discovery));
@@ -1293,7 +1292,8 @@ int driver_features_to_nvm_features(
   p_nvm_features->get_device_security = p_driver_features->passthrough;
 
   // modify device security - Get Topology, Passthrough
-  p_nvm_features->modify_device_security = p_driver_features->passthrough;
+  // Unsupported
+  p_nvm_features->modify_device_security = 0;
 
   // get device performance - Get Topology, Passthrough
   p_nvm_features->get_device_performance = p_driver_features->passthrough;
@@ -1449,267 +1449,6 @@ NVM_API int nvm_get_nvm_capacities(struct device_capacities *p_capacities)
   }
 Finish:
   FreePool(pdimms);
-  return rc;
-}
-
-NVM_API int nvm_set_passphrase(const NVM_UID device_uid,
-             const NVM_PASSPHRASE old_passphrase, const NVM_SIZE old_passphrase_len,
-             const NVM_PASSPHRASE new_passphrase, const NVM_SIZE new_passphrase_len)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.EnableDeviceSecuritySupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  return rc;
-}
-
-NVM_API int nvm_remove_passphrase(const NVM_UID device_uid,
-          const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  int nvm_status = NVM_SUCCESS;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-  UINT16 dimm_id;
-  unsigned int dimm_handle, dimm_count;
-  COMMAND_STATUS *p_command_status = NULL;
-  CHAR16 UnicodePassphrase[PASSPHRASE_BUFFER_SIZE];
-
-  SetMem(UnicodePassphrase, sizeof(UnicodePassphrase), 0x0);
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  if (NVM_SUCCESS != (nvm_status = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", nvm_status);
-    rc = nvm_status;
-    goto Finish;
-  }
-
-  ReturnCode = InitializeCommandStatus(&p_command_status);
-  if (EFI_ERROR(ReturnCode)) {
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.DisableDeviceSecuritySupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-    goto Finish;
-  }
-
-  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, &dimm_handle))) {
-    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
-    goto Finish;
-  }
-
-  dimm_count = 1;
-  ReturnCode = AsciiStrToUnicodeStrS(passphrase, UnicodePassphrase, PASSPHRASE_BUFFER_SIZE);
-  if (NVM_SUCCESS != ReturnCode) {
-    FreeCommandStatus(&p_command_status);
-    NVDIMM_ERR("Failed to convert passphrase (%s) to Unicode. Return code %d", passphrase, ReturnCode);
-    return NVM_ERR_UNKNOWN;
-  }
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, &dimm_id,
-    dimm_count, SECURITY_OPERATION_DISABLE_PASSPHRASE, UnicodePassphrase, NULL,
-    p_command_status);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  FreeCommandStatus(&p_command_status);
-  return rc;
-}
-
-NVM_API int nvm_unlock_device(const NVM_UID device_uid,
-            const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.UnlockDeviceSecuritySupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  return rc;
-}
-
-NVM_API int nvm_freezelock_device(const NVM_UID device_uid)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.FreezeDeviceSecuritySupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  return rc;
-}
-
-NVM_API int nvm_erase_device(const NVM_UID device_uid,
-           const NVM_PASSPHRASE passphrase, const NVM_SIZE passphrase_len)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.EraseDeviceDataSupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  return rc;
-}
-
-NVM_API int nvm_set_master_passphrase(const NVM_UID device_uid,
-             const NVM_PASSPHRASE old_master_passphrase, const NVM_SIZE old_master_passphrase_len,
-             const NVM_PASSPHRASE new_master_passphrase, const NVM_SIZE new_master_passphrase_len)
-{
-  EFI_STATUS ReturnCode = EFI_SUCCESS;
-  int rc = NVM_ERR_API_NOT_SUPPORTED;
-  SYSTEM_CAPABILITIES_INFO SystemCapabilitiesInfo;
-  COMMAND_STATUS *p_command_status = NULL;
-  UINT16 dimm_id;
-  unsigned int dimm_handle;
-  CHAR16 UnicodeOldMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
-  CHAR16 UnicodeNewMasterPassphrase[PASSPHRASE_BUFFER_SIZE];
-
-  if (old_master_passphrase_len > PASSPHRASE_BUFFER_SIZE
-       || new_master_passphrase_len > PASSPHRASE_BUFFER_SIZE) {
-    rc = NVM_ERR_PASSPHRASE_TOO_LONG;
-    return rc;
-  }
-
-  SetMem(UnicodeOldMasterPassphrase, sizeof(UnicodeOldMasterPassphrase), 0x0);
-  SetMem(UnicodeNewMasterPassphrase, sizeof(UnicodeNewMasterPassphrase), 0x0);
-
-  if (NVM_SUCCESS != (rc = nvm_init())) {
-    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
-    return rc;
-  }
-  SystemCapabilitiesInfo.PtrInterleaveFormatsSupported = 0;
-
-  ReturnCode = InitializeCommandStatus(&p_command_status);
-  if (EFI_ERROR(ReturnCode)) {
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetSystemCapabilitiesInfo(&gNvmDimmDriverNvmDimmConfig,
-      &SystemCapabilitiesInfo);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = NVM_ERR_UNKNOWN;
-    goto Finish;
-  }
-
-  if (!SystemCapabilitiesInfo.ChangeMasterPassphraseSupported) {
-    rc = NVM_ERR_OPERATION_NOT_SUPPORTED;
-  }
-
-  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, &dimm_handle))) {
-    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
-    goto Finish;
-  }
-
-  if (new_master_passphrase == NULL || new_master_passphrase_len == 0 || new_master_passphrase[0] == '\0') {
-    rc = NVM_ERR_PASSPHRASE_NOT_PROVIDED;
-    goto Finish;
-  }
-
-  AsciiStrToUnicodeStrS(old_master_passphrase, UnicodeOldMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
-  AsciiStrToUnicodeStrS(new_master_passphrase, UnicodeNewMasterPassphrase, PASSPHRASE_BUFFER_SIZE + 1);
-
-  ReturnCode = gNvmDimmDriverNvmDimmConfig.SetSecurityState(&gNvmDimmDriverNvmDimmConfig, &dimm_id,
-    1, SECURITY_OPERATION_CHANGE_MASTER_PASSPHRASE, UnicodeOldMasterPassphrase,
-    UnicodeNewMasterPassphrase, p_command_status);
-  if (EFI_ERROR(ReturnCode)) {
-    NVDIMM_ERR_W(FORMAT_STR_NL, CLI_ERR_INTERNAL_ERROR);
-    rc = p_command_status->GeneralStatus;
-    goto Finish;
-  }
-
-Finish:
-  FREE_HII_POINTER(SystemCapabilitiesInfo.PtrInterleaveFormatsSupported);
-  FreeCommandStatus(&p_command_status);
   return rc;
 }
 
@@ -1904,7 +1643,7 @@ Finish:
 
 NVM_API int nvm_get_number_of_regions( NVM_UINT8 *count)
 {
-  return nvm_get_number_of_regions_ex( TRUE, count);
+	return nvm_get_number_of_regions_ex(FALSE, count);
 }
 
 NVM_API int nvm_get_number_of_regions_ex(const NVM_BOOL use_nfit, NVM_UINT8 *count)
@@ -1944,7 +1683,7 @@ Finish:
 }
 
 NVM_API int nvm_get_regions( struct region *p_regions, NVM_UINT8 *count) {
-  return nvm_get_regions_ex( TRUE, p_regions, count);
+	return nvm_get_regions_ex(FALSE, p_regions, count);
 }
 
 NVM_API int nvm_get_regions_ex(const NVM_BOOL use_nfit, struct region *p_regions, NVM_UINT8 *count)
@@ -2402,7 +2141,7 @@ NVM_API int nvm_get_build_number()
 }
 
 
-EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
+EFI_STATUS execute_cli_cmd(wchar_t * CmdLine)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
   struct CommandInput Input;
@@ -2412,7 +2151,7 @@ EFI_STATUS execute_cli_cmd(wchar_t * cmdline)
   if (EFI_ERROR(ReturnCode))
     return NVM_ERR_UNKNOWN;
 
-  FillCommandInput(cmdline, &Input);
+  FillCommandInput(CmdLine, &Input);
   ReturnCode = Parse(&Input, &Command);
   if (!EFI_ERROR(ReturnCode))
   {
@@ -2465,7 +2204,7 @@ NVM_API int nvm_gather_support(const NVM_PATH support_file, const NVM_SIZE suppo
 }
 
 
-NVM_API int nvm_inject_device_error(const NVM_UID  device_uid,
+NVM_API int nvm_inject_device_error(const NVM_UID		device_uid,
             const struct device_error * p_error)
 {
   EFI_STATUS ReturnCode = EFI_SUCCESS;
@@ -2648,11 +2387,6 @@ NVM_API int nvm_set_user_preference(const NVM_PREFERENCE_KEY  key,
   return NVM_SUCCESS;
 }
 
-NVM_API int nvm_clear_dimm_lsa(const NVM_UID device_uid)
-{
-  return NVM_ERR_API_NOT_SUPPORTED; //deprecated
-}
-
 /*
  * Function enables disables the debug logger
  */
@@ -2753,13 +2487,13 @@ NVM_API int nvm_get_jobs(struct job *p_jobs, const NVM_UINT32 count)
         p_jobs[i].status = NVM_JOB_STATUS_COMPLETE;
       }
 
-      if ((pLongOpStatus->CmdOpcode == PtSetSecInfo) && (pLongOpStatus->CmdSubcode == SubopOverwriteDimm)) {
+      if ((pLongOpStatus->CmdOpcode == PtSetSecInfo) && (pLongOpStatus->CmdSubOpcode == SubopOverwriteDimm)) {
         p_jobs[i].type = NVM_JOB_TYPE_SANITIZE;
       }
-      else if ((pLongOpStatus->CmdOpcode == PtSetFeatures) && (pLongOpStatus->CmdSubcode == SubopAddressRangeScrub)) {
+      else if ((pLongOpStatus->CmdOpcode == PtSetFeatures) && (pLongOpStatus->CmdSubOpcode == SubopAddressRangeScrub)) {
         p_jobs[i].type = NVM_JOB_TYPE_ARS;
       }
-      else if ((pLongOpStatus->CmdOpcode == PtUpdateFw) && (pLongOpStatus->CmdSubcode == SubopUpdateFw)) {
+      else if ((pLongOpStatus->CmdOpcode == PtUpdateFw) && (pLongOpStatus->CmdSubOpcode == SubopUpdateFw)) {
         p_jobs[i].type = NVM_JOB_TYPE_FW_UPDATE;
       }
       else {
@@ -3026,7 +2760,7 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
   }
   p_device->part_number[PART_NUMBER_LEN - 1] = '\0';
   build_revision(p_device->fw_revision, NVM_VERSION_LEN, p_dimm->FwVer.FwProduct, p_dimm->FwVer.FwRevision,
-     p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
+		 p_dimm->FwVer.FwSecurityVersion, p_dimm->FwVer.FwBuild);
   snprintf(p_device->fw_api_version, NVM_VERSION_LEN, "%02d.%02d", p_dimm->FwVer.FwApiMajor, p_dimm->FwVer.FwApiMinor);
   p_device->capacity = p_dimm->Capacity;
   CopyMem_S(p_device->interface_format_codes, sizeof(p_device->interface_format_codes), p_dimm->InterfaceFormatCode, sizeof(UINT16) * 2);
@@ -3037,10 +2771,10 @@ void dimm_info_to_device_discovery(DIMM_INFO *p_dimm, struct device_discovery *p
 }
 
 int get_fw_err_log_stats(
-  const unsigned int     dimm_id,
-  const unsigned char    log_level,
-  const unsigned char    log_type,
-  LOG_INFO_DATA_RETURN * log_info)
+  const unsigned int	dimm_id,
+  const unsigned char	log_level,
+  const unsigned char	log_type,
+  LOG_INFO_DATA_RETURN *	log_info)
 {
   int rc = NVM_ERR_UNKNOWN;
   NVM_FW_CMD *cmd;
@@ -3164,5 +2898,209 @@ NVM_API int nvm_send_device_passthrough_cmd(const NVM_UID   device_uid,
   }
 finish:
   FREE_POOL_SAFE(cmd);
+  return rc;
+}
+
+static int nvm_get_command_effect_log_helper(const NVM_UID device_uid,
+  NVM_UINT32 *p_cel_count,
+  struct command_effect_log **pp_cel)
+{
+  UINT16 dimm_id;
+  int rc = NVM_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+
+  if (NULL == pp_cel || NULL == p_cel_count) {
+    NVDIMM_ERR("NULL input parameter\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
+
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetCommandEffectLog(&gNvmDimmDriverNvmDimmConfig, dimm_id, (COMMAND_EFFECT_LOG_ENTRY **)pp_cel, p_cel_count);
+  if (EFI_ERROR(ReturnCode)) {
+    return NVM_ERR_OPERATION_FAILED;
+  }
+
+  if (0 == *p_cel_count) {
+    rc = NVM_SUCCESS_NO_COMMAND_EFFECT_LOG_ENTRY;
+  }
+  return rc;
+}
+
+NVM_API int nvm_get_number_of_command_effect_log_entries(const NVM_UID device_uid,
+  NVM_UINT32 *p_count)
+{
+  int rc = NVM_SUCCESS;
+  struct command_effect_log *p_cel = NULL;
+
+  if (p_count == NULL)
+  {
+    NVDIMM_ERR("NULL input parameter\n");
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto finish;
+  }
+
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    goto finish;
+  }
+
+  rc = nvm_get_command_effect_log_helper(device_uid, p_count, &p_cel);
+
+  if (NVM_SUCCESS != rc && NVM_SUCCESS_NO_COMMAND_EFFECT_LOG_ENTRY != rc) {
+    NVDIMM_ERR("Failed to get number of command effect log entries %d\n", rc);
+    goto finish;
+  }
+
+finish:
+  FREE_POOL_SAFE(p_cel);
+  return rc;
+}
+
+NVM_API int nvm_get_command_effect_log(const NVM_UID device_uid,
+  struct command_effect_log *p_cel,
+  const NVM_UINT32 count)
+{
+  int rc = NVM_SUCCESS;
+  NVM_UINT32 actual_count = 0;
+  struct command_effect_log *p_cel_local = NULL;
+  NVM_UINT32 cel_size = 0;
+
+  if (NULL == p_cel) {
+    NVDIMM_ERR("NULL input parameter\n");
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto finish;
+  }
+
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    goto finish;
+  }
+
+  rc = nvm_get_command_effect_log_helper(device_uid, &actual_count, &p_cel_local);
+  if (NVM_SUCCESS != rc && NVM_SUCCESS_NO_COMMAND_EFFECT_LOG_ENTRY != rc) {
+    NVDIMM_ERR("Failed to get number of command effect log entries %d\n", rc);
+    goto finish;
+  }
+
+  if (actual_count != count)
+  {
+    rc = NVM_ERR_BAD_SIZE;
+    goto finish;
+  }
+
+  cel_size = actual_count * sizeof(struct command_effect_log);
+  CopyMem_S(p_cel, cel_size, p_cel_local, cel_size);
+
+finish:
+  FREE_POOL_SAFE(p_cel_local);
+  return rc;
+}
+
+NVM_API int nvm_get_command_access_policy(const NVM_UID device_uid,
+          NVM_UINT32 *p_cap_count,
+          struct command_access_policy *p_cap)
+{
+  UINT16 dimm_id;
+  int rc = NVM_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+  UINT32 cap_count, index;
+  COMMAND_ACCESS_POLICY_ENTRY *p_cap_info = NULL;
+
+  if (NULL == p_cap || NULL == p_cap_count) {
+    NVDIMM_ERR("NULL input parameter\n");
+    rc = NVM_ERR_INVALID_PARAMETER;
+    goto finish;
+  }
+
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    goto finish;
+  }
+
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
+    rc = NVM_ERR_UNKNOWN;
+    goto finish;
+  }
+
+  rc = nvm_get_number_of_cap_entries(device_uid, &cap_count);
+  if (EFI_ERROR(rc)) {
+    NVDIMM_ERR("Failed to obtain the number of cap entries (%d)\n", rc);
+    goto finish;
+  }
+
+  if (0 == cap_count) {
+    NVDIMM_ERR("No CAP entries found");
+    rc = NVM_SUCCESS_NO_COMMAND_ACCESS_POLICY_ENTRY;
+    goto finish;
+  }
+
+  p_cap_info = AllocateZeroPool(sizeof(COMMAND_ACCESS_POLICY_ENTRY) * cap_count);
+  if (p_cap_info == NULL) {
+    NVDIMM_ERR("Failed to allocate memory");
+    rc = NVM_ERR_NO_MEM;
+    goto finish;
+  }
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetCommandAccessPolicy(&gNvmDimmDriverNvmDimmConfig, dimm_id, &cap_count, p_cap_info);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("GetCommandAccessPolicy failed (%d)\n", rc);
+    rc = NVM_ERR_OPERATION_FAILED;
+    goto finish;
+  }
+
+  if (cap_count > * p_cap_count)
+    cap_count = *p_cap_count;
+
+  for (index = 0; index < cap_count; index++) {
+    memset(&p_cap[index], 0, sizeof(struct command_access_policy));
+    p_cap[index].opcode = p_cap_info[index].Opcode;
+    p_cap[index].sub_opcode = p_cap_info[index].SubOpcode;
+    p_cap[index].restriction = p_cap_info[index].Restriction;
+  }
+
+  *p_cap_count = cap_count;
+
+finish:
+  FREE_POOL_SAFE(p_cap_info);
+  return rc;
+}
+
+NVM_API int nvm_get_number_of_cap_entries(const NVM_UID device_uid,
+  NVM_UINT32 *p_count)
+{
+  UINT16 dimm_id;
+  unsigned int cap_count = 0;
+  int rc = NVM_SUCCESS;
+  EFI_STATUS ReturnCode = EFI_SUCCESS;
+
+  if (NULL == p_count) {
+    NVDIMM_ERR("NULL input parameter\n");
+    return NVM_ERR_INVALID_PARAMETER;
+  }
+
+  if (NVM_SUCCESS != (rc = nvm_init())) {
+    NVDIMM_ERR("Failed to intialize nvm library %d\n", rc);
+    return rc;
+  }
+
+  if (NVM_SUCCESS != (rc = get_dimm_id(device_uid, &dimm_id, NULL))) {
+    NVDIMM_ERR("Failed to get dimm ID %d\n", rc);
+    return NVM_ERR_UNKNOWN;
+  }
+
+  ReturnCode = gNvmDimmDriverNvmDimmConfig.GetCommandAccessPolicy(&gNvmDimmDriverNvmDimmConfig, dimm_id, &cap_count, NULL);
+  if (EFI_ERROR(ReturnCode)) {
+    NVDIMM_ERR("GetCommandAccessPolicy failed (%d)\n", rc);
+    return NVM_ERR_OPERATION_FAILED;
+  }
+
+  *p_count = cap_count;
+
   return rc;
 }

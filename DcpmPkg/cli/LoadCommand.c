@@ -297,7 +297,6 @@ Load(
     goto Finish;
   }
 
-  pCommandStatus->ObjectType = ObjectTypeDimm;
 
   ResetCmdStatus(pCommandStatus, NVM_ERR_OPERATION_NOT_STARTED);
   if (!Examine) {
@@ -386,13 +385,17 @@ Load(
     }
   } else {
     gBS->CloseEvent(ProgressEvent);
+
+    // move to next line after progress events have ended
+    PrinterSetMsg(pCmd->pPrintCtx, ReturnCode, FORMAT_NL);
+
     if (StagedFwUpdates > 0) {
       /*
       At this point, all indications are that the FW is on the way to being staged.
       Loop until they all report a staged version
       */
       TempReturnCode = BlockForFwStage(pCmd, pCommandStatus, pNvmDimmConfigProtocol,
-        &ReturnCodes[0], &NvmCodes[0], &pDimmTargets[0], DimmTargetsNum);
+        &ReturnCodes[0], &NvmCodes[0], pDimmTargets, DimmTargetsNum);
       if (EFI_ERROR(TempReturnCode)) {
         ReturnCode = TempReturnCode;
         goto Finish;
@@ -434,6 +437,7 @@ FinishNoCommandStatus:
   FREE_POOL_SAFE(pDimmIds);
   FREE_POOL_SAFE(pOptionsValue);
   FREE_POOL_SAFE(pDimmTargetIds);
+  FREE_POOL_SAFE(pDimms);
 
   if (TargetsIsNewList) {
     FREE_POOL_SAFE(pDimmTargets);

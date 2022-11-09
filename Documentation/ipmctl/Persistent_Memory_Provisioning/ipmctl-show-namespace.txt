@@ -1,0 +1,153 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-namespace(1)
+========================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-namespace - Shows information about one or more namespaces
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl show [OPTIONS] -namespace [TARGETS]
+--
+
+DESCRIPTION
+-----------
+Shows information about one or more namespaces.
+
+OPTIONS
+-------
+-a::
+-all::
+  Shows all attributes.
+
+NOTE: The all and display options are exclusive and may not be used together.
+
+-d (attributes)::
+-display (attributes)::
+  Filters the returned attributes by explicitly specifying a comma separated
+  list of any of the attributes defined in the Return Data section.
+
+NOTE: The all and display options are exclusive and may not be used together.
+
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+-u (B|MB|MiB|GB|GiB|TB| TiB)::
+-units (B|MB|MiB|GB|GiB|TB| TiB)::
+  Changes the units that capacities are displayed in for this command. One of:
+  bytes (B), megabytes (MB), mebibytes (MiB), gigabytes (GB), gibibytes (GiB),
+  terabytes (TB) or tebibytes (TiB).
+
+TARGETS
+-------
+-namespace [NamespaceIDs]::
+  Restricts output to specific namespaces by providing a comma separated list of
+  one or more namespace identifiers. The default is to display all namespaces.
+
+-region [RegionIDs]::
+  Restricts output to the namespaces on specific regions by supplying the region
+  target and one or more comma separated region identifiers. The default is to
+  display namespaces on all regions.
+
+EXAMPLES
+--------
+Shows the default attributes for the specified namespace.
+[listing]
+--
+ipmctl show -namespace 0x01
+--
+
+Shows all the attributes for all namespaces.
+[listing]
+--
+ipmctl show -a –namespace
+--
+
+LIMITATIONS
+-----------
+In order to successfully execute this command:
+
+* The caller must have the appropriate privileges.
+
+* The specified PMem modules must be manageable by the host software and unlocked if
+  security is enabled.
+
+Use the command <<Show System Capabilities>> to retrieve namespace
+limitations as reported by the driver.
+
+RETURN DATA
+-----------
+The default behavior is to display a table with the default attributes listed below;
+applying options changes the output to a more detailed format.
+
+NamespaceID::
+  (Default) The identifier of the namespace
+
+Capacity::
+  (Default) The usable capacity of the namespace. This value is the raw namespace capacity, not counting meta data.
+
+HealthState::
+  (Default) The rolled-up health of the underlying PMem modules. One of:
+  * Unknown
+  * Healthy
+  * Warning: Indicates a namespace has a non-critical problem. One of:
+    - Reporting an LBA size that is unsupported by this driver.
+  * Critical: Indicates a namespace has a critical problem. One of:
+    - Inconsistent data structures.
+    - Mismatch between namespace label and associated PM region.
+    - Poison or uncorrectable data in namespace metadata.
+    - Namespace label checksum mismatch.
+    - Mismatch between number of labels reported by namespace and number of labels found (invalid number of labels found).
+    - Namespace parent interleave set not found.
+    - Interleave set or region initialization failure (out of memory).
+    - PMem module missing (serial number of PMem module from the Platform Config Data not found in the PMem module list).
+    - PMem module not configured.
+    - Failure to retrieve AppDirect I/O structures from NFIT (system physical address missing).
+    - Failure to check existence of address abstraction.
+    - Failure to initialize BTT.
+    - Failure to initialize PFN.
+  * Locked: One or more of the of the underlying PMem modules within the namespace are locked.
+  * Unsupported: The namespace type is not supported.
+
+Name::
+  The user specified namespace name up to a maximum of 64 characters
+
+RegionID::
+  The region from which the namespace was created.
+
+BlockSize::
+  The logical size in bytes for compatibility with block read/write operations
+
+Mode::
+  Address abstraction type found on the namespace. One of:
+  * None (raw)
+  * Sector - Powerfail write atomicity is guaranteed via a Block Translation
+    Table (BTT).
+  * fsdax - Supports filesystem-dax (See ndctl-create-namespace)
+
+NOTE: If the namespace is disabled, mode may be reported as "None".
+
+LabelVersion::
+  Indicates the Namespace index version that can be set with
+  <<Create Memory Allocation Goal>>. One of:
+  * 1.1
+  * 1.2
+
+NamespaceUUID::
+  UUID of the namespace (raw UUID)

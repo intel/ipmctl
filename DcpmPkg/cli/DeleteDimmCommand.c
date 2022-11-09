@@ -14,10 +14,6 @@
 #include "SetDimmCommand.h"
 #include "Common.h"
 
-#define MULTI_OVERWRITE_PASSCOUNT     3
-#define DEFAULT_OVERWRITE_PASSCOUNT   1
-#define DEFAULT_INVERT_PATTERN        1
-
 /**
   Command syntax definition
 **/
@@ -78,6 +74,7 @@ DeleteDimm(
   BOOLEAN MasterOptionSpecified = FALSE;
   BOOLEAN DefaultOptionSpecified = FALSE;
   UINT16 SecurityOperation = SECURITY_OPERATION_UNDEFINED;
+  DIMM_INFO DimmInfo;
 
   NVDIMM_ENTRY();
 
@@ -150,13 +147,26 @@ DeleteDimm(
   /** Check default option **/
   DefaultOptionSpecified = containsOption(pCmd, DEFAULT_OPTION);
 
+  /** Check if default option is supported on selected modules **/
+  if (DefaultOptionSpecified) {
+    for (Index = 0; Index < DimmIdsCount; Index++) {
+      CHECK_RESULT((pNvmDimmConfigProtocol->GetDimm(pNvmDimmConfigProtocol, pDimmIds[Index], DIMM_INFO_CATEGORY_NONE, &DimmInfo)), Finish);
+      if (IsDefaultMasterPassphraseRestricted(DimmInfo)) {
+        ReturnCode = EFI_INVALID_PARAMETER;
+        PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_DEFAULT_NOT_SUPPORTED_FIRMWARE_REV);
+        goto Finish;
+      }
+    }
+  }
+
   /** Check force option **/
   if (containsOption(pCmd, FORCE_OPTION) || containsOption(pCmd, FORCE_OPTION_SHORT)) {
     Force = TRUE;
   }
 
   if (MasterOptionSpecified) {
-    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount)) {
+    // FALSE = Master passphrase must be enabled for FIS >= 3.2 PMem modules as well
+    if (!AllDimmsInListHaveMasterPassphraseEnabled(pDimms, DimmCount, pDimmIds, DimmIdsCount, FALSE)) {
       ReturnCode = EFI_INVALID_PARAMETER;
       PRINTER_SET_MSG(pPrinterCtx, ReturnCode, CLI_ERR_MASTER_PASSPHRASE_NOT_ENABLED);
       goto Finish;

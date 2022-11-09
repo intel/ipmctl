@@ -6,19 +6,10 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-#include <Version.h>
-#include <Types.h>
 #include <NvmTypes.h>
 #include <Uefi.h>
-#include <Protocol/SimpleFileSystem.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
+#include "NvmInterface.h"
 #include "NvmHealth.h"
-#include "FwVersion.h"
-#include <Library/SerialPortLib.h>
-#ifdef OS_BUILD
-#include <os_efi_preferences.h>
-#include <os_str.h>
-#endif
 
 #ifdef _MSC_VER
 int _fltused();
@@ -45,36 +36,36 @@ typedef union {
 
 #define SOCKET_ID_ALL MAX_UINT16
 
+#define BLOCKSIZE_4K 4096
+
 #define SPD_INTEL_VENDOR_ID 0x8980
 #define SPD_DEVICE_ID 0x0000
 #define SPD_DEVICE_ID_10 0x097A
 #define SPD_DEVICE_ID_15 0x097B
+#define SPD_DEVICE_ID_20 0x097C
 
 #define CONTROLLER_REVISION_BASE_STEP_MASK 0x30
 #define CONTROLLER_REVISION_METAL_STEP_MASK 0x03
 
-#define CONTROLLER_REVISON_A_STEP 0x00
-#define CONTROLLER_REVISON_S_STEP 0x10
-#define CONTROLLER_REVISON_B_STEP 0x20
-#define CONTROLLER_REVISON_C_STEP 0x30
-
-#define CONTROLLER_REVISON_A_STEP_STR L"A"
-#define CONTROLLER_REVISON_S_STEP_STR L"S"
-#define CONTROLLER_REVISON_B_STEP_STR L"B"
-#define CONTROLLER_REVISON_C_STEP_STR L"C"
+#define CONTROLLER_REVISION_A_STEP_STR L"A"
+#define CONTROLLER_REVISION_S_STEP_STR L"S"
+#define CONTROLLER_REVISION_B_STEP_STR L"B"
+#define CONTROLLER_REVISION_C_STEP_STR L"C"
+#define CONTROLLER_REVISION_D_STEP_STR L"D"
 
 #define CONTROLLER_STEPPING_UNKNOWN_STR L"Unknown stepping"
 
 #define MAX_CONFIG_DUMP_FILE_SIZE OUT_MB_SIZE
 
+// Picking a theoretical max string length so we don't run out of
+// memory and kill something that is continuously running (our driver).
+// Also it's good development practice.
 #define MAX_LINE_CHAR_LENGTH 400
 #define MAX_LINE_BYTE_LENGTH (MAX_LINE_CHAR_LENGTH * sizeof(CHAR8))
+#define MAX_STRING_LENGTH (16384)
 
 #define COUNT_TO_INDEX_OFFSET 1
 #define FIRST_CHAR_INDEX 0
-#define TWOLM_NMFM_RATIO_LOWER 3.6
-#define TWOLM_NMFM_RATIO_LOWER_STR L"3.6"
-#define TWOLM_NMFM_RATIO_UPPER 16
 
 #define UTF_16_BOM L'\xFEFF'
 
@@ -114,14 +105,17 @@ typedef union {
 #define LAST_SHUTDOWN_STATUS_UNKNOWN_STR              L"Unknown"
 
 // Last shutdown status extended string values
-#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                 L"Viral Interrupt Received"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR   L"Surprise Clock Stop Received"
-#define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR       L"Write Data Flush Complete"
-#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                  L"PM S4 Received"
-#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                         L"PM Idle Received"
-#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                  L"DDRT Surprise Reset Received"
-#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR     L"Extended Flush Complete"
-#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR L"Extended Flush Not Complete"
+#define LAST_SHUTDOWN_STATUS_VIRAL_INTERRUPT_STR                           L"Viral Interrupt Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_CLOCK_STOP_INTERRUPT_STR             L"Surprise Clock Stop Received"
+#define LAST_SHUTDOWN_STATUS_WRITE_DATA_FLUSH_COMPLETE_STR                 L"Write Data Flush Complete"
+#define LAST_SHUTDOWN_STATUS_S4_POWER_STATE_STR                            L"PM S4 Received"
+#define LAST_SHUTDOWN_STATUS_PM_IDLE_STR                                   L"PM Idle Received"
+#define LAST_SHUTDOWN_STATUS_SRE_CLOCK_STOP_STR                            L"SRE Clock Stop Received"
+#define LAST_SHUTDOWN_STATUS_SURPRISE_RESET_STR                            L"DDRT Surprise Reset Received"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_COMPLETE_STR               L"Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_ADR_FLUSH_NOT_COMPLETE_STR           L"Extended Flush Not Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_SX_EXTENDED_FLUSH_COMPLETE_STR       L"Sx Extended Flush Complete"
+#define LAST_SHUTDOWN_STATUS_ENHANCED_SX_EXTENDED_FLUSH_NOT_COMPLETE_STR   L"Sx Extended Flush Not Complete"
 
 // Memory modes supported string values
 #define MODES_SUPPORTED_MEMORY_MODE_STR      L"Memory Mode"
@@ -140,25 +134,13 @@ typedef union {
 #define SECURITY_CAPABILITIES_ERASE       L"Erase"
 #define SECURITY_CAPABILITIES_NONE        L"None"
 
-// ARS status string values
-#define ARS_STATUS_UNKNOWN_STR       L"Unknown"
-#define ARS_STATUS_NOT_STARTED_STR   L"Not started"
-#define ARS_STATUS_IN_PROGRESS_STR   L"In progress"
-#define ARS_STATUS_COMPLETED_STR     L"Completed"
-#define ARS_STATUS_ABORTED_STR       L"Aborted"
-
-// Overwrite DIMM status string values
-#define OVERWRITE_DIMM_STATUS_UNKNOWN_STR      L"Unknown"
-#define OVERWRITE_DIMM_STATUS_NOT_STARTED_STR  L"Not started"
-#define OVERWRITE_DIMM_STATUS_IN_PROGRESS_STR  L"In progress"
-#define OVERWRITE_DIMM_STATUS_COMPLETED_STR    L"Completed"
-
 // Memory type string values
 #define MEMORY_TYPE_DCPM_STR     L"Logical Non-Volatile Device"
 #define MEMORY_TYPE_DDR4_STR     L"DDR4"
+#define MEMORY_TYPE_DDR5_STR     L"DDR5"
 #define MEMORY_TYPE_UNKNOWN_STR  L"Unknown"
 
-//Units string vaules
+//Units string values
 #define UNITS_B_STR  L"B"
 #define UNITS_GB_STR  L"GB"
 #define UNITS_GIB_STR L"GiB"
@@ -172,7 +154,7 @@ typedef union {
 #define TWO_DIGITS_AFTER_POINT   2
 #define THREE_DIGITS_AFTER_POINT 3
 
-//Namespace healthstates
+//Namespace health states
 #define HEALTHSTATE_OK             L"Healthy"
 #define HEALTHSTATE_WARNING        L"Warning"
 #define HEALTHSTATE_CRITICAL       L"Critical"
@@ -455,7 +437,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
 // Go to Label if not true
 #define CHECK_NOT_TRUE(Call, Label)                                        \
   do {                                                                    \
-    if (TRUE != Call) {                                                   \
+    if (TRUE != (Call)) {                                                   \
       NVDIMM_ERR("Statement %s is not true", #Call);                      \
       goto Label;                                                         \
     }                                                                     \
@@ -469,6 +451,7 @@ if (NVM_SUCCESS != os_check_admin_permissions()) { \
       goto Label;                                                         \
     }                                                                     \
   } while (0)
+
 
 /**
   Get a variable from UEFI RunTime services.
@@ -655,7 +638,7 @@ ChecksumOperations(
     the RightValue
   @retval 0 when the provided values are the same
   @retval 1 when the LeftValue is bigger than
-    the RithValue
+    the RightValue
 **/
 INT8
 CompareUint128(
@@ -736,6 +719,7 @@ AsciiStrSplit(
 
 /**
   First free elements of array and then free the array
+  This does NOT set pointer to array to NULL
 
   @param[in,out] ppStringArray array of strings
   @param[in] ArraySize number of strings
@@ -745,6 +729,19 @@ FreeStringArray(
   IN OUT CHAR16 **ppStringArray,
   IN     UINT32 ArraySize
   );
+
+/**
+  Copy of FreeStringArray, used for avoiding static code analysis complaint
+
+  @param[in,out] ppStringArray array of strings
+  @param[in] ArraySize number of strings
+**/
+VOID
+FreeStringArrayAscii(
+  IN OUT CHAR8 **ppStringArray,
+  IN     UINT32 ArraySize
+  );
+
 
 /**
   Open the specified protocol.
@@ -789,7 +786,7 @@ GetDriverHandle(
   );
 
 /**
-  Open file or create new file.
+  Open file or create new file in text mode.
 
   @param[in] pArgFilePath path to a file that will be opened
   @param[out] pFileHandle output handler
@@ -803,7 +800,7 @@ GetDriverHandle(
   @retval EFI_PROTOCOL_ERROR if there is no EFI_SIMPLE_FILE_SYSTEM_PROTOCOL
 **/
 EFI_STATUS
-OpenFile(
+OpenFileText(
   IN     CHAR16 *pArgFilePath,
      OUT EFI_FILE_HANDLE *pFileHandle,
   IN     CONST CHAR16 *pCurrentDirectory OPTIONAL,
@@ -916,7 +913,7 @@ GetDimmInfoByHandle(
 
 /**
   Converts the Dimm IDs within a region to its  HII string equivalent
-  @param[in] pRegionInfo The Region info with DimmID and Dimmcount its HII string
+  @param[in] pRegionInfo The Region info with DimmID and DimmCount its HII string
   @param[in] pNvmDimmConfigProtocol A pointer to the EFI_DCPMM_CONFIG2_PROTOCOL instance
   @param[in] DimmIdentifier Dimm identifier preference
   @param[out] ppDimmIdStr A pointer to the HII DimmId string. Dynamically allocated memory and must be released by calling function.
@@ -1057,6 +1054,29 @@ CatSPrintClean(
   ...
   );
 
+
+/**
+  Appends a formatted Unicode string with arguments to a pre-allocated
+  null-terminated Unicode string provided by the caller with length of
+  DestStringMaxLength.
+
+  @param[in] DestString          A Null-terminated Unicode string of size
+                                 DestStringMaxLength
+  @param[in] DestStringMaxLength The maximum number of CHAR16 characters
+                                 that will fit into DestString
+  @param[in] FormatString        A Null-terminated Unicode format string.
+  @param[in] ...                 The variable argument list whose contents are
+                                 accessed based on the format string specified by
+                                 FormatString.
+**/
+EFI_STATUS
+CatSPrintNCopy(
+  IN OUT CHAR16 *pDestString,
+  IN     UINT16 DestStringMaxLength,
+  IN     CONST CHAR16 *pFormatString,
+  ...
+);
+
 /**
   Function that allows for nicely formatted HEX & ASCII debug output.
   It can be used to inspect memory objects without a need for debugger
@@ -1097,27 +1117,6 @@ INTN
 StrICmp(
   IN CONST CHAR16 *pFirstString,
   IN CONST CHAR16 *pSecondString
-  );
-
-/**
-  Checks if all of the DIMMS are healthy.
-
-  @param[out] pDimmsHeathy is the pointer to a BOOLEAN value,
-    where the result status will be stored.
-    If at least one DIMM status differs from healthy this
-    will equal FALSE.
-
-  @retval EFI_SUCCESS if there were no problems
-  @retval EFI_INVALID_PARAMETER if pDimmStatus is NULL
-
-  Other return values from functions:
-    HealthProtocol->GetHealthStatus
-    OpenNvmDimmProtocol
-    getControllerHandle
-**/
-EFI_STATUS
-CheckDimmsHealth(
-     OUT BOOLEAN *pDimmsStatus
   );
 
 /**
@@ -1225,8 +1224,9 @@ Pow(
   @param[in] pDevicePath - handle to obtain generic path/location information concerning the physical device
                           or logical device. The device path describes the location of the device the handle is for.
   @param[in] MaxFileSize - if file is bigger skip read and return error
+  @param[in] AsBinary - To open file as a binary file or not. (Windows will replace \r\n with \n if not binary file)
   @param[out] pFileSize - number of bytes written to buffer
-  @param[out] ppFileBuffer - output buffer
+  @param[out] ppFileBuffer - output buffer  * WARNING * caller is responsible for freeing
 
   @retval EFI_INVALID_PARAMETER One or more parameters are invalid
   @retval EFI_NOT_STARTED Test was not executed
@@ -1238,6 +1238,7 @@ FileRead(
   IN      CHAR16 *pFilePath,
   IN      EFI_DEVICE_PATH_PROTOCOL *pDevicePath,
   IN      CONST UINT64  MaxFileSize,
+  IN      BOOLEAN AsBinary,
      OUT  UINT64 *pFileSize,
      OUT  VOID **ppFileBuffer
   );
@@ -1288,7 +1289,7 @@ CleanUnicodeStringMemory(
   Get linked list size
 
   @param[in] pListHead   List head
-  @parma[out] pListSize  Counted number of items in the list
+  @param[out] pListSize  Counted number of items in the list
 
   @retval EFI_SUCCESS           Success
   @retval EFI_INVALID_PARAMETER At least one of the input parameters equals NULL
@@ -1350,12 +1351,14 @@ RemoveWhiteSpaces(
   Convert Last Shutdown Status to string
 
   @param[in] LastShutdownStatus structure
+  @param[in] FwVer Struct representing firmware version
 
-  @retval CLI string representation of last shudown status
+  @retval CLI string representation of last shutdown status
 **/
 CHAR16*
 LastShutdownStatusToStr(
-  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus
+  IN     LAST_SHUTDOWN_STATUS_DETAILS_COMBINED LastShutdownStatus,
+  IN     FIRMWARE_VERSION FwVer
   );
 
 /**
@@ -1499,15 +1502,17 @@ FwActivateOptInToString(
 );
 
 /**
-  Convert ARS status value to its respective string
+  Convert long op status value to its respective string
 
-  @param[in] ARS status value
+  @param[in] HiiHandle Pointer to HII handle
+  @param[in] LongOpStatus status value
 
-  @retval CLI string representation of ARS status
+  @retval CLI string representation of long op status
 **/
 CHAR16*
-ARSStatusToStr(
-  IN     UINT8 ARSStatus
+LongOpStatusToStr(
+  IN EFI_HANDLE HiiHandle,
+  IN     UINT8 LongOpStatus
   );
 
 /**
@@ -1731,7 +1736,7 @@ EndianSwapUint16(
 
 /**
   Converts EPOCH time in number of seconds into a human readable time string
-  @param[in] TimeInSesconds Number of seconds (EPOCH time)
+  @param[in] TimeInSeconds Number of seconds (EPOCH time)
 
   @retval Human readable time string
 **/
@@ -1815,7 +1820,7 @@ CopyMem_S(
 );
 
 /**
-  Retrives Intel Dimm Config EFI vars
+  Retrieves Intel Dimm Config EFI vars
 
   User is responsible for freeing ppIntelDIMMConfig
 
@@ -1898,13 +1903,34 @@ IsFwApiVersionSupportedByValues(
   Convert controller revision id to string
 
   @param[in] Controller revision id
+  @param[in] Subsystem Device Id for determining HW Gen
 
   @retval CLI string representation of the controller revision id
 **/
 CHAR16*
 ControllerRidToStr(
-  IN     UINT16 ControllerRid
-  );
+  IN     UINT16 ControllerRid,
+  IN     UINT16 SubsystemDeviceId
+);
+
+/**
+  Convert FIPS mode status to string
+
+  @param[in] HiiHandle HII handle to access string dictionary
+  @param[in] FIPSMode Response from GetFIPSMode firmware command
+  @param[in] FwVer Firmware revision
+  @param[in] ReturnCodeGetFIPSMode ReturnCode from GetFIPSMode API call,
+                                   used to provide clearer error message
+
+  @retval String representation of the FIPS mode status
+**/
+CHAR16 *
+ConvertFIPSModeToString(
+  IN EFI_HANDLE HiiHandle,
+  IN FIPS_MODE FIPSMode,
+  IN FIRMWARE_VERSION FwVer,
+  IN EFI_STATUS ReturnCodeGetFIPSMode
+);
 
 /**
 Set object status for DIMM_INFO
@@ -1969,16 +1995,35 @@ CHAR16 * ConvertDimmInfoAttribToString(
 );
 
 /**
-  Match driver command status to EFI return code
+  Create a duplicate of a string without parsing any format strings.
+  Caller is responsible for freeing the returned string.
+  Max string length is MAX_STRING_LENGTH
 
-  @param[in] Status - NVM_STATUS returned from driver
-
-  @retval - Appropriate EFI return code
+  @param[in] StringToDuplicate - String to duplicate
+  @param[out] pDuplicateString - Allocated copy of StringToDuplicate
 **/
 EFI_STATUS
-MatchCliReturnCode (
-  IN     NVM_STATUS Status
- );
+DuplicateString(
+  IN     CHAR16 *StringToDuplicate,
+     OUT CHAR16 **pDuplicateString
+);
+
+/**
+  Wrap the string (add \n) at the specified WrapPos by replacing a space character (' ')
+  with a newline character. Used for the HII popup window.
+  Make a copy of the MessageString so we can modify it if needed.
+
+  @param[in] WrapPos - Line length limit (inclusive). Does not include "\n" or "\0"
+  @param[in] MessageString - Original message string, is not modified
+  @param[out] pWrappedString - Allocated copy of MessageString that is wrapped with "\n"
+**/
+EFI_STATUS
+WrapString(
+  IN     UINT8 WrapPos,
+  IN     CHAR16 *MessageString,
+     OUT CHAR16 **pWrappedString
+  );
+
 
  /**
   Guess an appropriate NVM_STATUS code from EFI_STATUS. For use when
@@ -1996,7 +2041,6 @@ NVM_STATUS
 GuessNvmStatusFromReturnCode(
   IN EFI_STATUS ReturnCode
 );
-
 #ifndef OS_BUILD
 /**
   Find serial attributes from SerialProtocol and set on

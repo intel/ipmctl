@@ -11,6 +11,7 @@
 
 #include "lnx_common.h"
 #include <sys/time.h>
+#include <Base.h>
 #include <string.h>
 #include <stdlib.h>
 

@@ -1,0 +1,62 @@
+// Copyright (c) 2018, Intel Corporation.
+// SPDX-License-Identifier: BSD-3-Clause
+
+ifdef::manpage[]
+ipmctl-show-system(1)
+=====================
+endif::manpage[]
+
+NAME
+----
+ipmctl-show-system - Shows the system ACPI tables related to the PMem modules
+
+SYNOPSIS
+--------
+[listing]
+--
+ipmctl show [OPTIONS] -system
+--
+
+DESCRIPTION
+-----------
+Shows the system ACPI tables related to the PMem modules in the system.
+
+OPTIONS
+-------
+-h::
+-help::
+  Displays help for the command.
+
+-ddrt::
+  Used to specify DDRT as the desired transport protocol for the current invocation of ipmctl.
+
+-smbus::
+  Used to specify SMBUS as the desired transport protocol for the current invocation of ipmctl.
+
+NOTE: The -ddrt and -smbus options are mutually exclusive and may not be used together.
+
+TARGETS
+-------
+-system [NFIT|PCAT|PMTT]::
+  The system ACPI tables to display. By default NFIT, PCAT and PMTT tables
+  are displayed. One of:
+  * "NFIT" - The NVDIMM Firmware Interface Table
+  * "PCAT" - The Platform Capabilities Table
+  * "PMTT" - The Platform Memory Topology Table
+
+See the ACPI specification for detailed information about the ACPI tables.
+
+EXAMPLES
+--------
+Show the ACPI NFIT
+[listing]
+--
+ipmctl show -system NFIT
+--
+
+RETURN DATA
+-----------
+Returns the formatted data from the requested ACPI tables and their sub-tables. Refer
+to the ACPI specification for detailed information about the format of the ACPI tables.
+
+NOTE: All data is presented in ACPI little endian format.

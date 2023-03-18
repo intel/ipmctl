@@ -1,0 +1,38 @@
+name: build-check
+
+on: 
+  push:
+  pull_request:
+  schedule:
+    # run this job at 06:00 UTC every Monday
+    - cron: "0 6 * * 1"
+
+jobs:
+  check-build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libndctl-dev
+
+      - name: Checkout edk
+        run: cd ..; git clone https://github.com/tianocore/edk2.git
+
+      - name: Update ipmctl based on the latest edk and apply patches
+        run: ./updateedk.sh;
+             ./patch_OS.sh ./src/os/patches/0001-Ignore-STATIC_ASSERTs-and-NULL-define-for-os-and-ut-builds.patch 
+
+      - name: Build (debug)
+        run: mkdir build; cd build; cmake .. -DCMAKE_BUILD_TYPE=Debug; make -j $nproc
+
+      - name: Check built executable (debug)
+        run: ./output/debug/ipmctl version
+
+
+

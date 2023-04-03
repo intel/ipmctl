@@ -43,7 +43,7 @@ A corrected version is being developed and will hopefully be available soon. Unt
 
 02.00.00.xxxx  (master_2_0 branch) is for Intel Optane Persistent Memory 200 Series (and is backwards compatible with 100 series) 
 
-03.00.00.xxxx  (master_3_0 branch) is for Intel Optane Persistent Memory 300 Series (and is backwards compatible with both the 100 and 200 series
+03.00.00.xxxx  (master_3_0 branch) is the latest version and supports all series of Intel Optane Persistent Memory.
 
 **Note**: Branches may differ fundamentally. Please pay close attention to README.md of the respective branch.
 

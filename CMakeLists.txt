@@ -589,8 +589,17 @@ FILE(GLOB NVM_HEADERS
 	DcpmPkg/common/NvmSharedDefs.h
 	)
 
+FILE(COPY LICENSE
+	DESTINATION ${OUTPUT_DIR})
+
+FILE(COPY edk2_License.txt
+	DESTINATION ${OUTPUT_DIR})
+
+FILE(COPY thirdpartynotice.txt
+	DESTINATION ${OUTPUT_DIR})
+
 FILE(COPY ${NVM_HEADERS}
-       DESTINATION ${OUTPUT_DIR})
+	DESTINATION ${OUTPUT_DIR})
 
 FILE(COPY install/linux/logrotate/ipmctl.conf
 	DESTINATION ${OUTPUT_DIR})
@@ -625,6 +634,18 @@ if(LNX_BUILD)
 			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			)
 	endif()
+
+	install(FILES ${OUTPUT_DIR}/LICENSE
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
+		)
+
+	install(FILES ${OUTPUT_DIR}/thirdpartynotice.txt
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
+		)
+
+	install(FILES ${OUTPUT_DIR}/edk2_License.txt
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl
+		)
 
 	install(FILES ${OUTPUT_DIR}/ipmctl_default.conf
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ipmctl

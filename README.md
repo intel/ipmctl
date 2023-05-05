@@ -82,21 +82,17 @@ It can be found here https://github.com/pmem/ndctl if not available as a package
 ### building latest (03.00.00.xxxx) on Linux
 1. clone the ipmctl and edk2 repositories:
 
-`git clone -b development https://github.com/intel/ipmctl.git`
+`git clone -b master https://github.com/intel/ipmctl.git`
 
 `git clone https://github.com/tianocore/edk2.git`
 
 `cd ipmctl`
 
-2. Give execution permissions to the .sh files:
-
-`chmod +x *.sh`
-
-4. Run updateedk.sh, this will copy relevant folders from edk2 into ipmctl
+2. Run updateedk.sh, this will copy relevant folders from edk2 into ipmctl
 
 `./updateedk.sh`
 
-5. Build the ipmctl rpms specifying the version number to use
+3. Build the ipmctl rpms specifying the version number to use
 
 `./rpmbuild.sh 03.00.00.1234`
 

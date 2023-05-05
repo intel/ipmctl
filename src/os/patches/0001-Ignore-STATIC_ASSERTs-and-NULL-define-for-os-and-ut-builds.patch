@@ -41,15 +41,15 @@ index 2da08b0c78..072eefdb94 100644
  
  //
  // The following three enum types are used to verify that the compiler
-@@ -812,9 +820,13 @@ typedef enum {
-   __VerifyUint32EnumValue = 0xffffffff
- } __VERIFY_UINT32_ENUM_SIZE;
+@@ -812,9 +820,13 @@
+   __VerifyInt32EnumValue = 0x7fffffff
+ } __VERIFY_INT32_ENUM_SIZE;
  
 +#ifndef OS_BUILD
 +#ifndef UNIT_TEST_UEFI_BUILD
  STATIC_ASSERT (sizeof (__VERIFY_UINT8_ENUM_SIZE) == 4, "Size of enum does not meet UEFI Specification Data Type requirements");
  STATIC_ASSERT (sizeof (__VERIFY_UINT16_ENUM_SIZE) == 4, "Size of enum does not meet UEFI Specification Data Type requirements");
- STATIC_ASSERT (sizeof (__VERIFY_UINT32_ENUM_SIZE) == 4, "Size of enum does not meet UEFI Specification Data Type requirements");
+ STATIC_ASSERT (sizeof (__VERIFY_INT32_ENUM_SIZE) == 4, "Size of enum does not meet UEFI Specification Data Type requirements");
 +#endif
 +#endif
  

@@ -368,7 +368,7 @@ ParseSourceDumpFile(
   }
 
   /** Prepare memory for end of string char **/
-  *pFileString = ReallocatePool(FileBufferSize, FileBufferSize + sizeof('\0'), pFileBuffer);
+  *pFileString = ReallocatePool(FileBufferSize, FileBufferSize + 1 /* NUL */, pFileBuffer);
   if (*pFileString == NULL) {
     ReturnCode = EFI_OUT_OF_RESOURCES;
     goto Finish;

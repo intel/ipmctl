@@ -100,6 +100,7 @@ VOID DeserializePbrMode(UINT32 *pMode, UINT32 defaultMode);
   if(NULL == buffer) { \
     NVDIMM_ERR("Failed to allocate memory for deserializing buffer\n"); \
   } \
+  else \
   if (1 != fread(buffer, size, 1, pFile)) \
   { \
     NVDIMM_ERR("Failed to read the PBR file: %s\n", file); \

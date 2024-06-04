@@ -100,6 +100,7 @@ VOID DeserializePbrMode(UINT32 *pMode, UINT32 defaultMode);
   if(NULL == buffer) { \
     NVDIMM_ERR("Failed to allocate memory for deserializing buffer\n"); \
   } \
+  else \
   if (1 != fread(buffer, size, 1, pFile)) \
   { \
     NVDIMM_ERR("Failed to read the PBR file: %s\n", file); \
@@ -222,7 +223,17 @@ EFI_STATUS PbrDeserializeCtx(
     if (PBR_INVALID_SIG != ctx->PartitionContexts[CtxIndex].PartitionSig) {
       AsciiSPrint(pbr_filename, sizeof(pbr_filename), "%x.pbr", ctx->PartitionContexts[CtxIndex].PartitionSig);
       AsciiSPrint(pbr_dir, sizeof(pbr_dir), "%s%s", PBR_TMP_DIR, pbr_filename);
+
+      ctx->PartitionContexts[CtxIndex].PartitionData = NULL; // initialize buffer to NULL to allow proper error handling in case of fail to open pbr_dir file
       DeserializeBufferEx(pbr_dir, ctx->PartitionContexts[CtxIndex].PartitionData, ctx->PartitionContexts[CtxIndex].PartitionSize);
+
+      if(ctx->PartitionContexts[CtxIndex].PartitionData == NULL)
+      {
+          // we do not free already allocated memory because OS will free it after process exit
+          NVDIMM_ERR("PBR context file corrupted, please remove "PBR_TMP_DIR PBR_CTX_FILE_NAME"\n");
+          ReturnCode = EFI_END_OF_FILE;
+          goto Finish;
+      }
     }
   }
 

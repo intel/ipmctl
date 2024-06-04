@@ -977,6 +977,13 @@ PbrComposeSession(
   }
 
   pPbrMainHeader = (PbrHeader *)pContext->PbrMainHeader;
+
+  if (pPbrMainHeader == NULL) 
+  {
+    // bailout if PBR session is not initialized
+    return EFI_NOT_FOUND;
+  }
+  
   ZeroMem(&pPbrMainHeader->PartitionTable, sizeof(PbrPartitionTable));
   BufferSize = sizeof(PbrHeader);
 

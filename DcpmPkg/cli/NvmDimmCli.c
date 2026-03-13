@@ -1027,8 +1027,7 @@ EFI_STATUS showHelp(struct Command *pCmd)
     else {
       // if Printer is not setup then may need to do special handling for ESX
       if ((pPrinterCtx == NULL) &&
-        (pCmd != NULL) &&
-        (pCmd->options != NULL)) {
+        (pCmd != NULL)) {
         for (Index = 0; Index < MAX_OPTIONS; Index++) {
 
           if ((StrICmp(pCmd->options[Index].OptionName, OUTPUT_OPTION) == 0) ||
